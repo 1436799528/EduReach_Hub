@@ -1,0 +1,6 @@
+{
+  "name": "EduReach Hub",
+  "description": "Your Academic Success Partner. Learn • Improve • Succeed. Assignment Assistance, Project Guidance, Research Support, Academic Tutorials, and Study Materials.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
