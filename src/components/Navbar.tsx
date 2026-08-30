@@ -8,8 +8,7 @@ import {
   Menu,
   X,
   Home,
-  LogIn,
-  Phone
+  LogIn
 } from 'lucide-react';
 import { UserProfile, InstitutionId } from '../types';
 import { INSTITUTIONS } from '../data/mockData';
@@ -85,11 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => handleNavigation(item.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
-                    isActive
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
@@ -124,20 +119,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <button onClick={() => onOpenAuth('login')} className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
-                  Sign In
-                </button>
-                <button onClick={() => onOpenAuth('register')} className="px-3.5 py-1.5 text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer">
-                  Register Free
-                </button>
+                <button onClick={() => onOpenAuth('login')} className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">Sign In</button>
+                <button onClick={() => onOpenAuth('register')} className="px-3.5 py-1.5 text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer">Register Free</button>
               </div>
             )}
 
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              aria-label="Toggle Menu"
-            >
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Toggle Menu">
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
@@ -151,13 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               const Icon = item.icon;
               const isActive = currentView === item.id;
               return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.id)}
-                  className={`w-full px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${
-                    isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
+                <button key={item.id} onClick={() => handleNavigation(item.id)} className={`w-full px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'}`}>
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                 </button>
@@ -173,12 +154,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {!isLoggedIn && (
               <div className="grid grid-cols-2 gap-2 pt-2">
-                <button onClick={() => { onOpenAuth('login'); setMobileMenuOpen(false); }} className="py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-bold text-center">
-                  Sign In
-                </button>
-                <button onClick={() => { onOpenAuth('register'); setMobileMenuOpen(false); }} className="py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold text-center shadow-xs">
-                  Register Free
-                </button>
+                <button onClick={() => { onOpenAuth('login'); setMobileMenuOpen(false); }} className="py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-bold text-center">Sign In</button>
+                <button onClick={() => { onOpenAuth('register'); setMobileMenuOpen(false); }} className="py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold text-center shadow-xs">Register Free</button>
               </div>
             )}
           </div>
