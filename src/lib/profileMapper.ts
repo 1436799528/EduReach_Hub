@@ -1,4 +1,4 @@
-import type { UserProfile } from '../types';
+import type { InstitutionId, UserProfile } from '../types';
 
 export interface SupabaseProfileRow {
   id: string;
@@ -10,10 +10,6 @@ export interface SupabaseProfileRow {
   level?: string | null;
   session?: string | null;
   institution_id?: string | null;
-  faculty_id?: string | null;
-  department_id?: string | null;
-  session_id?: string | null;
-  programme_id?: string | null;
   matric_number?: string | null;
   avatar_url?: string | null;
   role?: string | null;
@@ -21,28 +17,31 @@ export interface SupabaseProfileRow {
   updated_at?: string | null;
 }
 
-/**
- * Maps the persisted Supabase profile into the existing UI contract.
- * Keep this boundary isolated so the current components do not need to know
- * about the database column names while authentication is migrated.
- */
+const toInstitutionId = (value?: string | null): InstitutionId =>
+  (value && ['UNICAL','UNILAG','UI','ABU','UNN','OAU','FUTO','UNIBEN','LASU','DELSU','ALL'].includes(value)
+    ? value
+    : 'UNICAL') as InstitutionId;
+
+/** Keeps database details isolated from the existing UI UserProfile contract. */
 export const mapSupabaseProfileToUserProfile = (
   row: SupabaseProfileRow,
   email?: string | null,
 ): UserProfile => ({
   id: row.id,
-  fullName: row.full_name,
+  name: row.full_name,
   email: email ?? row.email ?? '',
-  phone: '',
-  school: row.school ?? '',
-  faculty: row.faculty ?? '',
+  phoneNumber: '',
+  institutionId: toInstitutionId(row.institution_id),
   department: row.department ?? '',
+  faculty: row.faculty ?? '',
   level: row.level ?? '',
-  session: row.session ?? '',
-  matricNumber: row.matric_number ?? '',
-  avatar: row.avatar_url ?? '',
-  role: row.role === 'admin' ? 'admin' : row.role === 'moderator' ? 'moderator' : 'student',
-  verified: true,
-  joinedAt: row.created_at ?? new Date().toISOString(),
-  lastActive: row.updated_at ?? new Date().toISOString(),
+  walletBalance: 0,
+  isAPlusSubscriber: false,
+  enrolledCourses: [],
+  unlockedMaterialIds: [],
+  savedOfflineMaterialIds: [],
+  viewHistory: [],
+  downloadHistory: [],
+  contributorStats: { totalEarned: 0, totalRoyaltyPaid: 0, materialsUploaded: 0, pendingPayout: 0 },
+  role: row.role === 'senate_admin' ? 'senate_admin' : row.role === 'moderator' ? 'moderator' : row.role === 'contributor' ? 'contributor' : row.role === 'campus_agent' ? 'campus_agent' : 'student',
 });
