@@ -29,14 +29,9 @@ export default function App() {
   const [, setSearchQuery] = useState('');
 
   const initialInstitution = useMemo<InstitutionId>(() => {
-    const school = (user.school || '').toLowerCase();
-    const match = INSTITUTIONS.find(
-      (institution) =>
-        school.includes(institution.shortName.toLowerCase()) ||
-        school.includes(institution.name.toLowerCase()),
-    );
-    return match?.id ?? 'ALL';
-  }, [user.school]);
+    if (user.institutionId && user.institutionId !== 'ALL') return user.institutionId;
+    return 'ALL';
+  }, [user.institutionId]);
 
   const [selectedInstitution, setSelectedInstitution] = useState<InstitutionId>(initialInstitution);
 
@@ -117,7 +112,6 @@ export default function App() {
     if (updates.department !== undefined) dbUpdates.department = updates.department;
     if (updates.faculty !== undefined) dbUpdates.faculty = updates.faculty;
     if (updates.level !== undefined) dbUpdates.level = updates.level;
-    if (updates.matricNumber !== undefined) dbUpdates.matric_number = updates.matricNumber;
 
     try {
       if (Object.keys(dbUpdates).length) {
