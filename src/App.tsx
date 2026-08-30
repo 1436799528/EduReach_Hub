@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { 
-  InstitutionId, 
-  StudyMaterial, 
-  UserProfile, 
+import {
+  InstitutionId,
+  StudyMaterial,
+  UserProfile,
   FeedPost
 } from './types';
-import { 
-  getStoredUserProfile, 
-  saveUserProfile, 
-  getStoredMaterials, 
+import {
+  getStoredUserProfile,
+  saveUserProfile,
+  getStoredMaterials,
   saveMaterials
 } from './services/storage';
 import { FEED_POSTS } from './data/mockData';
@@ -24,27 +24,18 @@ import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 
 export default function App() {
-  // Global User State
   const [user, setUser] = useState<UserProfile>(getStoredUserProfile);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     const saved = localStorage.getItem('edureach_is_logged_in');
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : false;
   });
 
   const [materials, setMaterials] = useState<StudyMaterial[]>(getStoredMaterials);
   const [feedPosts] = useState<FeedPost[]>(FEED_POSTS);
-
-  // App Navigation: 'landing' vs Dashboard views ('feed' | 'my_school' | 'services' | 'profile')
   const [currentView, setCurrentView] = useState<'landing' | 'feed' | 'my_school' | 'services' | 'profile'>('landing');
-  
-  // Active Filter Institution (defaults to user's school)
   const [selectedInstitution, setSelectedInstitution] = useState<InstitutionId>(user.institutionId || 'UNICAL');
-
-  // Modals
   const [readingMaterial, setReadingMaterial] = useState<StudyMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Auth Modal State
   const [authModalConfig, setAuthModalConfig] = useState<{
     isOpen: boolean;
     mode: 'login' | 'register';
@@ -54,7 +45,6 @@ export default function App() {
     mode: 'login'
   });
 
-  // Local Storage Persistence
   useEffect(() => {
     saveUserProfile(user);
   }, [user]);
@@ -72,16 +62,10 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Open Auth Modal
   const handleOpenAuth = (mode: 'login' | 'register' = 'login', message?: string) => {
-    setAuthModalConfig({
-      isOpen: true,
-      mode,
-      message
-    });
+    setAuthModalConfig({ isOpen: true, mode, message });
   };
 
-  // Handle Login / Registration Success
   const handleAuthSuccess = (authenticatedUser: UserProfile) => {
     setUser(authenticatedUser);
     setIsLoggedIn(true);
@@ -92,35 +76,24 @@ export default function App() {
     showToast(`Welcome back, ${authenticatedUser.name.split(' ')[0]}!`);
   };
 
-  // Update user profile details
   const handleUpdateUser = (updatedFields: Partial<UserProfile>) => {
-    setUser(prev => ({
-      ...prev,
-      ...updatedFields
-    }));
+    setUser(prev => ({ ...prev, ...updatedFields }));
     if (updatedFields.institutionId) {
       setSelectedInstitution(updatedFields.institutionId);
     }
     showToast('Profile details updated & saved successfully!');
   };
 
-  // Logout action
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentView('landing');
+    setReadingMaterial(null);
     showToast('Logged out of student session.');
   };
 
-  // Navigate to core tab with auth check
   const handleNavigateToTab = (tab: 'feed' | 'my_school' | 'services' | 'profile') => {
-    if (!isLoggedIn && tab === 'profile') {
-      handleOpenAuth('login', 'Please sign in to access your student profile.');
-      return;
-    }
-    
-    // If not logged in but clicking other tabs, open auth modal or allow preview
     if (!isLoggedIn) {
-      handleOpenAuth('register', `Create a free scholar account or sign in to access full ${tab === 'my_school' ? 'My School materials' : tab === 'feed' ? 'Campus Student Feed' : 'Campus Services'}.`);
+      handleOpenAuth('register', `Create a free student account or sign in to access ${tab === 'my_school' ? 'My School materials' : tab === 'feed' ? 'Campus Student Feed' : tab === 'services' ? 'Campus Services' : 'your student profile'}.`);
       return;
     }
 
@@ -128,8 +101,12 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Unlock Material Action (Instant access)
   const handleUnlockMaterial = (material: StudyMaterial) => {
+    if (!isLoggedIn) {
+      handleOpenAuth('register', 'Create a free student account to access study materials.');
+      return;
+    }
+
     setUser(prev => ({
       ...prev,
       unlockedMaterialIds: [...new Set([...prev.unlockedMaterialIds, material.id])],
@@ -139,8 +116,12 @@ export default function App() {
     showToast(`Opened ${material.courseCode} study package!`);
   };
 
-  // Toggle Offline Storage
   const handleToggleOffline = (materialId: string) => {
+    if (!isLoggedIn) {
+      handleOpenAuth('register', 'Create a free student account to save study packs offline.');
+      return;
+    }
+
     const isSaved = user.savedOfflineMaterialIds.includes(materialId);
     if (isSaved) {
       setUser(prev => ({
@@ -158,20 +139,19 @@ export default function App() {
   };
 
   const handleReadFeedMaterial = (materialTitle: string) => {
-    const found = materials.find(m => m.title.toLowerCase().includes(materialTitle.toLowerCase()) || materialTitle.toLowerCase().includes(m.courseCode.toLowerCase()));
-    if (found) {
-      setReadingMaterial(found);
-    } else {
-      setReadingMaterial(materials[0]);
+    if (!isLoggedIn) {
+      handleOpenAuth('register', 'Create a free student account to access study materials.');
+      return;
     }
+
+    const found = materials.find(m => m.title.toLowerCase().includes(materialTitle.toLowerCase()) || materialTitle.toLowerCase().includes(m.courseCode.toLowerCase()));
+    if (found) setReadingMaterial(found);
   };
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-orange-500 selection:text-white">
-      
-      {/* Toast Notification Alert */}
       {toastMessage && (
-        <div 
+        <div
           onClick={() => setToastMessage(null)}
           className="fixed bottom-20 md:bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-800 text-xs font-bold flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 cursor-pointer hover:bg-slate-800 transition-colors"
           title="Click to dismiss alert"
@@ -179,10 +159,7 @@ export default function App() {
           <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shrink-0" />
           <span className="flex-1 pr-1">{toastMessage}</span>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setToastMessage(null);
-            }}
+            onClick={(e) => { e.stopPropagation(); setToastMessage(null); }}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors ml-1"
             title="Dismiss notification"
           >
@@ -191,7 +168,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Top Header Navbar */}
       <Navbar
         currentView={currentView}
         setCurrentView={setCurrentView}
@@ -203,20 +179,33 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* Primary Page Router */}
       {currentView === 'landing' && (
         <LandingPage
           isLoggedIn={isLoggedIn}
           onNavigateToTab={handleNavigateToTab}
           onOpenAuth={handleOpenAuth}
-          onPreviewMaterial={(mat) => setReadingMaterial(mat)}
         />
       )}
 
-      {currentView !== 'landing' && (
+      {currentView !== 'landing' && !isLoggedIn && (
+        <main className="flex-1 flex items-center justify-center px-4 py-20">
+          <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <LockIconPlaceholder />
+            <h1 className="mt-4 text-xl font-bold text-slate-900">Student account required</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Sign in or create an account to access EduReach Hub resources and student services.</p>
+            <button
+              type="button"
+              onClick={() => handleOpenAuth('register')}
+              className="mt-6 inline-flex items-center justify-center rounded-xl bg-orange-600 px-6 py-3 text-sm font-bold text-white hover:bg-orange-700"
+            >
+              Create Free Account
+            </button>
+          </div>
+        </main>
+      )}
+
+      {currentView !== 'landing' && isLoggedIn && (
         <main className="flex-1 w-full pb-16">
-          
-          {/* Tab 1: Campus Feed */}
           {currentView === 'feed' && (
             <CampusFeedPage
               posts={feedPosts}
@@ -228,7 +217,6 @@ export default function App() {
             />
           )}
 
-          {/* Tab 2: My School */}
           {currentView === 'my_school' && (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
               <MySchoolPage
@@ -244,34 +232,18 @@ export default function App() {
             </div>
           )}
 
-          {/* Tab 3: My Services */}
-          {currentView === 'services' && (
-            <MyServicesPage
-              user={user}
-            />
-          )}
+          {currentView === 'services' && <MyServicesPage user={user} />}
 
-          {/* Tab 4: Profile */}
           {currentView === 'profile' && (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-              <ProfilePage
-                user={user}
-                onUpdateUser={handleUpdateUser}
-                onLogout={handleLogout}
-              />
+              <ProfilePage user={user} onUpdateUser={handleUpdateUser} onLogout={handleLogout} />
             </div>
           )}
-
         </main>
       )}
 
-      {/* Global Application Footer with FAQ & Moderator Contact Desks */}
-      <Footer
-        onNavigateToTab={handleNavigateToTab}
-        onOpenAuth={handleOpenAuth}
-      />
+      <Footer onNavigateToTab={handleNavigateToTab} onOpenAuth={handleOpenAuth} />
 
-      {/* Student Authentication Modal */}
       <AuthModal
         isOpen={authModalConfig.isOpen}
         onClose={() => setAuthModalConfig(prev => ({ ...prev, isOpen: false }))}
@@ -279,14 +251,11 @@ export default function App() {
         initialMode={authModalConfig.mode}
         redirectMessage={authModalConfig.message}
         onContinueAsGuest={() => {
-          setIsLoggedIn(true);
-          setCurrentView('my_school');
-          showToast('Browsing in Scholar Guest Mode');
+          handleOpenAuth('register', 'Please create an account or sign in to access the student workspace.');
         }}
       />
 
-      {/* Reader Modal */}
-      {readingMaterial && (
+      {readingMaterial && isLoggedIn && (
         <MaterialReaderModal
           material={readingMaterial}
           user={user}
@@ -296,7 +265,10 @@ export default function App() {
           onUnlock={() => handleUnlockMaterial(readingMaterial)}
         />
       )}
-
     </div>
   );
+}
+
+function LockIconPlaceholder() {
+  return <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">🔒</div>;
 }
