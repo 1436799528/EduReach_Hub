@@ -1,23 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  GraduationCap,
+  ArrowRight,
   BookOpen,
   Briefcase,
-  ShieldCheck,
   CheckCircle2,
-  ArrowRight,
-  Star,
-  Clock,
+  GraduationCap,
   Lock,
-  MessageSquare,
-  FileText,
-  Check,
-  UserPlus,
   LogIn,
-  ChevronRight,
+  MessageSquare,
+  ShieldCheck,
+  UserPlus,
 } from 'lucide-react';
-import { StudyMaterial, ServiceItem } from '../types';
-import { ServiceInquiryModal } from './ServiceInquiryModal';
+import { StudyMaterial } from '../types';
 
 interface LandingPageProps {
   isLoggedIn: boolean;
@@ -29,6 +23,13 @@ interface LandingPageProps {
 const WHATSAPP_DISPLAY = '09130134969';
 const WHATSAPP_LINK = 'https://wa.me/2349130134969';
 const HERO_IMAGE_URL = 'https://cdn.phototourl.com/free/2026-08-30-83b1df55-b6bf-42d3-9f8a-0fc9c9c89009.jpg';
+
+const services = [
+  { title: 'WAEC / NECO', description: 'Registration and examination support.' },
+  { title: 'JAMB', description: 'Application and admission support.' },
+  { title: 'NELFUND Application', description: 'Guidance with student loan applications.' },
+  { title: 'Scholarship Application', description: 'Support with finding and applying for scholarships.' },
+];
 
 const platformAreas = [
   {
@@ -74,14 +75,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToTab,
   onOpenAuth,
 }) => {
-  const [selectedServiceModal, setSelectedServiceModal] = useState<ServiceItem | null>(null);
-
   const openApp = () => {
     if (isLoggedIn) {
-      onNavigateToTab('my_school');
+      onNavigateToTab('services');
       return;
     }
     onOpenAuth('register', 'Create your free student account to access EduReach Hub.');
+  };
+
+  const handleServiceClick = () => {
+    if (isLoggedIn) {
+      onNavigateToTab('services');
+      return;
+    }
+    onOpenAuth('register', 'Create your free student account to access EduReach Hub services.');
   };
 
   return (
@@ -90,8 +97,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="absolute -right-32 -top-32 h-80 w-80 rounded-full bg-orange-100/70 blur-3xl" aria-hidden="true" />
         <div className="absolute -left-40 bottom-0 h-72 w-72 rounded-full bg-slate-200/70 blur-3xl" aria-hidden="true" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-24">
-          <div className="max-w-2xl">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1.15fr] lg:px-8 lg:py-24">
+          <div className="max-w-2xl lg:pr-4">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-orange-800">
               <ShieldCheck className="h-4 w-4" />
               <span>Built for Nigerian tertiary students</span>
@@ -111,8 +118,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={openApp}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-orange-700"
               >
-                {isLoggedIn ? <BookOpen className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                <span>{isLoggedIn ? 'Go to My School' : 'Create Free Account'}</span>
+                {isLoggedIn ? <Briefcase className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                <span>{isLoggedIn ? 'View Services' : 'Create Free Account'}</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
 
@@ -148,24 +155,69 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-xl lg:justify-self-end">
+          <div className="relative mx-auto w-full max-w-2xl lg:justify-self-end">
             <div className="absolute -inset-5 rounded-[2rem] bg-orange-100/70 blur-2xl" aria-hidden="true" />
-            <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-300/40">
-              <div className="overflow-hidden rounded-[1.5rem] bg-slate-100">
-                <img
-                  src={HERO_IMAGE_URL}
-                  alt="EduReach Hub"
-                  className="block h-auto max-h-[520px] w-full object-cover"
-                  loading="eager"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                />
+            <div className="relative overflow-visible px-2 py-4 sm:px-6 lg:px-10">
+              <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-2 shadow-2xl shadow-slate-300/40">
+                <div className="overflow-hidden rounded-[1.5rem] bg-slate-100">
+                  <img
+                    src={HERO_IMAGE_URL}
+                    alt="EduReach Hub"
+                    className="block h-auto max-h-[540px] w-full object-cover"
+                    loading="eager"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="absolute -bottom-5 -left-4 hidden rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-lg sm:block">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                <Lock className="h-4 w-4 text-orange-600" />
-                <span>Resources protected by account access</span>
+
+              <div className="pointer-events-none absolute inset-x-0 top-1/2 hidden -translate-y-1/2 justify-between sm:flex">
+                <div className="pointer-events-auto -ml-1 w-44 space-y-3 lg:-ml-3">
+                  {services.slice(0, 2).map((service) => (
+                    <button
+                      key={service.title}
+                      type="button"
+                      onClick={handleServiceClick}
+                      className="w-full rounded-2xl border border-slate-200 bg-white/95 p-4 text-left shadow-xl shadow-slate-300/30 backdrop-blur transition-transform hover:-translate-y-1"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold text-slate-900">{service.title}</span>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-orange-600" />
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-slate-500">{service.description}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="pointer-events-auto -mr-1 w-44 space-y-3 lg:-mr-3">
+                  {services.slice(2, 4).map((service) => (
+                    <button
+                      key={service.title}
+                      type="button"
+                      onClick={handleServiceClick}
+                      className="w-full rounded-2xl border border-slate-200 bg-white/95 p-4 text-left shadow-xl shadow-slate-300/30 backdrop-blur transition-transform hover:-translate-y-1"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold text-slate-900">{service.title}</span>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-orange-600" />
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-slate-500">{service.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap justify-center gap-2 sm:hidden">
+                {services.map((service) => (
+                  <button
+                    key={service.title}
+                    type="button"
+                    onClick={handleServiceClick}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm"
+                  >
+                    {service.title}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -213,7 +265,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {testimonials.map((testimonial) => (
               <article key={testimonial.name} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex gap-1 text-orange-500">
-                  {[1, 2, 3, 4, 5].map((star) => <Star key={star} className="h-4 w-4 fill-current" />)}
+                  {[1, 2, 3, 4, 5].map((star) => <span key={star} aria-hidden="true">★</span>)}
                 </div>
                 <p className="mt-5 text-sm leading-6 text-slate-700">“{testimonial.quote}”</p>
                 <div className="mt-6 border-t border-slate-100 pt-4">
@@ -260,13 +312,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </a>
         </div>
       </footer>
-
-      {selectedServiceModal && (
-        <ServiceInquiryModal
-          service={selectedServiceModal}
-          onClose={() => setSelectedServiceModal(null)}
-        />
-      )}
     </div>
   );
 };
