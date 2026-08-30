@@ -18,15 +18,14 @@ export interface SupabaseProfileRow {
   institutions?: { acronym?: string | null } | null;
 }
 
-const toInstitutionId = (value?: string | null): InstitutionId =>
-  (value && ['UNICAL','UNILAG','UI','ABU','UNN','OAU','FUTO','UNIBEN','LASU','DELSU','ALL'].includes(value)
-    ? value
-    : 'UNICAL') as InstitutionId;
+const INSTITUTIONS: InstitutionId[] = ['UNICAL','UNILAG','UI','ABU','UNN','OAU','FUTO','UNIBEN','LASU','DELSU','ALL'];
 
-/** Keeps database details isolated from the existing UI UserProfile contract. */
+const toInstitutionId = (value?: string | null): InstitutionId =>
+  value && INSTITUTIONS.includes(value as InstitutionId) ? value as InstitutionId : 'UNICAL';
+
 export const mapSupabaseProfileToUserProfile = (row: SupabaseProfileRow, email?: string | null): UserProfile => ({
   id: row.id,
-  name: row.full_name,
+  name: row.full_name || 'Student',
   email: email ?? row.email ?? '',
   phoneNumber: '',
   institutionId: toInstitutionId(row.institutions?.acronym),
