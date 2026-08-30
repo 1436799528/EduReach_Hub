@@ -27,9 +27,30 @@ export const signUpStudent = async (input: StudentProfileInput, email: string, p
   const { data, error } = await client.auth.signUp({
     email: email.trim(),
     password,
-    options: { data: { full_name: input.fullName.trim() } },
+    options: {
+      data: {
+        full_name: input.fullName.trim(),
+        school: input.school.trim(),
+        faculty: input.faculty.trim(),
+        department: input.department.trim(),
+        level: input.level.trim(),
+        session: input.session?.trim() || '',
+        institution_acronym: input.institutionId || 'UNICAL',
+        matric_number: input.matricNumber?.trim() || null,
+      },
+    },
   });
   if (error || !data.user) return { data, error };
+
+  // Store the real UUID from institutions, not the frontend acronym.
+  const institution = input.institutionId
+    ? await client.from('institutions').select('id').eq('acronym', input.institutionId).maybeSingle()
+    : { data: null, error: null };
+  if (institution.error) return { data, error: institution.error };
+
+  // If email confirmation is enabled there may be no authenticated session yet.
+  // The auth metadata above allows a database trigger to create the profile safely.
+  if (!data.session) return { data, error: null, profile: null };
 
   const profile = await client.from('profiles').upsert({
     id: data.user.id,
@@ -39,7 +60,7 @@ export const signUpStudent = async (input: StudentProfileInput, email: string, p
     department: input.department.trim(),
     level: input.level.trim(),
     session: input.session?.trim() || '',
-    institution_id: input.institutionId || null,
+    institution_id: institution.data?.id || null,
     matric_number: input.matricNumber?.trim() || null,
     role: 'student',
   }).select().single();
@@ -63,9 +84,10 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
   const client = requireSupabase();
   const user = await getCurrentUser();
   if (!user) return null;
-  const { data, error } = await client.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  const { data, error } = await client.from('profiles').select('*, institutions(acronym)').eq('id', user.id).maybeSingle();
   if (error || !data) return null;
-  return mapSupabaseProfileToUserProfile(data as SupabaseProfileRow, user.email);
+  const row = data as SupabaseProfileRow & { institutions?: { acronym?: string | null } | null };
+  return mapSupabaseProfileToUserProfile(row, user.email);
 };
 
 export const subscribeToAuthChanges = (callback: (session: Session | null) => void) =>
