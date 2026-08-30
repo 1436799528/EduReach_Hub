@@ -32,7 +32,10 @@ export default function App() {
 
   const [materials, setMaterials] = useState<StudyMaterial[]>(getStoredMaterials);
   const [feedPosts] = useState<FeedPost[]>(FEED_POSTS);
-  const [currentView, setCurrentView] = useState<'landing' | 'feed' | 'my_school' | 'services' | 'profile'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'feed' | 'my_school' | 'services' | 'profile'>(() => {
+    const saved = localStorage.getItem('edureach_is_logged_in');
+    return saved === 'true' ? 'feed' : 'landing';
+  });
   const [selectedInstitution, setSelectedInstitution] = useState<InstitutionId>(user.institutionId || 'UNICAL');
   const [readingMaterial, setReadingMaterial] = useState<StudyMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -51,6 +54,10 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('edureach_is_logged_in', String(isLoggedIn));
+    if (!isLoggedIn) {
+      setCurrentView('landing');
+      setReadingMaterial(null);
+    }
   }, [isLoggedIn]);
 
   useEffect(() => {
@@ -72,7 +79,7 @@ export default function App() {
     if (authenticatedUser.institutionId) {
       setSelectedInstitution(authenticatedUser.institutionId);
     }
-    setCurrentView('my_school');
+    setCurrentView('feed');
     showToast(`Welcome back, ${authenticatedUser.name.split(' ')[0]}!`);
   };
 
