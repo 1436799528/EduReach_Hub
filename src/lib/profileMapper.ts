@@ -15,6 +15,7 @@ export interface SupabaseProfileRow {
   role?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  institutions?: { acronym?: string | null } | null;
 }
 
 const toInstitutionId = (value?: string | null): InstitutionId =>
@@ -23,15 +24,12 @@ const toInstitutionId = (value?: string | null): InstitutionId =>
     : 'UNICAL') as InstitutionId;
 
 /** Keeps database details isolated from the existing UI UserProfile contract. */
-export const mapSupabaseProfileToUserProfile = (
-  row: SupabaseProfileRow,
-  email?: string | null,
-): UserProfile => ({
+export const mapSupabaseProfileToUserProfile = (row: SupabaseProfileRow, email?: string | null): UserProfile => ({
   id: row.id,
   name: row.full_name,
   email: email ?? row.email ?? '',
   phoneNumber: '',
-  institutionId: toInstitutionId(row.institution_id),
+  institutionId: toInstitutionId(row.institutions?.acronym),
   department: row.department ?? '',
   faculty: row.faculty ?? '',
   level: row.level ?? '',
