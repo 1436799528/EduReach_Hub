@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { StudyMaterial, UserProfile } from './types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StudyMaterial, UserProfile, InstitutionId } from './types';
 import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
-import { FEED_POSTS } from './data/mockData';
+import { FEED_POSTS, INSTITUTIONS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CampusFeedPage } from './components/CampusFeedPage';
@@ -27,6 +27,22 @@ export default function App() {
   const [materials, setMaterials] = useState<StudyMaterial[]>(getStoredMaterials);
   const [readerMaterial, setReaderMaterial] = useState<StudyMaterial | null>(null);
   const [, setSearchQuery] = useState('');
+
+  const initialInstitution = useMemo<InstitutionId>(() => {
+    const school = (user.school || '').toLowerCase();
+    const match = INSTITUTIONS.find(
+      (institution) =>
+        school.includes(institution.shortName.toLowerCase()) ||
+        school.includes(institution.name.toLowerCase()),
+    );
+    return match?.id ?? 'ALL';
+  }, [user.school]);
+
+  const [selectedInstitution, setSelectedInstitution] = useState<InstitutionId>(initialInstitution);
+
+  useEffect(() => {
+    setSelectedInstitution(initialInstitution);
+  }, [initialInstitution]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -118,6 +134,16 @@ export default function App() {
     }
   };
 
+  const handleToggleOffline = (materialId: string) => {
+    setUser((current) => {
+      const saved = current.savedOfflineMaterialIds ?? [];
+      const nextSaved = saved.includes(materialId)
+        ? saved.filter((id) => id !== materialId)
+        : [...saved, materialId];
+      return { ...current, savedOfflineMaterialIds: nextSaved };
+    });
+  };
+
   const requireAuth = (nextView: View = 'feed') => {
     if (!isAuthenticated) {
       setAuthMode('login');
@@ -154,7 +180,18 @@ export default function App() {
           />
         )}
         {view === 'feed' && isAuthenticated && <CampusFeedPage user={user} posts={FEED_POSTS} />}
-        {view === 'my_school' && isAuthenticated && <MySchoolPage user={user} materials={materials} onReadMaterial={setReaderMaterial} />}
+        {view === 'my_school' && isAuthenticated && (
+          <MySchoolPage
+            user={user}
+            materials={materials}
+            selectedInstitution={selectedInstitution}
+            setSelectedInstitution={setSelectedInstitution}
+            onUnlockMaterial={setReaderMaterial}
+            onReadMaterial={setReaderMaterial}
+            onToggleOffline={handleToggleOffline}
+            onOpenCBT={setReaderMaterial}
+          />
+        )}
         {view === 'services' && isAuthenticated && <MyServicesPage user={user} />}
         {view === 'profile' && isAuthenticated && (
           <ProfilePage user={user} onUpdateUser={handleProfileUpdate} onLogout={handleLogout} />
