@@ -1,13 +1,134 @@
-import React,{useEffect,useState}from'react';
-import{InstitutionId,StudyMaterial,UserProfile}from'./types';
-import{getStoredUserProfile,saveUserProfile,getStoredMaterials,saveMaterials}from'./services/storage';
-import{FEED_POSTS}from'./data/mockData';
-import{Navbar}from'./components/Navbar';import{LandingPage}from'./components/LandingPage';import{CampusFeedPage}from'./components/CampusFeedPage';import{MySchoolPage}from'./components/MySchoolPage';import{MyServicesPage}from'./components/MyServicesPage';import{ProfilePage}from'./components/ProfilePage';import{MaterialReaderModal}from'./components/MaterialReaderModal';import{AuthModal}from'./components/AuthModal';import{Footer}from'./components/Footer';
-type View='landing'|'feed'|'my_school'|'services'|'profile';
-export default function App(){
- const[user,setUser]=useState<UserProfile>(getStoredUserProfile);const[logged,setLogged]=useState(()=>localStorage.getItem('edureach_is_logged_in')==='true');const[mats,setMats]=useState<StudyMaterial[]>(getStoredMaterials);const[view,setView]=useState<View>('landing');const[inst,setInst]=useState<InstitutionId>(user.institutionId||'UNICAL');const[reading,setReading]=useState<StudyMaterial|null>(null);const[auth,setAuth]=useState<{isOpen:boolean;mode:'login'|'register';message?:string}>({isOpen:false,mode:'login'});
- useEffect(()=>saveUserProfile(user),[user]);useEffect(()=>{localStorage.setItem('edureach_is_logged_in',String(logged));if(!logged)setReading(null)},[logged]);useEffect(()=>saveMaterials(mats),[mats]);
- const openAuth=(mode:'login'|'register'='login',message?:string)=>setAuth({isOpen:true,mode,message});const requireAuth=(message:string)=>{if(logged)return true;openAuth('register',message);return false};const nav=(v:Exclude<View,'landing'>)=>{setView(v);window.scrollTo({top:0,behavior:'smooth'})};
- const login=(u:UserProfile)=>{setUser(u);setLogged(true);if(u.institutionId)setInst(u.institutionId);setView('landing')};const logout=()=>{setLogged(false);setView('landing');setReading(null)};
- const read=(m:StudyMaterial)=>{if(requireAuth('Create a free student account or sign in to read this resource.'))setReading(m)};const unlock=(m:StudyMaterial)=>{if(!requireAuth('Create a free student account or sign in to access this study material.'))return;setUser(p=>({...p,unlockedMaterialIds:[...new Set([...p.unlockedMaterialIds,m.id])],viewHistory:[...new Set([...(p.viewHistory||[]),m.id])]}));setReading(m)};const offline=(id:string)=>{if(!requireAuth('Create a free student account or sign in to save study packs offline.'))return;setUser(p=>({...p,savedOfflineMaterialIds:p.savedOfflineMaterialIds.includes(id)?p.savedOfflineMaterialIds.filter(x=>x!==id):[...p.savedOfflineMaterialIds,id]}))};const feedRead=(title:string)=>{if(!requireAuth('Create a free student account or sign in to access this study material.'))return;const m=mats.find(x=>x.title.toLowerCase().includes(title.toLowerCase())||title.toLowerCase().includes(x.courseCode.toLowerCase()));if(m)setReading(m)};
- return <div className="min-h-screen bg-white text-slate-900 flex flex-col"><Navbar currentView={view} setCurrentView={setView} user={logged?user:null} isLoggedIn={logged} selectedInstitution={inst} setSelectedInstitution={setInst} onOpenAuth={openAuth} onLogout={logout}/>{view==='landing'&&<LandingPage isLoggedIn={logged} onNavigateToTab={nav} onOpenAuth={openAuth}/>} {view==='feed'&&<main className="flex-1"><CampusFeedPage posts={FEED_POSTS} currentInstitution={inst} userProfile={user} onSelectMaterialToRead={feedRead} onOpenAuth={openAuth} isLoggedIn={logged}/></main>} {view==='my_school'&&<main className="flex-1"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"><MySchoolPage user={user} materials={mats} selectedInstitution={inst} setSelectedInstitution={setInst} onUnlockMaterial={unlock} onReadMaterial={read} onToggleOffline={offline} onOpenCBT={read}/></div></main>} {view==='services'&&<main className="flex-1"><MyServicesPage user={user}/></main>} {view==='profile'&&<main className="flex-1"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"><ProfilePage user={user} onUpdateUser={f=>{setUser(p=>({...p,...f}));if(f.institutionId)setInst(f.institutionId)}} onLogout={logout}/></div></main>}<Footer onNavigateToTab={nav} onOpenAuth={openAuth}/><AuthModal isOpen={auth.isOpen} onClose={()=>setAuth(p=>({...p,isOpen:false}))} onLoginSuccess={login} initialMode={auth.mode} redirectMessage={auth.message} onContinueAsGuest={()=>openAuth('register','Please create an account or sign in to access protected resources.')}/>{reading&&logged&&<MaterialReaderModal material={reading} user={user} isSavedOffline={user.savedOfflineMaterialIds.includes(reading.id)} onToggleOffline={offline} onClose={()=>setReading(null)} onUnlock={()=>unlock(reading)}/>}</div>}
+import React, { useEffect, useState } from 'react';
+import { InstitutionId, StudyMaterial, UserProfile } from './types';
+import { getStoredUserProfile, saveUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
+import { FEED_POSTS } from './data/mockData';
+import { Navbar } from './components/Navbar';
+import { LandingPage } from './components/LandingPage';
+import { CampusFeedPage } from './components/CampusFeedPage';
+import { MySchoolPage } from './components/MySchoolPage';
+import { MyServicesPage } from './components/MyServicesPage';
+import { ProfilePage } from './components/ProfilePage';
+import { MaterialReaderModal } from './components/MaterialReaderModal';
+import { AuthModal } from './components/AuthModal';
+import { Footer } from './components/Footer';
+import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
+import { isSupabaseConfigured } from './lib/supabase';
+
+type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
+
+export default function App() {
+  const [user, setUser] = useState<UserProfile>(getStoredUserProfile);
+  const [logged, setLogged] = useState(false);
+  const [mats, setMats] = useState<StudyMaterial[]>(getStoredMaterials);
+  const [view, setView] = useState<View>('landing');
+  const [inst, setInst] = useState<InstitutionId>(user.institutionId || 'UNICAL');
+  const [reading, setReading] = useState<StudyMaterial | null>(null);
+  const [auth, setAuth] = useState<{ isOpen: boolean; mode: 'login' | 'register'; message?: string }>({ isOpen: false, mode: 'login' });
+
+  useEffect(() => {
+    saveUserProfile(user);
+  }, [user]);
+
+  useEffect(() => {
+    saveMaterials(mats);
+  }, [mats]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let mounted = true;
+
+    const hydrate = async () => {
+      const profile = await getCurrentUserProfile();
+      if (!mounted) return;
+      if (profile) {
+        setUser(profile);
+        setInst(profile.institutionId || 'UNICAL');
+        setLogged(true);
+      } else {
+        setLogged(false);
+      }
+    };
+
+    hydrate();
+    const { data } = subscribeToAuthChanges(async (session) => {
+      if (!mounted) return;
+      if (!session) {
+        setLogged(false);
+        setReading(null);
+        setView('landing');
+        return;
+      }
+      const profile = await getCurrentUserProfile();
+      if (!mounted) return;
+      if (profile) {
+        setUser(profile);
+        setInst(profile.institutionId || 'UNICAL');
+        setLogged(true);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  const openAuth = (mode: 'login' | 'register' = 'login', message?: string) => setAuth({ isOpen: true, mode, message });
+  const requireAuth = (message: string) => {
+    if (logged) return true;
+    openAuth('register', message);
+    return false;
+  };
+  const nav = (v: Exclude<View, 'landing'>) => {
+    setView(v);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const login = (profile: UserProfile) => {
+    setUser(profile);
+    setInst(profile.institutionId || 'UNICAL');
+    setLogged(true);
+    setView('landing');
+  };
+
+  const logout = async () => {
+    if (isSupabaseConfigured) {
+      try { await signOut(); } catch { /* auth listener will remain authoritative */ }
+    }
+    setLogged(false);
+    setView('landing');
+    setReading(null);
+  };
+
+  const read = (m: StudyMaterial) => {
+    if (requireAuth('Create a free student account or sign in to read this resource.')) setReading(m);
+  };
+  const unlock = (m: StudyMaterial) => {
+    if (!requireAuth('Create a free student account or sign in to access this study material.')) return;
+    setUser(p => ({ ...p, unlockedMaterialIds: [...new Set([...p.unlockedMaterialIds, m.id])], viewHistory: [...new Set([...(p.viewHistory || []), m.id])] }));
+    setReading(m);
+  };
+  const offline = (id: string) => {
+    if (!requireAuth('Create a free student account or sign in to save study packs offline.')) return;
+    setUser(p => ({ ...p, savedOfflineMaterialIds: p.savedOfflineMaterialIds.includes(id) ? p.savedOfflineMaterialIds.filter(x => x !== id) : [...p.savedOfflineMaterialIds, id] }));
+  };
+  const feedRead = (title: string) => {
+    if (!requireAuth('Create a free student account or sign in to access this study material.')) return;
+    const m = mats.find(x => x.title.toLowerCase().includes(title.toLowerCase()) || title.toLowerCase().includes(x.courseCode.toLowerCase()));
+    if (m) setReading(m);
+  };
+
+  return (
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+      <Navbar currentView={view} setCurrentView={setView} user={logged ? user : null} isLoggedIn={logged} selectedInstitution={inst} setSelectedInstitution={setInst} onOpenAuth={openAuth} onLogout={logout} />
+      {view === 'landing' && <LandingPage isLoggedIn={logged} onNavigateToTab={nav} onOpenAuth={openAuth} />}
+      {view === 'feed' && <main className="flex-1"><CampusFeedPage posts={FEED_POSTS} currentInstitution={inst} userProfile={user} onSelectMaterialToRead={feedRead} onOpenAuth={openAuth} isLoggedIn={logged} /></main>}
+      {view === 'my_school' && <main className="flex-1"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"><MySchoolPage user={user} materials={mats} selectedInstitution={inst} setSelectedInstitution={setInst} onUnlockMaterial={unlock} onReadMaterial={read} onToggleOffline={offline} onOpenCBT={read} /></div></main>}
+      {view === 'services' && <main className="flex-1"><MyServicesPage user={user} /></main>}
+      {view === 'profile' && <main className="flex-1"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8"><ProfilePage user={user} onUpdateUser={f => { setUser(p => ({ ...p, ...f })); if (f.institutionId) setInst(f.institutionId); }} onLogout={logout} /></div></main>}
+      <Footer onNavigateToTab={nav} onOpenAuth={openAuth} />
+      <AuthModal isOpen={auth.isOpen} onClose={() => setAuth(p => ({ ...p, isOpen: false }))} onLoginSuccess={login} initialMode={auth.mode} redirectMessage={auth.message} onContinueAsGuest={() => openAuth('register', 'Please create an account or sign in to access protected resources.')} />
+      {reading && logged && <MaterialReaderModal material={reading} user={user} isSavedOffline={user.savedOfflineMaterialIds.includes(reading.id)} onToggleOffline={offline} onClose={() => setReading(null)} onUnlock={() => unlock(reading)} />}
+    </div>
+  );
+}
