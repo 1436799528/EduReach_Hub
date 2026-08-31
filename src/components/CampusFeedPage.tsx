@@ -22,6 +22,8 @@ import {
   Check,
   Award
 } from 'lucide-react';
+import { togglePostLike, addPostComment } from '../lib/feedInteractions';
+import { createCampusUpload, resolveInstitutionUuid, resolveCourseUuid } from '../lib/productionActions';
 
 interface CampusFeedPageProps {
   posts: FeedPost[];
@@ -61,7 +63,10 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
   const [newDepartment, setNewDepartment] = useState(userProfile?.department || 'Computer Science');
   const [newLevel, setNewLevel] = useState(userProfile?.level || '300L');
   const [newPrice, setNewPrice] = useState<number>(300);
-  const [newFileName, setNewFileName] = useState('My_Course_Summary_2025.pdf');
+  const [newFileName, setNewFileName] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  const [submitPostError, setSubmitPostError] = useState('');
 
   // Comment input state per post
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
@@ -74,106 +79,147 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
   const [regulatedPriceDrafts, setRegulatedPriceDrafts] = useState<Record<string, number>>({});
 
   // Handle Like
-  const handleLikePost = (postId: string) => {
+  const handleLikePost = async (postId: string) => {
     if (!isLoggedIn && onOpenAuth) {
       onOpenAuth();
       return;
     }
-    const currentUserId = userProfile?.id || 'usr_guest_demo';
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-        const alreadyLiked = post.likedByUserIds.includes(currentUserId);
-        const newLikes = alreadyLiked ? post.likesCount - 1 : post.likesCount + 1;
-        const newLikedUsers = alreadyLiked
-          ? post.likedByUserIds.filter((id) => id !== currentUserId)
-          : [...post.likedByUserIds, currentUserId];
-        return {
-          ...post,
-          likesCount: Math.max(0, newLikes),
-          likedByUserIds: newLikedUsers,
-        };
-      })
-    );
+
+    if (!userProfile?.id) return;
+
+    try {
+      const result = await togglePostLike(postId, userProfile.id);
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) return post;
+          const alreadyLiked = post.likedByUserIds.includes(userProfile.id);
+          const shouldBeLiked = result.liked;
+          const nextLikedUsers = shouldBeLiked
+            ? (alreadyLiked ? post.likedByUserIds : [...post.likedByUserIds, userProfile.id])
+            : post.likedByUserIds.filter((id) => id !== userProfile.id);
+          const nextCount = Math.max(0, post.likesCount + (shouldBeLiked === alreadyLiked ? 0 : shouldBeLiked ? 1 : -1));
+          return { ...post, likesCount: nextCount, likedByUserIds: nextLikedUsers };
+        })
+      );
+    } catch (error) {
+      console.error('Unable to update post like', error);
+    }
   };
 
   // Handle Add Comment
-  const handleAddComment = (postId: string) => {
+  const handleAddComment = async (postId: string) => {
     if (!isLoggedIn && onOpenAuth) {
       onOpenAuth();
       return;
     }
+    if (!userProfile?.id) return;
+
     const text = commentInputs[postId]?.trim();
     if (!text) return;
 
-    const newComment = {
-      id: `c_${Date.now()}`,
-      authorId: userProfile?.id || 'usr_guest_demo',
-      authorName: userProfile?.name || 'Verified Scholar',
-      authorInstitution: userProfile?.institutionId || 'UNICAL',
-      text,
-      timestamp: 'Just now',
-    };
+    try {
+      const savedComment = await addPostComment(postId, userProfile.id, text);
+      const newComment = {
+        id: savedComment.id,
+        authorId: savedComment.author_id,
+        authorName: userProfile.name || 'Verified Scholar',
+        authorInstitution: userProfile.institutionId || 'UNICAL',
+        text: savedComment.body,
+        timestamp: 'Just now',
+      };
 
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-        return {
-          ...post,
-          comments: [...post.comments, newComment],
-        };
-      })
-    );
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) return post;
+          return {
+            ...post,
+            comments: [...post.comments, newComment],
+          };
+        })
+      );
 
-    setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
-    setExpandedComments((prev) => ({ ...prev, [postId]: true }));
+      setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+      setExpandedComments((prev) => ({ ...prev, [postId]: true }));
+    } catch (error) {
+      console.error('Unable to add comment', error);
+    }
   };
 
   // Handle New Post Submit
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newContent.trim()) return;
+    if (!isLoggedIn && onOpenAuth) {
+      onOpenAuth();
+      return;
+    }
+    if (!userProfile?.id || !newTitle.trim() || !newContent.trim() || isSubmittingPost) return;
 
-    // Moderator automatic fair calculation: capped/reviewed
-    const fairRegulatedPrice = Math.min(newPrice, Math.max(0, Math.round(newPrice * 0.85)));
+    setSubmitPostError('');
+    setIsSubmittingPost(true);
 
-    const created: FeedPost = {
-      id: `POST-${Date.now()}`,
-      authorId: userProfile?.id || 'usr_current_user',
-      authorName: userProfile?.name || 'Academic Scholar',
-      authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      authorBadge: 'Student Contributor',
-      authorInstitution: newInstitution,
-      authorDepartment: newDepartment,
-      authorLevel: newLevel,
-      title: newTitle,
-      content: newContent,
-      courseCode: newCourseCode.trim() || 'GEN 101',
-      category: newCategory,
-      attachment: {
-        name: newFileName,
-        fileSize: '2.4 MB',
-        fileType: 'PDF Document',
-        pagesCount: 22,
-        previewSnippet: 'Uploaded student resource verified with standard university course curriculum.',
-      },
-      priceRequested: Number(newPrice) || 0,
-      moderatedPrice: fairRegulatedPrice,
-      moderationStatus: 'APPROVED',
-      verifiedByModerator: 'Senate Resource Moderator Desk',
-      moderatorNotes: `Reviewed and approved under Student Fair Royalty Policy. Regulated at ₦${fairRegulatedPrice}.`,
-      likesCount: 1,
-      likedByUserIds: [userProfile?.id || 'usr_current_user'],
-      comments: [],
-      viewsCount: 1,
-      createdAt: 'Just now',
-    };
+    try {
+      const [institutionId, courseId] = await Promise.all([
+        resolveInstitutionUuid(newInstitution),
+        resolveCourseUuid(newCourseCode),
+      ]);
 
-    setPosts([created, ...posts]);
-    setIsCreateModalOpen(false);
-    setNewTitle('');
-    setNewContent('');
-    setNewCourseCode('');
+      const createdRow = await createCampusUpload(userProfile.id, {
+        institutionId,
+        departmentId: null,
+        courseId,
+        title: newTitle,
+        content: newContent,
+        category: newCategory,
+        price: Number(newPrice) || 0,
+        file: selectedFile,
+      });
+
+      const created: FeedPost = {
+        id: createdRow.id,
+        authorId: userProfile.id,
+        authorName: userProfile.name || 'Academic Scholar',
+        authorAvatar: undefined,
+        authorBadge: 'Student Contributor',
+        authorInstitution: newInstitution,
+        authorDepartment: newDepartment,
+        authorLevel: newLevel,
+        title: newTitle.trim(),
+        content: newContent.trim(),
+        courseCode: newCourseCode.trim() || undefined,
+        category: newCategory,
+        attachment: selectedFile
+          ? {
+              name: selectedFile.name,
+              fileSize: `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`,
+              fileType: selectedFile.type || 'Uploaded File',
+              previewSnippet: 'Submitted and awaiting moderator review.',
+            }
+          : undefined,
+        priceRequested: Number(newPrice) || 0,
+        moderatedPrice: 0,
+        moderationStatus: 'PENDING_REVIEW',
+        moderatorNotes: 'Submitted and awaiting moderator review.',
+        likesCount: 0,
+        likedByUserIds: [],
+        comments: [],
+        viewsCount: 0,
+        createdAt: 'Just now',
+      };
+
+      setPosts((prev) => [created, ...prev]);
+      setIsCreateModalOpen(false);
+      setNewTitle('');
+      setNewContent('');
+      setNewCourseCode('');
+      setSelectedFile(null);
+      setNewFileName('');
+      setSubmitPostError('');
+    } catch (error) {
+      console.error('Unable to publish campus post', error);
+      setSubmitPostError('We could not publish your submission. Check your institution/course and try again.');
+    } finally {
+      setIsSubmittingPost(false);
+    }
   };
 
   // Moderator regulate action
@@ -471,7 +517,7 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
 
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold text-[11px] self-start sm:self-auto shrink-0">
                       <CheckCircle2 className="w-3 h-3" />
-                      Senate Approved
+                      {post.moderationStatus === 'PENDING_REVIEW' ? 'Pending Review' : post.moderationStatus === 'REVISED' ? 'Needs Revision' : 'Senate Approved'}
                     </span>
                   </div>
 
@@ -579,7 +625,7 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-base">Upload Study Resource</h3>
-                  <p className="text-xs text-slate-500">Share lecture notes & earn cash royalties</p>
+                  <p className="text-xs text-slate-500">Share lecture notes & submit for moderator review</p>
                 </div>
               </div>
               <button
@@ -699,18 +745,25 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
                 />
               </div>
 
-              {/* File Attachment Name & Cash Pricing */}
+              {/* File Attachment & Cash Pricing */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Attached File Name
+                    Upload File
                   </label>
                   <input
-                    type="text"
-                    value={newFileName}
-                    onChange={(e) => setNewFileName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setSelectedFile(file);
+                      setNewFileName(file?.name || '');
+                    }}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-50 file:px-2.5 file:py-1 file:text-[11px] file:font-semibold file:text-orange-700"
                   />
+                  {newFileName && (
+                    <p className="text-[11px] text-slate-500 mt-1 truncate" title={newFileName}>{newFileName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -733,9 +786,15 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-orange-600 shrink-0 mt-0.5" />
                 <p>
-                  <strong>Moderation Policy:</strong> All uploads are reviewed by verified departmental moderators. Moderators regulate the final price to prevent student exploitation while guaranteeing fair payouts to authors.
+                  <strong>Moderation Policy:</strong> All uploads are reviewed by verified departmental moderators before they become approved campus resources.
                 </p>
               </div>
+
+              {submitPostError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+                  {submitPostError}
+                </div>
+              )}
 
               {/* Modal Actions */}
               <div className="pt-2 flex items-center justify-end gap-2">
@@ -748,9 +807,10 @@ export const CampusFeedPage: React.FC<CampusFeedPageProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs shadow-md shadow-orange-600/20 transition-all"
+                  disabled={isSubmittingPost}
+                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-xs shadow-md shadow-orange-600/20 transition-all"
                 >
-                  Publish Resource
+                  {isSubmittingPost ? 'Submitting…' : 'Publish Resource'}
                 </button>
               </div>
             </form>
