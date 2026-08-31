@@ -27,6 +27,24 @@ export async function removeBookmark(userId: string, entityType: BookmarkEntity,
   if (error) throw error;
 }
 
+export async function isBookmarked(userId: string, entityType: BookmarkEntity, entityId: string) {
+  const { data, error } = await requireClient()
+    .from('edureach_bookmarks')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('entity_type', entityType)
+    .eq('entity_id', entityId)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+}
+
+export async function toggleBookmark(userId: string, entityType: BookmarkEntity, entityId: string) {
+  return (await isBookmarked(userId, entityType, entityId))
+    ? (await removeBookmark(userId, entityType, entityId), false)
+    : (await addBookmark(userId, entityType, entityId), true);
+}
+
 export async function listBookmarks(userId: string, entityType?: BookmarkEntity) {
   let query = requireClient()
     .from('edureach_bookmarks')
@@ -59,12 +77,21 @@ export async function markNotificationRead(userId: string, notificationId: strin
   if (error) throw error;
 }
 
+export async function markAllNotificationsRead(userId: string) {
+  const { error } = await requireClient()
+    .from('edureach_notifications')
+    .update({ is_read: true })
+    .eq('user_id', userId)
+    .eq('is_read', false);
+  if (error) throw error;
+}
+
 export async function logSearchQuery(userId: string, query: string, filters: Record<string, unknown> = {}) {
   const value = query.trim();
   if (!value) return;
   const { error } = await requireClient().from('edureach_search_queries').insert({
     user_id: userId,
-    query: value,
+    query: value.slice(0, 200),
     filters,
   });
   if (error) throw error;
