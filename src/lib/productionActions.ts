@@ -12,6 +12,32 @@ export interface ServiceRequestInput {
   attachment?: File | null;
 }
 
+export async function resolveInstitutionUuid(acronym: string | null | undefined) {
+  if (!acronym) return null;
+  const client = requireClient();
+  const { data, error } = await client
+    .from('institutions')
+    .select('id')
+    .eq('acronym', acronym)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
+export async function resolveCourseUuid(courseCode: string | null | undefined) {
+  if (!courseCode?.trim()) return null;
+  const client = requireClient();
+  const { data, error } = await client
+    .from('courses')
+    .select('id')
+    .eq('code', courseCode.trim().toUpperCase())
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
+}
+
 export const uploadPrivateFile = async (
   bucket: 'resource-files' | 'campus-uploads',
   ownerId: string,
@@ -31,13 +57,6 @@ export const uploadPrivateFile = async (
 
 export const createServiceRequest = async (userId: string, input: ServiceRequestInput) => {
   const client = requireClient();
-  let attachmentPath: string | null = null;
-
-  if (input.attachment) {
-    const upload = await uploadPrivateFile('campus-uploads', userId, input.attachment);
-    attachmentPath = upload.path;
-  }
-
   const { data, error } = await client
     .from('service_requests')
     .insert({
@@ -46,7 +65,6 @@ export const createServiceRequest = async (userId: string, input: ServiceRequest
       institution_id: input.institutionId,
       status: 'submitted',
       form_data: input.formData,
-      attachment_path: attachmentPath,
     })
     .select('*')
     .single();
@@ -103,7 +121,7 @@ export const createCampusUpload = async (
       attachment_path: attachmentPath,
       attachment_name: attachmentName,
       moderation_status: 'PENDING_REVIEW',
-      moderated_price: Number(input.price ?? 0),
+      moderated_price: 0,
     })
     .select('*')
     .single();
