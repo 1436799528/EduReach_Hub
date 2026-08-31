@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_courses_programme_level_active ON public.courses (programme_id, level, is_active, semester, code);
+CREATE INDEX IF NOT EXISTS idx_resources_course_status_created ON public.resources (course_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_past_questions_course_status_year ON public.past_questions (course_id, status, year DESC);
+CREATE INDEX IF NOT EXISTS idx_campus_posts_institution_status_created ON public.campus_posts (institution_id, moderation_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_campus_posts_author_created ON public.campus_posts (author_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_campus_post_comments_post_created ON public.campus_post_comments (post_id, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_campus_post_likes_user ON public.campus_post_likes (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_requests_user_created ON public.service_requests (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_requests_status_created ON public.service_requests (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_service_catalog_active_title ON public.service_catalog (active, title);
