@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StudyMaterial, UserProfile, InstitutionId } from './types';
+import { StudyMaterial, UserProfile, InstitutionId, FeedPost } from './types';
 import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
-import { FEED_POSTS, INSTITUTIONS } from './data/mockData';
+import { FEED_POSTS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CampusFeedPage } from './components/CampusFeedPage';
@@ -13,7 +13,7 @@ import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
 import { isSupabaseConfigured } from './lib/supabase';
-import { updateMyProfile } from './lib/dataService';
+import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, updateMyProfile } from './lib/dataService';
 
 type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
 
@@ -21,10 +21,12 @@ export default function App() {
   const [user, setUser] = useState<UserProfile>(getStoredUserProfile);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [view, setView] = useState<View>('landing');
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [materials, setMaterials] = useState<StudyMaterial[]>(getStoredMaterials);
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>(FEED_POSTS);
   const [readerMaterial, setReaderMaterial] = useState<StudyMaterial | null>(null);
   const [, setSearchQuery] = useState('');
 
@@ -39,6 +41,31 @@ export default function App() {
     setSelectedInstitution(initialInstitution);
   }, [initialInstitution]);
 
+  const loadLiveStudentData = async (profile: UserProfile) => {
+    if (!isSupabaseConfigured || !profile.id) return;
+    setDataLoading(true);
+    try {
+      const [dbProfile, liveFeed] = await Promise.all([
+        getMyProfile(profile.id),
+        getCampusFeedPosts().catch((error) => {
+          console.error('Campus feed load failed', error);
+          return [] as FeedPost[];
+        }),
+      ]);
+
+      if (dbProfile) {
+        const liveMaterials = await getMyAcademicMaterials(dbProfile).catch((error) => {
+          console.error('Academic resource load failed', error);
+          return [] as StudyMaterial[];
+        });
+        if (liveMaterials.length) setMaterials(liveMaterials);
+      }
+      if (liveFeed.length) setFeedPosts(liveFeed);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isSupabaseConfigured) {
       setAuthLoading(false);
@@ -51,7 +78,10 @@ export default function App() {
         const profile = await getCurrentUserProfile();
         if (!mounted) return;
         setIsAuthenticated(Boolean(profile));
-        if (profile) setUser(profile);
+        if (profile) {
+          setUser(profile);
+          await loadLiveStudentData(profile);
+        }
       } catch (error) {
         console.error('Unable to restore Supabase session', error);
         if (mounted) setIsAuthenticated(false);
@@ -72,7 +102,10 @@ export default function App() {
       const profile = await getCurrentUserProfile();
       if (!mounted) return;
       setIsAuthenticated(Boolean(profile));
-      if (profile) setUser(profile);
+      if (profile) {
+        setUser(profile);
+        await loadLiveStudentData(profile);
+      }
       setAuthLoading(false);
     });
 
@@ -97,28 +130,28 @@ export default function App() {
     }
   };
 
-  const handleLogin = (profile: UserProfile) => {
+  const handleLogin = async (profile: UserProfile) => {
     setUser(profile);
     setIsAuthenticated(true);
     setShowAuth(false);
     setView('feed');
+    await loadLiveStudentData(profile);
   };
 
   const handleProfileUpdate = async (updates: Partial<UserProfile>) => {
     if (!user.id || !isSupabaseConfigured) return;
-
     const dbUpdates: Parameters<typeof updateMyProfile>[1] = {};
     if (updates.name !== undefined) dbUpdates.full_name = updates.name;
     if (updates.department !== undefined) dbUpdates.department = updates.department;
     if (updates.faculty !== undefined) dbUpdates.faculty = updates.faculty;
     if (updates.level !== undefined) dbUpdates.level = updates.level;
-
     try {
       if (Object.keys(dbUpdates).length) {
         await updateMyProfile(user.id, dbUpdates);
         const refreshed = await getCurrentUserProfile();
         if (refreshed) {
           setUser(refreshed);
+          await loadLiveStudentData(refreshed);
           return;
         }
       }
@@ -173,7 +206,16 @@ export default function App() {
             onNavigate={(target) => requireAuth(target)}
           />
         )}
-        {view === 'feed' && isAuthenticated && <CampusFeedPage user={user} posts={FEED_POSTS} />}
+        {view === 'feed' && isAuthenticated && (
+          <CampusFeedPage
+            posts={feedPosts}
+            currentInstitution={selectedInstitution}
+            userProfile={{ id: user.id, name: user.name, department: user.department, level: user.level, institutionId: user.institutionId }}
+            onOpenAuth={() => { setAuthMode('login'); setShowAuth(true); }}
+            isLoggedIn={isAuthenticated}
+            onSelectMaterialToRead={() => setView('my_school')}
+          />
+        )}
         {view === 'my_school' && isAuthenticated && (
           <MySchoolPage
             user={user}
@@ -206,8 +248,17 @@ export default function App() {
       {readerMaterial && (
         <MaterialReaderModal
           material={readerMaterial}
+          user={user}
+          isSavedOffline={user.savedOfflineMaterialIds.includes(readerMaterial.id)}
+          onToggleOffline={handleToggleOffline}
           onClose={() => setReaderMaterial(null)}
         />
+      )}
+
+      {dataLoading && isAuthenticated && (
+        <div className="fixed bottom-4 right-4 z-50 rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-500 shadow-sm">
+          Syncing your school data…
+        </div>
       )}
     </div>
   );
