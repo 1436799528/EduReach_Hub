@@ -58,9 +58,11 @@ export default function App() {
           console.error('Academic resource load failed', error);
           return [] as StudyMaterial[];
         });
-        if (liveMaterials.length) setMaterials(liveMaterials);
+        // Live Supabase data is authoritative once the student session exists.
+        setMaterials(liveMaterials);
       }
-      if (liveFeed.length) setFeedPosts(liveFeed);
+      // An empty approved feed is a valid production state; do not fall back to mock posts.
+      setFeedPosts(liveFeed);
     } finally {
       setDataLoading(false);
     }
@@ -127,6 +129,8 @@ export default function App() {
     } finally {
       setIsAuthenticated(false);
       setView('landing');
+      setMaterials([]);
+      setFeedPosts([]);
     }
   };
 
