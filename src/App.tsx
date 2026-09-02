@@ -15,7 +15,7 @@ import { Footer } from './components/Footer';
 import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
 import { isSupabaseConfigured } from './lib/supabase';
 import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, updateMyProfile } from './lib/dataService';
-import { listBookmarks, toggleBookmark } from './lib/userFeatures';
+import { listBookmarks, toggleBookmark, type BookmarkEntity } from './lib/userFeatures';
 
 type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
 
@@ -63,12 +63,15 @@ export default function App() {
         setMaterials(liveMaterials);
 
         try {
-          const bookmarks = await listBookmarks(profile.id, 'resource');
-          const materialIds = new Set(liveMaterials.map((material) => material.id));
-          const savedMaterialIds = bookmarks
+          const [resourceBookmarks, pastQuestionBookmarks] = await Promise.all([
+            listBookmarks(profile.id, 'resource'),
+            listBookmarks(profile.id, 'past_question'),
+          ]);
+          const liveMaterialIds = new Set(liveMaterials.map((material) => material.id));
+          const savedMaterialIds = [...resourceBookmarks, ...pastQuestionBookmarks]
             .map((bookmark) => bookmark.entity_id)
-            .filter((id) => materialIds.has(id));
-          setUser((current) => ({ ...current, savedOfflineMaterialIds: savedMaterialIds }));
+            .filter((id) => liveMaterialIds.has(id));
+          setUser((current) => ({ ...current, savedOfflineMaterialIds: [...new Set(savedMaterialIds)] }));
         } catch (error) {
           console.error('Bookmark load failed', error);
         }
@@ -142,6 +145,7 @@ export default function App() {
       setView('landing');
       setMaterials([]);
       setFeedPosts([]);
+      setUser((current) => ({ ...current, savedOfflineMaterialIds: [] }));
     }
   };
 
@@ -177,7 +181,10 @@ export default function App() {
   };
 
   const handleToggleOffline = async (materialId: string) => {
+    const material = materials.find((item) => item.id === materialId) ?? readerMaterial;
+    const entityType: BookmarkEntity = material?.materialType === 'past_question' ? 'past_question' : 'resource';
     const wasSaved = user.savedOfflineMaterialIds.includes(materialId);
+
     setUser((current) => {
       const saved = current.savedOfflineMaterialIds ?? [];
       const nextSaved = saved.includes(materialId)
@@ -188,7 +195,7 @@ export default function App() {
 
     if (!isSupabaseConfigured || !user.id) return;
     try {
-      const isSaved = await toggleBookmark(user.id, 'resource', materialId);
+      const isSaved = await toggleBookmark(user.id, entityType, materialId);
       if (isSaved !== !wasSaved) {
         setUser((current) => {
           const saved = current.savedOfflineMaterialIds ?? [];
