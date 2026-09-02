@@ -11,44 +11,55 @@ import {
   Bell,
   Check
 } from 'lucide-react';
-import { UserProfile, InstitutionId } from '../types';
-import { INSTITUTIONS } from '../data/mockData';
+import { UserProfile } from '../types';
 import { listMyNotifications, markNotificationRead } from '../lib/userFeatures';
 
 interface NavbarProps {
   currentView: 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
-  setCurrentView: (view: 'landing' | 'feed' | 'my_school' | 'services' | 'profile') => void;
+  onNavigate: (view: 'landing' | 'feed' | 'my_school' | 'services' | 'profile') => void;
   user: UserProfile | null;
-  isLoggedIn: boolean;
-  selectedInstitution: InstitutionId;
-  setSelectedInstitution: (id: InstitutionId) => void;
-  onOpenAuth: (mode?: 'login' | 'register') => void;
   onLogout: () => void;
+  onSearch: (query: string) => void;
+}
+
+interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  is_read: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
-  setCurrentView,
+  onNavigate,
   user,
-  isLoggedIn,
-  onOpenAuth,
-  onLogout
+  onLogout,
+  onSearch
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  const isLoggedIn = Boolean(user?.id);
 
   useEffect(() => {
     let mounted = true;
-    if (!isLoggedIn || !user?.id) {
+    if (!user?.id) {
       setNotifications([]);
       return;
     }
+
     listMyNotifications(user.id)
-      .then((items) => { if (mounted) setNotifications(items); })
+      .then((items) => {
+        if (mounted) setNotifications(items as NotificationItem[]);
+      })
       .catch((error) => console.error('Notification load failed', error));
-    return () => { mounted = false; };
-  }, [isLoggedIn, user?.id]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
 
   const unreadCount = notifications.filter((notification) => !notification.is_read).length;
 
@@ -64,24 +75,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const handleNavigation = (id: 'landing' | 'feed' | 'my_school' | 'services' | 'profile') => {
+    if (!isLoggedIn && id !== 'landing') {
+      onNavigate('landing');
+      setMobileMenuOpen(false);
+      return;
+    }
+    onNavigate(id);
+    setMobileMenuOpen(false);
+    setNotificationOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onSearch(event.target.value);
+  };
+
   const navItems = [
     { id: isLoggedIn ? 'feed' : 'landing', label: isLoggedIn ? 'Campus Feed' : 'Home', icon: isLoggedIn ? GraduationCap : Home },
     { id: 'my_school', label: 'My School', icon: BookOpen },
     { id: 'services', label: 'Campus Services', icon: Briefcase },
     { id: 'profile', label: 'Profile', icon: User }
-  ];
-
-  const handleNavigation = (id: string) => {
-    if (!isLoggedIn && id !== 'landing') {
-      onOpenAuth('register');
-      setMobileMenuOpen(false);
-      return;
-    }
-    setCurrentView(id as 'landing' | 'feed' | 'my_school' | 'services' | 'profile');
-    setMobileMenuOpen(false);
-    setNotificationOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  ] as const;
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
@@ -159,18 +174,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {isLoggedIn && user ? (
               <button onClick={() => handleNavigation('profile')} className="flex items-center gap-2 p-1.5 pl-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 transition-colors cursor-pointer">
-                <img src={(user as UserProfile & { avatar?: string }).avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250'} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-orange-500" referrerPolicy="no-referrer" />
+                <img src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250'} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-orange-500" referrerPolicy="no-referrer" />
                 <div className="text-left hidden lg:block pr-1">
                   <p className="text-[11px] font-bold text-slate-800 leading-tight truncate max-w-[100px]">{user.name.split(' ')[0]}</p>
                   <span className="text-[9px] text-orange-600 font-bold block">{user.institutionId}</span>
                 </div>
               </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button onClick={() => onOpenAuth('login')} className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">Sign In</button>
-                <button onClick={() => onOpenAuth('register')} className="px-3.5 py-1.5 text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer">Register Free</button>
-              </div>
-            )}
+            ) : null}
 
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Toggle Menu">
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -192,7 +202,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <div className="pt-3 border-t border-slate-100">
             <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs flex items-center justify-center gap-2"><MessageSquare className="w-4 h-4 text-emerald-600" /><span>Moderator Support Desk</span></div>
-            {!isLoggedIn && <div className="grid grid-cols-2 gap-2 pt-2"><button onClick={() => { onOpenAuth('login'); setMobileMenuOpen(false); }} className="py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-bold text-center">Sign In</button><button onClick={() => { onOpenAuth('register'); setMobileMenuOpen(false); }} className="py-2.5 rounded-xl bg-orange-600 text-white text-xs font-bold text-center shadow-xs">Register Free</button></div>}
             {isLoggedIn && <button onClick={onLogout} className="w-full mt-2 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold">Sign Out</button>}
           </div>
         </div>
