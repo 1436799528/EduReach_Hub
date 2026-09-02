@@ -4,13 +4,13 @@ import { supabase } from './supabase';
 const requireClient = () => { if (!supabase) throw new Error('Supabase is not configured.'); return supabase; };
 
 const serviceKeyToType = (key: string): ServiceType => {
-  const allowed: ServiceType[] = [
+  const allowed: string[] = [
     'ASSIGNMENT_ASSISTANCE','PROJECT_GUIDANCE','RESEARCH_SUPPORT','ACADEMIC_TUTORIALS',
     'RESULT_CHECKER_PIN','NELFUND_LOAN_ASSIST','ACADEMIC_TRANSCRIPT','REMITA_FEES_CLEARANCE',
     'DEFERMENT_LETTER','STATEMENT_OF_RESULT','POST_UTME_SCREENING_PIN',
-    'JAMB','NECO','WAEC','SCHOLARSHIP',
+    'JAMB','NECO','WAEC','SCHOLARSHIP','NELFUND',
   ];
-  return allowed.includes(key as ServiceType) ? key as ServiceType : 'PROJECT_GUIDANCE';
+  return (allowed.includes(key) ? key : 'PROJECT_GUIDANCE') as unknown as ServiceType;
 };
 
 export interface ServiceCatalogRow {
