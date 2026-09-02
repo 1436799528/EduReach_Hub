@@ -15,6 +15,7 @@ import { Footer } from './components/Footer';
 import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
 import { isSupabaseConfigured } from './lib/supabase';
 import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, updateMyProfile } from './lib/dataService';
+import { listBookmarks, toggleBookmark } from './lib/userFeatures';
 
 type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
 
@@ -60,6 +61,17 @@ export default function App() {
           return [] as StudyMaterial[];
         });
         setMaterials(liveMaterials);
+
+        try {
+          const bookmarks = await listBookmarks(profile.id, 'resource');
+          const materialIds = new Set(liveMaterials.map((material) => material.id));
+          const savedMaterialIds = bookmarks
+            .map((bookmark) => bookmark.entity_id)
+            .filter((id) => materialIds.has(id));
+          setUser((current) => ({ ...current, savedOfflineMaterialIds: savedMaterialIds }));
+        } catch (error) {
+          console.error('Bookmark load failed', error);
+        }
       }
       setFeedPosts(liveFeed);
     } finally {
@@ -164,7 +176,8 @@ export default function App() {
     }
   };
 
-  const handleToggleOffline = (materialId: string) => {
+  const handleToggleOffline = async (materialId: string) => {
+    const wasSaved = user.savedOfflineMaterialIds.includes(materialId);
     setUser((current) => {
       const saved = current.savedOfflineMaterialIds ?? [];
       const nextSaved = saved.includes(materialId)
@@ -172,6 +185,28 @@ export default function App() {
         : [...saved, materialId];
       return { ...current, savedOfflineMaterialIds: nextSaved };
     });
+
+    if (!isSupabaseConfigured || !user.id) return;
+    try {
+      const isSaved = await toggleBookmark(user.id, 'resource', materialId);
+      if (isSaved !== !wasSaved) {
+        setUser((current) => {
+          const saved = current.savedOfflineMaterialIds ?? [];
+          if (isSaved && !saved.includes(materialId)) return { ...current, savedOfflineMaterialIds: [...saved, materialId] };
+          if (!isSaved && saved.includes(materialId)) return { ...current, savedOfflineMaterialIds: saved.filter((id) => id !== materialId) };
+          return current;
+        });
+      }
+    } catch (error) {
+      console.error('Bookmark update failed', error);
+      setUser((current) => {
+        const saved = current.savedOfflineMaterialIds ?? [];
+        const restored = wasSaved
+          ? (saved.includes(materialId) ? saved : [...saved, materialId])
+          : saved.filter((id) => id !== materialId);
+        return { ...current, savedOfflineMaterialIds: restored };
+      });
+    }
   };
 
   const requireAuth = (nextView: View = 'feed') => {
