@@ -95,7 +95,7 @@ export interface StudyMaterial {
   semester: '1st Semester' | '2nd Semester' | 'All Year';
   materialType: MaterialType;
   academicSession: string;
-  unlockPrice: number; // in NGN (0 = free)
+  unlockPrice: number;
   uploader: {
     id: string;
     name: string;
@@ -153,7 +153,11 @@ export type ServiceType =
   | 'REMITA_FEES_CLEARANCE'
   | 'DEFERMENT_LETTER'
   | 'STATEMENT_OF_RESULT'
-  | 'POST_UTME_SCREENING_PIN';
+  | 'POST_UTME_SCREENING_PIN'
+  | 'JAMB'
+  | 'NECO'
+  | 'WAEC'
+  | 'SCHOLARSHIP';
 
 export interface ServiceItem {
   id: ServiceType;
@@ -161,7 +165,7 @@ export interface ServiceItem {
   shortDesc: string;
   detailedDesc: string;
   imageUrl?: string;
-  baseFee: number; // in NGN
+  baseFee: number;
   processingTime: string;
   deliveryMethod: 'Instant WhatsApp & SMS' | 'Physical Submission & Dispatch' | 'Official Registry Stamping';
   popularFor: InstitutionId[];
@@ -204,8 +208,8 @@ export interface FeedPost {
     pagesCount?: number;
     previewSnippet?: string;
   };
-  priceRequested: number; // Student proposed price (₦)
-  moderatedPrice: number; // Price approved/regulated by moderators (₦, 0 = Free)
+  priceRequested: number;
+  moderatedPrice: number;
   moderationStatus: 'PENDING_REVIEW' | 'APPROVED' | 'REVISED';
   moderatorNotes?: string;
   verifiedByModerator?: string;
@@ -252,7 +256,7 @@ export interface ServiceOrder {
   phoneNumber: string;
   email: string;
   notes?: string;
-  slaHoursTarget?: number; // e.g. 2 or 4 hours
+  slaHoursTarget?: number;
   slaDeadline?: string;
   slaStatus?: 'ON_TRACK' | 'URGENT' | 'BREACHED' | 'MET';
   assignedAgent?: {
@@ -291,14 +295,14 @@ export interface UserProfile {
   department: string;
   faculty: string;
   level: string;
-  walletBalance: number; // in NGN
+  walletBalance: number;
   isAPlusSubscriber: boolean;
   aPlusExpiresAt?: string;
-  enrolledCourses: string[]; // e.g. ['GST 111', 'CSC 301', 'CSC 303', 'MTH 201']
+  enrolledCourses: string[];
   unlockedMaterialIds: string[];
   savedOfflineMaterialIds: string[];
-  viewHistory: string[]; // material IDs viewed
-  downloadHistory: string[]; // material IDs downloaded/unlocked
+  viewHistory: string[];
+  downloadHistory: string[];
   contributorStats: {
     totalEarned: number;
     totalRoyaltyPaid: number;
@@ -308,7 +312,7 @@ export interface UserProfile {
   agentProfile?: {
     isAccredited: boolean;
     ninNumber: string;
-    cgpa: number; // e.g. 4.25
+    cgpa: number;
     guarantorName: string;
     guarantorDept: string;
     guarantorPhone: string;
@@ -316,10 +320,10 @@ export interface UserProfile {
     integrityAgreementSigned: boolean;
     integritySignedDate: string;
     tier: 'STANDARD_70_30' | 'TOP_AGENT_80_20';
-    escrowDepositHeld: number; // e.g. 10000
-    escrowTarget: number; // 10000
+    escrowDepositHeld: number;
+    escrowTarget: number;
     totalOrdersCompleted: number;
-    slaSuccessRate: number; // e.g. 98.4%
+    slaSuccessRate: number;
     totalCommissionEarned: number;
     availableCommissionBalance: number;
     penaltiesCount: number;
@@ -332,7 +336,7 @@ export interface RecommendationReason {
   type: 'ENROLLED_COURSE' | 'PEER_DOWNLOAD_AFFINITY' | 'RECENTLY_VERIFIED' | 'DEPARTMENT_TRENDING' | 'EQUIVALENCE_MATCH' | 'EXAM_PREP';
   badgeLabel: string;
   explanation: string;
-  confidenceScore: number; // 0 to 100
+  confidenceScore: number;
 }
 
 export interface RecommendedMaterialItem {
@@ -395,4 +399,3 @@ export interface AgentOnboardingApplication {
   agreedToIntegrityAgreement: boolean;
   agreedToEscrowBond: boolean;
 }
-
