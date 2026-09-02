@@ -7,6 +7,7 @@ import { LandingPage } from './components/LandingPage';
 import { CampusFeedPage } from './components/CampusFeedPage';
 import { MySchoolPage } from './components/MySchoolPage';
 import { MyServicesPage } from './components/MyServicesPage';
+import { ServiceRequestHistory } from './components/ServiceRequestHistory';
 import { ProfilePage } from './components/ProfilePage';
 import { MaterialReaderModal } from './components/MaterialReaderModal';
 import { AuthModal } from './components/AuthModal';
@@ -58,10 +59,8 @@ export default function App() {
           console.error('Academic resource load failed', error);
           return [] as StudyMaterial[];
         });
-        // Live Supabase data is authoritative once the student session exists.
         setMaterials(liveMaterials);
       }
-      // An empty approved feed is a valid production state; do not fall back to mock posts.
       setFeedPosts(liveFeed);
     } finally {
       setDataLoading(false);
@@ -232,7 +231,12 @@ export default function App() {
             onOpenCBT={setReaderMaterial}
           />
         )}
-        {view === 'services' && isAuthenticated && <MyServicesPage user={user} />}
+        {view === 'services' && isAuthenticated && (
+          <div className="space-y-6">
+            <MyServicesPage user={user} />
+            <ServiceRequestHistory user={user} />
+          </div>
+        )}
         {view === 'profile' && isAuthenticated && (
           <ProfilePage user={user} onUpdateUser={handleProfileUpdate} onLogout={handleLogout} />
         )}
