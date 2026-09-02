@@ -20,14 +20,22 @@ export async function getApprovedPastQuestions(courseIds: string[]) { if (!cours
 
 export function mapResourceToStudyMaterial(resource: ResourceRow, course?: SchoolCourseRow, institutionId: InstitutionId = 'ALL'): StudyMaterial { const level = course?.level && course.level >= 100 && course.level <= 500 ? `${course.level}L` as StudyMaterial['level'] : 'General'; return { id: resource.id, title: resource.title, courseCode: course?.code ?? 'RESOURCE', courseTitle: course?.title ?? 'Academic Resource', institutionId, department: '', faculty: '', level, semester: course?.semester === 1 ? '1st Semester' : course?.semester === 2 ? '2nd Semester' : 'All Year', materialType: toMaterialType(resource.resource_type), academicSession: '', unlockPrice: 0, uploader: { id: resource.uploaded_by ?? 'unknown', name: 'Verified Contributor', avatar: '', badge: 'Student Contributor', institution: institutionId, rating: 0 }, isVerified: resource.status === 'approved', verificationStatus: 'APPROVED', rating: 0, reviewCount: 0, unlockCount: 0, fileSizeKb: resource.file_size ? Math.round(resource.file_size / 1024) : 0, pageCount: 0, summary: resource.description ?? '', coreConcepts: [], fullTextContent: '', crossCampusEquivalents: [], createdAt: resource.created_at }; }
 
+export function mapPastQuestionToStudyMaterial(question: PastQuestionRow, course?: SchoolCourseRow, institutionId: InstitutionId = 'ALL'): StudyMaterial { const level = course?.level && course.level >= 100 && course.level <= 500 ? `${course.level}L` as StudyMaterial['level'] : 'General'; const semester = question.semester ?? course?.semester ?? null; const session = question.session || `${question.year}`; const examType = question.exam_type ? ` • ${question.exam_type}` : ''; return { id: question.id, title: question.title, courseCode: course?.code ?? 'PAST QUESTION', courseTitle: course?.title ?? 'Past Questions', institutionId, department: '', faculty: '', level, semester: semester === 1 ? '1st Semester' : semester === 2 ? '2nd Semester' : 'All Year', materialType: 'past_question', academicSession: session, unlockPrice: 0, uploader: { id: 'edureach-academic-archive', name: 'EduReach Academic Archive', avatar: '', badge: 'Verified Academic Archive', institution: institutionId, rating: 0 }, isVerified: question.status === 'approved', verificationStatus: 'APPROVED', rating: 0, reviewCount: 0, unlockCount: 0, fileSizeKb: 0, pageCount: 0, summary: `Approved ${question.year} ${question.title}${examType}.`, coreConcepts: [], fullTextContent: '', crossCampusEquivalents: [], createdAt: question.created_at }; }
+
 export async function getMyAcademicMaterials(profile: SupabaseProfileRow): Promise<StudyMaterial[]> {
   if (!profile.programme_id) return [];
   const courses = await getMyCourses(profile.programme_id, profile.level || '');
   if (!courses.length) return [];
-  const resources = await getApprovedResourcesForCourses(courses.map(course => course.id));
+  const courseIds = courses.map(course => course.id);
+  const [resources, pastQuestions] = await Promise.all([
+    getApprovedResourcesForCourses(courseIds),
+    getApprovedPastQuestions(courseIds),
+  ]);
   const courseById = new Map(courses.map(course => [course.id, course]));
   const institutionId = toInstitutionId(profile.institutions?.acronym || null);
-  return resources.map(resource => mapResourceToStudyMaterial(resource, resource.course_id ? courseById.get(resource.course_id) : undefined, institutionId));
+  const mappedResources = resources.map(resource => mapResourceToStudyMaterial(resource, resource.course_id ? courseById.get(resource.course_id) : undefined, institutionId));
+  const mappedPastQuestions = pastQuestions.map(question => mapPastQuestionToStudyMaterial(question, courseById.get(question.course_id), institutionId));
+  return [...mappedPastQuestions, ...mappedResources].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function getCampusFeedPosts(): Promise<FeedPost[]> {
