@@ -1,4 +1,5 @@
 import { supabase, isValidUuid } from './supabase';
+import type { AppNotification } from '../types';
 
 const requireClient = () => {
   if (!supabase) throw new Error('Supabase is not configured.');
@@ -62,23 +63,32 @@ export async function listBookmarks(userId: string, entityType?: BookmarkEntity)
   return data ?? [];
 }
 
-export async function listMyNotifications(userId: string, limit = 30) {
+export async function listMyNotifications(userId: string, limit = 30): Promise<AppNotification[]> {
   if (!isValidUuid(userId)) return [];
   const { data, error } = await requireClient()
     .from('edureach_notifications')
-    .select('*')
+    .select('id,user_id,title,body,type,related_task_id,related_deadline_id,read_at,created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return data ?? [];
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    message: row.body ?? '',
+    type: row.type as AppNotification['type'],
+    timestamp: row.created_at,
+    isRead: Boolean(row.read_at),
+  }));
 }
 
 export async function markNotificationRead(userId: string, notificationId: string) {
   if (!isValidUuid(userId) || !isValidUuid(notificationId)) return;
   const { error } = await requireClient()
     .from('edureach_notifications')
-    .update({ is_read: true })
+    .update({ read_at: new Date().toISOString() })
     .eq('id', notificationId)
     .eq('user_id', userId);
   if (error) throw error;
@@ -88,9 +98,9 @@ export async function markAllNotificationsRead(userId: string) {
   if (!isValidUuid(userId)) return;
   const { error } = await requireClient()
     .from('edureach_notifications')
-    .update({ is_read: true })
+    .update({ read_at: new Date().toISOString() })
     .eq('user_id', userId)
-    .eq('is_read', false);
+    .is('read_at', null);
   if (error) throw error;
 }
 
@@ -178,5 +188,3 @@ export async function listMaterialNotesFromBackend(userId: string, materialId?: 
     return [];
   }
 }
-
-
