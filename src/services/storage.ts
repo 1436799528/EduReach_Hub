@@ -15,6 +15,15 @@ const TRANSACTIONS_KEY = 'edureach_transactions_v3';
 const NOTIFICATIONS_KEY = 'edureach_notifications_v3';
 const DATA_SAVER_KEY = 'edureach_data_saver_active';
 
+const isUuid = (value: string): boolean => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+const createUuid = (): string => {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return '00000000-0000-4000-8000-' + Math.random().toString(16).slice(2).padEnd(12, '0').slice(0, 12);
+  }
+};
+
 /**
  * Local storage is retained only as a UI fallback/cache during the migration.
  * Authentication authority and persisted student identity now belong to Supabase.
@@ -75,10 +84,17 @@ export const saveUserProfile = (profile: UserProfile): void => {
 export const saveMaterialNoteToProfile = (note: MaterialNote): UserProfile => {
   const current = getStoredUserProfile();
   const existingNotes = current.materialNotes || [];
-  const noteIndex = existingNotes.findIndex((n) => n.id === note.id);
+  const existingIndex = existingNotes.findIndex((existing) => existing.id === note.id);
+
+  // The backend note table uses UUID primary keys. Migrate older local note IDs
+  // in place so subsequent create/update/delete operations use one stable ID.
+  if (!isUuid(note.id)) {
+    note.id = createUuid();
+  }
+
   let updatedNotes: MaterialNote[];
-  if (noteIndex >= 0) {
-    updatedNotes = existingNotes.map((n) => (n.id === note.id ? note : n));
+  if (existingIndex >= 0) {
+    updatedNotes = existingNotes.map((existing, index) => (index === existingIndex ? note : existing));
   } else {
     updatedNotes = [note, ...existingNotes];
   }
