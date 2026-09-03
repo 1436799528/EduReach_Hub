@@ -12,7 +12,6 @@ interface AuthModalProps {
   initialMode?: 'login' | 'register' | 'signup';
   mode?: 'login' | 'register' | 'signup';
   redirectMessage?: string;
-  onContinueAsGuest?: () => void;
   onSwitchMode?: (mode: 'login' | 'signup') => void;
 }
 
@@ -24,7 +23,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login',
   mode: modeProp,
   redirectMessage,
-  onContinueAsGuest,
   onSwitchMode,
 }) => {
   const getResolvedMode = (m?: string): 'login' | 'register' => {
@@ -69,9 +67,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setMode(nextMode);
     resetError();
     setConfirmationSent(false);
-    if (onSwitchMode) {
-      onSwitchMode(nextMode === 'register' ? 'signup' : 'login');
-    }
+    onSwitchMode?.(nextMode === 'register' ? 'signup' : 'login');
   };
 
   const resetError = () => { if (error) setError(''); };
@@ -176,33 +172,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
           ) : (
             <form onSubmit={handleRegisterSubmit} className="space-y-3">
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Full Name</label><div className="relative"><input type="text" required autoComplete="name" placeholder="e.g. Chukwuebuka Obi" value={name} onChange={e => { setName(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 pl-9 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /></div></div>
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Student Email</label><input type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Full Name</label><div className="relative"><input type="text" required autoComplete="name" placeholder="e.g. Chukwuebuka Obi" value={name} onChange={e => { setName(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 pl-9 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /></div></div>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Student Email</label><input type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2"><label className="block text-[11px] font-bold text-slate-700 mb-1">University Campus</label><div className="relative"><select value={institutionId} onChange={e => setInstitutionId(e.target.value as InstitutionId)} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 pl-9 text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none cursor-pointer">{INSTITUTIONS.filter(inst => inst.id !== 'ALL').map(inst => <option key={inst.id} value={inst.id}>{inst.shortName} - {inst.state}</option>)}</select><School className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" /></div></div>
                 <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Level</label><select value={level} onChange={e => setLevel(e.target.value)} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none cursor-pointer"><option>100L</option><option>200L</option><option>300L</option><option>400L</option><option>500L</option><option>PGD/MSc</option></select></div>
               </div>
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Department</label><input type="text" required placeholder="e.g. Computer Science, Law, Nursing" value={department} onChange={e => { setDepartment(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Create Password</label><input type="password" required minLength={6} autoComplete="new-password" placeholder="Minimum 6 characters" value={password} onChange={e => { setPassword(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Department</label><input type="text" required placeholder="e.g. Computer Science, Law, Nursing" value={department} onChange={e => { setDepartment(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Create Password</label><input type="password" required minLength={6} autoComplete="new-password" placeholder="Minimum 6 characters" value={password} onChange={e => { setPassword(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
               <button type="submit" disabled={busy} className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"><CheckCircle2 className="w-4 h-4" /><span>{busy ? 'Creating Account…' : 'Create Free Scholar Account'}</span></button>
             </form>
           )}
         </div>
-
-        {onContinueAsGuest && (
-          <div className="px-5 pb-3 bg-white">
-            <button
-              type="button"
-              onClick={() => {
-                onContinueAsGuest();
-                onClose();
-              }}
-              className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer text-center"
-            >
-              Continue Exploring as Guest Explorer
-            </button>
-          </div>
-        )}
 
         <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-center gap-1.5 text-[10px] text-slate-500"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /><span>Student Data Privacy • Secure Authentication</span></div>
       </div>
