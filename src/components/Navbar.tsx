@@ -11,7 +11,7 @@ import {
   Bell,
   Check
 } from 'lucide-react';
-import { UserProfile } from '../types';
+import { AppNotification, UserProfile } from '../types';
 import { listMyNotifications, markNotificationRead } from '../lib/userFeatures';
 import { isValidUuid } from '../lib/supabase';
 
@@ -23,14 +23,6 @@ interface NavbarProps {
   onSearch: (query: string) => void;
 }
 
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-}
-
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   onNavigate,
@@ -40,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   const isLoggedIn = Boolean(user?.id);
 
@@ -53,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
     listMyNotifications(user.id)
       .then((items) => {
-        if (mounted) setNotifications(items as NotificationItem[]);
+        if (mounted) setNotifications(items);
       })
       .catch((error) => console.error('Notification load failed', error));
 
@@ -62,14 +54,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
   }, [user?.id]);
 
-  const unreadCount = notifications.filter((notification) => !notification.is_read).length;
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
   const handleNotificationRead = async (notificationId: string) => {
     if (!user?.id || !isValidUuid(user.id)) return;
     try {
       await markNotificationRead(user.id, notificationId);
       setNotifications((current) => current.map((notification) =>
-        notification.id === notificationId ? { ...notification, is_read: true } : notification
+        notification.id === notificationId ? { ...notification, isRead: true } : notification
       ));
     } catch (error) {
       console.error('Notification update failed', error);
@@ -158,12 +150,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center"><Bell className="w-6 h-6 mx-auto text-slate-300" /><p className="text-xs font-semibold text-slate-600 mt-2">No notifications yet</p><p className="text-[10px] text-slate-400 mt-1">Updates from EduReach will appear here.</p></div>
                       ) : notifications.slice(0, 20).map((notification) => (
-                        <button key={notification.id} type="button" onClick={() => handleNotificationRead(notification.id)} className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${notification.is_read ? 'bg-white' : 'bg-orange-50/50'}`}>
+                        <button key={notification.id} type="button" onClick={() => handleNotificationRead(notification.id)} className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${notification.isRead ? 'bg-white' : 'bg-orange-50/50'}`}>
                           <div className="flex items-start gap-2.5">
-                            <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${notification.is_read ? 'bg-slate-100 text-slate-500' : 'bg-orange-100 text-orange-700'}`}>
-                              {notification.is_read ? <Check className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
+                            <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${notification.isRead ? 'bg-slate-100 text-slate-500' : 'bg-orange-100 text-orange-700'}`}>
+                              {notification.isRead ? <Check className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
                             </div>
-                            <div className="min-w-0 flex-1"><p className="text-xs font-bold text-slate-800 line-clamp-1">{notification.title}</p><p className="text-[11px] text-slate-600 leading-relaxed mt-0.5 line-clamp-2">{notification.message}</p><p className="text-[9px] text-slate-400 mt-1">{new Date(notification.created_at).toLocaleString()}</p></div>
+                            <div className="min-w-0 flex-1"><p className="text-xs font-bold text-slate-800 line-clamp-1">{notification.title}</p><p className="text-[11px] text-slate-600 leading-relaxed mt-0.5 line-clamp-2">{notification.message}</p><p className="text-[9px] text-slate-400 mt-1">{new Date(notification.timestamp).toLocaleString()}</p></div>
                           </div>
                         </button>
                       ))}
