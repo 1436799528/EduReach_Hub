@@ -14,7 +14,7 @@ import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
 import { isSupabaseConfigured, isValidUuid } from './lib/supabase';
-import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, updateMyProfile } from './lib/dataService';
+import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, getSignedResourceUrl, updateMyProfile } from './lib/dataService';
 import { listBookmarks, toggleBookmark, type BookmarkEntity } from './lib/userFeatures';
 
 type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
@@ -236,6 +236,31 @@ export default function App() {
     }
   };
 
+  const handleReadMaterial = async (material: StudyMaterial) => {
+    if (!isAuthenticated) {
+      setPendingTargetView('my_school');
+      setAuthMode('login');
+      setAuthMessage('Sign in to access your school materials.');
+      setShowAuth(true);
+      return;
+    }
+
+    try {
+      if (material.storagePath) {
+        const signedUrl = await getSignedResourceUrl(material.storagePath);
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      if (material.externalUrl || material.fileUrl) {
+        window.open(material.externalUrl || material.fileUrl || '', '_blank', 'noopener,noreferrer');
+        return;
+      }
+    } catch (error) {
+      console.error('Protected material open failed', error);
+    }
+    setReaderMaterial(material);
+  };
+
   const requireAuth = (nextView: View = 'feed', mode: 'login' | 'signup' = 'login', message?: string) => {
     if (!isAuthenticated) {
       setPendingTargetView(nextView);
@@ -291,9 +316,9 @@ export default function App() {
             selectedInstitution={selectedInstitution}
             setSelectedInstitution={setSelectedInstitution}
             onUnlockMaterial={setReaderMaterial}
-            onReadMaterial={setReaderMaterial}
+            onReadMaterial={handleReadMaterial}
             onToggleOffline={handleToggleOffline}
-            onOpenCBT={setReaderMaterial}
+            onOpenCBT={handleReadMaterial}
           />
         )}
         {view === 'services' && isAuthenticated && (
