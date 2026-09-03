@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StudyMaterial, UserProfile, InstitutionId, FeedPost, MaterialNote } from './types';
 import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
-import { FEED_POSTS, STUDY_MATERIALS } from './data/mockData';
+import { FEED_POSTS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CampusFeedPage } from './components/CampusFeedPage';
@@ -288,22 +288,22 @@ export default function App() {
   };
 
   if (authLoading) {
-    return <div className="min-h-screen bg-white flex items-center justify-center text-slate-600">Loading EduReach Hub...</div>;
+    return <div className="min-h-screen bg-white flex items-center justify-center px-6 text-sm text-slate-600">Loading EduReach Hub...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden">
       {isAuthenticated && (
         <Navbar
           user={user}
           currentView={view}
-          onNavigate={setView}
+          onNavigate={(nextView) => { setView(nextView); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           onLogout={handleLogout}
           onSearch={setSearchQuery}
         />
       )}
 
-      <main>
+      <main className={isAuthenticated ? 'er-page' : ''}>
         {view === 'landing' && (
           <LandingPage
             isLoggedIn={isAuthenticated}
@@ -337,13 +337,15 @@ export default function App() {
           />
         )}
         {view === 'services' && isAuthenticated && (
-          <div className="space-y-6">
+          <div className="er-content space-y-4 sm:space-y-6">
             <MyServicesPage user={user} />
             <ServiceRequestHistory user={user} />
           </div>
         )}
         {view === 'profile' && isAuthenticated && (
-          <ProfilePage user={user} onUpdateUser={handleProfileUpdate} onLogout={handleLogout} />
+          <div className="er-content">
+            <ProfilePage user={user} onUpdateUser={handleProfileUpdate} onLogout={handleLogout} />
+          </div>
         )}
       </main>
 
@@ -381,7 +383,7 @@ export default function App() {
       )}
 
       {dataLoading && isAuthenticated && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-500 shadow-sm">
+        <div className="er-cta fixed bottom-4 right-4 z-50 rounded-2xl bg-white/95 backdrop-blur border border-slate-200 px-4 py-2.5 text-xs font-medium text-slate-600 shadow-xl">
           Syncing your school data…
         </div>
       )}
