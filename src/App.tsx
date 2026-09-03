@@ -303,7 +303,7 @@ export default function App() {
         />
       )}
 
-      <main className={isAuthenticated ? 'er-page' : ''}>
+      <main key={view} className={isAuthenticated ? 'er-page animate-fadeIn' : 'animate-fadeIn'}>
         {view === 'landing' && (
           <LandingPage
             isLoggedIn={isAuthenticated}
