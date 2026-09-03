@@ -74,7 +74,7 @@ export interface AppNotification {
   userId: string;
   title: string;
   message: string;
-  type: 'VERIFICATION_APPROVED' | 'REVISION_REQUESTED' | 'VERIFICATION_REJECTED' | 'ROYALTY_EARNED' | 'RECOMMENDATION_ALERT' | 'TASK_ASSIGNED' | 'ORDER_UPDATE';
+  type: 'VERIFICATION_APPROVED' | 'REVISION_REQUESTED' | 'VERIFICATION_REJECTED' | 'ROYALTY_EARNED' | 'RECOMMENDATION_ALERT' | 'TASK_ASSIGNED' | 'ORDER_UPDATE' | 'SUBMISSION_RECEIVED';
   timestamp: string;
   isRead: boolean;
   materialId?: string;
@@ -96,6 +96,10 @@ export interface StudyMaterial {
   materialType: MaterialType;
   academicSession: string;
   unlockPrice: number;
+  storagePath?: string;
+  fileUrl?: string;
+  externalUrl?: string;
+  mimeType?: string;
   uploader: {
     id: string;
     name: string;
@@ -173,6 +177,7 @@ export interface ServiceItem {
   shortDesc: string;
   detailedDesc: string;
   imageUrl?: string;
+  applicationUrl?: string;
   baseFee: number;
   processingTime: string;
   deliveryMethod: 'Instant WhatsApp & SMS' | 'Physical Submission & Dispatch' | 'Official Registry Stamping';
