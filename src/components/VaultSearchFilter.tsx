@@ -83,7 +83,7 @@ export const VaultSearchFilter: React.FC<VaultSearchFilterProps> = ({
           <Search className="w-5 h-5 text-orange-500" />
         </div>
         <input
-          id="vault-search-input"
+          id="materials-search-input"
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

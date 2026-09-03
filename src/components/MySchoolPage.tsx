@@ -71,9 +71,9 @@ export const MySchoolPage: React.FC<MySchoolPageProps> = ({ user, materials, sel
       <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-sm relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-orange-400 text-xs font-bold"><Building2 className="w-3.5 h-3.5" /><span>{selectedInstitution === 'ALL' ? 'Multi-Campus National Vault' : currentInst.shortName}</span></div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{selectedInstitution === 'ALL' ? 'All Universities Academic Vault' : currentInst.name}</h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">{selectedInstitution === 'ALL' ? 'Access past questions, course outlines, and verified lecture solutions cross-referenced across Nigerian universities.' : `${currentInst.motto || 'Knowledge, Excellence and Service'} • Location: ${currentInst.state} State`}</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-orange-400 text-xs font-bold"><Building2 className="w-3.5 h-3.5" /><span>{selectedInstitution === 'ALL' ? 'All Nigerian Campuses' : currentInst.shortName}</span></div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{selectedInstitution === 'ALL' ? 'Course Materials & Past Questions' : currentInst.name}</h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">{selectedInstitution === 'ALL' ? 'Find past questions, lecture notes, course outlines, and verified solutions for your school and department.' : `${currentInst.motto || 'Knowledge, Excellence and Service'} • Location: ${currentInst.state} State`}</p>
           </div>
           <div className="bg-slate-800 p-3 rounded-2xl border border-slate-700 space-y-2 flex-shrink-0">
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Active University:</label>

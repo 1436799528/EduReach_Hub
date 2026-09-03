@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StudyMaterial, UserProfile, InstitutionId, FeedPost } from './types';
-import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
-import { FEED_POSTS } from './data/mockData';
+import { getStoredUserProfile, getStoredMaterials, saveMaterials, INITIAL_USER } from './services/storage';
+import { FEED_POSTS, STUDY_MATERIALS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CampusFeedPage } from './components/CampusFeedPage';
@@ -13,7 +13,7 @@ import { MaterialReaderModal } from './components/MaterialReaderModal';
 import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
-import { isSupabaseConfigured } from './lib/supabase';
+import { isSupabaseConfigured, isValidUuid } from './lib/supabase';
 import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, updateMyProfile } from './lib/dataService';
 import { listBookmarks, toggleBookmark, type BookmarkEntity } from './lib/userFeatures';
 
@@ -25,8 +25,10 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [view, setView] = useState<View>('landing');
+  const [pendingTargetView, setPendingTargetView] = useState<View>('feed');
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMessage, setAuthMessage] = useState('');
   const [materials, setMaterials] = useState<StudyMaterial[]>(getStoredMaterials);
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>(FEED_POSTS);
   const [readerMaterial, setReaderMaterial] = useState<StudyMaterial | null>(null);
@@ -47,6 +49,15 @@ export default function App() {
     if (!isSupabaseConfigured || !profile.id) return;
     setDataLoading(true);
     try {
+      if (!isValidUuid(profile.id)) {
+        const liveFeed = await getCampusFeedPosts().catch((error) => {
+          console.error('Campus feed load failed', error);
+          return [] as FeedPost[];
+        });
+        setFeedPosts(liveFeed);
+        return;
+      }
+
       const [dbProfile, liveFeed] = await Promise.all([
         getMyProfile(profile.id),
         getCampusFeedPosts().catch((error) => {
@@ -153,12 +164,31 @@ export default function App() {
     setUser(profile);
     setIsAuthenticated(true);
     setShowAuth(false);
-    setView('feed');
+    setView(pendingTargetView || 'feed');
     await loadLiveStudentData(profile);
   };
 
+  const handleContinueAsGuest = () => {
+    const guestUser: UserProfile = {
+      ...INITIAL_USER,
+      id: 'guest_student',
+      name: 'Guest Scholar',
+      email: 'guest@edureach.ng',
+      institutionId: 'UNICAL',
+      department: 'Computer Science',
+      level: '300L'
+    };
+    setUser(guestUser);
+    setIsAuthenticated(true);
+    setShowAuth(false);
+    setView(pendingTargetView || 'my_school');
+  };
+
   const handleProfileUpdate = async (updates: Partial<UserProfile>) => {
-    if (!user.id || !isSupabaseConfigured) return;
+    if (!user.id || !isValidUuid(user.id) || !isSupabaseConfigured) {
+      setUser((current) => ({ ...current, ...updates }));
+      return;
+    }
     const dbUpdates: Parameters<typeof updateMyProfile>[1] = {};
     if (updates.name !== undefined) dbUpdates.full_name = updates.name;
     if (updates.department !== undefined) dbUpdates.department = updates.department;
@@ -193,7 +223,7 @@ export default function App() {
       return { ...current, savedOfflineMaterialIds: nextSaved };
     });
 
-    if (!isSupabaseConfigured || !user.id) return;
+    if (!isSupabaseConfigured || !user.id || !isValidUuid(user.id)) return;
     try {
       const isSaved = await toggleBookmark(user.id, entityType, materialId);
       if (isSaved !== !wasSaved) {
@@ -216,9 +246,11 @@ export default function App() {
     }
   };
 
-  const requireAuth = (nextView: View = 'feed') => {
+  const requireAuth = (nextView: View = 'feed', mode: 'login' | 'signup' = 'login', message?: string) => {
     if (!isAuthenticated) {
-      setAuthMode('login');
+      setPendingTargetView(nextView);
+      setAuthMode(mode);
+      setAuthMessage(message || '');
       setShowAuth(true);
       return;
     }
@@ -244,11 +276,17 @@ export default function App() {
       <main>
         {view === 'landing' && (
           <LandingPage
-            onGetStarted={() => {
-              setAuthMode('signup');
-              setShowAuth(true);
-            }}
+            isLoggedIn={isAuthenticated}
+            onGetStarted={() => requireAuth('feed', 'signup')}
             onNavigate={(target) => requireAuth(target)}
+            onNavigateToTab={(tab) => requireAuth(tab)}
+            onOpenAuth={(mode, message) => requireAuth('feed', mode === 'register' ? 'signup' : 'login', message)}
+            onOpenDemoCBT={() => {
+              const demo = materials[0] || STUDY_MATERIALS[0];
+              if (demo) {
+                setReaderMaterial(demo);
+              }
+            }}
           />
         )}
         {view === 'feed' && isAuthenticated && (
@@ -284,14 +322,26 @@ export default function App() {
         )}
       </main>
 
-      {!isAuthenticated && <Footer />}
+      {!isAuthenticated && (
+        <Footer
+          onOpenAuth={(mode) => {
+            setAuthMode(mode === 'register' ? 'signup' : 'login');
+            setShowAuth(true);
+          }}
+          onNavigateToTab={(tab) => requireAuth(tab)}
+        />
+      )}
 
       {showAuth && (
         <AuthModal
+          isOpen={true}
           mode={authMode}
+          redirectMessage={authMessage}
           onClose={() => setShowAuth(false)}
           onLogin={handleLogin}
+          onLoginSuccess={handleLogin}
           onSwitchMode={setAuthMode}
+          onContinueAsGuest={handleContinueAsGuest}
         />
       )}
 
@@ -302,6 +352,7 @@ export default function App() {
           isSavedOffline={user.savedOfflineMaterialIds.includes(readerMaterial.id)}
           onToggleOffline={handleToggleOffline}
           onClose={() => setReaderMaterial(null)}
+          onUpdateUser={handleProfileUpdate}
         />
       )}
 

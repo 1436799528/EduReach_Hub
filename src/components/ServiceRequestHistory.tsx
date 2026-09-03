@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Clock3, FileText, RefreshCw, XCircle } from 'lucide-react';
 import { getMyServiceRequests, getServiceCatalog } from '../lib/productionActions';
+import { isValidUuid } from '../lib/supabase';
 import { UserProfile } from '../types';
 
 interface ServiceRequestHistoryProps {
@@ -39,7 +40,7 @@ export const ServiceRequestHistory: React.FC<ServiceRequestHistoryProps> = ({ us
   const [error, setError] = useState<string | null>(null);
 
   const loadHistory = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !isValidUuid(user.id)) return;
     setLoading(true);
     setError(null);
     try {
@@ -66,7 +67,7 @@ export const ServiceRequestHistory: React.FC<ServiceRequestHistoryProps> = ({ us
     [catalogue]
   );
 
-  if (!user?.id) return null;
+  if (!user?.id || !isValidUuid(user.id)) return null;
 
   return (
     <section className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6">

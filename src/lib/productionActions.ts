@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, isValidUuid } from './supabase';
 
 const requireClient = () => {
   if (!supabase) throw new Error('Supabase is not configured.');
@@ -65,6 +65,7 @@ export const createServiceRequest = async (userId: string, input: ServiceRequest
 };
 
 export const getMyServiceRequests = async (userId: string) => {
+  if (!isValidUuid(userId)) return [];
   const { data, error } = await requireClient().from('service_requests').select('id,user_id,service_id,institution_id,status,form_data,attachment_path,created_at,updated_at').eq('user_id', userId).order('created_at', { ascending: false });
   if (error) throw error;
   return data ?? [];

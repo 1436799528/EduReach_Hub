@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, isValidUuid } from './supabase';
 import type { InstitutionId, MaterialType, StudyMaterial, FeedPost, PostComment } from '../types';
 import type { SupabaseProfileRow } from './profileMapper';
 
@@ -11,8 +11,18 @@ const toInstitutionId = (value?: string | null): InstitutionId => value && INSTI
 const toMaterialType = (value?: string | null): MaterialType => value === 'past_question' ? 'past_question' : value === 'lecture_note' ? 'lecture_summary' : value === 'course_outline' ? 'project_guide' : value === 'textbook' ? 'handwritten_note' : 'formula_sheet';
 const requireClient = () => { if (!supabase) throw new Error('Supabase is not configured.'); return supabase; };
 
-export async function getMyProfile(userId: string): Promise<SupabaseProfileRow | null> { const { data, error } = await requireClient().from('profiles').select('*, institutions(acronym)').eq('id', userId).maybeSingle(); if (error) throw error; return data as SupabaseProfileRow | null; }
-export async function updateMyProfile(userId: string, updates: Partial<Pick<SupabaseProfileRow, 'full_name' | 'school' | 'faculty' | 'department' | 'level' | 'session' | 'matric_number' | 'avatar_url'>>) { const { data, error } = await requireClient().from('profiles').update(updates).eq('id', userId).select('*, institutions(acronym)').single(); if (error) throw error; return data as SupabaseProfileRow; }
+export async function getMyProfile(userId: string): Promise<SupabaseProfileRow | null> {
+  if (!isValidUuid(userId)) return null;
+  const { data, error } = await requireClient().from('profiles').select('*, institutions(acronym)').eq('id', userId).maybeSingle();
+  if (error) throw error;
+  return data as SupabaseProfileRow | null;
+}
+export async function updateMyProfile(userId: string, updates: Partial<Pick<SupabaseProfileRow, 'full_name' | 'school' | 'faculty' | 'department' | 'level' | 'session' | 'matric_number' | 'avatar_url'>>) {
+  if (!isValidUuid(userId)) throw new Error('Valid UUID is required for profile updates');
+  const { data, error } = await requireClient().from('profiles').update(updates).eq('id', userId).select('*, institutions(acronym)').single();
+  if (error) throw error;
+  return data as SupabaseProfileRow;
+}
 
 export async function getMyCourses(programmeId: string, level: string) { let query = requireClient().from('courses').select('id,code,title,units,level,semester,programme_id,department_id,is_active').eq('programme_id', programmeId).eq('is_active', true).order('level').order('semester').order('code'); const numericLevel = Number.parseInt(level, 10); if (Number.isFinite(numericLevel)) query = query.eq('level', numericLevel); const { data, error } = await query; if (error) throw error; return (data ?? []) as SchoolCourseRow[]; }
 export async function getApprovedResourcesForCourses(courseIds: string[]) { if (!courseIds.length) return [] as ResourceRow[]; const { data, error } = await requireClient().from('resources').select('id,course_id,title,description,resource_type,file_url,external_url,uploaded_by,status,created_at,original_filename,mime_type,file_size,storage_path').in('course_id', courseIds).eq('status', 'approved').order('created_at', { ascending: false }); if (error) throw error; return (data ?? []) as ResourceRow[]; }
@@ -54,7 +64,7 @@ export async function getCampusFeedPosts(): Promise<FeedPost[]> {
     client.from('campus_post_comments').select('id,post_id,author_id,body,created_at').in('post_id', postIds).order('created_at', { ascending: true }),
   ]);
   const authorMap = new Map((authors ?? []).map(author => [author.id, author]));
-  const courseMap = new Map((courses ?? []).map(course => [course.id, course]));
+  const courseMap = new Map<string, { id: string; code?: string }>(((courses ?? []) as Array<{ id: string; code?: string }>).map(course => [course.id, course]));
   const likesMap = new Map<string, string[]>();
   (likes ?? []).forEach(like => likesMap.set(like.post_id, [...(likesMap.get(like.post_id) ?? []), like.user_id]));
   const commentsMap = new Map<string, PostComment[]>();

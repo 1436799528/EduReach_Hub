@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   BookOpen, 
@@ -20,10 +20,23 @@ import {
   ChevronRight, 
   Calculator, 
   Play,
-  Lock
+  Lock,
+  StickyNote,
+  Trash2,
+  Copy,
+  Edit2,
+  BookmarkCheck,
+  Sparkles,
+  Plus
 } from 'lucide-react';
-import { StudyMaterial, CBTQuestion, UserProfile } from '../types';
-import { generateWhatsAppShareLink } from '../services/storage';
+import { StudyMaterial, CBTQuestion, UserProfile, MaterialNote } from '../types';
+import { 
+  generateWhatsAppShareLink, 
+  saveMaterialNoteToProfile, 
+  deleteMaterialNoteFromProfile, 
+  getStoredUserProfile 
+} from '../services/storage';
+import { syncMaterialNoteToBackend, deleteMaterialNoteFromBackend } from '../lib/userFeatures';
 
 interface MaterialReaderModalProps {
   material: StudyMaterial;
@@ -33,6 +46,7 @@ interface MaterialReaderModalProps {
   onUnlock?: () => void;
   onOpenTopUp?: () => void;
   onClose: () => void;
+  onUpdateUser?: (updated: Partial<UserProfile>) => void;
 }
 
 export const MaterialReaderModal: React.FC<MaterialReaderModalProps> = ({
@@ -42,11 +56,130 @@ export const MaterialReaderModal: React.FC<MaterialReaderModalProps> = ({
   onToggleOffline,
   onUnlock,
   onOpenTopUp,
-  onClose
+  onClose,
+  onUpdateUser
 }) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'formulas' | 'worked' | 'cbt'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'formulas' | 'worked' | 'cbt' | 'notes'>('summary');
   const [theme, setTheme] = useState<'day' | 'night' | 'sepia'>('day');
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
+
+  // Quick Notes State
+  const [notes, setNotes] = useState<MaterialNote[]>(() => {
+    const userNotes = user?.materialNotes || getStoredUserProfile().materialNotes || [];
+    return userNotes.filter((n) => n.materialId === material.id);
+  });
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [copiedNoteId, setCopiedNoteId] = useState<string | null>(null);
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Synchronize when user profile materialNotes changes
+  useEffect(() => {
+    const userNotes = user?.materialNotes || getStoredUserProfile().materialNotes || [];
+    setNotes(userNotes.filter((n) => n.materialId === material.id));
+  }, [user?.materialNotes, material.id]);
+
+  const handleSaveNote = async () => {
+    const trimmed = newNoteContent.trim();
+    if (!trimmed) return;
+
+    setSaveStatus('saving');
+    const newNote: MaterialNote = {
+      id: 'note_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      materialId: material.id,
+      courseCode: material.courseCode,
+      materialTitle: material.title,
+      content: trimmed,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 1. Save to local storage profile
+    const updatedUser = saveMaterialNoteToProfile(newNote);
+
+    // 2. Update local state immediately
+    setNotes((prev) => [newNote, ...prev]);
+    setNewNoteContent('');
+
+    // 3. Notify parent app if callback provided
+    if (onUpdateUser) {
+      onUpdateUser({ materialNotes: updatedUser.materialNotes });
+    }
+
+    // 4. Sync to Supabase backend if user session exists
+    if (user?.id) {
+      try {
+        await syncMaterialNoteToBackend(user.id, newNote);
+      } catch (err) {
+        console.warn('Backend note sync warning:', err);
+      }
+    }
+
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2500);
+  };
+
+  const handleUpdateNote = async (noteId: string) => {
+    const trimmed = editingContent.trim();
+    if (!trimmed) return;
+
+    const targetNote = notes.find((n) => n.id === noteId);
+    if (!targetNote) return;
+
+    const updatedNote: MaterialNote = {
+      ...targetNote,
+      content: trimmed,
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedUser = saveMaterialNoteToProfile(updatedNote);
+    setNotes((prev) => prev.map((n) => (n.id === noteId ? updatedNote : n)));
+    setEditingNoteId(null);
+    setEditingContent('');
+
+    if (onUpdateUser) {
+      onUpdateUser({ materialNotes: updatedUser.materialNotes });
+    }
+
+    if (user?.id) {
+      try {
+        await syncMaterialNoteToBackend(user.id, updatedNote);
+      } catch (err) {
+        console.warn('Backend note sync error:', err);
+      }
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    const updatedUser = deleteMaterialNoteFromProfile(noteId);
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+
+    if (onUpdateUser) {
+      onUpdateUser({ materialNotes: updatedUser.materialNotes });
+    }
+
+    if (user?.id) {
+      try {
+        await deleteMaterialNoteFromBackend(user.id, noteId);
+      } catch (err) {
+        console.warn('Backend note delete error:', err);
+      }
+    }
+  };
+
+  const handleCopyNote = (noteId: string, text: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    setCopiedNoteId(noteId);
+    setTimeout(() => setCopiedNoteId(null), 2000);
+  };
+
+  const handleInsertTag = (tag: string) => {
+    setNewNoteContent((prev) => (prev ? `${prev} [${tag}] ` : `[${tag}] `));
+    noteTextareaRef.current?.focus();
+  };
 
   // Close on Escape key
   useEffect(() => {
@@ -185,6 +318,25 @@ export const MaterialReaderModal: React.FC<MaterialReaderModalProps> = ({
               </button>
             </div>
 
+            {/* Quick Notes */}
+            <button
+              onClick={() => setActiveTab('notes')}
+              className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 text-xs ${
+                activeTab === 'notes'
+                  ? 'bg-amber-600 border-amber-500 text-white font-bold'
+                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white'
+              }`}
+              title="Quick Notes for this Material"
+            >
+              <StickyNote className="w-4 h-4 text-amber-400" />
+              <span className="hidden md:inline">Quick Notes</span>
+              {notes.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px]">
+                  {notes.length}
+                </span>
+              )}
+            </button>
+
             {/* Offline Save */}
             <button
               onClick={() => onToggleOffline(material.id)}
@@ -263,6 +415,19 @@ export const MaterialReaderModal: React.FC<MaterialReaderModalProps> = ({
               <span>Timed CBT Practice ({material.cbtQuestions.length} Qs)</span>
             </button>
           )}
+
+          {/* Quick Notes Tab */}
+          <button
+            onClick={() => setActiveTab('notes')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+              activeTab === 'notes'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+            }`}
+          >
+            <StickyNote className="w-3.5 h-3.5 text-amber-300" />
+            <span>Quick Notes {notes.length > 0 ? `(${notes.length})` : ''}</span>
+          </button>
         </div>
 
         {/* Tab Body Content Area */}
@@ -534,12 +699,280 @@ export const MaterialReaderModal: React.FC<MaterialReaderModalProps> = ({
             </div>
           )}
 
+          {/* TAB 5: Quick Notes & Study Memos */}
+          {activeTab === 'notes' && (
+            <div className="space-y-6 animate-fadeIn">
+              
+              {/* Header Info Banner */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-amber-600 text-white text-[11px] font-bold">
+                      {material.courseCode} Memo Desk
+                    </span>
+                    <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                      Personal Study Notes & Memos
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-800/80 dark:text-amber-300/80">
+                    Jot down short memos, exam reminders, and page takeaways. Memos are linked to this material and saved directly to your profile.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                    <BookmarkCheck className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>{notes.length} Memo{notes.length === 1 ? '' : 's'} Saved</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Note Composer Card */}
+              <div className="p-4 sm:p-5 rounded-2xl border border-slate-300 dark:border-slate-800 bg-slate-500/5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="quick-memo-input" className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Jot Down a New Memo</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {newNoteContent.length}/600 chars
+                  </span>
+                </div>
+
+                {/* Quick Tag Helpers */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">Insert tag:</span>
+                  {[
+                    { label: 'Exam Tip', tag: 'Exam Tip' },
+                    { label: 'Formula', tag: 'Formula Rule' },
+                    { label: 'Definition', tag: 'Core Definition' },
+                    { label: 'Past Q Ref', tag: 'Past Q Ref' },
+                    { label: 'Page Ref', tag: 'Page Ref' },
+                  ].map((item) => (
+                    <button
+                      key={item.tag}
+                      type="button"
+                      onClick={() => handleInsertTag(item.tag)}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 hover:text-amber-700 dark:hover:text-amber-300 transition-colors border border-transparent hover:border-amber-500/30 cursor-pointer"
+                    >
+                      + {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Memo Textarea */}
+                <textarea
+                  id="quick-memo-input"
+                  ref={noteTextareaRef}
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value.slice(0, 600))}
+                  placeholder="e.g. Remember to review Section 3 derivation on page 18 — Lecturer specifically highlighted this for continuous assessment..."
+                  rows={3}
+                  className="w-full text-xs sm:text-sm p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all resize-y"
+                  onKeyDown={(e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveNote();
+                    }
+                  }}
+                />
+
+                {/* Action Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <span className="text-[11px] text-slate-400 hidden sm:inline">
+                    Tip: Press <kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[10px]">Ctrl+Enter</kbd> to save
+                  </span>
+
+                  <div className="flex items-center gap-2 ml-auto">
+                    {saveStatus === 'saved' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg animate-in fade-in">
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Saved to Profile!</span>
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleSaveNote}
+                      disabled={!newNoteContent.trim() || saveStatus === 'saving'}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{saveStatus === 'saving' ? 'Saving...' : 'Save Memo to Profile'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Existing Notes List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Saved Memos for {material.courseCode} ({notes.length})
+                  </h3>
+                  {notes.length > 0 && (
+                    <span className="text-[11px] text-slate-400">
+                      Synchronized with your account
+                    </span>
+                  )}
+                </div>
+
+                {notes.length === 0 ? (
+                  <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-500/5 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                      <StickyNote className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1 max-w-sm mx-auto">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                        No Study Memos Yet
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Jot down exam formulas, revision questions, or key lecturer hints above. Your memos remain saved to your profile even when you close the reader.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => noteTextareaRef.current?.focus()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Write First Memo</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notes.map((note, idx) => {
+                      const isEditing = editingNoteId === note.id;
+                      const formattedDate = new Date(note.createdAt).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      });
+                      const formattedTime = new Date(note.createdAt).toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+
+                      return (
+                        <div
+                          key={note.id}
+                          className="p-4 rounded-2xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-2xs space-y-2.5 transition-all"
+                        >
+                          {/* Note Card Header */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="w-5 h-5 rounded-full bg-amber-600 text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0">
+                                {notes.length - idx}
+                              </span>
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                Memo #{notes.length - idx}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-400">
+                                {formattedDate} at {formattedTime}
+                              </span>
+                              {note.updatedAt && (
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                                  (Edited)
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleCopyNote(note.id, note.content)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                title="Copy memo text"
+                              >
+                                {copiedNoteId === note.id ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+
+                              {!isEditing ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingNoteId(note.id);
+                                    setEditingContent(note.content);
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                  title="Edit memo"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingNoteId(null)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                  title="Cancel editing"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteNote(note.id)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title="Delete memo"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Note Content / Editing */}
+                          {isEditing ? (
+                            <div className="space-y-2 pt-1">
+                              <textarea
+                                value={editingContent}
+                                onChange={(e) => setEditingContent(e.target.value)}
+                                rows={3}
+                                className="w-full text-xs p-2.5 rounded-xl border border-amber-400 bg-amber-50/20 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                              />
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingNoteId(null)}
+                                  className="px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateNote(note.id)}
+                                  className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer"
+                                >
+                                  Save Changes
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed opacity-95">
+                              {note.content}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
         </div>
 
         {/* Modal Footer Actions */}
         <div className="p-3 sm:p-4 border-t flex items-center justify-between gap-2 bg-slate-500/5">
           <div className="flex items-center gap-2 text-xs opacity-75">
-            <span>Verified Study Vault Pack • {material.pageCount} Pages</span>
+            <span>Verified Study Material • {material.pageCount} Pages</span>
           </div>
 
           <div className="flex items-center gap-2">

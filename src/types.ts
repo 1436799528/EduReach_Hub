@@ -143,6 +143,14 @@ export interface StudyMaterial {
 }
 
 export type ServiceType = 
+  | 'POSTGRADUATE_ADMISSION_LETTER'
+  | 'POSTGRADUATE_ACCEPTANCE_FEE'
+  | 'RESULT_PORTAL_PIN_RECOVERY'
+  | 'NELFUND_LOAN_APPLICATION'
+  | 'WAEC_NECO_RESULT_CHECKING'
+  | 'WAEC_NECO_SCRATCH_CARDS'
+  | 'JAMB_EXAM_SLIP_PRINTING'
+  | 'ADMISSION_DEFERMENT_SUPPLEMENTARY'
   | 'ASSIGNMENT_ASSISTANCE'
   | 'PROJECT_GUIDANCE'
   | 'RESEARCH_SUPPORT'
@@ -286,11 +294,24 @@ export interface ServiceOrder {
   createdAt: string;
 }
 
+export interface MaterialNote {
+  id: string;
+  materialId: string;
+  courseCode: string;
+  materialTitle: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
   phoneNumber: string;
+  avatar?: string;
+  matricNumber?: string;
+  stateOfOrigin?: string;
   institutionId: InstitutionId;
   department: string;
   faculty: string;
@@ -301,6 +322,7 @@ export interface UserProfile {
   enrolledCourses: string[];
   unlockedMaterialIds: string[];
   savedOfflineMaterialIds: string[];
+  materialNotes?: MaterialNote[];
   viewHistory: string[];
   downloadHistory: string[];
   contributorStats: {

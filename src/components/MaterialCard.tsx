@@ -118,7 +118,7 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
             <button id={`cbt-btn-${material.id}`} onClick={() => onOpenCBT(material)} className="p-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 transition-colors border border-slate-300 text-xs font-bold flex items-center shadow-xs cursor-pointer" title="Practice CBT Exam Questions"><Play className="w-3.5 h-3.5 text-orange-600" /></button>
           )}
 
-          <button id={`offline-btn-${material.id}`} onClick={() => onToggleOffline(material.id)} className={`p-2.5 rounded-xl transition-colors border text-xs font-semibold shadow-xs cursor-pointer ${isSavedOffline ? 'bg-orange-50 border-orange-300 text-orange-800' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600'}`} title={isSavedOffline ? 'Saved in Offline Vault' : 'Save for offline reading'}>
+          <button id={`offline-btn-${material.id}`} onClick={() => onToggleOffline(material.id)} className={`p-2.5 rounded-xl transition-colors border text-xs font-semibold shadow-xs cursor-pointer ${isSavedOffline ? 'bg-orange-50 border-orange-300 text-orange-800' : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600'}`} title={isSavedOffline ? 'Saved on your device (offline)' : 'Save for offline reading'}>
             {isSavedOffline ? <Check className="w-3.5 h-3.5 text-orange-600" /> : <DownloadCloud className="w-3.5 h-3.5 text-slate-500" />}
           </button>
 

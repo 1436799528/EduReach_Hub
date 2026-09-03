@@ -57,7 +57,7 @@ export const APlusPassBanner: React.FC<APlusPassModalProps> = ({
           </div>
           <div className="flex items-center gap-2.5 text-xs font-medium text-slate-200 bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl">
             <DownloadCloud className="w-4 h-4 text-orange-400 flex-shrink-0" />
-            <span>Zero-Data Offline Vault Downloads</span>
+            <span>Download &amp; Read Offline (No Data Needed)</span>
           </div>
           <div className="flex items-center gap-2.5 text-xs font-medium text-slate-200 bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl">
             <CheckCircle2 className="w-4 h-4 text-orange-400 flex-shrink-0" />

@@ -686,7 +686,7 @@ export const VerificationWorkflowModal: React.FC<VerificationWorkflowModalProps>
                 <span>Reject Uploaded Material</span>
               </div>
               <p className="text-xs text-red-800">
-                Rejecting removes the material from the public Study Vault. A formal explanation will be logged and sent to the contributor.
+                Rejecting removes the material from the public library. An explanation will be sent to the contributor.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

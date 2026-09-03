@@ -31,7 +31,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({
     <div className="bg-amber-600 text-white text-xs font-semibold px-4 py-2 flex items-center justify-between sticky top-0 z-50 shadow-md">
       <div className="flex items-center gap-2">
         <WifiOff className="w-4 h-4 text-amber-200 animate-pulse" />
-        <span>You are currently offline. Browsing locally cached materials and offline study packs.</span>
+        <span>You are currently offline. Browsing saved materials and past questions.</span>
       </div>
       {onOpenOfflineVault && (
         <button
@@ -39,7 +39,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({
           className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition-colors cursor-pointer"
         >
           <DownloadCloud className="w-3.5 h-3.5" />
-          <span>Saved Packs ({savedOfflineCount})</span>
+          <span>Saved Offline ({savedOfflineCount})</span>
         </button>
       )}
     </div>

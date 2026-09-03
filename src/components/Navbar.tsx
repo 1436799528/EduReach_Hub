@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { listMyNotifications, markNotificationRead } from '../lib/userFeatures';
+import { isValidUuid } from '../lib/supabase';
 
 interface NavbarProps {
   currentView: 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
@@ -45,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   useEffect(() => {
     let mounted = true;
-    if (!user?.id) {
+    if (!user?.id || !isValidUuid(user.id)) {
       setNotifications([]);
       return;
     }
@@ -64,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const unreadCount = notifications.filter((notification) => !notification.is_read).length;
 
   const handleNotificationRead = async (notificationId: string) => {
-    if (!user?.id) return;
+    if (!user?.id || !isValidUuid(user.id)) return;
     try {
       await markNotificationRead(user.id, notificationId);
       setNotifications((current) => current.map((notification) =>
@@ -112,7 +113,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span className="font-bold text-slate-900 text-base sm:text-lg tracking-tight">EduReach</span>
                   <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-orange-100 text-orange-800">HUB</span>
                 </div>
-                <p className="text-[10px] text-slate-500 font-semibold hidden sm:block">Academic Vault & Campus Liaison</p>
+                <p className="text-[10px] text-slate-500 font-semibold hidden sm:block">Past Questions, Notes & Campus Services</p>
               </div>
             </button>
           </div>

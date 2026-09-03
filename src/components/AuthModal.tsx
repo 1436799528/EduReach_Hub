@@ -5,16 +5,36 @@ import { INSTITUTIONS } from '../data/mockData';
 import { getCurrentUserProfile, signInWithPassword, signUpStudent } from '../lib/auth';
 
 interface AuthModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
-  onLoginSuccess: (user: UserProfile) => void;
-  initialMode?: 'login' | 'register';
+  onLoginSuccess?: (user: UserProfile) => void;
+  onLogin?: (user: UserProfile) => void;
+  initialMode?: 'login' | 'register' | 'signup';
+  mode?: 'login' | 'register' | 'signup';
   redirectMessage?: string;
   onContinueAsGuest?: () => void;
+  onSwitchMode?: (mode: 'login' | 'signup') => void;
 }
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess, initialMode = 'login', redirectMessage }) => {
-  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+export const AuthModal: React.FC<AuthModalProps> = ({
+  isOpen = true,
+  onClose,
+  onLoginSuccess,
+  onLogin,
+  initialMode = 'login',
+  mode: modeProp,
+  redirectMessage,
+  onContinueAsGuest,
+  onSwitchMode,
+}) => {
+  const getResolvedMode = (m?: string): 'login' | 'register' => {
+    if (m === 'signup' || m === 'register') return 'register';
+    return 'login';
+  };
+
+  const [mode, setMode] = useState<'login' | 'register'>(
+    getResolvedMode(modeProp || initialMode)
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -29,14 +49,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
   const [confirmationSent, setConfirmationSent] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setMode(initialMode);
-      setError('');
-      setConfirmationSent(false);
-    }
-  }, [isOpen, initialMode]);
+    const targetMode = getResolvedMode(modeProp || initialMode);
+    setMode(targetMode);
+    setError('');
+    setConfirmationSent(false);
+  }, [modeProp, initialMode, isOpen]);
 
-  if (!isOpen) return null;
+  if (isOpen === false) return null;
+
+  const handleNotifyLogin = (profile: UserProfile) => {
+    if (onLoginSuccess) {
+      onLoginSuccess(profile);
+    } else if (onLogin) {
+      onLogin(profile);
+    }
+  };
+
+  const handleModeChange = (nextMode: 'login' | 'register') => {
+    setMode(nextMode);
+    resetError();
+    setConfirmationSent(false);
+    if (onSwitchMode) {
+      onSwitchMode(nextMode === 'register' ? 'signup' : 'login');
+    }
+  };
 
   const resetError = () => { if (error) setError(''); };
 
@@ -50,7 +86,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       if (!data.session) throw new Error('Your email needs to be confirmed before you can sign in. Check your inbox.');
       const profile = await getCurrentUserProfile();
       if (!profile) throw new Error('Your account is authenticated, but your student profile could not be loaded. Please try again.');
-      onLoginSuccess(profile);
+      handleNotifyLogin(profile);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to sign in. Please check your details and try again.');
@@ -82,7 +118,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       if (result.data.session) {
         const profile = await getCurrentUserProfile();
         if (!profile) throw new Error('Account created, but your student profile could not be loaded. Please sign in again.');
-        onLoginSuccess(profile);
+        handleNotifyLogin(profile);
         onClose();
       } else {
         setConfirmationSent(true);
@@ -95,7 +131,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/35 backdrop-blur-xs animate-in fade-in duration-200" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200" onClick={onClose}>
       <div className="bg-white text-slate-900 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
         <div className="p-5 bg-white border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -112,8 +148,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
         <div className="p-4 bg-slate-50 border-b border-slate-200">
           <div className="grid grid-cols-2 gap-1 p-1 bg-white rounded-xl border border-slate-200 text-xs font-bold">
-            <button onClick={() => { setMode('login'); resetError(); setConfirmationSent(false); }} className={`py-2 rounded-lg transition-all text-center cursor-pointer ${mode === 'login' ? 'bg-orange-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}>Sign In to Account</button>
-            <button onClick={() => { setMode('register'); resetError(); setConfirmationSent(false); }} className={`py-2 rounded-lg transition-all text-center cursor-pointer ${mode === 'register' ? 'bg-orange-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}>Register New Student</button>
+            <button onClick={() => handleModeChange('login')} className={`py-2 rounded-lg transition-all text-center cursor-pointer ${mode === 'login' ? 'bg-orange-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}>Sign In to Account</button>
+            <button onClick={() => handleModeChange('register')} className={`py-2 rounded-lg transition-all text-center cursor-pointer ${mode === 'register' ? 'bg-orange-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}>Register New Student</button>
           </div>
         </div>
 
@@ -124,7 +160,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             <div className="py-8 text-center space-y-4">
               <div className="mx-auto w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center"><CheckCircle2 className="w-7 h-7 text-emerald-600" /></div>
               <div><h3 className="text-base font-extrabold text-slate-900">Check your email</h3><p className="mt-1 text-xs leading-relaxed text-slate-600">Your account has been created. Confirm your email address, then return here to sign in.</p></div>
-              <button type="button" onClick={() => { setMode('login'); setConfirmationSent(false); }} className="px-5 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-xs hover:bg-orange-700">Go to Sign In</button>
+              <button type="button" onClick={() => { handleModeChange('login'); setConfirmationSent(false); }} className="px-5 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-xs hover:bg-orange-700">Go to Sign In</button>
             </div>
           ) : mode === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -152,6 +188,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
             </form>
           )}
         </div>
+
+        {onContinueAsGuest && (
+          <div className="px-5 pb-3 bg-white">
+            <button
+              type="button"
+              onClick={() => {
+                onContinueAsGuest();
+                onClose();
+              }}
+              className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer text-center"
+            >
+              Continue Exploring as Guest Explorer
+            </button>
+          </div>
+        )}
 
         <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-center gap-1.5 text-[10px] text-slate-500"><ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /><span>Student Data Privacy • Secure Authentication</span></div>
       </div>

@@ -40,10 +40,10 @@ export const OfflineVaultDrawer: React.FC<OfflineVaultDrawerProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white">
-                Offline Study Vault
+                Saved Materials (Offline)
               </h2>
               <p className="text-xs text-slate-400">
-                PWA Local Cache • Readable without internet data
+                Read anytime on your phone without data
               </p>
             </div>
           </div>
@@ -61,9 +61,9 @@ export const OfflineVaultDrawer: React.FC<OfflineVaultDrawerProps> = ({
           <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1.5">
             <div className="flex items-center gap-1.5">
               <HardDrive className="w-4 h-4 text-emerald-600" />
-              <span>Device Storage Used</span>
+              <span>Storage Used</span>
             </div>
-            <span className="font-bold text-slate-900">{totalMb} MB / 50 MB Cache</span>
+            <span className="font-bold text-slate-900">{totalMb} MB Saved</span>
           </div>
 
           <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
@@ -80,10 +80,10 @@ export const OfflineVaultDrawer: React.FC<OfflineVaultDrawerProps> = ({
             <div className="text-center py-10 space-y-3">
               <WifiOff className="w-10 h-10 text-slate-300 mx-auto" />
               <h3 className="text-sm font-bold text-slate-700">
-                No materials saved offline yet
+                No materials saved yet
               </h3>
               <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                Click the download icon on any study material to save it for zero-data reading inside examination halls or low-network areas.
+                Click the download icon on any past question or lecture note to save and read offline without data.
               </p>
             </div>
           ) : (
@@ -135,13 +135,13 @@ export const OfflineVaultDrawer: React.FC<OfflineVaultDrawerProps> = ({
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between">
           <span className="text-xs text-slate-500">
-            {savedMaterials.length} Study Packs Available Offline
+            {savedMaterials.length} Materials Saved Offline
           </span>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-xs font-bold transition-colors"
+            className="px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
           >
-            Close Vault
+            Close
           </button>
         </div>
 

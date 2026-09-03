@@ -427,10 +427,10 @@ export const ContributorHub: React.FC<ContributorHubProps> = ({
             
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900">
-                Submit New Academic Material for National Vault
+                Upload Course Material or Past Question
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Help fellow students prepare for exams while earning passive micro-credits.
+                Help fellow students prepare for exams and earn money for approved materials.
               </p>
             </div>
 
@@ -644,10 +644,10 @@ export const ContributorHub: React.FC<ContributorHubProps> = ({
               <div className="pt-3">
                 <button
                   type="submit"
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <UploadCloud className="w-4 h-4" />
-                  <span>Submit Study Pack to National Vault</span>
+                  <span>Submit Study Material</span>
                 </button>
               </div>
 

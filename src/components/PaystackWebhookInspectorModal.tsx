@@ -31,7 +31,7 @@ interface PaystackWebhookInspectorModalProps {
 export const PaystackWebhookInspectorModal: React.FC<PaystackWebhookInspectorModalProps> = ({
   isOpen,
   onClose,
-  user = { id: 'usr_default', email: 'scholar@vault.edu.ng', name: 'Scholar', walletBalance: 0 } as any,
+  user = { id: 'usr_default', email: 'scholar@edureach.edu.ng', name: 'Scholar', walletBalance: 0 } as any,
   onWalletUpdated,
   onSimulateSuccess
 }) => {

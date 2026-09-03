@@ -1363,7 +1363,7 @@ I = I_cm + M * d²`,
         action: 'REJECTED',
         statusAfter: 'REJECTED',
         reasonCategory: 'Legibility & Quality Standards',
-        notes: 'Handwritten photos are too dark and out of focus for students on mobile screens. Does not meet National Study Vault minimum readability guidelines.'
+        notes: 'Handwritten photos are too dark and out of focus for students on mobile screens. Does not meet readability guidelines for students.'
       }
     ],
     rating: 3.0,
@@ -1436,6 +1436,142 @@ export const INITIAL_NOTIFICATIONS: AppNotification[] = [
 ];
 
 export const SERVICE_ITEMS: ServiceItem[] = [
+  {
+    id: 'POSTGRADUATE_ADMISSION_LETTER',
+    title: 'POSTGRADUATE ADMISSION LETTER',
+    shortDesc: 'Official School of Postgraduate Studies (SPGS) admission letter retrieval, departmental vetting, and stamped dispatch.',
+    detailedDesc: 'Direct liaison with the School of Postgraduate Studies (SPGS) registry. We track your official PG admission status, verify departmental clearance endorsement, collect the authenticated hard-copy admission letter, and dispatch high-resolution scans and physical copies via courier.',
+    imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80',
+    baseFee: 4500,
+    processingTime: '24 - 48 Hours',
+    deliveryMethod: 'Physical Submission & Dispatch',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'OAU', 'UNIBEN'],
+    requiredInputs: [
+      { field: 'applicationNumber', label: 'PG Application / Form Number', type: 'text', placeholder: 'e.g. PG/2024/09182', required: true },
+      { field: 'programme', label: 'Target Programme & Degree', type: 'text', placeholder: 'e.g. M.Sc. Accounting / PGD Public Health', required: true },
+      { field: 'faculty', label: 'Faculty & Department', type: 'text', placeholder: 'Faculty of Management Sciences', required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Number for Delivery', type: 'number', placeholder: '08012345678', required: true }
+    ]
+  },
+  {
+    id: 'POSTGRADUATE_ACCEPTANCE_FEE',
+    title: '💳 POSTGRADUATE ACCEPTANCE FEE PAYMENT',
+    shortDesc: 'Fast SPGS Remita RRR generation, instant payment reconciliation, and Bursary Department clearance stamping.',
+    detailedDesc: 'Ensure your postgraduate admission offer is secured before the deadline. We generate your official acceptance Remita Retrieval Reference (RRR), process verified payment verification, and obtain official receipt endorsement from the PG Bursary clearance desk.',
+    imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=800&auto=format&fit=crop&q=80',
+    baseFee: 2500,
+    processingTime: '1 - 3 Hours',
+    deliveryMethod: 'Instant WhatsApp & SMS',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'FUTO', 'UNIBEN'],
+    requiredInputs: [
+      { field: 'applicationNumber', label: 'PG Application / Matric Number', type: 'text', placeholder: 'e.g. SPGS/2024/1140', required: true },
+      { field: 'rrrNumber', label: 'Remita RRR (If already generated)', type: 'text', placeholder: 'Optional if you want us to generate it', required: false },
+      { field: 'whatsappNumber', label: 'WhatsApp Phone Number', type: 'number', placeholder: '08023419982', required: true }
+    ]
+  },
+  {
+    id: 'RESULT_PORTAL_PIN_RECOVERY',
+    title: '🔐 RESULT PORTAL PIN RECOVERY',
+    shortDesc: 'Instant recovery & password reset for locked student portals, lost semester result pins, and MIS account lockouts.',
+    detailedDesc: 'Locked out of your university results or student profile portal? Our verified on-campus agent interfaces directly with the ICT / MIS Directorate to verify student identity, reset portal credentials, retrieve lost result tokens, and restore immediate portal access.',
+    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+    baseFee: 1500,
+    processingTime: 'Instant (Under 60 mins)',
+    deliveryMethod: 'Instant WhatsApp & SMS',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'OAU', 'LASU'],
+    requiredInputs: [
+      { field: 'matricNumber', label: 'Matriculation / Student ID', type: 'text', placeholder: 'e.g. 21/042144081', required: true },
+      { field: 'portalEmail', label: 'Registered Portal Email Address', type: 'text', placeholder: 'student@unical.edu.ng', required: true },
+      { field: 'department', label: 'Department & Faculty', type: 'text', placeholder: 'e.g. Biochemistry, Science', required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Number for Restored Credentials', type: 'number', placeholder: '08148920119', required: true }
+    ]
+  },
+  {
+    id: 'NELFUND_LOAN_APPLICATION',
+    title: '💰 NELFUND LOAN APPLICATION',
+    shortDesc: 'Complete student loan documentation, BVN/NIN institutional verification, and Student Affairs clearance follow-up.',
+    detailedDesc: 'End-to-end NELFUND (Nigerian Education Loan Fund) application handling. We audit your JAMB admission credentials, link verified student BVN/NIN profiles, resolve institutional portal discrepancies, and follow up with the Dean of Student Affairs for rapid approval.',
+    imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
+    baseFee: 2500,
+    processingTime: '24 - 48 Hours',
+    deliveryMethod: 'Official Registry Stamping',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'FUTO', 'UNIBEN'],
+    requiredInputs: [
+      { field: 'matricNumber', label: 'Matriculation Number', type: 'text', placeholder: 'e.g. 21/084144023', required: true },
+      { field: 'jambRegNumber', label: 'JAMB Registration Number', type: 'text', placeholder: 'e.g. 202110293847EF', required: true },
+      { field: 'ninNumber', label: 'National Identification Number (NIN)', type: 'number', placeholder: '11-digit NIN', required: true },
+      { field: 'bankAccount', label: 'Student Bank & Account Number', type: 'text', placeholder: 'Access Bank - 0123456789', required: true },
+      { field: 'department', label: 'Department & Current Level', type: 'text', placeholder: 'Computer Science - 300L', required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Number for Status Updates', type: 'number', placeholder: '08012345678', required: true }
+    ]
+  },
+  {
+    id: 'WAEC_NECO_RESULT_CHECKING',
+    title: '📊 WAEC / NECO RESULT CHECKING',
+    shortDesc: 'Official online verification of May/June or Nov/Dec SSCE scores with high-resolution PDF printout dispatched immediately.',
+    detailedDesc: 'Instant authentic result checking for WAEC, NECO, and NABTEB candidates. We query the central examination council databases, verify grades against exam serial records, and deliver verified high-resolution printouts to your device and WhatsApp.',
+    imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
+    baseFee: 1200,
+    processingTime: 'Instant (Under 5 mins)',
+    deliveryMethod: 'Instant WhatsApp & SMS',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'OAU', 'UNIBEN', 'LASU'],
+    requiredInputs: [
+      { field: 'examType', label: 'Examination Council', type: 'select', options: ['WAEC (May/June School Candidates)', 'WAEC (Nov/Dec Private GCE)', 'NECO (June/July SSCE)', 'NECO (Nov/Dec SSCE GCE)', 'NABTEB National Technical Exam'], required: true },
+      { field: 'examNumber', label: '10-Digit Exam Candidate Number', type: 'text', placeholder: 'e.g. 4012345678', required: true },
+      { field: 'examYear', label: 'Examination Year', type: 'select', options: ['2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', 'Earlier Year'], required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Number for Result PDF', type: 'number', placeholder: '08012345678', required: true }
+    ]
+  },
+  {
+    id: 'WAEC_NECO_SCRATCH_CARDS',
+    title: '🎫 WAEC / NECO SCRATCH CARDS',
+    shortDesc: 'Genuine exam council scratch card PINs & serial tokens with 5-check guarantee sent straight to your phone.',
+    detailedDesc: '100% authentic WAEC, NECO, and NABTEB result checker scratch cards and electronic tokens. Delivers valid 10-12 digit PINs and serial numbers directly to your screen with full validity instructions for checking results up to 5 times.',
+    imageUrl: 'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&auto=format&fit=crop&q=80',
+    baseFee: 3800,
+    processingTime: 'Instant (Automated Delivery)',
+    deliveryMethod: 'Instant WhatsApp & SMS',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'OAU', 'UNIBEN', 'LASU'],
+    requiredInputs: [
+      { field: 'cardType', label: 'Select Token Type', type: 'select', options: ['WAEC Direct Result Checker PIN Token', 'NECO Official Scratch Card Token', 'NABTEB Result Checker Scratch Card', 'JAMB e-Facility Scratch Card PIN'], required: true },
+      { field: 'quantity', label: 'Quantity of Tokens Needed', type: 'select', options: ['1 Token (Up to 5 checks)', '2 Tokens', '5 Tokens (Study Center Pack)'], required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Phone Number for PINs', type: 'number', placeholder: '08012345678', required: true }
+    ]
+  },
+  {
+    id: 'JAMB_EXAM_SLIP_PRINTING',
+    title: '🖨️ JAMB EXAM SLIP PRINTING',
+    shortDesc: 'Original JAMB exam notification slips, CBT venue/date reprinting, and official CAPS admission slips.',
+    detailedDesc: 'Accredited JAMB portal reprinting service. Retrieve and print your updated UTME/Direct Entry examination slip detailing your exact exam center, scheduled date, and mock venue, plus original JAMB result slips and CAPS admission letters with barcodes.',
+    imageUrl: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=800&auto=format&fit=crop&q=80',
+    baseFee: 1500,
+    processingTime: 'Instant (Under 15 mins)',
+    deliveryMethod: 'Instant WhatsApp & SMS',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'OAU', 'FUTO', 'UNIBEN', 'LASU'],
+    requiredInputs: [
+      { field: 'jambRegNumber', label: 'JAMB Registration Number / Profile Code', type: 'text', placeholder: 'e.g. 202410984712FA', required: true },
+      { field: 'slipType', label: 'Slip Category to Print', type: 'select', options: ['UTME Main Exam Schedule & Venue Slip', 'Mock Examination Slip', 'Original JAMB Result Slip (With Passport)', 'Official JAMB CAPS Admission Letter'], required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Phone Number for PDF Slip', type: 'number', placeholder: '08012345678', required: true }
+    ]
+  },
+  {
+    id: 'ADMISSION_DEFERMENT_SUPPLEMENTARY',
+    title: '📄 ADMISSION DEFERMENT & SUPPLEMENTARY LETTERS',
+    shortDesc: 'Official formal admission deferment petitions, HOD/Dean endorsement, supplementary admission follow-up, and Senate approval.',
+    detailedDesc: 'Professional administrative routing for students requesting admission deferment or tracking supplementary admission lists. We draft compliant petitions according to your university\'s academic statutes, obtain HOD/Faculty Dean sign-offs, and track Senate Secretariat approval.',
+    imageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80',
+    baseFee: 4500,
+    processingTime: '2 - 4 Working Days',
+    deliveryMethod: 'Physical Submission & Dispatch',
+    popularFor: ['UNICAL', 'UNILAG', 'UI', 'ABU', 'UNN', 'OAU', 'FUTO', 'UNIBEN'],
+    requiredInputs: [
+      { field: 'matricNumber', label: 'Student Matric / JAMB Reg Number', type: 'text', placeholder: 'e.g. 23/074144019 or 2024109823AB', required: true },
+      { field: 'requestType', label: 'Request Classification', type: 'select', options: ['Admission Deferment to Next Academic Session', 'Supplementary Admission Tracking & Clearance Letter', 'Leave of Absence (Undergraduate/PG)'], required: true },
+      { field: 'reason', label: 'Primary Reason / Justification', type: 'text', placeholder: 'e.g. Medical reasons / Financial constraints / Session deferral', required: true },
+      { field: 'department', label: 'Department & Faculty', type: 'text', placeholder: 'e.g. Faculty of Law / Commercial Law', required: true },
+      { field: 'whatsappNumber', label: 'WhatsApp Contact Number', type: 'number', placeholder: '08148920119', required: true }
+    ]
+  },
   {
     id: 'ASSIGNMENT_ASSISTANCE',
     title: 'Assignment Assistance & Term Paper Research',

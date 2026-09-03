@@ -3,7 +3,8 @@ import {
   StudyMaterial,
   ServiceOrder,
   WalletTransaction,
-  AppNotification
+  AppNotification,
+  MaterialNote
 } from '../types';
 import { STUDY_MATERIALS, INITIAL_SERVICE_ORDERS, INITIAL_NOTIFICATIONS } from '../data/mockData';
 
@@ -34,6 +35,7 @@ export const INITIAL_USER: UserProfile = {
   enrolledCourses: [],
   unlockedMaterialIds: [],
   savedOfflineMaterialIds: [],
+  materialNotes: [],
   viewHistory: [],
   downloadHistory: [],
   contributorStats: {
@@ -48,7 +50,14 @@ export const INITIAL_USER: UserProfile = {
 export const getStoredUserProfile = (): UserProfile => {
   try {
     const data = localStorage.getItem(USER_PROFILE_KEY);
-    if (data) return { ...INITIAL_USER, ...JSON.parse(data) };
+    if (data) {
+      const parsed = JSON.parse(data);
+      return {
+        ...INITIAL_USER,
+        ...parsed,
+        materialNotes: Array.isArray(parsed.materialNotes) ? parsed.materialNotes : []
+      };
+    }
   } catch (e) {
     console.error('Error reading cached user profile', e);
   }
@@ -61,6 +70,30 @@ export const saveUserProfile = (profile: UserProfile): void => {
   } catch (e) {
     console.error('Error saving cached user profile', e);
   }
+};
+
+export const saveMaterialNoteToProfile = (note: MaterialNote): UserProfile => {
+  const current = getStoredUserProfile();
+  const existingNotes = current.materialNotes || [];
+  const noteIndex = existingNotes.findIndex((n) => n.id === note.id);
+  let updatedNotes: MaterialNote[];
+  if (noteIndex >= 0) {
+    updatedNotes = existingNotes.map((n) => (n.id === note.id ? note : n));
+  } else {
+    updatedNotes = [note, ...existingNotes];
+  }
+  const updatedUser: UserProfile = { ...current, materialNotes: updatedNotes };
+  saveUserProfile(updatedUser);
+  return updatedUser;
+};
+
+export const deleteMaterialNoteFromProfile = (noteId: string): UserProfile => {
+  const current = getStoredUserProfile();
+  const existingNotes = current.materialNotes || [];
+  const updatedNotes = existingNotes.filter((n) => n.id !== noteId);
+  const updatedUser: UserProfile = { ...current, materialNotes: updatedNotes };
+  saveUserProfile(updatedUser);
+  return updatedUser;
 };
 
 export const getStoredMaterials = (): StudyMaterial[] => {

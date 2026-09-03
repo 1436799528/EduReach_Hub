@@ -84,20 +84,60 @@ export const CampusServiceDesk: React.FC<CampusServiceDeskProps> = ({
 
   // Filter services by structured category
   const filteredServices = SERVICE_ITEMS.filter(svc => {
-    if (activeCategoryTab === 'academic') {
-      return ['ASSIGNMENT_ASSISTANCE', 'PROJECT_GUIDANCE', 'RESEARCH_SUPPORT', 'ACADEMIC_TUTORIALS'].includes(svc.id);
-    }
-    if (activeCategoryTab === 'registry') {
-      return ['TRANSCRIPT_PROCESSING', 'STATEMENT_OF_RESULT', 'NELFUND_DOC_PREP', 'CAMPUS_CLEARANCE'].includes(svc.id);
+    if (activeCategoryTab === 'admissions') {
+      return [
+        'POSTGRADUATE_ADMISSION_LETTER',
+        'POSTGRADUATE_ACCEPTANCE_FEE',
+        'ADMISSION_DEFERMENT_SUPPLEMENTARY',
+        'DEFERMENT_LETTER'
+      ].includes(svc.id);
     }
     if (activeCategoryTab === 'pins') {
-      return ['RESULT_CHECKER_PIN', 'JAMB_PORTAL_SCRATCH'].includes(svc.id);
+      return [
+        'RESULT_PORTAL_PIN_RECOVERY',
+        'WAEC_NECO_RESULT_CHECKING',
+        'WAEC_NECO_SCRATCH_CARDS',
+        'JAMB_EXAM_SLIP_PRINTING',
+        'RESULT_CHECKER_PIN',
+        'POST_UTME_SCREENING_PIN'
+      ].includes(svc.id);
+    }
+    if (activeCategoryTab === 'nelfund') {
+      return [
+        'NELFUND_LOAN_APPLICATION',
+        'NELFUND_LOAN_ASSIST',
+        'REMITA_FEES_CLEARANCE',
+        'ACADEMIC_TRANSCRIPT',
+        'STATEMENT_OF_RESULT'
+      ].includes(svc.id);
+    }
+    if (activeCategoryTab === 'academic') {
+      return [
+        'ASSIGNMENT_ASSISTANCE',
+        'PROJECT_GUIDANCE',
+        'RESEARCH_SUPPORT',
+        'ACADEMIC_TUTORIALS'
+      ].includes(svc.id);
     }
     return true;
   });
 
   const getServiceIcon = (id: string) => {
     switch (id) {
+      case 'POSTGRADUATE_ADMISSION_LETTER':
+      case 'POSTGRADUATE_ACCEPTANCE_FEE':
+      case 'ADMISSION_DEFERMENT_SUPPLEMENTARY':
+        return <GraduationCap className="w-5 h-5 text-orange-600" />;
+      case 'RESULT_PORTAL_PIN_RECOVERY':
+        return <Lock className="w-5 h-5 text-orange-600" />;
+      case 'NELFUND_LOAN_APPLICATION':
+      case 'NELFUND_LOAN_ASSIST':
+        return <Building2 className="w-5 h-5 text-orange-600" />;
+      case 'WAEC_NECO_RESULT_CHECKING':
+      case 'WAEC_NECO_SCRATCH_CARDS':
+      case 'JAMB_EXAM_SLIP_PRINTING':
+      case 'RESULT_CHECKER_PIN':
+        return <FileCheck className="w-5 h-5 text-orange-600" />;
       case 'ASSIGNMENT_ASSISTANCE':
         return <FileCheck className="w-5 h-5 text-orange-600" />;
       case 'PROJECT_GUIDANCE':
@@ -106,7 +146,7 @@ export const CampusServiceDesk: React.FC<CampusServiceDeskProps> = ({
         return <Search className="w-5 h-5 text-orange-600" />;
       case 'ACADEMIC_TUTORIALS':
         return <GraduationCap className="w-5 h-5 text-orange-600" />;
-      case 'TRANSCRIPT_PROCESSING':
+      case 'ACADEMIC_TRANSCRIPT':
       case 'STATEMENT_OF_RESULT':
         return <FileText className="w-5 h-5 text-orange-600" />;
       default:
@@ -161,25 +201,14 @@ export const CampusServiceDesk: React.FC<CampusServiceDeskProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveCategoryTab('academic')}
+            onClick={() => setActiveCategoryTab('admissions')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeCategoryTab === 'academic'
+              activeCategoryTab === 'admissions'
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            Academic & Research
-          </button>
-
-          <button
-            onClick={() => setActiveCategoryTab('registry')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeCategoryTab === 'registry'
-                ? 'bg-orange-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            Registry & Transcripts
+            Postgraduate & Admissions
           </button>
 
           <button
@@ -190,7 +219,29 @@ export const CampusServiceDesk: React.FC<CampusServiceDeskProps> = ({
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            PINs & Scratch Cards
+            Result Checking & PINs
+          </button>
+
+          <button
+            onClick={() => setActiveCategoryTab('nelfund')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeCategoryTab === 'nelfund'
+                ? 'bg-orange-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            NELFUND & Registry
+          </button>
+
+          <button
+            onClick={() => setActiveCategoryTab('academic')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeCategoryTab === 'academic'
+                ? 'bg-orange-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            Academic & Projects
           </button>
 
           <button
@@ -230,39 +281,59 @@ export const CampusServiceDesk: React.FC<CampusServiceDeskProps> = ({
           {filteredServices.map((service) => (
             <div
               key={service.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-orange-300 hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:border-orange-300 hover:shadow-lg transition-all flex flex-col justify-between group"
             >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
-                    {getServiceIcon(service.id)}
+              <div>
+                {/* Service Header Image */}
+                <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+                  <img
+                    src={service.imageUrl || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80'}
+                    alt={service.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
+                  
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <div className="w-8 h-8 rounded-lg bg-white/90 backdrop-blur-xs flex items-center justify-center shadow-xs">
+                      {getServiceIcon(service.id)}
+                    </div>
                   </div>
-                  <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                    {service.processingTime}
-                  </span>
+
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[11px] font-bold text-white bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-md">
+                      {service.processingTime}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider block">
+                      EduReach Campus Desk
+                    </span>
+                    <h3 className="text-base font-extrabold text-white leading-tight drop-shadow-xs line-clamp-2">
+                      {service.title}
+                    </h3>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    {service.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <div className="p-5 space-y-3">
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
                     {service.shortDesc}
                   </p>
-                </div>
 
-                <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Delivery Method:
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
-                    <Check className="w-3.5 h-3.5 text-orange-600 flex-shrink-0" />
-                    <span>{service.deliveryMethod}</span>
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Delivery Method:
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span>{service.deliveryMethod}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+              <div className="p-5 pt-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold block uppercase">Fixed Fee</span>
                   <span className="text-lg font-extrabold text-slate-900">
@@ -270,9 +341,10 @@ export const CampusServiceDesk: React.FC<CampusServiceDeskProps> = ({
                   </span>
                 </div>
 
+                {/* Prominent CTA Button */}
                 <button
                   onClick={() => setSelectedService(service)}
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>Request Service</span>
                   <ArrowRight className="w-3.5 h-3.5" />

@@ -10,6 +10,7 @@ export interface SupabaseProfileRow {
   level?: string | null;
   session?: string | null;
   institution_id?: string | null;
+  programme_id?: string | null;
   matric_number?: string | null;
   avatar_url?: string | null;
   role?: string | null;

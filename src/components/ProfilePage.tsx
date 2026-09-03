@@ -19,8 +19,13 @@ import {
   ChevronDown, 
   ChevronUp, 
   FileText, 
-  BookOpen
+  BookOpen,
+  StickyNote,
+  Trash2,
+  Copy
 } from 'lucide-react';
+import { deleteMaterialNoteFromProfile } from '../services/storage';
+import { deleteMaterialNoteFromBackend } from '../lib/userFeatures';
 
 interface ProfilePageProps {
   user: UserProfile;
@@ -54,6 +59,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [helpMessage, setHelpMessage] = useState('');
   const [helpSent, setHelpSent] = useState(false);
+  const [copiedProfileNoteId, setCopiedProfileNoteId] = useState<string | null>(null);
+
+  const handleDeleteProfileNote = async (noteId: string) => {
+    const updatedUser = deleteMaterialNoteFromProfile(noteId);
+    onUpdateUser({ materialNotes: updatedUser.materialNotes });
+    if (user.id) {
+      try {
+        await deleteMaterialNoteFromBackend(user.id, noteId);
+      } catch (e) {
+        console.warn('Backend delete note error', e);
+      }
+    }
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -450,6 +468,97 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </div>
                 </div>
 
+                {/* Saved Study Memos & Quick Notes Section */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <StickyNote className="w-4 h-4 text-amber-500" />
+                      <span className="text-xs font-bold text-slate-800">
+                        Saved Study Memos & Notes ({user.materialNotes?.length || 0})
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400">Linked to study packs</span>
+                  </div>
+
+                  {(!user.materialNotes || user.materialNotes.length === 0) ? (
+                    <div className="text-center py-6 px-3 bg-white rounded-xl border border-slate-200/70 space-y-1.5">
+                      <p className="text-xs font-semibold text-slate-700">No study notes saved yet</p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        While reading course summaries or past questions in My School, click the Quick Notes tab to save exam memos to your profile.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                      {user.materialNotes.map((note) => {
+                        const dateStr = new Date(note.createdAt).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        });
+
+                        return (
+                          <div
+                            key={note.id}
+                            className="p-3.5 rounded-xl bg-white border border-slate-200 text-xs space-y-1.5 shadow-2xs"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-800 text-[10px] font-bold">
+                                  {note.courseCode}
+                                </span>
+                                <span className="font-semibold text-slate-800 truncate max-w-[200px]">
+                                  {note.materialTitle}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  {dateStr}
+                                </span>
+                                {note.updatedAt && (
+                                  <span className="text-[10px] text-amber-600 font-semibold">
+                                    (Edited)
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (navigator.clipboard) {
+                                      navigator.clipboard.writeText(note.content);
+                                      setCopiedProfileNoteId(note.id);
+                                      setTimeout(() => setCopiedProfileNoteId(null), 2000);
+                                    }
+                                  }}
+                                  className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                  title="Copy memo"
+                                >
+                                  {copiedProfileNoteId === note.id ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteProfileNote(note.id)}
+                                  className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Delete memo"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">
+                              {note.content}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
               </div>
             )}
           </div>
@@ -467,6 +576,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-600">Saved Offline Packs</span>
                   <strong className="text-slate-900 font-bold">{user.savedOfflineMaterialIds.length}</strong>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">Saved Study Memos</span>
+                  <strong className="text-amber-600 font-bold">{user.materialNotes?.length || 0}</strong>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
