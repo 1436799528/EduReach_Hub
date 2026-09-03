@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StudyMaterial, UserProfile, InstitutionId, FeedPost } from './types';
+import { StudyMaterial, UserProfile, InstitutionId, FeedPost, MaterialNote } from './types';
 import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
 import { FEED_POSTS, STUDY_MATERIALS } from './data/mockData';
 import { Navbar } from './components/Navbar';
@@ -15,7 +15,7 @@ import { Footer } from './components/Footer';
 import { getCurrentUserProfile, subscribeToAuthChanges, signOut } from './lib/auth';
 import { isSupabaseConfigured, isValidUuid } from './lib/supabase';
 import { getMyAcademicMaterials, getMyProfile, getCampusFeedPosts, getSignedResourceUrl, updateMyProfile } from './lib/dataService';
-import { listBookmarks, toggleBookmark, type BookmarkEntity } from './lib/userFeatures';
+import { listBookmarks, listMaterialNotesFromBackend, toggleBookmark, type BookmarkEntity } from './lib/userFeatures';
 
 type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
 
@@ -72,21 +72,35 @@ export default function App() {
         setMaterials(liveMaterials);
 
         try {
-          const [resourceBookmarks, pastQuestionBookmarks] = await Promise.all([
+          const [resourceBookmarks, pastQuestionBookmarks, backendNotes] = await Promise.all([
             listBookmarks(profile.id, 'resource'),
             listBookmarks(profile.id, 'past_question'),
+            listMaterialNotesFromBackend(profile.id),
           ]);
           const liveMaterialIds = new Set(liveMaterials.map((material) => material.id));
           const savedMaterialIds = [...resourceBookmarks, ...pastQuestionBookmarks]
             .map((bookmark) => bookmark.entity_id)
             .filter((id) => liveMaterialIds.has(id));
-          setUser((current) => ({ ...current, savedOfflineMaterialIds: [...new Set(savedMaterialIds)] }));
+          const materialNotes: MaterialNote[] = backendNotes.map((note) => ({
+            id: note.id,
+            materialId: note.material_id,
+            courseCode: note.course_code,
+            materialTitle: note.material_title,
+            content: note.content,
+            createdAt: note.created_at,
+            updatedAt: note.updated_at,
+          }));
+          setUser((current) => ({
+            ...current,
+            savedOfflineMaterialIds: [...new Set(savedMaterialIds)],
+            materialNotes,
+          }));
         } catch (error) {
-          console.error('Bookmark load failed', error);
+          console.error('Student feature hydration failed', error);
         }
       } else {
         setMaterials([]);
-        setUser((current) => ({ ...current, savedOfflineMaterialIds: [] }));
+        setUser((current) => ({ ...current, savedOfflineMaterialIds: [], materialNotes: [] }));
       }
       setFeedPosts(liveFeed);
     } finally {
@@ -128,6 +142,7 @@ export default function App() {
         setMaterials([]);
         setFeedPosts([]);
         setReaderMaterial(null);
+        setUser((current) => ({ ...current, savedOfflineMaterialIds: [], materialNotes: [] }));
         return;
       }
       const profile = await getCurrentUserProfile();
@@ -161,7 +176,7 @@ export default function App() {
       setMaterials([]);
       setFeedPosts([]);
       setReaderMaterial(null);
-      setUser((current) => ({ ...current, savedOfflineMaterialIds: [] }));
+      setUser((current) => ({ ...current, savedOfflineMaterialIds: [], materialNotes: [] }));
     }
   };
 
