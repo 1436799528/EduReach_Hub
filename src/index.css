@@ -19,11 +19,7 @@
     font-weight: 700;
   }
 
-  button,
-  a,
-  input,
-  select,
-  textarea {
+  button, a, input, select, textarea {
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -121,6 +117,44 @@
 .er-tilt:hover { transform: perspective(900px) rotateX(1deg) rotateY(-1deg) translateY(-3px); }
 .er-float { animation: erFloat 5s ease-in-out infinite; }
 .er-glow { animation: erPulseGlow 4s ease-in-out infinite; }
+
+/* Apply depth to existing site cards and primary actions without changing their structure. */
+@media (hover: hover) and (pointer: fine) {
+  .bg-white.rounded-2xl.border,
+  .bg-white.rounded-3xl.border,
+  .bg-white.rounded-2xl.shadow-xs,
+  .bg-white.rounded-3xl.shadow-xs {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+
+  .bg-white.rounded-2xl.border:hover,
+  .bg-white.rounded-3xl.border:hover,
+  .bg-white.rounded-2xl.shadow-xs:hover,
+  .bg-white.rounded-3xl.shadow-xs:hover {
+    transform: translateY(-3px);
+    border-color: rgba(249, 115, 22, 0.22);
+    box-shadow: var(--er-shadow-hover);
+  }
+
+  button.bg-orange-600,
+  a.bg-orange-600,
+  button.bg-emerald-600,
+  a.bg-emerald-600,
+  button.bg-slate-900,
+  a.bg-slate-900 {
+    transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease, background-color 160ms ease;
+  }
+
+  button.bg-orange-600:hover,
+  a.bg-orange-600:hover,
+  button.bg-emerald-600:hover,
+  a.bg-emerald-600:hover,
+  button.bg-slate-900:hover,
+  a.bg-slate-900:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
+  }
+}
 
 @media (max-width: 767px) {
   .er-page { min-height: calc(100vh - 3.75rem); }
