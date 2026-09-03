@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StudyMaterial, UserProfile, InstitutionId, FeedPost } from './types';
-import { getStoredUserProfile, getStoredMaterials, saveMaterials, INITIAL_USER } from './services/storage';
+import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
 import { FEED_POSTS, STUDY_MATERIALS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
@@ -50,11 +50,9 @@ export default function App() {
     setDataLoading(true);
     try {
       if (!isValidUuid(profile.id)) {
-        const liveFeed = await getCampusFeedPosts().catch((error) => {
-          console.error('Campus feed load failed', error);
-          return [] as FeedPost[];
-        });
-        setFeedPosts(liveFeed);
+        setFeedPosts([]);
+        setMaterials([]);
+        setUser((current) => ({ ...current, savedOfflineMaterialIds: [] }));
         return;
       }
 
@@ -86,6 +84,9 @@ export default function App() {
         } catch (error) {
           console.error('Bookmark load failed', error);
         }
+      } else {
+        setMaterials([]);
+        setUser((current) => ({ ...current, savedOfflineMaterialIds: [] }));
       }
       setFeedPosts(liveFeed);
     } finally {
@@ -124,6 +125,9 @@ export default function App() {
         setIsAuthenticated(false);
         setAuthLoading(false);
         setView('landing');
+        setMaterials([]);
+        setFeedPosts([]);
+        setReaderMaterial(null);
         return;
       }
       const profile = await getCurrentUserProfile();
@@ -156,6 +160,7 @@ export default function App() {
       setView('landing');
       setMaterials([]);
       setFeedPosts([]);
+      setReaderMaterial(null);
       setUser((current) => ({ ...current, savedOfflineMaterialIds: [] }));
     }
   };
@@ -166,22 +171,7 @@ export default function App() {
     setShowAuth(false);
     setView(pendingTargetView || 'feed');
     await loadLiveStudentData(profile);
-  };
-
-  const handleContinueAsGuest = () => {
-    const guestUser: UserProfile = {
-      ...INITIAL_USER,
-      id: 'guest_student',
-      name: 'Guest Scholar',
-      email: 'guest@edureach.ng',
-      institutionId: 'UNICAL',
-      department: 'Computer Science',
-      level: '300L'
-    };
-    setUser(guestUser);
-    setIsAuthenticated(true);
-    setShowAuth(false);
-    setView(pendingTargetView || 'my_school');
+    setAuthMessage('');
   };
 
   const handleProfileUpdate = async (updates: Partial<UserProfile>) => {
@@ -281,12 +271,7 @@ export default function App() {
             onNavigate={(target) => requireAuth(target)}
             onNavigateToTab={(tab) => requireAuth(tab)}
             onOpenAuth={(mode, message) => requireAuth('feed', mode === 'register' ? 'signup' : 'login', message)}
-            onOpenDemoCBT={() => {
-              const demo = materials[0] || STUDY_MATERIALS[0];
-              if (demo) {
-                setReaderMaterial(demo);
-              }
-            }}
+            onOpenDemoCBT={() => requireAuth('my_school', 'login', 'Sign in to access CBT practice and your school materials.')}
           />
         )}
         {view === 'feed' && isAuthenticated && (
@@ -341,11 +326,10 @@ export default function App() {
           onLogin={handleLogin}
           onLoginSuccess={handleLogin}
           onSwitchMode={setAuthMode}
-          onContinueAsGuest={handleContinueAsGuest}
         />
       )}
 
-      {readerMaterial && (
+      {readerMaterial && isAuthenticated && (
         <MaterialReaderModal
           material={readerMaterial}
           user={user}
