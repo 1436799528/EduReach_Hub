@@ -42,30 +42,21 @@ export const signUpStudent = async (input: StudentProfileInput, email: string, p
   });
   if (error || !data.user) return { data, error };
 
-  // Store the real UUID from institutions, not the frontend acronym.
-  const institution = input.institutionId
-    ? await client.from('institutions').select('id').eq('acronym', input.institutionId).maybeSingle()
-    : { data: null, error: null };
-  if (institution.error) return { data, error: institution.error };
-
-  // If email confirmation is enabled there may be no authenticated session yet.
-  // The auth metadata above allows a database trigger to create the profile safely.
+  // handle_new_student_profile() is attached to auth.users and creates the
+  // student profile with the real institution UUID and role='student'.
+  // Rely on that trigger instead of a second client-side profile write.
   if (!data.session) return { data, error: null, profile: null };
 
-  const profile = await client.from('profiles').upsert({
-    id: data.user.id,
-    full_name: input.fullName.trim(),
-    school: input.school.trim(),
-    faculty: input.faculty.trim(),
-    department: input.department.trim(),
-    level: input.level.trim(),
-    session: input.session?.trim() || '',
-    institution_id: institution.data?.id || null,
-    matric_number: input.matricNumber?.trim() || null,
-    role: 'student',
-  }).select().single();
+  const profile = await getCurrentUserProfile();
+  if (!profile) {
+    return {
+      data,
+      error: new Error('Account created, but your student profile could not be loaded. Please try again.'),
+      profile: null,
+    };
+  }
 
-  return { data, error: profile.error, profile: profile.data };
+  return { data, error: null, profile };
 };
 
 export const getCurrentSession = async (): Promise<Session | null> => {
