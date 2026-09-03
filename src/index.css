@@ -5,48 +5,139 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
-  
+
   body {
     font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #0f172a;
-    background-color: #ffffff;
+    background: #f8fafc;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     font-weight: 700;
   }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+:root {
+  --er-orange: #f97316;
+  --er-ink: #0f172a;
+  --er-border: rgba(148, 163, 184, 0.22);
+  --er-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.05);
+  --er-shadow-hover: 0 20px 50px rgba(15, 23, 42, 0.12), 0 8px 20px rgba(249, 115, 22, 0.08);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes erFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes erPulseGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(249, 115, 22, 0); }
+  50% { box-shadow: 0 10px 30px rgba(249, 115, 22, 0.14); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.18s ease-out forwards; }
+
+.er-page {
+  min-height: calc(100vh - 4rem);
+  background:
+    radial-gradient(circle at 50% -10%, rgba(249, 115, 22, 0.07), transparent 32rem),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.er-content {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: clamp(1rem, 2vw, 1.75rem);
+}
+
+.er-surface {
+  border: 1px solid var(--er-border);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--er-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.er-card {
+  position: relative;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,250,252,0.94));
+  box-shadow: var(--er-shadow);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  will-change: transform;
+}
+
+.er-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(249, 115, 22, 0.26);
+  box-shadow: var(--er-shadow-hover);
+}
+
+.er-card:active { transform: translateY(-1px) scale(0.995); }
+
+.er-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255,255,255,0.18);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.er-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 25%, rgba(255,255,255,0.24) 50%, transparent 75%);
+  transform: translateX(-130%);
+  transition: transform 600ms ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.er-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14), 0 6px 16px rgba(249, 115, 22, 0.1);
+}
+
+.er-cta:hover::after { transform: translateX(130%); }
+.er-cta:active { transform: translateY(0) scale(0.985); }
+
+.er-tilt { transition: transform 180ms ease, box-shadow 180ms ease; }
+.er-tilt:hover { transform: perspective(900px) rotateX(1deg) rotateY(-1deg) translateY(-3px); }
+.er-float { animation: erFloat 5s ease-in-out infinite; }
+.er-glow { animation: erPulseGlow 4s ease-in-out infinite; }
+
+@media (max-width: 767px) {
+  .er-page { min-height: calc(100vh - 3.75rem); }
+  .er-content { padding: 0.875rem; }
+  .er-card:hover, .er-tilt:hover, .er-cta:hover { transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.15s ease-out forwards;
-}
-
-/* Custom low-data scrollbars */
-.scrollbar-thin::-webkit-scrollbar {
-  height: 4px;
-  width: 4px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.3);
-  border-radius: 9999px;
-}
-
-
+.scrollbar-thin::-webkit-scrollbar { height: 4px; width: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 9999px; }
