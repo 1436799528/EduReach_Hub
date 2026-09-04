@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StudyMaterial, UserProfile, InstitutionId, FeedPost, MaterialNote } from './types';
 import { getStoredUserProfile, getStoredMaterials, saveMaterials } from './services/storage';
-import { FEED_POSTS } from './data/mockData';
+import { FEED_POSTS, STUDY_MATERIALS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { CampusFeedPage } from './components/CampusFeedPage';
@@ -19,9 +19,36 @@ import { listBookmarks, listMaterialNotesFromBackend, toggleBookmark, type Bookm
 
 type View = 'landing' | 'feed' | 'my_school' | 'services' | 'profile';
 
+const GUEST_PROFILE: UserProfile = {
+  id: '',
+  name: 'Guest Student',
+  email: '',
+  phoneNumber: '',
+  institutionId: 'UNICAL',
+  department: 'Computer Science',
+  faculty: 'Physical Sciences',
+  level: '300L',
+  walletBalance: 0,
+  isAPlusSubscriber: false,
+  enrolledCourses: ['CSC 311', 'CSC 321', 'MTH 301'],
+  unlockedMaterialIds: [],
+  savedOfflineMaterialIds: [],
+  materialNotes: [],
+  viewHistory: [],
+  downloadHistory: [],
+  contributorStats: {
+    totalEarned: 0,
+    totalRoyaltyPaid: 0,
+    materialsUploaded: 0,
+    pendingPayout: 0,
+  },
+  role: 'student',
+};
+
 export default function App() {
   const [user, setUser] = useState<UserProfile>(getStoredUserProfile);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGuestPreview, setIsGuestPreview] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   const [view, setView] = useState<View>('landing');
@@ -33,6 +60,8 @@ export default function App() {
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>(FEED_POSTS);
   const [readerMaterial, setReaderMaterial] = useState<StudyMaterial | null>(null);
   const [, setSearchQuery] = useState('');
+
+  const hasAppAccess = isAuthenticated || isGuestPreview;
 
   const initialInstitution = useMemo<InstitutionId>(() => {
     if (user.institutionId && user.institutionId !== 'ALL') return user.institutionId;
@@ -121,6 +150,7 @@ export default function App() {
         if (!mounted) return;
         setIsAuthenticated(Boolean(profile));
         if (profile) {
+          setIsGuestPreview(false);
           setUser(profile);
           await loadLiveStudentData(profile);
         }
@@ -138,16 +168,13 @@ export default function App() {
       if (!session) {
         setIsAuthenticated(false);
         setAuthLoading(false);
-        setView('landing');
-        setMaterials([]);
-        setFeedPosts([]);
-        setReaderMaterial(null);
-        setUser((current) => ({ ...current, savedOfflineMaterialIds: [], materialNotes: [] }));
+        if (!isGuestPreview) setView('landing');
         return;
       }
       const profile = await getCurrentUserProfile();
       if (!mounted) return;
       setIsAuthenticated(Boolean(profile));
+      setIsGuestPreview(false);
       if (profile) {
         setUser(profile);
         await loadLiveStudentData(profile);
@@ -159,19 +186,32 @@ export default function App() {
       mounted = false;
       subscription.data.subscription.unsubscribe();
     };
-  }, []);
+  }, [isGuestPreview]);
 
   useEffect(() => {
-    saveMaterials(materials);
-  }, [materials]);
+    if (!isGuestPreview) saveMaterials(materials);
+  }, [materials, isGuestPreview]);
+
+  const handleGuestLogin = () => {
+    setIsGuestPreview(true);
+    setIsAuthenticated(false);
+    setUser({ ...GUEST_PROFILE });
+    setMaterials(getStoredMaterials().length ? getStoredMaterials() : STUDY_MATERIALS);
+    setFeedPosts([...FEED_POSTS]);
+    setReaderMaterial(null);
+    setView('feed');
+    setAuthMessage('');
+    setShowAuth(false);
+  };
 
   const handleLogout = async () => {
     try {
-      if (isSupabaseConfigured) await signOut();
+      if (isAuthenticated && isSupabaseConfigured) await signOut();
     } catch (error) {
       console.error('Logout failed', error);
     } finally {
       setIsAuthenticated(false);
+      setIsGuestPreview(false);
       setView('landing');
       setMaterials([]);
       setFeedPosts([]);
@@ -183,6 +223,7 @@ export default function App() {
   const handleLogin = async (profile: UserProfile) => {
     setUser(profile);
     setIsAuthenticated(true);
+    setIsGuestPreview(false);
     setShowAuth(false);
     setView(pendingTargetView || 'feed');
     await loadLiveStudentData(profile);
@@ -252,11 +293,16 @@ export default function App() {
   };
 
   const handleReadMaterial = async (material: StudyMaterial) => {
-    if (!isAuthenticated) {
+    if (!hasAppAccess) {
       setPendingTargetView('my_school');
       setAuthMode('login');
       setAuthMessage('Sign in to access your school materials.');
       setShowAuth(true);
+      return;
+    }
+
+    if (isGuestPreview) {
+      setReaderMaterial(material);
       return;
     }
 
@@ -277,7 +323,7 @@ export default function App() {
   };
 
   const requireAuth = (nextView: View = 'feed', mode: 'login' | 'signup' = 'login', message?: string) => {
-    if (!isAuthenticated) {
+    if (!hasAppAccess) {
       setPendingTargetView(nextView);
       setAuthMode(mode);
       setAuthMessage(message || '');
@@ -293,7 +339,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 overflow-x-hidden">
-      {isAuthenticated && (
+      {hasAppAccess && (
         <Navbar
           user={user}
           currentView={view}
@@ -303,7 +349,13 @@ export default function App() {
         />
       )}
 
-      <main key={view} className={isAuthenticated ? 'er-page animate-fadeIn' : 'animate-fadeIn'}>
+      {isGuestPreview && (
+        <div className="sticky top-16 z-30 border-b border-cyan-200 bg-cyan-50/95 backdrop-blur px-3 py-2 text-center text-[11px] sm:text-xs font-semibold text-cyan-900">
+          Guest Preview · Mock data · Account actions are disabled
+        </div>
+      )}
+
+      <main key={view} className={hasAppAccess ? 'er-page animate-fadeIn' : 'animate-fadeIn'}>
         {view === 'landing' && (
           <LandingPage
             isLoggedIn={isAuthenticated}
@@ -314,17 +366,17 @@ export default function App() {
             onOpenDemoCBT={() => requireAuth('my_school', 'login', 'Sign in to access CBT practice and your school materials.')}
           />
         )}
-        {view === 'feed' && isAuthenticated && (
+        {view === 'feed' && hasAppAccess && (
           <CampusFeedPage
             posts={feedPosts}
             currentInstitution={selectedInstitution}
             userProfile={{ id: user.id, name: user.name, department: user.department, level: user.level, institutionId: user.institutionId }}
             onOpenAuth={() => { setAuthMode('login'); setShowAuth(true); }}
-            isLoggedIn={isAuthenticated}
+            isLoggedIn={hasAppAccess}
             onSelectMaterialToRead={() => setView('my_school')}
           />
         )}
-        {view === 'my_school' && isAuthenticated && (
+        {view === 'my_school' && hasAppAccess && (
           <MySchoolPage
             user={user}
             materials={materials}
@@ -336,20 +388,20 @@ export default function App() {
             onOpenCBT={handleReadMaterial}
           />
         )}
-        {view === 'services' && isAuthenticated && (
+        {view === 'services' && hasAppAccess && (
           <div className="er-content space-y-4 sm:space-y-6">
             <MyServicesPage user={user} />
-            <ServiceRequestHistory user={user} />
+            <ServiceRequestHistory user={isGuestPreview ? undefined : user} />
           </div>
         )}
-        {view === 'profile' && isAuthenticated && (
+        {view === 'profile' && hasAppAccess && (
           <div className="er-content">
             <ProfilePage user={user} onUpdateUser={handleProfileUpdate} onLogout={handleLogout} />
           </div>
         )}
       </main>
 
-      {!isAuthenticated && (
+      {!hasAppAccess && (
         <Footer
           onOpenAuth={(mode) => {
             setAuthMode(mode === 'register' ? 'signup' : 'login');
@@ -367,11 +419,12 @@ export default function App() {
           onClose={() => setShowAuth(false)}
           onLogin={handleLogin}
           onLoginSuccess={handleLogin}
+          onGuestLogin={handleGuestLogin}
           onSwitchMode={setAuthMode}
         />
       )}
 
-      {readerMaterial && isAuthenticated && (
+      {readerMaterial && hasAppAccess && (
         <MaterialReaderModal
           material={readerMaterial}
           user={user}
