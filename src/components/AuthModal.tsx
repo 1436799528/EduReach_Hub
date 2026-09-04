@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, GraduationCap, Lock, Mail, User, School, ArrowRight, CheckCircle2, ShieldCheck, Eye, EyeOff, Sparkles, AlertCircle } from 'lucide-react';
+import { X, GraduationCap, Lock, Mail, User, School, ArrowRight, CheckCircle2, ShieldCheck, Eye, EyeOff, Sparkles, AlertCircle, Eye as GuestEye } from 'lucide-react';
 import { UserProfile, InstitutionId } from '../types';
 import { INSTITUTIONS } from '../data/mockData';
 import { getCurrentUserProfile, signInWithPassword, signUpStudent } from '../lib/auth';
@@ -9,6 +9,7 @@ interface AuthModalProps {
   onClose: () => void;
   onLoginSuccess?: (user: UserProfile) => void;
   onLogin?: (user: UserProfile) => void;
+  onGuestLogin?: () => void;
   initialMode?: 'login' | 'register' | 'signup';
   mode?: 'login' | 'register' | 'signup';
   redirectMessage?: string;
@@ -20,6 +21,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onLoginSuccess,
   onLogin,
+  onGuestLogin,
   initialMode = 'login',
   mode: modeProp,
   redirectMessage,
@@ -30,9 +32,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return 'login';
   };
 
-  const [mode, setMode] = useState<'login' | 'register'>(
-    getResolvedMode(modeProp || initialMode)
-  );
+  const [mode, setMode] = useState<'login' | 'register'>(getResolvedMode(modeProp || initialMode));
   const [showPassword, setShowPassword] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -56,11 +56,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   if (isOpen === false) return null;
 
   const handleNotifyLogin = (profile: UserProfile) => {
-    if (onLoginSuccess) {
-      onLoginSuccess(profile);
-    } else if (onLogin) {
-      onLogin(profile);
-    }
+    if (onLoginSuccess) onLoginSuccess(profile);
+    else if (onLogin) onLogin(profile);
   };
 
   const handleModeChange = (nextMode: 'login' | 'register') => {
@@ -71,6 +68,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const resetError = () => { if (error) setError(''); };
+
+  const handleGuestLogin = () => {
+    if (busy || !onGuestLogin) return;
+    setError('');
+    onGuestLogin();
+    onClose();
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,28 +163,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button type="button" onClick={() => { handleModeChange('login'); setConfirmationSent(false); }} className="px-5 py-2.5 rounded-xl bg-orange-600 text-white font-bold text-xs hover:bg-orange-700">Go to Sign In</button>
             </div>
           ) : mode === 'login' ? (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">Student Email</label>
-                <div className="relative"><input type="email" required autoComplete="email" placeholder="you@example.com" value={loginEmail} onChange={e => { setLoginEmail(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-3 pl-9 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /></div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">Password</label>
-                <div className="relative"><input type={showPassword ? 'text' : 'password'} required autoComplete="current-password" placeholder="Enter your password" value={loginPassword} onChange={e => { setLoginPassword(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-3 pl-9 pr-10 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
-              </div>
-              <button type="submit" disabled={busy} className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"><span>{busy ? 'Signing In…' : 'Sign In to Student Portal'}</span><ArrowRight className="w-4 h-4" /></button>
-            </form>
+            <div className="space-y-4">
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1.5">Student Email</label>
+                  <div className="relative"><input type="email" required autoComplete="email" placeholder="you@example.com" value={loginEmail} onChange={e => { setLoginEmail(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-3 pl-9 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /></div>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1.5">Password</label>
+                  <div className="relative"><input type={showPassword ? 'text' : 'password'} required autoComplete="current-password" placeholder="Enter your password" value={loginPassword} onChange={e => { setLoginPassword(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-3 pl-9 pr-10 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
+                </div>
+                <button type="submit" disabled={busy} className="er-cta w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"><span>{busy ? 'Signing In…' : 'Sign In to Student Portal'}</span><ArrowRight className="w-4 h-4" /></button>
+              </form>
+
+              {onGuestLogin && (
+                <div className="pt-1">
+                  <div className="flex items-center gap-3 text-[10px] text-slate-400 uppercase tracking-wider font-bold"><span className="h-px flex-1 bg-slate-200" /><span>Preview</span><span className="h-px flex-1 bg-slate-200" /></div>
+                  <button type="button" onClick={handleGuestLogin} disabled={busy} className="er-cta w-full mt-3 py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"><GuestEye className="w-4 h-4 text-cyan-300" /><span>Continue as Guest</span></button>
+                  <p className="text-[10px] text-slate-400 text-center mt-2">Preview the student interface with mock data. No account is created.</p>
+                </div>
+              )}
+            </div>
           ) : (
             <form onSubmit={handleRegisterSubmit} className="space-y-3">
               <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Full Name</label><div className="relative"><input type="text" required autoComplete="name" placeholder="e.g. Chukwuebuka Obi" value={name} onChange={e => { setName(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 pl-9 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /><User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" /></div></div>
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Student Email</label><input type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Student Email</label><input type="email" required autoComplete="email" placeholder="you@example.com" value={email} onChange={e => { setEmail(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2"><label className="block text-[11px] font-bold text-slate-700 mb-1">University Campus</label><div className="relative"><select value={institutionId} onChange={e => setInstitutionId(e.target.value as InstitutionId)} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 pl-9 text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none cursor-pointer">{INSTITUTIONS.filter(inst => inst.id !== 'ALL').map(inst => <option key={inst.id} value={inst.id}>{inst.shortName} - {inst.state}</option>)}</select><School className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" /></div></div>
                 <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Level</label><select value={level} onChange={e => setLevel(e.target.value)} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:ring-2 focus:ring-orange-500 focus:outline-none cursor-pointer"><option>100L</option><option>200L</option><option>300L</option><option>400L</option><option>500L</option><option>PGD/MSc</option></select></div>
               </div>
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Department</label><input type="text" required placeholder="e.g. Computer Science, Law, Nursing" value={department} onChange={e => { setDepartment(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
-              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Create Password</label><input type="password" required minLength={6} autoComplete="new-password" placeholder="Minimum 6 characters" value={password} onChange={e => { setPassword(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
-              <button type="submit" disabled={busy} className="w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"><CheckCircle2 className="w-4 h-4" /><span>{busy ? 'Creating Account…' : 'Create Free Scholar Account'}</span></button>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Department</label><input type="text" required placeholder="e.g. Computer Science, Law, Nursing" value={department} onChange={e => { setDepartment(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
+              <div><label className="block text-[11px] font-bold text-slate-700 mb-1">Create Password</label><input type="password" required minLength={6} autoComplete="new-password" placeholder="Minimum 6 characters" value={password} onChange={e => { setPassword(e.target.value); resetError(); }} className="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-orange-500 focus:outline-none" /></div>
+              <button type="submit" disabled={busy} className="er-cta w-full py-3 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"><CheckCircle2 className="w-4 h-4" /><span>{busy ? 'Creating Account…' : 'Create Free Scholar Account'}</span></button>
             </form>
           )}
         </div>
