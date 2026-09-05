@@ -1,0 +1,22 @@
+.service-detail-image-wrap { overflow: hidden; }
+.service-detail-image-wrap .blog-detail-image { display: block; width: 100%; max-height: 520px; object-fit: cover; }
+.service-request-card { position: sticky; top: 110px; }
+.service-request-form .service-form-field { margin-bottom: 2px; }
+.service-form-field label { display: block; margin: 0 0 7px; color: #0b104a; font-weight: 600; }
+.service-form-field select.form-control { min-height: 54px; }
+.service-form-message { margin-bottom: 18px; padding: 13px 15px; line-height: 1.6; }
+.service-form-error { background: #fff0f0; color: #a12626; border-left: 3px solid #c73d3d; }
+.service-auth-note { margin-bottom: 18px; padding: 13px 15px; background: #f7f8ff; color: #687174; border-left: 3px solid #525fe1; font-size: 14px; line-height: 1.6; }
+.service-submit-button:disabled { opacity: .65; cursor: wait; }
+.service-success { padding: 25px; text-align: center; background: #f4f8f5; border: 1px solid #d9e8dd; }
+.service-success > span { color: #2c7a4b; font-size: 34px; }
+.service-success h4 { margin: 12px 0 10px; color: #0b104a; font-size: 24px; }
+.service-success p { color: #687174; line-height: 1.7; }
+.service-reference { margin: 18px 0 8px; padding: 13px 15px; background: #fff; border: 1px dashed #cfd4df; color: #525fe1; font-size: 16px; }
+.service-status-line { margin-bottom: 4px !important; text-transform: capitalize; }
+.service-created-line { font-size: 13px !important; margin-bottom: 20px !important; }
+.service-security-note { margin-top: 18px; color: #7a7f81; font-size: 12px; line-height: 1.6; }
+.service-not-found { padding: 80px 0; }
+.service-step-list, .service-note-list { color: #687174; line-height: 1.85; padding-left: 22px; }
+.service-step-list li, .service-note-list li { margin-bottom: 9px; }
+@media (max-width: 991px) { .service-request-card { position: static; margin-top: 30px; } }
