@@ -11,7 +11,8 @@ async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      // Eduleb keeps separate HTML entry points for each page.
+      appType: 'mpa',
     });
     app.use(vite.middlewares);
   } else {
