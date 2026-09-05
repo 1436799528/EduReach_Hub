@@ -70,6 +70,7 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .blog_post { height: calc(100% - 30px); margin-bottom: 30px; overflow: hidden; background: #fff; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
 .blog-img img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
 .blog_content { padding: 22px; }
+.blog_content h3 a, .blog_post > a, .blog_readmore { text-decoration: none; }
 .blog_meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: #7a7f81; }
 .blog_content h3 { margin: 10px 0; font-size: 22px; line-height: 1.4; }
 .blog_readmore { display: inline-block; margin-top: 15px; color: #525fe1; font-weight: 700; }
@@ -79,7 +80,15 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .blog-filter-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .blog-filter-chips button { border: 1px solid #e0e1e6; background: #fff; color: #555; padding: 8px 13px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: .2s ease; }
 .blog-filter-chips button:hover, .blog-filter-chips button.active { background: #525fe1; border-color: #525fe1; color: #fff; }
-.empty-state { padding: 50px 20px; text-align: center; color: #777; }
+.blog-detail-card { background: #fff; box-shadow: 0 15px 45px rgba(23,23,36,.08); }
+.blog-detail-image img { display: block; width: 100%; max-height: 520px; object-fit: cover; }
+.blog-detail-content { padding: 42px 46px 48px; }
+.blog-detail-content h1 { margin: 14px 0 18px; color: #0b104a; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; }
+.blog-detail-byline { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 26px; color: #777; font-size: 14px; }
+.blog-detail-content p { color: #687174; font-size: 17px; line-height: 1.9; margin-bottom: 20px; }
+.blog-detail-content .blog-detail-lead { color: #4f5659; font-size: 20px; line-height: 1.75; font-weight: 500; }
+.blog-detail-source { margin: 30px 0; padding: 16px 18px; background: #f7f8ff; border-left: 3px solid #525fe1; color: #687174; font-size: 14px; line-height: 1.7; }
+.related-blog-area { background: #f8f9ff; }
 .contact_info { height: 100%; padding: 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
 .contact-form .form-control { min-height: 54px; margin-bottom: 18px; padding: 14px 16px; border: 1px solid #e5e6ea; border-radius: 2px; }
 .contact-form select.form-control { appearance: auto; }
@@ -87,5 +96,5 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .footer { background: #0b104a; color: rgba(255,255,255,.75); }
 .footer a, .footer h4, .footer p, .footer li, .footer li a { color: inherit; }
 @media (max-width: 1199px) { .eduleb-app .home_bg { min-height: 650px; } }
-@media (max-width: 991px) { .eduleb-app .home_bg { min-height: auto; padding: 120px 0 90px; } .auth-nav-actions { display: none; } .service-detail-card .single_c_img img { aspect-ratio: 16 / 7; } }
-@media (max-width: 575px) { .eduleb-app .home_bg { padding: 105px 0 70px; } .auth-modal { padding: 34px 22px 24px; } .edureach-logo { font-size: 23px; } .footer .edureach-logo { font-size: 25px; } .blog-filter-chips { justify-content: flex-start; } }
+@media (max-width: 991px) { .eduleb-app .home_bg { min-height: auto; padding: 120px 0 90px; } .auth-nav-actions { display: none; } .service-detail-card .single_c_img img { aspect-ratio: 16 / 7; } .blog-detail-content { padding: 34px 28px 38px; } }
+@media (max-width: 575px) { .eduleb-app .home_bg { padding: 105px 0 70px; } .auth-modal { padding: 34px 22px 24px; } .edureach-logo { font-size: 23px; } .footer .edureach-logo { font-size: 25px; } .blog-filter-chips { justify-content: flex-start; } .blog-detail-content { padding: 28px 20px 32px; } .blog-detail-content h1 { font-size: 31px; } .blog-detail-content p { font-size: 16px; } }
