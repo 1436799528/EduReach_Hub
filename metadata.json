@@ -1,6 +1,6 @@
 {
-  "name": "EduReach Hub",
-  "description": "Your Academic Success Partner. Learn • Improve • Succeed. Assignment Assistance, Project Guidance, Research Support, Academic Tutorials, and Study Materials.",
+  "name": "Eduleb",
+  "description": "Smart Study Where Knowledge Meets the Web.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }
