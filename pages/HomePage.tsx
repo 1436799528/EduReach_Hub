@@ -3,49 +3,43 @@ import { blogPosts, siteConfig, testimonials } from '../src/data/edulebMock';
 import { Shell, imageBase } from '../src/components/EdulebShared';
 
 const categories = [
-  ['Digital & Web Skills', 'Digital skills for study, work and modern opportunities.', 'cat1.jpg'],
-  ['Engineering Support', 'Practical technical guidance for engineering students.', 'cat2.jpg'],
-  ['Academic Success', 'Focused support for difficult courses and examinations.', 'cat3.jpg'],
-  ['Research & Projects', 'Guidance for research work, projects and presentations.', 'cat4.jpg'],
-  ['Career Development', 'Build useful professional skills before graduation.', 'cat5.jpg'],
-  ['Business & Entrepreneurship', 'Learn how to turn useful skills into practical services.', 'cat6.jpg'],
-  ['Design & Creativity', 'Develop clear visual and creative skills for modern work.', 'cat7.jpg'],
-  ['Personal Development', 'Improve your study habits, confidence and consistency.', 'cat8.jpg'],
-  ['Data & Technology', 'Understand data, tools and technology through practical learning.', 'cat1.jpg'],
-  ['Communication Skills', 'Write, present and communicate your ideas more effectively.', 'cat2.jpg'],
-  ['Professional Skills', 'Develop the skills employers look for in young professionals.', 'cat3.jpg'],
-  ['Student Support', 'Get direction when academic work becomes difficult.', 'cat4.jpg'],
+  ['Write', 'Letters, appeals, and official school documents.', 'cat1.jpg'],
+  ['My School', 'Courses, materials, and department information.', 'cat2.jpg'],
+  ['Search', 'Find answers, resources, notices, and useful templates.', 'cat3.jpg'],
+  ['Calculate', 'GPA, CGPA, and grade-target calculations for students.', 'cat4.jpg'],
+  ['Check', 'School updates, academic calendars, and important dates.', 'cat5.jpg'],
+  ['Support', 'Get private human support when you need help.', 'cat6.jpg'],
 ];
 
 const services = [
-  ['Academic Tutorial', 'Get clear, focused support for difficult topics, coursework and exam preparation.', 'cat1.jpg', 'ti-book'],
-  ['Project Guidance', 'Move your school project from an idea to a clear, practical plan with guided support.', 'cat2.jpg', 'ti-light-bulb'],
-  ['Assignment Assistance', 'Organise assignments, improve structure and understand what your lecturer expects.', 'cat3.jpg', 'ti-files'],
-  ['Research Support', 'Get practical help with research planning, source selection, structure and presentation.', 'cat4.jpg', 'ti-search'],
-  ['Student Support', 'Get the right direction when you are stuck and need someone to help you move forward.', 'cat5.jpg', 'ti-comments'],
-  ['Online Learning', 'Access useful learning materials and guidance from anywhere, on any device.', 'cat6.jpg', 'ti-world'],
+  ['Write', 'Letters, appeals, and official school documents.', 'cat1.jpg', 'ti-pencil'],
+  ['My School', 'Courses, materials, and department information in one place.', 'cat2.jpg', 'ti-book'],
+  ['Search', 'Find answers, resources, notices, and useful templates quickly.', 'cat3.jpg', 'ti-search'],
+  ['Calculate', 'Work out GPA, CGPA, and the grades you need to reach your target.', 'cat4.jpg', 'ti-bar-chart'],
+  ['Check', 'Keep up with school updates, academic calendars, and important dates.', 'cat5.jpg', 'ti-check-box'],
+  ['Support', 'Get private human support when you need help with school life.', 'cat6.jpg', 'ti-comments'],
 ];
 
-const instructors = [
-  ['Amara Okafor', 'Electrical Engineering Tutor', 'AO', 'team1.jpg'],
-  ['Daniel Obi', 'Software & Python Instructor', 'DO', 'team2.jpg'],
-  ['Fatima Bello', 'UI/UX & Creative Design', 'FB', 'team3.jpg'],
-  ['Emeka Nwachukwu', 'Data & Business Analytics', 'EN', 'team4.jpg'],
+const supportAreas = [
+  ['Academic Help', 'Get clear direction when coursework, assignments or difficult topics become confusing.', 'AH'],
+  ['School Information', 'Find useful academic information, notices, dates and resources in one place.', 'SI'],
+  ['Student Tools', 'Use simple tools for everyday academic decisions and planning.', 'ST'],
+  ['Human Support', 'Reach out when you need help beyond a search result or calculator.', 'HS'],
 ];
 
 const stats = [
-  ['4,500+', 'Active student', 'ti-user'],
-  ['134', 'Our Online Course', 'ti-book'],
-  ['29', 'Academic Programs', 'ti-medall'],
-  ['684', 'Certified Students', 'ti-id-badge'],
-  ['9,410', 'Enrolled Students', 'ti-user'],
+  ['01', 'Student hub', 'ti-user'],
+  ['06', 'Core services', 'ti-book'],
+  ['03', 'Simple steps', 'ti-medall'],
+  ['01', 'Shared platform', 'ti-world'],
+  ['100%', 'Student focused', 'ti-id-badge'],
 ];
 
 const journey = [
-  ['01', 'Expert Teacher', 'Learn from people who understand both theory and practical work.'],
-  ['02', 'Quality Education', 'Get simple explanations, useful examples and focused learning support.'],
-  ['03', 'Remote Learning', 'Study wherever you are with a responsive learning experience.'],
-  ['04', 'Lifetime Support', 'Keep access to useful guidance as your academic journey continues.'],
+  ['01', 'Register', 'Create your student account.'],
+  ['02', 'Set your school', 'Choose your institution and academic details.'],
+  ['03', 'Use EduReach', 'Open the service or information you need.'],
+  ['04', 'Get support', 'Move forward with the right information or human help.'],
 ];
 
 export default function HomePage() {
@@ -62,11 +56,11 @@ export default function HomePage() {
           <div className="row align-items-center">
             <div className="col-lg-6">
               <div className="hero-text ht_top">
-                <h1><span>Smart Study</span> Where Knowledge Meets the Web</h1>
+                <h1><span>EduReach Hub</span> Practical Support For Nigerian Tertiary Students</h1>
                 <p>{siteConfig.description}</p>
                 <div className="home_sb">
                   <div className="banner_subs">
-                    <input value={query} onChange={(event) => setQuery(event.target.value)} className="form-control home_si" placeholder="Search our services here" aria-label="Search services" />
+                    <input value={query} onChange={(event) => setQuery(event.target.value)} className="form-control home_si" placeholder="Search EduReach services here" aria-label="Search EduReach services" />
                     <a href="#services" className="subscribe__btn">Search <i className="fa fa-paper-plane-o" /></a>
                   </div>
                   {query && <div className="hero-search-results">{filteredServices.slice(0, 5).map(([title]) => <a href="#services" key={title}>{title}</a>)}</div>}
@@ -76,7 +70,7 @@ export default function HomePage() {
             <div className="col-lg-6">
               <div className="hero-text-img">
                 <img src={`${imageBase}/home-img2.png`} className="img-fluid" alt="Students learning online" />
-                <div className="home_ps"><span className="ti-user" /><h2>Students</h2><p>Built for practical learning support</p></div>
+                <div className="home_ps"><span className="ti-user" /><h2>Students</h2><p>Fast. Reliable. No stress.</p></div>
               </div>
             </div>
           </div>
@@ -98,8 +92,8 @@ export default function HomePage() {
       <section className="top_cat__area section-padding">
         <div className="container">
           <div className="section-title text-center">
-            <h2>Start your journey With us</h2>
-            <p>Choose from useful learning support and gain new skills with a simple, practical approach.</p>
+            <h2>One Place. Many Student Needs.</h2>
+            <p>EduReach brings useful student information, tools and support together in one place.</p>
           </div>
           <div className="row">
             {journey.map(([number, title, text]) => (
@@ -120,31 +114,31 @@ export default function HomePage() {
             </div>
             <div className="col-lg-6">
               <div className="section-title">
-                <h2>We Are Providing The Support Students Need</h2>
-                <p>We are building a practical digital learning space where students can find useful academic support, learning resources and guidance without unnecessary complexity.</p>
+                <h2>Practical Support For Nigerian Tertiary Students</h2>
+                <p>EduReach is built around the small problems students face every day: finding the right information, preparing school documents, checking dates, using simple academic tools and getting help when they are stuck.</p>
               </div>
-              <p>Our goal is simple: make learning support easier to find, easier to understand and easier to access. The platform brings academic guidance, project support and practical learning together in one place.</p>
+              <p>Our goal is simple: make student life easier by putting useful information, tools and support in one place. No unnecessary complexity. Just clear help for real student needs.</p>
               <ul className="why_list">
-                <li><i className="fa fa-check" /> Clear and practical academic support</li>
-                <li><i className="fa fa-check" /> Student-focused services and guidance</li>
-                <li><i className="fa fa-check" /> Simple access from any device</li>
+                <li><i className="fa fa-check" /> School information and academic resources</li>
+                <li><i className="fa fa-check" /> Useful student tools and calculators</li>
+                <li><i className="fa fa-check" /> Human support when you need it</li>
               </ul>
-              <a href="#services" className="btn_one">View Our Services</a>
+              <a href="#services" className="btn_one">Explore EduReach</a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SERVICES — Eduleb category architecture */}
+      {/* SERVICES */}
       <section id="services" className="cat_area section-padding">
         <div className="container">
           <div className="section-title text-center">
-            <h2>Find The Right Service For You</h2>
-            <p>Choose from practical services designed around real student needs.</p>
+            <h2>What EduReach Provides</h2>
+            <p>One place. Many student needs.</p>
           </div>
           <div className="row">
             {categories.map(([title, text, image]) => (
-              <div className="col-lg-3 col-sm-6 col-xs-12" key={title}>
+              <div className="col-lg-4 col-md-6 col-sm-6 col-xs-12" key={title}>
                 <div className="single_cat">
                   <img src={`${imageBase}/${image}`} alt={title} />
                   <div className="single_cat_text"><h4>{title}</h4><p>{text}</p><a href="#contact">Explore Service <i className="fa fa-angle-right" /></a></div>
@@ -158,8 +152,8 @@ export default function HomePage() {
       <section className="course_area section-padding">
         <div className="container">
           <div className="section-title text-center">
-            <h2>Our Core Services</h2>
-            <p>Simple, practical support that helps students understand more and move forward.</p>
+            <h2>Explore The EduReach Tools</h2>
+            <p>Useful services designed around everyday student problems.</p>
           </div>
           <div className="row">
             {services.map(([title, text, image, icon]) => (
@@ -176,13 +170,13 @@ export default function HomePage() {
 
       <section className="team_area section-padding">
         <div className="container">
-          <div className="section-title text-center"><h2>Meet Our Instructors</h2><p>Learn from educators and practitioners who turn complex ideas into practical guidance.</p></div>
+          <div className="section-title text-center"><h2>How EduReach Helps</h2><p>Simple support areas built around real student needs.</p></div>
           <div className="row">
-            {instructors.map(([name, role, initials, image]) => (
-              <div className="col-lg-3 col-sm-6 col-xs-12" key={name}>
+            {supportAreas.map(([title, text, initials]) => (
+              <div className="col-lg-3 col-sm-6 col-xs-12" key={title}>
                 <div className="our-team">
-                  <div className="team_img"><img src={`${imageBase}/team/${image}`} alt={name} onError={(event) => { event.currentTarget.style.display = 'none'; }} /><div className="demo-avatar">{initials}</div></div>
-                  <div className="team-content"><h4>{name}</h4><p>{role}</p></div>
+                  <div className="team_img"><div className="demo-avatar static-avatar">{initials}</div></div>
+                  <div className="team-content"><h4>{title}</h4><p>{text}</p></div>
                 </div>
               </div>
             ))}
@@ -193,11 +187,11 @@ export default function HomePage() {
       <section className="why_area section-padding">
         <div className="container">
           <div className="row align-items-center">
-            <div className="col-lg-6"><img src={`${imageBase}/about1.png`} className="img-fluid" alt="Learning support" /></div>
+            <div className="col-lg-6"><img src={`${imageBase}/about1.png`} className="img-fluid" alt="EduReach student support" /></div>
             <div className="col-lg-6">
-              <div className="section-title"><h2>Why Choose Us For Your Learning Journey</h2><p>We keep learning support practical, clear and focused on what students actually need.</p></div>
-              <ul className="why_list"><li><i className="fa fa-check" /> Practical, structured support</li><li><i className="fa fa-check" /> Guidance built around student needs</li><li><i className="fa fa-check" /> Simple access from any device</li></ul>
-              <a href="#contact" className="btn_one">Get Started</a>
+              <div className="section-title"><h2>Why Students Use EduReach</h2><p>We focus on useful things students actually need, not unnecessary features.</p></div>
+              <ul className="why_list"><li><i className="fa fa-check" /> One place for information, tools and support</li><li><i className="fa fa-check" /> Clear and simple student-focused design</li><li><i className="fa fa-check" /> Useful from phone, tablet or computer</li></ul>
+              <a href="#contact" className="btn_one">Talk To EduReach</a>
             </div>
           </div>
         </div>
@@ -205,7 +199,7 @@ export default function HomePage() {
 
       <section className="testimonial_area section-padding">
         <div className="container">
-          <div className="section-title text-center"><h2>What Students Say To Do<br />Their Online Learning</h2></div>
+          <div className="section-title text-center"><h2>What Students Say About<br />EduReach</h2></div>
           <div className="row">
             {testimonials.map((testimonial) => (
               <div className="col-lg-4 col-sm-6" key={testimonial.name}><div className="testimonial"><i className="fa fa-quote-left" /><p>{testimonial.text}</p><h4>{testimonial.name}</h4><span>{testimonial.company}</span></div></div>
@@ -217,7 +211,7 @@ export default function HomePage() {
       {/* BLOG */}
       <section id="blog" className="blog_area section-padding">
         <div className="container">
-          <div className="section-title text-center"><h2>Latest Blog &amp; News</h2><p>Study ideas, student guidance and practical advice for academic life.</p></div>
+          <div className="section-title text-center"><h2>Latest EduReach Guides</h2><p>Useful student guidance, tools and practical advice for academic life.</p></div>
           <div className="row">
             {blogPosts.slice(0, 3).map((post) => (
               <div className="col-lg-4 col-sm-6 col-xs-12" key={post.id}>
@@ -231,7 +225,7 @@ export default function HomePage() {
       {/* CONTACT */}
       <section id="contact" className="contact_area section-padding">
         <div className="container">
-          <div className="section-title text-center"><h2>Contact Us</h2><p>Have a question or need help choosing a service? Send us a message.</p></div>
+          <div className="section-title text-center"><h2>Talk To EduReach</h2><p>Have a question or need help choosing what to use? Send us a message.</p></div>
           <div className="row align-items-start">
             <div className="col-lg-5"><div className="contact_info"><h2>Get In Touch</h2><p>{siteConfig.description}</p><div className="sf_contact"><span className="ti-map" /><p>{siteConfig.address}</p></div><div className="sf_contact"><span className="ti-mobile" /><p>{siteConfig.phone}</p></div><div className="sf_contact"><span className="ti-email" /><p>{siteConfig.email}</p></div></div></div>
             <div className="col-lg-7"><form className="contact-form" onSubmit={(event) => { event.preventDefault(); setContactSent(true); }}><div className="row"><div className="col-md-6"><input className="form-control" name="name" placeholder="Your Name" required /></div><div className="col-md-6"><input className="form-control" type="email" name="email" placeholder="Your Email" required /></div><div className="col-md-12"><input className="form-control" name="subject" placeholder="Subject" required /></div><div className="col-md-12"><textarea className="form-control" name="message" rows={7} placeholder="Your Message" required /></div><div className="col-md-12"><button className="btn_one" type="submit">Send Message</button></div></div></form>{contactSent && <div className="form-success">Your message has been captured. The production mail service will be connected later.</div>}</div>
