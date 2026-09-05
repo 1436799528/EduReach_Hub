@@ -12,13 +12,8 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .eduleb-app .home_bg { min-height: 760px; display: flex; align-items: center; }
 .eduleb-app .section-title { margin-bottom: 42px; }
 .eduleb-app .section-title h2 { margin-bottom: 12px; }
+.eduleb-app #home, .eduleb-app #about, .eduleb-app #services, .eduleb-app #blog, .eduleb-app #contact { scroll-margin-top: 92px; }
 .eduleb-app #services { background: #f8f9ff; }
-
-.service-card { height: calc(100% - 30px); margin-bottom: 30px; padding: 34px 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 12px 35px rgba(23, 23, 36, 0.06); transition: transform .25s ease, box-shadow .25s ease; }
-.service-card:hover { transform: translateY(-5px); box-shadow: 0 18px 45px rgba(23, 23, 36, 0.1); }
-.service-card > span { display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; margin-bottom: 20px; border-radius: 50%; background: #eef0ff; color: #525fe1; font-size: 24px; }
-.service-card h3 { margin-bottom: 13px; font-size: 23px; }
-.service-card p { margin-bottom: 20px; color: #687174; line-height: 1.75; }
 
 .auth-nav-actions { white-space: nowrap; }
 .auth-link-btn { border: 0; background: transparent; cursor: pointer; }
@@ -36,18 +31,42 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .auth-success { background: #eefaf1; color: #24623b; }
 .auth-switch { margin-top: 20px; text-align: center; color: #717679; font-size: 14px; }
 .auth-switch button { border: 0; padding: 0; background: transparent; color: #525fe1; font: inherit; font-weight: 700; cursor: pointer; }
+.mobile-auth-button { width: 100%; border: 0; background: transparent; padding: 8px 0; text-align: left; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.mobile-auth-primary { color: #525fe1; }
 
 .hero-text h1 span { color: #525fe1; }
 .hero-text p { max-width: 560px; }
-.home_sb .banner_subs { max-width: 430px; }
+.home_sb .banner_subs { max-width: 620px; }
 .home_sb .subscribe__btn { display: inline-flex; align-items: center; gap: 7px; }
 .why_list li { margin: 12px 0; line-height: 1.7; }
 .why_list i { width: 22px; color: #525fe1; }
-.blog_post { overflow: hidden; margin-bottom: 30px; height: 100%; background: #fff; box-shadow: 0 10px 35px rgba(23, 23, 36, .05); }
+.about-img img { width: 100%; }
+.single_cat { height: calc(100% - 30px); margin-bottom: 30px; background: #fff; overflow: hidden; box-shadow: 0 10px 35px rgba(23,23,36,.06); }
+.single_cat > img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.single_cat_text { padding: 22px; }
+.single_cat_text h4 { font-size: 20px; margin-bottom: 10px; }
+.single_cat_text p { color: #687174; line-height: 1.7; }
+.single_cat_text a { display: inline-block; margin-top: 12px; color: #525fe1; font-weight: 700; }
+.single_course { height: calc(100% - 30px); margin-bottom: 30px; background: #fff; overflow: hidden; box-shadow: 0 10px 35px rgba(23,23,36,.06); }
+.single_course .single_c_img { position: relative; }
+.single_course .single_c_img img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.single_course .single_c_img span { position: absolute; left: 14px; bottom: 12px; padding: 6px 10px; background: #525fe1; color: #fff; font-size: 12px; font-weight: 700; }
+.single_course_text { padding: 24px; }
+.single_course_text h4 { margin: 10px 0 12px; font-size: 22px; }
+.single_course_text p { color: #687174; line-height: 1.7; min-height: 82px; }
+.team_img { position: relative; overflow: hidden; }
+.team_img img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+.demo-avatar { min-height: 150px; display: grid; place-items: center; background: #eef0ff; color: #525fe1; font: 800 32px/1 Jost, sans-serif; }
+.testimonial { height: calc(100% - 30px); margin-bottom: 30px; padding: 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
+.testimonial > i { color: #525fe1; font-size: 25px; }
+.testimonial p { margin: 17px 0; line-height: 1.8; }
+.blog_post { height: calc(100% - 30px); margin-bottom: 30px; overflow: hidden; background: #fff; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
+.blog-img img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
 .blog_content { padding: 22px; }
 .blog_meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: #7a7f81; }
-.blog_content h3 { margin: 10px 0; font-size: 23px; line-height: 1.4; }
-.blog_readmore { display: inline-block; margin-top: 16px; font-weight: 700; color: #525fe1; }
+.blog_content h3 { margin: 10px 0; font-size: 22px; line-height: 1.4; }
+.blog_readmore { display: inline-block; margin-top: 15px; color: #525fe1; font-weight: 700; }
+.contact_info { height: 100%; padding: 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
 .contact-form .form-control { min-height: 54px; margin-bottom: 18px; padding: 14px 16px; border: 1px solid #e5e6ea; border-radius: 2px; }
 .form-success { margin-top: 18px; padding: 14px 16px; background: #eef0ff; color: #0b104a; }
 .footer { background: #0b104a; color: rgba(255,255,255,.75); }
