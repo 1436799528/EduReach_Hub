@@ -13,8 +13,8 @@ const theme = 'https://themewagon.github.io/eduleb/assets/img';
 export const siteConfig = {
   brand: 'EduReach Hub',
   tagline: 'Practical support for Nigerian tertiary students',
-  email: 'hello@edureachhub.com',
-  phone: '+234 803 555 0123',
+  email: 'Use the Contact form',
+  phone: 'Contact us online',
   address: 'Nigeria',
   description: 'School information, documents, resources, and everyday academic tools in one place.',
 };
