@@ -1,19 +1,124 @@
 html,
 body,
 #root {
+  width: 100%;
+  min-width: 0;
   min-height: 100%;
+  height: auto;
   margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #fff;
+}
+
+#root {
+  display: block;
 }
 
 .eduleb-app {
+  display: block;
+  width: 100%;
+  min-width: 0;
   min-height: 100vh;
+  height: auto;
+  overflow: visible;
+  isolation: isolate;
   background: #fff;
 }
 
+.eduleb-app main {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+}
+
+.eduleb-app main > section,
+.eduleb-app main > div,
+.eduleb-app .section-padding {
+  display: flow-root;
+  width: 100%;
+}
+
+/* Keep legacy Eduleb floating layouts inside their section bounds. */
+.eduleb-app .row::after,
+.eduleb-app .container::after,
+.eduleb-app .section-padding::after,
+.eduleb-app .home_course::after,
+.eduleb-app .our_event::after,
+.eduleb-app .faq_area::after,
+.eduleb-app .footer::after,
+.eduleb-app .foot_copy::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+/* The preview renderer needs the real document height, not a viewport-sized shell. */
+.eduleb-app img,
+.eduleb-app iframe,
+.eduleb-app video {
+  max-width: 100%;
+}
+
+.eduleb-app iframe {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  border: 0;
+}
+
+.eduleb-app .section-top {
+  width: 100%;
+  min-height: 260px;
+}
+
+/* Native Eduleb course-grid structure used by the supplied HTML. */
+.eduleb-app .home_course .row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.eduleb-app .home_course .single_course {
+  height: auto;
+  min-height: 100%;
+}
+
+/* Native Eduleb course-detail columns must remain in normal document flow. */
+.eduleb-app .our_event > .container > .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.eduleb-app .course-details-content,
+.eduleb-app .course_features,
+.eduleb-app .related_course,
+.eduleb-app .sidebar-post,
+.eduleb-app .faq_area,
+.eduleb-app .footer,
+.eduleb-app .foot_copy {
+  overflow: visible;
+}
+
+@media (max-width: 991px) {
+  .eduleb-app .our_event > .container > .row {
+    display: block;
+  }
+}
+
+/* Existing project styles. */
 .mobile-site-nav {
   border-top: 1px solid #eee;
   margin-top: 14px;
