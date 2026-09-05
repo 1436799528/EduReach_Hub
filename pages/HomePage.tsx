@@ -3,12 +3,27 @@ import { blogPosts, siteConfig, testimonials } from '../src/data/edulebMock';
 import { Shell, imageBase } from '../src/components/EdulebShared';
 
 const services = [
-  { icon: 'ti-book', title: 'Academic Tutorial', text: 'Get clear, focused academic support for difficult topics and coursework.' },
-  { icon: 'ti-light-bulb', title: 'Project Guidance', text: 'Get practical guidance for projects, research ideas and technical work.' },
-  { icon: 'ti-files', title: 'Assignment Assistance', text: 'Organise your assignment work with structured academic support.' },
-  { icon: 'ti-search', title: 'Research Support', text: 'Find direction for research planning, sources, structure and presentation.' },
-  { icon: 'ti-comments', title: 'Student Support', text: 'Connect with the right learning support when you need it.' },
-  { icon: 'ti-world', title: 'Online Learning', text: 'Access useful learning resources from anywhere, on any device.' },
+  { icon: 'ti-book', title: 'Academic Tutorial', text: 'Get clear, focused support for difficult topics, coursework and exam preparation.' },
+  { icon: 'ti-light-bulb', title: 'Project Guidance', text: 'Move your school project from an idea to a clear, practical plan with guided support.' },
+  { icon: 'ti-files', title: 'Assignment Assistance', text: 'Organise assignments, improve structure and understand what your lecturer expects.' },
+  { icon: 'ti-search', title: 'Research Support', text: 'Get practical help with research planning, source selection, structure and presentation.' },
+  { icon: 'ti-comments', title: 'Student Support', text: 'Get the right direction when you are stuck and need someone to help you move forward.' },
+  { icon: 'ti-world', title: 'Online Learning', text: 'Access useful learning materials and guidance from anywhere, on any device.' },
+];
+
+const stats = [
+  ['4,500+', 'Active student', 'ti-user'],
+  ['134', 'Our Online Course', 'ti-book'],
+  ['29', 'Academic Programs', 'ti-medall'],
+  ['684', 'Certified Students', 'ti-id-badge'],
+  ['9,410', 'Enrolled Students', 'ti-user'],
+];
+
+const journey = [
+  ['01', 'Expert Teacher', 'Learn from people who understand both theory and practical work.'],
+  ['02', 'Quality Education', 'Get simple explanations, useful examples and focused learning support.'],
+  ['03', 'Remote Learning', 'Study wherever you are with a responsive learning experience.'],
+  ['04', 'Lifetime Support', 'Keep access to useful guidance as your academic journey continues.'],
 ];
 
 export default function HomePage() {
@@ -16,6 +31,7 @@ export default function HomePage() {
 
   return (
     <Shell>
+      {/* HOME */}
       <section id="home" className="home_bg hb_height" style={{ backgroundImage: `url(${imageBase}/bg/home-bg.jpg)`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <div className="container">
           <div className="row align-items-center">
@@ -40,28 +56,69 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="count_area counter_feature">
+        <div className="container">
+          <div className="row">
+            {stats.map(([value, label, icon]) => (
+              <div className="col-lg col-md-4 col-sm-6 col-12" key={label}>
+                <div className="single-counter">
+                  <span className={`${icon} sc_one`} />
+                  <h2 className="counter-num">{value}</h2>
+                  <p>{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="top_cat__area section-padding">
+        <div className="container">
+          <div className="section-title text-center">
+            <h2>Start your journey With us</h2>
+            <p>We offer a simple approach to learning. Choose the support you need and build your skills step by step.</p>
+          </div>
+          <div className="row">
+            {journey.map(([number, title, text]) => (
+              <div className="col-lg-3 col-sm-6 col-xs-12" key={number}>
+                <div className="single_tp">
+                  <span className="sc_one">{number}</span>
+                  <h3>{title}</h3>
+                  <p>{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ABOUT */}
       <section id="about" className="why_area section-padding">
         <div className="container">
           <div className="row align-items-center">
             <div className="col-lg-6">
-              <img src={`${imageBase}/about3.png`} className="img-fluid" alt="Students learning" />
+              <div className="about-img">
+                <img src={`${imageBase}/about1.png`} className="img-fluid" alt="Students learning" />
+              </div>
             </div>
             <div className="col-lg-6">
               <div className="section-title">
-                <h2>About Eduleb</h2>
-                <p>We are building a simple digital learning space where students can find useful academic support, learning resources and practical guidance.</p>
+                <h2>We Are Providing The Support Students Need</h2>
+                <p>We are building a practical digital learning space where students can find useful academic support, learning resources and guidance without unnecessary complexity.</p>
               </div>
-              <p>Eduleb is designed around the needs of modern students. The goal is straightforward: make useful learning support easier to find, easier to understand and easier to access.</p>
+              <p>Our goal is simple: make learning support easier to find, easier to understand and easier to access. The platform brings academic guidance, project support and practical learning together in one place.</p>
               <ul className="why_list">
                 <li><i className="fa fa-check" /> Clear and practical academic support</li>
-                <li><i className="fa fa-check" /> Services designed around student needs</li>
+                <li><i className="fa fa-check" /> Student-focused services and guidance</li>
                 <li><i className="fa fa-check" /> Simple access from any device</li>
               </ul>
+              <a href="#services" className="btn_one">Explore Services</a>
             </div>
           </div>
         </div>
       </section>
 
+      {/* SERVICES */}
       <section id="services" className="course_area section-padding">
         <div className="container">
           <div className="section-title text-center">
@@ -70,7 +127,7 @@ export default function HomePage() {
           </div>
           <div className="row">
             {services.map((service) => (
-              <div className="col-lg-4 col-sm-6" key={service.title}>
+              <div className="col-lg-4 col-sm-6 col-xs-12" key={service.title}>
                 <div className="service-card">
                   <span className={service.icon} />
                   <h3>{service.title}</h3>
@@ -83,15 +140,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="cta_area section-padding">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-6 col-sm-12">
+              <div className="single_cta">
+                <span>Need Academic Help?</span>
+                <h2>Start With The Right Support</h2>
+                <p>Tell us what you need and we will help you choose the right service for your situation.</p>
+                <a href="#contact" className="btn_one">Get Started</a>
+              </div>
+            </div>
+            <div className="col-lg-6 col-sm-12">
+              <div className="single_cta">
+                <span>Ready To Learn?</span>
+                <h2>Build Useful Skills</h2>
+                <p>Use practical learning support to understand more, practise better and move forward.</p>
+                <a href="#contact" className="btn_one">Contact Us</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BLOG */}
       <section id="blog" className="blog_area section-padding">
         <div className="container">
           <div className="section-title text-center">
-            <h2>Latest Blog</h2>
-            <p>Useful study ideas, student guidance and practical learning advice.</p>
+            <h2>Latest Blog &amp; News</h2>
+            <p>Study ideas, student guidance and practical advice for academic life.</p>
           </div>
           <div className="row">
             {blogPosts.slice(0, 3).map((post) => (
-              <div className="col-lg-4 col-sm-6" key={post.id}>
+              <div className="col-lg-4 col-sm-6 col-xs-12" key={post.id}>
                 <article className="blog_post">
                   <div className="blog-img"><img src={post.image} alt={post.title} /></div>
                   <div className="blog_content">
@@ -107,6 +188,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CONTACT */}
       <section id="contact" className="contact_area section-padding">
         <div className="container">
           <div className="section-title text-center">
@@ -129,11 +211,11 @@ export default function HomePage() {
                   <div className="col-md-6"><input className="form-control" name="name" placeholder="Your Name" required /></div>
                   <div className="col-md-6"><input className="form-control" type="email" name="email" placeholder="Your Email" required /></div>
                   <div className="col-md-12"><input className="form-control" name="subject" placeholder="Subject" required /></div>
-                  <div className="col-md-12"><textarea className="form-control" name="message" rows={6} placeholder="Your Message" required /></div>
+                  <div className="col-md-12"><textarea className="form-control" name="message" rows={7} placeholder="Your Message" required /></div>
                   <div className="col-md-12"><button className="btn_one" type="submit">Send Message</button></div>
                 </div>
               </form>
-              {contactSent && <div className="form-success">Your message has been captured. We will connect the production mail service later.</div>}
+              {contactSent && <div className="form-success">Your message has been captured. The production mail service will be connected later.</div>}
             </div>
           </div>
         </div>
