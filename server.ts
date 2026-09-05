@@ -6,30 +6,6 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 
 app.disable('x-powered-by');
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'EduReach Hub', timestamp: new Date().toISOString() });
-});
-
-// The previous payment endpoints simulated successful charges, stored balances
-// in process memory, exposed webhook logs, and accepted a test signature bypass.
-// They are intentionally removed until a real server-side Paystack integration
-// backed by persistent database transactions is implemented.
-app.all('/api/v1/payments/:action', (_req, res) => {
-  res.status(410).json({
-    error: 'Payment endpoint unavailable.',
-    message: 'Payment processing is not enabled on this server yet.',
-  });
-});
-
-app.all('/api/v1/users/:userId/balance', (_req, res) => {
-  res.status(410).json({
-    error: 'Wallet endpoint unavailable.',
-    message: 'Wallet balances are not served by the legacy in-memory API.',
-  });
-});
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
@@ -47,7 +23,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`EduReach Hub server running on port ${PORT}`);
+    console.log(`Eduleb server running on port ${PORT}`);
   });
 }
 
