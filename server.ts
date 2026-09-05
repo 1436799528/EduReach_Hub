@@ -11,8 +11,8 @@ async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      // Eduleb keeps separate HTML entry points for each page.
-      appType: 'mpa',
+      // EduReach uses client-side routing for /about, /services, /blog and /contact.
+      appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
@@ -24,7 +24,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Eduleb server running on port ${PORT}`);
+    console.log(`EduReach server running on port ${PORT}`);
   });
 }
 
