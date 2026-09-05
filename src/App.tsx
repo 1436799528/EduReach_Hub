@@ -3,6 +3,7 @@ import HomePage from '../pages/HomePage';
 import AboutPage from '../pages/AboutPage';
 import ServicesPage from '../pages/ServicesPage';
 import BlogPage from '../pages/BlogPage';
+import BlogDetailsPage from '../pages/BlogDetailsPage';
 import ContactPage from '../pages/ContactPage';
 
 export default function App(): ReactElement {
@@ -10,6 +11,7 @@ export default function App(): ReactElement {
   if (path === '/about') return <AboutPage />;
   if (path === '/services') return <ServicesPage />;
   if (path === '/blog') return <BlogPage />;
+  if (path.startsWith('/blog/')) return <BlogDetailsPage id={decodeURIComponent(path.slice('/blog/'.length))} />;
   if (path === '/contact') return <ContactPage />;
   return <HomePage />;
 }
