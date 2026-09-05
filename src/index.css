@@ -1,119 +1,27 @@
 @import "tailwindcss";
 
-@layer base {
-  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; scroll-behavior: smooth; }
-  body { font-family: 'Lexend', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; background: #f8fafc; }
-  h1,h2,h3,h4,h5,h6 { letter-spacing: -0.02em; font-weight: 700; }
-  button,a,input,select,textarea { -webkit-tap-highlight-color: transparent; }
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
 }
 
-:root {
-  --er-orange:#f97316;
-  --er-cyan:#22d3ee;
-  --er-shadow:0 8px 18px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.05);
-  --er-shadow-hover:0 24px 55px rgba(15,23,42,.15),0 10px 28px rgba(34,211,238,.11);
+body {
+  background: #fff;
 }
 
-@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-@keyframes erFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-@keyframes erGlow { 0%,100%{box-shadow:0 12px 26px rgba(15,23,42,.12),0 0 0 rgba(34,211,238,0)} 50%{box-shadow:0 18px 38px rgba(15,23,42,.15),0 0 22px rgba(34,211,238,.2)} }
-@keyframes erShimmer { from{transform:translateX(-120%)} to{transform:translateX(120%)} }
-@keyframes erPulse { 0%,100%{opacity:.55;transform:scale(1)} 50%{opacity:.9;transform:scale(1.03)} }
-
-.animate-fadeIn{animation:fadeIn .24s ease-out forwards}
-.er-page{min-height:calc(100vh - 4rem);background:radial-gradient(circle at 15% 0%,rgba(34,211,238,.055),transparent 24rem),radial-gradient(circle at 90% 10%,rgba(249,115,22,.06),transparent 22rem),linear-gradient(180deg,#fff 0%,#f8fafc 100%)}
-.er-content{width:min(100%,1280px);margin:0 auto;padding:clamp(1rem,2vw,1.75rem)}
-.er-surface{border:1px solid rgba(148,163,184,.22);background:rgba(255,255,255,.94);box-shadow:var(--er-shadow);backdrop-filter:blur(12px)}
-
-.er-card,.card-shadow,
-.bg-white.rounded-2xl.border,.bg-white.rounded-3xl.border,
-.bg-white.rounded-2xl.shadow-xs,.bg-white.rounded-3xl.shadow-xs,
-article[class*="rounded-2xl"][class*="border"],section[class*="rounded-2xl"][class*="border"]{
-  position:relative;
-  border-color:rgba(148,163,184,.22);
-  box-shadow:0 9px 22px rgba(15,23,42,.08),0 2px 7px rgba(15,23,42,.045);
-  transition:transform .26s cubic-bezier(.2,.8,.2,1),box-shadow .26s ease,border-color .26s ease,background-color .26s ease;
-  will-change:transform;
+.eduleb-shell {
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #fff;
 }
 
-.er-card::before,.card-shadow::before,
-.bg-white.rounded-2xl.border::before,.bg-white.rounded-3xl.border::before,
-.bg-white.rounded-2xl.shadow-xs::before,.bg-white.rounded-3xl.shadow-xs::before,
-article[class*="rounded-2xl"][class*="border"]::before,section[class*="rounded-2xl"][class*="border"]::before{
-  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
-  background:linear-gradient(135deg,rgba(34,211,238,.22),transparent 28%,rgba(249,115,22,.18) 74%,transparent);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.8;
+.eduleb-frame {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  height: 100vh;
+  border: 0;
 }
-
-.er-card:hover,.card-shadow:hover,
-.bg-white.rounded-2xl.border:hover,.bg-white.rounded-3xl.border:hover,
-.bg-white.rounded-2xl.shadow-xs:hover,.bg-white.rounded-3xl.shadow-xs:hover,
-article[class*="rounded-2xl"][class*="border"]:hover,section[class*="rounded-2xl"][class*="border"]:hover{
-  transform:translateY(-7px) perspective(1000px) rotateX(1.1deg) rotateY(-1.1deg);
-  border-color:rgba(34,211,238,.4);
-  box-shadow:0 28px 60px rgba(15,23,42,.16),0 0 28px rgba(34,211,238,.14),0 0 12px rgba(249,115,22,.08);
-}
-.er-card:active,.card-shadow:active{transform:translateY(-1px) scale(.992)}
-
-.card-neon{position:relative;width:100%;padding:1.5rem;border-radius:1rem;color:#fff;background:linear-gradient(145deg,#0f172a 0%,#111827 70%,#0b1220 100%);border:1px solid rgba(34,211,238,.45);box-shadow:0 14px 30px rgba(15,23,42,.24),0 0 20px rgba(34,211,238,.28),inset 0 1px 0 rgba(255,255,255,.09);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
-.card-neon::after{content:"";position:absolute;inset:-1px;border-radius:inherit;background:linear-gradient(135deg,rgba(34,211,238,.5),transparent 35%,rgba(249,115,22,.38) 78%,transparent);filter:blur(8px);opacity:.65;z-index:-1}
-.card-neon:hover{transform:translateY(-6px) perspective(1000px) rotateX(1deg) rotateY(-1deg);border-color:rgba(34,211,238,.75);box-shadow:0 24px 54px rgba(15,23,42,.3),0 0 34px rgba(34,211,238,.42),0 0 12px rgba(249,115,22,.15),inset 0 1px 0 rgba(255,255,255,.12)}
-
-.er-cta{position:relative;overflow:hidden;isolation:isolate;box-shadow:0 10px 22px rgba(15,23,42,.15),inset 0 1px 0 rgba(255,255,255,.2);transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
-.er-cta::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.34) 48%,transparent 70%);transform:translateX(-130%);transition:transform .65s ease;pointer-events:none}
-.er-cta:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 16px 34px rgba(15,23,42,.18),0 0 22px rgba(34,211,238,.16),0 0 10px rgba(249,115,22,.1)}
-.er-cta:hover::after{transform:translateX(130%)}
-.er-cta:active{transform:translateY(0) scale(.985)}
-.er-float{animation:erFloat 5s ease-in-out infinite}.er-glow{animation:erGlow 4s ease-in-out infinite}
-
-/* Make repeated platform controls feel consistent across routes. */
-input[class*="rounded-xl"],select[class*="rounded-xl"],textarea[class*="rounded-xl"]{
-  border-color:rgba(148,163,184,.28);
-  box-shadow:0 2px 7px rgba(15,23,42,.03),inset 0 1px 0 rgba(255,255,255,.72);
-  transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease,transform .18s ease;
-}
-input[class*="rounded-xl"]:focus,select[class*="rounded-xl"]:focus,textarea[class*="rounded-xl"]:focus{
-  border-color:rgba(249,115,22,.65)!important;
-  box-shadow:0 0 0 3px rgba(249,115,22,.1),0 7px 18px rgba(15,23,42,.05)!important;
-}
-
-button.bg-orange-600,a.bg-orange-600,button.bg-emerald-600,a.bg-emerald-600,button.bg-slate-900,a.bg-slate-900{
-  box-shadow:0 9px 20px rgba(15,23,42,.14),inset 0 1px 0 rgba(255,255,255,.18);
-}
-button.bg-orange-600:hover,a.bg-orange-600:hover,button.bg-emerald-600:hover,a.bg-emerald-600:hover,button.bg-slate-900:hover,a.bg-slate-900:hover{
-  transform:translateY(-3px);
-  filter:saturate(1.06);
-  box-shadow:0 17px 34px rgba(15,23,42,.16),0 0 20px rgba(34,211,238,.14);
-}
-button.bg-orange-600:active,a.bg-orange-600:active,button.bg-emerald-600:active,a.bg-emerald-600:active,button.bg-slate-900:active,a.bg-slate-900:active{transform:translateY(0) scale(.985)}
-
-/* Tab/chip groups. */
-button[class*="rounded-lg"][class*="text-xs"][class*="font-semibold"]:not(.bg-orange-600):not(.bg-slate-900){transition:transform .18s ease,background-color .18s ease,box-shadow .18s ease}
-button[class*="rounded-lg"][class*="text-xs"][class*="font-semibold"]:hover{box-shadow:0 5px 14px rgba(15,23,42,.06)}
-
-/* Route headers and subtle background layering. */
-.er-page > div > div > section:first-child,
-.er-page > div > section:first-child{border-radius:1.25rem;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(248,250,252,.92));padding:1.1rem 1.2rem;margin-bottom:.25rem;box-shadow:0 10px 24px rgba(15,23,42,.05)}
-
-/* Modal polish without affecting the backdrop itself. */
-div[class*="fixed"][class*="inset-0"] > div[class*="rounded"]{
-  border-color:rgba(148,163,184,.28);
-  box-shadow:0 30px 90px rgba(15,23,42,.24),0 0 34px rgba(34,211,238,.09);
-}
-
-@media (hover:hover) and (pointer:fine){
-  .group:hover .group-hover\:scale-105{transform:scale(1.05)}
-}
-
-@media (max-width:767px){
-  .er-page{min-height:calc(100vh - 3.75rem)}
-  .er-content{padding:.875rem}
-  .er-card:hover,.card-shadow:hover,.card-neon:hover,.bg-white.rounded-2xl.border:hover,.bg-white.rounded-3xl.border:hover,.bg-white.rounded-2xl.shadow-xs:hover,.bg-white.rounded-3xl.shadow-xs:hover,article[class*="rounded-2xl"][class*="border"]:hover,section[class*="rounded-2xl"][class*="border"]:hover,.er-cta:hover{transform:translateY(-3px)}
-  .er-page > div > div > section:first-child,.er-page > div > section:first-child{padding:.9rem;margin-bottom:0}
-  button.bg-orange-600,a.bg-orange-600,button.bg-emerald-600,a.bg-emerald-600,button.bg-slate-900,a.bg-slate-900{box-shadow:0 8px 18px rgba(15,23,42,.13)}
-}
-
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
-
-.scrollbar-thin::-webkit-scrollbar{height:4px;width:4px}.scrollbar-thin::-webkit-scrollbar-track{background:transparent}.scrollbar-thin::-webkit-scrollbar-thumb{background:rgba(100,116,139,.3);border-radius:9999px}
