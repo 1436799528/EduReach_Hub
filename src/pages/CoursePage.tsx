@@ -1,3 +1,116 @@
-import { courses, getCourse } from '../data/edulebMock'; import { CourseCard } from '../components/EdulebCards'; import { Shell } from '../components/EdulebShared';
-export default function CoursePage(){return <Shell title="Our courses"><section className="course_area section-padding"><div className="container"><div className="row">{courses.map(course=><CourseCard course={course} key={course.id}/>)}</div></div></section></Shell>}
-export function CourseDetailsPage(){const id=new URLSearchParams(location.search).get('course')||courses[0].id;const c=getCourse(id)||courses[0];return <Shell title="Course Details"><section className="course_details section-padding"><div className="container"><div className="row"><div className="col-lg-8"><img src={c.image} className="img-fluid" alt=""/><h2>{c.title}</h2><p>{c.description}</p><h3>What you will learn</h3><ul className="why_list"><li>Understand core concepts</li><li>Complete practical activities</li><li>Build a clear learning path</li></ul></div><div className="col-lg-4"><div className="course-sidebar"><h3>{c.price}</h3><p>{c.category}</p><a className="btn_one" href="/contact.html">Enrol in Course</a></div></div></div></div></section></Shell>}
+import { courses, getCourse } from '../data/edulebMock';
+import { CourseCard } from '../components/EdulebCards';
+import { Shell, imageBase } from '../components/EdulebShared';
+
+export default function CoursePage() {
+  return (
+    <Shell title="All Course">
+      <section className="home_course section-padding">
+        <div className="container">
+          <div className="row">
+            {courses.map((course) => (
+              <div className="col-lg-4 col-sm-6 col-xs-12" key={course.id}>
+                <div className="single_course">
+                  <div className="single_c_img">
+                    <img src={course.image} className="img-fluid" alt={course.title} />
+                    <span>{course.category}</span>
+                  </div>
+                  <div className="course-stars" aria-label={`${course.rating} out of 5 stars`}>
+                    {[1, 2, 3, 4, 5].map((star) => <i className="fa fa-star" key={star} />)}
+                  </div>
+                  <h4><a href={`/course_details.html?course=${course.id}`}>{course.title}</a></h4>
+                  <p><span className="ti-book" /> {course.lessons} Lessons</p>
+                  <p><span className="ti-alarm-clock" /> {course.duration}</p>
+                  <div className="price">Course Fee - {course.price}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </Shell>
+  );
+}
+
+export function CourseDetailsPage() {
+  const id = new URLSearchParams(location.search).get('course') || courses[0].id;
+  const course = getCourse(id) || courses[0];
+  const related = courses.filter((item) => item.id !== course.id).slice(0, 3);
+  const reviews = [
+    ['Robot Smith', 'client04.png', 'The lessons are clear and the practical examples make the course easy to follow.'],
+    ['Nicolas Anelca', 'client02.png', 'A useful learning path with a good balance of theory and practice.'],
+    ['Harry Johnshon', 'client03.png', 'The course helped me understand the topic better and gave me useful practice material.'],
+  ];
+  const instructorId = course.category === 'Electrical Engineering' ? 'amara-okafor' : 'daniel-obi';
+  const instructorName = course.category === 'Electrical Engineering' ? 'Amara Okafor' : 'Daniel Obi';
+
+  return (
+    <Shell title="Course details">
+      <section className="our_event section-padding">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-8 col-sm-8 col-xs-12">
+              <div className="single_event_single">
+                <img alt={course.title} className="img-fluid" src={`${imageBase}/sc.png`} />
+                <div className="single_event_text_single">
+                  <h4>{course.title}</h4>
+                  <span><i className="fa fa-calendar" /> 2026</span>
+                  <span><i className="fa fa-clock-o" /> {course.duration}</span>
+                  <span><i className="fa fa-table" /> <strong>{course.lessons} Lessons</strong></span>
+                  <p>{course.description}</p>
+                  <p>This demo uses realistic course data while preserving the full Eduleb course-details layout. Curriculum, enrolment, certificates and reviews can be connected to the live platform data later.</p>
+                </div>
+              </div>
+
+              <div className="course-details-content section-bg">
+                <ul className="nav nav-tabs" role="tablist">
+                  <li className="nav-item"><a href="#overview" className="nav-link active" data-bs-toggle="tab">Overview</a></li>
+                  <li><a href="#curriculum" className="nav-link" data-bs-toggle="tab">Curriculum</a></li>
+                  <li className="nav-item"><a href="#instructor" className="nav-link" data-bs-toggle="tab">Instructor</a></li>
+                  <li className="nav-item"><a href="#reviews" className="nav-link" data-bs-toggle="tab">Reviews</a></li>
+                </ul>
+                <div className="tab-content" id="myTabContent">
+                  <div className="tab-pane show fade active" id="overview">
+                    <div className="overview">
+                      <p>{course.description} Work through each lesson in order, practise the concepts and keep notes as you progress.</p>
+                      <div className="course-video-wrap"><iframe width="900" height="506" src="https://www.youtube.com/embed/RXv_uIN6e-Y" title="Course preview video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div>
+                      <p>By the end of the course, learners should be able to explain the major ideas, apply them in practical tasks and use the knowledge as a foundation for further study.</p>
+                      <div className="details-buttons-area"><a href="/contact.html" className="custom-button theme-one">Enroll Now <i className="fa fa-angle-right" /></a><a href="/pricing_plan.html" className="custom-button bg-white">Get Membership</a><ul className="social-icons"><li><a href="#0" className="active"><i className="fa fa-facebook" /></a></li><li><a href="#0"><i className="fa fa-twitter" /></a></li><li><a href="#0"><i className="fa fa-instagram" /></a></li></ul></div>
+                    </div>
+                  </div>
+                  <div className="tab-pane fade" id="curriculum">
+                    <div className="overview">
+                      <p><strong>Module 1:</strong> Foundations and key terminology.</p>
+                      <p><strong>Module 2:</strong> Guided practical exercises and worked examples.</p>
+                      <p><strong>Module 3:</strong> Applied project and review.</p>
+                      <div className="details-buttons-area"><a href="/contact.html" className="custom-button theme-one">Enroll Now <i className="fa fa-angle-right" /></a><a href="/pricing_plan.html" className="custom-button bg-white">Get Membership</a></div>
+                    </div>
+                  </div>
+                  <div className="tab-pane fade" id="instructor">
+                    <div className="overview text-center">
+                      <div className="instructor-item"><div className="instructor-thumb"><a href={`/instructor_details.html?instructor=${instructorId}`}><img src={`${imageBase}/ins-details.png`} alt="instructor" /></a></div><div className="instructor-content"><h6 className="title"><a href={`/instructor_details.html?instructor=${instructorId}`}>{instructorName}</a></h6><span className="details">TEACHER</span></div></div>
+                      <p>Experienced educator focused on clear explanations, practical examples and steady learner progress.</p>
+                      <div className="details-buttons-area"><ul className="social-icons justify-content-center w-100"><li><a href="#0"><i className="fa fa-facebook" /></a></li><li><a href="#0" className="active"><i className="fa fa-twitter" /></a></li><li><a href="#0"><i className="fa fa-instagram" /></a></li></ul></div>
+                    </div>
+                  </div>
+                  <div className="tab-pane fade" id="reviews">
+                    <div className="client-review"><div className="review-comments"><h6 className="review-title">Reviews ({reviews.length.toString().padStart(2, '0')})</h6><ul className="review-contents">{reviews.map(([name, image, text]) => <li key={name}><div className="thumb"><img src={`${imageBase}/${image}`} alt="course review" /></div><div className="cont"><h6 className="subtitle">{name}</h6><div className="ratings cl-theme">{[1, 2, 3, 4, 5].map((star) => <span key={star}><i className="fa fa-star" /></span>)}</div><p>{text}</p></div></li>)}</ul></div><div className="review-form"><h6 className="review-title">Add a Review</h6><form className="row client-form align-items-center" onSubmit={(event) => event.preventDefault()}><div className="col-md-4 col-12"><input type="text" name="name" placeholder="Full Name" /></div><div className="col-md-4 col-12"><input type="email" name="email" placeholder="Email Address" /></div><div className="col-md-4 col-12"><div className="rating"><span className="rating-title">Your Rating :</span><ul className="ratings">{[1, 2, 3, 4, 5].map((star) => <li key={star}><a href="#0" title={`Give Me ${star} Star`}><i className="fa fa-star" /></a></li>)}</ul></div></div><div className="col-md-12 col-12 d-inline-flex"><textarea rows={5} placeholder="Type Here Message" /></div><div className="col-12"><button type="submit" className="custom-button rounded">Submit Review</button></div></form></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-lg-4 col-sm-4 col-xs-12">
+              <div className="course_features"><h3>Course features</h3><ul><li><i className="fa fa-calendar" /> Course duration <b>{course.duration}</b></li><li><i className="fa fa-user" /> Total Lectures <b>{course.lessons}</b></li><li><i className="fa fa-user" /> Total Students <b>1,000+</b></li><li><i className="fa fa-trophy" /> Certification <b>YES</b></li></ul></div>
+              <div className="event_info_price"><h4>Price - {course.price}</h4></div>
+              <div className="event_info_register"><a className="btn_one" href="/contact.html">Register Today</a></div>
+              <div className="related_course"><h3>Related Course</h3>{related.map((item) => <div className="single_rc" key={item.id}><div className="rc_img"><img src={item.image} alt={item.title} /></div>{[1, 2, 3, 4, 5].map((star) => <i className="fa fa-star" key={star} />)}<h4><a href={`/course_details.html?course=${item.id}`}>{item.title}</a></h4><span>{item.price}</span></div>)}</div>
+              <div className="sidebar-post"><div className="sidebar_title"><h4>CATEGORIES</h4></div><div className="single_category"><ul>{['Education', 'Ai Content', 'New Course', 'Marketing', 'Software', 'Design'].map((category, index) => <li key={category}><a href={`/course.html?category=${encodeURIComponent(category)}`}>{category} <sup>{[11, 44, 33, 14, 21, 1][index]}</sup></a></li>)}</ul></div></div>
+              <div className="sidebar-post"><div className="sidebar_title"><h4>Follow us</h4></div><div className="single_social"><ul>{[['facebook', 'fa-facebook', '150K Likes'], ['twitter', 'fa-twitter', '138K Followers'], ['youtube', 'fa-youtube', '90K Subscribers'], ['pinterest', 'fa-pinterest', '350K Followers'], ['tumblr', 'fa-tumblr', '901 Followers'], ['rss', 'fa-rss', '411 Followers']].map(([type, icon, count]) => <li key={type}><div className={`social_item b_${type}`}><a href="#" title={type}><i className={`fa ${icon}`} /><span className="item-list">{count}</span></a></div></li>)}</ul></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </Shell>
+  );
+}
