@@ -1,34 +1,34 @@
-# Eduleb Demo Site
+# Eduleb Landing Page
 
-This repository contains the React implementation of the Eduleb educational website architecture, populated with editable mock data.
+This repository now contains one public Eduleb-style landing page.
 
-## Editable page map
+## Public navigation
 
-The active page source is the top-level `pages/` directory:
+The landing page contains exactly five sections:
 
-- `index.html` -> `pages/Home01.tsx`
-- `index2.html` -> `pages/Home02.tsx`
-- `about.html` -> `pages/AboutPage.tsx`
-- `course.html` -> `pages/CoursePage.tsx`
-- `course_details.html` -> `pages/CoursePage.tsx` (`CourseDetailsPage`)
-- `instructor.html` -> `pages/InstructorPage.tsx`
-- `instructor_details.html` -> `pages/InstructorPage.tsx` (`InstructorDetailsPage`)
-- `pricing_plan.html` -> `pages/PricingPage.tsx`
-- `faq.html` -> `pages/FAQPage.tsx`
-- `blog.html` -> `pages/BlogPage.tsx`
-- `blog_details.html` -> `pages/BlogPage.tsx` (`BlogDetailsPage`)
-- `contact.html` -> `pages/ContactPage.tsx`
-- `404.html` -> `pages/ErrorPage.tsx`
+- Home
+- About
+- Services
+- Blog
+- Contact
 
-The aliases `ins_details.html`, `pricing.html`, and `blog_single.html` point to the corresponding active page components.
+Sign In and Sign Up remain available from the header as working Supabase email/password authentication modals.
 
-## Shared architecture
+## Main source files
 
-- `src/App.tsx` handles the page map.
-- `src/components/EdulebShared.tsx` contains the shared header, banner, footer and shell.
-- `src/components/EdulebCards.tsx` contains reusable course, instructor, blog and homepage cards.
-- `src/data/edulebMock.ts` contains the editable mock catalogue, instructors, blog posts, FAQs and pricing plans.
-- `src/index.css` contains project overrides while the native Eduleb/Bootstrap assets are loaded consistently for every page entry.
+- `index.html` — the single browser entry point
+- `pages/HomePage.tsx` — the complete landing page
+- `src/components/EdulebShared.tsx` — shared header, footer and page shell
+- `src/components/AuthModal.tsx` — Supabase sign-in/sign-up interface
+- `src/lib/supabase.ts` — Supabase browser client
+- `src/data/edulebMock.ts` — editable landing-page content data
+- `src/index.css` — Eduleb-compatible styling and landing-page overrides
+
+All obsolete public pages and their route modules have been removed from the frontend.
+
+## Authentication
+
+The authentication UI uses the Supabase browser client with email/password sign-up and sign-in. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env` for local development; the code also has the current project configuration as a frontend-safe fallback.
 
 ## Development
 
