@@ -44,9 +44,9 @@ export default function AuthModal({ mode, onClose }: { mode: AuthMode; onClose: 
     <div className="auth-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div className="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
         <button type="button" className="auth-close" onClick={onClose} aria-label="Close">×</button>
-        <div className="auth-brand">Eduleb</div>
+        <div className="auth-brand">EduReach Hub</div>
         <h2 id="auth-title">{activeMode === 'signin' ? 'Welcome back' : 'Create your account'}</h2>
-        <p className="auth-intro">{activeMode === 'signin' ? 'Sign in to continue your learning journey.' : 'Join Eduleb and start learning with us.'}</p>
+        <p className="auth-intro">{activeMode === 'signin' ? 'Sign in to continue with EduReach.' : 'Create your EduReach account and get started.'}</p>
 
         <form onSubmit={submit}>
           {activeMode === 'signup' && (
@@ -61,7 +61,7 @@ export default function AuthModal({ mode, onClose }: { mode: AuthMode; onClose: 
 
         <div className="auth-switch">
           {activeMode === 'signin' ? (
-            <>New to Eduleb? <button type="button" onClick={() => { setActiveMode('signup'); setMessage(''); setError(''); }}>Create an account</button></>
+            <>New to EduReach? <button type="button" onClick={() => { setActiveMode('signup'); setMessage(''); setError(''); }}>Create an account</button></>
           ) : (
             <>Already have an account? <button type="button" onClick={() => { setActiveMode('signin'); setMessage(''); setError(''); }}>Sign in</button></>
           )}
