@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { siteConfig } from '../data/edulebMock';
 
 export const imageBase = 'https://themewagon.github.io/eduleb/assets/img';
+export const fallbackImage = `${imageBase}/about1.png`;
 
 export function Header() {
   return (
