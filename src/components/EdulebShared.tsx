@@ -16,7 +16,15 @@ export function Header() {
             <div className="col-20 align-self-center"><div className="site-logo"><a href="#home"><img src={`${imageBase}/logo.png`} alt="Eduleb" /></a></div></div>
             <div className="col-60 d-flex"><nav id="main-menu"><ul><li><a href="#home">Home</a></li><li><a href="#about">About</a></li><li><a href="#services">Services</a></li><li><a href="#blog">Blog</a></li><li><a href="#contact">Contact</a></li></ul></nav></div>
             <div className="col-20 d-none d-xl-block text-end align-self-center auth-nav-actions"><button type="button" className="header-btn auth-link-btn" onClick={() => setAuthMode('signin')}>Sign In</button><button type="button" className="btn_one auth-link-btn" onClick={() => setAuthMode('signup')}>Sign Up</button></div>
-            <ul className="mobile_menu"><li><a href="#home">Home</a></li><li><a href="#about">About</a></li><li><a href="#services">Services</a></li><li><a href="#blog">Blog</a></li><li><a href="#contact">Contact</a></li></ul>
+            <ul className="mobile_menu">
+              <li><a href="#home">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#services">Services</a></li>
+              <li><a href="#blog">Blog</a></li>
+              <li><a href="#contact">Contact</a></li>
+              <li><button type="button" className="mobile-auth-button" onClick={() => setAuthMode('signin')}>Sign In</button></li>
+              <li><button type="button" className="mobile-auth-button mobile-auth-primary" onClick={() => setAuthMode('signup')}>Sign Up</button></li>
+            </ul>
           </div>
         </div>
       </div>
