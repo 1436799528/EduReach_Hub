@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import { services } from '../src/data/edulebMock';
 import { Shell } from '../src/components/EdulebShared';
 import AuthModal from '../src/components/AuthModal';
@@ -86,7 +87,7 @@ export default function ServiceDetailsPage({ id }: { id: string }) {
 
   const title = useMemo(() => service.title, [service.title]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setSubmitted(false);
