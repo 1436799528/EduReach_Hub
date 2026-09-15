@@ -90,7 +90,6 @@
   line-height: 1.45;
 }
 
-/* Keep cards dense: no generic marketing paragraph is injected under titles. */
 .results-grid .card h3::after { content: none; }
 
 .results-grid .card .card-link {
@@ -162,11 +161,6 @@
 }
 
 .utility-card .utility-footer .primary.full { font-weight: 800; }
-
-/* Compact action bars for the main service cards. */
-.results-grid .card .card-link { font-size: 0; }
-.results-grid .card .card-link svg { width: 15px; }
-.results-grid .card .card-link::after { font-size: 12px; }
 
 @media (max-width: 900px) {
   .results-grid,
