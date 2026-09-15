@@ -8,6 +8,7 @@ import './app.css';
 import './home-refresh.css';
 import './card-polish.css';
 import './service-track.css';
+import './dense-portal.css';
 
 function RootRouter() {
   const [path, setPath] = useState(window.location.pathname);
