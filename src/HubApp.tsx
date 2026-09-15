@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import HubHomePage from '../pages/HubHomePage';
-import AuthPage from '../pages/AuthPage';
-import StudentDashboardPage from '../pages/StudentDashboardPage';
+import AuthPageV2 from '../pages/AuthPageV2';
+import StudentDashboardV2 from '../pages/StudentDashboardV2';
 import CbtPage from '../pages/CbtPage';
 import CbtPracticePage from '../pages/CbtPracticePage';
 import CbtResultsPage from '../pages/CbtResultsPage';
@@ -22,10 +22,10 @@ const serviceSlugs = ['nelfund-loan', 'results', 'scratch-cards', 'jamb-slip', '
 export default function HubApp(): ReactElement {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
-  if (path === '/login') return <AuthPage mode="signin" />;
-  if (path === '/register') return <AuthPage mode="signup" />;
-  if (path === '/forgot-password') return <AuthPage mode="forgot" />;
-  if (path === '/dashboard') return <StudentDashboardPage />;
+  if (path === '/login') return <AuthPageV2 mode="signin" />;
+  if (path === '/register') return <AuthPageV2 mode="signup" />;
+  if (path === '/forgot-password') return <AuthPageV2 mode="forgot" />;
+  if (path === '/dashboard') return <StudentDashboardV2 />;
 
   if (path === '/admin') return <AdminDashboardPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
