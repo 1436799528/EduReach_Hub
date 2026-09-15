@@ -9,9 +9,9 @@ export type ServiceCatalogItem = {
 };
 
 export const hubServices: ServiceCatalogItem[] = [
-  { slug: 'nelfund-loan', title: 'NELFUND Loan Assistance', short: 'NELFUND Loan', description: 'Organise your student-loan request details and get guided support before you submit through the official portal.', price: 'Assistance service', action: 'Apply Now', tone: 'green' },
-  { slug: 'jamb-caps-regularization', title: 'JAMB CAPS Regularization', short: 'JAMB CAPS', description: 'Structured support for students handling CAPS-related regularization and admission record issues.', price: 'Support request', action: 'Apply Now', tone: 'blue' },
-  { slug: 'waec-neco-pin', title: 'WAEC / NECO Pin Buy', short: 'Scratch Card', description: 'Request the correct result-checking PIN type and keep your code private while using the official checker.', price: 'Code request', action: 'Get Code', tone: 'amber' },
+  { slug: 'nelfund-loan', title: 'NELFUND Loan Application', short: 'NELFUND Loan', description: 'Organise your student-loan request details and get guided support before you submit through the official portal.', price: 'Assistance service', action: 'Apply Now', tone: 'green' },
+  { slug: 'results', title: 'WAEC / NECO Result Checking', short: 'Result Checking', description: 'Get guided support for WAEC and NECO result checking while keeping candidate details and PINs private.', price: 'Result support', action: 'Apply Now', tone: 'blue' },
+  { slug: 'scratch-cards', title: 'WAEC / NECO Scratch Cards', short: 'Scratch Cards', description: 'Request the right result-checking card type and keep your code private while using the official checker.', price: 'Code request', action: 'Get Code', tone: 'amber' },
   { slug: 'jamb-slip', title: 'JAMB Exam Slip Printing', short: 'JAMB Slip', description: 'Support for locating, verifying and preparing your examination slip for printing.', price: 'Printing support', action: 'Apply Now', tone: 'blue' },
   { slug: 'admission-letters', title: 'Admission Deferment & Supplementary Letters', short: 'Admission Letters', description: 'Prepare a clear application letter around your institution’s actual requirements.', price: 'Letter support', action: 'Apply Now', tone: 'green' },
 ];
