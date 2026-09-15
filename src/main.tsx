@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import IntegrationBridge from './IntegrationBridge.tsx';
 import ServiceTrackOverride from './ServiceTrackOverride.tsx';
+import { initUiPolish } from './uiPolish';
 import './app.css';
 import './home-refresh.css';
 import './card-polish.css';
@@ -26,3 +27,5 @@ createRoot(document.getElementById('root')!).render(
     <RootRouter />
   </StrictMode>,
 );
+
+initUiPolish();
