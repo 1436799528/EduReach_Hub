@@ -21,13 +21,19 @@ export default function AuthModal({ mode, onClose }: { mode: 'signin' | 'signup'
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        onClose();
+        window.location.href = '/dashboard';
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Authentication failed.');
     } finally {
       setBusy(false);
     }
+  }
+
+  function enterDemo() {
+    sessionStorage.setItem('edureach_demo_mode', 'true');
+    onClose();
+    window.location.href = '/dashboard';
   }
 
   return (
@@ -37,6 +43,16 @@ export default function AuthModal({ mode, onClose }: { mode: 'signin' | 'signup'
         <div className="hub-auth-brand">EduReach<span>.ng</span></div>
         <h2>{currentMode === 'signup' ? 'Create your account' : 'Welcome back'}</h2>
         <p>{currentMode === 'signup' ? 'Create an EduReach account to submit service requests and track them.' : 'Sign in to continue with your student services.'}</p>
+
+        <div className="hub-demo-auth-box">
+          <div>
+            <span className="hub-demo-label">DEMO ACCOUNT</span>
+            <strong>See the full student workspace</strong>
+            <small>Sample data only — no real student record or payment is used.</small>
+          </div>
+          <button type="button" className="hub-outline-btn" onClick={enterDemo}>Enter Demo</button>
+        </div>
+
         <form onSubmit={submit}>
           {currentMode === 'signup' && <input className="hub-field" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" required />}
           <input className="hub-field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" required />
