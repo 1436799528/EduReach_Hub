@@ -22,8 +22,8 @@ const serviceSlugs = ['nelfund-loan', 'results', 'scratch-cards', 'jamb-slip', '
 export default function HubApp(): ReactElement {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
-  if (path === '/login') return <AuthPageV2 mode="signin" />;
-  if (path === '/register') return <AuthPageV2 mode="signup" />;
+  if (path === '/login' || path === '/signin') return <AuthPageV2 mode="signin" />;
+  if (path === '/register' || path === '/signup') return <AuthPageV2 mode="signup" />;
   if (path === '/forgot-password') return <AuthPageV2 mode="forgot" />;
   if (path === '/dashboard') return <StudentDashboardV2 />;
 
