@@ -162,6 +162,33 @@
 
 .utility-card .utility-footer .primary.full { font-weight: 800; }
 
+/* Shared faint-icon card language inspired by compact Nigerian student portals. */
+.utility-card,
+.mini-service-grid .card,
+.results-grid .card,
+.timeline-list .card,
+.context-sidebar .card,
+.section-card,
+.auth-card,
+.social-community-card {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .045);
+}
+.utility-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #dbeafe;
+}
+.mini-service-grid .card:nth-child(2n) .utility-icon { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+.mini-service-grid .card:nth-child(3n) .utility-icon { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
+.utility-card:nth-child(4n+1) .utility-icon { background:#eff6ff; color:#1e3a8a; border-color:#dbeafe; }
+.utility-card:nth-child(4n+2) .utility-icon { background:#ecfdf5; color:#047857; border-color:#a7f3d0; }
+.utility-card:nth-child(4n+3) .utility-icon { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+.utility-card:nth-child(4n+4) .utility-icon { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
+.section-card { border-radius: 14px; }
+
 @media (max-width: 900px) {
   .results-grid,
   .mini-service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
