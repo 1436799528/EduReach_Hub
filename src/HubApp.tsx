@@ -21,12 +21,11 @@ const serviceSlugs = ['nelfund-loan', 'results', 'scratch-cards', 'jamb-slip', '
 
 export default function HubApp(): ReactElement {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
-  const demoMode = sessionStorage.getItem('edureach_demo_mode') === 'true';
 
   if (path === '/login') return <AuthPage mode="signin" />;
   if (path === '/register') return <AuthPage mode="signup" />;
   if (path === '/forgot-password') return <AuthPage mode="forgot" />;
-  if (path === '/dashboard' && demoMode) return <DemoDashboardPage />;
+  if (path === '/dashboard') return <DemoDashboardPage />;
 
   if (path === '/admin') return <AdminDashboardPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
