@@ -9,11 +9,21 @@ import ServiceTrackPage from '../pages/ServiceTrackPage';
 import NewsPage from '../pages/NewsPage';
 import NewsArticlePage from '../pages/NewsArticlePage';
 import JobsPage from '../pages/JobsPage';
+import AdminDashboardPage from '../pages/AdminDashboardPage';
+import AdminQueuePage from '../pages/AdminQueuePage';
+import AdminCbtPage from '../pages/AdminCbtPage';
+import AdminVouchersPage from '../pages/AdminVouchersPage';
+import AdminUsersPage from '../pages/AdminUsersPage';
 
 const serviceSlugs = ['nelfund-loan', 'results', 'scratch-cards', 'jamb-slip', 'admission-letters'];
 
 export default function HubApp(): ReactElement {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
+  if (path === '/admin') return <AdminDashboardPage />;
+  if (path === '/admin/queue') return <AdminQueuePage />;
+  if (path === '/admin/cbt') return <AdminCbtPage />;
+  if (path === '/admin/vouchers') return <AdminVouchersPage />;
+  if (path === '/admin/users') return <AdminUsersPage />;
   if (path === '/') return <HubHomePage />;
   if (path === '/cbt') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
