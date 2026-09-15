@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import HighDensityHome from './HighDensityHome';
 import IntegrationBridge from './IntegrationBridge.tsx';
 import ServiceTrackOverride from './ServiceTrackOverride.tsx';
 import { initUiPolish } from './uiPolish';
@@ -19,7 +20,9 @@ function RootRouter() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  return path.replace(/\/$/, '') === '/services/track' ? <ServiceTrackOverride /> : <App />;
+  const cleanPath = path.replace(/\/$/, '') || '/';
+  if (cleanPath === '/') return <HighDensityHome />;
+  return cleanPath === '/services/track' ? <ServiceTrackOverride /> : <App />;
 }
 
 createRoot(document.getElementById('root')!).render(
