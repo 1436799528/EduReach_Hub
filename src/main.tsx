@@ -5,6 +5,7 @@ import PwaRegister from './components/PwaRegister';
 import './app.css';
 import './hub.css';
 import './hub-portal-tuning.css';
+import './dashboard-v2.css';
 import './admin.css';
 
 createRoot(document.getElementById('root')!).render(
