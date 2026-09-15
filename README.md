@@ -1,34 +1,42 @@
-# Eduleb Landing Page
+# Edurecah
 
-This repository now contains one public Eduleb-style landing page.
+Edurecah is a student platform for Nigerian tertiary students.
 
-## Public navigation
+## Product architecture
 
-The landing page contains exactly five sections:
+The frontend now follows the 22-page Edurecah architecture:
 
-- Home
-- About
-- Services
-- Blog
-- Contact
+1. `/` — student action dashboard
+2. `/search` — global search
+3. `/about` — platform overview
+4. `/login`, `/register`, `/forgot-password` — authentication
+5. `/cbt` — CBT lobby
+6. `/cbt/:exam-type` — exam and subject selection
+7. `/cbt/session/:id` — active CBT session
+8. `/cbt/result/:id` — performance analytics
+9. `/services` — services directory
+10. `/services/:service-slug` — service application
+11. `/services/track` — request tracking
+12. `/news` — news feed
+13. `/schools` — school directory
+14. `/news/:slug` — article detail
+15. `/opportunities` — jobs and scholarships
+16. `/opportunities/:slug` — opportunity detail
+17. `/community` — Q&A/community
+18. `/groups` — study groups
+19. `/dashboard` — student dashboard
+20. `/dashboard/orders` — order and transaction history
+21. `/dashboard/profile` — profile settings
+22. `/admin` — admin control panel
 
-Sign In and Sign Up remain available from the header as working Supabase email/password authentication modals.
+The old Eduleb page structure, shared shell, styles, mock data and frontend route modules have been removed from the active product architecture.
 
-## Main source files
+## Stack
 
-- `index.html` — the single browser entry point
-- `pages/HomePage.tsx` — the complete landing page
-- `src/components/EdulebShared.tsx` — shared header, footer and page shell
-- `src/components/AuthModal.tsx` — Supabase sign-in/sign-up interface
-- `src/lib/supabase.ts` — Supabase browser client
-- `src/data/edulebMock.ts` — editable landing-page content data
-- `src/index.css` — Eduleb-compatible styling and landing-page overrides
-
-All obsolete public pages and their route modules have been removed from the frontend.
-
-## Authentication
-
-The authentication UI uses the Supabase browser client with email/password sign-up and sign-in. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env` for local development; the code also has the current project configuration as a frontend-safe fallback.
+- React + Vite + TypeScript
+- Supabase Auth + PostgreSQL
+- lucide-react
+- Responsive custom Edurecah design system
 
 ## Development
 
@@ -36,5 +44,3 @@ The authentication UI uses the Supabase browser client with email/password sign-
 npm install
 npm run dev
 ```
-
-Open the development server on port 3000.
