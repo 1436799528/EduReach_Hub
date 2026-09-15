@@ -4,6 +4,7 @@ import HubApp from './HubApp';
 import PwaRegister from './components/PwaRegister';
 import './app.css';
 import './hub.css';
+import './hub-portal-tuning.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
