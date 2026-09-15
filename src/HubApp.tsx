@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import HubHomePage from '../pages/HubHomePage';
 import AuthPage from '../pages/AuthPage';
-import DemoDashboardPage from '../pages/DemoDashboardPage';
+import StudentDashboardPage from '../pages/StudentDashboardPage';
 import CbtPage from '../pages/CbtPage';
 import CbtPracticePage from '../pages/CbtPracticePage';
 import CbtResultsPage from '../pages/CbtResultsPage';
@@ -25,7 +25,7 @@ export default function HubApp(): ReactElement {
   if (path === '/login') return <AuthPage mode="signin" />;
   if (path === '/register') return <AuthPage mode="signup" />;
   if (path === '/forgot-password') return <AuthPage mode="forgot" />;
-  if (path === '/dashboard') return <DemoDashboardPage />;
+  if (path === '/dashboard') return <StudentDashboardPage />;
 
   if (path === '/admin') return <AdminDashboardPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
