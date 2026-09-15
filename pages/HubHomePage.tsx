@@ -12,18 +12,33 @@ export default function HubHomePage() {
             <button className="hub-outline-btn"><MessageCircle size={17} /> Join Channel</button>
           </div>
 
-          <div className="hub-section-heading"><div><span className="hub-eyebrow">EDUREACH HUB</span><h1>Your student life, organised.</h1><p>Practice CBT questions, request student services, track applications and scan verified academic updates.</p></div></div>
+          <div className="hub-section-heading hub-portal-intro">
+            <div>
+              <span className="hub-eyebrow">EDUREACH HUB</span>
+              <h1>Student tools, services &amp; updates in one place.</h1>
+              <p>Start with a tool below, complete a service request, or check the latest academic updates.</p>
+            </div>
+          </div>
 
           <div className="hub-utility-cards">
-            <a className="hub-feature-card hub-tone-blue" href="/cbt"><div><span className="hub-tag">JAMB 2026</span><h3>CBT Practice</h3><p>Start a timed practice session with JAMB, WAEC or POST-UTME settings.</p><span className="hub-card-link">Start Test <ArrowRight size={16} /></span></div><div className="hub-card-icon">CBT</div></a>
-            <a className="hub-feature-card hub-tone-green" href="/services/apply/nelfund-loan"><div><span className="hub-tag">NELFUND Loan</span><h3>Digital Service</h3><p>Organise your request details and begin the EduReach assistance flow.</p><span className="hub-card-link">Apply Now <ArrowRight size={16} /></span></div><div className="hub-card-icon">₦</div></a>
-            <a className="hub-feature-card hub-tone-amber" href="/services/apply/waec-neco-pin"><div><span className="hub-tag">WAEC / NECO</span><h3>Scratch Card Voucher</h3><p>Request a result-checking PIN type without exposing secret credentials.</p><span className="hub-card-link">Buy Pin <ArrowRight size={16} /></span></div><div className="hub-card-icon">PIN</div></a>
+            <a className="hub-feature-card hub-tone-blue" href="/cbt">
+              <div className="hub-feature-head"><span>CBT</span><span>JAMB / WAEC</span></div>
+              <div className="hub-feature-body"><span className="hub-tag">JAMB 2026</span><h3>CBT Practice</h3><p>Start a timed practice session with JAMB, WAEC or POST-UTME settings.</p><span className="hub-card-link">Start Test <ArrowRight size={16} /></span></div>
+            </a>
+            <a className="hub-feature-card hub-tone-green" href="/services">
+              <div className="hub-feature-head"><span>₦</span><span>STUDENT SERVICES</span></div>
+              <div className="hub-feature-body"><span className="hub-tag">NELFUND Loan</span><h3>Student Services</h3><p>Apply for NELFUND help, result support, JAMB slip printing and admission services.</p><span className="hub-card-link">Apply Now <ArrowRight size={16} /></span></div>
+            </a>
+            <a className="hub-feature-card hub-tone-amber" href="/services/apply/scratch-cards">
+              <div className="hub-feature-head"><span>PIN</span><span>WAEC / NECO</span></div>
+              <div className="hub-feature-body"><span className="hub-tag">Result Checking</span><h3>Scratch Card Voucher</h3><p>Request the correct result-checking PIN type without exposing secret credentials.</p><span className="hub-card-link">Buy Pin <ArrowRight size={16} /></span></div>
+            </a>
           </div>
 
           <div className="hub-section-heading compact"><div><span className="hub-eyebrow">SERVICES</span><h2>Quick student services</h2></div><a href="/services">View all <ArrowRight size={16} /></a></div>
           <div className="hub-service-grid">{hubServices.map((service) => <a key={service.slug} href={`/services/apply/${service.slug}`} className={`hub-mini-service hub-tone-${service.tone}`}><Zap size={18}/><div><strong>{service.short}</strong><span>{service.description}</span></div><ArrowRight size={17}/></a>)}</div>
 
-          <div className="hub-section-heading compact"><div><span className="hub-eyebrow">LATEST</span><h2>News & academic updates</h2></div><a href="/news">Open news <ArrowRight size={16} /></a></div>
+          <div className="hub-section-heading compact"><div><span className="hub-eyebrow">LATEST</span><h2>News &amp; academic updates</h2></div><a href="/news">Open news <ArrowRight size={16} /></a></div>
           <div className="hub-news-list">{newsItems.slice(0, 4).map((item) => <a href={`/news/${item.slug}`} key={item.slug} className="hub-news-row"><div className="hub-news-thumb"><Newspaper size={20}/></div><div className="hub-news-copy"><div className="hub-news-meta"><span>{item.tag}</span><span>{item.date}</span>{item.verified ? <span className="hub-verified"><CheckCircle2 size={13}/> Verified</span> : null}</div><h3>{item.title}</h3><p>{item.excerpt}</p></div><ArrowRight size={18}/></a>)}</div>
         </section>
 
