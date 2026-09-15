@@ -1,8 +1,8 @@
-import { ArrowRight, CircleDollarSign, FileText, GraduationCap, KeyRound, Printer } from 'lucide-react';
+import { ArrowRight, CircleDollarSign, FileText, KeyRound, Printer } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { hubServices } from '../src/data/hubContent';
 
-const icons = { 'nelfund-loan': CircleDollarSign, 'jamb-caps-regularization': GraduationCap, 'waec-neco-pin': KeyRound, 'jamb-slip': Printer, 'admission-letters': FileText } as const;
+const icons = { 'nelfund-loan': CircleDollarSign, results: FileText, 'scratch-cards': KeyRound, 'jamb-slip': Printer, 'admission-letters': FileText } as const;
 
 export default function ServicesCatalogPage() {
   return <HubLayout><div className="hub-page"><div className="hub-container">
