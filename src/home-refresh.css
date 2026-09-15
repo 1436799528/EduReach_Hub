@@ -1,0 +1,25 @@
+/* EduReach Hub utility-dashboard refresh. */
+.dashboard-home{padding:24px 0 70px;background:#f8fafc}
+.dashboard-home .container{width:min(1240px,calc(100% - 32px))}
+.dashboard-banner-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.alert-banner{min-height:86px;padding:15px 16px;border-radius:13px;border-color:#dbe2ea;box-shadow:0 4px 14px rgba(15,23,42,.035)}
+.alert-banner:first-child{background:linear-gradient(90deg,#0f766e,#047857);border-color:transparent;color:#fff}
+.alert-banner:nth-child(2){background:linear-gradient(90deg,#1e3a8a,#312e81);border-color:transparent;color:#fff}
+.alert-banner:nth-child(3){background:linear-gradient(90deg,#a16207,#c2410c);border-color:transparent;color:#fff}
+.alert-banner b,.alert-banner small{color:inherit}.alert-banner small{opacity:.86}
+.banner-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14)!important;color:#fff!important}
+.workspace-grid{grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:22px}
+.workspace-intro{padding:2px 2px 6px}.workspace-intro h1{max-width:760px;font-size:clamp(1.6rem,3vw,2.55rem);letter-spacing:-.035em}.workspace-intro p{max-width:760px;font-size:.95rem}
+.section-card,.context-sidebar .card,.utility-card,.timeline-list .card{border-color:#dfe6ee;box-shadow:0 3px 14px rgba(15,23,42,.035)}
+.section-card{padding:18px;border-radius:13px}.section-head.compact h2{font-size:1.02rem;letter-spacing:-.015em}
+.eyebrow{background:transparent;padding:0;border-radius:0;color:#64748b;font-size:.67rem;font-weight:800;letter-spacing:.11em}
+.utility-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.utility-card{min-height:196px;padding:17px;border-radius:13px}
+.utility-card h3,.mini-service-grid .card h3,.timeline-list .card h3{color:#0f172a}
+.utility-card p,.mini-service-grid .card p,.timeline-list .card p{font-size:.8rem}
+.utility-icon{width:41px;height:41px;border-radius:10px}
+.mini-service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mini-service-grid .card{min-height:150px;border-radius:12px}
+.timeline-list .card{grid-template-columns:86px minmax(0,1fr);gap:13px;padding:13px}.timeline-thumb{min-height:94px}
+.context-sidebar{gap:13px}.context-sidebar .card{border-radius:13px}.context-sidebar .widget-head h3{font-size:.91rem}
+.badge{font-size:.66rem;letter-spacing:.055em}.bottom-nav{box-shadow:0 -7px 25px rgba(15,23,42,.07)}
+@media (max-width:1100px){.dashboard-banner-grid{grid-template-columns:1fr}.workspace-grid{grid-template-columns:minmax(0,1fr)}.context-sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.dashboard-home .container{width:min(100% - 20px,1240px)}.utility-grid,.mini-service-grid,.context-sidebar{grid-template-columns:1fr}.workspace-intro{align-items:stretch;flex-direction:column}.workspace-intro .secondary{align-self:flex-start}.timeline-list .card{grid-template-columns:1fr}.timeline-thumb{min-height:70px}}
