@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Bell, BookOpen, FileText, GraduationCap, LogOut, Newspaper, ArrowRight } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { hubServices } from '../src/data/hubContent';
+import { supabase } from '../src/lib/supabase';
 
 const demoRequests = [
   { service: 'NELFUND Loan Application', status: 'processing', ref: 'DEMO-NLF-2026-001', date: '15 Sep 2026' },
@@ -9,8 +11,50 @@ const demoRequests = [
 ];
 
 export default function DemoDashboardPage() {
-  function exitDemo() {
-    sessionStorage.removeItem('edureach_demo_mode');
+  const [demo, setDemo] = useState(false);
+  const [name, setName] = useState('EduReach Demo Student');
+  const [email, setEmail] = useState('demo@edureach.ng');
+  const [requests, setRequests] = useState(demoRequests);
+
+  useEffect(() => {
+    const demoMode = sessionStorage.getItem('edureach_demo_mode') === 'true';
+    setDemo(demoMode);
+
+    if (demoMode) return;
+
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) {
+        window.location.href = '/login';
+        return;
+      }
+      setName(data.user.user_metadata?.full_name || 'EduReach Student');
+      setEmail(data.user.email || '');
+
+      const { data: rows } = await supabase
+        .from('service_requests')
+        .select('id,status,created_at,service_catalog(title)')
+        .eq('user_id', data.user.id)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (rows) {
+        setRequests(rows.map((row: any) => ({
+          service: row.service_catalog?.title || 'EduReach Service',
+          status: row.status,
+          ref: row.id,
+          date: new Date(row.created_at).toLocaleDateString(),
+        })));
+      }
+    });
+  }, []);
+
+  async function exitDashboard() {
+    if (demo) {
+      sessionStorage.removeItem('edureach_demo_mode');
+      window.location.href = '/';
+      return;
+    }
+    await supabase.auth.signOut();
     window.location.href = '/';
   }
 
@@ -20,32 +64,30 @@ export default function DemoDashboardPage() {
         <div className="hub-container">
           <div className="hub-demo-dashboard-hero">
             <div>
-              <span className="hub-eyebrow">DEMO STUDENT ACCOUNT</span>
+              <span className="hub-eyebrow">{demo ? 'DEMO STUDENT ACCOUNT' : 'STUDENT DASHBOARD'}</span>
               <h1>Welcome to the EduReach student workspace.</h1>
-              <p>This is a safe sample account. The information below is demo data so you can test the navigation, services, tracking flow and student dashboard.</p>
+              <p>{demo ? 'This is a safe sample account. The information below is demo data so you can test the navigation, services, tracking flow and student dashboard.' : 'Your authenticated student workspace for requests, profile details and quick access to EduReach services.'}</p>
             </div>
-            <button className="hub-outline-btn" type="button" onClick={exitDemo}><LogOut size={16} /> Exit Demo</button>
+            <button className="hub-outline-btn" type="button" onClick={exitDashboard}><LogOut size={16} /> {demo ? 'Exit Demo' : 'Sign Out'}</button>
           </div>
 
-          <div className="hub-demo-note"><Bell size={17} /><span><strong>Demo mode is active.</strong> No real student record, payment or service request is being submitted from this preview.</span></div>
+          {demo && <div className="hub-demo-note"><Bell size={17} /><span><strong>Demo mode is active.</strong> No real student record, payment or service request is being submitted from this preview.</span></div>}
 
           <div className="hub-demo-grid">
             <div className="hub-demo-main">
               <div className="hub-panel">
-                <div className="hub-section-head"><div><span className="hub-eyebrow">STUDENT PROFILE</span><h2>EduReach Demo Student</h2></div><span className="hub-badge">300L</span></div>
+                <div className="hub-section-head"><div><span className="hub-eyebrow">STUDENT PROFILE</span><h2>{name}</h2></div><span className="hub-badge">300L</span></div>
                 <div className="hub-profile-grid">
                   <div><span>Institution</span><strong>University Demo Campus</strong></div>
                   <div><span>Faculty</span><strong>Faculty of Engineering</strong></div>
                   <div><span>Department</span><strong>Electrical Engineering</strong></div>
-                  <div><span>Email</span><strong>demo@edureach.ng</strong></div>
+                  <div><span>Email</span><strong>{email}</strong></div>
                 </div>
               </div>
 
               <div className="hub-panel">
                 <div className="hub-section-head"><div><span className="hub-eyebrow">SERVICE ACTIVITY</span><h2>Recent requests</h2></div><a href="/services/track" className="hub-text-link">Track requests <ArrowRight size={15} /></a></div>
-                <div className="hub-demo-request-list">
-                  {demoRequests.map((request) => <div className="hub-demo-request" key={request.ref}><div><span className="hub-badge soft">{request.status}</span><h3>{request.service}</h3><small>{request.ref} · {request.date}</small></div><FileText size={20} /></div>)}
-                </div>
+                {requests.length ? <div className="hub-demo-request-list">{requests.map((request) => <div className="hub-demo-request" key={request.ref}><div><span className="hub-badge soft">{request.status}</span><h3>{request.service}</h3><small>{request.ref} · {request.date}</small></div><FileText size={20} /></div>)}</div> : <p className="hub-form-note">No service requests yet. Open one of the services below to submit your first request.</p>}
               </div>
             </div>
 
