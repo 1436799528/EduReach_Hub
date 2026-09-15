@@ -51,11 +51,10 @@ function rewriteActions() {
     setLabel(link, contextualAction(title, type, path));
   });
 
-  document.querySelectorAll('.mini-service-grid .card').forEach((card, index) => {
+  document.querySelectorAll('.mini-service-grid .card').forEach((card) => {
     const title = textOf(card.querySelector('h3') || document.createElement('h3')).toLowerCase();
     const labels = title.includes('result') ? 'Check Result' : title.includes('scratch') ? 'Buy Card' : title.includes('slip') ? 'Print Slip' : 'Apply Now';
     card.setAttribute('data-service-action', labels);
-    if (index > 10) return;
   });
 
   document.querySelectorAll('.card-link').forEach((el) => {
@@ -89,6 +88,17 @@ function polishNavigation() {
         }, true);
       }
     }
+  });
+
+  document.querySelectorAll('.top-actions .icon-btn').forEach((button) => {
+    const target = button as HTMLButtonElement & { __edureachNotificationRewired?: boolean };
+    if (target.__edureachNotificationRewired) return;
+    target.__edureachNotificationRewired = true;
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      go('/dashboard/notifications');
+    }, true);
   });
 }
 
