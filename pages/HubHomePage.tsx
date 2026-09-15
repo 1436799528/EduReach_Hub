@@ -1,0 +1,38 @@
+import { ArrowRight, CheckCircle2, CircleAlert, MessageCircle, Newspaper, Zap } from 'lucide-react';
+import { hubServices, newsItems } from '../src/data/hubContent';
+import HubLayout from '../src/components/HubLayout';
+
+export default function HubHomePage() {
+  return <HubLayout>
+    <div className="hub-page">
+      <div className="hub-container hub-grid hub-home-grid">
+        <section className="hub-main-stream">
+          <div className="hub-channel-strip" id="channels">
+            <div><strong>Stay ahead of important updates.</strong><span>Join the EduReach WhatsApp or Telegram channel for student alerts.</span></div>
+            <button className="hub-outline-btn"><MessageCircle size={17} /> Join Channel</button>
+          </div>
+
+          <div className="hub-section-heading"><div><span className="hub-eyebrow">EDUREACH HUB</span><h1>Your student life, organised.</h1><p>Practice CBT questions, request student services, track applications and scan verified academic updates.</p></div></div>
+
+          <div className="hub-utility-cards">
+            <a className="hub-feature-card hub-tone-blue" href="/cbt"><div><span className="hub-tag">JAMB 2026</span><h3>CBT Practice</h3><p>Start a timed practice session with JAMB, WAEC or POST-UTME settings.</p><span className="hub-card-link">Start Test <ArrowRight size={16} /></span></div><div className="hub-card-icon">CBT</div></a>
+            <a className="hub-feature-card hub-tone-green" href="/services/apply/nelfund-loan"><div><span className="hub-tag">NELFUND Loan</span><h3>Digital Service</h3><p>Organise your request details and begin the EduReach assistance flow.</p><span className="hub-card-link">Apply Now <ArrowRight size={16} /></span></div><div className="hub-card-icon">₦</div></a>
+            <a className="hub-feature-card hub-tone-amber" href="/services/apply/waec-neco-pin"><div><span className="hub-tag">WAEC / NECO</span><h3>Scratch Card Voucher</h3><p>Request a result-checking PIN type without exposing secret credentials.</p><span className="hub-card-link">Buy Pin <ArrowRight size={16} /></span></div><div className="hub-card-icon">PIN</div></a>
+          </div>
+
+          <div className="hub-section-heading compact"><div><span className="hub-eyebrow">SERVICES</span><h2>Quick student services</h2></div><a href="/services">View all <ArrowRight size={16} /></a></div>
+          <div className="hub-service-grid">{hubServices.map((service) => <a key={service.slug} href={`/services/apply/${service.slug}`} className={`hub-mini-service hub-tone-${service.tone}`}><Zap size={18}/><div><strong>{service.short}</strong><span>{service.description}</span></div><ArrowRight size={17}/></a>)}</div>
+
+          <div className="hub-section-heading compact"><div><span className="hub-eyebrow">LATEST</span><h2>News & academic updates</h2></div><a href="/news">Open news <ArrowRight size={16} /></a></div>
+          <div className="hub-news-list">{newsItems.slice(0, 4).map((item) => <a href={`/news/${item.slug}`} key={item.slug} className="hub-news-row"><div className="hub-news-thumb"><Newspaper size={20}/></div><div className="hub-news-copy"><div className="hub-news-meta"><span>{item.tag}</span><span>{item.date}</span>{item.verified ? <span className="hub-verified"><CheckCircle2 size={13}/> Verified</span> : null}</div><h3>{item.title}</h3><p>{item.excerpt}</p></div><ArrowRight size={18}/></a>)}</div>
+        </section>
+
+        <aside className="hub-sidebar">
+          <div className="hub-sidebar-card"><div className="hub-sidebar-head"><h3>Live News Feed</h3><CircleAlert size={17}/></div>{newsItems.slice(0,5).map((item) => <a className="hub-sidebar-news" href={`/news/${item.slug}`} key={item.slug}><span>{item.tag}</span><strong>{item.title}</strong><small>{item.date}</small></a>)}</div>
+          <div className="hub-sidebar-card"><div className="hub-sidebar-head"><h3>Portal Status</h3><span className="hub-pulse" /></div><div className="hub-status-row"><span>JAMB Portal</span><strong className="status-online">Online</strong></div><div className="hub-status-row"><span>NELFUND Portal</span><strong className="status-maint">Maintenance</strong></div><div className="hub-status-row"><span>EduReach Services</span><strong className="status-online">Online</strong></div></div>
+          <div className="hub-sidebar-card hub-sidebar-callout"><span className="hub-eyebrow">NEED HELP?</span><h3>Track an existing request</h3><p>Use your 10-character reference code to see the current stage of your application.</p><a href="/services/track" className="hub-primary-btn">Track Request</a></div>
+        </aside>
+      </div>
+    </div>
+  </HubLayout>;
+}
