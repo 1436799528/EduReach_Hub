@@ -6,7 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-
 app.disable('x-powered-by');
 
 function getServerSupabase() {
@@ -26,11 +25,11 @@ async function requireUser(req: express.Request) {
   return { supabase, user: data.user };
 }
 
-function timingSafeSignature(rawBody: string, signature: string, secret: string) {
+function validPaystackSignature(rawBody: Buffer, signature: string, secret: string) {
   const expected = crypto.createHmac('sha512', secret).update(rawBody).digest('hex');
-  const a = Buffer.from(expected, 'utf8');
-  const b = Buffer.from(signature, 'utf8');
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  const actual = Buffer.from(signature, 'utf8');
+  const expectedBuffer = Buffer.from(expected, 'utf8');
+  return actual.length === expectedBuffer.length && crypto.timingSafeEqual(actual, expectedBuffer);
 }
 
 async function sendWhatsAppOrderCompletion(payload: { recipientPhone: string; studentName: string; orderReference: string; serviceTitle: string; pinDetails?: { serial: string; pin: string } }) {
@@ -51,59 +50,14 @@ async function sendWhatsAppOrderCompletion(payload: { recipientPhone: string; st
   }
 }
 
-app.use(express.json({ limit: '1mb' }));
-
-app.post('/api/payments/initialize', async (req, res) => {
+app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit: '1mb' }), async (req, res) => {
   try {
-    const { serviceRequestId, amountKobo, email } = req.body as { serviceRequestId?: string; amountKobo?: number; email?: string };
-    if (!serviceRequestId || !Number.isInteger(amountKobo) || amountKobo <= 0 || !email) return res.status(400).json({ error: 'serviceRequestId, amountKobo and email are required.' });
-    const { supabase, user } = await requireUser(req);
-    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,reference_code,status,form_data,service_catalog(title)').eq('id', serviceRequestId).eq('user_id', user.id).single();
-    if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
-    const reference = String(request.reference_code || `ER-${new Date().getFullYear()}-${serviceRequestId.slice(0, 6).toUpperCase()}`);
-    const response = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: String(amountKobo), email, currency: 'NGN', reference, metadata: { serviceRequestId, userId: user.id, referenceCode: request.reference_code } }) });
-    const payload = await response.json() as any;
-    if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack initialization failed.' });
-    await supabase.from('service_requests').update({ amount: Number(amountKobo) / 100, form_data: { ...(request.form_data || {}), payment_reference: payload.data.reference, payment_amount_kobo: amountKobo, payment_status: 'initialized' } }).eq('id', request.id).eq('user_id', user.id);
-    return res.json({ accessCode: payload.data.access_code, reference: payload.data.reference });
-  } catch (error) {
-    return res.status(401).json({ error: error instanceof Error ? error.message : 'Payment initialization failed.' });
-  }
-});
-
-app.post('/api/payments/verify', async (req, res) => {
-  try {
-    const { serviceRequestId, reference } = req.body as { serviceRequestId?: string; reference?: string };
-    if (!serviceRequestId || !reference) return res.status(400).json({ error: 'serviceRequestId and reference are required.' });
-    const { supabase, user } = await requireUser(req);
-    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status,amount,form_data').eq('id', serviceRequestId).eq('user_id', user.id).single();
-    if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
-    const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
-    const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, { headers: { Authorization: `Bearer ${secret}` } });
-    const payload = await response.json() as any;
-    if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack verification failed.' });
-    const transaction = payload.data;
-    const expectedAmount = Number(request.form_data?.payment_amount_kobo || 0);
-    const verified = transaction?.status === 'success' && Number(transaction?.amount) === expectedAmount && transaction?.reference === reference;
-    const paymentStatus = verified ? 'paid' : transaction?.status || 'failed';
-    await supabase.from('service_requests').update({ status: verified ? 'processing' : request.status, form_data: { ...(request.form_data || {}), payment_reference: reference, payment_status: paymentStatus, payment_gateway_response: transaction?.gateway_response || null } }).eq('id', request.id).eq('user_id', user.id);
-    return res.json({ verified, status: paymentStatus, reference });
-  } catch (error) {
-    return res.status(401).json({ error: error instanceof Error ? error.message : 'Payment verification failed.' });
-  }
-});
-
-app.post('/api/webhooks/paystack', async (req, res) => {
-  const rawBody = JSON.stringify(req.body);
-  try {
+    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || '');
     const signature = req.header('x-paystack-signature');
     const secret = process.env.PAYSTACK_SECRET_KEY;
     if (!secret || !signature) return res.status(400).json({ error: 'Missing security headers' });
-    if (!timingSafeSignature(rawBody, signature, secret)) return res.status(401).json({ error: 'Invalid Paystack signature' });
-    const event = req.body as any;
+    if (!validPaystackSignature(rawBody, signature, secret)) return res.status(401).json({ error: 'Invalid Paystack signature' });
+    const event = JSON.parse(rawBody.toString('utf8')) as any;
     if (event.event !== 'charge.success') return res.status(200).json({ status: 'ignored' });
 
     const reference = event?.data?.reference;
@@ -127,9 +81,9 @@ app.post('/api/webhooks/paystack', async (req, res) => {
     if (serviceTitle === 'WAEC / NECO Scratch Cards') {
       const examBody = String(request.form_data?.exam_body || '').toUpperCase();
       if (examBody === 'WAEC' || examBody === 'NECO') {
-        const { data: voucher } = await supabase.from('voucher_inventory').select('id,serial_number,pin').eq('exam_body', examBody).eq('status', 'available').limit(1).maybeSingle();
+        const { data: vouchers } = await supabase.rpc('claim_service_voucher', { p_request_id: request.id, p_exam_body: examBody });
+        const voucher = vouchers?.[0];
         if (voucher) {
-          await supabase.from('voucher_inventory').update({ status: 'dispensed', assigned_request_id: request.id, dispensed_at: new Date().toISOString() }).eq('id', voucher.id).eq('status', 'available');
           pinDetails = { serial: voucher.serial_number, pin: voucher.pin };
           nextStatus = 'completed';
           body.voucher_serial = voucher.serial_number;
@@ -141,11 +95,58 @@ app.post('/api/webhooks/paystack', async (req, res) => {
     await supabase.from('service_requests').update({ status: nextStatus, form_data: body }).eq('id', request.id);
 
     const { data: profile } = await supabase.from('profiles').select('full_name,phone').eq('id', request.user_id).maybeSingle();
-    if (profile?.phone && nextStatus === 'completed') await sendWhatsAppOrderCompletion({ recipientPhone: profile.phone, studentName: profile.full_name || 'Student', orderReference: request.reference_code || reference, serviceTitle, pinDetails });
+    if (profile?.phone && nextStatus === 'completed') {
+      await sendWhatsAppOrderCompletion({ recipientPhone: profile.phone, studentName: profile.full_name || 'Student', orderReference: request.reference_code || reference, serviceTitle, pinDetails });
+    }
     return res.status(200).json({ status: 'success', service_status: nextStatus });
   } catch (error) {
     console.error('Paystack webhook error:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.use(express.json({ limit: '1mb' }));
+
+app.post('/api/payments/initialize', async (req, res) => {
+  try {
+    const { serviceRequestId, amountKobo, email } = req.body as { serviceRequestId?: string; amountKobo?: number; email?: string };
+    if (!serviceRequestId || !Number.isInteger(amountKobo) || amountKobo <= 0 || !email) return res.status(400).json({ error: 'serviceRequestId, amountKobo and email are required.' });
+    const { supabase, user } = await requireUser(req);
+    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,reference_code,status,form_data').eq('id', serviceRequestId).eq('user_id', user.id).single();
+    if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
+    const secret = process.env.PAYSTACK_SECRET_KEY;
+    if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
+    const reference = String(request.reference_code || `ER-${new Date().getFullYear()}-${serviceRequestId.slice(0, 6).toUpperCase()}`);
+    const response = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: String(amountKobo), email, currency: 'NGN', reference, metadata: { serviceRequestId, userId: user.id, referenceCode: request.reference_code } }) });
+    const payload = await response.json() as any;
+    if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack initialization failed.' });
+    await supabase.from('service_requests').update({ amount: Number(amountKobo) / 100, form_data: { ...(request.form_data || {}), payment_reference: payload.data.reference, payment_amount_kobo: amountKobo, payment_status: 'initialized' } }).eq('id', request.id).eq('user_id', user.id);
+    return res.json({ accessCode: payload.data.access_code, reference: payload.data.reference });
+  } catch (error) {
+    return res.status(401).json({ error: error instanceof Error ? error.message : 'Payment initialization failed.' });
+  }
+});
+
+app.post('/api/payments/verify', async (req, res) => {
+  try {
+    const { serviceRequestId, reference } = req.body as { serviceRequestId?: string; reference?: string };
+    if (!serviceRequestId || !reference) return res.status(400).json({ error: 'serviceRequestId and reference are required.' });
+    const { supabase, user } = await requireUser(req);
+    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status,form_data').eq('id', serviceRequestId).eq('user_id', user.id).single();
+    if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
+    const secret = process.env.PAYSTACK_SECRET_KEY;
+    if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
+    const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, { headers: { Authorization: `Bearer ${secret}` } });
+    const payload = await response.json() as any;
+    if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack verification failed.' });
+    const transaction = payload.data;
+    const expectedAmount = Number(request.form_data?.payment_amount_kobo || 0);
+    const verified = transaction?.status === 'success' && Number(transaction?.amount) === expectedAmount && transaction?.reference === reference;
+    const paymentStatus = verified ? 'paid' : transaction?.status || 'failed';
+    await supabase.from('service_requests').update({ status: verified ? 'processing' : request.status, form_data: { ...(request.form_data || {}), payment_reference: reference, payment_status: paymentStatus, payment_gateway_response: transaction?.gateway_response || null } }).eq('id', request.id).eq('user_id', user.id);
+    return res.json({ verified, status: paymentStatus, reference });
+  } catch (error) {
+    return res.status(401).json({ error: error instanceof Error ? error.message : 'Payment verification failed.' });
   }
 });
 
