@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import HubApp from './HubApp';
 import PwaRegister from './components/PwaRegister';
-import './app.css';
 import './hub.css';
 import './hub-portal-tuning.css';
 import './dashboard-v2.css';
