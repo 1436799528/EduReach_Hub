@@ -10,6 +10,8 @@ type AdminSession = {
   role: 'admin';
 };
 
+const ADMIN_ROLES = new Set(['admin', 'super_admin', 'moderator']);
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
@@ -19,30 +21,33 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     let active = true;
 
     async function check() {
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      if (!authSession?.access_token) {
-        navigate('/login');
+      setChecking(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (active) navigate('/login');
         return;
       }
 
-      try {
-        const response = await fetch('/api/admin/session', {
-          headers: { Authorization: `Bearer ${authSession.access_token}` },
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const role = String(profile?.role || 'student');
+      if (!ADMIN_ROLES.has(role)) {
+        if (active) navigate('/');
+        return;
+      }
+
+      if (active) {
+        setSession({
+          id: user.id,
+          email: user.email || '',
+          fullName: String(profile?.full_name || user.user_metadata?.full_name || ''),
+          role: 'admin',
         });
-        if (!response.ok) {
-          await supabase.auth.signOut();
-          navigate('/login');
-          return;
-        }
-        const data = await response.json() as { user: AdminSession };
-        if (!active) return;
-        setSession(data.user);
         setChecking(false);
-      } catch {
-        if (active) {
-          setChecking(false);
-          navigate('/login');
-        }
       }
     }
 
@@ -55,7 +60,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     navigate('/login');
   }
 
-  if (checking) return <div className="admin-loading-screen">Verifying administrative session…</div>;
+  if (checking) return <div className="admin-loading-screen">Verifying administrative access…</div>;
   if (!session) return null;
 
   return <div className="admin-shell">
