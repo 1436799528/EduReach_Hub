@@ -3,7 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
-import { requireAdmin } from './middleware';
+import { requireAdmin, type AdminRequest } from './middleware';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -109,7 +109,7 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/admin/session', requireAdmin, (req, res) => {
-  res.json({ user: req.adminUser });
+  res.json({ user: (req as AdminRequest).adminUser });
 });
 
 app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
