@@ -9,11 +9,16 @@ export interface UserPayload {
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin', 'moderator']);
 
-function getServerSupabase() {
+type ServerSupabase = ReturnType<typeof createClient> | null;
+
+function getServerSupabase(): ServerSupabase {
   const url = process.env.VITE_SUPABASE_URL || 'https://gjdfatwcoosyuhakrrhh.supabase.co';
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured on the server.');
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (!key) return null;
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export function extractBearerToken(authorization?: string | string[]) {
@@ -24,6 +29,8 @@ export function extractBearerToken(authorization?: string | string[]) {
 
 export async function verifyJWT(token: string): Promise<UserPayload | null> {
   const supabase = getServerSupabase();
+  if (!supabase) return null;
+
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
 
