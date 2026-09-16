@@ -12,7 +12,7 @@ export const serviceWorkflows: Record<string, ServiceWorkflow> = {
     overview: 'Get organised help preparing your student-loan request and checking that the information you submit is complete before using the official NELFUND process.',
     steps: ['Confirm the current official application window and eligibility information.', 'Prepare your personal, school and programme details.', 'Review the request carefully before following the official application channel.'],
     requirements: ['Full name and contact number', 'Institution, faculty and department', 'Level and programme information', 'Any supporting information requested by the official portal'],
-    notes: ['Application windows and requirements can change.', 'Edurecah does not replace the official NELFUND portal.', 'Never send passwords, OTPs, card PINs or banking credentials in a request form.'],
+    notes: ['Application windows and requirements can change.', 'EduReach does not replace the official NELFUND portal.', 'Never send passwords, OTPs, card PINs or banking credentials in a request form.'],
     fields: [
       { name: 'fullName', label: 'Full name', placeholder: 'Enter your full name', required: true },
       { name: 'school', label: 'Institution', placeholder: 'Enter your school', required: true },
@@ -26,7 +26,7 @@ export const serviceWorkflows: Record<string, ServiceWorkflow> = {
     overview: 'Get guided support for checking WAEC or NECO results while keeping result-checking credentials private.',
     steps: ['Choose the examination body.', 'Prepare the candidate or examination details required by the official checker.', 'Complete final verification on the official result-checking channel.'],
     requirements: ['Examination body', 'Examination number or candidate details', 'Result-checking token or PIN when officially required'],
-    notes: ['Never post result PINs or tokens publicly.', 'Edurecah guidance does not replace the official checker.'],
+    notes: ['Never post result PINs or tokens publicly.', 'EduReach guidance does not replace the official checker.'],
     fields: [
       { name: 'fullName', label: 'Full name', placeholder: 'Enter your full name', required: true },
       { name: 'examBody', label: 'Examination body', type: 'select', required: true, options: ['WAEC','NECO'] },
