@@ -45,6 +45,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="admin-sidebar-footer">
         <div className="admin-health-card"><div><span>Database</span><b>Connected</b></div><div><span>Auth</span><b>Active</b></div></div>
         <div className="admin-user-email">{userEmail}</div>
+        <button className="admin-btn" onClick={() => navigate('/dashboard')}>Student Workspace</button>
         <button className="admin-logout" onClick={logout}>⎋ Terminate Admin Session</button>
       </div>
     </aside>
