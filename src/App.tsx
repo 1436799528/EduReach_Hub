@@ -3,6 +3,11 @@ import { ArrowRight, Bell, BookOpen, BriefcaseBusiness, CheckCircle2, Clock3, Fi
 import { supabase } from './lib/supabase';
 import { cbtQuestions, cbtDurationSeconds } from './data/cbtQuestions';
 import { serviceWorkflows } from './data/serviceWorkflows';
+import AdminDashboardPage from '../pages/AdminDashboardPage';
+import AdminQueuePage from '../pages/AdminQueuePage';
+import AdminCbtPage from '../pages/AdminCbtPage';
+import AdminVouchersPage from '../pages/AdminVouchersPage';
+import AdminUsersPage from '../pages/AdminUsersPage';
 
 const services = [
   ['nelfund-loan','NELFUND Loan Assistance','Funding'],
@@ -30,9 +35,29 @@ const navItems = [
   ['/','Home',HomeIcon],['/cbt','CBT Practice',BookOpen],['/services','Services',BriefcaseBusiness],['/news','News',Newspaper],['/opportunities','Opportunities',GraduationCap],['/community','Community',Users],
 ] as const;
 
+const ADMIN_ROLES = new Set(['admin','super_admin','moderator']);
+
 function AppShell({children}:{children:React.ReactNode}){
   const [menu,setMenu]=useState(false);
+  const [isAdmin,setIsAdmin]=useState(false);
   const current=window.location.pathname.replace(/\/$/,'')||'/';
+
+  useEffect(() => {
+    let active = true;
+    async function checkAdmin() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (active) setIsAdmin(false);
+        return;
+      }
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+      if (active) setIsAdmin(ADMIN_ROLES.has(String(profile?.role || 'student')));
+    }
+    checkAdmin();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { void checkAdmin(); });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, []);
+
   return <div className="app-shell">
     <header className="topbar">
       <div className="brand" onClick={()=>go('/')}><span className="brand-mark">ER</span><span>EduReach <b>Hub</b></span></div>
@@ -58,7 +83,7 @@ function AppShell({children}:{children:React.ReactNode}){
     </div>
 
     <nav className="bottom-nav">{navItems.slice(0,5).map(([href,label,Icon])=><button className={current===href||current.startsWith(`${href}/`)?'active':''} key={href} onClick={()=>go(href)}><Icon size={18}/><span>{label.replace(' Practice','')}</span></button>)}</nav>
-    <footer className="footer"><div><div className="brand"><span className="brand-mark">ER</span>EduReach <b>Hub</b></div><p>Student services, CBT practice, education news, opportunities and community in one platform.</p></div><div><strong>Platform</strong><button onClick={()=>go('/about')}>About</button><button onClick={()=>go('/services')}>Services</button><button onClick={()=>go('/dashboard')}>Dashboard</button></div><div><strong>Account</strong><button onClick={()=>go('/login')}>Login</button><button onClick={()=>go('/register')}>Register</button><button onClick={()=>go('/forgot-password')}>Reset password</button></div></footer>
+    <footer className="footer"><div><div className="brand"><span className="brand-mark">ER</span>EduReach <b>Hub</b></div><p>Student services, CBT practice, education news, opportunities and community in one platform.</p></div><div><strong>Platform</strong><button onClick={()=>go('/about')}>About</button><button onClick={()=>go('/services')}>Services</button><button onClick={()=>go('/dashboard')}>Dashboard</button></div><div><strong>Account</strong><button onClick={()=>go('/login')}>Login</button><button onClick={()=>go('/register')}>Register</button><button onClick={()=>go('/forgot-password')}>Reset password</button>{isAdmin&&<button className="admin-secret-link" onClick={()=>go('/admin')} title="Administrative area" aria-label="Open administrative area"><ShieldCheck size={12}/></button>}</div></footer>
   </div>
 }
 function Page({title,eyebrow,children,actions}:{title:string;eyebrow?:string;children:React.ReactNode;actions?:React.ReactNode}){return <section className="page"><div className="container"><div className="page-head">{eyebrow&&<span className="eyebrow">{eyebrow}</span>}<h1>{title}</h1>{actions&&<div className="page-actions">{actions}</div>}</div>{children}</div></section>}
@@ -118,4 +143,4 @@ function CbtSession({id}:{id:string}){const [i,setI]=useState(0);const [answers,
 function CbtResult(){const result=JSON.parse(localStorage.getItem('edurecah-cbt-result')||'{}');const score=result.score||0;const total=result.total||cbtQuestions.length;return <Page title="Performance & Score Analytics" eyebrow="CBT"><div className="result-hero"><div><span className="eyebrow">LATEST RESULT</span><strong>{score}/{total}</strong><p>{Math.round((score/total)*100)}% score</p></div><button className="primary" onClick={()=>go('/cbt')}>Practice again</button></div><div className="results-grid">{cbtQuestions.slice(0,6).map(q=><Card key={q.id}><span className="badge">{q.subject}</span><h3>{q.question}</h3><p>{result.answers?.[q.id]===q.answer?'Correct':'Review this question'}</p></Card>)}</div></Page>}
 function NotFound(){return <Page title="Page not found" eyebrow="404"><Card><p>The page you requested does not exist in the EduReach Hub architecture.</p><button className="primary" onClick={()=>go('/')}>Back home</button></Card></Page>}
 
-export default function App(){const [,render]=useState(0);useEffect(()=>{const f=()=>render(x=>x+1);window.addEventListener('popstate',f);return()=>window.removeEventListener('popstate',f)},[]);const path=window.location.pathname.replace(/\/$/,'')||'/';let page:React.ReactNode=path==='/'?<Home/>:path==='/search'?<SearchPage/>:path==='/about'?<About/>:path==='/login'?<AuthPage mode="login"/>:path==='/register'?<AuthPage mode="register"/>:path==='/forgot-password'?<AuthPage mode="forgot"/>:path==='/cbt'?<CbtLobby/>:path.startsWith('/cbt/session/')?<CbtSession id={path.split('/').pop()||'demo'}/>:path.startsWith('/cbt/result/')?<CbtResult/>:path.startsWith('/cbt/')?<CbtSelect exam={decodeURIComponent(path.slice('/cbt/'.length))}/>:path==='/services'?<Services/>:path==='/services/track'?<ServiceTrack/>:path.startsWith('/services/')?<ServicePage slug={decodeURIComponent(path.slice('/services/'.length))}/>:path==='/news'?<News/>:path.startsWith('/news/')?<NewsDetail slug={decodeURIComponent(path.slice('/news/'.length))}/>:path==='/schools'?<Schools/>:path==='/opportunities'?<Opportunities/>:path.startsWith('/opportunities/')?<Opportunities slug={decodeURIComponent(path.slice('/opportunities/'.length))}/>:path==='/community'?<Community/>:path==='/groups'?<Groups/>:path==='/dashboard'?<Dashboard/>:path==='/dashboard/orders'?<Orders/>:path==='/dashboard/profile'?<Profile/>:path==='/admin'?<Admin/>:<NotFound/>;return <AppShell>{page}</AppShell>}
+export default function App(){const [,render]=useState(0);useEffect(()=>{const f=()=>render(x=>x+1);window.addEventListener('popstate',f);return()=>window.removeEventListener('popstate',f)},[]);const path=window.location.pathname.replace(/\/$/,'')||'/';let page:React.ReactNode=path==='/'?<Home/>:path==='/search'?<SearchPage/>:path==='/about'?<About/>:path==='/login'?<AuthPage mode="login"/>:path==='/register'?<AuthPage mode="register"/>:path==='/forgot-password'?<AuthPage mode="forgot"/>:path==='/cbt'?<CbtLobby/>:path.startsWith('/cbt/session/')?<CbtSession id={path.split('/').pop()||'demo'}/>:path.startsWith('/cbt/result/')?<CbtResult/>:path.startsWith('/cbt/')?<CbtSelect exam={decodeURIComponent(path.slice('/cbt/'.length))}/>:path==='/services'?<Services/>:path==='/services/track'?<ServiceTrack/>:path.startsWith('/services/')?<ServicePage slug={decodeURIComponent(path.slice('/services/'.length))}/>:path==='/news'?<News/>:path.startsWith('/news/')?<NewsDetail slug={decodeURIComponent(path.slice('/news/'.length))}/>:path==='/schools'?<Schools/>:path==='/opportunities'?<Opportunities/>:path.startsWith('/opportunities/')?<Opportunities slug={decodeURIComponent(path.slice('/opportunities/'.length))}/>:path==='/community'?<Community/>:path==='/groups'?<Groups/>:path==='/dashboard'?<Dashboard/>:path==='/dashboard/orders'?<Orders/>:path==='/dashboard/profile'?<Profile/>:path==='/admin'?<AdminDashboardPage/>:path==='/admin/queue'?<AdminQueuePage/>:path==='/admin/cbt'?<AdminCbtPage/>:path==='/admin/vouchers'?<AdminVouchersPage/>:path==='/admin/users'?<AdminUsersPage/>:<NotFound/>;return <AppShell>{page}</AppShell>}
