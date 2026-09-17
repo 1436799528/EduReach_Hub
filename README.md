@@ -1,42 +1,39 @@
-# Edurecah
+# EduReach Hub
 
-Edurecah is a student platform for Nigerian tertiary students.
+EduReach Hub is a student-focused platform for Nigerian tertiary students, built around practical services, academic updates and clear next-step guidance.
 
-## Product architecture
+## Final public architecture
 
-The frontend follows the new Edurecah product architecture:
+The active frontend intentionally uses one public page structure with no duplicate legacy page implementations:
 
-- `/` — student action dashboard
-- `/search` — global search
+- `/` — EduReach home
 - `/about` — platform overview
-- `/login`, `/register`, `/forgot-password` — authentication
-- `/cbt` — CBT lobby
-- `/cbt/:exam-type` — exam and subject selection
-- `/cbt/session/:id` — active CBT session
-- `/cbt/result/:id` — performance analytics
-- `/services` — services directory
-- `/services/:service-slug` — service application
-- `/services/track` — request tracking
-- `/news` — news feed
-- `/schools` — school directory
-- `/news/:slug` — article detail
-- `/opportunities` — jobs and scholarships
-- `/opportunities/:slug` — opportunity detail
-- `/community` — Q&A/community
-- `/groups` — study groups
-- `/dashboard` — student dashboard
-- `/dashboard/orders` — order and transaction history
-- `/dashboard/profile` — profile settings
-- `/admin` — admin control panel
+- `/services` — five core student services
+- `/services/:service-key` — individual service guidance and support request
+- `/blog` — news, updates and campus gist
+- `/blog/:article-id` — article details
+- `/contact` — general support contact
 
-The old Eduleb page structure, shared shell, styles and mock content are being removed from the active product architecture.
+Authentication is handled through the shared Sign In / Sign Up modal and Supabase Auth.
+
+## Layout direction
+
+Interior pages use an Eduleb-inspired main-content layout with a reusable student rail on wider screens. The rail contains quick links, service shortcuts, recent updates and support navigation. On smaller screens it moves below the main content so it remains useful without wasting horizontal space.
+
+## Core services
+
+1. NELFUND Loan Application
+2. WAEC / NECO Result Checking
+3. WAEC / NECO Scratch Cards
+4. JAMB Exam Slip Printing
+5. Admission Deferment & Supplementary Letters
 
 ## Stack
 
 - React + Vite + TypeScript
 - Supabase Auth + PostgreSQL
-- lucide-react
-- Custom Edurecah design system
+- Eduleb visual/template foundation
+- Custom EduReach content and service architecture
 
 ## Development
 
