@@ -1,3 +1,4 @@
+import './studentRail.css';
 import { blogPosts, services } from '../data/edulebMock';
 
 const quickLinks = [
