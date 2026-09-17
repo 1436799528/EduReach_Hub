@@ -1,21 +1,94 @@
 import { supabase } from './supabase';
 
-export type CbtSubmitPayload = { answers: Record<number, number>; duration: number };
-export type CbtSubmitResponse = { score: number; breakdown: Array<{ question: number; selected: number | null; correct: number; explanation?: string }> };
+export type CbtSubmitPayload = { examId: string; answers: Record<number, number>; timeSpentSeconds: number };
+export type CbtSubmitResponse = {
+  attemptId: string;
+  score: number;
+  breakdown: Array<{ question: number; selected: number | null; correct: number; explanation?: string }>;
+};
 export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown> };
+export type NewsItem = {
+  id: string;
+  title: string;
+  summary: string | null;
+  body: string;
+  category: string;
+  priority: string;
+  source_url: string | null;
+  published_at: string | null;
+  last_verified_at: string | null;
+  verification_status: string;
+};
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error('Please sign in before continuing.');
+  return { Authorization: `Bearer ${session.access_token}` };
+}
 
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
-  const response = await fetch('/api/cbt/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-  if (!response.ok) throw new Error('CBT submission failed.');
-  return response.json() as Promise<CbtSubmitResponse>;
+  const headers = await authHeaders();
+  const response = await fetch('/api/cbt/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'CBT submission failed.');
+  return body as CbtSubmitResponse;
+}
+
+export async function fetchCbtQuestions(examId: string) {
+  const response = await fetch(`/api/cbt/exams/${encodeURIComponent(examId)}/questions`);
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'CBT questions could not be loaded.');
+  return body as { exam: { id: string; title: string; durationMinutes: number; subject: string }; questions: Array<{ id: number; text: string; options: string[] }> };
+}
+
+export async function fetchCbtResult(attemptId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Please sign in to view this result.');
+
+  const { data: attempt, error: attemptError } = await supabase
+    .from('cbt_attempts')
+    .select('id, exam_id, score, correct_answers, total_questions, submitted_at')
+    .eq('id', attemptId)
+    .eq('user_id', user.id)
+    .single();
+  if (attemptError || !attempt) throw new Error('CBT result could not be found.');
+
+  const { data: answers, error: answersError } = await supabase
+    .from('cbt_answers')
+    .select('question_id, selected_option, is_correct')
+    .eq('attempt_id', attempt.id);
+  if (answersError) throw answersError;
+
+  const questionIds = (answers || []).map((answer) => answer.question_id);
+  const { data: questions, error: questionsError } = questionIds.length
+    ? await supabase.from('exam_questions').select('id, position, question_text, option_a, option_b, option_c, option_d, correct_option, explanation').in('id', questionIds).order('position', { ascending: true })
+    : { data: [], error: null };
+  if (questionsError) throw questionsError;
+
+  return { attempt, answers: answers || [], questions: questions || [] };
 }
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Please sign in before submitting a service request.');
-  const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id, service_key, title').eq('service_key', payload.serviceSlug).eq('active', true).single();
+
+  const { data: service, error: serviceError } = await supabase
+    .from('service_catalog')
+    .select('id, service_key, title')
+    .eq('service_key', payload.serviceSlug)
+    .eq('active', true)
+    .single();
   if (serviceError || !service) throw new Error('Service is not available.');
-  const { data, error } = await supabase.from('service_requests').insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details }).select('id, reference_code, created_at, status').single();
+
+  const { data, error } = await supabase
+    .from('service_requests')
+    .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
+    .select('id, reference_code, created_at, status')
+    .single();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -23,7 +96,12 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
 export async function trackService(referenceCode: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Please sign in to track your request.');
-  const { data, error } = await supabase.from('service_requests').select('id, reference_code, status, created_at, form_data, service_catalog(title, service_key)').eq('user_id', user.id).eq('reference_code', referenceCode).maybeSingle();
+  const { data, error } = await supabase
+    .from('service_requests')
+    .select('id, reference_code, status, created_at, form_data, service_catalog(title, service_key)')
+    .eq('user_id', user.id)
+    .eq('reference_code', referenceCode)
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error('No request was found for that reference code.');
   const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4, rejected: 4, cancelled: 4 };
@@ -32,8 +110,16 @@ export async function trackService(referenceCode: string) {
   return { ...data, timeline: labels.map((label, index) => ({ label, done: index < current })) };
 }
 
-export async function fetchNews() {
+export async function fetchNews(): Promise<NewsItem[]> {
   const response = await fetch('/api/news');
-  if (!response.ok) throw new Error('News request failed.');
-  return response.json();
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'News request failed.');
+  return body?.items || [];
+}
+
+export async function fetchNewsItem(id: string): Promise<NewsItem> {
+  const response = await fetch(`/api/news/${encodeURIComponent(id)}`);
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'News article could not be loaded.');
+  return body.item as NewsItem;
 }
