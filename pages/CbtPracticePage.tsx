@@ -12,8 +12,8 @@ export default function CbtPracticePage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [flags, setFlags] = useState<Record<number, boolean>>({});
-  const [seconds, setSeconds] = useState(20 * 60);
-  const [durationMinutes, setDurationMinutes] = useState(20);
+  const [seconds, setSeconds] = useState(0);
+  const [durationMinutes, setDurationMinutes] = useState(0);
   const [restored, setRestored] = useState(false);
   const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [message, setMessage] = useState('');
@@ -28,12 +28,13 @@ export default function CbtPracticePage() {
         if (!active) return;
         setQuestions(data.questions);
         setDurationMinutes(data.exam.durationMinutes);
-        setSeconds(data.exam.durationMinutes * 60);
-        const saved = await getExamProgress(EXAM_ID);
+        const saved = await getExamProgress(EXAM_ID).catch(() => null);
         if (saved && active) {
           setAnswers(saved.answers);
           setFlags(saved.flags);
           setSeconds(saved.timeRemainingSeconds);
+        } else {
+          setSeconds(data.exam.durationMinutes * 60);
         }
       } catch (error) {
         if (active) setMessage(error instanceof Error ? error.message : 'Unable to load the CBT exam.');
@@ -44,6 +45,12 @@ export default function CbtPracticePage() {
     void loadExam();
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!restored || seconds <= 0 || !questions.length) return;
+    const timer = window.setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [restored, seconds, questions.length]);
 
   useEffect(() => {
     if (!question) return;
@@ -79,7 +86,7 @@ export default function CbtPracticePage() {
   async function submitExam() {
     setMessage('');
     if (!questions.length) return;
-    const timeSpentSeconds = durationMinutes * 60 - seconds;
+    const timeSpentSeconds = Math.max(0, durationMinutes * 60 - seconds);
     if (offline) {
       await queueOfflineSubmission({ examId: EXAM_ID, answers, timeSpentSeconds });
       setMessage('Submission is queued. It will sync automatically when your connection returns.');
@@ -99,7 +106,7 @@ export default function CbtPracticePage() {
   const secs = (seconds % 60).toString().padStart(2, '0');
 
   return <HubLayout><div className="hub-cbt-engine">
-    <div className="hub-cbt-topbar"><div><strong>EduReach CBT</strong><span>Practice exam</span></div><div className="hub-cbt-timer"><TimerReset size={17}/> {mins}:{secs}</div><div className="hub-cbt-network">{offline && <><WifiOff size={15}/> Offline mode • progress saved locally</>}</div><button className="hub-primary-btn" onClick={() => void submitExam()} disabled={loading || !questions.length}><Send size={16}/> Submit Exam</button></div>
+    <div className="hub-cbt-topbar"><div><strong>EduReach CBT</strong><span>Practice exam</span></div><div className="hub-cbt-timer"><TimerReset size={17}/> {mins}:{secs}</div><div className="hub-cbt-network">{offline && <><WifiOff size={15}/> Offline mode • progress saved locally</>}</div><button className="hub-primary-btn" onClick={() => void submitExam()} disabled={loading || !questions.length || seconds === 0}><Send size={16}/> Submit Exam</button></div>
     {message && <div className="hub-container"><div className="hub-form-note">{message}</div></div>}
     {loading ? <div className="hub-container"><div className="hub-panel hub-empty">Loading the current practice exam…</div></div> : !question ? <div className="hub-container"><div className="hub-panel hub-empty">No questions are available for this exam yet.</div></div> : <div className="hub-container hub-cbt-layout">
       <section className="hub-question-card"><div className="hub-question-meta"><span>Question {index + 1} of {questions.length} · {answeredCount} answered</span><button type="button" onClick={() => setFlags((value) => ({ ...value, [question.id]: !value[question.id] }))}><Flag size={16}/> {flags[question.id] ? 'Flagged' : 'Flag'}</button></div><h1>{question.text}</h1><div className="hub-options">{question.options.map((option, optionIndex) => <button type="button" key={option} className={answers[question.id] === optionIndex ? 'selected' : ''} onClick={() => setAnswers((value) => ({ ...value, [question.id]: optionIndex }))}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div><div className="hub-question-actions"><button type="button" className="hub-outline-btn" disabled={index === 0} onClick={() => setIndex(index - 1)}><ChevronLeft size={16}/> Previous</button><button type="button" className="hub-primary-btn" disabled={index === questions.length - 1} onClick={() => setIndex(index + 1)}>Next <ChevronRight size={16}/></button></div></section>
