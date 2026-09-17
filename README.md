@@ -1,27 +1,27 @@
 # EduReach Hub
 
-EduReach Hub is a student-focused platform for Nigerian tertiary students, combining student services, CBT practice, academic updates and opportunities in one responsive workspace.
+EduReach Hub is a student-focused platform for Nigerian tertiary students, combining student services, CBT practice, verified academic updates and student opportunities in one responsive workspace.
 
-## Final application architecture
+## Application architecture
 
-The browser entry point is `src/main.tsx`, which renders `src/HubApp.tsx`. There is one active page system; the old Eduleb page layer has been removed.
+The browser entry point is `src/main.tsx`, which renders `src/HubApp.tsx`. The active frontend is React + Vite with an Express production server. Supabase provides authentication and database access; server-side endpoints handle trusted operations such as CBT scoring and payment verification.
 
 ### Public routes
 
-- `/` — student services and updates hub
+- `/` — student services and verified updates hub
 - `/login` or `/signin` — sign in
 - `/register` or `/signup` — create account
-- `/forgot-password` — password reset
-- `/dashboard` — student workspace
+- `/forgot-password` — password recovery / password update
+- `/dashboard` — authenticated student workspace
 - `/cbt` — CBT setup
 - `/cbt/practice` — active CBT session
-- `/cbt/results` — CBT result review
+- `/cbt/results` — authenticated CBT result review
 - `/services` — service catalogue
 - `/services/:service-slug` — direct service entry
-- `/services/apply/:service-slug` — service application wizard
-- `/services/track` — request tracker
-- `/news` — academic/news feed
-- `/news/:slug` — article detail
+- `/services/apply/:service-slug` — authenticated service request wizard
+- `/services/track` — authenticated request tracker
+- `/news` — verified academic/news feed
+- `/news/:id` — verified article detail
 - `/jobs` — student opportunities
 
 ### Admin routes
@@ -32,12 +32,6 @@ The browser entry point is `src/main.tsx`, which renders `src/HubApp.tsx`. There
 - `/admin/vouchers` — scratch-card inventory
 - `/admin/users` — student accounts
 
-## Layout direction
-
-Content-heavy student pages use a MySchool-style desktop composition: the main page stays on the left while a reusable student rail fills the right side with quick tools, service shortcuts, recent updates and tracking support. On tablets and phones, the rail becomes a normal section beneath the main content so nothing is squeezed horizontally.
-
-The home page and student dashboard already have their own multi-column layouts, so the shared rail is used where it improves density without duplicating existing sidebars.
-
 ## Core services
 
 1. NELFUND Loan Application
@@ -46,13 +40,55 @@ The home page and student dashboard already have their own multi-column layouts,
 4. JAMB Exam Slip Printing
 5. Admission Deferment & Supplementary Letters
 
-## Stack
+## Production backend
 
-- React + Vite + TypeScript
-- Supabase Auth + PostgreSQL
-- Lucide React icons
-- Custom EduReach Hub visual system
-- Responsive desktop / tablet / mobile layouts
+### Supabase
+
+The current production schema already contains the main service, account, CBT, wallet and announcement tables. RLS is enabled on the exposed tables. Service requests are tied to the authenticated user and receive server/database-generated reference codes.
+
+Key tables include:
+
+- `profiles`
+- `service_catalog`
+- `service_requests`
+- `cbt_exams`
+- `exam_questions`
+- `cbt_attempts`
+- `cbt_answers`
+- `edureach_announcements`
+- `student_wallets`
+- `wallet_transactions`
+
+### Server API
+
+- `GET /api/health` — service health/configuration check
+- `GET /api/news` — verified published announcements
+- `GET /api/news/:id` — verified announcement detail
+- `GET /api/cbt/exams/:examId/questions` — active exam questions without answer keys
+- `POST /api/cbt/submit` — authenticated server-side scoring and attempt persistence
+- `POST /api/wallet/verify` — authenticated Paystack verification and wallet credit
+- `POST /api/webhooks/paystack` — signed Paystack webhook handler
+- `/api/admin/*` — protected administrative endpoints
+
+### Security rules
+
+Never expose `SUPABASE_SERVICE_ROLE_KEY` or `PAYSTACK_SECRET_KEY` to the browser. Browser code uses the Supabase publishable key only. Authentication is enforced before service requests, student dashboards, CBT submissions and wallet verification.
+
+Wallet credit is idempotent on the Paystack provider reference, and service request references are unique.
+
+## Environment
+
+Copy `.env.example` to the appropriate local environment and provide:
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_PAYSTACK_PUBLIC_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+PAYSTACK_SECRET_KEY=
+```
+
+Optional integrations are documented in `.env.production.example`.
 
 ## Development
 
@@ -60,3 +96,13 @@ The home page and student dashboard already have their own multi-column layouts,
 npm install
 npm run dev
 ```
+
+## Production build
+
+```bash
+npm run lint
+npm run build
+npm start
+```
+
+Before deployment, configure the Supabase Auth redirect URLs and Paystack webhook URL for the production domain. The production server must have the server-only Supabase and Paystack secrets configured in its runtime environment.
