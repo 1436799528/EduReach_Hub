@@ -1,6 +1,8 @@
-import { ArrowRight, CheckCircle2, CircleAlert, Newspaper, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle2, CircleAlert, CircleDollarSign, FileText, KeyRound, Newspaper, Printer } from 'lucide-react';
 import { hubServices, newsItems } from '../src/data/hubContent';
 import HubLayout from '../src/components/HubLayout';
+
+const serviceIcons = { 'nelfund-loan': CircleDollarSign, results: FileText, 'scratch-cards': KeyRound, 'jamb-slip': Printer, 'admission-letters': FileText } as const;
 
 export default function HubHomePage() {
   return <HubLayout>
@@ -22,7 +24,7 @@ export default function HubHomePage() {
           </div>
 
           <div className="hub-section-heading compact"><div><span className="hub-eyebrow">SERVICES</span><h2>Quick student services</h2></div><a href="/services">View all <ArrowRight size={16} /></a></div>
-          <div className="hub-service-grid">{hubServices.map((service) => <a key={service.slug} href={`/services/apply/${service.slug}`} className={`hub-mini-service hub-tone-${service.tone}`}><Zap size={18}/><div><strong>{service.short}</strong><span>{service.description}</span></div><ArrowRight size={17}/></a>)}</div>
+          <div className="hub-service-grid hub-service-profile-home-grid">{hubServices.map((service, index) => { const Icon = serviceIcons[service.slug as keyof typeof serviceIcons] || FileText; return <a key={service.slug} href={`/services/apply/${service.slug}`} className={`hub-service-profile-card hub-service-profile-compact hub-tone-${service.tone}`}><div className="hub-service-banner"><span>{service.short}</span><strong>0{index + 1}</strong></div><div className="hub-service-profile-avatar"><Icon size={23}/></div><div className="hub-service-profile-body"><div className="hub-service-card-meta"><span>EduReach Service</span><span>{service.price}</span></div><h2>{service.title}</h2><p>{service.description}</p><div className="hub-service-profile-footer"><span className="hub-service-card-caption">Student support</span><span className="hub-primary-btn">{service.action} <ArrowRight size={15}/></span></div></div></a>; })}</div>
 
           <div className="hub-section-heading compact"><div><span className="hub-eyebrow">LATEST</span><h2>News &amp; academic updates</h2></div><a href="/news">Open news <ArrowRight size={16} /></a></div>
           <div className="hub-news-list">{newsItems.slice(0, 4).map((item) => <a href={`/news/${item.slug}`} key={item.slug} className="hub-news-row"><div className="hub-news-thumb"><Newspaper size={20}/></div><div className="hub-news-copy"><div className="hub-news-meta"><span>{item.tag}</span><span>{item.date}</span>{item.verified ? <span className="hub-verified"><CheckCircle2 size={13}/> Verified</span> : null}</div><h3>{item.title}</h3><p>{item.excerpt}</p></div><ArrowRight size={18}/></a>)}</div>
