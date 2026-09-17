@@ -1,9 +1,20 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Search, Menu, X, Bell, Home, BrainCircuit, Zap, ScanSearch, MessageCircle } from 'lucide-react';
+import HubSideRail from './HubSideRail';
+import '../hub-rail.css';
 
 export default function HubLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const showRail = path === '/services'
+    || path.startsWith('/services/apply/')
+    || path === '/services/track'
+    || path === '/news'
+    || path.startsWith('/news/')
+    || path === '/jobs'
+    || path === '/cbt'
+    || path === '/cbt/results';
 
   return (
     <div className="hub-shell">
@@ -25,7 +36,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
       {mobileOpen && <div className="hub-mobile-panel"><div className="hub-mobile-panel-head"><strong>EduReach.ng</strong><button onClick={() => setMobileOpen(false)} aria-label="Close menu"><X size={22} /></button></div><nav className="hub-mobile-links"><a href="/">Home</a><a href="/cbt">CBT</a><a href="/services">Services</a><a href="/news">News</a><a href="/jobs">Jobs</a></nav><div className="hub-mobile-auth"><a className="hub-ghost-btn" href="/login">Sign In</a><a className="hub-primary-btn" href="/register">Sign Up</a></div></div>}
 
-      <main>{children}</main>
+      <main>{showRail ? <div className="hub-layout-with-rail"><div className="hub-layout-content">{children}</div><HubSideRail /></div> : children}</main>
 
       <nav className="hub-mobile-bottom" aria-label="Mobile navigation"><a href="/"><Home size={18} /><span>Home</span></a><a href="/cbt"><BrainCircuit size={18} /><span>CBT</span></a><a href="/services"><Zap size={18} /><span>Services</span></a><a href="/services/track"><ScanSearch size={18} /><span>Track</span></a><a href="#channels"><MessageCircle size={18} /><span>Channel</span></a></nav>
 
