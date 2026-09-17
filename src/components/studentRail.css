@@ -1,0 +1,50 @@
+.content-rail-layout { padding-top: 18px; padding-bottom: 10px; }
+.content-main { min-width: 0; }
+.content-aside { min-width: 0; }
+.student-rail { position: sticky; top: 112px; display: grid; gap: 18px; margin-bottom: 30px; }
+.rail-card { padding: 20px; background: #fff; border: 1px solid #e9eaf0; box-shadow: 0 12px 34px rgba(23,23,36,.06); }
+.rail-highlight { background: linear-gradient(145deg, #f7f8ff, #fff); border-top: 3px solid #525fe1; }
+.rail-kicker { display: inline-block; margin-bottom: 8px; color: #525fe1; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.rail-card h3 { margin: 4px 0 10px; color: #0b104a; font-size: 24px; line-height: 1.25; }
+.rail-card h4 { margin: 0; color: #0b104a; font-size: 18px; }
+.rail-card p { margin: 0 0 16px; color: #687174; line-height: 1.7; }
+.rail-primary-btn { width: 100%; text-align: center; }
+.rail-card-title { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
+.rail-card-title > span { color: #525fe1; font-size: 18px; }
+.rail-link-list, .rail-service-list, .rail-news-list { display: grid; gap: 8px; }
+.rail-link-list a, .rail-more-link, .rail-contact-card a { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #3e4549; text-decoration: none; font-weight: 700; }
+.rail-link-list a { padding: 10px 0; border-bottom: 1px solid #eff0f4; }
+.rail-link-list a:last-child { border-bottom: 0; }
+.rail-service-list a { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; padding: 9px 0; color: inherit; text-decoration: none; }
+.rail-service-icon { width: 36px; height: 36px; display: grid; place-items: center; background: #eef0ff; color: #525fe1; }
+.rail-service-list strong, .rail-service-list small { display: block; }
+.rail-service-list strong { color: #0b104a; font-size: 13px; }
+.rail-service-list small { margin-top: 3px; color: #7b8184; font-size: 11px; line-height: 1.4; }
+.rail-news-list a { padding: 9px 0 11px; border-bottom: 1px solid #eff0f4; color: #0b104a; text-decoration: none; }
+.rail-news-list a:last-child { border-bottom: 0; }
+.rail-news-date { display: block; margin-bottom: 4px; color: #8a8f92; font-size: 11px; }
+.rail-news-list strong { display: block; font-size: 13px; line-height: 1.45; }
+.rail-more-link { margin-top: 4px; color: #525fe1; font-size: 13px; }
+.rail-contact-card > span { color: #525fe1; font-size: 24px; }
+.rail-contact-card h4 { margin-top: 10px; }
+.rail-contact-card a { display: inline-flex; justify-content: flex-start; color: #525fe1; font-size: 13px; }
+.page-content-card, .page-section-card { margin-bottom: 30px; padding: 30px; background: #fff; border: 1px solid #e9eaf0; box-shadow: 0 12px 34px rgba(23,23,36,.05); }
+.page-content-inner { padding-top: 30px; }
+.about-value-card { height: calc(100% - 20px); margin-bottom: 20px; background: #f8f9ff; }
+.about-value-card h3 { font-size: 20px; }
+.about-value-card p { margin-bottom: 0; }
+.mission-strip { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 22px 24px; background: #f7f8ff; border-left: 3px solid #525fe1; }
+.mission-strip > span { color: #525fe1; font-size: 28px; }
+.mission-strip strong { display: block; margin-bottom: 4px; color: #0b104a; font-size: 18px; }
+.mission-strip p { margin: 0; color: #687174; }
+.contact-mini-card h3 { margin-bottom: 9px; color: #0b104a; }
+.content-aside .student-rail { margin-bottom: 20px; }
+@media (max-width: 991px) {
+  .content-rail-layout { padding-top: 0; }
+  .content-aside { margin-top: 12px; }
+  .student-rail { position: static; margin-top: 20px; }
+}
+@media (max-width: 575px) {
+  .rail-card, .page-content-card, .page-section-card { padding: 18px; }
+  .mission-strip { align-items: flex-start; padding: 18px; }
+}
