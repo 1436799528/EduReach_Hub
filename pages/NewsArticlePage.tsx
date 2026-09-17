@@ -1,8 +1,24 @@
-import { ArrowLeft, CheckCircle2, Share2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import { newsItems } from '../src/data/hubContent';
+import { fetchNewsItem, type NewsItem } from '../src/lib/api';
+
+function labelFor(category: string) {
+  return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 export default function NewsArticlePage({ slug }: { slug: string }) {
-  const item = newsItems.find((news) => news.slug === slug) ?? newsItems[0];
-  return <HubLayout><div className="hub-page"><div className="hub-container hub-narrow"><a className="hub-back-link" href="/news"><ArrowLeft size={16}/> Back to News</a><article className="hub-article"><div className="hub-news-meta"><span>{item.tag}</span><span>{item.date}</span>{item.verified && <span className="hub-verified"><CheckCircle2 size={13}/> Verified</span>}</div><h1>{item.title}</h1><p className="hub-article-lead">{item.excerpt}</p><div className="hub-article-body"><p>This is the EduReach article layout for concise student-facing updates. Verified notices will use this space for the essential facts, a clear next step and a direct official source link.</p><p>Do not treat sample headlines as official announcements. In production, this page will render content from the backend news API together with its verification status and source metadata.</p></div><div className="hub-verified-box"><div><span className="hub-eyebrow">VERIFIED ACTION</span><h3>Use the official source for the final step.</h3><p>The backend can supply the exact external URL for this notice. This placeholder demonstrates the verified-action component.</p></div><a className="hub-primary-btn" href="/services">Open Related Service</a></div><div className="hub-share-strip"><span>Share this update</span><button onClick={() => navigator.clipboard?.writeText(window.location.href)}><Share2 size={16}/> Share to WhatsApp</button></div></article></div></div></HubLayout>;
+  const [item, setItem] = useState<NewsItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    void fetchNewsItem(slug).then(setItem).catch((value) => setError(value instanceof Error ? value.message : 'Unable to load this article.')).finally(() => setLoading(false));
+  }, [slug]);
+
+  return <HubLayout><div className="hub-page"><div className="hub-container hub-narrow"><a className="hub-back-link" href="/news"><ArrowLeft size={16}/> Back to News</a>
+    {loading && <div className="hub-panel hub-empty">Loading verified article…</div>}
+    {error && <div className="hub-form-error">{error}</div>}
+    {!loading && !error && item && <article className="hub-article"><div className="hub-news-meta"><span>{labelFor(item.category)}</span><span>{item.published_at ? new Date(item.published_at).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Update'}</span><span className="hub-verified"><CheckCircle2 size={13}/> Verified</span></div><h1>{item.title}</h1><p className="hub-article-lead">{item.summary || ''}</p><div className="hub-article-body">{item.body.split(/\n\s*\n/).filter(Boolean).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div><div className="hub-verified-box"><div><span className="hub-eyebrow">SOURCE & VERIFICATION</span><h3>Use the official source for the final step.</h3><p>Last verified {item.last_verified_at ? new Date(item.last_verified_at).toLocaleString('en-NG') : 'by the EduReach verification team'}.</p></div>{item.source_url ? <a className="hub-primary-btn" href={item.source_url} target="_blank" rel="noreferrer">Open Official Source <ExternalLink size={16}/></a> : <span className="hub-outline-btn">Source not supplied</span>}</div><div className="hub-share-strip"><span>Share this update</span><button onClick={() => navigator.clipboard?.writeText(window.location.href)}><Share2 size={16}/> Copy Article Link</button></div></article>}
+  </div></div></HubLayout>;
 }
