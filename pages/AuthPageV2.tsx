@@ -13,6 +13,11 @@ const institutions = [
 const targets = ['JAMB (UTME)', 'POST-UTME', 'WAEC / NECO', 'Undergraduate'];
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset';
 
+function getSafeNextPath() {
+  const next = new URLSearchParams(window.location.search).get('next');
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+}
+
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [currentMode, setCurrentMode] = useState<Mode>(mode);
   const [fullName, setFullName] = useState('');
@@ -85,7 +90,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Could not verify the signed-in account.');
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-        window.location.href = ['admin', 'super_admin', 'moderator'].includes(profile?.role || '') ? '/admin' : '/dashboard';
+        const destination = ['admin', 'super_admin', 'moderator'].includes(profile?.role || '') ? '/admin' : getSafeNextPath();
+        window.location.href = destination;
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Authentication failed.');
