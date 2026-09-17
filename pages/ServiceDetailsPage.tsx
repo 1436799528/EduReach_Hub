@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { services } from '../src/data/edulebMock';
 import { Shell } from '../src/components/EdulebShared';
 import AuthModal from '../src/components/AuthModal';
+import StudentRail from '../src/components/StudentRail';
 import { supabase } from '../src/lib/supabase';
 
 type Detail = {
@@ -157,60 +158,41 @@ export default function ServiceDetailsPage({ id }: { id: string }) {
       <section className="course_area section-padding">
         <div className="container">
           <div className="row align-items-start">
-            <div className="col-lg-7">
+            <div className="col-xl-7 col-lg-7">
               <article className="blog-detail-card service-detail-page-card">
                 <img src={service.image} className="img-fluid blog-detail-image" alt={service.title} />
                 <div className="blog-detail-content">
                   <div className="blog_meta"><span>{service.shortTitle}</span><span>EduReach Service</span></div>
                   <h2>{service.title}</h2>
                   <p className="blog-detail-lead">{detail.overview}</p>
-
                   <h4>How It Works</h4>
                   <ol className="service-step-list">{detail.steps.map((step) => <li key={step}>{step}</li>)}</ol>
-
                   <h4>What You May Need</h4>
                   <ul className="why_list service-requirement-list">{detail.requirements.map((item) => <li key={item}><i className="fa fa-check" /> {item}</li>)}</ul>
-
                   <h4>Important Notes</h4>
                   <ul className="service-note-list">{detail.notes.map((note) => <li key={note}>{note}</li>)}</ul>
-
-                  {isNelfund && (
-                    <div className="service-official-link">
-                      <strong>Official NELFUND portal</strong>
-                      <p>Use the official portal for the final application step.</p>
-                      <a href="https://nelf.gov.ng/" target="_blank" rel="noreferrer" className="btn_one">Open NELFUND</a>
-                    </div>
-                  )}
+                  {isNelfund && <div className="service-official-link"><strong>Official NELFUND portal</strong><p>Use the official portal for the final application step.</p><a href="https://nelf.gov.ng/" target="_blank" rel="noreferrer" className="btn_one">Open NELFUND</a></div>}
                 </div>
               </article>
             </div>
 
-            <div className="col-lg-5">
+            <div className="col-xl-5 col-lg-5">
               <div className="contact_info service-request-card">
                 <div className="section-title"><h3>Request Support</h3><p>Sign in, send the details and keep your request ID for follow-up.</p></div>
                 <form className="contact-form" onSubmit={submitRequest}>
                   {detail.fields.map((field) => field.name === 'message' || field.name === 'reason' ? (
-                    <div className="col-md-12" key={field.name}>
-                      <label htmlFor={field.name}>{field.label}</label>
-                      <textarea id={field.name} name={field.name} className="form-control" rows={5} placeholder={field.placeholder} value={formData[field.name] || ''} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} />
-                    </div>
+                    <div className="col-md-12" key={field.name}><label htmlFor={field.name}>{field.label}</label><textarea id={field.name} name={field.name} className="form-control" rows={5} placeholder={field.placeholder} value={formData[field.name] || ''} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} /></div>
                   ) : (
-                    <div className="col-md-12" key={field.name}>
-                      <label htmlFor={field.name}>{field.label}</label>
-                      <input id={field.name} name={field.name} type={field.type || 'text'} className="form-control" placeholder={field.placeholder} value={formData[field.name] || ''} onChange={(event) => updateField(field.name, event.target.value)} min={field.type === 'number' ? 1 : undefined} required={field.required} />
-                    </div>
+                    <div className="col-md-12" key={field.name}><label htmlFor={field.name}>{field.label}</label><input id={field.name} name={field.name} type={field.type || 'text'} className="form-control" placeholder={field.placeholder} value={formData[field.name] || ''} onChange={(event) => updateField(field.name, event.target.value)} min={field.type === 'number' ? 1 : undefined} required={field.required} /></div>
                   ))}
-
                   {error && <div className="form-feedback form-feedback-error">{error}</div>}
                   {submitted && <div className="form-feedback form-feedback-success">Request submitted successfully. Your request ID is <strong>{requestId}</strong>.</div>}
-
-                  <div className="col-md-12">
-                    <button className="btn_one" type="submit" disabled={loading}>{loading ? 'Submitting…' : 'Submit Request'}</button>
-                  </div>
+                  <div className="col-md-12"><button className="btn_one" type="submit" disabled={loading}>{loading ? 'Submitting…' : 'Submit Request'}</button></div>
                 </form>
                 <button type="button" className="service-signin-link" onClick={() => setAuthMode('signin')}>Sign in before submitting</button>
                 <p className="service-security-note">Never submit passwords, OTPs, banking passwords, card PINs or other secret credentials here.</p>
               </div>
+              <StudentRail />
             </div>
           </div>
         </div>
