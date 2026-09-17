@@ -1,24 +1,42 @@
 # EduReach Hub
 
-EduReach Hub is a student-focused platform for Nigerian tertiary students, built around practical services, academic updates and clear next-step guidance.
+EduReach Hub is a student-focused platform for Nigerian tertiary students, combining student services, CBT practice, academic updates and opportunities in one responsive workspace.
 
-## Final public architecture
+## Final application architecture
 
-The active frontend intentionally uses one public page structure with no duplicate legacy page implementations:
+The browser entry point is `src/main.tsx`, which renders `src/HubApp.tsx`. There is one active page system; the old Eduleb page layer has been removed.
 
-- `/` — EduReach home
-- `/about` — platform overview
-- `/services` — five core student services
-- `/services/:service-key` — individual service guidance and support request
-- `/blog` — news, updates and campus gist
-- `/blog/:article-id` — article details
-- `/contact` — general support contact
+### Public routes
 
-Authentication is handled through the shared Sign In / Sign Up modal and Supabase Auth.
+- `/` — student services and updates hub
+- `/login` or `/signin` — sign in
+- `/register` or `/signup` — create account
+- `/forgot-password` — password reset
+- `/dashboard` — student workspace
+- `/cbt` — CBT setup
+- `/cbt/practice` — active CBT session
+- `/cbt/results` — CBT result review
+- `/services` — service catalogue
+- `/services/:service-slug` — direct service entry
+- `/services/apply/:service-slug` — service application wizard
+- `/services/track` — request tracker
+- `/news` — academic/news feed
+- `/news/:slug` — article detail
+- `/jobs` — student opportunities
+
+### Admin routes
+
+- `/admin` — operations dashboard
+- `/admin/queue` — service processing queue
+- `/admin/cbt` — CBT question bank
+- `/admin/vouchers` — scratch-card inventory
+- `/admin/users` — student accounts
 
 ## Layout direction
 
-Interior pages use an Eduleb-inspired main-content layout with a reusable student rail on wider screens. The rail contains quick links, service shortcuts, recent updates and support navigation. On smaller screens it moves below the main content so it remains useful without wasting horizontal space.
+Content-heavy student pages use a MySchool-style desktop composition: the main page stays on the left while a reusable student rail fills the right side with quick tools, service shortcuts, recent updates and tracking support. On tablets and phones, the rail becomes a normal section beneath the main content so nothing is squeezed horizontally.
+
+The home page and student dashboard already have their own multi-column layouts, so the shared rail is used where it improves density without duplicating existing sidebars.
 
 ## Core services
 
@@ -32,8 +50,9 @@ Interior pages use an Eduleb-inspired main-content layout with a reusable studen
 
 - React + Vite + TypeScript
 - Supabase Auth + PostgreSQL
-- Eduleb visual/template foundation
-- Custom EduReach content and service architecture
+- Lucide React icons
+- Custom EduReach Hub visual system
+- Responsive desktop / tablet / mobile layouts
 
 ## Development
 
