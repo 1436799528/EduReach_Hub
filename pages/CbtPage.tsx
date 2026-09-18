@@ -1,55 +1,25 @@
-import { ArrowRight, BarChart3, Calculator, Clock3, FileQuestion, GraduationCap, Trophy } from 'lucide-react';
+import { ArrowRight, BarChart3, Clock3, FileQuestion, GraduationCap, Trophy, Calculator } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
+import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchCbtExams } from '../src/lib/api';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
 const modes: Array<{ key: ExamMode; label: string; description: string }> = [
-  { key: 'ALL', label: 'All Exams', description: 'Browse every active EduReach practice exam.' },
-  { key: 'JAMB', label: 'JAMB / UTME', description: 'UTME-style practice, timed mocks and subject revision.' },
-  { key: 'POST-UTME', label: 'Post-UTME', description: 'University screening-style practice and preparation.' },
-  { key: 'WAEC', label: 'WAEC', description: 'WAEC-oriented CBT practice when a question bank is published.' },
-  { key: 'NECO', label: 'NECO', description: 'NECO-oriented CBT practice when a question bank is published.' },
+  { key: 'ALL', label: 'All Exams', description: 'All active practice exams.' },
+  { key: 'JAMB', label: 'JAMB / UTME', description: 'UTME-style practice and mocks.' },
+  { key: 'POST-UTME', label: 'Post-UTME', description: 'University screening practice.' },
+  { key: 'WAEC', label: 'WAEC', description: 'WAEC preparation and revision.' },
+  { key: 'NECO', label: 'NECO', description: 'NECO preparation and revision.' },
 ];
 
 const cbtServices = [
-  {
-    key: 'jamb',
-    label: 'JAMB',
-    title: 'JAMB CBT Simulator',
-    description: 'Realistic computer-based testing practice for JAMB / UTME preparation.',
-    tone: 'green',
-    logo: 'https://www.nigerianews.net/wp-content/uploads/2019/04/jamb-logo-3.jpg',
-    href: '/cbt?mode=JAMB',
-  },
-  {
-    key: 'waec',
-    label: 'WAEC',
-    title: 'WAEC CBT Practice',
-    description: 'Organised computer-based practice for WAEC preparation and revision.',
-    tone: 'blue',
-    logo: 'https://waecinternational.org/timetable/images/logo.png',
-    href: '/cbt?mode=WAEC',
-  },
-  {
-    key: 'neco',
-    label: 'NECO',
-    title: 'NECO CBT Practice',
-    description: 'Structured CBT preparation for NECO candidates and revision sessions.',
-    tone: 'red',
-    logo: 'https://1.bp.blogspot.com/-bjhkf4CABAI/YAHCWxzkNsI/AAAAAAAAA9Q/TO4HkefWVd4M6kXM5tRItcF4whFDnXC1QCLcBGAsYHQ/s810/National-Examinations-Council-NECO-810x810.png',
-    href: '/cbt?mode=NECO',
-  },
-  {
-    key: 'portal',
-    label: 'MySchool',
-    title: 'Student Learning Portal',
-    description: 'Keep learning resources, student services and useful academic tools together.',
-    tone: 'purple',
-    href: '/dashboard',
-  },
+  { key: 'jamb-slip', label: 'JAMB', title: 'JAMB CBT', description: 'UTME practice and timed mocks.', tone: 'blue' },
+  { key: 'results', label: 'WAEC / NECO', title: 'WAEC / NECO CBT', description: 'Exam-focused revision practice.', tone: 'green' },
+  { key: 'cbt', label: 'POST-UTME', title: 'Post-UTME Practice', description: 'University screening-style practice.', tone: 'amber' },
+  { key: 'services', label: 'EDUREACH', title: 'Student Learning Tools', description: 'Academic tools around your exams.', tone: 'slate' },
 ];
 
 export default function CbtPage() {
@@ -71,88 +41,55 @@ export default function CbtPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredExams = useMemo(() => {
-    if (mode === 'ALL') return exams;
-    return exams.filter((exam) => exam.exam_body.toUpperCase() === mode);
-  }, [exams, mode]);
+  const filteredExams = useMemo(() => mode === 'ALL' ? exams : exams.filter((exam) => exam.exam_body.toUpperCase() === mode), [exams, mode]);
 
   function changeMode(nextMode: ExamMode) {
     setMode(nextMode);
-    const nextUrl = nextMode === 'ALL' ? '/cbt' : `/cbt?mode=${encodeURIComponent(nextMode)}`;
-    window.history.replaceState({}, '', nextUrl);
+    window.history.replaceState({}, '', nextMode === 'ALL' ? '/cbt' : '/cbt?mode=' + encodeURIComponent(nextMode));
   }
 
   return <HubLayout><div className="hub-page"><div className="hub-container hub-narrow">
-    <section className="hub-cbt-hero">
-      <div>
-        <span className="hub-eyebrow">JAMB &amp; POST-UTME ENGINE</span>
-        <h1>One CBT engine for serious exam practice.</h1>
-        <p>Practise with a timed exam interface, question palette, flagging, saved progress, offline recovery and detailed corrections. JAMB, WAEC, NECO and Post-UTME can be treated as exam modes inside the same engine.</p>
-      </div>
-      <div className="hub-cbt-hero-actions">
-        <a className="hub-primary-btn" href="/screening-calculator"><Calculator size={16}/> Screening Calculator</a>
-        <a className="hub-outline-btn" href="/cbt/results"><Trophy size={16}/> My Results</a>
-      </div>
-    </section>
+    <div className="hub-section-heading hub-page-heading-compact">
+      <div><span className="hub-eyebrow">CBT</span><h1>Exam Practice</h1><p>Choose an exam mode and practise from the same EduReach CBT engine.</p></div>
+      <div className="hub-home-top-actions"><a className="hub-outline-btn" href="/screening-calculator"><Calculator size={15}/> Calculator</a><a className="hub-primary-btn" href="/cbt/results"><Trophy size={15}/> Results</a></div>
+    </div>
 
     <section className="hub-cbt-services-area">
-      <div className="hub-section-heading hub-page-heading-compact">
-        <div>
-          <span className="hub-eyebrow">CBT SERVICES</span>
-          <h2>Choose your examination service</h2>
-        </div>
-      </div>
-
-      <div className="hub-cbt-service-list">
+      <div className="hub-section-heading compact"><div><span className="hub-eyebrow">EXAM SERVICES</span><h2>Choose an examination service</h2></div></div>
+      <div className="hub-cbt-service-list hub-cbt-compact-service-list">
         {cbtServices.map((service) => (
-          <a className={`hub-cbt-service-card tone-${service.tone}`} href={service.href} key={service.key}>
-            <div className="hub-cbt-brand-area" aria-hidden="true">
-              {service.logo ? (
-                <div className="hub-cbt-logo-container">
-                  <img src={service.logo} alt="" loading="lazy" />
-                </div>
-              ) : (
-                <div className="hub-cbt-logo-container hub-cbt-logo-text">MY</div>
-              )}
-            </div>
-
-            <div className="hub-cbt-service-content">
-              <span className="hub-cbt-service-label">{service.label}</span>
-              <h3>{service.title}</h3>
-              <p>{service.description}</p>
-            </div>
+          <a className={`hub-cbt-service-card tone-${service.tone} hub-click-card`} href={service.key === 'services' ? '/dashboard' : '/cbt?mode=' + (service.key === 'jamb-slip' ? 'JAMB' : service.key === 'results' ? 'WAEC' : 'POST-UTME')} key={service.key}>
+            <div className="hub-cbt-brand-area"><CardIdentityMark value={service.key} type="service" /></div>
+            <div className="hub-cbt-service-content"><span className="hub-cbt-service-label">{service.label}</span><h3>{service.title}</h3><p>{service.description}</p></div>
+            <ArrowRight size={17} className="hub-compact-arrow" />
           </a>
         ))}
       </div>
     </section>
 
-    <div className="hub-cbt-feature-grid">
-      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><GraduationCap size={20}/></div><div><strong>JAMB / UTME</strong><span>Timed subject practice and full-mock ready structure.</span></div></article>
-      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><FileQuestion size={20}/></div><div><strong>POST-UTME</strong><span>University screening-style question banks in the same engine.</span></div></article>
-      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><BarChart3 size={20}/></div><div><strong>Screening planning</strong><span>Estimate aggregate scores before you apply.</span></div></article>
+    <div className="hub-cbt-feature-grid hub-cbt-compact-feature-grid">
+      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><GraduationCap size={19}/></div><div><strong>Timed practice</strong><span>Work through questions under exam-like time pressure.</span></div></article>
+      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><FileQuestion size={19}/></div><div><strong>Corrections</strong><span>Review answers and explanations after submission.</span></div></article>
+      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><BarChart3 size={19}/></div><div><strong>Performance</strong><span>Keep your practice results inside your account.</span></div></article>
     </div>
 
-    <div className="hub-section-heading hub-page-heading-compact"><div><span className="hub-eyebrow">EXAM MODE</span><h2>Choose what you want to practise</h2></div></div>
+    <div className="hub-section-heading compact"><div><span className="hub-eyebrow">EXAM MODE</span><h2>Choose what to practise</h2></div></div>
     <div className="hub-cbt-mode-switcher">
       {modes.map((item) => <button type="button" key={item.key} className={mode === item.key ? 'active' : ''} onClick={() => changeMode(item.key)}><strong>{item.label}</strong><span>{item.description}</span></button>)}
     </div>
 
     {loading && <div className="hub-panel hub-empty">Loading available exams…</div>}
     {error && <div className="hub-form-error">{error}</div>}
-
-    {!loading && !error && !filteredExams.length && <div className="hub-panel hub-empty">
-      <FileQuestion size={28}/>
-      <h3>No {mode === 'ALL' ? '' : mode} exams are published yet.</h3>
-      <p>The engine is ready for JAMB, WAEC, NECO and Post-UTME question banks. Add or publish the relevant exams from the CBT admin area.</p>
-      <div className="hub-wizard-actions"><a className="hub-outline-btn" href="/services">Student Services</a><a className="hub-primary-btn" href="/screening-calculator">Use Screening Calculator <ArrowRight size={15}/></a></div>
-    </div>}
+    {!loading && !error && !filteredExams.length && <div className="hub-panel hub-empty"><FileQuestion size={26}/><h3>No {mode === 'ALL' ? '' : mode + ' '}exams published yet.</h3><p>Add or publish the relevant question bank from the CBT admin area.</p></div>}
 
     {!loading && !error && filteredExams.length > 0 && <div className="hub-cbt-exam-list">
-      {filteredExams.map((exam) => <article className="hub-cbt-exam-row" key={exam.id}>
-        <div className="hub-cbt-exam-icon"><FileQuestion size={21}/></div>
-        <div className="hub-cbt-exam-main"><span>{exam.exam_body} · {exam.subject}</span><h2>{exam.title}</h2><p><Clock3 size={13}/> {exam.duration_minutes} minutes</p></div>
-        <a className="hub-primary-btn" href={`/cbt/practice?exam=${encodeURIComponent(exam.id)}`}>Start Practice <ArrowRight size={15}/></a>
-      </article>)}
+      {filteredExams.map((exam) => (
+        <a className="hub-cbt-exam-row hub-click-card" href={'/cbt/practice?exam=' + encodeURIComponent(exam.id)} key={exam.id}>
+          <div className="hub-cbt-exam-icon"><CardIdentityMark value={exam.exam_body === 'JAMB' ? 'jamb-slip' : exam.exam_body === 'WAEC' ? 'results' : exam.exam_body === 'NECO' ? 'results' : 'cbt'} type="service" /></div>
+          <div className="hub-cbt-exam-main"><span>{exam.exam_body} · {exam.subject}</span><h2>{exam.title}</h2><p><Clock3 size={13}/> {exam.duration_minutes} minutes</p></div>
+          <ArrowRight size={17} className="hub-compact-arrow" />
+        </a>
+      ))}
     </div>}
   </div></div></HubLayout>;
 }
