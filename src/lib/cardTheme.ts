@@ -3,6 +3,7 @@ export type CardIdentity = {
   secondary?: string;
   kind: 'wordmark' | 'icon';
   tone: 'blue' | 'green' | 'amber' | 'purple' | 'red' | 'slate';
+  imageUrls?: string[];
   icon?:
     | 'banknote'
     | 'brain'
@@ -25,9 +26,15 @@ export type CardIdentity = {
  * Keep service identity here so the same recognizable mark is reused on
  * cards, lists, side rails, CBT, news, dashboard and future screens.
  */
+const JAMB_LOGO_URL = 'https://raw.githubusercontent.com/Drslope-99/gradeup/edb86d539020b90996899b00721237350717d7d7/public/images/jamb.png';
+const WAEC_LOGO_URL = 'https://raw.githubusercontent.com/Drslope-99/gradeup/edb86d539020b90996899b00721237350717d7d7/public/images/waec.png';
+const NECO_LOGO_URL = 'https://raw.githubusercontent.com/Drslope-99/gradeup/edb86d539020b90996899b00721237350717d7d7/public/images/neco.png';
+const NELFUND_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Nigerian_Education_Loan_Fund_%28NELFUND%29.png';
+
 export const serviceVisuals: Record<string, CardIdentity> = {
   'nelfund-loan': {
     label: 'NELFUND',
+    imageUrls: [NELFUND_LOGO_URL],
     secondary: 'LOAN',
     kind: 'wordmark',
     tone: 'green',
@@ -36,6 +43,7 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   results: {
     label: 'WAEC',
     secondary: 'NECO',
+    imageUrls: [WAEC_LOGO_URL, NECO_LOGO_URL],
     kind: 'wordmark',
     tone: 'blue',
     ariaLabel: 'WAEC and NECO result checking',
@@ -43,6 +51,7 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   'scratch-cards': {
     label: 'WAEC',
     secondary: 'NECO PIN',
+    imageUrls: [WAEC_LOGO_URL, NECO_LOGO_URL],
     kind: 'wordmark',
     tone: 'amber',
     ariaLabel: 'WAEC and NECO scratch cards',
@@ -50,6 +59,7 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   'jamb-slip': {
     label: 'JAMB',
     secondary: 'SLIP',
+    imageUrls: [JAMB_LOGO_URL],
     kind: 'wordmark',
     tone: 'blue',
     ariaLabel: 'JAMB examination slip printing',
@@ -64,6 +74,7 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   cbt: {
     label: 'JAMB',
     secondary: 'CBT',
+    imageUrls: [JAMB_LOGO_URL],
     kind: 'wordmark',
     tone: 'blue',
     ariaLabel: 'JAMB computer based test practice',
