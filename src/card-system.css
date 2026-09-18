@@ -189,3 +189,80 @@
   .hub-feature-card .hub-feature-image { height: 84px; }
   .hub-service-profile-card .hub-service-image { height: 100px; }
 }
+
+/* Feed/article cards keep the thumbnail, category, content and action aligned. */
+.hub-news-feed-row {
+  display: grid;
+  grid-template-columns: 54px max-content minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.hub-news-feed-row .hub-feed-tag {
+  min-width: 0;
+}
+.hub-news-feed-row .hub-feed-main {
+  min-width: 0;
+}
+
+/* Empty/placeholder opportunity cards follow the same image-led shell. */
+.hub-opportunity-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+}
+.hub-opportunity-image {
+  width: 100%;
+  height: 150px;
+  display: block;
+  object-fit: cover;
+}
+.hub-opportunity-content {
+  padding: 18px;
+}
+.hub-opportunity-content h2 {
+  margin: 7px 0 8px;
+  font-size: 21px;
+}
+.hub-opportunity-content p {
+  margin: 0 0 15px;
+  color: #64748b;
+  line-height: 1.65;
+}
+.hub-sidebar-news {
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr);
+  column-gap: 9px;
+  align-items: center;
+}
+.hub-sidebar-news > .hub-rail-service-thumb {
+  grid-row: 1 / span 3;
+}
+.hub-sidebar-news > span,
+.hub-sidebar-news > strong,
+.hub-sidebar-news > small {
+  grid-column: 2;
+}
+@media (max-width: 700px) {
+  .hub-news-feed-row {
+    grid-template-columns: 44px 1fr;
+  }
+  .hub-news-feed-row > .hub-feed-tag {
+    grid-column: 2;
+  }
+  .hub-news-feed-row > .hub-feed-main {
+    grid-column: 2;
+  }
+  .hub-news-feed-row > .hub-outline-btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .hub-news-thumb {
+    width: 44px !important;
+    height: 44px !important;
+    grid-row: 1 / span 3;
+  }
+  .hub-opportunity-image {
+    height: 120px;
+  }
+}
