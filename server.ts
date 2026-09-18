@@ -133,6 +133,83 @@ app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
   res.json({ authenticated: true });
 });
 
+app.get('/api/services', async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('service_catalog')
+      .select('id,service_key,title,description,application_url,active')
+      .eq('active', true)
+      .order('title');
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Services API error:', error);
+    res.status(503).json({ error: 'Services are temporarily unavailable.' });
+  }
+});
+
+app.get('/api/services/:slug', async (req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('service_catalog')
+      .select('id,service_key,title,description,application_url,active')
+      .eq('service_key', req.params.slug)
+      .eq('active', true)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Service not found.' });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Service API error:', error);
+    res.status(503).json({ error: 'Service is temporarily unavailable.' });
+  }
+});
+
+app.get('/api/upcoming', async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const [deadlinesResult, examsResult] = await Promise.all([
+      supabase
+        .from('edureach_deadlines')
+        .select('id,title,description,due_at,priority')
+        .is('institution_id', null)
+        .is('user_id', null)
+        .eq('status', 'pending')
+        .gte('due_at', new Date().toISOString())
+        .order('due_at', { ascending: true })
+        .limit(8),
+      supabase
+        .from('edureach_exams')
+        .select('id,title,description,starts_at,ends_at,location,priority')
+        .is('institution_id', null)
+        .is('user_id', null)
+        .eq('status', 'pending')
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true })
+        .limit(8),
+    ]);
+
+    if (deadlinesResult.error) throw deadlinesResult.error;
+    if (examsResult.error) throw examsResult.error;
+
+    const items = [
+      ...(deadlinesResult.data || []).map((item) => ({ ...item, kind: 'deadline' as const, starts_at: null, location: null })),
+      ...(examsResult.data || []).map((item) => ({ ...item, kind: 'exam' as const, due_at: null })),
+    ].sort((a, b) => {
+      const aDate = new Date(a.due_at || a.starts_at || 0).getTime();
+      const bDate = new Date(b.due_at || b.starts_at || 0).getTime();
+      return aDate - bDate;
+    }).slice(0, 10);
+
+    res.json({ items });
+  } catch (error) {
+    console.error('Upcoming API error:', error);
+    res.status(503).json({ error: 'Upcoming items are temporarily unavailable.' });
+  }
+});
+
 app.get('/api/news', async (_req, res) => {
   try {
     const supabase = getServerSupabase();
