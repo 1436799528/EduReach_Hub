@@ -368,15 +368,25 @@ app.post('/api/wallet/verify', async (req, res) => {
 
 app.post('/api/payments/initialize', async (req, res) => {
   try {
-    const { serviceRequestId, amountKobo, email } = req.body as { serviceRequestId?: string; amountKobo?: number; email?: string };
-    if (!serviceRequestId || !Number.isInteger(amountKobo) || amountKobo <= 0 || !email) return res.status(400).json({ error: 'serviceRequestId, amountKobo and email are required.' });
+    const { serviceRequestId, email } = req.body as { serviceRequestId?: string; amountKobo?: number; email?: string };
+    if (!serviceRequestId || !email) return res.status(400).json({ error: 'serviceRequestId and email are required.' });
     const { supabase, user } = await requireUser(req);
-    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,reference_code,status,form_data').eq('id', serviceRequestId).eq('user_id', user.id).single();
+    const { data: request, error: requestError } = await supabase
+      .from('service_requests')
+      .select('id,reference_code,status,form_data,service_catalog(id,service_key,title,active,amount_kobo)')
+      .eq('id', serviceRequestId)
+      .eq('user_id', user.id)
+      .single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
     const secret = process.env.PAYSTACK_SECRET_KEY;
     if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
+    const service = request.service_catalog as { id: string; service_key: string; title: string; active: boolean; amount_kobo: number } | null;
+    const amountKobo = Number(service?.amount_kobo || 0);
+    if (!service || !service.active || !Number.isInteger(amountKobo) || amountKobo <= 0) {
+      return res.status(422).json({ error: 'This service does not have a valid production price configured.' });
+    }
     const reference = String(request.reference_code || `ER-${new Date().getFullYear()}-${serviceRequestId.slice(0, 6).toUpperCase()}`);
-    const response = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: String(amountKobo), email, currency: 'NGN', reference, metadata: { serviceRequestId, userId: user.id, referenceCode: request.reference_code } }) });
+    const response = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: String(amountKobo), email, currency: 'NGN', reference, metadata: { serviceRequestId, userId: user.id, referenceCode: request.reference_code, serviceKey: service.service_key } }) });
     const payload = await response.json() as any;
     if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack initialization failed.' });
     await supabase.from('service_requests').update({ amount: Number(amountKobo) / 100, form_data: { ...(request.form_data || {}), payment_reference: payload.data.reference, payment_amount_kobo: amountKobo, payment_status: 'initialized' } }).eq('id', request.id).eq('user_id', user.id);
