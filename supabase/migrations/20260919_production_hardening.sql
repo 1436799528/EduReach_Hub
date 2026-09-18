@@ -81,4 +81,15 @@ alter table public.service_catalog
 create index if not exists service_catalog_active_key_idx
   on public.service_catalog (active, service_key);
 
+-- Lock down SECURITY DEFINER RPCs to their intended callers.
+revoke all on function public.claim_service_voucher(uuid, text) from public, anon, authenticated;
+grant execute on function public.claim_service_voucher(uuid, text) to service_role;
+revoke all on function public.get_campus_feed_profiles(uuid[]) from public, anon;
+grant execute on function public.get_campus_feed_profiles(uuid[]) to authenticated;
+revoke all on function public.get_cbt_result(uuid) from public, anon;
+grant execute on function public.get_cbt_result(uuid) to authenticated;
+revoke all on function public.handle_new_student_profile() from public, anon, authenticated;
+grant execute on function public.handle_new_student_profile() to service_role;
+revoke all on function public.is_staff_user() from public, anon;
+grant execute on function public.is_staff_user() to authenticated;
 commit;
