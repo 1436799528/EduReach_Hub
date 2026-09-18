@@ -43,15 +43,15 @@ export default function HubHomePage() {
               
             </div>
             <div className="hub-home-top-actions">
-              <a className="hub-outline-btn" href="/services/track">Track Request</a>
+              <a className="hub-outline-btn" href="/news">Campus Updates</a>
               <a className="hub-primary-btn" href="/dashboard">My Dashboard</a>
             </div>
           </div>
 
           <div className="hub-utility-cards">
-            <a className="hub-feature-card hub-tone-blue" href="/cbt"><div className="hub-feature-head"><span>CBT</span><span>Practice</span></div><div className="hub-feature-body"><h3>CBT Practice</h3><span className="hub-card-link">Start Test <ArrowRight size={16} /></span></div></a>
+            <a className="hub-feature-card hub-tone-blue" href="/cbt"><div className="hub-feature-head"><span>JAMB</span><span>POST-UTME</span></div><div className="hub-feature-body"><h3>JAMB &amp; Post-UTME CBT</h3><span className="hub-card-link">Open Engine <ArrowRight size={16} /></span></div></a>
             <a className="hub-feature-card hub-tone-green" href="/services"><div className="hub-feature-head"><span>SERVICES</span><span>{services.length || '—'}</span></div><div className="hub-feature-body"><h3>Student Services</h3><span className="hub-card-link">Open Services <ArrowRight size={16} /></span></div></a>
-            <a className="hub-feature-card hub-tone-amber" href="/services/track"><div className="hub-feature-head"><span>TRACK</span><span>REQUEST</span></div><div className="hub-feature-body"><h3>Track a Request</h3><span className="hub-card-link">Check Status <ArrowRight size={16} /></span></div></a>
+            <a className="hub-feature-card hub-tone-amber" href="/news"><div className="hub-feature-head"><span>UPDATES</span><span>CAMPUS</span></div><div className="hub-feature-body"><h3>Campus Updates</h3><span className="hub-card-link">Read Updates <ArrowRight size={16} /></span></div></a>
           </div>
 
           <div className="hub-section-heading compact"><div><span className="hub-eyebrow">SERVICES</span><h2>Quick student services</h2></div><a href="/services">View all <ArrowRight size={16} /></a></div>
@@ -96,7 +96,7 @@ export default function HubHomePage() {
             {!loadingUpcoming && !upcomingError && !upcoming.length && <p className="hub-sidebar-copy">No upcoming items yet.</p>}
             {upcomingError && <p className="hub-sidebar-copy">{upcomingError}</p>}
           </div>
-          <div className="hub-sidebar-card hub-sidebar-callout"><span className="hub-eyebrow">STUDENT ACCOUNT</span><h3>Need your request history?</h3><p>Open your dashboard to see requests, CBT attempts and wallet data tied to your account.</p><a href="/dashboard" className="hub-primary-btn">Open Dashboard</a></div>
+          <div className="hub-sidebar-card hub-sidebar-callout"><span className="hub-eyebrow">CAMPUS UPDATES</span><h3>Keep up with what is changing.</h3><p>Check verified announcements, academic updates and important student deadlines from EduReach.</p><a href="/news" className="hub-primary-btn">Open Campus Updates</a></div>
         </aside>
       </div>
     </div>
