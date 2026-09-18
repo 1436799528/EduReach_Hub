@@ -1,0 +1,191 @@
+/* Shared EduReach card language: compact, image-led and consistent. */
+:root {
+  --er-card-bg: #fff;
+  --er-card-border: #e2e8f0;
+  --er-card-shadow: 0 4px 16px rgba(15, 23, 42, .045);
+  --er-card-shadow-hover: 0 12px 28px rgba(15, 23, 42, .09);
+  --er-card-radius: 12px;
+}
+
+.hub-feature-card,
+.hub-service-profile-card,
+.hub-news-row,
+.hub-news-feed-row,
+.hub-upcoming-row,
+.hub-sidebar-card,
+.hub-panel,
+.hub-rail-card,
+.hub-wizard-panel,
+.hub-success-panel,
+.hub-question-card,
+.hub-score-card {
+  border: 1px solid var(--er-card-border);
+  border-radius: var(--er-card-radius);
+  background: var(--er-card-bg);
+  box-shadow: var(--er-card-shadow);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.hub-feature-card:hover,
+.hub-service-profile-card:hover,
+.hub-news-row:hover,
+.hub-news-feed-row:hover,
+.hub-sidebar-card:hover,
+.hub-rail-card:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: var(--er-card-shadow-hover);
+}
+
+/* Small, purposeful site logo. */
+.hub-logo {
+  font-size: 18px !important;
+  letter-spacing: -.25px;
+}
+.hub-logo-footer {
+  font-size: 20px !important;
+}
+
+/* Homepage action cards use the image as the visual identity. */
+.hub-feature-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 205px;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #fff !important;
+}
+.hub-feature-card .hub-feature-image {
+  width: 100%;
+  height: 92px;
+  display: block;
+  object-fit: cover;
+}
+.hub-feature-card .hub-feature-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 16px 16px;
+}
+.hub-feature-card .hub-feature-head {
+  margin: 0 0 7px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hub-feature-card .hub-feature-head span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #64748b;
+}
+.hub-feature-card .hub-feature-body h3 {
+  margin: 0 0 9px;
+  font-size: 18px;
+}
+
+/* Service cards: no oversized circular logo; use the service image instead. */
+.hub-service-profile-card {
+  min-height: 0 !important;
+  overflow: hidden;
+  padding: 0 !important;
+  background: #fff !important;
+}
+.hub-service-profile-card .hub-service-image {
+  width: 100%;
+  height: 112px;
+  display: block;
+  object-fit: cover;
+}
+.hub-service-profile-card .hub-service-profile-avatar {
+  display: none !important;
+}
+.hub-service-profile-card .hub-service-profile-body {
+  padding: 13px 16px 16px !important;
+}
+.hub-service-profile-card .hub-service-profile-body h2 {
+  font-size: 17px !important;
+  line-height: 1.3;
+}
+.hub-service-profile-card .hub-service-profile-body p {
+  font-size: 11px !important;
+  line-height: 1.55;
+}
+
+/* News cards get small thumbnails rather than large icons. */
+.hub-news-thumb {
+  width: 54px !important;
+  height: 54px !important;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 10px !important;
+  border: 1px solid var(--er-card-border);
+  background: #f8fafc;
+}
+.hub-news-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.hub-news-feed-row {
+  padding: 12px 13px !important;
+  background: #fff;
+}
+
+/* Upcoming items use the same visual language. */
+.hub-upcoming-row {
+  padding: 10px 12px !important;
+  background: #fff !important;
+}
+.hub-upcoming-thumb {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--er-card-border);
+}
+.hub-upcoming-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Sidebar and rail cards stay compact and aligned with the same card shell. */
+.hub-sidebar-card,
+.hub-rail-card {
+  padding: 15px !important;
+}
+
+/* Prevent icon-only headings from looking like oversized logos. */
+.hub-sidebar-head > svg,
+.hub-rail-head > svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Small service thumbnails in the rail. */
+.hub-rail-service-thumb {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--er-card-border);
+}
+.hub-rail-service-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+@media (max-width: 700px) {
+  .hub-logo { font-size: 17px !important; }
+  .hub-logo-footer { font-size: 19px !important; }
+  .hub-feature-card .hub-feature-image { height: 84px; }
+  .hub-service-profile-card .hub-service-image { height: 100px; }
+}
