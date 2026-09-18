@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronRight, Copy, Plus, Search, Wallet } from 'lucide-react';
+import { Check, Copy, Plus, Search, Wallet } from 'lucide-react';
 import { supabase } from '../src/lib/supabase';
 import WalletModal from '../src/components/WalletModal';
 import CardIdentityMark from '../src/components/CardIdentityMark';
