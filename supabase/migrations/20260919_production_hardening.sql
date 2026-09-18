@@ -26,7 +26,7 @@ returns table (
   total_questions integer,
   submitted_at timestamptz,
   question_id uuid,
-  position integer,
+  "position" integer,
   question_text text,
   option_a text,
   option_b text,
