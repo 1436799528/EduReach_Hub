@@ -170,11 +170,45 @@ export async function trackService(referenceCode: string) {
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  const body = await jsonFetch<{ items: NewsItem[] }>('/api/news');
-  return body.items || [];
+  const { data, error } = await supabase
+    .from('news_articles')
+    .select('id,title,excerpt,body,category,source_url,published_at,updated_at,published')
+    .eq('published', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(30);
+  if (error) throw error;
+  return (data || []).map((item) => ({
+    id: item.id,
+    title: item.title,
+    summary: item.excerpt,
+    body: item.body,
+    category: item.category,
+    priority: 'normal',
+    source_url: item.source_url,
+    published_at: item.published_at,
+    last_verified_at: item.updated_at,
+    verification_status: 'verified',
+  }));
 }
 
 export async function fetchNewsItem(id: string): Promise<NewsItem> {
-  const body = await jsonFetch<{ item: NewsItem }>(`/api/news/${encodeURIComponent(id)}`);
-  return body.item;
+  const { data, error } = await supabase
+    .from('news_articles')
+    .select('id,title,excerpt,body,category,source_url,published_at,updated_at,published')
+    .eq('id', id)
+    .eq('published', true)
+    .single();
+  if (error || !data) throw new Error('News article could not be loaded.');
+  return {
+    id: data.id,
+    title: data.title,
+    summary: data.excerpt,
+    body: data.body,
+    category: data.category,
+    priority: 'normal',
+    source_url: data.source_url,
+    published_at: data.published_at,
+    last_verified_at: data.updated_at,
+    verification_status: 'verified',
+  };
 }
