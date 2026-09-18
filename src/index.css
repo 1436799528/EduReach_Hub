@@ -1,0 +1,251 @@
+html,
+body,
+#root { width: 100%; min-width: 0; min-height: 100%; height: auto; margin: 0; padding: 0; }
+html { overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; }
+body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff; }
+#root { display: block; }
+.eduleb-app { display: block; width: 100%; min-width: 0; min-height: 100vh; height: auto; overflow: visible; isolation: isolate; background: #fff; }
+.eduleb-app main { display: block; width: 100%; min-height: 0; height: auto; overflow: visible; }
+.eduleb-app main > section, .eduleb-app main > div, .eduleb-app .section-padding { display: flow-root; width: 100%; }
+.eduleb-app .row::after, .eduleb-app .container::after, .eduleb-app .section-padding::after, .eduleb-app .footer::after, .eduleb-app .foot_copy::after { content: ''; display: table; clear: both; }
+.eduleb-app img, .eduleb-app iframe, .eduleb-app video { max-width: 100%; }
+.eduleb-app .home_bg { min-height: 760px; display: flex; align-items: center; }
+.eduleb-app .section-title { margin-bottom: 42px; }
+.eduleb-app .section-title h2 { margin-bottom: 12px; }
+.eduleb-app #home, .eduleb-app #about, .eduleb-app #services, .eduleb-app #blog, .eduleb-app #contact { scroll-margin-top: 92px; }
+.eduleb-app #services { background: #f8f9ff; }
+.auth-nav-actions { white-space: nowrap; }
+.auth-link-btn { border: 0; background: transparent; cursor: pointer; }
+.auth-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(8, 12, 40, .62); }
+.auth-modal { position: relative; width: min(100%, 460px); padding: 38px 34px 30px; background: #fff; border-radius: 6px; box-shadow: 0 30px 80px rgba(0,0,0,.2); }
+.auth-close { position: absolute; top: 11px; right: 14px; border: 0; background: transparent; font-size: 30px; line-height: 1; color: #666; cursor: pointer; }
+.auth-brand { color: #525fe1; font: 800 18px/1 Jost, sans-serif; margin-bottom: 10px; }
+.auth-modal h2 { margin-bottom: 7px; color: #0b104a; font-size: 30px; }
+.auth-intro { margin-bottom: 24px; color: #6c7275; }
+.auth-field { min-height: 52px; margin-bottom: 14px; padding: 13px 15px; border: 1px solid #e4e5ea; border-radius: 2px; }
+.auth-submit { width: 100%; margin-top: 4px; }
+.auth-submit:disabled { opacity: .65; cursor: wait; }
+.auth-message { margin-bottom: 14px; padding: 11px 13px; font-size: 14px; line-height: 1.5; }
+.auth-error { background: #fff0f0; color: #a12626; }
+.auth-success { background: #eefaf1; color: #24623b; }
+.auth-switch { margin-top: 20px; text-align: center; color: #717679; font-size: 14px; }
+.auth-switch button { border: 0; padding: 0; background: transparent; color: #525fe1; font: inherit; font-weight: 700; cursor: pointer; }
+.mobile-auth-button { width: 100%; border: 0; background: transparent; padding: 8px 0; text-align: left; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.mobile-auth-primary { color: #525fe1; }
+.edureach-logo { display: inline-flex; align-items: baseline; gap: 4px; text-decoration: none !important; color: #0b104a !important; font: 800 26px/1 Jost, sans-serif; letter-spacing: -0.4px; white-space: nowrap; }
+.edureach-logo strong { color: #525fe1; font-weight: 800; }
+.footer .edureach-logo { color: #fff !important; font-size: 28px; margin-bottom: 18px; }
+.footer .edureach-logo strong { color: #8d96ff; }
+.hero-text h1 span { color: #525fe1; }
+.hero-text p { max-width: 560px; }
+.home_sb .banner_subs { max-width: 620px; }
+.home_sb .subscribe__btn { display: inline-flex; align-items: center; gap: 7px; }
+.why_list li { margin: 12px 0; line-height: 1.7; }
+.why_list i { width: 22px; color: #525fe1; }
+.about-img img { width: 100%; }
+.single_cat { height: calc(100% - 30px); margin-bottom: 30px; background: #fff; overflow: hidden; box-shadow: 0 10px 35px rgba(23,23,36,.06); }
+.single_cat > img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.single_cat_text { padding: 22px; }
+.single_cat_text h4 { font-size: 20px; margin-bottom: 10px; }
+.single_cat_text p { color: #687174; line-height: 1.7; }
+.single_cat_text a { display: inline-block; margin-top: 12px; color: #525fe1; font-weight: 700; }
+.single_course { height: calc(100% - 30px); margin-bottom: 30px; background: #fff; overflow: hidden; box-shadow: 0 10px 35px rgba(23,23,36,.06); }
+.single_course .single_c_img { position: relative; }
+.single_course .single_c_img img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.single_course .single_c_img span { position: absolute; left: 14px; bottom: 12px; padding: 6px 10px; background: #525fe1; color: #fff; font-size: 12px; font-weight: 700; }
+.single_course_text { padding: 24px; }
+.single_course_text h4 { margin: 10px 0 12px; font-size: 22px; }
+.single_course_text p { color: #687174; line-height: 1.7; min-height: 82px; }
+.single_course_text h5 { margin: 22px 0 10px; color: #0b104a; font-size: 17px; }
+.single_course_text ol, .single_course_text ul { padding-left: 20px; color: #687174; line-height: 1.8; }
+.service-detail-card { display: block; width: 100%; margin-bottom: 34px; }
+.service-detail-card .single_c_img img { aspect-ratio: 4 / 1.15; }
+.team_img { position: relative; overflow: hidden; }
+.team_img img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+.demo-avatar { min-height: 150px; display: grid; place-items: center; background: #eef0ff; color: #525fe1; font: 800 32px/1 Jost, sans-serif; }
+.static-avatar { min-height: 235px; height: 100%; }
+.testimonial { height: calc(100% - 30px); margin-bottom: 30px; padding: 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
+.testimonial > i { color: #525fe1; font-size: 25px; }
+.testimonial p { margin: 17px 0; line-height: 1.8; }
+.blog_post { height: calc(100% - 30px); margin-bottom: 30px; overflow: hidden; background: #fff; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
+.blog-img img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; }
+.blog_content { padding: 22px; }
+.blog_content h3 a, .blog_post > a, .blog_readmore { text-decoration: none; }
+.blog_meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: #7a7f81; }
+.blog_content h3 { margin: 10px 0; font-size: 22px; line-height: 1.4; }
+.blog_readmore { display: inline-block; margin-top: 15px; color: #525fe1; font-weight: 700; }
+.blog-card-footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 15px; padding-top: 12px; border-top: 1px solid #eee; color: #888; font-size: 12px; }
+.blog-filter-bar { margin-bottom: 35px; }
+.blog-filter-bar > .form-control { max-width: 620px; min-height: 52px; margin: 0 auto 18px; padding: 13px 16px; border: 1px solid #e5e6ea; border-radius: 2px; }
+.blog-filter-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.blog-filter-chips button { border: 1px solid #e0e1e6; background: #fff; color: #555; padding: 8px 13px; border-radius: 2px; font-size: 13px; cursor: pointer; transition: .2s ease; }
+.blog-filter-chips button:hover, .blog-filter-chips button.active { background: #525fe1; border-color: #525fe1; color: #fff; }
+.blog-detail-card { background: #fff; box-shadow: 0 15px 45px rgba(23,23,36,.08); }
+.blog-detail-image img { display: block; width: 100%; max-height: 520px; object-fit: cover; }
+.blog-detail-content { padding: 42px 46px 48px; }
+.blog-detail-content h1 { margin: 14px 0 18px; color: #0b104a; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; }
+.blog-detail-byline { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 26px; color: #777; font-size: 14px; }
+.blog-detail-content p { color: #687174; font-size: 17px; line-height: 1.9; margin-bottom: 20px; }
+.blog-detail-content .blog-detail-lead { color: #4f5659; font-size: 20px; line-height: 1.75; font-weight: 500; }
+.blog-detail-source { margin: 30px 0; padding: 16px 18px; background: #f7f8ff; border-left: 3px solid #525fe1; color: #687174; font-size: 14px; line-height: 1.7; }
+.related-blog-area { background: #f8f9ff; }
+.contact_info { height: 100%; padding: 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
+.contact-form .form-control { min-height: 54px; margin-bottom: 18px; padding: 14px 16px; border: 1px solid #e5e6ea; border-radius: 2px; }
+.contact-form select.form-control { appearance: auto; }
+.form-success { margin-top: 18px; padding: 14px 16px; background: #eef0ff; color: #0b104a; }
+.footer { background: #0b104a; color: rgba(255,255,255,.75); }
+.footer a, .footer h4, .footer p, .footer li, .footer li a { color: inherit; }
+@media (max-width: 1199px) { .eduleb-app .home_bg { min-height: 650px; } }
+@media (max-width: 991px) { .eduleb-app .home_bg { min-height: auto; padding: 120px 0 90px; } .auth-nav-actions { display: none; } .service-detail-card .single_c_img img { aspect-ratio: 16 / 7; } .blog-detail-content { padding: 34px 28px 38px; } }
+@media (max-width: 575px) { .eduleb-app .home_bg { padding: 105px 0 70px; } .auth-modal { padding: 34px 22px 24px; } .edureach-logo { font-size: 23px; } .footer .edureach-logo { font-size: 25px; } .blog-filter-chips { justify-content: flex-start; } .blog-detail-content { padding: 28px 20px 32px; } .blog-detail-content h1 { font-size: 31px; } .blog-detail-content p { font-size: 16px; } }
+
+/* EduReach compact service cards */
+.service-overview-area {
+  background: #f8f9ff;
+}
+
+.service-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.service-compact-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 90px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e8e9ef;
+  border-radius: 11px;
+  box-shadow: 0 8px 24px rgba(23,23,36,.06);
+  text-decoration: none !important;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.service-compact-card:hover {
+  transform: translateY(-2px);
+  border-color: #d8daf1;
+  box-shadow: 0 12px 28px rgba(23,23,36,.1);
+}
+
+.service-compact-card__mark {
+  position: relative;
+  flex: 0 0 102px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(145deg, #525fe1 0%, #737cf0 100%);
+}
+
+.service-compact-card__mark::before {
+  content: '';
+  position: absolute;
+  width: 96px;
+  height: 62px;
+  right: -38px;
+  bottom: -24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.16);
+  transform: rotate(-12deg);
+}
+
+.service-compact-card__mark::after {
+  content: '';
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  left: -30px;
+  top: -26px;
+  border-radius: 50%;
+  background: rgba(11,16,74,.1);
+}
+
+.service-compact-card__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: #fff;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.service-compact-card__body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 14px 12px 13px 16px;
+}
+
+.service-compact-card__body strong {
+  display: block;
+  color: #0b104a;
+  font: 700 16px/1.25 Jost, sans-serif;
+}
+
+.service-compact-card__body > span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #687174;
+  font-size: 11.5px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.service-compact-card__arrow {
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #525fe1;
+  font-size: 16px;
+}
+
+@media (max-width: 767px) {
+  .service-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .service-compact-card {
+    min-height: 88px;
+  }
+}
+
+@media (max-width: 575px) {
+  .service-card-grid {
+    gap: 10px;
+  }
+
+  .service-compact-card__mark {
+    flex-basis: 92px;
+  }
+
+  .service-compact-card__icon {
+    width: 42px;
+    height: 42px;
+    font-size: 33px;
+  }
+
+  .service-compact-card__body {
+    padding: 12px 8px 12px 14px;
+  }
+
+  .service-compact-card__body strong {
+    font-size: 15px;
+  }
+
+  .service-compact-card__body > span {
+    font-size: 11px;
+  }
+}
