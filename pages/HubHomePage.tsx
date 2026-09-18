@@ -1,9 +1,8 @@
-import { ArrowRight, CheckCircle2, CircleDollarSign, FileText, KeyRound, Newspaper, Printer, CalendarDays } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchNews, fetchServices, fetchUpcoming, type NewsItem, type ServiceItem, type UpcomingItem } from '../src/lib/api';
-
-const serviceIcons = { 'nelfund-loan': CircleDollarSign, results: FileText, 'scratch-cards': KeyRound, 'jamb-slip': Printer, 'admission-letters': FileText } as const;
+import { newsCardImage, serviceCardImage, upcomingCardImage } from '../src/lib/cardTheme';
 
 const tones = ['blue', 'green', 'amber'] as const;
 function toneFor(index: number) { return tones[index % tones.length]; }
@@ -49,9 +48,9 @@ export default function HubHomePage() {
           </div>
 
           <div className="hub-utility-cards">
-            <a className="hub-feature-card hub-tone-blue" href="/cbt"><div className="hub-feature-head"><span>JAMB</span><span>POST-UTME</span></div><div className="hub-feature-body"><h3>JAMB &amp; Post-UTME CBT</h3><span className="hub-card-link">Open Engine <ArrowRight size={16} /></span></div></a>
-            <a className="hub-feature-card hub-tone-green" href="/services"><div className="hub-feature-head"><span>SERVICES</span><span>{services.length || '—'}</span></div><div className="hub-feature-body"><h3>Student Services</h3><span className="hub-card-link">Open Services <ArrowRight size={16} /></span></div></a>
-            <a className="hub-feature-card hub-tone-amber" href="/news"><div className="hub-feature-head"><span>UPDATES</span><span>CAMPUS</span></div><div className="hub-feature-body"><h3>Campus Updates</h3><span className="hub-card-link">Read Updates <ArrowRight size={16} /></span></div></a>
+            <a className="hub-feature-card hub-tone-blue" href="/cbt"><img className="hub-feature-image" src={serviceCardImage('cbt')} alt="JAMB and Post-UTME CBT" loading="lazy" /><div className="hub-feature-content"><div className="hub-feature-head"><span>JAMB</span><span>POST-UTME</span></div><div className="hub-feature-body"><h3>JAMB &amp; Post-UTME CBT</h3><span className="hub-card-link">Open Engine <ArrowRight size={16} /></span></div></div></a>
+            <a className="hub-feature-card hub-tone-green" href="/services"><img className="hub-feature-image" src={serviceCardImage('services')} alt="EduReach student services" loading="lazy" /><div className="hub-feature-content"><div className="hub-feature-head"><span>SERVICES</span><span>{services.length || '—'}</span></div><div className="hub-feature-body"><h3>Student Services</h3><span className="hub-card-link">Open Services <ArrowRight size={16} /></span></div></div></a>
+            <a className="hub-feature-card hub-tone-amber" href="/news"><img className="hub-feature-image" src={serviceCardImage('news')} alt="Campus news and updates" loading="lazy" /><div className="hub-feature-content"><div className="hub-feature-head"><span>UPDATES</span><span>CAMPUS</span></div><div className="hub-feature-body"><h3>Campus Updates</h3><span className="hub-card-link">Read Updates <ArrowRight size={16} /></span></div></div></a>
           </div>
 
           <div className="hub-section-heading compact"><div><span className="hub-eyebrow">SERVICES</span><h2>Quick student services</h2></div><a href="/services">View all <ArrowRight size={16} /></a></div>
@@ -59,11 +58,9 @@ export default function HubHomePage() {
           {!loadingServices && serviceError && <div className="hub-form-error">{serviceError}</div>}
           {!loadingServices && !serviceError && !quickServices.length && <div className="hub-panel hub-empty">No student services are available yet.</div>}
           {!loadingServices && !serviceError && quickServices.length > 0 && <div className="hub-service-grid hub-service-profile-home-grid">{quickServices.map((service, index) => {
-            const Icon = serviceIcons[service.service_key as keyof typeof serviceIcons] || FileText;
             const tone = toneFor(index);
             return <a key={service.id} href={`/services/apply/${service.service_key}`} className={`hub-service-profile-card hub-service-profile-compact hub-tone-${tone}`}>
-              <div className="hub-service-banner"><span>{service.title}</span><strong>0{index + 1}</strong></div>
-              <div className="hub-service-profile-avatar"><Icon size={23}/></div>
+              <img className="hub-service-image" src={serviceCardImage(service.service_key)} alt={service.title} loading="lazy" />
               <div className="hub-service-profile-body"><div className="hub-service-card-meta"><span>EduReach Service</span></div><h2>{service.title}</h2><p>{service.description}</p><div className="hub-service-profile-footer"><span className="hub-service-card-caption">{service.application_url ? 'Official portal' : 'Request support'}</span><span className="hub-primary-btn">{service.application_url ? 'Open Portal' : 'Apply Now'} <ArrowRight size={15} /></span></div></div>
             </a>;
           })}</div>}
@@ -72,13 +69,13 @@ export default function HubHomePage() {
           {loadingNews && <div className="hub-panel hub-empty">Loading verified updates…</div>}
           {!loadingNews && newsError && <div className="hub-form-error">{newsError}</div>}
           {!loadingNews && !newsError && !newsItems.length && <div className="hub-panel hub-empty">No verified announcements are published right now.</div>}
-          {!loadingNews && !newsError && <div className="hub-news-list">{newsItems.slice(0, 5).map((item) => <a href={`/news/${item.id}`} key={item.id} className="hub-news-row"><div className="hub-news-thumb"><Newspaper size={20}/></div><div className="hub-news-copy"><div className="hub-news-meta"><span>{labelFor(item.category)}</span><span>{formatDate(item.published_at)}</span><span className="hub-verified"><CheckCircle2 size={13}/> Verified</span></div><h3>{item.title}</h3><p>{item.summary || ''}</p></div><ArrowRight size={18}/></a>)}</div>}
+          {!loadingNews && !newsError && <div className="hub-news-list">{newsItems.slice(0, 5).map((item) => <a href={`/news/${item.id}`} key={item.id} className="hub-news-row"><div className="hub-news-thumb"><img src={newsCardImage(item.category)} alt="" loading="lazy" /></div><div className="hub-news-copy"><div className="hub-news-meta"><span>{labelFor(item.category)}</span><span>{formatDate(item.published_at)}</span><span className="hub-verified"><CheckCircle2 size={13}/> Verified</span></div><h3>{item.title}</h3><p>{item.summary || ''}</p></div><ArrowRight size={18}/></a>)}</div>}
 
           <div className="hub-section-heading compact"><div><span className="hub-eyebrow">UP NEXT</span><h2>Upcoming</h2></div></div>
           {loadingUpcoming && <div className="hub-panel hub-empty">Loading upcoming items…</div>}
           {!loadingUpcoming && upcomingError && <div className="hub-form-error">{upcomingError}</div>}
           {!loadingUpcoming && !upcomingError && !upcoming.length && <div className="hub-panel hub-empty">No upcoming deadlines or exams have been published yet.</div>}
-          {!loadingUpcoming && !upcomingError && upcoming.length > 0 && <div className="hub-upcoming-list">{upcoming.map((item) => <div className="hub-upcoming-row" key={`${item.kind}-${item.id}`}><div className="hub-upcoming-icon"><CalendarDays size={18}/></div><div><span className="hub-upcoming-kind">{item.kind === 'deadline' ? 'Deadline' : 'Exam'}</span><h3>{item.title}</h3><p>{item.description || ''}</p></div><strong>{formatDate(item.due_at || item.starts_at)}</strong></div>)}</div>}
+          {!loadingUpcoming && !upcomingError && upcoming.length > 0 && <div className="hub-upcoming-list">{upcoming.map((item) => <div className="hub-upcoming-row" key={`${item.kind}-${item.id}`}><div className="hub-upcoming-thumb"><img src={upcomingCardImage(item.kind)} alt="" loading="lazy" /></div><div><span className="hub-upcoming-kind">{item.kind === 'deadline' ? 'Deadline' : 'Exam'}</span><h3>{item.title}</h3><p>{item.description || ''}</p></div><strong>{formatDate(item.due_at || item.starts_at)}</strong></div>)}</div>}
         </section>
 
         <aside className="hub-sidebar">
