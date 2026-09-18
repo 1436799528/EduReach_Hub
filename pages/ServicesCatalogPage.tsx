@@ -1,9 +1,9 @@
-import { ArrowRight, CircleDollarSign, FileText, KeyRound, Printer } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
+import { serviceCardImage } from '../src/lib/cardTheme';
 
-const icons = { 'nelfund-loan': CircleDollarSign, results: FileText, 'scratch-cards': KeyRound, 'jamb-slip': Printer, 'admission-letters': FileText } as const;
 const tones = ['blue', 'green', 'amber'] as const;
 
 export default function ServicesCatalogPage() {
@@ -24,11 +24,9 @@ export default function ServicesCatalogPage() {
     {error && <div className="hub-form-error">{error}</div>}
     {!loading && !error && !services.length && <div className="hub-panel hub-empty">No student services are available yet.</div>}
     {!loading && !error && <div className="hub-service-catalog-grid hub-service-profile-grid">{services.map((service, index) => {
-      const Icon = icons[service.service_key as keyof typeof icons] || FileText;
       const tone = tones[index % tones.length];
       return <article className={`hub-service-profile-card hub-tone-${tone}`} key={service.id}>
-        <div className="hub-service-banner"><span>{service.title}</span><strong>0{index + 1}</strong></div>
-        <div className="hub-service-profile-avatar"><Icon size={26}/></div>
+        <img className="hub-service-image" src={serviceCardImage(service.service_key)} alt={service.title} loading="lazy" />
         <div className="hub-service-profile-body"><div className="hub-service-card-meta"><span>EduReach Service</span>{service.application_url && <span>Official portal available</span>}</div><h2>{service.title}</h2><p>{service.description}</p><div className="hub-service-profile-footer"><span className="hub-service-card-caption">{service.application_url ? 'Official link' : 'Request support'}</span><a href={`/services/apply/${service.service_key}`} className="hub-primary-btn">{service.application_url ? 'Open / Request' : 'Start Request'} <ArrowRight size={16} /></a></div></div>
       </article>;
     })}</div>}
