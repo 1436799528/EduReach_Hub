@@ -5,6 +5,7 @@ import StudentDashboardV2 from '../pages/StudentDashboardV2';
 import CbtPage from '../pages/CbtPage';
 import CbtPracticePage from '../pages/CbtPracticePage';
 import CbtResultsPage from '../pages/CbtResultsPage';
+import ScreeningCalculatorPage from '../pages/ScreeningCalculatorPage';
 import ServicesCatalogPage from '../pages/ServicesCatalogPage';
 import ServiceApplyPage from '../pages/ServiceApplyPage';
 import ServiceTrackPage from '../pages/ServiceTrackPage';
@@ -36,6 +37,7 @@ export default function HubApp(): ReactElement {
   if (path === '/cbt') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
   if (path === '/cbt/results') return <CbtResultsPage />;
+  if (path === '/screening-calculator') return <ScreeningCalculatorPage />;
   if (path === '/services') return <ServicesCatalogPage />;
   if (path === '/services/track') return <ServiceTrackPage />;
   if (path.startsWith('/services/apply/')) return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/apply/'.length))} />;
