@@ -34,7 +34,7 @@ export default function HubHomePage() {
 
   return (
     <HubLayout>
-      <div className="hub-page hub-home-page">
+      <div className="hub-page hub-home-page hub-compact-site">
         <div className="hub-container hub-grid hub-home-grid">
           <section className="hub-main-stream">
             <div className="hub-home-topbar">
@@ -64,7 +64,7 @@ export default function HubHomePage() {
                 <div className="hub-compact-copy">
                   <span className="hub-compact-label">SERVICES</span>
                   <h3>Student Services</h3>
-                  <p>Five practical service tools</p>
+                  <p>Practical student service tools</p>
                 </div>
                 <ArrowRight size={17} className="hub-compact-arrow" />
               </a>
