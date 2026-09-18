@@ -82,14 +82,14 @@ export default function HubHomePage() {
           <div className="hub-sidebar-card">
             <div className="hub-sidebar-head"><h3>Latest News</h3><a href="/news">View all</a></div>
             {loadingNews && <p className="hub-sidebar-copy">Loading…</p>}
-            {!loadingNews && !newsError && newsItems.slice(0, 5).map((item) => <a className="hub-sidebar-news" href={`/news/${item.id}`} key={item.id}><span>{labelFor(item.category)}</span><strong>{item.title}</strong><small>{formatDate(item.published_at)}</small></a>)}
+            {!loadingNews && !newsError && newsItems.slice(0, 5).map((item) => <a className="hub-sidebar-news" href={`/news/${item.id}`} key={item.id}><div className="hub-news-thumb"><img src={newsCardImage(item.category)} alt="" loading="lazy" /></div><span>{labelFor(item.category)}</span><strong>{item.title}</strong><small>{formatDate(item.published_at)}</small></a>)}
             {!loadingNews && !newsError && !newsItems.length && <p className="hub-sidebar-copy">No verified updates yet.</p>}
             {newsError && <p className="hub-sidebar-copy">{newsError}</p>}
           </div>
           <div className="hub-sidebar-card">
             <div className="hub-sidebar-head"><h3>Upcoming</h3></div>
             {loadingUpcoming && <p className="hub-sidebar-copy">Loading…</p>}
-            {!loadingUpcoming && !upcomingError && upcoming.slice(0, 5).map((item) => <div className="hub-sidebar-news" key={`${item.kind}-${item.id}`}><span>{item.kind === 'deadline' ? 'Deadline' : 'Exam'}</span><strong>{item.title}</strong><small>{formatDate(item.due_at || item.starts_at)}</small></div>)}
+            {!loadingUpcoming && !upcomingError && upcoming.slice(0, 5).map((item) => <div className="hub-sidebar-news" key={`${item.kind}-${item.id}`}><div className="hub-news-thumb"><img src={upcomingCardImage(item.kind)} alt="" loading="lazy" /></div><span>{item.kind === 'deadline' ? 'Deadline' : 'Exam'}</span><strong>{item.title}</strong><small>{formatDate(item.due_at || item.starts_at)}</small></div>)}
             {!loadingUpcoming && !upcomingError && !upcoming.length && <p className="hub-sidebar-copy">No upcoming items yet.</p>}
             {upcomingError && <p className="hub-sidebar-copy">{upcomingError}</p>}
           </div>
