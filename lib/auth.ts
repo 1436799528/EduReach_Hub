@@ -12,9 +12,9 @@ const ADMIN_ROLES = new Set(['admin', 'super_admin', 'moderator']);
 type ServerSupabase = ReturnType<typeof createClient> | null;
 
 function getServerSupabase(): ServerSupabase {
-  const url = process.env.VITE_SUPABASE_URL || 'https://gjdfatwcoosyuhakrrhh.supabase.co';
+  const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) return null;
+  if (!url || !key) return null;
 
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
