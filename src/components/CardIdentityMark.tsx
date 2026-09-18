@@ -38,6 +38,16 @@ const iconMap = {
 } as const;
 
 function renderIdentity(identity: CardIdentity) {
+  if (identity.imageUrls?.length) {
+    return (
+      <span className="hub-card-identity hub-card-identity--images" aria-hidden="true">
+        {identity.imageUrls.map((src) => (
+          <img key={src} src={src} alt="" loading="lazy" decoding="async" />
+        ))}
+      </span>
+    );
+  }
+
   if (identity.kind === 'wordmark') {
     return (
       <span className="hub-card-identity hub-card-identity--wordmark" aria-hidden="true">
