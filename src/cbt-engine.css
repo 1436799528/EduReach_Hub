@@ -37,3 +37,42 @@
 .hub-calculator-breakdown b{color:#fff}
 @media(max-width:900px){.hub-cbt-hero{align-items:flex-start;flex-direction:column}.hub-cbt-feature-grid,.hub-cbt-mode-switcher,.hub-calculator-result{grid-template-columns:1fr}}
 @media(max-width:575px){.hub-cbt-hero{padding:20px}.hub-cbt-feature{padding:15px}.hub-calculator-card{padding:20px}.hub-calculator-result>div:first-child strong{font-size:40px}}
+
+/* Compact CBT identity cards: coloured identity block curves into the white content area. */
+.hub-cbt-services-area{margin-bottom:30px}
+.hub-cbt-service-list{display:grid;gap:13px}
+.hub-cbt-service-card{height:108px;background:#fff;border:1px solid #e7eaed;border-radius:10px;overflow:hidden;display:flex;align-items:center;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.035);transition:transform .2s ease,box-shadow .2s ease}
+.hub-cbt-service-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.08)}
+.hub-cbt-service-card:after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px}
+.hub-cbt-service-card.tone-green:after{background:#087443}
+.hub-cbt-service-card.tone-blue:after{background:#1261a0}
+.hub-cbt-service-card.tone-red:after{background:#8b2020}
+.hub-cbt-service-card.tone-purple:after{background:#5c3fc4}
+
+.hub-cbt-brand-area{width:142px;height:100%;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 142px}
+.hub-cbt-brand-area:before{content:'';position:absolute;width:165px;height:145px;left:-30px;top:50%;transform:translateY(-50%);border-radius:0 48% 48% 0;z-index:0}
+.hub-cbt-brand-area:after{content:'';position:absolute;width:80px;height:80px;right:-43px;top:-25px;border-radius:50%;background:rgba(255,255,255,.12);z-index:1}
+.hub-cbt-service-card.tone-green .hub-cbt-brand-area:before{background:#087443}
+.hub-cbt-service-card.tone-blue .hub-cbt-brand-area:before{background:#1261a0}
+.hub-cbt-service-card.tone-red .hub-cbt-brand-area:before{background:#8b2020}
+.hub-cbt-service-card.tone-purple .hub-cbt-brand-area:before{background:#5c3fc4}
+
+.hub-cbt-logo-container{width:62px;height:62px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;z-index:3;box-shadow:0 3px 10px rgba(0,0,0,.16);overflow:hidden}
+.hub-cbt-logo-container img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;padding:5px}
+.hub-cbt-logo-text{font-size:13px;font-weight:800;color:#5c3fc4}
+
+.hub-cbt-service-content{flex:1;min-width:0;padding:15px 22px}
+.hub-cbt-service-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#808891;margin-bottom:3px}
+.hub-cbt-service-content h3{font-size:18px;font-weight:750;line-height:1.15;color:#1b2530;margin:0}
+.hub-cbt-service-content p{margin:6px 0 0;font-size:12px;line-height:1.4;color:#747d86;max-width:500px}
+
+@media(max-width:620px){
+  .hub-cbt-service-card{height:96px}
+  .hub-cbt-brand-area{width:105px;flex-basis:105px}
+  .hub-cbt-brand-area:before{width:125px;height:125px;left:-28px}
+  .hub-cbt-logo-container{width:51px;height:51px;border-radius:10px}
+  .hub-cbt-service-content{padding:12px 14px}
+  .hub-cbt-service-content h3{font-size:15px}
+  .hub-cbt-service-content p{font-size:11px;margin-top:4px}
+  .hub-cbt-service-label{font-size:9px}
+}
