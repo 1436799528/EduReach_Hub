@@ -69,7 +69,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                   </p>
                 </div>
                 {item.source_url ? (
-                  <a className="hub-inline-link" href={item.source_url} target="_blank" rel="noreferrer">
+                  <a className="hub-card-link" href={item.source_url} target="_blank" rel="noreferrer">
                     View source <ExternalLink size={14} />
                   </a>
                 ) : (
