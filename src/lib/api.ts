@@ -44,25 +44,26 @@ async function authHeaders(): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${session.access_token}` };
 }
 
-export async function fetchServices(): Promise<ServiceItem[]> {
-  const response = await fetch('/api/services');
+async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+  const response = await fetch(input, init);
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'Services could not be loaded.');
-  return body?.items || [];
+  if (!response.ok) throw new Error(body?.error || 'Request failed.');
+  return body as T;
+}
+
+export async function fetchServices(): Promise<ServiceItem[]> {
+  const body = await jsonFetch<{ items: ServiceItem[] }>('/api/services');
+  return body.items || [];
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {
-  const response = await fetch(`/api/services/${encodeURIComponent(slug)}`);
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'Service could not be loaded.');
-  return body.item as ServiceItem;
+  const body = await jsonFetch<{ item: ServiceItem }>(`/api/services/${encodeURIComponent(slug)}`);
+  return body.item;
 }
 
 export async function fetchUpcoming(): Promise<UpcomingItem[]> {
-  const response = await fetch('/api/upcoming');
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'Upcoming items could not be loaded.');
-  return body?.items || [];
+  const body = await jsonFetch<{ items: UpcomingItem[] }>('/api/upcoming');
+  return body.items || [];
 }
 
 export async function fetchCbtExams() {
@@ -77,48 +78,57 @@ export async function fetchCbtExams() {
 
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
   const headers = await authHeaders();
-  const response = await fetch('/api/cbt/submit', {
+  return jsonFetch<CbtSubmitResponse>('/api/cbt/submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(payload),
   });
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'CBT submission failed.');
-  return body as CbtSubmitResponse;
 }
 
 export async function fetchCbtQuestions(examId: string) {
-  const response = await fetch(`/api/cbt/exams/${encodeURIComponent(examId)}/questions`);
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'CBT questions could not be loaded.');
-  return body as { exam: { id: string; title: string; durationMinutes: number; subject: string }; questions: Array<{ id: number; text: string; options: string[] }> };
+  const body = await jsonFetch<{ exam: { id: string; title: string; durationMinutes: number; subject: string }; questions: Array<{ id: number; text: string; options: string[] }> }>(
+    `/api/cbt/exams/${encodeURIComponent(examId)}/questions`,
+  );
+  return body;
 }
 
 export async function fetchCbtResult(attemptId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Please sign in to view this result.');
 
-  const { data: attempt, error: attemptError } = await supabase
-    .from('cbt_attempts')
-    .select('id, exam_id, score, correct_answers, total_questions, submitted_at')
-    .eq('id', attemptId)
-    .eq('user_id', user.id)
-    .single();
-  if (attemptError || !attempt) throw new Error('CBT result could not be found.');
+  const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
+  if (error) throw error;
+  if (!data?.length) throw new Error('CBT result could not be found.');
 
-  const { data: answers, error: answersError } = await supabase
-    .from('cbt_answers')
-    .select('question_id, selected_option, is_correct')
-    .eq('attempt_id', attempt.id);
-  if (answersError) throw answersError;
+  const first = data[0];
+  const attempt = {
+    id: first.attempt_id,
+    exam_id: first.exam_id,
+    score: first.score,
+    correct_answers: first.correct_answers,
+    total_questions: first.total_questions,
+    submitted_at: first.submitted_at,
+  };
 
-  const questionIds = (answers || []).map((answer) => answer.question_id);
-  const { data: questions, error: questionsError } = questionIds.length
-    ? await supabase.from('exam_questions').select('id, position, question_text, option_a, option_b, option_c, option_d, correct_option, explanation').in('id', questionIds).order('position', { ascending: true })
-    : { data: [], error: null };
-  if (questionsError) throw questionsError;
+  const answers = data.map((row: any) => ({
+    question_id: row.question_id,
+    selected_option: row.selected_option,
+    is_correct: row.is_correct,
+  }));
 
-  return { attempt, answers: answers || [], questions: questions || [] };
+  const questions = data.map((row: any) => ({
+    id: row.question_id,
+    position: row.position,
+    question_text: row.question_text,
+    option_a: row.option_a,
+    option_b: row.option_b,
+    option_c: row.option_c,
+    option_d: row.option_d,
+    correct_option: row.correct_option,
+    explanation: row.explanation,
+  }));
+
+  return { attempt, answers, questions };
 }
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
@@ -160,15 +170,11 @@ export async function trackService(referenceCode: string) {
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  const response = await fetch('/api/news');
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'News request failed.');
-  return body?.items || [];
+  const body = await jsonFetch<{ items: NewsItem[] }>('/api/news');
+  return body.items || [];
 }
 
 export async function fetchNewsItem(id: string): Promise<NewsItem> {
-  const response = await fetch(`/api/news/${encodeURIComponent(id)}`);
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'News article could not be loaded.');
-  return body.item as NewsItem;
+  const body = await jsonFetch<{ item: NewsItem }>(`/api/news/${encodeURIComponent(id)}`);
+  return body.item;
 }
