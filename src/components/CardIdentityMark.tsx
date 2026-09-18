@@ -3,10 +3,15 @@ import {
   BrainCircuit,
   BriefcaseBusiness,
   CalendarClock,
-  CreditCard,
+  CardSim,
+  ClipboardList,
   FileText,
+  GraduationCap,
   Newspaper,
   Printer,
+  ReceiptText,
+  UserRound,
+  WalletCards,
 } from 'lucide-react';
 import {
   contentCardIdentity,
@@ -21,10 +26,15 @@ const iconMap = {
   brain: BrainCircuit,
   briefcase: BriefcaseBusiness,
   calendar: CalendarClock,
-  card: CreditCard,
+  card: CardSim,
   file: FileText,
   news: Newspaper,
   printer: Printer,
+  user: UserRound,
+  wallet: WalletCards,
+  receipt: ReceiptText,
+  graduation: GraduationCap,
+  clipboard: ClipboardList,
 } as const;
 
 function renderIdentity(identity: CardIdentity) {
@@ -41,6 +51,7 @@ function renderIdentity(identity: CardIdentity) {
   return (
     <span className="hub-card-identity hub-card-identity--icon" aria-hidden="true">
       <Icon size={21} strokeWidth={1.8} />
+      {identity.label && <strong className="hub-card-identity-icon-label">{identity.label}</strong>}
     </span>
   );
 }
