@@ -40,7 +40,7 @@ export default function HubHomePage() {
             <div>
               <span className="hub-eyebrow">EDUREACH HUB</span>
               <h1>Student updates, services &amp; practice</h1>
-              <p>News, services and academic tools in one student workspace.</p>
+              
             </div>
             <div className="hub-home-top-actions">
               <a className="hub-outline-btn" href="/services/track">Track Request</a>
@@ -61,7 +61,7 @@ export default function HubHomePage() {
           {!loadingServices && !serviceError && quickServices.length > 0 && <div className="hub-service-grid hub-service-profile-home-grid">{quickServices.map((service, index) => {
             const Icon = serviceIcons[service.service_key as keyof typeof serviceIcons] || FileText;
             const tone = toneFor(index);
-            return <a key={service.id} href={service.application_url ? service.application_url : `/services/apply/${service.service_key}`} target={service.application_url ? '_blank' : undefined} rel={service.application_url ? 'noreferrer' : undefined} className={`hub-service-profile-card hub-service-profile-compact hub-tone-${tone}`}>
+            return <a key={service.id} href={`/services/apply/${service.service_key}`} className={`hub-service-profile-card hub-service-profile-compact hub-tone-${tone}`}>
               <div className="hub-service-banner"><span>{service.title}</span><strong>0{index + 1}</strong></div>
               <div className="hub-service-profile-avatar"><Icon size={23}/></div>
               <div className="hub-service-profile-body"><div className="hub-service-card-meta"><span>EduReach Service</span></div><h2>{service.title}</h2><p>{service.description}</p><div className="hub-service-profile-footer"><span className="hub-service-card-caption">{service.application_url ? 'Official portal' : 'Request support'}</span><span className="hub-primary-btn">{service.application_url ? 'Open Portal' : 'Apply Now'} <ArrowRight size={15} /></span></div></div>
