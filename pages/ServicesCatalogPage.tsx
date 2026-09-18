@@ -19,7 +19,7 @@ export default function ServicesCatalogPage() {
   }, []);
 
   return <HubLayout><div className="hub-page"><div className="hub-container">
-    <div className="hub-section-heading hub-page-heading-compact"><div><span className="hub-eyebrow">STUDENT SERVICES</span><h1>Services</h1></div><a className="hub-outline-btn" href="/services/track">Track Request</a></div>
+    <div className="hub-section-heading hub-page-heading-compact"><div><span className="hub-eyebrow">STUDENT SERVICES</span><h1>Services</h1></div><a className="hub-outline-btn" href="/news">Campus Updates</a></div>
     {loading && <div className="hub-panel hub-empty">Loading services…</div>}
     {error && <div className="hub-form-error">{error}</div>}
     {!loading && !error && !services.length && <div className="hub-panel hub-empty">No student services are available yet.</div>}
