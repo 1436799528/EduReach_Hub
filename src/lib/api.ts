@@ -7,6 +7,14 @@ export type CbtSubmitResponse = {
   breakdown: Array<{ question: number; selected: number | null; correct: number; explanation?: string }>;
 };
 export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown> };
+export type ServiceItem = {
+  id: string;
+  service_key: string;
+  title: string;
+  description: string;
+  application_url: string | null;
+  active: boolean;
+};
 export type NewsItem = {
   id: string;
   title: string;
@@ -19,11 +27,52 @@ export type NewsItem = {
   last_verified_at: string | null;
   verification_status: string;
 };
+export type UpcomingItem = {
+  id: string;
+  kind: 'deadline' | 'exam';
+  title: string;
+  description: string | null;
+  due_at: string | null;
+  starts_at: string | null;
+  location: string | null;
+  priority: string | null;
+};
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) throw new Error('Please sign in before continuing.');
   return { Authorization: `Bearer ${session.access_token}` };
+}
+
+export async function fetchServices(): Promise<ServiceItem[]> {
+  const response = await fetch('/api/services');
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'Services could not be loaded.');
+  return body?.items || [];
+}
+
+export async function fetchService(slug: string): Promise<ServiceItem> {
+  const response = await fetch(`/api/services/${encodeURIComponent(slug)}`);
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'Service could not be loaded.');
+  return body.item as ServiceItem;
+}
+
+export async function fetchUpcoming(): Promise<UpcomingItem[]> {
+  const response = await fetch('/api/upcoming');
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.error || 'Upcoming items could not be loaded.');
+  return body?.items || [];
+}
+
+export async function fetchCbtExams() {
+  const { data, error } = await supabase
+    .from('cbt_exams')
+    .select('id,title,exam_body,subject,duration_minutes')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
