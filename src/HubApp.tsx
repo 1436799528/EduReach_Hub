@@ -18,8 +18,6 @@ import AdminCbtPage from '../pages/AdminCbtPage';
 import AdminVouchersPage from '../pages/AdminVouchersPage';
 import AdminUsersPage from '../pages/AdminUsersPage';
 
-const serviceSlugs = ['nelfund-loan', 'results', 'scratch-cards', 'jamb-slip', 'admission-letters'];
-
 export default function HubApp(): ReactElement {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
@@ -41,7 +39,7 @@ export default function HubApp(): ReactElement {
   if (path === '/services') return <ServicesCatalogPage />;
   if (path === '/services/track') return <ServiceTrackPage />;
   if (path.startsWith('/services/apply/')) return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/apply/'.length))} />;
-  if (serviceSlugs.includes(path.slice('/services/'.length))) return <ServiceApplyPage slug={path.slice('/services/'.length)} />;
+  if (path.startsWith('/services/') && path !== '/services/track') return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/'.length))} />;
   if (path === '/news') return <NewsPage />;
   if (path.startsWith('/news/')) return <NewsArticlePage slug={decodeURIComponent(path.slice('/news/'.length))} />;
   if (path === '/jobs') return <JobsPage />;
