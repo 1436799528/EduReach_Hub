@@ -1,5 +1,5 @@
 const DB_NAME = 'EduReachCBT_DB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface OfflineExamPackage {
   examId: string;
@@ -19,6 +19,8 @@ export interface OfflineProgressState {
 }
 
 export interface OfflineSubmission {
+  queueId: string;
+  attemptId: string;
   examId: string;
   answers: Record<number, number>;
   timeSpentSeconds: number;
@@ -34,9 +36,15 @@ export function openCBTDatabase(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
+      if (request.transaction && request.oldVersion < 2 && db.objectStoreNames.contains('pending_submissions')) {
+        db.deleteObjectStore('pending_submissions');
+      }
       if (!db.objectStoreNames.contains('question_packs')) db.createObjectStore('question_packs', { keyPath: 'examId' });
       if (!db.objectStoreNames.contains('active_progress')) db.createObjectStore('active_progress', { keyPath: 'examId' });
-      if (!db.objectStoreNames.contains('pending_submissions')) db.createObjectStore('pending_submissions', { keyPath: 'examId' });
+      if (!db.objectStoreNames.contains('pending_submissions')) db.createObjectStore('pending_submissions', { keyPath: 'queueId' });
+      else {
+        const old = db.transaction ? null : null;
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error('Unable to open CBT storage.'));
@@ -86,10 +94,10 @@ export async function clearExamProgress(examId: string): Promise<void> {
   db.close();
 }
 
-export async function queueOfflineSubmission(submission: Omit<OfflineSubmission, 'queuedAt'>): Promise<void> {
+export async function queueOfflineSubmission(submission: Omit<OfflineSubmission, 'queuedAt' | 'queueId'>): Promise<void> {
   const db = await openCBTDatabase();
   const tx = db.transaction(['pending_submissions', 'active_progress'], 'readwrite');
-  tx.objectStore('pending_submissions').put({ ...submission, queuedAt: Date.now() });
+  tx.objectStore('pending_submissions').put({ ...submission, queueId: crypto.randomUUID(), queuedAt: Date.now() });
   tx.objectStore('active_progress').delete(submission.examId);
   await new Promise<void>((resolve, reject) => { tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); });
   db.close();
@@ -104,7 +112,7 @@ export async function syncPendingSubmissions(submitApiCall: (payload: OfflineSub
     try {
       if (await submitApiCall(item)) {
         const tx = db.transaction('pending_submissions', 'readwrite');
-        tx.objectStore('pending_submissions').delete(item.examId);
+        tx.objectStore('pending_submissions').delete(item.queueId);
         await new Promise<void>((resolve) => { tx.oncomplete = () => resolve(); tx.onerror = () => resolve(); });
         synced += 1;
       }
