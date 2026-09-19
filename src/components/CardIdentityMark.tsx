@@ -5,6 +5,14 @@ import {
   CalendarClock,
   ClipboardList,
   CreditCard,
+  Award,
+  BadgeCheck,
+  Bell,
+  Headset,
+  LayoutDashboard,
+  Monitor,
+  Search,
+  Settings,
   FileText,
   GraduationCap,
   Newspaper,
@@ -35,6 +43,21 @@ const iconMap = {
   receipt: ReceiptText,
   graduation: GraduationCap,
   clipboard: ClipboardList,
+  award: Award,
+  check: BadgeCheck,
+  headset: Headset,
+  bell: Bell,
+  settings: Settings,
+  search: Search,
+  dashboard: LayoutDashboard,
+} as const;
+
+const accentIconMap = {
+  monitor: Monitor,
+  graduation: GraduationCap,
+  file: FileText,
+  check: BadgeCheck,
+  award: Award,
 } as const;
 
 function renderIdentity(identity: CardIdentity) {
@@ -44,6 +67,11 @@ function renderIdentity(identity: CardIdentity) {
         {identity.imageUrls.map((src) => (
           <img key={src} src={src} alt="" loading="lazy" decoding="async" />
         ))}
+        {identity.accentIcon &&
+          (() => {
+            const AccentIcon = accentIconMap[identity.accentIcon];
+            return <AccentIcon className="hub-card-identity-accent" size={14} strokeWidth={1.9} />;
+          })()}
       </span>
     );
   }
