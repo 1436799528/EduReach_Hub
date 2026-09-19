@@ -15,7 +15,6 @@ export default function CbtPracticePage() {
   const [seconds, setSeconds] = useState(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
   const [attemptId, setAttemptId] = useState('');
-  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [message, setMessage] = useState('');
@@ -48,11 +47,11 @@ export default function CbtPracticePage() {
           const storageKey = `edureach-cbt-attempt-${examId}`;
           const stored = JSON.parse(localStorage.getItem(storageKey) || 'null') as { attemptId?: string; expiresAt?: string } | null;
           if (stored?.attemptId && stored.expiresAt && new Date(stored.expiresAt).getTime() > Date.now()) {
-            setAttemptId(stored.attemptId); setExpiresAt(stored.expiresAt);
+            setAttemptId(stored.attemptId);
           } else {
             const started = await startCbt(examId);
             if (!active) return;
-            setAttemptId(started.attemptId); setExpiresAt(started.expiresAt);
+            setAttemptId(started.attemptId);
             localStorage.setItem(storageKey, JSON.stringify({ attemptId: started.attemptId, expiresAt: started.expiresAt }));
             setSeconds(Math.max(0, Math.ceil((new Date(started.expiresAt).getTime() - Date.now()) / 1000)));
           }
@@ -72,6 +71,10 @@ export default function CbtPracticePage() {
     const timer = window.setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [restored, seconds, questions.length]);
+
+  useEffect(() => {
+    if (restored && questions.length && seconds === 0 && attemptId) void submitExam();
+  }, [restored, questions.length, seconds, attemptId]);
 
   useEffect(() => {
     if (!question) return;
@@ -129,7 +132,7 @@ export default function CbtPracticePage() {
   const secs = (seconds % 60).toString().padStart(2, '0');
 
   return <HubLayout><div className="hub-cbt-engine">
-    <div className="hub-cbt-topbar"><div><strong>EduReach JAMB &amp; Post-UTME Engine</strong><span>Timed practice exam</span></div><div className="hub-cbt-timer"><TimerReset size={17}/> {mins}:{secs}</div><div className="hub-cbt-network">{offline && <><WifiOff size={15}/> Offline mode • progress saved locally</>}</div><button className="hub-primary-btn" onClick={() => void submitExam()} disabled={loading || !questions.length || seconds === 0}><Send size={16}/> Submit Exam</button></div>
+    <div className="hub-cbt-topbar"><div><strong>EduReach JAMB &amp; Post-UTME Engine</strong><span>Timed practice exam</span></div><div className="hub-cbt-timer"><TimerReset size={17}/> {mins}:{secs}</div><div className="hub-cbt-network">{offline && <><WifiOff size={15}/> Offline mode • progress saved locally</>}</div><button className="hub-primary-btn" onClick={() => void submitExam()} disabled={loading || !questions.length || !attemptId}><Send size={16}/> Submit Exam</button></div>
     {message && <div className="hub-container"><div className="hub-form-note">{message}</div></div>}
     {loading ? <div className="hub-container"><div className="hub-panel hub-empty">Loading the selected practice exam…</div></div> : !question ? <div className="hub-container"><div className="hub-panel hub-empty">{examId ? 'No questions are available for this exam yet.' : 'Select a CBT exam from the practice page first.'}<div className="hub-wizard-actions"><a className="hub-outline-btn" href="/cbt">Back to CBT</a></div></div></div> : <div className="hub-container hub-cbt-layout">
       <section className="hub-question-card"><div className="hub-question-meta"><span>Question {index + 1} of {questions.length} · {answeredCount} answered</span><button type="button" onClick={() => setFlags((value) => ({ ...value, [question.id]: !value[question.id] }))}><Flag size={16}/> {flags[question.id] ? 'Flagged' : 'Flag'}</button></div><h1>{question.text}</h1><div className="hub-options">{question.options.map((option, optionIndex) => <button type="button" key={option} className={answers[question.id] === optionIndex ? 'selected' : ''} onClick={() => setAnswers((value) => ({ ...value, [question.id]: optionIndex }))}><span>{String.fromCharCode(65 + optionIndex)}</span>{option}</button>)}</div><div className="hub-question-actions"><button type="button" className="hub-outline-btn" disabled={index === 0} onClick={() => setIndex(index - 1)}><ChevronLeft size={16}/> Previous</button><button type="button" className="hub-primary-btn" disabled={index === questions.length - 1} onClick={() => setIndex(index + 1)}>Next <ChevronRight size={16}/></button></div></section>
