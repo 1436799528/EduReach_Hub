@@ -129,13 +129,7 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
 });
 
 app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'edureach',
-    environment: process.env.NODE_ENV || 'development',
-    supabaseConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    paystackConfigured: Boolean(process.env.PAYSTACK_SECRET_KEY),
-  });
+  res.json({ status: 'ok', service: 'edureach' });
 });
 
 
