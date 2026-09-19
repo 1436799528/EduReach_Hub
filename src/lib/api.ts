@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 
-export type CbtSubmitPayload = { examId: string; answers: Record<number, number>; timeSpentSeconds: number };
+export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
+export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number };
 export type CbtSubmitResponse = {
   attemptId: string;
   score: number;
@@ -74,6 +75,11 @@ export async function fetchCbtExams() {
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];
+}
+
+export async function startCbt(examId: string): Promise<CbtStartResponse> {
+  const headers = await authHeaders();
+  return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
 }
 
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
@@ -191,11 +197,11 @@ export async function fetchNews(): Promise<NewsItem[]> {
   }));
 }
 
-export async function fetchNewsItem(id: string): Promise<NewsItem> {
+export async function fetchNewsItem(slug: string): Promise<NewsItem> {
   const { data, error } = await supabase
     .from('news_articles')
     .select('id,title,excerpt,body,category,source_url,published_at,updated_at,published')
-    .eq('id', id)
+     .eq('slug', slug)
     .eq('published', true)
     .single();
   if (error || !data) throw new Error('News article could not be loaded.');
