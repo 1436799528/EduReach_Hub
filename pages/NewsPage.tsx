@@ -35,7 +35,7 @@ export default function NewsPage() {
 
     {!loading && !error && items.length > 0 && <div className="hub-news-feed">
       {items.map((item) => (
-        <a className="hub-news-feed-row hub-click-card" href={'/news/' + item.id} key={item.id}>
+        <a className="hub-news-feed-row hub-click-card" href={'/news/' + encodeURIComponent(item.slug)} key={item.id}>
           <div className="hub-news-thumb"><CardIdentityMark value={item.category} type="news" /></div>
           <div className="hub-feed-tag">{labelFor(item.category)}</div>
           <div className="hub-feed-main">
