@@ -26,6 +26,7 @@ export default function StudentDashboardV2() {
   const [error, setError] = useState('');
   const [walletOpen, setWalletOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [adminView, setAdminView] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -35,8 +36,10 @@ export default function StudentDashboardV2() {
       const { data: { session: currentSession }, error: authError } = await supabase.auth.getSession();
       if (authError || !currentSession?.user) { window.location.href = '/login?next=/dashboard'; return; }
 
+      const studentView = new URLSearchParams(window.location.search).get('view') === 'student';
       const adminCheck = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${currentSession.access_token}` } });
-      if (adminCheck.ok) { window.location.href = '/admin'; return; }
+      if (adminCheck.ok && !studentView) { window.location.href = '/admin'; return; }
+      if (studentView && adminCheck.ok) setAdminView(true);
 
       const user = currentSession.user;
       setEmail(user.email || '');
@@ -75,7 +78,7 @@ export default function StudentDashboardV2() {
     <header className="student-portal-header"><div className="student-portal-bar">
       <a href="/" className="student-brand"><span>ER</span> EduReach<span className="student-brand-suffix">.ng</span></a>
       <div className="student-search"><Search size={16}/><input placeholder="Search services, news or academic tools..." aria-label="Search student content"/></div>
-      <div className="student-header-actions">{wallet ? <button className="wallet-mini" onClick={() => setWalletOpen(true)}><Wallet size={14}/> ₦{wallet.balance.toLocaleString()} <b>+</b></button> : <button className="wallet-mini" onClick={() => setWalletOpen(true)}><Wallet size={14}/> Wallet <b>+</b></button>}<a className="student-header-link" href="/services">Services</a><button className="student-profile-menu" onClick={logout} aria-label="Sign out">{initials(displayName)} <span>⌄</span></button></div>
+      <div className="student-header-actions">{adminView && <button className="student-header-link" onClick={() => { window.location.href = '/admin'; }}>Admin Control</button>}{wallet ? <button className="wallet-mini" onClick={() => setWalletOpen(true)}><Wallet size={14}/> ₦{wallet.balance.toLocaleString()} <b>+</b></button> : <button className="wallet-mini" onClick={() => setWalletOpen(true)}><Wallet size={14}/> Wallet <b>+</b></button>}<a className="student-header-link" href="/services">Services</a><button className="student-profile-menu" onClick={logout} aria-label="Sign out">{initials(displayName)} <span>⌄</span></button></div>
     </div><div className="student-trust-strip">EduReach account • Student workspace</div></header>
 
     <main className="student-portal-main">{loading ? <div className="student-loading">Loading student workspace…</div> : <div className="student-grid">
