@@ -384,3 +384,63 @@
     transition: none !important;
   }
 }
+
+
+/* Site-wide banner-card finish: the same visual language is reused on compact service cards. */
+.hub-global-compact .hub-compact-card.er-banner-card,
+.hub-global-compact .hub-compact-card {
+  color:#fff !important;
+  border:0 !important;
+  background:linear-gradient(135deg,#1688e8 0%,#1556c5 52%,#0c367f 100%) !important;
+  box-shadow:0 10px 28px rgba(15,23,42,.10) !important;
+}
+.hub-global-compact .hub-compact-card:nth-child(8n + 2){background:linear-gradient(135deg,#109c87 0%,#08796e 52%,#07564f 100%) !important}
+.hub-global-compact .hub-compact-card:nth-child(8n + 3){background:linear-gradient(135deg,#6656e8 0%,#4a38c8 52%,#35248e 100%) !important}
+.hub-global-compact .hub-compact-card:nth-child(8n + 4){background:linear-gradient(135deg,#ff7a21 0%,#ef5c12 52%,#c73c08 100%) !important}
+.hub-global-compact .hub-compact-card:nth-child(8n + 5){background:linear-gradient(135deg,#19b5b0 0%,#0b8e8a 52%,#08706d 100%) !important}
+.hub-global-compact .hub-compact-card:nth-child(8n + 6){background:linear-gradient(135deg,#ec4b83 0%,#d72e68 52%,#aa164d 100%) !important}
+.hub-global-compact .hub-compact-card:nth-child(8n + 7){background:linear-gradient(135deg,#3475e8 0%,#2459c8 52%,#173d91 100%) !important}
+.hub-global-compact .hub-compact-card:nth-child(8n + 8){background:linear-gradient(135deg,#7a61e9 0%,#6246c5 52%,#473295 100%) !important}
+.hub-global-compact .hub-compact-card .hub-compact-icon{
+  color:#fff !important;
+  background:rgba(255,255,255,.12) !important;
+  border:1px solid rgba(255,255,255,.16);
+}
+.hub-global-compact .hub-compact-card .hub-compact-icon .hub-card-identity--icon{
+  color:#fff !important;
+}
+.hub-global-compact .hub-compact-card .hub-compact-label{
+  color:rgba(255,255,255,.72) !important;
+}
+.hub-global-compact .hub-compact-card h3,
+.hub-global-compact .hub-compact-card p,
+.hub-global-compact .hub-compact-card .hub-compact-arrow{
+  color:#fff !important;
+}
+.hub-global-compact .hub-card-identity--images.is-fallback .hub-card-identity-image-fallback{
+  display:flex;
+}
+.hub-card-identity-image-fallback{display:none;align-items:center;justify-content:center;font-size:11px;font-weight:900;letter-spacing:.04em}
+.hub-global-compact .hub-compact-card::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background:
+    radial-gradient(circle at 88% 16%,rgba(255,255,255,.24) 0 12%,transparent 13%),
+    radial-gradient(circle at 78% 84%,rgba(255,255,255,.13) 0 20%,transparent 21%),
+    linear-gradient(145deg,rgba(255,255,255,.07),transparent 50%);
+  pointer-events:none;
+}
+.hub-global-compact .hub-compact-card::after{
+  content:'';
+  position:absolute;
+  width:170px;height:170px;
+  right:-68px;bottom:-92px;
+  z-index:0;
+  border-radius:42% 58% 58% 42%;
+  background:rgba(255,255,255,.10);
+  transform:rotate(-18deg);
+  pointer-events:none;
+}
+.hub-global-compact .hub-compact-card > *{position:relative;z-index:1}
