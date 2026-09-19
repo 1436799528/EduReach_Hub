@@ -1,0 +1,386 @@
+/* EduReach image-banner card system.
+   Site-wide visual language inspired by the supplied reference:
+   full-bleed image-like gradients, rounded cards, bold copy, soft depth.
+   No external brand assets, phones, or duplicate pages are used.
+*/
+
+:root {
+  --er-banner-radius: 18px;
+  --er-banner-shadow: 0 10px 28px rgba(15, 23, 42, .10);
+  --er-banner-shadow-hover: 0 16px 36px rgba(15, 23, 42, .16);
+}
+
+.er-banner-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff !important;
+  border: 0 !important;
+  border-radius: var(--er-banner-radius) !important;
+  box-shadow: var(--er-banner-shadow) !important;
+  background: linear-gradient(135deg, #2563eb, #0f3b8f) !important;
+}
+
+.er-banner-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(255,255,255,.28) 0 14%, transparent 15%),
+    radial-gradient(circle at 76% 82%, rgba(255,255,255,.16) 0 22%, transparent 23%),
+    linear-gradient(145deg, rgba(255,255,255,.08), transparent 48%);
+}
+
+.er-banner-card::after {
+  content: '';
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  right: -70px;
+  bottom: -95px;
+  z-index: -1;
+  border-radius: 42% 58% 58% 42%;
+  background: rgba(255,255,255,.12);
+  transform: rotate(-18deg);
+  box-shadow: -85px -60px 0 -28px rgba(255,255,255,.08);
+}
+
+.er-banner-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.er-banner-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: var(--er-banner-shadow-hover) !important;
+}
+
+.er-banner-card a,
+.er-banner-card h1,
+.er-banner-card h2,
+.er-banner-card h3,
+.er-banner-card h4,
+.er-banner-card p,
+.er-banner-card span,
+.er-banner-card small,
+.er-banner-card strong {
+  color: inherit;
+}
+
+.er-banner-card p,
+.er-banner-card small {
+  opacity: .88;
+}
+
+/* Theme rotation mirrors the reference's varied image-banner palette. */
+.er-banner-card:nth-child(8n + 1) {
+  background: linear-gradient(135deg, #1688e8 0%, #1556c5 52%, #0c367f 100%) !important;
+}
+.er-banner-card:nth-child(8n + 2) {
+  background: linear-gradient(135deg, #109c87 0%, #08796e 52%, #07564f 100%) !important;
+}
+.er-banner-card:nth-child(8n + 3) {
+  background: linear-gradient(135deg, #6656e8 0%, #4a38c8 52%, #35248e 100%) !important;
+}
+.er-banner-card:nth-child(8n + 4) {
+  background: linear-gradient(135deg, #ff7a21 0%, #ef5c12 52%, #c73c08 100%) !important;
+}
+.er-banner-card:nth-child(8n + 5) {
+  background: linear-gradient(135deg, #19b5b0 0%, #0b8e8a 52%, #08706d 100%) !important;
+}
+.er-banner-card:nth-child(8n + 6) {
+  background: linear-gradient(135deg, #ec4b83 0%, #d72e68 52%, #aa164d 100%) !important;
+}
+.er-banner-card:nth-child(8n + 7) {
+  background: linear-gradient(135deg, #3475e8 0%, #2459c8 52%, #173d91 100%) !important;
+}
+.er-banner-card:nth-child(8n + 8) {
+  background: linear-gradient(135deg, #7a61e9 0%, #6246c5 52%, #473295 100%) !important;
+}
+
+/* Main portal/action cards. */
+.hub-compact-card,
+.hub-service-profile-card,
+.hub-service-large,
+.hub-feature-card,
+.portal-action-card,
+.utility-card,
+.mini-service-grid .card,
+.results-grid .card,
+.social-community-card,
+.quick-action,
+.admin-kpi {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--er-banner-radius) !important;
+}
+
+.hub-compact-card,
+.hub-service-profile-card,
+.hub-service-large,
+.hub-feature-card,
+.portal-action-card,
+.utility-card,
+.mini-service-grid .card,
+.results-grid .card,
+.social-community-card,
+.quick-action,
+.admin-kpi {
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: var(--er-banner-shadow) !important;
+}
+
+/* Full-card banner treatment. */
+.hub-compact-card::before,
+.hub-service-profile-card::before,
+.hub-service-large::before,
+.hub-feature-card::before,
+.portal-action-card::before,
+.utility-card::before,
+.mini-service-grid .card::before,
+.results-grid .card::before,
+.social-community-card::before,
+.quick-action::before,
+.admin-kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 90% 12%, rgba(255,255,255,.28) 0 13%, transparent 14%),
+    radial-gradient(circle at 72% 88%, rgba(255,255,255,.15) 0 24%, transparent 25%),
+    linear-gradient(145deg, rgba(255,255,255,.08), transparent 48%);
+}
+
+.hub-compact-card::after,
+.hub-service-profile-card::after,
+.hub-service-large::after,
+.hub-feature-card::after,
+.portal-action-card::after,
+.utility-card::after,
+.mini-service-grid .card::after,
+.results-grid .card::after,
+.social-community-card::after,
+.quick-action::after,
+.admin-kpi::after {
+  content: '';
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  right: -70px;
+  bottom: -100px;
+  z-index: -1;
+  border-radius: 44% 56% 58% 42%;
+  background: rgba(255,255,255,.12);
+  transform: rotate(-17deg);
+  box-shadow: -88px -58px 0 -28px rgba(255,255,255,.08);
+}
+
+.hub-compact-card > *,
+.hub-service-profile-card > *,
+.hub-service-large > *,
+.hub-feature-card > *,
+.portal-action-card > *,
+.utility-card > *,
+.mini-service-grid .card > *,
+.results-grid .card > *,
+.social-community-card > *,
+.quick-action > *,
+.admin-kpi > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hub-compact-card:nth-child(8n + 1),
+.hub-service-profile-card:nth-child(8n + 1),
+.hub-service-large:nth-child(8n + 1),
+.hub-feature-card:nth-child(8n + 1),
+.portal-action-card:nth-child(8n + 1),
+.utility-card:nth-child(8n + 1),
+.mini-service-grid .card:nth-child(8n + 1),
+.results-grid .card:nth-child(8n + 1),
+.social-community-card:nth-child(8n + 1),
+.quick-action:nth-child(8n + 1),
+.admin-kpi:nth-child(8n + 1) { background: linear-gradient(135deg,#1688e8,#1556c5 55%,#0c367f) !important; }
+
+.hub-compact-card:nth-child(8n + 2),
+.hub-service-profile-card:nth-child(8n + 2),
+.hub-service-large:nth-child(8n + 2),
+.hub-feature-card:nth-child(8n + 2),
+.portal-action-card:nth-child(8n + 2),
+.utility-card:nth-child(8n + 2),
+.mini-service-grid .card:nth-child(8n + 2),
+.results-grid .card:nth-child(8n + 2),
+.social-community-card:nth-child(8n + 2),
+.quick-action:nth-child(8n + 2),
+.admin-kpi:nth-child(8n + 2) { background: linear-gradient(135deg,#109c87,#08796e 55%,#07564f) !important; }
+
+.hub-compact-card:nth-child(8n + 3),
+.hub-service-profile-card:nth-child(8n + 3),
+.hub-service-large:nth-child(8n + 3),
+.hub-feature-card:nth-child(8n + 3),
+.portal-action-card:nth-child(8n + 3),
+.utility-card:nth-child(8n + 3),
+.mini-service-grid .card:nth-child(8n + 3),
+.results-grid .card:nth-child(8n + 3),
+.social-community-card:nth-child(8n + 3),
+.quick-action:nth-child(8n + 3),
+.admin-kpi:nth-child(8n + 3) { background: linear-gradient(135deg,#6656e8,#4a38c8 55%,#35248e) !important; }
+
+.hub-compact-card:nth-child(8n + 4),
+.hub-service-profile-card:nth-child(8n + 4),
+.hub-service-large:nth-child(8n + 4),
+.hub-feature-card:nth-child(8n + 4),
+.portal-action-card:nth-child(8n + 4),
+.utility-card:nth-child(8n + 4),
+.mini-service-grid .card:nth-child(8n + 4),
+.results-grid .card:nth-child(8n + 4),
+.social-community-card:nth-child(8n + 4),
+.quick-action:nth-child(8n + 4),
+.admin-kpi:nth-child(8n + 4) { background: linear-gradient(135deg,#ff7a21,#ef5c12 55%,#c73c08) !important; }
+
+.hub-compact-card:nth-child(8n + 5),
+.hub-service-profile-card:nth-child(8n + 5),
+.hub-service-large:nth-child(8n + 5),
+.hub-feature-card:nth-child(8n + 5),
+.portal-action-card:nth-child(8n + 5),
+.utility-card:nth-child(8n + 5),
+.mini-service-grid .card:nth-child(8n + 5),
+.results-grid .card:nth-child(8n + 5),
+.social-community-card:nth-child(8n + 5),
+.quick-action:nth-child(8n + 5),
+.admin-kpi:nth-child(8n + 5) { background: linear-gradient(135deg,#19b5b0,#0b8e8a 55%,#08706d) !important; }
+
+.hub-compact-card:nth-child(8n + 6),
+.hub-service-profile-card:nth-child(8n + 6),
+.hub-service-large:nth-child(8n + 6),
+.hub-feature-card:nth-child(8n + 6),
+.portal-action-card:nth-child(8n + 6),
+.utility-card:nth-child(8n + 6),
+.mini-service-grid .card:nth-child(8n + 6),
+.results-grid .card:nth-child(8n + 6),
+.social-community-card:nth-child(8n + 6),
+.quick-action:nth-child(8n + 6),
+.admin-kpi:nth-child(8n + 6) { background: linear-gradient(135deg,#ec4b83,#d72e68 55%,#aa164d) !important; }
+
+.hub-compact-card:nth-child(8n + 7),
+.hub-service-profile-card:nth-child(8n + 7),
+.hub-service-large:nth-child(8n + 7),
+.hub-feature-card:nth-child(8n + 7),
+.portal-action-card:nth-child(8n + 7),
+.utility-card:nth-child(8n + 7),
+.mini-service-grid .card:nth-child(8n + 7),
+.results-grid .card:nth-child(8n + 7),
+.social-community-card:nth-child(8n + 7),
+.quick-action:nth-child(8n + 7),
+.admin-kpi:nth-child(8n + 7) { background: linear-gradient(135deg,#3475e8,#2459c8 55%,#173d91) !important; }
+
+.hub-compact-card:nth-child(8n + 8),
+.hub-service-profile-card:nth-child(8n + 8),
+.hub-service-large:nth-child(8n + 8),
+.hub-feature-card:nth-child(8n + 8),
+.portal-action-card:nth-child(8n + 8),
+.utility-card:nth-child(8n + 8),
+.mini-service-grid .card:nth-child(8n + 8),
+.results-grid .card:nth-child(8n + 8),
+.social-community-card:nth-child(8n + 8),
+.quick-action:nth-child(8n + 8),
+.admin-kpi:nth-child(8n + 8) { background: linear-gradient(135deg,#7a61e9,#6246c5 55%,#473295) !important; }
+
+/* Rework compact home cards from icon-boxes into the reference's banner-card proportions. */
+.hub-compact-card {
+  min-height: 150px !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  align-items:end !important;
+  padding: 18px !important;
+}
+.hub-compact-card .hub-compact-icon {
+  position: absolute !important;
+  right: 14px;
+  bottom: 14px;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.18) !important;
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(5px);
+}
+.hub-compact-copy { align-self:end; padding-right:48px; }
+.hub-compact-label { color: rgba(255,255,255,.72) !important; }
+.hub-compact-copy h3 { font-size: 17px !important; line-height:1.15 !important; }
+.hub-compact-copy p { color: rgba(255,255,255,.84) !important; white-space:normal !important; }
+.hub-compact-arrow {
+  position:absolute !important;
+  left:16px;
+  bottom:15px;
+  width:30px;
+  height:30px;
+  padding:7px;
+  border-radius:50%;
+  background:#fff;
+  color:#1e3a8a !important;
+}
+
+/* Service cards use the same banner treatment without phone imagery. */
+.hub-service-profile-card {
+  min-height: 148px !important;
+  display:flex !important;
+  align-items:flex-end !important;
+  padding:17px !important;
+}
+.hub-service-profile-icon {
+  position:absolute !important;
+  right:14px;
+  bottom:14px;
+  width:56px !important;
+  height:56px !important;
+  border-radius:15px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.2);
+}
+.hub-service-profile-body { padding:0 !important; padding-right:50px !important; }
+.hub-service-card-meta span { color:rgba(255,255,255,.7) !important; }
+.hub-service-profile-body h2 { color:#fff !important; font-size:16px !important; }
+.hub-service-profile-body p { color:rgba(255,255,255,.82) !important; }
+.hub-service-profile-card > .hub-compact-arrow {
+  position:absolute;
+  left:15px;
+  bottom:15px;
+  background:#fff;
+  color:#1e3a8a;
+  border-radius:50%;
+  padding:6px;
+}
+
+/* Small cards remain compact but get the same image-like treatment. */
+.hub-news-row,
+.hub-news-feed-row,
+.hub-upcoming-row,
+.hub-sidebar-card {
+  border-radius:14px !important;
+}
+
+@media (max-width: 760px) {
+  .hub-compact-card { min-height:132px !important; }
+  .hub-service-profile-card { min-height:132px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .er-banner-card,
+  .hub-compact-card,
+  .hub-service-profile-card,
+  .hub-service-large,
+  .hub-feature-card,
+  .portal-action-card,
+  .utility-card,
+  .mini-service-grid .card,
+  .results-grid .card,
+  .social-community-card,
+  .quick-action,
+  .admin-kpi {
+    transition: none !important;
+  }
+}
