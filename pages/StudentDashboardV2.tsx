@@ -32,9 +32,13 @@ export default function StudentDashboardV2() {
     async function load() {
       setLoading(true);
       setError('');
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) { window.location.href = '/login?next=/dashboard'; return; }
+      const { data: { session: currentSession }, error: authError } = await supabase.auth.getSession();
+      if (authError || !currentSession?.user) { window.location.href = '/login?next=/dashboard'; return; }
 
+      const adminCheck = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${currentSession.access_token}` } });
+      if (adminCheck.ok) { window.location.href = '/admin'; return; }
+
+      const user = currentSession.user;
       setEmail(user.email || '');
       setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student');
       const [profileResult, serviceResult, requestResult, walletResult, attemptsResult] = await Promise.all([
