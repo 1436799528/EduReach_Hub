@@ -41,7 +41,7 @@ export default function NewsPage() {
           <div className="hub-feed-main">
             <div className="hub-news-meta">
               <span>{formatDate(item.published_at)}</span>
-              <span className="hub-verified"><CheckCircle2 size={13}/> Verified</span>
+              <span className="hub-verified"><CheckCircle2 size={13}/> Published</span>
             </div>
             <h2>{item.title}</h2>
             <p>{item.summary || ''}</p>
