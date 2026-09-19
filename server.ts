@@ -141,6 +141,51 @@ app.get('/api/health', (_req, res) => {
 
 app.use(express.json({ limit: '1mb' }));
 
+app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
+  try {
+    const status = typeof req.query.status === 'string' ? req.query.status : 'all';
+    const allowed = ['all','submitted','reviewing','processing','completed','rejected','cancelled'];
+    if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status filter.' });
+    const supabase = getServerSupabase();
+    let query = supabase.from('service_requests').select('id,user_id,status,form_data,created_at,updated_at,reference_code,service_catalog(title)').order('created_at', { ascending: false }).limit(200);
+    if (status !== 'all') query = query.eq('status', status);
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin service queue error:', error);
+    res.status(503).json({ error: 'Unable to load service queue.' });
+  }
+});
+
+app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const nextStatus = String(req.body?.status || '');
+    const allowed = ['submitted','reviewing','processing','completed','rejected','cancelled'];
+    if (!allowed.includes(nextStatus)) return res.status(400).json({ error: 'Invalid service status.' });
+    const supabase = getServerSupabase();
+    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status').eq('id', req.params.requestId).single();
+    if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
+    const transitions: Record<string, string[]> = {
+      submitted: ['reviewing','processing','rejected','cancelled'],
+      reviewing: ['processing','completed','rejected','cancelled'],
+      processing: ['completed','rejected','cancelled'],
+      completed: [],
+      rejected: [],
+      cancelled: [],
+    };
+    if (!transitions[request.status]?.includes(nextStatus)) return res.status(409).json({ error: `Cannot change status from ${request.status} to ${nextStatus}.` });
+    const { data, error } = await supabase.from('service_requests').update({ status: nextStatus, updated_at: new Date().toISOString() }).eq('id', request.id).select('id,status,updated_at').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin service status error:', error);
+    res.status(500).json({ error: 'Unable to update service request.' });
+  }
+});
+
 app.get('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   try {
     const supabase = getServerSupabase();
