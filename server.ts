@@ -113,8 +113,6 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
   }
 });
 
-app.use(express.json({ limit: '1mb' }));
-
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
@@ -125,6 +123,8 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   try {
