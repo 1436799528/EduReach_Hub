@@ -82,6 +82,11 @@ export async function startCbt(examId: string): Promise<CbtStartResponse> {
   return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
 }
 
+export async function startCbt(examId: string): Promise<CbtStartResponse> {
+  const headers = await authHeaders();
+  return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
+}
+
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
   const headers = await authHeaders();
   return jsonFetch<CbtSubmitResponse>('/api/cbt/submit', {
