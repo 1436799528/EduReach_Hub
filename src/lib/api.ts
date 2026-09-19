@@ -79,9 +79,6 @@ export async function fetchCbtExams() {
 }
 
 export async function startCbt(examId: string): Promise<CbtStartResponse> {
-  const headers = await authHeaders();
-  return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
-}
 
   const headers = await authHeaders();
   return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
