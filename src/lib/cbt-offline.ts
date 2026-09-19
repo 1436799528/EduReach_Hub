@@ -42,9 +42,6 @@ export function openCBTDatabase(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains('question_packs')) db.createObjectStore('question_packs', { keyPath: 'examId' });
       if (!db.objectStoreNames.contains('active_progress')) db.createObjectStore('active_progress', { keyPath: 'examId' });
       if (!db.objectStoreNames.contains('pending_submissions')) db.createObjectStore('pending_submissions', { keyPath: 'queueId' });
-      else {
-        const old = db.transaction ? null : null;
-      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error('Unable to open CBT storage.'));
