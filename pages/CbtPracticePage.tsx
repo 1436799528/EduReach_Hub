@@ -120,6 +120,7 @@ export default function CbtPracticePage() {
       if (!attemptId) { setMessage('Unable to identify this CBT attempt. Please restart the exam.'); return; }
       const result = await submitCbt({ examId, attemptId, answers });
       localStorage.setItem('edureach-last-cbt-attempt', result.attemptId);
+      localStorage.removeItem(`edureach-cbt-attempt-${examId}`);
       window.location.href = `/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Submission could not be completed. Your progress is still saved locally.');
