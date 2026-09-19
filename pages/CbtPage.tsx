@@ -16,9 +16,9 @@ const modes: Array<{ key: ExamMode; label: string; description: string }> = [
 ];
 
 const cbtServices = [
-  { key: 'jamb-slip', label: 'JAMB', title: 'JAMB CBT', description: 'UTME practice and timed mocks.', tone: 'blue' },
+  { key: 'jamb-cbt', label: 'JAMB', title: 'JAMB CBT', description: 'UTME practice and timed mocks.', tone: 'blue' },
   { key: 'results', label: 'WAEC / NECO', title: 'WAEC / NECO CBT', description: 'Exam-focused revision practice.', tone: 'green' },
-  { key: 'cbt', label: 'POST-UTME', title: 'Post-UTME Practice', description: 'University screening-style practice.', tone: 'amber' },
+  { key: 'post-utme', label: 'POST-UTME', title: 'Post-UTME Practice', description: 'University screening-style practice.', tone: 'amber' },
   { key: 'services', label: 'EDUREACH', title: 'Student Learning Tools', description: 'Academic tools around your exams.', tone: 'slate' },
 ];
 
@@ -58,7 +58,7 @@ export default function CbtPage() {
       <div className="hub-section-heading compact"><div><span className="hub-eyebrow">EXAM SERVICES</span><h2>Choose an examination service</h2></div></div>
       <div className="hub-cbt-service-list hub-cbt-compact-service-list">
         {cbtServices.map((service) => (
-          <a className={`hub-cbt-service-card tone-${service.tone} hub-click-card`} href={service.key === 'services' ? '/dashboard' : '/cbt?mode=' + (service.key === 'jamb-slip' ? 'JAMB' : service.key === 'results' ? 'WAEC' : 'POST-UTME')} key={service.key}>
+          <a className={`hub-cbt-service-card tone-${service.tone} hub-click-card`} href={service.key === 'services' ? '/dashboard' : '/cbt?mode=' + (service.key === 'jamb-cbt' ? 'JAMB' : service.key === 'results' ? 'WAEC' : 'POST-UTME')} key={service.key}>
             <div className="hub-cbt-brand-area"><CardIdentityMark value={service.key} type="service" /></div>
             <div className="hub-cbt-service-content"><span className="hub-cbt-service-label">{service.label}</span><h3>{service.title}</h3><p>{service.description}</p></div>
             <ArrowRight size={17} className="hub-compact-arrow" />
@@ -85,7 +85,7 @@ export default function CbtPage() {
     {!loading && !error && filteredExams.length > 0 && <div className="hub-cbt-exam-list">
       {filteredExams.map((exam) => (
         <a className="hub-cbt-exam-row hub-click-card" href={'/cbt/practice?exam=' + encodeURIComponent(exam.id)} key={exam.id}>
-          <div className="hub-cbt-exam-icon"><CardIdentityMark value={exam.exam_body === 'JAMB' ? 'jamb-slip' : exam.exam_body === 'WAEC' ? 'results' : exam.exam_body === 'NECO' ? 'results' : 'cbt'} type="service" /></div>
+          <div className="hub-cbt-exam-icon"><CardIdentityMark value={exam.exam_body === 'JAMB' ? 'jamb-cbt' : exam.exam_body === 'WAEC' ? 'waec-result' : exam.exam_body === 'NECO' ? 'neco-result' : 'cbt'} type="service" /></div>
           <div className="hub-cbt-exam-main"><span>{exam.exam_body} · {exam.subject}</span><h2>{exam.title}</h2><p><Clock3 size={13}/> {exam.duration_minutes} minutes</p></div>
           <ArrowRight size={17} className="hub-compact-arrow" />
         </a>
