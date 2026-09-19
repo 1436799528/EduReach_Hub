@@ -73,11 +73,9 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
     const serviceRequestId = event?.data?.metadata?.serviceRequestId;
     if (!reference) return res.status(400).json({ error: 'Missing payment reference' });
     const supabase = getServerSupabase();
-    const { data: existingEvent, error: eventInsertError } = await supabase
+    const { error: eventInsertError } = await supabase
       .from('payment_events')
-      .insert({ provider: 'paystack', provider_event_id: providerEventId, reference, event_type: event.event, status: 'processing', payload: event })
-      .select('id,status')
-      .maybeSingle();
+      .insert({ provider: 'paystack', provider_event_id: providerEventId, reference, event_type: event.event, status: 'processing', payload: event });
     if (eventInsertError) {
       const { data: priorEvent } = await supabase.from('payment_events').select('id,status').eq('provider','paystack').eq('reference',reference).maybeSingle();
       if (priorEvent?.status === 'processed') return res.status(200).json({ status: 'already_processed' });
