@@ -115,6 +115,7 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
     }
 
     await supabase.from('service_requests').update({ status: nextStatus, form_data: body }).eq('id', request.id);
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: request.user_id, p_action: 'payment_status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { to: nextStatus, payment_reference: reference } });
 
     const { data: profile } = await supabase.from('profiles').select('full_name,phone').eq('id', request.user_id).maybeSingle();
     if (profile?.phone && nextStatus === 'completed') {
