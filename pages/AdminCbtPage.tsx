@@ -5,7 +5,7 @@ import AdminLayout from './AdminLayout';
 type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number; is_active: boolean; created_at: string };
 type Question = { id: string; exam_id: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string | null; marks: number; position: number };
 const emptyExam = { title: '', exam_body: 'JAMB', subject: 'Use of English', description: '', duration_minutes: '30', is_active: true };
-const emptyQuestion = { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A' as const, explanation: '', marks: '1', position: '1' };
+const emptyQuestion: { question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string; marks: string; position: string } = { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', explanation: '', marks: '1', position: '1' };
 
 async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
