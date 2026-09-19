@@ -67,6 +67,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         const { data: { session: signedInSession } } = await supabase.auth.getSession();
         if (!signedInSession?.access_token) throw new Error('Could not verify the signed-in account.');
         const adminCheck = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${signedInSession.access_token}` } });
+        window.sessionStorage.removeItem('edureach-admin-student-view');
         window.location.href = adminCheck.ok ? '/admin' : getSafeNextPath();
       }
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Authentication failed.'); }
