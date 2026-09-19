@@ -1,10 +1,17 @@
 import {
   Banknote,
+  BookOpen,
+  BookOpenCheck,
   BrainCircuit,
   BriefcaseBusiness,
   CalendarClock,
   ClipboardList,
   CreditCard,
+  Calculator,
+  CircleHelp,
+  FileQuestion,
+  FileCheck2,
+  School,
   Award,
   BadgeCheck,
   Bell,
@@ -31,11 +38,17 @@ import {
 
 const iconMap = {
   banknote: Banknote,
+  book: BookOpen,
+  bookCheck: BookOpenCheck,
   brain: BrainCircuit,
   briefcase: BriefcaseBusiness,
   calendar: CalendarClock,
   card: CreditCard,
+  calculator: Calculator,
+  help: CircleHelp,
   file: FileText,
+  fileQuestion: FileQuestion,
+  fileCheck: FileCheck2,
   news: Newspaper,
   printer: Printer,
   user: UserRound,
@@ -49,6 +62,7 @@ const iconMap = {
   bell: Bell,
   settings: Settings,
   search: Search,
+  school: School,
   dashboard: LayoutDashboard,
 } as const;
 
