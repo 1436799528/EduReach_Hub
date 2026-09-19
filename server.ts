@@ -620,7 +620,8 @@ app.post('/api/payments/verify', async (req, res) => {
       && metadataRequestId === request.id
       && metadataUserId === user.id;
     const paymentStatus = verified ? 'paid' : transaction?.status || 'failed';
-    await supabase.from('service_requests').update({ status: verified ? 'processing' : request.status, form_data: { ...(request.form_data || {}), payment_reference: reference, payment_status: paymentStatus, payment_gateway_response: transaction?.gateway_response || null } }).eq('id', request.id).eq('user_id', user.id);
+    const nextServiceStatus = verified && ['submitted','reviewing'].includes(request.status) ? 'processing' : request.status;
+    await supabase.from('service_requests').update({ status: nextServiceStatus, form_data: { ...(request.form_data || {}), payment_reference: reference, payment_status: paymentStatus, payment_gateway_response: transaction?.gateway_response || null } }).eq('id', request.id).eq('user_id', user.id);
     return res.json({ verified, status: paymentStatus, reference });
   } catch (error) {
     return res.status(401).json({ error: error instanceof Error ? error.message : 'Payment verification failed.' });
