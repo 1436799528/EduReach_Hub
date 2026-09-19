@@ -38,6 +38,7 @@ import {
 
 const iconMap = {
   banknote: Banknote,
+  monitor: Monitor,
   book: BookOpen,
   bookCheck: BookOpenCheck,
   brain: BrainCircuit,
