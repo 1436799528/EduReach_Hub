@@ -20,7 +20,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
     <div className="hub-shell hub-global-compact">
       <header className="hub-header">
         <div className="hub-container hub-main-nav">
-          <button className="hub-mobile-trigger" aria-label="Open menu" onClick={() => setMobileOpen(true)}><Menu size={21} /></button>
+          <button type="button" className="hub-mobile-trigger" aria-label="Open menu" aria-expanded={mobileOpen} aria-controls="hub-mobile-menu" onClick={() => setMobileOpen(true)}><Menu size={21} /></button>
           <a className="hub-logo" href="/">EduReach<span>.ng</span></a>
           <nav className="hub-nav hub-nav-desktop" aria-label="Primary navigation">
             <a href="/">Home</a>
@@ -33,7 +33,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      {mobileOpen && <div className="hub-mobile-panel"><div className="hub-mobile-panel-head"><strong>EduReach.ng</strong><button onClick={() => setMobileOpen(false)} aria-label="Close menu"><X size={22} /></button></div><nav className="hub-mobile-links"><a href="/">Home</a><a href="/cbt">CBT</a><a href="/services">Services</a><a href="/news">News</a></nav><div className="hub-mobile-auth"><a className="hub-ghost-btn" href="/login">Sign In</a><a className="hub-primary-btn" href="/register">Sign Up</a></div></div>}
+      {mobileOpen && <div id="hub-mobile-menu" className="hub-mobile-panel"><div className="hub-mobile-panel-head"><strong>EduReach.ng</strong><button type="button" onClick={() => setMobileOpen(false)} aria-label="Close menu"><X size={22} /></button></div><nav className="hub-mobile-links"><a href="/" onClick={() => setMobileOpen(false)}>Home</a><a href="/cbt" onClick={() => setMobileOpen(false)}>CBT</a><a href="/services" onClick={() => setMobileOpen(false)}>Services</a><a href="/news" onClick={() => setMobileOpen(false)}>News</a></nav><div className="hub-mobile-auth"><a className="hub-ghost-btn" href="/login">Sign In</a><a className="hub-primary-btn" href="/register">Sign Up</a></div></div>}
 
       <main>{showRail ? <div className="hub-layout-with-rail"><div className="hub-layout-content">{children}</div><HubSideRail /></div> : children}</main>
 
