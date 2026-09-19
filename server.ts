@@ -69,8 +69,20 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
     if (event.event !== 'charge.success') return res.status(200).json({ status: 'ignored' });
 
     const reference = event?.data?.reference;
+    const providerEventId = event?.data?.id != null ? String(event.data.id) : null;
     const serviceRequestId = event?.data?.metadata?.serviceRequestId;
+    if (!reference) return res.status(400).json({ error: 'Missing payment reference' });
     const supabase = getServerSupabase();
+    const { data: existingEvent, error: eventInsertError } = await supabase
+      .from('payment_events')
+      .insert({ provider: 'paystack', provider_event_id: providerEventId, reference, event_type: event.event, status: 'processing', payload: event })
+      .select('id,status')
+      .maybeSingle();
+    if (eventInsertError) {
+      const { data: priorEvent } = await supabase.from('payment_events').select('id,status').eq('provider','paystack').eq('reference',reference).maybeSingle();
+      if (priorEvent?.status === 'processed') return res.status(200).json({ status: 'already_processed' });
+      if (!priorEvent) throw eventInsertError;
+    }
     const query = serviceRequestId
       ? supabase.from('service_requests').select('id,reference_code,status,form_data,amount,user_id,service_catalog(title)').eq('id', serviceRequestId).single()
       : supabase.from('service_requests').select('id,reference_code,status,form_data,amount,user_id,service_catalog(title)').eq('reference_code', reference).single();
@@ -106,6 +118,7 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
     if (profile?.phone && nextStatus === 'completed') {
       await sendWhatsAppOrderCompletion({ recipientPhone: profile.phone, studentName: profile.full_name || 'Student', orderReference: request.reference_code || reference, serviceTitle, pinDetails });
     }
+    await supabase.from('payment_events').update({ status: 'processed', processed_at: new Date().toISOString() }).eq('provider','paystack').eq('reference',reference);
     return res.status(200).json({ status: 'success', service_status: nextStatus });
   } catch (error) {
     console.error('Paystack webhook error:', error);
