@@ -17,7 +17,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
     || path === '/cbt/results';
 
   return (
-    <div className="hub-shell">
+    <div className="hub-shell hub-global-compact">
       <header className="hub-header">
         <div className="hub-container hub-main-nav">
           <button className="hub-mobile-trigger" aria-label="Open menu" onClick={() => setMobileOpen(true)}><Menu size={21} /></button>
