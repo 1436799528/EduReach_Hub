@@ -80,9 +80,9 @@ function renderIdentity(identity: CardIdentity) {
     return (
       <span className="hub-card-identity hub-card-identity--images" aria-hidden="true">
         {identity.imageUrls.map((src) => (
-          <img key={src} src={src} alt="" loading="lazy" decoding="async" />
+          <img key={src} src={src} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
         ))}
-        {identity.accentIcon &&
+        {!identity.imageUrls.some((src) => src) && null}\n        {identity.label && <strong className="hub-card-identity-image-fallback">{identity.label}</strong>}\n        {identity.accentIcon &&
           (() => {
             const AccentIcon = accentIconMap[identity.accentIcon];
             return <AccentIcon className="hub-card-identity-accent" size={14} strokeWidth={1.9} />;
