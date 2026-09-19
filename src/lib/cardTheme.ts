@@ -92,6 +92,22 @@ export const serviceVisuals: Record<string, CardIdentity> = {
     tone: 'blue',
     ariaLabel: 'JAMB result checking',
   },
+  'waec-result': {
+    label: 'WAEC',
+    secondary: 'RESULT',
+    imageUrls: [WAEC_LOGO_URL],
+    kind: 'wordmark',
+    tone: 'blue',
+    ariaLabel: 'WAEC result checking',
+  },
+  'neco-result': {
+    label: 'NECO',
+    secondary: 'RESULT',
+    imageUrls: [NECO_LOGO_URL],
+    kind: 'wordmark',
+    tone: 'green',
+    ariaLabel: 'NECO result checking',
+  },
   'past-questions': {
     label: 'PAST',
     secondary: 'QUESTIONS',
@@ -168,12 +184,8 @@ export function serviceCardIdentity(serviceKey: string): CardIdentity {
   if (key.includes('jamb') && key.includes('result')) return serviceVisuals['jamb-result'];
   if (key.includes('jamb')) return serviceVisuals['jamb-slip'];
   if (key.includes('waec') && key.includes('neco')) return serviceVisuals.results;
-  if (key.includes('waec') || key.includes('neco')) {
-    return {
-      ...(key.includes('neco') ? serviceVisuals.results : serviceVisuals.results),
-      ariaLabel: key.includes('neco') ? 'NECO result or examination service' : 'WAEC result or examination service',
-    };
-  }
+  if (key.includes('waec')) return serviceVisuals['waec-result'];
+  if (key.includes('neco')) return serviceVisuals['neco-result'];
   if (key.includes('past') || key.includes('question') || key.includes('practice')) return serviceVisuals['past-questions'];
   if (key.includes('cbt')) return serviceVisuals.cbt;
 
