@@ -98,7 +98,8 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
     const body = { ...(request.form_data || {}), payment_reference: reference, payment_status: 'paid', payment_gateway_response: event.data.gateway_response || null };
     let nextStatus = 'processing';
     let pinDetails: { serial: string; pin: string } | undefined;
-    const serviceTitle = request.service_catalog?.title || 'EduReach service';
+    const serviceCatalog = Array.isArray(request.service_catalog) ? request.service_catalog[0] : request.service_catalog;
+    const serviceTitle = serviceCatalog?.title || 'EduReach service';
 
     if (serviceTitle === 'WAEC / NECO Scratch Cards') {
       const examBody = String(request.form_data?.exam_body || '').toUpperCase();
@@ -648,7 +649,7 @@ app.post('/api/payments/initialize', async (req, res) => {
     if (['completed','cancelled','rejected'].includes(request.status)) return res.status(409).json({ error: 'This service request is not payable in its current status.' });
     const secret = process.env.PAYSTACK_SECRET_KEY;
     if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
-    const service = request.service_catalog as { id: string; service_key: string; title: string; active: boolean; amount_kobo: number } | null;
+    const service = (Array.isArray(request.service_catalog) ? request.service_catalog[0] : request.service_catalog) as { id: string; service_key: string; title: string; active: boolean; amount_kobo: number } | null;
     const amountKobo = Number(service?.amount_kobo || 0);
     if (!service || !service.active || !Number.isInteger(amountKobo) || amountKobo <= 0) {
       return res.status(422).json({ error: 'This service does not have a valid production price configured.' });
