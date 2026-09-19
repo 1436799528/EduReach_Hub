@@ -135,6 +135,24 @@ app.get('/api/health', (_req, res) => {
 
 app.use(express.json({ limit: '1mb' }));
 
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const supabase = getServerSupabase();
+    let query = supabase.from('profiles').select('id,full_name,school,faculty,department,level,role,matric_number,created_at').order('created_at', { ascending: false }).limit(200);
+    if (search) {
+      const safe = search.replace(/[%,_]/g, '');
+      if (safe) query = query.or(`full_name.ilike.%${safe}%,school.ilike.%${safe}%,department.ilike.%${safe}%,matric_number.ilike.%${safe}%`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin users error:', error);
+    res.status(503).json({ error: 'Unable to load student accounts.' });
+  }
+});
+
 app.get('/api/admin/vouchers', requireAdmin, async (req, res) => {
   try {
     const body = String(req.query.exam_body || 'WAEC').toUpperCase();
