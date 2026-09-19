@@ -1008,3 +1008,22 @@
   min-width: 40px;
   min-height: 40px;
 }
+
+
+/* Portal-wide card icon guard: no default black Lucide marks inside compact cards. */
+.hub-global-compact .hub-compact-card svg,
+.hub-global-compact .hub-service-profile-card svg,
+.hub-global-compact .hub-compact-service-card svg,
+.hub-global-compact .hub-cbt-service-card svg,
+.hub-global-compact .hub-opportunity-card svg,
+.hub-global-compact .hub-rail-card .hub-card-identity svg {
+  color: currentColor;
+  stroke: currentColor;
+}
+.hub-global-compact .hub-compact-card .hub-compact-icon {
+  color: var(--hub-blue);
+}
+.hub-global-compact .hub-rail-head svg {
+  color: #586274;
+  stroke: currentColor;
+}
