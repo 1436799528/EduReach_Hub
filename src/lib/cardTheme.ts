@@ -49,6 +49,8 @@ const NELFUND_LOGO_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/fi
 const CBT_ICON_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/ComputerScreen.svg';
 const PAST_QUESTIONS_ICON_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Book_with_bookmark_Pinhead_icon.svg';
 const NABTEB_LOGO_URL = 'https://nabteb.gov.ng/wp-content/uploads/2021/09/logo.png';
+const NYSC_LOGO_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/NYSC_LOGO.svg';
+const FME_LOGO_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Federal_Ministry_of_Education_Logo.jpg';
 
 export const serviceVisuals: Record<string, CardIdentity> = {
   'nelfund-loan': {
@@ -127,9 +129,18 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   nysc: {
     label: 'NYSC',
     secondary: 'SERVICE',
+    imageUrls: [NYSC_LOGO_URL],
     kind: 'wordmark',
     tone: 'green',
     ariaLabel: 'NYSC services',
+  },
+  'education-ministry': {
+    label: 'FME',
+    secondary: 'EDUCATION',
+    imageUrls: [FME_LOGO_URL],
+    kind: 'wordmark',
+    tone: 'green',
+    ariaLabel: 'Federal Ministry of Education services',
   },
   'jamb-result': {
     label: 'JAMB',
@@ -355,6 +366,9 @@ export function serviceCardIdentity(serviceKey: string): CardIdentity {
   if (key.includes('jamb')) return serviceVisuals['jamb-slip'];
   if (key.includes('nabteb')) return serviceVisuals.nabteb;
   if (key.includes('nysc')) return serviceVisuals.nysc;
+  if (key.includes('education-ministry') || key.includes('federal-ministry') || key === 'fme') {
+    return serviceVisuals['education-ministry'];
+  }
   if (key.includes('waec') && key.includes('neco')) return serviceVisuals.results;
   if (key.includes('waec')) return serviceVisuals['waec-result'];
   if (key.includes('neco')) return serviceVisuals['neco-result'];
