@@ -162,12 +162,7 @@ export const contentVisuals: Record<string, CardIdentity> = {
     ariaLabel: 'Student profile',
   },
   results: serviceVisuals.results,
-  jamb: {
-    label: 'JAMB',
-    kind: 'wordmark',
-    tone: 'blue',
-    ariaLabel: 'JAMB',
-  },
+  jamb: serviceVisuals['jamb-result'],
   cbt: serviceVisuals.cbt,
   nelfund: serviceVisuals['nelfund-loan'],
 };
@@ -186,8 +181,8 @@ export function serviceCardIdentity(serviceKey: string): CardIdentity {
   if (key.includes('waec') && key.includes('neco')) return serviceVisuals.results;
   if (key.includes('waec')) return serviceVisuals['waec-result'];
   if (key.includes('neco')) return serviceVisuals['neco-result'];
-  if (key.includes('past') || key.includes('question') || key.includes('practice')) return serviceVisuals['past-questions'];
   if (key.includes('cbt')) return serviceVisuals.cbt;
+  if (key.includes('past') || key.includes('question') || key.includes('practice')) return serviceVisuals['past-questions'];
 
   return {
     label: 'ER',
@@ -201,7 +196,7 @@ export function newsCardIdentity(category: string): CardIdentity {
   const key = category.toLowerCase();
 
   if (key.includes('jamb')) {
-    return { ...serviceVisuals.jamb, ariaLabel: 'JAMB news' };
+    return { ...serviceVisuals['jamb-result'], ariaLabel: 'JAMB news' };
   }
   if (key.includes('fund') || key.includes('nelfund')) {
     return { ...serviceVisuals.nelfund, ariaLabel: 'NELFUND news' };
@@ -227,13 +222,7 @@ export function newsCardIdentity(category: string): CardIdentity {
 
 export function upcomingCardIdentity(kind: 'deadline' | 'exam'): CardIdentity {
   return kind === 'exam'
-    ? {
-        label: 'CBT',
-        kind: 'icon',
-        icon: 'brain',
-        tone: 'blue',
-        ariaLabel: 'Examination',
-      }
+    ? { ...serviceVisuals.cbt, ariaLabel: 'Computer based examination' }
     : {
         label: 'DUE',
         kind: 'icon',
