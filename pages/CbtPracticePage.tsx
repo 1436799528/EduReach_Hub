@@ -43,18 +43,17 @@ export default function CbtPracticePage() {
         } else {
           setSeconds(data.exam.durationMinutes * 60);
         }
-        if (navigator.onLine) {
-          const storageKey = `edureach-cbt-attempt-${examId}`;
-          const stored = JSON.parse(localStorage.getItem(storageKey) || 'null') as { attemptId?: string; expiresAt?: string } | null;
-          if (stored?.attemptId && stored.expiresAt && new Date(stored.expiresAt).getTime() > Date.now()) {
-            setAttemptId(stored.attemptId);
-          } else {
-            const started = await startCbt(examId);
-            if (!active) return;
-            setAttemptId(started.attemptId);
-            localStorage.setItem(storageKey, JSON.stringify({ attemptId: started.attemptId, expiresAt: started.expiresAt }));
-            setSeconds(Math.max(0, Math.ceil((new Date(started.expiresAt).getTime() - Date.now()) / 1000)));
-          }
+        const storageKey = `edureach-cbt-attempt-${examId}`;
+        const stored = JSON.parse(localStorage.getItem(storageKey) || 'null') as { attemptId?: string; expiresAt?: string } | null;
+        if (stored?.attemptId && stored.expiresAt && new Date(stored.expiresAt).getTime() > Date.now()) {
+          setAttemptId(stored.attemptId);
+          setSeconds(Math.max(0, Math.ceil((new Date(stored.expiresAt).getTime() - Date.now()) / 1000)));
+        } else if (navigator.onLine) {
+          const started = await startCbt(examId);
+          if (!active) return;
+          setAttemptId(started.attemptId);
+          localStorage.setItem(storageKey, JSON.stringify({ attemptId: started.attemptId, expiresAt: started.expiresAt }));
+          setSeconds(Math.max(0, Math.ceil((new Date(started.expiresAt).getTime() - Date.now()) / 1000)));
         }
       } catch (error) {
         if (active) setMessage(error instanceof Error ? error.message : 'Unable to load the CBT exam.');
