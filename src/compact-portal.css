@@ -955,3 +955,17 @@
 .hub-global-compact .hub-cbt-brand-area .hub-card-identity--images img{
   display:block !important;
 }
+
+/* Brand cards: keep real logos primary and functional accents secondary. */
+.hub-global-compact .hub-card-identity--images {
+  gap: 5px;
+  min-width: 48px;
+}
+.hub-global-compact .hub-card-identity--images .hub-card-identity-accent {
+  flex: 0 0 auto;
+  opacity: .72;
+}
+.hub-global-compact .hub-card-identity--images img {
+  object-fit: contain;
+  background: transparent;
+}
