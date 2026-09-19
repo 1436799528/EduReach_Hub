@@ -26,7 +26,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, [navigate]);
 
-  async function logout() { await supabase.auth.signOut(); navigate('/login'); }
+  async function logout() {
+    window.sessionStorage.removeItem('edureach-admin-student-view');
+    await supabase.auth.signOut();
+    navigate('/login');
+  }
   if (checking) return <div className="admin-loading-screen">Verifying administrative access…</div>;
   if (!session) return null;
 
