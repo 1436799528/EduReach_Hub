@@ -637,3 +637,321 @@
     max-height:48px;
   }
 }
+
+
+/* ========================================================================== */
+/* EduReach global compact student-portal rules                               */
+/* Source of truth: compact, practical, card-first student utility UI.       */
+/* ========================================================================== */
+.hub-global-compact{
+  --hub-page-gutter:clamp(10px,2vw,24px);
+  --hub-card-radius:9px;
+  --hub-card-gap:10px;
+  --hub-card-shadow:none;
+}
+
+.hub-global-compact .hub-container{
+  width:calc(100% - (var(--hub-page-gutter) * 2));
+  max-width:1440px;
+  margin-inline:auto;
+}
+
+.hub-global-compact .hub-page{
+  padding:14px 0 40px;
+}
+
+.hub-global-compact .hub-page > .hub-container{
+  min-width:0;
+}
+
+.hub-global-compact .hub-page-heading-compact,
+.hub-global-compact .hub-section-heading{
+  margin-top:0;
+  margin-bottom:12px;
+}
+
+.hub-global-compact .hub-section-heading.compact{
+  margin-top:18px;
+}
+
+.hub-global-compact .hub-section-heading h1{
+  font-size:22px !important;
+  line-height:1.18;
+  letter-spacing:-.5px;
+  margin:3px 0;
+}
+
+.hub-global-compact .hub-section-heading h2{
+  font-size:15px !important;
+  line-height:1.25;
+  letter-spacing:-.15px;
+  margin:3px 0;
+}
+
+.hub-global-compact .hub-section-heading h3{
+  font-size:13px !important;
+}
+
+.hub-global-compact .hub-section-heading p{
+  max-width:720px;
+  margin:3px 0 0;
+  font-size:10.5px;
+  line-height:1.4;
+}
+
+.hub-global-compact .hub-eyebrow{
+  font-size:8px;
+  letter-spacing:.1em;
+}
+
+.hub-global-compact .hub-panel,
+.hub-global-compact .hub-wizard-panel,
+.hub-global-compact .hub-question-card,
+.hub-global-compact .hub-score-card,
+.hub-global-compact .hub-calculator-card,
+.hub-global-compact .hub-tracker-panel,
+.hub-global-compact .hub-verified-box,
+.hub-global-compact .hub-share-strip{
+  border-radius:var(--hub-card-radius) !important;
+  box-shadow:var(--hub-card-shadow) !important;
+}
+
+.hub-global-compact .hub-panel{
+  padding:12px !important;
+}
+
+.hub-global-compact .hub-form-note,
+.hub-global-compact .hub-request-summary{
+  font-size:10px;
+  line-height:1.45;
+}
+
+.hub-global-compact .hub-service-profile-card,
+.hub-global-compact .hub-news-feed-row,
+.hub-global-compact .hub-news-row,
+.hub-global-compact .hub-upcoming-row,
+.hub-global-compact .hub-cbt-service-card,
+.hub-global-compact .hub-cbt-exam-row,
+.hub-global-compact .hub-opportunity-card{
+  border-radius:var(--hub-card-radius) !important;
+  box-shadow:none !important;
+  transition:transform .14s ease,border-color .14s ease,background .14s ease;
+}
+
+.hub-global-compact .hub-service-profile-card:hover,
+.hub-global-compact .hub-news-feed-row:hover,
+.hub-global-compact .hub-news-row:hover,
+.hub-global-compact .hub-upcoming-row:hover,
+.hub-global-compact .hub-cbt-service-card:hover,
+.hub-global-compact .hub-cbt-exam-row:hover,
+.hub-global-compact .hub-opportunity-card:hover{
+  transform:translateY(-1px);
+  border-color:#cfd5df !important;
+  background:#fcfdff !important;
+  box-shadow:none !important;
+}
+
+.hub-global-compact .hub-compact-arrow{
+  transition:transform .14s ease;
+}
+
+.hub-global-compact a:hover > .hub-compact-arrow,
+.hub-global-compact .hub-click-card:hover > .hub-compact-arrow{
+  transform:translateX(2px);
+}
+
+.hub-global-compact .hub-card-identity{
+  border-radius:8px;
+  box-shadow:none;
+}
+
+.hub-global-compact .hub-card-identity--images{
+  background:transparent;
+  border:0;
+}
+
+.hub-global-compact .hub-card-identity--images img{
+  display:block !important;
+  object-fit:contain;
+}
+
+.hub-global-compact .hub-service-profile-body p,
+.hub-global-compact .hub-cbt-service-content p,
+.hub-global-compact .hub-opportunity-content p{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden;
+}
+
+.hub-global-compact .hub-news-feed-row{
+  min-height:70px;
+}
+
+.hub-global-compact .hub-news-feed-row .hub-feed-main h2{
+  font-size:12px;
+  line-height:1.3;
+}
+
+.hub-global-compact .hub-news-feed-row .hub-feed-main p{
+  font-size:10px;
+  line-height:1.35;
+  -webkit-line-clamp:1;
+}
+
+.hub-global-compact .hub-upcoming-row{
+  min-height:62px;
+}
+
+.hub-global-compact .hub-sidebar-card,
+.hub-global-compact .hub-rail-card{
+  border-radius:var(--hub-card-radius) !important;
+  box-shadow:none !important;
+}
+
+.hub-global-compact .hub-article{
+  max-width:920px;
+  margin-inline:auto;
+}
+
+.hub-global-compact .hub-article h1{
+  font-size:24px;
+  line-height:1.2;
+  letter-spacing:-.5px;
+}
+
+.hub-global-compact .hub-article-lead{
+  font-size:11px;
+  line-height:1.5;
+}
+
+.hub-global-compact .hub-article-body{
+  font-size:12px;
+  line-height:1.7;
+}
+
+.hub-global-compact .hub-back-link{
+  margin-bottom:10px;
+}
+
+.hub-global-compact .hub-track-box{
+  min-height:48px;
+  padding:6px 8px;
+  border-radius:9px;
+}
+
+.hub-global-compact .hub-track-box input{
+  font-size:11px;
+}
+
+.hub-global-compact .hub-form-grid{
+  gap:9px;
+}
+
+.hub-global-compact .hub-form-grid label{
+  font-size:9px;
+}
+
+.hub-global-compact .hub-form-grid input,
+.hub-global-compact .hub-form-grid select,
+.hub-global-compact .hub-form-grid textarea{
+  min-height:36px;
+  padding:8px 9px;
+  border-radius:7px;
+  font-size:11px;
+}
+
+.hub-global-compact .hub-wizard-panel{
+  padding:13px !important;
+}
+
+.hub-global-compact .hub-wizard-panel h2{
+  font-size:14px;
+  margin:10px 0;
+}
+
+.hub-global-compact .hub-corrections{
+  gap:7px;
+}
+
+.hub-global-compact .hub-correction{
+  border-radius:9px;
+  box-shadow:none;
+}
+
+.hub-global-compact .hub-calculator-intro p{
+  max-width:760px;
+  font-size:10px;
+  line-height:1.45;
+}
+
+.hub-global-compact .hub-calculator-result{
+  border-radius:9px;
+}
+
+.hub-global-compact .hub-home-top-actions,
+.hub-global-compact .hub-wizard-actions{
+  gap:6px;
+}
+
+.hub-global-compact .hub-primary-btn,
+.hub-global-compact .hub-outline-btn,
+.hub-global-compact .hub-ghost-btn{
+  min-height:32px;
+  padding:0 10px;
+  border-radius:7px;
+  font-size:10px;
+}
+
+@media(max-width:900px){
+  .hub-global-compact .hub-container{
+    width:calc(100% - 20px);
+  }
+}
+
+@media(max-width:620px){
+  .hub-global-compact .hub-container{
+    width:calc(100% - 16px);
+  }
+
+  .hub-global-compact .hub-page{
+    padding-top:10px;
+    padding-bottom:30px;
+  }
+
+  .hub-global-compact .hub-section-heading h1{
+    font-size:20px !important;
+  }
+
+  .hub-global-compact .hub-section-heading h2{
+    font-size:14px !important;
+  }
+
+  .hub-global-compact .hub-section-heading p{
+    font-size:10px;
+  }
+
+  .hub-global-compact .hub-page-heading-compact{
+    align-items:flex-start;
+  }
+
+  .hub-global-compact .hub-home-top-actions{
+    width:100%;
+  }
+
+  .hub-global-compact .hub-home-top-actions > a,
+  .hub-global-compact .hub-home-top-actions > button{
+    flex:1;
+  }
+
+  .hub-global-compact .hub-article h1{
+    font-size:21px;
+  }
+}
+
+/* Keep real service logos visible in every compact identity location. */
+.hub-global-compact .hub-rail-service-thumb .hub-card-identity--images img,
+.hub-global-compact .hub-opportunity-identity .hub-card-identity--images img,
+.hub-global-compact .hub-cbt-brand-area .hub-card-identity--images img{
+  display:block !important;
+}
