@@ -64,11 +64,10 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Could not verify the signed-in account.');
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-        const destination = ['admin', 'super_admin', 'moderator'].includes(profile?.role || '') ? '/admin' : getSafeNextPath();
-        window.location.href = destination;
+        const { data: { session: signedInSession } } = await supabase.auth.getSession();
+        if (!signedInSession?.access_token) throw new Error('Could not verify the signed-in account.');
+        const adminCheck = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${signedInSession.access_token}` } });
+        window.location.href = adminCheck.ok ? '/admin' : getSafeNextPath();
       }
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Authentication failed.'); }
     finally { setBusy(false); }
