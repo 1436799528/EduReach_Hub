@@ -72,9 +72,9 @@ Key tables include:
 
 ### Security rules
 
-Never expose `SUPABASE_SERVICE_ROLE_KEY` or `PAYSTACK_SECRET_KEY` to the browser. Browser code uses the Supabase publishable key only. Authentication is enforced before service requests, student dashboards, CBT submissions and wallet verification.
+Never expose `SUPABASE_SERVICE_ROLE_KEY` or `PAYSTACK_SECRET_KEY` to the browser. Browser code uses the Supabase publishable key only. Authentication is enforced before service requests, student dashboards, CBT submissions and wallet verification. New Supabase accounts automatically receive their student profile and wallet through the canonical auth triggers.
 
-Wallet credit is idempotent on the Paystack provider reference, and service request references are unique.
+Wallet credit is idempotent on the Paystack provider reference, service request references are unique, and a student cannot have two concurrent in-progress attempts for the same CBT exam. CBT answer keys are not browser-readable.
 
 ## Environment
 
@@ -106,3 +106,8 @@ npm start
 ```
 
 Before deployment, configure the Supabase Auth redirect URLs and Paystack webhook URL for the production domain. The production server must have the server-only Supabase and Paystack secrets configured in its runtime environment.
+
+
+## Admin student view
+
+Administrators retain their administrative identity but can enter the same `/dashboard` student-facing workspace through **View Student Site**. This uses the existing student pages and authenticated user data; it does not create a duplicate student dashboard or weaken server-side admin authorization.
