@@ -17,7 +17,6 @@ alter table public.admin_audit_logs enable row level security;
 revoke all on table public.admin_audit_logs from anon, authenticated;
 
 -- The server uses service_role after requireAdmin() authorization.
-revoke all on function public.admin_audit_log(uuid,text,text,uuid,jsonb) from public, anon, authenticated;
 create or replace function public.admin_audit_log(
   p_admin_user_id uuid,
   p_action text,
@@ -37,6 +36,7 @@ begin
   return v_id;
 end;
 $$;
+revoke all on function public.admin_audit_log(uuid,text,text,uuid,jsonb) from public, anon, authenticated;
 grant execute on function public.admin_audit_log(uuid,text,text,uuid,jsonb) to service_role;
 
 -- Enforce one answer row per question/attempt and protect the answer key.
