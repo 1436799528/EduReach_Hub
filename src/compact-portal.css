@@ -969,3 +969,42 @@
   object-fit: contain;
   background: transparent;
 }
+
+
+/* Card identity audit: functional icons are always visibly colored; brand logos stay untouched. */
+.hub-global-compact .hub-card-identity--icon {
+  color: inherit;
+}
+.hub-global-compact .hub-card-identity--icon svg {
+  width: 21px;
+  height: 21px;
+  stroke: currentColor;
+  color: currentColor;
+  flex: 0 0 auto;
+}
+.hub-global-compact .hub-card-identity--icon .hub-card-identity-icon-label {
+  color: currentColor;
+}
+.hub-global-compact .hub-card-identity-tone-blue .hub-card-identity--icon { color: #3550b6; }
+.hub-global-compact .hub-card-identity-tone-green .hub-card-identity--icon { color: #2e715c; }
+.hub-global-compact .hub-card-identity-tone-amber .hub-card-identity--icon { color: #8c641e; }
+.hub-global-compact .hub-card-identity-tone-purple .hub-card-identity--icon { color: #604b91; }
+.hub-global-compact .hub-card-identity-tone-red .hub-card-identity--icon { color: #8d4e4e; }
+.hub-global-compact .hub-card-identity-tone-slate .hub-card-identity--icon { color: #586274; }
+
+.hub-global-compact .hub-card-identity--images img {
+  width: 32px;
+  height: 32px;
+  max-width: 32px;
+  max-height: 32px;
+  object-fit: contain;
+  display: block;
+}
+.hub-global-compact .hub-card-identity--images .hub-card-identity-accent {
+  width: 14px;
+  height: 14px;
+}
+.hub-global-compact .hub-card-identity--images {
+  min-width: 40px;
+  min-height: 40px;
+}
