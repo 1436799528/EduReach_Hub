@@ -21,7 +21,7 @@ The browser entry point is `src/main.tsx`, which renders `src/HubApp.tsx`. The a
 - `/services/apply/:service-slug` — authenticated service request wizard
 - `/services/track` — authenticated request tracker
 - `/news` — verified academic/news feed
-- `/news/:id` — verified article detail
+- `/news/:slug` — verified article detail
 - `/jobs` — student opportunities
 
 ### Admin routes
@@ -55,7 +55,7 @@ Key tables include:
 - `exam_questions`
 - `cbt_attempts`
 - `cbt_answers`
-- `edureach_announcements`
+- `news_articles`
 - `student_wallets`
 - `wallet_transactions`
 
@@ -63,7 +63,7 @@ Key tables include:
 
 - `GET /api/health` — service health/configuration check
 - `GET /api/news` — verified published announcements
-- `GET /api/news/:id` — verified announcement detail
+- `GET /api/news/:slug` — verified announcement detail
 - `GET /api/cbt/exams/:examId/questions` — active exam questions without answer keys
 - `POST /api/cbt/submit` — authenticated server-side scoring and attempt persistence
 - `POST /api/wallet/verify` — authenticated Paystack verification and wallet credit
