@@ -8,17 +8,13 @@ export interface UserPayload {
 }
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin', 'moderator']);
-
 type ServerSupabase = ReturnType<typeof createClient> | null;
 
 function getServerSupabase(): ServerSupabase {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
-
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 export function extractBearerToken(authorization?: string | string[]) {
@@ -30,16 +26,16 @@ export function extractBearerToken(authorization?: string | string[]) {
 export async function verifyJWT(token: string): Promise<UserPayload | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
-
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
 
   const user = data.user as User;
-  const { data: profile } = await supabase
+  const { data: profileData } = await supabase
     .from('profiles')
     .select('role, full_name')
     .eq('id', user.id)
     .maybeSingle();
+  const profile = profileData as { role?: unknown; full_name?: unknown } | null;
 
   const profileRole = String(profile?.role || 'student');
   const role: UserPayload['role'] = ADMIN_ROLES.has(profileRole) ? 'admin' : 'student';
