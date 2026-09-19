@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Flag, Send, TimerReset, WifiOff } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
-import { fetchCbtQuestions, submitCbt } from '../src/lib/api';
+import { fetchCbtQuestions, startCbt, submitCbt } from '../src/lib/api';
 import { getExamProgress, saveExamProgress, queueOfflineSubmission, syncPendingSubmissions } from '../src/lib/cbt-offline';
 
 type Question = { id: number; text: string; options: string[] };
@@ -14,6 +14,8 @@ export default function CbtPracticePage() {
   const [flags, setFlags] = useState<Record<number, boolean>>({});
   const [seconds, setSeconds] = useState(0);
   const [durationMinutes, setDurationMinutes] = useState(0);
+  const [attemptId, setAttemptId] = useState('');
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [restored, setRestored] = useState(false);
   const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [message, setMessage] = useState('');
@@ -41,6 +43,19 @@ export default function CbtPracticePage() {
           setSeconds(saved.timeRemainingSeconds);
         } else {
           setSeconds(data.exam.durationMinutes * 60);
+        }
+        if (navigator.onLine) {
+          const storageKey = `edureach-cbt-attempt-${examId}`;
+          const stored = JSON.parse(localStorage.getItem(storageKey) || 'null') as { attemptId?: string; expiresAt?: string } | null;
+          if (stored?.attemptId && stored.expiresAt && new Date(stored.expiresAt).getTime() > Date.now()) {
+            setAttemptId(stored.attemptId); setExpiresAt(stored.expiresAt);
+          } else {
+            const started = await startCbt(examId);
+            if (!active) return;
+            setAttemptId(started.attemptId); setExpiresAt(started.expiresAt);
+            localStorage.setItem(storageKey, JSON.stringify({ attemptId: started.attemptId, expiresAt: started.expiresAt }));
+            setSeconds(Math.max(0, Math.ceil((new Date(started.expiresAt).getTime() - Date.now()) / 1000)));
+          }
         }
       } catch (error) {
         if (active) setMessage(error instanceof Error ? error.message : 'Unable to load the CBT exam.');
@@ -70,7 +85,7 @@ export default function CbtPracticePage() {
     const onOnline = () => {
       setOffline(false);
       void syncPendingSubmissions(async (payload) => {
-        try { await submitCbt({ examId: payload.examId, answers: payload.answers, timeSpentSeconds: payload.timeSpentSeconds }); return true; }
+        try { await submitCbt({ examId: payload.examId, attemptId: payload.attemptId, answers: payload.answers }); return true; }
         catch { return false; }
       });
     };
@@ -94,12 +109,14 @@ export default function CbtPracticePage() {
     if (!questions.length) return;
     const timeSpentSeconds = Math.max(0, durationMinutes * 60 - seconds);
     if (offline) {
-      await queueOfflineSubmission({ examId, answers, timeSpentSeconds });
+      if (!attemptId) { setMessage('The exam must be started while online before an offline submission can be queued.'); return; }
+      await queueOfflineSubmission({ examId, attemptId, answers, timeSpentSeconds });
       setMessage('Submission is queued and will sync when your connection returns.');
       return;
     }
     try {
-      const result = await submitCbt({ examId, answers, timeSpentSeconds });
+      if (!attemptId) { setMessage('Unable to identify this CBT attempt. Please restart the exam.'); return; }
+      const result = await submitCbt({ examId, attemptId, answers });
       localStorage.setItem('edureach-last-cbt-attempt', result.attemptId);
       window.location.href = `/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`;
     } catch (error) {
