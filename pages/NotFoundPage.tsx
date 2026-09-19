@@ -2,7 +2,7 @@ import { ArrowLeft, Home } from 'lucide-react';
 
 export default function NotFoundPage() {
   return (
-    <main className="hub-page">
+    <section className="hub-page" aria-labelledby="not-found-title">
       <div className="hub-container hub-narrow">
         <section className="hub-panel hub-empty" aria-labelledby="not-found-title">
           <span className="hub-eyebrow">404</span>
@@ -18,6 +18,6 @@ export default function NotFoundPage() {
           </div>
         </section>
       </div>
-    </main>
+    </section>
   );
 }
