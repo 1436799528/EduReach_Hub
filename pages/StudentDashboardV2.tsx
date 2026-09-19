@@ -77,7 +77,11 @@ export default function StudentDashboardV2() {
   const averageScore = attempts.length ? Math.round(attempts.reduce((sum, item) => sum + Number(item.score || 0), 0) / attempts.length) : 0;
   const bestScore = attempts.length ? Math.max(...attempts.map(item => Number(item.score || 0))) : 0;
   const copyReg = () => { if (!reg) return; navigator.clipboard?.writeText(reg); setCopied(true); window.setTimeout(() => setCopied(false), 1500); };
-  const logout = async () => { await supabase.auth.signOut(); window.location.href = '/'; };
+  const logout = async () => {
+    window.sessionStorage.removeItem('edureach-admin-student-view');
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
 
   return <div className="student-portal">
     <header className="student-portal-header"><div className="student-portal-bar">
