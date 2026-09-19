@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 
 export function useNavigate() {
-  return (path: string) => { window.location.assign(path); };
+  return useCallback((path: string) => {
+    window.location.assign(path);
+  }, []);
 }
 
 export function NavLink({ href, icon, children }: { href: string; icon: string; children: ReactNode }) {
