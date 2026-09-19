@@ -17,9 +17,9 @@ app.use((_req, res, next) => {
 });
 
 function getServerSupabase() {
-  const url = process.env.VITE_SUPABASE_URL || 'https://gjdfatwcoosyuhakrrhh.supabase.co';
+  const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured on the server.');
+  if (!url || !key) throw new Error('Supabase server configuration is incomplete.');
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
