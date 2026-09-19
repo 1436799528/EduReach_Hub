@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import HubApp from './HubApp';
+import App from './app/App';
 import PwaRegister from './components/PwaRegister';
 import './hub.css';
 import './card-system.css';
@@ -13,6 +13,6 @@ import './compact-portal.css';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PwaRegister />
-    <HubApp />
+    <App />
   </StrictMode>,
 );
