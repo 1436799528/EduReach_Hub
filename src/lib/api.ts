@@ -83,7 +83,6 @@ export async function startCbt(examId: string): Promise<CbtStartResponse> {
   return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
 }
 
-export async function startCbt(examId: string): Promise<CbtStartResponse> {
   const headers = await authHeaders();
   return jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
 }
@@ -207,7 +206,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
 export async function fetchNewsItem(slug: string): Promise<NewsItem> {
   const { data, error } = await supabase
     .from('news_articles')
-    .select('id,title,excerpt,body,category,source_url,published_at,updated_at,published')
+    .select('id,slug,title,excerpt,body,category,source_url,published_at,updated_at,published')
      .eq('slug', slug)
     .eq('published', true)
     .single();
@@ -225,4 +224,27 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     last_verified_at: data.updated_at,
     verification_status: 'verified',
   };
+}
+
+
+export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string };
+
+export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
+  const headers = await authHeaders();
+  const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
+  const body = await jsonFetch<{ items: AdminUser[] }>(`/api/admin/users${query}`, { headers });
+  return body.items || [];
+}
+
+export type AdminServiceRequest = { id: string; user_id: string; status: string; form_data: Record<string, unknown>; created_at: string; updated_at: string; reference_code?: string | null; service_catalog?: { title: string } | null };
+
+export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminServiceRequest[]> {
+  const headers = await authHeaders();
+  const body = await jsonFetch<{ items: AdminServiceRequest[] }>(`/api/admin/service-requests?status=${encodeURIComponent(status)}`, { headers });
+  return body.items || [];
+}
+
+export async function updateAdminServiceRequest(requestId: string, status: string) {
+  const headers = await authHeaders();
+  return jsonFetch<{ item: { id: string; status: string; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ status }) });
 }
