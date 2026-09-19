@@ -4,6 +4,12 @@ export type CardIdentity = {
   kind: 'wordmark' | 'icon';
   tone: 'blue' | 'green' | 'amber' | 'purple' | 'red' | 'slate';
   imageUrls?: string[];
+  accentIcon?:
+    | 'monitor'
+    | 'graduation'
+    | 'file'
+    | 'check'
+    | 'award';
   icon?:
     | 'banknote'
     | 'brain'
@@ -17,7 +23,14 @@ export type CardIdentity = {
     | 'wallet'
     | 'receipt'
     | 'graduation'
-    | 'clipboard';
+    | 'clipboard'
+    | 'award'
+    | 'check'
+    | 'headset'
+    | 'bell'
+    | 'settings'
+    | 'search'
+    | 'dashboard';
   ariaLabel: string;
 };
 
@@ -35,6 +48,7 @@ const NECO_LOGO_URL = 'https://raw.githubusercontent.com/Drslope-99/gradeup/edb8
 const NELFUND_LOGO_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Nigerian_Education_Loan_Fund_%28NELFUND%29.png';
 const CBT_ICON_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/ComputerScreen.svg';
 const PAST_QUESTIONS_ICON_URL = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/Book_with_bookmark_Pinhead_icon.svg';
+const NABTEB_LOGO_URL = 'https://nabteb.gov.ng/wp-content/uploads/2021/09/logo.png';
 
 export const serviceVisuals: Record<string, CardIdentity> = {
   'nelfund-loan': {
@@ -84,6 +98,39 @@ export const serviceVisuals: Record<string, CardIdentity> = {
     tone: 'blue',
     ariaLabel: 'Computer based test practice',
   },
+  'jamb-cbt': {
+    label: 'JAMB',
+    secondary: 'CBT',
+    imageUrls: [JAMB_LOGO_URL],
+    accentIcon: 'monitor',
+    kind: 'wordmark',
+    tone: 'blue',
+    ariaLabel: 'JAMB computer based test',
+  },
+  'post-utme': {
+    label: 'JAMB',
+    secondary: 'POST-UTME',
+    imageUrls: [JAMB_LOGO_URL],
+    accentIcon: 'graduation',
+    kind: 'wordmark',
+    tone: 'blue',
+    ariaLabel: 'Post UTME and admission examination',
+  },
+  nabteb: {
+    label: 'NABTEB',
+    secondary: 'EXAM',
+    imageUrls: [NABTEB_LOGO_URL],
+    kind: 'wordmark',
+    tone: 'green',
+    ariaLabel: 'NABTEB examination services',
+  },
+  nysc: {
+    label: 'NYSC',
+    secondary: 'SERVICE',
+    kind: 'wordmark',
+    tone: 'green',
+    ariaLabel: 'NYSC services',
+  },
   'jamb-result': {
     label: 'JAMB',
     secondary: 'RESULT',
@@ -122,6 +169,132 @@ export const serviceVisuals: Record<string, CardIdentity> = {
     icon: 'briefcase',
     tone: 'slate',
     ariaLabel: 'EduReach student services',
+  },
+  admission: {
+    label: '',
+    kind: 'icon',
+    icon: 'graduation',
+    tone: 'purple',
+    ariaLabel: 'Admission service',
+  },
+  'school-fees': {
+    label: '',
+    kind: 'icon',
+    icon: 'wallet',
+    tone: 'green',
+    ariaLabel: 'School fees and payment',
+  },
+  'course-registration': {
+    label: '',
+    kind: 'icon',
+    icon: 'clipboard',
+    tone: 'blue',
+    ariaLabel: 'Course registration',
+  },
+  transcript: {
+    label: '',
+    kind: 'icon',
+    icon: 'file',
+    tone: 'slate',
+    ariaLabel: 'Transcript request',
+  },
+  'student-id': {
+    label: '',
+    kind: 'icon',
+    icon: 'card',
+    tone: 'slate',
+    ariaLabel: 'Student identification card',
+  },
+  scholarship: {
+    label: '',
+    kind: 'icon',
+    icon: 'award',
+    tone: 'amber',
+    ariaLabel: 'Scholarship opportunity',
+  },
+  timetable: {
+    label: '',
+    kind: 'icon',
+    icon: 'calendar',
+    tone: 'blue',
+    ariaLabel: 'Academic timetable',
+  },
+  calendar: {
+    label: '',
+    kind: 'icon',
+    icon: 'calendar',
+    tone: 'blue',
+    ariaLabel: 'Academic calendar',
+  },
+  verification: {
+    label: '',
+    kind: 'icon',
+    icon: 'check',
+    tone: 'green',
+    ariaLabel: 'Document verification',
+  },
+  document: {
+    label: '',
+    kind: 'icon',
+    icon: 'file',
+    tone: 'slate',
+    ariaLabel: 'Document request',
+  },
+  support: {
+    label: '',
+    kind: 'icon',
+    icon: 'headset',
+    tone: 'blue',
+    ariaLabel: 'Student support',
+  },
+  payment: {
+    label: '',
+    kind: 'icon',
+    icon: 'wallet',
+    tone: 'green',
+    ariaLabel: 'Payment',
+  },
+  profile: {
+    label: '',
+    kind: 'icon',
+    icon: 'user',
+    tone: 'slate',
+    ariaLabel: 'Student profile',
+  },
+  news: {
+    label: '',
+    kind: 'icon',
+    icon: 'news',
+    tone: 'slate',
+    ariaLabel: 'News',
+  },
+  notification: {
+    label: '',
+    kind: 'icon',
+    icon: 'bell',
+    tone: 'slate',
+    ariaLabel: 'Notifications',
+  },
+  settings: {
+    label: '',
+    kind: 'icon',
+    icon: 'settings',
+    tone: 'slate',
+    ariaLabel: 'Settings',
+  },
+  search: {
+    label: '',
+    kind: 'icon',
+    icon: 'search',
+    tone: 'slate',
+    ariaLabel: 'Search',
+  },
+  dashboard: {
+    label: '',
+    kind: 'icon',
+    icon: 'dashboard',
+    tone: 'slate',
+    ariaLabel: 'Dashboard',
   },
 };
 
@@ -176,8 +349,12 @@ export function serviceCardIdentity(serviceKey: string): CardIdentity {
   // Future service_catalog rows can use descriptive keys without needing another
   // component or another card-specific icon mapping.
   if (key.includes('nelfund') || key.includes('student-loan')) return serviceVisuals['nelfund-loan'];
+  if (key.includes('jamb') && key.includes('cbt')) return serviceVisuals['jamb-cbt'];
+  if (key.includes('post-utme')) return serviceVisuals['post-utme'];
   if (key.includes('jamb') && key.includes('result')) return serviceVisuals['jamb-result'];
   if (key.includes('jamb')) return serviceVisuals['jamb-slip'];
+  if (key.includes('nabteb')) return serviceVisuals.nabteb;
+  if (key.includes('nysc')) return serviceVisuals.nysc;
   if (key.includes('waec') && key.includes('neco')) return serviceVisuals.results;
   if (key.includes('waec')) return serviceVisuals['waec-result'];
   if (key.includes('neco')) return serviceVisuals['neco-result'];
