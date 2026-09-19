@@ -494,7 +494,7 @@ app.post('/api/payments/initialize', async (req, res) => {
       return res.status(422).json({ error: 'This service does not have a valid production price configured.' });
     }
     const reference = String(request.reference_code || `ER-${new Date().getFullYear()}-${serviceRequestId.slice(0, 6).toUpperCase()}`);
-    const response = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: String(amountKobo), email, currency: 'NGN', reference, metadata: { serviceRequestId, userId: user.id, referenceCode: request.reference_code, serviceKey: service.service_key } }) });
+    const response = await fetch('https://api.paystack.co/transaction/initialize', { method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: String(amountKobo), email: user.email, currency: 'NGN', reference, metadata: { serviceRequestId, userId: user.id, referenceCode: request.reference_code, serviceKey: service.service_key } }) });
     const payload = await response.json() as any;
     if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack initialization failed.' });
     await supabase.from('service_requests').update({ amount: Number(amountKobo) / 100, form_data: { ...(request.form_data || {}), payment_reference: payload.data.reference, payment_amount_kobo: amountKobo, payment_status: 'initialized' } }).eq('id', request.id).eq('user_id', user.id);
@@ -518,7 +518,16 @@ app.post('/api/payments/verify', async (req, res) => {
     if (!response.ok || !payload?.status) return res.status(502).json({ error: payload?.message || 'Paystack verification failed.' });
     const transaction = payload.data;
     const expectedAmount = Number(request.form_data?.payment_amount_kobo || 0);
-    const verified = transaction?.status === 'success' && Number(transaction?.amount) === expectedAmount && transaction?.reference === reference;
+    const metadata = transaction?.metadata || {};
+    const metadataRequestId = String(metadata?.serviceRequestId || '');
+    const metadataUserId = String(metadata?.userId || '');
+    const storedReference = String(request.form_data?.payment_reference || '');
+    const verified = transaction?.status === 'success'
+      && Number(transaction?.amount) === expectedAmount
+      && transaction?.reference === reference
+      && (!storedReference || storedReference === reference)
+      && metadataRequestId === request.id
+      && metadataUserId === user.id;
     const paymentStatus = verified ? 'paid' : transaction?.status || 'failed';
     await supabase.from('service_requests').update({ status: verified ? 'processing' : request.status, form_data: { ...(request.form_data || {}), payment_reference: reference, payment_status: paymentStatus, payment_gateway_response: transaction?.gateway_response || null } }).eq('id', request.id).eq('user_id', user.id);
     return res.json({ verified, status: paymentStatus, reference });
