@@ -104,13 +104,13 @@ export default function HubHomePage() {
             )}
 
             <div className="hub-section-heading compact">
-              <div><span className="hub-eyebrow">LATEST</span><h2>Verified news &amp; academic updates</h2></div>
+              <div><span className="hub-eyebrow">LATEST</span><h2>Published news &amp; academic updates</h2></div>
               <a href="/news">Open news <ArrowRight size={16} /></a>
             </div>
 
             {loadingNews && <div className="hub-panel hub-empty">Loading verified updates…</div>}
             {!loadingNews && newsError && <div className="hub-form-error">{newsError}</div>}
-            {!loadingNews && !newsError && !newsItems.length && <div className="hub-panel hub-empty">No verified announcements are published right now.</div>}
+            {!loadingNews && !newsError && !newsItems.length && <div className="hub-panel hub-empty">No announcements are published right now.</div>}
             {!loadingNews && !newsError && (
               <div className="hub-news-list">
                 {newsItems.slice(0, 5).map((item) => (
@@ -120,7 +120,7 @@ export default function HubHomePage() {
                       <div className="hub-news-meta">
                         <span>{labelFor(item.category)}</span>
                         <span>{formatDate(item.published_at)}</span>
-                        <span className="hub-verified"><CheckCircle2 size={13}/> Verified</span>
+                        <span className="hub-verified"><CheckCircle2 size={13}/> Published</span>
                       </div>
                       <h3>{item.title}</h3>
                       <p>{item.summary || ''}</p>
