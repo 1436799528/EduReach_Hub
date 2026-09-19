@@ -478,12 +478,62 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
     const { count, error: countError } = await supabase.from('exam_questions').select('id', { count: 'exact', head: true }).eq('exam_id', exam.id);
     if (countError) throw countError;
     if (!count) return res.status(422).json({ error: 'This CBT exam has no questions yet.' });
-    const startedAt = new Date();
+    const now = new Date();
+    const { data: existingAttempt } = await supabase
+      .from('cbt_attempts')
+      .select('id,started_at,expires_at,total_questions,status')
+      .eq('user_id', user.id)
+      .eq('exam_id', exam.id)
+      .eq('status', 'in_progress')
+      .maybeSingle();
+
+    if (existingAttempt) {
+      const existingExpiry = existingAttempt.expires_at ? new Date(existingAttempt.expires_at) : null;
+      if (!existingExpiry || existingExpiry.getTime() > now.getTime()) {
+        return res.status(200).json({
+          attemptId: existingAttempt.id,
+          startedAt: existingAttempt.started_at,
+          expiresAt: existingAttempt.expires_at,
+          totalQuestions: existingAttempt.total_questions,
+        });
+      }
+      await supabase
+        .from('cbt_attempts')
+        .update({ status: 'expired', updated_at: now.toISOString() })
+        .eq('id', existingAttempt.id)
+        .eq('status', 'in_progress');
+    }
+
+    const startedAt = now;
     const expiresAt = new Date(startedAt.getTime() + exam.duration_minutes * 60 * 1000);
     const { data: attempt, error: attemptError } = await supabase.from('cbt_attempts').insert({
-      user_id: user.id, exam_id: exam.id, status: 'in_progress', started_at: startedAt.toISOString(), expires_at: expiresAt.toISOString(), total_questions: count,
+      user_id: user.id,
+      exam_id: exam.id,
+      status: 'in_progress',
+      started_at: startedAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      total_questions: count,
     }).select('id,started_at,expires_at,total_questions').single();
-    if (attemptError || !attempt) throw attemptError || new Error('Unable to start CBT attempt.');
+    if (attemptError || !attempt) {
+      if (attemptError?.code === '23505') {
+        const { data: retryAttempt } = await supabase
+          .from('cbt_attempts')
+          .select('id,started_at,expires_at,total_questions')
+          .eq('user_id', user.id)
+          .eq('exam_id', exam.id)
+          .eq('status', 'in_progress')
+          .maybeSingle();
+        if (retryAttempt) {
+          return res.status(200).json({
+            attemptId: retryAttempt.id,
+            startedAt: retryAttempt.started_at,
+            expiresAt: retryAttempt.expires_at,
+            totalQuestions: retryAttempt.total_questions,
+          });
+        }
+      }
+      throw attemptError || new Error('Unable to start CBT attempt.');
+    }
     res.status(201).json({ attemptId: attempt.id, startedAt: attempt.started_at, expiresAt: attempt.expires_at, totalQuestions: attempt.total_questions });
   } catch (error) {
     console.error('CBT start API error:', error);
