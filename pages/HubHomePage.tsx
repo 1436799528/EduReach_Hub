@@ -114,7 +114,7 @@ export default function HubHomePage() {
             {!loadingNews && !newsError && (
               <div className="hub-news-list">
                 {newsItems.slice(0, 5).map((item) => (
-                  <a href={'/news/' + item.id} key={item.id} className="hub-news-row hub-click-card">
+                  <a href={'/news/' + encodeURIComponent(item.slug)} key={item.id} className="hub-news-row hub-click-card">
                     <div className="hub-news-thumb"><CardIdentityMark value={item.category} type="news" /></div>
                     <div className="hub-news-copy">
                       <div className="hub-news-meta">
@@ -157,7 +157,7 @@ export default function HubHomePage() {
               <div className="hub-sidebar-head"><h3>Latest News</h3><a href="/news">View all</a></div>
               {loadingNews && <p className="hub-sidebar-copy">Loading…</p>}
               {!loadingNews && !newsError && newsItems.slice(0, 5).map((item) => (
-                <a className="hub-sidebar-news" href={'/news/' + item.id} key={item.id}>
+                <a className="hub-sidebar-news" href={'/news/' + encodeURIComponent(item.slug)} key={item.id}>
                   <div className="hub-news-thumb"><CardIdentityMark value={item.category} type="news" /></div>
                   <span>{labelFor(item.category)}</span>
                   <strong>{item.title}</strong>
