@@ -23,6 +23,7 @@ export type CardIdentity = {
     | 'file'
     | 'fileQuestion'
     | 'fileCheck'
+    | 'monitor'
     | 'news'
     | 'printer'
     | 'user'
