@@ -12,11 +12,17 @@ export type CardIdentity = {
     | 'award';
   icon?:
     | 'banknote'
+    | 'book'
+    | 'bookCheck'
     | 'brain'
     | 'briefcase'
     | 'calendar'
     | 'card'
+    | 'calculator'
+    | 'help'
     | 'file'
+    | 'fileQuestion'
+    | 'fileCheck'
     | 'news'
     | 'printer'
     | 'user'
@@ -30,6 +36,7 @@ export type CardIdentity = {
     | 'bell'
     | 'settings'
     | 'search'
+    | 'school'
     | 'dashboard';
   ariaLabel: string;
 };
@@ -95,8 +102,8 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   cbt: {
     label: 'CBT',
     secondary: 'PRACTICE',
-    imageUrls: [CBT_ICON_URL],
-    kind: 'wordmark',
+    kind: 'icon',
+    icon: 'monitor',
     tone: 'blue',
     ariaLabel: 'Computer based test practice',
   },
@@ -169,8 +176,8 @@ export const serviceVisuals: Record<string, CardIdentity> = {
   'past-questions': {
     label: 'PAST',
     secondary: 'QUESTIONS',
-    imageUrls: [PAST_QUESTIONS_ICON_URL],
-    kind: 'wordmark',
+    kind: 'icon',
+    icon: 'bookCheck',
     tone: 'purple',
     ariaLabel: 'Past questions and exam practice',
   },
@@ -188,6 +195,44 @@ export const serviceVisuals: Record<string, CardIdentity> = {
     tone: 'purple',
     ariaLabel: 'Admission service',
   },
+  'admission-consultation': { label: '', kind: 'icon', icon: 'help', tone: 'purple', ariaLabel: 'Admission consultation' },
+  'admission-guidance': { label: '', kind: 'icon', icon: 'school', tone: 'purple', ariaLabel: 'Admission guidance' },
+  'school-finder': { label: '', kind: 'icon', icon: 'school', tone: 'blue', ariaLabel: 'School and institution finder' },
+  'course-finder': { label: '', kind: 'icon', icon: 'search', tone: 'blue', ariaLabel: 'Course finder' },
+  'jamb-subject-combination': { label: '', kind: 'icon', icon: 'fileQuestion', tone: 'blue', ariaLabel: 'JAMB subject combination' },
+  'post-utme-guidance': { label: '', kind: 'icon', icon: 'fileQuestion', tone: 'purple', ariaLabel: 'Post UTME guidance' },
+  'admission-requirements': { label: '', kind: 'icon', icon: 'fileCheck', tone: 'green', ariaLabel: 'Admission requirements' },
+  'admission-application-support': { label: '', kind: 'icon', icon: 'file', tone: 'purple', ariaLabel: 'Admission application support' },
+  'change-institution-guidance': { label: '', kind: 'icon', icon: 'school', tone: 'amber', ariaLabel: 'Change of institution guidance' },
+  'change-course-guidance': { label: '', kind: 'icon', icon: 'fileQuestion', tone: 'amber', ariaLabel: 'Change of course guidance' },
+  'scholarship-finder': { label: '', kind: 'icon', icon: 'award', tone: 'amber', ariaLabel: 'Scholarship finder' },
+  'scholarship-application': { label: '', kind: 'icon', icon: 'award', tone: 'amber', ariaLabel: 'Scholarship application' },
+  'student-loan-guidance': { label: '', kind: 'icon', icon: 'file', tone: 'green', ariaLabel: 'Student loan guidance' },
+  'financial-aid': { label: '', kind: 'icon', icon: 'wallet', tone: 'green', ariaLabel: 'Financial aid' },
+  'education-cost-calculator': { label: '', kind: 'icon', icon: 'calculator', tone: 'blue', ariaLabel: 'Education cost calculator' },
+  'certificate-verification': { label: '', kind: 'icon', icon: 'fileCheck', tone: 'green', ariaLabel: 'Certificate verification' },
+  'certificate-services': { label: '', kind: 'icon', icon: 'file', tone: 'slate', ariaLabel: 'Certificate services' },
+  'document-upload': { label: '', kind: 'icon', icon: 'file', tone: 'slate', ariaLabel: 'Document upload' },
+  'result-verification': { label: '', kind: 'icon', icon: 'fileCheck', tone: 'green', ariaLabel: 'Result verification' },
+  'academic-record': { label: '', kind: 'icon', icon: 'file', tone: 'blue', ariaLabel: 'Academic record' },
+  'statement-of-result': { label: '', kind: 'icon', icon: 'file', tone: 'blue', ariaLabel: 'Statement of result' },
+  'reference-letter': { label: '', kind: 'icon', icon: 'file', tone: 'purple', ariaLabel: 'Reference letter' },
+  'cgpa-calculator': { label: '', kind: 'icon', icon: 'calculator', tone: 'blue', ariaLabel: 'CGPA calculator' },
+  'gpa-calculator': { label: '', kind: 'icon', icon: 'calculator', tone: 'blue', ariaLabel: 'GPA calculator' },
+  'study-planner': { label: '', kind: 'icon', icon: 'bookCheck', tone: 'purple', ariaLabel: 'Study planner' },
+  'exam-countdown': { label: '', kind: 'icon', icon: 'calendar', tone: 'amber', ariaLabel: 'Exam countdown' },
+  'grade-calculator': { label: '', kind: 'icon', icon: 'calculator', tone: 'blue', ariaLabel: 'Grade calculator' },
+  'course-planner': { label: '', kind: 'icon', icon: 'clipboard', tone: 'blue', ariaLabel: 'Course planner' },
+  'campus-news': { label: '', kind: 'icon', icon: 'news', tone: 'blue', ariaLabel: 'Campus news' },
+  'education-news': { label: '', kind: 'icon', icon: 'news', tone: 'blue', ariaLabel: 'Education news' },
+  'scholarship-updates': { label: '', kind: 'icon', icon: 'award', tone: 'amber', ariaLabel: 'Scholarship updates' },
+  'admission-updates': { label: '', kind: 'icon', icon: 'graduation', tone: 'purple', ariaLabel: 'Admission updates' },
+  'exam-updates': { label: '', kind: 'icon', icon: 'fileQuestion', tone: 'blue', ariaLabel: 'Exam updates' },
+  'deadline-alerts': { label: '', kind: 'icon', icon: 'bell', tone: 'amber', ariaLabel: 'Deadline alerts' },
+  'student-help': { label: '', kind: 'icon', icon: 'headset', tone: 'blue', ariaLabel: 'Student help' },
+  'faqs': { label: '', kind: 'icon', icon: 'help', tone: 'blue', ariaLabel: 'Frequently asked questions' },
+  'ask-consultant': { label: '', kind: 'icon', icon: 'help', tone: 'purple', ariaLabel: 'Ask a consultant' },
+  'student-community': { label: '', kind: 'icon', icon: 'user', tone: 'purple', ariaLabel: 'Student community' },
   'school-fees': {
     label: '',
     kind: 'icon',
