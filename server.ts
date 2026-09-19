@@ -577,6 +577,7 @@ app.post('/api/payments/initialize', async (req, res) => {
       .eq('user_id', user.id)
       .single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
+    if (['completed','cancelled','rejected'].includes(request.status)) return res.status(409).json({ error: 'This service request is not payable in its current status.' });
     const secret = process.env.PAYSTACK_SECRET_KEY;
     if (!secret) return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY is not configured.' });
     const service = request.service_catalog as { id: string; service_key: string; title: string; active: boolean; amount_kobo: number } | null;
