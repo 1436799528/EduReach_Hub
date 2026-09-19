@@ -89,6 +89,10 @@ app.post('/api/webhooks/paystack', express.raw({ type: 'application/json', limit
     if (request.status === 'completed') return res.status(200).json({ status: 'already_processed' });
 
     const expectedKobo = Math.round(Number(request.amount || 0) * 100);
+    const metadataUserId = String(event?.data?.metadata?.userId || '');
+    const metadataRequestId = String(event?.data?.metadata?.serviceRequestId || '');
+    if (metadataUserId && metadataUserId !== String(request.user_id)) return res.status(403).json({ error: 'Payment user mismatch' });
+    if (metadataRequestId && metadataRequestId !== String(request.id)) return res.status(400).json({ error: 'Payment request mismatch' });
     if (Number(event?.data?.amount) !== expectedKobo) return res.status(400).json({ error: 'Payment amount mismatch' });
 
     const body = { ...(request.form_data || {}), payment_reference: reference, payment_status: 'paid', payment_gateway_response: event.data.gateway_response || null };
