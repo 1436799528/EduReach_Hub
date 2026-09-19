@@ -44,7 +44,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                     : 'Update'}
                 </span>
                 <span className="hub-verified">
-                  <CheckCircle2 size={13} /> Verified
+                  <CheckCircle2 size={13} /> Published
                 </span>
               </div>
 
@@ -61,7 +61,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
               <div className="hub-verified-box">
                 <div>
                   <span className="hub-eyebrow">SOURCE</span>
-                  <h3>Official source</h3>
+                  <h3>Source information</h3>
                   <p>
                     {item.last_verified_at
                       ? `Last verified ${new Date(item.last_verified_at).toLocaleString('en-NG')}`
