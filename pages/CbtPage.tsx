@@ -23,25 +23,43 @@ const cbtServices = [
 ];
 
 export default function CbtPage() {
-  const initialMode = (() => {
-    if (typeof window === 'undefined') return 'JAMB' as ExamMode;
-    const requested = new URLSearchParams(window.location.search).get('mode')?.toUpperCase() as ExamMode | undefined;
-    return requested && modes.some((item) => item.key === requested) ? requested : 'JAMB';
-  })();
+  const readModeFromUrl = (): ExamMode => {
+    if (typeof window === 'undefined') return 'JAMB';
+    const requested = new URLSearchParams(window.location.search).get('mode')?.trim().toUpperCase();
+    return modes.some((item) => item.key === requested) ? requested as ExamMode : 'JAMB';
+  };
 
   const [exams, setExams] = useState<Exam[]>([]);
-  const [mode, setMode] = useState<ExamMode>(initialMode);
+  const [mode, setMode] = useState<ExamMode>(() => readModeFromUrl());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    const syncMode = () => setMode(readModeFromUrl());
+    window.addEventListener('popstate', syncMode);
+
     void fetchCbtExams()
       .then((data) => setExams(data as Exam[]))
       .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load CBT exams.'))
       .finally(() => setLoading(false));
+
+    return () => window.removeEventListener('popstate', syncMode);
   }, []);
 
-  const filteredExams = useMemo(() => mode === 'ALL' ? exams : exams.filter((exam) => exam.exam_body.toUpperCase() === mode), [exams, mode]);
+  const filteredExams = useMemo(() => {
+    if (mode === 'ALL') return exams;
+
+    return exams.filter((exam) => {
+      const body = exam.exam_body.trim().toUpperCase().replace(/[\s_-]+/g, '');
+      const selected = mode.replace(/[\s_-]+/g, '');
+
+      if (selected === 'JAMB') return body === 'JAMB' || body === 'UTME';
+      if (selected === 'WAEC') return body === 'WAEC' || body.includes('WAEC');
+      if (selected === 'NECO') return body === 'NECO' || body.includes('NECO');
+      if (selected === 'POSTUTME') return body === 'POSTUTME' || body.includes('POSTUTME');
+      return body === selected;
+    });
+  }, [exams, mode]);
 
   function changeMode(nextMode: ExamMode) {
     setMode(nextMode);
