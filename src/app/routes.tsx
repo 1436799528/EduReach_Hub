@@ -17,6 +17,7 @@ import AdminQueuePage from '../../pages/AdminQueuePage';
 import AdminCbtPage from '../../pages/AdminCbtPage';
 import AdminVouchersPage from '../../pages/AdminVouchersPage';
 import AdminUsersPage from '../../pages/AdminUsersPage';
+import NotFoundPage from '../../pages/NotFoundPage';
 
 export function renderRoute(pathname: string): ReactElement {
   const path = pathname.replace(/\/$/, '') || '/';
@@ -51,5 +52,5 @@ export function renderRoute(pathname: string): ReactElement {
   }
   if (path === '/jobs') return <JobsPage />;
 
-  return <HubHomePage />;
+  return <NotFoundPage />;
 }
