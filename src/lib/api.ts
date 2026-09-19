@@ -18,6 +18,7 @@ export type ServiceItem = {
 };
 export type NewsItem = {
   id: string;
+  slug: string;
   title: string;
   summary: string | null;
   body: string;
@@ -183,13 +184,14 @@ export async function trackService(referenceCode: string) {
 export async function fetchNews(): Promise<NewsItem[]> {
   const { data, error } = await supabase
     .from('news_articles')
-    .select('id,title,excerpt,body,category,source_url,published_at,updated_at,published')
+    .select('id,slug,title,excerpt,body,category,source_url,published_at,updated_at,published')
     .eq('published', true)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(30);
   if (error) throw error;
   return (data || []).map((item) => ({
     id: item.id,
+    slug: item.slug,
     title: item.title,
     summary: item.excerpt,
     body: item.body,
@@ -212,6 +214,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
   if (error || !data) throw new Error('News article could not be loaded.');
   return {
     id: data.id,
+    slug: data.slug,
     title: data.title,
     summary: data.excerpt,
     body: data.body,
