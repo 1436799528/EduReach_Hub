@@ -34,9 +34,10 @@ export function openCBTDatabase(): Promise<IDBDatabase> {
       return;
     }
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const db = request.result;
-      if (request.transaction && request.oldVersion < 2 && db.objectStoreNames.contains('pending_submissions')) {
+      const oldVersion = (event as IDBVersionChangeEvent).oldVersion;
+      if (request.transaction && oldVersion < 2 && db.objectStoreNames.contains('pending_submissions')) {
         db.deleteObjectStore('pending_submissions');
       }
       if (!db.objectStoreNames.contains('question_packs')) db.createObjectStore('question_packs', { keyPath: 'examId' });
