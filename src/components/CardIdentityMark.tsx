@@ -80,7 +80,7 @@ function renderIdentity(identity: CardIdentity) {
     return (
       <span className="hub-card-identity hub-card-identity--images" aria-hidden="true">
         {identity.imageUrls.map((src) => (
-          <img key={src} src={src} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+          <img key={src} src={src} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.display = 'none'; event.currentTarget.parentElement?.classList.add('is-fallback'); }} />
         ))}
         {!identity.imageUrls.some((src) => src) && null}\n        {identity.label && <strong className="hub-card-identity-image-fallback">{identity.label}</strong>}\n        {identity.accentIcon &&
           (() => {
