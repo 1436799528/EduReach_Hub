@@ -8,7 +8,7 @@ Add these under Netlify > Project configuration > Environment variables:
 
 | Variable | Scope | Secret |
 |---|---|---|
-| SUPABASE_URL | Functions, Runtime | Yes |
+| VITE_SUPABASE_URL | Functions, Runtime | No |
 | SUPABASE_SECRET_KEY | Functions, Runtime | Yes |
 | SUPABASE_SERVICE_ROLE_KEY | Functions, Runtime | Legacy fallback only |
 | PAYSTACK_SECRET_KEY | Functions, Runtime | Yes |
