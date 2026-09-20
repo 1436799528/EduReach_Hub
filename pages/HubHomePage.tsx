@@ -366,6 +366,7 @@ export default function HubHomePage() {
                     <a
                       key={service.id}
                       href={service.href}
+                      className="ms-service-card"
                       style={{
                         background: '#ffffff',
                         border: '1px solid #e2e8f0',
