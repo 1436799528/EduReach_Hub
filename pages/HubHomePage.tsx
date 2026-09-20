@@ -14,126 +14,72 @@ import {
   Users,
   Wallet,
   Zap,
+  LayoutDashboard,
+  ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchNews, fetchUpcoming, type NewsItem, type UpcomingItem } from '../src/lib/api';
+import { supabase } from '../src/lib/supabase';
 
-type ServiceCard = {
-  id: string;
-  title: string;
-  description: string;
-  badge: string;
-  href: string;
-  iconImage: string;
-  themeMark: string;
-  actionText: string;
-};
-
-const topExamTiles = [
+const topPortalPillars = [
   {
     title: 'JAMB CBT Simulator',
-    subtitle: 'Full UTME syllabus questions with real exam timer',
-    href: '/cbt?mode=JAMB',
+    subtitle: 'UTME exam simulator with real timer and scoring',
+    href: '/cbt',
     img: '/icons/jamb.svg',
     tag: 'UTME 2026',
   },
   {
-    title: 'WAEC CBT Practice',
-    subtitle: 'SSCE & GCE objective past questions revision',
-    href: '/cbt?mode=WAEC',
-    img: '/icons/waec.svg',
-    tag: 'SSCE REVISION',
+    title: 'Verified Student Services',
+    subtitle: 'NELFUND student loans, WAEC/NECO scratch cards & slips',
+    href: '/services',
+    img: '/icons/scratch-cards.svg',
+    tag: 'SERVICES',
   },
   {
-    title: 'NECO CBT Simulator',
-    subtitle: 'National Exams Council past questions & solutions',
-    href: '/cbt?mode=NECO',
-    img: '/icons/neco.svg',
-    tag: 'NECO 2026',
+    title: 'Screening Calculator',
+    subtitle: 'Aggregate calculator for Nigerian tertiary admissions',
+    href: '/screening-calculator',
+    img: '/icons/calculator.svg',
+    tag: 'AGGREGATE',
   },
   {
-    title: 'NELFUND Loan Portal',
-    subtitle: 'Federal student loan assistance & verification',
-    href: '/services/apply/nelfund-loan',
-    img: '/icons/nelfund.svg',
-    tag: 'STUDENT LOAN',
+    title: 'Scholarships & Grants',
+    subtitle: 'Verified Federal, state, and international student funding',
+    href: '/jobs',
+    img: '/icons/scholarship.svg',
+    tag: 'FUNDING',
   },
 ];
 
-const verifiedServices: ServiceCard[] = [
+const featuredServices = [
   {
     id: 'nelfund',
-    title: 'NELFUND Loan Application',
-    description: 'Guided profile verification, institutional clearance, and loan processing.',
-    badge: 'FEDERAL AID',
+    title: 'NELFUND Student Loan',
+    description: 'Federal tuition assistance, upkeep loans, and institutional verification.',
     href: '/services/apply/nelfund-loan',
-    iconImage: '/icons/nelfund.svg',
     themeMark: 'nelfund-loan',
-    actionText: 'Apply for Loan',
-  },
-  {
-    id: 'waec-results',
-    title: 'WAEC / NECO Result Checker',
-    description: 'Instant online result checking assistance and verified scratch card tokens.',
-    badge: 'EXAM RESULTS',
-    href: '/services/apply/results',
-    iconImage: '/icons/waec.svg',
-    themeMark: 'results',
-    actionText: 'Check Result',
+    badge: 'FEDERAL AID',
   },
   {
     id: 'scratch-cards',
-    title: 'Scratch Cards / Token PINs',
-    description: 'Instant delivery of official WAEC and NECO examination checker PINs.',
-    badge: 'INSTANT DELIVERY',
+    title: 'WAEC / NECO Scratch Cards',
+    description: 'Instant delivery of verified examination checker PINs and tokens.',
     href: '/services/apply/scratch-cards',
-    iconImage: '/icons/scratch-cards.svg',
     themeMark: 'scratch-cards',
-    actionText: 'Buy Scratch Card',
+    badge: 'INSTANT PIN',
   },
   {
     id: 'jamb-slip',
     title: 'JAMB Exam Slip Printing',
-    description: 'Coloured examination slip printing with verified centre locator and timing.',
-    badge: 'JAMB PORTAL',
+    description: 'Original coloured examination slips with venue, date, and schedule.',
     href: '/services/apply/jamb-slip',
-    iconImage: '/icons/jamb.svg',
     themeMark: 'jamb-slip',
-    actionText: 'Print Exam Slip',
+    badge: 'ORIGINAL SLIP',
   },
-  {
-    id: 'admission-letters',
-    title: 'Admission Deferment & Letters',
-    description: 'Prepare formal deferment requests and supplementary admission letters.',
-    badge: 'ADMISSIONS',
-    href: '/services/apply/admission-letters',
-    iconImage: '/icons/admission.svg',
-    themeMark: 'admission-letters',
-    actionText: 'Request Letter',
-  },
-  {
-    id: 'post-utme',
-    title: 'Post-UTME Past Questions & CBT',
-    description: 'Institution-specific screening past questions with timed mock tests.',
-    badge: 'SCREENING',
-    href: '/cbt?mode=POST-UTME',
-    iconImage: '/icons/post-utme.svg',
-    themeMark: 'post-utme',
-    actionText: 'Practice Post-UTME',
-  },
-];
-
-const cbtSubjects = [
-  { name: 'Use of English', questions: '40 Qs', icon: '📖' },
-  { name: 'Mathematics', questions: '40 Qs', icon: '📐' },
-  { name: 'Biology', questions: '40 Qs', icon: '🔬' },
-  { name: 'Chemistry', questions: '40 Qs', icon: '🧪' },
-  { name: 'Physics', questions: '40 Qs', icon: '⚡' },
-  { name: 'Economics', questions: '40 Qs', icon: '📊' },
-  { name: 'Government', questions: '40 Qs', icon: '🏛️' },
-  { name: 'Literature in English', questions: '40 Qs', icon: '📚' },
 ];
 
 function formatDate(value: string | null) {
@@ -146,11 +92,23 @@ export default function HubHomePage() {
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [trackRef, setTrackRef] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('all');
+  const [loggedInUser, setLoggedInUser] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
     let active = true;
+
+    // Check user session
+    void supabase.auth.getSession().then(({ data }) => {
+      if (active && data?.session?.user) {
+        const u = data.session.user;
+        setLoggedInUser({
+          name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Student',
+          email: u.email || '',
+        });
+      }
+    });
+
     void fetchNews()
       .then((items) => {
         if (active) setNews(items);
@@ -180,13 +138,13 @@ export default function HubHomePage() {
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '16px 0 60px' }}>
+      <div className="hub-page" style={{ padding: '14px 0 50px' }}>
         <div className="hub-container">
-          {/* MYSCHOOL NOTICE TICKER (NO LARGE HERO) */}
+          {/* 1. BREAKING NOTICE TICKER */}
           <div className="ms-ticker-strip">
-            <span className="ms-ticker-badge">LATEST</span>
+            <span className="ms-ticker-badge">NOTICE</span>
             <span className="ms-ticker-text">
-              JAMB CAPS 2026/2027 Admission Monitoring is Active • NELFUND Student Loan Application Open • WAEC GCE 2nd Series Registration Commenced
+              JAMB CAPS 2026/2027 Admission Monitoring Active • NELFUND Student Loan Verification Open • WAEC &amp; NECO Result Checking Services Live
             </span>
             <a
               href="/news"
@@ -198,19 +156,61 @@ export default function HubHomePage() {
                 flexShrink: 0,
               }}
             >
-              View Noticeboard →
+              Noticeboard →
             </a>
           </div>
 
-          {/* MYSCHOOL COMPACT SEARCH / SELECTOR BAR */}
-          <div className="ms-search-bar">
+          {/* 2. LOGGED-IN QUICK BANNER (If user is signed in) */}
+          {loggedInUser && (
+            <div
+              style={{
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={18} color="#059669" />
+                <span style={{ fontSize: '12.5px', color: '#065f46', fontWeight: 700 }}>
+                  Welcome back, <strong>{loggedInUser.name}</strong>! Your applications and mock exam scores are ready in your dashboard.
+                </span>
+              </div>
+              <a
+                href="/dashboard"
+                style={{
+                  background: '#059669',
+                  color: '#ffffff',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <LayoutDashboard size={13} /> Open Dashboard →
+              </a>
+            </div>
+          )}
+
+          {/* 3. COMPACT SEARCH BAR */}
+          <div className="ms-search-bar" style={{ marginBottom: '14px' }}>
             <Search size={18} color="#059669" />
             <input
               type="text"
               className="ms-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search JAMB, WAEC, NECO, NELFUND, Admission lists or course requirements…"
+              placeholder="Search JAMB, WAEC, NELFUND, university cut-offs, or course requirements…"
               aria-label="Search EduReach content"
             />
             {searchQuery && (
@@ -231,17 +231,17 @@ export default function HubHomePage() {
             )}
           </div>
 
-          {/* MYSCHOOL TOP 4 EXAM & SIMULATOR TILES */}
-          <div className="ms-top-tiles-grid">
-            {topExamTiles.map((tile) => (
+          {/* 4. TOP 4 PORTAL PILLARS */}
+          <div className="ms-top-tiles-grid" style={{ marginBottom: '18px' }}>
+            {topPortalPillars.map((tile) => (
               <a key={tile.title} href={tile.href} className="ms-top-tile">
                 <div className="ms-top-tile-icon">
-                  <img src={tile.img} alt={tile.title} width={42} height={42} />
+                  <img src={tile.img} alt={tile.title} width={38} height={38} />
                 </div>
                 <div className="ms-top-tile-body">
                   <span
                     style={{
-                      fontSize: '10px',
+                      fontSize: '9.5px',
                       fontWeight: 900,
                       color: '#059669',
                       letterSpacing: '0.04em',
@@ -258,162 +258,12 @@ export default function HubHomePage() {
             ))}
           </div>
 
-          {/* 2-COLUMN MYSCHOOL BEDROCK PORTAL LAYOUT */}
+          {/* 5. 2-COLUMN MYSCHOOL PORTAL LAYOUT */}
           <div className="ms-portal-layout">
-            {/* LEFT COLUMN: SERVICES & NEWS & CBT SUBJECTS */}
+            {/* LEFT MAIN COLUMN: LATEST NEWS & FEATURED SERVICES OVERVIEW */}
             <main>
-              {/* SECTION: VERIFIED STUDENT SERVICES */}
-              <section style={{ marginBottom: '28px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '12px',
-                    paddingBottom: '8px',
-                    borderBottom: '2px solid #059669',
-                  }}
-                >
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: '15px',
-                      fontWeight: 900,
-                      color: '#0f172a',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <CheckCircle2 size={18} color="#059669" />
-                    Verified Student Services &amp; Scratch Cards
-                  </h2>
-                  <a
-                    href="/services"
-                    style={{ fontSize: '12px', fontWeight: 800, color: '#059669', textDecoration: 'none' }}
-                  >
-                    All Services ({verifiedServices.length}) →
-                  </a>
-                </div>
-
-                {/* 3-COLUMN SERVICE CARDS WITH THEME IMAGE BADGE */}
-                <div className="ms-card-grid">
-                  {verifiedServices.map((service) => (
-                    <a key={service.id} href={service.href} className="ms-service-card">
-                      <div className="ms-service-card-header">
-                        <CardIdentityMark value={service.themeMark} type="service" size="sm" />
-                        <span className="ms-service-badge">{service.badge}</span>
-                      </div>
-
-                      <div className="ms-service-body">
-                        <h3>{service.title}</h3>
-                        <p>{service.description}</p>
-                      </div>
-
-                      <div className="ms-service-foot">
-                        <span className="ms-service-cta">
-                          {service.actionText} <ArrowRight size={13} />
-                        </span>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </section>
-
-              {/* SECTION: CBT CLASSROOM SUBJECT QUICK PRACTICE */}
-              <section style={{ marginBottom: '28px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '12px',
-                    paddingBottom: '8px',
-                    borderBottom: '2px solid #0284c7',
-                  }}
-                >
-                  <h2
-                    style={{
-                      margin: 0,
-                      fontSize: '15px',
-                      fontWeight: 900,
-                      color: '#0f172a',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <Laptop size={18} color="#0284c7" />
-                    CBT Classroom Practice Subjects
-                  </h2>
-                  <a
-                    href="/cbt"
-                    style={{ fontSize: '12px', fontWeight: 800, color: '#0284c7', textDecoration: 'none' }}
-                  >
-                    Open CBT Hall →
-                  </a>
-                </div>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                    gap: '10px',
-                  }}
-                >
-                  {cbtSubjects.map((sub) => (
-                    <a
-                      key={sub.name}
-                      href="/cbt/practice?exam=demo-exam-jamb"
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        padding: '12px 10px',
-                        textDecoration: 'none',
-                        color: '#0f172a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        transition: 'all 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = '#0284c7';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = '#e2e8f0';
-                        e.currentTarget.style.transform = 'none';
-                      }}
-                    >
-                      <span style={{ fontSize: '20px' }}>{sub.icon}</span>
-                      <div style={{ minWidth: 0 }}>
-                        <strong
-                          style={{
-                            display: 'block',
-                            fontSize: '12.5px',
-                            fontWeight: 800,
-                            lineHeight: 1.25,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {sub.name}
-                        </strong>
-                        <span style={{ fontSize: '10.5px', color: '#64748b' }}>{sub.questions} • Timed</span>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </section>
-
-              {/* SECTION: LATEST EDUCATIONAL NEWS & CAMPUS UPDATES */}
-              <section>
+              {/* SECTION: LATEST EDUCATIONAL NEWS & CAMPUS NOTICES (Core of Myschool.ng) */}
+              <section style={{ marginBottom: '24px' }}>
                 <div
                   style={{
                     display: 'flex',
@@ -429,18 +279,18 @@ export default function HubHomePage() {
                   <h2
                     style={{
                       margin: 0,
-                      fontSize: '15px',
+                      fontSize: '14.5px',
                       fontWeight: 900,
                       color: '#0f172a',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
+                      letterSpacing: '0.03em',
                     }}
                   >
                     Latest Educational News &amp; Updates
                   </h2>
 
                   {/* FILTER TABS */}
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '5px' }}>
                     {[
                       { id: 'all', label: 'All News' },
                       { id: 'jamb', label: 'JAMB' },
@@ -455,9 +305,9 @@ export default function HubHomePage() {
                           background: activeNewsCategory === tab.id ? '#059669' : '#f1f5f9',
                           color: activeNewsCategory === tab.id ? '#ffffff' : '#475569',
                           border: 0,
-                          borderRadius: '6px',
-                          padding: '4px 10px',
-                          fontSize: '11px',
+                          borderRadius: '5px',
+                          padding: '3px 9px',
+                          fontSize: '10.5px',
                           fontWeight: 700,
                           cursor: 'pointer',
                         }}
@@ -498,118 +348,227 @@ export default function HubHomePage() {
                             <span style={{ color: '#64748b' }}>Verified</span>
                           </div>
                           <h3>{item.title}</h3>
-                          <p>{item.summary || 'Click to read full details and guidelines on this verified announcement.'}</p>
+                          <p>{item.summary || 'Click to read official guidelines and instructions on this announcement.'}</p>
                         </div>
                         <ArrowRight size={15} color="#cbd5e1" style={{ flexShrink: 0 }} />
                       </a>
                     ))}
                   </div>
                 )}
+
+                <div style={{ textAlign: 'center', marginTop: '14px' }}>
+                  <a
+                    href="/news"
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: '#059669',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    View All Educational News &amp; Updates →
+                  </a>
+                </div>
+              </section>
+
+              {/* SECTION: FEATURED ACADEMIC SERVICES (Compact 3-Card Strip, not overwhelming) */}
+              <section>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '10px',
+                    paddingBottom: '6px',
+                    borderBottom: '2px solid #059669',
+                  }}
+                >
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: '14.5px',
+                      fontWeight: 900,
+                      color: '#0f172a',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <CheckCircle2 size={16} color="#059669" />
+                    Verified Student Services
+                  </h2>
+                  <a
+                    href="/services"
+                    style={{ fontSize: '11.5px', fontWeight: 800, color: '#059669', textDecoration: 'none' }}
+                  >
+                    Browse Catalog →
+                  </a>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                  {featuredServices.map((service) => (
+                    <a
+                      key={service.id}
+                      href={service.href}
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        textDecoration: 'none',
+                        color: '#0f172a',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <CardIdentityMark value={service.themeMark} type="service" size="sm" />
+                          <span style={{ fontSize: '9px', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 5px', borderRadius: '4px' }}>
+                            {service.badge}
+                          </span>
+                        </div>
+                        <strong style={{ fontSize: '12.5px', display: 'block', color: '#0f172a', marginBottom: '4px' }}>
+                          {service.title}
+                        </strong>
+                        <p style={{ margin: 0, fontSize: '10.5px', color: '#64748b', lineHeight: 1.45 }}>
+                          {service.description}
+                        </p>
+                      </div>
+
+                      <div style={{ marginTop: '10px', fontSize: '11px', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        Request Service <ArrowRight size={12} />
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </section>
             </main>
 
-            {/* RIGHT COLUMN: SIDEBAR WIDGETS (MYSCHOOL RADAR) */}
+            {/* RIGHT COLUMN: DASHBOARD PROMPT + NOTICEBOARD / DEADLINES */}
             <aside>
-              {/* WIDGET 1: QUICK APPLICATION TRACKER */}
-              <div className="ms-sidebar-widget">
-                <h3 className="ms-widget-title">
-                  <Search size={15} color="#059669" /> Track Application
-                </h3>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.4 }}>
-                  Enter your reference code to check real-time processing status.
-                </p>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (trackRef.trim()) {
-                      window.location.href = `/services/track?ref=${encodeURIComponent(trackRef.trim().toUpperCase())}`;
-                    }
-                  }}
-                  style={{ display: 'flex', gap: '6px' }}
-                >
-                  <input
-                    type="text"
-                    value={trackRef}
-                    onChange={(e) => setTrackRef(e.target.value.toUpperCase())}
-                    placeholder="e.g. ER-9482-JAMB"
-                    required
+              {/* WIDGET 1: STUDENT DASHBOARD PROMPT CARD */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  marginBottom: '14px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div
                     style={{
-                      flex: 1,
-                      padding: '7px 10px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      border: '1px solid #cbd5e1',
+                      width: '28px',
+                      height: '28px',
                       borderRadius: '6px',
-                      outline: 'none',
+                      background: '#ecfdf5',
+                      color: '#059669',
+                      display: 'grid',
+                      placeItems: 'center',
                     }}
-                  />
-                  <button
-                    type="submit"
+                  >
+                    <LayoutDashboard size={16} />
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '13px', display: 'block', color: '#0f172a' }}>
+                      Student Workspace
+                    </strong>
+                    <span style={{ fontSize: '10px', color: '#64748b' }}>
+                      Personal academic portal
+                    </span>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.5, margin: '0 0 12px' }}>
+                  Track your service applications, review past CBT scores, calculate your semester CGPA, and save shortlisted universities.
+                </p>
+
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  <a
+                    href="/dashboard"
                     style={{
                       background: '#059669',
                       color: '#ffffff',
-                      border: 0,
                       borderRadius: '6px',
-                      padding: '7px 12px',
-                      fontSize: '12px',
+                      padding: '8px 12px',
+                      textAlign: 'center',
+                      fontSize: '11.5px',
                       fontWeight: 800,
-                      cursor: 'pointer',
+                      textDecoration: 'none',
                     }}
                   >
-                    Track
-                  </button>
-                </form>
+                    {loggedInUser ? 'Open My Dashboard →' : 'Sign In to Dashboard →'}
+                  </a>
+                  {!loggedInUser && (
+                    <a
+                      href="/register"
+                      style={{
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        color: '#0f172a',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        textAlign: 'center',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Create Free Student Account
+                    </a>
+                  )}
+                </div>
               </div>
 
-              {/* WIDGET 2: SCREENING AGGREGATE CALCULATOR */}
-              <div className="ms-sidebar-widget">
-                <h3 className="ms-widget-title">
-                  <CardIdentityMark value="calculator" type="service" size="sm" /> Screening Calculator
-                </h3>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.4 }}>
-                  Estimate your university admission screening aggregate using target institution weighting.
-                </p>
-                <a
-                  href="/screening-calculator"
-                  className="hub-primary-btn"
-                  style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    textDecoration: 'none',
-                    fontSize: '12px',
-                    padding: '8px 12px',
-                    background: '#047857',
-                  }}
-                >
-                  Open Aggregate Calculator →
-                </a>
-              </div>
+              {/* WIDGET 2: ACADEMIC CALENDAR & DEADLINES */}
+              <div
+                style={{
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  marginBottom: '14px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                  <Calendar size={15} color="#059669" />
+                  <strong style={{ fontSize: '12px', textTransform: 'uppercase', color: '#0f172a', letterSpacing: '0.04em' }}>
+                    Academic Deadlines
+                  </strong>
+                </div>
 
-              {/* WIDGET 3: ACADEMIC CALENDAR & DEADLINES */}
-              <div className="ms-sidebar-widget">
-                <h3 className="ms-widget-title">
-                  <Calendar size={15} color="#059669" /> Important Deadlines
-                </h3>
-                <div style={{ display: 'grid', gap: '8px', fontSize: '12px' }}>
+                <div style={{ display: 'grid', gap: '8px', fontSize: '11.5px' }}>
                   {upcoming.slice(0, 4).map((item) => (
                     <div
                       key={item.id}
                       style={{
                         padding: '8px 10px',
                         background: '#f8fafc',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
+                        border: '1px solid #f1f5f9',
+                        borderRadius: '6px',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: 800, color: '#b45309', textTransform: 'uppercase' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 900, color: '#b45309', textTransform: 'uppercase' }}>
                           {item.kind}
                         </span>
-                        <span style={{ fontSize: '10px', color: '#64748b' }}>
-                          {(item.due_at || item.starts_at) ? new Date(item.due_at || item.starts_at!).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' }) : 'Upcoming'}
+                        <span style={{ fontSize: '9.5px', color: '#64748b' }}>
+                          {item.due_at || item.starts_at
+                            ? new Date(item.due_at || item.starts_at!).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' })
+                            : 'Upcoming'}
                         </span>
                       </div>
-                      <strong style={{ display: 'block', color: '#0f172a', fontSize: '12px', lineHeight: 1.3 }}>
+                      <strong style={{ display: 'block', color: '#0f172a', fontSize: '11.5px', lineHeight: 1.3 }}>
                         {item.title}
                       </strong>
                     </div>
@@ -617,24 +576,24 @@ export default function HubHomePage() {
                 </div>
               </div>
 
-              {/* WIDGET 4: WHATSAPP COMMUNITY */}
+              {/* WIDGET 3: WHATSAPP COMMUNITY & HELPLINE */}
               <div
-                className="ms-sidebar-widget"
                 style={{
                   background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
                   color: '#ffffff',
-                  border: 0,
+                  borderRadius: '10px',
+                  padding: '14px',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <MessageCircle size={20} color="#86efac" />
-                  <strong style={{ fontSize: '14px', color: '#ffffff' }}>Join WhatsApp Community</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <MessageCircle size={18} color="#86efac" />
+                  <strong style={{ fontSize: '13px', color: '#ffffff' }}>Official WhatsApp Helpline</strong>
                 </div>
-                <p style={{ fontSize: '12px', margin: '0 0 12px', opacity: 0.9, lineHeight: 1.4 }}>
-                  Connect with over 150,000 students, get instant admission alerts, and past question discussions.
+                <p style={{ fontSize: '11px', margin: '0 0 10px', color: '#d1fae5', lineHeight: 1.45 }}>
+                  Get real-time admission assistance, scratch card PIN verification, and scholarship announcements.
                 </p>
                 <a
-                  href="https://chat.whatsapp.com/"
+                  href="https://wa.me/2348000000000"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -642,14 +601,14 @@ export default function HubHomePage() {
                     textAlign: 'center',
                     background: '#25d366',
                     color: '#064e3b',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
+                    padding: '7px 12px',
+                    borderRadius: '6px',
                     fontWeight: 900,
-                    fontSize: '12px',
+                    fontSize: '11.5px',
                     textDecoration: 'none',
                   }}
                 >
-                  Join Official Group Now
+                  Chat with Academic Support →
                 </a>
               </div>
             </aside>
