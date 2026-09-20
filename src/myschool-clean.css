@@ -676,3 +676,9 @@
   font-weight: 700 !important;
   letter-spacing: .02em !important;
 }
+
+
+/* Remove small AI-style section labels/badges from inner-page sections. */
+.hub-calc-badge {
+  display: none !important;
+}
