@@ -17,12 +17,12 @@ app.use((_req, res, next) => {
 });
 
 function isServerSupabaseConfigured() {
-  return Boolean(process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(process.env.VITE_SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
 }
 
 function getServerSupabase() {
   const url = process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!url || !key) throw new Error('Supabase server configuration is incomplete.');
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
@@ -139,6 +139,72 @@ app.get('/api/health', (_req, res) => {
 
 
 app.use(express.json({ limit: '1mb' }));
+
+app.post('/api/admin/bootstrap', async (req, res) => {
+  try {
+    const configuredEmail = String(process.env.EDUREACH_ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
+    if (!configuredEmail) return res.status(503).json({ error: 'Admin bootstrap email is not configured.' });
+    const auth = req.header('authorization');
+    if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'Authentication required.' });
+    const supabase = getServerSupabase();
+    const token = auth.slice('Bearer '.length).trim();
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData.user?.email) return res.status(401).json({ error: 'Invalid or expired session.' });
+    if (authData.user.email.toLowerCase() !== configuredEmail) return res.status(403).json({ error: 'This account is not the configured EduReach administrator.' });
+    const { data, error } = await supabase.rpc('admin_bootstrap_first_admin', { p_user_id: authData.user.id, p_email: configuredEmail });
+    if (error) throw error;
+    if (!data) return res.status(409).json({ error: 'Admin bootstrap is already locked or the account does not match.' });
+    res.json({ success: true, role: 'super_admin' });
+  } catch (error) {
+    console.error('Admin bootstrap error:', error);
+    res.status(500).json({ error: 'Unable to bootstrap the first administrator.' });
+  }
+});
+
+app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data: metrics, error: metricError } = await supabase.rpc('admin_dashboard_metrics');
+    if (metricError) throw metricError;
+    const [audit, recentRequests, recentUsers] = await Promise.all([
+      supabase.from('edureach_audit_logs').select('id,action,entity_type,entity_id,metadata,created_at').order('created_at',{ascending:false}).limit(20),
+      supabase.from('service_requests').select('id,reference_code,status,created_at,updated_at,service_catalog(title)').order('created_at',{ascending:false}).limit(10),
+      supabase.from('profiles').select('id,full_name,role,created_at').order('created_at',{ascending:false}).limit(10)
+    ]);
+    res.json({ metrics: metrics || {}, audit: audit.data || [], recentRequests: recentRequests.data || [], recentUsers: recentUsers.data || [] });
+  } catch (error) {
+    console.error('Admin analytics error:', error);
+    res.status(503).json({ error: 'Unable to load administrative analytics.' });
+  }
+});
+
+app.post('/api/analytics/event', async (req, res) => {
+  try {
+    const eventName = String(req.body?.event_name || '').trim().slice(0,80);
+    const pathName = String(req.body?.path || '').trim().slice(0,500);
+    const sessionId = String(req.body?.session_id || '').trim().slice(0,120);
+    if (!eventName || !sessionId) return res.status(400).json({ error: 'event_name and session_id are required.' });
+    if (!/^page_view$|^service_view$|^service_submit$|^cbt_start$|^cbt_submit$|^search$/.test(eventName)) return res.status(400).json({ error: 'Unsupported analytics event.' });
+    const supabase = getServerSupabase();
+    const auth = req.header('authorization');
+    let userId: string | null = null;
+    if (auth?.startsWith('Bearer ')) {
+      const { data } = await supabase.auth.getUser(auth.slice('Bearer '.length).trim());
+      userId = data.user?.id || null;
+    }
+    const { error } = await supabase.from('site_analytics_events').insert({
+      event_name:eventName,path:pathName || null,session_id:sessionId,user_id:userId,
+      referrer:String(req.body?.referrer || '').slice(0,1000) || null,
+      user_agent:String(req.headers['user-agent'] || '').slice(0,1000) || null,
+      metadata:req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
+    });
+    if (error) throw error;
+    res.status(204).end();
+  } catch (error) {
+    console.error('Analytics event error:', error);
+    res.status(204).end();
+  }
+});
 
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
   try {
@@ -723,4 +789,3 @@ async function startServer() {
 if (!process.env.NETLIFY) {
   startServer();
 }
-
