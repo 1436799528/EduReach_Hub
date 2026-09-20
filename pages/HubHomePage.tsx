@@ -84,6 +84,14 @@ function formatDate(value: string | null) {
   return new Date(value).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function newsImageFor(item: NewsItem) {
+  const category = item.category.toLowerCase();
+  if (category.includes('jamb')) return '/news/jamb.svg';
+  if (category.includes('waec') || category.includes('neco') || category.includes('result')) return '/news/waec.svg';
+  if (category.includes('admission') || category.includes('screen')) return '/news/admission.svg';
+  return '/news/education.svg';
+}
+
 export default function HubHomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
@@ -278,7 +286,7 @@ export default function HubHomePage() {
                       >
                         <div className="ms-news-thumb">
                           <img
-                            src={(item as NewsItem & { image_url?: string | null }).image_url || '/news/education.svg'}
+                            src={newsImageFor(item)}
                             alt=""
                             loading="lazy"
                           />
