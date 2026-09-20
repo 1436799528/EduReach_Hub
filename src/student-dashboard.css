@@ -4,7 +4,7 @@
   min-height: 100vh;
   background: #FAF8FF;
   color: #131B2E;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--er-font-sans);
   display: flex;
   flex-direction: column;
 }

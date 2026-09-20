@@ -1,9 +1,15 @@
-/* ==========================================================================
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ========================================================================
    EduReach Hub — Official Color & Theme Design System
    Academic Blue + Institutional Navy + Crimson Action + Tangerine Energy
    ========================================================================== */
 
 :root {
+  /* 0. Shared Typography */
+  --er-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --er-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
   /* 1. Primary — Academic Crimson */
   --er-crimson: #D9381E;
   --er-crimson-deep: #B51D04;
@@ -45,6 +51,14 @@
   --er-error: #BA1A1A;
   --er-error-surface: #FFDAD6;
 
+  /* 9. Shared shape/shadow tokens */
+  --er-radius-sm: 6px;
+  --er-radius: 10px;
+  --er-radius-lg: 16px;
+  --er-radius-pill: 999px;
+  --er-shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.04);
+  --er-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+
   /* Legacy variable mapping to preserve system compatibility */
   --hub-bg: var(--er-bg);
   --hub-surface: var(--er-surface);
@@ -57,12 +71,181 @@
   --hub-green-soft: var(--er-success-soft);
   --hub-amber: var(--er-gold);
   --hub-amber-soft: var(--er-gold-soft);
+
+  /* Admin variable mapping so admin pages inherit the same styling language */
+  --admin-navy: var(--er-navy);
+  --admin-navy-2: var(--er-navy-soft);
+  --admin-orange: var(--er-crimson);
+  --admin-green: var(--er-success);
+  --admin-green-soft: var(--er-success-soft);
+  --admin-gold: var(--er-gold);
+  --admin-bg: var(--er-bg);
+  --admin-surface: var(--er-surface);
+  --admin-surface-2: var(--er-surface-soft);
+  --admin-border: var(--er-border);
+  --admin-text: var(--er-text-primary);
+  --admin-muted: var(--er-text-muted);
+  --admin-danger: var(--er-error);
+  --admin-shadow: var(--er-shadow-card);
 }
 
-/* Global body application */
-body {
+/* ------------------------------------------------------------------------
+   Global typography and page normalization
+   This file is imported last in src/main.tsx so every public, student, and
+   admin route inherits the same font stack, surface language, form controls,
+   focus rings, and button behavior.
+   ------------------------------------------------------------------------ */
+
+html {
+  font-family: var(--er-font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--er-bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body,
+#root {
+  min-height: 100vh;
+  margin: 0;
   background-color: var(--er-bg);
   color: var(--er-text-primary);
+  font-family: var(--er-font-sans) !important;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--er-font-sans) !important;
+}
+
+code,
+kbd,
+pre,
+samp,
+.mono,
+[style*="monospace"] {
+  font-family: var(--er-font-mono) !important;
+}
+
+:where(.hub-shell, .hub-page, .edureach-dash-container, .student-portal, .admin-shell, .admin-loading-screen, .service-track-page) {
+  font-family: var(--er-font-sans) !important;
+  color: var(--er-text-primary);
+}
+
+:where(.hub-shell, .hub-page, .edureach-dash-container, .student-portal, .admin-workspace, .service-track-page) {
+  background: var(--er-bg) !important;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  color: var(--er-navy);
+  letter-spacing: -0.015em;
+}
+
+:where(p, li, small, span) {
+  font-family: inherit;
+}
+
+:where(a) {
+  text-underline-offset: 3px;
+}
+
+:where(input, select, textarea) {
+  color: var(--er-text-primary) !important;
+  background-color: var(--er-surface) !important;
+  border-color: var(--er-border-strong) !important;
+  border-radius: var(--er-radius-sm) !important;
+}
+
+:where(input, select, textarea):focus {
+  border-color: var(--er-crimson) !important;
+  box-shadow: 0 0 0 3px rgba(217, 56, 30, 0.14) !important;
+  outline: 0 !important;
+}
+
+:where(.hub-search input, .hub-home-search input, .ms-search-input, .edureach-dash-search input, .student-search input) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+:where(.hub-search input, .hub-home-search input, .ms-search-input, .edureach-dash-search input, .student-search input):focus {
+  box-shadow: none !important;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(217, 56, 30, 0.24) !important;
+  outline-offset: 2px;
+}
+
+:where(button) {
+  font-family: var(--er-font-sans) !important;
+}
+
+:where(.hub-primary-btn, .wallet-pay-btn, .admin-btn, .student-btn, .edureach-dash-profile-btn, .edureach-dash-btn-icon) {
+  font-family: var(--er-font-sans) !important;
+}
+
+:where(.hub-panel, .dash-card, .student-card, .admin-card, .service-track-card, .ms-service-card, .ms-top-tile, .ms-news-row, .wallet-modal) {
+  border-color: var(--er-border) !important;
+  border-radius: var(--er-radius) !important;
+  box-shadow: var(--er-shadow-soft);
+}
+
+:where(.hub-eyebrow, .ms-ticker-badge, .dash-card-title, .admin-card-header h2, .admin-page-header h1) {
+  font-family: var(--er-font-sans) !important;
+}
+
+/* Admin pages previously mixed Sora/Montserrat. Force the single EduReach font. */
+.admin-shell :where(*:not(code):not(kbd):not(pre):not(samp):not(.mono)),
+.admin-loading-screen {
+  font-family: var(--er-font-sans) !important;
+}
+
+.admin-brand-mark {
+  background: linear-gradient(135deg, var(--er-crimson) 0%, var(--er-crimson-deep) 100%) !important;
+}
+
+.admin-nav-link.active {
+  box-shadow: inset 3px 0 0 var(--er-crimson) !important;
+}
+
+/* Legacy student portal stylesheet normalization */
+.student-brand > span:first-child,
+.wallet-modal-brand > span {
+  background: linear-gradient(135deg, var(--er-crimson) 0%, var(--er-crimson-deep) 100%) !important;
+}
+
+.student-brand-suffix,
+.student-table a,
+.card-title-row a,
+.support-link,
+.campus-feed article > span,
+.campus-feed button {
+  color: var(--er-crimson) !important;
+}
+
+.student-btn-green,
+.wallet-mini b {
+  background: var(--er-crimson) !important;
+}
+
+.quick-blue,
+.quick-green,
+.quick-amber,
+.quick-slate {
+  background: var(--er-surface-soft) !important;
+  border-color: var(--er-border) !important;
+  color: var(--er-text-primary) !important;
 }
 
 /* Primary buttons and CTAs */

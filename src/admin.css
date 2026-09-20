@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700&family=Sora:wght@600;700;800&display=swap');
-
 :root {
   --admin-navy: #0f172a;
   --admin-navy-2: #131b2e;
@@ -22,7 +20,7 @@
   display: flex;
   color: var(--admin-text);
   background: var(--admin-bg);
-  font-family: Inter, sans-serif;
+  font-family: var(--er-font-sans);
 }
 
 .admin-sidebar {

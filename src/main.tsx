@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import PwaRegister from './components/PwaRegister';
-import './styles/theme.css';
 import './hub.css';
 import './card-system.css';
 import './hub-portal-tuning.css';
@@ -13,6 +12,7 @@ import './compact-portal.css';
 import './image-card-system.css';
 import './home-card-first.css';
 import './myschool-clean.css';
+import './styles/theme.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
