@@ -113,39 +113,20 @@ export default function NewsPage() {
             <div className="hub-news-feed" style={{ display: 'grid', gap: '10px' }}>
               {filteredItems.map((item) => (
                 <a
-                  className="hub-news-feed-row hub-click-card"
+                  className="hub-news-feed-row hub-click-card ms-news-row"
                   href={'/news/' + encodeURIComponent(item.slug)}
                   key={item.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '14px',
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    background: '#ffffff',
-                    textDecoration: 'none',
-                    color: '#0f172a',
-                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
-                  }}
                 >
-                  <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
+                  <div className="hub-news-thumb ms-news-thumb" style={{ flexShrink: 0 }}>
                     <img src={newsImageFor(item)} alt="" loading="lazy" />
                   </div>
-                  <div className="hub-feed-main" style={{ flex: 1, minWidth: 0 }}>
-                    <div className="hub-news-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>
-                      <span>
-                        {labelFor(item.category)}
-                      </span>
+                  <div className="hub-feed-main ms-news-main" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="hub-news-meta ms-news-meta">
+                      <span>{labelFor(item.category)}</span>
                       <span>•</span>
                       <span>{formatDate(item.published_at)}</span>
-                      <span>•</span>
-                      
                     </div>
-                    <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
-                      {item.title}
-                    </h2>
-                    
+                    <h2>{item.title}</h2>
                   </div>
                   <ArrowRight size={15} className="hub-compact-arrow" style={{ color: '#cbd5e1', flexShrink: 0 }} />
                 </a>
