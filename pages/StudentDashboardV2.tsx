@@ -182,6 +182,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [services, setServices] = useState<ServiceRow[]>([]);
+  const [institutions, setInstitutions] = useState<Array<{ id: string; school_name: string; acronym?: string | null; state?: string | null; institution_type?: string | null; website_url?: string | null }>>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [wallet, setWallet] = useState<WalletState | null>(null);
@@ -292,7 +293,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         });
 
         setServices([]);
-        setRequests(readLocalServiceRequests());
+        setInstitutions([]);
+        setRequests([]);
         setWallet(null);
         setSavedItems(emptySavedItems);
         setAccessedServices(readAccessedServices());
@@ -313,6 +315,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       const [
         profileResult,
         serviceResult,
+        institutionResult,
         requestResult,
         walletResult,
         attemptsResult,
@@ -322,6 +325,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
+        supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url').order('school_name').limit(329),
         supabase.from('service_requests').select('id,status,form_data,created_at,reference_code,service_id').eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
         supabase.from('student_wallets').select('balance,currency').eq('user_id', user.id).maybeSingle(),
         supabase.from('cbt_attempts').select('id,score,correct_answers,total_questions,submitted_at,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
@@ -331,12 +335,21 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       ]);
 
       if (!active) return;
+      const metadataRole = String(currentSession.user.app_metadata?.role || currentSession.user.user_metadata?.role || '').toLowerCase();
       if (profileResult.data) {
         setProfile(profileResult.data as Profile);
         setMfaEnabled(Boolean(profileResult.data.mfa_enabled));
+      } else {
+        setProfile({
+          full_name: currentSession.user.user_metadata?.full_name || currentSession.user.email?.split('@')[0] || 'Student',
+          school: '', course_programme: '', faculty: '', department: '', level: '', matric_number: null,
+          role: metadataRole || 'student', phone: '', jamb_reg_no: '', target_exam: '', academic_interests: [], avatar_url: null,
+        });
       }
+
       if (profileResult.error) setError('We could not load your profile. Please refresh or update your academic profile.');
       setServices((serviceResult.data || []) as ServiceRow[]);
+      setInstitutions((institutionResult.data || []) as typeof institutions);
       setRequests((requestResult.data || []) as RequestRow[]);
       if (walletResult.data) setWallet({ balance: Number(walletResult.data.balance), currency: walletResult.data.currency });
       setAttempts((attemptsResult.data || []) as Attempt[]);
@@ -523,7 +536,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           createdAt: new Date().toISOString(),
           courses: cgpaCourses,
         });
-        setCgpaSaveMessage('CGPA snapshot saved locally for this account session.');
+        setCgpaSaveMessage('CGPA is available in preview mode only. Sign in with Supabase to save it to your student account.');
         return;
       }
 
@@ -607,37 +620,19 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const itemKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-  // School Finder list
-  const schoolsList = [
-    { name: 'University of Lagos (UNILAG)', state: 'Lagos', type: 'Federal University', founded: '1962', url: 'https://unilag.edu.ng' },
-    { name: 'University of Calabar (UNICAL)', state: 'Cross River', type: 'Federal University', founded: '1975', url: 'https://unical.edu.ng' },
-    { name: 'University of Ibadan (UI)', state: 'Oyo', type: 'Federal University', founded: '1948', url: 'https://ui.edu.ng' },
-    { name: 'Obafemi Awolowo University (OAU)', state: 'Osun', type: 'Federal University', founded: '1961', url: 'https://oauife.edu.ng' },
-    { name: 'Ahmadu Bello University (ABU)', state: 'Kaduna', type: 'Federal University', founded: '1962', url: 'https://abu.edu.ng' },
-    { name: 'University of Nigeria, Nsukka (UNN)', state: 'Enugu', type: 'Federal University', founded: '1960', url: 'https://unn.edu.ng' },
-    { name: 'Lagos State University (LASU)', state: 'Lagos', type: 'State University', founded: '1983', url: 'https://lasu.edu.ng' },
-    { name: 'Yaba College of Technology (YABATECH)', state: 'Lagos', type: 'Polytechnic', founded: '1947', url: 'https://yabatech.edu.ng' },
-    { name: 'Federal University of Technology, Akure (FUTA)', state: 'Ondo', type: 'Federal University', founded: '1981', url: 'https://futa.edu.ng' },
-  ];
-
-  const filteredSchools = schoolsList.filter((s) => {
-    const matchQuery = s.name.toLowerCase().includes(schoolFilterQuery.toLowerCase()) || s.state.toLowerCase().includes(schoolFilterQuery.toLowerCase());
+  // School Finder uses the verified institution directory from Supabase.
+  const filteredSchools = institutions.filter((school) => {
+    const haystack = [school.school_name, school.acronym, school.state].filter(Boolean).join(' ').toLowerCase();
+    const matchQuery = haystack.includes(schoolFilterQuery.toLowerCase());
     if (schoolTypeFilter === 'ALL') return matchQuery;
-    return matchQuery && s.type.toLowerCase().includes(schoolTypeFilter.toLowerCase());
+    return matchQuery && String(school.institution_type || '').toLowerCase().includes(schoolTypeFilter.toLowerCase());
   });
 
-  // Course Finder list
-  const coursesList = [
-    { name: 'Computer Science', faculty: 'Science', cutOff: 240, utme: 'English, Maths, Physics, Chemistry', olevel: '5 Credits incl. English & Maths' },
-    { name: 'Medicine and Surgery', faculty: 'Clinical Sciences', cutOff: 275, utme: 'English, Biology, Chemistry, Physics', olevel: '5 Credits in Science subjects' },
-    { name: 'Commercial Law', faculty: 'Law', cutOff: 260, utme: 'English, Literature, CRK/Govt, Any Art', olevel: '5 Credits incl. Lit in English' },
-    { name: 'Accounting', faculty: 'Management', cutOff: 220, utme: 'English, Maths, Economics, Govt/Commerce', olevel: '5 Credits incl. Maths & English' },
-    { name: 'Nursing Science', faculty: 'Allied Health', cutOff: 250, utme: 'English, Biology, Chemistry, Physics', olevel: '5 Credits in Sciences' },
-    { name: 'Mechanical Engineering', faculty: 'Engineering', cutOff: 235, utme: 'English, Maths, Physics, Chemistry', olevel: '5 Credits incl. Maths & Physics' },
-  ];
-
-  const filteredCourses = coursesList.filter((c) =>
-    c.name.toLowerCase().includes(courseFilterQuery.toLowerCase()) || c.faculty.toLowerCase().includes(courseFilterQuery.toLowerCase())
+  // Course Finder must not display fabricated cut-offs or requirements. Until the academic
+  // course directory is populated, show an honest empty state rather than mock records.
+  const coursesList: Array<{ name: string; faculty: string; cutOff: number; utme: string; olevel: string }> = [];
+  const filteredCourses = coursesList.filter((course) =>
+    course.name.toLowerCase().includes(courseFilterQuery.toLowerCase()) || course.faculty.toLowerCase().includes(courseFilterQuery.toLowerCase())
   );
 
   const navigateInApp = (path: string) => {
@@ -1009,13 +1004,16 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           </button>
 
           {profile?.role && ['admin', 'super_admin', 'moderator'].includes(String(profile.role).toLowerCase()) && (
-            <a
-              href="/admin"
-              className="edureach-nav-item"
-              style={{ marginTop: '6px', color: '#b91c1c', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
-            >
-              <Shield size={15} /> Admin Panel
-            </a>
+            <div className="edureach-admin-nav-group" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+              <a href="/admin" className="edureach-nav-item" style={{ color: '#b91c1c', fontWeight: 800 }}>
+                <Shield size={15} /> Admin Panel
+              </a>
+              <a href="/admin/analytics" className="edureach-nav-item edureach-admin-subitem">Analytics &amp; Reports</a>
+              <a href="/admin/queue" className="edureach-nav-item edureach-admin-subitem">Service Queue</a>
+              <a href="/admin/cbt" className="edureach-nav-item edureach-admin-subitem">CBT Question Bank</a>
+              <a href="/admin/vouchers" className="edureach-nav-item edureach-admin-subitem">Scratch Card Inventory</a>
+              <a href="/admin/users" className="edureach-nav-item edureach-admin-subitem">Student Accounts</a>
+            </div>
           )}
         </aside>
 
