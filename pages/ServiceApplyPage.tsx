@@ -212,40 +212,18 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     <HubLayout>
       <div className="hub-page" style={{ padding: '24px 0 60px' }}>
         <div className="hub-container" style={{ maxWidth: '760px' }}>
-          {/* SERVICE TITLE HEADER */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                OFFICIAL APPLICATION FORM
-              </span>
-              {service.application_url && (
-                <a
-                  className="hub-outline-btn"
-                  href={service.application_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ fontSize: '11px', padding: '4px 10px' }}
-                >
-                  Official Portal <ExternalLink size={13} />
-                </a>
-              )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+              <CardIdentityMark value={service.service_key + ' ' + service.title} type="service" size="sm" />
+              <h1 style={{ fontSize: '19px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                {service.title}
+              </h1>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
-              <CardIdentityMark value={service.service_key} type="service" size="lg" />
-              <div>
-                <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                  {service.title}
-                </h1>
-                <span style={{ fontSize: '11px', color: '#059669', fontWeight: 800 }}>
-                  Verified EduReach Digital Processing
-                </span>
-              </div>
-            </div>
-
-            <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-              {service.description}
-            </p>
+            {service.application_url && (
+              <a className="hub-outline-btn" href={service.application_url} target="_blank" rel="noreferrer" style={{ fontSize: '11px', padding: '5px 9px' }}>
+                Official Portal <ExternalLink size={12} />
+              </a>
+            )}
           </div>
 
           {/* SESSION BANNER */}
