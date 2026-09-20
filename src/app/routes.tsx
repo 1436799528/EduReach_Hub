@@ -20,6 +20,7 @@ import AdminCbtPage from '../../pages/AdminCbtPage';
 import AdminVouchersPage from '../../pages/AdminVouchersPage';
 import AdminUsersPage from '../../pages/AdminUsersPage';
 import NotFoundPage from '../../pages/NotFoundPage';
+import ExamHubPage from '../../pages/ExamHubPage';
 import ProtectedRoute from './ProtectedRoute';
 
 function protectedDashboard(initialTab: DashboardTab = 'dashboard', openSettings = false): ReactElement {
@@ -82,6 +83,10 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/users') return <AdminUsersPage />;
 
   if (path === '/') return <HubHomePage />;
+  if (path === '/jamb') return <ExamHubPage exam="jamb" />;
+  if (path === '/waec') return <ExamHubPage exam="waec" />;
+  if (path === '/neco') return <ExamHubPage exam="neco" />;
+  if (path === '/post-utme') return <ExamHubPage exam="post-utme" />;
   if (path === '/cbt' || path === '/past-questions') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
   if (path === '/cbt/results') return protectedCbtResult();
