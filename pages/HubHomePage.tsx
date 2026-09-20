@@ -1,12 +1,46 @@
-import { ArrowRight, Calendar, Search, ChevronRight } from 'lucide-react';
+import { ArrowRight, Calendar, ChevronRight, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
-import { services } from '../src/data/services';
+import { services, type ServiceDefinition } from '../src/data/services';
 import { fetchNews, fetchUpcoming, type NewsItem, type UpcomingItem } from '../src/lib/api';
 
-const quickKeys = ['jamb','jamb-cbt','waec','neco','nabteb','past-questions','nelfund','scholarships','school-finder','course-finder','admission-requirements','cgpa-calculator'];
-const examKeys = ['jamb-cbt','past-questions','waec','neco'];
+const service = (key: string) => services.find((item) => item.key === key);
+
+const examModules = [
+  {
+    key: 'jamb',
+    title: 'JAMB',
+    route: '/jamb',
+    logo: '/icons/brands/jamb.png',
+    intro: 'UTME, CAPS, results and admission resources',
+    links: ['JAMB CBT', 'JAMB Result', 'CAPS & Admission', 'Syllabus & Brochure', 'Past Questions'],
+  },
+  {
+    key: 'waec',
+    title: 'WAEC',
+    route: '/waec',
+    logo: '/icons/brands/waec.png',
+    intro: 'SSCE results, preparation and examination resources',
+    links: ['WAEC Result', 'WAEC CBT', 'Timetable', 'Syllabus', 'Past Questions'],
+  },
+  {
+    key: 'neco',
+    title: 'NECO',
+    route: '/neco',
+    logo: '/icons/brands/neco.png',
+    intro: 'NECO results, preparation and examination information',
+    links: ['NECO Result', 'NECO CBT', 'Timetable', 'Registration', 'Past Questions'],
+  },
+  {
+    key: 'post-utme',
+    title: 'Post-UTME',
+    route: '/post-utme',
+    logo: '/icons/brands/jamb.png',
+    intro: 'University screening, forms and admission preparation',
+    links: ['Screening Information', 'Universities', 'Past Questions', 'CBT Practice', 'Admission Updates'],
+  },
+];
 
 function formatDate(value: string | null) {
   if (!value) return 'Recent';
@@ -15,7 +49,6 @@ function formatDate(value: string | null) {
 
 function newsImageFor(item: NewsItem) {
   const category = item.category.toLowerCase();
-  if (category.includes('admission')) return '/icons/admission.svg';
   if (category.includes('jamb')) return '/icons/brands/jamb.png';
   if (category.includes('waec')) return '/icons/brands/waec.png';
   if (category.includes('neco')) return '/icons/brands/neco.png';
@@ -23,28 +56,40 @@ function newsImageFor(item: NewsItem) {
   return '/news/education.svg';
 }
 
-function serviceCard(key: string) {
-  return services.find((item) => item.key === key);
-}
-
-function CompactService({ service }: { service: NonNullable<ReturnType<typeof serviceCard>> }) {
+function LinkTile({ item }: { item: ServiceDefinition }) {
   return (
-    <a className="er-tile" href={service.route}>
-      <CardIdentityMark value={service.title} type="service" size="sm" />
-      <span className="er-tile-copy">
-        <strong>{service.title}</strong>
-        <small>{service.description}</small>
-      </span>
-      <ChevronRight size={13} className="er-tile-arrow" />
+    <a className="er-mini-link" href={item.route}>
+      <CardIdentityMark value={item.title} type="service" size="sm" />
+      <span>{item.title}</span>
+      <ChevronRight size={13} />
     </a>
   );
 }
 
-function CompactNews({ item }: { item: NewsItem }) {
+function ExamModule({ module }: { module: typeof examModules[number] }) {
+  return (
+    <section className="er-exam-module">
+      <a href={module.route} className="er-exam-head">
+        <span className="er-exam-logo"><img src={module.logo} alt="" /></span>
+        <span className="er-exam-heading">
+          <strong>{module.title}</strong>
+          <small>{module.intro}</small>
+        </span>
+        <ChevronRight size={17} />
+      </a>
+      <div className="er-exam-links">
+        {module.links.map((link) => <a href={module.route} key={link}>{link}</a>)}
+      </div>
+      <a href={module.route} className="er-module-more">Open {module.title} <ArrowRight size={12} /></a>
+    </section>
+  );
+}
+
+function NewsRow({ item }: { item: NewsItem }) {
   return (
     <a className="er-news-row" href={`/news/${encodeURIComponent(item.slug)}`}>
       <img src={newsImageFor(item)} alt="" loading="lazy" />
-      <span className="er-news-copy">
+      <span>
         <small>{item.category.replace('_', ' ')} · {formatDate(item.published_at)}</small>
         <strong>{item.title}</strong>
       </span>
@@ -53,7 +98,7 @@ function CompactNews({ item }: { item: NewsItem }) {
   );
 }
 
-function CompactDeadline({ item }: { item: UpcomingItem }) {
+function Deadline({ item }: { item: UpcomingItem }) {
   const date = item.due_at || item.starts_at;
   return (
     <div className="er-deadline">
@@ -61,10 +106,7 @@ function CompactDeadline({ item }: { item: UpcomingItem }) {
         <strong>{date ? new Date(date).getDate() : '—'}</strong>
         <small>{date ? new Date(date).toLocaleDateString('en-NG', { month: 'short' }) : 'Soon'}</small>
       </div>
-      <div>
-        <small>{item.kind}</small>
-        <strong>{item.title}</strong>
-      </div>
+      <span><small>{item.kind}</small><strong>{item.title}</strong></span>
     </div>
   );
 }
@@ -73,7 +115,6 @@ export default function HubHomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('all');
 
   useEffect(() => {
     let active = true;
@@ -82,85 +123,99 @@ export default function HubHomePage() {
     return () => { active = false; };
   }, []);
 
-  const filteredNews = useMemo(() => {
-    if (category === 'all') return news;
-    return news.filter((item) => item.category.toLowerCase().includes(category));
-  }, [news, category]);
-
-  const quickServices = quickKeys.map(serviceCard).filter(Boolean) as NonNullable<ReturnType<typeof serviceCard>>[];
-  const examServices = examKeys.map(serviceCard).filter(Boolean) as NonNullable<ReturnType<typeof serviceCard>>[];
+  const quick = useMemo(
+    () => ['past-questions', 'jamb-cbt', 'nelfund', 'scholarships'].map(service).filter(Boolean) as ServiceDefinition[],
+    [],
+  );
+  const admission = useMemo(
+    () => ['school-finder', 'course-finder', 'admission-requirements', 'admission-consultation'].map(service).filter(Boolean) as ServiceDefinition[],
+    [],
+  );
+  const tools = useMemo(
+    () => ['cgpa-calculator', 'gpa-calculator', 'course-registration', 'timetable'].map(service).filter(Boolean) as ServiceDefinition[],
+    [],
+  );
 
   return (
     <HubLayout>
       <div className="er-portal">
         <div className="er-container">
           <div className="er-notice">
-            <span>NOTICE</span>
-            <p>JAMB, admission, examination and student-service updates in one place.</p>
+            <span>EDUREACH</span>
+            <p>JAMB, WAEC, NECO, Post-UTME, admission and student updates.</p>
             <a href="/news">Noticeboard <ArrowRight size={12} /></a>
           </div>
 
-          <div className="er-search">
+          <form className="er-search" onSubmit={(e) => {
+            e.preventDefault();
+            if (search.trim()) window.location.href = `/services?q=${encodeURIComponent(search.trim())}`;
+          }}>
             <Search size={16} />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search schools, courses, JAMB, WAEC, scholarships..." />
-            {search.trim() && <a href={`/services?q=${encodeURIComponent(search.trim())}`}>Search</a>}
-          </div>
+            <button type="submit">Search</button>
+          </form>
 
           <a href="/past-questions" className="er-banner">
-            <div className="er-banner-mark"><CardIdentityMark value="Past Question Bank" type="service" size="sm" /></div>
-            <div><small>EDUREACH STUDY CENTRE</small><strong>Past Questions, CBT Practice &amp; Exam Preparation</strong><p>Practice by examination, subject and year.</p></div>
+            <div className="er-banner-art">
+              <img src="/icons/services/past-questions.svg" alt="" />
+            </div>
+            <div>
+              <small>EDUREACH STUDY CENTRE</small>
+              <strong>Past Questions &amp; CBT Practice</strong>
+              <p>Prepare by examination, subject, school and year.</p>
+            </div>
             <ArrowRight size={18} />
           </a>
 
           <section className="er-section">
-            <div className="er-section-head"><h2>Quick Access</h2><a href="/services">All services <ArrowRight size={12} /></a></div>
-            <div className="er-quick-grid">{quickServices.map((service) => <CompactService key={service.key} service={service} />)}</div>
+            <div className="er-section-head">
+              <h2>Examinations &amp; Admission</h2>
+              <a href="/services">More <ArrowRight size={12} /></a>
+            </div>
+            <div className="er-exam-grid">
+              {examModules.map((module) => <ExamModule key={module.key} module={module} />)}
+            </div>
           </section>
 
           <section className="er-section">
-            <div className="er-section-head"><h2>CBT &amp; Exam Preparation</h2><a href="/cbt">Open CBT <ArrowRight size={12} /></a></div>
-            <div className="er-exam-grid">{examServices.map((service) => <CompactService key={service.key} service={service} />)}</div>
+            <div className="er-section-head">
+              <h2>Take a Test</h2>
+              <a href="/cbt">Open CBT <ArrowRight size={12} /></a>
+            </div>
+            <div className="er-test-strip">
+              {['jamb-cbt', 'past-questions', 'waec', 'neco'].map((key) => {
+                const item = service(key);
+                return item ? <LinkTile key={key} item={item} /> : null;
+              })}
+            </div>
           </section>
 
           <div className="er-two-col">
             <section className="er-section">
-              <div className="er-section-head"><h2>Latest News</h2><a href="/news">View all <ArrowRight size={12} /></a></div>
-              <div className="er-list-tabs">
-                {['all','jamb','admission','waec'].map((tab) => <button key={tab} className={category === tab ? 'active' : ''} onClick={() => setCategory(tab)}>{tab === 'all' ? 'All' : tab.toUpperCase()}</button>)}
-              </div>
+              <div className="er-section-head"><h2>Latest Educational News</h2><a href="/news">View all <ArrowRight size={12} /></a></div>
               <div className="er-news-list">
-                {filteredNews.slice(0, 7).map((item) => <CompactNews key={item.id} item={item} />)}
-                {!filteredNews.length && <div className="er-empty">No news available.</div>}
+                {news.slice(0, 6).map((item) => <NewsRow key={item.id} item={item} />)}
+                {!news.length && <div className="er-empty">News updates will appear here.</div>}
               </div>
             </section>
 
             <section className="er-section">
               <div className="er-section-head"><h2>Upcoming</h2><a href="/news">Calendar <ArrowRight size={12} /></a></div>
               <div className="er-deadline-list">
-                {upcoming.slice(0, 6).map((item) => <CompactDeadline key={item.id} item={item} />)}
+                {upcoming.slice(0, 6).map((item) => <Deadline key={item.id} item={item} />)}
                 {!upcoming.length && <div className="er-empty"><Calendar size={15} /> Verified deadlines will appear here.</div>}
               </div>
             </section>
           </div>
 
           <section className="er-section">
-            <div className="er-section-head"><h2>Student Resources</h2><a href="/services">Explore <ArrowRight size={12} /></a></div>
-            <div className="er-resource-grid">
-              {['cgpa-calculator','gpa-calculator','course-registration','timetable','academic-calendar','exam-countdown','school-fees','support'].map((key) => {
-                const service = serviceCard(key);
-                return service ? <CompactService key={key} service={service} /> : null;
-              })}
-            </div>
+            <div className="er-section-head"><h2>Admission &amp; Schools</h2><a href="/admission">Explore <ArrowRight size={12} /></a></div>
+            <div className="er-link-grid">{admission.map((item) => <LinkTile key={item.key} item={item} />)}</div>
           </section>
 
           <section className="er-section">
-            <div className="er-section-head"><h2>Admission &amp; Funding</h2><a href="/admission">Explore <ArrowRight size={12} /></a></div>
-            <div className="er-resource-grid">
-              {['admission-consultation','school-finder','course-finder','admission-requirements','nelfund','scholarships'].map((key) => {
-                const service = serviceCard(key);
-                return service ? <CompactService key={key} service={service} /> : null;
-              })}
-            </div>
+            <div className="er-section-head"><h2>Student Tools &amp; Funding</h2><a href="/services">Explore <ArrowRight size={12} /></a></div>
+            <div className="er-link-grid">{[...tools, ...quick].map((item) => <LinkTile key={item.key} item={item} />)}</div>
           </section>
         </div>
       </div>
