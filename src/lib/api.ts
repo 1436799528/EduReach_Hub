@@ -159,10 +159,14 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 export async function fetchServices(): Promise<ServiceItem[]> {
   if (isSupabaseConfigured) {
     try {
-      const body = await jsonFetch<{ items: ServiceItem[] }>('/api/services');
-      if (body.items?.length) return body.items;
+      const { data, error } = await supabase
+        .from('service_catalog')
+        .select('id,service_key,title,description,application_url,active')
+        .eq('active', true)
+        .order('title');
+      if (!error && data?.length) return data as ServiceItem[];
     } catch {
-      // Backend offline / not configured
+      // fallback
     }
   }
   return fallbackServicesCatalog;
@@ -171,10 +175,15 @@ export async function fetchServices(): Promise<ServiceItem[]> {
 export async function fetchService(slug: string): Promise<ServiceItem> {
   if (isSupabaseConfigured) {
     try {
-      const body = await jsonFetch<{ item: ServiceItem }>(`/api/services/${encodeURIComponent(slug)}`);
-      if (body.item) return body.item;
+      const { data, error } = await supabase
+        .from('service_catalog')
+        .select('id,service_key,title,description,application_url,active')
+        .eq('service_key', slug)
+        .eq('active', true)
+        .maybeSingle();
+      if (!error && data) return data as ServiceItem;
     } catch {
-      // Backend offline / not configured
+      // fallback
     }
   }
   const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
@@ -182,7 +191,7 @@ export async function fetchService(slug: string): Promise<ServiceItem> {
   return {
     id: `srv-${slug}`,
     service_key: slug,
-    title: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    title: slug.replace(/-/g, ' ').replace(/\\b\\w/g, (c) => c.toUpperCase()),
     description: 'Comprehensive student service assistance and documentation support.',
     application_url: null,
     active: true,
@@ -218,15 +227,20 @@ export async function fetchCbtExams() {
 }
 
 export async function startCbt(examId: string): Promise<CbtStartResponse> {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      return await jsonFetch<CbtStartResponse>(`/api/cbt/exams/${encodeURIComponent(examId)}/start`, { method: 'POST', headers });
-    }
-  } catch {
-    // fallback
+  if (isSupabaseConfigured) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Please sign in before starting this CBT practice session.');
+
+    const { data, error } = await supabase.rpc('start_cbt_attempt', { p_exam_id: examId });
+    if (error || !data?.length) throw new Error(error?.message || 'Unable to start this CBT practice session.');
+    const row = data[0];
+    return {
+      attemptId: row.attempt_id,
+      startedAt: row.started_at,
+      expiresAt: row.expires_at,
+      totalQuestions: row.total_questions,
+    };
   }
-  if (isSupabaseConfigured) throw new Error('Please sign in before starting this CBT practice session.');
 
   return {
     attemptId: `local-cbt-${examId}-${Date.now()}`,
@@ -237,22 +251,24 @@ export async function startCbt(examId: string): Promise<CbtStartResponse> {
 }
 
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      return await jsonFetch<CbtSubmitResponse>('/api/cbt/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify(payload),
-      });
-    }
-  } catch {
-    // fallback
+  if (isSupabaseConfigured) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Please sign in before submitting this CBT practice session.');
+
+    const { data, error } = await supabase.rpc('submit_cbt_attempt', {
+      p_attempt_id: payload.attemptId,
+      p_exam_id: payload.examId,
+      p_answers: payload.answers,
+    });
+    if (error || !data?.length) throw new Error(error?.message || 'CBT submission failed.');
+    const row = data[0];
+    return {
+      attemptId: row.attempt_id,
+      score: Number(row.score),
+      breakdown: row.breakdown || [],
+    };
   }
 
-  if (isSupabaseConfigured) throw new Error('Please sign in before submitting this CBT practice session.');
-
-  // Local scoring for frontend practice mode
   let correctCount = 0;
   const breakdown = practiceQuestions.map((q) => {
     const selected = payload.answers[q.id] ?? null;
@@ -302,20 +318,25 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
     // localStorage may be disabled
   }
 
-  return {
-    attemptId: payload.attemptId,
-    score,
-    breakdown,
-  };
+  return { attemptId: payload.attemptId, score, breakdown };
 }
 
 export async function fetchCbtQuestions(examId: string) {
   if (isSupabaseConfigured) {
     try {
-      const body = await jsonFetch<{ exam: { id: string; title: string; durationMinutes: number; subject: string }; questions: Array<{ id: number; text: string; options: string[] }> }>(
-        `/api/cbt/exams/${encodeURIComponent(examId)}/questions`,
-      );
-      if (body?.questions?.length) return body;
+      const { data: exam, error: examError } = await supabase
+        .from('cbt_exams')
+        .select('id,title,duration_minutes,subject')
+        .eq('id', examId)
+        .eq('is_active', true)
+        .maybeSingle();
+      const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
+      if (!examError && !questionError && exam && questions?.length) {
+        return {
+          exam: { id: exam.id, title: exam.title, durationMinutes: exam.duration_minutes, subject: exam.subject },
+          questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
+        };
+      }
     } catch {
       // fallback
     }
@@ -323,12 +344,7 @@ export async function fetchCbtQuestions(examId: string) {
 
   const examMeta = fallbackCbtExams.find((e) => e.id === examId) || fallbackCbtExams[0];
   return {
-    exam: {
-      id: examId,
-      title: examMeta.title,
-      durationMinutes: examMeta.duration_minutes,
-      subject: examMeta.subject,
-    },
+    exam: { id: examId, title: examMeta.title, durationMinutes: examMeta.duration_minutes, subject: examMeta.subject },
     questions: practiceQuestions,
   };
 }
@@ -441,19 +457,20 @@ export async function trackService(referenceCode: string) {
 
   if (isSupabaseConfigured) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('service_requests')
-          .select('id, reference_code, status, created_at, form_data, service_catalog(title, service_key)')
-          .eq('reference_code', normalized)
-          .maybeSingle();
-        if (!error && data) {
-          const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4, rejected: 4, cancelled: 4 };
-          const current = stageMap[data.status] ?? 1;
-          const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
-          return { ...data, timeline: labels.map((label, index) => ({ label, done: index < current })) };
-        }
+      const { data, error } = await supabase.rpc('get_public_service_request', { p_reference_code: normalized });
+      if (!error && data?.length) {
+        const row = data[0];
+        const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4, rejected: 4, cancelled: 4 };
+        const current = stageMap[row.status] ?? 1;
+        const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
+        return {
+          id: row.id,
+          reference_code: row.reference_code,
+          status: row.status,
+          created_at: row.created_at,
+          service_catalog: { title: row.service_title, service_key: row.service_key },
+          timeline: labels.map((label, index) => ({ label, done: index < current })),
+        };
       }
     } catch {
       // fallback
@@ -461,7 +478,6 @@ export async function trackService(referenceCode: string) {
   }
 
   if (!isSupabaseConfigured) {
-    // Check locally saved requests created from real submitted forms.
     try {
       const saved = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
       const match = saved.find((r: any) => r.reference_code === normalized);
