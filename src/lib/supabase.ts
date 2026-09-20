@@ -1,16 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY) as string | undefined;
+const env = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env
+  : (typeof process !== 'undefined' ? process.env : {});
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('EduReach is missing VITE_SUPABASE_URL and a public Supabase key. Configure the environment before starting the app.');
-}
+const supabaseUrl = (env.VITE_SUPABASE_URL || env.SUPABASE_URL) as string | undefined;
+const supabaseKey = (env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY) as string | undefined;
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+
+// In frontend-first / preview environments without active Supabase credentials,
+// provide a resilient fallback client so the bundle doesn't crash on initial load.
+const effectiveUrl = supabaseUrl || 'https://mock-edureach.supabase.co';
+const effectiveKey = supabaseKey || 'mock-anon-key-frontend-preview';
+
+export const supabase = createClient(effectiveUrl, effectiveKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
 });
+

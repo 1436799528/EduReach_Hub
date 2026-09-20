@@ -1,5 +1,5 @@
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight, CheckCircle2, Search, ShieldCheck } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
@@ -8,6 +8,8 @@ export default function ServicesCatalogPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState('ALL');
 
   useEffect(() => {
     void fetchServices()
@@ -16,32 +18,193 @@ export default function ServicesCatalogPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  return <HubLayout><div className="hub-page"><div className="hub-container">
-    <div className="hub-section-heading hub-page-heading-compact">
-      <div><span className="hub-eyebrow">STUDENT SERVICES</span><h1>Services</h1><p>Common student tasks, kept compact and easy to open.</p></div>
-      <a className="hub-outline-btn" href="/services/track">Track Request</a>
-    </div>
+  const filteredServices = useMemo(() => {
+    return services.filter((srv) => {
+      const q = search.trim().toLowerCase();
+      const matchSearch =
+        !q || srv.title.toLowerCase().includes(q) || srv.description.toLowerCase().includes(q);
+      if (!matchSearch) return false;
+      if (activeFilter === 'ALL') return true;
+      if (activeFilter === 'LOAN') return srv.service_key.includes('nelfund') || srv.service_key.includes('loan');
+      if (activeFilter === 'EXAMS')
+        return (
+          srv.service_key.includes('waec') ||
+          srv.service_key.includes('neco') ||
+          srv.service_key.includes('result') ||
+          srv.service_key.includes('scratch')
+        );
+      if (activeFilter === 'ADMISSION')
+        return (
+          srv.service_key.includes('admission') ||
+          srv.service_key.includes('slip') ||
+          srv.service_key.includes('jamb')
+        );
+      return true;
+    });
+  }, [services, search, activeFilter]);
 
-    {loading && <div className="hub-panel hub-empty">Loading services…</div>}
-    {error && <div className="hub-form-error">{error}</div>}
-    {!loading && !error && !services.length && <div className="hub-panel hub-empty">No student services are available yet.</div>}
+  return (
+    <HubLayout>
+      <div className="hub-page" style={{ padding: '20px 0 60px' }}>
+        <div className="hub-container">
+          {/* COMPACT HEADER (NO LARGE HERO) */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginBottom: '20px',
+              paddingBottom: '14px',
+              borderBottom: '2px solid #059669',
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#059669',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  display: 'block',
+                  marginBottom: '2px',
+                }}
+              >
+                OFFICIAL SERVICES CATALOGUE
+              </span>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                Verified Student Services &amp; Scratch Cards
+              </h1>
+            </div>
 
-    {!loading && !error && <div className="hub-service-catalog-grid hub-service-profile-grid">
-      {services.map((service) => (
-        <a
-          className="hub-service-profile-card hub-service-catalog-card hub-click-card"
-          href={'/services/apply/' + service.service_key}
-          key={service.id}
-        >
-          <div className="hub-service-profile-icon"><CardIdentityMark value={service.service_key} type="service" /></div>
-          <div className="hub-service-profile-body">
-            <div className="hub-service-card-meta"><span>EDUREACH SERVICE</span>{service.application_url && <span>Portal link</span>}</div>
-            <h2>{service.title}</h2>
-            <p>{service.description}</p>
+            <a
+              className="hub-outline-btn"
+              href="/services/track"
+              style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
+            >
+              Track Existing Request →
+            </a>
           </div>
-          <ArrowRight size={18} className="hub-compact-arrow" />
-        </a>
-      ))}
-    </div>}
-  </div></div></HubLayout>;
+
+          {/* SEARCH & CATEGORY FILTER */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '22px',
+              background: '#ffffff',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
+              <Search size={18} style={{ color: '#059669' }} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search services (e.g. NELFUND, Scratch card, JAMB slip)..."
+                style={{ border: 0, outline: 0, width: '100%', fontSize: '13px', color: '#0f172a' }}
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  style={{ border: 0, background: 'none', color: '#64748b', cursor: 'pointer', fontSize: '16px' }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { id: 'ALL', label: 'All Services' },
+                { id: 'LOAN', label: 'NELFUND Loans' },
+                { id: 'EXAMS', label: 'Result & Scratch Cards' },
+                { id: 'ADMISSION', label: 'Admission Letters' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setActiveFilter(cat.id)}
+                  style={{
+                    border: '1px solid',
+                    borderColor: activeFilter === cat.id ? '#059669' : '#e2e8f0',
+                    background: activeFilter === cat.id ? '#059669' : '#f8fafc',
+                    color: activeFilter === cat.id ? '#ffffff' : '#475569',
+                    padding: '6px 12px',
+                    borderRadius: '7px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading && <div className="hub-panel hub-empty">Loading student services…</div>}
+          {error && <div className="hub-form-error">{error}</div>}
+          {!loading && !error && !filteredServices.length && (
+            <div className="hub-panel hub-empty">No student services matched your search filter.</div>
+          )}
+
+          {!loading && !error && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: '16px',
+              }}
+            >
+              {filteredServices.map((service) => (
+                <a
+                  className="ms-service-card"
+                  href={'/services/apply/' + service.service_key}
+                  key={service.id}
+                  style={{ minHeight: '180px' }}
+                >
+                  <div>
+                    <div className="ms-service-card-header">
+                      {/* Theme icon using service image */}
+                      <CardIdentityMark value={service.service_key} type="service" size="md" />
+                      <span className="ms-service-badge">
+                        <CheckCircle2 size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />
+                        Verified Active
+                      </span>
+                    </div>
+
+                    <div className="ms-service-body">
+                      <h3 style={{ fontSize: '15px' }}>{service.title}</h3>
+                      <p style={{ fontSize: '12.5px' }}>{service.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="ms-service-foot">
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>
+                      <ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px', color: '#059669' }} />
+                      Online Processing
+                    </span>
+                    <span className="ms-service-cta">
+                      Apply Now <ArrowRight size={13} className="hub-compact-arrow" />
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </HubLayout>
+  );
 }

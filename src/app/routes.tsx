@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import HubHomePage from '../../pages/HubHomePage';
 import AuthPageV2 from '../../pages/AuthPageV2';
+import ProfileCompletionPage from '../../pages/ProfileCompletionPage';
 import StudentDashboardV2 from '../../pages/StudentDashboardV2';
 import CbtPage from '../../pages/CbtPage';
 import CbtPracticePage from '../../pages/CbtPracticePage';
@@ -25,6 +26,9 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/login' || path === '/signin') return <AuthPageV2 mode="signin" />;
   if (path === '/register' || path === '/signup') return <AuthPageV2 mode="signup" />;
   if (path === '/forgot-password') return <AuthPageV2 mode="forgot" />;
+  if (path === '/reset-password') return <AuthPageV2 mode="reset" />;
+  if (path === '/verify-email') return <AuthPageV2 mode="verify" />;
+  if (path === '/profile/complete' || path === '/profile') return <ProfileCompletionPage />;
   if (path === '/dashboard') return <StudentDashboardV2 />;
 
   if (path === '/admin') return <AdminDashboardPage />;
@@ -37,9 +41,9 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/cbt') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
   if (path === '/cbt/results') return <CbtResultsPage />;
-  if (path === '/screening-calculator') return <ScreeningCalculatorPage />;
+  if (path === '/screening-calculator' || path === '/calculator') return <ScreeningCalculatorPage />;
   if (path === '/services') return <ServicesCatalogPage />;
-  if (path === '/services/track') return <ServiceTrackPage />;
+  if (path === '/services/track' || path === '/track') return <ServiceTrackPage />;
   if (path.startsWith('/services/apply/')) {
     return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/apply/'.length))} />;
   }

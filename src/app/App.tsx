@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { renderRoute } from './routes';
 
 const routeTitles: Record<string, string> = {
@@ -16,6 +16,10 @@ const routeTitles: Record<string, string> = {
   '/register': 'Register',
   '/signup': 'Register',
   '/forgot-password': 'Password Recovery',
+  '/reset-password': 'Reset Password',
+  '/verify-email': 'Verify Email',
+  '/profile/complete': 'Academic Profile Completion',
+  '/profile': 'Academic Profile',
   '/dashboard': 'Student Dashboard',
   '/admin': 'Admin Dashboard',
   '/admin/queue': 'Admin Queue',
@@ -33,9 +37,17 @@ function titleFor(pathname: string): string {
 }
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+
   useEffect(() => {
-    document.title = `EduReach — ${titleFor(window.location.pathname)}`;
+    const syncPath = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', syncPath);
+    return () => window.removeEventListener('popstate', syncPath);
   }, []);
 
-  return renderRoute(window.location.pathname);
+  useEffect(() => {
+    document.title = `EduReach — ${titleFor(currentPath)}`;
+  }, [currentPath]);
+
+  return renderRoute(currentPath);
 }

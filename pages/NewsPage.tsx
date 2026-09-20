@@ -1,5 +1,5 @@
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchNews, type NewsItem } from '../src/lib/api';
@@ -18,37 +18,139 @@ export default function NewsPage() {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeFilter, setActiveFilter] = useState('ALL');
 
   useEffect(() => {
-    void fetchNews().then(setItems).catch((value) => setError(value instanceof Error ? value.message : 'Unable to load news.')).finally(() => setLoading(false));
+    void fetchNews()
+      .then(setItems)
+      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load news.'))
+      .finally(() => setLoading(false));
   }, []);
 
-  return <HubLayout><div className="hub-page"><div className="hub-container hub-narrow">
-    <div className="hub-section-heading hub-page-heading-compact">
-      <div><span className="hub-eyebrow">NEWS &amp; UPDATES</span><h1>Latest Updates</h1><p>Verified announcements, campus news and important academic information.</p></div>
-      <a className="hub-outline-btn" href="/jobs">Opportunities</a>
-    </div>
+  const filteredItems = useMemo(() => {
+    if (activeFilter === 'ALL') return items;
+    return items.filter((item) =>
+      item.category.toLowerCase().includes(activeFilter.toLowerCase())
+    );
+  }, [items, activeFilter]);
 
-    {loading && <div className="hub-panel hub-empty">Loading…</div>}
-    {error && <div className="hub-form-error">{error}</div>}
-    {!loading && !error && !items.length && <div className="hub-panel hub-empty">No verified announcements are published yet.</div>}
-
-    {!loading && !error && items.length > 0 && <div className="hub-news-feed">
-      {items.map((item) => (
-        <a className="hub-news-feed-row hub-click-card" href={'/news/' + encodeURIComponent(item.slug)} key={item.id}>
-          <div className="hub-news-thumb"><CardIdentityMark value={item.category} type="news" /></div>
-          <div className="hub-feed-tag">{labelFor(item.category)}</div>
-          <div className="hub-feed-main">
-            <div className="hub-news-meta">
-              <span>{formatDate(item.published_at)}</span>
-              <span className="hub-verified"><CheckCircle2 size={13}/> Published</span>
+  return (
+    <HubLayout>
+      <div className="hub-page" style={{ padding: '20px 0 60px' }}>
+        <div className="hub-container hub-narrow">
+          <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
+            <div>
+              <span className="hub-eyebrow" style={{ color: '#059669', fontWeight: 800 }}>
+                CAMPUS NOTICEBOARD
+              </span>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
+                Latest Educational News &amp; Updates
+              </h1>
+              <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                Verified announcements, examination timetables, and admission lists directly from accredited bodies.
+              </p>
             </div>
-            <h2>{item.title}</h2>
-            <p>{item.summary || ''}</p>
+            <a className="hub-outline-btn" href="/jobs" style={{ textDecoration: 'none', fontSize: '12px' }}>
+              Scholarships &amp; Grants →
+            </a>
           </div>
-          <ArrowRight size={17} className="hub-compact-arrow" />
-        </a>
-      ))}
-    </div>}
-  </div></div></HubLayout>;
+
+          {/* MYSCHOOL CATEGORY FILTER PILLS */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              flexWrap: 'wrap',
+              marginBottom: '18px',
+              paddingBottom: '12px',
+              borderBottom: '1px solid #e2e8f0',
+            }}
+          >
+            {[
+              { id: 'ALL', label: 'All News' },
+              { id: 'jamb', label: 'JAMB Updates' },
+              { id: 'admission', label: 'Admission Lists' },
+              { id: 'waec', label: 'WAEC News' },
+              { id: 'neco', label: 'NECO Updates' },
+              { id: 'nelfund', label: 'NELFUND Loan' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveFilter(tab.id)}
+                style={{
+                  border: '1px solid',
+                  borderColor: activeFilter === tab.id ? '#059669' : '#e2e8f0',
+                  background: activeFilter === tab.id ? '#059669' : '#ffffff',
+                  color: activeFilter === tab.id ? '#ffffff' : '#475569',
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {loading && <div className="hub-panel hub-empty">Loading verified updates…</div>}
+          {error && <div className="hub-form-error">{error}</div>}
+          {!loading && !error && !filteredItems.length && (
+            <div className="hub-panel hub-empty">No announcements found matching this category.</div>
+          )}
+
+          {!loading && !error && filteredItems.length > 0 && (
+            <div className="hub-news-feed" style={{ display: 'grid', gap: '10px' }}>
+              {filteredItems.map((item) => (
+                <a
+                  className="hub-news-feed-row hub-click-card"
+                  href={'/news/' + encodeURIComponent(item.slug)}
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    textDecoration: 'none',
+                    color: '#0f172a',
+                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
+                  }}
+                >
+                  <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
+                    <CardIdentityMark value={item.category} type="news" size="sm" />
+                  </div>
+                  <div className="hub-feed-main" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="hub-news-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>
+                      <span style={{ fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
+                        {labelFor(item.category)}
+                      </span>
+                      <span>•</span>
+                      <span>{formatDate(item.published_at)}</span>
+                      <span>•</span>
+                      <span className="hub-verified" style={{ color: '#059669', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                        <CheckCircle2 size={12} /> Published
+                      </span>
+                    </div>
+                    <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
+                      {item.title}
+                    </h2>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                      {item.summary || ''}
+                    </p>
+                  </div>
+                  <ArrowRight size={15} className="hub-compact-arrow" style={{ color: '#cbd5e1', flexShrink: 0 }} />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </HubLayout>
+  );
 }

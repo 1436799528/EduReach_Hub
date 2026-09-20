@@ -11,6 +11,7 @@ import './cbt-engine.css';
 import './compact-portal.css';
 import './image-card-system.css';
 import './home-card-first.css';
+import './myschool-clean.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
