@@ -14,6 +14,7 @@ import NewsPage from '../../pages/NewsPage';
 import NewsArticlePage from '../../pages/NewsArticlePage';
 import JobsPage from '../../pages/JobsPage';
 import AdminDashboardPage from '../../pages/AdminDashboardPage';
+import AdminAnalyticsPage from '../../pages/AdminAnalyticsPage';
 import AdminQueuePage from '../../pages/AdminQueuePage';
 import AdminCbtPage from '../../pages/AdminCbtPage';
 import AdminVouchersPage from '../../pages/AdminVouchersPage';
@@ -74,6 +75,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/dashboard/settings') return protectedDashboard('settings', true);
 
   if (path === '/admin') return <AdminDashboardPage />;
+  if (path === '/admin/analytics') return <AdminAnalyticsPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
   if (path === '/admin/cbt') return <AdminCbtPage />;
   if (path === '/admin/vouchers') return <AdminVouchersPage />;
