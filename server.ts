@@ -161,6 +161,18 @@ app.post('/api/admin/bootstrap', async (req, res) => {
   }
 });
 
+app.get('/api/admin/session', requireAdmin, async (req, res) => {
+  const adminUser = (req as AdminRequest).adminUser!;
+  res.json({
+    user: {
+      id: adminUser.id,
+      email: adminUser.email,
+      fullName: adminUser.fullName,
+      role: adminUser.role,
+    },
+  });
+});
+
 app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
   try {
     const supabase = getServerSupabase();
