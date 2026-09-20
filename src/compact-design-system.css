@@ -1,0 +1,126 @@
+/* EduReach Compact Design System — final site-wide density layer */
+:root{
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;
+  --fs-xs:12px;--fs-sm:13px;--fs-md:14px;--fs-lg:16px;--fs-xl:18px;
+  --lh-tight:1.25;--lh-normal:1.35;
+  --radius-sm:8px;--radius-md:10px;
+  --border:#e5e7eb;--card-bg:#fff;
+  --compact-section-y:16px;--compact-card-p:12px;--compact-control-h:34px;
+}
+.compact,.hub-shell,.student-portal{
+  --section-y:var(--compact-section-y);
+  --card-p:var(--compact-card-p);
+  --control-h:var(--compact-control-h);
+}
+.hub-shell,.student-portal{font-size:14px;line-height:1.35}
+.hub-shell h1,.hub-shell h2,.hub-shell h3,.student-portal h1,.student-portal h2,.student-portal h3{
+  line-height:1.25;
+}
+.hub-shell p,.hub-shell li,.student-portal p,.student-portal li{line-height:1.35}
+.hub-page{padding-top:16px!important;padding-bottom:32px!important}
+.hub-container{width:min(1240px,calc(100% - 28px))!important}
+.hub-main-nav{min-height:56px!important;gap:16px!important}
+.hub-nav{gap:8px!important;font-size:13px!important}
+.hub-nav a{padding:8px 10px!important}
+.hub-search{height:34px!important;border-radius:8px!important}
+.hub-primary-btn,.hub-ghost-btn,.hub-outline-btn,.hub-icon-btn{
+  min-height:32px!important;height:32px!important;padding:0 10px!important;font-size:13px!important;border-radius:8px!important
+}
+.hub-section-heading{margin:16px 0 10px!important}
+.hub-section-heading.compact{margin-top:16px!important}
+.hub-section-heading h1{font-size:20px!important;line-height:1.25!important}
+.hub-section-heading h2{font-size:16px!important;line-height:1.3!important}
+.hub-section-heading p{font-size:12px!important;line-height:1.3!important}
+.hub-home-container{width:min(1240px,calc(100% - 28px))!important}
+.hub-home-intro{gap:16px!important;padding:12px 0 16px!important}
+.hub-home-intro h1{font-size:20px!important;line-height:1.25!important}
+.hub-home-intro p{font-size:12px!important}
+.hub-home-search{height:34px!important;padding:0 10px!important;border-radius:8px!important;box-shadow:0 1px 2px rgba(0,0,0,.05)!important}
+.hub-home-card-grid,.hub-home-news-deadline-grid{gap:12px!important}
+.hub-home-news-deadline-grid{margin-top:16px!important}
+.hub-home-footer-callout{margin-top:16px!important;padding:12px 14px!important;border-radius:10px!important}
+.hub-home-footer-callout h2{font-size:16px!important}
+.hub-utility-cards,.hub-news-list,.hub-upcoming-list,.hub-cbt-service-list,.hub-cbt-exam-list{gap:8px!important}
+.hub-compact-card,.hub-service-profile-card,.hub-news-row,.hub-news-feed-row,.hub-upcoming-row,.hub-cbt-exam-row,.hub-opportunity-card,.student-card{
+  border:1px solid var(--border)!important;
+  border-radius:10px!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.05)!important;
+}
+.hub-compact-card{min-height:68px!important;padding:10px!important}
+.hub-service-profile-card{min-height:76px!important;padding:10px!important}
+.hub-news-row{min-height:64px!important;padding:8px 10px!important}
+.hub-news-feed-row{min-height:66px!important;padding:8px 10px!important}
+.hub-upcoming-row{min-height:58px!important;padding:8px 10px!important}
+.hub-opportunity-card{min-height:76px!important;padding:10px!important}
+.hub-compact-icon,.hub-service-profile-icon{width:40px!important;height:40px!important}
+.hub-card-identity{min-width:34px!important;height:34px!important;border-radius:8px!important}
+.hub-compact-copy h3,.hub-service-profile-body h2{font-size:13px!important;line-height:1.25!important}
+.hub-compact-copy p,.hub-service-profile-body p{font-size:12px!important;line-height:1.3!important}
+.hub-service-profile-body p{display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
+.hub-news-copy h3,.hub-news-feed-row .hub-feed-main h2,.hub-upcoming-row h3{font-size:13px!important;line-height:1.25!important}
+.hub-news-copy p,.hub-news-feed-row .hub-feed-main p,.hub-upcoming-row p{font-size:12px!important;line-height:1.3!important}
+.hub-sidebar{gap:8px!important;top:64px!important}
+.hub-sidebar-card{padding:10px!important;border-radius:10px!important}
+.hub-cbt-hero{padding:8px 0 4px!important;margin-bottom:8px!important}
+.hub-cbt-hero h1{font-size:20px!important}
+.hub-cbt-hero p{font-size:12px!important;line-height:1.35!important}
+.hub-cbt-feature-grid{gap:8px!important;margin-bottom:12px!important}
+.hub-cbt-feature{min-height:50px!important;padding:8px!important;border-radius:10px!important}
+.hub-cbt-feature-icon{width:30px!important;height:30px!important}
+.hub-cbt-feature strong{font-size:12px!important}
+.hub-cbt-feature span{font-size:11px!important;line-height:1.3!important}
+.hub-cbt-service-list{gap:8px!important}
+.hub-cbt-service-card{height:74px!important;min-height:74px!important;border-radius:10px!important;box-shadow:0 1px 2px rgba(0,0,0,.05)!important}
+.hub-cbt-brand-area{width:78px!important;flex-basis:78px!important}
+.hub-cbt-logo-container{width:44px!important;height:44px!important;box-shadow:none!important}
+.hub-cbt-service-content{padding:8px 12px!important}
+.hub-cbt-service-content h3{font-size:14px!important}
+.hub-cbt-service-content p{font-size:11px!important;line-height:1.3!important;margin-top:3px!important}
+.hub-cbt-service-label{font-size:9px!important}
+.hub-cbt-exam-row{min-height:62px!important}
+.hub-panel,.hub-empty,.hub-wizard-panel,.hub-success-panel,.hub-question-card,.hub-score-card,.hub-calculator-card{
+  border-radius:10px!important;box-shadow:0 1px 2px rgba(0,0,0,.05)!important
+}
+.hub-calculator-card{padding:16px!important}
+.hub-form-grid input,.hub-form-grid select,.hub-form-grid textarea,
+input.hub-input,select.hub-input,textarea.hub-input{min-height:34px!important;font-size:13px!important}
+.student-portal-bar{min-height:52px!important}
+.student-portal-main{padding:12px!important}
+.student-grid,.quick-actions-grid{gap:8px!important}
+.quick-action{min-height:68px!important;padding:8px!important;border-radius:10px!important}
+.quick-action b{font-size:12px!important}
+.quick-action small{font-size:8px!important}
+.student-trust-strip{padding:5px 12px!important;font-size:12px!important}
+.ms-top-tiles-grid{gap:8px!important}
+.ms-top-tile{min-height:68px!important;padding:8px 10px!important;border-radius:10px!important}
+.ms-top-tile-body strong{font-size:12px!important}
+.ms-top-tile-body span:last-child{font-size:10px!important}
+.ms-service-card{min-height:68px!important;padding:8px 10px!important;border-radius:10px!important}
+.ms-news-row{min-height:64px!important;border-radius:10px!important}
+@media(max-width:1024px){
+  .hub-page{padding-top:13px!important}
+  .hub-section-heading{margin-top:13px!important}
+}
+@media(max-width:768px){
+  .hub-container,.hub-home-container{width:calc(100% - 20px)!important}
+  .hub-page{padding-bottom:24px!important}
+  .hub-compact-card,.hub-service-profile-card{padding:10px!important}
+  .hub-shell{font-size:13px}
+  .hub-shell h1,.hub-shell h2,.hub-shell h3{line-height:1.25}
+  .hub-home-intro{padding:10px 0 12px!important}
+  .hub-home-intro h1{font-size:19px!important}
+  .hub-home-search{height:34px!important}
+  .hub-cbt-service-card{height:70px!important;min-height:70px!important}
+  .hub-cbt-brand-area{width:70px!important;flex-basis:70px!important}
+  .hub-cbt-logo-container{width:40px!important;height:40px!important}
+}
+@media(max-width:480px){
+  .hub-container,.hub-home-container{width:calc(100% - 16px)!important}
+  .hub-nav{gap:4px!important}
+  .hub-nav a{padding:7px 8px!important}
+  .hub-section-heading{margin-top:12px!important}
+  .hub-section-heading h2{font-size:15px!important}
+  .hub-compact-card,.hub-service-profile-card,.hub-news-row,.hub-news-feed-row,.hub-upcoming-row{padding:9px!important}
+  .hub-cbt-service-content p{display:-webkit-box!important;-webkit-line-clamp:1!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
+  .hub-home-footer-callout{padding:10px 12px!important}
+}
