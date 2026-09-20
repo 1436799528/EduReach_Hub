@@ -15,6 +15,7 @@ import './home-card-first.css';
 import './myschool-clean.css';
 import './styles/theme.css';
 import './compact-design-system.css';
+import './compact-structural.css';
 import './card-density.css';
 import './landing-polish.css';
 
