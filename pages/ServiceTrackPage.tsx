@@ -11,6 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import CardIdentityMark from '../src/components/CardIdentityMark';
 import { trackService } from '../src/lib/api';
 
 function statusLabel(value: string) {
@@ -249,16 +250,19 @@ export default function ServiceTrackPage() {
                   borderBottom: '1px solid #f1f5f9',
                 }}
               >
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-                    TRACKING REFERENCE
-                  </span>
-                  <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px', letterSpacing: '0.02em' }}>
-                    {result.reference_code}
-                  </h2>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#059669', fontWeight: 700 }}>
-                    {result.service_catalog?.title || 'EduReach Academic Service Request'}
-                  </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <CardIdentityMark value={result.service_catalog?.title || result.reference_code || 'services'} type="service" size="md" />
+                  <div>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+                      TRACKING REFERENCE
+                    </span>
+                    <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '1px 0 2px', letterSpacing: '0.02em' }}>
+                      {result.reference_code}
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#059669', fontWeight: 700 }}>
+                      {result.service_catalog?.title || 'EduReach Academic Service Request'}
+                    </p>
+                  </div>
                 </div>
 
                 <div

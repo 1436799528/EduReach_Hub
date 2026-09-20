@@ -95,6 +95,28 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           <button type="submit" className="auth-v2-submit" disabled={busy}>{busy ? 'Processing…' : title}<ArrowRight size={16}/></button>
         </form>
         <div className="auth-v2-switch">{currentMode !== 'signin' && currentMode !== 'reset' && <button onClick={()=>{setCurrentMode('signin');setMessage('')}}>Sign in</button>}{currentMode !== 'signup' && currentMode !== 'reset' && <button onClick={()=>{setCurrentMode('signup');setMessage('')}}>Create account</button>}{currentMode !== 'forgot' && currentMode !== 'reset' && <button onClick={()=>{setCurrentMode('forgot');setMessage('')}}>Forgot password?</button>}</div>
+
+        <div style={{ marginTop: '18px', paddingTop: '14px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '8px' }}>
+            Direct Workspace Preview:
+          </span>
+          <a
+            href="/dashboard"
+            style={{
+              display: 'inline-block',
+              background: '#ecfdf5',
+              color: '#047857',
+              border: '1px solid #a7f3d0',
+              padding: '6px 14px',
+              borderRadius: '6px',
+              fontSize: '11.5px',
+              fontWeight: 800,
+              textDecoration: 'none',
+            }}
+          >
+            Open Student Dashboard Workspace →
+          </a>
+        </div>
       </div>
     </div>
   </div>;

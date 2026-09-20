@@ -47,8 +47,14 @@ export default function ScreeningCalculatorPage() {
   return <HubLayout>
     <div className="hub-page">
       <div className="hub-container hub-narrow">
-        <div className="hub-section-heading hub-page-heading-compact">
-          <div><span className="hub-eyebrow">ONLINE SCREENING TOOL</span><h1>Screening Score Calculator</h1></div>
+        <div className="hub-section-heading hub-page-heading-compact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/icons/calculator.svg" alt="Calculator" width={38} height={38} style={{ objectFit: 'contain' }} />
+            <div>
+              <span className="hub-eyebrow" style={{ color: '#059669', fontWeight: 800 }}>ONLINE ADMISSION TOOL</span>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, margin: 0, color: '#0f172a' }}>Screening Score Calculator</h1>
+            </div>
+          </div>
           <button type="button" className="hub-outline-btn" onClick={reset}><RotateCcw size={15}/> Reset</button>
         </div>
 

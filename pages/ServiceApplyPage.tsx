@@ -13,6 +13,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib/api';
 import { supabase } from '../src/lib/supabase';
 
@@ -186,7 +187,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         <div className="hub-container" style={{ maxWidth: '760px' }}>
           {/* SERVICE TITLE HEADER */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '10px' }}>
               <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 OFFICIAL APPLICATION FORM
               </span>
@@ -202,9 +203,19 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 </a>
               )}
             </div>
-            <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>
-              {service.title}
-            </h1>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '8px' }}>
+              <CardIdentityMark value={service.service_key} type="service" size="lg" />
+              <div>
+                <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+                  {service.title}
+                </h1>
+                <span style={{ fontSize: '11px', color: '#059669', fontWeight: 800 }}>
+                  Verified EduReach Digital Processing
+                </span>
+              </div>
+            </div>
+
             <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
               {service.description}
             </p>

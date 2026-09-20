@@ -77,32 +77,41 @@ export default function CbtResultsPage() {
                   gap: '20px',
                 }}
               >
-                <div>
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: 'rgba(255, 255, 255, 0.15)',
-                      padding: '4px 10px',
-                      borderRadius: '999px',
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <Award size={13} /> Official CBT Performance Report
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <img
+                    src="/icons/cbt.svg"
+                    alt="CBT Emblem"
+                    width={52}
+                    height={52}
+                    style={{ objectFit: 'contain', flexShrink: 0 }}
+                  />
+                  <div>
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        marginBottom: '6px',
+                      }}
+                    >
+                      <Award size={13} /> Official CBT Performance Report
+                    </div>
+                    <h1 style={{ fontSize: '24px', fontWeight: 900, margin: '0 0 4px', color: '#ffffff' }}>
+                      {isPass ? 'Distinction Performance!' : 'Practice Completed'}
+                    </h1>
+                    <p style={{ fontSize: '13px', margin: 0, opacity: 0.9, maxWidth: '440px', lineHeight: 1.4 }}>
+                      {isPass
+                        ? 'Congratulations on exceeding the 60% mark. Review the corrections below to eliminate residual blind spots.'
+                        : 'Review each detailed question explanation below to master key formulas and facts.'}
+                    </p>
                   </div>
-                  <h1 style={{ fontSize: '28px', fontWeight: 900, margin: '0 0 6px', color: '#ffffff' }}>
-                    {isPass ? 'Distinction Performance!' : 'Practice Completed'}
-                  </h1>
-                  <p style={{ fontSize: '13px', margin: 0, opacity: 0.9, maxWidth: '440px', lineHeight: 1.5 }}>
-                    {isPass
-                      ? 'Congratulations on exceeding the 60% mark. Review the corrections below to eliminate residual blind spots.'
-                      : 'Keep going! Review each detailed question explanation below to master key formulas and facts.'}
-                  </p>
                 </div>
 
                 <div

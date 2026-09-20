@@ -167,13 +167,22 @@ export default function CbtPracticePage() {
               boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)',
             }}
           >
-            <div>
-              <strong style={{ fontSize: '15px', display: 'block', color: '#ffffff' }}>
-                {examTitle}
-              </strong>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                EduReach Official CBT Classroom Simulator
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img
+                src={examId.includes('waec') ? '/icons/waec.svg' : examId.includes('neco') ? '/icons/neco.svg' : '/icons/jamb.svg'}
+                alt="Exam Body"
+                width={34}
+                height={34}
+                style={{ objectFit: 'contain' }}
+              />
+              <div>
+                <strong style={{ fontSize: '15px', display: 'block', color: '#ffffff' }}>
+                  {examTitle}
+                </strong>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                  EduReach Official CBT Classroom Simulator
+                </span>
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
