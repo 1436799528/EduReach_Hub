@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -54,9 +54,6 @@ export default function NewsPage() {
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
                 News &amp; Updates
               </h1>
-              <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                
-              </p>
             </div>
             <a className="hub-outline-btn" href="/jobs" style={{ textDecoration: 'none', fontSize: '12px' }}>
               Scholarships &amp; Grants →
@@ -104,7 +101,7 @@ export default function NewsPage() {
             ))}
           </div>
 
-          {loading && <div className="hub-panel hub-empty">Loading verified updates…</div>}
+          {loading && <div className="hub-panel hub-empty">Loading updates…</div>}
           {error && <div className="hub-form-error">{error}</div>}
           {!loading && !error && !filteredItems.length && (
             <div className="hub-panel hub-empty">No announcements found matching this category.</div>
