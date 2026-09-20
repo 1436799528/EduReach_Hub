@@ -14,6 +14,14 @@ function formatDate(value: string | null) {
     : 'Update';
 }
 
+function newsImageFor(item: NewsItem) {
+  const category = item.category.toLowerCase();
+  if (category.includes('jamb')) return '/news/jamb.svg';
+  if (category.includes('waec') || category.includes('neco') || category.includes('result')) return '/news/waec.svg';
+  if (category.includes('admission') || category.includes('screen')) return '/news/admission.svg';
+  return '/news/education.svg';
+}
+
 export default function NewsPage() {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,10 +52,10 @@ export default function NewsPage() {
                 CAMPUS NOTICEBOARD
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
-                Latest Educational News &amp; Updates
+                News &amp; Updates
               </h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                Verified announcements, examination timetables, and admission lists directly from accredited bodies.
+                
               </p>
             </div>
             <a className="hub-outline-btn" href="/jobs" style={{ textDecoration: 'none', fontSize: '12px' }}>
@@ -123,26 +131,22 @@ export default function NewsPage() {
                   }}
                 >
                   <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
-                    <CardIdentityMark value={item.category} type="news" size="sm" />
+                    <img src={newsImageFor(item)} alt="" loading="lazy" />
                   </div>
                   <div className="hub-feed-main" style={{ flex: 1, minWidth: 0 }}>
                     <div className="hub-news-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>
-                      <span style={{ fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
+                      <span>
                         {labelFor(item.category)}
                       </span>
                       <span>•</span>
                       <span>{formatDate(item.published_at)}</span>
                       <span>•</span>
-                      <span className="hub-verified" style={{ color: '#059669', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                        <CheckCircle2 size={12} /> Published
-                      </span>
+                      
                     </div>
                     <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
                       {item.title}
                     </h2>
-                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
-                      {item.summary || ''}
-                    </p>
+                    
                   </div>
                   <ArrowRight size={15} className="hub-compact-arrow" style={{ color: '#cbd5e1', flexShrink: 0 }} />
                 </a>
