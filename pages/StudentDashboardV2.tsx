@@ -38,8 +38,25 @@ import {
   LayoutDashboard,
   CheckSquare,
 } from 'lucide-react';
-import { supabase } from '../src/lib/supabase';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import WalletModal from '../src/components/WalletModal';
+import {
+  calculateCgpa,
+  createNotification,
+  deleteSavedItem,
+  fetchLatestCgpaSnapshot,
+  fetchNotifications,
+  fetchSavedItems,
+  markNotificationsRead,
+  recordSecurityEvent,
+  saveCgpaSnapshot,
+  upsertSavedItem,
+  type CgpaCourseInput,
+  type CgpaSnapshot,
+  type DashboardNotification,
+  type DashboardSavedItem,
+  type DashboardSavedItemInput,
+} from '../src/lib/studentDashboard';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import '../src/student-dashboard.css';
 
@@ -87,6 +104,29 @@ type TabType =
   | 'profile'
   | 'settings';
 
+
+const demoSavedItems: DashboardSavedItem[] = [
+  { id: 'demo-school-unilag', key: 'unilag', type: 'school', name: 'University of Lagos (UNILAG)', detail: 'Cut-off: 260 • Faculty of Science', location: 'Akoka, Lagos', saved: true },
+  { id: 'demo-course-medicine-unical', key: 'medicine-unical', type: 'course', name: 'Medicine & Surgery (UNICAL)', detail: 'Cut-off: 275 • English, Bio, Chem, Phys', location: 'Calabar, Cross River', saved: true },
+  { id: 'demo-course-csc-ui', key: 'computer-science-ui', type: 'course', name: 'Computer Science (UI)', detail: 'Cut-off: 265 • English, Maths, Phys, Chem', location: 'Ibadan, Oyo', saved: true },
+  { id: 'demo-school-oau', key: 'oau', type: 'school', name: 'Obafemi Awolowo University (OAU)', detail: 'Cut-off: 250 • Faculty of Technology', location: 'Ile-Ife, Osun', saved: true },
+];
+
+const demoNotifications: DashboardNotification[] = [
+  { id: 'n1', title: 'UNILAG Admission Screening List Released', time: '2 hours ago', read: false, type: 'admission', created_at: new Date(Date.now() - 2 * 3600000).toISOString() },
+  { id: 'n2', title: 'NELFUND Loan Institutional Verification Complete', time: '1 day ago', read: false, type: 'scholarship', created_at: new Date(Date.now() - 24 * 3600000).toISOString() },
+  { id: 'n3', title: 'Practice Reminder: Try 2024 JAMB English questions', time: '2 days ago', read: true, type: 'cbt', created_at: new Date(Date.now() - 48 * 3600000).toISOString() },
+  { id: 'n4', title: 'Wallet Top-up of ₦5,000 confirmed via Paystack', time: '3 days ago', read: true, type: 'wallet', created_at: new Date(Date.now() - 72 * 3600000).toISOString() },
+];
+
+const demoCgpaCourses: CgpaCourseInput[] = [
+  { code: 'CSC 301', units: 3, grade: 'A' },
+  { code: 'CSC 303', units: 3, grade: 'B' },
+  { code: 'MTH 301', units: 3, grade: 'A' },
+  { code: 'GST 311', units: 2, grade: 'A' },
+  { code: 'PHY 307', units: 3, grade: 'C' },
+];
+
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase() || 'ER';
 }
@@ -131,30 +171,21 @@ export default function StudentDashboardV2() {
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [sessionRevoked, setSessionRevoked] = useState(false);
 
+  const [userId, setUserId] = useState('');
+  const [isDemoMode, setIsDemoMode] = useState(!isSupabaseConfigured);
+  const [dashboardNotice, setDashboardNotice] = useState('');
+
   // Saved Schools & Courses state
-  const [savedItems, setSavedItems] = useState([
-    { id: '1', type: 'school', name: 'University of Lagos (UNILAG)', detail: 'Cut-off: 260 • Faculty of Science', location: 'Akoka, Lagos', saved: true },
-    { id: '2', type: 'course', name: 'Medicine & Surgery (UNICAL)', detail: 'Cut-off: 275 • English, Bio, Chem, Phys', location: 'Calabar, Cross River', saved: true },
-    { id: '3', type: 'course', name: 'Computer Science (UI)', detail: 'Cut-off: 265 • English, Maths, Phys, Chem', location: 'Ibadan, Oyo', saved: true },
-    { id: '4', type: 'school', name: 'Obafemi Awolowo University (OAU)', detail: 'Cut-off: 250 • Faculty of Technology', location: 'Ile-Ife, Osun', saved: true },
-  ]);
+  const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>(demoSavedItems);
 
   // Notifications state
-  const [notifications, setNotifications] = useState([
-    { id: 'n1', title: 'UNILAG Admission Screening List Released', time: '2 hours ago', read: false, type: 'admission' },
-    { id: 'n2', title: 'NELFUND Loan Institutional Verification Complete', time: '1 day ago', read: false, type: 'scholarship' },
-    { id: 'n3', title: 'Practice Reminder: Try 2024 JAMB English questions', time: '2 days ago', read: true, type: 'cbt' },
-    { id: 'n4', title: 'Wallet Top-up of ₦5,000 confirmed via Paystack', time: '3 days ago', read: true, type: 'wallet' },
-  ]);
+  const [notifications, setNotifications] = useState<DashboardNotification[]>(demoNotifications);
 
   // CGPA Calculator local state
-  const [cgpaCourses, setCgpaCourses] = useState([
-    { code: 'CSC 301', units: 3, grade: 'A' },
-    { code: 'CSC 303', units: 3, grade: 'B' },
-    { code: 'MTH 301', units: 3, grade: 'A' },
-    { code: 'GST 311', units: 2, grade: 'A' },
-    { code: 'PHY 307', units: 3, grade: 'C' },
-  ]);
+  const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>(demoCgpaCourses);
+  const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
+  const [cgpaSaving, setCgpaSaving] = useState(false);
+  const [cgpaSaveMessage, setCgpaSaveMessage] = useState('');
 
   // School Finder filter state
   const [schoolFilterQuery, setSchoolFilterQuery] = useState('');
@@ -174,10 +205,23 @@ export default function StudentDashboardV2() {
       } = await supabase.auth.getSession();
 
       // Check locally saved profile if exists
-      const locallySavedProfile = JSON.parse(localStorage.getItem('edureach-student-profile') || 'null');
+      let locallySavedProfile: any = null;
+      try {
+        locallySavedProfile = JSON.parse(localStorage.getItem('edureach-student-profile') || 'null');
+      } catch {
+        locallySavedProfile = null;
+      }
 
       if (authError || !currentSession?.user) {
-        // Fallback demo profile for frontend review / offline state
+        if (isSupabaseConfigured) {
+          const next = `${window.location.pathname}${window.location.search}`;
+          window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+          return;
+        }
+
+        // Fallback demo profile for frontend review / offline state only when Supabase is not configured.
+        setIsDemoMode(true);
+        setUserId('');
         setEmail(locallySavedProfile?.email || 'student@edureach.ng');
         setUserName(locallySavedProfile?.full_name || 'Adebayo Johnson');
         setProfile({
@@ -229,6 +273,10 @@ export default function StudentDashboardV2() {
         ]);
 
         setWallet({ balance: 4500, currency: 'NGN' });
+        setSavedItems(demoSavedItems);
+        setNotifications(demoNotifications);
+        setCgpaCourses(demoCgpaCourses);
+        setLatestCgpaSnapshot(null);
 
         setAttempts([
           {
@@ -255,15 +303,29 @@ export default function StudentDashboardV2() {
       }
 
       const user = currentSession.user;
+      setIsDemoMode(false);
+      setUserId(user.id);
       setEmail(user.email || '');
       setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student');
 
-      const [profileResult, serviceResult, requestResult, walletResult, attemptsResult] = await Promise.all([
+      const [
+        profileResult,
+        serviceResult,
+        requestResult,
+        walletResult,
+        attemptsResult,
+        savedResult,
+        notificationResult,
+        cgpaSnapshot,
+      ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
         supabase.from('service_requests').select('id,status,form_data,created_at,reference_code,service_id').eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
         supabase.from('student_wallets').select('balance,currency').eq('user_id', user.id).maybeSingle(),
         supabase.from('cbt_attempts').select('id,score,correct_answers,total_questions,submitted_at,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(8),
+        fetchSavedItems(user.id),
+        fetchNotifications(user.id),
+        fetchLatestCgpaSnapshot(user.id),
       ]);
 
       if (!active) return;
@@ -271,10 +333,15 @@ export default function StudentDashboardV2() {
         setProfile(profileResult.data as Profile);
         setMfaEnabled(Boolean(profileResult.data.mfa_enabled));
       }
+      if (profileResult.error) setError('We could not load your profile. Please refresh or update your academic profile.');
       setServices((serviceResult.data || []) as ServiceRow[]);
       setRequests((requestResult.data || []) as RequestRow[]);
       if (walletResult.data) setWallet({ balance: Number(walletResult.data.balance), currency: walletResult.data.currency });
       setAttempts((attemptsResult.data || []) as Attempt[]);
+      setSavedItems(savedResult.length ? savedResult : []);
+      setNotifications(notificationResult.length ? notificationResult : []);
+      setLatestCgpaSnapshot(cgpaSnapshot);
+      if (cgpaSnapshot?.courses?.length) setCgpaCourses(cgpaSnapshot.courses);
       setLoading(false);
     }
     void load();
@@ -291,6 +358,48 @@ export default function StudentDashboardV2() {
     : 0;
   const bestScore = attempts.length ? Math.max(...attempts.map((item) => Number(item.score || 0))) : 0;
   const unreadNotifsCount = notifications.filter((n) => !n.read).length;
+  const savedItemsCount = savedItems.filter((item) => item.saved).length;
+  const currentCgpa = useMemo(() => calculateCgpa(cgpaCourses), [cgpaCourses]);
+  const recentActivities = useMemo(() => {
+    const activities: Array<{ id: string; kind: 'attempt' | 'saved' | 'request' | 'cgpa'; title: string; time: string }> = [];
+    const latestAttempt = attempts[0];
+    if (latestAttempt) {
+      activities.push({
+        id: `attempt-${latestAttempt.id}`,
+        kind: 'attempt',
+        title: `Completed ${latestAttempt.subject || 'CBT practice'} (Score: ${latestAttempt.score || 0}%)`,
+        time: fmtDate(latestAttempt.submitted_at || latestAttempt.created_at),
+      });
+    }
+    const latestSaved = savedItems[0];
+    if (latestSaved) {
+      activities.push({
+        id: `saved-${latestSaved.id}`,
+        kind: 'saved',
+        title: `Saved ${latestSaved.name} to your shortlist`,
+        time: latestSaved.createdAt ? fmtDate(latestSaved.createdAt) : 'Recently',
+      });
+    }
+    const latestRequest = requests[0];
+    if (latestRequest) {
+      const title = String(latestRequest.form_data?.serviceTitle || serviceMap[latestRequest.service_id]?.title || 'EduReach Service');
+      activities.push({
+        id: `request-${latestRequest.id}`,
+        kind: 'request',
+        title: `Submitted ${title} (Ref: ${latestRequest.reference_code})`,
+        time: fmtDate(latestRequest.created_at),
+      });
+    }
+    if (latestCgpaSnapshot) {
+      activities.push({
+        id: `cgpa-${latestCgpaSnapshot.id}`,
+        kind: 'cgpa',
+        title: `Saved CGPA snapshot (${latestCgpaSnapshot.gpa}/5.00)`,
+        time: fmtDate(latestCgpaSnapshot.createdAt),
+      });
+    }
+    return activities;
+  }, [attempts, latestCgpaSnapshot, requests, savedItems, serviceMap]);
 
   const copyReg = () => {
     if (!reg) return;
@@ -306,28 +415,114 @@ export default function StudentDashboardV2() {
     window.location.href = '/';
   };
 
-  const toggleSave = (id: string) => {
-    setSavedItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, saved: !item.saved } : item))
-    );
+  const addLocalNotification = (title: string, type = 'system') => {
+    const notification: DashboardNotification = {
+      id: `local-${Date.now()}`,
+      title,
+      time: 'Just now',
+      read: false,
+      type,
+      created_at: new Date().toISOString(),
+    };
+    setNotifications((prev) => [notification, ...prev].slice(0, 20));
   };
 
-  const markAllNotifsRead = () => {
+  const isSavedItem = (type: DashboardSavedItemInput['type'], key: string) =>
+    savedItems.some((item) => item.saved && item.type === type && item.key === key);
+
+  const saveDashboardItem = async (input: DashboardSavedItemInput) => {
+    if (isSavedItem(input.type, input.key)) return;
+
+    const optimistic: DashboardSavedItem = {
+      id: `temp-${input.type}-${input.key}`,
+      key: input.key,
+      type: input.type,
+      name: input.name,
+      detail: input.detail || '',
+      location: input.location,
+      href: input.href,
+      saved: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    setSavedItems((prev) => [optimistic, ...prev]);
+    addLocalNotification(`${input.name} saved to your dashboard shortlist.`, 'saved');
+
+    if (isDemoMode || !userId) return;
+
+    const persisted = await upsertSavedItem(userId, input);
+    if (persisted) {
+      setSavedItems((prev) => prev.map((item) => (item.id === optimistic.id ? persisted : item)));
+      void createNotification(userId, {
+        title: `${input.name} saved to your dashboard shortlist.`,
+        type: 'saved',
+        href: input.href,
+      });
+    } else {
+      setSavedItems((prev) => prev.filter((item) => item.id !== optimistic.id));
+      setDashboardNotice('We could not save that item online. Please try again.');
+    }
+  };
+
+  const toggleSave = async (id: string) => {
+    const item = savedItems.find((entry) => entry.id === id);
+    if (!item) return;
+
+    setSavedItems((prev) => prev.filter((entry) => entry.id !== id));
+    if (isDemoMode || !userId || id.startsWith('demo-') || id.startsWith('temp-')) return;
+
+    try {
+      await deleteSavedItem(id);
+    } catch (err) {
+      setSavedItems((prev) => [item, ...prev]);
+      setDashboardNotice('Unable to remove saved item. Please check your connection and try again.');
+    }
+  };
+
+  const markAllNotifsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    if (isDemoMode || !userId) return;
+    try {
+      await markNotificationsRead(userId);
+    } catch (err) {
+      setDashboardNotice('Unable to sync notification read state right now.');
+    }
   };
 
   // CGPA calculation
-  const calculateCGPA = () => {
-    const gradePoints: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
-    let totalUnits = 0;
-    let totalPoints = 0;
-    cgpaCourses.forEach((c) => {
-      const u = Number(c.units) || 0;
-      const gp = gradePoints[c.grade] ?? 0;
-      totalUnits += u;
-      totalPoints += u * gp;
-    });
-    return totalUnits > 0 ? (totalPoints / totalUnits).toFixed(2) : '0.00';
+  const calculateCGPA = () => currentCgpa.gpaText;
+
+  const handleSaveCgpaSnapshot = async () => {
+    setCgpaSaving(true);
+    setCgpaSaveMessage('');
+    try {
+      if (isDemoMode || !userId) {
+        setLatestCgpaSnapshot({
+          id: `demo-cgpa-${Date.now()}`,
+          termLabel: 'Current Semester',
+          gpa: currentCgpa.gpaText,
+          totalUnits: currentCgpa.totalUnits,
+          classification: currentCgpa.classification,
+          createdAt: new Date().toISOString(),
+          courses: cgpaCourses,
+        });
+        setCgpaSaveMessage('CGPA snapshot saved in this demo session.');
+        return;
+      }
+
+      const snapshot = await saveCgpaSnapshot(userId, cgpaCourses);
+      setLatestCgpaSnapshot(snapshot);
+      setCgpaSaveMessage('CGPA snapshot saved to your student portal.');
+      const notification = await createNotification(userId, {
+        title: `CGPA snapshot saved: ${snapshot.gpa}/5.00`,
+        type: 'tools',
+      });
+      if (notification) setNotifications((prev) => [notification, ...prev]);
+    } catch (err) {
+      setCgpaSaveMessage(err instanceof Error ? err.message : 'Unable to save CGPA snapshot.');
+    } finally {
+      setCgpaSaving(false);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -348,18 +543,52 @@ export default function StudentDashboardV2() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) throw error;
-      setPasswordMessage('Password updated successfully.');
+      if (!isDemoMode) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        if (userId) void recordSecurityEvent(userId, 'password_changed', 'Password changed from student dashboard');
+      }
+      setPasswordMessage(isDemoMode ? 'Password validated locally in demo mode.' : 'Password updated successfully.');
       setOldPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
     } catch (err) {
-      setPasswordMessage('Password updated successfully (Local session updated).');
+      setPasswordError(err instanceof Error ? err.message : 'Password update failed. Please try again.');
     } finally {
       setPasswordBusy(false);
     }
   };
+
+  const handleSignOutOtherDevices = async () => {
+    setSessionRevoked(false);
+    try {
+      if (!isDemoMode) {
+        const { error } = await supabase.auth.signOut({ scope: 'others' });
+        if (error) throw error;
+        if (userId) void recordSecurityEvent(userId, 'sessions_revoked', 'Other sessions revoked from student dashboard');
+      }
+      setSessionRevoked(true);
+      window.setTimeout(() => setSessionRevoked(false), 3000);
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Unable to sign out other devices right now.');
+    }
+  };
+
+  const handleMfaToggle = async () => {
+    const nextValue = !mfaEnabled;
+    setMfaEnabled(nextValue);
+    if (isDemoMode || !userId) return;
+
+    const { error: updateError } = await supabase.from('profiles').update({ mfa_enabled: nextValue }).eq('id', userId);
+    if (updateError) {
+      setMfaEnabled(!nextValue);
+      setPasswordError(updateError.message);
+      return;
+    }
+    void recordSecurityEvent(userId, nextValue ? 'mfa_enabled' : 'mfa_disabled', `MFA ${nextValue ? 'enabled' : 'disabled'} from student dashboard`);
+  };
+
+  const itemKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   // School Finder list
   const schoolsList = [
@@ -393,6 +622,18 @@ export default function StudentDashboardV2() {
   const filteredCourses = coursesList.filter((c) =>
     c.name.toLowerCase().includes(courseFilterQuery.toLowerCase()) || c.faculty.toLowerCase().includes(courseFilterQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="edureach-dash-container" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px' }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px', textAlign: 'center', maxWidth: '420px' }}>
+          <div className="edureach-dash-logo-icon" style={{ margin: '0 auto 12px' }}>ER</div>
+          <h1 style={{ margin: '0 0 6px', fontSize: '18px', color: '#0f172a' }}>Loading your student workspace…</h1>
+          <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Checking your secure session and syncing dashboard records.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="edureach-dash-container">
@@ -471,6 +712,11 @@ export default function StudentDashboardV2() {
                     )}
                   </div>
                   <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                    {!notifications.length && (
+                      <div style={{ padding: '18px 14px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                        No notifications yet. Saved schools, CGPA snapshots, service updates, and CBT reminders will appear here.
+                      </div>
+                    )}
                     {notifications.map((n) => (
                       <div
                         key={n.id}
@@ -624,7 +870,7 @@ export default function StudentDashboardV2() {
             onClick={() => setActiveTab('saved')}
           >
             <Bookmark size={15} /> Saved
-            <span className="edureach-nav-item-badge">{savedItems.filter((i) => i.saved).length}</span>
+            <span className="edureach-nav-item-badge">{savedItemsCount}</span>
           </button>
           <button
             type="button"
@@ -686,6 +932,40 @@ export default function StudentDashboardV2() {
 
         {/* MAIN DASHBOARD STREAM */}
         <main className="edureach-dash-main">
+          {(error || dashboardNotice) && (
+            <div
+              style={{
+                background: error ? '#fef2f2' : '#FFF8DF',
+                border: error ? '1px solid #fecaca' : '1px solid #fef08a',
+                color: error ? '#b91c1c' : '#92400e',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                marginBottom: '12px',
+              }}
+            >
+              {error || dashboardNotice}
+            </div>
+          )}
+
+          {isDemoMode && (
+            <div
+              style={{
+                background: '#F2F3FF',
+                border: '1px solid #DAE2FD',
+                color: '#283044',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                marginBottom: '12px',
+              }}
+            >
+              Demo workspace mode: connect Supabase and sign in to persist saved items, notifications, CGPA snapshots, and security events.
+            </div>
+          )}
+
           {/* SECTION 1: WELCOME / PROFILE SUMMARY */}
           <section className="dash-welcome-card">
             <div className="dash-welcome-top">
@@ -993,6 +1273,12 @@ export default function StudentDashboardV2() {
               </button>
             </div>
 
+            {!savedItemsCount && (
+              <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '12px', marginBottom: '10px' }}>
+                Your shortlist is empty. Use School Finder or Course Finder to save institutions and courses to this dashboard.
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
               {savedItems
                 .filter((item) => item.saved)
@@ -1145,35 +1431,34 @@ export default function StudentDashboardV2() {
             </div>
 
             <div style={{ display: 'grid', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <CheckCircle2 size={15} color="#059669" />
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '11.5px', color: '#0f172a', fontWeight: 600 }}>
-                    Completed JAMB Use of English CBT Mock Exam (Score: 80%)
-                  </span>
-                  <small style={{ display: 'block', fontSize: '9.5px', color: '#94a3b8' }}>5 hours ago</small>
+              {!recentActivities.length && (
+                <div style={{ padding: '12px', color: '#64748b', fontSize: '12px', textAlign: 'center' }}>
+                  No activity yet. Your CBT attempts, saved schools, applications, and tool snapshots will appear here.
                 </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
-                <BookmarkCheck size={15} color="#2563eb" />
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '11.5px', color: '#0f172a', fontWeight: 600 }}>
-                    Saved University of Lagos (UNILAG) to your school shortlist
-                  </span>
-                  <small style={{ display: 'block', fontSize: '9.5px', color: '#94a3b8' }}>Yesterday</small>
+              )}
+              {recentActivities.map((activity, index) => (
+                <div
+                  key={activity.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '6px 0',
+                    borderBottom: index === recentActivities.length - 1 ? 0 : '1px solid #f1f5f9',
+                  }}
+                >
+                  {activity.kind === 'attempt' && <CheckCircle2 size={15} color="#059669" />}
+                  {activity.kind === 'saved' && <BookmarkCheck size={15} color="#2563eb" />}
+                  {activity.kind === 'request' && <ClipboardList size={15} color="#d97706" />}
+                  {activity.kind === 'cgpa' && <Calculator size={15} color="#7e22ce" />}
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '11.5px', color: '#0f172a', fontWeight: 600 }}>
+                      {activity.title}
+                    </span>
+                    <small style={{ display: 'block', fontSize: '9.5px', color: '#94a3b8' }}>{activity.time}</small>
+                  </div>
                 </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 0' }}>
-                <ClipboardList size={15} color="#d97706" />
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '11.5px', color: '#0f172a', fontWeight: 600 }}>
-                    Submitted request for NELFUND Loan Verification (Ref: ER-2026-N9A2)
-                  </span>
-                  <small style={{ display: 'block', fontSize: '9.5px', color: '#94a3b8' }}>3 days ago</small>
-                </div>
-              </div>
+              ))}
             </div>
           </section>
         </main>
@@ -1604,7 +1889,7 @@ export default function StudentDashboardV2() {
                 {calculateCGPA()} <small style={{ fontSize: '14px', color: '#065f46' }}>/ 5.00</small>
               </div>
               <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857' }}>
-                {Number(calculateCGPA()) >= 4.5 ? 'First Class Honours 🏆' : Number(calculateCGPA()) >= 3.5 ? 'Second Class Upper (2:1) 🎖️' : 'Second Class Lower (2:2)'}
+                {currentCgpa.classification}
               </span>
             </div>
 
@@ -1655,23 +1940,54 @@ export default function StudentDashboardV2() {
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setCgpaCourses([...cgpaCourses, { code: 'NEW 101', units: 2, grade: 'A' }])}
-              style={{
-                width: '100%',
-                background: '#f1f5f9',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '6px',
-                fontSize: '11px',
-                fontWeight: 800,
-                color: '#0f172a',
-                cursor: 'pointer',
-              }}
-            >
-              + Add Another Course
-            </button>
+            {latestCgpaSnapshot && (
+              <div style={{ background: '#F2F3FF', border: '1px solid #DAE2FD', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px', fontSize: '11px', color: '#283044' }}>
+                Last saved: {latestCgpaSnapshot.gpa}/5.00 • {latestCgpaSnapshot.totalUnits} units • {latestCgpaSnapshot.classification}
+              </div>
+            )}
+            {cgpaSaveMessage && (
+              <div style={{ background: cgpaSaveMessage.toLowerCase().includes('unable') ? '#fef2f2' : '#EAF8EE', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px', fontSize: '11px', color: cgpaSaveMessage.toLowerCase().includes('unable') ? '#b91c1c' : '#166534' }}>
+                {cgpaSaveMessage}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setCgpaCourses([...cgpaCourses, { code: 'NEW 101', units: 2, grade: 'A' }])}
+                style={{
+                  width: '100%',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '6px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                }}
+              >
+                + Add Course
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveCgpaSnapshot}
+                disabled={cgpaSaving}
+                style={{
+                  width: '100%',
+                  background: '#059669',
+                  border: 0,
+                  borderRadius: '6px',
+                  padding: '6px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                {cgpaSaving ? 'Saving…' : 'Save Snapshot'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1759,23 +2075,51 @@ export default function StudentDashboardV2() {
                       {s.type} • 📍 {s.state} State • Est. {s.founded}
                     </span>
                   </div>
-                  <a
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      color: '#059669',
-                      padding: '4px 8px',
-                      borderRadius: '5px',
-                      fontSize: '10.5px',
-                      fontWeight: 800,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    Portal ↗
-                  </a>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        saveDashboardItem({
+                          type: 'school',
+                          key: itemKey(s.name),
+                          name: s.name,
+                          detail: `${s.type} • Est. ${s.founded}`,
+                          location: `${s.state} State`,
+                          href: s.url,
+                        })
+                      }
+                      disabled={isSavedItem('school', itemKey(s.name))}
+                      style={{
+                        background: isSavedItem('school', itemKey(s.name)) ? '#EAF8EE' : '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: isSavedItem('school', itemKey(s.name)) ? '#16A34A' : '#059669',
+                        padding: '4px 8px',
+                        borderRadius: '5px',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        cursor: isSavedItem('school', itemKey(s.name)) ? 'default' : 'pointer',
+                      }}
+                    >
+                      {isSavedItem('school', itemKey(s.name)) ? 'Saved' : 'Save'}
+                    </button>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        color: '#059669',
+                        padding: '4px 8px',
+                        borderRadius: '5px',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Portal ↗
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1845,11 +2189,38 @@ export default function StudentDashboardV2() {
                     background: '#f8fafc',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
                     <strong style={{ fontSize: '12.5px', color: '#0f172a' }}>{c.name}</strong>
-                    <span style={{ fontSize: '10px', fontWeight: 900, background: '#ecfdf5', color: '#059669', padding: '2px 6px', borderRadius: '4px' }}>
-                      Cut-off: {c.cutOff}+
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          saveDashboardItem({
+                            type: 'course',
+                            key: itemKey(c.name),
+                            name: c.name,
+                            detail: `Cut-off: ${c.cutOff} • ${c.utme}`,
+                            location: c.faculty,
+                          })
+                        }
+                        disabled={isSavedItem('course', itemKey(c.name))}
+                        style={{
+                          background: isSavedItem('course', itemKey(c.name)) ? '#EAF8EE' : '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          color: isSavedItem('course', itemKey(c.name)) ? '#16A34A' : '#059669',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 900,
+                          cursor: isSavedItem('course', itemKey(c.name)) ? 'default' : 'pointer',
+                        }}
+                      >
+                        {isSavedItem('course', itemKey(c.name)) ? 'Saved' : 'Save'}
+                      </button>
+                      <span style={{ fontSize: '10px', fontWeight: 900, background: '#ecfdf5', color: '#059669', padding: '2px 6px', borderRadius: '4px' }}>
+                        Cut-off: {c.cutOff}+
+                      </span>
+                    </div>
                   </div>
                   <div style={{ fontSize: '10.5px', color: '#475569', marginBottom: '2px' }}>
                     <b>Faculty:</b> {c.faculty}
@@ -2073,10 +2444,7 @@ export default function StudentDashboardV2() {
 
               <button
                 type="button"
-                onClick={() => {
-                  setSessionRevoked(true);
-                  window.setTimeout(() => setSessionRevoked(false), 3000);
-                }}
+                onClick={handleSignOutOtherDevices}
                 style={{
                   background: '#f1f5f9',
                   border: '1px solid #cbd5e1',
@@ -2105,7 +2473,7 @@ export default function StudentDashboardV2() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setMfaEnabled(!mfaEnabled)}
+                  onClick={handleMfaToggle}
                   style={{
                     background: mfaEnabled ? '#059669' : '#e2e8f0',
                     color: mfaEnabled ? '#ffffff' : '#64748b',
@@ -2130,12 +2498,19 @@ export default function StudentDashboardV2() {
         isOpen={walletOpen}
         onClose={() => setWalletOpen(false)}
         userEmail={email}
-        onSuccess={(amount) =>
+        onSuccess={(amount) => {
           setWallet((current) => ({
             balance: (current?.balance || 0) + amount,
             currency: current?.currency || 'NGN',
-          }))
-        }
+          }));
+          addLocalNotification(`Wallet credited with ₦${amount.toLocaleString()}.`, 'wallet');
+          if (!isDemoMode && userId) {
+            void createNotification(userId, {
+              title: `Wallet credited with ₦${amount.toLocaleString()}`,
+              type: 'wallet',
+            });
+          }
+        }}
       />
     </div>
   );
