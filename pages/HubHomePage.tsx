@@ -14,15 +14,12 @@ import {
   Users,
   Wallet,
   Zap,
-  LayoutDashboard,
   ShieldCheck,
-  UserCheck,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchNews, fetchUpcoming, type NewsItem, type UpcomingItem } from '../src/lib/api';
-import { useAuth } from '../src/lib/auth';
 
 const topPortalPillars = [
   {
@@ -33,8 +30,8 @@ const topPortalPillars = [
     tag: 'UTME 2026',
   },
   {
-    title: 'Verified Student Services',
-    subtitle: 'NELFUND student loans, WAEC/NECO scratch cards & slips',
+    title: 'Services',
+    subtitle: 'Student support, exam services and applications',
     href: '/services',
     img: '/icons/scratch-cards.svg',
     tag: 'SERVICES',
@@ -91,10 +88,7 @@ export default function HubHomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('all');
-  const { user } = useAuth();
-  const loggedInUser = user ? { name: user.name, email: user.email } : null;
 
   useEffect(() => {
     let active = true;
@@ -128,7 +122,7 @@ export default function HubHomePage() {
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '14px 0 50px' }}>
+      <div className="hub-page edureach-landing" style={{ padding: '14px 0 50px' }}>
         <div className="hub-container">
           {/* 1. BREAKING NOTICE TICKER */}
           <div className="ms-ticker-strip">
@@ -150,49 +144,7 @@ export default function HubHomePage() {
             </a>
           </div>
 
-          {/* 2. LOGGED-IN QUICK BANNER (If user is signed in) */}
-          {loggedInUser && (
-            <div
-              style={{
-                background: '#EAF8EE',
-                border: '1px solid #bbf7d0',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                marginBottom: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '8px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <UserCheck size={18} color="#16A34A" />
-                <span style={{ fontSize: '12.5px', color: '#166534', fontWeight: 700 }}>
-                  Welcome back, <strong>{loggedInUser.name}</strong>! Your applications and CBT scores are ready in your dashboard.
-                </span>
-              </div>
-              <a
-                href="/dashboard"
-                style={{
-                  background: '#D9381E',
-                  color: '#ffffff',
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  fontSize: '11.5px',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <LayoutDashboard size={13} /> Open Dashboard →
-              </a>
-            </div>
-          )}
-
-          {/* 3. COMPACT SEARCH BAR */}
+          {/* 2. COMPACT SEARCH BAR */}
           <div className="ms-search-bar" style={{ marginBottom: '14px' }}>
             <Search size={18} color="#D9381E" />
             <input
@@ -276,7 +228,7 @@ export default function HubHomePage() {
                       letterSpacing: '0.03em',
                     }}
                   >
-                    Latest Educational News &amp; Updates
+                    News &amp; Updates
                   </h2>
 
                   {/* FILTER TABS */}
@@ -325,20 +277,20 @@ export default function HubHomePage() {
                         className="ms-news-row"
                       >
                         <div className="ms-news-thumb">
-                          <CardIdentityMark value={item.category} type="news" size="sm" />
+                          <img
+                            src={(item as NewsItem & { image_url?: string | null }).image_url || '/news/education.svg'}
+                            alt=""
+                            loading="lazy"
+                          />
                         </div>
                         <div className="ms-news-main">
                           <div className="ms-news-meta">
-                            <span style={{ fontWeight: 800, color: '#D9381E', textTransform: 'uppercase' }}>
-                              {item.category.replace('_', ' ')}
-                            </span>
+                            <span>{item.category.replace('_', ' ')}</span>
                             <span>•</span>
                             <span>{formatDate(item.published_at)}</span>
                             <span>•</span>
-                            <span style={{ color: '#64748b' }}>Verified</span>
                           </div>
                           <h3>{item.title}</h3>
-                          <p>{item.summary || 'Click to read official guidelines and instructions on this announcement.'}</p>
                         </div>
                         <ArrowRight size={15} color="#cbd5e1" style={{ flexShrink: 0 }} />
                       </a>
@@ -359,7 +311,7 @@ export default function HubHomePage() {
                       gap: '4px',
                     }}
                   >
-                    View All Educational News &amp; Updates →
+                    View All News &amp; Updates →
                   </a>
                 </div>
               </section>
@@ -390,13 +342,13 @@ export default function HubHomePage() {
                     }}
                   >
                     <CheckCircle2 size={16} color="#16A34A" />
-                    Verified Student Services
+                    Services
                   </h2>
                   <a
                     href="/services"
                     style={{ fontSize: '11.5px', fontWeight: 800, color: '#D9381E', textDecoration: 'none' }}
                   >
-                    Browse Catalog →
+                    View All →
                   </a>
                 </div>
 
@@ -421,21 +373,15 @@ export default function HubHomePage() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                           <CardIdentityMark value={service.themeMark} type="service" size="sm" />
-                          <span style={{ fontSize: '9px', fontWeight: 800, color: '#D9381E', background: '#FFF0E6', padding: '2px 5px', borderRadius: '4px' }}>
-                            {service.badge}
-                          </span>
+
                         </div>
                         <strong style={{ fontSize: '12.5px', display: 'block', color: '#0f172a', marginBottom: '4px' }}>
                           {service.title}
                         </strong>
-                        <p style={{ margin: 0, fontSize: '10.5px', color: '#64748b', lineHeight: 1.45 }}>
-                          {service.description}
-                        </p>
+
                       </div>
 
-                      <div style={{ marginTop: '10px', fontSize: '11px', fontWeight: 800, color: '#D9381E', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        Request Service <ArrowRight size={12} />
-                      </div>
+
                     </a>
                   ))}
                 </div>
@@ -444,82 +390,6 @@ export default function HubHomePage() {
 
             {/* RIGHT COLUMN: DASHBOARD PROMPT + NOTICEBOARD / DEADLINES */}
             <aside>
-              {/* WIDGET 1: STUDENT DASHBOARD PROMPT CARD */}
-              <div
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  marginBottom: '14px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <div
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '6px',
-                      background: '#FFF0E6',
-                      color: '#D9381E',
-                      display: 'grid',
-                      placeItems: 'center',
-                    }}
-                  >
-                    <LayoutDashboard size={16} />
-                  </div>
-                  <div>
-                    <strong style={{ fontSize: '13px', display: 'block', color: '#0f172a' }}>
-                      Student Workspace
-                    </strong>
-                    <span style={{ fontSize: '10px', color: '#64748b' }}>
-                      Personal academic portal
-                    </span>
-                  </div>
-                </div>
-
-                <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.5, margin: '0 0 12px' }}>
-                  Track your service applications, review past CBT scores, calculate your semester CGPA, and save shortlisted universities.
-                </p>
-
-                <div style={{ display: 'grid', gap: '6px' }}>
-                  <a
-                    href="/dashboard"
-                    style={{
-                      background: '#D9381E',
-                      color: '#ffffff',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      textAlign: 'center',
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {loggedInUser ? 'Open My Dashboard →' : 'Sign In to Dashboard →'}
-                  </a>
-                  {!loggedInUser && (
-                    <a
-                      href="/register"
-                      style={{
-                        background: '#f8fafc',
-                        border: '1px solid #cbd5e1',
-                        color: '#0f172a',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        textAlign: 'center',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      Create Free Student Account
-                    </a>
-                  )}
-                </div>
-              </div>
-
               {/* WIDGET 2: ACADEMIC CALENDAR & DEADLINES */}
               <div
                 style={{
@@ -571,42 +441,6 @@ export default function HubHomePage() {
                 </div>
               </div>
 
-              {/* WIDGET 3: WHATSAPP COMMUNITY & HELPLINE */}
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, #0F172A 0%, #283044 100%)',
-                  color: '#ffffff',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  borderTop: '3px solid #D9381E',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <MessageCircle size={18} color="#F97316" />
-                  <strong style={{ fontSize: '13px', color: '#ffffff' }}>Official WhatsApp Helpline</strong>
-                </div>
-                <p style={{ fontSize: '11px', margin: '0 0 10px', color: '#cbd5e1', lineHeight: 1.45 }}>
-                  Get real-time admission assistance, scratch card PIN verification, and scholarship announcements.
-                </p>
-                <a
-                  href="https://wa.me/2348000000000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    background: '#16A34A',
-                    color: '#ffffff',
-                    padding: '7px 12px',
-                    borderRadius: '6px',
-                    fontWeight: 900,
-                    fontSize: '11.5px',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Chat with Academic Support →
-                </a>
-              </div>
             </aside>
           </div>
         </div>
