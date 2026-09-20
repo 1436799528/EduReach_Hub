@@ -79,7 +79,7 @@ export default function ServicesCatalogPage() {
                 OFFICIAL SERVICES CATALOGUE
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
-                Verified Student Services &amp; Scratch Cards
+                Services
               </h1>
             </div>
 
@@ -176,21 +176,18 @@ export default function ServicesCatalogPage() {
                   className="ms-service-card"
                   href={'/services/apply/' + service.service_key}
                   key={service.id}
-                  style={{ minHeight: '180px' }}
+                  style={{ minHeight: '104px' }}
                 >
                   <div>
                     <div className="ms-service-card-header">
                       {/* Theme icon using service image */}
                       <CardIdentityMark value={service.service_key} type="service" size="md" />
-                      <span className="ms-service-badge">
-                        <CheckCircle2 size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />
-                        Verified Active
-                      </span>
+                      
                     </div>
 
                     <div className="ms-service-body">
                       <h3 style={{ fontSize: '15px' }}>{service.title}</h3>
-                      <p style={{ fontSize: '12.5px' }}>{service.description}</p>
+                      
                     </div>
                   </div>
 
