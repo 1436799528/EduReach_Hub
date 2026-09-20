@@ -575,3 +575,27 @@
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
 }
+
+/* 11. RESPONSIVE NAVIGATION HEADER */
+.hub-desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 920px) {
+  .hub-desktop-nav {
+    display: none !important;
+  }
+  .hub-mobile-trigger {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .hub-desktop-search {
+    display: none !important;
+  }
+}

@@ -3,18 +3,10 @@ import { useState } from 'react';
 import {
   Menu,
   X,
-  Home,
-  BrainCircuit,
-  Zap,
   ScanSearch,
-  MessageCircle,
-  Search,
-  ShieldCheck,
   User,
-  GraduationCap,
-  Calculator,
-  ChevronRight,
-  Headphones,
+  ShieldCheck,
+  Search,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import '../hub-rail.css';
@@ -24,7 +16,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   const [navSearch, setNavSearch] = useState('');
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
-  // Do not crowd full-screen tool pages (CBT Practice, CBT Results, Tracker, Calculator, Apply, Dashboard) with the side rail
+  // Do not crowd full-screen tool pages with the side rail
   const showRail = path === '/news' || (path.startsWith('/news/') && path !== '/news');
 
   const handleNavSearch = (e: React.FormEvent) => {
@@ -109,7 +101,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '16px',
-            padding: '10px 16px',
+            padding: '10px 0',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -121,7 +113,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               aria-controls="hub-mobile-menu"
               onClick={() => setMobileOpen(true)}
               style={{
-                display: 'none',
                 background: 'none',
                 border: 0,
                 color: '#0f172a',
@@ -171,11 +162,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
           {/* DESKTOP SEARCH BAR */}
           <form
             onSubmit={handleNavSearch}
+            className="hub-desktop-search"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              flex: '1 1 260px',
-              maxWidth: '380px',
               background: '#f8fafc',
               border: '1px solid #cbd5e1',
               borderRadius: '8px',
@@ -200,15 +188,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
           </form>
 
           {/* DESKTOP NAVIGATION LINKS */}
-          <nav
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '18px',
-              fontSize: '13px',
-              fontWeight: 700,
-            }}
-          >
+          <nav className="hub-desktop-nav">
             <a
               href="/"
               style={{
@@ -384,7 +364,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 News &amp; Noticeboard
               </a>
               <a href="/jobs" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Scholarships &amp; Jobs
+                Scholarships &amp; Grants
               </a>
               <a href="/dashboard" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Student Workspace
