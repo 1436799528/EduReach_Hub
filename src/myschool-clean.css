@@ -878,3 +878,183 @@
   .ms-news-row { grid-template-columns: 96px minmax(0,1fr) !important; }
   .ms-news-thumb { width: 96px !important; height: 76px !important; }
 }
+
+
+/* ==========================================================================
+   FINAL COMPACT DENSITY PASS
+   MySchool-like information density: white surfaces, restrained accents,
+   tighter spacing, small identity marks. Avoid a rainbow-card interface.
+   ========================================================================== */
+.edureach-landing{
+  padding:8px 0 28px !important;
+  background:#f7f8fa;
+}
+.edureach-landing > .hub-container{
+  width:calc(100% - 28px) !important;
+  max-width:1280px !important;
+}
+.ms-ticker-strip{
+  min-height:30px !important;
+  padding:5px 10px !important;
+  margin-bottom:8px !important;
+  border-radius:4px !important;
+  background:#0f5132 !important;
+  font-size:10.5px !important;
+  box-shadow:none !important;
+}
+.ms-ticker-badge{
+  padding:2px 6px !important;
+  font-size:8px !important;
+}
+.ms-search-bar{
+  min-height:38px !important;
+  padding:3px 9px !important;
+  margin-bottom:9px !important;
+  border-radius:5px !important;
+  box-shadow:none !important;
+}
+.ms-search-input{
+  font-size:12px !important;
+  padding:4px 0 !important;
+}
+.ms-top-tiles-grid{
+  gap:7px !important;
+  margin-bottom:12px !important;
+}
+.ms-top-tile{
+  min-height:72px !important;
+  padding:8px 10px !important;
+  gap:9px !important;
+  border:1px solid #e5e7eb !important;
+  border-radius:5px !important;
+  background:#fff !important;
+  color:#111827 !important;
+  box-shadow:none !important;
+}
+.ms-top-tile:nth-child(n){
+  background:#fff !important;
+}
+.ms-top-tile::after{display:none !important}
+.ms-top-tile-icon{
+  width:38px !important;
+  height:38px !important;
+  padding:3px !important;
+  border-radius:4px !important;
+  background:#f8fafc !important;
+}
+.ms-top-tile-icon img{width:31px !important;height:31px !important}
+.ms-top-tile-body strong{
+  font-size:11.5px !important;
+  color:#1f2937 !important;
+}
+.ms-top-tile-body span:last-child{
+  font-size:9px !important;
+  color:#6b7280 !important;
+}
+.ms-top-tile-body > span:first-child{
+  padding:0 !important;
+  background:none !important;
+  color:#64748b !important;
+  font-size:7.5px !important;
+}
+.ms-top-tile > svg{
+  color:#94a3b8 !important;
+}
+.ms-top-tile:hover{
+  transform:none !important;
+  border-color:#cbd5e1 !important;
+  box-shadow:none !important;
+}
+
+.ms-portal-layout{
+  grid-template-columns:minmax(0,1fr) 270px !important;
+  gap:14px !important;
+}
+.edureach-landing main section{
+  margin-bottom:14px !important;
+}
+.edureach-landing main section > div:first-child{
+  margin-bottom:7px !important;
+  padding-bottom:5px !important;
+  border-bottom:1px solid #e5e7eb !important;
+}
+.edureach-landing main section h2{
+  font-size:12px !important;
+}
+.ms-news-row{
+  grid-template-columns:104px minmax(0,1fr) 15px !important;
+  min-height:62px !important;
+  margin-bottom:5px !important;
+  border-radius:4px !important;
+}
+.ms-news-thumb{
+  width:104px !important;
+  height:62px !important;
+}
+.ms-news-main{padding:6px 8px !important}
+.ms-news-main h3{
+  font-size:11.5px !important;
+  line-height:1.3 !important;
+}
+.ms-news-meta{
+  font-size:8.5px !important;
+  margin-bottom:2px !important;
+}
+.edureach-landing aside > div{
+  padding:10px !important;
+  margin-bottom:9px !important;
+  border-radius:5px !important;
+}
+.edureach-landing aside strong{
+  font-size:10.5px !important;
+}
+.edureach-landing aside [style*="padding: 8px 10px"]{
+  padding:6px 8px !important;
+}
+
+.ms-service-card{
+  min-height:70px !important;
+  padding:8px 10px !important;
+  border-radius:5px !important;
+  background:#fff !important;
+  color:#111827 !important;
+  border:1px solid #e5e7eb !important;
+}
+.ms-service-card:nth-child(n){
+  background:#fff !important;
+}
+.ms-service-card::after{display:none !important}
+.ms-service-card .ms-identity-mark{
+  background:#f8fafc !important;
+  border:1px solid #eef2f7 !important;
+  color:#334155 !important;
+  padding:2px 5px !important;
+}
+.ms-service-card .ms-identity-label,
+.ms-service-card .ms-service-body h3,
+.ms-service-card .ms-service-body strong{
+  color:#1f2937 !important;
+}
+.ms-service-card .ms-service-body h3{
+  font-size:11.5px !important;
+}
+.ms-service-card .ms-service-card-header{margin-bottom:4px !important}
+.ms-service-card:hover{
+  transform:none !important;
+  border-color:#cbd5e1 !important;
+  box-shadow:none !important;
+}
+
+@media(max-width:700px){
+  .edureach-landing > .hub-container{width:calc(100% - 14px) !important}
+  .ms-top-tiles-grid{gap:5px !important}
+  .ms-top-tile{min-height:64px !important;padding:7px !important}
+  .ms-top-tile-icon{width:32px !important;height:32px !important}
+  .ms-top-tile-icon img{width:26px !important;height:26px !important}
+  .ms-top-tile-body strong{font-size:10.5px !important}
+  .ms-top-tile-body span:last-child{font-size:8.5px !important}
+  .ms-portal-layout{gap:10px !important}
+  .ms-news-row{grid-template-columns:82px minmax(0,1fr) !important;min-height:56px !important}
+  .ms-news-thumb{width:82px !important;height:56px !important}
+  .ms-news-main{padding:5px 6px !important}
+}
