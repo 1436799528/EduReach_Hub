@@ -1007,6 +1007,16 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           >
             <Settings size={15} /> Settings
           </button>
+
+          {profile?.role && ['admin', 'super_admin', 'moderator'].includes(String(profile.role).toLowerCase()) && (
+            <a
+              href="/admin"
+              className="edureach-nav-item"
+              style={{ marginTop: '6px', color: '#b91c1c', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
+            >
+              <Shield size={15} /> Admin Panel
+            </a>
+          )}
         </aside>
 
         {/* MAIN DASHBOARD STREAM */}
@@ -1096,7 +1106,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               </div>
               <div>
                 <div className="dash-quick-card-title">CBT Practice</div>
-                <div className="dash-quick-card-sub">Mock Simulator →</div>
+                <div className="dash-quick-card-sub">JAMB / WAEC Practice →</div>
               </div>
             </a>
 
