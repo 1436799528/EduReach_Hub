@@ -28,7 +28,7 @@ const modes: Array<{ key: ExamMode; label: string; description: string }> = [
 ];
 
 const cbtExamsOverview = [
-  { key: 'jamb', label: 'JAMB UTME', title: 'JAMB CBT Classroom', desc: 'Simulate the exact UTME computer test environment with real past questions and timer.', tone: 'emerald', questions: '40 Qs', time: '30 mins' },
+  { key: 'jamb', label: 'JAMB UTME', title: 'JAMB CBT Simulator', desc: 'Simulate the exact UTME computer test environment with real past questions and timer.', tone: 'emerald', questions: '40 Qs', time: '30 mins' },
   { key: 'waec', label: 'WAEC SSCE', title: 'WAEC Exam Practice', desc: 'Sharpen your preparation in English, Mathematics, Biology, Chemistry & Physics.', tone: 'blue', questions: '50 Qs', time: '45 mins' },
   { key: 'neco', label: 'NECO SSCE', title: 'NECO Examination Revision', desc: 'Comprehensive practice tests covering high-frequency SSCE syllabus objectives.', tone: 'emerald', questions: '40 Qs', time: '40 mins' },
   { key: 'post-utme', label: 'POST-UTME', title: 'Post-UTME Screening Tests', desc: 'Screening aptitude tests for UNILAG, UNICAL, UNN, ABU, UI and state institutions.', tone: 'purple', questions: '30 Qs', time: '25 mins' },
