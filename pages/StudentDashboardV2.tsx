@@ -216,6 +216,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [userId, setUserId] = useState('');
   const [isLocalMode, setIsLocalMode] = useState(!isSupabaseConfigured);
   const [dashboardNotice, setDashboardNotice] = useState('');
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   // Saved Schools & Courses state
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>(emptySavedItems);
@@ -336,8 +337,16 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
       if (!active) return;
       const metadataRole = String(currentSession.user.app_metadata?.role || currentSession.user.user_metadata?.role || '').toLowerCase();
+      let adminSession = false;
+      try {
+        const adminResponse = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${currentSession.access_token}` } });
+        adminSession = adminResponse.ok;
+      } catch {
+        adminSession = false;
+      }
+      setIsAdminUser(adminSession || ['admin', 'super_admin', 'moderator'].includes(metadataRole));
       if (profileResult.data) {
-        setProfile(profileResult.data as Profile);
+        setProfile({ ...(profileResult.data as Profile), role: metadataRole || String(profileResult.data.role || 'student') });
         setMfaEnabled(Boolean(profileResult.data.mfa_enabled));
       } else {
         setProfile({
@@ -1003,7 +1012,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <Settings size={15} /> Settings
           </button>
 
-          {profile?.role && ['admin', 'super_admin', 'moderator'].includes(String(profile.role).toLowerCase()) && (
+          {(isAdminUser || (profile?.role && ['admin', 'super_admin', 'moderator'].includes(String(profile.role).toLowerCase()))) && (
             <div className="edureach-admin-nav-group" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
               <a href="/admin" className="edureach-nav-item" style={{ color: '#b91c1c', fontWeight: 800 }}>
                 <Shield size={15} /> Admin Panel
