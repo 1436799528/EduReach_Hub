@@ -26,7 +26,7 @@ const topPortalPillars = [
     title: 'JAMB CBT Simulator',
     subtitle: 'UTME exam simulator with real timer and scoring',
     href: '/cbt',
-    img: 'https://www.jamb.gov.ng/favicon.ico',
+    img: 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg',
     tag: 'UTME 2026',
   },
   {
@@ -86,9 +86,9 @@ function formatDate(value: string | null) {
 
 function newsImageFor(item: NewsItem) {
   const category = item.category.toLowerCase();
-  if (category.includes('jamb')) return 'https://www.jamb.gov.ng/favicon.ico';
-  if (category.includes('neco')) return 'https://neco.gov.ng/favicon.ico';
-  if (category.includes('waec') || category.includes('result')) return 'https://www.waecnigeria.org/favicon.ico';
+  if (category.includes('jamb')) return 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg';
+  if (category.includes('neco')) return 'https://i.pinimg.com/736x/b2/54/24/b254246163c37148203ed5f7c1144e9d.jpg';
+  if (category.includes('waec') || category.includes('result')) return 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg';
   if (category.includes('admission') || category.includes('screen')) return 'https://i.pinimg.com/736x/26/7a/e3/267ae39bd873640ba1710cffe18451c8.jpg';
   if (category.includes('scholarship') || category.includes('grant') || category.includes('fund')) return 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg';
   return '/news/education.svg';
