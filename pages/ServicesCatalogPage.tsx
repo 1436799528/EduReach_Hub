@@ -65,19 +65,6 @@ export default function ServicesCatalogPage() {
             }}
           >
             <div>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#059669',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  display: 'block',
-                  marginBottom: '2px',
-                }}
-              >
-                OFFICIAL SERVICES CATALOGUE
-              </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
                 Services
               </h1>
