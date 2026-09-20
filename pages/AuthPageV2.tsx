@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
+import { bootstrapAdmin } from '../src/lib/api';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 
@@ -182,6 +183,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           } = await supabase.auth.getSession();
 
           if (signedInSession?.access_token) {
+            // The configured bootstrap account can become the first super administrator.
+            try { await bootstrapAdmin(); } catch { /* already bootstrapped or not the designated account */ }
             const adminCheck = await fetch('/api/admin/session', {
               headers: { Authorization: `Bearer ${signedInSession.access_token}` },
             });
