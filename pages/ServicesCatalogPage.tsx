@@ -166,7 +166,7 @@ export default function ServicesCatalogPage() {
                   style={{ minHeight: '104px' }}
                 >
                   <div className="ms-service-card-header">
-                    <CardIdentityMark value={service.service_key} type="service" size="md" />
+                    <CardIdentityMark value={`${service.service_key} ${service.title}`} type="service" size="md" />
                   </div>
                   <div className="ms-service-body">
                     <h3 style={{ fontSize: '15px' }}>{service.title}</h3>
