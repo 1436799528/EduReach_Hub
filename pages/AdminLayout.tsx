@@ -24,6 +24,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             if (active) { setSession({ id: user.id, email: user.email || '', fullName: user.fullName || '', role: 'admin' }); setChecking(false); }
             return;
           }
+
+          // Keep the admin shell accessible when the local API is unavailable,
+          // while still requiring the authenticated Supabase account to have an
+          // explicit admin role in its own profile.
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, full_name, role')
+            .eq('id', authSession.user.id)
+            .maybeSingle();
+
+          const role = String(profile?.role || '').toLowerCase();
+          if (['admin', 'super_admin', 'moderator'].includes(role)) {
+            if (active) {
+              setSession({
+                id: authSession.user.id,
+                email: authSession.user.email || '',
+                fullName: String(profile?.full_name || authSession.user.user_metadata?.full_name || ''),
+                role: 'admin',
+              });
+              setChecking(false);
+            }
+            return;
+          }
         }
       } catch {
         // Backend offline / not configured
