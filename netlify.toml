@@ -1,11 +1,20 @@
 [build]
-# Netlify production build: Vite output is published from dist.
-# Supabase frontend variables are supplied by the Netlify production environment.
   command = "npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  external_node_modules = ["express", "serverless-http"]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
