@@ -35,6 +35,30 @@ export function resolveIdentity(
 ): CleanIdentity {
   const v = (value || '').toLowerCase();
 
+  // Brand-first resolution: when a card explicitly names an organisation,
+  // its real brand mark takes precedence over the generic service icon.
+  if (v.includes('admission watch')) {
+    return { icon: FileText, image: 'https://i.pinimg.com/736x/26/7a/e3/267ae39bd873640ba1710cffe18451c8.jpg', label: 'ADMISSION WATCH', tone: 'purple', ariaLabel: 'Admission Watch' };
+  }
+  if (v.includes('student funding') || v.includes('funding alert')) {
+    return { icon: Wallet, image: 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
+  }
+  if (v.includes('jamb')) {
+    return { icon: GraduationCap, image: 'https://www.jamb.gov.ng/favicon.ico', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Services' };
+  }
+  if (v.includes('neco')) {
+    return { icon: Award, image: 'https://neco.gov.ng/favicon.ico', label: 'NECO', tone: 'blue', ariaLabel: 'NECO Services' };
+  }
+  if (v.includes('waec')) {
+    return { icon: FileCheck2, image: 'https://www.waecnigeria.org/favicon.ico', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC Services' };
+  }
+  if (v.includes('nabteb')) {
+    return { icon: Award, image: 'https://nabteb.gov.ng/wp-content/uploads/2025/09/logo-150x150.png', label: 'NABTEB', tone: 'blue', ariaLabel: 'NABTEB Services' };
+  }
+  if (v.includes('nelfund')) {
+    return { icon: Wallet, image: 'https://nelf.gov.ng/favicon.ico', label: 'NELFUND', tone: 'emerald', ariaLabel: 'NELFUND Services' };
+  }
+
   // News
   if (type === 'news' || v.includes('news') || v.includes('gist')) {
     if (v.includes('jamb')) {
@@ -86,11 +110,11 @@ export function resolveIdentity(
   if (v.includes('scratch') || v.includes('card') || v.includes('pin') || v.includes('voucher') || v.includes('token')) {
     return {
       icon: CreditCard,
-      image: '/icons/scratch-cards.svg',
-      label: 'CARDS',
-      badge: 'TOKEN',
-      tone: 'amber',
-      ariaLabel: 'WAEC and NECO Scratch Cards',
+      image: 'https://www.waecnigeria.org/favicon.ico',
+      label: 'WAEC',
+      badge: 'SCRATCH CARD',
+      tone: 'blue',
+      ariaLabel: 'WAEC / NECO Scratch Cards',
     };
   }
   if (v.includes('slip') || v.includes('print')) {
