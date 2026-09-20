@@ -47,7 +47,7 @@ const topPortalPillars = [
     title: 'Scholarships & Grants',
     subtitle: 'Verified Federal, state, and international student funding',
     href: '/jobs',
-    img: '/icons/scholarship.svg',
+    img: 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg',
     tag: 'FUNDING',
   },
 ];
@@ -86,9 +86,11 @@ function formatDate(value: string | null) {
 
 function newsImageFor(item: NewsItem) {
   const category = item.category.toLowerCase();
-  if (category.includes('jamb')) return '/news/jamb.svg';
-  if (category.includes('waec') || category.includes('neco') || category.includes('result')) return '/news/waec.svg';
-  if (category.includes('admission') || category.includes('screen')) return '/news/admission.svg';
+  if (category.includes('jamb')) return 'https://www.jamb.gov.ng/favicon.ico';
+  if (category.includes('neco')) return 'https://neco.gov.ng/favicon.ico';
+  if (category.includes('waec') || category.includes('result')) return 'https://www.waecnigeria.org/favicon.ico';
+  if (category.includes('admission') || category.includes('screen')) return 'https://i.pinimg.com/736x/26/7a/e3/267ae39bd873640ba1710cffe18451c8.jpg';
+  if (category.includes('scholarship') || category.includes('grant') || category.includes('fund')) return 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg';
   return '/news/education.svg';
 }
 
