@@ -1064,7 +1064,22 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 </p>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {isAdminUser && (
+                  <a
+                    href="/admin"
+                    className="dash-pill"
+                    style={{
+                      textDecoration: 'none',
+                      color: '#b91c1c',
+                      borderColor: '#fecaca',
+                      background: '#fff1f2',
+                      fontWeight: 800,
+                    }}
+                  >
+                    <Shield size={11} /> Admin Panel
+                  </a>
+                )}
                 <a
                   href="/profile"
                   className="dash-pill"
