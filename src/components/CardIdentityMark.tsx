@@ -35,14 +35,21 @@ export function resolveIdentity(
 ): CleanIdentity {
   const v = (value || '').toLowerCase();
 
-  // Brand-first resolution: when a card explicitly names an organisation,
-  // its real brand mark takes precedence over the generic service icon.
+  // Explicit service artwork takes precedence when the service itself is named.
   if (v.includes('admission watch')) {
     return { icon: FileText, image: 'https://i.pinimg.com/736x/26/7a/e3/267ae39bd873640ba1710cffe18451c8.jpg', label: 'ADMISSION WATCH', tone: 'purple', ariaLabel: 'Admission Watch' };
   }
   if (v.includes('student funding') || v.includes('funding alert')) {
     return { icon: Wallet, image: 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
   }
+  if (v.includes('scratch') || v.includes('scratch card') || v.includes('voucher') || v.includes('token')) {
+    return { icon: CreditCard, image: 'https://www.waecnigeria.org/favicon.ico', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC / NECO Scratch Cards' };
+  }
+  if (v.includes('jamb slip') || (v.includes('slip') && v.includes('jamb')) || v.includes('exam slip')) {
+    return { icon: Printer, image: 'https://www.jamb.gov.ng/favicon.ico', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Exam Slip Printing' };
+  }
+
+  // Brand-first resolution: an explicitly named organisation uses its real brand mark.
   if (v.includes('jamb')) {
     return { icon: GraduationCap, image: 'https://www.jamb.gov.ng/favicon.ico', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Services' };
   }
