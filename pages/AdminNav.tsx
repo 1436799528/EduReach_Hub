@@ -2,7 +2,8 @@ import { useCallback, type ReactNode } from 'react';
 
 export function useNavigate() {
   return useCallback((path: string) => {
-    window.location.assign(path);
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }, []);
 }
 

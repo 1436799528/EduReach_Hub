@@ -4,11 +4,15 @@ import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
 
+function initialServiceSearch() {
+  return new URLSearchParams(window.location.search).get('q') ?? '';
+}
+
 export default function ServicesCatalogPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialServiceSearch);
   const [activeFilter, setActiveFilter] = useState('ALL');
 
   useEffect(() => {

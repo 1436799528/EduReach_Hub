@@ -248,6 +248,22 @@ samp,
   color: var(--er-text-primary) !important;
 }
 
+/* Compact card/content rhythm: keep pages scannable and avoid stretched text-heavy cards. */
+:where(.ms-news-main p, .ms-service-body p, .dash-quick-card-sub, .dash-card p, .hub-service-profile-body p, .service-track-intro p, .admin-page-header p) {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:where(.dash-card, .hub-panel, .admin-card, .service-track-card) {
+  padding-block: clamp(12px, 1.4vw, 18px);
+}
+
+:where(.ms-service-card, .dash-quick-card, .student-card, .hub-service-profile-card) {
+  min-height: auto !important;
+}
+
 /* Primary buttons and CTAs */
 .hub-primary-btn {
   background: var(--er-crimson) !important;

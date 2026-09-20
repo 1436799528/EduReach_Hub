@@ -198,21 +198,25 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 }
 
 export async function fetchServices(): Promise<ServiceItem[]> {
-  try {
-    const body = await jsonFetch<{ items: ServiceItem[] }>('/api/services');
-    if (body.items?.length) return body.items;
-  } catch {
-    // Backend offline / not configured
+  if (isSupabaseConfigured) {
+    try {
+      const body = await jsonFetch<{ items: ServiceItem[] }>('/api/services');
+      if (body.items?.length) return body.items;
+    } catch {
+      // Backend offline / not configured
+    }
   }
   return fallbackServicesCatalog;
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {
-  try {
-    const body = await jsonFetch<{ item: ServiceItem }>(`/api/services/${encodeURIComponent(slug)}`);
-    if (body.item) return body.item;
-  } catch {
-    // Backend offline / not configured
+  if (isSupabaseConfigured) {
+    try {
+      const body = await jsonFetch<{ item: ServiceItem }>(`/api/services/${encodeURIComponent(slug)}`);
+      if (body.item) return body.item;
+    } catch {
+      // Backend offline / not configured
+    }
   }
   const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
   if (item) return item;
@@ -227,11 +231,13 @@ export async function fetchService(slug: string): Promise<ServiceItem> {
 }
 
 export async function fetchUpcoming(): Promise<UpcomingItem[]> {
-  try {
-    const body = await jsonFetch<{ items: UpcomingItem[] }>('/api/upcoming');
-    if (body.items?.length) return body.items;
-  } catch {
-    // Fall back to preview updates
+  if (isSupabaseConfigured) {
+    try {
+      const body = await jsonFetch<{ items: UpcomingItem[] }>('/api/upcoming');
+      if (body.items?.length) return body.items;
+    } catch {
+      // Fall back to preview updates
+    }
   }
   return fallbackUpcomingItems;
 }
@@ -341,13 +347,15 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
 }
 
 export async function fetchCbtQuestions(examId: string) {
-  try {
-    const body = await jsonFetch<{ exam: { id: string; title: string; durationMinutes: number; subject: string }; questions: Array<{ id: number; text: string; options: string[] }> }>(
-      `/api/cbt/exams/${encodeURIComponent(examId)}/questions`,
-    );
-    if (body?.questions?.length) return body;
-  } catch {
-    // fallback
+  if (isSupabaseConfigured) {
+    try {
+      const body = await jsonFetch<{ exam: { id: string; title: string; durationMinutes: number; subject: string }; questions: Array<{ id: number; text: string; options: string[] }> }>(
+        `/api/cbt/exams/${encodeURIComponent(examId)}/questions`,
+      );
+      if (body?.questions?.length) return body;
+    } catch {
+      // fallback
+    }
   }
 
   const examMeta = fallbackCbtExams.find((e) => e.id === examId) || fallbackCbtExams[0];

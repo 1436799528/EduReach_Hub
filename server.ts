@@ -16,6 +16,10 @@ app.use((_req, res, next) => {
   next();
 });
 
+function isServerSupabaseConfigured() {
+  return Boolean(process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 function getServerSupabase() {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -367,6 +371,7 @@ app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
 });
 
 app.get('/api/services', async (_req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -383,6 +388,7 @@ app.get('/api/services', async (_req, res) => {
 });
 
 app.get('/api/services/:slug', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'Service catalog is not configured.' });
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -401,6 +407,7 @@ app.get('/api/services/:slug', async (req, res) => {
 });
 
 app.get('/api/upcoming', async (_req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
     const [deadlinesResult, examsResult] = await Promise.all([
@@ -444,6 +451,7 @@ app.get('/api/upcoming', async (_req, res) => {
 });
 
 app.get('/api/news', async (_req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles')
@@ -458,6 +466,7 @@ app.get('/api/news', async (_req, res) => {
 });
 
 app.get('/api/news/:slug', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'News content is not configured.' });
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles')
@@ -544,6 +553,7 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
 });
 
 app.get('/api/cbt/exams/:examId/questions', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'CBT question bank is not configured.' });
   try {
     const supabase = getServerSupabase();
     const { data: exam, error: examError } = await supabase.from('cbt_exams').select('id,title,duration_minutes,subject,is_active').eq('id', req.params.examId).eq('is_active', true).single();

@@ -623,6 +623,37 @@ export default function StudentDashboardV2() {
     c.name.toLowerCase().includes(courseFilterQuery.toLowerCase()) || c.faculty.toLowerCase().includes(courseFilterQuery.toLowerCase())
   );
 
+  const navigateInApp = (path: string) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  const openDashboardTab = (tab: TabType) => {
+    if (tab === 'past-questions') return navigateInApp('/cbt?mode=WAEC');
+    if (tab === 'admission') return navigateInApp('/screening-calculator');
+    if (tab === 'scholarships') return navigateInApp('/jobs');
+    if (tab === 'profile') return navigateInApp('/profile/complete');
+    if (tab === 'settings') {
+      setSecurityOpen(true);
+      return;
+    }
+
+    setActiveTab(tab);
+    const targetId: Partial<Record<TabType, string>> = {
+      dashboard: 'dashboard-overview',
+      applications: 'applications',
+      saved: 'saved',
+      cbt: 'cbt',
+      tools: 'tools',
+      notifications: 'notifications',
+    };
+    window.requestAnimationFrame(() => {
+      const target = targetId[tab] ? document.getElementById(targetId[tab]!) : null;
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
+
   if (loading) {
     return (
       <div className="edureach-dash-container" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px' }}>
@@ -734,7 +765,7 @@ export default function StudentDashboardV2() {
                   <a
                     href="#notifications"
                     onClick={() => {
-                      setActiveTab('notifications');
+                      openDashboardTab('notifications');
                       setNotifDropdownOpen(false);
                     }}
                     style={{
@@ -852,14 +883,14 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => openDashboardTab('dashboard')}
           >
             <LayoutDashboard size={15} /> Dashboard
           </button>
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'applications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('applications')}
+            onClick={() => openDashboardTab('applications')}
           >
             <ClipboardList size={15} /> Applications
             {requests.length > 0 && <span className="edureach-nav-item-badge">{requests.length}</span>}
@@ -867,7 +898,7 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'saved' ? 'active' : ''}`}
-            onClick={() => setActiveTab('saved')}
+            onClick={() => openDashboardTab('saved')}
           >
             <Bookmark size={15} /> Saved
             <span className="edureach-nav-item-badge">{savedItemsCount}</span>
@@ -875,42 +906,42 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'cbt' ? 'active' : ''}`}
-            onClick={() => setActiveTab('cbt')}
+            onClick={() => openDashboardTab('cbt')}
           >
             <CheckSquare size={15} /> CBT Practice
           </button>
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'past-questions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('past-questions')}
+            onClick={() => openDashboardTab('past-questions')}
           >
             <BookOpen size={15} /> Past Questions
           </button>
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'admission' ? 'active' : ''}`}
-            onClick={() => setActiveTab('admission')}
+            onClick={() => openDashboardTab('admission')}
           >
             <GraduationCap size={15} /> Admission
           </button>
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'scholarships' ? 'active' : ''}`}
-            onClick={() => setActiveTab('scholarships')}
+            onClick={() => openDashboardTab('scholarships')}
           >
             <Award size={15} /> Scholarships
           </button>
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'tools' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tools')}
+            onClick={() => openDashboardTab('tools')}
           >
             <Wrench size={15} /> Tools &amp; Calc
           </button>
           <button
             type="button"
             className={`edureach-nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => openDashboardTab('notifications')}
           >
             <Bell size={15} /> Notifications
             {unreadNotifsCount > 0 && <span className="edureach-nav-item-badge">{unreadNotifsCount}</span>}
@@ -967,7 +998,7 @@ export default function StudentDashboardV2() {
           )}
 
           {/* SECTION 1: WELCOME / PROFILE SUMMARY */}
-          <section className="dash-welcome-card">
+          <section className="dash-welcome-card" id="dashboard-overview">
             <div className="dash-welcome-top">
               <div>
                 <h1 className="dash-welcome-title">Welcome back, {profile?.first_name || displayName}</h1>
@@ -1068,7 +1099,7 @@ export default function StudentDashboardV2() {
           </section>
 
           {/* SECTION 3: QUICK ACTIONS (CGPA Calculator, School Finder, Course Finder) */}
-          <section className="dash-card">
+          <section className="dash-card" id="tools">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
                 <Wrench size={14} className="dash-card-title-icon" /> Quick Actions &amp; Academic Tools
@@ -1318,7 +1349,57 @@ export default function StudentDashboardV2() {
             </div>
           </section>
 
-          {/* SECTION 7: RECOMMENDED SERVICES (Same EduReach card system with theme marks) */}
+          {/* SECTION 7: NOTIFICATIONS & ALERTS */}
+          <section className="dash-card" id="notifications">
+            <div className="dash-card-header">
+              <h2 className="dash-card-title">
+                <Bell size={14} className="dash-card-title-icon" /> Notifications &amp; Alerts
+              </h2>
+              {unreadNotifsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllNotifsRead}
+                  className="dash-card-link"
+                  style={{ background: 'none', border: 0, cursor: 'pointer' }}
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {!notifications.length && (
+                <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                  No alerts yet. Service updates, CBT reminders, saved items, and funding announcements will appear here.
+                </div>
+              )}
+              {notifications.slice(0, 5).map((notice) => (
+                <div
+                  key={notice.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    background: notice.read ? '#ffffff' : '#FFF0E6',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '9px 11px',
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {notice.title}
+                    </strong>
+                    <span style={{ fontSize: '10px', color: '#64748b' }}>{notice.time}</span>
+                  </div>
+                  {!notice.read && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#D9381E', flexShrink: 0 }} />}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* SECTION 8: RECOMMENDED SERVICES (Same EduReach card system with theme marks) */}
           <section className="dash-card">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
@@ -1422,7 +1503,7 @@ export default function StudentDashboardV2() {
             </div>
           </section>
 
-          {/* SECTION 8: RECENT ACTIVITY */}
+          {/* SECTION 9: RECENT ACTIVITY */}
           <section className="dash-card">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
@@ -1666,7 +1747,7 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-bottom-link ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => openDashboardTab('dashboard')}
           >
             <LayoutDashboard size={17} />
             <span>Dashboard</span>
@@ -1674,7 +1755,7 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-bottom-link ${activeTab === 'applications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('applications')}
+            onClick={() => openDashboardTab('applications')}
           >
             <ClipboardList size={17} />
             <span>Apply</span>
@@ -1682,7 +1763,7 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-bottom-link ${activeTab === 'cbt' ? 'active' : ''}`}
-            onClick={() => setActiveTab('cbt')}
+            onClick={() => openDashboardTab('cbt')}
           >
             <CheckSquare size={17} />
             <span>CBT</span>
@@ -1690,7 +1771,7 @@ export default function StudentDashboardV2() {
           <button
             type="button"
             className={`edureach-bottom-link ${activeTab === 'saved' ? 'active' : ''}`}
-            onClick={() => setActiveTab('saved')}
+            onClick={() => openDashboardTab('saved')}
           >
             <Bookmark size={17} />
             <span>Saved</span>
@@ -1744,7 +1825,7 @@ export default function StudentDashboardV2() {
                 type="button"
                 className="edureach-nav-item"
                 onClick={() => {
-                  setActiveTab('dashboard');
+                  openDashboardTab('dashboard');
                   setMobileMenuOpen(false);
                 }}
               >
@@ -1754,7 +1835,7 @@ export default function StudentDashboardV2() {
                 type="button"
                 className="edureach-nav-item"
                 onClick={() => {
-                  setActiveTab('applications');
+                  openDashboardTab('applications');
                   setMobileMenuOpen(false);
                 }}
               >
@@ -1764,7 +1845,7 @@ export default function StudentDashboardV2() {
                 type="button"
                 className="edureach-nav-item"
                 onClick={() => {
-                  setActiveTab('saved');
+                  openDashboardTab('saved');
                   setMobileMenuOpen(false);
                 }}
               >
@@ -1774,7 +1855,7 @@ export default function StudentDashboardV2() {
                 type="button"
                 className="edureach-nav-item"
                 onClick={() => {
-                  setActiveTab('cbt');
+                  openDashboardTab('cbt');
                   setMobileMenuOpen(false);
                 }}
               >

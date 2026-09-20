@@ -133,7 +133,8 @@ export default function CbtPracticePage() {
       const result = await submitCbt({ examId, attemptId: activeAttemptId, answers });
       localStorage.setItem('edureach-last-cbt-attempt', result.attemptId);
       localStorage.removeItem(`edureach-cbt-attempt-${examId}`);
-      window.location.href = `/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`;
+      window.history.pushState({}, '', `/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Submission failed. Your answers are saved locally.');
       setSubmitting(false);

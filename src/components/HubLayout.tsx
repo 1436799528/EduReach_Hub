@@ -22,9 +22,11 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
   const handleNavSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (navSearch.trim()) {
-      window.location.href = `/services?q=${encodeURIComponent(navSearch.trim())}`;
-    }
+    if (!navSearch.trim()) return;
+
+    window.history.pushState({}, '', `/services?q=${encodeURIComponent(navSearch.trim())}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    setMobileOpen(false);
   };
 
   return (
