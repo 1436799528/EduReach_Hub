@@ -43,21 +43,21 @@ export function resolveIdentity(
     return { icon: Wallet, image: 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
   }
   if (v.includes('scratch') || v.includes('scratch card') || v.includes('voucher') || v.includes('token')) {
-    return { icon: CreditCard, image: 'https://www.waecnigeria.org/favicon.ico', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC / NECO Scratch Cards' };
+    return { icon: CreditCard, image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC / NECO Scratch Cards' };
   }
   if (v.includes('jamb slip') || (v.includes('slip') && v.includes('jamb')) || v.includes('exam slip')) {
-    return { icon: Printer, image: 'https://www.jamb.gov.ng/favicon.ico', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Exam Slip Printing' };
+    return { icon: Printer, image: 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Exam Slip Printing' };
   }
 
   // Brand-first resolution: an explicitly named organisation uses its real brand mark.
   if (v.includes('jamb')) {
-    return { icon: GraduationCap, image: 'https://www.jamb.gov.ng/favicon.ico', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Services' };
+    return { icon: GraduationCap, image: 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Services' };
   }
   if (v.includes('neco')) {
-    return { icon: Award, image: 'https://neco.gov.ng/favicon.ico', label: 'NECO', tone: 'blue', ariaLabel: 'NECO Services' };
+    return { icon: Award, image: 'https://i.pinimg.com/736x/b2/54/24/b254246163c37148203ed5f7c1144e9d.jpg', label: 'NECO', tone: 'blue', ariaLabel: 'NECO Services' };
   }
   if (v.includes('waec')) {
-    return { icon: FileCheck2, image: 'https://www.waecnigeria.org/favicon.ico', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC Services' };
+    return { icon: FileCheck2, image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC Services' };
   }
   if (v.includes('nabteb')) {
     return { icon: Award, image: 'https://nabteb.gov.ng/wp-content/uploads/2025/09/logo-150x150.png', label: 'NABTEB', tone: 'blue', ariaLabel: 'NABTEB Services' };
@@ -69,22 +69,22 @@ export function resolveIdentity(
   // News
   if (type === 'news' || v.includes('news') || v.includes('gist')) {
     if (v.includes('jamb')) {
-      return { icon: GraduationCap, image: 'https://www.jamb.gov.ng/favicon.ico', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Updates' };
+      return { icon: GraduationCap, image: 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Updates' };
     }
     if (v.includes('nelfund') || v.includes('fund') || v.includes('loan')) {
       return { icon: Wallet, image: 'https://nelf.gov.ng/favicon.ico', label: 'NELFUND', tone: 'emerald', ariaLabel: 'NELFUND News' };
     }
     if (v.includes('waec')) {
-      return { icon: FileCheck2, image: 'https://www.waecnigeria.org/favicon.ico', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC News' };
+      return { icon: FileCheck2, image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC News' };
     }
     if (v.includes('nabteb')) {
     return { icon: Award, image: 'https://nabteb.gov.ng/wp-content/uploads/2025/09/logo-150x150.png', label: 'NABTEB', badge: 'EXAMS', tone: 'blue', ariaLabel: 'NABTEB Examination' };
   }
   if (v.includes('neco')) {
-      return { icon: Award, image: 'https://neco.gov.ng/favicon.ico', label: 'NECO', tone: 'blue', ariaLabel: 'NECO News' };
+      return { icon: Award, image: 'https://i.pinimg.com/736x/b2/54/24/b254246163c37148203ed5f7c1144e9d.jpg', label: 'NECO', tone: 'blue', ariaLabel: 'NECO News' };
     }
     if (v.includes('result')) {
-      return { icon: FileCheck2, image: 'https://www.waecnigeria.org/favicon.ico', label: 'EXAMS', tone: 'blue', ariaLabel: 'Exam News' };
+      return { icon: FileCheck2, image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg', label: 'EXAMS', tone: 'blue', ariaLabel: 'Exam News' };
     }
     if (v.includes('admission') || v.includes('screening')) {
       return { icon: FileText, image: '/icons/admission.svg', label: 'ADMISSION', tone: 'purple', ariaLabel: 'Admission News' };
@@ -117,7 +117,7 @@ export function resolveIdentity(
   if (v.includes('scratch') || v.includes('card') || v.includes('pin') || v.includes('voucher') || v.includes('token')) {
     return {
       icon: CreditCard,
-      image: 'https://www.waecnigeria.org/favicon.ico',
+      image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg',
       label: 'WAEC',
       badge: 'SCRATCH CARD',
       tone: 'blue',
@@ -127,7 +127,7 @@ export function resolveIdentity(
   if (v.includes('slip') || v.includes('print')) {
     return {
       icon: Printer,
-      image: 'https://www.jamb.gov.ng/favicon.ico',
+      image: 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg',
       label: 'JAMB SLIP',
       badge: 'PRINT',
       tone: 'crimson',
@@ -137,7 +137,7 @@ export function resolveIdentity(
   if (v.includes('result') || (v.includes('waec') && v.includes('neco'))) {
     return {
       icon: FileCheck2,
-      image: 'https://www.waecnigeria.org/favicon.ico',
+      image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg',
       label: 'RESULTS',
       badge: 'CHECK',
       tone: 'blue',
@@ -167,7 +167,7 @@ export function resolveIdentity(
   if (v.includes('jamb') || v.includes('utme')) {
     return {
       icon: GraduationCap,
-      image: 'https://www.jamb.gov.ng/favicon.ico',
+      image: 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg',
       label: 'JAMB',
       badge: 'UTME',
       tone: 'crimson',
@@ -177,7 +177,7 @@ export function resolveIdentity(
   if (v.includes('waec')) {
     return {
       icon: FileCheck2,
-      image: 'https://www.waecnigeria.org/favicon.ico',
+      image: 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg',
       label: 'WAEC',
       badge: 'SSCE',
       tone: 'blue',
@@ -187,7 +187,7 @@ export function resolveIdentity(
   if (v.includes('neco')) {
     return {
       icon: Award,
-      image: 'https://neco.gov.ng/favicon.ico',
+      image: 'https://i.pinimg.com/736x/b2/54/24/b254246163c37148203ed5f7c1144e9d.jpg',
       label: 'NECO',
       badge: 'SSCE',
       tone: 'blue',
