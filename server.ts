@@ -5,7 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin, type AdminRequest } from './middleware';
 
-const app = express();
+export const app = express();
 const PORT = Number(process.env.PORT || 3000);
 app.disable('x-powered-by');
 
@@ -720,4 +720,7 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => console.log(`EduReach server running on port ${PORT}`));
 }
 
-startServer();
+if (!process.env.NETLIFY) {
+  startServer();
+}
+
