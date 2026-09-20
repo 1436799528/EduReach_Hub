@@ -26,7 +26,7 @@ const topPortalPillars = [
     title: 'JAMB CBT Simulator',
     subtitle: 'UTME exam simulator with real timer and scoring',
     href: '/cbt',
-    img: '/icons/jamb.svg',
+    img: 'https://www.jamb.gov.ng/favicon.ico',
     tag: 'UTME 2026',
   },
   {
