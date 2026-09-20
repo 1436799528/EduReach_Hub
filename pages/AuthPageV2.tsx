@@ -250,7 +250,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               width: '36px',
               height: '36px',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              background: 'linear-gradient(135deg, #D9381E 0%, #B51D04 100%)',
               color: '#ffffff',
               display: 'grid',
               placeItems: 'center',
@@ -261,7 +261,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             ER
           </div>
           <span>
-            EduReach<span style={{ color: '#059669' }}>.ng</span>
+            EduReach<span style={{ color: '#D9381E' }}>.ng</span>
           </span>
         </a>
       </div>
@@ -284,7 +284,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#059669',
+              color: '#D9381E',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
             }}
@@ -356,7 +356,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#059669',
+                color: '#D9381E',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -374,7 +374,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#059669',
+                  background: '#D9381E',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -517,7 +517,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#059669' : '#cbd5e1',
+                          borderColor: accountType === type ? '#D9381E' : '#cbd5e1',
                           background: accountType === type ? '#ecfdf5' : '#ffffff',
                           color: accountType === type ? '#047857' : '#475569',
                           fontWeight: 800,
@@ -600,7 +600,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#059669', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#D9381E', marginTop: '2px' }}
                   />
                   <span>
                     8. I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
@@ -650,7 +650,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#059669', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: '#D9381E', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -690,7 +690,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      style={{ accentColor: '#059669' }}
+                      style={{ accentColor: '#D9381E' }}
                     />
                     Remember my session
                   </label>
@@ -779,7 +779,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               type="submit"
               disabled={busy}
               style={{
-                background: '#059669',
+                background: '#D9381E',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -829,7 +829,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#059669', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#D9381E', fontWeight: 800, cursor: 'pointer' }}
             >
               Already have an account? Sign in
             </button>
@@ -843,7 +843,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#059669', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#D9381E', fontWeight: 800, cursor: 'pointer' }}
             >
               Need an account? Register
             </button>

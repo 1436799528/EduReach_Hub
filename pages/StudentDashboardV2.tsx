@@ -403,7 +403,7 @@ export default function StudentDashboardV2() {
           <a href="/" className="edureach-dash-brand">
             <div className="edureach-dash-logo-icon">ER</div>
             <span>
-              EduReach<span style={{ color: '#059669' }}>.ng</span>
+              EduReach<span style={{ color: '#D9381E' }}>.ng</span>
             </span>
           </a>
 

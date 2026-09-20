@@ -164,8 +164,8 @@ export default function HubHomePage() {
           {loggedInUser && (
             <div
               style={{
-                background: '#ecfdf5',
-                border: '1px solid #a7f3d0',
+                background: '#EAF8EE',
+                border: '1px solid #bbf7d0',
                 borderRadius: '8px',
                 padding: '10px 14px',
                 marginBottom: '14px',
@@ -177,15 +177,15 @@ export default function HubHomePage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <UserCheck size={18} color="#059669" />
-                <span style={{ fontSize: '12.5px', color: '#065f46', fontWeight: 700 }}>
+                <UserCheck size={18} color="#16A34A" />
+                <span style={{ fontSize: '12.5px', color: '#166534', fontWeight: 700 }}>
                   Welcome back, <strong>{loggedInUser.name}</strong>! Your applications and mock exam scores are ready in your dashboard.
                 </span>
               </div>
               <a
                 href="/dashboard"
                 style={{
-                  background: '#059669',
+                  background: '#D9381E',
                   color: '#ffffff',
                   padding: '5px 12px',
                   borderRadius: '6px',
@@ -204,7 +204,7 @@ export default function HubHomePage() {
 
           {/* 3. COMPACT SEARCH BAR */}
           <div className="ms-search-bar" style={{ marginBottom: '14px' }}>
-            <Search size={18} color="#059669" />
+            <Search size={18} color="#D9381E" />
             <input
               type="text"
               className="ms-search-input"
@@ -217,7 +217,7 @@ export default function HubHomePage() {
               <a
                 href={`/services?q=${encodeURIComponent(searchQuery)}`}
                 style={{
-                  background: '#059669',
+                  background: '#D9381E',
                   color: '#ffffff',
                   padding: '6px 14px',
                   borderRadius: '6px',
@@ -243,7 +243,7 @@ export default function HubHomePage() {
                     style={{
                       fontSize: '9.5px',
                       fontWeight: 900,
-                      color: '#059669',
+                      color: '#D9381E',
                       letterSpacing: '0.04em',
                       textTransform: 'uppercase',
                     }}
@@ -253,7 +253,7 @@ export default function HubHomePage() {
                   <strong>{tile.title}</strong>
                   <span>{tile.subtitle}</span>
                 </div>
-                <ArrowRight size={14} color="#059669" style={{ flexShrink: 0 }} />
+                <ArrowRight size={14} color="#D9381E" style={{ flexShrink: 0 }} />
               </a>
             ))}
           </div>
@@ -273,7 +273,7 @@ export default function HubHomePage() {
                     gap: '10px',
                     marginBottom: '12px',
                     paddingBottom: '8px',
-                    borderBottom: '2px solid #059669',
+                    borderBottom: '2px solid #D9381E',
                   }}
                 >
                   <h2
@@ -302,7 +302,7 @@ export default function HubHomePage() {
                         type="button"
                         onClick={() => setActiveNewsCategory(tab.id)}
                         style={{
-                          background: activeNewsCategory === tab.id ? '#059669' : '#f1f5f9',
+                          background: activeNewsCategory === tab.id ? '#D9381E' : '#f1f5f9',
                           color: activeNewsCategory === tab.id ? '#ffffff' : '#475569',
                           border: 0,
                           borderRadius: '5px',
@@ -339,7 +339,7 @@ export default function HubHomePage() {
                         </div>
                         <div className="ms-news-main">
                           <div className="ms-news-meta">
-                            <span style={{ fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>
+                            <span style={{ fontWeight: 800, color: '#D9381E', textTransform: 'uppercase' }}>
                               {item.category.replace('_', ' ')}
                             </span>
                             <span>•</span>
@@ -362,7 +362,7 @@ export default function HubHomePage() {
                     style={{
                       fontSize: '12px',
                       fontWeight: 800,
-                      color: '#059669',
+                      color: '#D9381E',
                       textDecoration: 'none',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -383,7 +383,7 @@ export default function HubHomePage() {
                     justifyContent: 'space-between',
                     marginBottom: '10px',
                     paddingBottom: '6px',
-                    borderBottom: '2px solid #059669',
+                    borderBottom: '2px solid #D9381E',
                   }}
                 >
                   <h2
@@ -399,12 +399,12 @@ export default function HubHomePage() {
                       gap: '6px',
                     }}
                   >
-                    <CheckCircle2 size={16} color="#059669" />
+                    <CheckCircle2 size={16} color="#16A34A" />
                     Verified Student Services
                   </h2>
                   <a
                     href="/services"
-                    style={{ fontSize: '11.5px', fontWeight: 800, color: '#059669', textDecoration: 'none' }}
+                    style={{ fontSize: '11.5px', fontWeight: 800, color: '#D9381E', textDecoration: 'none' }}
                   >
                     Browse Catalog →
                   </a>
@@ -431,7 +431,7 @@ export default function HubHomePage() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                           <CardIdentityMark value={service.themeMark} type="service" size="sm" />
-                          <span style={{ fontSize: '9px', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 5px', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '9px', fontWeight: 800, color: '#D9381E', background: '#FFF0E6', padding: '2px 5px', borderRadius: '4px' }}>
                             {service.badge}
                           </span>
                         </div>
@@ -443,7 +443,7 @@ export default function HubHomePage() {
                         </p>
                       </div>
 
-                      <div style={{ marginTop: '10px', fontSize: '11px', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ marginTop: '10px', fontSize: '11px', fontWeight: 800, color: '#D9381E', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         Request Service <ArrowRight size={12} />
                       </div>
                     </a>
@@ -471,8 +471,8 @@ export default function HubHomePage() {
                       width: '28px',
                       height: '28px',
                       borderRadius: '6px',
-                      background: '#ecfdf5',
-                      color: '#059669',
+                      background: '#FFF0E6',
+                      color: '#D9381E',
                       display: 'grid',
                       placeItems: 'center',
                     }}
@@ -497,7 +497,7 @@ export default function HubHomePage() {
                   <a
                     href="/dashboard"
                     style={{
-                      background: '#059669',
+                      background: '#D9381E',
                       color: '#ffffff',
                       borderRadius: '6px',
                       padding: '8px 12px',
@@ -541,7 +541,7 @@ export default function HubHomePage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                  <Calendar size={15} color="#059669" />
+                  <Calendar size={15} color="#D9381E" />
                   <strong style={{ fontSize: '12px', textTransform: 'uppercase', color: '#0f172a', letterSpacing: '0.04em' }}>
                     Academic Deadlines
                   </strong>
@@ -579,17 +579,18 @@ export default function HubHomePage() {
               {/* WIDGET 3: WHATSAPP COMMUNITY & HELPLINE */}
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
+                  background: 'linear-gradient(135deg, #0F172A 0%, #283044 100%)',
                   color: '#ffffff',
                   borderRadius: '10px',
                   padding: '14px',
+                  borderTop: '3px solid #D9381E',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <MessageCircle size={18} color="#86efac" />
+                  <MessageCircle size={18} color="#F97316" />
                   <strong style={{ fontSize: '13px', color: '#ffffff' }}>Official WhatsApp Helpline</strong>
                 </div>
-                <p style={{ fontSize: '11px', margin: '0 0 10px', color: '#d1fae5', lineHeight: 1.45 }}>
+                <p style={{ fontSize: '11px', margin: '0 0 10px', color: '#cbd5e1', lineHeight: 1.45 }}>
                   Get real-time admission assistance, scratch card PIN verification, and scholarship announcements.
                 </p>
                 <a
@@ -599,8 +600,8 @@ export default function HubHomePage() {
                   style={{
                     display: 'block',
                     textAlign: 'center',
-                    background: '#25d366',
-                    color: '#064e3b',
+                    background: '#16A34A',
+                    color: '#ffffff',
                     padding: '7px 12px',
                     borderRadius: '6px',
                     fontWeight: 900,

@@ -25,7 +25,7 @@ export interface CleanIdentity {
   image?: string;
   label?: string;
   badge?: string;
-  tone: 'emerald' | 'blue' | 'amber' | 'purple' | 'slate';
+  tone: 'crimson' | 'emerald' | 'blue' | 'amber' | 'purple' | 'slate';
   ariaLabel: string;
 }
 
@@ -38,7 +38,7 @@ export function resolveIdentity(
   // News
   if (type === 'news' || v.includes('news') || v.includes('gist')) {
     if (v.includes('jamb')) {
-      return { icon: GraduationCap, image: '/icons/jamb.svg', label: 'JAMB', tone: 'emerald', ariaLabel: 'JAMB Updates' };
+      return { icon: GraduationCap, image: '/icons/jamb.svg', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Updates' };
     }
     if (v.includes('nelfund') || v.includes('fund') || v.includes('loan')) {
       return { icon: Wallet, image: '/icons/nelfund.svg', label: 'NELFUND', tone: 'emerald', ariaLabel: 'NELFUND News' };
@@ -66,7 +66,7 @@ export function resolveIdentity(
     if (v === 'deadline' || v.includes('dead')) {
       return { icon: Clock, label: 'DUE', tone: 'amber', ariaLabel: 'Important Deadline' };
     }
-    return { icon: Laptop, image: '/icons/cbt.svg', label: 'EXAM', tone: 'emerald', ariaLabel: 'Upcoming Examination' };
+    return { icon: Laptop, image: '/icons/cbt.svg', label: 'EXAM', tone: 'crimson', ariaLabel: 'Upcoming Examination' };
   }
 
   // Services and Tools
@@ -96,7 +96,7 @@ export function resolveIdentity(
       image: '/icons/jamb.svg',
       label: 'JAMB SLIP',
       badge: 'PRINT',
-      tone: 'emerald',
+      tone: 'crimson',
       ariaLabel: 'JAMB Exam Slip Printing',
     };
   }
@@ -136,7 +136,7 @@ export function resolveIdentity(
       image: '/icons/jamb.svg',
       label: 'JAMB',
       badge: 'UTME',
-      tone: 'emerald',
+      tone: 'crimson',
       ariaLabel: 'JAMB Services',
     };
   }
@@ -166,7 +166,7 @@ export function resolveIdentity(
       image: '/icons/cbt.svg',
       label: 'CBT',
       badge: 'CLASSROOM',
-      tone: 'blue',
+      tone: 'crimson',
       ariaLabel: 'CBT Classroom Simulator',
     };
   }
@@ -186,7 +186,7 @@ export function resolveIdentity(
       image: '/icons/calculator.svg',
       label: 'CALC',
       badge: 'TOOL',
-      tone: 'emerald',
+      tone: 'crimson',
       ariaLabel: 'Screening & Aggregate Calculator',
     };
   }
@@ -215,7 +215,7 @@ export function resolveIdentity(
     icon: Layers,
     label: 'EDUREACH',
     badge: 'PORTAL',
-    tone: 'emerald',
+    tone: 'crimson',
     ariaLabel: 'EduReach Academic Service',
   };
 }

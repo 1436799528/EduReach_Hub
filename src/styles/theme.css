@@ -1,0 +1,103 @@
+/* ==========================================================================
+   EduReach Hub — Official Color & Theme Design System
+   Academic Blue + Institutional Navy + Crimson Action + Tangerine Energy
+   ========================================================================== */
+
+:root {
+  /* 1. Primary — Academic Crimson */
+  --er-crimson: #D9381E;
+  --er-crimson-deep: #B51D04;
+
+  /* 2. Secondary — Academic Tangerine */
+  --er-tangerine: #F97316;
+  --er-secondary-soft: #FFF0E6;
+
+  /* 3. Institutional Navy */
+  --er-navy: #0F172A;
+  --er-navy-soft: #283044;
+
+  /* 4. Academic Surface Colors */
+  --er-bg: #FAF8FF;
+  --er-surface: #FFFFFF;
+  --er-surface-soft: #F2F3FF;
+  --er-surface-academic: #EAEDFF;
+  --er-surface-elevated: #E2E7FF;
+  --er-surface-deep: #DAE2FD;
+
+  /* 5. Supporting Colors */
+  --er-burgundy: #54080C;
+  --er-success: #16A34A;
+  --er-success-soft: #EAF8EE;
+  --er-gold: #CA8A04;
+  --er-gold-soft: #FFF8DF;
+
+  /* 6. Text Colors */
+  --er-text-primary: #131B2E;
+  --er-text-secondary: #5B403B;
+  --er-text-muted: #64748B;
+  --er-text-inverse: #FFFFFF;
+
+  /* 7. Border & Divider Colors */
+  --er-border: #E2E8F0;
+  --er-border-strong: #CBD5E1;
+
+  /* 8. Functional Colors */
+  --er-error: #BA1A1A;
+  --er-error-surface: #FFDAD6;
+
+  /* Legacy variable mapping to preserve system compatibility */
+  --hub-bg: var(--er-bg);
+  --hub-surface: var(--er-surface);
+  --hub-border: var(--er-border);
+  --hub-text: var(--er-text-primary);
+  --hub-muted: var(--er-text-muted);
+  --hub-blue: var(--er-crimson);
+  --hub-blue-soft: var(--er-surface-soft);
+  --hub-green: var(--er-success);
+  --hub-green-soft: var(--er-success-soft);
+  --hub-amber: var(--er-gold);
+  --hub-amber-soft: var(--er-gold-soft);
+}
+
+/* Global body application */
+body {
+  background-color: var(--er-bg);
+  color: var(--er-text-primary);
+}
+
+/* Primary buttons and CTAs */
+.hub-primary-btn {
+  background: var(--er-crimson) !important;
+  color: #ffffff !important;
+  border: 0 !important;
+  box-shadow: 0 2px 6px rgba(217, 56, 30, 0.25) !important;
+}
+
+.hub-primary-btn:hover {
+  background: var(--er-crimson-deep) !important;
+  box-shadow: 0 4px 12px rgba(181, 29, 4, 0.3) !important;
+}
+
+.hub-outline-btn {
+  border: 1px solid var(--er-border-strong) !important;
+  background: var(--er-surface) !important;
+  color: var(--er-navy) !important;
+}
+
+.hub-outline-btn:hover {
+  border-color: var(--er-crimson) !important;
+  color: var(--er-crimson) !important;
+}
+
+/* Active navigation indicators */
+.nav-active-indicator,
+.hub-desktop-nav a.active {
+  color: var(--er-crimson) !important;
+  border-bottom-color: var(--er-crimson) !important;
+}
+
+/* Brand logo styling */
+.brand-er-badge {
+  background: linear-gradient(135deg, var(--er-crimson) 0%, var(--er-crimson-deep) 100%) !important;
+  box-shadow: 0 2px 6px rgba(217, 56, 30, 0.3) !important;
+}

@@ -218,7 +218,7 @@ export default function ProfileCompletionPage() {
               style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                color: '#059669',
+                color: '#D9381E',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 background: '#ecfdf5',
@@ -254,7 +254,7 @@ export default function ProfileCompletionPage() {
                 fontSize: '14px',
               }}
             >
-              <CheckCircle2 size={20} color="#059669" />
+              <CheckCircle2 size={20} color="#D9381E" />
               <span>Profile completed successfully! Redirecting to your student dashboard…</span>
             </div>
           )}
@@ -272,7 +272,7 @@ export default function ProfileCompletionPage() {
             {/* 9. PROFILE PHOTO (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Camera size={18} color="#059669" />
+                <Camera size={18} color="#D9381E" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   9. Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
                 </h2>
@@ -355,7 +355,7 @@ export default function ProfileCompletionPage() {
             {/* 10-13. INSTITUTION & FACULTY DETAILS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <School size={18} color="#059669" />
+                <School size={18} color="#D9381E" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   10–13. Institution &amp; Programme Details
                 </h2>
@@ -486,7 +486,7 @@ export default function ProfileCompletionPage() {
             {/* 14-16. LEVEL & ACADEMIC YEARS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <GraduationCap size={18} color="#059669" />
+                <GraduationCap size={18} color="#D9381E" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   14–16. Level &amp; Academic Timeline
                 </h2>
@@ -574,7 +574,7 @@ export default function ProfileCompletionPage() {
             {/* 17. ACADEMIC INTERESTS (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Sparkles size={18} color="#059669" />
+                <Sparkles size={18} color="#D9381E" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   17. Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
                 </h2>
@@ -597,7 +597,7 @@ export default function ProfileCompletionPage() {
                         fontSize: '12px',
                         fontWeight: 700,
                         border: '1px solid',
-                        borderColor: selected ? '#059669' : '#cbd5e1',
+                        borderColor: selected ? '#D9381E' : '#cbd5e1',
                         background: selected ? '#ecfdf5' : '#ffffff',
                         color: selected ? '#047857' : '#475569',
                         cursor: 'pointer',
@@ -618,7 +618,7 @@ export default function ProfileCompletionPage() {
             {/* 18. NOTIFICATION PREFERENCES */}
             <section style={{ marginBottom: '26px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <Bell size={18} color="#059669" />
+                <Bell size={18} color="#D9381E" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   18. Notification Preferences
                 </h2>
@@ -631,7 +631,7 @@ export default function ProfileCompletionPage() {
                     alignItems: 'center',
                     gap: '12px',
                     padding: '10px 14px',
-                    background: '#f8fafc',
+                    background: '#FAF8FF',
                     borderRadius: '8px',
                     border: '1px solid #e2e8f0',
                     cursor: 'pointer',
@@ -641,11 +641,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={emailAlerts}
                     onChange={(e) => setEmailAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Mail size={14} color="#059669" /> Email Notifications
+                      <Mail size={14} color="#D9381E" /> Email Notifications
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Receive official examination alerts, result check notifications, and scholarship updates.
@@ -659,7 +659,7 @@ export default function ProfileCompletionPage() {
                     alignItems: 'center',
                     gap: '12px',
                     padding: '10px 14px',
-                    background: '#f8fafc',
+                    background: '#FAF8FF',
                     borderRadius: '8px',
                     border: '1px solid #e2e8f0',
                     cursor: 'pointer',
@@ -669,11 +669,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={whatsappAlerts}
                     onChange={(e) => setWhatsappAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <MessageSquare size={14} color="#059669" /> WhatsApp Order &amp; Request Alerts
+                      <MessageSquare size={14} color="#D9381E" /> WhatsApp Order &amp; Request Alerts
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Instant WhatsApp delivery when your scratch cards, tokens, or result verification is ready.
@@ -687,7 +687,7 @@ export default function ProfileCompletionPage() {
                     alignItems: 'center',
                     gap: '12px',
                     padding: '10px 14px',
-                    background: '#f8fafc',
+                    background: '#FAF8FF',
                     borderRadius: '8px',
                     border: '1px solid #e2e8f0',
                     cursor: 'pointer',
@@ -697,7 +697,7 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#059669' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a' }}>
@@ -731,7 +731,7 @@ export default function ProfileCompletionPage() {
                 type="submit"
                 disabled={saving || savedSuccess}
                 style={{
-                  background: '#059669',
+                  background: '#D9381E',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',

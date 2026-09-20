@@ -30,7 +30,7 @@
 
 .er-banner-card:hover {
   transform: translateY(-2px) !important;
-  border-color: #059669 !important;
+  border-color: #D9381E !important;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07) !important;
 }
 
@@ -63,7 +63,7 @@
   border-radius: 0 !important;
   padding: 0 !important;
   box-shadow: none !important;
-  color: #059669 !important;
+  color: #D9381E !important;
   display: inline-flex !important;
   align-items: center !important;
   flex: none !important;
@@ -119,7 +119,7 @@
 }
 
 .ms-ticker-badge {
-  background: #059669;
+  background: #D9381E;
   color: #ffffff;
   padding: 2px 8px;
   border-radius: 4px;
@@ -200,7 +200,7 @@
 
 .ms-top-tile:hover {
   transform: translateY(-2px);
-  border-color: #059669;
+  border-color: #D9381E;
   box-shadow: 0 6px 14px rgba(5, 150, 105, 0.1);
 }
 
@@ -276,34 +276,40 @@
   text-transform: uppercase;
 }
 
+.ms-mark-tone-crimson {
+  background: #FFF0E6;
+  color: #D9381E;
+  border: 1px solid #fed7aa;
+}
+
 .ms-mark-tone-emerald {
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  background: #EAF8EE;
+  color: #16A34A;
+  border: 1px solid #bbf7d0;
 }
 
 .ms-mark-tone-blue {
-  background: #eff6ff;
+  background: #F2F3FF;
   color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #EAEDFF;
 }
 
 .ms-mark-tone-amber {
-  background: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  background: #FFF8DF;
+  color: #CA8A04;
+  border: 1px solid #fef08a;
 }
 
 .ms-mark-tone-purple {
-  background: #f5f3ff;
+  background: #FAF8FF;
   color: #6d28d9;
-  border: 1px solid #ddd6fe;
+  border: 1px solid #E2E7FF;
 }
 
 .ms-mark-tone-slate {
-  background: #f8fafc;
-  color: #334155;
-  border: 1px solid #e2e8f0;
+  background: #F2F3FF;
+  color: #0F172A;
+  border: 1px solid #E2E8F0;
 }
 
 /* 6. MYSCHOOL SERVICE & VERIFIED CARDS */
@@ -341,7 +347,7 @@
 
 .ms-service-card:hover {
   transform: translateY(-2px);
-  border-color: #059669;
+  border-color: #D9381E;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
 }
 
@@ -358,7 +364,7 @@
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #059669;
+  color: #D9381E;
   background: #ecfdf5;
   padding: 3px 8px;
   border-radius: 5px;
@@ -394,11 +400,11 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 800;
-  color: #059669;
+  color: #D9381E;
 }
 
 .ms-service-card:hover .ms-service-cta {
-  color: #047857;
+  color: #B51D04;
 }
 
 /* 7. MYSCHOOL 2-COLUMN PORTAL LAYOUT */
@@ -431,7 +437,7 @@
 }
 
 .ms-news-row:hover {
-  border-color: #059669;
+  border-color: #D9381E;
   background: #fcfdfd;
   transform: translateX(2px);
 }
@@ -504,7 +510,7 @@
   align-items: center;
   gap: 6px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #059669;
+  border-bottom: 2px solid #D9381E;
 }
 
 /* 10. ELIMINATE BROCHURE AND LARGE HEROS GLOBALLY */
@@ -520,18 +526,18 @@
 
 /* Global button styling matching Myschool emerald accents */
 .hub-primary-btn {
-  background: #059669 !important;
+  background: #D9381E !important;
   color: #ffffff !important;
   border: 0 !important;
   border-radius: 8px !important;
   font-weight: 800 !important;
-  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(217, 56, 30, 0.25) !important;
   transition: all 0.15s ease !important;
 }
 
 .hub-primary-btn:hover {
-  background: #047857 !important;
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35) !important;
+  background: #B51D04 !important;
+  box-shadow: 0 4px 12px rgba(181, 29, 4, 0.35) !important;
 }
 
 .hub-outline-btn {
@@ -544,8 +550,8 @@
 }
 
 .hub-outline-btn:hover {
-  border-color: #059669 !important;
-  color: #059669 !important;
+  border-color: #D9381E !important;
+  color: #D9381E !important;
   background: #f8fafc !important;
 }
 
@@ -558,7 +564,7 @@
   gap: 12px !important;
   margin-bottom: 20px !important;
   padding-bottom: 12px !important;
-  border-bottom: 2px solid #059669 !important;
+  border-bottom: 2px solid #D9381E !important;
 }
 
 .hub-section-heading.hub-page-heading-compact h1 {
@@ -569,7 +575,7 @@
 }
 
 .hub-eyebrow {
-  color: #059669 !important;
+  color: #D9381E !important;
   font-weight: 800 !important;
   font-size: 11px !important;
   letter-spacing: 0.05em !important;

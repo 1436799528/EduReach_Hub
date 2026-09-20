@@ -28,7 +28,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="hub-shell hub-global-compact" style={{ background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="hub-shell hub-global-compact" style={{ background: '#FAF8FF', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* CLEAN MAIN HEADER */}
       <header
         style={{
@@ -70,19 +70,19 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  background: 'linear-gradient(135deg, #D9381E 0%, #B51D04 100%)',
                   color: '#ffffff',
                   display: 'grid',
                   placeItems: 'center',
                   fontSize: '15px',
                   fontWeight: 900,
-                  boxShadow: '0 2px 6px rgba(5, 150, 105, 0.3)',
+                  boxShadow: '0 2px 6px rgba(217, 56, 30, 0.3)',
                 }}
               >
                 ER
               </div>
               <span>
-                EduReach<span style={{ color: '#059669' }}>.ng</span>
+                EduReach<span style={{ color: '#D9381E' }}>.ng</span>
               </span>
             </a>
           </div>
@@ -120,9 +120,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/"
               style={{
-                color: path === '/' ? '#059669' : '#334155',
+                color: path === '/' ? '#D9381E' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path === '/' ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: path === '/' ? '2px solid #D9381E' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -131,9 +131,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/cbt"
               style={{
-                color: path.startsWith('/cbt') ? '#059669' : '#334155',
+                color: path.startsWith('/cbt') ? '#D9381E' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/cbt') ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: path.startsWith('/cbt') ? '2px solid #D9381E' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -142,9 +142,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/services"
               style={{
-                color: path === '/services' || path.startsWith('/services/apply') ? '#059669' : '#334155',
+                color: path === '/services' || path.startsWith('/services/apply') ? '#D9381E' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid #D9381E' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -153,9 +153,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/screening-calculator"
               style={{
-                color: path.includes('calculator') ? '#059669' : '#334155',
+                color: path.includes('calculator') ? '#D9381E' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.includes('calculator') ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: path.includes('calculator') ? '2px solid #D9381E' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -164,9 +164,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/news"
               style={{
-                color: path.startsWith('/news') ? '#059669' : '#334155',
+                color: path.startsWith('/news') ? '#D9381E' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/news') ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: path.startsWith('/news') ? '2px solid #D9381E' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -175,9 +175,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/jobs"
               style={{
-                color: path === '/jobs' ? '#059669' : '#334155',
+                color: path === '/jobs' ? '#D9381E' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path === '/jobs' ? '2px solid #059669' : '2px solid transparent',
+                borderBottom: path === '/jobs' ? '2px solid #D9381E' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -190,7 +190,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/services/track"
               style={{
-                background: '#f1f5f9',
+                background: '#f8fafc',
                 border: '1px solid #e2e8f0',
                 color: '#334155',
                 borderRadius: '7px',
@@ -203,13 +203,13 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 gap: '5px',
               }}
             >
-              <ScanSearch size={14} color="#059669" />
+              <ScanSearch size={14} color="#D9381E" />
               <span>Track</span>
             </a>
             <a
               href="/login"
               style={{
-                background: '#059669',
+                background: '#D9381E',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '7px',
@@ -217,7 +217,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 fontSize: '12px',
                 fontWeight: 800,
                 textDecoration: 'none',
-                boxShadow: '0 2px 6px rgba(5, 150, 105, 0.25)',
+                boxShadow: '0 2px 6px rgba(217, 56, 30, 0.25)',
               }}
             >
               Sign In
@@ -232,7 +232,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               aria-controls="hub-mobile-menu"
               onClick={() => setMobileOpen(true)}
               style={{
-                background: '#f1f5f9',
+                background: '#f8fafc',
                 border: '1px solid #e2e8f0',
                 borderRadius: '7px',
                 color: '#0f172a',
@@ -283,7 +283,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               }}
             >
               <strong style={{ fontSize: '18px', color: '#0f172a' }}>
-                EduReach<span style={{ color: '#059669' }}>.ng</span>
+                EduReach<span style={{ color: '#D9381E' }}>.ng</span>
               </strong>
               <button
                 type="button"
@@ -326,7 +326,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <a
                 href="/login"
                 className="hub-primary-btn"
-                style={{ textAlign: 'center', textDecoration: 'none', background: '#059669' }}
+                style={{ textAlign: 'center', textDecoration: 'none', background: '#D9381E' }}
               >
                 Student Sign In
               </a>
@@ -361,7 +361,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
           background: '#0f172a',
           color: '#94a3b8',
           padding: '40px 0 24px',
-          borderTop: '3px solid #059669',
+          borderTop: '3px solid #D9381E',
           marginTop: 'auto',
           fontSize: '13px',
         }}
@@ -378,12 +378,12 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             {/* COLUMN 1: BRAND */}
             <div>
               <div style={{ fontSize: '18px', fontWeight: 900, color: '#ffffff', marginBottom: '8px' }}>
-                EduReach<span style={{ color: '#10b981' }}>.ng</span>
+                EduReach<span style={{ color: '#F97316' }}>.ng</span>
               </div>
               <p style={{ margin: '0 0 14px', lineHeight: 1.6, fontSize: '12px' }}>
                 Nigeria's premier academic support portal for CBT practice, verified scratch cards, NELFUND loan assistance, and admission updates.
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontSize: '12px', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16A34A', fontSize: '12px', fontWeight: 700 }}>
                 <ShieldCheck size={16} /> Verified Academic Portal
               </div>
             </div>

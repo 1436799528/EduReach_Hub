@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import PwaRegister from './components/PwaRegister';
+import './styles/theme.css';
 import './hub.css';
 import './card-system.css';
 import './hub-portal-tuning.css';
