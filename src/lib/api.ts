@@ -573,6 +573,26 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
   };
 }
 
+export type AdminAnalytics = {
+  metrics: Record<string, number>;
+  audit: Array<Record<string, unknown>>;
+  recentRequests: Array<Record<string, any>>;
+  recentUsers: Array<Record<string, any>>;
+};
+
+export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<AdminAnalytics>('/api/admin/analytics', { headers });
+  return body;
+}
+
+export async function bootstrapAdmin(): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Sign in with the configured administrator account first.');
+  await jsonFetch('/api/admin/bootstrap', { method: 'POST', headers });
+}
+
 export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string };
 
 const fallbackAdminUsers: AdminUser[] = [];
