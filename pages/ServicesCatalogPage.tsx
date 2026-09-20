@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, Search, ShieldCheck } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -178,27 +178,11 @@ export default function ServicesCatalogPage() {
                   key={service.id}
                   style={{ minHeight: '104px' }}
                 >
-                  <div>
-                    <div className="ms-service-card-header">
-                      {/* Theme icon using service image */}
-                      <CardIdentityMark value={service.service_key} type="service" size="md" />
-                      
-                    </div>
-
-                    <div className="ms-service-body">
-                      <h3 style={{ fontSize: '15px' }}>{service.title}</h3>
-                      
-                    </div>
+                  <div className="ms-service-card-header">
+                    <CardIdentityMark value={service.service_key} type="service" size="md" />
                   </div>
-
-                  <div className="ms-service-foot">
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>
-                      <ShieldCheck size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px', color: '#059669' }} />
-                      Online Processing
-                    </span>
-                    <span className="ms-service-cta">
-                      Apply Now <ArrowRight size={13} className="hub-compact-arrow" />
-                    </span>
+                  <div className="ms-service-body">
+                    <h3 style={{ fontSize: '15px' }}>{service.title}</h3>
                   </div>
                 </a>
               ))}
