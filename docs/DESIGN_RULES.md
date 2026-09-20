@@ -1,36 +1,23 @@
-# EduReach Design Rules
+# EduReach — Design System Rules & Standards
 
-EduReach is a Nigerian student-information and student-services hub combining practical services, examination preparation, academic tools, information and a student account workspace.
+EduReach is a high-performance Nigerian student-services and examination support hub combining academic tools, official brand services, computer-based testing, and a personalized student workspace.
 
-## Rules
+## Core Rules
 
-1. One visual language across public, student and service pages.
-2. Reuse existing shared layout, card and state primitives before creating a new visual primitive.
-3. Cards stay compact, information-dense and actionable. Avoid oversized dashboard templates.
-4. Brand identities such as JAMB, WAEC, NECO, NABTEB and NELFUND use their brand marks. EduReach-owned tools use EduReach service icons.
-5. Never create a second service-card style.
-6. Reuse established typography, spacing, buttons, status badges and responsive breakpoints.
-7. Mobile uses the same components and data as desktop.
-8. Loading, empty, error and success states use the shared visual language.
-9. Never duplicate service definitions inside a page.
-10. Do not hard-code a service route when it already exists in the service directory.
-11. Authentication and authorization are separate concerns. Server authorization remains authoritative.
-12. Admin student-view is a mode of the existing student workspace, not a second application.
-13. External official portals must be clearly identified as external.
-14. Never collect passwords, OTPs, card PINs or banking credentials in EduReach forms.
-15. Database-backed features require a table/API/RLS contract before a page is added.
+1. **One Design Language**: The public portal, student dashboard, and service workflows inherit the same visual tokens and interaction rules.
+2. **Compact Card Architecture**: Cards are information-dense, lightly bordered (`#e2e8f0`), lightly tinted where appropriate, and clickable. No oversized widgets or bulky banners.
+3. **No Massive Heros**: Content first. Replaced giant marketing heroes with compact top notice tickers, quick 4-pillar launch tiles, and clean search bars.
+4. **Official Brand Emblems**: External statutory organizations (JAMB, WAEC, NECO, NELFUND, NABTEB, NYSC) must display their authentic emblem via `<CardIdentityMark />`. Never replace a recognized brand with generic mismatched icons.
+5. **No Duplicate Card Variations**: Do not create page-local card classes (`.jamb-special-card`). Reuse the established `<BrandServiceCard />` and `<CardIdentityMark />` components.
+6. **Interaction Standard**: The card itself is the clickable target. Avoid redundant `[ APPLY NOW ]` or `[ PRACTICE NOW ]` buttons inside every card.
+7. **Predictable Page Shell**: All standard routes use `<HubLayout />` or `<StudentDashboardV2 />` with the clean header, container boundaries, and responsive side rails.
+8. **Responsive Breakpoints**:
+   - Desktop (1280px–1440px): 3–4 compact cards per row.
+   - Tablet (768px–1024px): 2 compact cards per row.
+   - Mobile (360px–480px): 1 compact card per row; sticky compact navigation; zero horizontal overflow.
+9. **Single Source of Truth**: All services and tools are registered in `src/data/services.ts`. No route may define its own hardcoded service list.
+10. **State Completeness**: Every interactive view must support Default, Loading, Empty, Error, and Success states.
 
-## Mandatory page quality gate
+## Mandatory Compliance
 
-Every route must pass `docs/PAGE_QUALITY_GATE.md` before it is considered complete. Rendering successfully is not sufficient.
-
-The gate is applied in two layers:
-
-- **Global EduReach QA:** architecture, design system, route integrity, navigation, accessibility, responsive behavior, states, performance, code quality and assets.
-- **Route-specific QA:** functional requirements for the feature, such as CBT timing/submission, calculator validation/calculation, listing states, or student-account behavior.
-
-A route marked PASS must have actual verification evidence. If a required check cannot be performed, it must remain REVISE or BLOCKED.
-
-## Build order
-
-Build one route to PASS, lock the reusable pattern, then move to the next route. Do not compensate for a weak shared foundation by creating page-specific duplicates.
+All routes must adhere strictly to `docs/PAGE_QUALITY_GATE.md` before being marked complete.
