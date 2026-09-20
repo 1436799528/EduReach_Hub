@@ -1027,3 +1027,178 @@
   color: #586274;
   stroke: currentColor;
 }
+
+
+/* ============================================================
+   SITE-WIDE DENSITY OVERRIDE
+   One compact portal language across Home, Services, CBT,
+   Admission, Tools and Dashboard.
+   ============================================================ */
+:root{
+  --er-density-gap:8px;
+  --er-surface:#fff;
+  --er-border:#e5e7eb;
+  --er-text:#18202a;
+  --er-muted:#697386;
+  --er-accent:#2563eb;
+}
+
+/* Never let legacy gradient/banner treatments make inner pages loose. */
+.hub-page .hub-compact-card,
+.hub-page .hub-service-profile-card,
+.hub-page .hub-opportunity-card,
+.hub-page .hub-cbt-service-card,
+.hub-page .hub-cbt-exam-row,
+.hub-page .hub-panel,
+.hub-page .hub-question-card,
+.hub-page .hub-score-card{
+  box-shadow:none !important;
+}
+
+/* Compact service grids */
+.hub-service-profile-home-grid,
+.hub-service-profile-grid{gap:7px !important}
+.hub-service-profile-card{
+  min-height:76px !important;
+  grid-template-columns:40px minmax(0,1fr) auto !important;
+  gap:8px !important;
+  padding:8px !important;
+  border-radius:6px !important;
+}
+.hub-service-profile-icon{width:40px !important;height:40px !important}
+.hub-service-profile-body h2{font-size:12px !important;margin:2px 0 !important}
+.hub-service-profile-body p{font-size:9px !important;line-height:1.3 !important;-webkit-line-clamp:1 !important}
+.hub-service-card-meta{font-size:6.5px !important}
+
+/* Compact generic utility cards */
+.hub-utility-cards{gap:7px !important}
+.hub-compact-card{
+  min-height:68px !important;
+  grid-template-columns:38px minmax(0,1fr) 14px !important;
+  gap:8px !important;
+  padding:7px 8px !important;
+  border-radius:6px !important;
+}
+.hub-compact-icon{width:38px !important;height:38px !important;border-radius:6px !important}
+.hub-compact-copy h3{font-size:11.5px !important}
+.hub-compact-copy p{font-size:8.5px !important;line-height:1.25 !important}
+.hub-compact-label{font-size:6.5px !important;margin-bottom:1px !important}
+.hub-compact-arrow{font-size:12px !important}
+
+/* Section rhythm */
+.hub-page{padding:12px 0 30px !important}
+.hub-section-heading{margin:3px 0 8px !important}
+.hub-section-heading h2{font-size:14px !important}
+.hub-section-heading p{font-size:9px !important}
+.hub-home-page{padding-top:10px !important}
+.hub-home-topbar{margin-bottom:8px !important}
+.hub-home-topbar h1{font-size:22px !important}
+.hub-home-topbar p{font-size:10px !important}
+
+/* CBT: compact rows, but preserve the actual logos. */
+.hub-cbt-services-area{margin-bottom:14px !important}
+.hub-cbt-service-list{gap:7px !important}
+.hub-cbt-service-card{
+  height:74px !important;
+  min-height:74px !important;
+  border-radius:6px !important;
+  box-shadow:none !important;
+}
+.hub-cbt-brand-area{
+  width:78px !important;
+  flex-basis:78px !important;
+}
+.hub-cbt-brand-area:before{
+  width:88px !important;
+  height:100% !important;
+  left:-24px !important;
+}
+.hub-cbt-brand-area:after{display:none !important}
+.hub-cbt-logo-container{
+  width:44px !important;
+  height:44px !important;
+  border-radius:7px !important;
+  box-shadow:0 1px 4px rgba(0,0,0,.10) !important;
+}
+.hub-cbt-logo-container img{padding:3px !important}
+.hub-cbt-service-content{padding:8px 12px !important}
+.hub-cbt-service-label{font-size:7px !important;margin-bottom:2px !important}
+.hub-cbt-service-content h3{font-size:13px !important}
+.hub-cbt-service-content p{font-size:9px !important;margin-top:2px !important;line-height:1.25 !important}
+.hub-cbt-exam-list{gap:6px !important}
+.hub-cbt-exam-row{
+  min-height:62px !important;
+  padding:7px 8px !important;
+  border-radius:6px !important;
+}
+.hub-cbt-exam-icon{width:34px !important;height:34px !important;border-radius:6px !important}
+.hub-cbt-exam-main h2{font-size:11px !important}
+.hub-cbt-exam-main p{font-size:8px !important}
+
+/* Admission / scholarship / opportunity cards */
+.hub-opportunity-card{
+  min-height:70px !important;
+  grid-template-columns:38px minmax(0,1fr) 14px !important;
+  gap:8px !important;
+  padding:8px !important;
+  border-radius:6px !important;
+}
+.hub-opportunity-identity{width:38px !important;height:38px !important}
+.hub-opportunity-content h2{font-size:11.5px !important;margin:2px 0 !important}
+.hub-opportunity-content p{font-size:8.5px !important;line-height:1.3 !important}
+
+/* News and deadline rows */
+.hub-news-list,.hub-news-feed,.hub-upcoming-list{gap:5px !important}
+.hub-news-row{
+  min-height:58px !important;
+  padding:6px 8px !important;
+  gap:8px !important;
+  border-radius:6px !important;
+}
+.hub-news-thumb{width:34px !important;height:34px !important}
+.hub-news-copy h3{font-size:10.5px !important}
+.hub-news-copy p{font-size:8.5px !important}
+.hub-news-meta{font-size:7px !important}
+.hub-upcoming-row{
+  min-height:52px !important;
+  padding:7px 8px !important;
+  grid-template-columns:32px minmax(0,1fr) auto !important;
+  gap:8px !important;
+  border-radius:6px !important;
+}
+.hub-upcoming-icon{width:32px !important;height:32px !important;border-radius:6px !important}
+.hub-upcoming-row h3{font-size:10.5px !important}
+.hub-upcoming-row p{font-size:8px !important}
+
+/* Dashboard quick actions */
+.student-grid{gap:8px !important}
+.student-card{padding:9px !important;border-radius:6px !important}
+.quick-actions-grid{gap:5px !important}
+.quick-action{
+  min-height:68px !important;
+  padding:7px !important;
+  border-radius:6px !important;
+}
+.quick-action .hub-card-identity-wrap{width:30px !important;height:30px !important}
+.quick-action b{font-size:9.5px !important}
+.quick-action small{font-size:6.5px !important}
+
+/* Reduce the size of global panels/forms without making controls unusable. */
+.hub-panel{padding:12px !important}
+.hub-page .hub-form-grid{gap:8px !important}
+
+/* Mobile stays dense rather than expanding into large single cards. */
+@media(max-width:620px){
+  .hub-page{padding-top:8px !important}
+  .hub-container{width:calc(100% - 16px) !important}
+  .hub-service-profile-home-grid,
+  .hub-service-profile-grid,
+  .hub-compact-utility-cards{
+    grid-template-columns:1fr !important;
+  }
+  .hub-cbt-service-card{height:70px !important;min-height:70px !important}
+  .hub-cbt-brand-area{width:68px !important;flex-basis:68px !important}
+  .hub-cbt-logo-container{width:40px !important;height:40px !important}
+  .hub-cbt-service-content h3{font-size:12px !important}
+  .hub-cbt-service-content p{font-size:8px !important}
+}
