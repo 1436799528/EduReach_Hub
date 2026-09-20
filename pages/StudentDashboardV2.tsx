@@ -344,7 +344,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       } catch {
         adminSession = false;
       }
-      setIsAdminUser(adminSession || ['admin', 'super_admin', 'moderator'].includes(metadataRole));
+      const profileRole = String(profileResult.data?.role || metadataRole || '').toLowerCase();
+      const profileIsAdmin = ['admin', 'super_admin', 'moderator'].includes(profileRole);
+      setIsAdminUser(adminSession || profileIsAdmin);
       if (profileResult.data) {
         setProfile({ ...(profileResult.data as Profile), role: metadataRole || String(profileResult.data.role || 'student') });
         setMfaEnabled(Boolean(profileResult.data.mfa_enabled));
@@ -1065,7 +1067,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {isAdminUser && (
+                {(isAdminUser || ['admin', 'super_admin', 'moderator'].includes(String(profile?.role || '').toLowerCase())) && (
                   <a
                     href="/admin"
                     className="dash-pill"
