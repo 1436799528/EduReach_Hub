@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchNews, fetchUpcoming, type NewsItem, type UpcomingItem } from '../src/lib/api';
-import { supabase } from '../src/lib/supabase';
+import { useAuth } from '../src/lib/auth';
 
 const topPortalPillars = [
   {
@@ -93,21 +93,11 @@ export default function HubHomePage() {
   const [loadingNews, setLoadingNews] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('all');
-  const [loggedInUser, setLoggedInUser] = useState<{ name: string; email: string } | null>(null);
+  const { user } = useAuth();
+  const loggedInUser = user ? { name: user.name, email: user.email } : null;
 
   useEffect(() => {
     let active = true;
-
-    // Check user session
-    void supabase.auth.getSession().then(({ data }) => {
-      if (active && data?.session?.user) {
-        const u = data.session.user;
-        setLoggedInUser({
-          name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Student',
-          email: u.email || '',
-        });
-      }
-    });
 
     void fetchNews()
       .then((items) => {

@@ -58,6 +58,7 @@ import {
   type DashboardSavedItemInput,
 } from '../src/lib/studentDashboard';
 import CardIdentityMark from '../src/components/CardIdentityMark';
+import { useAuth } from '../src/lib/auth';
 import '../src/student-dashboard.css';
 
 type Profile = {
@@ -90,9 +91,11 @@ type ServiceRow = { id: string; service_key: string; title: string };
 type RequestRow = { id: string; status: string; form_data: Record<string, unknown>; created_at: string; reference_code: string; service_id: string };
 type WalletState = { balance: number; currency: string };
 type Attempt = { id: string; score: number | null; correct_answers: number; total_questions: number; submitted_at: string | null; created_at: string; subject?: string };
+type AccessedService = { key: string; title: string; href: string; category: string; lastAccessedAt: string; count: number };
 
-type TabType =
+export type DashboardTab =
   | 'dashboard'
+  | 'services'
   | 'applications'
   | 'saved'
   | 'cbt'
@@ -103,6 +106,8 @@ type TabType =
   | 'notifications'
   | 'profile'
   | 'settings';
+
+type TabType = DashboardTab;
 
 
 const demoSavedItems: DashboardSavedItem[] = [
@@ -127,6 +132,41 @@ const demoCgpaCourses: CgpaCourseInput[] = [
   { code: 'PHY 307', units: 3, grade: 'C' },
 ];
 
+const demoAccessedServices: AccessedService[] = [
+  { key: 'jamb-cbt', title: 'JAMB CBT Classroom', href: '/cbt', category: 'CBT Practice', lastAccessedAt: new Date(Date.now() - 3600000 * 3).toISOString(), count: 4 },
+  { key: 'school-finder', title: 'School Finder', href: '/schools', category: 'Academic Tool', lastAccessedAt: new Date(Date.now() - 3600000 * 12).toISOString(), count: 2 },
+  { key: 'nelfund-loan', title: 'NELFUND Loan Application', href: '/services/apply/nelfund-loan', category: 'Student Service', lastAccessedAt: new Date(Date.now() - 86400000).toISOString(), count: 1 },
+];
+
+function readAccessedServices(): AccessedService[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('edureach-accessed-services') || '[]');
+    return Array.isArray(parsed) ? parsed.slice(0, 8) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readLocalServiceRequests(): RequestRow[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('edureach-mock-requests') || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item: any) => ({
+      id: String(item.id || `local-${item.reference_code}`),
+      service_id: String(item.service_id || item.form_data?.serviceSlug || 'local-service'),
+      status: String(item.status || 'submitted'),
+      reference_code: String(item.reference_code || 'ER-LOCAL'),
+      created_at: String(item.created_at || new Date().toISOString()),
+      form_data: {
+        ...(item.form_data || {}),
+        serviceTitle: item.form_data?.serviceTitle || item.service_catalog?.title || 'EduReach Service',
+      },
+    })).slice(0, 8);
+  } catch {
+    return [];
+  }
+}
+
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join('').toUpperCase() || 'ER';
 }
@@ -137,8 +177,9 @@ function statusLabel(status: string) {
   return status.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export default function StudentDashboardV2() {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+export default function StudentDashboardV2({ initialTab = 'dashboard', openSettings = false }: { initialTab?: DashboardTab; openSettings?: boolean }) {
+  const { user: authUser, signOut: authSignOut } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
@@ -178,6 +219,9 @@ export default function StudentDashboardV2() {
   // Saved Schools & Courses state
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>(demoSavedItems);
 
+  // Recently accessed services/tools state
+  const [accessedServices, setAccessedServices] = useState<AccessedService[]>(() => readAccessedServices());
+
   // Notifications state
   const [notifications, setNotifications] = useState<DashboardNotification[]>(demoNotifications);
 
@@ -213,13 +257,14 @@ export default function StudentDashboardV2() {
       }
 
       if (authError || !currentSession?.user) {
-        if (isSupabaseConfigured) {
+        if (isSupabaseConfigured && !authUser?.isDemo) {
           const next = `${window.location.pathname}${window.location.search}`;
-          window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+          window.history.replaceState({}, '', `/login?next=${encodeURIComponent(next)}`);
+          window.dispatchEvent(new PopStateEvent('popstate'));
           return;
         }
 
-        // Fallback demo profile for frontend review / offline state only when Supabase is not configured.
+        // Fallback demo profile for authenticated preview/offline sessions.
         setIsDemoMode(true);
         setUserId('');
         setEmail(locallySavedProfile?.email || 'student@edureach.ng');
@@ -253,7 +298,8 @@ export default function StudentDashboardV2() {
           { id: '4', service_key: 'jamb-slip', title: 'JAMB Exam Slip Printing' },
         ]);
 
-        setRequests([
+        const localRequests = readLocalServiceRequests();
+        setRequests(localRequests.length ? localRequests : [
           {
             id: 'req-1',
             service_id: '1',
@@ -274,6 +320,7 @@ export default function StudentDashboardV2() {
 
         setWallet({ balance: 4500, currency: 'NGN' });
         setSavedItems(demoSavedItems);
+        setAccessedServices(readAccessedServices().length ? readAccessedServices() : demoAccessedServices);
         setNotifications(demoNotifications);
         setCgpaCourses(demoCgpaCourses);
         setLatestCgpaSnapshot(null);
@@ -339,6 +386,7 @@ export default function StudentDashboardV2() {
       if (walletResult.data) setWallet({ balance: Number(walletResult.data.balance), currency: walletResult.data.currency });
       setAttempts((attemptsResult.data || []) as Attempt[]);
       setSavedItems(savedResult.length ? savedResult : []);
+      setAccessedServices(readAccessedServices());
       setNotifications(notificationResult.length ? notificationResult : []);
       setLatestCgpaSnapshot(cgpaSnapshot);
       if (cgpaSnapshot?.courses?.length) setCgpaCourses(cgpaSnapshot.courses);
@@ -347,6 +395,16 @@ export default function StudentDashboardV2() {
     void load();
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const syncAccessed = () => setAccessedServices(readAccessedServices());
+    window.addEventListener('edureach-activity-changed', syncAccessed);
+    window.addEventListener('storage', syncAccessed);
+    return () => {
+      window.removeEventListener('edureach-activity-changed', syncAccessed);
+      window.removeEventListener('storage', syncAccessed);
     };
   }, []);
 
@@ -409,10 +467,9 @@ export default function StudentDashboardV2() {
   };
 
   const logout = async () => {
-    window.sessionStorage.removeItem('edureach-admin-student-view');
-    localStorage.removeItem('edureach-mock-user-email');
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    await authSignOut();
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   const addLocalNotification = (title: string, type = 'system') => {
@@ -628,24 +685,41 @@ export default function StudentDashboardV2() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
-  const openDashboardTab = (tab: TabType) => {
-    if (tab === 'past-questions') return navigateInApp('/cbt?mode=WAEC');
-    if (tab === 'admission') return navigateInApp('/screening-calculator');
-    if (tab === 'scholarships') return navigateInApp('/jobs');
-    if (tab === 'profile') return navigateInApp('/profile/complete');
-    if (tab === 'settings') {
-      setSecurityOpen(true);
-      return;
-    }
+  const routeForTab: Partial<Record<TabType, string>> = {
+    dashboard: '/dashboard',
+    services: '/dashboard/services',
+    applications: '/dashboard/applications',
+    saved: '/dashboard/saved',
+    cbt: '/dashboard/cbt',
+    'past-questions': '/dashboard/past-questions',
+    scholarships: '/dashboard/scholarships',
+    tools: '/dashboard/tools',
+    notifications: '/dashboard/notifications',
+    profile: '/profile',
+    settings: '/settings',
+  };
+
+  const openDashboardTab = (tab: TabType, syncUrl = true) => {
+    if (tab === 'profile') return navigateInApp('/profile');
+    if (tab === 'admission') return navigateInApp('/admission');
 
     setActiveTab(tab);
+    if (tab === 'settings') setSecurityOpen(true);
+    if (syncUrl && routeForTab[tab] && `${window.location.pathname}${window.location.search}` !== routeForTab[tab]) {
+      window.history.pushState({}, '', routeForTab[tab]!);
+    }
+
     const targetId: Partial<Record<TabType, string>> = {
       dashboard: 'dashboard-overview',
+      services: 'services',
       applications: 'applications',
       saved: 'saved',
       cbt: 'cbt',
+      'past-questions': 'past-questions',
+      scholarships: 'scholarships',
       tools: 'tools',
       notifications: 'notifications',
+      settings: 'dashboard-overview',
     };
     window.requestAnimationFrame(() => {
       const target = targetId[tab] ? document.getElementById(targetId[tab]!) : null;
@@ -653,6 +727,12 @@ export default function StudentDashboardV2() {
       else window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   };
+
+  useEffect(() => {
+    if (loading) return;
+    if (openSettings) setSecurityOpen(true);
+    openDashboardTab(initialTab, false);
+  }, [initialTab, loading, openSettings]);
 
   if (loading) {
     return (
@@ -833,7 +913,7 @@ export default function StudentDashboardV2() {
                     <Wallet size={14} color="#059669" /> Wallet: ₦{wallet?.balance.toLocaleString() || '0'}
                   </button>
                   <a
-                    href="/profile/complete"
+                    href="/profile"
                     className="edureach-nav-item"
                     style={{ padding: '6px 10px' }}
                   >
@@ -886,6 +966,14 @@ export default function StudentDashboardV2() {
             onClick={() => openDashboardTab('dashboard')}
           >
             <LayoutDashboard size={15} /> Dashboard
+          </button>
+          <button
+            type="button"
+            className={`edureach-nav-item ${activeTab === 'services' ? 'active' : ''}`}
+            onClick={() => openDashboardTab('services')}
+          >
+            <FileText size={15} /> Services
+            {requests.length > 0 && <span className="edureach-nav-item-badge">{requests.length}</span>}
           </button>
           <button
             type="button"
@@ -947,7 +1035,7 @@ export default function StudentDashboardV2() {
             {unreadNotifsCount > 0 && <span className="edureach-nav-item-badge">{unreadNotifsCount}</span>}
           </button>
           <a
-            href="/profile/complete"
+            href="/profile"
             className={`edureach-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
           >
             <User size={15} /> Profile
@@ -1013,7 +1101,7 @@ export default function StudentDashboardV2() {
 
               <div style={{ display: 'flex', gap: '8px' }}>
                 <a
-                  href="/profile/complete"
+                  href="/profile"
                   className="dash-pill"
                   style={{ textDecoration: 'none', color: '#059669', borderColor: '#a7f3d0' }}
                 >
@@ -1150,7 +1238,95 @@ export default function StudentDashboardV2() {
             </div>
           </section>
 
-          {/* SECTION 4: MY APPLICATIONS */}
+          {/* SECTION 4: MY SERVICES / ACCESSED SERVICES */}
+          <section className="dash-card" id="services">
+            <div className="dash-card-header">
+              <h2 className="dash-card-title">
+                <FileText size={14} className="dash-card-title-icon" /> My Services &amp; Accessed Tools
+              </h2>
+              <a href="/services" className="dash-card-link">
+                Request New Service →
+              </a>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px', marginBottom: '12px' }}>
+              {requests.slice(0, 3).map((req) => {
+                const service = serviceMap[req.service_id];
+                const title = String(req.form_data?.serviceTitle || service?.title || 'EduReach Service');
+                return (
+                  <a
+                    key={req.id}
+                    href={`/dashboard/services?ref=${encodeURIComponent(req.reference_code)}`}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '9px',
+                      padding: '11px 12px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '10px',
+                      textDecoration: 'none',
+                      color: '#0f172a',
+                    }}
+                  >
+                    <CardIdentityMark value={service?.service_key || title} type="service" size="sm" />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <strong style={{ display: 'block', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</strong>
+                      <span style={{ display: 'block', fontSize: '10px', color: '#64748b', margin: '2px 0' }}>Ref: {req.reference_code}</span>
+                      <span className={`dash-status-pill dash-status-${req.status}`}>{statusLabel(req.status)}</span>
+                    </div>
+                  </a>
+                );
+              })}
+              {!requests.length && (
+                <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '9px', padding: '12px', color: '#64748b', fontSize: '12px' }}>
+                  No service requests yet. When you request NELFUND, result checking, scratch cards, or JAMB slips, live status appears here.
+                </div>
+              )}
+            </div>
+
+            <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                <strong style={{ fontSize: '11px', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Recently Accessed
+                </strong>
+                <span style={{ fontSize: '10px', color: '#94a3b8' }}>Tracked on this student account</span>
+              </div>
+              <div style={{ display: 'grid', gap: '7px' }}>
+                {(accessedServices.length ? accessedServices : []).slice(0, 5).map((item) => (
+                  <a
+                    key={`${item.key}-${item.href}`}
+                    href={item.href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      background: '#f8fafc',
+                      border: '1px solid #eef2f7',
+                      borderRadius: '8px',
+                      padding: '8px 10px',
+                      textDecoration: 'none',
+                      color: '#0f172a',
+                    }}
+                  >
+                    <span style={{ minWidth: 0 }}>
+                      <strong style={{ display: 'block', fontSize: '11.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</strong>
+                      <small style={{ color: '#64748b', fontSize: '10px' }}>{item.category} • opened {item.count}x • {fmtDate(item.lastAccessedAt)}</small>
+                    </span>
+                    <ChevronRight size={14} color="#94a3b8" />
+                  </a>
+                ))}
+                {!accessedServices.length && (
+                  <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '10px', color: '#64748b', fontSize: '12px', textAlign: 'center' }}>
+                    Start using CBT, services, school finder, or scholarships and your recent activity will appear here.
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 5: MY APPLICATIONS */}
           <section className="dash-card" id="applications">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
@@ -1192,7 +1368,7 @@ export default function StudentDashboardV2() {
                         </td>
                         <td>
                           <a
-                            href={`/services/track?ref=${encodeURIComponent(req.reference_code)}`}
+                            href={`/dashboard/services?ref=${encodeURIComponent(req.reference_code)}`}
                             style={{ color: '#059669', textDecoration: 'none', fontWeight: 800, fontSize: '11px' }}
                           >
                             Track →
@@ -1274,7 +1450,7 @@ export default function StudentDashboardV2() {
                         </td>
                         <td>
                           <a
-                            href={`/cbt/results?attempt=${encodeURIComponent(a.id)}`}
+                            href={`/dashboard/cbt/results?attempt=${encodeURIComponent(a.id)}`}
                             style={{ color: '#059669', textDecoration: 'none', fontWeight: 800, fontSize: '11px' }}
                           >
                             Scorecard →
@@ -1288,7 +1464,37 @@ export default function StudentDashboardV2() {
             )}
           </section>
 
-          {/* SECTION 6: SAVED SCHOOLS / COURSES */}
+          {/* SECTION 6: PAST QUESTION PROGRESS */}
+          <section className="dash-card" id="past-questions">
+            <div className="dash-card-header">
+              <h2 className="dash-card-title">
+                <BookOpen size={14} className="dash-card-title-icon" /> Past Question Progress
+              </h2>
+              <a href="/past-questions" className="dash-card-link">
+                Continue Practice →
+              </a>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+              {[
+                { label: 'JAMB Use of English', done: 42, total: 60 },
+                { label: 'WAEC Mathematics', done: 28, total: 50 },
+                { label: 'Post-UTME Aptitude', done: 18, total: 40 },
+              ].map((item) => {
+                const pct = Math.round((item.done / item.total) * 100);
+                return (
+                  <div key={item.label} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '9px', padding: '11px' }}>
+                    <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a', marginBottom: '5px' }}>{item.label}</strong>
+                    <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '5px' }}>
+                      <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: '#D9381E' }} />
+                    </div>
+                    <small style={{ color: '#64748b', fontSize: '10px' }}>{item.done}/{item.total} questions completed • {pct}%</small>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 7: SAVED SCHOOLS / COURSES */}
           <section className="dash-card" id="saved">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
@@ -1349,7 +1555,49 @@ export default function StudentDashboardV2() {
             </div>
           </section>
 
-          {/* SECTION 7: NOTIFICATIONS & ALERTS */}
+          {/* SECTION 8: SAVED / APPLIED SCHOLARSHIPS */}
+          <section className="dash-card" id="scholarships">
+            <div className="dash-card-header">
+              <h2 className="dash-card-title">
+                <Award size={14} className="dash-card-title-icon" /> Scholarships &amp; Funding Watchlist
+              </h2>
+              <a href="/scholarships" className="dash-card-link">
+                Browse Grants →
+              </a>
+            </div>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {[
+                { title: 'NELFUND Student Loan', status: requests.some((r) => String(r.form_data?.serviceTitle || '').toLowerCase().includes('nelfund')) ? 'Application tracked' : 'Eligible to apply', href: '/services/apply/nelfund-loan' },
+                { title: 'Federal 3MTT Technical Training', status: 'Saved opportunity', href: '/jobs' },
+                { title: 'Undergraduate Merit Grants', status: 'Open for review', href: '/scholarships' },
+              ].map((item) => (
+                <a
+                  key={item.title}
+                  href={item.href}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '9px 11px',
+                    color: '#0f172a',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span>
+                    <strong style={{ display: 'block', fontSize: '12px' }}>{item.title}</strong>
+                    <small style={{ color: '#64748b', fontSize: '10px' }}>{item.status}</small>
+                  </span>
+                  <ChevronRight size={14} color="#94a3b8" />
+                </a>
+              ))}
+            </div>
+          </section>
+
+          {/* SECTION 9: NOTIFICATIONS & ALERTS */}
           <section className="dash-card" id="notifications">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
@@ -1835,6 +2083,16 @@ export default function StudentDashboardV2() {
                 type="button"
                 className="edureach-nav-item"
                 onClick={() => {
+                  openDashboardTab('services');
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <FileText size={15} /> My Services
+              </button>
+              <button
+                type="button"
+                className="edureach-nav-item"
+                onClick={() => {
                   openDashboardTab('applications');
                   setMobileMenuOpen(false);
                 }}
@@ -1892,7 +2150,7 @@ export default function StudentDashboardV2() {
                 <Compass size={15} /> Course Finder
               </button>
               <a
-                href="/profile/complete"
+                href="/profile"
                 className="edureach-nav-item"
                 onClick={() => setMobileMenuOpen(false)}
               >

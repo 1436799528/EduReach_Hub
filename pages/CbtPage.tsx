@@ -92,7 +92,7 @@ export default function CbtPage() {
               <a className="hub-outline-btn" href="/screening-calculator" style={{ textDecoration: 'none' }}>
                 <Calculator size={14} /> Screening Calculator
               </a>
-              <a className="hub-primary-btn" href="/cbt/results" style={{ textDecoration: 'none' }}>
+              <a className="hub-primary-btn" href="/dashboard/cbt/results" style={{ textDecoration: 'none' }}>
                 <Trophy size={14} /> View Past Results
               </a>
             </div>

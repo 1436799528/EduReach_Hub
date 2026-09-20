@@ -8,12 +8,17 @@ import {
   ShieldCheck,
   Search,
   Bell,
+  LogOut,
+  LayoutDashboard,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
+import { useAuth } from '../lib/auth';
 import '../hub-rail.css';
 
 export default function HubLayout({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [navSearch, setNavSearch] = useState('');
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
@@ -28,6 +33,16 @@ export default function HubLayout({ children }: { children: ReactNode }) {
     window.dispatchEvent(new PopStateEvent('popstate'));
     setMobileOpen(false);
   };
+
+  const handleLogout = async () => {
+    await signOut();
+    setProfileOpen(false);
+    setMobileOpen(false);
+    window.history.pushState({}, '', '/');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  const firstName = user?.name?.split(/\s+/)[0] || 'Student';
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#FAF8FF', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -190,7 +205,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <a
-              href="/services/track"
+              href={isAuthenticated ? '/dashboard/services' : '/services/track'}
               style={{
                 background: '#f8fafc',
                 border: '1px solid #e2e8f0',
@@ -206,24 +221,109 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               }}
             >
               <ScanSearch size={14} color="#D9381E" />
-              <span>Track</span>
+              <span>{isAuthenticated ? 'My Services' : 'Track'}</span>
             </a>
-            <a
-              href="/login"
-              style={{
-                background: '#D9381E',
-                color: '#ffffff',
-                border: 0,
-                borderRadius: '7px',
-                padding: '6px 14px',
-                fontSize: '12px',
-                fontWeight: 800,
-                textDecoration: 'none',
-                boxShadow: '0 2px 6px rgba(217, 56, 30, 0.25)',
-              }}
-            >
-              Sign In
-            </a>
+
+            {!isLoading && !isAuthenticated && (
+              <a
+                href="/login"
+                style={{
+                  background: '#D9381E',
+                  color: '#ffffff',
+                  border: 0,
+                  borderRadius: '7px',
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 6px rgba(217, 56, 30, 0.25)',
+                }}
+              >
+                Sign In
+              </a>
+            )}
+
+            {isAuthenticated && (
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <a
+                  href="/dashboard/notifications"
+                  aria-label="Notifications"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    borderRadius: '7px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    color: '#334155',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Bell size={15} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((open) => !open)}
+                  style={{
+                    background: '#D9381E',
+                    color: '#ffffff',
+                    border: 0,
+                    borderRadius: '7px',
+                    padding: '6px 11px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 6px rgba(217, 56, 30, 0.22)',
+                  }}
+                >
+                  <User size={14} /> {firstName}
+                </button>
+                {profileOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '40px',
+                      right: 0,
+                      width: '230px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '10px',
+                      boxShadow: '0 12px 32px rgba(15, 23, 42, 0.14)',
+                      padding: '8px',
+                      zIndex: 200,
+                    }}
+                  >
+                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', marginBottom: '6px' }}>
+                      <strong style={{ display: 'block', fontSize: '12.5px', color: '#0f172a' }}>{user?.name}</strong>
+                      <span style={{ display: 'block', fontSize: '10.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</span>
+                    </div>
+                    <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                      <LayoutDashboard size={14} /> Dashboard
+                    </a>
+                    <a href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                      <User size={14} /> Profile
+                    </a>
+                    <a href="/dashboard/services" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                      <ScanSearch size={14} /> My Services
+                    </a>
+                    <a href="/dashboard/cbt" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                      <Bell size={14} /> CBT Results
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', border: 0, background: 'transparent', color: '#dc2626', fontSize: '12px', fontWeight: 800, cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <LogOut size={14} /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* THREE-DOT TRIGGER: ONLY VISIBLE ON MOBILE */}
             <button
@@ -307,8 +407,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <a href="/services" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Services &amp; Scratch Cards
               </a>
-              <a href="/services/track" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Track Application
+              <a href={isAuthenticated ? '/dashboard/services' : '/services/track'} onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
+                {isAuthenticated ? 'My Services' : 'Track Application'}
               </a>
               <a href="/screening-calculator" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Screening Calculator
@@ -325,20 +425,43 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </nav>
 
             <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #f1f5f9', display: 'grid', gap: '10px' }}>
-              <a
-                href="/login"
-                className="hub-primary-btn"
-                style={{ textAlign: 'center', textDecoration: 'none', background: '#D9381E' }}
-              >
-                Student Sign In
-              </a>
-              <a
-                href="/register"
-                className="hub-outline-btn"
-                style={{ textAlign: 'center', textDecoration: 'none' }}
-              >
-                Create Account
-              </a>
+              {isAuthenticated ? (
+                <>
+                  <a
+                    href="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="hub-outline-btn"
+                    style={{ textAlign: 'center', textDecoration: 'none' }}
+                  >
+                    {firstName}'s Profile
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="hub-primary-btn"
+                    style={{ textAlign: 'center', background: '#D9381E' }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a
+                    href="/login"
+                    className="hub-primary-btn"
+                    style={{ textAlign: 'center', textDecoration: 'none', background: '#D9381E' }}
+                  >
+                    Student Sign In
+                  </a>
+                  <a
+                    href="/register"
+                    className="hub-outline-btn"
+                    style={{ textAlign: 'center', textDecoration: 'none' }}
+                  >
+                    Create Account
+                  </a>
+                </>
+              )}
             </div>
           </div>
           <div style={{ flex: 1 }} onClick={() => setMobileOpen(false)} />
@@ -400,7 +523,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 <a href="/cbt?mode=WAEC" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC SSCE Past Questions</a>
                 <a href="/cbt?mode=NECO" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NECO Exam Practice</a>
                 <a href="/cbt?mode=POST-UTME" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Post-UTME Screening Tests</a>
-                <a href="/cbt/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Performance Scorecards</a>
+                <a href="/dashboard/cbt/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Performance Scorecards</a>
               </div>
             </div>
 

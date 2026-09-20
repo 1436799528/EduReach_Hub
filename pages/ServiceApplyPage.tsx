@@ -16,6 +16,7 @@ import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib/api';
 import { supabase } from '../src/lib/supabase';
+import { useAuth } from '../src/lib/auth';
 
 type FormState = {
   fullName: string;
@@ -64,6 +65,7 @@ function fieldsFor(serviceKey: string) {
 }
 
 export default function ServiceApplyPage({ slug }: { slug: string }) {
+  const { isAuthenticated } = useAuth();
   const [service, setService] = useState<ServiceItem | null>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState('');
@@ -561,7 +563,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a
                   className="hub-primary-btn"
-                  href={`/track?ref=${encodeURIComponent(reference)}`}
+                  href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/track?ref=${encodeURIComponent(reference)}`}
                   style={{ textDecoration: 'none', background: '#059669' }}
                 >
                   <Search size={15} /> Track Application Status

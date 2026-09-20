@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { supabase } from '../src/lib/supabase';
+import { useAuth } from '../src/lib/auth';
 
 const commonInstitutions = [
   'University of Lagos (UNILAG)',
@@ -80,6 +81,7 @@ const avatarPresets = [
 ];
 
 export default function ProfileCompletionPage() {
+  const { user } = useAuth();
   const [userId, setUserId] = useState('');
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -111,6 +113,38 @@ export default function ProfileCompletionPage() {
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
+    const applyStoredProfile = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('edureach-student-profile') || 'null');
+        if (!stored) return;
+        if (stored.full_name) setUserName(stored.full_name);
+        if (stored.email) setUserEmail(stored.email);
+        if (stored.school) setSchool(stored.school);
+        if (stored.course_programme) setCourseProgramme(stored.course_programme);
+        if (stored.department) setDepartment(stored.department);
+        if (stored.faculty) setFaculty(stored.faculty);
+        if (stored.level) setLevel(stored.level);
+        if (stored.admission_year) setAdmissionYear(String(stored.admission_year));
+        if (stored.expected_graduation_year) setExpectedGradYear(String(stored.expected_graduation_year));
+        if (stored.avatar_url) setAvatarUrl(stored.avatar_url);
+        if (Array.isArray(stored.academic_interests) && stored.academic_interests.length) setInterests(stored.academic_interests);
+        if (stored.notification_preferences) {
+          setEmailAlerts(Boolean(stored.notification_preferences.email_alerts));
+          setWhatsappAlerts(Boolean(stored.notification_preferences.whatsapp_alerts));
+          setSmsAlerts(Boolean(stored.notification_preferences.sms_alerts));
+        }
+      } catch {
+        // ignore local profile parse issues
+      }
+    };
+
+    if (user) {
+      setUserId(user.isDemo ? '' : user.id);
+      setUserEmail(user.email);
+      setUserName(user.name);
+      applyStoredProfile();
+    }
+
     void supabase.auth.getUser().then(({ data }) => {
       if (data?.user) {
         setUserId(data.user.id);
@@ -145,9 +179,11 @@ export default function ProfileCompletionPage() {
               }
             }
           });
+      } else {
+        applyStoredProfile();
       }
     });
-  }, []);
+  }, [user]);
 
   const toggleInterest = (interest: string) => {
     setInterests((prev) =>
@@ -204,7 +240,8 @@ export default function ProfileCompletionPage() {
     setSaving(false);
     setSavedSuccess(true);
     window.setTimeout(() => {
-      window.location.href = '/dashboard';
+      window.history.pushState({}, '', '/dashboard');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }, 1200);
   };
 

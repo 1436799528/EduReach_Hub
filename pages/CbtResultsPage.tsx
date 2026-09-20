@@ -14,13 +14,14 @@ import {
 import HubLayout from '../src/components/HubLayout';
 import { fetchCbtResult } from '../src/lib/api';
 
-export default function CbtResultsPage() {
+export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptId?: string } = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [result, setResult] = useState<any>(null);
 
   useEffect(() => {
     const attemptId =
+      routeAttemptId ||
       new URLSearchParams(window.location.search).get('attempt') ||
       localStorage.getItem('edureach-last-cbt-attempt') ||
       'demo-attempt-preview';
@@ -29,7 +30,7 @@ export default function CbtResultsPage() {
       .then(setResult)
       .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load the CBT result.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [routeAttemptId]);
 
   const score = result?.attempt ? Math.round(Number(result.attempt.score || 0)) : 0;
   const isPass = score >= 60;

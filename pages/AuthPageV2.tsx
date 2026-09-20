@@ -14,12 +14,18 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { supabase } from '../src/lib/supabase';
+import { notifyAuthChanged } from '../src/lib/auth';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 
 function getSafeNextPath() {
   const next = new URLSearchParams(window.location.search).get('next');
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/profile/complete';
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+}
+
+function navigateInApp(path: string) {
+  window.history.pushState({}, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
@@ -151,6 +157,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           })
         );
         localStorage.setItem('edureach-mock-user-email', email.trim());
+        notifyAuthChanged();
         setVerifyEmailSent(email.trim());
         setCurrentMode('verify');
         setBusy(false);
@@ -179,7 +186,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               headers: { Authorization: `Bearer ${signedInSession.access_token}` },
             });
             window.sessionStorage.removeItem('edureach-admin-student-view');
-            window.location.href = adminCheck.ok ? '/admin' : getSafeNextPath();
+            notifyAuthChanged();
+            navigateInApp(adminCheck.ok ? '/admin' : getSafeNextPath());
             return;
           }
         } catch {
@@ -187,7 +195,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         }
 
         localStorage.setItem('edureach-mock-user-email', email.trim());
-        window.location.href = getSafeNextPath();
+        notifyAuthChanged();
+        navigateInApp(getSafeNextPath());
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during authentication.');
@@ -200,10 +209,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const handleQuickDemo = (role: 'student' | 'admin') => {
     if (role === 'admin') {
       window.sessionStorage.setItem('edureach-admin-student-view', '0');
-      window.location.href = '/admin';
+      notifyAuthChanged();
+      navigateInApp('/admin');
     } else {
       localStorage.setItem('edureach-mock-user-email', 'student@edureach.ng');
-      window.location.href = '/dashboard';
+      notifyAuthChanged();
+      navigateInApp('/dashboard');
     }
   };
 
@@ -370,7 +381,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
             <div style={{ display: 'grid', gap: '10px' }}>
               <a
-                href="/profile/complete"
+                href="/profile"
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
@@ -873,7 +884,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               Instant Student Workspace →
             </button>
             <a
-              href="/profile/complete"
+              href="/profile"
+              onClick={() => {
+                localStorage.setItem('edureach-mock-user-email', email.trim() || 'student@edureach.ng');
+                notifyAuthChanged();
+              }}
               style={{
                 background: '#eff6ff',
                 color: '#1d4ed8',

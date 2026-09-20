@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import PwaRegister from './components/PwaRegister';
+import { AuthProvider } from './lib/auth';
 import './hub.css';
 import './card-system.css';
 import './hub-portal-tuning.css';
@@ -16,7 +17,9 @@ import './styles/theme.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PwaRegister />
-    <App />
+    <AuthProvider>
+      <PwaRegister />
+      <App />
+    </AuthProvider>
   </StrictMode>,
 );
