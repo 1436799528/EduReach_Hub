@@ -37,9 +37,9 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/cbt') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
   if (path === '/cbt/results') return <CbtResultsPage />;
-  if (path === '/screening-calculator') return <ScreeningCalculatorPage />;
+  if (path === '/screening-calculator' || path === '/calculator') return <ScreeningCalculatorPage />;
   if (path === '/services') return <ServicesCatalogPage />;
-  if (path === '/services/track') return <ServiceTrackPage />;
+  if (path === '/services/track' || path === '/track') return <ServiceTrackPage />;
   if (path.startsWith('/services/apply/')) {
     return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/apply/'.length))} />;
   }
