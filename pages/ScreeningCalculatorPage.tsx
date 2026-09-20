@@ -2,102 +2,181 @@ import { RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 
-const clamp = (value: string, min: number, max: number) => Math.min(max, Math.max(min, Number(value) || 0));
+type Formula = '50-50' | '60-40' | '70-30';
+
+const clamp = (value: string, max: number) => Math.min(max, Math.max(0, Number(value) || 0));
 
 export default function ScreeningCalculatorPage() {
   const [institution, setInstitution] = useState('');
-  const [jamb, setJamb] = useState('250');
-  const [postUtme, setPostUtme] = useState('70');
-  const [olevel, setOlevel] = useState('75');
-  const [jambWeight, setJambWeight] = useState('50');
-  const [postUtmeWeight, setPostUtmeWeight] = useState('20');
-  const [olevelWeight, setOlevelWeight] = useState('30');
+  const [jamb, setJamb] = useState('');
+  const [postUtme, setPostUtme] = useState('');
+  const [formula, setFormula] = useState<Formula>('50-50');
 
-  const calculation = useMemo(() => {
-    const jambPercent = clamp(jamb, 0, 400) / 4;
-    const postUtmePercent = clamp(postUtme, 0, 100);
-    const olevelPercent = clamp(olevel, 0, 100);
-    const weights = {
-      jamb: Math.max(0, Number(jambWeight) || 0),
-      postUtme: Math.max(0, Number(postUtmeWeight) || 0),
-      olevel: Math.max(0, Number(olevelWeight) || 0),
-    };
-    const weightTotal = weights.jamb + weights.postUtme + weights.olevel;
-    if (!weightTotal) return { aggregate: null, jambPercent, postUtmePercent, olevelPercent, weightTotal: 0 };
-    const aggregate = (
-      jambPercent * weights.jamb +
-      postUtmePercent * weights.postUtme +
-      olevelPercent * weights.olevel
-    ) / weightTotal;
-    return { aggregate, jambPercent, postUtmePercent, olevelPercent, weightTotal };
-  }, [jamb, postUtme, olevel, jambWeight, postUtmeWeight, olevelWeight]);
+  const weights = useMemo(() => {
+    if (formula === '60-40') return { jamb: 60, postUtme: 40 };
+    if (formula === '70-30') return { jamb: 70, postUtme: 30 };
+    return { jamb: 50, postUtme: 50 };
+  }, [formula]);
+
+  const result = useMemo(() => {
+    const jambScore = clamp(jamb, 400);
+    const postScore = clamp(postUtme, 100);
+    const jambPercent = (jambScore / 400) * 100;
+    const postPercent = postScore;
+    const aggregate = (jambPercent * weights.jamb + postPercent * weights.postUtme) / 100;
+    return { jambScore, postScore, jambPercent, postPercent, aggregate };
+  }, [jamb, postUtme, weights]);
 
   function reset() {
     setInstitution('');
-    setJamb('250');
-    setPostUtme('70');
-    setOlevel('75');
-    setJambWeight('50');
-    setPostUtmeWeight('20');
-    setOlevelWeight('30');
+    setJamb('');
+    setPostUtme('');
+    setFormula('50-50');
   }
 
-  const aggregate = calculation.aggregate === null ? '—' : calculation.aggregate.toFixed(2);
+  const ready = jamb !== '' || postUtme !== '';
 
-  return <HubLayout>
-    <div className="hub-page">
-      <div className="hub-container hub-narrow">
-        <div className="hub-section-heading hub-page-heading-compact" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img src="/icons/calculator.svg" alt="Calculator" width={38} height={38} style={{ objectFit: 'contain' }} />
-            <div>
-              <span className="hub-eyebrow" style={{ color: '#059669', fontWeight: 800 }}>ONLINE ADMISSION TOOL</span>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, margin: 0, color: '#0f172a' }}>Screening Score Calculator</h1>
+  return (
+    <HubLayout>
+      <div className="hub-page" style={{ padding: '18px 0 50px' }}>
+        <div className="hub-container hub-narrow">
+          <div
+            className="hub-section-heading hub-page-heading-compact"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <img src="/icons/calculator.svg" alt="" width={30} height={30} />
+              <div>
+                <h1 style={{ fontSize: '19px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
+                  Screening Aggregate Calculator
+                </h1>
+                <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#64748b' }}>
+                  Enter your JAMB and Post-UTME scores to estimate your aggregate.
+                </p>
+              </div>
+            </div>
+            <button type="button" className="hub-outline-btn" onClick={reset} style={{ fontSize: '11px', padding: '5px 9px' }}>
+              <RotateCcw size={13} /> Reset
+            </button>
+          </div>
+
+          <div className="hub-calculator-card">
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
+                  School (optional)
+                </label>
+                <input
+                  value={institution}
+                  onChange={(e) => setInstitution(e.target.value)}
+                  placeholder="e.g. University of Calabar"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: '10px',
+                }}
+              >
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                  JAMB / UTME score
+                  <input
+                    type="number"
+                    min="0"
+                    max="400"
+                    value={jamb}
+                    onChange={(e) => setJamb(e.target.value)}
+                    placeholder="0 – 400"
+                    style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
+                  />
+                  <small style={{ display: 'block', marginTop: '3px', color: '#64748b', fontWeight: 400 }}>
+                    Your JAMB score out of 400.
+                  </small>
+                </label>
+
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                  Post-UTME score
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={postUtme}
+                    onChange={(e) => setPostUtme(e.target.value)}
+                    placeholder="0 – 100"
+                    style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
+                  />
+                  <small style={{ display: 'block', marginTop: '3px', color: '#64748b', fontWeight: 400 }}>
+                    Your screening score out of 100.
+                  </small>
+                </label>
+              </div>
+
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '7px' }}>
+                  Which formula should I use?
+                </div>
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  {([
+                    ['50-50', '50% JAMB + 50% Post-UTME'],
+                    ['60-40', '60% JAMB + 40% Post-UTME'],
+                    ['70-30', '70% JAMB + 30% Post-UTME'],
+                  ] as const).map(([value, label]) => (
+                    <label key={value} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '11.5px', color: '#334155', fontWeight: 600 }}>
+                      <input
+                        type="radio"
+                        name="formula"
+                        value={value}
+                        checked={formula === value}
+                        onChange={() => setFormula(value)}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <p style={{ margin: '7px 0 0', fontSize: '10.5px', color: '#64748b', lineHeight: 1.45 }}>
+                  These are calculation options, not a claim that every school uses them. Always confirm your school's current screening formula.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  background: '#ecfdf5',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '10px',
+                  padding: '14px',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto',
+                  gap: '12px',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#047857', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                    Estimated aggregate
+                  </div>
+                  <strong style={{ display: 'block', marginTop: '2px', fontSize: '30px', lineHeight: 1, color: '#065f46' }}>
+                    {ready ? result.aggregate.toFixed(2) : '—'}
+                  </strong>
+                  <span style={{ display: 'block', marginTop: '5px', fontSize: '11px', color: '#475569' }}>
+                    {institution || 'Your selected formula'} • out of 100
+                  </span>
+                </div>
+                <div style={{ textAlign: 'right', fontSize: '11px', color: '#475569', lineHeight: 1.6 }}>
+                  <div>JAMB contribution: <strong>{ready ? ((result.jambPercent * weights.jamb) / 100).toFixed(2) : '—'}</strong></div>
+                  <div>Post-UTME contribution: <strong>{ready ? ((result.postPercent * weights.postUtme) / 100).toFixed(2) : '—'}</strong></div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.5 }}>
+                <strong style={{ color: '#334155' }}>How it works:</strong> JAMB is first converted from 400 to 100, then the selected percentages are applied. For example, 240 JAMB becomes 60/100.
+              </div>
             </div>
           </div>
-          <button type="button" className="hub-outline-btn" onClick={reset}><RotateCcw size={15}/> Reset</button>
         </div>
-
-        <div className="hub-calculator-card">
-          <div className="hub-calculator-intro">
-            <span className="hub-calc-badge">PLANNING TOOL</span>
-            <h2>Estimate your screening aggregate</h2>
-            <p>Enter the scores and weighting used by your target institution. The calculator is for planning and does not replace an official screening formula or admission decision.</p>
-          </div>
-
-          <div className="hub-form-grid">
-            <label>Target Institution<input value={institution} onChange={(event) => setInstitution(event.target.value)} placeholder="e.g. University of Calabar" /></label>
-            <label>JAMB / UTME Score<input type="number" min="0" max="400" value={jamb} onChange={(event) => setJamb(event.target.value)} /><small>0–400</small></label>
-            <label>Post-UTME Score<input type="number" min="0" max="100" value={postUtme} onChange={(event) => setPostUtme(event.target.value)} /><small>0–100</small></label>
-            <label>O'Level Screening Score<input type="number" min="0" max="100" value={olevel} onChange={(event) => setOlevel(event.target.value)} /><small>Use your institution's stated O'Level scale.</small></label>
-          </div>
-
-          <div className="hub-calculator-weighting">
-            <div className="hub-section-heading compact"><div><span className="hub-eyebrow">WEIGHTING</span><h3>Set your institution's formula</h3></div></div>
-            <div className="hub-form-grid">
-              <label>JAMB weight (%)<input type="number" min="0" max="100" value={jambWeight} onChange={(event) => setJambWeight(event.target.value)} /></label>
-              <label>Post-UTME weight (%)<input type="number" min="0" max="100" value={postUtmeWeight} onChange={(event) => setPostUtmeWeight(event.target.value)} /></label>
-              <label>O'Level weight (%)<input type="number" min="0" max="100" value={olevelWeight} onChange={(event) => setOlevelWeight(event.target.value)} /></label>
-            </div>
-            <p className={calculation.weightTotal === 100 ? 'hub-calc-weight-ok' : 'hub-calc-weight-warn'}>Weight total: <strong>{calculation.weightTotal}%</strong>. {calculation.weightTotal === 100 ? 'Formula is balanced.' : 'The calculator normalises the weights automatically. Verify the official formula first.'}</p>
-          </div>
-
-          <div className="hub-calculator-result">
-            <div>
-              <span className="hub-eyebrow">ESTIMATED AGGREGATE</span>
-              <strong>{aggregate}%</strong>
-              <span>{institution || 'Target institution not specified'}</span>
-            </div>
-            <div className="hub-calculator-breakdown">
-              <span><b>{calculation.jambPercent.toFixed(1)}%</b> JAMB score base</span>
-              <span><b>{calculation.postUtmePercent.toFixed(1)}%</b> Post-UTME score base</span>
-              <span><b>{calculation.olevelPercent.toFixed(1)}%</b> O'Level score base</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="hub-panel hub-form-note"><strong>Important:</strong> institutions can use different formulas, subject requirements and cut-off rules. Use this calculator for planning, then confirm the current screening method directly from the institution.</div>
       </div>
-    </div>
-  </HubLayout>;
+    </HubLayout>
+  );
 }
