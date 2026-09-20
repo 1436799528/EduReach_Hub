@@ -14,6 +14,7 @@ import './image-card-system.css';
 import './home-card-first.css';
 import './myschool-clean.css';
 import './styles/theme.css';
+import './card-density.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
