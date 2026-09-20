@@ -84,9 +84,9 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow">MYSCHOOL CBT CLASSROOM</span>
-              <h1 style={{ fontSize: '28px', fontWeight: 900 }}>Computer-Based Test (CBT) Practice</h1>
-              <p>Practice for JAMB UTME, WAEC, NECO and Post-UTME with timed questions, instant scoring, and step-by-step corrections.</p>
+              <span className="hub-eyebrow">CBT</span>
+              <h1 style={{ fontSize: '28px', fontWeight: 900 }}>CBT Practice</h1>
+              <p></p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <a className="hub-outline-btn" href="/screening-calculator" style={{ textDecoration: 'none' }}>
