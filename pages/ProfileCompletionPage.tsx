@@ -249,30 +249,10 @@ export default function ProfileCompletionPage() {
     <HubLayout>
       <div className="hub-page" style={{ padding: '24px 0 60px' }}>
         <div className="hub-container" style={{ maxWidth: '780px' }}>
-          {/* HEADER (NO LARGE HERO) */}
-          <div style={{ marginBottom: '22px' }}>
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                color: '#D9381E',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                background: '#ecfdf5',
-                padding: '4px 10px',
-                borderRadius: '999px',
-                display: 'inline-block',
-                marginBottom: '8px',
-              }}
-            >
-              STEP 2 OF 2 • PROFILE ONBOARDING
-            </span>
-            <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', margin: '0 0 6px' }}>
+          <div style={{ marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
+            <h1 style={{ fontSize: '19px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
               Academic Profile &amp; Preferences
             </h1>
-            <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-              Tailor your EduReach dashboard, CBT recommendations, and verified scholarship radar.
-            </p>
           </div>
 
           {savedSuccess && (
