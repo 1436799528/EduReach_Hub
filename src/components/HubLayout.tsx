@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import {
-  Menu,
+  MoreVertical,
   X,
   ScanSearch,
   User,
   ShieldCheck,
   Search,
+  Bell,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import '../hub-rail.css';
@@ -28,62 +29,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* MYSCHOOL TOP UTILITY GREEN BAR */}
-      <div
-        style={{
-          background: '#064e3b',
-          color: '#ffffff',
-          fontSize: '11.5px',
-          fontWeight: 600,
-          padding: '6px 0',
-          borderBottom: '1px solid #047857',
-        }}
-      >
-        <div
-          className="hub-container"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '8px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              style={{
-                background: '#059669',
-                color: '#ffffff',
-                padding: '2px 7px',
-                borderRadius: '4px',
-                fontSize: '9.5px',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-              }}
-            >
-              PORTAL NOTICE
-            </span>
-            <span>Welcome to EduReach.ng — Nigeria's Premier Academic &amp; Student Services Hub</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <a href="/cbt" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 700 }}>
-              CBT Hall
-            </a>
-            <span style={{ opacity: 0.4 }}>|</span>
-            <a href="/services/track" style={{ color: '#ffffff', textDecoration: 'none' }}>
-              Track Application
-            </a>
-            <span style={{ opacity: 0.4 }}>|</span>
-            <a href="/dashboard" style={{ color: '#ffffff', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <User size={12} /> Student Account
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* MYSCHOOL MAIN HEADER */}
+      {/* CLEAN MAIN HEADER */}
       <header
         style={{
           background: '#ffffff',
@@ -105,24 +51,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              type="button"
-              className="hub-mobile-trigger"
-              aria-label="Open menu"
-              aria-expanded={mobileOpen}
-              aria-controls="hub-mobile-menu"
-              onClick={() => setMobileOpen(true)}
-              style={{
-                background: 'none',
-                border: 0,
-                color: '#0f172a',
-                cursor: 'pointer',
-                padding: '4px',
-              }}
-            >
-              <Menu size={22} />
-            </button>
-
             {/* BRAND LOGO */}
             <a
               href="/"
@@ -257,7 +185,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </nav>
 
-          {/* ACTION BUTTONS */}
+          {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <a
               href="/services/track"
@@ -294,6 +222,29 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             >
               Sign In
             </a>
+
+            {/* THREE-DOT TRIGGER: ONLY VISIBLE ON MOBILE */}
+            <button
+              type="button"
+              className="hub-mobile-trigger"
+              aria-label="Open mobile menu"
+              aria-expanded={mobileOpen}
+              aria-controls="hub-mobile-menu"
+              onClick={() => setMobileOpen(true)}
+              style={{
+                background: '#f1f5f9',
+                border: '1px solid #e2e8f0',
+                borderRadius: '7px',
+                color: '#0f172a',
+                cursor: 'pointer',
+                padding: '6px 8px',
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <MoreVertical size={18} />
+            </button>
           </div>
         </div>
       </header>

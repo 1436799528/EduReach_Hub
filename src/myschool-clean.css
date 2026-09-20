@@ -577,6 +577,10 @@
 }
 
 /* 11. RESPONSIVE NAVIGATION HEADER */
+.hub-mobile-trigger {
+  display: none;
+}
+
 .hub-desktop-nav {
   display: flex;
   align-items: center;
