@@ -1,0 +1,24 @@
+/* Landing page visual cleanup: compact, image-led and non-repetitive. */
+.edureach-landing .ms-ticker-strip{overflow:hidden;position:relative;justify-content:flex-start}
+.edureach-landing .ms-ticker-text{display:block;flex:1;white-space:nowrap;overflow:visible;text-overflow:clip;animation:edureach-notice-scroll 22s linear infinite}
+@keyframes edureach-notice-scroll{0%{transform:translateX(100%)}100%{transform:translateX(-115%)}}
+.edureach-landing .ms-ticker-strip:hover .ms-ticker-text{animation-play-state:paused}
+.edureach-landing .ms-ticker-strip .ms-ticker-badge,.edureach-landing .ms-ticker-strip>a{position:relative;z-index:2}
+.edureach-landing h2{font-weight:700!important;text-transform:none!important;letter-spacing:0!important}
+.edureach-landing .ms-top-tile-body strong{font-weight:700}
+.edureach-landing .ms-top-tile-body>span{font-weight:400}
+.edureach-landing .ms-news-row{display:grid;grid-template-columns:150px minmax(0,1fr) auto;align-items:stretch;gap:14px;padding:0;overflow:hidden}
+.edureach-landing .ms-news-thumb{width:150px;height:88px;min-height:88px;border-radius:0;background:#f1f5f9;overflow:hidden;display:block}
+.edureach-landing .ms-news-thumb img{width:100%;height:100%;display:block;object-fit:cover}
+.edureach-landing .ms-news-main{padding:10px 0;min-width:0}
+.edureach-landing .ms-news-main h3{font-weight:700}
+.edureach-landing .ms-news-meta{font-weight:400}
+.edureach-landing .ms-news-meta span:first-child{font-weight:500!important;color:#64748b!important;text-transform:none!important}
+.edureach-landing .ms-news-row>svg{align-self:center;margin-right:12px}
+.edureach-landing .ms-service-card,.edureach-landing .ms-card-grid> a{font-weight:400}
+.edureach-landing .ms-service-card strong,.edureach-landing .ms-card-grid a strong{font-weight:700}
+.edureach-landing .ms-portal-layout{grid-template-columns:minmax(0,1fr) 280px}
+.edureach-landing .ms-service-card{min-height:86px;padding:10px 12px}
+.edureach-landing .ms-service-card p,.edureach-landing .ms-service-foot{display:none}
+@media(max-width:700px){.edureach-landing .ms-news-row{grid-template-columns:100px minmax(0,1fr)}.edureach-landing .ms-news-thumb{width:100px;height:72px;min-height:72px}.edureach-landing .ms-news-row>svg{display:none}}
+@media(prefers-reduced-motion:reduce){.edureach-landing .ms-ticker-text{animation:none}}
