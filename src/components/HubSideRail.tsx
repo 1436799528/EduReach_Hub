@@ -53,7 +53,7 @@ export default function HubSideRail() {
       {!loadingNews && !news.length && <p className="hub-rail-copy">No verified updates yet.</p>}
       {!loadingNews && news.length > 0 && <div className="hub-rail-news">
         {news.slice(0, 4).map((item) => (
-          <a href={'/news/' + item.id} key={item.id}>
+          <a href={'/news/' + encodeURIComponent(item.slug)} key={item.id}>
             <div className="hub-rail-service-thumb"><CardIdentityMark value={item.category} type="news" /></div>
             <span>{item.category.replaceAll('_', ' ')}</span>
             <strong>{item.title}</strong>

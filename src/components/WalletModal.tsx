@@ -28,7 +28,8 @@ export default function WalletModal({ isOpen, onClose, userEmail, onSuccess }: P
   if (!isOpen) return null;
 
   const startPayment = () => {
-    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
+    const env = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
+    const publicKey = env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
     if (!publicKey) return setMessage('Payment is not configured yet. Add VITE_PAYSTACK_PUBLIC_KEY.');
     if (!window.PaystackPop) return setMessage('Payment gateway is still loading. Please try again.');
     if (!Number.isFinite(amount) || amount < 500) return setMessage('Minimum wallet top-up is ₦500.');

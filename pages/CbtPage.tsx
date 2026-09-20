@@ -1,4 +1,16 @@
-import { ArrowRight, BarChart3, Clock3, FileQuestion, GraduationCap, Trophy, Calculator } from 'lucide-react';
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Calculator,
+  CheckCircle2,
+  Clock3,
+  FileQuestion,
+  GraduationCap,
+  Laptop,
+  Sparkles,
+  Trophy,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -8,25 +20,25 @@ type Exam = { id: string; title: string; exam_body: string; subject: string; dur
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
 const modes: Array<{ key: ExamMode; label: string; description: string }> = [
-  { key: 'ALL', label: 'All Exams', description: 'All active practice exams.' },
-  { key: 'JAMB', label: 'JAMB / UTME', description: 'UTME-style practice and mocks.' },
-  { key: 'POST-UTME', label: 'Post-UTME', description: 'University screening practice.' },
-  { key: 'WAEC', label: 'WAEC', description: 'WAEC preparation and revision.' },
-  { key: 'NECO', label: 'NECO', description: 'NECO preparation and revision.' },
+  { key: 'ALL', label: 'All Exams', description: 'All active CBT practice questions.' },
+  { key: 'JAMB', label: 'JAMB / UTME', description: 'UTME-style timed test practice.' },
+  { key: 'POST-UTME', label: 'Post-UTME', description: 'University screening mock tests.' },
+  { key: 'WAEC', label: 'WAEC SSCE', description: 'Senior school certificate revision.' },
+  { key: 'NECO', label: 'NECO SSCE', description: 'Senior secondary practice papers.' },
 ];
 
-const cbtServices = [
-  { key: 'jamb-cbt', label: 'JAMB', title: 'JAMB CBT', description: 'UTME practice and timed mocks.', tone: 'blue' },
-  { key: 'results', label: 'WAEC / NECO', title: 'WAEC / NECO CBT', description: 'Exam-focused revision practice.', tone: 'green' },
-  { key: 'post-utme', label: 'POST-UTME', title: 'Post-UTME Practice', description: 'University screening-style practice.', tone: 'amber' },
-  { key: 'services', label: 'EDUREACH', title: 'Student Learning Tools', description: 'Academic tools around your exams.', tone: 'slate' },
+const cbtExamsOverview = [
+  { key: 'jamb', label: 'JAMB UTME', title: 'JAMB CBT Classroom', desc: 'Simulate the exact UTME computer test environment with real past questions and timer.', tone: 'emerald', questions: '40 Qs', time: '30 mins' },
+  { key: 'waec', label: 'WAEC SSCE', title: 'WAEC Exam Practice', desc: 'Sharpen your preparation in English, Mathematics, Biology, Chemistry & Physics.', tone: 'blue', questions: '50 Qs', time: '45 mins' },
+  { key: 'neco', label: 'NECO SSCE', title: 'NECO Examination Revision', desc: 'Comprehensive practice tests covering high-frequency SSCE syllabus objectives.', tone: 'emerald', questions: '40 Qs', time: '40 mins' },
+  { key: 'post-utme', label: 'POST-UTME', title: 'Post-UTME Screening Tests', desc: 'Screening aptitude tests for UNILAG, UNICAL, UNN, ABU, UI and state institutions.', tone: 'purple', questions: '30 Qs', time: '25 mins' },
 ];
 
 export default function CbtPage() {
   const readModeFromUrl = (): ExamMode => {
-    if (typeof window === 'undefined') return 'JAMB';
+    if (typeof window === 'undefined') return 'ALL';
     const requested = new URLSearchParams(window.location.search).get('mode')?.trim().toUpperCase();
-    return modes.some((item) => item.key === requested) ? requested as ExamMode : 'JAMB';
+    return modes.some((item) => item.key === requested) ? (requested as ExamMode) : 'ALL';
   };
 
   const [exams, setExams] = useState<Exam[]>([]);
@@ -66,48 +78,208 @@ export default function CbtPage() {
     window.history.replaceState({}, '', nextMode === 'ALL' ? '/cbt' : '/cbt?mode=' + encodeURIComponent(nextMode));
   }
 
-  return <HubLayout><div className="hub-page"><div className="hub-container hub-narrow">
-    <div className="hub-section-heading hub-page-heading-compact">
-      <div><span className="hub-eyebrow">CBT</span><h1>Exam Practice</h1><p>Choose an exam mode and practise from the same EduReach CBT engine.</p></div>
-      <div className="hub-home-top-actions"><a className="hub-outline-btn" href="/screening-calculator"><Calculator size={15}/> Calculator</a><a className="hub-primary-btn" href="/cbt/results"><Trophy size={15}/> Results</a></div>
-    </div>
+  return (
+    <HubLayout>
+      <div className="hub-page">
+        <div className="hub-container hub-narrow">
+          <div className="hub-section-heading hub-page-heading-compact">
+            <div>
+              <span className="hub-eyebrow">MYSCHOOL CBT CLASSROOM</span>
+              <h1 style={{ fontSize: '28px', fontWeight: 900 }}>Computer-Based Test (CBT) Practice</h1>
+              <p>Practice for JAMB UTME, WAEC, NECO and Post-UTME with timed questions, instant scoring, and step-by-step corrections.</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <a className="hub-outline-btn" href="/screening-calculator" style={{ textDecoration: 'none' }}>
+                <Calculator size={14} /> Screening Calculator
+              </a>
+              <a className="hub-primary-btn" href="/cbt/results" style={{ textDecoration: 'none' }}>
+                <Trophy size={14} /> View Past Results
+              </a>
+            </div>
+          </div>
 
-    <section className="hub-cbt-services-area">
-      <div className="hub-section-heading compact"><div><span className="hub-eyebrow">EXAM SERVICES</span><h2>Choose an examination service</h2></div></div>
-      <div className="hub-cbt-service-list hub-cbt-compact-service-list">
-        {cbtServices.map((service) => (
-          <a className={`hub-cbt-service-card tone-${service.tone} hub-click-card`} href={service.key === 'services' ? '/dashboard' : '/cbt?mode=' + (service.key === 'jamb-cbt' ? 'JAMB' : service.key === 'results' ? 'WAEC' : 'POST-UTME')} key={service.key}>
-            <div className="hub-cbt-brand-area"><CardIdentityMark value={service.key} type="service" /></div>
-            <div className="hub-cbt-service-content"><span className="hub-cbt-service-label">{service.label}</span><h3>{service.title}</h3><p>{service.description}</p></div>
-            <ArrowRight size={17} className="hub-compact-arrow" />
-          </a>
-        ))}
+          {/* 4 EXAM BODIES MYSCHOOL GRID */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '14px',
+              marginBottom: '26px',
+            }}
+          >
+            {cbtExamsOverview.map((item) => (
+              <div
+                key={item.key}
+                className="ms-card"
+                style={{ padding: '18px', cursor: 'default' }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <CardIdentityMark value={item.key} type="service" />
+                    <span className="ms-card-badge">{item.label}</span>
+                  </div>
+                  <h3 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
+                    {item.title}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
+                    {item.desc}
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>
+                    {item.questions} • {item.time}
+                  </span>
+                  <a
+                    href={`/cbt/practice?exam=demo-exam-${item.key}`}
+                    className="hub-primary-btn"
+                    style={{ minHeight: '32px', padding: '0 12px', fontSize: '11px', textDecoration: 'none' }}
+                  >
+                    Start Test →
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* KEY BENEFITS OF MYSCHOOL CBT */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '12px',
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '26px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Clock3 size={20} style={{ color: '#059669', flexShrink: 0 }} />
+              <div>
+                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>Simulate real exam pressure</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <CheckCircle2 size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
+              <div>
+                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Instant Evaluation</strong>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>Accurate scoring and percentages</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <BookOpen size={20} style={{ color: '#7c3aed', flexShrink: 0 }} />
+              <div>
+                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Detailed Corrections</strong>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>Explanations for all options</span>
+              </div>
+            </div>
+          </div>
+
+          {/* MODE SELECTOR */}
+          <div className="hub-section-heading" style={{ marginBottom: '12px' }}>
+            <div>
+              <span className="hub-eyebrow">SELECT CATEGORY</span>
+              <h2 style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 900 }}>Filter CBT Question Banks</h2>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginBottom: '18px',
+            }}
+          >
+            {modes.map((item) => (
+              <button
+                type="button"
+                key={item.key}
+                onClick={() => changeMode(item.key)}
+                style={{
+                  border: '1px solid',
+                  borderColor: mode === item.key ? '#059669' : '#e2e8f0',
+                  background: mode === item.key ? '#ecfdf5' : '#ffffff',
+                  color: mode === item.key ? '#047857' : '#334155',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {loading && <div className="hub-panel hub-empty">Loading question banks…</div>}
+          {error && <div className="hub-form-error">{error}</div>}
+          {!loading && !error && !filteredExams.length && (
+            <div className="hub-panel hub-empty">
+              <FileQuestion size={26} style={{ color: '#64748b', marginBottom: '8px' }} />
+              <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No {mode === 'ALL' ? '' : mode + ' '}exams available yet.</h3>
+              <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Select another category to practice.</p>
+            </div>
+          )}
+
+          {!loading && !error && filteredExams.length > 0 && (
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {filteredExams.map((exam) => (
+                <div
+                  key={exam.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '14px',
+                    padding: '16px 18px',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                    <CardIdentityMark value={exam.exam_body} type="service" />
+                    <div>
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {exam.exam_body} • {exam.subject}
+                      </span>
+                      <h3 style={{ margin: '2px 0 0', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
+                        {exam.title}
+                      </h3>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>
+                        <Clock3 size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />
+                        {exam.duration_minutes} Minutes
+                      </span>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`/cbt/practice?exam=${encodeURIComponent(exam.id)}`}
+                    className="hub-primary-btn"
+                    style={{
+                      background: '#059669',
+                      padding: '0 16px',
+                      minHeight: '36px',
+                      fontSize: '12px',
+                      textDecoration: 'none',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Take Test <ArrowRight size={14} />
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </section>
-
-    <div className="hub-cbt-feature-grid hub-cbt-compact-feature-grid">
-      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><GraduationCap size={19}/></div><div><strong>Timed practice</strong><span>Work through questions under exam-like time pressure.</span></div></article>
-      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><FileQuestion size={19}/></div><div><strong>Corrections</strong><span>Review answers and explanations after submission.</span></div></article>
-      <article className="hub-cbt-feature"><div className="hub-cbt-feature-icon"><BarChart3 size={19}/></div><div><strong>Performance</strong><span>Keep your practice results inside your account.</span></div></article>
-    </div>
-
-    <div className="hub-section-heading compact"><div><span className="hub-eyebrow">EXAM MODE</span><h2>Choose what to practise</h2></div></div>
-    <div className="hub-cbt-mode-switcher">
-      {modes.map((item) => <button type="button" key={item.key} className={mode === item.key ? 'active' : ''} onClick={() => changeMode(item.key)}><strong>{item.label}</strong><span>{item.description}</span></button>)}
-    </div>
-
-    {loading && <div className="hub-panel hub-empty">Loading available exams…</div>}
-    {error && <div className="hub-form-error">{error}</div>}
-    {!loading && !error && !filteredExams.length && <div className="hub-panel hub-empty"><FileQuestion size={26}/><h3>No {mode === 'ALL' ? '' : mode + ' '}exams published yet.</h3><p>Add or publish the relevant question bank from the CBT admin area.</p></div>}
-
-    {!loading && !error && filteredExams.length > 0 && <div className="hub-cbt-exam-list">
-      {filteredExams.map((exam) => (
-        <a className="hub-cbt-exam-row hub-click-card" href={'/cbt/practice?exam=' + encodeURIComponent(exam.id)} key={exam.id}>
-          <div className="hub-cbt-exam-icon"><CardIdentityMark value={exam.exam_body === 'JAMB' ? 'jamb-cbt' : exam.exam_body === 'WAEC' ? 'waec-result' : exam.exam_body === 'NECO' ? 'neco-result' : 'cbt'} type="service" /></div>
-          <div className="hub-cbt-exam-main"><span>{exam.exam_body} · {exam.subject}</span><h2>{exam.title}</h2><p><Clock3 size={13}/> {exam.duration_minutes} minutes</p></div>
-          <ArrowRight size={17} className="hub-compact-arrow" />
-        </a>
-      ))}
-    </div>}
-  </div></div></HubLayout>;
+    </HubLayout>
+  );
 }
