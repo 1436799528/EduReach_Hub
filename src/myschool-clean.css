@@ -609,3 +609,70 @@
     display: none !important;
   }
 }
+
+
+/* 12. SITE-WIDE COMPACT PAGE HEADERS
+   Keep inner pages useful and dense; remove the small AI-style eyebrow labels
+   and oversized introductory treatment. */
+.hub-page .hub-eyebrow {
+  display: none !important;
+}
+
+.hub-page .hub-section-heading.hub-page-heading-compact {
+  min-height: 0 !important;
+  margin-bottom: 12px !important;
+  padding: 0 0 8px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.hub-page .hub-section-heading.hub-page-heading-compact h1 {
+  margin: 0 !important;
+  font-size: 19px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+
+.hub-page .hub-section-heading.hub-page-heading-compact p {
+  display: none !important;
+}
+
+.hub-page > .hub-container > .hub-section-heading:not(.hub-page-heading-compact) {
+  margin-top: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+.hub-page > .hub-container > .hub-section-heading:not(.hub-page-heading-compact) h2,
+.hub-page > .hub-container > .hub-section-heading:not(.hub-page-heading-compact) h3 {
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  font-weight: 700 !important;
+}
+
+.hub-page > .hub-container > .hub-section-heading:not(.hub-page-heading-compact) p {
+  display: none !important;
+}
+
+/* Remove legacy hero/intro wrappers even when older page-specific classes are used. */
+.hub-page .hub-hero,
+.hub-page .hub-hero-banner,
+.hub-page .hub-hero-card,
+.hub-page .hub-portal-hero,
+.hub-page .hub-page-header-large,
+.hub-page .hub-intro-hero {
+  display: none !important;
+}
+
+/* Compact branded card identity: logo first, no oversized identity badge. */
+.ms-identity-mark {
+  padding: 2px 4px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+}
+
+.ms-identity-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em !important;
+}
