@@ -104,34 +104,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </div>
 
-          {/* DESKTOP SEARCH BAR */}
-          <form
-            onSubmit={handleNavSearch}
-            className="hub-desktop-search"
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #cbd5e1',
-              borderRadius: '8px',
-              padding: '4px 10px',
-            }}
-          >
-            <Search size={16} color="#64748b" style={{ flexShrink: 0, marginRight: '8px' }} />
-            <input
-              type="text"
-              value={navSearch}
-              onChange={(e) => setNavSearch(e.target.value)}
-              placeholder="Search JAMB, WAEC, NELFUND, schools…"
-              style={{
-                border: 0,
-                outline: 'none',
-                background: 'transparent',
-                fontSize: '13px',
-                width: '100%',
-                color: '#0f172a',
-              }}
-            />
-          </form>
-
           {/* DESKTOP NAVIGATION LINKS */}
           <nav className="hub-desktop-nav">
             <a
@@ -419,9 +391,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <a href="/jobs" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Scholarships &amp; Grants
               </a>
-              <a href="/dashboard" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Student Workspace
-              </a>
             </nav>
 
             <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #f1f5f9', display: 'grid', gap: '10px' }}>
@@ -551,7 +520,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Campus Noticeboard</a>
                 <a href="/jobs" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Scholarships &amp; Grants</a>
                 <a href="/dashboard" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Student Dashboard</a>
-                <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none' }}>
+                <a href="https://wa.me/2349130134969" target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none' }}>
                   WhatsApp Official Helpline
                 </a>
               </div>
