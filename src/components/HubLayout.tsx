@@ -45,7 +45,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   const firstName = user?.name?.split(/\s+/)[0] || 'Student';
 
   return (
-    <div className="hub-shell hub-global-compact" style={{ background: '#FAF8FF', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* CLEAN MAIN HEADER */}
       <header
         style={{
