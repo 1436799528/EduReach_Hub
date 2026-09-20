@@ -96,6 +96,7 @@ export default function HubHomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeNewsCategory, setActiveNewsCategory] = useState('all');
 
   useEffect(() => {
