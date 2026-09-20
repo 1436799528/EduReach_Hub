@@ -10,6 +10,10 @@ import {
   Bell,
   LogOut,
   LayoutDashboard,
+  Home,
+  Laptop,
+  Newspaper,
+  BookOpen,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import { useAuth } from '../lib/auth';
@@ -448,6 +452,15 @@ export default function HubLayout({ children }: { children: ReactNode }) {
           children
         )}
       </main>
+
+      {/* MOBILE PORTAL NAVIGATION */}
+      <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
+        <a className={path === '/' ? 'active' : ''} href="/"><Home size={18} /><span>Home</span></a>
+        <a className={path.startsWith('/cbt') ? 'active' : ''} href="/cbt"><Laptop size={18} /><span>CBT</span></a>
+        <a className={path.startsWith('/news') ? 'active' : ''} href="/news"><Newspaper size={18} /><span>News</span></a>
+        <a className={path === '/past-questions' ? 'active' : ''} href="/past-questions"><BookOpen size={18} /><span>Questions</span></a>
+        <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
+      </nav>
 
       {/* MYSCHOOL FOOTER */}
       <footer
