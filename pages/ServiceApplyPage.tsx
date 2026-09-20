@@ -18,6 +18,8 @@ import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 
+const EDUReachWhatsApp = '2349130134969';
+
 type FormState = {
   fullName: string;
   phone: string;
@@ -187,7 +189,18 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         details: { ...form, serviceTitle: service!.title },
       });
       setReference(result.reference_code);
-      setMessage('Your service request was successfully submitted.');
+      setMessage('Your service request was successfully submitted. Redirecting to WhatsApp…');
+      const whatsappText = [
+        'Hello EduReach, I just submitted a service request.',
+        `Service: ${service!.title}`,
+        `Reference code: ${result.reference_code}`,
+        `Name: ${form.fullName}`,
+        `WhatsApp: ${form.whatsapp || form.phone}`,
+        'Please assist me with this request.',
+      ].join('\\n');
+      window.setTimeout(() => {
+        window.location.assign(`https://wa.me/${EDUReachWhatsApp}?text=${encodeURIComponent(whatsappText)}`);
+      }, 700);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to submit request.');
     } finally {
