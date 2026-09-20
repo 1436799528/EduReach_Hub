@@ -53,10 +53,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="admin-brand"><div className="admin-brand-mark">ER</div><div><strong>EduReach Admin</strong><span>Production Control</span></div></div>
         <nav className="admin-nav">
           <NavLink href="/admin" icon="▦">Operations Dashboard</NavLink>
+          <NavLink href="/admin/analytics" icon="◔">Analytics & Reports</NavLink>
           <NavLink href="/admin/queue" icon="≋">Service Queue</NavLink>
           <NavLink href="/admin/cbt" icon="▣">CBT Question Bank</NavLink>
           <NavLink href="/admin/vouchers" icon="▤">Scratch Card Inventory</NavLink>
           <NavLink href="/admin/users" icon="♙">Student Accounts</NavLink>
+          <NavLink href="/services" icon="✦">View Public Site</NavLink>
         </nav>
       </div>
       <div className="admin-sidebar-footer">
