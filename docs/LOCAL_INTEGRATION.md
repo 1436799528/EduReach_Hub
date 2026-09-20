@@ -6,7 +6,7 @@ EduReach Hub uses Vite + React + Express + Supabase. It does not use Next.js or 
 
 The Supabase database already contains the service catalog and service-request workflow. The application seed migration adds:
 
-- a demo CBT exam with 10 questions;
+- a seed CBT practice exam with 10 questions;
 - three prototype news articles;
 - an automatic `ER-YYYY-XXXXXX` reference code for every new service request.
 
@@ -41,7 +41,7 @@ For a local Supabase CLI database, apply the repository migrations with the norm
 supabase/migrations/20260915_application_integration_seed.sql
 ```
 
-After a local reset, the database should contain the five service definitions, the demo CBT exam/question bank, and the three prototype news records.
+After a local reset, the database should contain the five service definitions, the seed CBT practice exam/question bank, and the three prototype news records.
 
 ## Payment API
 

@@ -59,8 +59,6 @@ export default function ServiceTrackPage() {
     await searchReference(referenceCode);
   }
 
-  const sampleCodes = ['ER-9482-JAMB', 'ER-8214-NELFUND', 'ER-7712-WAEC'];
-
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '24px 0 60px' }}>
@@ -172,43 +170,17 @@ export default function ServiceTrackPage() {
               </button>
             </form>
 
-            {/* QUICK SAMPLE CODES */}
             <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                flexWrap: 'wrap',
                 marginTop: '14px',
                 paddingTop: '12px',
                 borderTop: '1px solid #f1f5f9',
+                fontSize: '11px',
+                color: '#64748b',
+                fontWeight: 600,
               }}
             >
-              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
-                Try sample references:
-              </span>
-              {sampleCodes.map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => {
-                    setReferenceCode(code);
-                    void searchReference(code);
-                  }}
-                  style={{
-                    background: '#f1f5f9',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    color: '#334155',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {code}
-                </button>
-              ))}
+              Enter the reference code from your submitted EduReach service request receipt.
             </div>
           </div>
 

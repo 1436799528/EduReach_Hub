@@ -24,7 +24,13 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
       routeAttemptId ||
       new URLSearchParams(window.location.search).get('attempt') ||
       localStorage.getItem('edureach-last-cbt-attempt') ||
-      'demo-attempt-preview';
+      '';
+
+    if (!attemptId) {
+      setError('No CBT attempt was selected. Complete a practice test to generate a scorecard.');
+      setLoading(false);
+      return;
+    }
 
     void fetchCbtResult(attemptId)
       .then(setResult)
@@ -180,7 +186,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                     <Printer size={13} /> Print Result Slip
                   </button>
                   <a
-                    href="/cbt/practice?exam=demo-exam-jamb"
+                    href="/cbt/practice?exam=practice-exam-jamb"
                     className="hub-primary-btn"
                     style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
                   >

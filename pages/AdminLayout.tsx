@@ -29,15 +29,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         // Backend offline / not configured
       }
 
-      // In frontend preview mode when backend is offline, provide a preview session
       if (active) {
-        setSession({
-          id: 'admin-demo-node',
-          email: 'admin@edureach.ng',
-          fullName: 'Admin Operations Control (Preview)',
-          role: 'admin',
-        });
+        setSession(null);
         setChecking(false);
+        navigate('/login');
       }
     }
     check();

@@ -46,15 +46,7 @@ export default function WalletModal({ isOpen, onClose, userEmail, onSuccess }: P
     }
 
     if (!publicKey) {
-      // In demo/preview mode without Paystack keys, provide instant preview funding
-      setProcessing(true);
-      window.setTimeout(() => {
-        onSuccess(amount);
-        setMessage(`Demo wallet credited with ₦${amount.toLocaleString()}.`);
-        setProcessing(false);
-        window.setTimeout(onClose, 800);
-      }, 500);
-      return;
+      return setMessage('Wallet top-up is unavailable until a Paystack public key is configured.');
     }
 
     if (!window.PaystackPop) return setMessage('Payment gateway is still loading. Please try again.');

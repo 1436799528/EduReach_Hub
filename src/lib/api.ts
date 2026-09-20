@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import { hubServices, newsItems as fallbackNews, sampleQuestions } from '../data/hubContent';
+import { hubServices, newsItems as fallbackNews } from '../data/hubContent';
 
 export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number };
@@ -51,75 +51,34 @@ const fallbackServicesCatalog: ServiceItem[] = hubServices.map((srv, index) => (
   active: true,
 }));
 
-// Fallback upcoming deadlines and exams
-const fallbackUpcomingItems: UpcomingItem[] = [
-  {
-    id: 'up-1',
-    kind: 'exam',
-    title: 'JAMB UTME 2026 Examination',
-    description: 'National examination session and center verification.',
-    due_at: null,
-    starts_at: '2026-04-18',
-    location: 'Designated CBT Centers',
-    priority: 'high',
-  },
-  {
-    id: 'up-2',
-    kind: 'deadline',
-    title: 'NELFUND Student Loan Window',
-    description: 'Deadline to submit student-loan information for current semester.',
-    due_at: '2026-05-15',
-    starts_at: null,
-    location: 'Official Portal',
-    priority: 'high',
-  },
-  {
-    id: 'up-3',
-    kind: 'exam',
-    title: 'WAEC May/June Examination',
-    description: 'Senior secondary certificate examination nationwide timetable.',
-    due_at: null,
-    starts_at: '2026-05-08',
-    location: 'Accredited Schools',
-    priority: 'normal',
-  },
-  {
-    id: 'up-4',
-    kind: 'deadline',
-    title: 'Post-UTME Screening Applications',
-    description: 'University screening registration closes for tertiary institutions.',
-    due_at: '2026-06-30',
-    starts_at: null,
-    location: 'Institution Portals',
-    priority: 'normal',
-  },
-];
+// Upcoming deadlines are loaded from the backend when configured
+const fallbackUpcomingItems: UpcomingItem[] = [];
 
-// Fallback CBT exams
+// Built-in CBT practice catalog
 const fallbackCbtExams = [
   {
-    id: 'demo-exam-jamb',
+    id: 'practice-exam-jamb',
     title: 'JAMB UTME Comprehensive Practice',
     exam_body: 'JAMB',
     subject: 'General Practice & Use of English',
     duration_minutes: 30,
   },
   {
-    id: 'demo-exam-waec',
+    id: 'practice-exam-waec',
     title: 'WAEC Senior Certificate Revision',
     exam_body: 'WAEC',
     subject: 'Use of English',
     duration_minutes: 45,
   },
   {
-    id: 'demo-exam-neco',
+    id: 'practice-exam-neco',
     title: 'NECO SSCE Comprehensive Practice',
     exam_body: 'NECO',
     subject: 'Mathematics',
     duration_minutes: 40,
   },
   {
-    id: 'demo-exam-post-utme',
+    id: 'practice-exam-post-utme',
     title: 'Federal Universities Post-UTME Screening',
     exam_body: 'POST-UTME',
     subject: 'Aptitude & General Studies',
@@ -141,7 +100,7 @@ const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
   verification_status: n.verified ? 'verified' : 'pending',
 }));
 
-const fallbackQuestions = [
+const practiceQuestions = [
   { id: 1, text: 'Choose the word nearest in meaning to "rapid".', options: ['Slow', 'Fast', 'Late', 'Weak'] },
   { id: 2, text: 'What is 15% of 200?', options: ['20', '25', '30', '35'] },
   { id: 3, text: 'Which quantity is measured in newtons?', options: ['Power', 'Force', 'Energy', 'Pressure'] },
@@ -236,7 +195,7 @@ export async function fetchUpcoming(): Promise<UpcomingItem[]> {
       const body = await jsonFetch<{ items: UpcomingItem[] }>('/api/upcoming');
       if (body.items?.length) return body.items;
     } catch {
-      // Fall back to preview updates
+      // Return an empty list when no backend deadline feed is configured
     }
   }
   return fallbackUpcomingItems;
@@ -267,11 +226,13 @@ export async function startCbt(examId: string): Promise<CbtStartResponse> {
   } catch {
     // fallback
   }
+  if (isSupabaseConfigured) throw new Error('Please sign in before starting this CBT practice session.');
+
   return {
-    attemptId: `mock-cbt-${examId}-${Date.now()}`,
+    attemptId: `local-cbt-${examId}-${Date.now()}`,
     startedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    totalQuestions: fallbackQuestions.length,
+    totalQuestions: practiceQuestions.length,
   };
 }
 
@@ -289,9 +250,11 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
     // fallback
   }
 
-  // Local fallback scoring for frontend practice mode
+  if (isSupabaseConfigured) throw new Error('Please sign in before submitting this CBT practice session.');
+
+  // Local scoring for frontend practice mode
   let correctCount = 0;
-  const breakdown = fallbackQuestions.map((q) => {
+  const breakdown = practiceQuestions.map((q) => {
     const selected = payload.answers[q.id] ?? null;
     const correct = correctAnswersMap[q.id];
     const isCorrect = selected === correct;
@@ -304,22 +267,22 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
     };
   });
 
-  const score = Math.round((correctCount / fallbackQuestions.length) * 100);
+  const score = Math.round((correctCount / practiceQuestions.length) * 100);
   const resultData = {
     attempt: {
       id: payload.attemptId,
       exam_id: payload.examId,
       score,
       correct_answers: correctCount,
-      total_questions: fallbackQuestions.length,
+      total_questions: practiceQuestions.length,
       submitted_at: new Date().toISOString(),
     },
-    answers: fallbackQuestions.map((q) => ({
+    answers: practiceQuestions.map((q) => ({
       question_id: q.id,
       selected_option: payload.answers[q.id] !== undefined ? String.fromCharCode(65 + payload.answers[q.id]) : null,
       is_correct: payload.answers[q.id] === correctAnswersMap[q.id],
     })),
-    questions: fallbackQuestions.map((q, idx) => ({
+    questions: practiceQuestions.map((q, idx) => ({
       id: q.id,
       position: idx + 1,
       question_text: q.text,
@@ -366,7 +329,7 @@ export async function fetchCbtQuestions(examId: string) {
       durationMinutes: examMeta.duration_minutes,
       subject: examMeta.subject,
     },
-    questions: fallbackQuestions,
+    questions: practiceQuestions,
   };
 }
 
@@ -410,40 +373,16 @@ export async function fetchCbtResult(attemptId: string) {
     }
   }
 
-  try {
-    const stored = localStorage.getItem(`edureach-cbt-result-${attemptId}`);
-    if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
+  if (!isSupabaseConfigured) {
+    try {
+      const stored = localStorage.getItem(`edureach-cbt-result-${attemptId}`);
+      if (stored) return JSON.parse(stored);
+    } catch {
+      // ignore
+    }
   }
 
-  // Realistic sample demo result if no attempt stored
-  return {
-    attempt: {
-      id: attemptId,
-      exam_id: 'demo-exam-jamb',
-      score: 80,
-      correct_answers: 8,
-      total_questions: 10,
-      submitted_at: new Date().toISOString(),
-    },
-    answers: fallbackQuestions.map((q, idx) => ({
-      question_id: q.id,
-      selected_option: idx < 8 ? String.fromCharCode(65 + correctAnswersMap[q.id]) : 'A',
-      is_correct: idx < 8,
-    })),
-    questions: fallbackQuestions.map((q, idx) => ({
-      id: q.id,
-      position: idx + 1,
-      question_text: q.text,
-      option_a: q.options[0],
-      option_b: q.options[1],
-      option_c: q.options[2],
-      option_d: q.options[3],
-      correct_option: String.fromCharCode(65 + correctAnswersMap[q.id]),
-      explanation: explanationsMap[q.id],
-    })),
-  };
+  throw new Error('No CBT result was found for this attempt. Complete a CBT practice session to generate a scorecard.');
 }
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
@@ -472,12 +411,14 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
     }
   }
 
-  // Offline / Demo request generation
+  if (isSupabaseConfigured) throw new Error('Please sign in before submitting a service request.');
+
+  // Local request persistence for unconfigured/offline sessions. This records only what the student actually submitted.
   const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const mockRef = `ER-${new Date().getFullYear()}-${randomSuffix}`;
-  const mockRecord = {
+  const localRef = `ER-${new Date().getFullYear()}-${randomSuffix}`;
+  const localRecord = {
     id: `req-${Date.now()}`,
-    reference_code: mockRef,
+    reference_code: localRef,
     created_at: new Date().toISOString(),
     status: 'submitted',
     form_data: payload.details,
@@ -485,14 +426,14 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   };
 
   try {
-    const existing = JSON.parse(localStorage.getItem('edureach-mock-requests') || '[]');
-    existing.unshift(mockRecord);
-    localStorage.setItem('edureach-mock-requests', JSON.stringify(existing));
+    const existing = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
+    existing.unshift(localRecord);
+    localStorage.setItem('edureach-service-requests', JSON.stringify(existing));
   } catch {
     // ignore
   }
 
-  return mockRecord;
+  return localRecord;
 }
 
 export async function trackService(referenceCode: string) {
@@ -519,31 +460,23 @@ export async function trackService(referenceCode: string) {
     }
   }
 
-  // Check locally saved mock requests
-  try {
-    const saved = JSON.parse(localStorage.getItem('edureach-mock-requests') || '[]');
-    const match = saved.find((r: any) => r.reference_code === normalized);
-    if (match) {
-      const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4 };
-      const current = stageMap[match.status] ?? 1;
-      const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
-      return { ...match, timeline: labels.map((label, index) => ({ label, done: index < current })) };
+  if (!isSupabaseConfigured) {
+    // Check locally saved requests created from real submitted forms.
+    try {
+      const saved = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
+      const match = saved.find((r: any) => r.reference_code === normalized);
+      if (match) {
+        const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4 };
+        const current = stageMap[match.status] ?? 1;
+        const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
+        return { ...match, timeline: labels.map((label, index) => ({ label, done: index < current })) };
+      }
+    } catch {
+      // ignore
     }
-  } catch {
-    // ignore
   }
 
-  // Demo fallback tracked response for any valid format
-  const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
-  return {
-    id: `req-demo-${normalized}`,
-    reference_code: normalized,
-    status: 'processing',
-    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    service_catalog: { title: 'JAMB / Student Service Processing' },
-    form_data: { fullName: 'Student Candidate', statusNote: 'Application is undergoing administrative verification.' },
-    timeline: labels.map((label, index) => ({ label, done: index < 3 })),
-  };
+  throw new Error('No service request was found for that reference code. Please confirm the code from your submitted application.');
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
@@ -626,12 +559,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
 
 export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string };
 
-const fallbackAdminUsers: AdminUser[] = [
-  { id: 'usr-1', full_name: 'Chinedu Okafor', school: 'University of Nigeria, Nsukka', faculty: 'Engineering', department: 'Mechanical Engineering', level: '400L', role: 'student', matric_number: '2021/248102', created_at: new Date(Date.now() - 86400000 * 30).toISOString() },
-  { id: 'usr-2', full_name: 'Fatima Bello', school: 'Ahmadu Bello University, Zaria', faculty: 'Law', department: 'Public Law', level: '300L', role: 'student', matric_number: 'ABU/LAW/22/041', created_at: new Date(Date.now() - 86400000 * 20).toISOString() },
-  { id: 'usr-3', full_name: 'Adebayo Johnson', school: 'University of Calabar (UNICAL)', faculty: 'Physical Sciences', department: 'Computer Science', level: '300L', role: 'student', matric_number: '21/095244102', created_at: new Date(Date.now() - 86400000 * 15).toISOString() },
-  { id: 'usr-4', full_name: 'Oluwaseun Balogun', school: 'EduReach Operations Team', faculty: 'Administration', department: 'Student Support', level: 'Staff', role: 'admin', matric_number: null, created_at: new Date(Date.now() - 86400000 * 120).toISOString() },
-];
+const fallbackAdminUsers: AdminUser[] = [];
 
 export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
   try {
@@ -652,38 +580,7 @@ export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
 
 export type AdminServiceRequest = { id: string; user_id: string; status: string; form_data: Record<string, unknown>; created_at: string; updated_at: string; reference_code?: string | null; service_catalog?: { title: string } | null };
 
-const fallbackAdminRequests: AdminServiceRequest[] = [
-  {
-    id: 'req-adm-1',
-    user_id: 'usr-1',
-    status: 'submitted',
-    reference_code: 'ER-2026-N7X9',
-    form_data: { fullName: 'Chinedu Okafor', institution: 'UNN', phone: '08012345678', requestDetails: 'NELFUND student loan guidance' },
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    service_catalog: { title: 'NELFUND Loan Application' },
-  },
-  {
-    id: 'req-adm-2',
-    user_id: 'usr-3',
-    status: 'processing',
-    reference_code: 'ER-2026-J4B8',
-    form_data: { fullName: 'Adebayo Johnson', institution: 'UNICAL', phone: '08098765432', requestDetails: 'JAMB Original Result Slip' },
-    created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
-    updated_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-    service_catalog: { title: 'JAMB Exam Slip Printing' },
-  },
-  {
-    id: 'req-adm-3',
-    user_id: 'usr-2',
-    status: 'completed',
-    reference_code: 'ER-2026-W2M4',
-    form_data: { fullName: 'Fatima Bello', institution: 'ABU Zaria', phone: '08123456789', requestDetails: 'WAEC Scratch Card Token' },
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-    service_catalog: { title: 'WAEC / NECO Scratch Cards' },
-  },
-];
+const fallbackAdminRequests: AdminServiceRequest[] = [];
 
 export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminServiceRequest[]> {
   try {
@@ -711,9 +608,8 @@ export async function updateAdminServiceRequest(requestId: string, status: strin
   }
 
   const req = fallbackAdminRequests.find(r => r.id === requestId);
-  if (req) {
-    req.status = status;
-    req.updated_at = new Date().toISOString();
-  }
-  return { item: { id: requestId, status, updated_at: new Date().toISOString() } };
+  if (!req) throw new Error('Unable to update this request because no admin service record was found.');
+  req.status = status;
+  req.updated_at = new Date().toISOString();
+  return { item: { id: requestId, status, updated_at: req.updated_at } };
 }

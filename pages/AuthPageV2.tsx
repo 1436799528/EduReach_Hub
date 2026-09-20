@@ -13,7 +13,7 @@ import {
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
-import { supabase } from '../src/lib/supabase';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -123,8 +123,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
         const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-        // Attempt Supabase sign up
-        try {
+        // Attempt Supabase sign up when credentials are configured.
+        if (isSupabaseConfigured) {
           const { error: signUpError } = await supabase.auth.signUp({
             email: email.trim(),
             password,
@@ -140,11 +140,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             },
           });
           if (signUpError) throw signUpError;
-        } catch (authErr) {
-          console.warn('Supabase auth notice:', authErr);
         }
 
-        // Store registration info locally for resilient offline/preview persistence
+        // Store registration info locally only for unconfigured preview/offline sessions.
         localStorage.setItem(
           'edureach-student-profile',
           JSON.stringify({
@@ -156,8 +154,10 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             account_type: accountType,
           })
         );
-        localStorage.setItem('edureach-mock-user-email', email.trim());
-        notifyAuthChanged();
+        if (!isSupabaseConfigured) {
+          localStorage.setItem('edureach-local-user-email', email.trim());
+          notifyAuthChanged();
+        }
         setVerifyEmailSent(email.trim());
         setCurrentMode('verify');
         setBusy(false);
@@ -190,13 +190,18 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             navigateInApp(adminCheck.ok ? '/admin' : getSafeNextPath());
             return;
           }
-        } catch {
-          // If in preview/offline mode, allow smooth login
+        } catch (signInErr) {
+          if (isSupabaseConfigured) throw signInErr;
         }
 
-        localStorage.setItem('edureach-mock-user-email', email.trim());
-        notifyAuthChanged();
-        navigateInApp(getSafeNextPath());
+        if (!isSupabaseConfigured) {
+          localStorage.setItem('edureach-local-user-email', email.trim());
+          notifyAuthChanged();
+          navigateInApp(getSafeNextPath());
+          return;
+        }
+
+        throw new Error('Unable to confirm your EduReach session. Please try signing in again.');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during authentication.');
@@ -204,19 +209,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       setBusy(false);
     }
   }
-
-  // Quick Demo Sign In
-  const handleQuickDemo = (role: 'student' | 'admin') => {
-    if (role === 'admin') {
-      window.sessionStorage.setItem('edureach-admin-student-view', '0');
-      notifyAuthChanged();
-      navigateInApp('/admin');
-    } else {
-      localStorage.setItem('edureach-mock-user-email', 'student@edureach.ng');
-      notifyAuthChanged();
-      navigateInApp('/dashboard');
-    }
-  };
 
   const pageTitle =
     currentMode === 'signin'
@@ -421,7 +413,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="e.g. Ibrahim"
+                      placeholder="e.g. First name"
                       required
                       autoComplete="given-name"
                       style={{
@@ -443,7 +435,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="e.g. Adebayo"
+                      placeholder="e.g. Last name"
                       required
                       autoComplete="family-name"
                       style={{
@@ -861,49 +853,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           )}
         </div>
 
-        {/* PREVIEW DIRECT LINKS (FOR EASY TESTING) */}
-        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
-          <span style={{ fontSize: '11px', color: '#64748b', display: 'block', marginBottom: '8px' }}>
-            Instant Testing Access:
-          </span>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('student')}
-              style={{
-                background: '#ecfdf5',
-                color: '#047857',
-                border: '1px solid #a7f3d0',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '11.5px',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              Instant Student Workspace →
-            </button>
-            <a
-              href="/profile"
-              onClick={() => {
-                localStorage.setItem('edureach-mock-user-email', email.trim() || 'student@edureach.ng');
-                notifyAuthChanged();
-              }}
-              style={{
-                background: '#eff6ff',
-                color: '#1d4ed8',
-                border: '1px solid #bfdbfe',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '11.5px',
-                fontWeight: 800,
-                textDecoration: 'none',
-              }}
-            >
-              Profile Completion Form →
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );

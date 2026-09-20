@@ -20,7 +20,7 @@ type Question = { id: number; text: string; options: string[] };
 
 export default function CbtPracticePage() {
   const urlParam = new URLSearchParams(window.location.search).get('exam');
-  const examId = urlParam || 'demo-exam-jamb';
+  const examId = urlParam || 'practice-exam-jamb';
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [examTitle, setExamTitle] = useState('JAMB UTME Comprehensive Practice');
@@ -129,7 +129,7 @@ export default function CbtPracticePage() {
     const timeSpentSeconds = Math.max(0, durationMinutes * 60 - seconds);
 
     try {
-      const activeAttemptId = attemptId || `mock-att-${Date.now()}`;
+      const activeAttemptId = attemptId || `local-att-${Date.now()}`;
       const result = await submitCbt({ examId, attemptId: activeAttemptId, answers });
       localStorage.setItem('edureach-last-cbt-attempt', result.attemptId);
       localStorage.removeItem(`edureach-cbt-attempt-${examId}`);

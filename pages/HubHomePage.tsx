@@ -169,7 +169,7 @@ export default function HubHomePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <UserCheck size={18} color="#16A34A" />
                 <span style={{ fontSize: '12.5px', color: '#166534', fontWeight: 700 }}>
-                  Welcome back, <strong>{loggedInUser.name}</strong>! Your applications and mock exam scores are ready in your dashboard.
+                  Welcome back, <strong>{loggedInUser.name}</strong>! Your applications and CBT scores are ready in your dashboard.
                 </span>
               </div>
               <a
@@ -538,6 +538,11 @@ export default function HubHomePage() {
                 </div>
 
                 <div style={{ display: 'grid', gap: '8px', fontSize: '11.5px' }}>
+                  {!upcoming.length && (
+                    <div style={{ padding: '10px', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '6px', color: '#64748b', lineHeight: 1.5 }}>
+                      Verified academic deadlines will appear here when published.
+                    </div>
+                  )}
                   {upcoming.slice(0, 4).map((item) => (
                     <div
                       key={item.id}

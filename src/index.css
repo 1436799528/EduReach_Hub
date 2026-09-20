@@ -19,7 +19,7 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .auth-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(8, 12, 40, .62); }
 .auth-modal { position: relative; width: min(100%, 460px); padding: 38px 34px 30px; background: #fff; border-radius: 6px; box-shadow: 0 30px 80px rgba(0,0,0,.2); }
 .auth-close { position: absolute; top: 11px; right: 14px; border: 0; background: transparent; font-size: 30px; line-height: 1; color: #666; cursor: pointer; }
-.auth-brand { color: #525fe1; font: 800 18px/1 Jost, sans-serif; margin-bottom: 10px; }
+.auth-brand { color: #525fe1; font: 800 18px/1 var(--er-font-sans); margin-bottom: 10px; }
 .auth-modal h2 { margin-bottom: 7px; color: #0b104a; font-size: 30px; }
 .auth-intro { margin-bottom: 24px; color: #6c7275; }
 .auth-field { min-height: 52px; margin-bottom: 14px; padding: 13px 15px; border: 1px solid #e4e5ea; border-radius: 2px; }
@@ -32,7 +32,7 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .auth-switch button { border: 0; padding: 0; background: transparent; color: #525fe1; font: inherit; font-weight: 700; cursor: pointer; }
 .mobile-auth-button { width: 100%; border: 0; background: transparent; padding: 8px 0; text-align: left; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
 .mobile-auth-primary { color: #525fe1; }
-.edureach-logo { display: inline-flex; align-items: baseline; gap: 4px; text-decoration: none !important; color: #0b104a !important; font: 800 26px/1 Jost, sans-serif; letter-spacing: -0.4px; white-space: nowrap; }
+.edureach-logo { display: inline-flex; align-items: baseline; gap: 4px; text-decoration: none !important; color: #0b104a !important; font: 800 26px/1 var(--er-font-sans); letter-spacing: -0.4px; white-space: nowrap; }
 .edureach-logo strong { color: #525fe1; font-weight: 800; }
 .footer .edureach-logo { color: #fff !important; font-size: 28px; margin-bottom: 18px; }
 .footer .edureach-logo strong { color: #8d96ff; }
@@ -62,7 +62,7 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .service-detail-card .single_c_img img { aspect-ratio: 4 / 1.15; }
 .team_img { position: relative; overflow: hidden; }
 .team_img img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
-.demo-avatar { min-height: 150px; display: grid; place-items: center; background: #eef0ff; color: #525fe1; font: 800 32px/1 Jost, sans-serif; }
+.placeholder-avatar { min-height: 150px; display: grid; place-items: center; background: #eef0ff; color: #525fe1; font: 800 32px/1 var(--er-font-sans); }
 .static-avatar { min-height: 235px; height: 100%; }
 .testimonial { height: calc(100% - 30px); margin-bottom: 30px; padding: 28px; background: #fff; border: 1px solid #eee; box-shadow: 0 10px 35px rgba(23,23,36,.05); }
 .testimonial > i { color: #525fe1; font-size: 25px; }
@@ -190,7 +190,7 @@ body { min-height: 100vh; overflow-x: hidden; overflow-y: auto; background: #fff
 .service-compact-card__body strong {
   display: block;
   color: #0b104a;
-  font: 700 16px/1.25 Jost, sans-serif;
+  font: 700 16px/1.25 var(--er-font-sans);
 }
 
 .service-compact-card__body > span {

@@ -24,7 +24,7 @@ export const cbtSubjects = [
   { name: 'Biology', key: 'biology', tone: 'green', count: 60 },
 ];
 
-export const sampleQuestions = [
+export const practiceQuestions = [
   { id: 1, text: 'Which option is closest in meaning to “rapid”?', options: ['Slow', 'Fast', 'Heavy', 'Quiet'], correct: 1, explanation: 'Rapid means happening quickly or at high speed.' },
   { id: 2, text: 'If 3x = 18, what is x?', options: ['3', '6', '9', '12'], correct: 1, explanation: 'Divide both sides by 3: x = 6.' },
   { id: 3, text: 'What is the chemical symbol for sodium?', options: ['So', 'Sd', 'Na', 'Sn'], correct: 2, explanation: 'Sodium is represented by Na.' },
@@ -36,7 +36,7 @@ export const newsItems = [
   { slug: 'jamb-caps-status-guide', tag: 'JAMB', title: 'JAMB CAPS: What Students Should Check Before Accepting Admission', date: 'Quick guide', excerpt: 'A compact checklist for checking admission status, CAPS details and the next step.', verified: true },
   { slug: 'nelfund-student-loan-checklist', tag: 'NELFUND', title: 'NELFUND Student Loan: Information to Organise Before You Apply', date: 'Student guide', excerpt: 'Keep your contact, institution and academic details ready before starting a loan request.', verified: true },
   { slug: 'waec-neco-result-checking', tag: 'WAEC / NECO', title: 'WAEC / NECO Result Checking: Keep Your PIN and Candidate Details Safe', date: 'Reminder', excerpt: 'Simple safety steps for result-checking tokens and official portals.', verified: true },
-  { slug: 'campus-gist-week', tag: 'Campus Gist', title: 'Campus Gist: What Students Should Watch This Week', date: 'Weekly', excerpt: 'A sample campus roundup layout for deadlines, notices and useful student updates.', verified: false },
+  { slug: 'campus-gist-week', tag: 'Campus Gist', title: 'Campus Gist: What Students Should Watch This Week', date: 'Weekly', excerpt: 'A student roundup guide for deadlines, notices and useful student updates.', verified: false },
   { slug: 'student-opportunities', tag: 'Opportunities', title: 'Student Opportunities: Keep Your Documents Ready', date: 'Guide', excerpt: 'How to keep an application-ready student folder for scholarships, internships and opportunities.', verified: false },
 ];
 

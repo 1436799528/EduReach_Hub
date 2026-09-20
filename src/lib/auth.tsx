@@ -6,7 +6,7 @@ export type AuthUser = {
   email: string;
   name: string;
   avatarUrl?: string | null;
-  isDemo: boolean;
+  isLocal: boolean;
 };
 
 type AuthContextValue = {
@@ -14,7 +14,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   refreshAuth: () => Promise<void>;
-  startDemoSession: (email?: string, name?: string) => void;
+  startLocalSession: (email: string, name?: string) => void;
   signOut: () => Promise<void>;
 };
 
@@ -29,19 +29,19 @@ function readStoredProfile(): Record<string, any> | null {
   }
 }
 
-function readDemoUser(): AuthUser | null {
-  const email = localStorage.getItem('edureach-mock-user-email');
+function readLocalUser(): AuthUser | null {
+  const email = localStorage.getItem('edureach-local-user-email');
   if (!email) return null;
 
   const profile = readStoredProfile();
   const fullName = profile?.full_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || email.split('@')[0] || 'Student';
 
   return {
-    id: `demo-${email.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    id: `local-${email.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
     email,
     name: fullName,
     avatarUrl: profile?.avatar_url || null,
-    isDemo: true,
+    isLocal: true,
   };
 }
 
@@ -62,14 +62,14 @@ async function resolveCurrentUser(): Promise<AuthUser | null> {
         email: session.user.email || '',
         name: meta.full_name || [meta.first_name, meta.last_name].filter(Boolean).join(' ') || session.user.email?.split('@')[0] || 'Student',
         avatarUrl: meta.avatar_url || null,
-        isDemo: false,
+        isLocal: false,
       };
     }
   } catch {
-    // Continue to local preview/demo session fallback.
+    // Continue to local preview session fallback.
   }
 
-  return readDemoUser();
+  return isSupabaseConfigured ? null : readLocalUser();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: authUser.email || '',
           name: meta.full_name || [meta.first_name, meta.last_name].filter(Boolean).join(' ') || authUser.email?.split('@')[0] || 'Student',
           avatarUrl: meta.avatar_url || null,
-          isDemo: false,
+          isLocal: false,
         });
         setIsLoading(false);
         return;
@@ -119,8 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refreshAuth]);
 
-  const startDemoSession = useCallback((email = 'student@edureach.ng', name = 'EduReach Student') => {
-    localStorage.setItem('edureach-mock-user-email', email);
+  const startLocalSession = useCallback((email: string, name = 'Student') => {
+    if (isSupabaseConfigured || !email.trim()) return;
+    localStorage.setItem('edureach-local-user-email', email.trim());
     const existing = readStoredProfile();
     if (!existing) {
       localStorage.setItem(
@@ -129,19 +130,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           first_name: name.split(' ')[0] || 'EduReach',
           last_name: name.split(' ').slice(1).join(' ') || 'Student',
           full_name: name,
-          email,
+          email: email.trim(),
           account_type: 'student',
         }),
       );
     }
-    setUser(readDemoUser());
+    setUser(readLocalUser());
     setIsLoading(false);
     dispatchAuthChanged();
   }, []);
 
   const signOut = useCallback(async () => {
     window.sessionStorage.removeItem('edureach-admin-student-view');
-    localStorage.removeItem('edureach-mock-user-email');
+    localStorage.removeItem('edureach-local-user-email');
     try {
       if (isSupabaseConfigured) await supabase.auth.signOut();
       else await supabase.auth.signOut();
@@ -159,10 +160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       isLoading,
       refreshAuth,
-      startDemoSession,
+      startLocalSession,
       signOut,
     }),
-    [isLoading, refreshAuth, signOut, startDemoSession, user],
+    [isLoading, refreshAuth, signOut, startLocalSession, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

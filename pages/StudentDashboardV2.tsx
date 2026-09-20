@@ -110,33 +110,9 @@ export type DashboardTab =
 type TabType = DashboardTab;
 
 
-const demoSavedItems: DashboardSavedItem[] = [
-  { id: 'demo-school-unilag', key: 'unilag', type: 'school', name: 'University of Lagos (UNILAG)', detail: 'Cut-off: 260 • Faculty of Science', location: 'Akoka, Lagos', saved: true },
-  { id: 'demo-course-medicine-unical', key: 'medicine-unical', type: 'course', name: 'Medicine & Surgery (UNICAL)', detail: 'Cut-off: 275 • English, Bio, Chem, Phys', location: 'Calabar, Cross River', saved: true },
-  { id: 'demo-course-csc-ui', key: 'computer-science-ui', type: 'course', name: 'Computer Science (UI)', detail: 'Cut-off: 265 • English, Maths, Phys, Chem', location: 'Ibadan, Oyo', saved: true },
-  { id: 'demo-school-oau', key: 'oau', type: 'school', name: 'Obafemi Awolowo University (OAU)', detail: 'Cut-off: 250 • Faculty of Technology', location: 'Ile-Ife, Osun', saved: true },
-];
-
-const demoNotifications: DashboardNotification[] = [
-  { id: 'n1', title: 'UNILAG Admission Screening List Released', time: '2 hours ago', read: false, type: 'admission', created_at: new Date(Date.now() - 2 * 3600000).toISOString() },
-  { id: 'n2', title: 'NELFUND Loan Institutional Verification Complete', time: '1 day ago', read: false, type: 'scholarship', created_at: new Date(Date.now() - 24 * 3600000).toISOString() },
-  { id: 'n3', title: 'Practice Reminder: Try 2024 JAMB English questions', time: '2 days ago', read: true, type: 'cbt', created_at: new Date(Date.now() - 48 * 3600000).toISOString() },
-  { id: 'n4', title: 'Wallet Top-up of ₦5,000 confirmed via Paystack', time: '3 days ago', read: true, type: 'wallet', created_at: new Date(Date.now() - 72 * 3600000).toISOString() },
-];
-
-const demoCgpaCourses: CgpaCourseInput[] = [
-  { code: 'CSC 301', units: 3, grade: 'A' },
-  { code: 'CSC 303', units: 3, grade: 'B' },
-  { code: 'MTH 301', units: 3, grade: 'A' },
-  { code: 'GST 311', units: 2, grade: 'A' },
-  { code: 'PHY 307', units: 3, grade: 'C' },
-];
-
-const demoAccessedServices: AccessedService[] = [
-  { key: 'jamb-cbt', title: 'JAMB CBT Classroom', href: '/cbt', category: 'CBT Practice', lastAccessedAt: new Date(Date.now() - 3600000 * 3).toISOString(), count: 4 },
-  { key: 'school-finder', title: 'School Finder', href: '/schools', category: 'Academic Tool', lastAccessedAt: new Date(Date.now() - 3600000 * 12).toISOString(), count: 2 },
-  { key: 'nelfund-loan', title: 'NELFUND Loan Application', href: '/services/apply/nelfund-loan', category: 'Student Service', lastAccessedAt: new Date(Date.now() - 86400000).toISOString(), count: 1 },
-];
+const emptySavedItems: DashboardSavedItem[] = [];
+const emptyNotifications: DashboardNotification[] = [];
+const emptyCgpaCourses: CgpaCourseInput[] = [];
 
 function readAccessedServices(): AccessedService[] {
   try {
@@ -149,7 +125,7 @@ function readAccessedServices(): AccessedService[] {
 
 function readLocalServiceRequests(): RequestRow[] {
   try {
-    const parsed = JSON.parse(localStorage.getItem('edureach-mock-requests') || '[]');
+    const parsed = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
     if (!Array.isArray(parsed)) return [];
     return parsed.map((item: any) => ({
       id: String(item.id || `local-${item.reference_code}`),
@@ -162,6 +138,30 @@ function readLocalServiceRequests(): RequestRow[] {
         serviceTitle: item.form_data?.serviceTitle || item.service_catalog?.title || 'EduReach Service',
       },
     })).slice(0, 8);
+  } catch {
+    return [];
+  }
+}
+
+function readLocalCbtAttempts(): Attempt[] {
+  try {
+    const attempts: Attempt[] = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key?.startsWith('edureach-cbt-result-')) continue;
+      const stored = JSON.parse(localStorage.getItem(key) || 'null');
+      if (!stored?.attempt) continue;
+      attempts.push({
+        id: String(stored.attempt.id || key.replace('edureach-cbt-result-', '')),
+        score: Number(stored.attempt.score || 0),
+        correct_answers: Number(stored.attempt.correct_answers || 0),
+        total_questions: Number(stored.attempt.total_questions || stored.questions?.length || 0),
+        submitted_at: stored.attempt.submitted_at || null,
+        created_at: stored.attempt.submitted_at || new Date().toISOString(),
+        subject: stored.exam?.subject || stored.attempt.exam_id || 'CBT Practice',
+      });
+    }
+    return attempts.sort((a, b) => new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime()).slice(0, 8);
   } catch {
     return [];
   }
@@ -213,20 +213,20 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [sessionRevoked, setSessionRevoked] = useState(false);
 
   const [userId, setUserId] = useState('');
-  const [isDemoMode, setIsDemoMode] = useState(!isSupabaseConfigured);
+  const [isLocalMode, setIsLocalMode] = useState(!isSupabaseConfigured);
   const [dashboardNotice, setDashboardNotice] = useState('');
 
   // Saved Schools & Courses state
-  const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>(demoSavedItems);
+  const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>(emptySavedItems);
 
   // Recently accessed services/tools state
   const [accessedServices, setAccessedServices] = useState<AccessedService[]>(() => readAccessedServices());
 
   // Notifications state
-  const [notifications, setNotifications] = useState<DashboardNotification[]>(demoNotifications);
+  const [notifications, setNotifications] = useState<DashboardNotification[]>(emptyNotifications);
 
   // CGPA Calculator local state
-  const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>(demoCgpaCourses);
+  const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>(emptyCgpaCourses);
   const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
   const [cgpaSaving, setCgpaSaving] = useState(false);
   const [cgpaSaveMessage, setCgpaSaveMessage] = useState('');
@@ -257,100 +257,55 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       }
 
       if (authError || !currentSession?.user) {
-        if (isSupabaseConfigured && !authUser?.isDemo) {
+        if (isSupabaseConfigured && !authUser?.isLocal) {
           const next = `${window.location.pathname}${window.location.search}`;
           window.history.replaceState({}, '', `/login?next=${encodeURIComponent(next)}`);
           window.dispatchEvent(new PopStateEvent('popstate'));
           return;
         }
 
-        // Fallback demo profile for authenticated preview/offline sessions.
-        setIsDemoMode(true);
+        // Local preview/offline session: use only real locally-entered account data and empty states.
+        setIsLocalMode(true);
         setUserId('');
-        setEmail(locallySavedProfile?.email || 'student@edureach.ng');
-        setUserName(locallySavedProfile?.full_name || 'Adebayo Johnson');
+        setEmail(locallySavedProfile?.email || authUser?.email || '');
+        setUserName(locallySavedProfile?.full_name || authUser?.name || 'Student');
         setProfile({
-          first_name: locallySavedProfile?.first_name || 'Adebayo',
-          last_name: locallySavedProfile?.last_name || 'Johnson',
-          full_name: locallySavedProfile?.full_name || 'Adebayo Johnson',
+          first_name: locallySavedProfile?.first_name || (authUser?.name || 'Student').split(/\s+/)[0] || 'Student',
+          last_name: locallySavedProfile?.last_name || null,
+          full_name: locallySavedProfile?.full_name || authUser?.name || 'Student',
           account_type: locallySavedProfile?.account_type || 'student',
-          school: locallySavedProfile?.school || 'University of Calabar (UNICAL)',
-          course_programme: locallySavedProfile?.course_programme || 'Computer Science',
-          faculty: locallySavedProfile?.faculty || 'Faculty of Science',
-          department: locallySavedProfile?.department || 'Computer Science',
-          level: locallySavedProfile?.level || '300 Level',
-          admission_year: locallySavedProfile?.admission_year || 2023,
-          expected_graduation_year: locallySavedProfile?.expected_graduation_year || 2027,
-          matric_number: '21/095244102',
+          school: locallySavedProfile?.school || '',
+          course_programme: locallySavedProfile?.course_programme || '',
+          faculty: locallySavedProfile?.faculty || '',
+          department: locallySavedProfile?.department || '',
+          level: locallySavedProfile?.level || '',
+          admission_year: locallySavedProfile?.admission_year || null,
+          expected_graduation_year: locallySavedProfile?.expected_graduation_year || null,
+          matric_number: locallySavedProfile?.matric_number || null,
           role: 'student',
-          phone: locallySavedProfile?.phone || '08098765432',
-          jamb_reg_no: '202188492014EF',
-          target_exam: 'Undergraduate',
-          academic_interests: locallySavedProfile?.academic_interests || ['JAMB UTME Prep', 'Undergraduate Scholarships'],
+          phone: locallySavedProfile?.phone || '',
+          jamb_reg_no: locallySavedProfile?.jamb_reg_no || '',
+          target_exam: locallySavedProfile?.target_exam || '',
+          academic_interests: locallySavedProfile?.academic_interests || [],
           avatar_url: locallySavedProfile?.avatar_url || null,
-          notification_preferences: locallySavedProfile?.notification_preferences || { email_alerts: true, whatsapp_alerts: true, sms_alerts: false },
+          notification_preferences: locallySavedProfile?.notification_preferences || { email_alerts: false, whatsapp_alerts: false, sms_alerts: false },
         });
 
-        setServices([
-          { id: '1', service_key: 'nelfund-loan', title: 'NELFUND Loan Application' },
-          { id: '2', service_key: 'results', title: 'WAEC / NECO Result Checking' },
-          { id: '3', service_key: 'scratch-cards', title: 'WAEC / NECO Scratch Cards' },
-          { id: '4', service_key: 'jamb-slip', title: 'JAMB Exam Slip Printing' },
-        ]);
-
-        const localRequests = readLocalServiceRequests();
-        setRequests(localRequests.length ? localRequests : [
-          {
-            id: 'req-1',
-            service_id: '1',
-            status: 'submitted',
-            reference_code: 'ER-2026-N9A2',
-            created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-            form_data: { serviceTitle: 'NELFUND Loan Application' },
-          },
-          {
-            id: 'req-2',
-            service_id: '2',
-            status: 'completed',
-            reference_code: 'ER-2026-W3F1',
-            created_at: new Date(Date.now() - 3600000 * 72).toISOString(),
-            form_data: { serviceTitle: 'WAEC / NECO Result Checking' },
-          },
-        ]);
-
-        setWallet({ balance: 4500, currency: 'NGN' });
-        setSavedItems(demoSavedItems);
-        setAccessedServices(readAccessedServices().length ? readAccessedServices() : demoAccessedServices);
-        setNotifications(demoNotifications);
-        setCgpaCourses(demoCgpaCourses);
+        setServices([]);
+        setRequests(readLocalServiceRequests());
+        setWallet(null);
+        setSavedItems(emptySavedItems);
+        setAccessedServices(readAccessedServices());
+        setNotifications(emptyNotifications);
+        setCgpaCourses(emptyCgpaCourses);
         setLatestCgpaSnapshot(null);
-
-        setAttempts([
-          {
-            id: 'att-1',
-            score: 80,
-            correct_answers: 8,
-            total_questions: 10,
-            submitted_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-            created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-            subject: 'JAMB Use of English',
-          },
-          {
-            id: 'att-2',
-            score: 70,
-            correct_answers: 7,
-            total_questions: 10,
-            submitted_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-            created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-            subject: 'JAMB Mathematics',
-          },
-        ]);
+        setAttempts(readLocalCbtAttempts());
         setLoading(false);
         return;
       }
 
       const user = currentSession.user;
-      setIsDemoMode(false);
+      setIsLocalMode(false);
       setUserId(user.id);
       setEmail(user.email || '');
       setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student');
@@ -410,14 +365,19 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const serviceMap = useMemo(() => Object.fromEntries(services.map((s) => [s.id, s])), [services]);
   const displayName = profile?.full_name || userName;
+  const profileSummaryItems = [profile?.school, profile?.course_programme || profile?.department, profile?.level].filter(Boolean);
   const reg = profile?.jamb_reg_no || profile?.matric_number || '';
   const averageScore = attempts.length
     ? Math.round(attempts.reduce((sum, item) => sum + Number(item.score || 0), 0) / attempts.length)
     : 0;
   const bestScore = attempts.length ? Math.max(...attempts.map((item) => Number(item.score || 0))) : 0;
+  const pastQuestionsSolved = attempts.reduce((sum, item) => sum + Number(item.total_questions || 0), 0);
   const unreadNotifsCount = notifications.filter((n) => !n.read).length;
   const savedItemsCount = savedItems.filter((item) => item.saved).length;
+  const savedScholarships = savedItems.filter((item) => item.saved && item.type === 'scholarship');
   const currentCgpa = useMemo(() => calculateCgpa(cgpaCourses), [cgpaCourses]);
+  const walletBalanceLabel = wallet ? `₦${wallet.balance.toLocaleString()}` : 'Not enabled';
+  const walletStatusLabel = wallet ? 'ACTIVE' : 'UNAVAILABLE';
   const recentActivities = useMemo(() => {
     const activities: Array<{ id: string; kind: 'attempt' | 'saved' | 'request' | 'cgpa'; title: string; time: string }> = [];
     const latestAttempt = attempts[0];
@@ -505,7 +465,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     setSavedItems((prev) => [optimistic, ...prev]);
     addLocalNotification(`${input.name} saved to your dashboard shortlist.`, 'saved');
 
-    if (isDemoMode || !userId) return;
+    if (isLocalMode || !userId) return;
 
     const persisted = await upsertSavedItem(userId, input);
     if (persisted) {
@@ -526,7 +486,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     if (!item) return;
 
     setSavedItems((prev) => prev.filter((entry) => entry.id !== id));
-    if (isDemoMode || !userId || id.startsWith('demo-') || id.startsWith('temp-')) return;
+    if (isLocalMode || !userId || id.startsWith('local-') || id.startsWith('temp-')) return;
 
     try {
       await deleteSavedItem(id);
@@ -538,7 +498,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const markAllNotifsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    if (isDemoMode || !userId) return;
+    if (isLocalMode || !userId) return;
     try {
       await markNotificationsRead(userId);
     } catch (err) {
@@ -553,9 +513,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     setCgpaSaving(true);
     setCgpaSaveMessage('');
     try {
-      if (isDemoMode || !userId) {
+      if (isLocalMode || !userId) {
         setLatestCgpaSnapshot({
-          id: `demo-cgpa-${Date.now()}`,
+          id: `local-cgpa-${Date.now()}`,
           termLabel: 'Current Semester',
           gpa: currentCgpa.gpaText,
           totalUnits: currentCgpa.totalUnits,
@@ -563,7 +523,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           createdAt: new Date().toISOString(),
           courses: cgpaCourses,
         });
-        setCgpaSaveMessage('CGPA snapshot saved in this demo session.');
+        setCgpaSaveMessage('CGPA snapshot saved locally for this account session.');
         return;
       }
 
@@ -600,12 +560,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     }
 
     try {
-      if (!isDemoMode) {
+      if (!isLocalMode) {
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) throw error;
         if (userId) void recordSecurityEvent(userId, 'password_changed', 'Password changed from student dashboard');
       }
-      setPasswordMessage(isDemoMode ? 'Password validated locally in demo mode.' : 'Password updated successfully.');
+      setPasswordMessage(isLocalMode ? 'Password validated for this local account session.' : 'Password updated successfully.');
       setOldPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
@@ -619,7 +579,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const handleSignOutOtherDevices = async () => {
     setSessionRevoked(false);
     try {
-      if (!isDemoMode) {
+      if (!isLocalMode) {
         const { error } = await supabase.auth.signOut({ scope: 'others' });
         if (error) throw error;
         if (userId) void recordSecurityEvent(userId, 'sessions_revoked', 'Other sessions revoked from student dashboard');
@@ -634,7 +594,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const handleMfaToggle = async () => {
     const nextValue = !mfaEnabled;
     setMfaEnabled(nextValue);
-    if (isDemoMode || !userId) return;
+    if (isLocalMode || !userId) return;
 
     const { error: updateError } = await supabase.from('profiles').update({ mfa_enabled: nextValue }).eq('id', userId);
     if (updateError) {
@@ -899,7 +859,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 >
                   <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', marginBottom: '6px' }}>
                     <strong style={{ fontSize: '12.5px', display: 'block', color: '#0f172a' }}>{displayName}</strong>
-                    <span style={{ fontSize: '10.5px', color: '#64748b' }}>{profile?.school || 'EduReach Student'}</span>
+                    <span style={{ fontSize: '10.5px', color: '#64748b' }}>{profile?.school || 'Student account'}</span>
                   </div>
 
                   <button
@@ -910,7 +870,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     className="edureach-nav-item"
                     style={{ padding: '6px 10px' }}
                   >
-                    <Wallet size={14} color="#059669" /> Wallet: ₦{wallet?.balance.toLocaleString() || '0'}
+                    <Wallet size={14} color="#059669" /> Wallet: {walletBalanceLabel}
                   </button>
                   <a
                     href="/profile"
@@ -1068,22 +1028,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             </div>
           )}
 
-          {isDemoMode && (
-            <div
-              style={{
-                background: '#F2F3FF',
-                border: '1px solid #DAE2FD',
-                color: '#283044',
-                borderRadius: '8px',
-                padding: '10px 12px',
-                fontSize: '12px',
-                fontWeight: 700,
-                marginBottom: '12px',
-              }}
-            >
-              Demo workspace mode: connect Supabase and sign in to persist saved items, notifications, CGPA snapshots, and security events.
-            </div>
-          )}
 
           {/* SECTION 1: WELCOME / PROFILE SUMMARY */}
           <section className="dash-welcome-card" id="dashboard-overview">
@@ -1091,11 +1035,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <div>
                 <h1 className="dash-welcome-title">Welcome back, {profile?.first_name || displayName}</h1>
                 <p className="dash-welcome-subtitle">
-                  <span>{profile?.school || 'University of Calabar (UNICAL)'}</span>
-                  <span>•</span>
-                  <span>{profile?.course_programme || profile?.department || 'Computer Science'}</span>
-                  <span>•</span>
-                  <span>{profile?.level || '300 Level'}</span>
+                  {profileSummaryItems.length ? (
+                    profileSummaryItems.map((item, index) => (
+                      <span key={item}>
+                        {index > 0 && ' • '}{item}
+                      </span>
+                    ))
+                  ) : (
+                    <span>Complete your academic profile to personalize this dashboard.</span>
+                  )}
                 </p>
               </div>
 
@@ -1133,8 +1081,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 style={{ cursor: 'pointer', background: '#f8fafc' }}
               >
                 <Wallet size={11} color="#059669" />
-                <span>Wallet: ₦{(wallet?.balance || 0).toLocaleString()}</span>
-                <b style={{ color: '#059669', marginLeft: '3px' }}>+ Fund</b>
+                <span>Wallet: {walletBalanceLabel}</span>
+                <b style={{ color: '#059669', marginLeft: '3px' }}>{wallet ? '+ Fund' : 'Set Up'}</b>
               </button>
             </div>
           </section>
@@ -1419,7 +1367,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               </div>
               <div className="dash-metric-card">
                 <span className="dash-metric-label">Past Q Solved</span>
-                <span className="dash-metric-val">128</span>
+                <span className="dash-metric-val">{pastQuestionsSolved}</span>
               </div>
             </div>
 
@@ -1474,24 +1422,29 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 Continue Practice →
               </a>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-              {[
-                { label: 'JAMB Use of English', done: 42, total: 60 },
-                { label: 'WAEC Mathematics', done: 28, total: 50 },
-                { label: 'Post-UTME Aptitude', done: 18, total: 40 },
-              ].map((item) => {
-                const pct = Math.round((item.done / item.total) * 100);
-                return (
-                  <div key={item.label} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '9px', padding: '11px' }}>
-                    <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a', marginBottom: '5px' }}>{item.label}</strong>
-                    <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '5px' }}>
-                      <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: '#D9381E' }} />
+            {!attempts.length && (
+              <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                No past-question progress yet. Start a practice session and your solved-question count will appear here.
+              </div>
+            )}
+            {!!attempts.length && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                {attempts.slice(0, 3).map((item) => {
+                  const total = Number(item.total_questions || 0);
+                  const done = Number(item.correct_answers || 0);
+                  const pct = total ? Math.round((done / total) * 100) : 0;
+                  return (
+                    <div key={item.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '9px', padding: '11px' }}>
+                      <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a', marginBottom: '5px' }}>{item.subject || 'CBT Practice'}</strong>
+                      <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '5px' }}>
+                        <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: '#D9381E' }} />
+                      </div>
+                      <small style={{ color: '#64748b', fontSize: '10px' }}>{done}/{total} correct • {pct}% score path</small>
                     </div>
-                    <small style={{ color: '#64748b', fontSize: '10px' }}>{item.done}/{item.total} questions completed • {pct}%</small>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           {/* SECTION 7: SAVED SCHOOLS / COURSES */}
@@ -1566,14 +1519,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               </a>
             </div>
             <div style={{ display: 'grid', gap: '8px' }}>
-              {[
-                { title: 'NELFUND Student Loan', status: requests.some((r) => String(r.form_data?.serviceTitle || '').toLowerCase().includes('nelfund')) ? 'Application tracked' : 'Eligible to apply', href: '/services/apply/nelfund-loan' },
-                { title: 'Federal 3MTT Technical Training', status: 'Saved opportunity', href: '/jobs' },
-                { title: 'Undergraduate Merit Grants', status: 'Open for review', href: '/scholarships' },
-              ].map((item) => (
+              {!savedScholarships.length && (
+                <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                  No saved scholarships or funding applications yet. Browse grants and save real opportunities to track them here.
+                </div>
+              )}
+              {savedScholarships.map((item) => (
                 <a
-                  key={item.title}
-                  href={item.href}
+                  key={item.id}
+                  href={item.href || '/scholarships'}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1588,8 +1542,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   }}
                 >
                   <span>
-                    <strong style={{ display: 'block', fontSize: '12px' }}>{item.title}</strong>
-                    <small style={{ color: '#64748b', fontSize: '10px' }}>{item.status}</small>
+                    <strong style={{ display: 'block', fontSize: '12px' }}>{item.name}</strong>
+                    <small style={{ color: '#64748b', fontSize: '10px' }}>{item.detail || 'Saved funding opportunity'}</small>
                   </span>
                   <ChevronRight size={14} color="#94a3b8" />
                 </a>
@@ -1647,108 +1601,57 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             </div>
           </section>
 
-          {/* SECTION 8: RECOMMENDED SERVICES (Same EduReach card system with theme marks) */}
+          {/* SECTION 10: AVAILABLE SERVICES FROM CATALOG */}
           <section className="dash-card">
             <div className="dash-card-header">
               <h2 className="dash-card-title">
-                <Sparkles size={14} className="dash-card-title-icon" /> Recommended Academic Services
+                <Sparkles size={14} className="dash-card-title-icon" /> Available Academic Services
               </h2>
               <a href="/services" className="dash-card-link">
                 View All Services →
               </a>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-              <div
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <CardIdentityMark value="nelfund" type="service" size="sm" />
-                  <div>
-                    <strong style={{ fontSize: '12px', display: 'block', color: '#0f172a' }}>NELFUND Loan Application</strong>
-                    <small style={{ fontSize: '10px', color: '#64748b' }}>Student upkeep &amp; tuition aid</small>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669' }}>₦3,500</span>
-                  <a
-                    href="/services/apply/nelfund-loan"
-                    className="dash-pill"
-                    style={{ textDecoration: 'none', background: '#059669', color: '#ffffff', borderColor: '#059669' }}
-                  >
-                    Apply Now
-                  </a>
-                </div>
+            {!services.length && (
+              <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '14px', textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                No service catalog records are available for this account yet.
               </div>
-
-              <div
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <CardIdentityMark value="scratch-cards" type="service" size="sm" />
-                  <div>
-                    <strong style={{ fontSize: '12px', display: 'block', color: '#0f172a' }}>WAEC / NECO Scratch Cards</strong>
-                    <small style={{ fontSize: '10px', color: '#64748b' }}>Instant PIN token delivery</small>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669' }}>From ₦3,800</span>
-                  <a
-                    href="/services/apply/scratch-cards"
-                    className="dash-pill"
-                    style={{ textDecoration: 'none', background: '#059669', color: '#ffffff', borderColor: '#059669' }}
+            )}
+            {!!services.length && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                {services.slice(0, 3).map((service) => (
+                  <div
+                    key={service.id}
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                    }}
                   >
-                    Buy Token
-                  </a>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <CardIdentityMark value="jamb-slip" type="service" size="sm" />
-                  <div>
-                    <strong style={{ fontSize: '12px', display: 'block', color: '#0f172a' }}>JAMB Exam Slip Printing</strong>
-                    <small style={{ fontSize: '10px', color: '#64748b' }}>Original colored CAPS print</small>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <CardIdentityMark value={service.service_key} type="service" size="sm" />
+                      <div>
+                        <strong style={{ fontSize: '12px', display: 'block', color: '#0f172a' }}>{service.title}</strong>
+                        <small style={{ fontSize: '10px', color: '#64748b' }}>Available in service catalog</small>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '6px' }}>
+                      <a
+                        href={`/services/apply/${service.service_key}`}
+                        className="dash-pill"
+                        style={{ textDecoration: 'none', background: '#059669', color: '#ffffff', borderColor: '#059669' }}
+                      >
+                        Open Service
+                      </a>
+                    </div>
                   </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669' }}>₦1,500</span>
-                  <a
-                    href="/services/apply/jamb-slip"
-                    className="dash-pill"
-                    style={{ textDecoration: 'none', background: '#059669', color: '#ffffff', borderColor: '#059669' }}
-                  >
-                    Print Slip
-                  </a>
-                </div>
+                ))}
               </div>
-            </div>
+            )}
           </section>
 
           {/* SECTION 9: RECENT ACTIVITY */}
@@ -1794,67 +1697,29 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
         {/* 3. RIGHT RAIL: NOTICEBOARD, UPCOMING DEADLINES & AD SPACE (Prevents cards from stretching too long) */}
         <aside className="edureach-dash-rail">
-          {/* NOTICEBOARD / SPONSORED UPDATES (Myschool-style side banner / ads space) */}
-          <div className="dash-ad-notice">
-            <span className="dash-ad-badge">Portal Notice &amp; Ads</span>
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #064e3b 0%, #047857 100%)',
-                color: '#ffffff',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '10px',
-              }}
-            >
-              <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#86efac' }}>
-                OFFICIAL ADVERT
-              </span>
-              <strong style={{ display: 'block', fontSize: '12px', margin: '4px 0 6px', lineHeight: 1.35 }}>
-                2026 JAMB CBT Offline Practice App for PC &amp; Android
-              </strong>
-              <p style={{ margin: 0, fontSize: '10px', color: '#d1fae5', lineHeight: 1.45 }}>
-                Practice over 30,000 past questions without internet connection.
-              </p>
-              <a
-                href="/cbt"
-                style={{
-                  display: 'inline-block',
-                  marginTop: '8px',
-                  background: '#ffffff',
-                  color: '#065f46',
-                  fontSize: '10px',
-                  fontWeight: 900,
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  textDecoration: 'none',
-                }}
-              >
-                Get App Access →
-              </a>
+          {/* ACCOUNT SHORTCUTS */}
+          <div className="dash-card">
+            <div className="dash-card-header">
+              <h2 className="dash-card-title">
+                <LayoutDashboard size={13} className="dash-card-title-icon" /> Account Shortcuts
+              </h2>
             </div>
-
-            {/* SECOND SPONSORED CARD */}
-            <div
-              style={{
-                border: '1px dashed #cbd5e1',
-                borderRadius: '8px',
-                padding: '10px',
-                background: '#f8fafc',
-              }}
-            >
-              <span style={{ fontSize: '9px', fontWeight: 800, color: '#64748b' }}>SPONSORED UPDATE</span>
-              <strong style={{ display: 'block', fontSize: '11px', color: '#0f172a', margin: '2px 0 4px' }}>
-                Federal 3MTT Cohort 3 Applications Open
-              </strong>
-              <p style={{ margin: 0, fontSize: '9.5px', color: '#64748b' }}>
-                Full scholarship training in software development, data science, and cloud computing.
-              </p>
-              <a
-                href="/jobs"
-                style={{ display: 'inline-block', marginTop: '6px', fontSize: '10px', fontWeight: 800, color: '#059669', textDecoration: 'none' }}
-              >
-                Check Eligibility →
-              </a>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {[
+                { label: 'My Services', href: '/dashboard/services', count: requests.length },
+                { label: 'CBT Attempts', href: '/dashboard/cbt', count: attempts.length },
+                { label: 'Saved Items', href: '/dashboard/saved', count: savedItemsCount },
+                { label: 'Notifications', href: '/dashboard/notifications', count: unreadNotifsCount },
+              ].map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 10px', textDecoration: 'none', color: '#0f172a' }}
+                >
+                  <span style={{ fontSize: '11.5px', fontWeight: 800 }}>{item.label}</span>
+                  <strong style={{ fontSize: '11px', color: '#D9381E' }}>{item.count}</strong>
+                </a>
+              ))}
             </div>
           </div>
 
@@ -1865,51 +1730,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 <Clock size={13} className="dash-card-title-icon" /> Upcoming Deadlines
               </h2>
             </div>
-
-            <div className="dash-deadline-list">
-              <div className="dash-deadline-item">
-                <div className="dash-deadline-date">
-                  <strong>15</strong>
-                  <small>OCT</small>
-                </div>
-                <div className="dash-deadline-info">
-                  <strong>JAMB CAPS Acceptance</strong>
-                  <small>Merit list acceptance closing</small>
-                </div>
-              </div>
-
-              <div className="dash-deadline-item">
-                <div className="dash-deadline-date">
-                  <strong>28</strong>
-                  <small>OCT</small>
-                </div>
-                <div className="dash-deadline-info">
-                  <strong>NELFUND Batch 2 Disbursement</strong>
-                  <small>Upkeep payments to bank accounts</small>
-                </div>
-              </div>
-
-              <div className="dash-deadline-item">
-                <div className="dash-deadline-date">
-                  <strong>05</strong>
-                  <small>NOV</small>
-                </div>
-                <div className="dash-deadline-info">
-                  <strong>UNILAG Post-UTME Screening</strong>
-                  <small>Online proctored examination</small>
-                </div>
-              </div>
-
-              <div className="dash-deadline-item">
-                <div className="dash-deadline-date">
-                  <strong>12</strong>
-                  <small>NOV</small>
-                </div>
-                <div className="dash-deadline-info">
-                  <strong>WAEC GCE Registration Close</strong>
-                  <small>Private candidates second series</small>
-                </div>
-              </div>
+            <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '12px', color: '#64748b', fontSize: '12px', textAlign: 'center' }}>
+              No personalized deadlines yet. Deadlines from saved schools, applications, and notifications will appear here.
             </div>
           </div>
 
@@ -1920,11 +1742,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 Wallet Balance
               </strong>
               <span style={{ fontSize: '9.5px', fontWeight: 900, color: '#059669', background: '#ecfdf5', padding: '1px 5px', borderRadius: '4px' }}>
-                ACTIVE
+                {walletStatusLabel}
               </span>
             </div>
             <div style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', margin: '4px 0 10px' }}>
-              ₦{(wallet?.balance || 0).toLocaleString()}
+              {walletBalanceLabel}
             </div>
             <button
               onClick={() => setWalletOpen(true)}
@@ -2843,7 +2665,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             currency: current?.currency || 'NGN',
           }));
           addLocalNotification(`Wallet credited with ₦${amount.toLocaleString()}.`, 'wallet');
-          if (!isDemoMode && userId) {
+          if (!isLocalMode && userId) {
             void createNotification(userId, {
               title: `Wallet credited with ₦${amount.toLocaleString()}`,
               type: 'wallet',

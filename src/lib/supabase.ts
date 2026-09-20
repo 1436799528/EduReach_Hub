@@ -10,9 +10,9 @@ const supabaseKey = (env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
 // In frontend-first / preview environments without active Supabase credentials,
-// provide a resilient fallback client so the bundle doesn't crash on initial load.
-const effectiveUrl = supabaseUrl || 'https://mock-edureach.supabase.co';
-const effectiveKey = supabaseKey || 'mock-anon-key-frontend-preview';
+// provide an inert fallback client so the bundle doesn't crash on initial load.
+const effectiveUrl = supabaseUrl || 'https://edureach-unconfigured.supabase.co';
+const effectiveKey = supabaseKey || 'anon-key-unconfigured-frontend-preview';
 
 export const supabase = createClient(effectiveUrl, effectiveKey, {
   auth: {

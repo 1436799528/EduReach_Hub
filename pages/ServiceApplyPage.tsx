@@ -15,7 +15,7 @@ import {
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib/api';
-import { supabase } from '../src/lib/supabase';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 
 type FormState = {
@@ -65,7 +65,7 @@ function fieldsFor(serviceKey: string) {
 }
 
 export default function ServiceApplyPage({ slug }: { slug: string }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: authUser } = useAuth();
   const [service, setService] = useState<ServiceItem | null>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState('');
@@ -88,6 +88,14 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
       .finally(() => {
         if (active) setServiceLoading(false);
       });
+
+    if (!isSupabaseConfigured) {
+      setSignedIn(isAuthenticated);
+      if (authUser?.email) setForm((current) => ({ ...current, email: current.email || authUser.email }));
+      return () => {
+        active = false;
+      };
+    }
 
     void supabase.auth.getUser().then(({ data }) => {
       if (active && data.user) {
@@ -118,7 +126,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [authUser?.email, isAuthenticated, slug]);
 
   const canNext = useMemo(
     () => step !== 1 || Boolean(form.fullName.trim() && form.phone.trim() && form.institution.trim()),
@@ -162,6 +170,10 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
 
   function next(event: FormEvent) {
     event.preventDefault();
+    if (isSupabaseConfigured && !isAuthenticated) {
+      setMessage('Please sign in before submitting this service request.');
+      return;
+    }
     if (step < 3) setStep((value) => value + 1);
     else void handleSubmit();
   }
@@ -223,7 +235,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
             </p>
           </div>
 
-          {/* GUEST BANNER (Non-blocking) */}
+          {/* SESSION BANNER */}
           {signedIn === false && !reference && (
             <div
               style={{
@@ -244,7 +256,11 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <ShieldCheck size={16} color="#059669" />
                 <span>
-                  <strong>Instant Student Mode:</strong> You can submit now as a guest and track status with your reference code.
+                  {isSupabaseConfigured ? (
+                    <><strong>Sign-in required:</strong> Submit from your student account so the request is linked to your dashboard.</>
+                  ) : (
+                    <><strong>Local account session:</strong> Requests are saved in this browser until production auth is configured.</>
+                  )}
                 </span>
               </div>
               <a

@@ -139,7 +139,7 @@ export default function ProfileCompletionPage() {
     };
 
     if (user) {
-      setUserId(user.isDemo ? '' : user.id);
+      setUserId(user.isLocal ? '' : user.id);
       setUserEmail(user.email);
       setUserName(user.name);
       applyStoredProfile();
@@ -217,7 +217,7 @@ export default function ProfileCompletionPage() {
       profile_completed: true,
     };
 
-    // Save locally for instant persistence in demo/preview
+    // Save locally for instant persistence when running without configured auth services
     try {
       localStorage.setItem('edureach-profile-completed', 'true');
       localStorage.setItem(

@@ -22,7 +22,7 @@ type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 const modes: Array<{ key: ExamMode; label: string; description: string }> = [
   { key: 'ALL', label: 'All Exams', description: 'All active CBT practice questions.' },
   { key: 'JAMB', label: 'JAMB / UTME', description: 'UTME-style timed test practice.' },
-  { key: 'POST-UTME', label: 'Post-UTME', description: 'University screening mock tests.' },
+  { key: 'POST-UTME', label: 'Post-UTME', description: 'University screening practice tests.' },
   { key: 'WAEC', label: 'WAEC SSCE', description: 'Senior school certificate revision.' },
   { key: 'NECO', label: 'NECO SSCE', description: 'Senior secondary practice papers.' },
 ];
@@ -131,7 +131,7 @@ export default function CbtPage() {
                     {item.questions} • {item.time}
                   </span>
                   <a
-                    href={`/cbt/practice?exam=demo-exam-${item.key}`}
+                    href={`/cbt/practice?exam=practice-exam-${item.key}`}
                     className="hub-primary-btn"
                     style={{ minHeight: '32px', padding: '0 12px', fontSize: '11px', textDecoration: 'none' }}
                   >

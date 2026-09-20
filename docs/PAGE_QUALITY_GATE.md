@@ -111,7 +111,7 @@ Every route must answer clearly:
 * `/services/apply/:slug` → Submit a specific service application
 * `/services/track` → Check real-time application processing status
 * `/cbt` → Start timed exam simulator
-* `/cbt/practice` → Take active CBT mock test session
+* `/cbt/practice` → Take active CBT practice test session
 * `/cbt/results` → Review test scores, corrections, and answers
 * `/screening-calculator` → Calculate tertiary aggregate screening scores
 * `/news` → Read verified educational announcements and noticeboard
@@ -290,7 +290,7 @@ Every route undergoes two evaluation layers:
 | **Service Apply** | `/services/apply/:slug` | Submit service application request | 🟢 PASS |
 | **Service Tracker** | `/services/track` | Track application processing status | 🟢 PASS |
 | **CBT Hall** | `/cbt` | Exam selection and practice starter | 🟢 PASS |
-| **CBT Practice** | `/cbt/practice` | Active timed mock exam simulator | 🟢 PASS |
+| **CBT Practice** | `/cbt/practice` | Active timed practice exam simulator | 🟢 PASS |
 | **CBT Results** | `/cbt/results` | Scorecard corrections and answer review | 🟢 PASS |
 | **Screening Calculator**| `/screening-calculator` | Admission screening aggregate estimation | 🟢 PASS |
 | **News & Noticeboard** | `/news` | Campus news, JAMB/WAEC announcements | 🟢 PASS |

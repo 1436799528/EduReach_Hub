@@ -11,7 +11,7 @@ All application routes are registered centrally in `src/app/routes.tsx` and reso
 | **Service Apply** | `/services/apply/:slug` | Submit service application request | 🟢 PASS |
 | **Service Tracker** | `/services/track` | Track application processing status | 🟢 PASS |
 | **CBT Hall** | `/cbt` | Exam selection and practice starter | 🟢 PASS |
-| **CBT Practice** | `/cbt/practice` | Active timed mock exam simulator | 🟢 PASS |
+| **CBT Practice** | `/cbt/practice` | Active timed practice exam simulator | 🟢 PASS |
 | **CBT Results** | `/cbt/results` | Scorecard corrections and answer review | 🟢 PASS |
 | **Screening Calculator**| `/screening-calculator` | Admission screening aggregate estimation | 🟢 PASS |
 | **News & Noticeboard** | `/news` | Campus news, JAMB/WAEC announcements | 🟢 PASS |
