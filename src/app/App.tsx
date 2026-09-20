@@ -90,6 +90,33 @@ function serviceActivityFor(pathname: string): { key: string; title: string; cat
   return null;
 }
 
+function analyticsSessionId() {
+  const key = 'edureach-analytics-session';
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const value = crypto.randomUUID();
+    sessionStorage.setItem(key, value);
+    return value;
+  } catch {
+    return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function recordPageView(pathname: string) {
+  void fetch('/api/analytics/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    keepalive: true,
+    body: JSON.stringify({
+      event_name: 'page_view',
+      path: pathname,
+      session_id: analyticsSessionId(),
+      referrer: document.referrer || null,
+    }),
+  }).catch(() => undefined);
+}
+
 function recordServiceActivity(pathname: string, href: string) {
   const item = serviceActivityFor(pathname);
   if (!item) return;
@@ -152,6 +179,7 @@ export default function App() {
 
   useEffect(() => {
     document.title = `EduReach — ${titleFor(locationState.pathname)}`;
+    recordPageView(locationState.pathname);
   }, [locationState.pathname]);
 
   return <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>;
