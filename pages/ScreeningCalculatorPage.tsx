@@ -1,6 +1,7 @@
-import { RotateCcw } from 'lucide-react';
+import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
+import SectionHead from '../src/components/SectionHead';
 
 type Formula = '50-50' | '60-40' | '70-30';
 
@@ -175,6 +176,16 @@ export default function ScreeningCalculatorPage() {
               </div>
             </div>
           </div>
+
+          <section className="er-section">
+            <SectionHead title="Keep preparing" href="/cbt" linkLabel="CBT hall" />
+            <div className="er-guide-strip">
+              <a href="/cbt?mode=POST-UTME">Post-UTME practice <ArrowRight size={11} /></a>
+              <a href="/past-questions">Past questions <ArrowRight size={11} /></a>
+              <a href="/admission">Admission centre <ArrowRight size={11} /></a>
+              <a href="/news">Admission updates <ArrowRight size={11} /></a>
+            </div>
+          </section>
         </div>
       </div>
     </HubLayout>

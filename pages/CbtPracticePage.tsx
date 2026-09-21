@@ -213,7 +213,7 @@ export default function CbtPracticePage() {
                 onClick={() => setShowSubmitModal(true)}
                 disabled={loading || !questions.length}
                 style={{
-                  background: '#059669',
+                  background: '#D9381E',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '8px',
@@ -277,7 +277,7 @@ export default function CbtPracticePage() {
                     borderBottom: '1px solid #f1f5f9',
                   }}
                 >
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#D9381E', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Question {index + 1} of {questions.length}
                   </span>
 
@@ -332,8 +332,8 @@ export default function CbtPracticePage() {
                           padding: '12px 16px',
                           borderRadius: '10px',
                           border: '2px solid',
-                          borderColor: isSelected ? '#059669' : '#e2e8f0',
-                          background: isSelected ? '#ecfdf5' : '#ffffff',
+                          borderColor: isSelected ? '#D9381E' : '#e2e8f0',
+                          background: isSelected ? '#FFF0E6' : '#ffffff',
                           color: '#0f172a',
                           textAlign: 'left',
                           fontSize: '14px',
@@ -351,7 +351,7 @@ export default function CbtPracticePage() {
                             placeItems: 'center',
                             fontSize: '12px',
                             fontWeight: 900,
-                            background: isSelected ? '#059669' : '#f1f5f9',
+                            background: isSelected ? '#D9381E' : '#f1f5f9',
                             color: isSelected ? '#ffffff' : '#475569',
                             flexShrink: 0,
                           }}
@@ -539,7 +539,7 @@ export default function CbtPracticePage() {
                   <button
                     type="button"
                     className="hub-primary-btn"
-                    style={{ background: '#059669' }}
+                    style={{ background: '#D9381E' }}
                     onClick={() => void handleDirectSubmit()}
                     disabled={submitting}
                   >

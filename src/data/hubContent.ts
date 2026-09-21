@@ -40,8 +40,24 @@ export const newsItems = [
   { slug: 'student-opportunities', tag: 'Opportunities', title: 'Student Opportunities: Keep Your Documents Ready', date: 'Guide', excerpt: 'How to keep an application-ready student folder for scholarships, internships and opportunities.', verified: false },
 ];
 
-export const jobs = [
-  { title: 'Student Content Contributor', type: 'Part-time', mode: 'Remote', note: 'Help turn verified academic updates into short student-friendly posts.' },
-  { title: 'Campus Community Rep', type: 'Volunteer', mode: 'Campus', note: 'Share official EduReach updates and report useful campus information.' },
-  { title: 'Frontend Support Intern', type: 'Internship', mode: 'Hybrid', note: 'Support UI testing, accessibility checks and student-facing product improvements.' },
+export type JobCategory = 'scholarship' | 'internship' | 'campus' | 'part-time';
+
+export type JobListing = {
+  title: string;
+  type: string;
+  mode: string;
+  category: JobCategory;
+  note: string;
+};
+
+export const jobs: JobListing[] = [
+  { title: 'Student Content Contributor', type: 'Part-time', mode: 'Remote', category: 'part-time', note: 'Help turn verified academic updates into short student-friendly posts.' },
+  { title: 'Campus Community Rep', type: 'Volunteer', mode: 'Campus', category: 'campus', note: 'Share official EduReach updates and report useful campus information.' },
+  { title: 'Frontend Support Intern', type: 'Internship', mode: 'Hybrid', category: 'internship', note: 'Support UI testing, accessibility checks and student-facing product improvements.' },
 ];
+
+export const EDUREACH_WHATSAPP = '2349130134969';
+
+export function jobApplyHref(title: string): string {
+  return `https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, I want to apply for: ${title}`)}`;
+}

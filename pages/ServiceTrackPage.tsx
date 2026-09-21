@@ -18,6 +18,15 @@ function statusLabel(value: string) {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function statusTone(status: string) {
+  const value = (status || '').toLowerCase();
+  if (value.includes('complet') || value.includes('approv') || value.includes('verif') || value.includes('done'))
+    return { background: '#ecfdf5', color: '#047857', border: '#a7f3d0' };
+  if (value.includes('reject') || value.includes('cancel') || value.includes('fail'))
+    return { background: '#fef2f2', color: '#b91c1c', border: '#fecaca' };
+  return { background: '#FFFBEB', color: '#B45309', border: '#fde68a' };
+}
+
 export default function ServiceTrackPage() {
   const [referenceCode, setReferenceCode] = useState(
     () => new URLSearchParams(window.location.search).get('ref') || 'ER-9482-JAMB'
@@ -69,10 +78,10 @@ export default function ServiceTrackPage() {
               style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                color: '#059669',
+                color: '#D9381E',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
-                background: '#ecfdf5',
+                background: '#FFF0E6',
                 padding: '4px 12px',
                 borderRadius: '999px',
                 display: 'inline-block',
@@ -152,7 +161,7 @@ export default function ServiceTrackPage() {
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: '#059669',
+                  background: '#D9381E',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',
@@ -231,7 +240,7 @@ export default function ServiceTrackPage() {
                     <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '1px 0 2px', letterSpacing: '0.02em' }}>
                       {result.reference_code}
                     </h2>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#059669', fontWeight: 700 }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#D9381E', fontWeight: 700 }}>
                       {result.service_catalog?.title || 'EduReach Academic Service Request'}
                     </p>
                   </div>
@@ -334,7 +343,7 @@ export default function ServiceTrackPage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#475569' }}>
-                  <Clock size={15} color="#059669" />
+                  <Clock size={15} color="#D9381E" />
                   <span>
                     Initiated:{' '}
                     <strong>

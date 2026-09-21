@@ -50,6 +50,24 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* UTILITY STRIP */}
+      <div className="er-utility">
+        <div className="er-utility-row">
+          <span className="er-utility-copy">Nigeria&apos;s student portal — CBT, services &amp; verified updates</span>
+          <div className="er-utility-links">
+            <a href="/services/track">Track request</a>
+            <a href="/news">Noticeboard</a>
+            {isAuthenticated ? (
+              <a href="/dashboard">My dashboard</a>
+            ) : (
+              <>
+                <a href="/login">Sign in</a>
+                <a className="er-utility-join" href="/register">Create account</a>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
       {/* CLEAN MAIN HEADER */}
       <header
         style={{

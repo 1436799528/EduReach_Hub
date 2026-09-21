@@ -1,7 +1,9 @@
 import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import { fetchNewsItem, type NewsItem } from '../src/lib/api';
+import SectionHead from '../src/components/SectionHead';
+import { NewsRow } from '../src/components/NewsSections';
+import { fetchNews, fetchNewsItem, type NewsItem } from '../src/lib/api';
 
 function labelFor(category: string) {
   return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
