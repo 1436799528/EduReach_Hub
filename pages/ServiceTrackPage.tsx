@@ -2,17 +2,14 @@ import { FormEvent, useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Clock,
-  Clock3,
-  ExternalLink,
-  HelpCircle,
   MessageSquare,
-  PackageCheck,
   Search,
   ShieldCheck,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { trackService } from '../src/lib/api';
+import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 
 function statusLabel(value: string) {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -29,7 +26,7 @@ function statusTone(status: string) {
 
 export default function ServiceTrackPage() {
   const [referenceCode, setReferenceCode] = useState(
-    () => new URLSearchParams(window.location.search).get('ref') || 'ER-9482-JAMB'
+    () => new URLSearchParams(window.location.search).get('ref') || ''
   );
   const [timeline, setTimeline] = useState<Array<{ label: string; done: boolean }>>([]);
   const [result, setResult] = useState<any>(null);
@@ -78,7 +75,7 @@ export default function ServiceTrackPage() {
               style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                color: '#B8492F',
+                color: '#C85841',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
                 background: '#F9F0EE',
@@ -161,7 +158,7 @@ export default function ServiceTrackPage() {
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: '#B8492F',
+                  background: '#C85841',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',
@@ -172,7 +169,7 @@ export default function ServiceTrackPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+                  boxShadow: '0 2px 8px rgba(200, 88, 65, 0.25)',
                 }}
               >
                 {loading ? 'Tracking…' : 'Track Status'}
@@ -240,29 +237,34 @@ export default function ServiceTrackPage() {
                     <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '1px 0 2px', letterSpacing: '0.02em' }}>
                       {result.reference_code}
                     </h2>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#B8492F', fontWeight: 700 }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#C85841', fontWeight: 700 }}>
                       {result.service_catalog?.title || 'EduReach Academic Service Request'}
                     </p>
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    background: '#ecfdf5',
-                    color: '#047857',
-                    border: '1px solid #a7f3d0',
-                    padding: '6px 14px',
-                    borderRadius: '999px',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <ShieldCheck size={15} />
-                  <span>{statusLabel(result.status || 'processing')}</span>
-                </div>
+                {(() => {
+                  const tone = statusTone(result.status || '');
+                  return (
+                    <div
+                      style={{
+                        background: tone.background,
+                        color: tone.color,
+                        border: `1px solid ${tone.border}`,
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <ShieldCheck size={15} />
+                      <span>{statusLabel(result.status || 'processing')}</span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* TIMELINE PROGRESS */}
@@ -343,7 +345,7 @@ export default function ServiceTrackPage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#475569' }}>
-                  <Clock size={15} color="#B8492F" />
+                  <Clock size={15} color="#C85841" />
                   <span>
                     Initiated:{' '}
                     <strong>
@@ -361,7 +363,7 @@ export default function ServiceTrackPage() {
                 </div>
 
                 <a
-                  href={`https://wa.me/2349130134969?text=${encodeURIComponent(`Hello EduReach Support, I am tracking reference ${result.reference_code}`)}`}
+                  href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach Support, I am tracking reference ${result.reference_code}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

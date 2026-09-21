@@ -5,20 +5,17 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock,
   ExternalLink,
-  FileText,
+  MessageSquare,
   Search,
   ShieldCheck,
-  UserRound,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib/api';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
-
-const EDUReachWhatsApp = '2349130134969';
+import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 
 type FormState = {
   fullName: string;
@@ -189,18 +186,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         details: { ...form, serviceTitle: service!.title },
       });
       setReference(result.reference_code);
-      setMessage('Your service request was successfully submitted. Redirecting to WhatsApp…');
-      const whatsappText = [
-        'Hello EduReach, I just submitted a service request.',
-        `Service: ${service!.title}`,
-        `Reference code: ${result.reference_code}`,
-        `Name: ${form.fullName}`,
-        `WhatsApp: ${form.whatsapp || form.phone}`,
-        'Please assist me with this request.',
-      ].join('\\n');
-      window.setTimeout(() => {
-        window.location.assign(`https://wa.me/${EDUReachWhatsApp}?text=${encodeURIComponent(whatsappText)}`);
-      }, 700);
+      setMessage('');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to submit request.');
     } finally {
@@ -256,7 +242,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               </div>
               <a
                 href={`/login?next=${encodeURIComponent(`/services/apply/${service.service_key}`)}`}
-                style={{ color: '#B8492F', fontWeight: 800, textDecoration: 'none' }}
+                style={{ color: '#C85841', fontWeight: 800, textDecoration: 'none' }}
               >
                 Sign in to link account →
               </a>
@@ -497,7 +483,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <button
                     type="submit"
                     className="hub-primary-btn"
-                    style={{ background: '#B8492F' }}
+                    style={{ background: '#C85841' }}
                     disabled={busy}
                   >
                     {busy ? 'Submitting…' : 'Confirm & Submit'} <Check size={16} />
@@ -571,12 +557,30 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 <a
                   className="hub-primary-btn"
                   href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/track?ref=${encodeURIComponent(reference)}`}
-                  style={{ textDecoration: 'none', background: '#B8492F' }}
+                  style={{ textDecoration: 'none', background: '#C85841' }}
                 >
                   <Search size={15} /> Track Application Status
                 </a>
                 <a className="hub-outline-btn" href="/services" style={{ textDecoration: 'none' }}>
                   Return to Catalog
+                </a>
+                <a
+                  className="hub-outline-btn"
+                  href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(
+                    [
+                      'Hello EduReach, I just submitted a service request.',
+                      `Service: ${service.title}`,
+                      `Reference code: ${reference}`,
+                      `Name: ${form.fullName}`,
+                      `WhatsApp: ${form.whatsapp || form.phone}`,
+                      'Please assist me with this request.',
+                    ].join('\n'),
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ textDecoration: 'none', color: '#059669', borderColor: '#a7f3d0' }}
+                >
+                  <MessageSquare size={15} /> Continue on WhatsApp
                 </a>
               </div>
             </div>

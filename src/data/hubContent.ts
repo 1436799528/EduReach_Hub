@@ -16,22 +16,6 @@ export const hubServices: ServiceCatalogItem[] = [
   { slug: 'admission-letters', title: 'Admission Deferment & Supplementary Letters', short: 'Admission Letters', description: 'Prepare a clear application letter around your institution’s actual requirements.', price: 'Letter support', action: 'Apply Now', tone: 'green' },
 ];
 
-export const cbtSubjects = [
-  { name: 'Use of English', key: 'english', tone: 'blue', count: 60 },
-  { name: 'Mathematics', key: 'mathematics', tone: 'green', count: 60 },
-  { name: 'Chemistry', key: 'chemistry', tone: 'amber', count: 60 },
-  { name: 'Physics', key: 'physics', tone: 'blue', count: 60 },
-  { name: 'Biology', key: 'biology', tone: 'green', count: 60 },
-];
-
-export const practiceQuestions = [
-  { id: 1, text: 'Which option is closest in meaning to “rapid”?', options: ['Slow', 'Fast', 'Heavy', 'Quiet'], correct: 1, explanation: 'Rapid means happening quickly or at high speed.' },
-  { id: 2, text: 'If 3x = 18, what is x?', options: ['3', '6', '9', '12'], correct: 1, explanation: 'Divide both sides by 3: x = 6.' },
-  { id: 3, text: 'What is the chemical symbol for sodium?', options: ['So', 'Sd', 'Na', 'Sn'], correct: 2, explanation: 'Sodium is represented by Na.' },
-  { id: 4, text: 'What unit is commonly used for electrical current?', options: ['Volt', 'Ohm', 'Ampere', 'Watt'], correct: 2, explanation: 'Electric current is measured in amperes.' },
-  { id: 5, text: 'Which organ pumps blood around the human body?', options: ['Liver', 'Heart', 'Kidney', 'Lung'], correct: 1, explanation: 'The heart pumps blood through the circulatory system.' },
-];
-
 export const newsItems = [
   { slug: 'jamb-caps-status-guide', tag: 'JAMB', title: 'JAMB CAPS: What Students Should Check Before Accepting Admission', date: 'Quick guide', excerpt: 'A compact checklist for checking admission status, CAPS details and the next step.', verified: true },
   { slug: 'nelfund-student-loan-checklist', tag: 'NELFUND', title: 'NELFUND Student Loan: Information to Organise Before You Apply', date: 'Student guide', excerpt: 'Keep your contact, institution and academic details ready before starting a loan request.', verified: true },

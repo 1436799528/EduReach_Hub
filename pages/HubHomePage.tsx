@@ -42,7 +42,7 @@ const toolTiles = [
   { title: 'Past Question Bank', href: '/cbt' },
   { title: 'Screening Calculator', href: '/screening-calculator' },
   { title: 'Track Request', href: '/services/track' },
-  { title: 'Scholarships', href: '/scholarships' },
+  { title: 'Scholarships', href: '/jobs' },
 ];
 
 export default function HubHomePage() {
@@ -77,7 +77,7 @@ export default function HubHomePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search schools, courses, JAMB, WAEC, scholarships..."
+              placeholder="Search services — NELFUND, scratch cards, JAMB slips…"
               aria-label="Search services"
             />
             <button type="submit">Search</button>
@@ -90,7 +90,7 @@ export default function HubHomePage() {
             <div>
               <small>EDUREACH STUDY CENTRE</small>
               <strong>Past Questions &amp; CBT Practice</strong>
-              <p>Prepare by examination, subject, school and year.</p>
+              <p>Timed JAMB, WAEC, NECO and Post-UTME practice.</p>
             </div>
             <ArrowRight size={18} />
           </a>
@@ -124,7 +124,7 @@ export default function HubHomePage() {
 
             <div>
               <section className="er-section">
-                <SectionHead title="Upcoming" href="/news" linkLabel="Calendar" />
+                <SectionHead title="Upcoming" href="/news" linkLabel="View all" />
                 {upcoming.length > 0 ? (
                   <div className="er-deadline-list">
                     {upcoming.slice(0, 6).map((item) => <Deadline key={item.id} item={item} />)}

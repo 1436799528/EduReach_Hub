@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   Award,
-  BookOpen,
   CheckCircle2,
-  ChevronRight,
   Clock3,
-  FileText,
   Printer,
   RotateCcw,
   Sparkles,
@@ -50,7 +47,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
         <div className="hub-container" style={{ maxWidth: '900px' }}>
           {loading && (
             <div className="hub-panel hub-empty" style={{ padding: '48px', textAlign: 'center' }}>
-              <Sparkles size={24} style={{ color: '#B8492F', marginBottom: '8px' }} />
+              <Sparkles size={24} style={{ color: '#C85841', marginBottom: '8px' }} />
               <p style={{ fontWeight: 700, color: '#0f172a' }}>Calculating CBT test score and performance analysis…</p>
             </div>
           )}
@@ -170,9 +167,9 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569' }}>
-                  <Clock3 size={15} color="#B8492F" />
+                  <Clock3 size={15} color="#C85841" />
                   <span>
-                    Exam Date: <strong>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+                    Exam Date: <strong>{result?.attempt?.submitted_at ? new Date(result.attempt.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</strong>
                   </span>
                 </div>
 
@@ -197,7 +194,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
               {/* CORRECTIONS LIST */}
               <div style={{ marginBottom: '16px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#B8492F', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#C85841', letterSpacing: '0.04em' }}>
                   DETAILED ANALYSIS
                 </span>
                 <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '4px 0 0' }}>

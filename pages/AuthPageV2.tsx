@@ -5,13 +5,9 @@ import {
   Lock,
   Mail,
   Phone,
-  ShieldCheck,
-  User,
-  Users,
   Eye,
   EyeOff,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
@@ -157,7 +153,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         if (!firstName.trim()) throw new Error('First Name is required.');
         if (!lastName.trim()) throw new Error('Last Name is required.');
         if (!email.trim() || !email.includes('@')) throw new Error('A valid Email Address is required.');
-        if (!phone.trim() || phone.length < 10) throw new Error('A valid Nigerian phone number is required.');
+        if (phone.replace(/\D/g, '').length < 10) throw new Error('A valid Nigerian phone number is required.');
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
         if (password !== confirmPassword) throw new Error('Passwords do not match.');
         if (!termsAgreed) throw new Error('You must agree to the Terms of Service and Privacy Policy.');
@@ -227,12 +223,16 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           if (signedInSession?.access_token) {
             // The configured bootstrap account can become the first super administrator.
             try { await bootstrapAdmin(); } catch { /* already bootstrapped or not the designated account */ }
-            const adminCheck = await fetch('/api/admin/session', {
-              headers: { Authorization: `Bearer ${signedInSession.access_token}` },
-            });
+            let isAdmin = false;
+            try {
+              const adminCheck = await fetch('/api/admin/session', {
+                headers: { Authorization: `Bearer ${signedInSession.access_token}` },
+              });
+              isAdmin = adminCheck.ok;
+            } catch { /* backend unreachable — continue as a regular student session */ }
             window.sessionStorage.removeItem('edureach-admin-student-view');
             notifyAuthChanged();
-            navigateInApp(adminCheck.ok ? '/admin' : getSafeNextPath());
+            navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
             return;
           }
         } catch (signInErr) {
@@ -315,7 +315,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#B8492F',
+              color: '#C85841',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
             }}
@@ -361,7 +361,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         {message && (
           <div
             style={{
-              background: '#fef2f2',
+              background: '#ecfdf5',
               border: '1px solid #a7f3d0',
               color: '#047857',
               padding: '10px 14px',
@@ -387,7 +387,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#B8492F',
+                color: '#C85841',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -405,7 +405,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#B8492F',
+                  background: '#C85841',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -546,9 +546,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#B8492F' : '#cbd5e1',
+                          borderColor: accountType === type ? '#C85841' : '#cbd5e1',
                           background: accountType === type ? '#F9F0EE' : '#ffffff',
-                          color: accountType === type ? '#B8492F' : '#475569',
+                          color: accountType === type ? '#C85841' : '#475569',
                           fontWeight: 800,
                           fontSize: '12px',
                           textTransform: 'capitalize',
@@ -647,7 +647,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#B8492F', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#C85841', marginTop: '2px' }}
                   />
                   <span>
                     I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
@@ -697,7 +697,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#B8492F', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: '#C85841', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -833,7 +833,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               type="submit"
               disabled={busy}
               style={{
-                background: '#B8492F',
+                background: '#C85841',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -846,7 +846,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 justifyContent: 'center',
                 gap: '8px',
                 marginTop: '6px',
-                boxShadow: '0 2px 8px rgba(184, 73, 47, 0.25)',
+                boxShadow: '0 2px 8px rgba(200, 88, 65, 0.25)',
               }}
             >
               {busy
@@ -883,7 +883,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#B8492F', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer' }}
             >
               Already have an account? Sign in
             </button>
@@ -897,7 +897,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#B8492F', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer' }}
             >
               Need an account? Register
             </button>

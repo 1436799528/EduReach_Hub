@@ -1,9 +1,7 @@
 import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import SectionHead from '../src/components/SectionHead';
-import { NewsRow } from '../src/components/NewsSections';
-import { fetchNews, fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { fetchNewsItem, type NewsItem } from '../src/lib/api';
 
 function labelFor(category: string) {
   return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -13,6 +11,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
   const [item, setItem] = useState<NewsItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     void fetchNewsItem(slug)
@@ -52,7 +51,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               <h1>{item.title}</h1>
               {item.summary && <p className="hub-article-lead">{item.summary}</p>}
-              {item.image_url && <img className="er-news-hero" src={item.image_url} alt="" />}
+              {item.image_url && <img className="er-news-hero" src={item.image_url} alt={item.title} />}
 
               <div className="hub-article-body">
                 {item.body
@@ -82,8 +81,15 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               <div className="hub-share-strip">
                 <span>Share</span>
-                <button onClick={() => navigator.clipboard?.writeText(window.location.href)}>
-                  <Share2 size={16} /> Copy Link
+                <button
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(window.location.href).then(() => {
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 1600);
+                    });
+                  }}
+                >
+                  <Share2 size={16} /> {copied ? 'Copied!' : 'Copy Link'}
                 </button>
               </div>
             </article>

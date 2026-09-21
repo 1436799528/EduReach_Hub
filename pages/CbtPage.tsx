@@ -77,7 +77,7 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#B8492F', fontWeight: 800 }}>CBT HALL</span>
+              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>CBT HALL</span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
                 Timed exam simulators with instant scoring and corrections.
@@ -94,7 +94,7 @@ export default function CbtPage() {
           </div>
 
           <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Start a simulator" href="/cbt/practice" linkLabel="Question bank" />
+            <SectionHead title="Start a simulator" href="/cbt/practice" linkLabel="Quick start" />
             <ExamSimulatorGrid variant="start" />
           </section>
 
@@ -111,21 +111,21 @@ export default function CbtPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock3 size={20} style={{ color: '#B8492F', flexShrink: 0 }} />
+              <Clock3 size={20} style={{ color: '#C85841', flexShrink: 0 }} />
               <div>
                 <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>Simulate real exam pressure</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CheckCircle2 size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
+              <CheckCircle2 size={20} style={{ color: '#059669', flexShrink: 0 }} />
               <div>
                 <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Instant Evaluation</strong>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>Accurate scoring and percentages</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <BookOpen size={20} style={{ color: '#7c3aed', flexShrink: 0 }} />
+              <BookOpen size={20} style={{ color: '#B45309', flexShrink: 0 }} />
               <div>
                 <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Detailed Corrections</strong>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>Explanations for all options</span>

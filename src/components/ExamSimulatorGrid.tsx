@@ -17,7 +17,7 @@ export const examSimulators: ExamSimulator[] = [
     mode: 'JAMB',
     logo: '/icons/brands/jamb.png',
     desc: 'UTME past questions in a real CBT environment with timer.',
-    meta: '40 Qs • 30 mins',
+    meta: 'Timed • 30 mins',
     guideHref: '/jamb',
   },
   {
@@ -26,7 +26,7 @@ export const examSimulators: ExamSimulator[] = [
     mode: 'WAEC',
     logo: '/icons/brands/waec.webp',
     desc: 'SSCE revision across English, Maths and sciences.',
-    meta: '50 Qs • 45 mins',
+    meta: 'Timed • 45 mins',
     guideHref: '/waec',
   },
   {
@@ -35,7 +35,7 @@ export const examSimulators: ExamSimulator[] = [
     mode: 'NECO',
     logo: '/icons/brands/neco.webp',
     desc: 'SSCE practice papers by syllabus objective.',
-    meta: '40 Qs • 40 mins',
+    meta: 'Timed • 40 mins',
     guideHref: '/neco',
   },
   {
@@ -44,7 +44,7 @@ export const examSimulators: ExamSimulator[] = [
     mode: 'POST-UTME',
     logo: '/icons/brands/jamb.png',
     desc: 'Screening aptitude tests for federal and state schools.',
-    meta: '30 Qs • 25 mins',
+    meta: 'Timed • 25 mins',
     guideHref: '/post-utme',
   },
 ];

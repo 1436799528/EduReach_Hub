@@ -129,7 +129,7 @@ export default function AdminNewsPage() {
         <div className="admin-page-header">
           <div>
             <h1>Newsroom CMS</h1>
-            <p>Write, edit, publish and delete news articles. Published stories appear on /news, the ticker and exam hubs.</p>
+            <p>Write, edit, publish and delete news articles. Published stories appear on /news and exam hubs.</p>
           </div>
         </div>
         {error && <div className="admin-card">{error}</div>}

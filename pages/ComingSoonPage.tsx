@@ -78,13 +78,16 @@ export default function ComingSoonPage({ title, description }: { title?: string;
   const copy = copyFor(path);
   const heading = title || copy.title;
   const body = description || copy.description;
+  const isServicePath = path.startsWith('/services/');
+  const backHref = isServicePath ? '/services' : '/';
+  const backLabel = isServicePath ? 'Services' : 'Portal home';
 
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '32px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '640px' }}>
-          <a className="hub-back-link" href="/services">
-            <ArrowLeft size={16} /> Services
+          <a className="hub-back-link" href={backHref}>
+            <ArrowLeft size={16} /> {backLabel}
           </a>
 
           <div
@@ -104,7 +107,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                 gap: '6px',
                 fontSize: '11px',
                 fontWeight: 900,
-                color: '#B8492F',
+                color: '#C85841',
                 background: '#F9F0EE',
                 border: '1px solid #F0D2BC',
                 padding: '4px 12px',
@@ -115,7 +118,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
             >
               <BellRing size={13} /> {copy.eyebrow} · Coming soon
             </span>
-            <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0F172A', margin: '14px 0 8px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '14px 0 8px' }}>
               {heading}
             </h1>
             <p style={{ fontSize: '13px', color: '#64748b', margin: '0 auto 22px', lineHeight: 1.6, maxWidth: '460px' }}>
@@ -129,7 +132,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: '#B8492F',
+                  background: '#C85841',
                   color: '#ffffff',
                   borderRadius: '8px',
                   padding: '9px 18px',
@@ -147,7 +150,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   alignItems: 'center',
                   gap: '6px',
                   background: '#ffffff',
-                  color: '#0F172A',
+                  color: '#0f172a',
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '9px 18px',
@@ -165,7 +168,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   alignItems: 'center',
                   gap: '6px',
                   background: '#ffffff',
-                  color: '#0F172A',
+                  color: '#0f172a',
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '9px 18px',

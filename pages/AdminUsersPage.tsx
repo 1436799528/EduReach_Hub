@@ -19,10 +19,6 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
-    load('');
-  }, []);
-
-  useEffect(() => {
     const timer = window.setTimeout(() => load(query), 250);
     return () => window.clearTimeout(timer);
   }, [query]);
