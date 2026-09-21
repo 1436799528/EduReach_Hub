@@ -11,25 +11,25 @@ const data: Record<ExamKey, {
 }> = {
   jamb: {
     title: 'JAMB',
-    logo: '/icons/brands/jamb.png',
+    logo: '/icons/jamb.svg',
     description: 'JAMB UTME, CAPS, results, admission and examination preparation resources.',
     links: ['JAMB CBT Practice', 'JAMB Result', 'JAMB CAPS & Admission Status', 'UTME Syllabus', 'JAMB Brochure', 'Past Questions'],
   },
   waec: {
     title: 'WAEC',
-    logo: '/icons/brands/waec.png',
+    logo: '/icons/waec.svg',
     description: 'WAEC examination information, results, preparation and study resources.',
     links: ['WAEC Result', 'WAEC CBT Practice', 'Timetable', 'Syllabus', 'Registration Information', 'Past Questions'],
   },
   neco: {
     title: 'NECO',
-    logo: '/icons/brands/neco.png',
+    logo: '/icons/neco.svg',
     description: 'NECO examination information, results, preparation and study resources.',
     links: ['NECO Result', 'NECO CBT Practice', 'Timetable', 'Syllabus', 'Registration Information', 'Past Questions'],
   },
   'post-utme': {
     title: 'Post-UTME',
-    logo: '/icons/brands/jamb.png',
+    logo: '/icons/post-utme.svg',
     description: 'University screening information, admission preparation and Post-UTME practice.',
     links: ['Find a School', 'Screening Information', 'Post-UTME Past Questions', 'CBT Practice', 'Admission Requirements', 'Latest Updates'],
   },

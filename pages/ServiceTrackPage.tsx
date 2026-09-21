@@ -352,7 +352,7 @@ export default function ServiceTrackPage() {
                 </div>
 
                 <a
-                  href="https://wa.me/2348000000000?text=Hello%20EduReach%20Support,%20I%20am%20tracking%20reference%20"
+                  href="https://wa.me/2349130134969?text=Hello%20EduReach%20Support,%20I%20am%20tracking%20reference%20"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

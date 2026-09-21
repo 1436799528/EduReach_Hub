@@ -1231,6 +1231,31 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               </a>
             </div>
 
+            {(() => {
+              const refParam = new URLSearchParams(window.location.search).get('ref');
+              if (!refParam) return null;
+              const match = requests.find((item) => item.reference_code === refParam);
+              if (!match) {
+                return (
+                  <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', fontSize: '12px', color: '#92400e' }}>
+                    Reference <strong>{refParam}</strong> is not on this account yet.{' '}
+                    <a href={`/services/track?ref=${encodeURIComponent(refParam)}`} style={{ color: '#b45309', fontWeight: 800 }}>Track it publicly →</a>
+                  </div>
+                );
+              }
+              const matchedService = serviceMap[match.service_id];
+              const matchedTitle = String(match.form_data?.serviceTitle || matchedService?.title || 'EduReach Service');
+              return (
+                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '12px', color: '#0f172a' }}>
+                    <strong style={{ display: 'block' }}>{matchedTitle}</strong>
+                    <span style={{ color: '#64748b' }}>Ref: {match.reference_code} • {statusLabel(match.status)} • {fmtDate(match.created_at)}</span>
+                  </div>
+                  <a href={`/services/track?ref=${encodeURIComponent(match.reference_code)}`} style={{ fontSize: '11.5px', fontWeight: 800, color: '#15803d', textDecoration: 'none' }}>Full timeline →</a>
+                </div>
+              );
+            })()}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px', marginBottom: '12px' }}>
               {requests.slice(0, 3).map((req) => {
                 const service = serviceMap[req.service_id];
@@ -1833,7 +1858,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <div>
               <strong style={{ fontSize: '11.5px', display: 'block', color: '#0f172a' }}>Need Academic Help?</strong>
               <a
-                href="https://wa.me/2348000000000"
+                href="https://wa.me/2349130134969"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ fontSize: '10.5px', color: '#059669', fontWeight: 800, textDecoration: 'none' }}
@@ -2265,9 +2290,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   }}
                 >
                   <div>
-                    <strong style={{ fontSize: '12px', color: '#0f172a', display: 'block' }}>{s.name}</strong>
+                    <strong style={{ fontSize: '12px', color: '#0f172a', display: 'block' }}>{s.school_name}</strong>
                     <span style={{ fontSize: '10.5px', color: '#64748b' }}>
-                      {s.type} • 📍 {s.state} State • Est. {s.founded}
+                      {s.institution_type || 'Institution'}{s.acronym ? ` (${s.acronym})` : ''} • 📍 {s.state ? `${s.state} State` : 'Nigeria'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2276,44 +2301,48 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       onClick={() =>
                         saveDashboardItem({
                           type: 'school',
-                          key: itemKey(s.name),
-                          name: s.name,
-                          detail: `${s.type} • Est. ${s.founded}`,
-                          location: `${s.state} State`,
-                          href: s.url,
+                          key: itemKey(s.school_name),
+                          name: s.school_name,
+                          detail: s.institution_type || 'Institution',
+                          location: s.state ? `${s.state} State` : 'Nigeria',
+                          href: s.website_url || '',
                         })
                       }
-                      disabled={isSavedItem('school', itemKey(s.name))}
+                      disabled={isSavedItem('school', itemKey(s.school_name))}
                       style={{
-                        background: isSavedItem('school', itemKey(s.name)) ? '#EAF8EE' : '#ffffff',
+                        background: isSavedItem('school', itemKey(s.school_name)) ? '#EAF8EE' : '#ffffff',
                         border: '1px solid #cbd5e1',
-                        color: isSavedItem('school', itemKey(s.name)) ? '#16A34A' : '#059669',
+                        color: isSavedItem('school', itemKey(s.school_name)) ? '#16A34A' : '#059669',
                         padding: '4px 8px',
                         borderRadius: '5px',
                         fontSize: '10.5px',
                         fontWeight: 800,
-                        cursor: isSavedItem('school', itemKey(s.name)) ? 'default' : 'pointer',
+                        cursor: isSavedItem('school', itemKey(s.school_name)) ? 'default' : 'pointer',
                       }}
                     >
-                      {isSavedItem('school', itemKey(s.name)) ? 'Saved' : 'Save'}
+                      {isSavedItem('school', itemKey(s.school_name)) ? 'Saved' : 'Save'}
                     </button>
-                    <a
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        color: '#059669',
-                        padding: '4px 8px',
-                        borderRadius: '5px',
-                        fontSize: '10.5px',
-                        fontWeight: 800,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      Portal ↗
-                    </a>
+                    {s.website_url ? (
+                      <a
+                        href={s.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          color: '#059669',
+                          padding: '4px 8px',
+                          borderRadius: '5px',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Portal ↗
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: '10.5px', color: '#94a3b8', fontWeight: 700 }}>No portal link</span>
+                    )}
                   </div>
                 </div>
               ))}
