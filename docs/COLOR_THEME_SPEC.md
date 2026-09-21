@@ -45,7 +45,7 @@ The interface maintains a balance between:
   - Contrast against lighter crimson surfaces
 
 ### Secondary — Academic Tangerine
-* **HEX:** `#F97316`
+* **HEX:** `#DE6A1F`
 * The secondary accent represents energy, activity, speed, and student engagement.
 * **Use for:**
   - Small highlights
@@ -135,7 +135,7 @@ Hierarchy:
 2. **SOFT ACADEMIC BLUE (`#FAF8FF`, `#F2F3FF`, `#EAEDFF`)** → primary interface environment
 3. **WHITE (`#FFFFFF`)** → clean content surfaces
 4. **CRIMSON (`#D9381E`)** → important action and brand emphasis
-5. **TANGERINE (`#F97316`)** → energetic secondary accent
+5. **TANGERINE (`#DE6A1F`)** → energetic secondary accent
 6. **GREEN (`#16A34A`)** → success and verification
 7. **GOLD (`#CA8A04`)** → trust and recognition
 8. **BURGUNDY (`#54080C`)** → special institutional emphasis

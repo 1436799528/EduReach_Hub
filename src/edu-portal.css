@@ -95,21 +95,13 @@
 
 /* ---- EduReach unified theme tokens (single source of truth for brand accents).
    Page-level success/verification greens are semantic and stay green. */
-:root{--hub-blue:#D9381E;--hub-blue-soft:#FFF0E6;--er-crimson:#D9381E;--er-crimson-deep:#B51D04;--er-navy:#0F172A;--er-tangerine:#F97316}
+:root{--hub-blue:#D9381E;--hub-blue-soft:#FFF0E6;--er-crimson:#D9381E;--er-crimson-deep:#B51D04;--er-navy:#0F172A;--er-tangerine:#DE6A1F}
 .hub-primary-btn:hover{background:#B51D04}
 .hub-card-link,.hub-section-heading.compact>a,.hub-auth-switch,.hub-rail-more,.hub-rail-news a span,.hub-rail-links a svg:first-child,.hub-rail-head>svg,.hub-rail-help>svg{color:#D9381E}
 .hub-stepper>div.active{border-color:#fed7aa;color:#D9381E}
 .hub-stepper>div.active span{background:#FFF0E6;color:#D9381E}
 
 /* ---- Utility strip (Myschool-style top bar, EduReach navy) ---- */
-.er-utility{background:#0F172A;color:#cbd5e1;font-size:11px}
-.er-utility-row{width:min(1180px,calc(100% - 40px));margin:0 auto;min-height:32px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.er-utility-copy{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.er-utility-links{display:flex;align-items:center;gap:14px}
-.er-utility-links a{color:#e2e8f0;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px}
-.er-utility-links a:hover{color:#F97316}
-.er-utility-links .er-utility-join{color:#F97316}
-@media(max-width:620px){.er-utility-copy{display:none}.er-utility-row{justify-content:center}}
 
 /* ---- Exam simulator grid (shared: home + CBT hall) ---- */
 .er-sim-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
@@ -174,22 +166,6 @@
 .er-tool-fallback small{display:block;font-size:10px;color:#64748b;font-weight:400}
 
 /* ---- Breaking updates ticker (pauses on hover/focus) ---- */
-.er-ticker{display:flex;align-items:stretch;gap:0;background:#0f5132;color:#fff;min-height:34px;border-bottom:1px solid #0b3d26}
-.er-ticker-badge{flex:none;display:inline-flex;align-items:center;gap:6px;background:#c02220;color:#fff;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:0 12px}
-.er-ticker-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:#fff;animation:er-ticker-blink 1.2s ease-in-out infinite}
-@keyframes er-ticker-blink{0%,100%{opacity:1}50%{opacity:.25}}
-.er-ticker-viewport{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center}
-.er-ticker-track{display:inline-flex;align-items:center;gap:0;white-space:nowrap;animation:er-ticker-scroll linear infinite;will-change:transform}
-.er-ticker-track a{color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 0}
-.er-ticker-track a:hover{text-decoration:underline}
-.er-ticker-track a::after{content:'•';margin:0 18px;color:#86efac}
-.er-ticker-track a:focus-visible{outline:2px solid #fff;outline-offset:-2px}
-@keyframes er-ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.er-ticker:hover .er-ticker-track,.er-ticker:focus-within .er-ticker-track{animation-play-state:paused}
-.er-ticker-all{flex:none;display:inline-flex;align-items:center;color:#fff;font-size:10px;font-weight:800;text-decoration:none;padding:0 12px;background:rgba(255,255,255,.08)}
-.er-ticker-all:hover{background:rgba(255,255,255,.16)}
-@media (prefers-reduced-motion:reduce){.er-ticker-track{animation:none}.er-ticker-viewport{overflow-x:auto}.er-ticker-badge::before{animation:none}}
-@media(max-width:620px){.er-ticker-all{display:none}}
 
 /* Global return-navigation bar (all public pages except home) */
 .er-pagebar{background:#fff;border-bottom:1px solid #e2e8f0}
@@ -224,3 +200,6 @@
 /* Study-centre banner art is now a real photo tile */
 .er-banner-art{padding:0;overflow:hidden;background:#0f172a}
 .er-banner-art img{width:100%;height:100%;object-fit:cover}
+
+/* Brand logo fallback tile (shown only until the production logo ships) */
+.er-logo-fallback{display:inline-grid;place-items:center;background:linear-gradient(135deg,#D9381E 0%,#B51D04 100%);color:#fff;font-weight:900;font-size:14px;box-shadow:0 2px 6px rgba(217,56,30,.3);flex:none}

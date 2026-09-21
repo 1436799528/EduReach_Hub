@@ -512,7 +512,7 @@
 
 .dash-status-processing {
   background: #FFF0E6;
-  color: #F97316;
+  color: var(--er-tangerine);
   border: 1px solid #fed7aa;
 }
 

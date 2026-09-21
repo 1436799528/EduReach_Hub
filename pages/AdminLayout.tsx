@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
+import BrandLogo from '../src/components/BrandLogo';
 
 type AdminSession = { id: string; email: string; fullName: string; role: 'admin' };
 
@@ -73,7 +74,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return <div className="admin-shell">
     <aside className="admin-sidebar">
       <div>
-        <div className="admin-brand"><div className="admin-brand-mark">ER</div><div><strong>EduReach Admin</strong><span>Production Control</span></div></div>
+        <div className="admin-brand"><BrandLogo height={40} radius={13} /><div><strong>EduReach Admin</strong><span>Production Control</span></div></div>
         <nav className="admin-nav">
           <NavLink href="/admin" icon="▦">Operations Dashboard</NavLink>
           <NavLink href="/admin/analytics" icon="◔">Analytics & Reports</NavLink>

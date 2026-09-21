@@ -16,6 +16,7 @@ import {
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
+import BrandLogo from '../src/components/BrandLogo';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 
@@ -182,18 +183,20 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           if (signUpError) throw signUpError;
         }
 
-        // Store registration info locally only for unconfigured preview/offline sessions.
-        localStorage.setItem(
-          'edureach-student-profile',
-          JSON.stringify({
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            full_name: fullName,
-            email: email.trim(),
-            phone: phone.trim(),
-            account_type: accountType,
-          })
-        );
+        // Local profile cache for unconfigured preview/offline sessions only.
+        if (!isSupabaseConfigured) {
+          localStorage.setItem(
+            'edureach-student-profile',
+            JSON.stringify({
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+              full_name: fullName,
+              email: email.trim(),
+              phone: phone.trim(),
+              account_type: accountType,
+            })
+          );
+        }
         if (!isSupabaseConfigured) {
           localStorage.setItem('edureach-local-user-email', email.trim());
           notifyAuthChanged();
@@ -290,21 +293,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             letterSpacing: '-0.02em',
           }}
         >
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #D9381E 0%, #B51D04 100%)',
-              color: '#ffffff',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: '16px',
-              fontWeight: 900,
-            }}
-          >
-            ER
-          </div>
+          <BrandLogo height={36} />
           <span>
             EduReach<span style={{ color: '#D9381E' }}>.ng</span>
           </span>

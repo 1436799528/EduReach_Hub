@@ -16,8 +16,8 @@ import {
   Briefcase,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
-import BreakingTicker from './BreakingTicker';
 import PageBar from './PageBar';
+import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
 import '../hub-rail.css';
 
@@ -88,22 +88,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 letterSpacing: '-0.02em',
               }}
             >
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #D9381E 0%, #B51D04 100%)',
-                  color: '#ffffff',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: '15px',
-                  fontWeight: 900,
-                  boxShadow: '0 2px 6px rgba(217, 56, 30, 0.3)',
-                }}
-              >
-                ER
-              </div>
+              <BrandLogo height={32} />
               <span>
                 EduReach<span style={{ color: '#D9381E' }}>.ng</span>
               </span>
@@ -329,7 +314,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <BreakingTicker />
       <PageBar />
 
       {/* MOBILE DRAWER */}
@@ -490,7 +474,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             {/* COLUMN 1: BRAND */}
             <div>
               <div style={{ fontSize: '18px', fontWeight: 900, color: '#ffffff', marginBottom: '8px' }}>
-                EduReach<span style={{ color: '#F97316' }}>.ng</span>
+                EduReach<span style={{ color: 'var(--er-tangerine)' }}>.ng</span>
               </div>
               <p style={{ margin: '0 0 14px', lineHeight: 1.6, fontSize: '12px' }}>
                 Nigeria's premier academic support portal for CBT practice, verified scratch cards, NELFUND loan assistance, and admission updates.

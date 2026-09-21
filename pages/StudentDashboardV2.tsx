@@ -60,6 +60,7 @@ import {
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { useAuth } from '../src/lib/auth';
 import '../src/student-dashboard.css';
+import BrandLogo from '../src/components/BrandLogo';
 
 type Profile = {
   first_name?: string | null;
@@ -704,7 +705,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     return (
       <div className="edureach-dash-container" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px' }}>
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px', textAlign: 'center', maxWidth: '420px' }}>
-          <div className="edureach-dash-logo-icon" style={{ margin: '0 auto 12px' }}>ER</div>
+          <div style={{ margin: '0 auto 12px', display: 'flex', justifyContent: 'center' }}><BrandLogo height={36} /></div>
           <h1 style={{ margin: '0 0 6px', fontSize: '18px', color: '#0f172a' }}>Loading your student workspace…</h1>
           <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Checking your secure session and syncing dashboard records.</p>
         </div>
@@ -742,7 +743,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="edureach-dash-bar">
           {/* LOGO */}
           <a href="/" className="edureach-dash-brand">
-            <div className="edureach-dash-logo-icon">ER</div>
+            <BrandLogo height={32} />
             <span>
               EduReach<span style={{ color: '#D9381E' }}>.ng</span>
             </span>
@@ -1384,7 +1385,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     return (
                       <tr key={req.id}>
                         <td>
-                          <strong style={{ fontFamily: 'monospace', fontSize: '11px', color: '#0f172a' }}>{req.reference_code}</strong>
+                          <strong style={{ fontFamily: 'var(--er-font-sans)', fontSize: '11px', letterSpacing: '0.04em', color: '#0f172a' }}>{req.reference_code}</strong>
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

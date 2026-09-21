@@ -46,7 +46,7 @@ Every route must look like **EduReach**. The page can have a different function,
 
 ### Must Inherit:
 * EduReach typography (Inter / system fonts, standard hierarchy)
-* EduReach colors (Primary Academic Crimson `#D9381E`, Deep Crimson `#B51D04`, Institutional Navy `#0F172A`, Secondary Tangerine `#F97316`, Borders `#e2e8f0`) — see `docs/COLOR_THEME_SPEC.md` as the single source of truth. Success Green `#16A34A` and Trust Gold `#CA8A04` are reserved for status/verification only, never as primary brand color.
+* EduReach colors (Primary Academic Crimson `#D9381E`, Deep Crimson `#B51D04`, Institutional Navy `#0F172A`, Secondary Tangerine `#DE6A1F`, Borders `#e2e8f0`) — see `docs/COLOR_THEME_SPEC.md` as the single source of truth. Success Green `#16A34A` and Trust Gold `#CA8A04` are reserved for status/verification only, never as primary brand color.
 * EduReach spacing and density
 * EduReach border radius (Standard 6px–10px, Pill 999px)
 * EduReach shadows (Subtle `0 1px 3px rgba(15, 23, 42, 0.04)`)
