@@ -86,11 +86,11 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <img
-                    src="/icons/cbt.svg"
-                    alt="CBT Emblem"
+                    src="/news/photos/jamb-cbt.jpg"
+                    alt="CBT examination hall"
                     width={52}
                     height={52}
-                    style={{ objectFit: 'contain', flexShrink: 0 }}
+                    style={{ objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }}
                   />
                   <div>
                     <div

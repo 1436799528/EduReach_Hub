@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>
-<rect width="100" height="100" rx="20" fill="url(#g)"/>
-<circle cx="50" cy="46" r="17" fill="none" stroke="#ffffff" stroke-width="5"/>
-<circle cx="50" cy="46" r="7" fill="none" stroke="#fbbf24" stroke-width="4"/>
-<path d="M50 22 V29 M50 63 V70 M26 46 h7 M67 46 h7 M33 29 l5 5 M62 58 l5 5 M67 29 l-5 5 M38 58 l-5 5" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-<text x="50" y="90" text-anchor="middle" fill="#ffffff" font-family="system-ui,sans-serif" font-size="9" font-weight="900" letter-spacing="1">CONFIG</text>
-</svg>

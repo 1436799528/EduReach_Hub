@@ -12,7 +12,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'JAMB UTME, CAPS, results, admission and examination preparation resources.',
     links: [
       { label: 'JAMB CBT Practice', href: '/cbt?mode=JAMB' },
-      { label: 'Past Questions', href: '/past-questions' },
+      { label: 'Past Questions', href: '/cbt' },
       { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },
       { label: 'CAPS & Admission Status', href: '/admission' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
@@ -25,7 +25,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'WAEC examination information, results, preparation and study resources.',
     links: [
       { label: 'WAEC CBT Practice', href: '/cbt?mode=WAEC' },
-      { label: 'Past Questions', href: '/past-questions' },
+      { label: 'Past Questions', href: '/cbt' },
       { label: 'Result Checking', href: '/services/apply/results' },
       { label: 'Scratch Cards', href: '/services/apply/scratch-cards' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
@@ -38,7 +38,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'NECO examination information, results, preparation and study resources.',
     links: [
       { label: 'NECO CBT Practice', href: '/cbt?mode=NECO' },
-      { label: 'Past Questions', href: '/past-questions' },
+      { label: 'Past Questions', href: '/cbt' },
       { label: 'Result Checking', href: '/services/apply/results' },
       { label: 'Scratch Cards', href: '/services/apply/scratch-cards' },
       { label: 'Exam Timetable', href: '/tools/calendar' },
@@ -47,13 +47,13 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
   },
   'post-utme': {
     title: 'Post-UTME',
-    logo: '/icons/post-utme.svg',
+    logo: '/icons/brands/jamb.png',
     description: 'University screening information, admission preparation and Post-UTME practice.',
     links: [
       { label: 'CBT Practice', href: '/cbt?mode=POST-UTME' },
       { label: 'Find a School', href: '/admission/schools' },
       { label: 'Screening Information', href: '/admission' },
-      { label: 'Past Questions', href: '/past-questions' },
+      { label: 'Past Questions', href: '/cbt' },
       { label: 'Admission Requirements', href: '/admission/requirements' },
       { label: 'Latest Updates', href: '/news' },
     ],

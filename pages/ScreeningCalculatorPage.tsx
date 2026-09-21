@@ -2,6 +2,7 @@ import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
+import CardIdentityMark from '../src/components/CardIdentityMark';
 
 type Formula = '50-50' | '60-40' | '70-30';
 
@@ -46,7 +47,7 @@ export default function ScreeningCalculatorPage() {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-              <img src="/icons/calculator.svg" alt="" width={30} height={30} />
+              <CardIdentityMark value="calculator" type="service" size="sm" />
               <div>
                 <h1 style={{ fontSize: '19px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
                   Screening Aggregate Calculator

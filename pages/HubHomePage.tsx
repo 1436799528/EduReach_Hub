@@ -85,7 +85,7 @@ export default function HubHomePage() {
 
           <a href="/cbt" className="er-banner">
             <div className="er-banner-art">
-              <img src="/icons/services/past-questions.svg" alt="" />
+              <img src="/news/photos/jamb-cbt.jpg" alt="CBT study centre" />
             </div>
             <div>
               <small>EDUREACH STUDY CENTRE</small>

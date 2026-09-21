@@ -3,13 +3,12 @@ import type { NewsItem } from '../lib/api';
 
 export function newsThumbFor(category: string): string {
   const value = (category || '').toLowerCase();
-  if (value.includes('jamb')) return '/news/jamb.svg';
-  if (value.includes('waec') || value.includes('result')) return '/news/waec.svg';
-  if (value.includes('neco')) return '/news/neco.svg';
+  if (value.includes('jamb')) return '/news/photos/jamb-cbt.jpg';
+  if (value.includes('waec') || value.includes('neco') || value.includes('result')) return '/news/photos/waec-result.png';
   if (value.includes('nelfund') || value.includes('fund') || value.includes('scholar') || value.includes('grant') || value.includes('loan'))
-    return '/news/funding.svg';
-  if (value.includes('admission') || value.includes('screen')) return '/news/admission.svg';
-  return '/news/education.svg';
+    return '/news/photos/nelfund.webp';
+  if (value.includes('admission') || value.includes('screen')) return '/news/photos/campus.jpg';
+  return '/news/photos/graduates.jpg';
 }
 
 export function newsCategoryLabel(category: string): string {
@@ -29,7 +28,7 @@ function articleHref(item: NewsItem): string {
 export function NewsRow({ item }: { item: NewsItem }) {
   return (
     <a className="er-news-row" href={articleHref(item)}>
-      <img src={item.image_url || newsThumbFor(item.category)} className={item.image_url ? 'er-news-photo' : undefined} alt="" loading="lazy" />
+      <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt="" loading="lazy" />
       <span>
         <small>
           {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
@@ -48,7 +47,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
     <div className="er-featured-grid">
       {items.slice(0, 2).map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
-          <img src={item.image_url || newsThumbFor(item.category)} className={item.image_url ? 'er-news-photo' : undefined} alt="" loading="lazy" />
+          <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt="" loading="lazy" />
           <span className="er-featured-body">
             <small>
               {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}

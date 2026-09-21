@@ -208,3 +208,19 @@
 .er-admin-view-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#0f172a;color:#e2e8f0;font-size:12px;font-weight:700;padding:8px 16px}
 .er-admin-view-banner button{background:#D9381E;color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer}
 .er-admin-view-banner button:hover{background:#B51D04}
+
+/* Identity marks: height-driven images so wide brand marks never squash into
+   squares; labels truncate instead of wrapping over neighbouring content. */
+.ms-identity-mark{min-width:0;flex-shrink:0}
+.ms-identity-img{width:auto!important}
+.ms-service-card .ms-identity-img{width:auto!important;height:25px!important}
+.ms-identity-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Mini link tiles already print the title beside the mark: icon-only, centred */
+.er-mini-link>.ms-identity-mark{justify-content:center}
+.er-mini-link .ms-identity-label{display:none}
+
+/* Simulator logos: wide brand marks letterbox, never squash */
+.er-sim-top img{width:34px;height:34px;object-fit:contain;flex:none}
+/* Study-centre banner art is now a real photo tile */
+.er-banner-art{padding:0;overflow:hidden;background:#0f172a}
+.er-banner-art img{width:100%;height:100%;object-fit:cover}

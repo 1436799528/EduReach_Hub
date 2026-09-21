@@ -39,10 +39,10 @@ export function resolveIdentity(
 
   // Explicit service artwork takes precedence when the service itself is named.
   if (v.includes('admission watch')) {
-    return { icon: FileText, image: '/news/admission.svg', label: 'ADMISSION WATCH', tone: 'purple', ariaLabel: 'Admission Watch' };
+    return { icon: FileText, image: '/news/photos/campus.jpg', label: 'ADMISSION WATCH', tone: 'purple', ariaLabel: 'Admission Watch' };
   }
   if (v.includes('student funding') || v.includes('funding alert')) {
-    return { icon: Wallet, image: '/news/funding.svg', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
+    return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
   }
   if (v.includes('scratch') || v.includes('scratch card') || v.includes('voucher') || v.includes('token')) {
     return { icon: CreditCard, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC / NECO Scratch Cards' };
@@ -74,10 +74,10 @@ export function resolveIdentity(
       return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'EXAMS', tone: 'blue', ariaLabel: 'Exam News' };
     }
     if (v.includes('admission') || v.includes('screening')) {
-      return { icon: FileText, image: '/icons/admission.svg', label: 'ADMISSION', tone: 'purple', ariaLabel: 'Admission News' };
+      return { icon: FileText, label: 'ADMISSION', tone: 'purple', ariaLabel: 'Admission News' };
     }
     if (v.includes('scholarship') || v.includes('opportun')) {
-      return { icon: Award, image: '/icons/scholarship.svg', label: 'GRANTS', tone: 'amber', ariaLabel: 'Scholarship News' };
+      return { icon: Award, label: 'GRANTS', tone: 'amber', ariaLabel: 'Scholarship News' };
     }
     return { icon: Newspaper, label: 'UPDATES', tone: 'slate', ariaLabel: 'Campus News' };
   }
@@ -87,7 +87,7 @@ export function resolveIdentity(
     if (v === 'deadline' || v.includes('dead')) {
       return { icon: Clock, label: 'DUE', tone: 'amber', ariaLabel: 'Important Deadline' };
     }
-    return { icon: Laptop, image: '/icons/cbt.svg', label: 'EXAM', tone: 'crimson', ariaLabel: 'Upcoming Examination' };
+    return { icon: Laptop, label: 'EXAM', tone: 'crimson', ariaLabel: 'Upcoming Examination' };
   }
 
   // Services and Tools
@@ -134,7 +134,6 @@ export function resolveIdentity(
   if (v.includes('admission') || v.includes('letter')) {
     return {
       icon: FileText,
-      image: '/icons/admission.svg',
       label: 'ADMISSION',
       badge: 'PORTAL',
       tone: 'purple',
@@ -171,7 +170,7 @@ export function resolveIdentity(
   if (v.includes('post-utme') || v.includes('postutme')) {
     return {
       icon: GraduationCap,
-      image: '/icons/post-utme.svg',
+      image: '/icons/brands/jamb.png',
       label: 'POST-UTME',
       badge: 'SCREENING',
       tone: 'blue',
@@ -211,7 +210,6 @@ export function resolveIdentity(
   if (v.includes('cbt') || v.includes('practice') || v.includes('test') || v.includes('simulator')) {
     return {
       icon: Laptop,
-      image: '/icons/cbt.svg',
       label: 'CBT',
       badge: 'CLASSROOM',
       tone: 'crimson',
@@ -221,7 +219,6 @@ export function resolveIdentity(
   if (v.includes('past') || v.includes('question')) {
     return {
       icon: BookOpen,
-      image: '/icons/cbt.svg',
       label: 'PAST Q',
       badge: 'STUDY',
       tone: 'purple',
@@ -231,7 +228,6 @@ export function resolveIdentity(
   if (v.includes('cgpa') || v.includes('gpa') || v.includes('calc') || v.includes('screen') || v.includes('aggregate')) {
     return {
       icon: Calculator,
-      image: '/icons/calculator.svg',
       label: 'CALC',
       badge: 'TOOL',
       tone: 'crimson',
@@ -277,7 +273,6 @@ export function resolveIdentity(
   if (v.includes('scholarship') || v.includes('grant') || v.includes('fund')) {
     return {
       icon: Award,
-      image: '/icons/scholarship.svg',
       label: 'GRANTS',
       badge: 'SCHOLARSHIP',
       tone: 'amber',
@@ -287,7 +282,6 @@ export function resolveIdentity(
   if (v.includes('job') || v.includes('opportun') || v.includes('career') || v.includes('intern') || v.includes('part-time') || v.includes('parttime') || v.includes('campus') || v.includes('volunteer') || v.includes('contributor') || v.includes('ambassador') || v.includes('mentor') || v.includes('tutor')) {
     return {
       icon: Briefcase,
-      image: '/icons/scholarship.svg',
       label: 'CAREERS',
       badge: 'OPPORTUNITY',
       tone: 'slate',

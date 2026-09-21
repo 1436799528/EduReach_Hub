@@ -42,7 +42,7 @@ export const examSimulators: ExamSimulator[] = [
     key: 'post-utme',
     title: 'Post-UTME Screening Tests',
     mode: 'POST-UTME',
-    logo: '/icons/post-utme.svg',
+    logo: '/icons/brands/jamb.png',
     desc: 'Screening aptitude tests for federal and state schools.',
     meta: '30 Qs • 25 mins',
     guideHref: '/post-utme',
