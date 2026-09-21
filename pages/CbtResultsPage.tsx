@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   Award,
-  BookOpen,
   CheckCircle2,
-  ChevronRight,
   Clock3,
-  FileText,
   Printer,
   RotateCcw,
   Sparkles,
@@ -50,7 +47,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
         <div className="hub-container" style={{ maxWidth: '900px' }}>
           {loading && (
             <div className="hub-panel hub-empty" style={{ padding: '48px', textAlign: 'center' }}>
-              <Sparkles size={24} style={{ color: '#059669', marginBottom: '8px' }} />
+              <Sparkles size={24} style={{ color: '#C85841', marginBottom: '8px' }} />
               <p style={{ fontWeight: 700, color: '#0f172a' }}>Calculating CBT test score and performance analysis…</p>
             </div>
           )}
@@ -86,11 +83,11 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <img
-                    src="/icons/cbt.svg"
-                    alt="CBT Emblem"
+                    src="/news/photos/jamb-cbt.jpg"
+                    alt="CBT examination hall"
                     width={52}
                     height={52}
-                    style={{ objectFit: 'contain', flexShrink: 0 }}
+                    style={{ objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }}
                   />
                   <div>
                     <div
@@ -170,9 +167,9 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569' }}>
-                  <Clock3 size={15} color="#059669" />
+                  <Clock3 size={15} color="#C85841" />
                   <span>
-                    Exam Date: <strong>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+                    Exam Date: <strong>{result?.attempt?.submitted_at ? new Date(result.attempt.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</strong>
                   </span>
                 </div>
 
@@ -186,7 +183,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                     <Printer size={13} /> Print Result Slip
                   </button>
                   <a
-                    href="/cbt/practice?exam=practice-exam-jamb"
+                    href={result?.attempt?.exam_id ? `/cbt/practice?exam=${encodeURIComponent(result.attempt.exam_id)}` : '/cbt'}
                     className="hub-primary-btn"
                     style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
                   >
@@ -197,7 +194,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
               {/* CORRECTIONS LIST */}
               <div style={{ marginBottom: '16px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#059669', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#C85841', letterSpacing: '0.04em' }}>
                   DETAILED ANALYSIS
                 </span>
                 <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '4px 0 0' }}>

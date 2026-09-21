@@ -1,28 +1,18 @@
-import { ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark from '../src/components/CardIdentityMark';
+import FilterPills from '../src/components/FilterPills';
+import SectionHead from '../src/components/SectionHead';
+import { FeaturedNews, NewsRow } from '../src/components/NewsSections';
 import { fetchNews, type NewsItem } from '../src/lib/api';
 
-function labelFor(category: string) {
-  return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function formatDate(value: string | null) {
-  return value
-    ? new Date(value).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' })
-    : 'Update';
-}
-
-function newsImageFor(item: NewsItem) {
-  const category = item.category.toLowerCase();
-  if (category.includes('jamb')) return 'https://i.pinimg.com/736x/ec/ce/9f/ecce9f34b9cf3bc867d301e43c326db3.jpg';
-  if (category.includes('neco')) return 'https://i.pinimg.com/736x/b2/54/24/b254246163c37148203ed5f7c1144e9d.jpg';
-  if (category.includes('waec') || category.includes('result')) return 'https://i.pinimg.com/736x/b7/5d/88/b75d8803cf1011910157dfd52f449365.jpg';
-  if (category.includes('admission') || category.includes('screen')) return 'https://i.pinimg.com/736x/26/7a/e3/267ae39bd873640ba1710cffe18451c8.jpg';
-  if (category.includes('scholarship') || category.includes('grant') || category.includes('fund')) return 'https://i.pinimg.com/736x/11/bc/7b/11bc7b6c4db6e280cbbebda9bfda821d.jpg';
-  return '/news/education.svg';
-}
+const filters = [
+  { id: 'ALL', label: 'All News' },
+  { id: 'jamb', label: 'JAMB Updates' },
+  { id: 'admission', label: 'Admission Lists' },
+  { id: 'waec', label: 'WAEC News' },
+  { id: 'neco', label: 'NECO Updates' },
+  { id: 'nelfund', label: 'NELFUND Loan' },
+];
 
 export default function NewsPage() {
   const [items, setItems] = useState<NewsItem[]>([]);
@@ -39,9 +29,7 @@ export default function NewsPage() {
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'ALL') return items;
-    return items.filter((item) =>
-      item.category.toLowerCase().includes(activeFilter.toLowerCase())
-    );
+    return items.filter((item) => item.category.toLowerCase().includes(activeFilter.toLowerCase()));
   }, [items, activeFilter]);
 
   return (
@@ -50,7 +38,7 @@ export default function NewsPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
-              <span className="hub-eyebrow" style={{ color: '#059669', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>
                 CAMPUS NOTICEBOARD
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
@@ -62,45 +50,8 @@ export default function NewsPage() {
             </a>
           </div>
 
-          {/* MYSCHOOL CATEGORY FILTER PILLS */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '6px',
-              flexWrap: 'wrap',
-              marginBottom: '18px',
-              paddingBottom: '12px',
-              borderBottom: '1px solid #e2e8f0',
-            }}
-          >
-            {[
-              { id: 'ALL', label: 'All News' },
-              { id: 'jamb', label: 'JAMB Updates' },
-              { id: 'admission', label: 'Admission Lists' },
-              { id: 'waec', label: 'WAEC News' },
-              { id: 'neco', label: 'NECO Updates' },
-              { id: 'nelfund', label: 'NELFUND Loan' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveFilter(tab.id)}
-                style={{
-                  border: '1px solid',
-                  borderColor: activeFilter === tab.id ? '#059669' : '#e2e8f0',
-                  background: activeFilter === tab.id ? '#059669' : '#ffffff',
-                  color: activeFilter === tab.id ? '#ffffff' : '#475569',
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div style={{ marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+            <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="News categories" />
           </div>
 
           {loading && <div className="hub-panel hub-empty">Loading updates…</div>}
@@ -110,28 +61,22 @@ export default function NewsPage() {
           )}
 
           {!loading && !error && filteredItems.length > 0 && (
-            <div className="hub-news-feed" style={{ display: 'grid', gap: '10px' }}>
-              {filteredItems.map((item) => (
-                <a
-                  className="hub-news-feed-row hub-click-card ms-news-row"
-                  href={'/news/' + encodeURIComponent(item.slug)}
-                  key={item.id}
-                >
-                  <div className="hub-news-thumb ms-news-thumb" style={{ flexShrink: 0 }}>
-                    <img src={newsImageFor(item)} alt="" loading="lazy" />
-                  </div>
-                  <div className="hub-feed-main ms-news-main" style={{ flex: 1, minWidth: 0 }}>
-                    <div className="hub-news-meta ms-news-meta">
-                      <span>{labelFor(item.category)}</span>
-                      <span>•</span>
-                      <span>{formatDate(item.published_at)}</span>
-                    </div>
-                    <h2>{item.title}</h2>
-                  </div>
-                  <ArrowRight size={15} className="hub-compact-arrow" style={{ color: '#cbd5e1', flexShrink: 0 }} />
-                </a>
-              ))}
-            </div>
+            <>
+              {activeFilter === 'ALL' && (
+                <section className="er-section" style={{ marginTop: 0 }}>
+                  <SectionHead title="Featured" />
+                  <FeaturedNews items={filteredItems} />
+                </section>
+              )}
+              <section className="er-section" style={{ marginTop: 0 }}>
+                <SectionHead title={activeFilter === 'ALL' ? 'Latest stories' : 'Results'} />
+                <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
+                  {(activeFilter === 'ALL' ? filteredItems.slice(2) : filteredItems).map((item) => (
+                    <NewsRow key={item.id} item={item} />
+                  ))}
+                </div>
+              </section>
+            </>
           )}
         </div>
       </div>

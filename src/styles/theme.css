@@ -11,12 +11,12 @@
   --er-font-mono: var(--er-font-sans);
 
   /* 1. Primary — Academic Crimson */
-  --er-crimson: #D9381E;
-  --er-crimson-deep: #B51D04;
+  --er-crimson: #C85841;
+  --er-crimson-deep: #B3331A;
 
   /* 2. Secondary — Academic Tangerine */
-  --er-tangerine: #F97316;
-  --er-secondary-soft: #FFF0E6;
+  --er-tangerine: #D2732A;
+  --er-secondary-soft: #F9F0EE;
 
   /* 3. Institutional Navy */
   --er-navy: #0F172A;
@@ -167,7 +167,7 @@ samp,
 
 :where(input, select, textarea):focus {
   border-color: var(--er-crimson) !important;
-  box-shadow: 0 0 0 3px rgba(217, 56, 30, 0.14) !important;
+  box-shadow: 0 0 0 3px rgba(200, 88, 65, 0.14) !important;
   outline: 0 !important;
 }
 
@@ -183,7 +183,7 @@ samp,
 }
 
 :where(button, a, input, select, textarea):focus-visible {
-  outline: 3px solid rgba(217, 56, 30, 0.24) !important;
+  outline: 3px solid rgba(200, 88, 65, 0.24) !important;
   outline-offset: 2px;
 }
 
@@ -269,7 +269,7 @@ samp,
   background: var(--er-crimson) !important;
   color: #ffffff !important;
   border: 0 !important;
-  box-shadow: 0 2px 6px rgba(217, 56, 30, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(200, 88, 65, 0.25) !important;
 }
 
 .hub-primary-btn:hover {
@@ -298,5 +298,5 @@ samp,
 /* Brand logo styling */
 .brand-er-badge {
   background: linear-gradient(135deg, var(--er-crimson) 0%, var(--er-crimson-deep) 100%) !important;
-  box-shadow: 0 2px 6px rgba(217, 56, 30, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(200, 88, 65, 0.3) !important;
 }

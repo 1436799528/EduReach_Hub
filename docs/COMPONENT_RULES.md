@@ -13,7 +13,13 @@ Before creating a UI element, always ask:
 2. **Centralized Data in `src/data/`**: Product catalogs, service maps, and static options belong in `src/data/`, not hardcoded inside page files.
 3. **Single Service Card Family**:
    - `<CardIdentityMark />`: Resolves the appropriate brand emblem or service theme icon.
+   - `<ServiceCard />`: Canonical compact service card (whole card is the link).
    - Standard compact service cards consume centralized metadata from `src/data/services.ts`.
+4. **Shared Portal Blocks** (Myschool-dense, EduReach-themed; reuse, never duplicate):
+   - `<SectionHead />`: Section title + "view all" link.
+   - `<ExamSimulatorGrid />`: JAMB/WAEC/NECO/Post-UTME simulator cards (`mode` or `start` variant).
+   - `<NewsRow />`, `<FeaturedNews />`, `<TrendingNews />`, `newsThumbFor()`: One news row language everywhere.
+   - `<FilterPills />`: Category filter pills.
 4. **Typed Props & Contracts**: Every shared component must have explicit TypeScript interfaces.
 5. **Intrinsic Responsiveness**: Layout components and cards must handle their own responsive adjustments rather than forcing pages to inject custom CSS overrides.
 6. **No CSS Framework Duplication**: Avoid introducing competing CSS systems for individual routes. Use the global design tokens in `src/styles/` and `src/myschool-clean.css`.

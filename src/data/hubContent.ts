@@ -16,22 +16,6 @@ export const hubServices: ServiceCatalogItem[] = [
   { slug: 'admission-letters', title: 'Admission Deferment & Supplementary Letters', short: 'Admission Letters', description: 'Prepare a clear application letter around your institution’s actual requirements.', price: 'Letter support', action: 'Apply Now', tone: 'green' },
 ];
 
-export const cbtSubjects = [
-  { name: 'Use of English', key: 'english', tone: 'blue', count: 60 },
-  { name: 'Mathematics', key: 'mathematics', tone: 'green', count: 60 },
-  { name: 'Chemistry', key: 'chemistry', tone: 'amber', count: 60 },
-  { name: 'Physics', key: 'physics', tone: 'blue', count: 60 },
-  { name: 'Biology', key: 'biology', tone: 'green', count: 60 },
-];
-
-export const practiceQuestions = [
-  { id: 1, text: 'Which option is closest in meaning to “rapid”?', options: ['Slow', 'Fast', 'Heavy', 'Quiet'], correct: 1, explanation: 'Rapid means happening quickly or at high speed.' },
-  { id: 2, text: 'If 3x = 18, what is x?', options: ['3', '6', '9', '12'], correct: 1, explanation: 'Divide both sides by 3: x = 6.' },
-  { id: 3, text: 'What is the chemical symbol for sodium?', options: ['So', 'Sd', 'Na', 'Sn'], correct: 2, explanation: 'Sodium is represented by Na.' },
-  { id: 4, text: 'What unit is commonly used for electrical current?', options: ['Volt', 'Ohm', 'Ampere', 'Watt'], correct: 2, explanation: 'Electric current is measured in amperes.' },
-  { id: 5, text: 'Which organ pumps blood around the human body?', options: ['Liver', 'Heart', 'Kidney', 'Lung'], correct: 1, explanation: 'The heart pumps blood through the circulatory system.' },
-];
-
 export const newsItems = [
   { slug: 'jamb-caps-status-guide', tag: 'JAMB', title: 'JAMB CAPS: What Students Should Check Before Accepting Admission', date: 'Quick guide', excerpt: 'A compact checklist for checking admission status, CAPS details and the next step.', verified: true },
   { slug: 'nelfund-student-loan-checklist', tag: 'NELFUND', title: 'NELFUND Student Loan: Information to Organise Before You Apply', date: 'Student guide', excerpt: 'Keep your contact, institution and academic details ready before starting a loan request.', verified: true },
@@ -40,8 +24,24 @@ export const newsItems = [
   { slug: 'student-opportunities', tag: 'Opportunities', title: 'Student Opportunities: Keep Your Documents Ready', date: 'Guide', excerpt: 'How to keep an application-ready student folder for scholarships, internships and opportunities.', verified: false },
 ];
 
-export const jobs = [
-  { title: 'Student Content Contributor', type: 'Part-time', mode: 'Remote', note: 'Help turn verified academic updates into short student-friendly posts.' },
-  { title: 'Campus Community Rep', type: 'Volunteer', mode: 'Campus', note: 'Share official EduReach updates and report useful campus information.' },
-  { title: 'Frontend Support Intern', type: 'Internship', mode: 'Hybrid', note: 'Support UI testing, accessibility checks and student-facing product improvements.' },
+export type JobCategory = 'scholarship' | 'internship' | 'campus' | 'part-time';
+
+export type JobListing = {
+  title: string;
+  type: string;
+  mode: string;
+  category: JobCategory;
+  note: string;
+};
+
+export const jobs: JobListing[] = [
+  { title: 'Student Content Contributor', type: 'Part-time', mode: 'Remote', category: 'part-time', note: 'Help turn verified academic updates into short student-friendly posts.' },
+  { title: 'Campus Community Rep', type: 'Volunteer', mode: 'Campus', category: 'campus', note: 'Share official EduReach updates and report useful campus information.' },
+  { title: 'Frontend Support Intern', type: 'Internship', mode: 'Hybrid', category: 'internship', note: 'Support UI testing, accessibility checks and student-facing product improvements.' },
 ];
+
+export const EDUREACH_WHATSAPP = '2349130134969';
+
+export function jobApplyHref(title: string): string {
+  return `https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, I want to apply for: ${title}`)}`;
+}

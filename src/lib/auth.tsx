@@ -14,7 +14,6 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   refreshAuth: () => Promise<void>;
-  startLocalSession: (email: string, name?: string) => void;
   signOut: () => Promise<void>;
 };
 
@@ -119,26 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refreshAuth]);
 
-  const startLocalSession = useCallback((email: string, name = 'Student') => {
-    if (isSupabaseConfigured || !email.trim()) return;
-    localStorage.setItem('edureach-local-user-email', email.trim());
-    const existing = readStoredProfile();
-    if (!existing) {
-      localStorage.setItem(
-        'edureach-student-profile',
-        JSON.stringify({
-          first_name: name.split(' ')[0] || 'EduReach',
-          last_name: name.split(' ').slice(1).join(' ') || 'Student',
-          full_name: name,
-          email: email.trim(),
-          account_type: 'student',
-        }),
-      );
-    }
-    setUser(readLocalUser());
-    setIsLoading(false);
-    dispatchAuthChanged();
-  }, []);
 
   const signOut = useCallback(async () => {
     window.sessionStorage.removeItem('edureach-admin-student-view');
@@ -160,10 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: Boolean(user),
       isLoading,
       refreshAuth,
-      startLocalSession,
       signOut,
     }),
-    [isLoading, refreshAuth, signOut, startLocalSession, user],
+    [isLoading, refreshAuth, signOut, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -26,6 +26,7 @@ export type NewsItem = {
   category: string;
   priority: string;
   source_url: string | null;
+  image_url: string | null;
   published_at: string | null;
   last_verified_at: string | null;
   verification_status: string;
@@ -86,6 +87,15 @@ const fallbackCbtExams = [
   },
 ];
 
+// Real photography for the built-in news feed (Supabase rows carry their own image_url)
+const fallbackNewsPhotos: Record<string, string> = {
+  'jamb-caps-status-guide': '/news/photos/jamb-cbt.jpg',
+  'nelfund-student-loan-checklist': '/news/photos/nelfund.webp',
+  'waec-neco-result-checking': '/news/photos/waec-result.png',
+  'campus-gist-week': '/news/photos/campus.jpg',
+  'student-opportunities': '/news/photos/graduates.jpg',
+};
+
 const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
   id: `news-${n.slug}-${index + 1}`,
   slug: n.slug,
@@ -95,6 +105,7 @@ const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
   category: n.tag.toLowerCase().replace(/[\s/]+/g, '_'),
   priority: 'normal',
   source_url: 'https://edureach.ng',
+  image_url: fallbackNewsPhotos[n.slug] ?? null,
   published_at: new Date(Date.now() - index * 86400000 * 2).toISOString(),
   last_verified_at: new Date().toISOString(),
   verification_status: n.verified ? 'verified' : 'pending',
@@ -188,14 +199,7 @@ export async function fetchService(slug: string): Promise<ServiceItem> {
   }
   const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
   if (item) return item;
-  return {
-    id: `srv-${slug}`,
-    service_key: slug,
-    title: slug.replace(/-/g, ' ').replace(/\\b\\w/g, (c) => c.toUpperCase()),
-    description: 'Comprehensive student service assistance and documentation support.',
-    application_url: null,
-    active: true,
-  };
+  throw new Error('This service is not available. Browse the services catalogue for active student services.');
 }
 
 export async function fetchUpcoming(): Promise<UpcomingItem[]> {
@@ -500,7 +504,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
     try {
       const { data, error } = await supabase
         .from('news_articles')
-        .select('id,slug,title,excerpt,body,category,source_url,published_at,updated_at,published')
+        .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
         .eq('published', true)
         .order('published_at', { ascending: false, nullsFirst: false })
         .limit(30);
@@ -514,6 +518,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
           category: item.category,
           priority: 'normal',
           source_url: item.source_url,
+          image_url: item.image_url ?? null,
           published_at: item.published_at,
           last_verified_at: item.updated_at,
           verification_status: 'verified',
@@ -531,7 +536,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     try {
       const { data, error } = await supabase
         .from('news_articles')
-        .select('id,slug,title,excerpt,body,category,source_url,published_at,updated_at,published')
+        .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
         .eq('slug', slug)
         .eq('published', true)
         .maybeSingle();
@@ -545,6 +550,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
           category: data.category,
           priority: 'normal',
           source_url: data.source_url,
+          image_url: data.image_url ?? null,
           published_at: data.published_at,
           last_verified_at: data.updated_at,
           verification_status: 'verified',
@@ -567,6 +573,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     category: 'academic',
     priority: 'normal',
     source_url: 'https://edureach.ng',
+    image_url: null,
     published_at: new Date().toISOString(),
     last_verified_at: new Date().toISOString(),
     verification_status: 'verified',
@@ -648,4 +655,64 @@ export async function updateAdminServiceRequest(requestId: string, status: strin
   req.status = status;
   req.updated_at = new Date().toISOString();
   return { item: { id: requestId, status, updated_at: req.updated_at } };
+}
+
+export type AdminNewsArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string;
+  category: string;
+  image_url: string | null;
+  source_url: string | null;
+  published: boolean;
+  published_at: string | null;
+  updated_at: string;
+};
+
+export type AdminNewsInput = {
+  title: string;
+  slug?: string;
+  excerpt?: string | null;
+  body: string;
+  category?: string;
+  image_url?: string | null;
+  source_url?: string | null;
+  published?: boolean;
+};
+
+export async function fetchAdminNews(): Promise<AdminNewsArticle[]> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: AdminNewsArticle[] }>('/api/admin/news', { headers });
+  return body.items || [];
+}
+
+export async function createAdminNews(input: AdminNewsInput): Promise<AdminNewsArticle> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ item: AdminNewsArticle }>('/api/admin/news', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function updateAdminNews(id: string, input: Partial<AdminNewsInput>): Promise<AdminNewsArticle> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ item: AdminNewsArticle }>(`/api/admin/news/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function deleteAdminNews(id: string): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  await jsonFetch(`/api/admin/news/${encodeURIComponent(id)}`, { method: 'DELETE', headers });
 }

@@ -1,15 +1,11 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import {
-  ArrowRight,
-  BookOpen,
   Camera,
   Check,
   CheckCircle2,
   GraduationCap,
   School,
-  ShieldCheck,
   Sparkles,
-  User,
   Bell,
   MessageSquare,
   Mail,
@@ -73,13 +69,6 @@ const academicInterestOptions = [
   'Study Abroad & Grants',
 ];
 
-const avatarPresets = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-];
-
 export default function ProfileCompletionPage() {
   const { user } = useAuth();
   const [userId, setUserId] = useState('');
@@ -93,12 +82,12 @@ export default function ProfileCompletionPage() {
   // 10-16. Academic details
   const [school, setSchool] = useState(commonInstitutions[0]);
   const [customSchool, setCustomSchool] = useState('');
-  const [courseProgramme, setCourseProgramme] = useState('Computer Science');
-  const [department, setDepartment] = useState('Computer Science');
+  const [courseProgramme, setCourseProgramme] = useState('');
+  const [department, setDepartment] = useState('');
   const [faculty, setFaculty] = useState(faculties[0]);
   const [level, setLevel] = useState(levels[0]);
-  const [admissionYear, setAdmissionYear] = useState('2024');
-  const [expectedGradYear, setExpectedGradYear] = useState('2028');
+  const [admissionYear, setAdmissionYear] = useState('');
+  const [expectedGradYear, setExpectedGradYear] = useState('');
 
   // 17. Academic interests (optional)
   const [interests, setInterests] = useState<string[]>(['JAMB UTME Prep', 'Undergraduate Scholarships']);
@@ -110,6 +99,15 @@ export default function ProfileCompletionPage() {
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Local initials avatar: no external images. Legacy unsplash presets are ignored.
+  const rawAvatar = (customAvatar || avatarUrl || '').trim();
+  const displayAvatar = rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
+  const avatarInitials =
+    userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
+  const avatarTones = ['#C85841', '#0F172A', '#B45309', '#0E7490'];
+  const avatarTone =
+    avatarTones[[...userName].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarTones.length];
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
@@ -271,7 +269,7 @@ export default function ProfileCompletionPage() {
                 fontSize: '14px',
               }}
             >
-              <CheckCircle2 size={20} color="#D9381E" />
+              <CheckCircle2 size={20} color="#059669" />
               <span>Profile completed successfully! Redirecting to your student dashboard…</span>
             </div>
           )}
@@ -289,13 +287,13 @@ export default function ProfileCompletionPage() {
             {/* 9. PROFILE PHOTO (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Camera size={18} color="#D9381E" />
+                <Camera size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  9. Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
+                  Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
                 </h2>
               </div>
               <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 14px' }}>
-                Select an academic avatar or paste a profile image URL.
+                Your initials show by default, or paste a profile image URL.
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
@@ -305,49 +303,49 @@ export default function ProfileCompletionPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    border: '3px solid #059669',
+                    border: '3px solid #C85841',
                     overflow: 'hidden',
-                    background: '#f1f5f9',
-                    display: 'grid',
-                    placeItems: 'center',
+                    background: avatarTone,
                     flexShrink: 0,
+                    position: 'relative',
                   }}
                 >
-                  {customAvatar || avatarUrl ? (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: '#ffffff',
+                      fontWeight: 900,
+                      fontSize: '20px',
+                    }}
+                  >
+                    {avatarInitials}
+                  </span>
+                  {displayAvatar && (
                     <img
-                      src={customAvatar || avatarUrl}
+                      src={displayAvatar}
                       alt="Avatar"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(event) => {
+                        (event.target as HTMLImageElement).style.display = 'none';
+                      }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                     />
-                  ) : (
-                    <User size={30} color="#64748b" />
                   )}
                 </div>
 
-                {/* AVATAR PRESETS */}
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  {avatarPresets.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setAvatarUrl(preset);
-                        setCustomAvatar('');
-                      }}
-                      style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '50%',
-                        border: avatarUrl === preset ? '3px solid #059669' : '1px solid #e2e8f0',
-                        overflow: 'hidden',
-                        padding: 0,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <img src={preset} alt={`Avatar ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAvatarUrl('');
+                    setCustomAvatar('');
+                  }}
+                  className="hub-outline-btn"
+                  style={{ fontSize: '12px', padding: '8px 14px' }}
+                >
+                  Use my initials instead
+                </button>
 
                 {/* CUSTOM IMAGE INPUT */}
                 <div style={{ flex: '1 1 220px' }}>
@@ -372,7 +370,7 @@ export default function ProfileCompletionPage() {
             {/* 10-13. INSTITUTION & FACULTY DETAILS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <School size={18} color="#D9381E" />
+                <School size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   10–13. Institution &amp; Programme Details
                 </h2>
@@ -382,7 +380,7 @@ export default function ProfileCompletionPage() {
                 {/* 10. INSTITUTION */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    10. Institution / School *
+                    Institution / School *
                   </label>
                   <select
                     value={school}
@@ -427,7 +425,7 @@ export default function ProfileCompletionPage() {
                 {/* 11. COURSE / PROGRAMME */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    11. Course / Programme *
+                    Course / Programme *
                   </label>
                   <input
                     type="text"
@@ -450,7 +448,7 @@ export default function ProfileCompletionPage() {
                 {/* 12. DEPARTMENT */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    12. Department *
+                    Department *
                   </label>
                   <input
                     type="text"
@@ -473,7 +471,7 @@ export default function ProfileCompletionPage() {
                 {/* 13. FACULTY */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    13. Faculty *
+                    Faculty *
                   </label>
                   <select
                     value={faculty}
@@ -503,7 +501,7 @@ export default function ProfileCompletionPage() {
             {/* 14-16. LEVEL & ACADEMIC YEARS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <GraduationCap size={18} color="#D9381E" />
+                <GraduationCap size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   14–16. Level &amp; Academic Timeline
                 </h2>
@@ -513,7 +511,7 @@ export default function ProfileCompletionPage() {
                 {/* 14. CURRENT LEVEL */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    14. Current Level *
+                    Current Level *
                   </label>
                   <select
                     value={level}
@@ -541,7 +539,7 @@ export default function ProfileCompletionPage() {
                 {/* 15. ADMISSION YEAR */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    15. Admission Year *
+                    Admission Year *
                   </label>
                   <input
                     type="number"
@@ -549,6 +547,7 @@ export default function ProfileCompletionPage() {
                     max="2030"
                     value={admissionYear}
                     onChange={(e) => setAdmissionYear(e.target.value)}
+                    placeholder="e.g. 2024"
                     required
                     style={{
                       width: '100%',
@@ -565,7 +564,7 @@ export default function ProfileCompletionPage() {
                 {/* 16. EXPECTED GRADUATION YEAR */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    16. Expected Graduation Year *
+                    Expected Graduation Year *
                   </label>
                   <input
                     type="number"
@@ -573,6 +572,7 @@ export default function ProfileCompletionPage() {
                     max="2035"
                     value={expectedGradYear}
                     onChange={(e) => setExpectedGradYear(e.target.value)}
+                    placeholder="e.g. 2028"
                     required
                     style={{
                       width: '100%',
@@ -591,9 +591,9 @@ export default function ProfileCompletionPage() {
             {/* 17. ACADEMIC INTERESTS (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Sparkles size={18} color="#D9381E" />
+                <Sparkles size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  17. Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
+                  Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
                 </h2>
               </div>
               <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 12px' }}>
@@ -614,9 +614,9 @@ export default function ProfileCompletionPage() {
                         fontSize: '12px',
                         fontWeight: 700,
                         border: '1px solid',
-                        borderColor: selected ? '#D9381E' : '#cbd5e1',
-                        background: selected ? '#ecfdf5' : '#ffffff',
-                        color: selected ? '#047857' : '#475569',
+                        borderColor: selected ? '#C85841' : '#cbd5e1',
+                        background: selected ? '#F9F0EE' : '#ffffff',
+                        color: selected ? '#C85841' : '#475569',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -635,9 +635,9 @@ export default function ProfileCompletionPage() {
             {/* 18. NOTIFICATION PREFERENCES */}
             <section style={{ marginBottom: '26px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <Bell size={18} color="#D9381E" />
+                <Bell size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  18. Notification Preferences
+                  Notification Preferences
                 </h2>
               </div>
 
@@ -658,11 +658,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={emailAlerts}
                     onChange={(e) => setEmailAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Mail size={14} color="#D9381E" /> Email Notifications
+                      <Mail size={14} color="#C85841" /> Email Notifications
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Receive official examination alerts, result check notifications, and scholarship updates.
@@ -686,11 +686,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={whatsappAlerts}
                     onChange={(e) => setWhatsappAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <MessageSquare size={14} color="#D9381E" /> WhatsApp Order &amp; Request Alerts
+                      <MessageSquare size={14} color="#C85841" /> WhatsApp Order &amp; Request Alerts
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Instant WhatsApp delivery when your scratch cards, tokens, or result verification is ready.
@@ -714,7 +714,7 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a' }}>
@@ -748,7 +748,7 @@ export default function ProfileCompletionPage() {
                 type="submit"
                 disabled={saving || savedSuccess}
                 style={{
-                  background: '#D9381E',
+                  background: '#C85841',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',
@@ -759,7 +759,7 @@ export default function ProfileCompletionPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+                  boxShadow: '0 2px 8px rgba(200, 88, 65, 0.25)',
                 }}
               >
                 {saving ? 'Saving Profile…' : 'Save & Open Dashboard'} <ChevronRight size={16} />

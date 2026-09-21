@@ -1,12 +1,21 @@
 import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark from '../src/components/CardIdentityMark';
+import ServiceCard from '../src/components/ServiceCard';
+import FilterPills from '../src/components/FilterPills';
+import SectionHead from '../src/components/SectionHead';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
 
 function initialServiceSearch() {
   return new URLSearchParams(window.location.search).get('q') ?? '';
 }
+
+const filters = [
+  { id: 'ALL', label: 'All Services' },
+  { id: 'LOAN', label: 'NELFUND Loans' },
+  { id: 'EXAMS', label: 'Result & Scratch Cards' },
+  { id: 'ADMISSION', label: 'Admission Letters' },
+];
 
 export default function ServicesCatalogPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -51,7 +60,6 @@ export default function ServicesCatalogPage() {
     <HubLayout>
       <div className="hub-page" style={{ padding: '20px 0 60px' }}>
         <div className="hub-container">
-          {/* COMPACT HEADER (NO LARGE HERO) */}
           <div
             style={{
               display: 'flex',
@@ -61,11 +69,14 @@ export default function ServicesCatalogPage() {
               gap: '12px',
               marginBottom: '20px',
               paddingBottom: '14px',
-              borderBottom: '2px solid #059669',
+              borderBottom: '2px solid #C85841',
             }}
           >
             <div>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: 0 }}>
+              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>
+                STUDENT SERVICES
+              </span>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 0' }}>
                 Services
               </h1>
             </div>
@@ -79,7 +90,6 @@ export default function ServicesCatalogPage() {
             </a>
           </div>
 
-          {/* SEARCH & CATEGORY FILTER */}
           <div
             style={{
               display: 'flex',
@@ -96,17 +106,19 @@ export default function ServicesCatalogPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
-              <Search size={18} style={{ color: '#059669' }} />
+              <Search size={18} style={{ color: '#C85841' }} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search services (e.g. NELFUND, Scratch card, JAMB slip)..."
+                aria-label="Search services"
                 style={{ border: 0, outline: 0, width: '100%', fontSize: '13px', color: '#0f172a' }}
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
+                  aria-label="Clear search"
                   style={{ border: 0, background: 'none', color: '#64748b', cursor: 'pointer', fontSize: '16px' }}
                 >
                   ×
@@ -114,34 +126,7 @@ export default function ServicesCatalogPage() {
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {[
-                { id: 'ALL', label: 'All Services' },
-                { id: 'LOAN', label: 'NELFUND Loans' },
-                { id: 'EXAMS', label: 'Result & Scratch Cards' },
-                { id: 'ADMISSION', label: 'Admission Letters' },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setActiveFilter(cat.id)}
-                  style={{
-                    border: '1px solid',
-                    borderColor: activeFilter === cat.id ? '#059669' : '#e2e8f0',
-                    background: activeFilter === cat.id ? '#059669' : '#f8fafc',
-                    color: activeFilter === cat.id ? '#ffffff' : '#475569',
-                    padding: '6px 12px',
-                    borderRadius: '7px',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
+            <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="Service categories" />
           </div>
 
           {loading && <div className="hub-panel hub-empty">Loading student services…</div>}
@@ -150,30 +135,17 @@ export default function ServicesCatalogPage() {
             <div className="hub-panel hub-empty">No student services matched your search filter.</div>
           )}
 
-          {!loading && !error && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: '16px',
-              }}
-            >
-              {filteredServices.map((service) => (
-                <a
-                  className="ms-service-card"
-                  href={'/services/apply/' + service.service_key}
-                  key={service.id}
-                  style={{ minHeight: '104px' }}
-                >
-                  <div className="ms-service-card-header">
-                    <CardIdentityMark value={`${service.service_key} ${service.title}`} type="service" size="md" />
-                  </div>
-                  <div className="ms-service-body">
-                    <h3 style={{ fontSize: '15px' }}>{service.title}</h3>
-                  </div>
-                </a>
-              ))}
-            </div>
+          {!loading && !error && filteredServices.length > 0 && (
+            <section className="er-section" style={{ marginTop: 0 }}>
+              <SectionHead
+                title={`${filteredServices.length} active service${filteredServices.length === 1 ? '' : 's'}`}
+                href="/services/track"
+                linkLabel="Track a request"
+              />
+              <div className="er-service-grid">
+                {filteredServices.map((service) => <ServiceCard key={service.id} service={service} />)}
+              </div>
+            </section>
           )}
         </div>
       </div>

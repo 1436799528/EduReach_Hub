@@ -5,7 +5,7 @@
   "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "background_color": "#f8fafc",
-  "theme_color": "#1e3a8a",
+  "theme_color": "#C85841",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/icons/edureach-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }

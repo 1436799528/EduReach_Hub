@@ -1,4 +1,4 @@
-import { ArrowLeft, Home, Search, BookOpen, Laptop } from 'lucide-react';
+import { ArrowLeft, Home, BookOpen, Laptop } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 
 export default function NotFoundPage() {
@@ -19,8 +19,8 @@ export default function NotFoundPage() {
               style={{
                 fontSize: '12px',
                 fontWeight: 900,
-                color: '#059669',
-                background: '#ecfdf5',
+                color: '#b91c1c',
+                background: '#fef2f2',
                 padding: '4px 12px',
                 borderRadius: '999px',
                 textTransform: 'uppercase',
@@ -42,7 +42,7 @@ export default function NotFoundPage() {
               <a
                 className="hub-primary-btn"
                 href="/"
-                style={{ textDecoration: 'none', background: '#059669', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ textDecoration: 'none', background: '#C85841', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
                 <Home size={15} /> Portal Home
               </a>

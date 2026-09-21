@@ -440,6 +440,125 @@ app.delete('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res
   }
 });
 
+function slugifyTitle(title: string): string {
+  return title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'article';
+}
+
+async function uniqueNewsSlug(supabase: any, base: string, excludeId?: string): Promise<string> {
+  let candidate = base;
+  for (let attempt = 0; attempt < 25; attempt++) {
+    let query = supabase.from('news_articles').select('id').eq('slug', candidate).limit(1);
+    if (excludeId) query = query.neq('id', excludeId);
+    const { data } = await query;
+    if (!data || data.length === 0) return candidate;
+    candidate = `${base}-${attempt + 2}`;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
+const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_url,published,published_at,updated_at';
+
+app.get('/api/admin/news', requireAdmin, async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('news_articles').select(newsRowSelect).order('updated_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin news list error:', error);
+    res.status(503).json({ error: 'Unable to load newsroom articles.' });
+  }
+});
+
+app.post('/api/admin/news', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const title = String(req.body?.title || '').trim();
+    const bodyText = String(req.body?.body || '').trim();
+    if (!title || !bodyText) return res.status(400).json({ error: 'Article title and body are required.' });
+    const supabase = getServerSupabase();
+    const base = slugifyTitle(String(req.body?.slug || title));
+    const slug = await uniqueNewsSlug(supabase, base);
+    const published = req.body?.published === true;
+    const now = new Date().toISOString();
+    const row = {
+      slug,
+      title,
+      excerpt: req.body?.excerpt ? String(req.body.excerpt).trim() : null,
+      body: bodyText,
+      category: String(req.body?.category || 'general').trim().toLowerCase() || 'general',
+      image_url: req.body?.image_url ? String(req.body.image_url).trim() : null,
+      source_url: req.body?.source_url ? String(req.body.source_url).trim() : null,
+      published,
+      published_at: published ? now : null,
+    };
+    const { data, error } = await supabase.from('news_articles').insert(row).select(newsRowSelect).single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_create', p_entity_type: 'news_article', p_entity_id: data.id, p_metadata: { slug } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin news create error:', error);
+    res.status(500).json({ error: 'Unable to create this article.' });
+  }
+});
+
+app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at').eq('id', req.params.articleId).single();
+    if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (req.body?.title !== undefined) {
+      const title = String(req.body.title).trim();
+      if (!title) return res.status(400).json({ error: 'Article title cannot be empty.' });
+      patch.title = title;
+    }
+    if (req.body?.slug !== undefined) {
+      const base = slugifyTitle(String(req.body.slug || (patch.title as string) || existing.slug));
+      patch.slug = await uniqueNewsSlug(supabase, base, existing.id);
+    }
+    if (req.body?.body !== undefined) {
+      const bodyText = String(req.body.body).trim();
+      if (!bodyText) return res.status(400).json({ error: 'Article body cannot be empty.' });
+      patch.body = bodyText;
+    }
+    if (req.body?.excerpt !== undefined) patch.excerpt = req.body.excerpt ? String(req.body.excerpt).trim() : null;
+    if (req.body?.category !== undefined) patch.category = String(req.body.category).trim().toLowerCase() || 'general';
+    if (req.body?.image_url !== undefined) patch.image_url = req.body.image_url ? String(req.body.image_url).trim() : null;
+    if (req.body?.source_url !== undefined) patch.source_url = req.body.source_url ? String(req.body.source_url).trim() : null;
+    if (req.body?.published !== undefined) {
+      const published = req.body.published === true;
+      patch.published = published;
+      if (published && !existing.published_at) patch.published_at = new Date().toISOString();
+      if (!published) patch.published_at = null;
+    }
+    const { data, error } = await supabase.from('news_articles').update(patch).eq('id', existing.id).select(newsRowSelect).single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_update', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: data.slug } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin news update error:', error);
+    res.status(500).json({ error: 'Unable to update this article.' });
+  }
+});
+
+app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug').eq('id', req.params.articleId).single();
+    if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
+    const { error } = await supabase.from('news_articles').delete().eq('id', existing.id);
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_delete', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: existing.slug } });
+    res.json({ deleted: true });
+  } catch (error) {
+    console.error('Admin news delete error:', error);
+    res.status(500).json({ error: 'Unable to delete this article.' });
+  }
+});
+
 app.get('/api/admin/session', requireAdmin, (req, res) => {
   res.json({ user: (req as AdminRequest).adminUser });
 });
@@ -533,7 +652,7 @@ app.get('/api/news', async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,source_name,source_url,published_at,updated_at,published')
+      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
       .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
     if (error) throw error;
     res.json({ items: (data || []).map(item => ({ ...item, summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
@@ -548,7 +667,7 @@ app.get('/api/news/:slug', async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,source_name,source_url,published_at,updated_at,published')
+      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
       .eq('slug', req.params.slug).eq('published', true).maybeSingle();
     if (error || !data) return res.status(404).json({ error: 'News article not found.' });
     res.json({ item: { ...data, summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });

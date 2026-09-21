@@ -29,6 +29,10 @@ All application routes are registered centrally in `src/app/routes.tsx` and reso
 | **Admin CBT** | `/admin/cbt` | CBT questions management | 🟢 PASS |
 | **Admin Vouchers** | `/admin/vouchers` | Voucher and scratch card inventory | 🟢 PASS |
 | **Admin Users** | `/admin/users` | Student profile records management | 🟢 PASS |
+| **Admin Newsroom** | `/admin/news` | News write/edit/publish/delete CMS | 🟢 PASS |
+| **Admin Analytics** | `/admin/analytics` | Metrics, audit and reports | 🟢 PASS |
+| **Exam Hubs** | `/jamb`, `/waec`, `/neco`, `/post-utme` | Exam information centres | 🟡 REVISE |
+| **Coming Soon** | `/nabteb`, `/support`, `/schools`, `/admission`, `/admission/*`, `/tools`, `/tools/*`, `/services/<inactive-slug>` | Honest placeholder panels for planned sections; each links to active services, tracker and noticeboard | 🟢 PASS |
 
 ## Routing Quality Criteria
 

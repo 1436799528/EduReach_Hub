@@ -1,20 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
   Flag,
-  HelpCircle,
   Send,
-  TimerReset,
-  Wifi,
-  WifiOff,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchCbtQuestions, startCbt, submitCbt } from '../src/lib/api';
-import { getExamProgress, saveExamProgress, queueOfflineSubmission, syncPendingSubmissions } from '../src/lib/cbt-offline';
+import { getExamProgress, saveExamProgress } from '../src/lib/cbt-offline';
 
 type Question = { id: number; text: string; options: string[] };
 
@@ -31,7 +25,6 @@ export default function CbtPracticePage() {
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [attemptId, setAttemptId] = useState('');
   const [restored, setRestored] = useState(false);
-  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -126,7 +119,6 @@ export default function CbtPracticePage() {
   async function handleDirectSubmit() {
     setSubmitting(true);
     setMessage('');
-    const timeSpentSeconds = Math.max(0, durationMinutes * 60 - seconds);
 
     try {
       const activeAttemptId = attemptId || `local-att-${Date.now()}`;
@@ -170,7 +162,7 @@ export default function CbtPracticePage() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img
-                src={examId.includes('waec') ? '/icons/waec.svg' : examId.includes('neco') ? '/icons/neco.svg' : '/icons/jamb.svg'}
+                src={examId.includes('waec') ? '/icons/brands/waec.webp' : examId.includes('neco') ? '/icons/brands/neco.webp' : '/icons/brands/jamb.png'}
                 alt="Exam Body"
                 width={34}
                 height={34}
@@ -197,7 +189,8 @@ export default function CbtPracticePage() {
                   color: '#ffffff',
                   padding: '6px 14px',
                   borderRadius: '8px',
-                  fontFamily: 'monospace',
+                  fontFamily: 'var(--er-font-sans)',
+                  fontVariantNumeric: 'tabular-nums',
                   fontSize: '16px',
                   fontWeight: 900,
                   letterSpacing: '0.05em',
@@ -213,7 +206,7 @@ export default function CbtPracticePage() {
                 onClick={() => setShowSubmitModal(true)}
                 disabled={loading || !questions.length}
                 style={{
-                  background: '#059669',
+                  background: '#C85841',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '8px',
@@ -249,14 +242,7 @@ export default function CbtPracticePage() {
               </div>
             </div>
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) 280px',
-                gap: '18px',
-                alignItems: 'start',
-              }}
-            >
+            <div className="er-cbt-workspace">
               {/* QUESTION WORKSPACE */}
               <section
                 style={{
@@ -277,7 +263,7 @@ export default function CbtPracticePage() {
                     borderBottom: '1px solid #f1f5f9',
                   }}
                 >
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#C85841', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Question {index + 1} of {questions.length}
                   </span>
 
@@ -332,8 +318,8 @@ export default function CbtPracticePage() {
                           padding: '12px 16px',
                           borderRadius: '10px',
                           border: '2px solid',
-                          borderColor: isSelected ? '#059669' : '#e2e8f0',
-                          background: isSelected ? '#ecfdf5' : '#ffffff',
+                          borderColor: isSelected ? '#C85841' : '#e2e8f0',
+                          background: isSelected ? '#F9F0EE' : '#ffffff',
                           color: '#0f172a',
                           textAlign: 'left',
                           fontSize: '14px',
@@ -351,7 +337,7 @@ export default function CbtPracticePage() {
                             placeItems: 'center',
                             fontSize: '12px',
                             fontWeight: 900,
-                            background: isSelected ? '#059669' : '#f1f5f9',
+                            background: isSelected ? '#C85841' : '#f1f5f9',
                             color: isSelected ? '#ffffff' : '#475569',
                             flexShrink: 0,
                           }}
@@ -390,7 +376,6 @@ export default function CbtPracticePage() {
                   <button
                     type="button"
                     className="hub-primary-btn"
-                    style={{ background: '#2563eb' }}
                     disabled={index === questions.length - 1}
                     onClick={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}
                   >
@@ -447,7 +432,7 @@ export default function CbtPracticePage() {
                       border = '1px solid #fde68a';
                     }
                     if (isCurrent) {
-                      border = '2px solid #2563eb';
+                      border = '2px solid #C85841';
                     }
 
                     return (
@@ -479,7 +464,7 @@ export default function CbtPracticePage() {
                     <span>Answered ({answeredCount})</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#d97706' }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#C47612' }} />
                     <span>Flagged ({flaggedCount})</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -539,7 +524,7 @@ export default function CbtPracticePage() {
                   <button
                     type="button"
                     className="hub-primary-btn"
-                    style={{ background: '#059669' }}
+                    style={{ background: '#C85841' }}
                     onClick={() => void handleDirectSubmit()}
                     disabled={submitting}
                   >

@@ -5,17 +5,14 @@ import {
   Lock,
   Mail,
   Phone,
-  ShieldCheck,
-  User,
-  Users,
   Eye,
   EyeOff,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
+import BrandLogo from '../src/components/BrandLogo';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 
@@ -52,11 +49,50 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
   // UI state
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [verifyEmailSent, setVerifyEmailSent] = useState('');
+
+  const modePaths: Record<Mode, string> = {
+    signin: '/login',
+    signup: '/register',
+    forgot: '/forgot-password',
+    reset: '/reset-password',
+    verify: '/verify-email',
+  };
+
+  // Keep the address bar on the canonical route for the visible mode,
+  // preserving query/hash tokens (password recovery links) and ?next=.
+  useEffect(() => {
+    const canonical = modePaths[currentMode] + window.location.search + window.location.hash;
+    const current = window.location.pathname + window.location.search + window.location.hash;
+    if (current !== canonical) window.history.replaceState({}, '', canonical);
+  }, [currentMode]);
+
+  async function resendVerification() {
+    const target = (verifyEmailSent || email).trim();
+    if (!target) {
+      setError('Enter your email address first.');
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      setMessage('Email service is not configured yet — your verification link will send once it is.');
+      return;
+    }
+    try {
+      setBusy(true);
+      setError('');
+      setMessage('');
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: target });
+      if (resendError) throw resendError;
+      setMessage('A new verification email has been sent.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to resend the verification email.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     const {
@@ -117,7 +153,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         if (!firstName.trim()) throw new Error('First Name is required.');
         if (!lastName.trim()) throw new Error('Last Name is required.');
         if (!email.trim() || !email.includes('@')) throw new Error('A valid Email Address is required.');
-        if (!phone.trim() || phone.length < 10) throw new Error('A valid Nigerian phone number is required.');
+        if (phone.replace(/\D/g, '').length < 10) throw new Error('A valid Nigerian phone number is required.');
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
         if (password !== confirmPassword) throw new Error('Passwords do not match.');
         if (!termsAgreed) throw new Error('You must agree to the Terms of Service and Privacy Policy.');
@@ -143,18 +179,20 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           if (signUpError) throw signUpError;
         }
 
-        // Store registration info locally only for unconfigured preview/offline sessions.
-        localStorage.setItem(
-          'edureach-student-profile',
-          JSON.stringify({
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            full_name: fullName,
-            email: email.trim(),
-            phone: phone.trim(),
-            account_type: accountType,
-          })
-        );
+        // Local profile cache for unconfigured preview/offline sessions only.
+        if (!isSupabaseConfigured) {
+          localStorage.setItem(
+            'edureach-student-profile',
+            JSON.stringify({
+              first_name: firstName.trim(),
+              last_name: lastName.trim(),
+              full_name: fullName,
+              email: email.trim(),
+              phone: phone.trim(),
+              account_type: accountType,
+            })
+          );
+        }
         if (!isSupabaseConfigured) {
           localStorage.setItem('edureach-local-user-email', email.trim());
           notifyAuthChanged();
@@ -185,12 +223,16 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           if (signedInSession?.access_token) {
             // The configured bootstrap account can become the first super administrator.
             try { await bootstrapAdmin(); } catch { /* already bootstrapped or not the designated account */ }
-            const adminCheck = await fetch('/api/admin/session', {
-              headers: { Authorization: `Bearer ${signedInSession.access_token}` },
-            });
+            let isAdmin = false;
+            try {
+              const adminCheck = await fetch('/api/admin/session', {
+                headers: { Authorization: `Bearer ${signedInSession.access_token}` },
+              });
+              isAdmin = adminCheck.ok;
+            } catch { /* backend unreachable — continue as a regular student session */ }
             window.sessionStorage.removeItem('edureach-admin-student-view');
             notifyAuthChanged();
-            navigateInApp(adminCheck.ok ? '/admin' : getSafeNextPath());
+            navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
             return;
           }
         } catch (signInErr) {
@@ -251,24 +293,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             letterSpacing: '-0.02em',
           }}
         >
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #D9381E 0%, #B51D04 100%)',
-              color: '#ffffff',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: '16px',
-              fontWeight: 900,
-            }}
-          >
-            ER
-          </div>
-          <span>
-            EduReach<span style={{ color: '#D9381E' }}>.ng</span>
-          </span>
+          <BrandLogo height={44} radius="50%" />
         </a>
       </div>
 
@@ -290,7 +315,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#D9381E',
+              color: '#C85841',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
             }}
@@ -362,7 +387,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#D9381E',
+                color: '#C85841',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -380,7 +405,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#D9381E',
+                  background: '#C85841',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -391,9 +416,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
               <button
                 type="button"
-                onClick={() => {
-                  setMessage('A new verification email has been resent.');
-                }}
+                onClick={() => void resendVerification()}
                 className="hub-outline-btn"
                 style={{ padding: '10px', fontSize: '12px' }}
               >
@@ -410,7 +433,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      1. First Name *
+                      First Name *
                     </label>
                     <input
                       type="text"
@@ -432,7 +455,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      2. Last Name *
+                      Last Name *
                     </label>
                     <input
                       type="text"
@@ -457,7 +480,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 3. EMAIL ADDRESS */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                    3. Email Address *
+                    Email Address *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -484,7 +507,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 4. PHONE NUMBER */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                    4. Phone Number *
+                    Phone Number *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -511,7 +534,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 7. ACCOUNT TYPE — Student / Parent / Teacher */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                    7. Account Type *
+                    Account Type *
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                     {(['student', 'parent', 'teacher'] as const).map((type) => (
@@ -523,9 +546,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#D9381E' : '#cbd5e1',
-                          background: accountType === type ? '#ecfdf5' : '#ffffff',
-                          color: accountType === type ? '#047857' : '#475569',
+                          borderColor: accountType === type ? '#C85841' : '#cbd5e1',
+                          background: accountType === type ? '#F9F0EE' : '#ffffff',
+                          color: accountType === type ? '#C85841' : '#475569',
                           fontWeight: 800,
                           fontSize: '12px',
                           textTransform: 'capitalize',
@@ -542,50 +565,68 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      5. Password *
+                      Password *
                     </label>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 8 chars"
-                      minLength={8}
-                      required
-                      autoComplete="new-password"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Min. 8 chars"
+                        minLength={8}
+                        required
+                        autoComplete="new-password"
+                        style={{
+                          width: '100%',
+                          padding: '10px 30px 10px 12px',
+                          fontSize: '13px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#0f172a',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      6. Confirm Password *
+                      Confirm Password *
                     </label>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-type password"
-                      minLength={8}
-                      required
-                      autoComplete="new-password"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-type password"
+                        minLength={8}
+                        required
+                        autoComplete="new-password"
+                        style={{
+                          width: '100%',
+                          padding: '10px 30px 10px 12px',
+                          fontSize: '13px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#0f172a',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -606,10 +647,10 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#C85841', marginTop: '2px' }}
                   />
                   <span>
-                    8. I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
+                    I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
                   </span>
                 </label>
               </>
@@ -656,7 +697,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#D9381E', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: '#C85841', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -690,17 +731,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#475569' }}>
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      style={{ accentColor: '#D9381E' }}
-                    />
-                    Remember my session
-                  </label>
-                </div>
               </>
             )}
 
@@ -739,43 +769,61 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     New Password
                   </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min. 8 characters"
-                    minLength={8}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      outline: 'none',
-                    }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      minLength={8}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 36px 10px 12px',
+                        fontSize: '13px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Confirm New Password
                   </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat new password"
-                    minLength={8}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      outline: 'none',
-                    }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      minLength={8}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 36px 10px 12px',
+                        fontSize: '13px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -785,7 +833,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               type="submit"
               disabled={busy}
               style={{
-                background: '#D9381E',
+                background: '#C85841',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -798,7 +846,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 justifyContent: 'center',
                 gap: '8px',
                 marginTop: '6px',
-                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+                boxShadow: '0 2px 8px rgba(200, 88, 65, 0.25)',
               }}
             >
               {busy
@@ -835,7 +883,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#D9381E', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer' }}
             >
               Already have an account? Sign in
             </button>
@@ -849,11 +897,17 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#D9381E', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer' }}
             >
               Need an account? Register
             </button>
           )}
+        </div>
+
+        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+          <a href="/" style={{ fontSize: '12.5px', fontWeight: 800, color: '#64748b', textDecoration: 'none' }}>
+            ← Back to portal
+          </a>
         </div>
 
       </div>

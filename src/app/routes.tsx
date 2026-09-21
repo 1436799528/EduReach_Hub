@@ -19,9 +19,27 @@ import AdminQueuePage from '../../pages/AdminQueuePage';
 import AdminCbtPage from '../../pages/AdminCbtPage';
 import AdminVouchersPage from '../../pages/AdminVouchersPage';
 import AdminUsersPage from '../../pages/AdminUsersPage';
+import AdminNewsPage from '../../pages/AdminNewsPage';
 import NotFoundPage from '../../pages/NotFoundPage';
 import ExamHubPage from '../../pages/ExamHubPage';
+import ComingSoonPage from '../../pages/ComingSoonPage';
 import ProtectedRoute from './ProtectedRoute';
+
+// Slugs with a live application workflow. Every other /services/* slug renders
+// an honest coming-soon panel instead of a fabricated service form.
+const liveServiceSlugs = new Set([
+  'nelfund-loan',
+  'results',
+  'scratch-cards',
+  'jamb-slip',
+  'admission-letters',
+]);
+
+function serviceEntry(slug: string): ReactElement {
+  const normalized = slug.toLowerCase();
+  if (liveServiceSlugs.has(normalized)) return <ServiceApplyPage slug={normalized} />;
+  return <ComingSoonPage />;
+}
 
 function protectedDashboard(initialTab: DashboardTab = 'dashboard', openSettings = false): ReactElement {
   return (
@@ -79,6 +97,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/analytics') return <AdminAnalyticsPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
   if (path === '/admin/cbt') return <AdminCbtPage />;
+  if (path === '/admin/news') return <AdminNewsPage />;
   if (path === '/admin/vouchers') return <AdminVouchersPage />;
   if (path === '/admin/users') return <AdminUsersPage />;
 
@@ -87,19 +106,24 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/waec') return <ExamHubPage exam="waec" />;
   if (path === '/neco') return <ExamHubPage exam="neco" />;
   if (path === '/post-utme') return <ExamHubPage exam="post-utme" />;
+  if (path === '/nabteb') return <ComingSoonPage />;
   if (path === '/cbt' || path === '/past-questions') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
   if (path === '/cbt/results') return protectedCbtResult();
-  if (path === '/screening-calculator' || path === '/calculator' || path === '/admission' || path === '/tools' || path === '/schools') return <ScreeningCalculatorPage />;
+  if (path === '/screening-calculator' || path === '/calculator') return <ScreeningCalculatorPage />;
+  if (path === '/admission' || path.startsWith('/admission/')) return <ComingSoonPage />;
+  if (path === '/tools' || path.startsWith('/tools/')) return <ComingSoonPage />;
+  if (path === '/schools') return <ComingSoonPage />;
+  if (path === '/support') return <ComingSoonPage />;
   if (path === '/services') return <ServicesCatalogPage />;
   if (path === '/services/track' || path === '/track') return <ServiceTrackPage />;
   if (path === '/nelfund') return <ServiceApplyPage slug="nelfund-loan" />;
   if (path === '/results') return <ServiceApplyPage slug="results" />;
   if (path.startsWith('/services/apply/')) {
-    return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/apply/'.length))} />;
+    return serviceEntry(decodeURIComponent(path.slice('/services/apply/'.length)));
   }
   if (path.startsWith('/services/') && path !== '/services/track') {
-    return <ServiceApplyPage slug={decodeURIComponent(path.slice('/services/'.length))} />;
+    return serviceEntry(decodeURIComponent(path.slice('/services/'.length)));
   }
   if (path === '/news' || path === '/events') return <NewsPage />;
   if (path.startsWith('/news/')) {
