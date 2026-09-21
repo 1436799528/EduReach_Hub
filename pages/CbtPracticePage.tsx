@@ -170,7 +170,7 @@ export default function CbtPracticePage() {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <img
-                src={examId.includes('waec') ? '/icons/waec.svg' : examId.includes('neco') ? '/icons/neco.svg' : '/icons/jamb.svg'}
+                src={examId.includes('waec') ? '/icons/brands/waec.webp' : examId.includes('neco') ? '/icons/brands/neco.webp' : '/icons/brands/jamb.png'}
                 alt="Exam Body"
                 width={34}
                 height={34}

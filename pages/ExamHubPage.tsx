@@ -8,7 +8,7 @@ type ExamLink = { label: string; href: string };
 const data: Record<ExamKey, { title: string; logo: string; description: string; links: ExamLink[] }> = {
   jamb: {
     title: 'JAMB',
-    logo: '/icons/brands/jamb.svg',
+    logo: '/icons/brands/jamb.png',
     description: 'JAMB UTME, CAPS, results, admission and examination preparation resources.',
     links: [
       { label: 'JAMB CBT Practice', href: '/cbt?mode=JAMB' },
@@ -21,7 +21,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
   },
   waec: {
     title: 'WAEC',
-    logo: '/icons/brands/waec.svg',
+    logo: '/icons/brands/waec.webp',
     description: 'WAEC examination information, results, preparation and study resources.',
     links: [
       { label: 'WAEC CBT Practice', href: '/cbt?mode=WAEC' },
@@ -34,7 +34,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
   },
   neco: {
     title: 'NECO',
-    logo: '/icons/brands/neco.svg',
+    logo: '/icons/brands/neco.webp',
     description: 'NECO examination information, results, preparation and study resources.',
     links: [
       { label: 'NECO CBT Practice', href: '/cbt?mode=NECO' },

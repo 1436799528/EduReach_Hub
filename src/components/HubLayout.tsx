@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
+import BreakingTicker from './BreakingTicker';
 import { useAuth } from '../lib/auth';
 import '../hub-rail.css';
 

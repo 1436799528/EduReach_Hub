@@ -70,12 +70,6 @@ export default function HubHomePage() {
     <HubLayout>
       <div className="er-portal">
         <div className="er-container">
-          <div className="er-notice">
-            <span>EDUREACH</span>
-            <p>JAMB, WAEC, NECO, Post-UTME, admission and student updates.</p>
-            <a href="/news">Noticeboard <ArrowRight size={12} /></a>
-          </div>
-
           <form className="er-search" onSubmit={(e) => {
             e.preventDefault();
             if (search.trim()) navigateInApp(`/services?q=${encodeURIComponent(search.trim())}`);

@@ -172,3 +172,21 @@
 .er-tool-fallback a:hover{border-color:#D9381E}
 .er-tool-fallback a svg{color:#D9381E;flex:none}
 .er-tool-fallback small{display:block;font-size:10px;color:#64748b;font-weight:400}
+
+/* ---- Breaking updates ticker (pauses on hover/focus) ---- */
+.er-ticker{display:flex;align-items:stretch;gap:0;background:#0f5132;color:#fff;min-height:34px;border-bottom:1px solid #0b3d26}
+.er-ticker-badge{flex:none;display:inline-flex;align-items:center;gap:6px;background:#c02220;color:#fff;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:0 12px}
+.er-ticker-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:#fff;animation:er-ticker-blink 1.2s ease-in-out infinite}
+@keyframes er-ticker-blink{0%,100%{opacity:1}50%{opacity:.25}}
+.er-ticker-viewport{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center}
+.er-ticker-track{display:inline-flex;align-items:center;gap:0;white-space:nowrap;animation:er-ticker-scroll linear infinite;will-change:transform}
+.er-ticker-track a{color:#fff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 0}
+.er-ticker-track a:hover{text-decoration:underline}
+.er-ticker-track a::after{content:'•';margin:0 18px;color:#86efac}
+.er-ticker-track a:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+@keyframes er-ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.er-ticker:hover .er-ticker-track,.er-ticker:focus-within .er-ticker-track{animation-play-state:paused}
+.er-ticker-all{flex:none;display:inline-flex;align-items:center;color:#fff;font-size:10px;font-weight:800;text-decoration:none;padding:0 12px;background:rgba(255,255,255,.08)}
+.er-ticker-all:hover{background:rgba(255,255,255,.16)}
+@media (prefers-reduced-motion:reduce){.er-ticker-track{animation:none}.er-ticker-viewport{overflow-x:auto}.er-ticker-badge::before{animation:none}}
+@media(max-width:620px){.er-ticker-all{display:none}}
