@@ -52,11 +52,50 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
   // UI state
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [verifyEmailSent, setVerifyEmailSent] = useState('');
+
+  const modePaths: Record<Mode, string> = {
+    signin: '/login',
+    signup: '/register',
+    forgot: '/forgot-password',
+    reset: '/reset-password',
+    verify: '/verify-email',
+  };
+
+  // Keep the address bar on the canonical route for the visible mode,
+  // preserving query/hash tokens (password recovery links) and ?next=.
+  useEffect(() => {
+    const canonical = modePaths[currentMode] + window.location.search + window.location.hash;
+    const current = window.location.pathname + window.location.search + window.location.hash;
+    if (current !== canonical) window.history.replaceState({}, '', canonical);
+  }, [currentMode]);
+
+  async function resendVerification() {
+    const target = (verifyEmailSent || email).trim();
+    if (!target) {
+      setError('Enter your email address first.');
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      setMessage('Email service is not configured yet — your verification link will send once it is.');
+      return;
+    }
+    try {
+      setBusy(true);
+      setError('');
+      setMessage('');
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: target });
+      if (resendError) throw resendError;
+      setMessage('A new verification email has been sent.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to resend the verification email.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     const {
@@ -336,7 +375,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         {message && (
           <div
             style={{
-              background: '#ecfdf5',
+              background: '#fef2f2',
               border: '1px solid #a7f3d0',
               color: '#047857',
               padding: '10px 14px',
@@ -391,9 +430,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
               <button
                 type="button"
-                onClick={() => {
-                  setMessage('A new verification email has been resent.');
-                }}
+                onClick={() => void resendVerification()}
                 className="hub-outline-btn"
                 style={{ padding: '10px', fontSize: '12px' }}
               >
@@ -410,7 +447,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      1. First Name *
+                      First Name *
                     </label>
                     <input
                       type="text"
@@ -432,7 +469,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      2. Last Name *
+                      Last Name *
                     </label>
                     <input
                       type="text"
@@ -457,7 +494,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 3. EMAIL ADDRESS */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                    3. Email Address *
+                    Email Address *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -484,7 +521,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 4. PHONE NUMBER */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                    4. Phone Number *
+                    Phone Number *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -511,7 +548,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 7. ACCOUNT TYPE — Student / Parent / Teacher */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                    7. Account Type *
+                    Account Type *
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                     {(['student', 'parent', 'teacher'] as const).map((type) => (
@@ -542,50 +579,68 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      5. Password *
+                      Password *
                     </label>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 8 chars"
-                      minLength={8}
-                      required
-                      autoComplete="new-password"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Min. 8 chars"
+                        minLength={8}
+                        required
+                        autoComplete="new-password"
+                        style={{
+                          width: '100%',
+                          padding: '10px 30px 10px 12px',
+                          fontSize: '13px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#0f172a',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
 
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
-                      6. Confirm Password *
+                      Confirm Password *
                     </label>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-type password"
-                      minLength={8}
-                      required
-                      autoComplete="new-password"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-type password"
+                        minLength={8}
+                        required
+                        autoComplete="new-password"
+                        style={{
+                          width: '100%',
+                          padding: '10px 30px 10px 12px',
+                          fontSize: '13px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#0f172a',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -609,7 +664,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     style={{ width: '16px', height: '16px', accentColor: '#D9381E', marginTop: '2px' }}
                   />
                   <span>
-                    8. I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
+                    I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
                   </span>
                 </label>
               </>
@@ -690,17 +745,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: '#475569' }}>
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      style={{ accentColor: '#D9381E' }}
-                    />
-                    Remember my session
-                  </label>
-                </div>
               </>
             )}
 
@@ -739,43 +783,61 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     New Password
                   </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min. 8 characters"
-                    minLength={8}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      outline: 'none',
-                    }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      minLength={8}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 36px 10px 12px',
+                        fontSize: '13px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Confirm New Password
                   </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat new password"
-                    minLength={8}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      outline: 'none',
-                    }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      minLength={8}
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px 36px 10px 12px',
+                        fontSize: '13px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        outline: 'none',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -798,7 +860,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 justifyContent: 'center',
                 gap: '8px',
                 marginTop: '6px',
-                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+                boxShadow: '0 2px 8px rgba(217, 56, 30, 0.25)',
               }}
             >
               {busy
@@ -854,6 +916,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               Need an account? Register
             </button>
           )}
+        </div>
+
+        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+          <a href="/" style={{ fontSize: '12.5px', fontWeight: 800, color: '#64748b', textDecoration: 'none' }}>
+            ← Back to portal
+          </a>
         </div>
 
       </div>

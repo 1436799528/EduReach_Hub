@@ -19,6 +19,7 @@ import AdminQueuePage from '../../pages/AdminQueuePage';
 import AdminCbtPage from '../../pages/AdminCbtPage';
 import AdminVouchersPage from '../../pages/AdminVouchersPage';
 import AdminUsersPage from '../../pages/AdminUsersPage';
+import AdminNewsPage from '../../pages/AdminNewsPage';
 import NotFoundPage from '../../pages/NotFoundPage';
 import ExamHubPage from '../../pages/ExamHubPage';
 import ComingSoonPage from '../../pages/ComingSoonPage';
@@ -96,6 +97,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/analytics') return <AdminAnalyticsPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
   if (path === '/admin/cbt') return <AdminCbtPage />;
+  if (path === '/admin/news') return <AdminNewsPage />;
   if (path === '/admin/vouchers') return <AdminVouchersPage />;
   if (path === '/admin/users') return <AdminUsersPage />;
 

@@ -181,7 +181,7 @@ export default function ScreeningCalculatorPage() {
             <SectionHead title="Keep preparing" href="/cbt" linkLabel="CBT hall" />
             <div className="er-guide-strip">
               <a href="/cbt?mode=POST-UTME">Post-UTME practice <ArrowRight size={11} /></a>
-              <a href="/past-questions">Past questions <ArrowRight size={11} /></a>
+              <a href="/cbt">Past questions <ArrowRight size={11} /></a>
               <a href="/admission">Admission centre <ArrowRight size={11} /></a>
               <a href="/news">Admission updates <ArrowRight size={11} /></a>
             </div>

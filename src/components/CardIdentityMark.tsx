@@ -18,6 +18,8 @@ import {
   Layers,
   Sparkles,
   Briefcase,
+  MessageCircle,
+  BookOpenCheck,
 } from 'lucide-react';
 
 export interface CleanIdentity {
@@ -66,23 +68,8 @@ export function resolveIdentity(
     return { icon: Wallet, image: '/icons/brands/nelfund.png', label: 'NELFUND', tone: 'emerald', ariaLabel: 'NELFUND Services' };
   }
 
-  // News
+  // News (brand-named stories already returned above with real marks)
   if (type === 'news' || v.includes('news') || v.includes('gist')) {
-    if (v.includes('jamb')) {
-      return { icon: GraduationCap, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Updates' };
-    }
-    if (v.includes('nelfund') || v.includes('fund') || v.includes('loan')) {
-      return { icon: Wallet, image: '/icons/brands/nelfund.png', label: 'NELFUND', tone: 'emerald', ariaLabel: 'NELFUND News' };
-    }
-    if (v.includes('waec')) {
-      return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC News' };
-    }
-    if (v.includes('nabteb')) {
-    return { icon: Award, image: '/icons/brands/nabteb.png', label: 'NABTEB', badge: 'EXAMS', tone: 'blue', ariaLabel: 'NABTEB Examination' };
-  }
-  if (v.includes('neco')) {
-      return { icon: Award, image: '/icons/brands/neco.webp', label: 'NECO', tone: 'blue', ariaLabel: 'NECO News' };
-    }
     if (v.includes('result')) {
       return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'EXAMS', tone: 'blue', ariaLabel: 'Exam News' };
     }
@@ -152,6 +139,33 @@ export function resolveIdentity(
       badge: 'PORTAL',
       tone: 'purple',
       ariaLabel: 'Admission Letters & Clearance',
+    };
+  }
+  if (v.includes('transcript') || v.includes('certificate') || v.includes('verific')) {
+    return {
+      icon: FileCheck2,
+      label: 'RECORDS',
+      badge: 'VERIFY',
+      tone: 'blue',
+      ariaLabel: 'Transcripts & Certificate Verification',
+    };
+  }
+  if (v.includes('document')) {
+    return {
+      icon: FileText,
+      label: 'DOCS',
+      badge: 'REQUEST',
+      tone: 'slate',
+      ariaLabel: 'Document Requests',
+    };
+  }
+  if (v.includes('track') || v.includes('reference') || v.includes('request')) {
+    return {
+      icon: Search,
+      label: 'TRACK',
+      badge: 'STATUS',
+      tone: 'crimson',
+      ariaLabel: 'Track Service Request',
     };
   }
   if (v.includes('post-utme') || v.includes('postutme')) {
@@ -224,6 +238,42 @@ export function resolveIdentity(
       ariaLabel: 'Screening & Aggregate Calculator',
     };
   }
+  if (v.includes('school') || v.includes('universit') || v.includes('finder') || v.includes('polytechnic') || v.includes('college')) {
+    return {
+      icon: School,
+      label: 'SCHOOLS',
+      badge: 'FINDER',
+      tone: 'blue',
+      ariaLabel: 'School Finder',
+    };
+  }
+  if (v.includes('event') || v.includes('calendar')) {
+    return {
+      icon: Calendar,
+      label: 'EVENTS',
+      badge: 'DATES',
+      tone: 'purple',
+      ariaLabel: 'Academic Events',
+    };
+  }
+  if (v.includes('wallet') || v.includes('balance')) {
+    return {
+      icon: Wallet,
+      label: 'WALLET',
+      badge: 'FUNDS',
+      tone: 'emerald',
+      ariaLabel: 'Student Wallet',
+    };
+  }
+  if (v.includes('regist') || v.includes('timetable') || v.includes('countdown') || v.includes('course') || v === 'exam' || v.includes(' exam')) {
+    return {
+      icon: BookOpenCheck,
+      label: 'STUDY',
+      badge: 'ACADEMIC',
+      tone: 'purple',
+      ariaLabel: 'Academic Tools',
+    };
+  }
   if (v.includes('scholarship') || v.includes('grant') || v.includes('fund')) {
     return {
       icon: Award,
@@ -234,7 +284,7 @@ export function resolveIdentity(
       ariaLabel: 'Scholarships & Grants',
     };
   }
-  if (v.includes('job') || v.includes('opportun') || v.includes('career')) {
+  if (v.includes('job') || v.includes('opportun') || v.includes('career') || v.includes('intern') || v.includes('part-time') || v.includes('parttime') || v.includes('campus') || v.includes('volunteer') || v.includes('contributor') || v.includes('ambassador') || v.includes('mentor') || v.includes('tutor')) {
     return {
       icon: Briefcase,
       image: '/icons/scholarship.svg',
@@ -245,6 +295,15 @@ export function resolveIdentity(
     };
   }
 
+  if (v.includes('support') || v.includes('help') || v.includes('contact')) {
+    return {
+      icon: MessageCircle,
+      label: 'HELP',
+      badge: 'SUPPORT',
+      tone: 'blue',
+      ariaLabel: 'Student Support',
+    };
+  }
   return {
     icon: Layers,
     label: 'EDUREACH',

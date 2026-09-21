@@ -85,7 +85,7 @@ export default function JobsPage() {
                     }}
                   >
                     <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
-                      <CardIdentityMark value={item.title} type="content" size="sm" />
+                      <CardIdentityMark value={`${item.title} ${item.category} ${item.type}`} type="content" size="sm" />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>

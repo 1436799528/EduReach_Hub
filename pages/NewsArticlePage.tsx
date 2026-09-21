@@ -52,6 +52,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               <h1>{item.title}</h1>
               {item.summary && <p className="hub-article-lead">{item.summary}</p>}
+              {item.image_url && <img className="er-news-hero" src={item.image_url} alt="" />}
 
               <div className="hub-article-body">
                 {item.body

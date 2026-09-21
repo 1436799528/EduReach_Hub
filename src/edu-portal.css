@@ -190,3 +190,21 @@
 .er-ticker-all:hover{background:rgba(255,255,255,.16)}
 @media (prefers-reduced-motion:reduce){.er-ticker-track{animation:none}.er-ticker-viewport{overflow-x:auto}.er-ticker-badge::before{animation:none}}
 @media(max-width:620px){.er-ticker-all{display:none}}
+
+/* Global return-navigation bar (all public pages except home) */
+.er-pagebar{background:#fff;border-bottom:1px solid #e2e8f0}
+.er-pagebar-row{max-width:1180px;margin:0 auto;padding:7px 16px;display:flex;align-items:center;gap:12px}
+.er-pagebar-back{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e2e8f0;color:#0f172a;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer}
+.er-pagebar-back:hover{background:#e2e8f0}
+.er-pagebar-title{font-size:12.5px;font-weight:800;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:center}
+.er-pagebar-home{display:inline-flex;align-items:center;gap:6px;color:#D9381E;font-size:12px;font-weight:800;text-decoration:none;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;padding:5px 11px}
+.er-pagebar-home:hover{background:#fee2e2}
+/* Real news photography fills the thumbnail frame (SVG banners keep contain) */
+.er-news-row img.er-news-photo{object-fit:cover;padding:0;background:#0f172a}
+.er-news-feature img.er-news-photo{object-fit:cover}
+.er-news-hero{width:100%;max-height:340px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin:0 0 14px}
+
+/* Admin student-preview banner inside the student dashboard */
+.er-admin-view-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#0f172a;color:#e2e8f0;font-size:12px;font-weight:700;padding:8px 16px}
+.er-admin-view-banner button{background:#D9381E;color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer}
+.er-admin-view-banner button:hover{background:#B51D04}

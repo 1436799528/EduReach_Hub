@@ -712,8 +712,31 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     );
   }
 
+  const adminStudentView =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('view') === 'student' &&
+    window.sessionStorage.getItem('edureach-admin-student-view') === '1';
+
+  const exitAdminStudentView = () => {
+    try {
+      window.sessionStorage.removeItem('edureach-admin-student-view');
+    } catch {
+      // storage unavailable
+    }
+    window.history.pushState({}, '', '/admin');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   return (
     <div className="edureach-dash-container">
+      {adminStudentView && (
+        <div className="er-admin-view-banner" role="notice">
+          <span>Admin preview — you are browsing the student portal as a student.</span>
+          <button type="button" onClick={exitAdminStudentView}>
+            ← Return to admin
+          </button>
+        </div>
+      )}
       {/* 1. CLEAN NORMAL HEADER (No green utility strip) */}
       <header className="edureach-dash-header">
         <div className="edureach-dash-bar">
@@ -1477,7 +1500,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <h2 className="dash-card-title">
                 <BookOpen size={14} className="dash-card-title-icon" /> Past Question Progress
               </h2>
-              <a href="/past-questions" className="dash-card-link">
+              <a href="/cbt" className="dash-card-link">
                 Continue Practice →
               </a>
             </div>
@@ -1573,7 +1596,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <h2 className="dash-card-title">
                 <Award size={14} className="dash-card-title-icon" /> Scholarships &amp; Funding Watchlist
               </h2>
-              <a href="/scholarships" className="dash-card-link">
+              <a href="/jobs" className="dash-card-link">
                 Browse Grants →
               </a>
             </div>

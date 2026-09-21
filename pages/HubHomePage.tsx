@@ -39,7 +39,7 @@ function Deadline({ item }: { item: UpcomingItem }) {
 }
 
 const toolTiles = [
-  { title: 'Past Question Bank', href: '/past-questions' },
+  { title: 'Past Question Bank', href: '/cbt' },
   { title: 'Screening Calculator', href: '/screening-calculator' },
   { title: 'Track Request', href: '/services/track' },
   { title: 'Scholarships', href: '/scholarships' },
@@ -83,7 +83,7 @@ export default function HubHomePage() {
             <button type="submit">Search</button>
           </form>
 
-          <a href="/past-questions" className="er-banner">
+          <a href="/cbt" className="er-banner">
             <div className="er-banner-art">
               <img src="/icons/services/past-questions.svg" alt="" />
             </div>

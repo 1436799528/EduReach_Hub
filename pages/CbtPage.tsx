@@ -94,7 +94,7 @@ export default function CbtPage() {
           </div>
 
           <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Start a simulator" href="/past-questions" linkLabel="Question bank" />
+            <SectionHead title="Start a simulator" href="/cbt/practice" linkLabel="Question bank" />
             <ExamSimulatorGrid variant="start" />
           </section>
 

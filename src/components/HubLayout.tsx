@@ -13,10 +13,11 @@ import {
   Home,
   Laptop,
   Newspaper,
-  BookOpen,
+  Briefcase,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import BreakingTicker from './BreakingTicker';
+import PageBar from './PageBar';
 import { useAuth } from '../lib/auth';
 import '../hub-rail.css';
 
@@ -51,24 +52,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* UTILITY STRIP */}
-      <div className="er-utility">
-        <div className="er-utility-row">
-          <span className="er-utility-copy">Nigeria&apos;s student portal — CBT, services &amp; verified updates</span>
-          <div className="er-utility-links">
-            <a href="/services/track">Track request</a>
-            <a href="/news">Noticeboard</a>
-            {isAuthenticated ? (
-              <a href="/dashboard">My dashboard</a>
-            ) : (
-              <>
-                <a href="/login">Sign in</a>
-                <a className="er-utility-join" href="/register">Create account</a>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
       {/* CLEAN MAIN HEADER */}
       <header
         style={{
@@ -346,6 +329,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      <BreakingTicker />
+      <PageBar />
+
       {/* MOBILE DRAWER */}
       {mobileOpen && (
         <div
@@ -477,7 +463,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         <a className={path === '/' ? 'active' : ''} href="/"><Home size={18} /><span>Home</span></a>
         <a className={path.startsWith('/cbt') ? 'active' : ''} href="/cbt"><Laptop size={18} /><span>CBT</span></a>
         <a className={path.startsWith('/news') ? 'active' : ''} href="/news"><Newspaper size={18} /><span>News</span></a>
-        <a className={path === '/past-questions' ? 'active' : ''} href="/past-questions"><BookOpen size={18} /><span>Questions</span></a>
+        <a className={path.startsWith('/services') ? 'active' : ''} href="/services"><Briefcase size={18} /><span>Services</span></a>
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
