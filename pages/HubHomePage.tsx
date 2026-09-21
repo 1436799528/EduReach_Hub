@@ -12,7 +12,7 @@ const examModules = [
     key: 'jamb',
     title: 'JAMB',
     route: '/jamb',
-    logo: '/icons/jamb.svg',
+    logo: '/icons/brands/jamb.svg',
     intro: 'UTME, CAPS, results and admission resources',
     links: ['JAMB CBT', 'JAMB Result', 'CAPS & Admission', 'Syllabus & Brochure', 'Past Questions'],
   },
@@ -20,7 +20,7 @@ const examModules = [
     key: 'waec',
     title: 'WAEC',
     route: '/waec',
-    logo: '/icons/waec.svg',
+    logo: '/icons/brands/waec.svg',
     intro: 'SSCE results, preparation and examination resources',
     links: ['WAEC Result', 'WAEC CBT', 'Timetable', 'Syllabus', 'Past Questions'],
   },
@@ -28,7 +28,7 @@ const examModules = [
     key: 'neco',
     title: 'NECO',
     route: '/neco',
-    logo: '/icons/neco.svg',
+    logo: '/icons/brands/neco.svg',
     intro: 'NECO results, preparation and examination information',
     links: ['NECO Result', 'NECO CBT', 'Timetable', 'Registration', 'Past Questions'],
   },
@@ -49,10 +49,10 @@ function formatDate(value: string | null) {
 
 function newsImageFor(item: NewsItem) {
   const category = item.category.toLowerCase();
-  if (category.includes('jamb')) return '/icons/brands/jamb.png';
-  if (category.includes('waec')) return '/icons/brands/waec.png';
-  if (category.includes('neco')) return '/icons/brands/neco.png';
-  if (category.includes('nelfund') || category.includes('fund')) return '/icons/brands/nelfund.png';
+  if (category.includes('jamb')) return '/icons/brands/jamb.svg';
+  if (category.includes('waec')) return '/icons/brands/waec.svg';
+  if (category.includes('neco')) return '/icons/brands/neco.svg';
+  if (category.includes('nelfund') || category.includes('fund')) return '/icons/brands/nelfund.svg';
   return '/news/education.svg';
 }
 

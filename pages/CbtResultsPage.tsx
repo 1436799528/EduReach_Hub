@@ -186,7 +186,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                     <Printer size={13} /> Print Result Slip
                   </button>
                   <a
-                    href="/cbt/practice?exam=practice-exam-jamb"
+                    href={result?.attempt?.exam_id ? `/cbt/practice?exam=${encodeURIComponent(result.attempt.exam_id)}` : '/cbt'}
                     className="hub-primary-btn"
                     style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
                   >

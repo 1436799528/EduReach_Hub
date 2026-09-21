@@ -2305,7 +2305,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                           name: s.school_name,
                           detail: s.institution_type || 'Institution',
                           location: s.state ? `${s.state} State` : 'Nigeria',
-                          href: s.website_url || '',
+                          href: s.website_url || undefined,
                         })
                       }
                       disabled={isSavedItem('school', itemKey(s.school_name))}

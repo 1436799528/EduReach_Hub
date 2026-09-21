@@ -21,6 +21,8 @@ const routeTitles: Record<string, string> = {
   '/events': 'Events',
   '/jobs': 'Jobs',
   '/scholarships': 'Scholarships',
+  '/nabteb': 'NABTEB',
+  '/support': 'Student Support',
   '/nelfund': 'NELFUND',
   '/results': 'Results',
   '/login': 'Sign In',

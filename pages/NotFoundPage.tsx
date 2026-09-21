@@ -42,7 +42,7 @@ export default function NotFoundPage() {
               <a
                 className="hub-primary-btn"
                 href="/"
-                style={{ textDecoration: 'none', background: '#059669', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ textDecoration: 'none', background: '#D9381E', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
                 <Home size={15} /> Portal Home
               </a>

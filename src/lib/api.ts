@@ -188,14 +188,7 @@ export async function fetchService(slug: string): Promise<ServiceItem> {
   }
   const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
   if (item) return item;
-  return {
-    id: `srv-${slug}`,
-    service_key: slug,
-    title: slug.replace(/-/g, ' ').replace(/\\b\\w/g, (c) => c.toUpperCase()),
-    description: 'Comprehensive student service assistance and documentation support.',
-    application_url: null,
-    active: true,
-  };
+  throw new Error('This service is not available. Browse the services catalogue for active student services.');
 }
 
 export async function fetchUpcoming(): Promise<UpcomingItem[]> {
