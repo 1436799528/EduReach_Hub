@@ -108,7 +108,7 @@ export default function ProfileCompletionPage() {
   const displayAvatar = rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
   const avatarInitials =
     userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
-  const avatarTones = ['#D9381E', '#0F172A', '#B45309', '#0E7490'];
+  const avatarTones = ['#B8492F', '#0F172A', '#B45309', '#0E7490'];
   const avatarTone =
     avatarTones[[...userName].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarTones.length];
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -272,7 +272,7 @@ export default function ProfileCompletionPage() {
                 fontSize: '14px',
               }}
             >
-              <CheckCircle2 size={20} color="#D9381E" />
+              <CheckCircle2 size={20} color="#B8492F" />
               <span>Profile completed successfully! Redirecting to your student dashboard…</span>
             </div>
           )}
@@ -290,7 +290,7 @@ export default function ProfileCompletionPage() {
             {/* 9. PROFILE PHOTO (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Camera size={18} color="#D9381E" />
+                <Camera size={18} color="#B8492F" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
                 </h2>
@@ -306,7 +306,7 @@ export default function ProfileCompletionPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    border: '3px solid #D9381E',
+                    border: '3px solid #B8492F',
                     overflow: 'hidden',
                     background: avatarTone,
                     flexShrink: 0,
@@ -373,7 +373,7 @@ export default function ProfileCompletionPage() {
             {/* 10-13. INSTITUTION & FACULTY DETAILS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <School size={18} color="#D9381E" />
+                <School size={18} color="#B8492F" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   10–13. Institution &amp; Programme Details
                 </h2>
@@ -504,7 +504,7 @@ export default function ProfileCompletionPage() {
             {/* 14-16. LEVEL & ACADEMIC YEARS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <GraduationCap size={18} color="#D9381E" />
+                <GraduationCap size={18} color="#B8492F" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   14–16. Level &amp; Academic Timeline
                 </h2>
@@ -592,7 +592,7 @@ export default function ProfileCompletionPage() {
             {/* 17. ACADEMIC INTERESTS (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Sparkles size={18} color="#D9381E" />
+                <Sparkles size={18} color="#B8492F" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
                 </h2>
@@ -615,9 +615,9 @@ export default function ProfileCompletionPage() {
                         fontSize: '12px',
                         fontWeight: 700,
                         border: '1px solid',
-                        borderColor: selected ? '#D9381E' : '#cbd5e1',
-                        background: selected ? '#FFF0E6' : '#ffffff',
-                        color: selected ? '#D9381E' : '#475569',
+                        borderColor: selected ? '#B8492F' : '#cbd5e1',
+                        background: selected ? '#F9F0EE' : '#ffffff',
+                        color: selected ? '#B8492F' : '#475569',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -636,7 +636,7 @@ export default function ProfileCompletionPage() {
             {/* 18. NOTIFICATION PREFERENCES */}
             <section style={{ marginBottom: '26px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <Bell size={18} color="#D9381E" />
+                <Bell size={18} color="#B8492F" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Notification Preferences
                 </h2>
@@ -659,11 +659,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={emailAlerts}
                     onChange={(e) => setEmailAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#B8492F' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Mail size={14} color="#D9381E" /> Email Notifications
+                      <Mail size={14} color="#B8492F" /> Email Notifications
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Receive official examination alerts, result check notifications, and scholarship updates.
@@ -687,11 +687,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={whatsappAlerts}
                     onChange={(e) => setWhatsappAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#B8492F' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <MessageSquare size={14} color="#D9381E" /> WhatsApp Order &amp; Request Alerts
+                      <MessageSquare size={14} color="#B8492F" /> WhatsApp Order &amp; Request Alerts
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Instant WhatsApp delivery when your scratch cards, tokens, or result verification is ready.
@@ -715,7 +715,7 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#B8492F' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a' }}>
@@ -749,7 +749,7 @@ export default function ProfileCompletionPage() {
                 type="submit"
                 disabled={saving || savedSuccess}
                 style={{
-                  background: '#D9381E',
+                  background: '#B8492F',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',

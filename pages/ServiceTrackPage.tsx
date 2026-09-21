@@ -78,10 +78,10 @@ export default function ServiceTrackPage() {
               style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                color: '#D9381E',
+                color: '#B8492F',
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
-                background: '#FFF0E6',
+                background: '#F9F0EE',
                 padding: '4px 12px',
                 borderRadius: '999px',
                 display: 'inline-block',
@@ -161,7 +161,7 @@ export default function ServiceTrackPage() {
                 type="submit"
                 disabled={loading}
                 style={{
-                  background: '#D9381E',
+                  background: '#B8492F',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',
@@ -240,7 +240,7 @@ export default function ServiceTrackPage() {
                     <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '1px 0 2px', letterSpacing: '0.02em' }}>
                       {result.reference_code}
                     </h2>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#D9381E', fontWeight: 700 }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#B8492F', fontWeight: 700 }}>
                       {result.service_catalog?.title || 'EduReach Academic Service Request'}
                     </p>
                   </div>
@@ -343,7 +343,7 @@ export default function ServiceTrackPage() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#475569' }}>
-                  <Clock size={15} color="#D9381E" />
+                  <Clock size={15} color="#B8492F" />
                   <span>
                     Initiated:{' '}
                     <strong>

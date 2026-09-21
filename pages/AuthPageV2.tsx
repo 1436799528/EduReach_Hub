@@ -293,10 +293,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             letterSpacing: '-0.02em',
           }}
         >
-          <BrandLogo height={36} />
-          <span>
-            EduReach<span style={{ color: '#D9381E' }}>.ng</span>
-          </span>
+          <BrandLogo height={44} radius="50%" />
         </a>
       </div>
 
@@ -318,7 +315,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#D9381E',
+              color: '#B8492F',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
             }}
@@ -390,7 +387,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#D9381E',
+                color: '#B8492F',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -408,7 +405,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#D9381E',
+                  background: '#B8492F',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -549,9 +546,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#D9381E' : '#cbd5e1',
-                          background: accountType === type ? '#FFF0E6' : '#ffffff',
-                          color: accountType === type ? '#D9381E' : '#475569',
+                          borderColor: accountType === type ? '#B8492F' : '#cbd5e1',
+                          background: accountType === type ? '#F9F0EE' : '#ffffff',
+                          color: accountType === type ? '#B8492F' : '#475569',
                           fontWeight: 800,
                           fontSize: '12px',
                           textTransform: 'capitalize',
@@ -650,7 +647,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#D9381E', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#B8492F', marginTop: '2px' }}
                   />
                   <span>
                     I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
@@ -700,7 +697,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#D9381E', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: '#B8492F', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -836,7 +833,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               type="submit"
               disabled={busy}
               style={{
-                background: '#D9381E',
+                background: '#B8492F',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -849,7 +846,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 justifyContent: 'center',
                 gap: '8px',
                 marginTop: '6px',
-                boxShadow: '0 2px 8px rgba(217, 56, 30, 0.25)',
+                boxShadow: '0 2px 8px rgba(184, 73, 47, 0.25)',
               }}
             >
               {busy
@@ -886,7 +883,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#D9381E', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#B8492F', fontWeight: 800, cursor: 'pointer' }}
             >
               Already have an account? Sign in
             </button>
@@ -900,7 +897,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#D9381E', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#B8492F', fontWeight: 800, cursor: 'pointer' }}
             >
               Need an account? Register
             </button>

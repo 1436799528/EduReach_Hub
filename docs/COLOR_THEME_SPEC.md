@@ -26,7 +26,7 @@ The interface maintains a balance between:
 ## 2. Core Color Palette
 
 ### Primary — Academic Crimson
-* **HEX:** `#D9381E`
+* **HEX:** `#B8492F`
 * The primary accent represents action, importance, academic urgency, and brand recognition.
 * **Use selectively for:**
   - Important actions
@@ -37,7 +37,7 @@ The interface maintains a balance between:
 * Crimson should be noticeable without becoming the dominant color of every section.
 
 ### Primary Deep — Crimson Red
-* **HEX:** `#B51D04`
+* **HEX:** `#97300F`
 * A deeper version of the primary crimson.
 * **Use for:**
   - Strong emphasis
@@ -45,7 +45,7 @@ The interface maintains a balance between:
   - Contrast against lighter crimson surfaces
 
 ### Secondary — Academic Tangerine
-* **HEX:** `#DE6A1F`
+* **HEX:** `#C9641E`
 * The secondary accent represents energy, activity, speed, and student engagement.
 * **Use for:**
   - Small highlights
@@ -134,8 +134,8 @@ Hierarchy:
 1. **NAVY (`#0F172A`)** → institutional foundation and trust
 2. **SOFT ACADEMIC BLUE (`#FAF8FF`, `#F2F3FF`, `#EAEDFF`)** → primary interface environment
 3. **WHITE (`#FFFFFF`)** → clean content surfaces
-4. **CRIMSON (`#D9381E`)** → important action and brand emphasis
-5. **TANGERINE (`#DE6A1F`)** → energetic secondary accent
+4. **CRIMSON (`#B8492F`)** → important action and brand emphasis
+5. **TANGERINE (`#C9641E`)** → energetic secondary accent
 6. **GREEN (`#16A34A`)** → success and verification
 7. **GOLD (`#CA8A04`)** → trust and recognition
 8. **BURGUNDY (`#54080C`)** → special institutional emphasis

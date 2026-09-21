@@ -69,11 +69,11 @@ export default function ServicesCatalogPage() {
               gap: '12px',
               marginBottom: '20px',
               paddingBottom: '14px',
-              borderBottom: '2px solid #D9381E',
+              borderBottom: '2px solid #B8492F',
             }}
           >
             <div>
-              <span className="hub-eyebrow" style={{ color: '#D9381E', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#B8492F', fontWeight: 800 }}>
                 STUDENT SERVICES
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 0' }}>
@@ -106,7 +106,7 @@ export default function ServicesCatalogPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
-              <Search size={18} style={{ color: '#D9381E' }} />
+              <Search size={18} style={{ color: '#B8492F' }} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

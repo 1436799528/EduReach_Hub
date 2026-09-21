@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return <div className="admin-shell">
     <aside className="admin-sidebar">
       <div>
-        <div className="admin-brand"><BrandLogo height={40} radius={13} /><div><strong>EduReach Admin</strong><span>Production Control</span></div></div>
+        <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
         <nav className="admin-nav">
           <NavLink href="/admin" icon="▦">Operations Dashboard</NavLink>
           <NavLink href="/admin/analytics" icon="◔">Analytics & Reports</NavLink>

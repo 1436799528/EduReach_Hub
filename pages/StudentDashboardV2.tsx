@@ -705,7 +705,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     return (
       <div className="edureach-dash-container" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px' }}>
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px', textAlign: 'center', maxWidth: '420px' }}>
-          <div style={{ margin: '0 auto 12px', display: 'flex', justifyContent: 'center' }}><BrandLogo height={36} /></div>
+          <div style={{ margin: '0 auto 12px', display: 'flex', justifyContent: 'center' }}><BrandLogo height={48} radius="50%" /></div>
           <h1 style={{ margin: '0 0 6px', fontSize: '18px', color: '#0f172a' }}>Loading your student workspace…</h1>
           <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Checking your secure session and syncing dashboard records.</p>
         </div>
@@ -743,10 +743,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="edureach-dash-bar">
           {/* LOGO */}
           <a href="/" className="edureach-dash-brand">
-            <BrandLogo height={32} />
-            <span>
-              EduReach<span style={{ color: '#D9381E' }}>.ng</span>
-            </span>
+            <BrandLogo height={36} radius="50%" />
           </a>
 
           {/* SEARCH BAR (Middle) */}
@@ -806,7 +803,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     {unreadNotifsCount > 0 && (
                       <button
                         onClick={markAllNotifsRead}
-                        style={{ background: 'none', border: 0, color: '#D9381E', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
+                        style={{ background: 'none', border: 0, color: '#B8492F', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
                       >
                         Mark all read
                       </button>
@@ -844,7 +841,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       padding: '8px',
                       fontSize: '11px',
                       fontWeight: 800,
-                      color: '#D9381E',
+                      color: '#B8492F',
                       textDecoration: 'none',
                       background: '#f8fafc',
                     }}
@@ -1109,7 +1106,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 <a
                   href="/profile"
                   className="dash-pill"
-                  style={{ textDecoration: 'none', color: '#D9381E', borderColor: '#fed7aa' }}
+                  style={{ textDecoration: 'none', color: '#B8492F', borderColor: '#F0D2BC' }}
                 >
                   <Edit size={11} /> Edit Profile
                 </a>
@@ -1205,7 +1202,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 className="dash-action-box"
                 onClick={() => setCgpaModalOpen(true)}
               >
-                <div className="dash-action-icon-wrap" style={{ background: '#FFF0E6', color: '#D9381E' }}>
+                <div className="dash-action-icon-wrap" style={{ background: '#F9F0EE', color: '#B8492F' }}>
                   <Calculator size={18} />
                 </div>
                 <div className="dash-action-text">
@@ -1400,7 +1397,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                         <td>
                           <a
                             href={`/dashboard/services?ref=${encodeURIComponent(req.reference_code)}`}
-                            style={{ color: '#D9381E', textDecoration: 'none', fontWeight: 800, fontSize: '11px' }}
+                            style={{ color: '#B8492F', textDecoration: 'none', fontWeight: 800, fontSize: '11px' }}
                           >
                             Track →
                           </a>
@@ -1434,7 +1431,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <div className="dash-metric-strip">
               <div className="dash-metric-card">
                 <span className="dash-metric-label">Average Score</span>
-                <span className="dash-metric-val" style={{ color: averageScore >= 70 ? '#059669' : '#d97706' }}>
+                <span className="dash-metric-val" style={{ color: averageScore >= 70 ? '#059669' : '#BC6A0B' }}>
                   {averageScore}%
                 </span>
               </div>
@@ -1474,7 +1471,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                         </td>
                         <td style={{ color: '#64748b' }}>{fmtDate(a.submitted_at || a.created_at)}</td>
                         <td>
-                          <strong style={{ color: Number(a.score || 0) >= 70 ? '#059669' : '#d97706' }}>{a.score}%</strong>
+                          <strong style={{ color: Number(a.score || 0) >= 70 ? '#059669' : '#BC6A0B' }}>{a.score}%</strong>
                         </td>
                         <td>
                           {a.correct_answers} / {a.total_questions}
@@ -1482,7 +1479,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                         <td>
                           <a
                             href={`/dashboard/cbt/results?attempt=${encodeURIComponent(a.id)}`}
-                            style={{ color: '#D9381E', textDecoration: 'none', fontWeight: 800, fontSize: '11px' }}
+                            style={{ color: '#B8492F', textDecoration: 'none', fontWeight: 800, fontSize: '11px' }}
                           >
                             Scorecard →
                           </a>
@@ -1520,7 +1517,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     <div key={item.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '9px', padding: '11px' }}>
                       <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a', marginBottom: '5px' }}>{item.subject || 'CBT Practice'}</strong>
                       <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden', marginBottom: '5px' }}>
-                        <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: '#D9381E' }} />
+                        <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: '#B8492F' }} />
                       </div>
                       <small style={{ color: '#64748b', fontSize: '10px' }}>{done}/{total} correct • {pct}% score path</small>
                     </div>
@@ -1571,7 +1568,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   >
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        {item.type === 'school' ? <School size={13} color="#D9381E" /> : <GraduationCap size={13} color="#2563eb" />}
+                        {item.type === 'school' ? <School size={13} color="#B8492F" /> : <GraduationCap size={13} color="#2563eb" />}
                         <strong style={{ fontSize: '12px', color: '#0f172a' }}>{item.name}</strong>
                       </div>
                       <p style={{ margin: '0 0 4px', fontSize: '10.5px', color: '#64748b' }}>{item.detail}</p>
@@ -1666,7 +1663,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '10px',
-                    background: notice.read ? '#ffffff' : '#FFF0E6',
+                    background: notice.read ? '#ffffff' : '#F9F0EE',
                     border: '1px solid #e2e8f0',
                     borderRadius: '8px',
                     padding: '9px 11px',
@@ -1678,7 +1675,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     </strong>
                     <span style={{ fontSize: '10px', color: '#64748b' }}>{notice.time}</span>
                   </div>
-                  {!notice.read && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#D9381E', flexShrink: 0 }} />}
+                  {!notice.read && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#B8492F', flexShrink: 0 }} />}
                 </div>
               ))}
             </div>
@@ -1726,7 +1723,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       <a
                         href={`/services/apply/${service.service_key}`}
                         className="dash-pill"
-                        style={{ textDecoration: 'none', background: '#D9381E', color: '#ffffff', borderColor: '#D9381E' }}
+                        style={{ textDecoration: 'none', background: '#B8492F', color: '#ffffff', borderColor: '#B8492F' }}
                       >
                         Open Service
                       </a>
@@ -1764,7 +1761,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 >
                   {activity.kind === 'attempt' && <CheckCircle2 size={15} color="#059669" />}
                   {activity.kind === 'saved' && <BookmarkCheck size={15} color="#2563eb" />}
-                  {activity.kind === 'request' && <ClipboardList size={15} color="#d97706" />}
+                  {activity.kind === 'request' && <ClipboardList size={15} color="#BC6A0B" />}
                   {activity.kind === 'cgpa' && <Calculator size={15} color="#7e22ce" />}
                   <div style={{ flex: 1 }}>
                     <span style={{ fontSize: '11.5px', color: '#0f172a', fontWeight: 600 }}>
@@ -1800,7 +1797,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 10px', textDecoration: 'none', color: '#0f172a' }}
                 >
                   <span style={{ fontSize: '11.5px', fontWeight: 800 }}>{item.label}</span>
-                  <strong style={{ fontSize: '11px', color: '#D9381E' }}>{item.count}</strong>
+                  <strong style={{ fontSize: '11px', color: '#B8492F' }}>{item.count}</strong>
                 </a>
               ))}
             </div>
@@ -1835,7 +1832,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               onClick={() => setWalletOpen(true)}
               style={{
                 width: '100%',
-                background: '#D9381E',
+                background: '#B8492F',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '6px',
@@ -2113,7 +2110,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calculator size={18} color="#D9381E" />
+                <Calculator size={18} color="#B8492F" />
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
                   Nigerian Tertiary CGPA Calculator (5.0 Scale)
                 </h3>
@@ -2219,7 +2216,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 disabled={cgpaSaving}
                 style={{
                   width: '100%',
-                  background: '#D9381E',
+                  background: '#B8492F',
                   border: 0,
                   borderRadius: '6px',
                   padding: '6px',
@@ -2265,7 +2262,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <School size={18} color="#D9381E" />
+                <School size={18} color="#B8492F" />
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
                   Nigerian School &amp; Institution Explorer
                 </h3>
@@ -2336,7 +2333,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       style={{
                         background: isSavedItem('school', itemKey(s.school_name)) ? '#EAF8EE' : '#ffffff',
                         border: '1px solid #cbd5e1',
-                        color: isSavedItem('school', itemKey(s.school_name)) ? '#16A34A' : '#D9381E',
+                        color: isSavedItem('school', itemKey(s.school_name)) ? '#16A34A' : '#B8492F',
                         padding: '4px 8px',
                         borderRadius: '5px',
                         fontSize: '10.5px',
@@ -2354,7 +2351,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                         style={{
                           background: '#ffffff',
                           border: '1px solid #cbd5e1',
-                          color: '#D9381E',
+                          color: '#B8492F',
                           padding: '4px 8px',
                           borderRadius: '5px',
                           fontSize: '10.5px',
@@ -2404,7 +2401,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Compass size={18} color="#D9381E" />
+                <Compass size={18} color="#B8492F" />
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 900, color: '#0f172a' }}>
                   JAMB Course &amp; Cut-Off Benchmark Finder
                 </h3>
@@ -2455,7 +2452,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                         style={{
                           background: isSavedItem('course', itemKey(c.name)) ? '#EAF8EE' : '#ffffff',
                           border: '1px solid #cbd5e1',
-                          color: isSavedItem('course', itemKey(c.name)) ? '#16A34A' : '#D9381E',
+                          color: isSavedItem('course', itemKey(c.name)) ? '#16A34A' : '#B8492F',
                           padding: '2px 6px',
                           borderRadius: '4px',
                           fontSize: '10px',
@@ -2611,7 +2608,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 type="submit"
                 disabled={passwordBusy}
                 style={{
-                  background: '#D9381E',
+                  background: '#B8492F',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '6px',
@@ -2650,7 +2647,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Laptop size={18} color="#D9381E" />
+                    <Laptop size={18} color="#B8492F" />
                     <div>
                       <strong style={{ fontSize: '12px', display: 'block', color: '#0f172a' }}>
                         Current Web Session • Chrome / Windows

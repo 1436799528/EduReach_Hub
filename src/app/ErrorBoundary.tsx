@@ -56,8 +56,8 @@ export default class ErrorBoundary extends Component<Props, State> {
               display: 'grid',
               placeItems: 'center',
               margin: '0 auto 12px',
-              background: '#FFF0E6',
-              color: '#D9381E',
+              background: '#F9F0EE',
+              color: '#B8492F',
               fontWeight: 900,
             }}
           >
@@ -75,7 +75,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               onClick={() => window.location.reload()}
               style={{
                 border: 0,
-                background: '#D9381E',
+                background: '#B8492F',
                 color: '#ffffff',
                 borderRadius: '7px',
                 padding: '8px 12px',

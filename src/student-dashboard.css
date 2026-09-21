@@ -45,13 +45,13 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #D9381E 0%, #B51D04 100%);
+  background: linear-gradient(135deg, #B8492F 0%, #97300F 100%);
   color: #ffffff;
   display: grid;
   place-items: center;
   font-size: 14px;
   font-weight: 900;
-  box-shadow: 0 2px 6px rgba(217, 56, 30, 0.3);
+  box-shadow: 0 2px 6px rgba(184, 73, 47, 0.3);
 }
 
 .edureach-dash-search {
@@ -76,8 +76,8 @@
 
 .edureach-dash-search input:focus {
   background: #ffffff;
-  border-color: #D9381E;
-  box-shadow: 0 0 0 2px rgba(217, 56, 30, 0.15);
+  border-color: #B8492F;
+  box-shadow: 0 0 0 2px rgba(184, 73, 47, 0.15);
 }
 
 .edureach-dash-search-icon {
@@ -226,8 +226,8 @@
 }
 
 .edureach-nav-item.active {
-  background: #FFF0E6;
-  color: #D9381E;
+  background: #F9F0EE;
+  color: #B8492F;
   font-weight: 800;
 }
 
@@ -279,13 +279,13 @@
 }
 
 .dash-card-title-icon {
-  color: #D9381E;
+  color: #B8492F;
 }
 
 .dash-card-link {
   font-size: 11.5px;
   font-weight: 800;
-  color: #D9381E;
+  color: #B8492F;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -294,7 +294,7 @@
 
 .dash-card-link:hover {
   text-decoration: underline;
-  color: #B51D04;
+  color: #97300F;
 }
 
 /* 5. WELCOME & PROFILE SUMMARY */
@@ -384,9 +384,9 @@
 }
 
 .dash-quick-card:hover {
-  border-color: #D9381E;
+  border-color: #B8492F;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(217, 56, 30, 0.08);
+  box-shadow: 0 4px 10px rgba(184, 73, 47, 0.08);
 }
 
 .dash-quick-card-top {
@@ -431,7 +431,7 @@
 
 .dash-action-box:hover {
   background: #ffffff;
-  border-color: #D9381E;
+  border-color: #B8492F;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
@@ -511,9 +511,9 @@
 }
 
 .dash-status-processing {
-  background: #FFF0E6;
+  background: #F9F0EE;
   color: var(--er-tangerine);
-  border: 1px solid #fed7aa;
+  border: 1px solid #F0D2BC;
 }
 
 .dash-status-completed {
@@ -618,7 +618,7 @@
   display: block;
   font-size: 8.5px;
   font-weight: 800;
-  color: #D9381E;
+  color: #B8492F;
   text-transform: uppercase;
   margin-top: 2px;
 }
@@ -678,7 +678,7 @@
 }
 
 .edureach-bottom-link.active {
-  color: #D9381E;
+  color: #B8492F;
   font-weight: 900;
 }
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
  *  production logo file is installed at this path. */
 export const BRAND_LOGO_SRC = '/icons/edureach-logo.png';
 
-export default function BrandLogo({ height = 32, radius = 8 }: { height?: number; radius?: number }) {
+export default function BrandLogo({ height = 32, radius = 8 }: { height?: number; radius?: number | string }) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {

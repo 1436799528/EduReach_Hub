@@ -28,7 +28,7 @@ export default function JobsPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
-              <span className="hub-eyebrow" style={{ color: '#D9381E', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#B8492F', fontWeight: 800 }}>
                 STUDENT OPPORTUNITIES &amp; GRANTS
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
@@ -49,7 +49,7 @@ export default function JobsPage() {
 
           {!filteredJobs.length && (
             <div className="hub-panel hub-empty">
-              <BellRing size={22} style={{ color: '#D9381E', marginBottom: '8px' }} />
+              <BellRing size={22} style={{ color: '#B8492F', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No verified scholarships listed right now.</h3>
               <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b' }}>
                 New scholarships and grants are added only after verification. Message the helpline and we will notify you.
@@ -89,7 +89,7 @@ export default function JobsPage() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#D9381E' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#B8492F' }}>
                           <Tag size={11} /> {item.type}
                         </span>
                         <span>•</span>
@@ -136,8 +136,8 @@ export default function JobsPage() {
                   width: '40px',
                   height: '40px',
                   borderRadius: '8px',
-                  background: '#FFF0E6',
-                  color: '#D9381E',
+                  background: '#F9F0EE',
+                  color: '#B8492F',
                   display: 'grid',
                   placeItems: 'center',
                   flexShrink: 0,

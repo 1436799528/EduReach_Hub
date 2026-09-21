@@ -256,7 +256,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               </div>
               <a
                 href={`/login?next=${encodeURIComponent(`/services/apply/${service.service_key}`)}`}
-                style={{ color: '#D9381E', fontWeight: 800, textDecoration: 'none' }}
+                style={{ color: '#B8492F', fontWeight: 800, textDecoration: 'none' }}
               >
                 Sign in to link account →
               </a>
@@ -497,7 +497,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <button
                     type="submit"
                     className="hub-primary-btn"
-                    style={{ background: '#D9381E' }}
+                    style={{ background: '#B8492F' }}
                     disabled={busy}
                   >
                     {busy ? 'Submitting…' : 'Confirm & Submit'} <Check size={16} />
@@ -571,7 +571,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 <a
                   className="hub-primary-btn"
                   href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/track?ref=${encodeURIComponent(reference)}`}
-                  style={{ textDecoration: 'none', background: '#D9381E' }}
+                  style={{ textDecoration: 'none', background: '#B8492F' }}
                 >
                   <Search size={15} /> Track Application Status
                 </a>

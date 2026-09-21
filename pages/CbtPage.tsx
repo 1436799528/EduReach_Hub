@@ -77,7 +77,7 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#D9381E', fontWeight: 800 }}>CBT HALL</span>
+              <span className="hub-eyebrow" style={{ color: '#B8492F', fontWeight: 800 }}>CBT HALL</span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
                 Timed exam simulators with instant scoring and corrections.
@@ -111,7 +111,7 @@ export default function CbtPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock3 size={20} style={{ color: '#D9381E', flexShrink: 0 }} />
+              <Clock3 size={20} style={{ color: '#B8492F', flexShrink: 0 }} />
               <div>
                 <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>Simulate real exam pressure</span>
