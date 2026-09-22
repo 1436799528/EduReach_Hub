@@ -1,8 +1,6 @@
 import { useState } from 'react';
 
-/** Official EduReach Hub logo. Falls back to the ER monogram tile until the
- *  production logo file is installed at this path. */
-export const BRAND_LOGO_SRC = '/icons/edureach-logo.png';
+export const BRAND_LOGO_SRC = 'https://cdn.phototourl.com/free/2026-09-21-ef5b6526-ef17-4517-9aab-443facfc3d90.png';
 
 export default function BrandLogo({ height = 32, radius = 8 }: { height?: number; radius?: number | string }) {
   const [failed, setFailed] = useState(false);
@@ -18,10 +16,10 @@ export default function BrandLogo({ height = 32, radius = 8 }: { height?: number
   return (
     <img
       src={BRAND_LOGO_SRC}
-      alt="EduReach Hub"
+      alt="EduReach Hub NG"
       height={height}
       onError={() => setFailed(true)}
-      style={{ width: 'auto', height, borderRadius: radius, display: 'block', flex: 'none' }}
+      style={{ width: 'auto', height, maxWidth: '220px', objectFit: 'contain', borderRadius: radius, display: 'block', flex: 'none' }}
     />
   );
 }
