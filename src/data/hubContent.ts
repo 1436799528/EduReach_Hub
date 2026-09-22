@@ -41,6 +41,7 @@ export const jobs: JobListing[] = [
 ];
 
 export const EDUREACH_WHATSAPP = '2349130134969';
+export const EDUREACH_WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029Va5klNXBqbrFpObq350A';
 
 export function jobApplyHref(title: string): string {
   return `https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, I want to apply for: ${title}`)}`;
