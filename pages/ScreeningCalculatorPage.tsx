@@ -94,7 +94,7 @@ export default function ScreeningCalculatorPage() {
                     placeholder="0 – 400"
                     style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
                   />
-                  <small style={{ display: 'block', marginTop: '3px', color: '#64748b', fontWeight: 400 }}>
+                  <small style={{ display: 'block', marginTop: '4px', color: '#64748b', fontWeight: 400, fontSize: '12px' }}>
                     Your JAMB score out of 400.
                   </small>
                 </label>
@@ -110,7 +110,7 @@ export default function ScreeningCalculatorPage() {
                     placeholder="0 – 100"
                     style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
                   />
-                  <small style={{ display: 'block', marginTop: '3px', color: '#64748b', fontWeight: 400 }}>
+                  <small style={{ display: 'block', marginTop: '4px', color: '#64748b', fontWeight: 400, fontSize: '12px' }}>
                     Your screening score out of 100.
                   </small>
                 </label>
@@ -138,7 +138,7 @@ export default function ScreeningCalculatorPage() {
                     </label>
                   ))}
                 </div>
-                <p style={{ margin: '7px 0 0', fontSize: '10.5px', color: '#64748b', lineHeight: 1.45 }}>
+                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }}>
                   These are calculation options, not a claim that every school uses them. Always confirm your school's current screening formula.
                 </p>
               </div>

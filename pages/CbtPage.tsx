@@ -151,33 +151,18 @@ export default function CbtPage() {
           )}
 
           {!loading && !error && filteredExams.length > 0 && (
-            <div style={{ display: 'grid', gap: '10px' }}>
+            <div className="er-bank-list">
               {filteredExams.map((exam) => (
-                <div
-                  key={exam.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '14px',
-                    padding: '16px 18px',
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                <div key={exam.id} className="er-bank-card">
+                  <div className="er-bank-main">
                     <CardIdentityMark value={exam.exam_body} type="service" />
-                    <div>
-                      <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div className="er-bank-copy">
+                      <span className="er-bank-eyebrow">
                         {exam.exam_body} • {exam.subject}
                       </span>
-                      <h3 style={{ margin: '2px 0 0', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
-                        {exam.title}
-                      </h3>
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>
-                        <Clock3 size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />
+                      <h3>{exam.title}</h3>
+                      <span className="er-bank-meta">
+                        <Clock3 size={13} />
                         {exam.duration_minutes} Minutes
                       </span>
                     </div>
@@ -185,14 +170,7 @@ export default function CbtPage() {
 
                   <a
                     href={`/cbt/practice?exam=${encodeURIComponent(exam.id)}`}
-                    className="hub-primary-btn"
-                    style={{
-                      padding: '0 16px',
-                      minHeight: '36px',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      whiteSpace: 'nowrap',
-                    }}
+                    className="hub-primary-btn er-bank-cta"
                   >
                     Take Test <ArrowRight size={14} />
                   </a>
