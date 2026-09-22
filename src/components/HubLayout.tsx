@@ -18,7 +18,7 @@ import HubSideRail from './HubSideRail';
 import PageBar from './PageBar';
 import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
-import { EDUREACH_WHATSAPP } from '../data/hubContent';
+import { EDUREACH_WHATSAPP, EDUREACH_WHATSAPP_CHANNEL } from '../data/hubContent';
 import '../hub-rail.css';
 
 export default function HubLayout({ children }: { children: ReactNode }) {
@@ -512,6 +512,12 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Campus Noticeboard</a>
                 <a href="/jobs" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Scholarships &amp; Grants</a>
                 <a href="/dashboard" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Student Dashboard</a>
+                <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 800 }}>
+                  📢 Follow EduReach Hub NG on WhatsApp
+                </a>
+                <span style={{ color: '#94a3b8', fontSize: '11.5px', lineHeight: 1.5 }}>
+                  Get education updates, opportunities, resources and announcements directly on WhatsApp.
+                </span>
                 <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none' }}>
                   WhatsApp Official Helpline
                 </a>
