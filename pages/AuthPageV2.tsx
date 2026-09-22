@@ -870,9 +870,10 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             paddingTop: '16px',
             borderTop: '1px solid #f1f5f9',
             display: 'flex',
+            flexWrap: 'wrap',
             justifyContent: 'center',
-            gap: '12px',
-            fontSize: '12.5px',
+            gap: '10px 18px',
+            fontSize: '13px',
           }}
         >
           {currentMode !== 'signin' && (
@@ -883,7 +884,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Already have an account? Sign in
             </button>
@@ -897,7 +898,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer' }}
+              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Need an account? Register
             </button>

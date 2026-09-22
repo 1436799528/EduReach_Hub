@@ -25,6 +25,8 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;
+    // Never chain /login?next=/login?next=… (e.g. StrictMode double effects).
+    if (window.location.pathname.startsWith('/login')) return;
     const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     navigateInApp(`/login?next=${encodeURIComponent(next)}`, true);
   }, [isAuthenticated, isLoading]);

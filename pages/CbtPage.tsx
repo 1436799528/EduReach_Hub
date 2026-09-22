@@ -10,10 +10,10 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
-import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams } from '../src/lib/api';
+import { SkeletonRows } from '../src/components/Skeleton';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
@@ -77,26 +77,21 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>CBT HALL</span>
+              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>QUESTION BANKS</span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                Timed exam simulators with instant scoring and corrections.
+                Pick a question bank below — each test opens straight in the timed CBT simulator with an on-screen calculator.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <a className="hub-outline-btn" href="/screening-calculator" style={{ textDecoration: 'none' }}>
                 <Calculator size={14} /> Screening Calculator
               </a>
-              <a className="hub-primary-btn" href="/dashboard/cbt/results" style={{ textDecoration: 'none' }}>
-                <Trophy size={14} /> View Past Results
+              <a className="hub-primary-btn" href="/dashboard/cbt" style={{ textDecoration: 'none' }}>
+                <Trophy size={14} /> My Results
               </a>
             </div>
           </div>
-
-          <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Start a simulator" href="/cbt/practice" linkLabel="Quick start" />
-            <ExamSimulatorGrid variant="start" />
-          </section>
 
           <div
             style={{
@@ -107,46 +102,46 @@ export default function CbtPage() {
               border: '1px solid #e2e8f0',
               borderRadius: '12px',
               padding: '16px 20px',
-              margin: '18px 0 26px',
+              margin: '0 0 22px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Clock3 size={20} style={{ color: '#C85841', flexShrink: 0 }} />
               <div>
-                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Simulate real exam pressure</span>
+                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Countdown, auto-submit and calculator</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CheckCircle2 size={20} style={{ color: '#059669', flexShrink: 0 }} />
               <div>
-                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Instant Evaluation</strong>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Accurate scoring and percentages</span>
+                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Instant Evaluation</strong>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Accurate scoring and percentages</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <BookOpen size={20} style={{ color: '#B45309', flexShrink: 0 }} />
               <div>
-                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Detailed Corrections</strong>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Explanations for all options</span>
+                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Detailed Corrections</strong>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Explanations for all options</span>
               </div>
             </div>
           </div>
 
           <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Filter question banks" />
+            <SectionHead title="Choose an exam" />
             <div style={{ marginBottom: '18px' }}>
               <FilterPills options={modes} active={mode} onChange={changeMode} ariaLabel="Exam categories" />
             </div>
           </section>
 
-          {loading && <div className="hub-panel hub-empty">Loading question banks…</div>}
+          {loading && <SkeletonRows rows={4} label="Loading question banks" />}
           {error && <div className="hub-form-error">{error}</div>}
           {!loading && !error && !filteredExams.length && (
             <div className="hub-panel hub-empty">
               <FileQuestion size={26} style={{ color: '#64748b', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No {mode === 'ALL' ? '' : mode + ' '}exams available yet.</h3>
-              <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Select another category to practice.</p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Select another category to practice.</p>
             </div>
           )}
 

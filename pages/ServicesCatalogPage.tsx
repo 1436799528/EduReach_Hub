@@ -5,6 +5,7 @@ import ServiceCard from '../src/components/ServiceCard';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
+import { SkeletonRows } from '../src/components/Skeleton';
 
 function initialServiceSearch() {
   return new URLSearchParams(window.location.search).get('q') ?? '';
@@ -129,7 +130,7 @@ export default function ServicesCatalogPage() {
             <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="Service categories" />
           </div>
 
-          {loading && <div className="hub-panel hub-empty">Loading student services…</div>}
+          {loading && <SkeletonRows rows={4} label="Loading student services" />}
           {error && <div className="hub-form-error">{error}</div>}
           {!loading && !error && !filteredServices.length && (
             <div className="hub-panel hub-empty">No student services matched your search filter.</div>

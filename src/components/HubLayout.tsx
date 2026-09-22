@@ -104,7 +104,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 padding: '4px 0',
               }}
             >
-              CBT Classroom
+              CBT Practice
             </a>
             <a
               href="/services"
@@ -354,7 +354,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 Home
               </a>
               <a href="/cbt" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                CBT Classroom
+                CBT Practice
               </a>
               <a href="/services" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Services &amp; Scratch Cards
@@ -440,6 +440,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
       {/* MYSCHOOL FOOTER */}
       <footer
+        className="er-footer"
         style={{
           background: '#0f172a',
           color: '#94a3b8',
@@ -451,6 +452,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
       >
         <div className="hub-container">
           <div
+            className="er-footer-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -459,7 +461,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             }}
           >
             {/* COLUMN 1: BRAND */}
-            <div>
+            <div className="er-footer-brand">
               <div style={{ marginBottom: '10px', display: 'inline-flex', padding: '3px', background: '#ffffff', borderRadius: '50%' }}>
                 <BrandLogo height={46} radius="50%" />
               </div>
@@ -474,32 +476,34 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            {/* COLUMN 2: CBT EXAMS */}
+            {/* COLUMN 2: CBT EXAMS — each link starts the simulator directly */}
             <div>
               <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
                 CBT Practice Center
               </h4>
-              <div style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/cbt?mode=JAMB" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB UTME Simulator</a>
-                <a href="/cbt?mode=WAEC" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC SSCE Past Questions</a>
-                <a href="/cbt?mode=NECO" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NECO Exam Practice</a>
-                <a href="/cbt?mode=POST-UTME" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Post-UTME Screening Tests</a>
-                <a href="/dashboard/cbt/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Performance Scorecards</a>
+              <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
+                <a href="/cbt/practice?exam=practice-exam-jamb" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB CBT Simulator</a>
+                <a href="/cbt/practice?exam=practice-exam-waec" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC CBT Practice</a>
+                <a href="/cbt/practice?exam=practice-exam-neco" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NECO CBT Practice</a>
+                <a href="/cbt/practice?exam=practice-exam-post-utme" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Post-UTME Screening Test</a>
+                <a href="/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>All Question Banks</a>
+                <a href="/dashboard/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>My CBT Results</a>
               </div>
             </div>
 
-            {/* COLUMN 3: SERVICES */}
+            {/* COLUMN 3: SERVICES — live application workflows only */}
             <div>
               <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
                 Student Services &amp; Tools
               </h4>
-              <div style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
+              <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
                 <a href="/services/apply/nelfund-loan" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NELFUND Loan Application</a>
-                <a href="/services/apply/scratch-cards" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Buy Scratch Card / Tokens</a>
-                <a href="/services/apply/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC &amp; NECO Result Checking</a>
+                <a href="/services/apply/scratch-cards" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC / NECO Scratch Cards</a>
+                <a href="/services/apply/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC / NECO Result Checking</a>
                 <a href="/services/apply/jamb-slip" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB Exam Slip Printing</a>
-                <a href="/screening-calculator" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Screening Score Calculator</a>
-                <a href="/services/track" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Track Order Reference</a>
+                <a href="/services/apply/admission-letters" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Admission Letters</a>
+                <a href="/screening-calculator" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Screening Calculator</a>
+                <a href="/services/track" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Track Application Status</a>
               </div>
             </div>
 
@@ -508,8 +512,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
                 Community &amp; Support
               </h4>
-              <div style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Campus Noticeboard</a>
+              <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
+                <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>News &amp; Updates</a>
                 <a href="/jobs" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Scholarships &amp; Grants</a>
                 <a href="/dashboard" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Student Dashboard</a>
                 <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 800 }}>

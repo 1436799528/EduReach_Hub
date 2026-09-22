@@ -61,7 +61,9 @@ export function pageTitleFor(pathname: string): string {
   const normalized = pathname.replace(/\/$/, '') || '/';
   if (normalized.startsWith('/services/apply/')) return 'Service Request';
   if (normalized.startsWith('/services/')) return 'Service';
-  if (normalized.startsWith('/dashboard/cbt/results')) return 'CBT Results';
+  if (normalized.startsWith('/dashboard/cbt/results') || normalized.startsWith('/cbt/results')) return 'CBT Results';
   if (normalized.startsWith('/news/')) return 'News Article';
+  if (normalized.startsWith('/admission/')) return 'Admission';
+  if (normalized.startsWith('/tools/')) return 'Academic Tools';
   return routeTitles[normalized] || 'Page Not Found';
 }

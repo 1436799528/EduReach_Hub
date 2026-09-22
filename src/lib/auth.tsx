@@ -76,6 +76,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshAuth = useCallback(async () => {
+    // Local preview sessions resolve synchronously so a fresh sign-in is visible
+    // to ProtectedRoute on the very next render (no redirect-back-to-login race).
+    if (!isSupabaseConfigured) {
+      const localUser = readLocalUser();
+      if (localUser) {
+        setUser(localUser);
+        setIsLoading(false);
+        return;
+      }
+    }
     const nextUser = await resolveCurrentUser();
     setUser(nextUser);
     setIsLoading(false);
@@ -103,7 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void refreshAuth();
     });
 
-    const onAuthChanged = () => void refreshAuth();
+    const onAuthChanged = () => {
+      // Hold protected pages in their loading state while the session is re-read,
+      // instead of bouncing a just-signed-in student back to /login.
+      setIsLoading(true);
+      void refreshAuth();
+    };
     const onStorage = (event: StorageEvent) => {
       if (!event.key || event.key.startsWith('edureach-')) void refreshAuth();
     };

@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { SkeletonArticle } from '../src/components/Skeleton';
 
 function labelFor(category: string) {
   return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -28,7 +29,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
             <ArrowLeft size={16} /> News
           </a>
 
-          {loading && <div className="hub-panel hub-empty">Loading…</div>}
+          {loading && <SkeletonArticle />}
           {error && <div className="hub-form-error">{error}</div>}
 
           {!loading && !error && item && (

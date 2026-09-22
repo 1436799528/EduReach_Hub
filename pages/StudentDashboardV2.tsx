@@ -998,13 +998,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           </button>
           <button
             type="button"
-            className={`edureach-nav-item ${activeTab === 'admission' ? 'active' : ''}`}
-            onClick={() => openDashboardTab('admission')}
-          >
-            <GraduationCap size={15} /> Admission
-          </button>
-          <button
-            type="button"
             className={`edureach-nav-item ${activeTab === 'scholarships' ? 'active' : ''}`}
             onClick={() => openDashboardTab('scholarships')}
           >

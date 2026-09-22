@@ -1,23 +1,26 @@
 import { ArrowRight, Calculator, ScanSearch, Trophy } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import { FeaturedNews, NewsRow, TrendingNews } from '../src/components/NewsSections';
-import { services, type ServiceDefinition } from '../src/data/services';
+import { SkeletonRows } from '../src/components/Skeleton';
+import { EDUREACH_WHATSAPP, hubServices } from '../src/data/hubContent';
 import { fetchNews, fetchUpcoming, type NewsItem, type UpcomingItem } from '../src/lib/api';
-
-const service = (key: string) => services.find((item) => item.key === key);
 
 function navigateInApp(path: string) {
   window.history.pushState({}, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-function LinkTile({ title, href }: { title: string; href: string }) {
+function LinkTile({ title, href, external = false }: { title: string; href: string; external?: boolean }) {
   return (
-    <a className="er-mini-link" href={href}>
+    <a
+      className="er-mini-link"
+      href={href}
+      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+    >
       <CardIdentityMark value={title} type="service" size="sm" />
       <span>{title}</span>
       <ArrowRight size={13} />
@@ -47,24 +50,19 @@ const toolTiles = [
 
 export default function HubHomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     let active = true;
-    void fetchNews().then((items) => active && setNews(items)).catch(() => {});
+    void fetchNews()
+      .then((items) => active && setNews(items))
+      .catch(() => {})
+      .finally(() => active && setNewsLoading(false));
     void fetchUpcoming().then((items) => active && setUpcoming(items)).catch(() => {});
     return () => { active = false; };
   }, []);
-
-  const admission = useMemo(
-    () => ['school-finder', 'course-finder', 'admission-requirements', 'admission-consultation'].map(service).filter(Boolean) as ServiceDefinition[],
-    [],
-  );
-  const fundingTools = useMemo(
-    () => ['nelfund', 'scholarships', 'school-fees', 'support'].map(service).filter(Boolean) as ServiceDefinition[],
-    [],
-  );
 
   return (
     <HubLayout>
@@ -96,8 +94,8 @@ export default function HubHomePage() {
           </a>
 
           <section className="er-section">
-            <SectionHead title="CBT Simulators" href="/cbt" linkLabel="Open CBT hall" />
-            <ExamSimulatorGrid variant="mode" showGuides />
+            <SectionHead title="CBT Simulators" href="/cbt" linkLabel="All question banks" />
+            <ExamSimulatorGrid variant="start" showGuides />
           </section>
 
           <section className="er-section">
@@ -110,7 +108,7 @@ export default function HubHomePage() {
           <section className="er-section">
             <SectionHead title="Featured Updates" href="/news" linkLabel="Noticeboard" />
             <FeaturedNews items={news} />
-            {!news.length && <div className="er-empty">News updates will appear here.</div>}
+            {!news.length && !newsLoading && <div className="er-empty">News updates will appear here.</div>}
           </section>
 
           <div className="er-two-col">
@@ -118,7 +116,8 @@ export default function HubHomePage() {
               <SectionHead title="Latest Educational News" href="/news" linkLabel="View all" />
               <div className="er-news-list">
                 {news.slice(0, 6).map((item) => <NewsRow key={item.id} item={item} />)}
-                {!news.length && <div className="er-empty">News updates will appear here.</div>}
+                {!news.length && newsLoading && <SkeletonRows rows={4} label="Loading news" />}
+                {!news.length && !newsLoading && <div className="er-empty">News updates will appear here.</div>}
               </div>
             </section>
 
@@ -150,22 +149,18 @@ export default function HubHomePage() {
               <section className="er-section">
                 <SectionHead title="Trending" href="/news" linkLabel="More" />
                 <TrendingNews items={news} limit={5} />
-                {!news.length && <div className="er-empty">Trending stories will appear here.</div>}
+                {!news.length && !newsLoading && <div className="er-empty">Trending stories will appear here.</div>}
               </section>
             </div>
           </div>
 
           <section className="er-section">
-            <SectionHead title="Admission &amp; Schools" href="/admission" linkLabel="Explore" />
+            <SectionHead title="Services &amp; Pins" href="/services" linkLabel="All services" />
             <div className="er-link-grid">
-              {admission.map((item) => <LinkTile key={item.key} title={item.title} href={item.route} />)}
-            </div>
-          </section>
-
-          <section className="er-section">
-            <SectionHead title="Funding &amp; Support" href="/services" linkLabel="Explore" />
-            <div className="er-link-grid">
-              {fundingTools.map((item) => <LinkTile key={item.key} title={item.title} href={item.route} />)}
+              {hubServices.map((item) => (
+                <LinkTile key={item.slug} title={item.short} href={`/services/apply/${item.slug}`} />
+              ))}
+              <LinkTile title="Student Support" href={`https://wa.me/${EDUREACH_WHATSAPP}`} external />
             </div>
           </section>
         </div>

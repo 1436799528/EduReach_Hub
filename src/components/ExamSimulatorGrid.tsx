@@ -49,17 +49,22 @@ export const examSimulators: ExamSimulator[] = [
   },
 ];
 
+/** Direct-start URL for a simulator card: no intermediate hall page. */
+export function simulatorStartHref(key: string) {
+  return `/cbt/practice?exam=practice-exam-${key}`;
+}
+
 /**
- * Shared Myschool-style exam simulator grid.
- * variant="mode" links each card to the filtered CBT hall (/cbt?mode=X).
- * variant="start" links each card straight into a practice session.
+ * Shared Myschool-style exam simulator grid. Every card starts its simulator
+ * directly (/cbt/practice?exam=…); variant="mode" is kept for catalog contexts
+ * that deliberately want the filtered question-bank list (/cbt?mode=X).
  *
  * Layout lives in edu-portal.css: 4-up vertical cards on desktop; on mobile the
  * same cards turn horizontal and sit in a 2-row swipe strip (Myschool "Take a
  * test" pattern) with the next column peeking in from the right edge.
  */
 export default function ExamSimulatorGrid({
-  variant = 'mode',
+  variant = 'start',
   showGuides = false,
 }: {
   variant?: 'mode' | 'start';
@@ -72,7 +77,7 @@ export default function ExamSimulatorGrid({
           <a
             key={exam.key}
             className={`er-sim-card er-sim-${exam.key}`}
-            href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : `/cbt/practice?exam=practice-exam-${exam.key}`}
+            href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : simulatorStartHref(exam.key)}
           >
             <span className="er-sim-top">
               <img src={exam.logo} alt="" width={40} height={40} loading="lazy" />

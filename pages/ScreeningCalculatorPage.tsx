@@ -179,12 +179,12 @@ export default function ScreeningCalculatorPage() {
           </div>
 
           <section className="er-section">
-            <SectionHead title="Keep preparing" href="/cbt" linkLabel="CBT hall" />
+            <SectionHead title="Keep preparing" href="/cbt" linkLabel="Question banks" />
             <div className="er-guide-strip">
-              <a href="/cbt?mode=POST-UTME">Post-UTME practice <ArrowRight size={11} /></a>
-              <a href="/cbt">Past questions <ArrowRight size={11} /></a>
-              <a href="/admission">Admission centre <ArrowRight size={11} /></a>
-              <a href="/news">Admission updates <ArrowRight size={11} /></a>
+              <a href="/cbt/practice?exam=practice-exam-post-utme">Start Post-UTME test <ArrowRight size={11} /></a>
+              <a href="/post-utme">Post-UTME guide <ArrowRight size={11} /></a>
+              <a href="/services/apply/admission-letters">Admission letters <ArrowRight size={11} /></a>
+              <a href="/news?category=admission">Admission updates <ArrowRight size={11} /></a>
             </div>
           </section>
         </div>

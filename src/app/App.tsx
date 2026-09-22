@@ -126,5 +126,11 @@ export default function App() {
     recordPageView(locationState.pathname);
   }, [locationState.pathname]);
 
-  return <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>;
+  return (
+    <>
+      {/* Thin top progress bar: in-app navigation never triggers the browser's own loading UI. */}
+      <div key={`progress:${locationState.routeKey}`} className="er-route-progress" aria-hidden="true" />
+      <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+    </>
+  );
 }

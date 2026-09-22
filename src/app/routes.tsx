@@ -109,7 +109,12 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/nabteb') return <ComingSoonPage />;
   if (path === '/cbt' || path === '/past-questions') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
-  if (path === '/cbt/results') return protectedCbtResult();
+  // Public scorecard route: guests who finish a practice test land here with
+  // their locally stored result; signed-in students get the saved attempt.
+  if (path === '/cbt/results') return <CbtResultsPage />;
+  if (path.startsWith('/cbt/results/')) {
+    return <CbtResultsPage attemptId={decodeURIComponent(path.slice('/cbt/results/'.length))} />;
+  }
   if (path === '/screening-calculator' || path === '/calculator') return <ScreeningCalculatorPage />;
   if (path === '/admission' || path.startsWith('/admission/')) return <ComingSoonPage />;
   if (path === '/tools' || path.startsWith('/tools/')) return <ComingSoonPage />;
