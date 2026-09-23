@@ -20,20 +20,6 @@ function readLocation() {
   };
 }
 
-function serviceActivityFor(pathname: string): { key: string; title: string; category: string } | null {
-  if (pathname === '/cbt' || pathname === '/past-questions') return { key: 'cbt-practice', title: 'CBT & Past Question Bank', category: 'CBT Practice' };
-  if (pathname === '/screening-calculator' || pathname === '/calculator' || pathname === '/admission') return { key: 'admission-tools', title: 'Admission & Screening Calculator', category: 'Academic Tool' };
-  if (pathname === '/schools') return { key: 'school-finder', title: 'School Finder', category: 'Academic Tool' };
-  if (pathname === '/jobs' || pathname === '/scholarships') return { key: 'scholarships', title: 'Scholarships & Grants', category: 'Funding' };
-  if (pathname === '/nelfund') return { key: 'nelfund-loan', title: 'NELFUND Loan Application', category: 'Student Service' };
-  if (pathname === '/results') return { key: 'results', title: 'WAEC / NECO Result Checking', category: 'Student Service' };
-  if (pathname.startsWith('/services/apply/')) {
-    const slug = decodeURIComponent(pathname.slice('/services/apply/'.length));
-    return { key: slug, title: slug.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()), category: 'Student Service' };
-  }
-  return null;
-}
-
 function analyticsSessionId() {
   const key = 'edureach-analytics-session';
   try {
@@ -59,28 +45,6 @@ function recordPageView(pathname: string) {
       referrer: document.referrer || null,
     }),
   }).catch(() => undefined);
-}
-
-function recordServiceActivity(pathname: string, href: string) {
-  const item = serviceActivityFor(pathname);
-  if (!item) return;
-
-  try {
-    const current = JSON.parse(localStorage.getItem('edureach-accessed-services') || '[]');
-    const list = Array.isArray(current) ? current : [];
-    const existing = list.find((entry: any) => entry.key === item.key);
-    const nextItem = {
-      ...item,
-      href,
-      lastAccessedAt: new Date().toISOString(),
-      count: existing ? Number(existing.count || 0) + 1 : 1,
-    };
-    const next = [nextItem, ...list.filter((entry: any) => entry.key !== item.key)].slice(0, 12);
-    localStorage.setItem('edureach-accessed-services', JSON.stringify(next));
-    window.dispatchEvent(new Event('edureach-activity-changed'));
-  } catch {
-    // Local activity tracking is best-effort only.
-  }
 }
 
 export default function App() {
@@ -112,7 +76,6 @@ export default function App() {
       const next = `${url.pathname}${url.search}${url.hash}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       if (next !== current) window.history.pushState({}, '', next);
-      recordServiceActivity(url.pathname, next);
       setLocationState({ pathname: url.pathname, routeKey: `${url.pathname}${url.search}` });
       scrollForNavigation(url.hash);
     };

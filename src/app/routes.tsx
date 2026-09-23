@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import HubHomePage from '../../pages/HubHomePage';
 import AuthPageV2 from '../../pages/AuthPageV2';
@@ -49,6 +50,14 @@ function protectedDashboard(initialTab: DashboardTab = 'dashboard', openSettings
   );
 }
 
+function RedirectTo({ path }: { path: string }): ReactElement {
+  useEffect(() => {
+    window.history.replaceState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [path]);
+  return <></>;
+}
+
 function protectedProfile(): ReactElement {
   return (
     <ProtectedRoute>
@@ -74,24 +83,19 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/reset-password') return <AuthPageV2 mode="reset" />;
   if (path === '/verify-email') return <AuthPageV2 mode="verify" />;
 
-  if (path === '/profile/complete' || path === '/profile') return protectedProfile();
-  if (path === '/settings') return protectedDashboard('settings', true);
+  if (path === '/profile/complete' || path === '/profile' || path === '/dashboard/profile') return protectedProfile();
+  if (path === '/settings' || path === '/dashboard/settings') return protectedDashboard('dashboard', true);
 
-  if (path === '/dashboard') return protectedDashboard('dashboard');
-  if (path === '/dashboard/services') return protectedDashboard('services');
-  if (path === '/dashboard/applications') return protectedDashboard('applications');
-  if (path === '/dashboard/cbt') return protectedDashboard('cbt');
+  // Four dashboard pages: Overview · My Requests · My CBT · Tools & Saved.
+  if (path === '/dashboard' || path === '/dashboard/notifications') return protectedDashboard('dashboard');
+  if (path === '/dashboard/services' || path === '/dashboard/applications') return protectedDashboard('services');
+  if (path === '/dashboard/cbt' || path === '/dashboard/past-questions') return protectedDashboard('cbt');
   if (path === '/dashboard/cbt/results') return protectedCbtResult();
   if (path.startsWith('/dashboard/cbt/results/')) {
     return protectedCbtResult(decodeURIComponent(path.slice('/dashboard/cbt/results/'.length)));
   }
-  if (path === '/dashboard/past-questions') return protectedDashboard('past-questions');
-  if (path === '/dashboard/saved') return protectedDashboard('saved');
-  if (path === '/dashboard/scholarships') return protectedDashboard('scholarships');
-  if (path === '/dashboard/notifications') return protectedDashboard('notifications');
-  if (path === '/dashboard/tools') return protectedDashboard('tools');
-  if (path === '/dashboard/profile') return protectedProfile();
-  if (path === '/dashboard/settings') return protectedDashboard('settings', true);
+  if (path === '/dashboard/tools' || path === '/dashboard/saved') return protectedDashboard('tools');
+  if (path === '/dashboard/scholarships') return <RedirectTo path="/jobs" />;
 
   if (path === '/admin') return <AdminDashboardPage />;
   if (path === '/admin/analytics') return <AdminAnalyticsPage />;

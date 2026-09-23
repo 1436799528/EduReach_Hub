@@ -6,7 +6,6 @@ import {
   ScanSearch,
   User,
   ShieldCheck,
-  Bell,
   LogOut,
   LayoutDashboard,
   Home,
@@ -195,23 +194,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
             {isAuthenticated && (
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <a
-                  href="/dashboard/notifications"
-                  aria-label="Notifications"
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    display: 'grid',
-                    placeItems: 'center',
-                    borderRadius: '7px',
-                    border: '1px solid #e2e8f0',
-                    background: '#ffffff',
-                    color: '#334155',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <Bell size={15} />
-                </a>
                 <button
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
@@ -258,10 +240,10 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                       <User size={14} /> Profile
                     </a>
                     <a href="/dashboard/services" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
-                      <ScanSearch size={14} /> My Services
+                      <ScanSearch size={14} /> My Requests
                     </a>
                     <a href="/dashboard/cbt" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
-                      <Laptop size={14} /> CBT Practice
+                      <Laptop size={14} /> My CBT
                     </a>
                     <button
                       type="button"
