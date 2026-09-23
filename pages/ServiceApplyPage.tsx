@@ -556,7 +556,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a
                   className="hub-primary-btn"
-                  href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/track?ref=${encodeURIComponent(reference)}`}
+                  href={`/services/track?ref=${encodeURIComponent(reference)}`}
                   style={{ textDecoration: 'none', background: '#C85841' }}
                 >
                   <Search size={15} /> Track Application Status

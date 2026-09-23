@@ -9,6 +9,18 @@ export default defineConfig(() => ({
       '@': path.resolve(__dirname, '.'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        // Stable vendor chunks so a redeploy does not invalidate React/Supabase in the browser cache.
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
+  },
   server: {
     allowedHosts: true as const,
     // HMR can be disabled in environments that set DISABLE_HMR.

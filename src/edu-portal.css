@@ -404,6 +404,8 @@ body.er-exam-mode .er-pagebar{display:none!important}
 .er-skeleton-article{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px}
 .er-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .er-route-progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:3000;background:linear-gradient(90deg,#C85841,#f0a08f);border-radius:0 3px 3px 0;pointer-events:none;animation:er-route-progress .55s cubic-bezier(.2,.7,.2,1) forwards}
+.er-route-progress.is-pending{animation:er-route-pending 2.4s cubic-bezier(.1,.6,.2,1) forwards}
+@keyframes er-route-pending{0%{width:0;opacity:1}100%{width:86%;opacity:1}}
 @keyframes er-route-progress{0%{width:0;opacity:1}70%{width:82%;opacity:1}100%{width:100%;opacity:0}}
 @media(prefers-reduced-motion:reduce){.er-route-progress,.er-skel,.er-exam-timer.is-critical{animation:none}}
 .er-skel{background:linear-gradient(90deg,#e9eef4 25%,#f5f7fa 37%,#e9eef4 63%);background-size:400% 100%;border-radius:8px;animation:er-skel 1.3s ease infinite}
@@ -453,3 +455,8 @@ body.er-exam-mode .er-pagebar{display:none!important}
   .er-footer-links a{min-height:32px}
   .er-footer-links span{font-size:12px!important;line-height:1.5}
 }
+
+/* Lazy route fallback: keeps the page shape while a code chunk downloads */
+.er-route-fallback{min-height:100vh;background:#FAF8FF}
+.er-route-fallback-bar{height:58px;background:#fff;border-bottom:1px solid #e2e8f0}
+.er-route-fallback-body{max-width:1100px;margin:0 auto;padding:24px 16px;display:grid;gap:14px}

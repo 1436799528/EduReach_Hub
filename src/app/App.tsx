@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState, useTransition } from 'react';
 import ErrorBoundary from './ErrorBoundary';
+import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
 import { pageTitleFor } from '../lib/pageMeta';
 
@@ -49,10 +50,25 @@ function recordPageView(pathname: string) {
 
 export default function App() {
   const [locationState, setLocationState] = useState(readLocation);
+  // Route changes run as transitions: when the next page's code chunk is still
+  // downloading (see routes.tsx), the current page stays on screen and the
+  // progress bar shows "pending" instead of flashing a skeleton.
+  const [isPending, startTransition] = useTransition();
+  const pendingHash = useRef<string | null>(null);
+  const currentRouteKey = useRef(locationState.routeKey);
+  currentRouteKey.current = locationState.routeKey;
+
+  useEffect(() => {
+    if (pendingHash.current === null) return;
+    scrollForNavigation(pendingHash.current);
+    pendingHash.current = null;
+  }, [locationState.routeKey]);
 
   useEffect(() => {
     const syncPath = () => {
-      setLocationState(readLocation());
+      // Always publish a fresh location object: the dashboard relies on it to
+      // re-sync its tab after a silent pushState + browser back.
+      startTransition(() => setLocationState(readLocation()));
       scrollForNavigation(window.location.hash);
     };
     window.addEventListener('popstate', syncPath);
@@ -76,8 +92,15 @@ export default function App() {
       const next = `${url.pathname}${url.search}${url.hash}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       if (next !== current) window.history.pushState({}, '', next);
-      setLocationState({ pathname: url.pathname, routeKey: `${url.pathname}${url.search}` });
-      scrollForNavigation(url.hash);
+      const routeKey = `${url.pathname}${url.search}`;
+      if (routeKey === currentRouteKey.current) {
+        // Same page (or hash-only change): nothing new to load, scroll right away.
+        scrollForNavigation(url.hash);
+      } else {
+        // Scroll once the new page has actually committed (after its chunk loads).
+        pendingHash.current = url.hash;
+      }
+      startTransition(() => setLocationState({ pathname: url.pathname, routeKey }));
     };
 
     document.addEventListener('click', handleInternalLink);
@@ -93,7 +116,13 @@ export default function App() {
     <>
       {/* Thin top progress bar: in-app navigation never triggers the browser's own loading UI. */}
       <div key={`progress:${locationState.routeKey}`} className="er-route-progress" aria-hidden="true" />
-      <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+      {isPending && <div className="er-route-progress is-pending" aria-hidden="true" />}
+      {/* Suspense stays mounted across routes (only the inner tree is keyed) so a
+          transition keeps the current page visible while the next chunk loads;
+          the skeleton fallback only appears on a cold load. */}
+      <Suspense fallback={<RouteFallback />}>
+        <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+      </Suspense>
     </>
   );
 }

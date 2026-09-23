@@ -1,30 +1,36 @@
-import { useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import HubHomePage from '../../pages/HubHomePage';
-import AuthPageV2 from '../../pages/AuthPageV2';
-import ProfileCompletionPage from '../../pages/ProfileCompletionPage';
-import StudentDashboardV2, { type DashboardTab } from '../../pages/StudentDashboardV2';
-import CbtPage from '../../pages/CbtPage';
-import CbtPracticePage from '../../pages/CbtPracticePage';
-import CbtResultsPage from '../../pages/CbtResultsPage';
-import ScreeningCalculatorPage from '../../pages/ScreeningCalculatorPage';
-import ServicesCatalogPage from '../../pages/ServicesCatalogPage';
-import ServiceApplyPage from '../../pages/ServiceApplyPage';
-import ServiceTrackPage from '../../pages/ServiceTrackPage';
-import NewsPage from '../../pages/NewsPage';
-import NewsArticlePage from '../../pages/NewsArticlePage';
-import JobsPage from '../../pages/JobsPage';
-import AdminDashboardPage from '../../pages/AdminDashboardPage';
-import AdminAnalyticsPage from '../../pages/AdminAnalyticsPage';
-import AdminQueuePage from '../../pages/AdminQueuePage';
-import AdminCbtPage from '../../pages/AdminCbtPage';
-import AdminVouchersPage from '../../pages/AdminVouchersPage';
-import AdminUsersPage from '../../pages/AdminUsersPage';
-import AdminNewsPage from '../../pages/AdminNewsPage';
-import NotFoundPage from '../../pages/NotFoundPage';
 import ExamHubPage from '../../pages/ExamHubPage';
+import CbtPage from '../../pages/CbtPage';
+import NotFoundPage from '../../pages/NotFoundPage';
 import ComingSoonPage from '../../pages/ComingSoonPage';
 import ProtectedRoute from './ProtectedRoute';
+import type { DashboardTab } from '../../pages/StudentDashboardV2';
+
+// Route-level code splitting. The home page, exam hubs and the CBT hall ship in
+// the main bundle; everything else is fetched the first time a student opens it,
+// so a phone on mobile data never downloads the admin console or the dashboard
+// just to read the home page. App.tsx wraps routes in <Suspense>.
+const AuthPageV2 = lazy(() => import('../../pages/AuthPageV2'));
+const ProfileCompletionPage = lazy(() => import('../../pages/ProfileCompletionPage'));
+const StudentDashboardV2 = lazy(() => import('../../pages/StudentDashboardV2'));
+const CbtPracticePage = lazy(() => import('../../pages/CbtPracticePage'));
+const CbtResultsPage = lazy(() => import('../../pages/CbtResultsPage'));
+const ScreeningCalculatorPage = lazy(() => import('../../pages/ScreeningCalculatorPage'));
+const ServicesCatalogPage = lazy(() => import('../../pages/ServicesCatalogPage'));
+const ServiceApplyPage = lazy(() => import('../../pages/ServiceApplyPage'));
+const ServiceTrackPage = lazy(() => import('../../pages/ServiceTrackPage'));
+const NewsPage = lazy(() => import('../../pages/NewsPage'));
+const NewsArticlePage = lazy(() => import('../../pages/NewsArticlePage'));
+const JobsPage = lazy(() => import('../../pages/JobsPage'));
+const AdminDashboardPage = lazy(() => import('../../pages/AdminDashboardPage'));
+const AdminAnalyticsPage = lazy(() => import('../../pages/AdminAnalyticsPage'));
+const AdminQueuePage = lazy(() => import('../../pages/AdminQueuePage'));
+const AdminCbtPage = lazy(() => import('../../pages/AdminCbtPage'));
+const AdminVouchersPage = lazy(() => import('../../pages/AdminVouchersPage'));
+const AdminUsersPage = lazy(() => import('../../pages/AdminUsersPage'));
+const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 
 // Slugs with a live application workflow. Every other /services/* slug renders
 // an honest coming-soon panel instead of a fabricated service form.

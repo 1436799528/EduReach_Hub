@@ -33,3 +33,17 @@ export function SkeletonArticle() {
     </div>
   );
 }
+
+/** Shown while a lazily loaded route chunk downloads (see src/app/routes.tsx). */
+export function RouteFallback() {
+  return (
+    <div className="er-route-fallback" role="status" aria-live="polite" aria-label="Loading page">
+      <div className="er-route-fallback-bar" />
+      <div className="er-route-fallback-body">
+        <div className="er-skel er-skel-line" style={{ width: '32%', height: 22 }} />
+        <div className="er-skel er-skel-line" style={{ width: '58%' }} />
+        <SkeletonRows rows={3} label="Loading page" />
+      </div>
+    </div>
+  );
+}

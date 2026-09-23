@@ -326,6 +326,17 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     setActiveTab(initialTab);
   }, [initialTab]);
 
+  // Tab switches use a silent pushState, so the browser back button must
+  // re-sync the view from the URL (the route props do not change in that case).
+  useEffect(() => {
+    const syncTabFromUrl = () => {
+      const match = (Object.keys(TAB_ROUTES) as DashboardTab[]).find((tab) => TAB_ROUTES[tab] === window.location.pathname);
+      if (match) setActiveTab(match);
+    };
+    window.addEventListener('popstate', syncTabFromUrl);
+    return () => window.removeEventListener('popstate', syncTabFromUrl);
+  }, []);
+
   /* ---------------- derived ---------------- */
   const serviceMap = useMemo(() => Object.fromEntries(services.map((s) => [s.id, s])), [services]);
   const displayName = profile?.full_name || authUser?.name || 'Student';

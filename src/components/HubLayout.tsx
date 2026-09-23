@@ -170,7 +170,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               }}
             >
               <ScanSearch size={14} color="#C85841" />
-              <span>{isAuthenticated ? 'My Services' : 'Track'}</span>
+              <span>{isAuthenticated ? 'My Requests' : 'Track'}</span>
             </a>
 
             {!isLoading && !isAuthenticated && (
@@ -342,7 +342,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 Services &amp; Scratch Cards
               </a>
               <a href={isAuthenticated ? '/dashboard/services' : '/services/track'} onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                {isAuthenticated ? 'My Services' : 'Track Application'}
+                {isAuthenticated ? 'My Requests' : 'Track Application'}
               </a>
               <a href="/screening-calculator" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Screening Calculator

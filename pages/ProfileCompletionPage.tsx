@@ -9,6 +9,7 @@ import {
   Bell,
   MessageSquare,
   Mail,
+  Smartphone,
   ChevronRight,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
@@ -372,7 +373,7 @@ export default function ProfileCompletionPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                 <School size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  10–13. Institution &amp; Programme Details
+                  Institution &amp; Programme
                 </h2>
               </div>
 
@@ -503,7 +504,7 @@ export default function ProfileCompletionPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                 <GraduationCap size={18} color="#C85841" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  14–16. Level &amp; Academic Timeline
+                  Level &amp; Academic Timeline
                 </h2>
               </div>
 
@@ -717,8 +718,8 @@ export default function ProfileCompletionPage() {
                     style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
                   />
                   <div style={{ flex: 1 }}>
-                    <strong style={{ fontSize: '13px', color: '#0f172a' }}>
-                      SMS Urgent Deadline Reminders
+                    <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Smartphone size={14} color="#C85841" /> SMS Urgent Deadline Reminders
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
                       Receive high-priority SMS reminders for closing dates (e.g. JAMB registration &amp; Post-UTME).
