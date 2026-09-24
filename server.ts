@@ -140,54 +140,6 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/vouchers', requireAdmin, async (req, res) => {
-  try {
-    const body = String(req.query.exam_body || 'WAEC').toUpperCase();
-    const year = Number(req.query.exam_year || new Date().getFullYear());
-    if (!['WAEC','NECO'].includes(body) || !Number.isInteger(year)) return res.status(400).json({ error: 'Invalid voucher filter.' });
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('voucher_inventory').select('id,exam_body,exam_year,serial_number,status,created_at').eq('exam_body',body).eq('exam_year',year).order('created_at',{ascending:false}).limit(100);
-    if (error) throw error;
-    res.json({ items: data || [] });
-  } catch (error) {
-    console.error('Admin voucher list error:', error);
-    res.status(503).json({ error: 'Unable to load voucher inventory.' });
-  }
-});
-
-app.post('/api/admin/vouchers', requireAdmin, async (req, res) => {
-  try {
-    const adminUser = (req as AdminRequest).adminUser!;
-    const examBody = String(req.body?.exam_body || '').toUpperCase();
-    const examYear = Number(req.body?.exam_year);
-    const serial = String(req.body?.serial_number || '').trim();
-    const pin = String(req.body?.pin || '').trim();
-    if (!['WAEC','NECO'].includes(examBody) || !Number.isInteger(examYear) || !serial || !pin) return res.status(400).json({ error: 'Exam body, year, serial and PIN are required.' });
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('voucher_inventory').insert({ exam_body: examBody, exam_year: examYear, serial_number: serial, pin }).select('id,exam_body,exam_year,serial_number,status,created_at').single();
-    if (error) throw error;
-    await supabase.rpc('admin_audit_log',{p_admin_user_id:adminUser.id,p_action:'create',p_entity_type:'voucher',p_entity_id:data.id,p_metadata:{exam_body:examBody,exam_year:examYear}});
-    res.status(201).json({ item: data });
-  } catch (error) {
-    console.error('Admin voucher create error:', error);
-    res.status(400).json({ error: 'Unable to add voucher. Serial may already exist.' });
-  }
-});
-
-app.post('/api/admin/vouchers/:voucherId/reveal', requireAdmin, async (req, res) => {
-  try {
-    const adminUser = (req as AdminRequest).adminUser!;
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('voucher_inventory').select('id,exam_body,exam_year,serial_number,pin,status').eq('id',req.params.voucherId).single();
-    if (error || !data) return res.status(404).json({ error: 'Voucher not found.' });
-    await supabase.rpc('admin_audit_log',{p_admin_user_id:adminUser.id,p_action:'reveal_pin',p_entity_type:'voucher',p_entity_id:data.id,p_metadata:{exam_body:data.exam_body,exam_year:data.exam_year}});
-    res.json({ pin: data.pin });
-  } catch (error) {
-    console.error('Admin voucher reveal error:', error);
-    res.status(500).json({ error: 'Unable to reveal voucher PIN.' });
-  }
-});
-
 app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : 'all';

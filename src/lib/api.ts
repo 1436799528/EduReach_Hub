@@ -102,7 +102,7 @@ const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
   slug: n.slug,
   title: n.title,
   summary: n.excerpt,
-  body: `${n.excerpt}\n\nOfficial Student Advice:\nStudents are advised to cross-check all deadlines and application portals through legitimate school channels. Keep your student registration numbers, tokens, and exam slips safeguarded.\n\nKey Requirements:\n1. Ensure your JAMB registration profile is linked to an active email address.\n2. Do not disclose secret result-checking PINs to unverified sources.\n3. Track all service requests on EduReach Hub for live updates.`,
+  body: `${n.excerpt}\n\nOfficial Student Advice:\nStudents are advised to cross-check all deadlines and application portals through legitimate school channels. Keep your student registration numbers and exam slips safeguarded.\n\nKey Requirements:\n1. Ensure your JAMB registration profile is linked to an active email address.\n2. Do not disclose private result-checking access details to unverified sources.\n3. Track all service requests on EduReach Hub for live updates.`,
   category: n.tag.toLowerCase().replace(/[\s/]+/g, '_'),
   priority: 'normal',
   source_url: null,
@@ -177,7 +177,8 @@ export async function fetchServices(): Promise<ServiceItem[]> {
     .eq('active', true)
     .order('title');
   if (error) throw error;
-  return (data || []) as ServiceItem[];
+  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
+  return ((data || []) as ServiceItem[]).filter((service) => supportedSlugs.has(service.service_key));
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {

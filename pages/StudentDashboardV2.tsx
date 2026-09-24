@@ -544,7 +544,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <a href="/services" className="dash-quick-card">
           <div className="dash-quick-card-top"><FileText size={18} color="#1d4ed8" /></div>
           <h3 className="dash-quick-card-title">Request a service</h3>
-          <span className="dash-quick-card-sub">NELFUND, results, pins, slips</span>
+          <span className="dash-quick-card-sub">NELFUND, results, slips</span>
         </a>
         <a href="/dashboard/services" className="dash-quick-card">
           <div className="dash-quick-card-top"><ScanSearch size={18} color="#059669" /></div>
@@ -565,7 +565,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
         {requests.length
           ? requestsTable(requests.slice(0, 3))
-          : emptyState('No service requests yet. When you request NELFUND help, result checking, scratch cards or a JAMB slip, its live status appears here.', '/services', 'Browse services')}
+          : emptyState('No service requests yet. When you request NELFUND help, result checking, a JAMB slip or admission support, its live status appears here.', '/services', 'Browse services')}
       </section>
 
       <section className="dash-card">
@@ -596,7 +596,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </div>
       {requests.length
         ? requestsTable(requests)
-        : emptyState('No service requests yet. Choose a service to get started — NELFUND loan support, WAEC/NECO result checking, scratch cards, JAMB slips or admission letters.', '/services', 'Browse services')}
+        : emptyState('No service requests yet. Choose a service to get started — NELFUND loan support, WAEC/NECO result checking, JAMB slips or admission letters.', '/services', 'Browse services')}
     </section>
   );
 

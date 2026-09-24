@@ -467,7 +467,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 EduReach<span style={{ color: 'var(--er-tangerine)' }}>.ng</span>
               </div>
               <p style={{ margin: '0 0 14px', lineHeight: 1.6, fontSize: '12px' }}>
-                Nigeria's premier academic support portal for CBT practice, verified scratch cards, NELFUND loan assistance, and admission updates.
+                Nigeria's student support portal for CBT practice, guided services, NELFUND assistance, and admission updates.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#86efac', fontSize: '12px', fontWeight: 700 }}>
                 <ShieldCheck size={16} /> Verified Academic Portal
@@ -496,7 +496,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               </h4>
               <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
                 <a href="/services/apply/nelfund-loan" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NELFUND Loan Application</a>
-                <a href="/services/apply/scratch-cards" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC / NECO Scratch Cards</a>
                 <a href="/services/apply/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC / NECO Result Checking</a>
                 <a href="/services/apply/jamb-slip" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB Exam Slip Printing</a>
                 <a href="/services/apply/admission-letters" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Admission Letters</a>

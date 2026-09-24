@@ -346,7 +346,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               ? 'Quick registration for students, parents, and teachers.'
               : currentMode === 'verify'
               ? 'Check your inbox to confirm your email ownership.'
-              : 'Access CBT classroom, scratch cards, and student services.'}
+              : 'Access CBT practice, guided services, and student tools.'}
           </p>
         </div>
 

@@ -4,7 +4,6 @@ import {
   BookOpen,
   FileCheck2,
   FileText,
-  CreditCard,
   Printer,
   Calculator,
   Award,
@@ -43,9 +42,6 @@ export function resolveIdentity(
   }
   if (v.includes('student funding') || v.includes('funding alert')) {
     return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
-  }
-  if (v.includes('scratch') || v.includes('scratch card') || v.includes('voucher') || v.includes('token')) {
-    return { icon: CreditCard, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC / NECO Scratch Cards' };
   }
   if (v.includes('jamb slip') || (v.includes('slip') && v.includes('jamb')) || v.includes('exam slip')) {
     return { icon: Printer, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Exam Slip Printing' };
@@ -99,16 +95,6 @@ export function resolveIdentity(
       badge: 'LOAN',
       tone: 'emerald',
       ariaLabel: 'NELFUND Student Loan',
-    };
-  }
-  if (v.includes('scratch') || v.includes('card') || v.includes('pin') || v.includes('voucher') || v.includes('token')) {
-    return {
-      icon: CreditCard,
-      image: '/icons/brands/waec.webp',
-      label: 'WAEC',
-      badge: 'SCRATCH CARD',
-      tone: 'blue',
-      ariaLabel: 'WAEC / NECO Scratch Cards',
     };
   }
   if (v.includes('slip') || v.includes('print')) {

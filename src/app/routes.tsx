@@ -30,7 +30,6 @@ const AdminDashboardPage = lazy(() => import('../../pages/AdminDashboardPage'));
 const AdminAnalyticsPage = lazy(() => import('../../pages/AdminAnalyticsPage'));
 const AdminQueuePage = lazy(() => import('../../pages/AdminQueuePage'));
 const AdminCbtPage = lazy(() => import('../../pages/AdminCbtPage'));
-const AdminVouchersPage = lazy(() => import('../../pages/AdminVouchersPage'));
 const AdminUsersPage = lazy(() => import('../../pages/AdminUsersPage'));
 const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 
@@ -39,7 +38,6 @@ const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 const liveServiceSlugs = new Set([
   'nelfund-loan',
   'results',
-  'scratch-cards',
   'jamb-slip',
   'admission-letters',
 ]);
@@ -110,7 +108,6 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/queue') return <AdminQueuePage />;
   if (path === '/admin/cbt') return <AdminCbtPage />;
   if (path === '/admin/news') return <AdminNewsPage />;
-  if (path === '/admin/vouchers') return <AdminVouchersPage />;
   if (path === '/admin/users') return <AdminUsersPage />;
 
   if (path === '/') return <HubHomePage />;

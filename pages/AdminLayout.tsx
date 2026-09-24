@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   ListChecks,
   Newspaper,
-  Ticket,
   Users,
 } from 'lucide-react';
 import { NavLink, useNavigate } from './AdminNav';
@@ -93,7 +92,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavLink href="/admin/queue" icon={<ListChecks size={15} />}>Service Queue</NavLink>
           <NavLink href="/admin/cbt" icon={<Laptop size={15} />}>CBT Question Bank</NavLink>
           <NavLink href="/admin/news" icon={<Newspaper size={15} />}>Newsroom CMS</NavLink>
-          <NavLink href="/admin/vouchers" icon={<Ticket size={15} />}>Scratch Card Inventory</NavLink>
           <NavLink href="/admin/users" icon={<Users size={15} />}>Student Accounts</NavLink>
           <NavLink href="/" icon={<Globe size={15} />}>View Public Site</NavLink>
         </nav>

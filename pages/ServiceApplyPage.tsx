@@ -27,7 +27,6 @@ type FormState = {
   email: string;
   examBody: string;
   candidateNumber: string;
-  quantity: string;
   requestType: string;
   notes: string;
 };
@@ -50,14 +49,12 @@ const emptyForm: FormState = {
   email: '',
   examBody: '',
   candidateNumber: '',
-  quantity: '1',
   requestType: '',
   notes: '',
 };
 
 function fieldsFor(serviceKey: string) {
   if (serviceKey === 'results') return { extra: 'results' as const };
-  if (serviceKey === 'scratch-cards') return { extra: 'cards' as const };
   if (serviceKey === 'jamb-slip') return { extra: 'jamb' as const };
   if (serviceKey === 'admission-letters') return { extra: 'admission' as const };
   return { extra: 'nelfund' as const };
@@ -367,8 +364,6 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 16px', color: '#0f172a' }}>
                     {variant.extra === 'results'
                       ? 'Result Verification Details'
-                      : variant.extra === 'cards'
-                      ? 'Scratch Card Order'
                       : variant.extra === 'jamb'
                       ? 'JAMB Portal Specifics'
                       : variant.extra === 'admission'
@@ -386,7 +381,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         autoComplete="email"
                       />
                     </label>
-                    {(variant.extra === 'results' || variant.extra === 'cards') && (
+                    {variant.extra === 'results' && (
                       <label>
                         Examination Body
                         <select value={form.examBody} onChange={(e) => update('examBody', e.target.value)}>
@@ -404,18 +399,6 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                           value={form.candidateNumber}
                           onChange={(e) => update('candidateNumber', e.target.value)}
                           placeholder="e.g. 4120934021"
-                        />
-                      </label>
-                    )}
-                    {variant.extra === 'cards' && (
-                      <label>
-                        Quantity Required
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={form.quantity}
-                          onChange={(e) => update('quantity', e.target.value)}
                         />
                       </label>
                     )}

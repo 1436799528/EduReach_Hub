@@ -57,7 +57,6 @@ const routeTitles: Record<string, string> = {
   '/admin/queue': 'Admin Queue',
   '/admin/cbt': 'Admin CBT',
   '/admin/news': 'Admin Newsroom',
-  '/admin/vouchers': 'Admin Vouchers',
   '/admin/users': 'Admin Users',
 };
 

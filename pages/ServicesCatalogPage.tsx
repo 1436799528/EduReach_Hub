@@ -53,8 +53,7 @@ export default function ServicesCatalogPage() {
         return (
           srv.service_key.includes('waec') ||
           srv.service_key.includes('neco') ||
-          srv.service_key.includes('result') ||
-          srv.service_key.includes('scratch')
+          srv.service_key.includes('result')
         );
       if (activeFilter === 'ADMISSION')
         return (

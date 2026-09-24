@@ -83,7 +83,7 @@ export default function HubHomePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services — NELFUND, scratch cards, JAMB slips…"
+              placeholder="Search services — NELFUND, result checking, JAMB slips…"
               aria-label="Search services"
             />
             <button type="submit">Search</button>

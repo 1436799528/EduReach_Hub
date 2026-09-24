@@ -704,7 +704,7 @@ export default function ProfileCompletionPage() {
                       <MessageSquare size={14} color="#C85841" /> WhatsApp Order &amp; Request Alerts
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#64748b' }}>
-                      Instant WhatsApp delivery when your scratch cards, tokens, or result verification is ready.
+                      WhatsApp updates when your service request or result verification is ready.
                     </span>
                   </div>
                 </label>

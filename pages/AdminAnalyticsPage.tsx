@@ -34,7 +34,6 @@ export default function AdminAnalyticsPage() {
         <Metric label="Average CBT Score" value={`${m.average_cbt_score ?? 0}%`} />
         <Metric label="Institutions" value={m.institutions ?? 0} detail={`${m.active_services ?? 0} active services`} />
         <Metric label="Published News" value={m.published_news ?? 0} detail={`${m.audit_events ?? 0} audit events`} />
-        <Metric label="Available Vouchers" value={m.vouchers_available ?? 0} detail={`${m.vouchers_used ?? 0} used/reserved`} />
       </div>
       <div className="admin-card">
         <div className="admin-card-header"><h2>Recent Service Activity</h2><span>Production</span></div>

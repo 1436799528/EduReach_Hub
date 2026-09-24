@@ -34,25 +34,13 @@ export const serviceGuides: Record<string, ServiceGuide> = {
   results: {
     slug: 'results',
     eyebrow: 'Result-checking guide',
-    summary: 'Choose the correct examination body, prepare your candidate number and check results through the official checker without exposing your PIN.',
-    safetyNote: 'Result-checking tokens are private. Do not paste a scratch-card PIN into a public chat or send it to an unverified person.',
+    summary: 'Choose the correct examination body, prepare your candidate number and check results through the official checker without exposing private access details.',
+    safetyNote: 'Result-checking access details are private. Do not paste them into a public chat or send them to an unverified person.',
     steps: [
-      { title: 'Choose the examination body', body: 'Confirm whether the result is WAEC, NECO or another supported body. The checker, candidate number format and token rules can differ.', image: '/news/photos/waec-result.png', imageAlt: 'Examination result guidance' },
+      { title: 'Choose the examination body', body: 'Confirm whether the result is WAEC, NECO or another supported body. The checker, candidate number format and access rules can differ.', image: '/news/photos/waec-result.png', imageAlt: 'Examination result guidance' },
       { title: 'Keep your candidate details ready', body: 'Find the examination number, examination year and any required registration details before opening the official result-checking page.', image: '/news/photos/jamb-cbt.jpg', imageAlt: 'Computer-based examination preparation' },
       { title: 'Use the official checker', body: 'Open the examination body’s official result portal, enter the details carefully and keep the result page or PDF for your records.', image: '/news/photos/waec-result.png', imageAlt: 'Result-checking screen illustration' },
       { title: 'Ask for guided help only when needed', body: 'If you are unsure which checker or details to use, complete the support form below. We will return a reference code for your request.', image: '/news/photos/graduates.jpg', imageAlt: 'Student receiving academic guidance' },
-    ],
-  },
-  'scratch-cards': {
-    slug: 'scratch-cards',
-    eyebrow: 'Examination token guide',
-    summary: 'Understand which result-checking token you need, how to keep it private and how to request guidance before purchase or use.',
-    safetyNote: 'EduReach does not need your confidential PIN for general guidance. Only enter a token into the official examination checker when you are ready to check your result.',
-    steps: [
-      { title: 'Confirm the body and year', body: 'Check whether you need a WAEC or NECO token and confirm the result year before buying anything. A wrong token may not work for your result.', image: '/news/photos/waec-result.png', imageAlt: 'WAEC and NECO result guidance' },
-      { title: 'Use a trusted purchase channel', body: 'Buy from the examination body or an authorised channel. Check the receipt and product description before paying.', image: '/news/photos/campus.jpg', imageAlt: 'Student checking an official service' },
-      { title: 'Keep the token private', body: 'Do not publish the serial or PIN in screenshots. Store the receipt and use the token only on the official result-checking portal.', image: '/news/photos/nelfund.webp', imageAlt: 'Secure student service information' },
-      { title: 'Request our help if you are stuck', body: 'Tell us the examination body, year and the step where you need help. Do not include the private PIN in the request form.', image: '/news/photos/graduates.jpg', imageAlt: 'Student requesting support' },
     ],
   },
   'jamb-slip': {
