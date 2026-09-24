@@ -130,18 +130,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 padding: '4px 0',
               }}
             >
-              Services &amp; Pins
-            </a>
-            <a
-              href="/screening-calculator"
-              style={{
-                color: path.includes('calculator') ? '#C85841' : '#334155',
-                textDecoration: 'none',
-                borderBottom: path.includes('calculator') ? '2px solid #C85841' : '2px solid transparent',
-                padding: '4px 0',
-              }}
-            >
-              Calculator
+              Services
             </a>
             <a
               href="/news"
@@ -169,25 +158,27 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <a
-              href={isAuthenticated ? '/dashboard/services' : '/services/track'}
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                color: '#334155',
-                borderRadius: '7px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                fontWeight: 800,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-            >
-              <ScanSearch size={14} color="#C85841" />
-              <span>{isAuthenticated ? 'My Requests' : 'Track'}</span>
-            </a>
+            {!isLoading && isAuthenticated && (
+              <a
+                href="/dashboard/services"
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: '#334155',
+                  borderRadius: '7px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <ScanSearch size={14} color="#C85841" />
+                <span>My Requests</span>
+              </a>
+            )}
 
             {!isLoading && !isAuthenticated && (
               <a
@@ -365,14 +356,13 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 CBT Practice
               </a>
               <a href="/services" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Services &amp; Scratch Cards
+                Services
               </a>
-              <a href={isAuthenticated ? '/dashboard/services' : '/services/track'} onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                {isAuthenticated ? 'My Requests' : 'Track Application'}
-              </a>
-              <a href="/screening-calculator" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Screening Calculator
-              </a>
+              {isAuthenticated && (
+                <a href="/dashboard/services" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
+                  My Requests
+                </a>
+              )}
               <a href="/news" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 News &amp; Noticeboard
               </a>
@@ -490,10 +480,10 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 CBT Practice Center
               </h4>
               <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/cbt/practice?exam=practice-exam-jamb" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB CBT Simulator</a>
-                <a href="/cbt/practice?exam=practice-exam-waec" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC CBT Practice</a>
-                <a href="/cbt/practice?exam=practice-exam-neco" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NECO CBT Practice</a>
-                <a href="/cbt/practice?exam=practice-exam-post-utme" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Post-UTME Screening Test</a>
+                <a href="/cbt/setup/jamb" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB CBT Simulator</a>
+                <a href="/cbt/setup/waec" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC CBT Practice</a>
+                <a href="/cbt/setup/neco" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NECO CBT Practice</a>
+                <a href="/cbt/setup/post-utme" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Post-UTME Screening Test</a>
                 <a href="/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>All Question Banks</a>
                 <a href="/dashboard/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>My CBT Results</a>
               </div>
@@ -502,7 +492,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             {/* COLUMN 3: SERVICES — live application workflows only */}
             <div>
               <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
-                Student Services &amp; Tools
+                Student Services
               </h4>
               <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
                 <a href="/services/apply/nelfund-loan" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NELFUND Loan Application</a>
@@ -511,7 +501,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 <a href="/services/apply/jamb-slip" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB Exam Slip Printing</a>
                 <a href="/services/apply/admission-letters" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Admission Letters</a>
                 <a href="/screening-calculator" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Screening Calculator</a>
-                <a href="/services/track" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Track Application Status</a>
               </div>
             </div>
 

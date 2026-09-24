@@ -14,7 +14,7 @@ function initialServiceSearch() {
 const filters = [
   { id: 'ALL', label: 'All Services' },
   { id: 'LOAN', label: 'NELFUND Loans' },
-  { id: 'EXAMS', label: 'Result & Scratch Cards' },
+  { id: 'EXAMS', label: 'Result services' },
   { id: 'ADMISSION', label: 'Admission Letters' },
 ];
 
@@ -91,13 +91,6 @@ export default function ServicesCatalogPage() {
               </h1>
             </div>
 
-            <a
-              className="hub-outline-btn"
-              href="/services/track"
-              style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
-            >
-              Track Existing Request →
-            </a>
           </div>
 
           <div
@@ -120,7 +113,7 @@ export default function ServicesCatalogPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search services (e.g. NELFUND, Scratch card, JAMB slip)..."
+                placeholder="Search services (e.g. NELFUND, result checking, JAMB slip)..."
                 aria-label="Search services"
                 style={{ border: 0, outline: 0, width: '100%', fontSize: '13px', color: '#0f172a' }}
               />
@@ -154,8 +147,8 @@ export default function ServicesCatalogPage() {
             <section className="er-section" style={{ marginTop: 0 }}>
               <SectionHead
                 title={`${filteredServices.length} active service${filteredServices.length === 1 ? '' : 's'}`}
-                href="/services/track"
-                linkLabel="Track a request"
+                href="/services"
+                linkLabel="Browse all services"
               />
               <div className="er-service-grid">
                 {filteredServices.map((service) => <ServiceCard key={service.id} service={service} />)}

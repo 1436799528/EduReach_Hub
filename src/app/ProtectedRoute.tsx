@@ -21,7 +21,7 @@ function LoadingPortal() {
 }
 
 // Every route wrapped in <ProtectedRoute> lives under one of these prefixes.
-const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings'];
+const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/services/track', '/track'];
 export function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }

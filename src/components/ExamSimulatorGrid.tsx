@@ -49,14 +49,14 @@ export const examSimulators: ExamSimulator[] = [
   },
 ];
 
-/** Direct-start URL for a simulator card: no intermediate hall page. */
+/** Setup URL for a simulator card: students choose a course, school or subjects before the hall. */
 export function simulatorStartHref(key: string) {
-  return `/cbt/practice?exam=practice-exam-${key}`;
+  return `/cbt/setup/${key}`;
 }
 
 /**
- * Shared Myschool-style exam simulator grid. Every card starts its simulator
- * directly (/cbt/practice?exam=…); variant="mode" is kept for catalog contexts
+ * Shared exam simulator grid. Every card enters an exam-specific setup wizard
+ * (/cbt/setup/…) before the timed hall; variant="mode" is kept for catalog contexts
  * that deliberately want the filtered question-bank list (/cbt?mode=X).
  *
  * Layout lives in edu-portal.css: 4-up vertical cards on desktop; on mobile the

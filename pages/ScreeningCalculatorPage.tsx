@@ -3,20 +3,24 @@ import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
 import CardIdentityMark from '../src/components/CardIdentityMark';
+import { admissionMethodProfiles } from '../src/data/examPreparation';
 
-type Formula = '50-50' | '60-40' | '70-30';
+type Formula = '50-50' | '60-40' | '70-30' | 'jamb-only' | 'points';
 
 const clamp = (value: string, max: number) => Math.min(max, Math.max(0, Number(value) || 0));
 
 export default function ScreeningCalculatorPage() {
-  const [institution, setInstitution] = useState('');
+  const [institution, setInstitution] = useState('custom');
   const [jamb, setJamb] = useState('');
   const [postUtme, setPostUtme] = useState('');
   const [formula, setFormula] = useState<Formula>('50-50');
 
+  const methodProfile = admissionMethodProfiles.find((profile) => profile.id === institution) || admissionMethodProfiles[admissionMethodProfiles.length - 1];
+
   const weights = useMemo(() => {
     if (formula === '60-40') return { jamb: 60, postUtme: 40 };
     if (formula === '70-30') return { jamb: 70, postUtme: 30 };
+    if (formula === 'jamb-only') return { jamb: 100, postUtme: 0 };
     return { jamb: 50, postUtme: 50 };
   }, [formula]);
 
@@ -25,12 +29,14 @@ export default function ScreeningCalculatorPage() {
     const postScore = clamp(postUtme, 100);
     const jambPercent = (jambScore / 400) * 100;
     const postPercent = postScore;
-    const aggregate = (jambPercent * weights.jamb + postPercent * weights.postUtme) / 100;
+    const aggregate = formula === 'points'
+      ? (jambPercent + postPercent) / 2
+      : (jambPercent * weights.jamb + postPercent * weights.postUtme) / 100;
     return { jambScore, postScore, jambPercent, postPercent, aggregate };
-  }, [jamb, postUtme, weights]);
+  }, [formula, jamb, postUtme, weights]);
 
   function reset() {
-    setInstitution('');
+    setInstitution('custom');
     setJamb('');
     setPostUtme('');
     setFormula('50-50');
@@ -66,15 +72,21 @@ export default function ScreeningCalculatorPage() {
             <div style={{ display: 'grid', gap: '12px' }}>
               <div>
                 <label htmlFor="screening-institution" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
-                  School (optional)
+                  School method profile
                 </label>
-                <input
+                <select
                   id="screening-institution"
                   value={institution}
-                  onChange={(e) => setInstitution(e.target.value)}
-                  placeholder="e.g. University of Calabar"
+                  onChange={(event) => {
+                    const next = admissionMethodProfiles.find((profile) => profile.id === event.target.value) || admissionMethodProfiles[admissionMethodProfiles.length - 1];
+                    setInstitution(next.id);
+                    setFormula(next.formula);
+                  }}
                   style={{ width: '100%', boxSizing: 'border-box' }}
-                />
+                >
+                  {admissionMethodProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.school}</option>)}
+                </select>
+                <p style={{ margin: '6px 0 0', fontSize: '11.5px', color: '#64748b', lineHeight: 1.45 }}>{methodProfile.method}: {methodProfile.explanation}</p>
               </div>
 
               <div
@@ -126,6 +138,8 @@ export default function ScreeningCalculatorPage() {
                     ['50-50', '50% JAMB + 50% Post-UTME'],
                     ['60-40', '60% JAMB + 40% Post-UTME'],
                     ['70-30', '70% JAMB + 30% Post-UTME'],
+                    ['jamb-only', 'JAMB score / cut-off planning'],
+                    ['points', 'Points or requirement planning'],
                   ] as const).map(([value, label]) => (
                     <label key={value} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '11.5px', color: '#334155', fontWeight: 600 }}>
                       <input
@@ -140,7 +154,7 @@ export default function ScreeningCalculatorPage() {
                   ))}
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }}>
-                  These are calculation options, not a claim that every school uses them. Always confirm your school's current screening formula.
+                  These are planning models, not a claim that every school uses them. Always confirm the current school brochure; some institutions use O-Level points, cut-offs or programme-specific requirements instead.
                 </p>
               </div>
 
@@ -164,12 +178,12 @@ export default function ScreeningCalculatorPage() {
                     {ready ? result.aggregate.toFixed(2) : '—'}
                   </strong>
                   <span style={{ display: 'block', marginTop: '5px', fontSize: '11px', color: '#475569' }}>
-                    {institution || 'Your selected formula'} • out of 100
+                    {methodProfile.school} • planning score out of 100
                   </span>
                 </div>
                 <div style={{ textAlign: 'right', fontSize: '11px', color: '#475569', lineHeight: 1.6 }}>
-                  <div>JAMB contribution: <strong>{ready ? ((result.jambPercent * weights.jamb) / 100).toFixed(2) : '—'}</strong></div>
-                  <div>Post-UTME contribution: <strong>{ready ? ((result.postPercent * weights.postUtme) / 100).toFixed(2) : '—'}</strong></div>
+                  <div>{formula === 'jamb-only' ? 'JAMB planning score' : 'JAMB contribution'}: <strong>{ready ? (formula === 'jamb-only' ? result.jambPercent : ((result.jambPercent * weights.jamb) / 100)).toFixed(2) : '—'}</strong></div>
+                  <div>{formula === 'points' ? 'Post-UTME planning input' : 'Post-UTME contribution'}: <strong>{ready ? (formula === 'points' ? result.postPercent : ((result.postPercent * weights.postUtme) / 100)).toFixed(2) : '—'}</strong></div>
                 </div>
               </div>
 
@@ -179,10 +193,31 @@ export default function ScreeningCalculatorPage() {
             </div>
           </div>
 
+          <section className="er-methods-section" aria-labelledby="admission-methods-title">
+            <div className="er-methods-heading">
+              <div>
+                <span className="hub-eyebrow">Admission guidance</span>
+                <h2 id="admission-methods-title">How different schools may assess applicants</h2>
+                <p>Schools can combine UTME, Post-UTME, O-Level grades, cut-offs and programme requirements differently. Use these profiles to know what to look for, then confirm the active notice.</p>
+              </div>
+              <CardIdentityMark value="admission requirements" type="service" size="sm" />
+            </div>
+            <div className="er-methods-grid">
+              {admissionMethodProfiles.filter((profile) => profile.id !== 'custom').map((profile) => (
+                <article className="er-method-card" key={profile.id}>
+                  <h3>{profile.school}</h3>
+                  <strong>{profile.method}</strong>
+                  <p>{profile.explanation}</p>
+                  <small>{profile.officialReminder}</small>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <section className="er-section">
             <SectionHead title="Keep preparing" href="/cbt" linkLabel="Question banks" />
             <div className="er-guide-strip">
-              <a href="/cbt/practice?exam=practice-exam-post-utme">Start Post-UTME test <ArrowRight size={11} /></a>
+              <a href="/cbt/setup/post-utme">Start Post-UTME test <ArrowRight size={11} /></a>
               <a href="/post-utme">Post-UTME guide <ArrowRight size={11} /></a>
               <a href="/services/apply/admission-letters">Admission letters <ArrowRight size={11} /></a>
               <a href="/news?category=admission">Admission updates <ArrowRight size={11} /></a>

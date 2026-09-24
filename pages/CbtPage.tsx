@@ -13,6 +13,14 @@ import CardIdentityMark from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams } from '../src/lib/api';
+
+function setupPathForExam(exam: Exam) {
+  const value = `${exam.exam_body} ${exam.id} ${exam.title}`.toLowerCase();
+  if (value.includes('post-utme') || value.includes('postutme')) return '/cbt/setup/post-utme';
+  if (value.includes('waec')) return '/cbt/setup/waec';
+  if (value.includes('neco')) return '/cbt/setup/neco';
+  return '/cbt/setup/jamb';
+}
 import { SkeletonRows } from '../src/components/Skeleton';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
@@ -87,7 +95,7 @@ export default function CbtPage() {
               <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>QUESTION BANKS</span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                Pick a question bank below — each test opens straight in the timed CBT simulator with an on-screen calculator.
+                Pick a question bank below — each test opens a short setup page before the timed CBT simulator and on-screen calculator.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -176,10 +184,10 @@ export default function CbtPage() {
                   </div>
 
                   <a
-                    href={`/cbt/practice?exam=${encodeURIComponent(exam.id)}`}
+                    href={setupPathForExam(exam)}
                     className="hub-primary-btn er-bank-cta"
                   >
-                    Take Test <ArrowRight size={14} />
+                    Set up test <ArrowRight size={14} />
                   </a>
                 </div>
               ))}

@@ -89,6 +89,10 @@ export default function CbtPracticePage() {
   const question = questions[index];
   const total = questions.length;
   const brand = examKeyFor(`${examId} ${examBody} ${examTitle}`) || 'jamb';
+  const setupParams = new URLSearchParams(window.location.search);
+  const setupCourse = setupParams.get('course') || '';
+  const setupSchool = setupParams.get('schoolName') || '';
+  const setupSubjects = (setupParams.get('subjects') || '').split('|').filter(Boolean);
 
   // Exam-focus mode: hide the site footer / mobile tab bar / page bar while a test is open.
   useEffect(() => {
@@ -296,6 +300,13 @@ export default function CbtPracticePage() {
                   {subject && <em className="er-exam-chip">{subject}</em>}
                   {total > 0 && <span className="er-exam-progress">Question {index + 1} of {total}</span>}
                 </span>
+                {(setupCourse || setupSchool || setupSubjects.length > 0) && (
+                  <small className="er-exam-setup-context">
+                    {setupCourse && `Course: ${setupCourse}`}
+                    {setupSchool && `School: ${setupSchool}`}
+                    {setupSubjects.length > 0 && `Subjects: ${setupSubjects.join(' · ')}`}
+                  </small>
+                )}
               </div>
             </div>
 
@@ -356,7 +367,7 @@ export default function CbtPracticePage() {
               <h2>Sign in to start this test</h2>
               <p>Your attempts, scores and corrections are saved to your student dashboard, so this question bank needs an EduReach account.</p>
               <div className="er-exam-gate-actions">
-                <a className="hub-primary-btn" href={`/login?next=${encodeURIComponent(`/cbt/practice?exam=${requestedExamId}`)}`}>Sign in &amp; start</a>
+                <a className="hub-primary-btn" href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in &amp; start</a>
                 <a className="hub-outline-btn" href="/cbt">All question banks</a>
               </div>
             </div>

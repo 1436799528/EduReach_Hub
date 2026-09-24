@@ -7,7 +7,6 @@ import {
   ChevronRight,
   ExternalLink,
   MessageSquare,
-  Search,
   ShieldCheck,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
@@ -16,6 +15,7 @@ import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
+import { guideForService } from '../src/data/serviceGuides';
 
 type FormState = {
   fullName: string;
@@ -162,6 +162,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     );
 
   const variant = fieldsFor(service.service_key);
+  const guide = guideForService(service.service_key);
 
   function update(name: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
@@ -250,7 +251,37 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           )}
 
           {!reference ? (
-            <form className="hub-panel hub-wizard-panel" onSubmit={next} style={{ padding: '24px' }}>
+            <>
+              {guide && (
+                <section className="er-service-guide" aria-labelledby="service-guide-title">
+                  <div className="er-service-guide-heading">
+                    <div>
+                      <span className="hub-eyebrow">{guide.eyebrow}</span>
+                      <h2 id="service-guide-title">How to handle this service</h2>
+                      <p>{guide.summary}</p>
+                    </div>
+                    <CardIdentityMark value={service.service_key} type="service" size="md" />
+                  </div>
+                  <div className="er-service-guide-steps">
+                    {guide.steps.map((guideStep, index) => (
+                      <article className="er-service-guide-step" key={guideStep.title}>
+                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" />
+                        <div>
+                          <span className="er-service-guide-number">{String(index + 1).padStart(2, '0')}</span>
+                          <h3>{guideStep.title}</h3>
+                          <p>{guideStep.body}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  <div className="er-service-guide-footer">
+                    <p><ShieldCheck size={16} /> {guide.safetyNote}</p>
+                    <a className="hub-primary-btn" href="#request-help">Need guided help <ChevronRight size={15} /></a>
+                  </div>
+                </section>
+              )}
+
+              <form id="request-help" className="hub-panel hub-wizard-panel" onSubmit={next} style={{ padding: '24px' }}>
               {/* STEPPER */}
               <div className="hub-stepper" style={{ marginBottom: '24px' }}>
                 {[
@@ -491,6 +522,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 )}
               </div>
             </form>
+            </>
           ) : (
             /* SUCCESS CONFIRMATION PANEL */
             <div
@@ -532,7 +564,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 Application Successfully Logged
               </h2>
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 20px', maxWidth: '500px', marginInline: 'auto' }}>
-                Your request has been registered in the EduReach academic queue. Save your tracking reference code below to check verification milestones.
+                Your request has been registered in the EduReach academic queue. Save your reference code. Signed-in students can view the request and its milestones from My Requests in the dashboard.
               </p>
 
               <div
@@ -556,10 +588,10 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a
                   className="hub-primary-btn"
-                  href={`/services/track?ref=${encodeURIComponent(reference)}`}
+                  href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/login?next=${encodeURIComponent('/dashboard/services')}`}
                   style={{ textDecoration: 'none', background: '#C85841' }}
                 >
-                  <Search size={15} /> Track Application Status
+                  <CheckCircle2 size={15} /> {isAuthenticated ? 'View in My Requests' : 'Sign in to view request'}
                 </a>
                 <a className="hub-outline-btn" href="/services" style={{ textDecoration: 'none' }}>
                   Return to Catalog

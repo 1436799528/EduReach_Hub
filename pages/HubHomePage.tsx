@@ -1,4 +1,4 @@
-import { ArrowRight, Calculator, ScanSearch, Trophy } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -42,9 +42,8 @@ function Deadline({ item }: { item: UpcomingItem }) {
 }
 
 const toolTiles = [
-  { title: 'Past Question Bank', href: '/cbt' },
+  { title: 'Past Question Library', href: '/past-questions' },
   { title: 'Screening Calculator', href: '/screening-calculator' },
-  { title: 'Track Request', href: '/services/track' },
   { title: 'Scholarships', href: '/jobs' },
 ];
 
@@ -54,6 +53,7 @@ export default function HubHomePage() {
   const [newsError, setNewsError] = useState('');
   const [feedVersion, setFeedVersion] = useState(0);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
+  const [upcomingError, setUpcomingError] = useState('');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -64,7 +64,10 @@ export default function HubHomePage() {
       .then((items) => active && setNews(items))
       .catch((value) => active && setNewsError(value instanceof Error ? value.message : 'Unable to load news updates.'))
       .finally(() => active && setNewsLoading(false));
-    void fetchUpcoming().then((items) => active && setUpcoming(items)).catch(() => {});
+    setUpcomingError('');
+    void fetchUpcoming()
+      .then((items) => active && setUpcoming(items))
+      .catch((value) => active && setUpcomingError(value instanceof Error ? value.message : 'Unable to load upcoming events.'));
     return () => { active = false; };
   }, [feedVersion]);
 
@@ -86,7 +89,7 @@ export default function HubHomePage() {
             <button type="submit">Search</button>
           </form>
 
-          <a href="/cbt" className="er-banner">
+          <a href="/past-questions" className="er-banner">
             <div className="er-banner-art">
               <img src="/news/photos/jamb-cbt.jpg" alt="CBT study centre" />
             </div>
@@ -134,26 +137,18 @@ export default function HubHomePage() {
 
             <div>
               <section className="er-section">
-                <SectionHead title="Upcoming" href="/news" linkLabel="View all" />
-                {upcoming.length > 0 ? (
+                <SectionHead title="Upcoming events" />
+                {upcomingError ? (
+                  <div className="er-empty" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                    <span>{upcomingError}</span>
+                    <button type="button" className="hub-outline-btn" onClick={() => setFeedVersion((value) => value + 1)}>Try again</button>
+                  </div>
+                ) : upcoming.length > 0 ? (
                   <div className="er-deadline-list">
                     {upcoming.slice(0, 6).map((item) => <Deadline key={item.id} item={item} />)}
                   </div>
                 ) : (
-                  <div className="er-tool-fallback">
-                    <a href="/services/track">
-                      <ScanSearch size={16} />
-                      <span>Track a request<small>Live status for any reference code</small></span>
-                    </a>
-                    <a href="/screening-calculator">
-                      <Calculator size={16} />
-                      <span>Screening calculator<small>Estimate your admission aggregate</small></span>
-                    </a>
-                    <a href="/cbt">
-                      <Trophy size={16} />
-                      <span>CBT practice<small>Timed JAMB, WAEC &amp; NECO tests</small></span>
-                    </a>
-                  </div>
+                  <div className="er-empty">No upcoming events have been published yet.</div>
                 )}
               </section>
 
@@ -166,7 +161,7 @@ export default function HubHomePage() {
           </div>
 
           <section className="er-section">
-            <SectionHead title="Services &amp; Pins" href="/services" linkLabel="All services" />
+            <SectionHead title="Student services" href="/services" linkLabel="All services" />
             <div className="er-link-grid">
               {hubServices.map((item) => (
                 <LinkTile key={item.slug} title={item.short} href={`/services/apply/${item.slug}`} />

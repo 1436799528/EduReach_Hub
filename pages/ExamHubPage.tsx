@@ -11,7 +11,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/jamb.png',
     description: 'JAMB UTME, CAPS, results, admission and examination preparation resources.',
     links: [
-      { label: 'Start JAMB CBT Simulator', href: '/cbt/practice?exam=practice-exam-jamb' },
+      { label: 'Start JAMB CBT Simulator', href: '/cbt/setup/jamb' },
       { label: 'JAMB Question Banks', href: '/cbt?mode=JAMB' },
       { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
@@ -24,7 +24,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/waec.webp',
     description: 'WAEC examination information, results, preparation and study resources.',
     links: [
-      { label: 'Start WAEC CBT Practice', href: '/cbt/practice?exam=practice-exam-waec' },
+      { label: 'Start WAEC CBT Practice', href: '/cbt/setup/waec' },
       { label: 'WAEC Question Banks', href: '/cbt?mode=WAEC' },
       { label: 'Result Checking', href: '/services/apply/results' },
       { label: 'Scratch Cards', href: '/services/apply/scratch-cards' },
@@ -37,7 +37,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/neco.webp',
     description: 'NECO examination information, results, preparation and study resources.',
     links: [
-      { label: 'Start NECO CBT Practice', href: '/cbt/practice?exam=practice-exam-neco' },
+      { label: 'Start NECO CBT Practice', href: '/cbt/setup/neco' },
       { label: 'NECO Question Banks', href: '/cbt?mode=NECO' },
       { label: 'Result Checking', href: '/services/apply/results' },
       { label: 'Scratch Cards', href: '/services/apply/scratch-cards' },
@@ -50,7 +50,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/jamb.png',
     description: 'University screening information, admission preparation and Post-UTME practice.',
     links: [
-      { label: 'Start Post-UTME Screening Test', href: '/cbt/practice?exam=practice-exam-post-utme' },
+      { label: 'Start Post-UTME Screening Test', href: '/cbt/setup/post-utme' },
       { label: 'Post-UTME Question Banks', href: '/cbt?mode=POST-UTME' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
       { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },

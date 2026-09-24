@@ -14,7 +14,7 @@ export default function ServiceCard({ service }: { service: ServiceItem }) {
         <strong>{service.title}</strong>
         <small>{service.description}</small>
         <span className="er-service-meta">
-          {service.application_url ? 'Official portal link available' : 'Guided support'} <ArrowRight size={11} />
+          {service.application_url ? 'Official portal + step-by-step guide' : 'Step-by-step guide + guided support'} <ArrowRight size={11} />
         </span>
       </span>
     </a>

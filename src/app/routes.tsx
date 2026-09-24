@@ -16,12 +16,14 @@ const AuthPageV2 = lazy(() => import('../../pages/AuthPageV2'));
 const ProfileCompletionPage = lazy(() => import('../../pages/ProfileCompletionPage'));
 const StudentDashboardV2 = lazy(() => import('../../pages/StudentDashboardV2'));
 const CbtPracticePage = lazy(() => import('../../pages/CbtPracticePage'));
+const ExamSetupPage = lazy(() => import('../../pages/ExamSetupPage'));
+const PastQuestionsPage = lazy(() => import('../../pages/PastQuestionsPage'));
 const CbtResultsPage = lazy(() => import('../../pages/CbtResultsPage'));
 const ScreeningCalculatorPage = lazy(() => import('../../pages/ScreeningCalculatorPage'));
 const ServicesCatalogPage = lazy(() => import('../../pages/ServicesCatalogPage'));
 const ServiceApplyPage = lazy(() => import('../../pages/ServiceApplyPage'));
-const ServiceTrackPage = lazy(() => import('../../pages/ServiceTrackPage'));
 const NewsPage = lazy(() => import('../../pages/NewsPage'));
+const EventsPage = lazy(() => import('../../pages/EventsPage'));
 const NewsArticlePage = lazy(() => import('../../pages/NewsArticlePage'));
 const JobsPage = lazy(() => import('../../pages/JobsPage'));
 const AdminDashboardPage = lazy(() => import('../../pages/AdminDashboardPage'));
@@ -117,8 +119,13 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/neco') return <ExamHubPage exam="neco" />;
   if (path === '/post-utme') return <ExamHubPage exam="post-utme" />;
   if (path === '/nabteb') return <ComingSoonPage />;
-  if (path === '/cbt' || path === '/past-questions') return <CbtPage />;
+  if (path === '/past-questions') return <PastQuestionsPage />;
+  if (path === '/cbt') return <CbtPage />;
   if (path === '/cbt/practice') return <CbtPracticePage />;
+  if (path === '/cbt/setup/jamb') return <ExamSetupPage exam="jamb" />;
+  if (path === '/cbt/setup/waec') return <ExamSetupPage exam="waec" />;
+  if (path === '/cbt/setup/neco') return <ExamSetupPage exam="neco" />;
+  if (path === '/cbt/setup/post-utme') return <ExamSetupPage exam="post-utme" />;
   // Public scorecard route: guests who finish a practice test land here with
   // their locally stored result; signed-in students get the saved attempt.
   if (path === '/cbt/results') return <CbtResultsPage />;
@@ -131,7 +138,8 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/schools') return <ComingSoonPage />;
   if (path === '/support') return <ComingSoonPage />;
   if (path === '/services') return <ServicesCatalogPage />;
-  if (path === '/services/track' || path === '/track') return <ServiceTrackPage />;
+  // Request tracking is a signed-in dashboard workflow, not a public page.
+  if (path === '/services/track' || path === '/track') return protectedDashboard('services');
   if (path === '/nelfund') return <ServiceApplyPage slug="nelfund-loan" />;
   if (path === '/results') return <ServiceApplyPage slug="results" />;
   if (path.startsWith('/services/apply/')) {
@@ -140,7 +148,8 @@ export function renderRoute(pathname: string): ReactElement {
   if (path.startsWith('/services/') && path !== '/services/track') {
     return serviceEntry(decodeURIComponent(path.slice('/services/'.length)));
   }
-  if (path === '/news' || path === '/events') return <NewsPage />;
+  if (path === '/news') return <NewsPage />;
+  if (path === '/events') return <EventsPage />;
   if (path.startsWith('/news/')) {
     return <NewsArticlePage slug={decodeURIComponent(path.slice('/news/'.length))} />;
   }

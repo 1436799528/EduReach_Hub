@@ -13,7 +13,7 @@ export type ServiceDefinition = {
 export const services: ServiceDefinition[] = [
   { key: 'jamb', title: 'JAMB Services', category: 'Examinations', route: '/jamb', icon: '/icons/brands/jamb.png', type: 'brand', description: 'JAMB information, guidance and related student services.', requiresApplication: false },
   { key: 'jamb-cbt', title: 'JAMB CBT', category: 'Examinations', route: '/cbt', icon: '/icons/brands/jamb.png', type: 'brand', description: 'Computer-based practice and examination preparation.', requiresApplication: false },
-  { key: 'past-questions', title: 'Past Question Bank', category: 'Examinations', route: '/cbt', icon: '/news/photos/jamb-cbt.jpg', type: 'edureach', description: 'Timed CBT practice organised by examination.', requiresApplication: false },
+  { key: 'past-questions', title: 'Past Question Library', category: 'Examinations', route: '/past-questions', icon: '/news/photos/jamb-cbt.jpg', type: 'edureach', description: 'Timed CBT practice organised by examination.', requiresApplication: false },
   { key: 'waec', title: 'WAEC', category: 'Examinations', route: '/waec', icon: '/icons/brands/waec.webp', type: 'brand', description: 'WAEC information, preparation and result resources.', requiresApplication: false },
   { key: 'neco', title: 'NECO', category: 'Examinations', route: '/neco', icon: '/icons/brands/neco.webp', type: 'brand', description: 'NECO information, preparation and result resources.', requiresApplication: false },
   { key: 'nabteb', title: 'NABTEB', category: 'Examinations', route: '/nabteb', icon: '/icons/brands/nabteb.png', type: 'brand', description: 'NABTEB examination information and resources.', requiresApplication: false },

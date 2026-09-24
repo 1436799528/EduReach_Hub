@@ -8,6 +8,10 @@ const routeTitles: Record<string, string> = {
   '/track': 'Request Tracker',
   '/cbt': 'CBT',
   '/cbt/practice': 'CBT Practice',
+  '/cbt/setup/jamb': 'JAMB Practice Setup',
+  '/cbt/setup/waec': 'WAEC Practice Setup',
+  '/cbt/setup/neco': 'NECO Practice Setup',
+  '/cbt/setup/post-utme': 'Post-UTME Practice Setup',
   '/cbt/results': 'CBT Results',
   '/dashboard/cbt/results': 'CBT Results',
   '/screening-calculator': 'Screening Calculator',
@@ -59,7 +63,8 @@ const routeTitles: Record<string, string> = {
 
 export function pageTitleFor(pathname: string): string {
   const normalized = pathname.replace(/\/$/, '') || '/';
-  if (normalized.startsWith('/services/apply/')) return 'Service Request';
+  if (normalized.startsWith('/cbt/setup/')) return 'Practice Setup';
+  if (normalized.startsWith('/services/apply/')) return 'Service Guide';
   if (normalized.startsWith('/services/')) return 'Service';
   if (normalized.startsWith('/dashboard/cbt/results') || normalized.startsWith('/cbt/results')) return 'CBT Results';
   if (normalized.startsWith('/news/')) return 'News Article';

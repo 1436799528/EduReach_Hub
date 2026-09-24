@@ -454,7 +454,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 <td>{requestTitle(row)}</td>
                 <td><span className={statusClass(row.status)}>{statusLabel(row.status)}</span></td>
                 <td>{fmtDate(row.created_at)}</td>
-                <td><a className="dash-card-link" href={`/services/track?ref=${encodeURIComponent(row.reference_code)}`}>Track</a></td>
+                <td><a className="dash-card-link" href={`/dashboard/services?ref=${encodeURIComponent(row.reference_code)}`}>Track</a></td>
               </tr>
             ))}
           </tbody>
@@ -470,7 +470,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <strong className="dash-row-title">{requestTitle(row)}</strong>
             <div className="dash-row-meta">
               <span>{fmtDate(row.created_at)}</span>
-              <a className="dash-card-link" href={`/services/track?ref=${encodeURIComponent(row.reference_code)}`}>Track status →</a>
+              <a className="dash-card-link" href={`/dashboard/services?ref=${encodeURIComponent(row.reference_code)}`}>Track status →</a>
             </div>
           </li>
         ))}
@@ -546,7 +546,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <h3 className="dash-quick-card-title">Request a service</h3>
           <span className="dash-quick-card-sub">NELFUND, results, pins, slips</span>
         </a>
-        <a href="/services/track" className="dash-quick-card">
+        <a href="/dashboard/services" className="dash-quick-card">
           <div className="dash-quick-card-top"><ScanSearch size={18} color="#059669" /></div>
           <h3 className="dash-quick-card-title">Track a request</h3>
           <span className="dash-quick-card-sub">Live status by reference</span>
