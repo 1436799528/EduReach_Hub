@@ -17,7 +17,7 @@ function navigateInApp(path: string) {
 function LinkTile({ title, href, external = false }: { title: string; href: string; external?: boolean }) {
   return (
     <a
-      className={`er-mini-link ${identityClassFor(title, 'service')}`}
+      className="er-mini-link"
       href={href}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >

@@ -28,7 +28,7 @@ function articleHref(item: NewsItem): string {
 /** Compact Myschool-style news row: thumb + category/date + headline. */
 export function NewsRow({ item }: { item: NewsItem }) {
   return (
-    <a className={`er-news-row ${identityClassFor(item.category, 'news')}`} href={articleHref(item)}>
+    <a className="er-news-row" href={articleHref(item)}>
       <img
         src={item.image_url || newsThumbFor(item.category)}
         className="er-news-photo"
@@ -56,7 +56,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
   return (
     <div className="er-featured-grid">
       {items.slice(0, 2).map((item) => (
-        <a key={item.id} className={`er-featured-card ${identityClassFor(item.category, 'news')}`} href={articleHref(item)}>
+        <a key={item.id} className="er-featured-card" href={articleHref(item)}>
           <img
         src={item.image_url || newsThumbFor(item.category)}
         className="er-news-photo"

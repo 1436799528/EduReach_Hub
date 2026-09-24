@@ -43,7 +43,7 @@ export function resolveIdentity(
     return { icon: FileText, image: '/news/photos/campus.jpg', label: 'ADMISSION WATCH', tone: 'purple', brand: 'admission', ariaLabel: 'Admission Watch' };
   }
   if (v.includes('student funding') || v.includes('funding alert')) {
-    return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', brand: 'nelfund', ariaLabel: 'Student Funding' };
+    return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
   }
   if (v.includes('jamb slip') || (v.includes('slip') && v.includes('jamb')) || v.includes('exam slip')) {
     return { icon: Printer, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Exam Slip Printing' };

@@ -77,7 +77,7 @@ export default function ExamSimulatorGrid({
         {examSimulators.map((exam) => (
           <a
             key={exam.key}
-            className={`er-sim-card er-sim-${exam.key} ${identityClassFor(exam.mode, 'service')}`}
+            className={`er-sim-card er-sim-${exam.key}`}
             href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : simulatorStartHref(exam.key)}
           >
             <span className="er-sim-top">

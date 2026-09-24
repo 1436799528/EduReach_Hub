@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchCbtResult } from '../src/lib/api';
+import { localStorageKey } from '../src/lib/localPreview';
 
 export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptId?: string } = {}) {
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     const attemptId =
       routeAttemptId ||
       new URLSearchParams(window.location.search).get('attempt') ||
-      localStorage.getItem('edureach-last-cbt-attempt') ||
+      localStorage.getItem(localStorageKey('last-cbt-attempt')) ||
       '';
 
     if (!attemptId) {
@@ -47,6 +48,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
         <div className="hub-container" style={{ maxWidth: '900px' }}>
           {loading && (
             <div className="hub-panel hub-empty" style={{ padding: '48px', textAlign: 'center' }}>
+              <h1 className="er-visually-hidden">CBT Results</h1>
               <Sparkles size={24} style={{ color: '#C85841', marginBottom: '8px' }} />
               <p style={{ fontWeight: 700, color: '#0f172a' }}>Calculating CBT test score and performance analysis…</p>
             </div>
@@ -54,6 +56,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
           {!loading && error && (
             <div className="hub-panel hub-empty" style={{ padding: '40px', textAlign: 'center' }}>
+              <h1 className="er-visually-hidden">CBT Results</h1>
               <p style={{ color: '#b91c1c', marginBottom: '16px' }}>{error}</p>
               <a className="hub-primary-btn" href="/cbt" style={{ textDecoration: 'none' }}>
                 Start CBT Practice
@@ -98,7 +101,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                         background: 'rgba(255, 255, 255, 0.15)',
                         padding: '4px 10px',
                         borderRadius: '999px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 800,
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
@@ -133,7 +136,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                     <div style={{ fontSize: '38px', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em' }}>
                       {score}%
                     </div>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', opacity: 0.85, fontWeight: 700, marginTop: '4px' }}>
+                    <div style={{ fontSize: '12px', textTransform: 'uppercase', opacity: 0.85, fontWeight: 700, marginTop: '4px' }}>
                       Overall Score
                     </div>
                   </div>
@@ -194,7 +197,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
               {/* CORRECTIONS LIST */}
               <div style={{ marginBottom: '16px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#C85841', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#C85841', letterSpacing: '0.04em' }}>
                   DETAILED ANALYSIS
                 </span>
                 <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '4px 0 0' }}>
@@ -250,7 +253,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '4px',
-                              fontSize: '11px',
+                              fontSize: '12px',
                               fontWeight: 800,
                               padding: '2px 8px',
                               borderRadius: '999px',
@@ -313,12 +316,12 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                               <strong style={{ width: '18px' }}>{String.fromCharCode(65 + optIdx)}.</strong>
                               <span style={{ flex: 1 }}>{optText}</span>
                               {isOptionCorrect && (
-                                <span style={{ fontSize: '10px', background: '#059669', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                                <span style={{ fontSize: '11px', background: '#059669', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
                                   CORRECT ANSWER
                                 </span>
                               )}
                               {wasSelected && !isOptionCorrect && (
-                                <span style={{ fontSize: '10px', background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
+                                <span style={{ fontSize: '11px', background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
                                   YOUR CHOICE
                                 </span>
                               )}

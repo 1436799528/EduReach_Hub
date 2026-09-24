@@ -21,7 +21,6 @@ const PastQuestionsPage = lazy(() => import('../../pages/PastQuestionsPage'));
 const CbtResultsPage = lazy(() => import('../../pages/CbtResultsPage'));
 const ScreeningCalculatorPage = lazy(() => import('../../pages/ScreeningCalculatorPage'));
 const ServicesCatalogPage = lazy(() => import('../../pages/ServicesCatalogPage'));
-const SearchPage = lazy(() => import('../../pages/SearchPage'));
 const ServiceApplyPage = lazy(() => import('../../pages/ServiceApplyPage'));
 const NewsPage = lazy(() => import('../../pages/NewsPage'));
 const EventsPage = lazy(() => import('../../pages/EventsPage'));
@@ -136,7 +135,6 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/schools') return <ComingSoonPage />;
   if (path === '/support') return <ComingSoonPage />;
   if (path === '/services') return <ServicesCatalogPage />;
-  if (path === '/search') return <SearchPage />;
   // Request tracking is a signed-in dashboard workflow, not a public page.
   if (path === '/services/track' || path === '/track') return protectedDashboard('services');
   if (path === '/nelfund') return <ServiceApplyPage slug="nelfund-loan" />;

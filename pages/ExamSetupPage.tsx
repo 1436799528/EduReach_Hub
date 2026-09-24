@@ -1,7 +1,7 @@
 import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
+import CardIdentityMark from '../src/components/CardIdentityMark';
 import {
   jambCourses,
   jambDepartments,
@@ -299,7 +299,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     {postUtmeSchools.filter((school) => school.offersPostUtme).map((school) => <option key={school.id} value={school.id}>{school.name} · {school.location}</option>)}
                   </select>
                 </label>
-                <div className={`er-setup-school-card er-setup-full-width ${identityClassFor('post-utme', 'service')}`}>
+                <div className="er-setup-school-card er-setup-full-width">
                   <CheckCircle2 size={18} />
                   <div><strong>{selectedSchool.examLabel}</strong><span>{selectedSchool.subjects.join(' · ')}</span><small>Only schools with an active Post-UTME practice profile are listed here. Check the school’s current admission notice before applying.</small></div>
                 </div>

@@ -9,6 +9,14 @@ import {
 } from '../src/lib/api';
 
 const categories = ['jamb', 'admission', 'waec', 'neco', 'nelfund', 'campus', 'opportunities', 'general'];
+const authors = [
+  'EduReach Editorial Desk',
+  'EduReach Exams Desk',
+  'EduReach Student Funding Desk',
+  'EduReach Admissions Desk',
+  'EduReach Opportunities Desk',
+  'EduReach Campus Desk',
+];
 
 const emptyForm = {
   title: '',
@@ -17,6 +25,7 @@ const emptyForm = {
   body: '',
   category: 'general',
   image_url: '',
+  source_name: 'EduReach Editorial Desk',
   source_url: '',
   published: false,
 };
@@ -71,6 +80,7 @@ export default function AdminNewsPage() {
       body: article.body,
       category: article.category || 'general',
       image_url: article.image_url || '',
+      source_name: article.source_name || 'EduReach Editorial Desk',
       source_url: article.source_url || '',
       published: article.published,
     });
@@ -92,6 +102,7 @@ export default function AdminNewsPage() {
         body: form.body.trim(),
         category: form.category,
         image_url: form.image_url.trim() || null,
+        source_name: form.source_name.trim() || null,
         source_url: form.source_url.trim() || null,
         published: publish,
       };
@@ -132,7 +143,7 @@ export default function AdminNewsPage() {
             <p>Write, edit, publish and delete news articles. Published stories appear on /news and exam hubs.</p>
           </div>
         </div>
-        {error && <div className="admin-card">{error}</div>}
+        {error && <div className="admin-card" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}><span>{error}</span><button type="button" className="admin-btn small" onClick={() => void load()} disabled={loading}>Try again</button></div>}
         {notice && <div className="admin-card">{notice}</div>}
 
         <div className="admin-kpi-grid two">
@@ -156,7 +167,7 @@ export default function AdminNewsPage() {
           <div style={{ display: 'grid', gap: '10px' }}>
             <input
               className="admin-input"
-              placeholder="Headline *"
+              aria-label="Article headline" placeholder="Headline *"
               value={form.title}
               onChange={(e) => {
                 set('title', e.target.value);
@@ -166,14 +177,14 @@ export default function AdminNewsPage() {
             <div className="admin-inline-form">
               <input
                 className="admin-input"
-                placeholder="URL slug (auto from headline)"
+                aria-label="Article URL slug" placeholder="URL slug (auto from headline)"
                 value={form.slug}
                 onChange={(e) => {
                   set('slug', slugify(e.target.value));
                   setSlugTouched(true);
                 }}
               />
-              <select className="admin-select" value={form.category} onChange={(e) => set('category', e.target.value)}>
+              <select aria-label="Article category" className="admin-select" value={form.category} onChange={(e) => set('category', e.target.value)}>
                 {categories.map((c) => (
                   <option key={c} value={c}>
                     {c.toUpperCase()}
@@ -183,21 +194,26 @@ export default function AdminNewsPage() {
             </div>
             <input
               className="admin-input"
-              placeholder="Short excerpt (one line shown on cards)"
+              aria-label="Article excerpt" placeholder="Short excerpt (one line shown on cards)"
               value={form.excerpt}
               onChange={(e) => set('excerpt', e.target.value)}
             />
+            <select aria-label="Article author" className="admin-select" value={form.source_name} onChange={(e) => set('source_name', e.target.value)}>
+              {Array.from(new Set([...(authors as string[]), ...(form.source_name && !authors.includes(form.source_name) ? [form.source_name] : [])])).map((author) => (
+                <option key={author} value={author}>{author}</option>
+              ))}
+            </select>
             <textarea
               className="admin-input"
               rows={8}
               style={{ height: 'auto', minHeight: '160px' }}
-              placeholder="Article body * — blank lines separate paragraphs"
+              aria-label="Article body" placeholder="Article body * — blank lines separate paragraphs"
               value={form.body}
               onChange={(e) => set('body', e.target.value)}
             />
             <input
               className="admin-input"
-              placeholder="Cover image URL (https://… or /news/photos/….jpg)"
+              aria-label="Cover image URL" placeholder="Cover image URL (https://… or /news/photos/….jpg)"
               value={form.image_url}
               onChange={(e) => {
                 set('image_url', e.target.value);
@@ -217,7 +233,7 @@ export default function AdminNewsPage() {
             )}
             <input
               className="admin-input"
-              placeholder="Source URL (official announcement link, optional)"
+              aria-label="Source URL" placeholder="Source URL (official announcement link, optional)"
               value={form.source_url}
               onChange={(e) => set('source_url', e.target.value)}
             />
@@ -226,14 +242,14 @@ export default function AdminNewsPage() {
               Published (visible on the student news feed)
             </label>
             <div className="admin-inline-form">
-              <button className="admin-btn success" onClick={() => void save(true)}>
+              <button type="button" className="admin-btn success" onClick={() => void save(true)}>
                 {editingId ? 'Save & Publish' : 'Publish Article'}
               </button>
-              <button className="admin-btn secondary" onClick={() => void save(false)}>
+              <button type="button" className="admin-btn secondary" onClick={() => void save(false)}>
                 {editingId ? 'Save as Draft' : 'Save Draft'}
               </button>
               {editingId && (
-                <button className="admin-btn secondary" onClick={resetForm}>
+                <button type="button" className="admin-btn secondary" onClick={resetForm}>
                   Cancel Edit
                 </button>
               )}
@@ -273,7 +289,7 @@ export default function AdminNewsPage() {
                     </td>
                     <td>{a.updated_at ? new Date(a.updated_at).toLocaleString() : '—'}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <button className="admin-text-btn" onClick={() => startEdit(a)}>
+                      <button type="button" className="admin-text-btn" onClick={() => startEdit(a)}>
                         Edit
                       </button>{' '}
                       {a.published && (
@@ -283,7 +299,7 @@ export default function AdminNewsPage() {
                           </a>{' '}
                         </>
                       )}
-                      <button className="admin-text-btn" onClick={() => void remove(a.id, a.title)}>
+                      <button type="button" className="admin-text-btn" onClick={() => void remove(a.id, a.title)}>
                         Delete
                       </button>
                     </td>

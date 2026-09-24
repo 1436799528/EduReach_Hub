@@ -94,6 +94,7 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
 });
 
 app.post('/api/analytics/event', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
     const eventName = String(req.body?.event_name || '').trim().slice(0,80);
     const pathName = String(req.body?.path || '').trim().slice(0,500);
@@ -136,54 +137,6 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin users error:', error);
     res.status(503).json({ error: 'Unable to load student accounts.' });
-  }
-});
-
-app.get('/api/admin/vouchers', requireAdmin, async (req, res) => {
-  try {
-    const body = String(req.query.exam_body || 'WAEC').toUpperCase();
-    const year = Number(req.query.exam_year || new Date().getFullYear());
-    if (!['WAEC','NECO'].includes(body) || !Number.isInteger(year)) return res.status(400).json({ error: 'Invalid voucher filter.' });
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('voucher_inventory').select('id,exam_body,exam_year,serial_number,status,created_at').eq('exam_body',body).eq('exam_year',year).order('created_at',{ascending:false}).limit(100);
-    if (error) throw error;
-    res.json({ items: data || [] });
-  } catch (error) {
-    console.error('Admin voucher list error:', error);
-    res.status(503).json({ error: 'Unable to load voucher inventory.' });
-  }
-});
-
-app.post('/api/admin/vouchers', requireAdmin, async (req, res) => {
-  try {
-    const adminUser = (req as AdminRequest).adminUser!;
-    const examBody = String(req.body?.exam_body || '').toUpperCase();
-    const examYear = Number(req.body?.exam_year);
-    const serial = String(req.body?.serial_number || '').trim();
-    const pin = String(req.body?.pin || '').trim();
-    if (!['WAEC','NECO'].includes(examBody) || !Number.isInteger(examYear) || !serial || !pin) return res.status(400).json({ error: 'Exam body, year, serial and PIN are required.' });
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('voucher_inventory').insert({ exam_body: examBody, exam_year: examYear, serial_number: serial, pin }).select('id,exam_body,exam_year,serial_number,status,created_at').single();
-    if (error) throw error;
-    await supabase.rpc('admin_audit_log',{p_admin_user_id:adminUser.id,p_action:'create',p_entity_type:'voucher',p_entity_id:data.id,p_metadata:{exam_body:examBody,exam_year:examYear}});
-    res.status(201).json({ item: data });
-  } catch (error) {
-    console.error('Admin voucher create error:', error);
-    res.status(400).json({ error: 'Unable to add voucher. Serial may already exist.' });
-  }
-});
-
-app.post('/api/admin/vouchers/:voucherId/reveal', requireAdmin, async (req, res) => {
-  try {
-    const adminUser = (req as AdminRequest).adminUser!;
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('voucher_inventory').select('id,exam_body,exam_year,serial_number,pin,status').eq('id',req.params.voucherId).single();
-    if (error || !data) return res.status(404).json({ error: 'Voucher not found.' });
-    await supabase.rpc('admin_audit_log',{p_admin_user_id:adminUser.id,p_action:'reveal_pin',p_entity_type:'voucher',p_entity_id:data.id,p_metadata:{exam_body:data.exam_body,exam_year:data.exam_year}});
-    res.json({ pin: data.pin });
-  } catch (error) {
-    console.error('Admin voucher reveal error:', error);
-    res.status(500).json({ error: 'Unable to reveal voucher PIN.' });
   }
 });
 
@@ -359,7 +312,7 @@ async function uniqueNewsSlug(supabase: any, base: string, excludeId?: string): 
   return `${base}-${Date.now().toString(36)}`;
 }
 
-const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_url,published,published_at,updated_at';
+const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,updated_at';
 
 app.get('/api/admin/news', requireAdmin, async (_req, res) => {
   try {
@@ -391,6 +344,7 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
       body: bodyText,
       category: String(req.body?.category || 'general').trim().toLowerCase() || 'general',
       image_url: req.body?.image_url ? String(req.body.image_url).trim() : null,
+      source_name: req.body?.source_name ? String(req.body.source_name).trim() : null,
       source_url: req.body?.source_url ? String(req.body.source_url).trim() : null,
       published,
       published_at: published ? now : null,
@@ -429,6 +383,7 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     if (req.body?.excerpt !== undefined) patch.excerpt = req.body.excerpt ? String(req.body.excerpt).trim() : null;
     if (req.body?.category !== undefined) patch.category = String(req.body.category).trim().toLowerCase() || 'general';
     if (req.body?.image_url !== undefined) patch.image_url = req.body.image_url ? String(req.body.image_url).trim() : null;
+    if (req.body?.source_name !== undefined) patch.source_name = req.body.source_name ? String(req.body.source_name).trim() : null;
     if (req.body?.source_url !== undefined) patch.source_url = req.body.source_url ? String(req.body.source_url).trim() : null;
     if (req.body?.published !== undefined) {
       const published = req.body.published === true;
@@ -460,10 +415,6 @@ app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     console.error('Admin news delete error:', error);
     res.status(500).json({ error: 'Unable to delete this article.' });
   }
-});
-
-app.get('/api/admin/session', requireAdmin, (req, res) => {
-  res.json({ user: (req as AdminRequest).adminUser });
 });
 
 app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
@@ -558,7 +509,7 @@ app.get('/api/news', async (_req, res) => {
       .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
       .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
     if (error) throw error;
-    res.json({ items: (data || []).map(item => ({ ...item, summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
+    res.json({ items: (data || []).map(item => ({ ...item, author: item.source_name || 'EduReach Editorial Desk', summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
   } catch (error) {
     console.error('News API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -573,7 +524,7 @@ app.get('/api/news/:slug', async (req, res) => {
       .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
       .eq('slug', req.params.slug).eq('published', true).maybeSingle();
     if (error || !data) return res.status(404).json({ error: 'News article not found.' });
-    res.json({ item: { ...data, summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
+    res.json({ item: { ...data, author: data.source_name || 'EduReach Editorial Desk', summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
   } catch (error) {
     console.error('News article API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });

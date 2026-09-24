@@ -2,7 +2,7 @@ import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
+import CardIdentityMark from '../src/components/CardIdentityMark';
 import { admissionMethodProfiles } from '../src/data/examPreparation';
 
 type Formula = '50-50' | '60-40' | '70-30' | 'jamb-only' | 'points';
@@ -205,7 +205,7 @@ export default function ScreeningCalculatorPage() {
             </div>
             <div className="er-methods-grid">
               {admissionMethodProfiles.filter((profile) => profile.id !== 'custom').map((profile) => (
-                <article className={`er-method-card ${identityClassFor('admission requirements', 'service')}`} key={profile.id}>
+                <article className="er-method-card" key={profile.id}>
                   <h3>{profile.school}</h3>
                   <strong>{profile.method}</strong>
                   <p>{profile.explanation}</p>

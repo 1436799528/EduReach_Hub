@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState, useTransition } from 'react';
 import ErrorBoundary from './ErrorBoundary';
+import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
 import { pageTitleFor } from '../lib/pageMeta';
 
@@ -18,20 +19,6 @@ function readLocation() {
     pathname: window.location.pathname,
     routeKey: `${window.location.pathname}${window.location.search}`,
   };
-}
-
-function serviceActivityFor(pathname: string): { key: string; title: string; category: string } | null {
-  if (pathname === '/cbt' || pathname === '/past-questions') return { key: 'cbt-practice', title: 'CBT & Past Question Bank', category: 'CBT Practice' };
-  if (pathname === '/screening-calculator' || pathname === '/calculator' || pathname === '/admission') return { key: 'admission-tools', title: 'Admission & Screening Calculator', category: 'Academic Tool' };
-  if (pathname === '/schools') return { key: 'school-finder', title: 'School Finder', category: 'Academic Tool' };
-  if (pathname === '/jobs' || pathname === '/scholarships') return { key: 'scholarships', title: 'Scholarships & Grants', category: 'Funding' };
-  if (pathname === '/nelfund') return { key: 'nelfund-loan', title: 'NELFUND Loan Application', category: 'Student Service' };
-  if (pathname === '/results') return { key: 'results', title: 'WAEC / NECO Result Checking', category: 'Student Service' };
-  if (pathname.startsWith('/services/apply/')) {
-    const slug = decodeURIComponent(pathname.slice('/services/apply/'.length));
-    return { key: slug, title: slug.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()), category: 'Student Service' };
-  }
-  return null;
 }
 
 function analyticsSessionId() {
@@ -61,34 +48,40 @@ function recordPageView(pathname: string) {
   }).catch(() => undefined);
 }
 
-function recordServiceActivity(pathname: string, href: string) {
-  const item = serviceActivityFor(pathname);
-  if (!item) return;
-
-  try {
-    const current = JSON.parse(localStorage.getItem('edureach-accessed-services') || '[]');
-    const list = Array.isArray(current) ? current : [];
-    const existing = list.find((entry: any) => entry.key === item.key);
-    const nextItem = {
-      ...item,
-      href,
-      lastAccessedAt: new Date().toISOString(),
-      count: existing ? Number(existing.count || 0) + 1 : 1,
-    };
-    const next = [nextItem, ...list.filter((entry: any) => entry.key !== item.key)].slice(0, 12);
-    localStorage.setItem('edureach-accessed-services', JSON.stringify(next));
-    window.dispatchEvent(new Event('edureach-activity-changed'));
-  } catch {
-    // Local activity tracking is best-effort only.
-  }
-}
-
 export default function App() {
   const [locationState, setLocationState] = useState(readLocation);
+  // Route changes run as transitions: when the next page's code chunk is still
+  // downloading (see routes.tsx), the current page stays on screen and the
+  // progress bar shows "pending" instead of flashing a skeleton.
+  const [isPending, startTransition] = useTransition();
+  const pendingHash = useRef<string | null>(null);
+  const currentRouteKey = useRef(locationState.routeKey);
+  currentRouteKey.current = locationState.routeKey;
 
   useEffect(() => {
+    if (pendingHash.current === null) return;
+    scrollForNavigation(pendingHash.current);
+    pendingHash.current = null;
+  }, [locationState.routeKey]);
+
+  useEffect(() => {
+    try {
+      window.history.replaceState({ ...(window.history.state || {}), edureach: true }, '', window.location.href);
+    } catch {
+      // History state is optional; navigation still works without the marker.
+    }
+
     const syncPath = () => {
-      setLocationState(readLocation());
+      pendingHash.current = null;
+      try {
+        window.history.replaceState({ ...(window.history.state || {}), edureach: true }, '', window.location.href);
+        window.sessionStorage.setItem('edureach-app-history', '1');
+      } catch {
+        // Storage may be unavailable in a restricted browser context.
+      }
+      // Always publish a fresh location object: the dashboard relies on it to
+      // re-sync its tab after a silent pushState + browser back.
+      startTransition(() => setLocationState(readLocation()));
       scrollForNavigation(window.location.hash);
     };
     window.addEventListener('popstate', syncPath);
@@ -111,10 +104,19 @@ export default function App() {
       event.preventDefault();
       const next = `${url.pathname}${url.search}${url.hash}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      if (next !== current) window.history.pushState({}, '', next);
-      recordServiceActivity(url.pathname, next);
-      setLocationState({ pathname: url.pathname, routeKey: `${url.pathname}${url.search}` });
-      scrollForNavigation(url.hash);
+      if (next !== current) {
+        window.history.pushState({ edureach: true }, '', next);
+        try { window.sessionStorage.setItem('edureach-app-history', '1'); } catch { /* optional */ }
+      }
+      const routeKey = `${url.pathname}${url.search}`;
+      if (routeKey === currentRouteKey.current) {
+        // Same page (or hash-only change): nothing new to load, scroll right away.
+        scrollForNavigation(url.hash);
+      } else {
+        // Scroll once the new page has actually committed (after its chunk loads).
+        pendingHash.current = url.hash;
+      }
+      startTransition(() => setLocationState({ pathname: url.pathname, routeKey }));
     };
 
     document.addEventListener('click', handleInternalLink);
@@ -126,5 +128,17 @@ export default function App() {
     recordPageView(locationState.pathname);
   }, [locationState.pathname]);
 
-  return <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>;
+  return (
+    <>
+      {/* Thin top progress bar: in-app navigation never triggers the browser's own loading UI. */}
+      <div key={`progress:${locationState.routeKey}`} className="er-route-progress" aria-hidden="true" />
+      {isPending && <div className="er-route-progress is-pending" aria-hidden="true" />}
+      {/* Suspense stays mounted across routes (only the inner tree is keyed) so a
+          transition keeps the current page visible while the next chunk loads;
+          the skeleton fallback only appears on a cold load. */}
+      <Suspense fallback={<RouteFallback />}>
+        <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+      </Suspense>
+    </>
+  );
 }

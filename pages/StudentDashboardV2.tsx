@@ -21,7 +21,6 @@ import {
   X,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
-import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
@@ -572,22 +571,22 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </section>
 
       <div className="dash-quick-grid">
-        <a href="/cbt" className={`dash-quick-card ${identityClassFor('cbt', 'service')}`}>
+        <a href="/cbt" className="dash-quick-card">
           <div className="dash-quick-card-top"><MonitorPlay size={18} color="#C85841" /></div>
           <h3 className="dash-quick-card-title">Start a CBT test</h3>
           <span className="dash-quick-card-sub">JAMB • WAEC • NECO • Post-UTME</span>
         </a>
-        <a href="/services" className={`dash-quick-card ${identityClassFor('support', 'service')}`}>
+        <a href="/services" className="dash-quick-card">
           <div className="dash-quick-card-top"><FileText size={18} color="#1d4ed8" /></div>
           <h3 className="dash-quick-card-title">Request a service</h3>
           <span className="dash-quick-card-sub">NELFUND, results, slips</span>
         </a>
-        <a href="/dashboard/services" className={`dash-quick-card ${identityClassFor('track request', 'service')}`}>
+        <a href="/dashboard/services" className="dash-quick-card">
           <div className="dash-quick-card-top"><ScanSearch size={18} color="#059669" /></div>
           <h3 className="dash-quick-card-title">Track a request</h3>
           <span className="dash-quick-card-sub">Live status by reference</span>
         </a>
-        <a href="/screening-calculator" className={`dash-quick-card ${identityClassFor('calculator', 'service')}`}>
+        <a href="/screening-calculator" className="dash-quick-card">
           <div className="dash-quick-card-top"><Calculator size={18} color="#7c3aed" /></div>
           <h3 className="dash-quick-card-title">Screening calculator</h3>
           <span className="dash-quick-card-sub">Estimate your aggregate</span>
