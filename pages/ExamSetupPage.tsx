@@ -245,11 +245,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                           Subject {index + 1}{index === 0 ? ' · compulsory' : ''}
                           <select
                             value={subject}
-                            disabled={index === 0}
                             onChange={(event) => updateJambSubject(index, event.target.value)}
                           >
                             {index !== 0 && <option value="">Choose a subject</option>}
-                            {jambOptions.map((option) => (
+                            {(index === 0 ? ['Use of English'] : jambOptions).map((option) => (
                               <option key={option} value={option} disabled={index !== 0 && usedByOtherSlot.has(option)}>
                                 {option}
                               </option>
