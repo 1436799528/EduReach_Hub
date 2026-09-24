@@ -4,10 +4,15 @@
 const routeTitles: Record<string, string> = {
   '/': 'Home',
   '/services': 'Services',
+  '/search': 'Search',
   '/services/track': 'Request Tracker',
   '/track': 'Request Tracker',
   '/cbt': 'CBT',
   '/cbt/practice': 'CBT Practice',
+  '/cbt/setup/jamb': 'JAMB Practice Setup',
+  '/cbt/setup/waec': 'WAEC Practice Setup',
+  '/cbt/setup/neco': 'NECO Practice Setup',
+  '/cbt/setup/post-utme': 'Post-UTME Practice Setup',
   '/cbt/results': 'CBT Results',
   '/dashboard/cbt/results': 'CBT Results',
   '/screening-calculator': 'Screening Calculator',
@@ -20,6 +25,10 @@ const routeTitles: Record<string, string> = {
   '/events': 'Events',
   '/jobs': 'Jobs',
   '/scholarships': 'Scholarships',
+  '/jamb': 'JAMB',
+  '/waec': 'WAEC',
+  '/neco': 'NECO',
+  '/post-utme': 'Post-UTME',
   '/nabteb': 'NABTEB',
   '/support': 'Student Support',
   '/nelfund': 'NELFUND',
@@ -34,14 +43,14 @@ const routeTitles: Record<string, string> = {
   '/profile/complete': 'Academic Profile Completion',
   '/profile': 'Academic Profile',
   '/dashboard': 'Student Dashboard',
-  '/dashboard/services': 'My Services',
-  '/dashboard/applications': 'Applications',
-  '/dashboard/cbt': 'CBT Progress',
-  '/dashboard/past-questions': 'Past Question Progress',
-  '/dashboard/saved': 'Saved Items',
-  '/dashboard/scholarships': 'Scholarships',
-  '/dashboard/notifications': 'Notifications',
-  '/dashboard/tools': 'Dashboard Tools',
+  '/dashboard/services': 'My Requests',
+  '/dashboard/applications': 'My Requests',
+  '/dashboard/cbt': 'My CBT',
+  '/dashboard/past-questions': 'My CBT',
+  '/dashboard/tools': 'Tools & Saved',
+  '/dashboard/saved': 'Tools & Saved',
+  '/dashboard/notifications': 'Student Dashboard',
+  '/dashboard/scholarships': 'Scholarships & Grants',
   '/dashboard/settings': 'Settings',
   '/settings': 'Settings',
   '/admin': 'Admin Dashboard',
@@ -49,15 +58,17 @@ const routeTitles: Record<string, string> = {
   '/admin/queue': 'Admin Queue',
   '/admin/cbt': 'Admin CBT',
   '/admin/news': 'Admin Newsroom',
-  '/admin/vouchers': 'Admin Vouchers',
   '/admin/users': 'Admin Users',
 };
 
 export function pageTitleFor(pathname: string): string {
   const normalized = pathname.replace(/\/$/, '') || '/';
-  if (normalized.startsWith('/services/apply/')) return 'Service Request';
+  if (normalized.startsWith('/cbt/setup/')) return 'Practice Setup';
+  if (normalized.startsWith('/services/apply/')) return 'Service Guide';
   if (normalized.startsWith('/services/')) return 'Service';
-  if (normalized.startsWith('/dashboard/cbt/results')) return 'CBT Results';
+  if (normalized.startsWith('/dashboard/cbt/results') || normalized.startsWith('/cbt/results')) return 'CBT Results';
   if (normalized.startsWith('/news/')) return 'News Article';
+  if (normalized.startsWith('/admission/')) return 'Admission';
+  if (normalized.startsWith('/tools/')) return 'Academic Tools';
   return routeTitles[normalized] || 'Page Not Found';
 }

@@ -1,7 +1,7 @@
 import { ArrowRight, BellRing, Briefcase, MapPin, Tag } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark from '../src/components/CardIdentityMark';
+import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { EDUREACH_WHATSAPP, jobApplyHref, jobs } from '../src/data/hubContent';
@@ -32,10 +32,10 @@ export default function JobsPage() {
                 STUDENT OPPORTUNITIES &amp; GRANTS
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
-                Scholarships, Grants &amp; Careers
+                Student Opportunities &amp; Grants
               </h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                Verified tertiary scholarships, undergraduate bursaries, and campus student work opportunities.
+                Browse the currently configured student opportunities. Grants and scholarships appear only when their source, eligibility and application route have been checked.
               </p>
             </div>
             <a className="hub-outline-btn" href="/news" style={{ textDecoration: 'none', fontSize: '12px' }}>
@@ -45,6 +45,22 @@ export default function JobsPage() {
 
           <div style={{ marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
             <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="Opportunity categories" />
+          </div>
+
+          <div
+            role="note"
+            style={{
+              marginBottom: '18px',
+              padding: '12px 14px',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              background: '#fffbeb',
+              color: '#854d0e',
+              fontSize: '12px',
+              lineHeight: 1.5,
+            }}
+          >
+            <strong>Catalogue note:</strong> there are no fabricated “all grants” results here. If a scholarship or grant is not in the filtered list, select the Scholarships & Grants filter for the notify option and confirm any opportunity on the organiser’s official channel before sharing documents or paying a fee.
           </div>
 
           {!filteredJobs.length && (
@@ -73,6 +89,7 @@ export default function JobsPage() {
                 {filteredJobs.map((item) => (
                   <div
                     key={item.title}
+                    className={`er-opportunity-card ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -97,7 +114,7 @@ export default function JobsPage() {
                           <MapPin size={11} /> {item.mode}
                         </span>
                         <span>•</span>
-                        <span className="hub-verified">Verified</span>
+                        <span style={{ color: '#64748b', fontWeight: 700 }}>Active EduReach listing</span>
                       </div>
                       <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
                         {item.title}

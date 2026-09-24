@@ -4,7 +4,6 @@ import {
   BookOpen,
   FileCheck2,
   FileText,
-  CreditCard,
   Printer,
   Calculator,
   Award,
@@ -28,6 +27,8 @@ export interface CleanIdentity {
   label?: string;
   badge?: string;
   tone: 'crimson' | 'emerald' | 'blue' | 'amber' | 'purple' | 'slate';
+  /** Stable brand identity used to carry the same exam/service palette into parent cards. */
+  brand?: string;
   ariaLabel: string;
 }
 
@@ -39,47 +40,44 @@ export function resolveIdentity(
 
   // Explicit service artwork takes precedence when the service itself is named.
   if (v.includes('admission watch')) {
-    return { icon: FileText, image: '/news/photos/campus.jpg', label: 'ADMISSION WATCH', tone: 'purple', ariaLabel: 'Admission Watch' };
+    return { icon: FileText, image: '/news/photos/campus.jpg', label: 'ADMISSION WATCH', tone: 'purple', brand: 'admission', ariaLabel: 'Admission Watch' };
   }
   if (v.includes('student funding') || v.includes('funding alert')) {
-    return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
-  }
-  if (v.includes('scratch') || v.includes('scratch card') || v.includes('voucher') || v.includes('token')) {
-    return { icon: CreditCard, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC / NECO Scratch Cards' };
+    return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', brand: 'nelfund', ariaLabel: 'Student Funding' };
   }
   if (v.includes('jamb slip') || (v.includes('slip') && v.includes('jamb')) || v.includes('exam slip')) {
-    return { icon: Printer, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Exam Slip Printing' };
+    return { icon: Printer, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Exam Slip Printing' };
   }
 
   // Brand-first resolution: an explicitly named organisation uses its real brand mark.
   if (v.includes('jamb')) {
-    return { icon: GraduationCap, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', ariaLabel: 'JAMB Services' };
+    return { icon: GraduationCap, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Services' };
   }
   if (v.includes('neco')) {
-    return { icon: Award, image: '/icons/brands/neco.webp', label: 'NECO', tone: 'blue', ariaLabel: 'NECO Services' };
+    return { icon: Award, image: '/icons/brands/neco.webp', label: 'NECO', tone: 'blue', brand: 'neco', ariaLabel: 'NECO Services' };
   }
   if (v.includes('waec')) {
-    return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', ariaLabel: 'WAEC Services' };
+    return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', brand: 'waec', ariaLabel: 'WAEC Services' };
   }
   if (v.includes('nabteb')) {
-    return { icon: Award, image: '/icons/brands/nabteb.png', label: 'NABTEB', tone: 'blue', ariaLabel: 'NABTEB Services' };
+    return { icon: Award, image: '/icons/brands/nabteb.png', label: 'NABTEB', tone: 'blue', brand: 'nabteb', ariaLabel: 'NABTEB Services' };
   }
   if (v.includes('nelfund')) {
-    return { icon: Wallet, image: '/icons/brands/nelfund.png', label: 'NELFUND', tone: 'emerald', ariaLabel: 'NELFUND Services' };
+    return { icon: Wallet, image: '/icons/brands/nelfund.png', label: 'NELFUND', tone: 'emerald', brand: 'nelfund', ariaLabel: 'NELFUND Services' };
   }
 
   // News (brand-named stories already returned above with real marks)
   if (type === 'news' || v.includes('news') || v.includes('gist')) {
     if (v.includes('result')) {
-      return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'EXAMS', tone: 'blue', ariaLabel: 'Exam News' };
+      return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'EXAMS', tone: 'blue', brand: 'waec', ariaLabel: 'Exam News' };
     }
     if (v.includes('admission') || v.includes('screening')) {
-      return { icon: FileText, label: 'ADMISSION', tone: 'purple', ariaLabel: 'Admission News' };
+      return { icon: FileText, label: 'ADMISSION', tone: 'purple', brand: 'admission', ariaLabel: 'Admission News' };
     }
     if (v.includes('scholarship') || v.includes('opportun')) {
-      return { icon: Award, label: 'GRANTS', tone: 'amber', ariaLabel: 'Scholarship News' };
+      return { icon: Award, label: 'GRANTS', tone: 'amber', brand: 'opportunity', ariaLabel: 'Scholarship News' };
     }
-    return { icon: Newspaper, label: 'UPDATES', tone: 'slate', ariaLabel: 'Campus News' };
+    return { icon: Newspaper, label: 'UPDATES', tone: 'slate', brand: 'news', ariaLabel: 'Campus News' };
   }
 
   // Upcoming
@@ -98,17 +96,8 @@ export function resolveIdentity(
       label: 'NELFUND',
       badge: 'LOAN',
       tone: 'emerald',
+      brand: 'nelfund',
       ariaLabel: 'NELFUND Student Loan',
-    };
-  }
-  if (v.includes('scratch') || v.includes('card') || v.includes('pin') || v.includes('voucher') || v.includes('token')) {
-    return {
-      icon: CreditCard,
-      image: '/icons/brands/waec.webp',
-      label: 'WAEC',
-      badge: 'SCRATCH CARD',
-      tone: 'blue',
-      ariaLabel: 'WAEC / NECO Scratch Cards',
     };
   }
   if (v.includes('slip') || v.includes('print')) {
@@ -118,6 +107,7 @@ export function resolveIdentity(
       label: 'JAMB SLIP',
       badge: 'PRINT',
       tone: 'crimson',
+      brand: 'jamb',
       ariaLabel: 'JAMB Exam Slip Printing',
     };
   }
@@ -128,6 +118,7 @@ export function resolveIdentity(
       label: 'RESULTS',
       badge: 'CHECK',
       tone: 'blue',
+      brand: 'waec',
       ariaLabel: 'WAEC / NECO Result Checking',
     };
   }
@@ -137,6 +128,7 @@ export function resolveIdentity(
       label: 'ADMISSION',
       badge: 'PORTAL',
       tone: 'purple',
+      brand: 'admission',
       ariaLabel: 'Admission Letters & Clearance',
     };
   }
@@ -164,6 +156,7 @@ export function resolveIdentity(
       label: 'TRACK',
       badge: 'STATUS',
       tone: 'crimson',
+      brand: 'support',
       ariaLabel: 'Track Service Request',
     };
   }
@@ -174,6 +167,7 @@ export function resolveIdentity(
       label: 'POST-UTME',
       badge: 'SCREENING',
       tone: 'blue',
+      brand: 'post-utme',
       ariaLabel: 'Post-UTME Practice',
     };
   }
@@ -184,6 +178,7 @@ export function resolveIdentity(
       label: 'JAMB',
       badge: 'UTME',
       tone: 'crimson',
+      brand: 'jamb',
       ariaLabel: 'JAMB Services',
     };
   }
@@ -194,6 +189,7 @@ export function resolveIdentity(
       label: 'WAEC',
       badge: 'SSCE',
       tone: 'blue',
+      brand: 'waec',
       ariaLabel: 'WAEC Examination',
     };
   }
@@ -204,6 +200,7 @@ export function resolveIdentity(
       label: 'NECO',
       badge: 'SSCE',
       tone: 'blue',
+      brand: 'neco',
       ariaLabel: 'NECO Examination',
     };
   }
@@ -213,6 +210,7 @@ export function resolveIdentity(
       label: 'CBT',
       badge: 'CLASSROOM',
       tone: 'crimson',
+      brand: 'cbt',
       ariaLabel: 'CBT Classroom Simulator',
     };
   }
@@ -222,6 +220,7 @@ export function resolveIdentity(
       label: 'PAST Q',
       badge: 'STUDY',
       tone: 'purple',
+      brand: 'study',
       ariaLabel: 'Past Questions Bank',
     };
   }
@@ -276,6 +275,7 @@ export function resolveIdentity(
       label: 'GRANTS',
       badge: 'SCHOLARSHIP',
       tone: 'amber',
+      brand: 'opportunity',
       ariaLabel: 'Scholarships & Grants',
     };
   }
@@ -285,6 +285,7 @@ export function resolveIdentity(
       label: 'CAREERS',
       badge: 'OPPORTUNITY',
       tone: 'slate',
+      brand: 'opportunity',
       ariaLabel: 'Student Opportunities',
     };
   }
@@ -295,6 +296,7 @@ export function resolveIdentity(
       label: 'HELP',
       badge: 'SUPPORT',
       tone: 'blue',
+      brand: 'support',
       ariaLabel: 'Student Support',
     };
   }
@@ -307,6 +309,14 @@ export function resolveIdentity(
   };
 }
 
+export function identityClassFor(
+  value: string,
+  type: 'service' | 'news' | 'upcoming' | 'content' = 'service',
+): string {
+  const { brand, tone } = resolveIdentity(value, type);
+  return `er-identity-card er-identity-${brand || tone}`;
+}
+
 export default function CardIdentityMark({
   value,
   type = 'service',
@@ -316,14 +326,14 @@ export default function CardIdentityMark({
   type?: 'service' | 'news' | 'upcoming' | 'content';
   size?: 'sm' | 'md' | 'lg';
 }) {
-  const { icon: Icon, image, label, tone, ariaLabel } = resolveIdentity(value, type);
+  const { icon: Icon, image, label, brand, tone, ariaLabel } = resolveIdentity(value, type);
 
   // Real brand marks are wide, not square: fix the height and let the width
   // follow the natural aspect ratio so emblems never stretch.
   const imgHeight = size === 'sm' ? 20 : size === 'lg' ? 36 : 26;
 
   return (
-    <div className={`ms-identity-mark ms-mark-tone-${tone} ms-mark-${size}`} aria-label={ariaLabel}>
+    <div className={`ms-identity-mark ms-mark-tone-${tone} ms-mark-${size} ${brand ? `ms-identity-brand-${brand}` : ''}`} aria-label={ariaLabel}>
       {image ? (
         <img
           src={image}

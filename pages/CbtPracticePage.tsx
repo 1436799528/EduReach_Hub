@@ -1,70 +1,162 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
+  Calculator,
   ChevronLeft,
   ChevronRight,
   Clock,
   Flag,
+  LayoutGrid,
+  LogIn,
   Send,
+  X,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
-import { fetchCbtQuestions, startCbt, submitCbt } from '../src/lib/api';
+import { identityClassFor } from '../src/components/CardIdentityMark';
+import ScientificCalculator from '../src/components/ScientificCalculator';
+import { fetchCbtExams, fetchCbtQuestions, startCbt, submitCbt } from '../src/lib/api';
 import { getExamProgress, saveExamProgress } from '../src/lib/cbt-offline';
+import { localStorageKey } from '../src/lib/localPreview';
 
 type Question = { id: number; text: string; options: string[] };
+type ExamSummary = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
+type ExamKey = 'jamb' | 'waec' | 'neco' | 'post-utme' | '';
+
+const BRAND_LOGO: Record<Exclude<ExamKey, ''>, string> = {
+  jamb: '/icons/brands/jamb.png',
+  waec: '/icons/brands/waec.webp',
+  neco: '/icons/brands/neco.webp',
+  'post-utme': '/icons/brands/jamb.png',
+};
+
+function navigateInApp(path: string) {
+  window.history.pushState({}, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+function examKeyFor(value: string): ExamKey {
+  const normalized = value.toLowerCase().replace(/[\s_]+/g, '-');
+  if (normalized.includes('post-utme') || normalized.includes('postutme')) return 'post-utme';
+  if (normalized.includes('waec')) return 'waec';
+  if (normalized.includes('neco')) return 'neco';
+  if (normalized.includes('jamb') || normalized.includes('utme')) return 'jamb';
+  return '';
+}
+
+/**
+ * Simulator links use stable ids (practice-exam-jamb, …). When a live exam
+ * catalogue is available, map that request onto the first matching exam so the
+ * "Start test" cards work against real question banks as well as the built-in
+ * practice set.
+ */
+async function resolveExamId(requested: string): Promise<{ id: string; summary: ExamSummary | null }> {
+  const exams = (await fetchCbtExams().catch(() => [])) as ExamSummary[];
+  const exact = exams.find((exam) => exam.id === requested);
+  if (exact) return { id: requested, summary: exact };
+  const wanted = examKeyFor(requested);
+  const match = wanted ? exams.find((exam) => examKeyFor(`${exam.exam_body} ${exam.title}`) === wanted) : undefined;
+  return match ? { id: match.id, summary: match } : { id: requested, summary: null };
+}
+
+function formatClock(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+  const secs = (totalSeconds % 60).toString().padStart(2, '0');
+  return hours > 0 ? `${hours}:${mins}:${secs}` : `${mins}:${secs}`;
+}
 
 export default function CbtPracticePage() {
-  const urlParam = new URLSearchParams(window.location.search).get('exam');
-  const examId = urlParam || 'practice-exam-jamb';
+  const requestedExamId = new URLSearchParams(window.location.search).get('exam') || 'practice-exam-jamb';
 
+  const [examId, setExamId] = useState(requestedExamId);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [examTitle, setExamTitle] = useState('JAMB UTME Comprehensive Practice');
+  const [examTitle, setExamTitle] = useState('CBT Practice Test');
+  const [examBody, setExamBody] = useState('');
+  const [subject, setSubject] = useState('');
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [flags, setFlags] = useState<Record<number, boolean>>({});
   const [seconds, setSeconds] = useState(1800);
-  const [durationMinutes, setDurationMinutes] = useState(30);
   const [attemptId, setAttemptId] = useState('');
   const [restored, setRestored] = useState(false);
   const [message, setMessage] = useState('');
+  const [authRequired, setAuthRequired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [calcOpen, setCalcOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const question = questions[index];
+  const total = questions.length;
+  const brand = examKeyFor(`${examId} ${examBody} ${examTitle}`) || 'jamb';
+  const setupParams = new URLSearchParams(window.location.search);
+  const setupCourse = setupParams.get('course') || '';
+  const setupSchool = setupParams.get('schoolName') || '';
+  const setupSubjects = (setupParams.get('subjects') || '').split('|').filter(Boolean);
+
+  // Exam-focus mode: hide the site footer / mobile tab bar / page bar while a test is open.
+  useEffect(() => {
+    document.body.classList.add('er-exam-mode');
+    const syncTop = () => {
+      const header = document.querySelector('header');
+      const height = header ? Math.round(header.getBoundingClientRect().height) : 60;
+      document.documentElement.style.setProperty('--er-exam-top', `${height}px`);
+    };
+    syncTop();
+    window.addEventListener('resize', syncTop);
+    return () => {
+      document.body.classList.remove('er-exam-mode');
+      window.removeEventListener('resize', syncTop);
+      document.documentElement.style.removeProperty('--er-exam-top');
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
     async function loadExam() {
       try {
-        const data = await fetchCbtQuestions(examId);
+        const resolved = await resolveExamId(requestedExamId);
+        if (!active) return;
+        setExamId(resolved.id);
+        if (resolved.summary) {
+          setExamBody(resolved.summary.exam_body || '');
+          setSubject(resolved.summary.subject || '');
+        }
+
+        const data = await fetchCbtQuestions(resolved.id);
         if (!active) return;
         setQuestions(data.questions);
-        setDurationMinutes(data.exam.durationMinutes || 30);
-        setExamTitle(data.exam.title || 'JAMB UTME Comprehensive Practice');
+        setExamTitle(data.exam.title || 'CBT Practice Test');
+        if (data.exam.subject) setSubject(data.exam.subject);
+        const durationMinutes = data.exam.durationMinutes || 30;
 
-        const saved = await getExamProgress(examId).catch(() => null);
+        const saved = await getExamProgress(resolved.id).catch(() => null);
         if (saved && active) {
           setAnswers(saved.answers);
           setFlags(saved.flags);
           setSeconds(saved.timeRemainingSeconds);
         } else {
-          setSeconds((data.exam.durationMinutes || 30) * 60);
+          setSeconds(durationMinutes * 60);
         }
 
-        const storageKey = `edureach-cbt-attempt-${examId}`;
+        const storageKey = localStorageKey(`cbt-attempt-${resolved.id}`);
         const stored = JSON.parse(localStorage.getItem(storageKey) || 'null') as { attemptId?: string; expiresAt?: string } | null;
         if (stored?.attemptId && stored.expiresAt && new Date(stored.expiresAt).getTime() > Date.now()) {
           setAttemptId(stored.attemptId);
           setSeconds(Math.max(0, Math.ceil((new Date(stored.expiresAt).getTime() - Date.now()) / 1000)));
         } else {
-          const started = await startCbt(examId);
+          const started = await startCbt(resolved.id);
           if (!active) return;
           setAttemptId(started.attemptId);
           localStorage.setItem(storageKey, JSON.stringify({ attemptId: started.attemptId, expiresAt: started.expiresAt }));
           setSeconds(Math.max(0, Math.ceil((new Date(started.expiresAt).getTime() - Date.now()) / 1000)));
         }
       } catch (error) {
-        if (active) setMessage(error instanceof Error ? error.message : 'Unable to load the CBT exam.');
+        if (!active) return;
+        const text = error instanceof Error ? error.message : 'Unable to load the CBT exam.';
+        if (/sign in/i.test(text)) setAuthRequired(true);
+        else setMessage(text);
       } finally {
         if (active) {
           setRestored(true);
@@ -74,42 +166,55 @@ export default function CbtPracticePage() {
     }
     void loadExam();
     return () => { active = false; };
-  }, [examId]);
+  }, [requestedExamId]);
 
   useEffect(() => {
-    if (!restored || seconds <= 0 || !questions.length) return;
+    if (!restored || seconds <= 0 || !questions.length || authRequired) return;
     const timer = window.setInterval(() => setSeconds((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
-  }, [restored, seconds, questions.length]);
+  }, [restored, seconds, questions.length, authRequired]);
 
   useEffect(() => {
-    if (restored && questions.length && seconds === 0 && attemptId) {
+    if (restored && questions.length && seconds === 0 && attemptId && !submitting) {
       void handleDirectSubmit();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restored, questions.length, seconds, attemptId]);
 
-  // Keyboard shortcut listener for fast answering
+  // JAMB-style keyboard shortcuts: A–D answer, N/→ next, P/← previous, F flag, S submit.
   useEffect(() => {
     if (!question) return;
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"], .er-calc')) return;
       const key = event.key.toLowerCase();
+
+      if (showSubmitModal) {
+        if (key === 'escape') setShowSubmitModal(false);
+        return;
+      }
+      if (key === 'escape') {
+        setCalcOpen(false);
+        setPaletteOpen(false);
+        return;
+      }
       if (['a', 'b', 'c', 'd'].includes(key)) {
         const optionIndex = key.charCodeAt(0) - 97;
-        setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }));
-      }
-      if (key === 'n' || key === 'arrowright') {
+        if (optionIndex < question.options.length) setAnswers((prev) => ({ ...prev, [question.id]: optionIndex }));
+      } else if (key === 'n' || key === 'arrowright') {
         setIndex((value) => Math.min(value + 1, questions.length - 1));
-      }
-      if (key === 'p' || key === 'arrowleft') {
+      } else if (key === 'p' || key === 'arrowleft') {
         setIndex((value) => Math.max(value - 1, 0));
-      }
-      if (key === 'f') {
+      } else if (key === 'f') {
         setFlags((value) => ({ ...value, [question.id]: !value[question.id] }));
+      } else if (key === 's') {
+        setShowSubmitModal(true);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [question, questions.length]);
+  }, [question, questions.length, showSubmitModal]);
 
   useEffect(() => {
     if (!restored || !questions.length) return;
@@ -123,10 +228,9 @@ export default function CbtPracticePage() {
     try {
       const activeAttemptId = attemptId || `local-att-${Date.now()}`;
       const result = await submitCbt({ examId, attemptId: activeAttemptId, answers });
-      localStorage.setItem('edureach-last-cbt-attempt', result.attemptId);
-      localStorage.removeItem(`edureach-cbt-attempt-${examId}`);
-      window.history.pushState({}, '', `/dashboard/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      localStorage.setItem(localStorageKey('last-cbt-attempt'), result.attemptId);
+      localStorage.removeItem(localStorageKey(`cbt-attempt-${examId}`));
+      navigateInApp(`/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Submission failed. Your answers are saved locally.');
       setSubmitting(false);
@@ -136,405 +240,276 @@ export default function CbtPracticePage() {
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
   const flaggedCount = useMemo(() => Object.values(flags).filter(Boolean).length, [flags]);
-  const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const secs = (seconds % 60).toString().padStart(2, '0');
-  const isTimeCritical = seconds < 300; // < 5 minutes
+  const unansweredCount = Math.max(0, total - answeredCount);
+  const isTimeCritical = seconds < 300;
+  const isLast = index === total - 1;
+
+  const goPrev = () => setIndex((i) => Math.max(0, i - 1));
+  const goNext = () => {
+    if (isLast) setShowSubmitModal(true);
+    else setIndex((i) => Math.min(total - 1, i + 1));
+  };
+  const jumpTo = (target: number) => {
+    setIndex(target);
+    setPaletteOpen(false);
+  };
+
+  const paletteState = (q: Question, qIdx: number) => {
+    const classes = ['er-exam-pal-btn'];
+    if (answers[q.id] !== undefined) classes.push('is-answered');
+    if (flags[q.id]) classes.push('is-flagged');
+    if (index === qIdx) classes.push('is-current');
+    return classes.join(' ');
+  };
+
+  const palette = (
+    <>
+      <div className="er-exam-pal-grid" role="list" aria-label="Question palette">
+        {questions.map((q, qIdx) => (
+          <button
+            key={q.id}
+            type="button"
+            role="listitem"
+            className={paletteState(q, qIdx)}
+            onClick={() => jumpTo(qIdx)}
+            aria-label={`Go to question ${qIdx + 1}${answers[q.id] !== undefined ? ', answered' : ''}${flags[q.id] ? ', flagged' : ''}`}
+            aria-current={index === qIdx ? 'true' : undefined}
+          >
+            {qIdx + 1}
+          </button>
+        ))}
+      </div>
+      <div className="er-exam-legend">
+        <span><i className="dot is-answered" /> Answered ({answeredCount})</span>
+        <span><i className="dot is-flagged" /> Flagged ({flaggedCount})</span>
+        <span><i className="dot" /> Not answered ({unansweredCount})</span>
+      </div>
+    </>
+  );
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '20px 0 60px' }}>
-        <div className="hub-container">
-          {/* MYSCHOOL CBT EXAM CONTROL TOPBAR */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '12px',
-              background: '#0f172a',
-              color: '#ffffff',
-              padding: '14px 20px',
-              borderRadius: '12px',
-              marginBottom: '16px',
-              boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img
-                src={examId.includes('waec') ? '/icons/brands/waec.webp' : examId.includes('neco') ? '/icons/brands/neco.webp' : '/icons/brands/jamb.png'}
-                alt="Exam Body"
-                width={34}
-                height={34}
-                style={{ objectFit: 'contain' }}
-              />
-              <div>
-                <strong style={{ fontSize: '15px', display: 'block', color: '#ffffff' }}>
-                  {examTitle}
-                </strong>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  EduReach Official CBT Classroom Simulator
+      <div className="er-exam">
+        {/* EXAM CONTROL BAR — candidate strip, countdown, calculator, submit */}
+        <div className="er-exam-bar">
+          <div className="er-exam-bar-inner er-container">
+            <div className="er-exam-id">
+              <img src={BRAND_LOGO[brand]} alt={`${brand.toUpperCase()} logo`} width={36} height={36} />
+              <div className="er-exam-id-copy">
+                <h1>{examTitle}</h1>
+                <span>
+                  {subject && <em className="er-exam-chip">{subject}</em>}
+                  {total > 0 && <span className="er-exam-progress">Question {index + 1} of {total}</span>}
                 </span>
+                {(setupCourse || setupSchool || setupSubjects.length > 0) && (
+                  <small className="er-exam-setup-context">
+                    {setupCourse && `Course: ${setupCourse}`}
+                    {setupSchool && `School: ${setupSchool}`}
+                    {setupSubjects.length > 0 && `Subjects: ${setupSubjects.join(' · ')}`}
+                  </small>
+                )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: isTimeCritical ? '#dc2626' : '#1e293b',
-                  border: `1px solid ${isTimeCritical ? '#ef4444' : '#334155'}`,
-                  color: '#ffffff',
-                  padding: '6px 14px',
-                  borderRadius: '8px',
-                  fontFamily: 'var(--er-font-sans)',
-                  fontVariantNumeric: 'tabular-nums',
-                  fontSize: '16px',
-                  fontWeight: 900,
-                  letterSpacing: '0.05em',
-                  transition: 'background 0.3s ease',
-                }}
-              >
-                <Clock size={16} />
-                <span>{mins}:{secs}</span>
-              </div>
+            <div className={`er-exam-timer${isTimeCritical ? ' is-critical' : ''}`} role="timer" aria-live="off" aria-label="Time remaining">
+              <Clock size={16} />
+              <span>{formatClock(seconds)}</span>
+            </div>
 
+            <div className="er-exam-controls">
               <button
                 type="button"
-                onClick={() => setShowSubmitModal(true)}
-                disabled={loading || !questions.length}
-                style={{
-                  background: '#C85841',
-                  color: '#ffffff',
-                  border: 0,
-                  borderRadius: '8px',
-                  padding: '8px 18px',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
+                className={`er-exam-tool${calcOpen ? ' is-active' : ''}`}
+                onClick={() => setCalcOpen((open) => !open)}
+                aria-pressed={calcOpen}
+                aria-label="Toggle calculator"
+                disabled={loading || !total}
               >
-                <Send size={14} /> Submit Test
+                <Calculator size={16} /> <span>Calculator</span>
+              </button>
+              <button
+                type="button"
+                className="er-exam-submit"
+                onClick={() => setShowSubmitModal(true)}
+                disabled={loading || !total}
+              >
+                <Send size={14} /> <span>Submit</span>
               </button>
             </div>
           </div>
+        </div>
 
+        <div className="er-container er-exam-body">
           {message && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '12px' }}>
-              {message}
+            <div className="er-exam-alert" role="alert">
+              <AlertTriangle size={16} /> <span>{message}</span>
             </div>
           )}
 
           {loading ? (
-            <div className="hub-panel hub-empty">Loading question bank…</div>
+            <div className="er-cbt-workspace">
+              <section className="er-exam-q er-skeleton-card" aria-busy="true" aria-label="Loading questions">
+                <div className="er-skel er-skel-line" style={{ width: '32%' }} />
+                <div className="er-skel er-skel-line" style={{ width: '90%', height: 18 }} />
+                <div className="er-skel er-skel-line" style={{ width: '70%', height: 18 }} />
+                <div className="er-skel er-skel-block" />
+                <div className="er-skel er-skel-block" />
+                <div className="er-skel er-skel-block" />
+                <div className="er-skel er-skel-block" />
+              </section>
+              <aside className="er-exam-side er-skeleton-card">
+                <div className="er-skel er-skel-line" style={{ width: '50%' }} />
+                <div className="er-skel er-skel-block" style={{ height: 160 }} />
+              </aside>
+            </div>
+          ) : authRequired ? (
+            <div className="er-exam-gate">
+              <LogIn size={26} />
+              <h2>Sign in to start this test</h2>
+              <p>Your attempts, scores and corrections are saved to your student dashboard, so this question bank needs an EduReach account.</p>
+              <div className="er-exam-gate-actions">
+                <a className="hub-primary-btn" href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in &amp; start</a>
+                <a className="hub-outline-btn" href="/cbt">All question banks</a>
+              </div>
+            </div>
           ) : !question ? (
-            <div className="hub-panel hub-empty">
-              No questions found for this exam.
-              <div style={{ marginTop: '12px' }}>
-                <a className="hub-primary-btn" href="/cbt" style={{ textDecoration: 'none' }}>
-                  Return to CBT Center
-                </a>
+            <div className="er-exam-gate">
+              <AlertTriangle size={26} />
+              <h2>No questions found for this exam</h2>
+              <p>This question bank is empty at the moment. Choose another exam to continue practising.</p>
+              <div className="er-exam-gate-actions">
+                <a className="hub-primary-btn" href="/cbt">Back to question banks</a>
               </div>
             </div>
           ) : (
             <div className="er-cbt-workspace">
               {/* QUESTION WORKSPACE */}
-              <section
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '14px',
-                  padding: '24px',
-                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '16px',
-                    paddingBottom: '12px',
-                    borderBottom: '1px solid #f1f5f9',
-                  }}
-                >
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#C85841', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Question {index + 1} of {questions.length}
-                  </span>
-
+              <section className={`er-exam-q ${identityClassFor(examBody || 'cbt', 'service')}`} aria-labelledby="er-exam-question">
+                <div className="er-exam-q-head">
+                  <span className="er-exam-q-num">Question {index + 1} of {total}</span>
                   <button
                     type="button"
+                    className={`er-exam-flag${flags[question.id] ? ' is-on' : ''}`}
                     onClick={() => setFlags((prev) => ({ ...prev, [question.id]: !prev[question.id] }))}
-                    style={{
-                      border: '1px solid',
-                      borderColor: flags[question.id] ? '#fde68a' : '#e2e8f0',
-                      background: flags[question.id] ? '#fffbeb' : '#f8fafc',
-                      color: flags[question.id] ? '#b45309' : '#64748b',
-                      padding: '5px 10px',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                    }}
+                    aria-pressed={Boolean(flags[question.id])}
                   >
-                    <Flag size={13} /> {flags[question.id] ? 'Flagged' : 'Flag Question'}
+                    <Flag size={14} /> {flags[question.id] ? 'Flagged for review' : 'Flag for review'}
                   </button>
                 </div>
 
-                {/* QUESTION TEXT */}
-                <h2
-                  style={{
-                    fontSize: '17px',
-                    fontWeight: 800,
-                    color: '#0f172a',
-                    lineHeight: 1.5,
-                    margin: '0 0 20px',
-                  }}
-                >
-                  {question.text}
-                </h2>
+                <h2 id="er-exam-question" className="er-exam-text">{question.text}</h2>
 
-                {/* OPTIONS (A, B, C, D) */}
-                <div style={{ display: 'grid', gap: '10px', marginBottom: '24px' }}>
+                <div className="er-exam-options" role="radiogroup" aria-label="Answer options">
                   {question.options.map((option, optIdx) => {
                     const isSelected = answers[question.id] === optIdx;
                     return (
                       <button
                         key={optIdx}
                         type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        className={`er-exam-option${isSelected ? ' is-selected' : ''}`}
                         onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: optIdx }))}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          padding: '12px 16px',
-                          borderRadius: '10px',
-                          border: '2px solid',
-                          borderColor: isSelected ? '#C85841' : '#e2e8f0',
-                          background: isSelected ? '#F9F0EE' : '#ffffff',
-                          color: '#0f172a',
-                          textAlign: 'left',
-                          fontSize: '14px',
-                          fontWeight: isSelected ? 800 : 500,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
                       >
-                        <span
-                          style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            display: 'grid',
-                            placeItems: 'center',
-                            fontSize: '12px',
-                            fontWeight: 900,
-                            background: isSelected ? '#C85841' : '#f1f5f9',
-                            color: isSelected ? '#ffffff' : '#475569',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {String.fromCharCode(65 + optIdx)}
-                        </span>
-                        <span style={{ flex: 1 }}>{option}</span>
+                        <span className="er-exam-letter">{String.fromCharCode(65 + optIdx)}</span>
+                        <span className="er-exam-option-text">{option}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* NAVIGATION BUTTONS */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingTop: '16px',
-                    borderTop: '1px solid #f1f5f9',
-                  }}
-                >
-                  <button
-                    type="button"
-                    className="hub-outline-btn"
-                    disabled={index === 0}
-                    onClick={() => setIndex((i) => Math.max(0, i - 1))}
-                  >
+                <div className="er-exam-nav">
+                  <button type="button" className="hub-outline-btn er-exam-nav-btn" disabled={index === 0} onClick={goPrev}>
                     <ChevronLeft size={16} /> Previous
                   </button>
-
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>
-                    Tip: Press A, B, C, D to answer • N for next
-                  </span>
-
-                  <button
-                    type="button"
-                    className="hub-primary-btn"
-                    disabled={index === questions.length - 1}
-                    onClick={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}
-                  >
-                    Next <ChevronRight size={16} />
+                  <span className="er-exam-hint">Keyboard: A–D answer · N next · P previous · F flag · S submit</span>
+                  <button type="button" className="hub-primary-btn er-exam-nav-btn" onClick={goNext}>
+                    {isLast ? 'Finish' : 'Next'} <ChevronRight size={16} />
                   </button>
                 </div>
               </section>
 
-              {/* QUESTION PALETTE SIDEBAR */}
-              <aside
-                style={{
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '14px',
-                  padding: '18px',
-                  boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
-                }}
-              >
-                <div style={{ marginBottom: '14px' }}>
-                  <span style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.06em' }}>
-                    QUESTION PALETTE
-                  </span>
-                  <h3 style={{ margin: '3px 0 0', fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
-                    Jump to Question
-                  </h3>
+              {/* QUESTION PALETTE (desktop sidebar) */}
+              <aside className="er-exam-side">
+                <div className="er-exam-side-head">
+                  <span>Question palette</span>
+                  <strong>{answeredCount}/{total} answered</strong>
                 </div>
-
-                {/* 1-10 GRID */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(5, 1fr)',
-                    gap: '7px',
-                    marginBottom: '16px',
-                  }}
-                >
-                  {questions.map((q, qIdx) => {
-                    const isAnswered = answers[q.id] !== undefined;
-                    const isFlagged = flags[q.id];
-                    const isCurrent = index === qIdx;
-
-                    let bg = '#f8fafc';
-                    let color = '#475569';
-                    let border = '1px solid #e2e8f0';
-
-                    if (isAnswered) {
-                      bg = '#ecfdf5';
-                      color = '#047857';
-                      border = '1px solid #a7f3d0';
-                    }
-                    if (isFlagged) {
-                      bg = '#fffbeb';
-                      color = '#b45309';
-                      border = '1px solid #fde68a';
-                    }
-                    if (isCurrent) {
-                      border = '2px solid #C85841';
-                    }
-
-                    return (
-                      <button
-                        key={q.id}
-                        type="button"
-                        onClick={() => setIndex(qIdx)}
-                        style={{
-                          height: '36px',
-                          borderRadius: '8px',
-                          border,
-                          background: bg,
-                          color,
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {qIdx + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* PALETTE LEGEND */}
-                <div style={{ display: 'grid', gap: '6px', fontSize: '11px', color: '#64748b', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#059669' }} />
-                    <span>Answered ({answeredCount})</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#C47612' }} />
-                    <span>Flagged ({flaggedCount})</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#cbd5e1' }} />
-                    <span>Unanswered ({questions.length - answeredCount})</span>
-                  </div>
-                </div>
+                {palette}
+                <button type="button" className="er-exam-side-submit" onClick={() => setShowSubmitModal(true)}>
+                  <Send size={14} /> Submit test
+                </button>
               </aside>
             </div>
           )}
+        </div>
 
-          {/* SUBMIT CONFIRMATION MODAL */}
-          {showSubmitModal && (
-            <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 1000,
-                background: 'rgba(15, 23, 42, 0.7)',
-                backdropFilter: 'blur(3px)',
-                display: 'grid',
-                placeItems: 'center',
-                padding: '20px',
-              }}
-            >
-              <div
-                style={{
-                  background: '#ffffff',
-                  borderRadius: '16px',
-                  maxWidth: '440px',
-                  width: '100%',
-                  padding: '26px',
-                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.2)',
+        {/* MOBILE EXAM BAR — previous / palette / next */}
+        {!loading && question && (
+          <div className="er-exam-mobile-bar">
+            <button type="button" disabled={index === 0} onClick={goPrev} aria-label="Previous question">
+              <ChevronLeft size={18} /> Prev
+            </button>
+            <button type="button" className="er-exam-mobile-map" onClick={() => setPaletteOpen(true)} aria-haspopup="dialog">
+              <LayoutGrid size={16} /> {index + 1}/{total} · {answeredCount} done
+            </button>
+            <button type="button" className="is-primary" onClick={goNext} aria-label={isLast ? 'Finish test' : 'Next question'}>
+              {isLast ? 'Finish' : 'Next'} <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+
+        {/* MOBILE PALETTE SHEET */}
+        {paletteOpen && (
+          <div className="er-exam-sheet-backdrop" onClick={() => setPaletteOpen(false)}>
+            <div className="er-exam-sheet" role="dialog" aria-label="Question palette" onClick={(event) => event.stopPropagation()}>
+              <div className="er-exam-sheet-head">
+                <strong>Questions · {answeredCount}/{total} answered</strong>
+                <button type="button" onClick={() => setPaletteOpen(false)} aria-label="Close palette"><X size={18} /></button>
+              </div>
+              {palette}
+              <button
+                type="button"
+                className="er-exam-side-submit"
+                onClick={() => {
+                  setPaletteOpen(false);
+                  setShowSubmitModal(true);
                 }}
               >
-                <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>
-                  Are you ready to submit your exam?
-                </h3>
-                <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>
-                  You have answered <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions.
-                  {questions.length - answeredCount > 0 && (
-                    <span style={{ color: '#b45309', display: 'block', marginTop: '6px' }}>
-                      ⚠️ You still have {questions.length - answeredCount} unanswered question(s).
-                    </span>
-                  )}
-                </p>
+                <Send size={14} /> Submit test
+              </button>
+            </div>
+          </div>
+        )}
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    className="hub-outline-btn"
-                    onClick={() => setShowSubmitModal(false)}
-                    disabled={submitting}
-                  >
-                    Continue Answering
-                  </button>
-                  <button
-                    type="button"
-                    className="hub-primary-btn"
-                    style={{ background: '#C85841' }}
-                    onClick={() => void handleDirectSubmit()}
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Submitting…' : 'Yes, Submit Test'}
-                  </button>
-                </div>
+        {/* ON-SCREEN CALCULATOR */}
+        {calcOpen && <ScientificCalculator onClose={() => setCalcOpen(false)} />}
+
+        {/* SUBMIT CONFIRMATION */}
+        {showSubmitModal && (
+          <div className="er-exam-modal-backdrop">
+            <div className="er-exam-modal" role="dialog" aria-modal="true" aria-labelledby="er-exam-submit-title">
+              <h3 id="er-exam-submit-title">{seconds === 0 ? 'Time is up' : 'Submit your test?'}</h3>
+              <p>
+                You have answered <strong>{answeredCount}</strong> of <strong>{total}</strong> questions.
+                {unansweredCount > 0 && (
+                  <span className="er-exam-modal-warn">
+                    <AlertTriangle size={14} /> {unansweredCount} unanswered question{unansweredCount === 1 ? '' : 's'} will be marked wrong.
+                  </span>
+                )}
+                {flaggedCount > 0 && <span className="er-exam-modal-note">{flaggedCount} question{flaggedCount === 1 ? '' : 's'} still flagged for review.</span>}
+              </p>
+              <div className="er-exam-modal-actions">
+                <button type="button" className="hub-outline-btn" onClick={() => setShowSubmitModal(false)} disabled={submitting}>
+                  Continue test
+                </button>
+                <button type="button" className="hub-primary-btn" onClick={() => void handleDirectSubmit()} disabled={submitting}>
+                  {submitting ? 'Submitting…' : 'Yes, submit'}
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </HubLayout>
   );

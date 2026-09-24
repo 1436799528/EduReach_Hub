@@ -9,11 +9,19 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark from '../src/components/CardIdentityMark';
-import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
+import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams } from '../src/lib/api';
+
+function setupPathForExam(exam: Exam) {
+  const value = `${exam.exam_body} ${exam.id} ${exam.title}`.toLowerCase();
+  if (value.includes('post-utme') || value.includes('postutme')) return '/cbt/setup/post-utme';
+  if (value.includes('waec')) return '/cbt/setup/waec';
+  if (value.includes('neco')) return '/cbt/setup/neco';
+  return '/cbt/setup/jamb';
+}
+import { SkeletonRows } from '../src/components/Skeleton';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
@@ -38,15 +46,22 @@ export default function CbtPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  async function loadExams() {
+    setLoading(true);
+    setError('');
+    try {
+      setExams((await fetchCbtExams()) as Exam[]);
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Unable to load CBT exams.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     const syncMode = () => setMode(readModeFromUrl());
     window.addEventListener('popstate', syncMode);
-
-    void fetchCbtExams()
-      .then((data) => setExams(data as Exam[]))
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load CBT exams.'))
-      .finally(() => setLoading(false));
-
+    void loadExams();
     return () => window.removeEventListener('popstate', syncMode);
   }, []);
 
@@ -77,26 +92,21 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>CBT HALL</span>
+              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>QUESTION BANKS</span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
-                Timed exam simulators with instant scoring and corrections.
+                Pick a question bank below — each test opens a short setup page before the timed CBT simulator and on-screen calculator.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <a className="hub-outline-btn" href="/screening-calculator" style={{ textDecoration: 'none' }}>
                 <Calculator size={14} /> Screening Calculator
               </a>
-              <a className="hub-primary-btn" href="/dashboard/cbt/results" style={{ textDecoration: 'none' }}>
-                <Trophy size={14} /> View Past Results
+              <a className="hub-primary-btn" href="/dashboard/cbt" style={{ textDecoration: 'none' }}>
+                <Trophy size={14} /> My Results
               </a>
             </div>
           </div>
-
-          <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Start a simulator" href="/cbt/practice" linkLabel="Quick start" />
-            <ExamSimulatorGrid variant="start" />
-          </section>
 
           <div
             style={{
@@ -107,94 +117,77 @@ export default function CbtPage() {
               border: '1px solid #e2e8f0',
               borderRadius: '12px',
               padding: '16px 20px',
-              margin: '18px 0 26px',
+              margin: '0 0 22px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Clock3 size={20} style={{ color: '#C85841', flexShrink: 0 }} />
               <div>
-                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Simulate real exam pressure</span>
+                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Countdown, auto-submit and calculator</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <CheckCircle2 size={20} style={{ color: '#059669', flexShrink: 0 }} />
               <div>
-                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Instant Evaluation</strong>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Accurate scoring and percentages</span>
+                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Instant Evaluation</strong>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Accurate scoring and percentages</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <BookOpen size={20} style={{ color: '#B45309', flexShrink: 0 }} />
               <div>
-                <strong style={{ display: 'block', fontSize: '12px', color: '#0f172a' }}>Detailed Corrections</strong>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Explanations for all options</span>
+                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Detailed Corrections</strong>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>Explanations for all options</span>
               </div>
             </div>
           </div>
 
           <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Filter question banks" />
+            <SectionHead title="Choose an exam" />
             <div style={{ marginBottom: '18px' }}>
               <FilterPills options={modes} active={mode} onChange={changeMode} ariaLabel="Exam categories" />
             </div>
           </section>
 
-          {loading && <div className="hub-panel hub-empty">Loading question banks…</div>}
-          {error && <div className="hub-form-error">{error}</div>}
+          {loading && <SkeletonRows rows={4} label="Loading question banks" />}
+          {error && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <span>{error}</span>
+              <button type="button" className="hub-outline-btn" onClick={() => void loadExams()} disabled={loading}>Try again</button>
+            </div>
+          )}
           {!loading && !error && !filteredExams.length && (
             <div className="hub-panel hub-empty">
               <FileQuestion size={26} style={{ color: '#64748b', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No {mode === 'ALL' ? '' : mode + ' '}exams available yet.</h3>
-              <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Select another category to practice.</p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Select another category to practice.</p>
             </div>
           )}
 
           {!loading && !error && filteredExams.length > 0 && (
-            <div style={{ display: 'grid', gap: '10px' }}>
+            <div className="er-bank-list">
               {filteredExams.map((exam) => (
-                <div
-                  key={exam.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '14px',
-                    padding: '16px 18px',
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                <div key={exam.id} className={`er-bank-card ${identityClassFor(exam.exam_body, 'service')}`}>
+                  <div className="er-bank-main">
                     <CardIdentityMark value={exam.exam_body} type="service" />
-                    <div>
-                      <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div className="er-bank-copy">
+                      <span className="er-bank-eyebrow">
                         {exam.exam_body} • {exam.subject}
                       </span>
-                      <h3 style={{ margin: '2px 0 0', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>
-                        {exam.title}
-                      </h3>
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>
-                        <Clock3 size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '3px' }} />
+                      <h3>{exam.title}</h3>
+                      <span className="er-bank-meta">
+                        <Clock3 size={13} />
                         {exam.duration_minutes} Minutes
                       </span>
                     </div>
                   </div>
 
                   <a
-                    href={`/cbt/practice?exam=${encodeURIComponent(exam.id)}`}
-                    className="hub-primary-btn"
-                    style={{
-                      padding: '0 16px',
-                      minHeight: '36px',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      whiteSpace: 'nowrap',
-                    }}
+                    href={setupPathForExam(exam)}
+                    className="hub-primary-btn er-bank-cta"
                   >
-                    Take Test <ArrowRight size={14} />
+                    Set up test <ArrowRight size={14} />
                   </a>
                 </div>
               ))}
