@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchNewsItem, type NewsItem } from '../src/lib/api';
@@ -27,10 +27,6 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
     <HubLayout>
       <div className="hub-page">
         <div className="hub-container hub-narrow">
-          <a className="hub-back-link" href="/news">
-            <ArrowLeft size={16} /> News
-          </a>
-
           {loading && <SkeletonArticle />}
           {error && (
             <div className="hub-panel hub-empty" role="alert">
@@ -44,6 +40,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
             <article className="hub-article">
               <div className="hub-news-meta">
                 <span>{labelFor(item.category)}</span>
+                <span>By {item.author || 'EduReach Editorial Desk'}</span>
                 <span>
                   {item.published_at
                     ? new Date(item.published_at).toLocaleDateString('en-NG', {
@@ -51,11 +48,9 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                         month: 'short',
                         year: 'numeric',
                       })
-                    : 'Update'}
+                    : 'Date not supplied'}
                 </span>
-                <span className="hub-verified">
-                  <CheckCircle2 size={13} /> Published
-                </span>
+                {item.verification_status === 'verified' && <span className="hub-verified"><CheckCircle2 size={13} /> Source checked</span>}
               </div>
 
               <h1>{item.title}</h1>

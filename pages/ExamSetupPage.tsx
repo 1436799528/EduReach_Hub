@@ -1,8 +1,17 @@
-import { ArrowLeft, ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, ShieldCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
-import { jambCourses, jambDepartments, postUtmeSchools, secondarySchoolSubjects, type ExamSetupKey } from '../src/data/examPreparation';
+import {
+  jambCourses,
+  jambDepartments,
+  jambSubjectCatalog,
+  postUtmeSchools,
+  secondarySchoolSubjects,
+  secondarySubjectCatalog,
+  secondarySubjectTracks,
+  type ExamSetupKey,
+} from '../src/data/examPreparation';
 
 type SetupCopy = {
   eyebrow: string;
@@ -64,6 +73,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const [department, setDepartment] = useState('All departments');
   const [courseName, setCourseName] = useState(jambCourses[0].name);
   const [jambSubjects, setJambSubjects] = useState(jambCourses[0].subjects);
+  const [secondaryTrack, setSecondaryTrack] = useState<(typeof secondarySubjectTracks)[number]>('General');
   const [schoolId, setSchoolId] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get('school');
     return postUtmeSchools.some((school) => school.id === requested && school.offersPostUtme) ? requested || postUtmeSchools[0].id : postUtmeSchools[0].id;
@@ -88,6 +98,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   );
   const selectedCourse = jambCourses.find((course) => course.name === courseName) || filteredCourses[0] || jambCourses[0];
   const selectedSchool = postUtmeSchools.find((school) => school.id === schoolId) || postUtmeSchools[0];
+  const jambOptions = jambSubjectCatalog[selectedCourse.department];
+  const secondaryOptions = secondaryTrack === 'General'
+    ? secondarySchoolSubjects
+    : secondarySubjectCatalog[secondaryTrack];
 
   function changeDepartment(value: string) {
     setDepartment(value);
@@ -108,12 +122,36 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     setSchoolSubjects(school?.subjects || []);
   }
 
+  function updateJambSubject(index: number, value: string) {
+    setJambSubjects((current) => current.map((subject, subjectIndex) => subjectIndex === index ? value : subject));
+  }
+
   function updateSecondarySubject(index: number, value: string) {
     setSecondarySubjects((current) => current.map((subject, subjectIndex) => subjectIndex === index ? value : subject));
   }
 
+  function changeSecondaryTrack(value: (typeof secondarySubjectTracks)[number]) {
+    setSecondaryTrack(value);
+    // Keep the two common core slots where the selected track supports them,
+    // but clear electives so the student makes an explicit, duplicate-free choice.
+    const options = value === 'General' ? secondarySchoolSubjects : secondarySubjectCatalog[value];
+    setSecondarySubjects([
+      options.includes('Use of English') ? 'Use of English' : '',
+      options.includes('Mathematics') ? 'Mathematics' : '',
+      '', '', '', '', '', '', '',
+    ]);
+  }
+
   function startPractice() {
     setSchoolError('');
+    if (exam === 'jamb' && (jambSubjects.length !== 4 || jambSubjects.some((subject) => !subject))) {
+      setSchoolError('Choose all four JAMB subjects before entering the practice hall.');
+      return;
+    }
+    if (exam === 'jamb' && (jambSubjects[0] !== 'Use of English' || new Set(jambSubjects).size !== jambSubjects.length)) {
+      setSchoolError('Use of English must be first, and each JAMB subject can be selected only once.');
+      return;
+    }
     if ((exam === 'waec' || exam === 'neco') && secondarySubjects.some((subject) => !subject)) {
       setSchoolError('Choose all nine subjects before entering the practice hall.');
       return;
@@ -143,10 +181,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     <HubLayout>
       <main className="hub-page" style={{ padding: '22px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
-          <a className="hub-back-link" href={exam === 'post-utme' ? '/post-utme' : '/cbt'}>
-            <ArrowLeft size={16} /> Back to exam centre
-          </a>
-
           <section className="er-setup-hero">
             <div className="er-setup-hero-mark"><img src={copy.logo} alt={`${exam.toUpperCase()} logo`} width={48} height={48} /></div>
             <div>
@@ -202,28 +236,45 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </select>
                 </label>
                 <div className="er-setup-full-width">
-                  <span className="er-setup-label">Your four UTME subjects</span>
-                  <div className="er-setup-subject-chips">
-                    {jambSubjects.map((subject) => (
-                      <label className="er-setup-subject-chip" key={subject}>
-                        <input
-                          type="checkbox"
-                          checked
-                          disabled
-                          readOnly
-                        />
-                        {subject}{subject === 'Use of English' ? ' · compulsory' : ''}
-                      </label>
-                    ))}
+                  <span className="er-setup-label">Choose your four UTME subjects</span>
+                  <div className="er-setup-subject-grid er-setup-jamb-subject-grid">
+                    {jambSubjects.map((subject, index) => {
+                      const usedByOtherSlot = new Set(jambSubjects.filter((_, subjectIndex) => subjectIndex !== index));
+                      return (
+                        <label key={index}>
+                          Subject {index + 1}{index === 0 ? ' · compulsory' : ''}
+                          <select
+                            value={subject}
+                            disabled={index === 0}
+                            onChange={(event) => updateJambSubject(index, event.target.value)}
+                          >
+                            {index !== 0 && <option value="">Choose a subject</option>}
+                            {jambOptions.map((option) => (
+                              <option key={option} value={option} disabled={index !== 0 && usedByOtherSlot.has(option)}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      );
+                    })}
                   </div>
-                  <p className="er-setup-field-note">Use of English stays selected. This combination is selected from the course guide; confirm the current JAMB brochure for your institution and course.</p>
+                  <p className="er-setup-field-note">Use of English is required for UTME. The other slots are personalised to the selected interest area and course; confirm the current JAMB brochure for your institution before registering.</p>
                 </div>
               </div>
             )}
 
             {(exam === 'waec' || exam === 'neco') && (
               <div>
-                <p className="er-setup-field-note" style={{ marginTop: 0 }}>English Language and Mathematics are preselected as common core subjects. Replace any slot if your registration combination differs.</p>
+                <div className="er-setup-form-grid" style={{ marginBottom: '12px' }}>
+                  <label>
+                    Track / subject area
+                    <select value={secondaryTrack} onChange={(event) => changeSecondaryTrack(event.target.value as (typeof secondarySubjectTracks)[number])}>
+                      {secondarySubjectTracks.map((track) => <option key={track} value={track}>{track}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p className="er-setup-field-note" style={{ marginTop: 0 }}>English Language and Mathematics are preselected where they are present in the selected track. Choose nine distinct subjects and confirm your school’s current WAEC or NECO registration requirements.</p>
                 <div className="er-setup-subject-grid">
                   {secondarySubjects.map((subject, index) => {
                     const usedByOtherSlot = new Set(secondarySubjects.filter((_, subjectIndex) => subjectIndex !== index));
@@ -232,7 +283,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         Subject {index + 1}{index < 2 ? ' · core' : ''}
                         <select value={subject} onChange={(event) => updateSecondarySubject(index, event.target.value)}>
                           <option value="">Choose a subject</option>
-                          {secondarySchoolSubjects.map((option) => <option key={option} value={option} disabled={usedByOtherSlot.has(option)}>{option}</option>)}
+                          {secondaryOptions.map((option) => <option key={option} value={option} disabled={usedByOtherSlot.has(option)}>{option}</option>)}
                         </select>
                       </label>
                     );

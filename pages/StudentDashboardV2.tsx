@@ -3,6 +3,7 @@ import {
   Bookmark,
   Calculator,
   CheckSquare,
+  ChevronRight,
   ClipboardList,
   Edit,
   ExternalLink,
@@ -53,7 +54,11 @@ type Profile = {
   school?: string | null;
   course_programme?: string | null;
   department?: string | null;
+  faculty?: string | null;
   level?: string | null;
+  session?: string | null;
+  admission_year?: number | null;
+  expected_graduation_year?: number | null;
   matric_number?: string | null;
   jamb_reg_no?: string | null;
   role?: string | null;
@@ -245,7 +250,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           school: stored?.school || '',
           course_programme: stored?.course_programme || '',
           department: stored?.department || '',
+          faculty: stored?.faculty || '',
           level: stored?.level || '',
+          session: stored?.session || '',
+          admission_year: stored?.admission_year || null,
+          expected_graduation_year: stored?.expected_graduation_year || null,
           matric_number: stored?.matric_number || null,
           jamb_reg_no: stored?.jamb_reg_no || '',
           avatar_url: stored?.avatar_url || null,
@@ -343,7 +352,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const displayName = profile?.full_name || authUser?.name || 'Student';
   const firstName = profile?.first_name || displayName.split(/\s+/)[0];
   const profileBits = [profile?.school, profile?.course_programme || profile?.department, profile?.level].filter(Boolean) as string[];
-  const profileComplete = profileBits.length >= 2;
+  const requiredProfileValues = [profile?.school, profile?.course_programme, profile?.department, profile?.faculty, profile?.level, profile?.session];
+  const profileComplete = requiredProfileValues.every((value) => Boolean(String(value || '').trim()));
   const requestTitle = (row: RequestRow) => String(row.form_data?.serviceTitle || serviceMap[row.service_id]?.title || 'EduReach Service');
   const openRequests = requests.filter((r) => !['completed', 'rejected', 'cancelled'].includes(r.status)).length;
   const averageScore = attempts.length ? Math.round(attempts.reduce((sum, a) => sum + Number(a.score || 0), 0) / attempts.length) : 0;
@@ -532,6 +542,31 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-pill dash-pill-green"><ShieldCheck size={12} /> {isLocalMode ? 'Local session' : 'Verified student'}</span>
           {email && <span className="dash-pill">{email}</span>}
           {(profile?.jamb_reg_no || profile?.matric_number) && <span className="dash-pill dash-mono">{profile?.jamb_reg_no || profile?.matric_number}</span>}
+        </div>
+      </section>
+
+      <section className="dash-profile-summary" aria-labelledby="saved-profile-heading">
+        <div className="dash-section-head">
+          <div>
+            <h2 id="saved-profile-heading">Saved profile details</h2>
+            <p>{profileComplete ? 'These details are used to personalise exam and service guidance.' : 'Add the missing details so exam and service guidance can be personalised.'}</p>
+          </div>
+          <a href="/profile" className="dash-card-link">{profileComplete ? 'Update details' : 'Complete profile'} <ChevronRight size={13} /></a>
+        </div>
+        <div className="dash-profile-detail-grid">
+          {[
+            ['Institution', profile?.school],
+            ['Course / programme', profile?.course_programme],
+            ['Department', profile?.department],
+            ['Faculty', profile?.faculty],
+            ['Level', profile?.level],
+            ['Session', profile?.session],
+          ].map(([label, value]) => (
+            <div className="dash-profile-detail" key={label}>
+              <span>{label}</span>
+              <strong>{value || 'Not added yet'}</strong>
+            </div>
+          ))}
         </div>
       </section>
 

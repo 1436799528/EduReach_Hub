@@ -1,4 +1,4 @@
-import { ArrowLeft, Home, BookOpen, Laptop } from 'lucide-react';
+import { Home, BookOpen, Laptop } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 
 export default function NotFoundPage() {
@@ -62,23 +62,6 @@ export default function NotFoundPage() {
               </a>
             </div>
 
-            <button
-              type="button"
-              onClick={() => window.history.back()}
-              style={{
-                background: 'none',
-                border: 0,
-                color: '#64748b',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <ArrowLeft size={14} /> Return to previous page
-            </button>
           </div>
         </div>
       </div>

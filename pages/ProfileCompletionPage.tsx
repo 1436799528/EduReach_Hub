@@ -16,49 +16,15 @@ import HubLayout from '../src/components/HubLayout';
 import { supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
-
-const commonInstitutions = [
-  'University of Lagos (UNILAG)',
-  'University of Calabar (UNICAL)',
-  'University of Nigeria, Nsukka (UNN)',
-  'University of Ibadan (UI)',
-  'Obafemi Awolowo University (OAU)',
-  'Ahmadu Bello University (ABU)',
-  'University of Benin (UNIBEN)',
-  'University of Ilorin (UNILORIN)',
-  'University of Port Harcourt (UNIPORT)',
-  'University of Uyo (UNIUYO)',
-  'Lagos State University (LASU)',
-  'Federal University of Technology, Akure (FUTA)',
-  'Federal University of Technology, Owerri (FUTO)',
-  'Other Nigerian University / Polytechnic',
-];
-
-const faculties = [
-  'Faculty of Science',
-  'Faculty of Engineering & Technology',
-  'Faculty of Clinical Sciences / Medicine',
-  'Faculty of Law',
-  'Faculty of Social Sciences',
-  'Faculty of Arts & Humanities',
-  'Faculty of Management / Business Administration',
-  'Faculty of Environmental Sciences',
-  'Faculty of Education',
-  'Faculty of Agriculture',
-  'Basic Medical Sciences',
-  'Other Faculty / School',
-];
-
-const levels = [
-  '100 Level (Freshman)',
-  '200 Level',
-  '300 Level',
-  '400 Level',
-  '500 Level (Final Year)',
-  'Post-Graduate (Masters / PhD)',
-  'JAMB Aspirant / Pre-Degree',
-];
-
+import {
+  academicSessions,
+  academicYears,
+  commonInstitutions,
+  courseProgrammes,
+  departments,
+  faculties,
+  levels,
+} from '../src/data/studentOptions';
 const academicInterestOptions = [
   'JAMB UTME Prep',
   'Post-UTME Screening',
@@ -80,16 +46,23 @@ export default function ProfileCompletionPage() {
   // 9. Profile photo (optional)
   const [avatarUrl, setAvatarUrl] = useState('');
   const [customAvatar, setCustomAvatar] = useState('');
+  const [avatarImageUrl, setAvatarImageUrl] = useState('');
 
-  // 10-16. Academic details
-  const [school, setSchool] = useState(commonInstitutions[0]);
+  // 10-17. Academic details. Empty defaults keep an incomplete profile visibly incomplete.
+  const [school, setSchool] = useState('');
   const [customSchool, setCustomSchool] = useState('');
   const [courseProgramme, setCourseProgramme] = useState('');
+  const [customCourseProgramme, setCustomCourseProgramme] = useState('');
+  const [courseOtherSelected, setCourseOtherSelected] = useState(false);
   const [department, setDepartment] = useState('');
-  const [faculty, setFaculty] = useState(faculties[0]);
-  const [level, setLevel] = useState(levels[0]);
+  const [customDepartment, setCustomDepartment] = useState('');
+  const [departmentOtherSelected, setDepartmentOtherSelected] = useState(false);
+  const [faculty, setFaculty] = useState('');
+  const [level, setLevel] = useState('');
+  const [session, setSession] = useState('');
   const [admissionYear, setAdmissionYear] = useState('');
   const [expectedGradYear, setExpectedGradYear] = useState('');
+  const [avatarFileName, setAvatarFileName] = useState('');
 
   // 17. Academic interests (optional)
   const [interests, setInterests] = useState<string[]>(['JAMB UTME Prep', 'Undergraduate Scholarships']);
@@ -103,7 +76,7 @@ export default function ProfileCompletionPage() {
   const [message, setMessage] = useState('');
 
   // Local initials avatar: no external images. Legacy unsplash presets are ignored.
-  const rawAvatar = (customAvatar || avatarUrl || '').trim();
+  const rawAvatar = (customAvatar || avatarImageUrl || avatarUrl || '').trim();
   const displayAvatar = rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
   const avatarInitials =
     userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
@@ -111,6 +84,16 @@ export default function ProfileCompletionPage() {
   const avatarTone =
     avatarTones[[...userName].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarTones.length];
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const profileMissingLabels = [
+    ['Institution', school.includes('Other') ? customSchool : school],
+    ['Course / programme', courseProgramme || customCourseProgramme],
+    ['Department', department || customDepartment],
+    ['Faculty', faculty],
+    ['Current level', level],
+    ['Academic session', session],
+    ['Admission year', admissionYear],
+    ['Expected graduation year', expectedGradYear],
+  ].filter(([, value]) => !String(value).trim()).map(([label]) => label);
 
   useEffect(() => {
     const applyStoredProfile = () => {
@@ -119,11 +102,30 @@ export default function ProfileCompletionPage() {
         if (!stored) return;
         if (stored.full_name) setUserName(stored.full_name);
         if (stored.email) setUserEmail(stored.email);
-        if (stored.school) setSchool(stored.school);
-        if (stored.course_programme) setCourseProgramme(stored.course_programme);
-        if (stored.department) setDepartment(stored.department);
+        if (stored.school) {
+          if (commonInstitutions.includes(stored.school)) setSchool(stored.school);
+          else {
+            setSchool('Other Nigerian University / Polytechnic');
+            setCustomSchool(stored.school);
+          }
+        }
+        if (stored.course_programme) {
+          if (courseProgrammes.some((option) => option === stored.course_programme && option !== 'Other programme')) setCourseProgramme(stored.course_programme);
+          else {
+            setCourseOtherSelected(true);
+            setCustomCourseProgramme(stored.course_programme);
+          }
+        }
+        if (stored.department) {
+          if (departments.some((option) => option === stored.department && option !== 'Other department')) setDepartment(stored.department);
+          else {
+            setDepartmentOtherSelected(true);
+            setCustomDepartment(stored.department);
+          }
+        }
         if (stored.faculty) setFaculty(stored.faculty);
         if (stored.level) setLevel(stored.level);
+        if (stored.session) setSession(stored.session);
         if (stored.admission_year) setAdmissionYear(String(stored.admission_year));
         if (stored.expected_graduation_year) setExpectedGradYear(String(stored.expected_graduation_year));
         if (stored.avatar_url) setAvatarUrl(stored.avatar_url);
@@ -161,11 +163,30 @@ export default function ProfileCompletionPage() {
           .maybeSingle()
           .then(({ data: profile }) => {
             if (profile) {
-              if (profile.school) setSchool(profile.school);
-              if (profile.course_programme) setCourseProgramme(profile.course_programme);
-              if (profile.department) setDepartment(profile.department);
+              if (profile.school) {
+                if (commonInstitutions.includes(profile.school)) setSchool(profile.school);
+                else {
+                  setSchool('Other Nigerian University / Polytechnic');
+                  setCustomSchool(profile.school);
+                }
+              }
+              if (profile.course_programme) {
+                if (courseProgrammes.some((option) => option === profile.course_programme && option !== 'Other programme')) setCourseProgramme(profile.course_programme);
+                else {
+                  setCourseOtherSelected(true);
+                  setCustomCourseProgramme(profile.course_programme);
+                }
+              }
+              if (profile.department) {
+                if (departments.some((option) => option === profile.department && option !== 'Other department')) setDepartment(profile.department);
+                else {
+                  setDepartmentOtherSelected(true);
+                  setCustomDepartment(profile.department);
+                }
+              }
               if (profile.faculty) setFaculty(profile.faculty);
               if (profile.level) setLevel(profile.level);
+              if (profile.session) setSession(profile.session);
               if (profile.admission_year) setAdmissionYear(String(profile.admission_year));
               if (profile.expected_graduation_year) setExpectedGradYear(String(profile.expected_graduation_year));
               if (profile.avatar_url) setAvatarUrl(profile.avatar_url);
@@ -191,20 +212,63 @@ export default function ProfileCompletionPage() {
     );
   };
 
+  function handleAvatarFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setMessage('Choose an image file for your profile photo.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage('Profile photos must be 2 MB or smaller.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCustomAvatar(typeof reader.result === 'string' ? reader.result : '');
+      setAvatarImageUrl('');
+      setAvatarFileName(file.name);
+      setMessage('');
+    };
+    reader.readAsDataURL(file);
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
 
-    const finalSchool = school.includes('Other') ? customSchool || school : school;
-    const finalAvatar = customAvatar || avatarUrl;
+    const finalSchool = school.includes('Other') ? customSchool.trim() : school;
+    const finalCourseProgramme = courseProgramme || customCourseProgramme.trim();
+    const finalDepartment = department || customDepartment.trim();
+    const finalAvatar = customAvatar || avatarImageUrl || avatarUrl;
+    const missing = [
+      ['institution', finalSchool],
+      ['course/programme', finalCourseProgramme],
+      ['department', finalDepartment],
+      ['faculty', faculty],
+      ['current level', level],
+      ['academic session', session],
+      ['admission year', admissionYear],
+      ['expected graduation year', expectedGradYear],
+    ].filter(([, value]) => !String(value).trim()).map(([label]) => label);
+    if (missing.length) {
+      setSaving(false);
+      setMessage(`Complete the required profile details: ${missing.join(', ')}.`);
+      return;
+    }
+    if (Number(expectedGradYear) < Number(admissionYear)) {
+      setSaving(false);
+      setMessage('Expected graduation year should not be earlier than the admission year.');
+      return;
+    }
 
     const payload = {
       school: finalSchool,
-      course_programme: courseProgramme.trim(),
-      department: department.trim(),
+      course_programme: finalCourseProgramme,
+      department: finalDepartment,
       faculty: faculty.trim(),
       level,
+      session,
       admission_year: Number(admissionYear) || null,
       expected_graduation_year: Number(expectedGradYear) || null,
       academic_interests: interests,
@@ -255,6 +319,25 @@ export default function ProfileCompletionPage() {
             </h1>
           </div>
 
+          {!savedSuccess && profileMissingLabels.length > 0 && (
+            <div
+              role="status"
+              style={{
+                background: '#fff7ed',
+                border: '1px solid #fed7aa',
+                color: '#9a3412',
+                padding: '13px 15px',
+                borderRadius: '10px',
+                marginBottom: '16px',
+                fontSize: '12.5px',
+                lineHeight: 1.5,
+              }}
+            >
+              <strong>Complete your profile to personalise your dashboard.</strong>{' '}
+              Missing: {profileMissingLabels.join(', ')}.
+            </div>
+          )}
+
           {savedSuccess && (
             <div
               style={{
@@ -295,7 +378,7 @@ export default function ProfileCompletionPage() {
                 </h2>
               </div>
               <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 14px' }}>
-                Your initials show by default, or paste a profile image URL.
+                Choose a photo from your device, or use a trusted image URL. The photo is saved with your profile; initials remain the fallback.
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
@@ -342,6 +425,8 @@ export default function ProfileCompletionPage() {
                   onClick={() => {
                     setAvatarUrl('');
                     setCustomAvatar('');
+                    setAvatarImageUrl('');
+                    setAvatarFileName('');
                   }}
                   className="hub-outline-btn"
                   style={{ fontSize: '12px', padding: '8px 14px' }}
@@ -349,14 +434,32 @@ export default function ProfileCompletionPage() {
                   Use my initials instead
                 </button>
 
-                {/* CUSTOM IMAGE INPUT */}
-                <div style={{ flex: '1 1 220px' }}>
+                {/* LOCAL PHOTO + OPTIONAL IMAGE URL */}
+                <div style={{ flex: '1 1 260px', display: 'grid', gap: '8px' }}>
+                  <label
+                    className="hub-outline-btn"
+                    style={{ fontSize: '12px', padding: '8px 14px', cursor: 'pointer', width: 'fit-content' }}
+                  >
+                    <Camera size={14} /> Choose photo
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      aria-label="Choose profile photo"
+                      onChange={(event) => handleAvatarFile(event.target.files?.[0])}
+                      style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
+                    />
+                  </label>
+                  {avatarFileName && <span style={{ fontSize: '11px', color: '#475569' }}>{avatarFileName}</span>}
                   <input
                     type="url"
-                    value={customAvatar}
+                    value={avatarImageUrl}
                     aria-label="Profile image URL"
-                    onChange={(e) => setCustomAvatar(e.target.value)}
-                    placeholder="Or paste image URL (e.g. https://...)"
+                    onChange={(e) => {
+                      setAvatarImageUrl(e.target.value);
+                      setCustomAvatar('');
+                      setAvatarFileName('');
+                    }}
+                    placeholder="Or paste image URL (https://…)"
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -401,6 +504,7 @@ export default function ProfileCompletionPage() {
                       color: '#0f172a',
                     }}
                   >
+                    <option value="">Choose an institution</option>
                     {commonInstitutions.map((inst) => (
                       <option key={inst} value={inst}>
                         {inst}
@@ -432,12 +536,15 @@ export default function ProfileCompletionPage() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
                     Course / Programme *
                   </label>
-                  <input
-                    type="text"
-                    value={courseProgramme}
+                  <select
+                    value={courseOtherSelected ? 'Other programme' : courseProgramme}
                     aria-label="Course or programme"
-                    onChange={(e) => setCourseProgramme(e.target.value)}
-                    placeholder="e.g. Computer Science / Medicine"
+                    onChange={(e) => {
+                      const isOther = e.target.value === 'Other programme';
+                      setCourseOtherSelected(isOther);
+                      setCourseProgramme(isOther ? '' : e.target.value);
+                      if (!isOther) setCustomCourseProgramme('');
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -445,10 +552,32 @@ export default function ProfileCompletionPage() {
                       fontSize: '13px',
                       border: '1px solid #cbd5e1',
                       borderRadius: '8px',
+                      background: '#ffffff',
                       outline: 'none',
                       color: '#0f172a',
                     }}
-                  />
+                  >
+                    <option value="">Choose a course or programme</option>
+                    {courseProgrammes.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                  {courseOtherSelected && (
+                    <input
+                      type="text"
+                      value={customCourseProgramme}
+                      aria-label="Other course or programme"
+                      onChange={(e) => setCustomCourseProgramme(e.target.value)}
+                      placeholder="Enter your course or programme"
+                      required
+                      style={{
+                        width: '100%',
+                        marginTop: '8px',
+                        padding: '9px 12px',
+                        fontSize: '13px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* 12. DEPARTMENT */}
@@ -456,12 +585,15 @@ export default function ProfileCompletionPage() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
                     Department *
                   </label>
-                  <input
-                    type="text"
-                    value={department}
+                  <select
+                    value={departmentOtherSelected ? 'Other department' : department}
                     aria-label="Department"
-                    onChange={(e) => setDepartment(e.target.value)}
-                    placeholder="e.g. Computer Science / Biochemistry"
+                    onChange={(e) => {
+                      const isOther = e.target.value === 'Other department';
+                      setDepartmentOtherSelected(isOther);
+                      setDepartment(isOther ? '' : e.target.value);
+                      if (!isOther) setCustomDepartment('');
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -469,10 +601,32 @@ export default function ProfileCompletionPage() {
                       fontSize: '13px',
                       border: '1px solid #cbd5e1',
                       borderRadius: '8px',
+                      background: '#ffffff',
                       outline: 'none',
                       color: '#0f172a',
                     }}
-                  />
+                  >
+                    <option value="">Choose a department</option>
+                    {departments.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                  {departmentOtherSelected && (
+                    <input
+                      type="text"
+                      value={customDepartment}
+                      aria-label="Other department"
+                      onChange={(e) => setCustomDepartment(e.target.value)}
+                      placeholder="Enter your department"
+                      required
+                      style={{
+                        width: '100%',
+                        marginTop: '8px',
+                        padding: '9px 12px',
+                        fontSize: '13px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  )}
                 </div>
 
                 {/* 13. FACULTY */}
@@ -496,6 +650,7 @@ export default function ProfileCompletionPage() {
                       color: '#0f172a',
                     }}
                   >
+                    <option value="">Choose a faculty</option>
                     {faculties.map((fac) => (
                       <option key={fac} value={fac}>
                         {fac}
@@ -537,6 +692,7 @@ export default function ProfileCompletionPage() {
                       color: '#0f172a',
                     }}
                   >
+                    <option value="">Choose current level</option>
                     {levels.map((lvl) => (
                       <option key={lvl} value={lvl}>
                         {lvl}
@@ -545,19 +701,15 @@ export default function ProfileCompletionPage() {
                   </select>
                 </div>
 
-                {/* 15. ADMISSION YEAR */}
+                {/* 15. ACADEMIC SESSION */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
-                    Admission Year *
+                    Academic Session *
                   </label>
-                  <input
-                    type="number"
-                    min="2015"
-                    max="2030"
-                    value={admissionYear}
-                    aria-label="Admission year"
-                    onChange={(e) => setAdmissionYear(e.target.value)}
-                    placeholder="e.g. 2024"
+                  <select
+                    value={session}
+                    aria-label="Academic session"
+                    onChange={(e) => setSession(e.target.value)}
                     required
                     style={{
                       width: '100%',
@@ -565,10 +717,40 @@ export default function ProfileCompletionPage() {
                       fontSize: '13px',
                       border: '1px solid #cbd5e1',
                       borderRadius: '8px',
+                      background: '#ffffff',
                       outline: 'none',
                       color: '#0f172a',
                     }}
-                  />
+                  >
+                    <option value="">Choose academic session</option>
+                    {academicSessions.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                </div>
+
+                {/* 16. ADMISSION YEAR */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                    Admission Year *
+                  </label>
+                  <select
+                    value={admissionYear}
+                    aria-label="Admission year"
+                    onChange={(e) => setAdmissionYear(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      fontSize: '13px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      background: '#ffffff',
+                      outline: 'none',
+                      color: '#0f172a',
+                    }}
+                  >
+                    <option value="">Choose admission year</option>
+                    {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
                 </div>
 
                 {/* 16. EXPECTED GRADUATION YEAR */}
@@ -576,14 +758,10 @@ export default function ProfileCompletionPage() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
                     Expected Graduation Year *
                   </label>
-                  <input
-                    type="number"
-                    min="2020"
-                    max="2035"
+                  <select
                     value={expectedGradYear}
                     aria-label="Expected graduation year"
                     onChange={(e) => setExpectedGradYear(e.target.value)}
-                    placeholder="e.g. 2028"
                     required
                     style={{
                       width: '100%',
@@ -591,10 +769,14 @@ export default function ProfileCompletionPage() {
                       fontSize: '13px',
                       border: '1px solid #cbd5e1',
                       borderRadius: '8px',
+                      background: '#ffffff',
                       outline: 'none',
                       color: '#0f172a',
                     }}
-                  />
+                  >
+                    <option value="">Choose graduation year</option>
+                    {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                  </select>
                 </div>
               </div>
             </section>

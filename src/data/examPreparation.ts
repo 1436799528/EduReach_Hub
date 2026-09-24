@@ -48,6 +48,37 @@ export const jambCourses: JambCourse[] = [
 
 export const jambDepartments = ['All departments', ...Array.from(new Set(jambCourses.map((course) => course.department)))];
 
+/**
+ * Subject choices shown in the JAMB setup dropdowns. The catalogue is a
+ * practical starter set grouped by interest area; it is not a claim that every
+ * institution accepts every combination. The setup page keeps the official
+ * brochure reminder visible and lets a student choose a different subject when
+ * their current course guide requires it.
+ */
+export const jambSubjectCatalog: Record<JambCourse['department'], string[]> = {
+  Science: ['Use of English', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Agricultural Science', 'Economics', 'Geography', 'Further Mathematics'],
+  Engineering: ['Use of English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Agricultural Science', 'Economics', 'Geography', 'Further Mathematics'],
+  'Medicine & Health': ['Use of English', 'Biology', 'Chemistry', 'Physics', 'Mathematics', 'Agricultural Science', 'Economics'],
+  'Arts & Humanities': ['Use of English', 'Literature in English', 'Government', 'History', 'Economics', 'Geography', 'Christian Religious Studies', 'Islamic Religious Studies', 'CRS / IRS', 'French', 'Arabic'],
+  'Social Science': ['Use of English', 'Mathematics', 'Economics', 'Government', 'Biology', 'Geography', 'History', 'Commerce', 'Literature in English'],
+  Commercial: ['Use of English', 'Mathematics', 'Economics', 'Commerce', 'Financial Accounting', 'Government', 'Geography', 'Marketing', 'Business Studies'],
+  Education: ['Use of English', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Literature in English', 'Government', 'Economics', 'Agricultural Science', 'CRS / IRS'],
+};
+
+export type SecondarySubjectTrack = 'General' | 'Science' | 'Arts & Humanities' | 'Social Science' | 'Commercial' | 'Technical / Vocational';
+
+/** Track filters are deliberately transparent and fall back to the maintained general catalogue. */
+export const secondarySubjectTracks: SecondarySubjectTrack[] = ['General', 'Science', 'Arts & Humanities', 'Social Science', 'Commercial', 'Technical / Vocational'];
+
+export const secondarySubjectCatalog: Record<SecondarySubjectTrack, string[]> = {
+  General: [],
+  Science: ['Use of English', 'Mathematics', 'Civic Education', 'Biology', 'Chemistry', 'Physics', 'Agricultural Science', 'Further Mathematics', 'Economics', 'Geography', 'Computer Studies', 'Data Processing'],
+  'Arts & Humanities': ['Use of English', 'Mathematics', 'Civic Education', 'Literature in English', 'Government', 'History', 'Geography', 'Christian Religious Studies', 'Islamic Religious Studies', 'French', 'Arabic', 'Igbo', 'Hausa', 'Yoruba', 'Visual Art', 'Music'],
+  'Social Science': ['Use of English', 'Mathematics', 'Civic Education', 'Economics', 'Government', 'Geography', 'History', 'Biology', 'Commerce', 'Financial Accounting', 'Marketing', 'Computer Studies'],
+  Commercial: ['Use of English', 'Mathematics', 'Civic Education', 'Economics', 'Commerce', 'Financial Accounting', 'Marketing', 'Business Studies', 'Government', 'Data Processing', 'Computer Studies'],
+  'Technical / Vocational': ['Use of English', 'Mathematics', 'Civic Education', 'Technical Drawing', 'Basic Electricity', 'Building Construction', 'Auto Mechanics', 'Dyeing and Bleaching', 'Leather Goods Manufacturing', 'Clothing and Textiles', 'Computer Studies', 'Data Processing'],
+};
+
 export const secondarySchoolSubjects = [
   'Use of English',
   'Mathematics',

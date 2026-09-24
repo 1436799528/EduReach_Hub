@@ -1,6 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -16,6 +15,7 @@ import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { guideForService } from '../src/data/serviceGuides';
+import { commonInstitutions } from '../src/data/studentOptions';
 
 type FormState = {
   fullName: string;
@@ -38,6 +38,8 @@ type ProfileRow = {
   phone: string | null;
   jamb_reg_no: string | null;
 };
+
+const institutionOptions = commonInstitutions.filter((institution) => institution !== 'Other Nigerian University / Polytechnic');
 
 const emptyForm: FormState = {
   fullName: '',
@@ -70,6 +72,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const [reference, setReference] = useState('');
   const [message, setMessage] = useState('');
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [institutionOtherSelected, setInstitutionOtherSelected] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
@@ -105,6 +108,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           .then(({ data: profile }) => {
             if (!active || !profile) return;
             const row = profile as ProfileRow;
+            if (row.school && !institutionOptions.some((institution) => institution === row.school)) setInstitutionOtherSelected(true);
             setForm((current) => ({
               ...current,
               fullName: current.fullName || row.full_name || '',
@@ -147,11 +151,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           <div className="hub-container hub-narrow">
             <div className="hub-panel hub-empty">
               {serviceError || 'Service not found.'}
-              <div className="hub-wizard-actions" style={{ marginTop: '14px' }}>
-                <a className="hub-outline-btn" href="/services">
-                  <ArrowLeft size={16} /> All Services
-                </a>
-              </div>
+
             </div>
           </div>
         </div>
@@ -160,6 +160,13 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
 
   const variant = fieldsFor(service.service_key);
   const guide = guideForService(service.service_key);
+  const institutionSelection = institutionOtherSelected
+    ? '__other__'
+    : institutionOptions.some((institution) => institution === form.institution)
+      ? form.institution
+      : form.institution
+        ? '__other__'
+        : '';
 
   function update(name: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
@@ -331,12 +338,27 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     </label>
                     <label>
                       Institution Name *
-                      <input
-                        value={form.institution}
-                        onChange={(e) => update('institution', e.target.value)}
-                        placeholder="e.g. University of Lagos / UNIPORT"
+                      <select
+                        value={institutionSelection}
+                        onChange={(e) => {
+                          const isOther = e.target.value === '__other__';
+                          setInstitutionOtherSelected(isOther);
+                          update('institution', isOther ? '' : e.target.value);
+                        }}
                         required
-                      />
+                      >
+                        <option value="">Choose an institution</option>
+                        {institutionOptions.map((institution) => <option key={institution} value={institution}>{institution}</option>)}
+                        <option value="__other__">Other institution</option>
+                      </select>
+                      {institutionSelection === '__other__' && (
+                        <input
+                          value={form.institution}
+                          onChange={(e) => update('institution', e.target.value)}
+                          placeholder="Enter your institution name"
+                          required
+                        />
+                      )}
                     </label>
                     <label>
                       Matriculation / Application No.
@@ -484,9 +506,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     <ChevronLeft size={16} /> Previous
                   </button>
                 ) : (
-                  <a className="hub-outline-btn" href="/services" style={{ textDecoration: 'none' }}>
-                    <ArrowLeft size={15} /> All Services
-                  </a>
+                  <span aria-hidden="true" />
                 )}
                 <span />
                 {step < 3 ? (

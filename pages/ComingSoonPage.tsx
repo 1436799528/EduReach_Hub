@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BellRing, LayoutGrid, Newspaper } from 'lucide-react';
+import { ArrowRight, BellRing, LayoutGrid, Newspaper } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { getServiceDefinition } from '../src/data/services';
 
@@ -78,18 +78,10 @@ export default function ComingSoonPage({ title, description }: { title?: string;
   const copy = copyFor(path);
   const heading = title || copy.title;
   const body = description || copy.description;
-  const isServicePath = path.startsWith('/services/');
-  const backHref = isServicePath ? '/services' : '/';
-  const backLabel = isServicePath ? 'Services' : 'Portal home';
-
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '32px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '640px' }}>
-          <a className="hub-back-link" href={backHref}>
-            <ArrowLeft size={16} /> {backLabel}
-          </a>
-
           <div
             style={{
               background: '#ffffff',

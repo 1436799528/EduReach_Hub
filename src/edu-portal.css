@@ -212,15 +212,47 @@
 /* Global return-navigation bar (all public pages except home) */
 .er-pagebar{background:#fff;border-bottom:1px solid #e2e8f0}
 .er-pagebar-row{max-width:1180px;margin:0 auto;padding:7px 16px;display:flex;align-items:center;gap:12px}
-.er-pagebar-back{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #e2e8f0;color:#0f172a;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer}
+.er-pagebar-back{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:76px;min-height:30px;background:#f1f5f9;border:1px solid #e2e8f0;color:#0f172a;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:800;cursor:pointer}
 .er-pagebar-back:hover{background:#e2e8f0}
 .er-pagebar-title{font-size:12.5px;font-weight:800;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:center}
-.er-pagebar-home{display:inline-flex;align-items:center;gap:6px;color:#C85841;font-size:12px;font-weight:800;text-decoration:none;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;padding:5px 11px}
+.er-pagebar-home{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:76px;min-height:30px;color:#C85841;font-size:12px;font-weight:800;text-decoration:none;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;padding:5px 11px}
 .er-pagebar-home:hover{background:#fee2e2}
 /* Real news photography fills the thumbnail frame (SVG banners keep contain) */
 .er-news-row img.er-news-photo{object-fit:cover;padding:0;background:#0f172a}
 .er-news-feature img.er-news-photo{object-fit:cover}
-.er-news-hero{width:100%;max-height:340px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin:0 0 14px}
+.er-news-hero{width:100%;max-height:300px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin:0 0 18px}
+
+/* Article detail stays a readable card instead of stretching like a full-page poster. */
+.hub-article{
+  width:min(100%, 800px);
+  margin:0 auto;
+  padding:24px;
+  background:#fff;
+  border:1px solid #dfe4ea;
+  border-radius:14px;
+  box-shadow:0 6px 22px rgba(15,23,42,.06);
+}
+.hub-article h1{margin:10px 0 10px;font-size:clamp(24px,3.2vw,34px);line-height:1.16;letter-spacing:-.6px;color:#0f172a}
+.hub-article-lead{margin:0 0 18px;color:#475569;font-size:15px;line-height:1.65}
+.hub-article-body{color:#334155;font-size:15px;line-height:1.8}
+.hub-article-body p{margin:0 0 18px}
+.hub-article-body p:last-child{margin-bottom:0}
+.hub-news-meta{font-size:12px!important;line-height:1.4;letter-spacing:.02em;text-transform:none;gap:9px!important}
+.hub-news-meta span{display:inline-flex;align-items:center;gap:4px}
+@media(max-width:640px){
+  .hub-article{width:100%;padding:18px 16px;border-radius:12px}
+  .hub-article h1{font-size:24px}
+  .hub-article-lead{font-size:14px}
+  .hub-article-body{font-size:14px;line-height:1.75}
+}
+.hub-global-compact .hub-article{width:min(100%, 800px);max-width:800px}
+.hub-global-compact .hub-article-lead{font-size:15px;line-height:1.65}
+.hub-global-compact .hub-article-body{font-size:15px;line-height:1.8}
+@media(max-width:640px){
+  .hub-global-compact .hub-article{width:100%;padding:18px 16px}
+  .hub-global-compact .hub-article-lead{font-size:14px}
+  .hub-global-compact .hub-article-body{font-size:14px;line-height:1.75}
+}
 
 /* Admin student-preview banner inside the student dashboard */
 .er-admin-view-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#0f172a;color:#e2e8f0;font-size:12px;font-weight:700;padding:8px 16px}

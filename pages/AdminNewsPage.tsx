@@ -9,6 +9,14 @@ import {
 } from '../src/lib/api';
 
 const categories = ['jamb', 'admission', 'waec', 'neco', 'nelfund', 'campus', 'opportunities', 'general'];
+const authors = [
+  'EduReach Editorial Desk',
+  'EduReach Exams Desk',
+  'EduReach Student Funding Desk',
+  'EduReach Admissions Desk',
+  'EduReach Opportunities Desk',
+  'EduReach Campus Desk',
+];
 
 const emptyForm = {
   title: '',
@@ -17,6 +25,7 @@ const emptyForm = {
   body: '',
   category: 'general',
   image_url: '',
+  source_name: 'EduReach Editorial Desk',
   source_url: '',
   published: false,
 };
@@ -71,6 +80,7 @@ export default function AdminNewsPage() {
       body: article.body,
       category: article.category || 'general',
       image_url: article.image_url || '',
+      source_name: article.source_name || 'EduReach Editorial Desk',
       source_url: article.source_url || '',
       published: article.published,
     });
@@ -92,6 +102,7 @@ export default function AdminNewsPage() {
         body: form.body.trim(),
         category: form.category,
         image_url: form.image_url.trim() || null,
+        source_name: form.source_name.trim() || null,
         source_url: form.source_url.trim() || null,
         published: publish,
       };
@@ -187,6 +198,11 @@ export default function AdminNewsPage() {
               value={form.excerpt}
               onChange={(e) => set('excerpt', e.target.value)}
             />
+            <select aria-label="Article author" className="admin-select" value={form.source_name} onChange={(e) => set('source_name', e.target.value)}>
+              {Array.from(new Set([...(authors as string[]), ...(form.source_name && !authors.includes(form.source_name) ? [form.source_name] : [])])).map((author) => (
+                <option key={author} value={author}>{author}</option>
+              ))}
+            </select>
             <textarea
               className="admin-input"
               rows={8}

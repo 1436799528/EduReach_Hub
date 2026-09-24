@@ -312,7 +312,7 @@ async function uniqueNewsSlug(supabase: any, base: string, excludeId?: string): 
   return `${base}-${Date.now().toString(36)}`;
 }
 
-const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_url,published,published_at,updated_at';
+const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,updated_at';
 
 app.get('/api/admin/news', requireAdmin, async (_req, res) => {
   try {
@@ -344,6 +344,7 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
       body: bodyText,
       category: String(req.body?.category || 'general').trim().toLowerCase() || 'general',
       image_url: req.body?.image_url ? String(req.body.image_url).trim() : null,
+      source_name: req.body?.source_name ? String(req.body.source_name).trim() : null,
       source_url: req.body?.source_url ? String(req.body.source_url).trim() : null,
       published,
       published_at: published ? now : null,
@@ -382,6 +383,7 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     if (req.body?.excerpt !== undefined) patch.excerpt = req.body.excerpt ? String(req.body.excerpt).trim() : null;
     if (req.body?.category !== undefined) patch.category = String(req.body.category).trim().toLowerCase() || 'general';
     if (req.body?.image_url !== undefined) patch.image_url = req.body.image_url ? String(req.body.image_url).trim() : null;
+    if (req.body?.source_name !== undefined) patch.source_name = req.body.source_name ? String(req.body.source_name).trim() : null;
     if (req.body?.source_url !== undefined) patch.source_url = req.body.source_url ? String(req.body.source_url).trim() : null;
     if (req.body?.published !== undefined) {
       const published = req.body.published === true;
@@ -507,7 +509,7 @@ app.get('/api/news', async (_req, res) => {
       .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
       .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
     if (error) throw error;
-    res.json({ items: (data || []).map(item => ({ ...item, summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
+    res.json({ items: (data || []).map(item => ({ ...item, author: item.source_name || 'EduReach Editorial Desk', summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
   } catch (error) {
     console.error('News API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -522,7 +524,7 @@ app.get('/api/news/:slug', async (req, res) => {
       .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
       .eq('slug', req.params.slug).eq('published', true).maybeSingle();
     if (error || !data) return res.status(404).json({ error: 'News article not found.' });
-    res.json({ item: { ...data, summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
+    res.json({ item: { ...data, author: data.source_name || 'EduReach Editorial Desk', summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
   } catch (error) {
     console.error('News article API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
