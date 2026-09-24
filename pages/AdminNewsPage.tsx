@@ -226,14 +226,14 @@ export default function AdminNewsPage() {
               Published (visible on the student news feed)
             </label>
             <div className="admin-inline-form">
-              <button className="admin-btn success" onClick={() => void save(true)}>
+              <button type="button" className="admin-btn success" onClick={() => void save(true)}>
                 {editingId ? 'Save & Publish' : 'Publish Article'}
               </button>
-              <button className="admin-btn secondary" onClick={() => void save(false)}>
+              <button type="button" className="admin-btn secondary" onClick={() => void save(false)}>
                 {editingId ? 'Save as Draft' : 'Save Draft'}
               </button>
               {editingId && (
-                <button className="admin-btn secondary" onClick={resetForm}>
+                <button type="button" className="admin-btn secondary" onClick={resetForm}>
                   Cancel Edit
                 </button>
               )}
@@ -273,7 +273,7 @@ export default function AdminNewsPage() {
                     </td>
                     <td>{a.updated_at ? new Date(a.updated_at).toLocaleString() : '—'}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
-                      <button className="admin-text-btn" onClick={() => startEdit(a)}>
+                      <button type="button" className="admin-text-btn" onClick={() => startEdit(a)}>
                         Edit
                       </button>{' '}
                       {a.published && (
@@ -283,7 +283,7 @@ export default function AdminNewsPage() {
                           </a>{' '}
                         </>
                       )}
-                      <button className="admin-text-btn" onClick={() => void remove(a.id, a.title)}>
+                      <button type="button" className="admin-text-btn" onClick={() => void remove(a.id, a.title)}>
                         Delete
                       </button>
                     </td>

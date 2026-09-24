@@ -15,6 +15,7 @@ import HubLayout from '../src/components/HubLayout';
 import ScientificCalculator from '../src/components/ScientificCalculator';
 import { fetchCbtExams, fetchCbtQuestions, startCbt, submitCbt } from '../src/lib/api';
 import { getExamProgress, saveExamProgress } from '../src/lib/cbt-offline';
+import { localStorageKey } from '../src/lib/localPreview';
 
 type Question = { id: number; text: string; options: string[] };
 type ExamSummary = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
@@ -134,7 +135,7 @@ export default function CbtPracticePage() {
           setSeconds(durationMinutes * 60);
         }
 
-        const storageKey = `edureach-cbt-attempt-${resolved.id}`;
+        const storageKey = localStorageKey(`cbt-attempt-${resolved.id}`);
         const stored = JSON.parse(localStorage.getItem(storageKey) || 'null') as { attemptId?: string; expiresAt?: string } | null;
         if (stored?.attemptId && stored.expiresAt && new Date(stored.expiresAt).getTime() > Date.now()) {
           setAttemptId(stored.attemptId);
@@ -222,8 +223,8 @@ export default function CbtPracticePage() {
     try {
       const activeAttemptId = attemptId || `local-att-${Date.now()}`;
       const result = await submitCbt({ examId, attemptId: activeAttemptId, answers });
-      localStorage.setItem('edureach-last-cbt-attempt', result.attemptId);
-      localStorage.removeItem(`edureach-cbt-attempt-${examId}`);
+      localStorage.setItem(localStorageKey('last-cbt-attempt'), result.attemptId);
+      localStorage.removeItem(localStorageKey(`cbt-attempt-${examId}`));
       navigateInApp(`/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Submission failed. Your answers are saved locally.');
@@ -288,9 +289,9 @@ export default function CbtPracticePage() {
         <div className="er-exam-bar">
           <div className="er-exam-bar-inner er-container">
             <div className="er-exam-id">
-              <img src={BRAND_LOGO[brand]} alt="" width={36} height={36} />
+              <img src={BRAND_LOGO[brand]} alt={`${brand.toUpperCase()} logo`} width={36} height={36} />
               <div className="er-exam-id-copy">
-                <strong>{examTitle}</strong>
+                <h1>{examTitle}</h1>
                 <span>
                   {subject && <em className="er-exam-chip">{subject}</em>}
                   {total > 0 && <span className="er-exam-progress">Question {index + 1} of {total}</span>}

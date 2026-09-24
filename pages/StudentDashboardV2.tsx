@@ -24,6 +24,7 @@ import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { pageTitleFor } from '../src/lib/pageMeta';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
@@ -78,7 +79,7 @@ const NAV: Array<{ tab: DashboardTab; label: string; short: string; Icon: typeof
   { tab: 'tools', label: 'Tools & Saved', short: 'Tools', Icon: Wrench },
 ];
 
-const LOCAL_SAVED_KEY = 'edureach-saved-items';
+const localSavedItemsKey = () => localStorageKey('saved-items');
 
 /* ------------------------------------------------------------------ */
 /* Local (no-Supabase) readers                                         */
@@ -86,7 +87,7 @@ const LOCAL_SAVED_KEY = 'edureach-saved-items';
 
 function readLocalServiceRequests(): RequestRow[] {
   try {
-    const parsed = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
+    const parsed = JSON.parse(localStorage.getItem(localStorageKey('service-requests')) || '[]');
     if (!Array.isArray(parsed)) return [];
     return parsed
       .map((item: any) => ({
@@ -111,11 +112,11 @@ function readLocalCbtAttempts(): Attempt[] {
     const attempts: Attempt[] = [];
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
-      if (!key?.startsWith('edureach-cbt-result-')) continue;
+      if (!key?.startsWith(localStorageKey('cbt-result-'))) continue;
       const stored = JSON.parse(localStorage.getItem(key) || 'null');
       if (!stored?.attempt) continue;
       attempts.push({
-        id: String(stored.attempt.id || key.replace('edureach-cbt-result-', '')),
+        id: String(stored.attempt.id || key.replace(localStorageKey('cbt-result-'), '')),
         score: Number(stored.attempt.score || 0),
         correct_answers: Number(stored.attempt.correct_answers || 0),
         total_questions: Number(stored.attempt.total_questions || stored.questions?.length || 0),
@@ -132,7 +133,7 @@ function readLocalCbtAttempts(): Attempt[] {
 
 function readLocalSavedItems(): DashboardSavedItem[] {
   try {
-    const parsed = JSON.parse(localStorage.getItem(LOCAL_SAVED_KEY) || '[]');
+    const parsed = JSON.parse(localStorage.getItem(localSavedItemsKey()) || '[]');
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -141,7 +142,7 @@ function readLocalSavedItems(): DashboardSavedItem[] {
 
 function writeLocalSavedItems(items: DashboardSavedItem[]) {
   try {
-    localStorage.setItem(LOCAL_SAVED_KEY, JSON.stringify(items));
+    localStorage.setItem(localSavedItemsKey(), JSON.stringify(items));
   } catch {
     // storage unavailable
   }
@@ -149,7 +150,7 @@ function writeLocalSavedItems(items: DashboardSavedItem[]) {
 
 function readStoredProfile(): any {
   try {
-    return JSON.parse(localStorage.getItem('edureach-student-profile') || 'null');
+    return JSON.parse(readLocalPreviewValue('profile') || 'null');
   } catch {
     return null;
   }

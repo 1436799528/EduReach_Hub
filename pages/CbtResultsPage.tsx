@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchCbtResult } from '../src/lib/api';
+import { localStorageKey } from '../src/lib/localPreview';
 
 export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptId?: string } = {}) {
   const [loading, setLoading] = useState(true);
@@ -20,7 +21,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     const attemptId =
       routeAttemptId ||
       new URLSearchParams(window.location.search).get('attempt') ||
-      localStorage.getItem('edureach-last-cbt-attempt') ||
+      localStorage.getItem(localStorageKey('last-cbt-attempt')) ||
       '';
 
     if (!attemptId) {
@@ -47,6 +48,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
         <div className="hub-container" style={{ maxWidth: '900px' }}>
           {loading && (
             <div className="hub-panel hub-empty" style={{ padding: '48px', textAlign: 'center' }}>
+              <h1 className="er-visually-hidden">CBT Results</h1>
               <Sparkles size={24} style={{ color: '#C85841', marginBottom: '8px' }} />
               <p style={{ fontWeight: 700, color: '#0f172a' }}>Calculating CBT test score and performance analysis…</p>
             </div>
@@ -54,6 +56,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
           {!loading && error && (
             <div className="hub-panel hub-empty" style={{ padding: '40px', textAlign: 'center' }}>
+              <h1 className="er-visually-hidden">CBT Results</h1>
               <p style={{ color: '#b91c1c', marginBottom: '16px' }}>{error}</p>
               <a className="hub-primary-btn" href="/cbt" style={{ textDecoration: 'none' }}>
                 Start CBT Practice

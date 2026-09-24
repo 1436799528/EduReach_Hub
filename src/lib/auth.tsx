@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { isSupabaseConfigured, supabase } from './supabase';
+import { localStorageKey, readLocalPreviewValue } from './localPreview';
 
 export type AuthUser = {
   id: string;
@@ -22,7 +23,7 @@ const AUTH_EVENT = 'edureach-auth-changed';
 
 function readStoredProfile(): Record<string, any> | null {
   try {
-    return JSON.parse(localStorage.getItem('edureach-student-profile') || 'null');
+    return JSON.parse(readLocalPreviewValue('profile') || 'null');
   } catch {
     return null;
   }

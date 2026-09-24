@@ -68,6 +68,7 @@ export default function HubHomePage() {
     <HubLayout>
       <div className="er-portal">
         <div className="er-container">
+          <h1 className="er-visually-hidden">EduReach Hub student services, CBT practice and education updates</h1>
           <form className="er-search" onSubmit={(e) => {
             e.preventDefault();
             if (search.trim()) navigateInApp(`/services?q=${encodeURIComponent(search.trim())}`);

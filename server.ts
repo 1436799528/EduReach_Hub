@@ -94,6 +94,7 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
 });
 
 app.post('/api/analytics/event', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
     const eventName = String(req.body?.event_name || '').trim().slice(0,80);
     const pathName = String(req.body?.path || '').trim().slice(0,500);
@@ -460,10 +461,6 @@ app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     console.error('Admin news delete error:', error);
     res.status(500).json({ error: 'Unable to delete this article.' });
   }
-});
-
-app.get('/api/admin/session', requireAdmin, (req, res) => {
-  res.json({ user: (req as AdminRequest).adminUser });
 });
 
 app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {

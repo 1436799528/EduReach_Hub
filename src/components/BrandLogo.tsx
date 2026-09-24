@@ -7,7 +7,7 @@ export default function BrandLogo({ height = 32, radius = 8 }: { height?: number
 
   if (failed) {
     return (
-      <span className="er-logo-fallback" style={{ height, minWidth: height, borderRadius: radius }}>
+      <span className="er-logo-fallback" role="img" aria-label="EduReach Hub NG" style={{ height, minWidth: height, borderRadius: radius }}>
         ER
       </span>
     );

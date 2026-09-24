@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Calculator, Trash2 } from 'lucide-react';
 import { calculateCgpa, saveCgpaSnapshot, type CgpaCourseInput, type CgpaSnapshot } from '../../lib/studentDashboard';
+import { localStorageKey } from '../../lib/localPreview';
 
-const LOCAL_KEY = 'edureach-cgpa-courses';
+const localCoursesKey = () => localStorageKey('cgpa-courses');
 const fieldStyle = { padding: '8px 9px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '6px', width: '100%', boxSizing: 'border-box' } as const;
 
 function readLocalCourses(): CgpaCourseInput[] {
   try {
-    const parsed = JSON.parse(localStorage.getItem(LOCAL_KEY) || 'null');
+    const parsed = JSON.parse(localStorage.getItem(localCoursesKey()) || 'null');
     return Array.isArray(parsed) && parsed.length ? parsed : [];
   } catch {
     return [];
@@ -41,7 +42,7 @@ export default function CgpaCalculatorCard({
     const next = courses.map((course, i) => (i === index ? { ...course, ...patch } : course));
     setCourses(next);
     try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(next));
+      localStorage.setItem(localCoursesKey(), JSON.stringify(next));
     } catch {
       // storage unavailable — calculator still works for this session
     }
@@ -107,7 +108,13 @@ export default function CgpaCalculatorCard({
               type="button"
               onClick={() => {
                 const next = courses.filter((_, i) => i !== index);
-                setCourses(next.length ? next : [{ code: '', units: 2, grade: 'A' }]);
+                const nextCourses = next.length ? next : [{ code: '', units: 2, grade: 'A' }];
+                setCourses(nextCourses);
+                try {
+                  localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
+                } catch {
+                  // storage unavailable — calculator still works for this session
+                }
               }}
               aria-label={`Remove course ${index + 1}`}
               className="dash-icon-btn"
@@ -124,7 +131,21 @@ export default function CgpaCalculatorCard({
       {message && <div className={`dash-note ${message.toLowerCase().includes('unable') ? 'is-error' : 'is-success'}`}>{message}</div>}
 
       <div className="dash-btn-row">
-        <button type="button" className="dash-btn dash-btn-secondary" onClick={() => setCourses([...courses, { code: '', units: 2, grade: 'A' }])}>+ Add Course</button>
+        <button
+          type="button"
+          className="dash-btn dash-btn-secondary"
+          onClick={() => {
+            const nextCourses = [...courses, { code: '', units: 2, grade: 'A' }];
+            setCourses(nextCourses);
+            try {
+              localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
+            } catch {
+              // storage unavailable — calculator still works for this session
+            }
+          }}
+        >
+          + Add Course
+        </button>
         <button type="button" className="dash-btn dash-btn-primary" onClick={save} disabled={saving || !result.totalUnits}>{saving ? 'Saving…' : 'Save Snapshot'}</button>
       </div>
     </section>

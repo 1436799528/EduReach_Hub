@@ -308,7 +308,7 @@ body.er-exam-mode .er-pagebar{display:none!important}
 .er-exam-id{display:flex;align-items:center;gap:10px;min-width:0;flex:1;margin-right:auto}
 .er-exam-id img{width:36px;height:36px;object-fit:contain;background:#fff;border-radius:8px;padding:3px;flex:none}
 .er-exam-id-copy{display:grid;gap:2px;min-width:0}
-.er-exam-id-copy strong{font-size:15px;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.er-exam-id-copy h1,.er-exam-id-copy strong{font-size:15px;font-weight:800;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;color:inherit}
 .er-exam-id-copy>span{display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;min-width:0}
 .er-exam-chip{font-style:normal;font-weight:700;color:#fff;background:rgba(255,255,255,.14);border-radius:999px;padding:2px 9px;white-space:nowrap}
 .er-exam-progress{white-space:nowrap}
@@ -434,7 +434,7 @@ body.er-exam-mode .er-pagebar{display:none!important}
   .er-exam-timer{grid-area:timer;min-height:38px;padding:0 10px;font-size:15px}
   .er-exam-controls{grid-area:controls;display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .er-exam-id img{width:32px;height:32px}
-  .er-exam-id-copy strong{font-size:14px}
+  .er-exam-id-copy h1,.er-exam-id-copy strong{font-size:14px}
   .er-exam-id-copy>span{font-size:11.5px;gap:6px}
   .er-exam-progress{display:none}
   .er-exam-tool,.er-exam-submit{min-height:40px;justify-content:center;font-size:13px}

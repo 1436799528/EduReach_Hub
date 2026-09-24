@@ -19,7 +19,21 @@ export default function PageBar() {
   if (path === '/') return null;
 
   const goBack = () => {
-    if (window.history.length > 1) window.history.back();
+    let sameOriginReferrer = false;
+    try {
+      sameOriginReferrer = Boolean(document.referrer && new URL(document.referrer).origin === window.location.origin);
+    } catch {
+      sameOriginReferrer = false;
+    }
+
+    let appHistory = false;
+    try {
+      appHistory = window.sessionStorage.getItem('edureach-app-history') === '1';
+    } catch {
+      appHistory = false;
+    }
+
+    if ((sameOriginReferrer || appHistory) && window.history.length > 1) window.history.back();
     else {
       window.history.pushState({}, '', '/');
       window.dispatchEvent(new PopStateEvent('popstate'));

@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { localStorageKey } from '../src/lib/localPreview';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
 import BrandLogo from '../src/components/BrandLogo';
@@ -118,12 +119,17 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         if (!email.trim() || !email.includes('@')) {
           throw new Error('Please enter a valid email address.');
         }
+        if (!isSupabaseConfigured) {
+          setMessage('Password reset email is unavailable in local preview mode. Connect an EduReach account to reset a password.');
+          setBusy(false);
+          return;
+        }
         try {
           await supabase.auth.resetPasswordForEmail(email.trim(), {
             redirectTo: `${window.location.origin}/reset-password`,
           });
         } catch {
-          // graceful fallback
+          // Keep the response generic so account existence is not disclosed.
         }
         setMessage('If an account exists for this email, you will receive password reset instructions.');
         setBusy(false);
@@ -137,6 +143,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         }
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match.');
+        }
+        if (!isSupabaseConfigured) {
+          setError('Password reset is unavailable in local preview mode. Connect an EduReach account to update a password.');
+          setBusy(false);
+          return;
         }
         const { error: resetErr } = await supabase.auth.updateUser({ password });
         if (resetErr) throw resetErr;
@@ -181,8 +192,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
         // Local profile cache for unconfigured preview/offline sessions only.
         if (!isSupabaseConfigured) {
+          localStorage.setItem('edureach-local-user-email', email.trim());
           localStorage.setItem(
-            'edureach-student-profile',
+            localStorageKey('profile'),
             JSON.stringify({
               first_name: firstName.trim(),
               last_name: lastName.trim(),
@@ -194,7 +206,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           );
         }
         if (!isSupabaseConfigured) {
-          localStorage.setItem('edureach-local-user-email', email.trim());
           notifyAuthChanged();
         }
         setVerifyEmailSent(email.trim());
@@ -396,7 +407,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               <Mail size={26} />
             </div>
             <p style={{ fontSize: '13.5px', color: '#334155', lineHeight: 1.6, marginBottom: '20px' }}>
-              We sent a verification link to <strong>{verifyEmailSent || email}</strong>. Please check your inbox or spam folder to confirm your email.
+              {isSupabaseConfigured
+                ? <>We sent a verification link to <strong>{verifyEmailSent || email}</strong>. Please check your inbox or spam folder to confirm your email.</>
+                : <>This local preview account is ready on this device. No email is sent until a connected EduReach auth service is configured.</>}
             </p>
 
             <div style={{ display: 'grid', gap: '10px' }}>
@@ -589,6 +602,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -622,6 +636,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -724,6 +739,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -789,6 +805,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -819,6 +836,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}

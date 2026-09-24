@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { hubServices, newsItems as fallbackNews } from '../data/hubContent';
+import { localStorageKey } from './localPreview';
 
 export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number };
@@ -104,7 +105,7 @@ const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
   body: `${n.excerpt}\n\nOfficial Student Advice:\nStudents are advised to cross-check all deadlines and application portals through legitimate school channels. Keep your student registration numbers, tokens, and exam slips safeguarded.\n\nKey Requirements:\n1. Ensure your JAMB registration profile is linked to an active email address.\n2. Do not disclose secret result-checking PINs to unverified sources.\n3. Track all service requests on EduReach Hub for live updates.`,
   category: n.tag.toLowerCase().replace(/[\s/]+/g, '_'),
   priority: 'normal',
-  source_url: 'https://edureach.ng',
+  source_url: null,
   image_url: fallbackNewsPhotos[n.slug] ?? null,
   published_at: new Date(Date.now() - index * 86400000 * 2).toISOString(),
   last_verified_at: new Date().toISOString(),
@@ -168,37 +169,32 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 }
 
 export async function fetchServices(): Promise<ServiceItem[]> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('service_catalog')
-        .select('id,service_key,title,description,application_url,active')
-        .eq('active', true)
-        .order('title');
-      if (!error && data?.length) return data as ServiceItem[];
-    } catch {
-      // fallback
-    }
-  }
-  return fallbackServicesCatalog;
+  if (!isSupabaseConfigured) return fallbackServicesCatalog;
+
+  const { data, error } = await supabase
+    .from('service_catalog')
+    .select('id,service_key,title,description,application_url,active')
+    .eq('active', true)
+    .order('title');
+  if (error) throw error;
+  return (data || []) as ServiceItem[];
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('service_catalog')
-        .select('id,service_key,title,description,application_url,active')
-        .eq('service_key', slug)
-        .eq('active', true)
-        .maybeSingle();
-      if (!error && data) return data as ServiceItem;
-    } catch {
-      // fallback
-    }
+  if (!isSupabaseConfigured) {
+    const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
+    if (item) return item;
+    throw new Error('This service is not available. Browse the services catalogue for active student services.');
   }
-  const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
-  if (item) return item;
+
+  const { data, error } = await supabase
+    .from('service_catalog')
+    .select('id,service_key,title,description,application_url,active')
+    .eq('service_key', slug)
+    .eq('active', true)
+    .maybeSingle();
+  if (error) throw error;
+  if (data) return data as ServiceItem;
   throw new Error('This service is not available. Browse the services catalogue for active student services.');
 }
 
@@ -215,19 +211,15 @@ export async function fetchUpcoming(): Promise<UpcomingItem[]> {
 }
 
 export async function fetchCbtExams() {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('cbt_exams')
-        .select('id,title,exam_body,subject,duration_minutes')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-      if (!error && data?.length) return data;
-    } catch {
-      // ignore
-    }
-  }
-  return fallbackCbtExams;
+  if (!isSupabaseConfigured) return fallbackCbtExams;
+
+  const { data, error } = await supabase
+    .from('cbt_exams')
+    .select('id,title,exam_body,subject,duration_minutes')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function startCbt(examId: string): Promise<CbtStartResponse> {
@@ -316,8 +308,8 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
   };
 
   try {
-    localStorage.setItem(`edureach-cbt-result-${payload.attemptId}`, JSON.stringify(resultData));
-    localStorage.setItem('edureach-last-cbt-attempt', payload.attemptId);
+    localStorage.setItem(localStorageKey(`cbt-result-${payload.attemptId}`), JSON.stringify(resultData));
+    localStorage.setItem(localStorageKey('last-cbt-attempt'), payload.attemptId);
   } catch {
     // localStorage may be disabled
   }
@@ -326,80 +318,90 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
 }
 
 export async function fetchCbtQuestions(examId: string) {
-  if (isSupabaseConfigured) {
-    try {
-      const { data: exam, error: examError } = await supabase
-        .from('cbt_exams')
-        .select('id,title,duration_minutes,subject')
-        .eq('id', examId)
-        .eq('is_active', true)
-        .maybeSingle();
-      const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
-      if (!examError && !questionError && exam && questions?.length) {
-        return {
-          exam: { id: exam.id, title: exam.title, durationMinutes: exam.duration_minutes, subject: exam.subject },
-          questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
-        };
-      }
-    } catch {
-      // fallback
-    }
+  if (!isSupabaseConfigured) {
+    const examMeta = fallbackCbtExams.find((e) => e.id === examId);
+    if (!examMeta) throw new Error('This CBT exam is not available. Choose another question bank.');
+    return {
+      exam: { id: examId, title: examMeta.title, durationMinutes: examMeta.duration_minutes, subject: examMeta.subject },
+      questions: practiceQuestions,
+    };
   }
 
-  const examMeta = fallbackCbtExams.find((e) => e.id === examId) || fallbackCbtExams[0];
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Please sign in before loading this CBT exam.');
+
+  const { data: exam, error: examError } = await supabase
+    .from('cbt_exams')
+    .select('id,title,duration_minutes,subject')
+    .eq('id', examId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (examError) throw examError;
+  if (!exam) throw new Error('This CBT exam is not available. Choose another question bank.');
+
+  const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
+  if (questionError) throw questionError;
+  if (!questions?.length) throw new Error('This CBT exam has no questions yet. Choose another question bank.');
+
   return {
-    exam: { id: examId, title: examMeta.title, durationMinutes: examMeta.duration_minutes, subject: examMeta.subject },
-    questions: practiceQuestions,
+    exam: { id: exam.id, title: exam.title, durationMinutes: exam.duration_minutes, subject: exam.subject },
+    questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
   };
 }
 
 export async function fetchCbtResult(attemptId: string) {
   if (isSupabaseConfigured) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
-        if (!error && data?.length) {
-          const first = data[0];
-          const attempt = {
-            id: first.attempt_id,
-            exam_id: first.exam_id,
-            score: first.score,
-            correct_answers: first.correct_answers,
-            total_questions: first.total_questions,
-            submitted_at: first.submitted_at,
-          };
-          const answers = data.map((row: any) => ({
-            question_id: row.question_id,
-            selected_option: row.selected_option,
-            is_correct: row.is_correct,
-          }));
-          const questions = data.map((row: any) => ({
-            id: row.question_id,
-            position: row.position,
-            question_text: row.question_text,
-            option_a: row.option_a,
-            option_b: row.option_b,
-            option_c: row.option_c,
-            option_d: row.option_d,
-            correct_option: row.correct_option,
-            explanation: row.explanation,
-          }));
-          return { attempt, answers, questions };
-        }
-      }
-    } catch {
-      // fallback to local stored result
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Please sign in to view this CBT result.');
+
+    const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
+    if (error) throw error;
+    if (!data?.length) throw new Error('No CBT result was found for this attempt.');
+
+    const first = data[0];
+    const attempt = {
+      id: first.attempt_id,
+      exam_id: first.exam_id,
+      score: first.score,
+      correct_answers: first.correct_answers,
+      total_questions: first.total_questions,
+      submitted_at: first.submitted_at,
+    };
+    const answers = data.map((row: any) => ({
+      question_id: row.question_id,
+      selected_option: row.selected_option,
+      is_correct: row.is_correct,
+    }));
+    const questions = data.map((row: any) => ({
+      id: row.question_id,
+      position: row.position,
+      question_text: row.question_text,
+      option_a: row.option_a,
+      option_b: row.option_b,
+      option_c: row.option_c,
+      option_d: row.option_d,
+      correct_option: row.correct_option,
+      explanation: row.explanation,
+    }));
+    return { attempt, answers, questions };
   }
 
-  if (!isSupabaseConfigured) {
-    try {
-      const stored = localStorage.getItem(`edureach-cbt-result-${attemptId}`);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // ignore
+  try {
+    const resultSuffix = `:cbt-result-${attemptId}`;
+    const candidateKeys = new Set<string>([localStorageKey(`cbt-result-${attemptId}`)]);
+    // A completed scorecard is a direct, shareable destination. Allow a guest
+    // to reopen it with the exact attempt id even after signing out, without
+    // exposing the current student's entire result list.
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('edureach-local:') && key.endsWith(resultSuffix)) candidateKeys.add(key);
     }
+    for (const key of candidateKeys) {
+      const stored = localStorage.getItem(key);
+      if (stored) return JSON.parse(stored);
+    }
+  } catch {
+    // localStorage may be disabled
   }
 
   throw new Error('No CBT result was found for this attempt. Complete a CBT practice session to generate a scorecard.');
@@ -407,31 +409,27 @@ export async function fetchCbtResult(attemptId: string) {
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   if (isSupabaseConfigured) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: service } = await supabase
-          .from('service_catalog')
-          .select('id, service_key, title')
-          .eq('service_key', payload.serviceSlug)
-          .eq('active', true)
-          .maybeSingle();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Please sign in before submitting a service request.');
 
-        if (service) {
-          const { data, error } = await supabase
-            .from('service_requests')
-            .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
-            .select('id, reference_code, created_at, status')
-            .single();
-          if (!error && data) return data;
-        }
-      }
-    } catch {
-      // fallback
-    }
+    const { data: service, error: serviceError } = await supabase
+      .from('service_catalog')
+      .select('id, service_key, title')
+      .eq('service_key', payload.serviceSlug)
+      .eq('active', true)
+      .maybeSingle();
+    if (serviceError) throw serviceError;
+    if (!service) throw new Error('This service is no longer accepting requests. Browse the services catalogue for active services.');
+
+    const { data, error } = await supabase
+      .from('service_requests')
+      .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
+      .select('id, reference_code, created_at, status')
+      .single();
+    if (error) throw error;
+    if (!data) throw new Error('The service request could not be created.');
+    return data;
   }
-
-  if (isSupabaseConfigured) throw new Error('Please sign in before submitting a service request.');
 
   // Local request persistence for unconfigured/offline sessions. This records only what the student actually submitted.
   const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -446,11 +444,11 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   };
 
   try {
-    const existing = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
+    const existing = JSON.parse(localStorage.getItem(localStorageKey('service-requests')) || '[]');
     existing.unshift(localRecord);
-    localStorage.setItem('edureach-service-requests', JSON.stringify(existing));
+    localStorage.setItem(localStorageKey('service-requests'), JSON.stringify(existing));
   } catch {
-    // ignore
+    // localStorage may be disabled
   }
 
   return localRecord;
@@ -458,124 +456,106 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
 
 export async function trackService(referenceCode: string) {
   const normalized = referenceCode.trim().toUpperCase();
+  if (!normalized) throw new Error('Enter a reference code to track a service request.');
 
   if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase.rpc('get_public_service_request', { p_reference_code: normalized });
-      if (!error && data?.length) {
-        const row = data[0];
-        const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4, rejected: 4, cancelled: 4 };
-        const current = stageMap[row.status] ?? 1;
-        const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
-        return {
-          id: row.id,
-          reference_code: row.reference_code,
-          status: row.status,
-          created_at: row.created_at,
-          service_catalog: { title: row.service_title, service_key: row.service_key },
-          timeline: labels.map((label, index) => ({ label, done: index < current })),
-        };
-      }
-    } catch {
-      // fallback
+    const { data, error } = await supabase.rpc('get_public_service_request', { p_reference_code: normalized });
+    if (error) throw new Error('Tracking is temporarily unavailable. Please try again shortly.');
+    if (data?.length) {
+      const row = data[0];
+      const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4, rejected: 4, cancelled: 4 };
+      const current = stageMap[row.status] ?? 1;
+      const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
+      return {
+        id: row.id,
+        reference_code: row.reference_code,
+        status: row.status,
+        created_at: row.created_at,
+        service_catalog: { title: row.service_title, service_key: row.service_key },
+        timeline: labels.map((label, index) => ({ label, done: index < current })),
+      };
     }
+    throw new Error('No service request was found for that reference code. Please confirm the code from your submitted application.');
   }
 
-  if (!isSupabaseConfigured) {
-    try {
-      const saved = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
-      const match = saved.find((r: any) => r.reference_code === normalized);
+  try {
+    const candidateKeys = new Set<string>([localStorageKey('service-requests')]);
+    // Tracking is intentionally public by reference code. Search scoped local
+    // preview records only for the exact code entered; never return the list.
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('edureach-local:') && key.endsWith(':service-requests')) candidateKeys.add(key);
+    }
+    for (const key of candidateKeys) {
+      const saved = JSON.parse(localStorage.getItem(key) || '[]');
+      const match = Array.isArray(saved) ? saved.find((r: any) => r.reference_code === normalized) : null;
       if (match) {
         const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4 };
         const current = stageMap[match.status] ?? 1;
         const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
         return { ...match, timeline: labels.map((label, index) => ({ label, done: index < current })) };
       }
-    } catch {
-      // ignore
     }
+  } catch {
+    // localStorage may be disabled
   }
 
   throw new Error('No service request was found for that reference code. Please confirm the code from your submitted application.');
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
-        .eq('published', true)
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .limit(30);
-      if (!error && data?.length) {
-        return data.map((item) => ({
-          id: item.id,
-          slug: item.slug,
-          title: item.title,
-          summary: item.excerpt,
-          body: item.body,
-          category: item.category,
-          priority: 'normal',
-          source_url: item.source_url,
-          image_url: item.image_url ?? null,
-          published_at: item.published_at,
-          last_verified_at: item.updated_at,
-          verification_status: 'verified',
-        }));
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return fallbackNewsItems;
+  if (!isSupabaseConfigured) return fallbackNewsItems;
+
+  const { data, error } = await supabase
+    .from('news_articles')
+    .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
+    .eq('published', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(30);
+  if (error) throw error;
+  return (data || []).map((item) => ({
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    summary: item.excerpt,
+    body: item.body,
+    category: item.category,
+    priority: 'normal',
+    source_url: item.source_url,
+    image_url: item.image_url ?? null,
+    published_at: item.published_at,
+    last_verified_at: item.updated_at,
+    verification_status: 'verified',
+  }));
 }
 
 export async function fetchNewsItem(slug: string): Promise<NewsItem> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
-        .eq('slug', slug)
-        .eq('published', true)
-        .maybeSingle();
-      if (!error && data) {
-        return {
-          id: data.id,
-          slug: data.slug,
-          title: data.title,
-          summary: data.excerpt,
-          body: data.body,
-          category: data.category,
-          priority: 'normal',
-          source_url: data.source_url,
-          image_url: data.image_url ?? null,
-          published_at: data.published_at,
-          last_verified_at: data.updated_at,
-          verification_status: 'verified',
-        };
-      }
-    } catch {
-      // fallback
-    }
+  if (!isSupabaseConfigured) {
+    const match = fallbackNewsItems.find((n) => n.slug === slug);
+    if (match) return match;
+    throw new Error('This news article could not be found.');
   }
 
-  const match = fallbackNewsItems.find((n) => n.slug === slug);
-  if (match) return match;
-
+  const { data, error } = await supabase
+    .from('news_articles')
+    .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
+    .eq('slug', slug)
+    .eq('published', true)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('This news article could not be found.');
   return {
-    id: `news-${slug}`,
-    slug,
-    title: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-    summary: 'Official notification and academic update details for Nigerian students.',
-    body: 'This update is part of the EduReach Hub verified announcements feed. Detailed guidelines and official institutional schedules will be displayed here as they are released.',
-    category: 'academic',
+    id: data.id,
+    slug: data.slug,
+    title: data.title,
+    summary: data.excerpt,
+    body: data.body,
+    category: data.category,
     priority: 'normal',
-    source_url: 'https://edureach.ng',
-    image_url: null,
-    published_at: new Date().toISOString(),
-    last_verified_at: new Date().toISOString(),
+    source_url: data.source_url,
+    image_url: data.image_url ?? null,
+    published_at: data.published_at,
+    last_verified_at: data.updated_at,
     verification_status: 'verified',
   };
 }
@@ -602,59 +582,31 @@ export async function bootstrapAdmin(): Promise<void> {
 
 export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string };
 
-const fallbackAdminUsers: AdminUser[] = [];
-
 export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
-      const body = await jsonFetch<{ items: AdminUser[] }>(`/api/admin/users${query}`, { headers });
-      if (body.items) return body.items;
-    }
-  } catch {
-    // fallback
-  }
-
-  if (!search.trim()) return fallbackAdminUsers;
-  const q = search.toLowerCase();
-  return fallbackAdminUsers.filter(u => u.full_name.toLowerCase().includes(q) || u.school.toLowerCase().includes(q) || (u.matric_number && u.matric_number.toLowerCase().includes(q)));
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
+  const body = await jsonFetch<{ items: AdminUser[] }>(`/api/admin/users${query}`, { headers });
+  return body.items || [];
 }
 
 export type AdminServiceRequest = { id: string; user_id: string; status: string; form_data: Record<string, unknown>; created_at: string; updated_at: string; reference_code?: string | null; service_catalog?: { title: string } | null };
 
-const fallbackAdminRequests: AdminServiceRequest[] = [];
-
 export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminServiceRequest[]> {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      const body = await jsonFetch<{ items: AdminServiceRequest[] }>(`/api/admin/service-requests?status=${encodeURIComponent(status)}`, { headers });
-      if (body.items) return body.items;
-    }
-  } catch {
-    // fallback
-  }
-
-  if (status === 'all') return fallbackAdminRequests;
-  return fallbackAdminRequests.filter(r => r.status === status);
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: AdminServiceRequest[] }>(`/api/admin/service-requests?status=${encodeURIComponent(status)}`, { headers });
+  return body.items || [];
 }
 
 export async function updateAdminServiceRequest(requestId: string, status: string) {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      return await jsonFetch<{ item: { id: string; status: string; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ status }) });
-    }
-  } catch {
-    // fallback
-  }
-
-  const req = fallbackAdminRequests.find(r => r.id === requestId);
-  if (!req) throw new Error('Unable to update this request because no admin service record was found.');
-  req.status = status;
-  req.updated_at = new Date().toISOString();
-  return { item: { id: requestId, status, updated_at: req.updated_at } };
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  return await jsonFetch<{ item: { id: string; status: string; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ status }),
+  });
 }
 
 export type AdminNewsArticle = {

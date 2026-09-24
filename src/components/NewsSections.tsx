@@ -28,7 +28,7 @@ function articleHref(item: NewsItem): string {
 export function NewsRow({ item }: { item: NewsItem }) {
   return (
     <a className="er-news-row" href={articleHref(item)}>
-      <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt="" loading="lazy" />
+      <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt={`${item.title} — ${newsCategoryLabel(item.category)}`} loading="lazy" />
       <span>
         <small>
           {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
@@ -47,7 +47,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
     <div className="er-featured-grid">
       {items.slice(0, 2).map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
-          <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt="" loading="lazy" />
+          <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt={`${item.title} — ${newsCategoryLabel(item.category)}`} loading="lazy" />
           <span className="er-featured-body">
             <small>
               {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}

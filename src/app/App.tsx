@@ -65,7 +65,20 @@ export default function App() {
   }, [locationState.routeKey]);
 
   useEffect(() => {
+    try {
+      window.history.replaceState({ ...(window.history.state || {}), edureach: true }, '', window.location.href);
+    } catch {
+      // History state is optional; navigation still works without the marker.
+    }
+
     const syncPath = () => {
+      pendingHash.current = null;
+      try {
+        window.history.replaceState({ ...(window.history.state || {}), edureach: true }, '', window.location.href);
+        window.sessionStorage.setItem('edureach-app-history', '1');
+      } catch {
+        // Storage may be unavailable in a restricted browser context.
+      }
       // Always publish a fresh location object: the dashboard relies on it to
       // re-sync its tab after a silent pushState + browser back.
       startTransition(() => setLocationState(readLocation()));
@@ -91,7 +104,10 @@ export default function App() {
       event.preventDefault();
       const next = `${url.pathname}${url.search}${url.hash}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      if (next !== current) window.history.pushState({}, '', next);
+      if (next !== current) {
+        window.history.pushState({ edureach: true }, '', next);
+        try { window.sessionStorage.setItem('edureach-app-history', '1'); } catch { /* optional */ }
+      }
       const routeKey = `${url.pathname}${url.search}`;
       if (routeKey === currentRouteKey.current) {
         // Same page (or hash-only change): nothing new to load, scroll right away.

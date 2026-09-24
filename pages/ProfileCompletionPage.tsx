@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { supabase } from '../src/lib/supabase';
+import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 
 const commonInstitutions = [
@@ -114,7 +115,7 @@ export default function ProfileCompletionPage() {
   useEffect(() => {
     const applyStoredProfile = () => {
       try {
-        const stored = JSON.parse(localStorage.getItem('edureach-student-profile') || 'null');
+        const stored = JSON.parse(readLocalPreviewValue('profile') || 'null');
         if (!stored) return;
         if (stored.full_name) setUserName(stored.full_name);
         if (stored.email) setUserEmail(stored.email);
@@ -218,9 +219,9 @@ export default function ProfileCompletionPage() {
 
     // Save locally for instant persistence when running without configured auth services
     try {
-      localStorage.setItem('edureach-profile-completed', 'true');
+      localStorage.setItem(localStorageKey('profile-completed'), 'true');
       localStorage.setItem(
-        'edureach-student-profile',
+        localStorageKey('profile'),
         JSON.stringify({ ...payload, full_name: userName, email: userEmail })
       );
     } catch {
@@ -353,6 +354,7 @@ export default function ProfileCompletionPage() {
                   <input
                     type="url"
                     value={customAvatar}
+                    aria-label="Profile image URL"
                     onChange={(e) => setCustomAvatar(e.target.value)}
                     placeholder="Or paste image URL (e.g. https://...)"
                     style={{
@@ -385,6 +387,7 @@ export default function ProfileCompletionPage() {
                   </label>
                   <select
                     value={school}
+                    aria-label="Institution or school"
                     onChange={(e) => setSchool(e.target.value)}
                     required
                     style={{
@@ -408,6 +411,7 @@ export default function ProfileCompletionPage() {
                     <input
                       type="text"
                       value={customSchool}
+                      aria-label="Custom institution name"
                       onChange={(e) => setCustomSchool(e.target.value)}
                       placeholder="Enter your institution name"
                       required
@@ -431,6 +435,7 @@ export default function ProfileCompletionPage() {
                   <input
                     type="text"
                     value={courseProgramme}
+                    aria-label="Course or programme"
                     onChange={(e) => setCourseProgramme(e.target.value)}
                     placeholder="e.g. Computer Science / Medicine"
                     required
@@ -454,6 +459,7 @@ export default function ProfileCompletionPage() {
                   <input
                     type="text"
                     value={department}
+                    aria-label="Department"
                     onChange={(e) => setDepartment(e.target.value)}
                     placeholder="e.g. Computer Science / Biochemistry"
                     required
@@ -476,6 +482,7 @@ export default function ProfileCompletionPage() {
                   </label>
                   <select
                     value={faculty}
+                    aria-label="Faculty"
                     onChange={(e) => setFaculty(e.target.value)}
                     required
                     style={{
@@ -516,6 +523,7 @@ export default function ProfileCompletionPage() {
                   </label>
                   <select
                     value={level}
+                    aria-label="Current level"
                     onChange={(e) => setLevel(e.target.value)}
                     required
                     style={{
@@ -547,6 +555,7 @@ export default function ProfileCompletionPage() {
                     min="2015"
                     max="2030"
                     value={admissionYear}
+                    aria-label="Admission year"
                     onChange={(e) => setAdmissionYear(e.target.value)}
                     placeholder="e.g. 2024"
                     required
@@ -572,6 +581,7 @@ export default function ProfileCompletionPage() {
                     min="2020"
                     max="2035"
                     value={expectedGradYear}
+                    aria-label="Expected graduation year"
                     onChange={(e) => setExpectedGradYear(e.target.value)}
                     placeholder="e.g. 2028"
                     required

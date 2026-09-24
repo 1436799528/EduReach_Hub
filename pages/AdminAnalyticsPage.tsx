@@ -21,7 +21,7 @@ export default function AdminAnalyticsPage() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div><h1>Analytics &amp; Reports</h1><p>Live operational metrics from EduReach production data.</p></div>
-        <button className="admin-btn" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
+        <button type="button" className="admin-btn" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
       </div>
       {error && <div className="admin-card"><p className="empty-state">{error}</p></div>}
       <div className="admin-kpi-grid">

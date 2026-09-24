@@ -13,6 +13,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
 
   useEffect(() => {
     void fetchNewsItem(slug)
@@ -30,7 +31,13 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
           </a>
 
           {loading && <SkeletonArticle />}
-          {error && <div className="hub-form-error">{error}</div>}
+          {error && (
+            <div className="hub-panel hub-empty" role="alert">
+              <h1>Article not found</h1>
+              <p>{error}</p>
+              <a className="hub-primary-btn" href="/news" style={{ textDecoration: 'none' }}>Browse news</a>
+            </div>
+          )}
 
           {!loading && !error && item && (
             <article className="hub-article">
@@ -83,15 +90,22 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
               <div className="hub-share-strip">
                 <span>Share</span>
                 <button
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(window.location.href).then(() => {
+                  type="button"
+                  onClick={async () => {
+                    setCopyError('');
+                    try {
+                      if (!navigator.clipboard) throw new Error('Clipboard access is unavailable in this browser.');
+                      await navigator.clipboard.writeText(window.location.href);
                       setCopied(true);
                       window.setTimeout(() => setCopied(false), 1600);
-                    });
+                    } catch (value) {
+                      setCopyError(value instanceof Error ? value.message : 'Unable to copy this link.');
+                    }
                   }}
                 >
                   <Share2 size={16} /> {copied ? 'Copied!' : 'Copy Link'}
                 </button>
+                {copyError && <small className="hub-muted-label" role="status">{copyError}</small>}
               </div>
             </article>
           )}

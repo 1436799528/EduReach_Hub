@@ -80,7 +80,7 @@ export default function ExamSimulatorGrid({
             href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : simulatorStartHref(exam.key)}
           >
             <span className="er-sim-top">
-              <img src={exam.logo} alt="" width={40} height={40} loading="lazy" />
+              <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" />
               <span className="er-sim-badge">{exam.mode}</span>
             </span>
             <span className="er-sim-body">
