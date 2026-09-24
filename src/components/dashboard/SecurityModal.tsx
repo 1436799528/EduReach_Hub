@@ -243,12 +243,12 @@ export default function SecurityModal({
             <div style={{ display: 'grid', gap: '10px', marginBottom: '12px' }}>
               <div className="dash-two-col">
                 <div>
-                  <label style={labelStyle}>New Password</label>
-                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required autoComplete="new-password" style={inputStyle} />
+                  <label htmlFor="security-new-password" style={labelStyle}>New Password</label>
+                  <input id="security-new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required autoComplete="new-password" style={inputStyle} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Confirm New Password</label>
-                  <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Repeat new password" minLength={8} required autoComplete="new-password" style={inputStyle} />
+                  <label htmlFor="security-confirm-password" style={labelStyle}>Confirm New Password</label>
+                  <input id="security-confirm-password" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Repeat new password" minLength={8} required autoComplete="new-password" style={inputStyle} />
                 </div>
               </div>
             </div>

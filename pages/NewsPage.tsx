@@ -27,13 +27,22 @@ export default function NewsPage() {
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState(() => readCategoryFromUrl());
 
+  async function loadNews() {
+    setLoading(true);
+    setError('');
+    try {
+      setItems(await fetchNews());
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Unable to load news.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     const syncFilter = () => setActiveFilter(readCategoryFromUrl());
     window.addEventListener('popstate', syncFilter);
-    void fetchNews()
-      .then(setItems)
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load news.'))
-      .finally(() => setLoading(false));
+    void loadNews();
     return () => window.removeEventListener('popstate', syncFilter);
   }, []);
 
@@ -70,7 +79,12 @@ export default function NewsPage() {
           </div>
 
           {loading && <SkeletonRows rows={5} label="Loading updates" />}
-          {error && <div className="hub-form-error">{error}</div>}
+          {error && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <span>{error}</span>
+              <button type="button" className="hub-outline-btn" onClick={() => void loadNews()} disabled={loading}>Try again</button>
+            </div>
+          )}
           {!loading && !error && !filteredItems.length && (
             <div className="hub-panel hub-empty">No announcements found matching this category.</div>
           )}

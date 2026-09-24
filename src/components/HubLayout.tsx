@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   MoreVertical,
   X,
@@ -24,6 +24,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const mobileTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileCloseRef = useRef<HTMLButtonElement>(null);
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
   // Do not crowd full-screen tool pages with the side rail
@@ -38,6 +40,19 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   };
 
   const firstName = user?.name?.split(/\s+/)[0] || 'Student';
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    mobileCloseRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        window.setTimeout(() => mobileTriggerRef.current?.focus(), 0);
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [mobileOpen]);
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -66,6 +81,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             {/* BRAND LOGO */}
             <a
               href="/"
+              aria-label="EduReach Hub home"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -197,6 +213,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => setProfileOpen((open) => !open)}
+                  aria-haspopup="menu"
+                  aria-expanded={profileOpen}
+                  aria-controls="hub-profile-menu"
                   style={{
                     background: '#C85841',
                     color: '#ffffff',
@@ -216,6 +235,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 </button>
                 {profileOpen && (
                   <div
+                    id="hub-profile-menu"
+                    role="menu"
                     style={{
                       position: 'absolute',
                       top: '40px',
@@ -264,6 +285,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               aria-label="Open mobile menu"
               aria-expanded={mobileOpen}
               aria-controls="hub-mobile-menu"
+              ref={mobileTriggerRef}
               onClick={() => setMobileOpen(true)}
               style={{
                 background: '#f8fafc',
@@ -289,6 +311,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
       {mobileOpen && (
         <div
           id="hub-mobile-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hub-mobile-menu-title"
           style={{
             position: 'fixed',
             inset: 0,
@@ -318,12 +343,13 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 marginBottom: '16px',
               }}
             >
-              <strong style={{ fontSize: '18px', color: '#0f172a' }}>
+              <strong id="hub-mobile-menu-title" style={{ fontSize: '18px', color: '#0f172a' }}>
                 EduReach<span style={{ color: '#C85841' }}>.ng</span>
               </strong>
               <button
+                ref={mobileCloseRef}
                 type="button"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => { setMobileOpen(false); window.setTimeout(() => mobileTriggerRef.current?.focus(), 0); }}
                 style={{ background: 'none', border: 0, color: '#64748b', cursor: 'pointer' }}
                 aria-label="Close menu"
               >
@@ -413,11 +439,11 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
       {/* MOBILE PORTAL NAVIGATION */}
       <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
-        <a className={path === '/' ? 'active' : ''} href="/"><Home size={18} /><span>Home</span></a>
-        <a className={path.startsWith('/cbt') ? 'active' : ''} href="/cbt"><Laptop size={18} /><span>CBT</span></a>
-        <a className={path.startsWith('/news') ? 'active' : ''} href="/news"><Newspaper size={18} /><span>News</span></a>
-        <a className={path.startsWith('/services') ? 'active' : ''} href="/services"><Briefcase size={18} /><span>Services</span></a>
-        <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
+        <a className={path === '/' ? 'active' : ''} aria-current={path === '/' ? 'page' : undefined} href="/"><Home size={18} /><span>Home</span></a>
+        <a className={path.startsWith('/cbt') ? 'active' : ''} aria-current={path.startsWith('/cbt') ? 'page' : undefined} href="/cbt"><Laptop size={18} /><span>CBT</span></a>
+        <a className={path.startsWith('/news') ? 'active' : ''} aria-current={path.startsWith('/news') ? 'page' : undefined} href="/news"><Newspaper size={18} /><span>News</span></a>
+        <a className={path.startsWith('/services') ? 'active' : ''} aria-current={path.startsWith('/services') ? 'page' : undefined} href="/services"><Briefcase size={18} /><span>Services</span></a>
+        <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
       {/* MYSCHOOL FOOTER */}

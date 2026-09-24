@@ -51,18 +51,22 @@ const toolTiles = [
 export default function HubHomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState('');
+  const [feedVersion, setFeedVersion] = useState(0);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     let active = true;
+    setNewsLoading(true);
+    setNewsError('');
     void fetchNews()
       .then((items) => active && setNews(items))
-      .catch(() => {})
+      .catch((value) => active && setNewsError(value instanceof Error ? value.message : 'Unable to load news updates.'))
       .finally(() => active && setNewsLoading(false));
     void fetchUpcoming().then((items) => active && setUpcoming(items)).catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [feedVersion]);
 
   return (
     <HubLayout>
@@ -109,7 +113,13 @@ export default function HubHomePage() {
           <section className="er-section">
             <SectionHead title="Featured Updates" href="/news" linkLabel="Noticeboard" />
             <FeaturedNews items={news} />
-            {!news.length && !newsLoading && <div className="er-empty">News updates will appear here.</div>}
+            {newsError && (
+              <div className="er-empty" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <span>{newsError}</span>
+                <button type="button" className="hub-outline-btn" onClick={() => setFeedVersion((value) => value + 1)} disabled={newsLoading}>Try again</button>
+              </div>
+            )}
+            {!news.length && !newsLoading && !newsError && <div className="er-empty">News updates will appear here.</div>}
           </section>
 
           <div className="er-two-col">
@@ -118,7 +128,7 @@ export default function HubHomePage() {
               <div className="er-news-list">
                 {news.slice(0, 6).map((item) => <NewsRow key={item.id} item={item} />)}
                 {!news.length && newsLoading && <SkeletonRows rows={4} label="Loading news" />}
-                {!news.length && !newsLoading && <div className="er-empty">News updates will appear here.</div>}
+                {!news.length && !newsLoading && !newsError && <div className="er-empty">News updates will appear here.</div>}
               </div>
             </section>
 
@@ -150,7 +160,7 @@ export default function HubHomePage() {
               <section className="er-section">
                 <SectionHead title="Trending" href="/news" linkLabel="More" />
                 <TrendingNews items={news} limit={5} />
-                {!news.length && !newsLoading && <div className="er-empty">Trending stories will appear here.</div>}
+                {!news.length && !newsLoading && !newsError && <div className="er-empty">Trending stories will appear here.</div>}
               </section>
             </div>
           </div>

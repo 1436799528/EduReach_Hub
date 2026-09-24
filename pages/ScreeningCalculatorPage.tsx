@@ -65,10 +65,11 @@ export default function ScreeningCalculatorPage() {
           <div className="hub-calculator-card">
             <div style={{ display: 'grid', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
+                <label htmlFor="screening-institution" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
                   School (optional)
                 </label>
                 <input
+                  id="screening-institution"
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
                   placeholder="e.g. University of Calabar"

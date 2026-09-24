@@ -293,6 +293,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <a
           href="/"
+          aria-label="EduReach Hub home"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -445,10 +446,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 1. FIRST NAME & 2. LAST NAME */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-first-name" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                       First Name *
                     </label>
                     <input
+                      id="auth-first-name"
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
@@ -467,10 +469,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-last-name" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                       Last Name *
                     </label>
                     <input
+                      id="auth-last-name"
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
@@ -492,11 +495,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 {/* 3. EMAIL ADDRESS */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Email Address *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="auth-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -519,11 +523,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 {/* 4. PHONE NUMBER */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-phone" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Phone Number *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="auth-phone"
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
@@ -549,7 +554,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Account Type *
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  <div role="group" aria-label="Account type" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                     {(['student', 'parent', 'teacher'] as const).map((type) => (
                       <button
                         key={type}
@@ -577,11 +582,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 5. PASSWORD & 6. CONFIRM PASSWORD */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                       Password *
                     </label>
                     <div style={{ position: 'relative' }}>
                       <input
+                        id="auth-password"
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -611,11 +617,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-confirm-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                       Confirm Password *
                     </label>
                     <div style={{ position: 'relative' }}>
                       <input
+                        id="auth-confirm-password"
                         type={showPassword ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -675,11 +682,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {currentMode === 'signin' && (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Email Address
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="auth-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -702,7 +710,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 800, color: '#334155' }}>
+                    <label htmlFor="auth-password" style={{ fontSize: '12px', fontWeight: 800, color: '#334155' }}>
                       Password
                     </label>
                     <button
@@ -719,6 +727,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="auth-password"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -753,11 +762,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {/* FORGOT PASSWORD FORM */}
             {currentMode === 'forgot' && (
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                   Enter Account Email
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    id="auth-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -782,11 +792,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {currentMode === 'reset' && (
               <>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     New Password
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="auth-new-password"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -813,11 +824,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-confirm-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
                     Confirm New Password
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="auth-confirm-new-password"
                       type={showPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}

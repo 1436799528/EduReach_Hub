@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { newsThumbFor } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
 
 function labelFor(category: string) {
@@ -59,7 +60,17 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               <h1>{item.title}</h1>
               {item.summary && <p className="hub-article-lead">{item.summary}</p>}
-              {item.image_url && <img className="er-news-hero" src={item.image_url} alt={item.title} />}
+              {item.image_url && (
+                <img
+                  className="er-news-hero"
+                  src={item.image_url}
+                  alt={item.title}
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = newsThumbFor(item.category);
+                  }}
+                />
+              )}
 
               <div className="hub-article-body">
                 {item.body

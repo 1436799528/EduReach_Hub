@@ -25,11 +25,20 @@ export default function ServicesCatalogPage() {
   const [search, setSearch] = useState(initialServiceSearch);
   const [activeFilter, setActiveFilter] = useState('ALL');
 
+  async function loadServices() {
+    setLoading(true);
+    setError('');
+    try {
+      setServices(await fetchServices());
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Unable to load services.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    void fetchServices()
-      .then(setServices)
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load services.'))
-      .finally(() => setLoading(false));
+    void loadServices();
   }, []);
 
   const filteredServices = useMemo(() => {
@@ -131,7 +140,12 @@ export default function ServicesCatalogPage() {
           </div>
 
           {loading && <SkeletonRows rows={4} label="Loading student services" />}
-          {error && <div className="hub-form-error">{error}</div>}
+          {error && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <span>{error}</span>
+              <button type="button" className="hub-outline-btn" onClick={() => void loadServices()} disabled={loading}>Try again</button>
+            </div>
+          )}
           {!loading && !error && !filteredServices.length && (
             <div className="hub-panel hub-empty">No student services matched your search filter.</div>
           )}

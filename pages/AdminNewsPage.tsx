@@ -132,7 +132,7 @@ export default function AdminNewsPage() {
             <p>Write, edit, publish and delete news articles. Published stories appear on /news and exam hubs.</p>
           </div>
         </div>
-        {error && <div className="admin-card">{error}</div>}
+        {error && <div className="admin-card" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}><span>{error}</span><button type="button" className="admin-btn small" onClick={() => void load()} disabled={loading}>Try again</button></div>}
         {notice && <div className="admin-card">{notice}</div>}
 
         <div className="admin-kpi-grid two">
@@ -156,7 +156,7 @@ export default function AdminNewsPage() {
           <div style={{ display: 'grid', gap: '10px' }}>
             <input
               className="admin-input"
-              placeholder="Headline *"
+              aria-label="Article headline" placeholder="Headline *"
               value={form.title}
               onChange={(e) => {
                 set('title', e.target.value);
@@ -166,14 +166,14 @@ export default function AdminNewsPage() {
             <div className="admin-inline-form">
               <input
                 className="admin-input"
-                placeholder="URL slug (auto from headline)"
+                aria-label="Article URL slug" placeholder="URL slug (auto from headline)"
                 value={form.slug}
                 onChange={(e) => {
                   set('slug', slugify(e.target.value));
                   setSlugTouched(true);
                 }}
               />
-              <select className="admin-select" value={form.category} onChange={(e) => set('category', e.target.value)}>
+              <select aria-label="Article category" className="admin-select" value={form.category} onChange={(e) => set('category', e.target.value)}>
                 {categories.map((c) => (
                   <option key={c} value={c}>
                     {c.toUpperCase()}
@@ -183,7 +183,7 @@ export default function AdminNewsPage() {
             </div>
             <input
               className="admin-input"
-              placeholder="Short excerpt (one line shown on cards)"
+              aria-label="Article excerpt" placeholder="Short excerpt (one line shown on cards)"
               value={form.excerpt}
               onChange={(e) => set('excerpt', e.target.value)}
             />
@@ -191,13 +191,13 @@ export default function AdminNewsPage() {
               className="admin-input"
               rows={8}
               style={{ height: 'auto', minHeight: '160px' }}
-              placeholder="Article body * — blank lines separate paragraphs"
+              aria-label="Article body" placeholder="Article body * — blank lines separate paragraphs"
               value={form.body}
               onChange={(e) => set('body', e.target.value)}
             />
             <input
               className="admin-input"
-              placeholder="Cover image URL (https://… or /news/photos/….jpg)"
+              aria-label="Cover image URL" placeholder="Cover image URL (https://… or /news/photos/….jpg)"
               value={form.image_url}
               onChange={(e) => {
                 set('image_url', e.target.value);
@@ -217,7 +217,7 @@ export default function AdminNewsPage() {
             )}
             <input
               className="admin-input"
-              placeholder="Source URL (official announcement link, optional)"
+              aria-label="Source URL" placeholder="Source URL (official announcement link, optional)"
               value={form.source_url}
               onChange={(e) => set('source_url', e.target.value)}
             />

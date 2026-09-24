@@ -38,15 +38,22 @@ export default function CbtPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  async function loadExams() {
+    setLoading(true);
+    setError('');
+    try {
+      setExams((await fetchCbtExams()) as Exam[]);
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Unable to load CBT exams.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     const syncMode = () => setMode(readModeFromUrl());
     window.addEventListener('popstate', syncMode);
-
-    void fetchCbtExams()
-      .then((data) => setExams(data as Exam[]))
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load CBT exams.'))
-      .finally(() => setLoading(false));
-
+    void loadExams();
     return () => window.removeEventListener('popstate', syncMode);
   }, []);
 
@@ -136,7 +143,12 @@ export default function CbtPage() {
           </section>
 
           {loading && <SkeletonRows rows={4} label="Loading question banks" />}
-          {error && <div className="hub-form-error">{error}</div>}
+          {error && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <span>{error}</span>
+              <button type="button" className="hub-outline-btn" onClick={() => void loadExams()} disabled={loading}>Try again</button>
+            </div>
+          )}
           {!loading && !error && !filteredExams.length && (
             <div className="hub-panel hub-empty">
               <FileQuestion size={26} style={{ color: '#64748b', marginBottom: '8px' }} />
