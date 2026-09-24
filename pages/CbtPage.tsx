@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
+import { identityClassFor } from '../src/components/CardIdentityMark';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
@@ -168,7 +169,7 @@ export default function CbtPage() {
           {!loading && !error && filteredExams.length > 0 && (
             <div className="er-bank-list">
               {filteredExams.map((exam) => (
-                <div key={exam.id} className="er-bank-card">
+                <div key={exam.id} className={`er-bank-card ${identityClassFor(exam.exam_body, 'service')}`}>
                   <div className="er-bank-main">
                     <CardIdentityMark value={exam.exam_body} type="service" />
                     <div className="er-bank-copy">

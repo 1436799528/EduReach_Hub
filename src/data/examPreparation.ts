@@ -190,3 +190,69 @@ export const admissionMethodProfiles: AdmissionMethodProfile[] = [
   { id: 'lasu', school: 'Lagos State University (LASU)', method: 'Screening and aggregate planning', explanation: 'LASU requirements can vary by programme and admission cycle. Use this estimate to compare scenarios, not as an official score.', formula: '50-50', officialReminder: 'Confirm LASU’s current screening formula and programme cut-off.' },
   { id: 'custom', school: 'My school is not listed', method: 'Enter the published method', explanation: 'Select the closest planning model, then replace it with the weights and requirements in your institution’s current admission notice.', formula: '50-50', officialReminder: 'The institution’s official portal and brochure always take priority.' },
 ];
+
+/**
+ * The materials catalogue intentionally points to Scribd's home page rather
+ * than inventing document URLs. A student can browse/search there, or ask the
+ * EduReach team to help locate the configured material through WhatsApp.
+ */
+export const SCRIBD_HOME_URL = 'https://www.scribd.com/home';
+
+export type StudyMaterialRecord = {
+  id: string;
+  title: string;
+  exam: PastQuestionRecord['exam'];
+  school: string;
+  formats: string[];
+  subjects: string;
+  description: string;
+  sourceUrl: string;
+  cbtHref?: string;
+};
+
+export const studyMaterialLibrary: StudyMaterialRecord[] = [
+  {
+    id: 'materials-jamb-utme',
+    title: 'JAMB UTME Past Questions & Study Materials',
+    exam: 'JAMB',
+    school: 'JAMB / UTME',
+    formats: ['PDF', 'DOC', 'Study materials'],
+    subjects: 'Use of English, Mathematics, Biology, Chemistry and Physics',
+    description: 'Request or browse the configured JAMB study material route before your timed practice.',
+    sourceUrl: SCRIBD_HOME_URL,
+    cbtHref: '/cbt/setup/jamb',
+  },
+  {
+    id: 'materials-waec-ssce',
+    title: 'WAEC SSCE Past Questions & Study Materials',
+    exam: 'WAEC',
+    school: 'WAEC',
+    formats: ['PDF', 'DOC', 'Revision materials'],
+    subjects: 'English, Mathematics and elective subjects',
+    description: 'Browse the external material source or ask EduReach to help with the configured material request.',
+    sourceUrl: SCRIBD_HOME_URL,
+    cbtHref: '/cbt/setup/waec',
+  },
+  {
+    id: 'materials-neco-ssce',
+    title: 'NECO SSCE Past Questions & Study Materials',
+    exam: 'NECO',
+    school: 'NECO',
+    formats: ['PDF', 'DOC', 'Revision materials'],
+    subjects: 'English, Mathematics and elective subjects',
+    description: 'Browse the external material source or ask EduReach to help with the configured material request.',
+    sourceUrl: SCRIBD_HOME_URL,
+    cbtHref: '/cbt/setup/neco',
+  },
+  ...postUtmeSchools.map((school) => ({
+    id: `materials-${school.id}`,
+    title: `${school.name} Past Questions & Materials`,
+    exam: 'Post-UTME' as const,
+    school: school.name,
+    formats: ['PDF', 'DOC', 'School materials'],
+    subjects: school.subjects.join(', '),
+    description: `Configured material request for ${school.location} applicants. Confirm the current school notice before relying on any paper.`,
+    sourceUrl: SCRIBD_HOME_URL,
+    cbtHref: school.offersPostUtme ? `/cbt/setup/post-utme?school=${school.id}` : undefined,
+  })),
+];

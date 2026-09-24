@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import { identityClassFor } from '../src/components/CardIdentityMark';
 import ScientificCalculator from '../src/components/ScientificCalculator';
 import { fetchCbtExams, fetchCbtQuestions, startCbt, submitCbt } from '../src/lib/api';
 import { getExamProgress, saveExamProgress } from '../src/lib/cbt-offline';
@@ -383,7 +384,7 @@ export default function CbtPracticePage() {
           ) : (
             <div className="er-cbt-workspace">
               {/* QUESTION WORKSPACE */}
-              <section className="er-exam-q" aria-labelledby="er-exam-question">
+              <section className={`er-exam-q ${identityClassFor(examBody || 'cbt', 'service')}`} aria-labelledby="er-exam-question">
                 <div className="er-exam-q-head">
                   <span className="er-exam-q-num">Question {index + 1} of {total}</span>
                   <button

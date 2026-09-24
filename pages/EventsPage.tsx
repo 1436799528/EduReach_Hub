@@ -1,6 +1,7 @@
 import { CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
+import { identityClassFor } from '../src/components/CardIdentityMark';
 import { fetchUpcoming, type UpcomingItem } from '../src/lib/api';
 import { SkeletonRows } from '../src/components/Skeleton';
 
@@ -47,7 +48,7 @@ export default function EventsPage() {
           {!loading && !error && events.length > 0 && (
             <div className="er-events-list">
               {events.map((item) => (
-                <article className="er-event-card" key={item.id}>
+                <article className={`er-event-card ${identityClassFor(`${item.kind} ${item.title}`, 'upcoming')}`} key={item.id}>
                   <div className="er-event-date"><strong>{new Date(item.starts_at || item.due_at || Date.now()).getDate()}</strong><span>{new Date(item.starts_at || item.due_at || Date.now()).toLocaleDateString('en-NG', { month: 'short' })}</span></div>
                   <div className="er-event-copy"><span className="er-library-badge">{item.kind === 'exam' ? 'Exam event' : 'Deadline'}</span><h2>{item.title}</h2><p>{item.description || 'Check the official notice for the full event details.'}</p><div className="er-event-meta"><span><Clock3 size={13} /> {eventDate(item)}</span>{item.location && <span><MapPin size={13} /> {item.location}</span>}</div></div>
                 </article>

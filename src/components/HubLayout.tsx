@@ -32,6 +32,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [siteSearch, setSiteSearch] = useState('');
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
   const path = window.location.pathname.replace(/\/$/, '') || '/';
@@ -455,29 +456,10 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
-      {/* MYSCHOOL FOOTER */}
-      <footer
-        className="er-footer"
-        style={{
-          background: '#0f172a',
-          color: '#94a3b8',
-          padding: '40px 0 24px',
-          borderTop: '3px solid #C85841',
-          marginTop: 'auto',
-          fontSize: '13px',
-        }}
-      >
+      {/* CONSOLIDATED FOOTER: primary destinations only; duplicate exam/service lists live on their destination pages. */}
+      <footer className="er-footer" style={{ background: '#0f172a', color: '#94a3b8', padding: '40px 0 24px', borderTop: '3px solid #C85841', marginTop: 'auto', fontSize: '13px' }}>
         <div className="hub-container">
-          <div
-            className="er-footer-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '28px',
-              marginBottom: '36px',
-            }}
-          >
-            {/* COLUMN 1: BRAND */}
+          <div className="er-footer-grid" style={{ display: 'grid', gridTemplateColumns: '1.35fr 1fr 1fr', gap: '28px', marginBottom: '32px' }}>
             <div className="er-footer-brand">
               <div style={{ marginBottom: '10px', display: 'inline-flex', padding: '3px', background: '#ffffff', borderRadius: '50%' }}>
                 <BrandLogo height={46} radius="50%" />
@@ -493,53 +475,26 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            {/* COLUMN 2: CBT EXAMS — each link starts the simulator directly */}
             <div>
-              <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
-                CBT Practice Center
-              </h4>
+              <h4 className="er-footer-heading">Explore</h4>
               <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/cbt/setup/jamb" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB CBT Simulator</a>
-                <a href="/cbt/setup/waec" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC CBT Practice</a>
-                <a href="/cbt/setup/neco" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NECO CBT Practice</a>
-                <a href="/cbt/setup/post-utme" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Post-UTME Screening Test</a>
-                <a href="/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>All Question Banks</a>
-                <a href="/dashboard/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>My CBT Results</a>
+                <a href="/cbt">CBT Practice Center</a>
+                <a href="/past-questions">Past Questions &amp; Materials</a>
+                <a href="/services">Student Services</a>
+                <a href="/news">News &amp; Updates</a>
+                <a href="/jobs">Scholarships &amp; Grants</a>
+                <a href="/dashboard">Student Dashboard</a>
               </div>
             </div>
 
-            {/* COLUMN 3: SERVICES — live application workflows only */}
             <div>
-              <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
-                Student Services
-              </h4>
+              <h4 className="er-footer-heading">Support</h4>
               <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/services/apply/nelfund-loan" style={{ color: '#cbd5e1', textDecoration: 'none' }}>NELFUND Loan Application</a>
-                <a href="/services/apply/results" style={{ color: '#cbd5e1', textDecoration: 'none' }}>WAEC / NECO Result Checking</a>
-                <a href="/services/apply/jamb-slip" style={{ color: '#cbd5e1', textDecoration: 'none' }}>JAMB Exam Slip Printing</a>
-                <a href="/services/apply/admission-letters" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Admission Letters</a>
-                <a href="/screening-calculator" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Screening Calculator</a>
-              </div>
-            </div>
-
-            {/* COLUMN 4: COMMUNITY & LEGAL */}
-            <div>
-              <h4 style={{ color: '#ffffff', fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 12px' }}>
-                Community &amp; Support
-              </h4>
-              <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>News &amp; Updates</a>
-                <a href="/jobs" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Scholarships &amp; Grants</a>
-                <a href="/dashboard" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Student Dashboard</a>
-                <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none', fontWeight: 800 }}>
-                  📢 Follow EduReach Hub NG on WhatsApp
-                </a>
-                <span style={{ color: '#94a3b8', fontSize: '11.5px', lineHeight: 1.5 }}>
-                  Get education updates, opportunities, resources and announcements directly on WhatsApp.
-                </span>
-                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', textDecoration: 'none' }}>
-                  WhatsApp Official Helpline
-                </a>
+                <a href="/screening-calculator">Screening Calculator</a>
+                <a href="/services/apply/nelfund-loan">NELFUND guidance</a>
+                <a href="/services/apply/results">Result checking support</a>
+                <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 800 }}>Follow EduReach Hub NG on WhatsApp</a>
+                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac' }}>Chat with the official helpline</a>
               </div>
             </div>
           </div>
