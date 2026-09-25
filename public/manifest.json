@@ -12,6 +12,6 @@
   ],
   "shortcuts": [
     { "name": "CBT Practice", "short_name": "CBT", "url": "/cbt" },
-    { "name": "Track Service Request", "short_name": "Track", "url": "/services/track" }
+    { "name": "My Requests", "short_name": "Requests", "url": "/dashboard/services" }
   ]
 }

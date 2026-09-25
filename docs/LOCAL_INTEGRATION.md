@@ -4,11 +4,13 @@
 
 EduReach Hub uses Vite + React + Express + Supabase. It does not use Next.js or Prisma, so local setup should follow the existing stack instead of creating a second database layer.
 
-The Supabase database already contains the service catalog and service-request workflow. The application seed migration adds:
+The Supabase database contains the service catalog and service-request workflow. The application seed migration adds:
 
 - a seed CBT practice exam with 10 questions;
 - three prototype news articles;
 - an automatic `ER-YYYY-XXXXXX` reference code for every new service request.
+
+The active service catalogue covers NELFUND guidance, WAEC/NECO result checking, JAMB slip support and admission-letter guidance. Legacy scratch-card inventory is retired and is not part of the browser or admin workflow.
 
 ## Local environment
 
@@ -18,11 +20,9 @@ Create `.env.local` from `.env.example` and provide:
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
-PAYSTACK_SECRET_KEY=...
-PAYSTACK_PUBLIC_KEY=...
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` and `PAYSTACK_SECRET_KEY` are server-only secrets. Never prefix them with `VITE_` and never expose them in browser code.
+`SUPABASE_SERVICE_ROLE_KEY` is server-only. Never prefix it with `VITE_` or expose it in browser code.
 
 ## Run the prototype
 
@@ -31,7 +31,7 @@ npm install
 npm run dev
 ```
 
-The existing `server.ts` starts the Vite development server and also exposes the payment API scaffolding under `/api/payments/*`.
+The existing `server.ts` starts the Vite development server and exposes protected administration and application-support endpoints.
 
 ## Supabase local database workflow
 
@@ -41,28 +41,17 @@ For a local Supabase CLI database, apply the repository migrations with the norm
 supabase/migrations/20260915_application_integration_seed.sql
 ```
 
-After a local reset, the database should contain the five service definitions, the seed CBT practice exam/question bank, and the three prototype news records.
-
-## Payment API
-
-The prototype now contains:
-
-```text
-POST /api/payments/initialize
-POST /api/payments/verify
-```
-
-The backend keeps the Paystack secret key server-side, initializes transactions through Paystack, and verifies the returned transaction reference before moving a service request to `processing`. Paystack recommends server-side initialization and server-side verification, including checking both transaction status and amount before delivering value.
-
-The frontend payment button is intentionally not hard-coded to a service price yet. Service prices must be decided and stored server-side before production use. For local integration work, the payment endpoints accept a test amount supplied by the prototype client.
+After a local reset, the database should contain the active service definitions, the seed CBT practice exam/question bank and the prototype news records. Apply the later retirement migration to deactivate legacy service-catalog rows and apply `supabase/migrations/20260925213000_cbt_attempt_question_position.sql` plus `supabase/migrations/20260925214000_service_request_statuses.sql` before testing signed-in CBT resume position or administrative request state changes.
 
 ## Manual end-to-end checks
 
-1. Open `/` and confirm the dashboard-style EduReach homepage loads.
-2. Open `/cbt`, choose an exam and launch a session.
-3. Confirm the 30-minute timer starts and the question palette changes when answers are selected.
-4. Submit the CBT and confirm the local result screen appears.
-5. Sign in, open `/services`, choose a service, complete its form and submit.
-6. Confirm the request appears in `/services/track` and `/dashboard`.
+1. Open `/` and confirm the student-facing EduReach homepage loads.
+2. Open `/cbt`, choose an exam and complete its setup page.
+3. Confirm the timer starts and the question palette changes when answers are selected.
+4. Submit the CBT and confirm the result screen appears.
+5. Sign in, open `/services`, choose a supported service, complete its form and submit.
+6. Confirm the request appears in the authenticated dashboard under My Requests.
 7. Confirm the saved service request contains an `ER-YYYY-XXXXXX` reference code in `reference_code` and `form_data.reference_code`.
-8. For Paystack testing, configure server-only Paystack credentials and exercise the initialize/verify API before wiring a production service fee into the UI.
+8. Open `/profile`, confirm saved details are shown, then use only **Edit Profile** to reopen the form; verify phone/profile changes persist.
+9. Start a signed-in CBT, answer a question, move to another question and reload/resume; confirm the attempt remains active at the saved position. Confirm a submitted attempt opens only as a result.
+10. Open `/schools`, search by acronym/state/course tag, select a result and use the detail page’s back link to return with search context.

@@ -10,8 +10,7 @@ export type ServiceCatalogItem = {
 
 export const hubServices: ServiceCatalogItem[] = [
   { slug: 'nelfund-loan', title: 'NELFUND Loan Application', short: 'NELFUND Loan', description: 'Organise your student-loan request details and get guided support before you submit through the official portal.', price: 'Assistance service', action: 'Apply Now', tone: 'green' },
-  { slug: 'results', title: 'WAEC / NECO Result Checking', short: 'Result Checking', description: 'Get guided support for WAEC and NECO result checking while keeping candidate details and PINs private.', price: 'Result support', action: 'Apply Now', tone: 'blue' },
-  { slug: 'scratch-cards', title: 'WAEC / NECO Scratch Cards', short: 'Scratch Cards', description: 'Request the right result-checking card type and keep your code private while using the official checker.', price: 'Code request', action: 'Get Code', tone: 'amber' },
+  { slug: 'results', title: 'WAEC / NECO Result Checking', short: 'Result Checking', description: 'Get guided support for WAEC and NECO result checking while keeping candidate details private.', price: 'Result support', action: 'Apply Now', tone: 'blue' },
   { slug: 'jamb-slip', title: 'JAMB Exam Slip Printing', short: 'JAMB Slip', description: 'Support for locating, verifying and preparing your examination slip for printing.', price: 'Printing support', action: 'Apply Now', tone: 'blue' },
   { slug: 'admission-letters', title: 'Admission Deferment & Supplementary Letters', short: 'Admission Letters', description: 'Prepare a clear application letter around your institution’s actual requirements.', price: 'Letter support', action: 'Apply Now', tone: 'green' },
 ];
@@ -19,7 +18,7 @@ export const hubServices: ServiceCatalogItem[] = [
 export const newsItems = [
   { slug: 'jamb-caps-status-guide', tag: 'JAMB', title: 'JAMB CAPS: What Students Should Check Before Accepting Admission', date: 'Quick guide', excerpt: 'A compact checklist for checking admission status, CAPS details and the next step.', verified: true },
   { slug: 'nelfund-student-loan-checklist', tag: 'NELFUND', title: 'NELFUND Student Loan: Information to Organise Before You Apply', date: 'Student guide', excerpt: 'Keep your contact, institution and academic details ready before starting a loan request.', verified: true },
-  { slug: 'waec-neco-result-checking', tag: 'WAEC / NECO', title: 'WAEC / NECO Result Checking: Keep Your PIN and Candidate Details Safe', date: 'Reminder', excerpt: 'Simple safety steps for result-checking tokens and official portals.', verified: true },
+  { slug: 'waec-neco-result-checking', tag: 'WAEC / NECO', title: 'WAEC / NECO Result Checking: Keep Your Candidate Details Safe', date: 'Reminder', excerpt: 'Simple safety steps for result-checking access details and official portals.', verified: true },
   { slug: 'campus-gist-week', tag: 'Campus Gist', title: 'Campus Gist: What Students Should Watch This Week', date: 'Weekly', excerpt: 'A student roundup guide for deadlines, notices and useful student updates.', verified: false },
   { slug: 'student-opportunities', tag: 'Opportunities', title: 'Student Opportunities: Keep Your Documents Ready', date: 'Guide', excerpt: 'How to keep an application-ready student folder for scholarships, internships and opportunities.', verified: false },
 ];

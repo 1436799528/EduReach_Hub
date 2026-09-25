@@ -7,10 +7,12 @@ All application routes are registered centrally in `src/app/routes.tsx` and reso
 | Route | Canonical Path | Primary Responsibility | Quality Gate Status |
 |---|---|---|---|
 | **Home** | `/` | Portal gateway, noticeboard, featured services | 🟢 PASS |
-| **Services Catalog** | `/services` | Filterable academic service catalog | 🟢 PASS |
+| **Services Catalog** | `/services` | Filterable academic service catalog with first-result search targeting | 🟢 PASS |
+| **Site Search** | `/search?q=...` | Direct results across services, exams, CBT banks, materials, news and opportunities | 🟢 PASS |
 | **Service Apply** | `/services/apply/:slug` | Submit service application request | 🟢 PASS |
-| **Service Tracker** | `/services/track` | Track application processing status | 🟢 PASS |
+| **My Requests** | `/dashboard/services` | Authenticated request history and status; `/services/track` and `/track` are protected compatibility aliases | 🟢 PASS |
 | **CBT Hall** | `/cbt` | Exam selection and practice starter | 🟢 PASS |
+| **Past Questions & Materials** | `/past-questions` | CBT question-bank mode plus configured PDF/DOC/material request mode | 🟢 PASS |
 | **CBT Practice** | `/cbt/practice` | Active timed practice exam simulator | 🟢 PASS |
 | **CBT Results** | `/cbt/results` | Scorecard corrections and answer review | 🟢 PASS |
 | **Screening Calculator**| `/screening-calculator` | Admission screening aggregate estimation | 🟢 PASS |
@@ -22,17 +24,17 @@ All application routes are registered centrally in `src/app/routes.tsx` and reso
 | **Password Recovery** | `/forgot-password` | Password recovery request form | 🟢 PASS |
 | **Reset Password** | `/reset-password` | New password creation and confirmation | 🟢 PASS |
 | **Email Verification** | `/verify-email` | Email verification notice and resend | 🟢 PASS |
-| **Profile Onboarding** | `/profile/complete` | Post-registration academic profile setup | 🟢 PASS |
-| **Student Dashboard** | `/dashboard` | Personal student workspace & tools | 🟢 PASS |
+| **Profile & Edit Profile** | `/profile`, `/profile?edit=1`, `/profile/complete` | Saved student details with explicit edit mode and Supabase/local persistence | 🟢 PASS |
+| **School Finder** | `/schools`, `/schools/:slug` | Maintained institution search, autocomplete, honest detail destinations | 🟢 PASS |
+| **Student Dashboard** | `/dashboard` | Personal student workspace, request history, CBT resume and tools | 🟢 PASS |
 | **Admin Dashboard** | `/admin` | Operational admin overview | 🟢 PASS |
 | **Admin Queue** | `/admin/queue` | Service request processing pipeline | 🟢 PASS |
 | **Admin CBT** | `/admin/cbt` | CBT questions management | 🟢 PASS |
-| **Admin Vouchers** | `/admin/vouchers` | Voucher and scratch card inventory | 🟢 PASS |
 | **Admin Users** | `/admin/users` | Student profile records management | 🟢 PASS |
 | **Admin Newsroom** | `/admin/news` | News write/edit/publish/delete CMS | 🟢 PASS |
 | **Admin Analytics** | `/admin/analytics` | Metrics, audit and reports | 🟢 PASS |
 | **Exam Hubs** | `/jamb`, `/waec`, `/neco`, `/post-utme` | Exam information centres | 🟡 REVISE |
-| **Coming Soon** | `/nabteb`, `/support`, `/schools`, `/admission`, `/admission/*`, `/tools`, `/tools/*`, `/services/<inactive-slug>` | Honest placeholder panels for planned sections; each links to active services, tracker and noticeboard | 🟢 PASS |
+| **Coming Soon** | `/nabteb`, `/support`, `/admission`, `/admission/*`, `/tools`, `/tools/*`, `/services/<inactive-slug>` | Honest unavailable panels for planned or unconfigured sections; each keeps active services, noticeboard and direct support available | 🟢 PASS |
 
 ## Routing Quality Criteria
 

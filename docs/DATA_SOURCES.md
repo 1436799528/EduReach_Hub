@@ -15,7 +15,7 @@ The production CBT schema is ready. Question-bank content should be loaded from 
 
 ## Service catalogue
 
-The active service catalogue is seeded in Supabase. Service prices, official portal URLs, vouchers, payment credentials and other operational values remain configurable and should be entered only after they are verified.
+The active service catalogue is seeded in Supabase. Service descriptions, official portal URLs and other operational values remain configurable and should be entered only after they are verified. Legacy scratch-card inventory is retired from the active catalogue.
 
 ## Operational WhatsApp
 

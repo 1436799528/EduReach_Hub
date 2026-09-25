@@ -1,30 +1,34 @@
 import { useEffect, useState } from 'react';
-import {
-  Award,
-  CheckCircle2,
-  Clock3,
-  Printer,
-  RotateCcw,
-  Sparkles,
-  XCircle,
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronDown, Download, Printer, RotateCcw, XCircle } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import CbtResultSlip from '../src/components/CbtResultSlip';
 import { fetchCbtResult } from '../src/lib/api';
+import { localStorageKey } from '../src/lib/localPreview';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { useAuth } from '../src/lib/auth';
+
+function navigateInApp(path: string) {
+  window.history.pushState({}, '', path);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+const slipDownloadCss = `
+*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#172033;font-family:Arial,Helvetica,sans-serif}.er-result-slip{max-width:820px;margin:24px auto;background:#fff;border:1px solid #d8dee8;padding:34px;color:#172033}.er-result-slip-header{display:flex;justify-content:space-between;gap:24px;align-items:center}.er-result-brand{display:flex;align-items:center;gap:12px}.er-result-brand strong{display:block;font-size:24px}.er-result-brand span,.er-result-title-block span,.er-result-student-grid span,.er-result-signature-box span,.er-result-verification-box span{display:block;color:#667085;font-size:11px}.er-result-title-block{text-align:right}.er-result-title-block h2{margin:4px 0 0;font-size:20px}.er-result-rule{height:3px;background:#c85841;margin:24px 0}.er-result-student-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;border-bottom:1px solid #e4e7ec;padding-bottom:20px}.er-result-student-grid strong{display:block;margin-top:4px;font-size:13px}.er-result-performance{margin-top:22px}.er-result-section-heading{display:flex;justify-content:space-between;align-items:baseline}.er-result-section-heading h3{margin:0;font-size:16px}.er-result-section-heading span{font-size:12px;color:#047857}.er-result-subject-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.er-result-subject-table th,.er-result-subject-table td{text-align:left;padding:10px;border-bottom:1px solid #e4e7ec}.er-result-subject-table th:not(:first-child),.er-result-subject-table td:not(:first-child){text-align:right}.er-result-total-row{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid #e4e7ec;font-size:17px}.er-result-total-row strong{color:#047857}.er-result-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;font-size:11px;color:#667085}.er-result-counts b{display:block;color:#172033;font-size:12px;margin-top:3px}.er-result-slip-footer{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px}.er-result-signature-box,.er-result-verification-box{border-top:1px solid #98a2b3;padding-top:9px}.er-result-signature-line{height:34px}.er-result-verification-box strong{display:block;margin-top:8px;letter-spacing:.08em;font-size:14px}.er-result-disclaimer{margin:26px 0 0;color:#667085;font-size:10px;line-height:1.5}@media(max-width:640px){.er-result-slip{margin:0;padding:22px}.er-result-slip-header{display:block}.er-result-title-block{text-align:left;margin-top:20px}.er-result-student-grid{grid-template-columns:repeat(2,1fr)}.er-result-counts{grid-template-columns:repeat(2,1fr)}}
+`;
 
 export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptId?: string } = {}) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [result, setResult] = useState<any>(null);
+  const [studentName, setStudentName] = useState('Guest student');
+  const [studentId, setStudentId] = useState('');
+  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
-    const attemptId =
-      routeAttemptId ||
-      new URLSearchParams(window.location.search).get('attempt') ||
-      localStorage.getItem('edureach-last-cbt-attempt') ||
-      '';
-
+    const attemptId = routeAttemptId || new URLSearchParams(window.location.search).get('attempt') || localStorage.getItem(localStorageKey('last-cbt-attempt')) || '';
     if (!attemptId) {
-      setError('No CBT attempt was selected. Complete a practice test to generate a scorecard.');
+      setError('No CBT attempt was selected. Complete a practice test to generate a result.');
       setLoading(false);
       return;
     }
@@ -35,320 +39,101 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
       .finally(() => setLoading(false));
   }, [routeAttemptId]);
 
-  const score = result?.attempt ? Math.round(Number(result.attempt.score || 0)) : 0;
+  useEffect(() => {
+    if (!user) return;
+    setStudentName(user.name || 'Student');
+    setStudentId(user.email || user.id || '');
+    if (!isSupabaseConfigured || user.isLocal) return;
+    void supabase.from('profiles').select('full_name,matric_number,jamb_reg_no').eq('id', user.id).maybeSingle().then(({ data }) => {
+      if (data?.full_name) setStudentName(data.full_name);
+      if (data?.matric_number || data?.jamb_reg_no) setStudentId(data.matric_number || data.jamb_reg_no || studentId);
+    });
+  }, [user]);
+
+  const score = Number(result?.attempt?.score || 0);
   const isPass = score >= 60;
-  const correctCount = result?.attempt?.correct_answers ?? 0;
-  const totalCount = result?.attempt?.total_questions ?? 0;
-  const missedCount = totalCount - correctCount;
+  const correctCount = Number(result?.attempt?.correct_answers || 0);
+  const totalCount = Number(result?.attempt?.total_questions || result?.questions?.length || 0);
+  const missedCount = Math.max(0, totalCount - correctCount);
+
+  const printResult = () => window.print();
+  const downloadResult = () => {
+    const slip = document.getElementById('er-result-slip');
+    if (!slip) return;
+    const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EduReach CBT Result</title><style>${slipDownloadCss}</style></head><body>${slip.outerHTML}</body></html>`;
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `edureach-cbt-result-${result?.attempt?.id || 'record'}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '24px 0 60px' }}>
-        <div className="hub-container" style={{ maxWidth: '900px' }}>
-          {loading && (
-            <div className="hub-panel hub-empty" style={{ padding: '48px', textAlign: 'center' }}>
-              <Sparkles size={24} style={{ color: '#C85841', marginBottom: '8px' }} />
-              <p style={{ fontWeight: 700, color: '#0f172a' }}>Calculating CBT test score and performance analysis…</p>
-            </div>
-          )}
+      <div className="hub-page er-results-page">
+        <div className="hub-container er-results-container">
+          {loading && <div className="hub-panel hub-empty"><p>Loading your CBT result…</p></div>}
 
           {!loading && error && (
-            <div className="hub-panel hub-empty" style={{ padding: '40px', textAlign: 'center' }}>
-              <p style={{ color: '#b91c1c', marginBottom: '16px' }}>{error}</p>
-              <a className="hub-primary-btn" href="/cbt" style={{ textDecoration: 'none' }}>
-                Start CBT Practice
-              </a>
+            <div className="hub-panel hub-empty">
+              <p>{error}</p>
+              <a className="hub-primary-btn" href="/cbt">Choose a CBT test</a>
             </div>
           )}
 
           {!loading && result && (
             <>
-              {/* MYSCHOOL RESULT SCORECARD BANNER */}
-              <div
-                style={{
-                  background: isPass
-                    ? 'linear-gradient(135deg, #065f46 0%, #047857 100%)'
-                    : 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                  color: '#ffffff',
-                  borderRadius: '16px',
-                  padding: '28px',
-                  marginBottom: '24px',
-                  boxShadow: '0 10px 25px rgba(6, 95, 70, 0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '20px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <img
-                    src="/news/photos/jamb-cbt.jpg"
-                    alt="CBT examination hall"
-                    width={52}
-                    height={52}
-                    style={{ objectFit: 'cover', borderRadius: '10px', flexShrink: 0 }}
-                  />
-                  <div>
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'rgba(255, 255, 255, 0.15)',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        marginBottom: '6px',
-                      }}
-                    >
-                      <Award size={13} /> Official CBT Performance Report
-                    </div>
-                    <h1 style={{ fontSize: '24px', fontWeight: 900, margin: '0 0 4px', color: '#ffffff' }}>
-                      {isPass ? 'Distinction Performance!' : 'Practice Completed'}
-                    </h1>
-                    <p style={{ fontSize: '13px', margin: 0, opacity: 0.9, maxWidth: '440px', lineHeight: 1.4 }}>
-                      {isPass
-                        ? 'Congratulations on exceeding the 60% mark. Review the corrections below to eliminate residual blind spots.'
-                        : 'Review each detailed question explanation below to master key formulas and facts.'}
-                    </p>
+              <section className={`er-result-status ${isPass ? 'is-pass' : 'is-fail'}`} aria-labelledby="result-status-heading">
+                <div className="er-result-status-icon">{isPass ? <CheckCircle2 size={30} /> : <XCircle size={30} />}</div>
+                <div>
+                  <span className="er-result-status-kicker">CBT test completed</span>
+                  <h1 id="result-status-heading">{isPass ? 'Passed' : 'Completed — keep practising'}</h1>
+                  <p>Score: <strong>{score.toFixed(1)}%</strong> · {isPass ? 'Good performance.' : 'You did not meet the 60% practice target.'}</p>
+                </div>
+              </section>
+
+              <div className="er-result-actions" aria-label="Result actions">
+                <button type="button" className="hub-primary-btn" onClick={printResult}><Printer size={15} /> Print Result</button>
+                <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download Result</button>
+                <button type="button" className="hub-outline-btn" onClick={() => setShowReview((open) => !open)}><ChevronDown size={15} /> {showReview ? 'Hide Answers' : 'Review Answers'}</button>
+                <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Take Another Test</a>
+                <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt') }><ArrowLeft size={15} /> Return to CBT</button>
+              </div>
+
+              <CbtResultSlip result={result} studentName={studentName} studentId={studentId} />
+
+              <section className="er-result-quick-stats" aria-label="Score details">
+                <div><span>Correct</span><strong>{correctCount}</strong></div>
+                <div><span>Incorrect</span><strong>{missedCount}</strong></div>
+                <div><span>Total questions</span><strong>{totalCount}</strong></div>
+                <div><span>Reference</span><strong>{result.attempt?.id || '—'}</strong></div>
+              </section>
+
+              {showReview && (
+                <section className="er-result-review" aria-labelledby="review-heading">
+                  <h2 id="review-heading">Review answers</h2>
+                  <p className="er-result-review-intro">Use the corrections below to prepare for your next test.</p>
+                  <div className="er-result-review-list">
+                    {(result.questions || []).map((question: any) => {
+                      const answer = (result.answers || []).find((item: any) => item.question_id === question.id);
+                      const selectedIndex = answer?.selected_option ? String(answer.selected_option).charCodeAt(0) - 65 : null;
+                      const correctIndex = String(question.correct_option || 'A').charCodeAt(0) - 65;
+                      const options = [question.option_a, question.option_b, question.option_c, question.option_d];
+                      return (
+                        <article className={`er-result-review-card ${answer?.is_correct ? 'is-correct' : 'is-wrong'}`} key={question.id}>
+                          <div className="er-result-review-head"><strong>Question {question.position}</strong><span>{answer?.is_correct ? 'Correct' : 'Review this answer'}</span></div>
+                          <h3>{question.question_text}</h3>
+                          <div className="er-result-review-options">
+                            {options.map((option: string, index: number) => <div className={`${index === correctIndex ? 'is-answer' : ''} ${index === selectedIndex && index !== correctIndex ? 'is-selected-wrong' : ''}`} key={index}><b>{String.fromCharCode(65 + index)}.</b> {option}</div>)}
+                          </div>
+                          {question.explanation && <p><strong>Explanation:</strong> {question.explanation}</p>}
+                        </article>
+                      );
+                    })}
                   </div>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '20px',
-                    background: 'rgba(255, 255, 255, 0.12)',
-                    padding: '16px 24px',
-                    borderRadius: '14px',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                  }}
-                >
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '38px', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em' }}>
-                      {score}%
-                    </div>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', opacity: 0.85, fontWeight: 700, marginTop: '4px' }}>
-                      Overall Score
-                    </div>
-                  </div>
-
-                  <div style={{ width: '1px', height: '40px', background: 'rgba(255, 255, 255, 0.2)' }} />
-
-                  <div style={{ display: 'grid', gap: '4px', fontSize: '12px' }}>
-                    <div>
-                      <strong style={{ color: '#86efac' }}>{correctCount}</strong> / {totalCount} Correct
-                    </div>
-                    <div>
-                      <strong style={{ color: '#fca5a5' }}>{missedCount}</strong> Missed
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ACTION QUICK BAR */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  background: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '14px 18px',
-                  marginBottom: '24px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569' }}>
-                  <Clock3 size={15} color="#C85841" />
-                  <span>
-                    Exam Date: <strong>{result?.attempt?.submitted_at ? new Date(result.attempt.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</strong>
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="hub-outline-btn"
-                    style={{ fontSize: '12px', padding: '7px 12px' }}
-                  >
-                    <Printer size={13} /> Print Result Slip
-                  </button>
-                  <a
-                    href={result?.attempt?.exam_id ? `/cbt/practice?exam=${encodeURIComponent(result.attempt.exam_id)}` : '/cbt'}
-                    className="hub-primary-btn"
-                    style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
-                  >
-                    <RotateCcw size={13} /> Retake Test
-                  </a>
-                </div>
-              </div>
-
-              {/* CORRECTIONS LIST */}
-              <div style={{ marginBottom: '16px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#C85841', letterSpacing: '0.04em' }}>
-                  DETAILED ANALYSIS
-                </span>
-                <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: '4px 0 0' }}>
-                  Question by Question Corrections
-                </h2>
-              </div>
-
-              <div style={{ display: 'grid', gap: '14px' }}>
-                {result.questions.map((question: any) => {
-                  const answer = result.answers.find((item: any) => item.question_id === question.id);
-                  const isCorrect = answer?.is_correct;
-                  const correctIndex = String(question.correct_option).charCodeAt(0) - 65;
-                  const selectedIndex = answer?.selected_option ? String(answer.selected_option).charCodeAt(0) - 65 : null;
-
-                  const optionsList = [
-                    question.option_a,
-                    question.option_b,
-                    question.option_c,
-                    question.option_d,
-                  ];
-
-                  return (
-                    <div
-                      key={question.id}
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid',
-                        borderColor: isCorrect ? '#e2e8f0' : '#fee2e2',
-                        borderRadius: '12px',
-                        padding: '18px 20px',
-                        boxShadow: '0 2px 6px rgba(15, 23, 42, 0.03)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span
-                            style={{
-                              width: '26px',
-                              height: '26px',
-                              borderRadius: '6px',
-                              background: '#f1f5f9',
-                              color: '#334155',
-                              display: 'grid',
-                              placeItems: 'center',
-                              fontSize: '12px',
-                              fontWeight: 800,
-                            }}
-                          >
-                            {question.position}
-                          </span>
-                          <span
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              fontSize: '11px',
-                              fontWeight: 800,
-                              padding: '2px 8px',
-                              borderRadius: '999px',
-                              background: isCorrect ? '#ecfdf5' : '#fef2f2',
-                              color: isCorrect ? '#047857' : '#b91c1c',
-                            }}
-                          >
-                            {isCorrect ? (
-                              <>
-                                <CheckCircle2 size={12} /> Correct (+1)
-                              </>
-                            ) : (
-                              <>
-                                <XCircle size={12} /> Incorrect (0)
-                              </>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-
-                      <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '0 0 14px', lineHeight: 1.5 }}>
-                        {question.question_text}
-                      </h3>
-
-                      <div style={{ display: 'grid', gap: '6px', marginBottom: '14px' }}>
-                        {optionsList.map((optText, optIdx) => {
-                          const isOptionCorrect = optIdx === correctIndex;
-                          const wasSelected = optIdx === selectedIndex;
-
-                          let optBg = '#f8fafc';
-                          let optBorder = '#e2e8f0';
-                          let optColor = '#334155';
-
-                          if (isOptionCorrect) {
-                            optBg = '#ecfdf5';
-                            optBorder = '#10b981';
-                            optColor = '#065f46';
-                          } else if (wasSelected && !isOptionCorrect) {
-                            optBg = '#fef2f2';
-                            optBorder = '#ef4444';
-                            optColor = '#991b1b';
-                          }
-
-                          return (
-                            <div
-                              key={optIdx}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                border: `1px solid ${optBorder}`,
-                                background: optBg,
-                                color: optColor,
-                                fontSize: '13px',
-                                fontWeight: isOptionCorrect || wasSelected ? 700 : 400,
-                              }}
-                            >
-                              <strong style={{ width: '18px' }}>{String.fromCharCode(65 + optIdx)}.</strong>
-                              <span style={{ flex: 1 }}>{optText}</span>
-                              {isOptionCorrect && (
-                                <span style={{ fontSize: '10px', background: '#059669', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
-                                  CORRECT ANSWER
-                                </span>
-                              )}
-                              {wasSelected && !isOptionCorrect && (
-                                <span style={{ fontSize: '10px', background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>
-                                  YOUR CHOICE
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* EXPLANATION BLOCK */}
-                      <div
-                        style={{
-                          background: '#f8fafc',
-                          borderLeft: '3px solid #059669',
-                          padding: '10px 14px',
-                          borderRadius: '0 8px 8px 0',
-                          fontSize: '12px',
-                          color: '#475569',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        <strong style={{ color: '#0f172a', display: 'block', marginBottom: '2px' }}>
-                          Academic Explanation:
-                        </strong>
-                        {question.explanation ||
-                          'The correct option is derived directly from the official curriculum syllabus standards. Review relevant past questions to reinforce this topic.'}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                </section>
+              )}
             </>
           )}
         </div>

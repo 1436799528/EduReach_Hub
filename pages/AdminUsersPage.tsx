@@ -6,13 +6,16 @@ export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState<AdminUser[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   async function load(search: string) {
     setLoading(true);
     try {
+      setError('');
       setProfiles(await fetchAdminUsers(search));
-    } catch {
+    } catch (value) {
       setProfiles([]);
+      setError(value instanceof Error ? value.message : 'Unable to load student accounts.');
     } finally {
       setLoading(false);
     }
@@ -33,11 +36,14 @@ export default function AdminUsersPage() {
           </div>
           <input
             className="admin-input admin-search"
+            aria-label="Search student accounts"
             placeholder="Search name, school or matric number"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
+
+        {error && <div className="admin-card" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}><span>{error}</span><button type="button" className="admin-btn small" onClick={() => void load(query)} disabled={loading}>Try again</button></div>}
 
         <div className="admin-card">
           <div className="admin-table-wrap">

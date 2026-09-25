@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import type { NewsItem } from '../lib/api';
+import { identityClassFor } from './CardIdentityMark';
 
 export function newsThumbFor(category: string): string {
   const value = (category || '').toLowerCase();
@@ -28,7 +29,16 @@ function articleHref(item: NewsItem): string {
 export function NewsRow({ item }: { item: NewsItem }) {
   return (
     <a className="er-news-row" href={articleHref(item)}>
-      <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt="" loading="lazy" />
+      <img
+        src={item.image_url || newsThumbFor(item.category)}
+        className="er-news-photo"
+        alt={`${item.title} — ${newsCategoryLabel(item.category)}`}
+        loading="lazy"
+        onError={(event) => {
+          event.currentTarget.onerror = null;
+          event.currentTarget.src = newsThumbFor(item.category);
+        }}
+      />
       <span>
         <small>
           {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
@@ -47,7 +57,16 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
     <div className="er-featured-grid">
       {items.slice(0, 2).map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
-          <img src={item.image_url || newsThumbFor(item.category)} className="er-news-photo" alt="" loading="lazy" />
+          <img
+        src={item.image_url || newsThumbFor(item.category)}
+        className="er-news-photo"
+        alt={`${item.title} — ${newsCategoryLabel(item.category)}`}
+        loading="lazy"
+        onError={(event) => {
+          event.currentTarget.onerror = null;
+          event.currentTarget.src = newsThumbFor(item.category);
+        }}
+      />
           <span className="er-featured-body">
             <small>
               {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
@@ -69,7 +88,7 @@ export function TrendingNews({ items, limit = 5 }: { items: NewsItem[]; limit?: 
     <ol className="er-trend-list">
       {list.map((item, index) => (
         <li key={item.id}>
-          <a href={articleHref(item)}>
+          <a className={identityClassFor(item.category, 'news')} href={articleHref(item)}>
             <span className="er-trend-num">{String(index + 1).padStart(2, '0')}</span>
             <span className="er-trend-copy">
               <small>

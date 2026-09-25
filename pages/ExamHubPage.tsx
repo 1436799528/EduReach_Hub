@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import { identityClassFor } from '../src/components/CardIdentityMark';
 
 type ExamKey = 'jamb' | 'waec' | 'neco' | 'post-utme';
 
@@ -11,12 +12,12 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/jamb.png',
     description: 'JAMB UTME, CAPS, results, admission and examination preparation resources.',
     links: [
-      { label: 'JAMB CBT Practice', href: '/cbt?mode=JAMB' },
-      { label: 'Past Questions', href: '/cbt' },
+      { label: 'Start JAMB CBT Simulator', href: '/cbt/setup/jamb' },
+      { label: 'JAMB Question Banks', href: '/cbt?mode=JAMB' },
       { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },
-      { label: 'CAPS & Admission Status', href: '/admission' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
-      { label: 'Latest Updates', href: '/news' },
+      { label: 'Admission Letters', href: '/services/apply/admission-letters' },
+      { label: 'JAMB & CAPS Updates', href: '/news?category=jamb' },
     ],
   },
   waec: {
@@ -24,12 +25,11 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/waec.webp',
     description: 'WAEC examination information, results, preparation and study resources.',
     links: [
-      { label: 'WAEC CBT Practice', href: '/cbt?mode=WAEC' },
-      { label: 'Past Questions', href: '/cbt' },
+      { label: 'Start WAEC CBT Practice', href: '/cbt/setup/waec' },
+      { label: 'WAEC Question Banks', href: '/cbt?mode=WAEC' },
       { label: 'Result Checking', href: '/services/apply/results' },
-      { label: 'Scratch Cards', href: '/services/apply/scratch-cards' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
-      { label: 'Latest Updates', href: '/news' },
+      { label: 'WAEC News', href: '/news?category=waec' },
     ],
   },
   neco: {
@@ -37,12 +37,11 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/neco.webp',
     description: 'NECO examination information, results, preparation and study resources.',
     links: [
-      { label: 'NECO CBT Practice', href: '/cbt?mode=NECO' },
-      { label: 'Past Questions', href: '/cbt' },
+      { label: 'Start NECO CBT Practice', href: '/cbt/setup/neco' },
+      { label: 'NECO Question Banks', href: '/cbt?mode=NECO' },
       { label: 'Result Checking', href: '/services/apply/results' },
-      { label: 'Scratch Cards', href: '/services/apply/scratch-cards' },
-      { label: 'Exam Timetable', href: '/tools/calendar' },
-      { label: 'Latest Updates', href: '/news' },
+      { label: 'Screening Calculator', href: '/screening-calculator' },
+      { label: 'NECO Updates', href: '/news?category=neco' },
     ],
   },
   'post-utme': {
@@ -50,12 +49,12 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     logo: '/icons/brands/jamb.png',
     description: 'University screening information, admission preparation and Post-UTME practice.',
     links: [
-      { label: 'CBT Practice', href: '/cbt?mode=POST-UTME' },
-      { label: 'Find a School', href: '/admission/schools' },
-      { label: 'Screening Information', href: '/admission' },
-      { label: 'Past Questions', href: '/cbt' },
-      { label: 'Admission Requirements', href: '/admission/requirements' },
-      { label: 'Latest Updates', href: '/news' },
+      { label: 'Start Post-UTME Screening Test', href: '/cbt/setup/post-utme' },
+      { label: 'Post-UTME Question Banks', href: '/cbt?mode=POST-UTME' },
+      { label: 'Screening Calculator', href: '/screening-calculator' },
+      { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },
+      { label: 'Admission Letters', href: '/services/apply/admission-letters' },
+      { label: 'Admission Lists & News', href: '/news?category=admission' },
     ],
   },
 };
@@ -67,13 +66,13 @@ export default function ExamHubPage({ exam }: { exam: ExamKey }) {
       <main className="er-major-page">
         <div className="er-major-container">
           <div className="er-major-heading">
-            <div className="er-major-logo"><img src={item.logo} alt="" /></div>
+            <div className="er-major-logo"><img src={item.logo} alt={`${item.title} logo`} /></div>
             <div><h1>{item.title}</h1><p>{item.description}</p></div>
           </div>
 
           <section className="er-major-grid">
             {item.links.map((link) => (
-              <a href={link.href} key={link.label} className="er-major-link">
+              <a href={link.href} key={link.label} className={`er-major-link ${identityClassFor(item.title, 'service')}`}>
                 <CheckCircle2 size={15} />
                 <span>{link.label}</span>
                 <ArrowRight size={13} />
