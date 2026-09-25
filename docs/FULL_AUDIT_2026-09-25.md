@@ -94,6 +94,9 @@ The earlier dirty workspace was preserved; no reset, branch switch or stash dele
 8. **News URL safety:** admin news create/update accepts only HTTPS or site-relative image/source URLs; article rendering repeats the guard for existing rows.
 9. **Security headers:** Netlify and Express now send content-type, referrer, frame, permissions and CSP protections. The CSP allows the intentionally used Supabase, Google Fonts and HTTPS image dependencies.
 10. **Mobile admin control:** narrow admin layouts retain email/logout/student-view controls.
+11. **Security Advisor RLS findings:** the release migration now makes the intentional browser-deny boundary explicit for `exam_questions` and, when present, `site_analytics_events` and `admin_content_versions`. These tables remain server/RPC-only; the policies do not grant client access.
+12. **SECURITY DEFINER review:** the release migration pins the known SECURITY DEFINER routines to an empty `search_path` when they exist, while retaining their existing intended grants. Live verification must still confirm the routine definitions, owners and `EXECUTE` privileges after migration.
+13. **Leaked-password protection:** this is a Supabase Auth dashboard setting, not a repository migration. It remains a launch prerequisite and must be enabled under Authentication → Password Security. The exact SQL and dashboard verification steps are recorded in `docs/SUPABASE_SECURITY_CHECKLIST.md`.
 
 ## 5. Data, privacy and production dependency assessment
 
@@ -122,9 +125,11 @@ A real browser click-through was not available because the sandbox Chromium depe
 ## 7. Release checklist still required outside this sandbox
 
 1. Apply all migrations through `20260925_public_release_security_hardening.sql` to the production Supabase project; verify the own-request/profile permissions with a real student account and verify an admin cannot be demoted through the client.
-2. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and server-only `SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_SECRET_KEY`; configure Supabase Auth redirect URLs for the production origin.
-3. Seed/verify at least one active CBT exam with questions, institution rows, published news rows with author/date/source policy and any live opportunities intended for launch. Empty states are correct if those feeds remain empty.
-4. Run an authenticated staging click-through at mobile and desktop widths: registration/verification, profile save, each of the four service submissions, request visibility, CBT start/submit/result ownership, password/MFA controls, admin queue/news/CBT operations and sign-out.
-5. Verify Netlify environment variables, SPA/API redirects, `_headers`, service worker cache behavior and external WhatsApp/Scribd/official portal destinations on the final production hostname.
+2. Review the live Supabase Security Advisor after migration: confirm `admin_content_versions`, `exam_questions` and `site_analytics_events` are intentionally server/RPC-only, confirm no unexpected browser grants exist, and review all SECURITY DEFINER owners, `search_path` settings and `EXECUTE` privileges.
+3. Enable Supabase Auth leaked-password protection under Authentication → Password Security, then verify password reset, email verification, MFA controls and redirect URLs.
+4. Set `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and server-only `SUPABASE_SERVICE_ROLE_KEY`/`SUPABASE_SECRET_KEY`; configure Supabase Auth redirect URLs for the production origin.
+5. Seed/verify at least one active CBT exam with questions, institution rows, published news rows with author/date/source policy and any live opportunities intended for launch. Empty states are correct if those feeds remain empty.
+6. Run an authenticated staging click-through at mobile and desktop widths: registration/verification, profile save, each of the four service submissions, request visibility, CBT start/submit/result ownership, password/MFA controls, admin queue/news/CBT operations and sign-out.
+7. Verify Netlify environment variables, SPA/API redirects, `_headers`, service worker cache behavior and external WhatsApp/Scribd/official portal destinations on the final production hostname.
 
 **Final audit classification:** the branch is suitable for a production-oriented staging pass. It should not be represented as a fully live release until the data/configuration checklist above is complete.
