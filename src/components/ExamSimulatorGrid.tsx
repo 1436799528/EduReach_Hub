@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import { identityClassFor } from './CardIdentityMark';
 
 export type ExamSimulator = {
   key: string;
@@ -49,13 +50,22 @@ export const examSimulators: ExamSimulator[] = [
   },
 ];
 
+/** Setup URL for a simulator card: students choose a course, school or subjects before the hall. */
+export function simulatorStartHref(key: string) {
+  return `/cbt/setup/${key}`;
+}
+
 /**
- * Shared Myschool-style exam simulator grid.
- * variant="mode" links each card to the filtered CBT hall (/cbt?mode=X).
- * variant="start" links each card straight into a practice session.
+ * Shared exam simulator grid. Every card enters an exam-specific setup wizard
+ * (/cbt/setup/…) before the timed hall; variant="mode" is kept for catalog contexts
+ * that deliberately want the filtered question-bank list (/cbt?mode=X).
+ *
+ * Layout lives in edu-portal.css: 4-up vertical cards on desktop; on mobile the
+ * same cards turn horizontal and sit in a 2-row swipe strip (Myschool "Take a
+ * test" pattern) with the next column peeking in from the right edge.
  */
 export default function ExamSimulatorGrid({
-  variant = 'mode',
+  variant = 'start',
   showGuides = false,
 }: {
   variant?: 'mode' | 'start';
@@ -67,19 +77,21 @@ export default function ExamSimulatorGrid({
         {examSimulators.map((exam) => (
           <a
             key={exam.key}
-            className="er-sim-card"
-            href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : `/cbt/practice?exam=practice-exam-${exam.key}`}
+            className={`er-sim-card er-sim-${exam.key} ${identityClassFor(exam.mode, 'service')}`}
+            href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : simulatorStartHref(exam.key)}
           >
             <span className="er-sim-top">
-              <img src={exam.logo} alt="" width={34} height={34} loading="lazy" />
+              <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" />
               <span className="er-sim-badge">{exam.mode}</span>
             </span>
-            <strong>{exam.title}</strong>
-            <small>{exam.desc}</small>
-            <span className="er-sim-foot">
-              <span>{exam.meta}</span>
-              <span className="er-sim-cta">
-                {variant === 'mode' ? 'Practice' : 'Start Test'} <ArrowRight size={12} />
+            <span className="er-sim-body">
+              <strong>{exam.title}</strong>
+              <small>{exam.desc}</small>
+              <span className="er-sim-foot">
+                <span>{exam.meta}</span>
+                <span className="er-sim-cta">
+                  {variant === 'mode' ? 'Practice' : 'Start Test'} <ArrowRight size={12} />
+                </span>
               </span>
             </span>
           </a>

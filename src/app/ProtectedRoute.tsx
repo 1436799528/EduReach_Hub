@@ -20,11 +20,22 @@ function LoadingPortal() {
   );
 }
 
+// Every route wrapped in <ProtectedRoute> lives under one of these prefixes.
+const PROTECTED_PREFIXES = ['/dashboard', '/profile', '/settings', '/services/track', '/track'];
+export function isProtectedPath(pathname: string) {
+  return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;
+    // Never chain /login?next=/login?next=… (e.g. StrictMode double effects).
+    if (window.location.pathname.startsWith('/login')) return;
+    // Signing out navigates home in the same tick; if the URL has already left
+    // the protected area, this stale guard must not bounce the user to /login.
+    if (!isProtectedPath(window.location.pathname)) return;
     const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     navigateInApp(`/login?next=${encodeURIComponent(next)}`, true);
   }, [isAuthenticated, isLoading]);

@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { hubServices, newsItems as fallbackNews } from '../data/hubContent';
+import { localStorageKey } from './localPreview';
 
 export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number };
@@ -28,6 +29,7 @@ export type NewsItem = {
   source_url: string | null;
   image_url: string | null;
   published_at: string | null;
+  author: string | null;
   last_verified_at: string | null;
   verification_status: string;
 };
@@ -96,18 +98,72 @@ const fallbackNewsPhotos: Record<string, string> = {
   'student-opportunities': '/news/photos/graduates.jpg',
 };
 
+const fallbackNewsAuthors: Record<string, string> = {
+  'jamb-caps-status-guide': 'EduReach Exams Desk',
+  'nelfund-student-loan-checklist': 'EduReach Student Funding Desk',
+  'waec-neco-result-checking': 'EduReach Exams Desk',
+  'campus-gist-week': 'EduReach Campus Desk',
+  'student-opportunities': 'EduReach Opportunities Desk',
+};
+
+/** Built-in stories are guides, not live announcements. Keep the full explainer available offline. */
+const fallbackNewsBodies: Record<string, string> = {
+  'jamb-caps-status-guide': `JAMB CAPS is the admission-status area where a candidate can review an admission offer and follow the next instruction shown on the official JAMB portal. The exact options available to a candidate depend on the current admission cycle and the candidate's record, so this guide is for orientation rather than a substitute for the official portal.
+
+Start with the basics: confirm that you are on the official JAMB website, sign in with the details attached to your registration, and check that the name, registration number and examination year shown on the profile are yours. Do not hand over your password or profile code to a third party who promises to change an admission outcome.
+
+When an offer appears, read the institution and course carefully before taking an action. A candidate should understand the difference between checking an offer, accepting it and declining it. If the page is not loading or the details look inconsistent, save a screenshot and contact JAMB or the institution through an official support channel before making an irreversible choice.
+
+After checking CAPS, keep the evidence you may need later: the status page, admission letter instructions, school screening notice and any payment receipt issued through the official portal. EduReach can help you organise questions for a service request, but it cannot create an admission offer or replace the institution's published instructions.
+
+Before the next deadline, compare the course requirements with your O-Level subjects, confirm the institution's current registration window and use only the official links supplied by JAMB or the school. Requirements and menus can change between admission cycles, so verify them again before submitting anything.`,
+  'nelfund-student-loan-checklist': `A NELFUND application is a funding request, not an automatic award. Before starting, organise the information that the official NELFUND portal asks for and make sure your institution and programme details match the records held by your school.
+
+Prepare access to an active email address and phone number, your student or matriculation information, admission or institutional details, and any identity or banking information requested on the live application. Do not upload a document simply because an unofficial message asks for it; first read the current requirement on the official portal.
+
+Complete the form slowly and review every field before submitting. Names, registration numbers, institution, department and session should be consistent with your school record. If a required field is unavailable or your institution is not listed, stop and confirm the correct process with NELFUND or your institution rather than selecting a random entry.
+
+After submission, keep the reference or confirmation message and monitor the status from the same official account. A request may require institutional verification or additional information, and an approval should not be assumed until the official system shows it.
+
+EduReach can help you prepare a checklist and organise a guided request. We do not approve loans, ask for a password or guarantee funding. Check the current NELFUND notice for eligibility, deadlines, repayment information and the active application URL before you proceed.`,
+  'waec-neco-result-checking': `Result checking should begin on the official WAEC or NECO channel for the examination year. A result checker token, PIN or candidate detail is private information, so avoid sending it in public groups or to an unverified agent.
+
+Before entering any details, confirm the examination body, candidate number, examination year and the exact result-checking instructions. Keep your token or PIN safe and make sure the name and candidate number you enter match the registration record. Repeated failed attempts can create avoidable support problems.
+
+If the result page reports that a result is unavailable, withheld or requires a different checker route, do not conclude that the result has been cancelled. Save the exact message, check the official help guidance and contact the examination body or your school using a verified channel.
+
+Download or print the result statement only from the official flow when it becomes available, and keep a private copy for admission or scholarship applications. Do not pay a social-media contact who promises to alter a grade or release a result outside the examination body's process.
+
+This is a safety and preparation guide. Result availability, fees and checker requirements change, so confirm the active WAEC or NECO notice before using a token or submitting a request.`,
+  'campus-gist-week': `A useful campus update is one a student can trace to an official notice, a named institution or a clearly identified event organiser. This weekly guide helps you sort the updates competing for your attention without treating an unverified rumour as a confirmed announcement.
+
+Begin with the deadlines that affect you directly: registration, course forms, screening, examinations, accommodation and bursary applications. Check the school website, student portal, faculty noticeboard or verified communication channel for the original notice and record the closing date in a place you will revisit.
+
+For a campus event or opportunity, confirm the organiser, venue, eligibility, cost and contact details before sharing it. Be especially careful with messages that demand a transfer to a personal account, request a password or promise admission in exchange for an urgent payment.
+
+When an update cannot be confirmed, EduReach will keep it labelled as unverified or leave it out rather than present it as fact. Students can send the original notice for review, but should still rely on their institution's official channel for a final decision.`,
+  'student-opportunities': `A ready application folder can save time when a verified scholarship, internship or campus opportunity opens. Keep a clean copy of your current CV, a short personal statement, academic results, identification documents and a record of your institution and programme, while sharing only what the application genuinely requires.
+
+Use clear filenames and check that your phone number, email address, course, level and session are current. If a referee or institutional letter is needed, request it early and confirm the required format. Do not reuse a document with an old registration number or deadline without checking it.
+
+Before applying, verify the organisation, eligibility, closing date, official application URL and any stated cost. A genuine listing should explain what is being offered and how applications are assessed. Treat requests for passwords, unexplained fees or guaranteed selection as warning signs.
+
+EduReach lists opportunities only when the available details can be checked. If a category has no verified listing, that means there is no confirmed item in the current catalogue—not that every opportunity has been searched or that a student is ineligible. Recheck the page and the organiser's official channel before a deadline.`,
+};
+
 const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
   id: `news-${n.slug}-${index + 1}`,
   slug: n.slug,
   title: n.title,
   summary: n.excerpt,
-  body: `${n.excerpt}\n\nOfficial Student Advice:\nStudents are advised to cross-check all deadlines and application portals through legitimate school channels. Keep your student registration numbers, tokens, and exam slips safeguarded.\n\nKey Requirements:\n1. Ensure your JAMB registration profile is linked to an active email address.\n2. Do not disclose secret result-checking PINs to unverified sources.\n3. Track all service requests on EduReach Hub for live updates.`,
+  body: fallbackNewsBodies[n.slug] || `${n.excerpt}\n\nCheck the current official notice for requirements, deadlines and the correct application route. EduReach does not replace the examination body, institution or organiser's published instructions.`,
   category: n.tag.toLowerCase().replace(/[\s/]+/g, '_'),
   priority: 'normal',
-  source_url: 'https://edureach.ng',
+  source_url: null,
   image_url: fallbackNewsPhotos[n.slug] ?? null,
   published_at: new Date(Date.now() - index * 86400000 * 2).toISOString(),
-  last_verified_at: new Date().toISOString(),
+  author: fallbackNewsAuthors[n.slug] || 'EduReach Editorial Desk',
+  last_verified_at: n.verified ? new Date().toISOString() : null,
   verification_status: n.verified ? 'verified' : 'pending',
 }));
 
@@ -168,37 +224,43 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 }
 
 export async function fetchServices(): Promise<ServiceItem[]> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('service_catalog')
-        .select('id,service_key,title,description,application_url,active')
-        .eq('active', true)
-        .order('title');
-      if (!error && data?.length) return data as ServiceItem[];
-    } catch {
-      // fallback
-    }
-  }
-  return fallbackServicesCatalog;
+  if (!isSupabaseConfigured) return fallbackServicesCatalog;
+
+  const { data, error } = await supabase
+    .from('service_catalog')
+    .select('id,service_key,title,description,application_url,active')
+    .eq('active', true)
+    .order('title');
+  if (error) throw error;
+  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
+  return ((data || []) as ServiceItem[]).filter((service) => supportedSlugs.has(service.service_key));
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('service_catalog')
-        .select('id,service_key,title,description,application_url,active')
-        .eq('service_key', slug)
-        .eq('active', true)
-        .maybeSingle();
-      if (!error && data) return data as ServiceItem;
-    } catch {
-      // fallback
-    }
+  // The database catalogue contains planned and historical products as well as
+  // the four workflows that are currently supported by this student hub. Keep
+  // direct deep links subject to the same catalogue boundary as /services so an
+  // active but unsupported row cannot accidentally render the NELFUND form.
+  const normalizedSlug = slug.trim().toLowerCase();
+  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
+  if (!supportedSlugs.has(normalizedSlug)) {
+    throw new Error('This service is not available. Browse the services catalogue for active student services.');
   }
-  const item = fallbackServicesCatalog.find((s) => s.service_key === slug);
-  if (item) return item;
+
+  if (!isSupabaseConfigured) {
+    const item = fallbackServicesCatalog.find((s) => s.service_key === normalizedSlug);
+    if (item) return item;
+    throw new Error('This service is not available. Browse the services catalogue for active student services.');
+  }
+
+  const { data, error } = await supabase
+    .from('service_catalog')
+    .select('id,service_key,title,description,application_url,active')
+    .eq('service_key', normalizedSlug)
+    .eq('active', true)
+    .maybeSingle();
+  if (error) throw error;
+  if (data && supportedSlugs.has(data.service_key)) return data as ServiceItem;
   throw new Error('This service is not available. Browse the services catalogue for active student services.');
 }
 
@@ -215,19 +277,15 @@ export async function fetchUpcoming(): Promise<UpcomingItem[]> {
 }
 
 export async function fetchCbtExams() {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('cbt_exams')
-        .select('id,title,exam_body,subject,duration_minutes')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-      if (!error && data?.length) return data;
-    } catch {
-      // ignore
-    }
-  }
-  return fallbackCbtExams;
+  if (!isSupabaseConfigured) return fallbackCbtExams;
+
+  const { data, error } = await supabase
+    .from('cbt_exams')
+    .select('id,title,exam_body,subject,duration_minutes')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 export async function startCbt(examId: string): Promise<CbtStartResponse> {
@@ -316,8 +374,8 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
   };
 
   try {
-    localStorage.setItem(`edureach-cbt-result-${payload.attemptId}`, JSON.stringify(resultData));
-    localStorage.setItem('edureach-last-cbt-attempt', payload.attemptId);
+    localStorage.setItem(localStorageKey(`cbt-result-${payload.attemptId}`), JSON.stringify(resultData));
+    localStorage.setItem(localStorageKey('last-cbt-attempt'), payload.attemptId);
   } catch {
     // localStorage may be disabled
   }
@@ -326,112 +384,124 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
 }
 
 export async function fetchCbtQuestions(examId: string) {
-  if (isSupabaseConfigured) {
-    try {
-      const { data: exam, error: examError } = await supabase
-        .from('cbt_exams')
-        .select('id,title,duration_minutes,subject')
-        .eq('id', examId)
-        .eq('is_active', true)
-        .maybeSingle();
-      const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
-      if (!examError && !questionError && exam && questions?.length) {
-        return {
-          exam: { id: exam.id, title: exam.title, durationMinutes: exam.duration_minutes, subject: exam.subject },
-          questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
-        };
-      }
-    } catch {
-      // fallback
-    }
+  if (!isSupabaseConfigured) {
+    const examMeta = fallbackCbtExams.find((e) => e.id === examId);
+    if (!examMeta) throw new Error('This CBT exam is not available. Choose another question bank.');
+    return {
+      exam: { id: examId, title: examMeta.title, durationMinutes: examMeta.duration_minutes, subject: examMeta.subject },
+      questions: practiceQuestions,
+    };
   }
 
-  const examMeta = fallbackCbtExams.find((e) => e.id === examId) || fallbackCbtExams[0];
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Please sign in before loading this CBT exam.');
+
+  const { data: exam, error: examError } = await supabase
+    .from('cbt_exams')
+    .select('id,title,duration_minutes,subject')
+    .eq('id', examId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (examError) throw examError;
+  if (!exam) throw new Error('This CBT exam is not available. Choose another question bank.');
+
+  const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
+  if (questionError) throw questionError;
+  if (!questions?.length) throw new Error('This CBT exam has no questions yet. Choose another question bank.');
+
   return {
-    exam: { id: examId, title: examMeta.title, durationMinutes: examMeta.duration_minutes, subject: examMeta.subject },
-    questions: practiceQuestions,
+    exam: { id: exam.id, title: exam.title, durationMinutes: exam.duration_minutes, subject: exam.subject },
+    questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
   };
 }
 
 export async function fetchCbtResult(attemptId: string) {
   if (isSupabaseConfigured) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
-        if (!error && data?.length) {
-          const first = data[0];
-          const attempt = {
-            id: first.attempt_id,
-            exam_id: first.exam_id,
-            score: first.score,
-            correct_answers: first.correct_answers,
-            total_questions: first.total_questions,
-            submitted_at: first.submitted_at,
-          };
-          const answers = data.map((row: any) => ({
-            question_id: row.question_id,
-            selected_option: row.selected_option,
-            is_correct: row.is_correct,
-          }));
-          const questions = data.map((row: any) => ({
-            id: row.question_id,
-            position: row.position,
-            question_text: row.question_text,
-            option_a: row.option_a,
-            option_b: row.option_b,
-            option_c: row.option_c,
-            option_d: row.option_d,
-            correct_option: row.correct_option,
-            explanation: row.explanation,
-          }));
-          return { attempt, answers, questions };
-        }
-      }
-    } catch {
-      // fallback to local stored result
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Please sign in to view this CBT result.');
+
+    const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
+    if (error) throw error;
+    if (!data?.length) throw new Error('No CBT result was found for this attempt.');
+
+    const first = data[0];
+    const attempt = {
+      id: first.attempt_id,
+      exam_id: first.exam_id,
+      score: first.score,
+      correct_answers: first.correct_answers,
+      total_questions: first.total_questions,
+      submitted_at: first.submitted_at,
+    };
+    const answers = data.map((row: any) => ({
+      question_id: row.question_id,
+      selected_option: row.selected_option,
+      is_correct: row.is_correct,
+    }));
+    const questions = data.map((row: any) => ({
+      id: row.question_id,
+      position: row.position,
+      question_text: row.question_text,
+      option_a: row.option_a,
+      option_b: row.option_b,
+      option_c: row.option_c,
+      option_d: row.option_d,
+      correct_option: row.correct_option,
+      explanation: row.explanation,
+    }));
+    return { attempt, answers, questions };
   }
 
-  if (!isSupabaseConfigured) {
-    try {
-      const stored = localStorage.getItem(`edureach-cbt-result-${attemptId}`);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // ignore
+  try {
+    const resultSuffix = `:cbt-result-${attemptId}`;
+    const candidateKeys = new Set<string>([localStorageKey(`cbt-result-${attemptId}`)]);
+    // A completed scorecard is a direct, shareable destination. Allow a guest
+    // to reopen it with the exact attempt id even after signing out, without
+    // exposing the current student's entire result list.
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('edureach-local:') && key.endsWith(resultSuffix)) candidateKeys.add(key);
     }
+    for (const key of candidateKeys) {
+      const stored = localStorage.getItem(key);
+      if (stored) return JSON.parse(stored);
+    }
+  } catch {
+    // localStorage may be disabled
   }
 
   throw new Error('No CBT result was found for this attempt. Complete a CBT practice session to generate a scorecard.');
 }
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
-  if (isSupabaseConfigured) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: service } = await supabase
-          .from('service_catalog')
-          .select('id, service_key, title')
-          .eq('service_key', payload.serviceSlug)
-          .eq('active', true)
-          .maybeSingle();
-
-        if (service) {
-          const { data, error } = await supabase
-            .from('service_requests')
-            .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
-            .select('id, reference_code, created_at, status')
-            .single();
-          if (!error && data) return data;
-        }
-      }
-    } catch {
-      // fallback
-    }
+  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
+  const normalizedSlug = payload.serviceSlug.trim().toLowerCase();
+  if (!supportedSlugs.has(normalizedSlug)) {
+    throw new Error('This service is not available. Browse the services catalogue for active student services.');
   }
 
-  if (isSupabaseConfigured) throw new Error('Please sign in before submitting a service request.');
+  if (isSupabaseConfigured) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Please sign in before submitting a service request.');
+
+    const { data: service, error: serviceError } = await supabase
+      .from('service_catalog')
+      .select('id, service_key, title')
+      .eq('service_key', normalizedSlug)
+      .eq('active', true)
+      .maybeSingle();
+    if (serviceError) throw serviceError;
+    if (!service) throw new Error('This service is no longer accepting requests. Browse the services catalogue for active services.');
+
+    const { data, error } = await supabase
+      .from('service_requests')
+      .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
+      .select('id, reference_code, created_at, status')
+      .single();
+    if (error) throw error;
+    if (!data) throw new Error('The service request could not be created.');
+    return data;
+  }
 
   // Local request persistence for unconfigured/offline sessions. This records only what the student actually submitted.
   const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -446,136 +516,71 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   };
 
   try {
-    const existing = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
+    const existing = JSON.parse(localStorage.getItem(localStorageKey('service-requests')) || '[]');
     existing.unshift(localRecord);
-    localStorage.setItem('edureach-service-requests', JSON.stringify(existing));
+    localStorage.setItem(localStorageKey('service-requests'), JSON.stringify(existing));
   } catch {
-    // ignore
+    // localStorage may be disabled
   }
 
   return localRecord;
 }
 
-export async function trackService(referenceCode: string) {
-  const normalized = referenceCode.trim().toUpperCase();
-
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase.rpc('get_public_service_request', { p_reference_code: normalized });
-      if (!error && data?.length) {
-        const row = data[0];
-        const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4, rejected: 4, cancelled: 4 };
-        const current = stageMap[row.status] ?? 1;
-        const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
-        return {
-          id: row.id,
-          reference_code: row.reference_code,
-          status: row.status,
-          created_at: row.created_at,
-          service_catalog: { title: row.service_title, service_key: row.service_key },
-          timeline: labels.map((label, index) => ({ label, done: index < current })),
-        };
-      }
-    } catch {
-      // fallback
-    }
-  }
-
-  if (!isSupabaseConfigured) {
-    try {
-      const saved = JSON.parse(localStorage.getItem('edureach-service-requests') || '[]');
-      const match = saved.find((r: any) => r.reference_code === normalized);
-      if (match) {
-        const stageMap: Record<string, number> = { submitted: 1, reviewing: 2, processing: 3, completed: 4 };
-        const current = stageMap[match.status] ?? 1;
-        const labels = ['Received', 'Reviewing', 'Processing', 'Completed'];
-        return { ...match, timeline: labels.map((label, index) => ({ label, done: index < current })) };
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  throw new Error('No service request was found for that reference code. Please confirm the code from your submitted application.');
-}
-
 export async function fetchNews(): Promise<NewsItem[]> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
-        .eq('published', true)
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .limit(30);
-      if (!error && data?.length) {
-        return data.map((item) => ({
-          id: item.id,
-          slug: item.slug,
-          title: item.title,
-          summary: item.excerpt,
-          body: item.body,
-          category: item.category,
-          priority: 'normal',
-          source_url: item.source_url,
-          image_url: item.image_url ?? null,
-          published_at: item.published_at,
-          last_verified_at: item.updated_at,
-          verification_status: 'verified',
-        }));
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return fallbackNewsItems;
+  if (!isSupabaseConfigured) return fallbackNewsItems;
+
+  const { data, error } = await supabase
+    .from('news_articles')
+    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published')
+    .eq('published', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(30);
+  if (error) throw error;
+  return (data || []).map((item) => ({
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    summary: item.excerpt,
+    body: item.body,
+    category: item.category,
+    priority: 'normal',
+    source_url: item.source_url,
+    image_url: item.image_url ?? null,
+    published_at: item.published_at,
+    author: item.source_name || 'EduReach Editorial Desk',
+    last_verified_at: item.updated_at,
+    verification_status: 'verified',
+  }));
 }
 
 export async function fetchNewsItem(slug: string): Promise<NewsItem> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('id,slug,title,excerpt,body,category,image_url,source_url,published_at,updated_at,published')
-        .eq('slug', slug)
-        .eq('published', true)
-        .maybeSingle();
-      if (!error && data) {
-        return {
-          id: data.id,
-          slug: data.slug,
-          title: data.title,
-          summary: data.excerpt,
-          body: data.body,
-          category: data.category,
-          priority: 'normal',
-          source_url: data.source_url,
-          image_url: data.image_url ?? null,
-          published_at: data.published_at,
-          last_verified_at: data.updated_at,
-          verification_status: 'verified',
-        };
-      }
-    } catch {
-      // fallback
-    }
+  if (!isSupabaseConfigured) {
+    const match = fallbackNewsItems.find((n) => n.slug === slug);
+    if (match) return match;
+    throw new Error('This news article could not be found.');
   }
 
-  const match = fallbackNewsItems.find((n) => n.slug === slug);
-  if (match) return match;
-
+  const { data, error } = await supabase
+    .from('news_articles')
+    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published')
+    .eq('slug', slug)
+    .eq('published', true)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('This news article could not be found.');
   return {
-    id: `news-${slug}`,
-    slug,
-    title: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-    summary: 'Official notification and academic update details for Nigerian students.',
-    body: 'This update is part of the EduReach Hub verified announcements feed. Detailed guidelines and official institutional schedules will be displayed here as they are released.',
-    category: 'academic',
+    id: data.id,
+    slug: data.slug,
+    title: data.title,
+    summary: data.excerpt,
+    body: data.body,
+    category: data.category,
     priority: 'normal',
-    source_url: 'https://edureach.ng',
-    image_url: null,
-    published_at: new Date().toISOString(),
-    last_verified_at: new Date().toISOString(),
+    source_url: data.source_url,
+    image_url: data.image_url ?? null,
+    published_at: data.published_at,
+    author: data.source_name || 'EduReach Editorial Desk',
+    last_verified_at: data.updated_at,
     verification_status: 'verified',
   };
 }
@@ -602,59 +607,31 @@ export async function bootstrapAdmin(): Promise<void> {
 
 export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string };
 
-const fallbackAdminUsers: AdminUser[] = [];
-
 export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
-      const body = await jsonFetch<{ items: AdminUser[] }>(`/api/admin/users${query}`, { headers });
-      if (body.items) return body.items;
-    }
-  } catch {
-    // fallback
-  }
-
-  if (!search.trim()) return fallbackAdminUsers;
-  const q = search.toLowerCase();
-  return fallbackAdminUsers.filter(u => u.full_name.toLowerCase().includes(q) || u.school.toLowerCase().includes(q) || (u.matric_number && u.matric_number.toLowerCase().includes(q)));
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
+  const body = await jsonFetch<{ items: AdminUser[] }>(`/api/admin/users${query}`, { headers });
+  return body.items || [];
 }
 
 export type AdminServiceRequest = { id: string; user_id: string; status: string; form_data: Record<string, unknown>; created_at: string; updated_at: string; reference_code?: string | null; service_catalog?: { title: string } | null };
 
-const fallbackAdminRequests: AdminServiceRequest[] = [];
-
 export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminServiceRequest[]> {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      const body = await jsonFetch<{ items: AdminServiceRequest[] }>(`/api/admin/service-requests?status=${encodeURIComponent(status)}`, { headers });
-      if (body.items) return body.items;
-    }
-  } catch {
-    // fallback
-  }
-
-  if (status === 'all') return fallbackAdminRequests;
-  return fallbackAdminRequests.filter(r => r.status === status);
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: AdminServiceRequest[] }>(`/api/admin/service-requests?status=${encodeURIComponent(status)}`, { headers });
+  return body.items || [];
 }
 
 export async function updateAdminServiceRequest(requestId: string, status: string) {
-  try {
-    const headers = await authHeaders();
-    if (headers.Authorization) {
-      return await jsonFetch<{ item: { id: string; status: string; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ status }) });
-    }
-  } catch {
-    // fallback
-  }
-
-  const req = fallbackAdminRequests.find(r => r.id === requestId);
-  if (!req) throw new Error('Unable to update this request because no admin service record was found.');
-  req.status = status;
-  req.updated_at = new Date().toISOString();
-  return { item: { id: requestId, status, updated_at: req.updated_at } };
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  return await jsonFetch<{ item: { id: string; status: string; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ status }),
+  });
 }
 
 export type AdminNewsArticle = {
@@ -666,6 +643,7 @@ export type AdminNewsArticle = {
   category: string;
   image_url: string | null;
   source_url: string | null;
+  source_name: string | null;
   published: boolean;
   published_at: string | null;
   updated_at: string;
@@ -679,6 +657,7 @@ export type AdminNewsInput = {
   category?: string;
   image_url?: string | null;
   source_url?: string | null;
+  source_name?: string | null;
   published?: boolean;
 };
 

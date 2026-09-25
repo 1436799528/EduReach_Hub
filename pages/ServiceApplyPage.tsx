@@ -1,13 +1,11 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
   MessageSquare,
-  Search,
   ShieldCheck,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
@@ -16,6 +14,8 @@ import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
+import { guideForService } from '../src/data/serviceGuides';
+import { commonInstitutions } from '../src/data/studentOptions';
 
 type FormState = {
   fullName: string;
@@ -27,7 +27,6 @@ type FormState = {
   email: string;
   examBody: string;
   candidateNumber: string;
-  quantity: string;
   requestType: string;
   notes: string;
 };
@@ -40,6 +39,8 @@ type ProfileRow = {
   jamb_reg_no: string | null;
 };
 
+const institutionOptions = commonInstitutions.filter((institution) => institution !== 'Other Nigerian University / Polytechnic');
+
 const emptyForm: FormState = {
   fullName: '',
   phone: '',
@@ -50,14 +51,12 @@ const emptyForm: FormState = {
   email: '',
   examBody: '',
   candidateNumber: '',
-  quantity: '1',
   requestType: '',
   notes: '',
 };
 
 function fieldsFor(serviceKey: string) {
   if (serviceKey === 'results') return { extra: 'results' as const };
-  if (serviceKey === 'scratch-cards') return { extra: 'cards' as const };
   if (serviceKey === 'jamb-slip') return { extra: 'jamb' as const };
   if (serviceKey === 'admission-letters') return { extra: 'admission' as const };
   return { extra: 'nelfund' as const };
@@ -73,6 +72,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const [reference, setReference] = useState('');
   const [message, setMessage] = useState('');
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [institutionOtherSelected, setInstitutionOtherSelected] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
@@ -108,6 +108,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           .then(({ data: profile }) => {
             if (!active || !profile) return;
             const row = profile as ProfileRow;
+            if (row.school && !institutionOptions.some((institution) => institution === row.school)) setInstitutionOtherSelected(true);
             setForm((current) => ({
               ...current,
               fullName: current.fullName || row.full_name || '',
@@ -150,11 +151,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           <div className="hub-container hub-narrow">
             <div className="hub-panel hub-empty">
               {serviceError || 'Service not found.'}
-              <div className="hub-wizard-actions" style={{ marginTop: '14px' }}>
-                <a className="hub-outline-btn" href="/services">
-                  <ArrowLeft size={16} /> All Services
-                </a>
-              </div>
+
             </div>
           </div>
         </div>
@@ -162,6 +159,14 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     );
 
   const variant = fieldsFor(service.service_key);
+  const guide = guideForService(service.service_key);
+  const institutionSelection = institutionOtherSelected
+    ? '__other__'
+    : institutionOptions.some((institution) => institution === form.institution)
+      ? form.institution
+      : form.institution
+        ? '__other__'
+        : '';
 
   function update(name: keyof FormState, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
@@ -169,9 +174,30 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
 
   function next(event: FormEvent) {
     event.preventDefault();
+    setMessage('');
     if (isSupabaseConfigured && !isAuthenticated) {
       setMessage('Please sign in before submitting this service request.');
       return;
+    }
+    if (step === 1) {
+      const phoneDigits = form.phone.replace(/\D/g, '');
+      const whatsappDigits = form.whatsapp.replace(/\D/g, '');
+      if (form.fullName.trim().split(/\s+/).length < 2) {
+        setMessage('Enter your first and last name so we can identify the request correctly.');
+        return;
+      }
+      if (phoneDigits.length < 10) {
+        setMessage('Enter a valid Nigerian phone number with at least 10 digits.');
+        return;
+      }
+      if (form.whatsapp.trim() && whatsappDigits.length < 10) {
+        setMessage('Enter a valid WhatsApp number or leave that field blank.');
+        return;
+      }
+      if (!form.institution.trim()) {
+        setMessage('Choose an institution or enter it using Other institution.');
+        return;
+      }
     }
     if (step < 3) setStep((value) => value + 1);
     else void handleSubmit();
@@ -250,7 +276,37 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           )}
 
           {!reference ? (
-            <form className="hub-panel hub-wizard-panel" onSubmit={next} style={{ padding: '24px' }}>
+            <>
+              {guide && (
+                <section className="er-service-guide" aria-labelledby="service-guide-title">
+                  <div className="er-service-guide-heading">
+                    <div>
+                      <span className="hub-eyebrow">{guide.eyebrow}</span>
+                      <h2 id="service-guide-title">How to handle this service</h2>
+                      <p>{guide.summary}</p>
+                    </div>
+                    <CardIdentityMark value={service.service_key} type="service" size="md" />
+                  </div>
+                  <div className="er-service-guide-steps">
+                    {guide.steps.map((guideStep, index) => (
+                      <article className="er-service-guide-step" key={guideStep.title}>
+                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" />
+                        <div>
+                          <span className="er-service-guide-number">{String(index + 1).padStart(2, '0')}</span>
+                          <h3>{guideStep.title}</h3>
+                          <p>{guideStep.body}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                  <div className="er-service-guide-footer">
+                    <p><ShieldCheck size={16} /> {guide.safetyNote}</p>
+                    <a className="hub-primary-btn" href="#request-help">Need guided help <ChevronRight size={15} /></a>
+                  </div>
+                </section>
+              )}
+
+              <form id="request-help" className="hub-panel hub-wizard-panel" onSubmit={next} style={{ padding: '24px' }}>
               {/* STEPPER */}
               <div className="hub-stepper" style={{ marginBottom: '24px' }}>
                 {[
@@ -303,12 +359,27 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     </label>
                     <label>
                       Institution Name *
-                      <input
-                        value={form.institution}
-                        onChange={(e) => update('institution', e.target.value)}
-                        placeholder="e.g. University of Lagos / UNIPORT"
+                      <select
+                        value={institutionSelection}
+                        onChange={(e) => {
+                          const isOther = e.target.value === '__other__';
+                          setInstitutionOtherSelected(isOther);
+                          update('institution', isOther ? '' : e.target.value);
+                        }}
                         required
-                      />
+                      >
+                        <option value="">Choose an institution</option>
+                        {institutionOptions.map((institution) => <option key={institution} value={institution}>{institution}</option>)}
+                        <option value="__other__">Other institution</option>
+                      </select>
+                      {institutionSelection === '__other__' && (
+                        <input
+                          value={form.institution}
+                          onChange={(e) => update('institution', e.target.value)}
+                          placeholder="Enter your institution name"
+                          required
+                        />
+                      )}
                     </label>
                     <label>
                       Matriculation / Application No.
@@ -336,8 +407,6 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 16px', color: '#0f172a' }}>
                     {variant.extra === 'results'
                       ? 'Result Verification Details'
-                      : variant.extra === 'cards'
-                      ? 'Scratch Card Order'
                       : variant.extra === 'jamb'
                       ? 'JAMB Portal Specifics'
                       : variant.extra === 'admission'
@@ -355,7 +424,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         autoComplete="email"
                       />
                     </label>
-                    {(variant.extra === 'results' || variant.extra === 'cards') && (
+                    {variant.extra === 'results' && (
                       <label>
                         Examination Body
                         <select value={form.examBody} onChange={(e) => update('examBody', e.target.value)}>
@@ -373,18 +442,6 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                           value={form.candidateNumber}
                           onChange={(e) => update('candidateNumber', e.target.value)}
                           placeholder="e.g. 4120934021"
-                        />
-                      </label>
-                    )}
-                    {variant.extra === 'cards' && (
-                      <label>
-                        Quantity Required
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={form.quantity}
-                          onChange={(e) => update('quantity', e.target.value)}
                         />
                       </label>
                     )}
@@ -470,9 +527,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     <ChevronLeft size={16} /> Previous
                   </button>
                 ) : (
-                  <a className="hub-outline-btn" href="/services" style={{ textDecoration: 'none' }}>
-                    <ArrowLeft size={15} /> All Services
-                  </a>
+                  <span aria-hidden="true" />
                 )}
                 <span />
                 {step < 3 ? (
@@ -491,6 +546,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 )}
               </div>
             </form>
+            </>
           ) : (
             /* SUCCESS CONFIRMATION PANEL */
             <div
@@ -532,7 +588,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 Application Successfully Logged
               </h2>
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 20px', maxWidth: '500px', marginInline: 'auto' }}>
-                Your request has been registered in the EduReach academic queue. Save your tracking reference code below to check verification milestones.
+                Your request has been registered in the EduReach academic queue. Save your reference code. Signed-in students can view the request and its milestones from My Requests in the dashboard.
               </p>
 
               <div
@@ -556,10 +612,10 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <a
                   className="hub-primary-btn"
-                  href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/track?ref=${encodeURIComponent(reference)}`}
+                  href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/login?next=${encodeURIComponent('/dashboard/services')}`}
                   style={{ textDecoration: 'none', background: '#C85841' }}
                 >
-                  <Search size={15} /> Track Application Status
+                  <CheckCircle2 size={15} /> {isAuthenticated ? 'View in My Requests' : 'Sign in to view request'}
                 </a>
                 <a className="hub-outline-btn" href="/services" style={{ textDecoration: 'none' }}>
                   Return to Catalog

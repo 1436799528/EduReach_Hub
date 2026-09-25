@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, BellRing, LayoutGrid, Newspaper, Timer } from 'lucide-react';
+import { ArrowRight, BellRing, LayoutGrid, Newspaper } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { getServiceDefinition } from '../src/data/services';
 
@@ -47,7 +47,7 @@ const copyByPath: Array<{ match: (path: string) => boolean; copy: ComingSoonCopy
       eyebrow: 'Support',
       title: 'Student support centre is on the way',
       description:
-        'A dedicated support centre is being prepared. Meanwhile, track any submitted request below or reach the official EduReach helpline.',
+        'A dedicated support centre is being prepared. Meanwhile, read a service guide or open a guided-support form through the services catalogue.',
     },
   },
 ];
@@ -56,7 +56,7 @@ const fallbackCopy: ComingSoonCopy = {
   eyebrow: 'Student service',
   title: 'This service is not live yet',
   description:
-    'This service has not launched yet. Browse the active services catalogue or track an existing request below.',
+    'This service has not launched yet. Browse the active services catalogue for a guided service workflow.',
 };
 
 function copyFor(path: string): ComingSoonCopy {
@@ -67,7 +67,7 @@ function copyFor(path: string): ComingSoonCopy {
     return {
       eyebrow: definition.category,
       title: `${definition.title} is not live yet`,
-      description: `${definition.description} This service has not launched yet — browse the active services catalogue or track an existing request below.`,
+      description: `${definition.description} This service has not launched yet — browse the active services catalogue for a guided service workflow.`,
     };
   }
   return copyByPath.find((entry) => entry.match(path))?.copy || fallbackCopy;
@@ -78,18 +78,10 @@ export default function ComingSoonPage({ title, description }: { title?: string;
   const copy = copyFor(path);
   const heading = title || copy.title;
   const body = description || copy.description;
-  const isServicePath = path.startsWith('/services/');
-  const backHref = isServicePath ? '/services' : '/';
-  const backLabel = isServicePath ? 'Services' : 'Portal home';
-
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '32px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '640px' }}>
-          <a className="hub-back-link" href={backHref}>
-            <ArrowLeft size={16} /> {backLabel}
-          </a>
-
           <div
             style={{
               background: '#ffffff',
@@ -142,24 +134,6 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                 }}
               >
                 <LayoutGrid size={15} /> Active services
-              </a>
-              <a
-                href="/services/track"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: '#ffffff',
-                  color: '#0f172a',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '9px 18px',
-                  fontSize: '12.5px',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                }}
-              >
-                <Timer size={15} /> Track a request
               </a>
               <a
                 href="/news"

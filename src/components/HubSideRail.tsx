@@ -1,12 +1,11 @@
-import { ArrowRight, BookOpen, Headphones, Newspaper, ScanSearch, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, Newspaper, ShieldCheck, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { fetchNews, fetchServices, type NewsItem, type ServiceItem } from '../lib/api';
-import CardIdentityMark from './CardIdentityMark';
+import CardIdentityMark, { identityClassFor } from './CardIdentityMark';
 
 const quickLinks = [
   { label: 'CBT Practice', href: '/cbt', icon: Zap },
   { label: 'Student Services', href: '/services', icon: BookOpen },
-  { label: 'Track Request', href: '/services/track', icon: ScanSearch },
   { label: 'News & Updates', href: '/news', icon: Newspaper },
 ];
 
@@ -38,9 +37,9 @@ export default function HubSideRail() {
       {!loadingServices && !services.length && <p className="hub-rail-copy">No services available yet.</p>}
       {!loadingServices && services.length > 0 && <div className="hub-rail-services">
         {services.slice(0, 5).map((service) => (
-          <a href={'/services/apply/' + service.service_key} key={service.id}>
+          <a className={identityClassFor(`${service.service_key} ${service.title}`, 'service')} href={'/services/apply/' + service.service_key} key={service.id}>
             <div className="hub-rail-service-thumb"><CardIdentityMark value={service.service_key} type="service" /></div>
-            <span><strong>{service.title}</strong><small>{service.application_url ? 'Official portal link available' : 'Request support'}</small></span>
+            <span><strong>{service.title}</strong><small>{service.application_url ? 'Guide + official portal' : 'Read guide + request help'}</small></span>
             <ArrowRight size={14}/>
           </a>
         ))}
@@ -53,7 +52,7 @@ export default function HubSideRail() {
       {!loadingNews && !news.length && <p className="hub-rail-copy">No verified updates yet.</p>}
       {!loadingNews && news.length > 0 && <div className="hub-rail-news">
         {news.slice(0, 4).map((item) => (
-          <a href={'/news/' + encodeURIComponent(item.slug)} key={item.id}>
+          <a className={identityClassFor(item.category, 'news')} href={'/news/' + encodeURIComponent(item.slug)} key={item.id}>
             <div className="hub-rail-service-thumb"><CardIdentityMark value={item.category} type="news" /></div>
             <span>{item.category.replaceAll('_', ' ')}</span>
             <strong>{item.title}</strong>
@@ -64,11 +63,11 @@ export default function HubSideRail() {
       {!loadingNews && news.length > 0 && <a className="hub-rail-more" href="/news">See all updates <ArrowRight size={14}/></a>}
     </section>
 
-    <a className="hub-rail-card hub-rail-help hub-click-card" href="/services/track">
-      <Headphones size={22}/>
+    <a className="hub-rail-card hub-rail-help hub-click-card" href="/services">
+      <BookOpen size={22} />
       <h3>Need help?</h3>
-      <p>Track a submitted request or open a service to start.</p>
-      <span>Track a request <ArrowRight size={14}/></span>
+      <p>Read a service guide or open a guided-support form.</p>
+      <span>Explore services <ArrowRight size={14}/></span>
     </a>
   </aside>;
 }

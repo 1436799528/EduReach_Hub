@@ -1,15 +1,18 @@
-/* EduReach Student Dashboard — Myschool Compact Design System */
+/* EduReach Student Dashboard — compact, four-page layout
+   (Overview · My Requests · My CBT · Tools & Saved) */
 
 .edureach-dash-container {
   min-height: 100vh;
-  background: #FAF8FF;
-  color: #131B2E;
+  background: #faf8ff;
+  color: #131b2e;
   font-family: var(--er-font-sans);
   display: flex;
   flex-direction: column;
 }
 
-/* 1. CLEAN HEADER (No green utility strip) */
+/* ---------------------------------------------------------------- */
+/* Header                                                            */
+/* ---------------------------------------------------------------- */
 .edureach-dash-header {
   position: sticky;
   top: 0;
@@ -20,10 +23,10 @@
 }
 
 .edureach-dash-bar {
-  max-width: 1360px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 0 16px;
-  height: 56px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,27 +39,11 @@
   gap: 8px;
   text-decoration: none;
   color: #0f172a;
-  font-size: 19px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
-
-.edureach-dash-logo-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #C85841 0%, #B3331A 100%);
-  color: #ffffff;
-  display: grid;
-  place-items: center;
-  font-size: 14px;
-  font-weight: 900;
-  box-shadow: 0 2px 6px rgba(200, 88, 65, 0.3);
 }
 
 .edureach-dash-search {
   flex: 1;
-  max-width: 480px;
+  max-width: 440px;
   position: relative;
   display: flex;
   align-items: center;
@@ -67,8 +54,8 @@
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 7px 12px 7px 34px;
-  font-size: 12.5px;
+  padding: 8px 12px 8px 34px;
+  font-size: 13px;
   color: #0f172a;
   outline: none;
   transition: all 0.15s ease;
@@ -76,7 +63,7 @@
 
 .edureach-dash-search input:focus {
   background: #ffffff;
-  border-color: #C85841;
+  border-color: #c85841;
   box-shadow: 0 0 0 2px rgba(200, 88, 65, 0.15);
 }
 
@@ -93,44 +80,6 @@
   gap: 10px;
 }
 
-.edureach-dash-btn-icon {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #334155;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.edureach-dash-btn-icon:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #0f172a;
-}
-
-.edureach-dash-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 9px;
-  font-weight: 900;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  padding: 0 3px;
-  border: 2px solid #ffffff;
-}
-
-/* Profile dropdown button */
 .edureach-dash-profile-btn {
   display: flex;
   align-items: center;
@@ -149,26 +98,27 @@
 }
 
 .edureach-dash-avatar {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: #dbeafe;
   color: #1d4ed8;
   font-weight: 800;
-  font-size: 11px;
+  font-size: 12px;
   display: grid;
   place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .edureach-dash-avatar img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
 }
 
 .edureach-dash-profile-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #0f172a;
   max-width: 110px;
@@ -177,20 +127,61 @@
   text-overflow: ellipsis;
 }
 
-/* 2. THREE-PANEL DESKTOP LAYOUT (Sidebar + Main + Right Rail) */
+/* Profile dropdown */
+.dash-menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: 240px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  padding: 6px;
+  z-index: 120;
+  display: grid;
+  gap: 2px;
+}
+
+.dash-menu-head {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+  min-width: 0;
+}
+
+.dash-menu-head strong,
+.dash-sheet-head strong {
+  display: block;
+  font-size: 13.5px;
+  color: #0f172a;
+}
+
+.dash-menu-head span,
+.dash-sheet-head span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- */
+/* Layout                                                            */
+/* ---------------------------------------------------------------- */
 .edureach-dash-body {
-  max-width: 1360px;
+  max-width: 1160px;
   width: 100%;
   margin: 0 auto;
   padding: 16px;
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 290px;
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   flex: 1;
 }
 
-/* 3. DESKTOP SIDEBAR */
 .edureach-dash-sidebar {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -199,16 +190,22 @@
   display: grid;
   gap: 2px;
   position: sticky;
-  top: 72px;
+  top: 74px;
+}
+
+.dash-nav-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 6px 4px;
 }
 
 .edureach-nav-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12.5px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 13px;
   font-weight: 700;
   color: #475569;
   text-decoration: none;
@@ -218,6 +215,7 @@
   text-align: left;
   cursor: pointer;
   transition: all 0.15s ease;
+  font-family: inherit;
 }
 
 .edureach-nav-item:hover {
@@ -226,43 +224,51 @@
 }
 
 .edureach-nav-item.active {
-  background: #F9F0EE;
-  color: #C85841;
+  background: #f9f0ee;
+  color: #c85841;
   font-weight: 800;
+}
+
+.edureach-nav-item.is-danger {
+  color: #dc2626;
 }
 
 .edureach-nav-item-badge {
   margin-left: auto;
   background: #fee2e2;
   color: #b91c1c;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 999px;
 }
 
-/* 4. MAIN CONTENT AREA */
 .edureach-dash-main {
   display: grid;
   gap: 14px;
   min-width: 0;
 }
 
-/* Compact Myschool Card base */
+/* ---------------------------------------------------------------- */
+/* Cards & typography                                                */
+/* ---------------------------------------------------------------- */
 .dash-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 14px;
+  padding: 14px 16px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  min-width: 0;
 }
 
 .dash-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -279,30 +285,195 @@
 }
 
 .dash-card-title-icon {
-  color: #C85841;
+  color: #c85841;
+}
+
+.dash-card-meta {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #64748b;
 }
 
 .dash-card-link {
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 800;
-  color: #C85841;
+  color: #c85841;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .dash-card-link:hover {
   text-decoration: underline;
-  color: #B3331A;
+  color: #b3331a;
 }
 
-/* 5. WELCOME & PROFILE SUMMARY */
+.dash-page-head {
+  padding: 2px 2px 0;
+}
+
+.dash-page-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #131b2e;
+  margin: 0 0 2px;
+  letter-spacing: -0.01em;
+}
+
+.dash-page-sub {
+  font-size: 13px;
+  color: #5b403b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dash-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+}
+
+/* Buttons */
+.dash-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 800;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.dash-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dash-btn-primary {
+  background: #c85841;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(200, 88, 65, 0.22);
+}
+
+.dash-btn-primary:hover:not(:disabled) {
+  background: #b3331a;
+}
+
+.dash-btn-secondary {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.dash-btn-secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.dash-btn-small {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.dash-btn.is-saved {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.dash-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dash-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dash-icon-btn:hover {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+/* Notes & empty states */
+.dash-note {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  color: #334155;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.dash-note.is-success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.dash-note.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+  margin-top: 0;
+}
+
+.dash-empty {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 18px 16px;
+  text-align: center;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.55;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.dash-empty p {
+  margin: 0;
+  max-width: 460px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Overview                                                          */
+/* ---------------------------------------------------------------- */
 .dash-welcome-card {
-  background: linear-gradient(to right, #ffffff, #F2F3FF);
-  border: 1px solid #EAEDFF;
+  background: linear-gradient(to right, #ffffff, #f2f3ff);
+  border: 1px solid #eaedff;
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 16px;
 }
 
 .dash-welcome-top {
@@ -314,22 +485,19 @@
 }
 
 .dash-welcome-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 900;
-  color: #131B2E;
+  color: #131b2e;
   margin: 0 0 3px;
   letter-spacing: -0.01em;
 }
 
 .dash-welcome-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: #5B403B;
+  color: #5b403b;
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  line-height: 1.5;
 }
 
 .dash-welcome-pills {
@@ -337,15 +505,74 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.dash-pill {
-  font-size: 11px;
+.dash-profile-summary {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.dash-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dash-section-head h2 {
+  margin: 0 0 3px;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.dash-section-head p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dash-profile-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dash-profile-detail {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.dash-profile-detail span {
+  display: block;
+  color: #64748b;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 3px 8px;
+  margin-bottom: 3px;
+}
+
+.dash-profile-detail strong {
+  display: block;
+  color: #0f172a;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.dash-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 9px;
   border-radius: 6px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -353,15 +580,17 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dash-pill-green {
-  background: #EAF8EE;
+  background: #eaf8ee;
   border-color: #bbf7d0;
-  color: #16A34A;
+  color: #16a34a;
 }
 
-/* 6. QUICK-ACCESS 4 COMPACT CARDS (CBT, Past Q, Admission, Scholarships) */
 .dash-quick-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -377,14 +606,13 @@
   color: #0f172a;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 84px;
+  min-height: 92px;
   transition: all 0.15s ease;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
 }
 
 .dash-quick-card:hover {
-  border-color: #C85841;
+  border-color: #c85841;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(200, 88, 65, 0.08);
 }
@@ -396,70 +624,53 @@
 }
 
 .dash-quick-card-title {
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 800;
   color: #0f172a;
-  margin: 6px 0 0;
+  margin: 8px 0 2px;
+  line-height: 1.3;
 }
 
 .dash-quick-card-sub {
-  font-size: 10.5px;
+  font-size: 12px;
   color: #64748b;
   font-weight: 600;
+  line-height: 1.4;
 }
 
-/* 7. QUICK ACTIONS (CGPA Calculator, School Finder, Course Finder) */
-.dash-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.dash-action-box {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  text-align: left;
+.dash-help {
   display: flex;
   align-items: center;
-  gap: 10px;
-  transition: all 0.15s ease;
-  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #065f46;
 }
 
-.dash-action-box:hover {
-  background: #ffffff;
-  border-color: #C85841;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+.dash-help strong {
+  font-size: 13.5px;
 }
 
-.dash-action-icon-wrap {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
+.dash-help span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
 }
 
-.dash-action-text strong {
-  display: block;
-  font-size: 12px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.dash-action-text small {
-  display: block;
-  font-size: 10px;
-  color: #64748b;
-}
-
-/* 8. APPLICATION TRACKING & STATUS */
+/* ---------------------------------------------------------------- */
+/* Tables                                                            */
+/* ---------------------------------------------------------------- */
 .dash-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   border-radius: 8px;
   border: 1px solid #f1f5f9;
 }
@@ -467,7 +678,7 @@
 .dash-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11.5px;
+  font-size: 13px;
   text-align: left;
 }
 
@@ -476,15 +687,15 @@
   color: #475569;
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.04em;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
 }
 
 .dash-table td {
-  padding: 9px 10px;
+  padding: 10px;
   border-bottom: 1px solid #f1f5f9;
   color: #1e293b;
   vertical-align: middle;
@@ -495,10 +706,10 @@
 }
 
 .dash-status-pill {
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
-  padding: 2px 7px;
+  padding: 3px 7px;
   border-radius: 4px;
   display: inline-block;
   white-space: nowrap;
@@ -511,18 +722,78 @@
 }
 
 .dash-status-processing {
-  background: #F9F0EE;
-  color: var(--er-tangerine);
-  border: 1px solid #F0D2BC;
+  background: #f9f0ee;
+  color: var(--er-tangerine, #c85841);
+  border: 1px solid #f0d2bc;
 }
 
 .dash-status-completed {
-  background: #EAF8EE;
-  color: #16A34A;
+  background: #eaf8ee;
+  color: #16a34a;
   border: 1px solid #bbf7d0;
 }
 
-/* 9. CBT & PAST QUESTIONS METRICS */
+.dash-status-rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Stacked rows used instead of tables on phones */
+.dash-mobile-only {
+  display: none;
+}
+
+.dash-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dash-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.dash-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dash-row-title {
+  font-size: 13.5px;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.dash-row-score {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
+.dash-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+/* ---------------------------------------------------------------- */
+/* My CBT metrics                                                    */
+/* ---------------------------------------------------------------- */
 .dash-metric-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -534,11 +805,11 @@
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
 }
 
 .dash-metric-label {
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 800;
   color: #64748b;
   text-transform: uppercase;
@@ -547,109 +818,210 @@
 }
 
 .dash-metric-val {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 900;
   color: #0f172a;
   margin-top: 2px;
   display: block;
 }
 
-/* 10. RIGHT RAIL (NOTICEBOARD, UPCOMING DEADLINES, ADS) */
-.edureach-dash-rail {
+/* ---------------------------------------------------------------- */
+/* Tools & Saved                                                     */
+/* ---------------------------------------------------------------- */
+.dash-tools-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
+  align-items: start;
 }
 
-.dash-ad-notice {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+.dash-cgpa-result {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  text-align: center;
+  margin-bottom: 12px;
 }
 
-.dash-ad-badge {
-  font-size: 9px;
+.dash-cgpa-result .dash-metric-label {
+  color: #065f46;
+}
+
+.dash-cgpa-value {
+  font-size: 32px;
   font-weight: 900;
-  text-transform: uppercase;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-  letter-spacing: 0.05em;
-  display: inline-block;
-  margin-bottom: 6px;
+  color: #059669;
+  line-height: 1.1;
 }
 
-.dash-deadline-list {
+.dash-cgpa-value small {
+  font-size: 14px;
+  color: #065f46;
+}
+
+.dash-cgpa-class {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #047857;
+}
+
+.dash-cgpa-rows {
   display: grid;
   gap: 8px;
 }
 
-.dash-deadline-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px;
-  border-radius: 6px;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
+.dash-cgpa-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 92px 34px;
+  gap: 8px;
+  align-items: center;
 }
 
-.dash-deadline-date {
-  background: #ffffff;
+.dash-cgpa-head span {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-finder-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dash-finder-controls input,
+.dash-finder-controls select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  padding: 4px 6px;
-  text-align: center;
-  flex-shrink: 0;
-  min-width: 44px;
+  box-sizing: border-box;
+  background: #ffffff;
 }
 
-.dash-deadline-date strong {
+.dash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.dash-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.dash-list-copy {
+  min-width: 0;
+}
+
+.dash-list-copy strong {
   display: block;
   font-size: 13px;
-  font-weight: 900;
   color: #0f172a;
-  line-height: 1;
+  line-height: 1.35;
 }
 
-.dash-deadline-date small {
+.dash-list-copy span {
   display: block;
-  font-size: 8.5px;
-  font-weight: 800;
-  color: #C85841;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.dash-deadline-info strong {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.3;
-}
-
-.dash-deadline-info small {
-  display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #64748b;
   margin-top: 2px;
 }
 
-/* 11. MOBILE BOTTOM NAVIGATION */
+.dash-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.dash-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Modals & mobile account sheet                                     */
+/* ---------------------------------------------------------------- */
+.dash-modal-backdrop,
+.dash-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.dash-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dash-sheet-backdrop {
+  align-items: end;
+  padding: 0;
+}
+
+.dash-sheet {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 16px 16px 0 0;
+  padding: 14px 12px calc(16px + env(safe-area-inset-bottom));
+  display: grid;
+  gap: 2px;
+  box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.18);
+}
+
+.dash-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 6px;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- */
+/* Mobile bottom navigation                                          */
+/* ---------------------------------------------------------------- */
 .edureach-bottom-nav {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
+  height: 58px;
   background: #ffffff;
   border-top: 1px solid #e2e8f0;
   z-index: 100;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .edureach-bottom-nav-inner {
@@ -657,7 +1029,7 @@
   align-items: center;
   justify-content: space-around;
   height: 100%;
-  max-width: 500px;
+  max-width: 520px;
   margin: 0 auto;
 }
 
@@ -666,31 +1038,36 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   text-decoration: none;
   color: #64748b;
-  font-size: 9.5px;
+  font-size: 11px;
   font-weight: 700;
   background: none;
   border: 0;
   cursor: pointer;
-  padding: 4px 10px;
+  padding: 4px 8px;
+  min-width: 56px;
+  font-family: inherit;
 }
 
 .edureach-bottom-link.active {
-  color: #C85841;
+  color: #c85841;
   font-weight: 900;
 }
 
-/* 12. RESPONSIVE BREAKPOINTS */
+/* ---------------------------------------------------------------- */
+/* Responsive                                                        */
+/* ---------------------------------------------------------------- */
 @media (max-width: 1080px) {
   .edureach-dash-body {
-    grid-template-columns: 180px minmax(0, 1fr);
+    grid-template-columns: 196px minmax(0, 1fr);
   }
-  .edureach-dash-rail {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 900px) {
+  .dash-tools-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -698,27 +1075,66 @@
   .edureach-dash-body {
     grid-template-columns: 1fr;
     padding: 10px;
-    padding-bottom: 70px; /* space for mobile bottom nav */
+    padding-bottom: 76px; /* space for the bottom nav */
   }
-  .edureach-dash-sidebar {
-    display: none; /* replaced by compact bottom nav */
-  }
-  .edureach-dash-search {
+
+  .edureach-dash-sidebar,
+  .edureach-dash-search,
+  .dash-hide-mobile,
+  .dash-desktop-only {
     display: none;
   }
-  .edureach-dash-rail {
-    grid-template-columns: 1fr;
+
+  .dash-mobile-only {
+    display: grid;
   }
-  .dash-quick-grid {
-    grid-template-columns: repeat(2, 1fr);
+
+  .edureach-dash-bar {
+    padding: 0 12px;
   }
-  .dash-actions-grid {
-    grid-template-columns: 1fr;
-  }
+
+  .dash-quick-grid,
   .dash-metric-strip {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .dash-profile-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-card {
+    padding: 12px;
+  }
+
+  .dash-page-title,
+  .dash-welcome-title {
+    font-size: 18px;
+  }
+
+  .dash-cgpa-row {
+    grid-template-columns: minmax(0, 1fr) 64px 84px 34px;
+  }
+
+  .dash-finder-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-list {
+    max-height: none;
+  }
+
   .edureach-bottom-nav {
     display: block;
+  }
+}
+
+@media (max-width: 420px) {
+  .dash-btn-row,
+  .dash-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-list-row {
+    flex-wrap: wrap;
   }
 }

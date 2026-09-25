@@ -19,6 +19,7 @@ export default function FilterPills({
           key={option.id}
           type="button"
           className={active === option.id ? 'er-pill active' : 'er-pill'}
+          aria-pressed={active === option.id}
           onClick={() => onChange(option.id)}
         >
           {option.label}
