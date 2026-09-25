@@ -4,6 +4,7 @@ import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { FeaturedNews, NewsRow } from '../src/components/NewsSections';
 import { fetchNews, type NewsItem } from '../src/lib/api';
+import { SkeletonRows } from '../src/components/Skeleton';
 
 const filters = [
   { id: 'ALL', label: 'All News' },
@@ -14,18 +15,41 @@ const filters = [
   { id: 'nelfund', label: 'NELFUND Loan' },
 ];
 
+function readCategoryFromUrl() {
+  if (typeof window === 'undefined') return 'ALL';
+  const requested = new URLSearchParams(window.location.search).get('category')?.trim().toLowerCase();
+  return filters.some((item) => item.id === requested) ? (requested as string) : 'ALL';
+}
+
 export default function NewsPage() {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [activeFilter, setActiveFilter] = useState(() => readCategoryFromUrl());
+
+  async function loadNews() {
+    setLoading(true);
+    setError('');
+    try {
+      setItems(await fetchNews());
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Unable to load news.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    void fetchNews()
-      .then(setItems)
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load news.'))
-      .finally(() => setLoading(false));
+    const syncFilter = () => setActiveFilter(readCategoryFromUrl());
+    window.addEventListener('popstate', syncFilter);
+    void loadNews();
+    return () => window.removeEventListener('popstate', syncFilter);
   }, []);
+
+  function changeFilter(next: string) {
+    setActiveFilter(next);
+    window.history.replaceState({}, '', next === 'ALL' ? '/news' : `/news?category=${encodeURIComponent(next)}`);
+  }
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'ALL') return items;
@@ -51,11 +75,16 @@ export default function NewsPage() {
           </div>
 
           <div style={{ marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-            <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="News categories" />
+            <FilterPills options={filters} active={activeFilter} onChange={changeFilter} ariaLabel="News categories" />
           </div>
 
-          {loading && <div className="hub-panel hub-empty">Loading updates…</div>}
-          {error && <div className="hub-form-error">{error}</div>}
+          {loading && <SkeletonRows rows={5} label="Loading updates" />}
+          {error && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <span>{error}</span>
+              <button type="button" className="hub-outline-btn" onClick={() => void loadNews()} disabled={loading}>Try again</button>
+            </div>
+          )}
           {!loading && !error && !filteredItems.length && (
             <div className="hub-panel hub-empty">No announcements found matching this category.</div>
           )}

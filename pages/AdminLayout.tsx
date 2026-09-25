@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   ListChecks,
   Newspaper,
-  Ticket,
   Users,
 } from 'lucide-react';
 import { NavLink, useNavigate } from './AdminNav';
@@ -93,7 +92,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavLink href="/admin/queue" icon={<ListChecks size={15} />}>Service Queue</NavLink>
           <NavLink href="/admin/cbt" icon={<Laptop size={15} />}>CBT Question Bank</NavLink>
           <NavLink href="/admin/news" icon={<Newspaper size={15} />}>Newsroom CMS</NavLink>
-          <NavLink href="/admin/vouchers" icon={<Ticket size={15} />}>Scratch Card Inventory</NavLink>
           <NavLink href="/admin/users" icon={<Users size={15} />}>Student Accounts</NavLink>
           <NavLink href="/" icon={<Globe size={15} />}>View Public Site</NavLink>
         </nav>
@@ -101,8 +99,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="admin-sidebar-footer">
         <div className="admin-health-card"><div><span>Backend</span><b>{backend}</b></div><div><span>Session</span><b>Active</b></div></div>
         <div className="admin-user-email">{session.email}</div>
-        <button className="admin-btn secondary" onClick={() => { window.sessionStorage.setItem('edureach-admin-student-view', '1'); navigate('/dashboard?view=student'); }}>View Student Site</button>
-        <button className="admin-logout" onClick={logout}>Terminate Admin Session</button>
+        <button type="button" className="admin-btn secondary" onClick={() => { window.sessionStorage.setItem('edureach-admin-student-view', '1'); navigate('/dashboard?view=student'); }}>View Student Site</button>
+        <button type="button" className="admin-logout" onClick={logout}>Terminate Admin Session</button>
       </div>
     </aside>
     <div className="admin-workspace"><header className="admin-topbar"><span>Production Node: <code>edureach-prod</code></span><span className="admin-health-pill"><i /> Admin Session</span></header><main className="admin-main">{children}</main></div>

@@ -1,19 +1,26 @@
-import { Search } from 'lucide-react';
+import { MessageSquare, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import ServiceCard from '../src/components/ServiceCard';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
+import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
+import { SkeletonRows } from '../src/components/Skeleton';
 
 function initialServiceSearch() {
   return new URLSearchParams(window.location.search).get('q') ?? '';
 }
 
+function initialServiceFilter() {
+  const value = new URLSearchParams(window.location.search).get('filter') ?? 'ALL';
+  return filters.some((item) => item.id === value) ? value : 'ALL';
+}
+
 const filters = [
   { id: 'ALL', label: 'All Services' },
   { id: 'LOAN', label: 'NELFUND Loans' },
-  { id: 'EXAMS', label: 'Result & Scratch Cards' },
+  { id: 'EXAMS', label: 'Result services' },
   { id: 'ADMISSION', label: 'Admission Letters' },
 ];
 
@@ -22,13 +29,31 @@ export default function ServicesCatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState(initialServiceSearch);
-  const [activeFilter, setActiveFilter] = useState('ALL');
+  const [activeFilter, setActiveFilter] = useState(initialServiceFilter);
+
+  async function loadServices() {
+    setLoading(true);
+    setError('');
+    try {
+      setServices(await fetchServices());
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Unable to load services.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    void fetchServices()
-      .then(setServices)
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load services.'))
-      .finally(() => setLoading(false));
+    void loadServices();
+  }, []);
+
+  useEffect(() => {
+    const syncFromUrl = () => {
+      setSearch(initialServiceSearch());
+      setActiveFilter(initialServiceFilter());
+    };
+    window.addEventListener('popstate', syncFromUrl);
+    return () => window.removeEventListener('popstate', syncFromUrl);
   }, []);
 
   const filteredServices = useMemo(() => {
@@ -43,8 +68,7 @@ export default function ServicesCatalogPage() {
         return (
           srv.service_key.includes('waec') ||
           srv.service_key.includes('neco') ||
-          srv.service_key.includes('result') ||
-          srv.service_key.includes('scratch')
+          srv.service_key.includes('result')
         );
       if (activeFilter === 'ADMISSION')
         return (
@@ -55,6 +79,23 @@ export default function ServicesCatalogPage() {
       return true;
     });
   }, [services, search, activeFilter]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (search.trim()) params.set('q', search.trim());
+    else params.delete('q');
+    if (activeFilter !== 'ALL') params.set('filter', activeFilter);
+    else params.delete('filter');
+    const query = params.toString();
+    window.history.replaceState(window.history.state, '', query ? `/services?${query}` : '/services');
+    if (!search.trim() || !filteredServices.length) return;
+    window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>('.er-service-card');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target?.classList.add('is-search-focus');
+      window.setTimeout(() => target?.classList.remove('is-search-focus'), 1800);
+    });
+  }, [activeFilter, filteredServices, search]);
 
   return (
     <HubLayout>
@@ -80,14 +121,7 @@ export default function ServicesCatalogPage() {
                 Services
               </h1>
             </div>
-
-            <a
-              className="hub-outline-btn"
-              href="/services/track"
-              style={{ textDecoration: 'none', fontSize: '12px', padding: '7px 14px' }}
-            >
-              Track Existing Request →
-            </a>
+            <a className="hub-outline-btn" href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent('Hello EduReach, I need help choosing a student service.')}`} target="_blank" rel="noopener noreferrer"><MessageSquare size={14} /> Talk to Us</a>
           </div>
 
           <div
@@ -110,7 +144,7 @@ export default function ServicesCatalogPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search services (e.g. NELFUND, Scratch card, JAMB slip)..."
+                placeholder="Search services (e.g. NELFUND, result checking, JAMB slip)..."
                 aria-label="Search services"
                 style={{ border: 0, outline: 0, width: '100%', fontSize: '13px', color: '#0f172a' }}
               />
@@ -129,8 +163,13 @@ export default function ServicesCatalogPage() {
             <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="Service categories" />
           </div>
 
-          {loading && <div className="hub-panel hub-empty">Loading student services…</div>}
-          {error && <div className="hub-form-error">{error}</div>}
+          {loading && <SkeletonRows rows={4} label="Loading student services" />}
+          {error && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <span>{error}</span>
+              <button type="button" className="hub-outline-btn" onClick={() => void loadServices()} disabled={loading}>Try again</button>
+            </div>
+          )}
           {!loading && !error && !filteredServices.length && (
             <div className="hub-panel hub-empty">No student services matched your search filter.</div>
           )}
@@ -139,8 +178,8 @@ export default function ServicesCatalogPage() {
             <section className="er-section" style={{ marginTop: 0 }}>
               <SectionHead
                 title={`${filteredServices.length} active service${filteredServices.length === 1 ? '' : 's'}`}
-                href="/services/track"
-                linkLabel="Track a request"
+                href="/services"
+                linkLabel="Browse all services"
               />
               <div className="er-service-grid">
                 {filteredServices.map((service) => <ServiceCard key={service.id} service={service} />)}
