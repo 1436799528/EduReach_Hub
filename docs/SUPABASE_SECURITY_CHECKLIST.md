@@ -78,6 +78,7 @@ Expected principles:
 - Student result/question RPCs are callable only by `authenticated` and enforce `auth.uid()` ownership where applicable.
 - Admin audit and payment-credit functions are callable only through the server-side role.
 - The retired public request lookup is not callable by browser roles.
+- The unused `get_campus_feed_profiles(uuid[])` RPC is not callable by browser roles.
 - No SECURITY DEFINER routine relies on a mutable non-empty search path.
 - Function owners and grants are reviewed against the intended server/RPC boundary, not accepted solely because a function exists.
 
