@@ -11,7 +11,7 @@ function worker() {
     URL, Response,
     self: { location: { origin: 'https://example.test' }, addEventListener: (name: string, fn: any) => { handlers[name] = fn; }, clients: { claim: async () => {} }, skipWaiting: async () => {} },
     caches: {
-      keys: async () => ['edureach-shell-v3', 'edureach-dynamic-v3', 'unrelated-app'],
+      keys: async () => ['edureach-shell-v4', 'edureach-dynamic-v4', 'unrelated-app'],
       delete: async (key: string) => { deleted.push(key); },
       match: async () => undefined,
       open: async () => ({ addAll: async () => {}, put: async (req: Request) => { cached.push(req.url); } }),
@@ -38,7 +38,7 @@ test('activation purges old EduReach data caches only', async () => {
   let task: Promise<void>;
   handlers.activate({ waitUntil: (promise: Promise<void>) => { task = promise; } });
   await task!;
-  assert.deepEqual(deleted, ['edureach-shell-v3', 'edureach-dynamic-v3']);
+  assert.deepEqual(deleted, ['edureach-shell-v4', 'edureach-dynamic-v4']);
 });
 test('offline navigation returns an actual response, never undefined', async () => {
   const { handlers, context } = worker();
@@ -49,11 +49,11 @@ test('offline navigation returns an actual response, never undefined', async () 
   assert.equal(response.status, 503);
   assert.match(await response.text(), /offline/);
 });
-test('public assets are cloned before consumption and cached with waitUntil', async () => {
+test('stable public assets are cloned before consumption and cached with waitUntil', async () => {
   const { handlers, cached } = worker();
   let response: Promise<Response>;
   const tasks: Promise<void>[] = [];
-  handlers.fetch({ request: new Request('https://example.test/assets/app.js'), respondWith: (promise: Promise<Response>) => { response = promise; }, waitUntil: (promise: Promise<void>) => tasks.push(promise) });
+  handlers.fetch({ request: new Request('https://example.test/icons/logo.png'), respondWith: (promise: Promise<Response>) => { response = promise; }, waitUntil: (promise: Promise<void>) => tasks.push(promise) });
   assert.equal(await (await response!).text(), 'asset');
   await Promise.all(tasks);
   assert.deepEqual(cached, ['https://example.test/assets/app.js']);
