@@ -40,8 +40,10 @@ function analyticsSessionId() {
   }
 }
 
+const API_BASE_PATH = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
+
 function recordPageView(pathname: string) {
-  void fetch('/api/analytics/event', {
+  void fetch(`${API_BASE_PATH}/analytics/event`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     keepalive: true,
