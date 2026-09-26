@@ -1807,15 +1807,29 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
       const withoutIds = chunk.filter(item => !item.values.id);
       if (withoutIds.length) {
         const { error } = await supabase.from(resource.table).insert(withoutIds.map(item => item.values));
-        if (error) {
-          errors.push(...withoutIds.map(item => ({ row: item.index + 2, error: error.message })));
-        } else inserted += withoutIds.length;
+        if (!error) {
+          inserted += withoutIds.length;
+        } else {
+          // Bulk-first; only fall back to individual rows when a mixed batch is rejected.
+          for (const item of withoutIds) {
+            const single = await supabase.from(resource.table).insert(item.values);
+            if (single.error) errors.push({ row: item.index + 2, error: single.error.message });
+            else inserted += 1;
+          }
+        }
       }
       if (withIds.length) {
         const { error } = await supabase.from(resource.table).upsert(withIds.map(item => item.values), { onConflict: 'id', ignoreDuplicates: false });
-        if (error) {
-          errors.push(...withIds.map(item => ({ row: item.index + 2, error: error.message })));
-        } else updated += withIds.length;
+        if (!error) {
+          updated += withIds.length;
+        } else {
+          // Bulk-first; only fall back to individual rows when a mixed batch is rejected.
+          for (const item of withIds) {
+            const single = await supabase.from(resource.table).upsert(item.values, { onConflict: 'id', ignoreDuplicates: false });
+            if (single.error) errors.push({ row: item.index + 2, error: single.error.message });
+            else updated += 1;
+          }
+        }
       }
     }
     res.json({ inserted, updated, errors });
