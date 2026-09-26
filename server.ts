@@ -1291,73 +1291,22 @@ app.get('/api/news/:slug', async (req, res) => {
 
 app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   try {
-    const { supabase, user } = await requireUser(req);
-    const { data: exam, error: examError } = await supabase.from('cbt_exams').select('id,title,duration_minutes,subject,is_active').eq('id', req.params.examId).eq('is_active', true).single();
-    if (examError || !exam) return res.status(404).json({ error: 'CBT exam not found.' });
-    const { count, error: countError } = await supabase.from('exam_questions').select('id', { count: 'exact', head: true }).eq('exam_id', exam.id);
-    if (countError) throw countError;
-    if (!count) return res.status(422).json({ error: 'This CBT exam has no questions yet.' });
-    const now = new Date();
-    const { data: existingAttempt } = await supabase
-      .from('cbt_attempts')
-      .select('id,started_at,expires_at,total_questions,status')
-      .eq('user_id', user.id)
-      .eq('exam_id', exam.id)
-      .eq('status', 'in_progress')
-      .maybeSingle();
-
-    if (existingAttempt) {
-      const existingExpiry = existingAttempt.expires_at ? new Date(existingAttempt.expires_at) : null;
-      if (!existingExpiry || existingExpiry.getTime() > now.getTime()) {
-        return res.status(200).json({
-          attemptId: existingAttempt.id,
-          startedAt: existingAttempt.started_at,
-          expiresAt: existingAttempt.expires_at,
-          totalQuestions: existingAttempt.total_questions,
-        });
-      }
-      await supabase
-        .from('cbt_attempts')
-        .update({ status: 'expired', updated_at: now.toISOString() })
-        .eq('id', existingAttempt.id)
-        .eq('status', 'in_progress');
-    }
-
-    const startedAt = now;
-    const expiresAt = new Date(startedAt.getTime() + exam.duration_minutes * 60 * 1000);
-    const { data: attempt, error: attemptError } = await supabase.from('cbt_attempts').insert({
-      user_id: user.id,
-      exam_id: exam.id,
-      status: 'in_progress',
-      started_at: startedAt.toISOString(),
-      expires_at: expiresAt.toISOString(),
-      total_questions: count,
-    }).select('id,started_at,expires_at,total_questions').single();
-    if (attemptError || !attempt) {
-      if (attemptError?.code === '23505') {
-        const { data: retryAttempt } = await supabase
-          .from('cbt_attempts')
-          .select('id,started_at,expires_at,total_questions')
-          .eq('user_id', user.id)
-          .eq('exam_id', exam.id)
-          .eq('status', 'in_progress')
-          .maybeSingle();
-        if (retryAttempt) {
-          return res.status(200).json({
-            attemptId: retryAttempt.id,
-            startedAt: retryAttempt.started_at,
-            expiresAt: retryAttempt.expires_at,
-            totalQuestions: retryAttempt.total_questions,
-          });
-        }
-      }
-      throw attemptError || new Error('Unable to start CBT attempt.');
-    }
-    res.status(201).json({ attemptId: attempt.id, startedAt: attempt.started_at, expiresAt: attempt.expires_at, totalQuestions: attempt.total_questions });
+    const { supabase } = await requireUser(req);
+    const { data, error } = await supabase.rpc('start_cbt_attempt', { p_exam_id: req.params.examId });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return res.status(404).json({ error: 'Unable to start this CBT exam.' });
+    res.status(201).json({
+      attemptId: row.attempt_id,
+      startedAt: row.started_at,
+      expiresAt: row.expires_at,
+      totalQuestions: row.total_questions,
+    });
   } catch (error) {
     console.error('CBT start API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
-    res.status(message.includes('Authentication') || message.includes('session') ? 401 : 500).json({ error: message });
+    const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /no questions/i.test(message) ? 422 : 409;
+    res.status(status).json({ error: message });
   }
 });
 
@@ -1533,45 +1482,29 @@ app.get('/api/cbt/exams/:examId/questions', async (req, res) => {
 
 app.post('/api/cbt/submit', async (req, res) => {
   try {
-    const { supabase, user } = await requireUser(req);
+    const { supabase } = await requireUser(req);
     const { attemptId, examId, answers } = req.body as { attemptId?: string; examId?: string; answers?: Record<string, unknown> };
-    if (!attemptId || !examId || !answers || typeof answers !== 'object' || Array.isArray(answers)) return res.status(400).json({ error: 'attemptId, examId and answers are required.' });
-    const { data: attempt, error: attemptError } = await supabase.from('cbt_attempts').select('id,exam_id,status,user_id,started_at,expires_at').eq('id', attemptId).eq('user_id', user.id).eq('exam_id', examId).single();
-    if (attemptError || !attempt) return res.status(404).json({ error: 'CBT attempt not found.' });
-    if (attempt.status !== 'in_progress') return res.status(409).json({ error: 'This CBT attempt has already been submitted.' });
-    const now = new Date();
-    if (attempt.expires_at && now.getTime() > new Date(attempt.expires_at).getTime()) {
-      await supabase.from('cbt_attempts').update({ status: 'expired', updated_at: now.toISOString() }).eq('id', attempt.id);
-      return res.status(409).json({ error: 'This CBT attempt has expired.' });
+    if (!attemptId || !examId || !answers || typeof answers !== 'object' || Array.isArray(answers)) {
+      return res.status(400).json({ error: 'attemptId, examId and answers are required.' });
     }
-    const { data: questions, error: questionsError } = await supabase.from('exam_questions').select('id,position,correct_option,explanation').eq('exam_id', examId).order('position', { ascending: true });
-    if (questionsError) throw questionsError;
-    if (!questions?.length) return res.status(422).json({ error: 'This CBT exam has no questions yet.' });
-    const breakdown = questions.map(question => {
-      const raw = answers[String(question.position)];
-      const valid = raw === null || raw === undefined || (typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 && raw <= 3);
-      if (!valid) throw new Error(`Invalid answer for question ${question.position}.`);
-      const selected = raw === undefined || raw === null ? null : Number(raw);
-      const selectedOption = selected === null ? null : String.fromCharCode(65 + selected);
-      const correctIndex = question.correct_option.charCodeAt(0) - 65;
-      return { question: question.position, selected, correct: correctIndex, isCorrect: selectedOption === question.correct_option, explanation: question.explanation || undefined, questionId: question.id };
+    const { data, error } = await supabase.rpc('submit_cbt_attempt', {
+      p_attempt_id: attemptId,
+      p_exam_id: examId,
+      p_answers: answers,
     });
-    for (const key of Object.keys(answers)) {
-      if (!questions.some(q => String(q.position) === key)) return res.status(400).json({ error: 'Submission contains an invalid question.' });
-    }
-    const correctAnswers = breakdown.filter(x => x.isCorrect).length;
-    const totalQuestions = questions.length;
-    const score = Number(((correctAnswers / totalQuestions) * 100).toFixed(2));
-    const { error: attemptUpdateError } = await supabase.from('cbt_attempts').update({ status:'submitted', submitted_at:now.toISOString(), score, correct_answers:correctAnswers, total_questions:totalQuestions, updated_at:now.toISOString() }).eq('id', attempt.id).eq('status','in_progress');
-    if (attemptUpdateError) throw attemptUpdateError;
-    const answerRows = breakdown.map(q => ({ attempt_id: attempt.id, question_id:q.questionId, selected_option:q.selected === null ? null : String.fromCharCode(65 + q.selected), is_correct:q.isCorrect }));
-    const { error: answersError } = await supabase.from('cbt_answers').upsert(answerRows, { onConflict:'attempt_id,question_id' });
-    if (answersError) throw answersError;
-    res.json({ attemptId: attempt.id, score, breakdown: breakdown.map(({question,selected,correct,explanation}) => ({question,selected,correct,explanation})) });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return res.status(409).json({ error: 'CBT submission did not produce a result.' });
+    res.json({
+      attemptId: row.attempt_id,
+      score: Number(row.score),
+      breakdown: row.breakdown || [],
+    });
   } catch (error) {
     console.error('CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
-    res.status(message.includes('Authentication') || message.includes('session') ? 401 : 400).json({ error: message });
+    const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
+    res.status(status).json({ error: message });
   }
 });
 
