@@ -1,8 +1,14 @@
-import { Suspense, useEffect, useRef, useState, useTransition } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useTransition } from 'react';
 import ErrorBoundary from './ErrorBoundary';
 import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
 import { pageTitleFor } from '../lib/pageMeta';
+
+// The admin console keeps ONE mounted shell (sidebar, top bar, session state)
+// across every /admin route; only the inner content area re-renders. This is
+// what stops the console from showing "verifying administrator…" on every
+// internal navigation.
+const AdminShell = lazy(() => import('../../pages/AdminLayout'));
 
 function scrollForNavigation(hash: string) {
   if (hash) {
@@ -135,10 +141,19 @@ export default function App() {
       {isPending && <div className="er-route-progress is-pending" aria-hidden="true" />}
       {/* Suspense stays mounted across routes (only the inner tree is keyed) so a
           transition keeps the current page visible while the next chunk loads;
-          the skeleton fallback only appears on a cold load. */}
-      <Suspense fallback={<RouteFallback />}>
-        <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
-      </Suspense>
+          the skeleton fallback only appears on a cold load. Admin routes wrap
+          the keyed content in a single persistent console shell. */}
+      {locationState.pathname.startsWith('/admin') ? (
+        <Suspense fallback={<RouteFallback />}>
+          <AdminShell>
+            <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+          </AdminShell>
+        </Suspense>
+      ) : (
+        <Suspense fallback={<RouteFallback />}>
+          <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+        </Suspense>
+      )}
     </>
   );
 }

@@ -35,7 +35,7 @@ documented as gaps, not invented.
 | Area | Why it is not an Admin section |
 |---|---|
 | Faculties / departments / programmes / courses | No such tables exist; school detail data is part of the maintained static catalogue. Inventing four CRUD screens over non-existent tables would violate the source-of-truth rule. |
-| Past-question PDFs | Curated static data + Scribd/WhatsApp hand-off by design (see `docs/DATA_SOURCES.md`); `edureach_material_notes` is student-owned, not staff content. A staff-managed materials table remains a documented candidate if the product wants editable material listings. |
+| Past-question PDFs | First-party only since 2026-09-27 (Scribd removed): CBT banks are admin-managed in the CBT Manager (`cbt_exams`/`exam_questions`); material cards without a configured bank route to EduReach's own request channel, never a third-party platform (see `docs/DATA_SOURCES.md`). `edureach_material_notes` is student-owned, not staff content. |
 | Site settings / nav visibility / homepage content | No `site_settings` table exists; homepage composition is code-owned (component rules). Static configuration belongs in code per the source-of-truth rule. |
 | AI content tools | Explicitly out of scope: the CMS is human-controlled. |
 

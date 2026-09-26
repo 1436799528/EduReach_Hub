@@ -12,6 +12,9 @@ import {
   secondarySubjectTracks,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
+import { fetchCbtExams } from '../src/lib/api';
+import { isSupabaseConfigured } from '../src/lib/supabase';
+import { durationOptionsFor, resolveSetupExam, type CatalogExam } from '../src/lib/cbt-config';
 
 type SetupCopy = {
   eyebrow: string;
@@ -21,33 +24,36 @@ type SetupCopy = {
   logo: string;
 };
 
+// `duration` is only the unconfigured-local-preview label. When a backend is
+// configured the setup page shows the exam's real configured default duration
+// from the CBT catalogue — never a hard-coded time.
 const setupCopy: Record<ExamSetupKey, SetupCopy> = {
   jamb: {
     eyebrow: 'JAMB CBT entry',
     title: 'Choose your JAMB course and subjects',
     intro: 'Enter the practice hall with a subject combination that matches the course you want to study. Use of English is selected by default because it is compulsory for UTME candidates.',
-    duration: '30-minute practice session',
+    duration: 'Practice session',
     logo: '/icons/brands/jamb.png',
   },
   waec: {
     eyebrow: 'WAEC CBT entry',
     title: 'Set up your WAEC practice plan',
     intro: 'Settle in first: learn how the CBT works, then choose the nine subjects you are offering. Your selections are carried into the practice hall.',
-    duration: '45-minute practice session',
+    duration: 'Practice session',
     logo: '/icons/brands/waec.webp',
   },
   neco: {
     eyebrow: 'NECO CBT entry',
     title: 'Set up your NECO practice plan',
     intro: 'Read the short exam guide and choose the nine subjects you are offering before you begin your NECO practice session.',
-    duration: '40-minute practice session',
+    duration: 'Practice session',
     logo: '/icons/brands/neco.webp',
   },
   'post-utme': {
     eyebrow: 'Post-UTME CBT entry',
     title: 'Choose your school before you practise',
     intro: 'Post-UTME tests are school-specific. Select an institution from the active Post-UTME practice catalogue so the hall can show the right preparation context.',
-    duration: '25-minute practice session',
+    duration: 'Practice session',
     logo: '/icons/brands/jamb.png',
   },
 };
@@ -89,6 +95,12 @@ function readSetupMemory(exam: ExamSetupKey): SetupMemory {
 
 export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const copy = setupCopy[exam];
+  // Production CBT configuration (single source of truth). `targetExam` is the
+  // concrete exam this setup session will start; its configured default
+  // duration drives everything the student sees before the timer begins.
+  const [catalogExams, setCatalogExams] = useState<CatalogExam[]>([]);
+  const [targetExam, setTargetExam] = useState<CatalogExam | null>(null);
+  const [chosenMinutes, setChosenMinutes] = useState<number | null>(null);
   const [memory] = useState(() => readSetupMemory(exam));
   const [department, setDepartment] = useState(memory.department || 'All departments');
   const [courseName, setCourseName] = useState(memory.courseName || jambCourses[0].name);
@@ -121,6 +133,31 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       // Session storage may be unavailable; the form remains usable in memory.
     }
   }, [courseName, department, exam, jambSubjects, schoolId, schoolSubjects, secondarySubjects, secondaryTrack]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let active = true;
+    const requestedId = new URLSearchParams(window.location.search).get('exam');
+    void fetchCbtExams()
+      .then((exams) => {
+        if (!active) return;
+        const typed = exams as CatalogExam[];
+        setCatalogExams(typed);
+        const resolved = resolveSetupExam(typed, exam, requestedId);
+        setTargetExam(resolved);
+        setChosenMinutes(resolved ? resolved.duration_minutes : null);
+      })
+      .catch(() => {
+        // The catalogue read failed; the setup page remains usable and the
+        // practice hall will surface the honest question-bank error state.
+        if (active) setTargetExam(null);
+      });
+    return () => { active = false; };
+  }, [exam]);
+
+  const defaultMinutes = targetExam?.duration_minutes ?? null;
+  const durationChoices = defaultMinutes ? durationOptionsFor(defaultMinutes) : [];
+  const effectiveMinutes = chosenMinutes ?? defaultMinutes;
 
   const filteredCourses = useMemo(
     () => department === 'All departments' ? jambCourses : jambCourses.filter((course) => course.department === department),
@@ -191,8 +228,11 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       return;
     }
 
-    const examId = `practice-exam-${exam}`;
+    // Prefer the concrete production exam id; fall back to the stable local
+    // preview id only when no catalogue is configured/resolvable.
+    const examId = targetExam?.id || `practice-exam-${exam}`;
     const params = new URLSearchParams({ exam: examId });
+    if (effectiveMinutes) params.set('duration', String(effectiveMinutes));
     if (exam === 'jamb') {
       params.set('course', courseName);
       params.set('department', selectedCourse.department);
@@ -217,7 +257,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
               <span className="hub-eyebrow">{copy.eyebrow}</span>
               <h1>{copy.title}</h1>
               <p>{copy.intro}</p>
-              <span className="er-setup-duration"><Clock3 size={14} /> {copy.duration}</span>
+              <span className="er-setup-duration"><Clock3 size={14} /> {defaultMinutes ? `Default time: ${defaultMinutes} minutes` : copy.duration}</span>
             </div>
           </section>
 
@@ -333,6 +373,33 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <CheckCircle2 size={18} />
                   <div><strong>{selectedSchool.examLabel}</strong><span>{selectedSchool.subjects.join(' · ')}</span><small>Only schools with an active Post-UTME practice profile are listed here. Check the school’s current admission notice before applying.</small></div>
                 </div>
+              </div>
+            )}
+
+            {durationChoices.length > 0 && defaultMinutes !== null && (
+              <div className="er-setup-duration-picker er-setup-full-width">
+                <span className="er-setup-label">Session length</span>
+                <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose your practice duration">
+                  {durationChoices.map((minutes) => {
+                    const isDefault = minutes === defaultMinutes;
+                    const isSelected = (effectiveMinutes ?? defaultMinutes) === minutes;
+                    return (
+                      <button
+                        key={minutes}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        className={`er-setup-duration-option${isSelected ? ' is-selected' : ''}`}
+                        onClick={() => setChosenMinutes(minutes)}
+                      >
+                        {minutes} min{isDefault ? ' · default' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="er-setup-field-note">
+                  Default time for this exam is {defaultMinutes} minutes. The countdown starts only when you enter the practice hall.
+                </p>
               </div>
             )}
 

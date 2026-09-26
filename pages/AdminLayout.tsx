@@ -20,71 +20,124 @@ import { useAdminHealth } from '../src/components/admin/AdminKit';
 
 type AdminSession = { id: string; email: string; fullName: string; role: 'admin' };
 
+// ---------------------------------------------------------------------------
+// Module-scoped admin session cache.
+//
+// The admin shell mounts once for the whole console (see App.tsx), so a normal
+// page change never re-verifies anything. The cache additionally covers the
+// cases where the shell is remounted (cold load of an /admin deep link, or
+// returning from the public site): a recent verified session renders the
+// console immediately while a silent revalidation runs in the background.
+// The full-page "Verifying administrative access…" state only appears when
+// there is no known session at all.
+// ---------------------------------------------------------------------------
+
+const SESSION_CACHE_TTL_MS = 15 * 60 * 1000;
+
+let sessionCache: { session: AdminSession; backend: string; verifiedAt: number } | null = null;
+
+export function clearAdminSessionCache() {
+  sessionCache = null;
+}
+
+async function verifyAdminSession(): Promise<{ session: AdminSession; backend: string } | null> {
+  const { data: { session: authSession } } = await supabase.auth.getSession();
+  if (!authSession?.access_token) return null;
+
+  const response = await fetch('/api/admin/session', {
+    headers: { Authorization: `Bearer ${authSession.access_token}` },
+  }).catch(() => null);
+  const body = response ? await response.json().catch(() => null) : null;
+  if (response?.ok && body?.user) {
+    return {
+      session: {
+        id: body.user.id,
+        email: body.user.email || '',
+        fullName: body.user.fullName || '',
+        role: 'admin',
+      },
+      backend: 'Connected',
+    };
+  }
+
+  // Keep the admin shell accessible when the local API is unavailable,
+  // while still requiring the authenticated Supabase account to have an
+  // explicit admin role in its own profile.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, full_name, role')
+    .eq('id', authSession.user.id)
+    .maybeSingle();
+
+  const role = String(profile?.role || '').toLowerCase();
+  if (['admin', 'super_admin', 'moderator'].includes(role)) {
+    return {
+      session: {
+        id: authSession.user.id,
+        email: authSession.user.email || '',
+        fullName: String(profile?.full_name || authSession.user.user_metadata?.full_name || ''),
+        role: 'admin',
+      },
+      backend: 'Profile fallback',
+    };
+  }
+  return null;
+}
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const health = useAdminHealth();
-  const [checking, setChecking] = useState(true);
-  const [session, setSession] = useState<AdminSession | null>(null);
-  const [backend, setBackend] = useState('Checking…');
+  const cached = sessionCache && Date.now() - sessionCache.verifiedAt < SESSION_CACHE_TTL_MS ? sessionCache : null;
+  const [checking, setChecking] = useState(!cached);
+  const [session, setSession] = useState<AdminSession | null>(cached?.session || null);
+  const [backend, setBackend] = useState(cached?.backend || 'Checking…');
 
   useEffect(() => {
     let active = true;
+
     async function check() {
-      setChecking(true);
+      // With a cached session the console is already interactive; revalidate
+      // quietly and only tear the session down if the server rejects it.
+      const blocking = !cached;
+      if (blocking) setChecking(true);
       try {
-        const { data: { session: authSession } } = await supabase.auth.getSession();
-        if (authSession?.access_token) {
-          const response = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${authSession.access_token}` } });
-          const body = await response.json().catch(() => null);
-          if (response.ok && body?.user) {
-            const user = body.user;
-            if (active) { setSession({ id: user.id, email: user.email || '', fullName: user.fullName || '', role: 'admin' }); setBackend('Connected'); setChecking(false); }
-            return;
-          }
-
-          // Keep the admin shell accessible when the local API is unavailable,
-          // while still requiring the authenticated Supabase account to have an
-          // explicit admin role in its own profile.
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('id, full_name, role')
-            .eq('id', authSession.user.id)
-            .maybeSingle();
-
-          const role = String(profile?.role || '').toLowerCase();
-          if (['admin', 'super_admin', 'moderator'].includes(role)) {
-            if (active) {
-              setSession({
-                id: authSession.user.id,
-                email: authSession.user.email || '',
-                fullName: String(profile?.full_name || authSession.user.user_metadata?.full_name || ''),
-                role: 'admin',
-              });
-              setBackend('Profile fallback');
-              setChecking(false);
-            }
-            return;
-          }
+        const result = await verifyAdminSession();
+        if (!active) return;
+        if (result) {
+          sessionCache = { session: result.session, backend: result.backend, verifiedAt: Date.now() };
+          setSession(result.session);
+          setBackend(result.backend);
+          setChecking(false);
+          return;
         }
-      } catch {
-        // Backend offline / not configured
-      }
-
-      if (active) {
+        sessionCache = null;
         setSession(null);
         setChecking(false);
         navigate('/login');
+      } catch {
+        // Network/backend hiccup: keep a cached session alive rather than
+        // locking an administrator out mid-navigation.
+        if (!active) return;
+        if (!cached) {
+          setSession(null);
+          setChecking(false);
+          navigate('/login');
+        }
       }
     }
+
     check();
     return () => { active = false; };
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function logout() {
     window.sessionStorage.removeItem('edureach-admin-student-view');
+    clearAdminSessionCache();
     await supabase.auth.signOut();
     navigate('/login');
   }
+
   if (checking) return <div className="admin-loading-screen">Verifying administrative access…</div>;
   if (!session) {
     return (

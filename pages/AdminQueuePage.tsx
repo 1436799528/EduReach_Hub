@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import AdminLayout from './AdminLayout';
 import {
   fetchAdminServiceRequests,
   updateAdminServiceRequest,
@@ -64,7 +63,6 @@ export default function AdminQueuePage() {
   }
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -129,6 +127,5 @@ export default function AdminQueuePage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }

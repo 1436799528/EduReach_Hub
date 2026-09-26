@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react';
-import AdminLayout from './AdminLayout';
 import {
   fetchAdminAnalytics,
   fetchAdminServiceRequests,
@@ -90,7 +89,6 @@ export default function AdminDashboardPage() {
   const num = (key: string) => Number(m[key] ?? 0);
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -211,7 +209,6 @@ export default function AdminDashboardPage() {
           </>
         )}
       </div>
-    </AdminLayout>
   );
 }
 

@@ -4,21 +4,31 @@ import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { FeaturedNews, NewsRow } from '../src/components/NewsSections';
 import { fetchNews, type NewsItem } from '../src/lib/api';
+import { newsCategories, newsCategoryMatches } from '../src/data/newsCategories';
 import { SkeletonRows } from '../src/components/Skeleton';
 
+// Category pills are the shared database-driven category list (the same slugs
+// the Admin Newsroom writes), so public filtering and admin authoring can
+// never drift apart.
 const filters = [
   { id: 'ALL', label: 'All News' },
-  { id: 'jamb', label: 'JAMB Updates' },
-  { id: 'admission', label: 'Admission Lists' },
-  { id: 'waec', label: 'WAEC News' },
-  { id: 'neco', label: 'NECO Updates' },
-  { id: 'nelfund', label: 'NELFUND Loan' },
+  ...newsCategories.map((category) => ({ id: category.slug, label: category.label })),
 ];
+
+// Legacy deep links (/news?category=admission, …) keep resolving to the
+// current category slugs instead of falling through to “All News”.
+const legacyCategoryAliases: Record<string, string> = {
+  admission: 'admissions',
+  funding: 'scholarships',
+  campus: 'school-updates',
+};
 
 function readCategoryFromUrl() {
   if (typeof window === 'undefined') return 'ALL';
-  const requested = new URLSearchParams(window.location.search).get('category')?.trim().toLowerCase();
-  return filters.some((item) => item.id === requested) ? (requested as string) : 'ALL';
+  const raw = new URLSearchParams(window.location.search).get('category')?.trim().toLowerCase();
+  if (!raw) return 'ALL';
+  const requested = legacyCategoryAliases[raw] || raw;
+  return filters.some((item) => item.id === requested) ? requested : 'ALL';
 }
 
 export default function NewsPage() {
@@ -53,8 +63,18 @@ export default function NewsPage() {
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'ALL') return items;
-    return items.filter((item) => item.category.toLowerCase().includes(activeFilter.toLowerCase()));
+    return items.filter((item) => newsCategoryMatches(item.category, activeFilter));
   }, [items, activeFilter]);
+
+  // The “Latest stories” list shows every published article; the two feature
+  // cards are already rendered above, so they are excluded there to avoid
+  // showing the same story twice back-to-back.
+  const latestItems = useMemo(() => {
+    if (activeFilter !== 'ALL') return filteredItems;
+    const flagged = filteredItems.filter((item) => item.featured);
+    const featuredIds = new Set((flagged.length ? flagged : filteredItems).slice(0, 2).map((item) => item.id));
+    return filteredItems.filter((item) => !featuredIds.has(item.id));
+  }, [activeFilter, filteredItems]);
 
   return (
     <HubLayout>
@@ -86,7 +106,11 @@ export default function NewsPage() {
             </div>
           )}
           {!loading && !error && !filteredItems.length && (
-            <div className="hub-panel hub-empty">No announcements found matching this category.</div>
+            <div className="hub-panel hub-empty">
+              {items.length
+                ? 'No announcements found matching this category.'
+                : 'No news content available yet. Verified education updates are published here as soon as they are ready.'}
+            </div>
           )}
 
           {!loading && !error && filteredItems.length > 0 && (
@@ -99,11 +123,15 @@ export default function NewsPage() {
               )}
               <section className="er-section" style={{ marginTop: 0 }}>
                 <SectionHead title={activeFilter === 'ALL' ? 'Latest stories' : 'Results'} />
-                <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
-                  {(activeFilter === 'ALL' ? filteredItems.slice(2) : filteredItems).map((item) => (
-                    <NewsRow key={item.id} item={item} />
-                  ))}
-                </div>
+                {latestItems.length > 0 ? (
+                  <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
+                    {latestItems.map((item) => (
+                      <NewsRow key={item.id} item={item} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="hub-panel hub-empty">No additional stories yet.</div>
+                )}
               </section>
             </>
           )}

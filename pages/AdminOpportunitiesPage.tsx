@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import AdminLayout from './AdminLayout';
 import {
   createAdminOpportunity,
   deleteAdminOpportunity,
@@ -123,7 +122,6 @@ export default function AdminOpportunitiesPage() {
   const visible = items.filter((item) => filter === 'all' ? true : item.category === filter);
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -240,6 +238,5 @@ export default function AdminOpportunitiesPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }

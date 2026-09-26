@@ -1,14 +1,11 @@
-import { CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Newspaper, Share2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import { fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { fetchNews, fetchNewsItem, type NewsItem } from '../src/lib/api';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
-import { newsThumbFor } from '../src/components/NewsSections';
+import { newsCategoryLabel } from '../src/data/newsCategories';
+import { formatNewsDate, NewsRow } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
-
-function labelFor(category: string) {
-  return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
 
 function safeContentUrl(value: string | null) {
   const raw = String(value || '').trim();
@@ -28,21 +25,49 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
+  const [related, setRelated] = useState<NewsItem[]>([]);
 
   useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError('');
+    setItem(null);
     void fetchNewsItem(slug)
-      .then(setItem)
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load this article.'))
-      .finally(() => setLoading(false));
+      .then((article) => active && setItem(article))
+      .catch((value) => active && setError(value instanceof Error ? value.message : 'Unable to load this article.'))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, [slug]);
+
+  // Related reading comes from the same published source as the listings —
+  // same-category stories first, then the newest remaining articles.
+  useEffect(() => {
+    if (!item) return;
+    let active = true;
+    void fetchNews()
+      .then((articles) => {
+        if (!active) return;
+        const others = articles.filter((article) => article.slug !== item.slug);
+        const sameCategory = others.filter((article) => article.category === item.category);
+        const rest = others.filter((article) => article.category !== item.category);
+        setRelated([...sameCategory, ...rest].slice(0, 4));
+      })
+      .catch(() => active && setRelated([]));
+    return () => { active = false; };
+  }, [item]);
 
   const safeImageUrl = safeContentUrl(item?.image_url || null);
   const safeSourceUrl = safeContentUrl(item?.source_url || null);
+  const tags = useMemo(() => item?.tags || [], [item]);
 
   return (
     <HubLayout>
       <div className="hub-page">
         <div className="hub-container hub-narrow">
+          <a className="hub-text-btn" href="/news" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <ArrowLeft size={14} /> Back to News
+          </a>
+
           {loading && <SkeletonArticle />}
           {error && (
             <div className="hub-panel hub-empty" role="alert">
@@ -55,32 +80,34 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
           {!loading && !error && item && (
             <article className="hub-article">
               <div className="hub-news-meta">
-                <span>{labelFor(item.category)}</span>
+                <span>{newsCategoryLabel(item.category)}</span>
                 <span>By {item.author || 'EduReach Editorial Desk'}</span>
-                <span>
-                  {item.published_at
-                    ? new Date(item.published_at).toLocaleDateString('en-NG', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })
-                    : 'Date not supplied'}
-                </span>
+                <span>{formatNewsDate(item.published_at)}</span>
                 {item.verification_status === 'verified' && <span className="hub-verified"><CheckCircle2 size={13} /> Source checked</span>}
               </div>
 
               <h1>{item.title}</h1>
               {item.summary && <p className="hub-article-lead">{item.summary}</p>}
-              {safeImageUrl && (
+              {safeImageUrl ? (
                 <img
                   className="er-news-hero"
                   src={safeImageUrl}
                   alt={item.title}
                   onError={(event) => {
-                    event.currentTarget.onerror = null;
-                    event.currentTarget.src = newsThumbFor(item.category);
+                    // Never swap a broken article image for a generic photo —
+                    // replace it with the intentional no-image placeholder.
+                    const element = event.currentTarget;
+                    element.onerror = null;
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'er-news-hero er-news-noimage er-news-noimage-hero';
+                    element.replaceWith(placeholder);
                   }}
                 />
+              ) : (
+                <div className="er-news-hero er-news-noimage er-news-noimage-hero" aria-hidden="true">
+                  <Newspaper size={22} />
+                  <small>{newsCategoryLabel(item.category)}</small>
+                </div>
               )}
 
               <div className="hub-article-body">
@@ -94,11 +121,18 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                     .map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
               </div>
 
+              {tags.length > 0 && (
+                <div className="hub-article-tags">
+                  {tags.map((tag) => <span key={tag} className="hub-tag-chip">{tag}</span>)}
+                </div>
+              )}
+
               <div className="hub-verified-box">
                 <div>
                   <span className="hub-eyebrow">SOURCE</span>
                   <h3>Source information</h3>
                   <p>
+                    {item.author ? `Reported by ${item.author}. ` : ''}
                     {item.last_verified_at
                       ? `Last verified ${new Date(item.last_verified_at).toLocaleString('en-NG')}`
                       : 'Verification date not supplied.'}
@@ -133,6 +167,15 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                 </button>
                 {copyError && <small className="hub-muted-label" role="status">{copyError}</small>}
               </div>
+
+              {related.length > 0 && (
+                <section className="er-section" style={{ marginTop: '26px' }}>
+                  <h2 style={{ fontSize: 16, fontWeight: 900, margin: '0 0 10px' }}>Related updates</h2>
+                  <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
+                    {related.map((relatedItem) => <NewsRow key={relatedItem.id} item={relatedItem} />)}
+                  </div>
+                </section>
+              )}
             </article>
           )}
         </div>

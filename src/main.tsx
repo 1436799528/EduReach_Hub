@@ -17,6 +17,7 @@ import './styles/theme.css';
 import './compact-design-system.css';
 import './compact-structural.css';
 import './edu-portal.css';
+import './data-control.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

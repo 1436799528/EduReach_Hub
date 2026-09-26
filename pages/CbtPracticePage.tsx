@@ -69,6 +69,13 @@ function formatClock(totalSeconds: number) {
 export default function CbtPracticePage() {
   const { user: authUser, isLoading: authLoading } = useAuth();
   const requestedExamId = new URLSearchParams(window.location.search).get('exam') || 'practice-exam-jamb';
+  // Optional duration chosen on the setup page. It applies to guest/local
+  // sessions; signed-in attempts keep the server-enforced expiry from the
+  // exam's configured duration (single source of truth).
+  const requestedDurationRaw = Number(new URLSearchParams(window.location.search).get('duration'));
+  const requestedDuration = Number.isInteger(requestedDurationRaw) && requestedDurationRaw >= 5 && requestedDurationRaw <= 180
+    ? requestedDurationRaw
+    : null;
 
   const [examId, setExamId] = useState(requestedExamId);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -168,7 +175,8 @@ export default function CbtPracticePage() {
         setExamBody((data.exam as any).examBody || resolved.summary?.exam_body || '');
         if (data.exam.subject) setSubject(data.exam.subject);
         const examDurationMinutes = data.exam.durationMinutes || 30;
-        setDurationMinutes(examDurationMinutes);
+        const sessionMinutes = requestedDuration || examDurationMinutes;
+        setDurationMinutes(sessionMinutes);
 
         const saved = await getExamProgress(resolved.id).catch(() => null);
         if (saved && active) {
@@ -177,14 +185,14 @@ export default function CbtPracticePage() {
           setSeconds(saved.timeRemainingSeconds);
           if (Number.isInteger(saved.questionIndex)) setIndex(Math.max(0, Math.min(saved.questionIndex as number, data.questions.length - 1)));
         } else {
-          setSeconds(examDurationMinutes * 60);
+          setSeconds(sessionMinutes * 60);
         }
 
         setRestored(true);
         if (!authUser) {
           setShowAccountPrompt(true);
         } else {
-          await beginAttempt(resolved.id, examDurationMinutes, false, data.questions.length);
+          await beginAttempt(resolved.id, sessionMinutes, false, data.questions.length);
         }
       } catch (error) {
         if (!active) return;

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
-import AdminLayout from './AdminLayout';
 import { adminApiFetch, fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, type AdminUser, type AdminUserActivity } from '../src/lib/api';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 
@@ -73,7 +72,6 @@ export default function AdminUsersPage() {
   }, [query]);
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -218,6 +216,5 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
   );
 }

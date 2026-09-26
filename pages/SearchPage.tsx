@@ -37,11 +37,11 @@ function staticResults(): SearchResult[] {
     href: `/cbt/setup/${exam.key}`,
     identity: exam.key,
   }));
-  const materialResults = studyMaterialLibrary.map((material) => ({
-    id: `material-${material.id}`,
-    title: material.title,
-    description: `${material.school} · ${material.formats.join(', ')} · request via WhatsApp or browse Scribd.`,
-    category: 'Past Questions & Materials',
+    const materialResults = studyMaterialLibrary.map((material) => ({
+      id: `material-${material.id}`,
+      title: material.title,
+      description: `${material.school} · ${material.formats.join(', ')} · request through EduReach.`,
+      category: 'Past Questions & Materials',
     href: `/past-questions?view=materials&exam=${encodeURIComponent(material.exam)}&q=${encodeURIComponent(material.school)}`,
     identity: material.exam,
   }));

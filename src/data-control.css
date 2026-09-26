@@ -1,0 +1,161 @@
+/* ===========================================================================
+   Post-merge data-control additions (2026-09-27).
+   Styles for: honest news image placeholders, whole-card click targets,
+   article tag chips, and the first-party past-question material cards.
+   =========================================================================== */
+
+/* --- News: intentional no-image placeholder --------------------------------
+   Articles without a featured image (or with broken media) render this
+   neutral placeholder instead of recycling one of the bundled stock photos. */
+.er-news-noimage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #f9f0ee 0%, #f1f5f9 100%);
+  color: #c85841;
+  overflow: hidden;
+}
+.er-news-noimage small {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  max-width: 90%;
+  text-align: center;
+  line-height: 1.2;
+}
+.er-news-row .er-news-noimage { width: 96px; height: 80px; }
+.er-featured-card .er-news-noimage { width: 100%; height: 150px; }
+.er-news-hero.er-news-noimage-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 180px;
+  border-radius: 12px;
+  margin: 0 0 16px;
+}
+.er-news-hero.er-news-noimage-hero small { font-size: 11px; }
+@media (max-width: 640px) {
+  .er-news-row .er-news-noimage { width: 88px; height: 78px; }
+  .er-featured-card .er-news-noimage { height: 159px; }
+}
+
+/* --- Article tag chips ---------------------------------------------------- */
+.hub-article-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 0; }
+.hub-tag-chip {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c2d12;
+  background: #f9f0ee;
+  border: 1px solid #f3d1c9;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+/* --- Whole-card click targets -----------------------------------------------
+   Cards whose entire surface is the interaction target. The inner CTA is a
+   styled span (not a nested interactive element) so there is exactly one
+   clickable element per card. */
+.er-library-card-link,
+.er-material-card-link,
+.er-bank-card-link,
+.school-finder-result-card-link,
+.er-opportunity-link {
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+a.er-library-card-link:hover,
+a.er-material-card-link:hover,
+a.er-bank-card-link:hover,
+a.school-finder-result-card-link:hover,
+a.er-opportunity-link:hover {
+  border-color: #c85841;
+  box-shadow: 0 4px 14px rgba(200, 88, 65, 0.12);
+}
+a.er-library-card-link:focus-visible,
+a.er-material-card-link:focus-visible,
+a.er-bank-card-link:focus-visible,
+a.school-finder-result-card-link:focus-visible,
+a.er-opportunity-link:focus-visible {
+  outline: 2px solid #c85841;
+  outline-offset: 2px;
+}
+
+/* CTA rendered inside a whole-card link: looks like the old button but is not
+   a nested interactive element. */
+.er-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  pointer-events: none;
+}
+.er-library-card .er-card-cta { min-height: 36px; }
+.er-material-card .er-material-actions { width: 100%; display: flex; margin-top: auto; }
+.er-material-card .er-material-actions .er-card-cta { width: 100%; justify-content: center; }
+.er-material-school-static {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* CBT question-bank card as a link */
+a.er-bank-card-link { display: flex; }
+.er-bank-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* School finder result card as a link */
+a.school-finder-result-card-link { display: flex; }
+
+/* Opportunity card as a link (live + preview variants share the layout) */
+a.er-opportunity-link { display: flex; }
+
+/* --- CBT setup: duration picker --------------------------------------------
+   Shows the exam's configured default duration and the allowed choices. The
+   actual countdown only appears once the CBT session starts. */
+.er-setup-duration-picker { margin-top: 4px; }
+.er-setup-duration-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+.er-setup-duration-option {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.er-setup-duration-option:hover { border-color: #c85841; }
+.er-setup-duration-option.is-selected {
+  background: #c85841;
+  border-color: #c85841;
+  color: #fff;
+}
+
+/* --- Admin: news editor quality-gate hint --------------------------------- */
+.admin-quality-gate {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  border-left: 3px solid #e2e8f0;
+  padding-left: 10px;
+  margin: 8px 0 0;
+}
+.admin-quality-gate.is-error { color: #b91c1c; border-left-color: #ef4444; }

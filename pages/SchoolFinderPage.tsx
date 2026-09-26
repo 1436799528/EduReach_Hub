@@ -40,7 +40,11 @@ export default function SchoolFinderPage() {
       } catch (value) {
         if (active) {
           setError(value instanceof Error ? value.message : 'The school directory could not be loaded.');
-          setInstitutions(starterInstitutions());
+          // Production never silently substitutes the maintained starter list
+          // for a configured-but-failing directory; the starter list is only
+          // the unconfigured local-preview source.
+          if (!isSupabaseConfigured) setInstitutions(starterInstitutions());
+          else setInstitutions([]);
         }
       } finally {
         if (active) setLoading(false);
@@ -96,13 +100,14 @@ export default function SchoolFinderPage() {
             <div className="school-finder-search-meta">{loading ? 'Loading verified directory…' : `${filtered.length} matching institution${filtered.length === 1 ? '' : 's'}`}</div>
           </section>
 
-          {error && <div className="hub-alert hub-alert-info">Some directory data could not be loaded. Showing the maintained starter list.</div>}
+          {error && <div className="hub-alert hub-alert-info">The institution directory could not be loaded right now. Please try again in a moment.</div>}
           {!loading && !filtered.length && <div className="hub-panel hub-empty"><School size={24} /><h2>No school found</h2><p>Try an acronym, state or a shorter school name.</p></div>}
           <div className="school-finder-results">
             {filtered.map((school) => {
               const slug = itemKey(school.school_name);
               const detailPath = `/schools/${encodeURIComponent(slug)}?name=${encodeURIComponent(school.school_name)}&acronym=${encodeURIComponent(school.acronym || '')}&state=${encodeURIComponent(school.state || '')}&type=${encodeURIComponent(school.institution_type || '')}&website=${encodeURIComponent(school.website_url || '')}&course=${encodeURIComponent(school.course_context || '')}&return=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
-              return <article className="school-finder-result-card" key={school.id}><div className="school-finder-result-icon"><School size={20} /></div><div className="school-finder-result-copy"><h2>{school.school_name}</h2><p>{school.acronym && <b>{school.acronym} · </b>}{school.institution_type || 'Institution'} <span>·</span> <MapPin size={13} /> {school.state ? `${school.state} State` : 'Nigeria'}</p>{school.course_context && <small className="school-finder-course-tags">Course tags: {school.course_context.split(' ').slice(0, 6).join(', ')}{school.course_context.split(' ').length > 6 ? '…' : ''}</small>}</div><button type="button" className="hub-outline-btn" onClick={() => navigateTo(detailPath)}>View school <ArrowRight size={14} /></button></article>;
+              // Whole card is the link — no tiny nested button.
+              return <a className="school-finder-result-card school-finder-result-card-link" key={school.id} href={detailPath} onClick={(event) => { if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); navigateTo(detailPath); }}><div className="school-finder-result-icon"><School size={20} /></div><div className="school-finder-result-copy"><h2>{school.school_name}</h2><p>{school.acronym && <b>{school.acronym} · </b>}{school.institution_type || 'Institution'} <span>·</span> <MapPin size={13} /> {school.state ? `${school.state} State` : 'Nigeria'}</p>{school.course_context && <small className="school-finder-course-tags">Course tags: {school.course_context.split(' ').slice(0, 6).join(', ')}{school.course_context.split(' ').length > 6 ? '…' : ''}</small>}</div><span className="hub-outline-btn er-card-cta">View school <ArrowRight size={14} /></span></a>;
             })}
           </div>
         </div>

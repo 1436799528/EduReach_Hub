@@ -332,6 +332,71 @@ app.post('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   }
 });
 
+app.patch('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active').eq('id', req.params.examId).single();
+    if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (req.body?.title !== undefined) {
+      const title = String(req.body.title).trim().slice(0, 160);
+      if (!title) return res.status(400).json({ error: 'The exam title cannot be empty.' });
+      patch.title = title;
+    }
+    if (req.body?.exam_body !== undefined) {
+      const examBody = String(req.body.exam_body).trim().toUpperCase().slice(0, 40);
+      if (!examBody) return res.status(400).json({ error: 'The examination body cannot be empty.' });
+      patch.exam_body = examBody;
+    }
+    if (req.body?.subject !== undefined) {
+      const subject = String(req.body.subject).trim().slice(0, 120);
+      if (!subject) return res.status(400).json({ error: 'The exam subject cannot be empty.' });
+      patch.subject = subject;
+    }
+    if (req.body?.description !== undefined) patch.description = String(req.body.description).trim().slice(0, 600) || null;
+    if (req.body?.duration_minutes !== undefined) {
+      const duration = Number(req.body.duration_minutes);
+      if (!Number.isInteger(duration) || duration < 5 || duration > 180) {
+        return res.status(400).json({ error: 'The default duration must be a whole number of minutes between 5 and 180.' });
+      }
+      patch.duration_minutes = duration;
+    }
+    if (req.body?.is_active !== undefined) patch.is_active = req.body.is_active === true;
+    if (Object.keys(patch).length === 1) return res.status(400).json({ error: 'Nothing to update.' });
+    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'cbt_exam', p_entity_id: existing.id, p_metadata: { title: data.title, is_active: data.is_active } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin CBT exam update error:', error);
+    res.status(500).json({ error: 'Unable to update the CBT exam.' });
+  }
+});
+
+app.delete('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title').eq('id', req.params.examId).single();
+    if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
+    // Never erase a bank students have attempted — history integrity wins.
+    const { count: attemptCount, error: attemptError } = await supabase
+      .from('cbt_attempts').select('id', { count: 'exact', head: true }).eq('exam_id', existing.id);
+    if (attemptError) throw attemptError;
+    if (attemptCount) return res.status(409).json({ error: 'This exam has recorded student attempts. Deactivate it instead of deleting it so result history stays intact.' });
+    const { error: questionError } = await supabase.from('exam_questions').delete().eq('exam_id', existing.id);
+    if (questionError) throw questionError;
+    const { error } = await supabase.from('cbt_exams').delete().eq('id', existing.id);
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'cbt_exam', p_entity_id: existing.id, p_metadata: { title: existing.title } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin CBT exam delete error:', error);
+    res.status(500).json({ error: 'Unable to delete the CBT exam.' });
+  }
+});
+
 app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
   try {
     const supabase = getServerSupabase();
@@ -436,7 +501,15 @@ async function uniqueNewsSlug(supabase: any, base: string, excludeId?: string): 
   return `${base}-${Date.now().toString(36)}`;
 }
 
-const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,updated_at';
+const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,featured,tags,updated_at';
+
+// Comma-separated tag list → trimmed, de-duplicated, capped. Empty → null.
+function normalizeTags(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  const list = Array.isArray(value) ? value : String(value).split(',');
+  const cleaned = Array.from(new Set(list.map((tag) => String(tag || '').trim().slice(0, 40)).filter(Boolean))).slice(0, 12);
+  return cleaned.length ? cleaned.join(', ') : null;
+}
 
 app.get('/api/admin/news', requireAdmin, async (_req, res) => {
   try {
@@ -466,6 +539,16 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
     }
     const published = req.body?.published === true;
     const now = new Date().toISOString();
+    let publishedAt: string | null = null;
+    if (published) {
+      if (req.body?.published_at) {
+        const parsedAt = new Date(String(req.body.published_at));
+        if (!Number.isFinite(parsedAt.getTime())) return res.status(400).json({ error: 'The publication date is invalid.' });
+        publishedAt = parsedAt.toISOString();
+      } else {
+        publishedAt = now;
+      }
+    }
     const row = {
       slug,
       title,
@@ -476,7 +559,9 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
       source_name: req.body?.source_name ? String(req.body.source_name).trim() : null,
       source_url: sourceUrl,
       published,
-      published_at: published ? now : null,
+      published_at: publishedAt,
+      featured: req.body?.featured === true,
+      tags: normalizeTags(req.body?.tags),
     };
     const { data, error } = await supabase.from('news_articles').insert(row).select(newsRowSelect).single();
     if (error) throw error;
@@ -522,6 +607,8 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
       if (req.body.source_url && !sourceUrl) return res.status(400).json({ error: 'Source links must use HTTPS or a site-relative path.' });
       patch.source_url = sourceUrl;
     }
+    if (req.body?.featured !== undefined) patch.featured = req.body.featured === true;
+    if (req.body?.tags !== undefined) patch.tags = normalizeTags(req.body.tags);
     if (req.body?.published !== undefined) {
       const published = req.body.published === true;
       patch.published = published;
@@ -1159,7 +1246,7 @@ app.get('/api/news', async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
+      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags')
       .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
     if (error) throw error;
     res.json({ items: (data || []).map(item => ({ ...item, author: item.source_name || 'EduReach Editorial Desk', summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
@@ -1174,7 +1261,7 @@ app.get('/api/news/:slug', async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published')
+      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags')
       .eq('slug', req.params.slug).eq('published', true).maybeSingle();
     if (error || !data) return res.status(404).json({ error: 'News article not found.' });
     res.json({ item: { ...data, author: data.source_name || 'EduReach Editorial Desk', summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
