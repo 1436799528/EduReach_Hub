@@ -1704,6 +1704,7 @@ function validateContentRow(resource: ContentResource, input: Record<string, unk
   const allowed = new Set(resource.fields.filter(f => !f.readonly).map(f => f.name));
   for (const key of Object.keys(input)) if (!allowed.has(key) && key !== 'id') throw new Error(\`Field "\${key}" is not editable for this resource.\`);
   const values: Record<string, unknown> = {};
+  if (input.id !== undefined && input.id !== null && String(input.id).trim()) values.id = String(input.id).trim();
   for (const field of resource.fields) {
     if (field.readonly) continue;
     const value = input[field.name];
