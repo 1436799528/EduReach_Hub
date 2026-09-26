@@ -10,7 +10,7 @@ function publicErrorMessage(value: unknown, fallback = 'We could not complete th
   const raw = value instanceof Error ? value.message : String(value || '');
   const message = raw.trim();
   if (!message) return fallback;
-  if (/postgres|postgresql|supabase|sqlstate|column .* (ambiguous|does not exist)|relation .* does not exist|constraint|violates|rpc|function .* does not exist|syntax error|stack|at [\\w./:-]+\\(/i.test(message)) {
+  if (/postgres|postgresql|supabase|sqlstate|column .* (ambiguous|does not exist)|relation .* does not exist|constraint|violates|rpc|function .* does not exist|syntax error|stack|at [\w./:-]+\(/i.test(message)) {
     return fallback;
   }
   if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) return 'Please check your internet connection and try again.';
