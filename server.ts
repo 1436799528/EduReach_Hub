@@ -453,7 +453,7 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res
   } catch (error) {
     console.error('Admin CBT question create error:', error);
     const message = error instanceof Error && error.message.includes('duplicate') ? 'That question position is already in use.' : 'Unable to create CBT question.';
-    res.status(400).json({ error: message });
+    res.status(400).json({ error: publicErrorMessage(message, 'Invalid CBT question data. Please check the question and try again.') });
   }
 });
 
@@ -817,7 +817,7 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
       },
     };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Invalid institution data.' };
+    return { error: publicErrorMessage(error, 'Invalid institution data.') };
   }
 }
 
@@ -1727,7 +1727,7 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
       try {
         if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Row is not an object.');
         valid.push({ index, values: validateContentRow(resource, row as Record<string, unknown>) });
-      } catch (error) { errors.push({ row: index + 2, error: error instanceof Error ? error.message : 'Invalid row.' }); }
+      } catch (error) { errors.push({ row: index + 2, error: publicErrorMessage(error, 'Invalid row.') }); }
     });
     let inserted = 0, updated = 0;
     // Use bulk inserts/updates in chunks rather than issuing one request per row.
