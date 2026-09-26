@@ -6,8 +6,10 @@ import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import { FeaturedNews, NewsRow, TrendingNews } from '../src/components/NewsSections';
 import { SkeletonRows } from '../src/components/Skeleton';
-import { EDUREACH_WHATSAPP, hubServices } from '../src/data/hubContent';
-import { fetchNews, fetchUpcoming, type NewsItem, type UpcomingItem } from '../src/lib/api';
+import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
+import ServiceCard from '../src/components/ServiceCard';
+import { fetchServices, type ServiceItem } from '../src/lib/api';
+import { fetchNews, fetchUpcoming, fetchServices, type NewsItem, type UpcomingItem, type ServiceItem } from '../src/lib/api';
 
 function navigateInApp(path: string) {
   window.history.pushState({}, '', path);
@@ -53,6 +55,8 @@ export default function HubHomePage() {
   const [newsError, setNewsError] = useState('');
   const [feedVersion, setFeedVersion] = useState(0);
   const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [servicesError, setServicesError] = useState('');
   const [upcomingError, setUpcomingError] = useState('');
   const [search, setSearch] = useState('');
 
@@ -65,6 +69,9 @@ export default function HubHomePage() {
       .catch((value) => active && setNewsError(value instanceof Error ? value.message : 'Unable to load news updates.'))
       .finally(() => active && setNewsLoading(false));
     setUpcomingError('');
+    void fetchServices()
+      .then((items) => active && setServices(items))
+      .catch((value) => active && setServicesError(value instanceof Error ? value.message : 'Unable to load student services.'));
     void fetchUpcoming()
       .then((items) => active && setUpcoming(items))
       .catch((value) => active && setUpcomingError(value instanceof Error ? value.message : 'Unable to load upcoming events.'));
@@ -162,12 +169,15 @@ export default function HubHomePage() {
 
           <section className="er-section">
             <SectionHead title="Student services" href="/services" linkLabel="All services" />
-            <div className="er-link-grid">
-              {hubServices.map((item) => (
-                <LinkTile key={item.slug} title={item.short} href={`/services/apply/${item.slug}`} />
-              ))}
-              <LinkTile title="Student Support" href={`https://wa.me/${EDUREACH_WHATSAPP}`} external />
-            </div>
+            {servicesError ? (
+              <div className="er-empty" role="alert">{servicesError}</div>
+            ) : services.length ? (
+              <div className="er-service-grid">
+                {services.slice(0, 8).map((service) => <ServiceCard key={service.id} service={service} />)}
+              </div>
+            ) : (
+              <div className="er-empty">No active student services have been published yet.</div>
+            )}
           </section>
         </div>
       </div>
