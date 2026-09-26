@@ -2,6 +2,34 @@ import { supabase, isSupabaseConfigured } from './supabase';
 import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 
+export function userFacingError(value: unknown, fallback = 'We could not complete that request. Please try again.') {
+  const raw = value instanceof Error ? value.message : String(value || '');
+  const message = raw.trim();
+  if (!message) return fallback;
+
+  const known: Array<[RegExp, string]> = [
+    [/failed to fetch|networkerror|load failed|fetch failed/i, 'Please check your internet connection and try again.'],
+    [/invalid or expired session|authentication required|administrator session required/i, 'Your session has expired. Please sign in again.'],
+    [/not found|could not be found|no .* was found/i, 'The requested information is not available.'],
+    [/already been submitted|duplicate|already exists/i, 'This action has already been completed.'],
+    [/expired/i, 'This session has expired. Please start again.'],
+    [/no questions|question bank/i, 'This CBT is not ready yet. Please choose another available question bank.'],
+    [/not available|not accepting requests/i, 'This service is not currently available. Please choose another option.'],
+    [/required|invalid.*input|valid .* required/i, 'Please check the information entered and try again.'],
+    [/permission|forbidden|not authorized|access denied/i, 'You do not have permission to perform this action.'],
+    [/too large|payload|size limit/i, 'The submitted file or information is too large. Please reduce it and try again.'],
+    [/timeout|timed out/i, 'The request took too long. Please try again.'],
+  ];
+  const match = known.find(([pattern]) => pattern.test(message));
+  if (match) return match[1];
+
+  // Never expose SQL, database, stack traces, file paths, RPC names or server internals.
+  if (/postgres|postgresql|supabase|sqlstate|column .* (ambiguous|does not exist)|relation .* does not exist|constraint|violates|rpc|function .* does not exist|syntax error|stack|at [\w./:-]+\(/i.test(message)) {
+    return fallback;
+  }
+  return message.length <= 180 && !/[\n\r]/.test(message) ? message : fallback;
+}
+
 export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number; guest?: boolean };
 export type CbtSubmitResponse = {
@@ -166,11 +194,18 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, init);
+  let response: Response;
+  try {
+    response = await fetch(input, init);
+  } catch {
+    throw new Error('Please check your internet connection and try again.');
+  }
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'Request failed.');
+  if (!response.ok) throw new Error(userFacingError(body?.error, 'We could not complete that request. Please try again.'));
   return body as T;
 }
+
+
 
 
 // The full active service catalogue — form services, in-app routes and
@@ -185,7 +220,7 @@ export async function fetchServices(): Promise<ServiceItem[]> {
     .eq('active', true)
     .order('sort_order', { ascending: true, nullsFirst: false })
     .order('title', { ascending: true });
-  if (error) throw error;
+  if (error) throw new Error(userFacingError(error));
   return (data || []) as ServiceItem[];
 }
 
@@ -256,7 +291,7 @@ export async function startCbt(examId: string, durationMinutes = 30): Promise<Cb
     }
 
     const { data, error } = await supabase.rpc('start_cbt_attempt', { p_exam_id: examId });
-    if (error || !data?.length) throw new Error(error?.message || 'Unable to start this CBT practice session.');
+    if (error || !data?.length) throw new Error(userFacingError(error, 'Unable to start this CBT practice session.'));
     const row = data[0];
     return {
       attemptId: row.attempt_id,
@@ -297,7 +332,7 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
       p_exam_id: payload.examId,
       p_answers: payload.answers,
     });
-    if (error || !data?.length) throw new Error(error?.message || 'CBT submission failed.');
+    if (error || !data?.length) throw new Error(userFacingError(error, 'CBT submission failed.'));
     const row = data[0];
     return {
       attemptId: row.attempt_id,
@@ -444,7 +479,7 @@ export async function fetchCbtResult(attemptId: string) {
     if (!user) throw new Error('Please sign in to view this CBT result.');
 
     const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
-    if (error) throw error;
+    if (error) throw new Error(userFacingError(error));
     if (!data?.length) throw new Error('No CBT result was found for this attempt.');
 
     const first = data[0];
@@ -597,7 +632,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     .eq('slug', slug)
     .eq('published', true)
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw new Error(userFacingError(error));
   if (!data) throw new Error('This news article could not be found.');
   return {
     id: data.id,
