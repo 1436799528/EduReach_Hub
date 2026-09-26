@@ -12,8 +12,8 @@ import { AdminEmptyState, TableSkeleton } from '../src/components/admin/AdminKit
 // Schools manager: direct CRUD over the `institutions` rows the public
 // School Finder (/schools) reads. Same columns, one source of truth.
 
-type FormState = { id: string | null; school_name: string; acronym: string; state: string; institution_type: string; website_url: string };
-const emptyForm: FormState = { id: null, school_name: '', acronym: '', state: '', institution_type: '', website_url: '' };
+type FormState = { id: string | null; school_name: string; acronym: string; slug: string; state: string; institution_type: string; website_url: string; admission_portal_url: string; student_portal_url: string; is_verified: boolean };
+const emptyForm: FormState = { id: null, school_name: '', acronym: '', slug: '', state: '', institution_type: '', website_url: '', admission_portal_url: '', student_portal_url: '', is_verified: false };
 
 const TYPES = ['university', 'polytechnic', 'college of education', 'other'];
 
@@ -52,7 +52,11 @@ export default function AdminSchoolsPage() {
         acronym: form.acronym.trim() || null,
         state: form.state.trim() || null,
         institution_type: form.institution_type.trim() || null,
+        slug: form.slug.trim() || null,
         website_url: form.website_url.trim() || null,
+        admission_portal_url: form.admission_portal_url.trim() || null,
+        student_portal_url: form.student_portal_url.trim() || null,
+        is_verified: form.is_verified,
       };
       const saved = form.id ? await updateAdminInstitution(form.id, payload) : await createAdminInstitution(payload);
       setInstitutions((current) => {
@@ -119,8 +123,24 @@ export default function AdminSchoolsPage() {
                     </select>
                   </label>
                 </div>
-                <label className="admin-field"><span>Website (https)</span>
+                <div className="admin-field-row">
+                  <label className="admin-field"><span>Slug</span>
+                    <input className="admin-input" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="university-of-lagos" />
+                  </label>
+                  <label className="admin-field"><span>Verified</span>
+                    <select className="admin-select" value={form.is_verified ? 'true' : 'false'} onChange={(e) => setForm({ ...form, is_verified: e.target.value === 'true' })}>
+                      <option value="false">Not verified</option><option value="true">Verified</option>
+                    </select>
+                  </label>
+                </div>
+                <label className="admin-field"><span>Website URL (https)</span>
                   <input className="admin-input" style={{ width: '100%' }} value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} placeholder="https://unilag.edu.ng" />
+                </label>
+                <label className="admin-field"><span>Admission portal URL (https)</span>
+                  <input className="admin-input" style={{ width: '100%' }} value={form.admission_portal_url} onChange={(e) => setForm({ ...form, admission_portal_url: e.target.value })} placeholder="https://admissions.unilag.edu.ng" />
+                </label>
+                <label className="admin-field"><span>Student portal URL (https)</span>
+                  <input className="admin-input" style={{ width: '100%' }} value={form.student_portal_url} onChange={(e) => setForm({ ...form, student_portal_url: e.target.value })} placeholder="https://studentportal.unilag.edu.ng" />
                 </label>
               </div>
               <div className="admin-news-editor-actions">
@@ -153,9 +173,13 @@ export default function AdminSchoolsPage() {
                           id: institution.id,
                           school_name: institution.school_name,
                           acronym: institution.acronym || '',
+                          slug: institution.slug || '',
                           state: institution.state || '',
                           institution_type: institution.institution_type || '',
                           website_url: institution.website_url || '',
+                          admission_portal_url: institution.admission_portal_url || '',
+                          student_portal_url: institution.student_portal_url || '',
+                          is_verified: institution.is_verified,
                         })}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(institution)}><Trash2 size={12} /></button>
                       </div>
