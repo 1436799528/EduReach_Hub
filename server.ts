@@ -6,6 +6,19 @@ import { requireAdmin, type AdminRequest } from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
 
 export const app = express();
+function publicErrorMessage(value: unknown, fallback = 'We could not complete that request. Please try again.') {
+  const raw = value instanceof Error ? value.message : String(value || '');
+  const message = raw.trim();
+  if (!message) return fallback;
+  if (/postgres|postgresql|supabase|sqlstate|column .* (ambiguous|does not exist)|relation .* does not exist|constraint|violates|rpc|function .* does not exist|syntax error|stack|at [\\w./:-]+\\(/i.test(message)) {
+    return fallback;
+  }
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) return 'Please check your internet connection and try again.';
+  if (/authentication|required|invalid or expired session/i.test(message)) return 'Your session has expired. Please sign in again.';
+  return message.length <= 180 && !/[\\n\\r]/.test(message) ? message : fallback;
+}
+
+
 const PORT = Number(process.env.PORT || 3000);
 const LIVE_SERVICE_KEYS = ['nelfund-loan', 'results', 'jamb-slip', 'admission-letters'] as const;
 app.disable('x-powered-by');
@@ -1306,7 +1319,7 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
     console.error('CBT start API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
     const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /no questions/i.test(message) ? 422 : 409;
-    res.status(status).json({ error: message });
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this CBT exam. Please try again.') });
   }
 });
 
@@ -1384,7 +1397,7 @@ app.post('/api/cbt/guest-submit', async (req, res) => {
     });
   } catch (error) {
     console.error('Guest CBT submit API error:', error);
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Guest CBT submission failed.' });
+    res.status(400).json({ error: publicErrorMessage(error, 'Guest CBT submission failed. Please try again.') });
   }
 });
 
@@ -1416,7 +1429,7 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   } catch (error) {
     console.error('CBT progress read error:', error);
     const message = error instanceof Error ? error.message : 'Unable to load CBT progress.';
-    res.status(message.includes('Authentication') ? 401 : 503).json({ error: message });
+    res.status(message.includes('Authentication') ? 401 : 503).json({ error: publicErrorMessage(message, 'CBT progress is temporarily unavailable. Please try again.') });
   }
 });
 
@@ -1457,7 +1470,7 @@ app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   } catch (error) {
     console.error('CBT progress save error:', error);
     const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
-    res.status(message.includes('Authentication') ? 401 : 503).json({ error: message });
+    res.status(message.includes('Authentication') ? 401 : 503).json({ error: publicErrorMessage(message, 'CBT progress is temporarily unavailable. Please try again.') });
   }
 });
 
@@ -1476,7 +1489,7 @@ app.get('/api/cbt/exams/:examId/questions', async (req, res) => {
   } catch (error) {
     console.error('CBT question API error:', error);
     const message = error instanceof Error ? error.message : 'CBT service is temporarily unavailable.';
-    res.status(message.includes('Authentication') || message.includes('session') ? 401 : 503).json({ error: message.includes('Authentication') || message.includes('session') ? message : 'CBT service is temporarily unavailable.' });
+    res.status(message.includes('Authentication') || message.includes('session') ? 401 : 503).json({ error: publicErrorMessage(message, 'CBT service is temporarily unavailable.') });
   }
 });
 
@@ -1504,7 +1517,7 @@ app.post('/api/cbt/submit', async (req, res) => {
     console.error('CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
-    res.status(status).json({ error: message });
+    res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
   }
 });
 
@@ -1661,7 +1674,7 @@ app.post('/api/admin/content-manager/data/:resource', requireAdmin, async (req, 
     res.status(201).json({ row: data });
   } catch (error) {
     console.error('Content manager create error:', error);
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to create record.' });
+    res.status(400).json({ error: publicErrorMessage(error, 'Unable to create record.') });
   }
 });
 
@@ -1677,7 +1690,7 @@ app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (
     res.json({ row: data });
   } catch (error) {
     console.error('Content manager update error:', error);
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to update record.' });
+    res.status(400).json({ error: publicErrorMessage(error, 'Unable to update record.') });
   }
 });
 
@@ -1696,7 +1709,7 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async 
     res.json({ success: true });
   } catch (error) {
     console.error('Content manager delete error:', error);
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to delete record.' });
+    res.status(400).json({ error: publicErrorMessage(error, 'Unable to delete record.') });
   }
 });
 
@@ -1752,7 +1765,7 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
     res.json({ inserted, updated, errors });
   } catch (error) {
     console.error('Content manager import error:', error);
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to import data.' });
+    res.status(400).json({ error: publicErrorMessage(error, 'Unable to import data.') });
   }
 });
 
