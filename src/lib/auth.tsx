@@ -69,7 +69,7 @@ async function resolveCurrentUser(): Promise<AuthUser | null> {
     // Continue to local preview session fallback.
   }
 
-  return isSupabaseConfigured ? null : readLocalUser();
+  return null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -79,14 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshAuth = useCallback(async () => {
     // Local preview sessions resolve synchronously so a fresh sign-in is visible
     // to ProtectedRoute on the very next render (no redirect-back-to-login race).
-    if (!isSupabaseConfigured) {
-      const localUser = readLocalUser();
-      if (localUser) {
-        setUser(localUser);
-        setIsLoading(false);
-        return;
-      }
-    }
     const nextUser = await resolveCurrentUser();
     setUser(nextUser);
     setIsLoading(false);
@@ -137,10 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     window.sessionStorage.removeItem('edureach-admin-student-view');
-    localStorage.removeItem('edureach-local-user-email');
+
     try {
-      if (isSupabaseConfigured) await supabase.auth.signOut();
-      else await supabase.auth.signOut();
+      await supabase.auth.signOut();
     } catch {
       // Local preview sessions may not have a real Supabase session to clear.
     }
