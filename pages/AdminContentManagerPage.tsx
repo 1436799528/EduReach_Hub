@@ -74,6 +74,7 @@ export default function AdminContentManagerPage() {
   const [showForm, setShowForm] = useState(false);
   const [fileName, setFileName] = useState('');
   const [pendingImport, setPendingImport] = useState<Row[]>([]);
+  const [search, setSearch] = useState('');
 
   const resource = useMemo(() => resources.find(r => r.key === resourceKey), [resources, resourceKey]);
 
@@ -170,6 +171,16 @@ export default function AdminContentManagerPage() {
     } finally { setSaving(false); }
   }
 
+  function exportRows() {
+    if (!resource) return;
+    const fields = resource.fields.map(f => f.name);
+    const lines = [fields.map(csvEscape).join(',')];
+    for (const row of rows) {
+      lines.push(fields.map(field => csvEscape(row[field])).join(','));
+    }
+    download(`edureach-${resource.key}-export.csv`, lines.join('\\n') + '\\n');
+  }
+
   function template() {
     if (!resource) return;
     download(`edureach-${resource.key}-template.csv`, resource.fields.filter(f => !f.readonly).map(f => f.name).concat(resource.fields.some(f => f.name === 'id') ? ['id'] : []).join(',') + '\n');
@@ -187,6 +198,7 @@ export default function AdminContentManagerPage() {
             {resources.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
           </select>
           <button className="admin-btn secondary-dark" type="button" onClick={() => void loadRows()} disabled={loading}><RefreshCw size={14} /></button>
+          <button className="admin-btn secondary-dark" type="button" onClick={exportRows} disabled={loading || !rows.length}><Download size={14} /> Export</button>
           <button className="admin-btn" type="button" onClick={startNew}><Plus size={14} /> New</button>
         </div>
       </div>
@@ -226,7 +238,12 @@ export default function AdminContentManagerPage() {
                     if (field.readonly) return null;
                     const value = editing[field.name];
                     if (field.type === 'boolean') return <label className="admin-field" key={field.name}><span>{field.label}{field.required ? ' *' : ''}</span><select className="admin-select" value={String(Boolean(value))} onChange={e => setEditing({ ...editing, [field.name]: e.target.value === 'true' })}><option value="true">True</option><option value="false">False</option></select></label>;
-                    return <label className="admin-field" key={field.name}><span>{field.label}{field.required ? ' *' : ''}</span><input className="admin-input" style={{ width: '100%' }} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'datetime-local' ? 'datetime-local' : 'text'} value={value == null ? '' : String(value)} onChange={e => setEditing({ ...editing, [field.name]: e.target.value })} /></label>;
+                    const longText = ['body', 'description', 'excerpt', 'question_text', 'explanation', 'source_note'].includes(field.name);
+                    const inputValue = value == null ? '' : String(value);
+                    if (longText) {
+                      return <label className="admin-field" key={field.name}><span>{field.label}{field.required ? ' *' : ''}</span><textarea className="admin-input" style={{ width: '100%', minHeight: field.name === 'body' || field.name === 'question_text' ? 180 : 100, resize: 'vertical' }} value={inputValue} onChange={e => setEditing({ ...editing, [field.name]: e.target.value })} /></label>;
+                    }
+                    return <label className="admin-field" key={field.name}><span>{field.label}{field.required ? ' *' : ''}</span><input className="admin-input" style={{ width: '100%' }} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'datetime-local' ? 'datetime-local' : field.type === 'url' ? 'url' : 'text'} value={inputValue} onChange={e => setEditing({ ...editing, [field.name]: e.target.value })} /></label>;
                   })}
                 </div>
                 <div className="admin-news-editor-actions"><button className="admin-btn success" type="button" onClick={() => void saveRow()} disabled={saving}>{saving ? 'Saving…' : 'Save record'}</button></div>
@@ -235,11 +252,23 @@ export default function AdminContentManagerPage() {
           )}
 
           <div className="admin-card">
-            <div className="admin-card-header"><h2>{resource.label}</h2><span>{loading ? 'Loading…' : `${rows.length} shown`}</span></div>
+            <div className="admin-card-header">
+                <h2>{resource.label}</h2>
+                <span>{loading ? 'Loading…' : `${rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).length} shown`}</span>
+              </div>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--admin-border)' }}>
+                <input
+                  className="admin-input"
+                  style={{ width: '100%' }}
+                  placeholder={`Search ${resource.label.toLowerCase()}…`}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
             <div className="admin-table-wrap">
               <table className="admin-table"><thead><tr>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <th key={f.name}>{f.label}</th>)}<th className="right">Actions</th></tr></thead>
                 <tbody>
-                  {!loading && rows.map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}
+                  {!loading && rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}
                   {loading && <tr><td colSpan={7} className="empty-state">Loading…</td></tr>}
                   {!loading && !rows.length && <tr><td colSpan={7} className="empty-state">No records yet.</td></tr>}
                 </tbody>
