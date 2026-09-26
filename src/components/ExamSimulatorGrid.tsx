@@ -77,7 +77,7 @@ export default function ExamSimulatorGrid({
           <a
             key={exam.id}
             className={`er-sim-card er-sim-${exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
-            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.id)}
+            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.mode.toLowerCase())}
           >
             <span className="er-sim-top">
               <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" />
