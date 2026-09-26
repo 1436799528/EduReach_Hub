@@ -3,9 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import { pastQuestionLibrary, studyMaterialLibrary } from '../src/data/examPreparation';
-import { examSimulators } from '../src/components/ExamSimulatorGrid';
 import { services } from '../src/data/services';
-import { fetchNews, type NewsItem, trackEvent } from '../src/lib/api';
+import { fetchCbtExams, fetchNews, type NewsItem, trackEvent } from '../src/lib/api';
 
 type SearchResult = {
   id: string;
@@ -16,11 +15,31 @@ type SearchResult = {
   identity: string;
 };
 
+type CatalogExamItem = {
+  id: string;
+  title: string;
+  exam_body: string;
+  subject: string;
+  description: string | null;
+};
+
+// Same routing contract as PastQuestionsPage: known exam bodies open their
+// setup flow with the exact catalogue id; anything else goes straight to the
+// practice hall, which accepts any configured exam id.
+function setupKeyForExamBody(value: string): 'jamb' | 'waec' | 'neco' | 'post-utme' | null {
+  const normalized = value.toLowerCase();
+  if (normalized.includes('post-utme') || normalized.includes('postutme')) return 'post-utme';
+  if (normalized.includes('waec')) return 'waec';
+  if (normalized.includes('neco')) return 'neco';
+  if (normalized.includes('jamb') || normalized.includes('utme')) return 'jamb';
+  return null;
+}
+
 function readQuery() {
   return new URLSearchParams(window.location.search).get('q')?.trim() || '';
 }
 
-function staticResults(): SearchResult[] {
+function staticResults(exams: CatalogExamItem[]): SearchResult[] {
   const serviceResults = services.map((service) => ({
     id: `service-${service.key}`,
     title: service.title,
@@ -29,14 +48,19 @@ function staticResults(): SearchResult[] {
     href: service.route,
     identity: service.key,
   }));
-  const examResults = examSimulators.map((exam) => ({
-    id: `exam-${exam.key}`,
-    title: exam.title,
-    description: exam.desc,
-    category: 'CBT Practice',
-    href: `/cbt/setup/${exam.key}`,
-    identity: exam.key,
-  }));
+  const examResults = exams.map((exam) => {
+    const setupKey = setupKeyForExamBody(`${exam.exam_body} ${exam.title}`);
+    return {
+      id: `exam-${exam.id}`,
+      title: exam.title,
+      description: exam.description || `${exam.exam_body} ${exam.subject} practice bank.`,
+      category: 'CBT Practice',
+      href: setupKey
+        ? `/cbt/setup/${setupKey}?exam=${encodeURIComponent(exam.id)}`
+        : `/cbt/practice?exam=${encodeURIComponent(exam.id)}`,
+      identity: exam.exam_body || exam.id,
+    };
+  });
     const materialResults = studyMaterialLibrary.map((material) => ({
       id: `material-${material.id}`,
       title: material.title,
@@ -70,6 +94,17 @@ export default function SearchPage() {
   const [query, setQuery] = useState(readQuery);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [catalogExams, setCatalogExams] = useState<CatalogExamItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    // The CBT catalogue is admin-driven; mirror the other pages by reading the
+    // live catalogue (with its local preview fallback) instead of a static list.
+    fetchCbtExams()
+      .then((items) => { if (active) setCatalogExams(items as CatalogExamItem[]); })
+      .catch(() => { if (active) setCatalogExams([]); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const term = query.trim();
@@ -86,7 +121,7 @@ export default function SearchPage() {
   }, []);
 
   const allResults = useMemo<SearchResult[]>(() => [
-    ...staticResults(),
+    ...staticResults(catalogExams),
     ...news.map((item) => ({
       id: `news-${item.id}`,
       title: item.title,
@@ -95,7 +130,7 @@ export default function SearchPage() {
       href: `/news/${encodeURIComponent(item.slug)}`,
       identity: item.category,
     })),
-  ], [news]);
+  ], [catalogExams, news]);
 
   const results = useMemo(() => {
     const normalized = query.trim();
