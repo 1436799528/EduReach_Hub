@@ -19,6 +19,28 @@ function safeContentUrl(value: string | null) {
   }
 }
 
+function renderPlainArticleText(text: string) {
+  const urlPattern = /(https:\/\/[^\s<]+)/gi;
+  return text.split(/\n\s*\n/).filter(Boolean).map((paragraph, paragraphIndex) => {
+    const parts = paragraph.split(urlPattern);
+    return (
+      <p key={`paragraph-${paragraphIndex}`}>
+        {parts.map((part, index) => {
+          const candidate = part.replace(/[),.;!?]+$/, '');
+          const trailing = part.slice(candidate.length);
+          const url = safeContentUrl(candidate);
+          if (!url) return <span key={`text-${paragraphIndex}-${index}`}>{part}</span>;
+          return (
+            <span key={`url-${paragraphIndex}-${index}`}>
+              <a href={url} target="_blank" rel="noreferrer">{candidate}</a>{trailing}
+            </span>
+          );
+        })}
+      </p>
+    );
+  });
+}
+
 export default function NewsArticlePage({ slug }: { slug: string }) {
   const [item, setItem] = useState<NewsItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,8 +61,6 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
     return () => { active = false; };
   }, [slug]);
 
-  // Related reading comes from the same published source as the listings —
-  // same-category stories first, then the newest remaining articles.
   useEffect(() => {
     if (!item) return;
     let active = true;
@@ -94,8 +114,6 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                   src={safeImageUrl}
                   alt={item.title}
                   onError={(event) => {
-                    // Never swap a broken article image for a generic photo —
-                    // replace it with the intentional no-image placeholder.
                     const element = event.currentTarget;
                     element.onerror = null;
                     const placeholder = document.createElement('div');
@@ -112,13 +130,8 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               <div className="hub-article-body">
                 {looksLikeHtml(item.body)
-                  ? // Rich bodies are authored in the admin CMS and sanitized
-                    // with a strict allowlist at render time.
-                    <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(item.body) }} />
-                  : item.body
-                    .split(/\n\s*\n/)
-                    .filter(Boolean)
-                    .map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                  ? <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(item.body) }} />
+                  : renderPlainArticleText(item.body)}
               </div>
 
               {tags.length > 0 && (
