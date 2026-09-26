@@ -87,12 +87,31 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
     const supabase = getServerSupabase();
     const { data: metrics, error: metricError } = await supabase.rpc('admin_dashboard_metrics');
     if (metricError) throw metricError;
-    const [audit, recentRequests, recentUsers] = await Promise.all([
-      supabase.from('edureach_audit_logs').select('id,action,entity_type,entity_id,metadata,created_at').order('created_at',{ascending:false}).limit(20),
+    // The admin_audit_log RPC writes admin_audit_logs; older live projects may
+    // hold earlier entries in edureach_audit_logs. Read both tolerantly so the
+    // feed works on either schema and merges both histories.
+    const auditFeed = async (table: 'admin_audit_logs' | 'edureach_audit_logs') => {
+      try {
+        const { data, error } = await supabase
+          .from(table)
+          .select('id,action,entity_type,entity_id,metadata,created_at')
+          .order('created_at', { ascending: false })
+          .limit(20);
+        return error ? [] : data || [];
+      } catch {
+        return [];
+      }
+    };
+    const [canonicalAudit, legacyAudit, recentRequests, recentUsers] = await Promise.all([
+      auditFeed('admin_audit_logs'),
+      auditFeed('edureach_audit_logs'),
       supabase.from('service_requests').select('id,reference_code,status,created_at,updated_at,service_catalog(title)').order('created_at',{ascending:false}).limit(10),
       supabase.from('profiles').select('id,full_name,role,created_at').order('created_at',{ascending:false}).limit(10)
     ]);
-    res.json({ metrics: metrics || {}, audit: audit.data || [], recentRequests: recentRequests.data || [], recentUsers: recentUsers.data || [] });
+    const audit = [...canonicalAudit, ...legacyAudit]
+      .sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime())
+      .slice(0, 20);
+    res.json({ metrics: metrics || {}, audit, recentRequests: recentRequests.data || [], recentUsers: recentUsers.data || [] });
   } catch (error) {
     console.error('Admin analytics error:', error);
     res.status(503).json({ error: 'Unable to load administrative analytics.' });

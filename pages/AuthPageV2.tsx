@@ -402,7 +402,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             <p style={{ fontSize: '13.5px', color: '#334155', lineHeight: 1.6, marginBottom: '20px' }}>
               {isSupabaseConfigured
                 ? <>We sent a verification link to <strong>{verifyEmailSent || email}</strong>. Please check your inbox or spam folder to confirm your email.</>
-                : <>This local preview account is ready on this device. No email is sent until a connected EduReach auth service is configured.</>}
+                : <>Email verification needs the live EduReach account service. It is not configured in this environment, so no verification email can be sent yet.</>}
             </p>
 
             <div style={{ display: 'grid', gap: '10px' }}>

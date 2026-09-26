@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { isSupabaseConfigured, supabase } from './supabase';
-import { localStorageKey, readLocalPreviewValue } from './localPreview';
+import { supabase } from './supabase';
 
 export type AuthUser = {
   id: string;
@@ -20,30 +19,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const AUTH_EVENT = 'edureach-auth-changed';
-
-function readStoredProfile(): Record<string, any> | null {
-  try {
-    return JSON.parse(readLocalPreviewValue('profile') || 'null');
-  } catch {
-    return null;
-  }
-}
-
-function readLocalUser(): AuthUser | null {
-  const email = localStorage.getItem('edureach-local-user-email');
-  if (!email) return null;
-
-  const profile = readStoredProfile();
-  const fullName = profile?.full_name || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || email.split('@')[0] || 'Student';
-
-  return {
-    id: `local-${email.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-    email,
-    name: fullName,
-    avatarUrl: profile?.avatar_url || null,
-    isLocal: true,
-  };
-}
 
 function dispatchAuthChanged() {
   window.dispatchEvent(new Event(AUTH_EVENT));
