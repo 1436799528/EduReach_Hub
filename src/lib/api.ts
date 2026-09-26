@@ -193,10 +193,18 @@ async function authHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
+const API_BASE_PATH = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
+
+function apiPath(path: string): string {
+  if (!path.startsWith('/api/')) return path;
+  return `${API_BASE_PATH}${path.slice('/api'.length)}`;
+}
+
 async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(input, init);
+    const requestInput = typeof input === 'string' ? apiPath(input) : input;
+    response = await fetch(requestInput, init);
   } catch {
     throw new Error('Please check your internet connection and try again.');
   }
