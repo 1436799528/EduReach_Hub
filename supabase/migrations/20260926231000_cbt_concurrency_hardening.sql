@@ -14,6 +14,7 @@ declare
   v_now timestamptz := now();
 begin
   if v_user is null then raise exception 'Authentication required.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_user::text || ':' || p_exam_id::text, 0));
   select * into v_exam from public.cbt_exams where id=p_exam_id and is_active=true;
   if not found then raise exception 'CBT exam not found.'; end if;
   select count(*) into v_count from public.exam_questions where exam_id=p_exam_id;
