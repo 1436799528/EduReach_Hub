@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, ExternalLink, FileText, Laptop, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, BookOpen, FileText, Laptop, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
@@ -6,10 +6,11 @@ import FilterPills from '../src/components/FilterPills';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import {
   pastQuestionLibrary,
-  SCRIBD_HOME_URL,
   studyMaterialLibrary,
   type StudyMaterialRecord,
 } from '../src/data/examPreparation';
+import { fetchCbtExams } from '../src/lib/api';
+import { isSupabaseConfigured } from '../src/lib/supabase';
 
 type Filter = 'ALL' | 'JAMB' | 'WAEC' | 'NECO' | 'Post-UTME';
 type LibraryView = 'CBT' | 'MATERIALS';
@@ -22,6 +23,19 @@ const filters = [
   { id: 'Post-UTME', label: 'Post-UTME' },
 ];
 
+type BankGroup = 'JAMB' | 'WAEC' | 'NECO' | 'Post-UTME';
+
+type CbtBankRecord = {
+  id: string;
+  title: string;
+  exam: BankGroup;
+  school: string;
+  year: string;
+  subjects: string;
+  description: string;
+  href: string;
+};
+
 function readQuery() {
   const params = new URLSearchParams(window.location.search);
   const requestedView = params.get('view')?.toUpperCase();
@@ -31,6 +45,23 @@ function readQuery() {
     view: requestedView === 'MATERIALS' ? 'MATERIALS' as LibraryView : 'CBT' as LibraryView,
     filter: filters.some((item) => item.id === requestedFilter) ? requestedFilter as Filter : 'ALL' as Filter,
   };
+}
+
+function setupKeyForExamBody(value: string): 'jamb' | 'waec' | 'neco' | 'post-utme' | null {
+  const normalized = value.toLowerCase();
+  if (normalized.includes('post-utme') || normalized.includes('postutme')) return 'post-utme';
+  if (normalized.includes('waec')) return 'waec';
+  if (normalized.includes('neco')) return 'neco';
+  if (normalized.includes('jamb') || normalized.includes('utme')) return 'jamb';
+  return null;
+}
+
+function bankGroupForExamBody(value: string): Exclude<Filter, 'ALL'> {
+  const key = setupKeyForExamBody(value);
+  if (key === 'post-utme') return 'Post-UTME';
+  if (key === 'waec') return 'WAEC';
+  if (key === 'neco') return 'NECO';
+  return 'JAMB';
 }
 
 function materialRequestHref(material: StudyMaterialRecord) {
@@ -49,15 +80,54 @@ export default function PastQuestionsPage() {
   const [view, setView] = useState<LibraryView>(initial.view);
   const [filter, setFilter] = useState<Filter>(initial.filter);
   const [search, setSearch] = useState(initial.search);
+  const [banks, setBanks] = useState<CbtBankRecord[] | null>(null);
+  const [banksError, setBanksError] = useState('');
+
+  // The CBT tab is database-driven in production: every card maps to a real
+  // `cbt_exams` row managed in the Admin CBT console. The static library only
+  // renders in an unconfigured local preview (documented dev fallback).
+  useEffect(() => {
+    let active = true;
+    if (!isSupabaseConfigured) {
+      setBanks(pastQuestionLibrary.map((record) => ({ ...record })));
+      return;
+    }
+    fetchCbtExams()
+      .then((exams) => {
+        if (!active) return;
+        setBanks(exams.map((exam) => {
+          const setupKey = setupKeyForExamBody(`${exam.exam_body} ${exam.title}`);
+          return {
+            id: exam.id,
+            title: exam.title,
+            exam: bankGroupForExamBody(`${exam.exam_body} ${exam.title}`),
+            school: exam.exam_body,
+            year: 'Practice set',
+            subjects: exam.subject,
+            description: exam.description || `${exam.exam_body} ${exam.subject} practice bank.`,
+            href: setupKey
+              ? `/cbt/setup/${setupKey}?exam=${encodeURIComponent(exam.id)}`
+              : `/cbt/practice?exam=${encodeURIComponent(exam.id)}`,
+          };
+        }));
+      })
+      .catch((value) => {
+        if (!active) return;
+        setBanks([]);
+        setBanksError(value instanceof Error ? value.message : 'Unable to load the CBT catalogue.');
+      });
+    return () => { active = false; };
+  }, []);
 
   const records = useMemo(() => {
+    const list = banks || [];
     const query = search.trim().toLowerCase();
-    return pastQuestionLibrary.filter((record) => {
+    return list.filter((record) => {
       const matchesFilter = filter === 'ALL' || record.exam === filter;
       const searchable = `${record.title} ${record.school} ${record.year} ${record.subjects}`.toLowerCase();
       return matchesFilter && (!query || searchable.includes(query));
     });
-  }, [filter, search]);
+  }, [banks, filter, search]);
 
   const materials = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -124,7 +194,7 @@ export default function PastQuestionsPage() {
             <div>
               <span className="hub-eyebrow" style={{ color: '#C85841' }}>QUESTION LIBRARY</span>
               <h1>Past Questions &amp; Study Materials</h1>
-              <p>Choose between timed CBT practice and document/material requests. School coverage is limited to the configured catalogue; unavailable papers are not invented.</p>
+              <p>Choose between timed CBT practice and EduReach material requests. Coverage reflects what is actually configured — unavailable papers are never invented.</p>
             </div>
             <BookOpen size={28} color="#C85841" aria-hidden="true" />
           </div>
@@ -153,17 +223,24 @@ export default function PastQuestionsPage() {
             <span>
               {view === 'CBT'
                 ? 'Choose a configured bank to set your subjects or school before entering the timed hall. The calculator remains inside the CBT experience.'
-                : <>School material links open the configured Scribd home source (<a href={SCRIBD_HOME_URL} target="_blank" rel="noopener noreferrer">Scribd</a>). Use <b>Get now</b> to ask EduReach for guided material support on WhatsApp.</>}
+                : 'Document materials that are not yet available on EduReach open our own request channel — you stay inside EduReach and never get redirected to a third-party reading platform.'}
             </span>
           </div>
 
           {view === 'CBT' && (
-            !records.length ? (
-              <div className="hub-panel hub-empty"><h2>No matching CBT bank</h2><p>Try a different examination body, school or subject.</p></div>
+            banks === null ? (
+              <div className="hub-panel hub-empty">Loading question banks…</div>
+            ) : banksError ? (
+              <div className="hub-form-error" role="alert">{banksError}</div>
+            ) : !records.length ? (
+              <div className="hub-panel hub-empty">
+                <h2>{banks.length ? 'No matching CBT bank' : 'No CBT question banks available yet'}</h2>
+                <p>{banks.length ? 'Try a different examination body, school or subject.' : 'Question banks appear here as soon as they are published through the EduReach CBT catalogue.'}</p>
+              </div>
             ) : (
               <div className="er-library-grid">
                 {records.map((record) => (
-                  <article className={`er-library-card ${identityClassFor(record.exam, 'service')}`} id={`cbt-${record.id}`} key={record.id}>
+                  <a className={`er-library-card er-library-card-link ${identityClassFor(record.exam, 'service')}`} id={`cbt-${record.id}`} key={record.id} href={record.href}>
                     <div className="er-library-card-top">
                       <CardIdentityMark value={record.exam} type="service" size="sm" />
                       <span>{record.year}</span>
@@ -172,8 +249,8 @@ export default function PastQuestionsPage() {
                     <p className="er-library-school">{record.school}</p>
                     <p>{record.description}</p>
                     <div className="er-library-subjects"><strong>Subjects</strong><span>{record.subjects}</span></div>
-                    <a className="hub-primary-btn" href={record.href}>Set up CBT <ArrowRight size={14} /></a>
-                  </article>
+                    <span className="hub-primary-btn er-card-cta">Set up CBT <ArrowRight size={14} /></span>
+                  </a>
                 ))}
               </div>
             )
@@ -185,22 +262,27 @@ export default function PastQuestionsPage() {
             ) : (
               <div className="er-material-grid">
                 {materials.map((material) => (
-                  <article className={`er-material-card ${identityClassFor(material.exam, 'service')}`} id={`materials-${material.id}`} key={material.id}>
+                  <a
+                    className={`er-material-card er-material-card-link ${identityClassFor(material.exam, 'service')}`}
+                    id={`materials-${material.id}`}
+                    key={material.id}
+                    href={material.cbtHref || materialRequestHref(material)}
+                    {...(material.cbtHref ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+                  >
                     <div className="er-material-card-top">
                       <CardIdentityMark value={material.exam} type="service" size="sm" />
                       <span className="er-material-formats">{material.formats.join(' · ')}</span>
                     </div>
                     <h2>{material.title}</h2>
-                    <a className="er-material-school" href={material.sourceUrl} target="_blank" rel="noopener noreferrer">
-                      {material.school} <ExternalLink size={13} />
-                    </a>
+                    <span className="er-material-school-static">{material.school}</span>
                     <p>{material.description}</p>
                     <div className="er-library-subjects"><strong>Subjects</strong><span>{material.subjects}</span></div>
-                    <div className="er-material-actions">
-                      <a className="hub-primary-btn" href={materialRequestHref(material)} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} /> Get now</a>
-                      {material.cbtHref && <a className="hub-outline-btn" href={material.cbtHref}><Laptop size={14} /> CBT</a>}
-                    </div>
-                  </article>
+                    <span className="er-material-actions">
+                      {material.cbtHref
+                        ? <span className="hub-primary-btn er-card-cta"><Laptop size={14} /> Practice CBT</span>
+                        : <span className="hub-primary-btn er-card-cta"><MessageCircle size={14} /> Request via EduReach</span>}
+                    </span>
+                  </a>
                 ))}
               </div>
             )

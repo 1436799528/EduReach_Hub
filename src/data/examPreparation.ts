@@ -192,12 +192,14 @@ export const admissionMethodProfiles: AdmissionMethodProfile[] = [
 ];
 
 /**
- * The materials catalogue intentionally points to Scribd's home page rather
- * than inventing document URLs. A student can browse/search there, or ask the
- * EduReach team to help locate the configured material through WhatsApp.
+ * Study-material records are honest route cards, never document claims.
+ *
+ * There are no third-party document links (Scribd was removed entirely on
+ * 2026-09-27): each record either routes into the first-party CBT practice
+ * (`cbtHref`) or into EduReach's own material-request channel. When an admin
+ * publishes real question content in the CBT catalogue, students reach it
+ * without leaving EduReach.
  */
-export const SCRIBD_HOME_URL = 'https://www.scribd.com/home';
-
 export type StudyMaterialRecord = {
   id: string;
   title: string;
@@ -206,7 +208,6 @@ export type StudyMaterialRecord = {
   formats: string[];
   subjects: string;
   description: string;
-  sourceUrl: string;
   cbtHref?: string;
 };
 
@@ -218,8 +219,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     school: 'JAMB / UTME',
     formats: ['PDF', 'DOC', 'Study materials'],
     subjects: 'Use of English, Mathematics, Biology, Chemistry and Physics',
-    description: 'Request or browse the configured JAMB study material route before your timed practice.',
-    sourceUrl: SCRIBD_HOME_URL,
+    description: 'Timed JAMB practice is available now. Request document materials through EduReach while the library is being configured.',
     cbtHref: '/cbt/setup/jamb',
   },
   {
@@ -229,8 +229,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     school: 'WAEC',
     formats: ['PDF', 'DOC', 'Revision materials'],
     subjects: 'English, Mathematics and elective subjects',
-    description: 'Browse the external material source or ask EduReach to help with the configured material request.',
-    sourceUrl: SCRIBD_HOME_URL,
+    description: 'Timed practice is available now. Request document materials through EduReach while the library is being configured.',
     cbtHref: '/cbt/setup/waec',
   },
   {
@@ -240,8 +239,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     school: 'NECO',
     formats: ['PDF', 'DOC', 'Revision materials'],
     subjects: 'English, Mathematics and elective subjects',
-    description: 'Browse the external material source or ask EduReach to help with the configured material request.',
-    sourceUrl: SCRIBD_HOME_URL,
+    description: 'Timed practice is available now. Request document materials through EduReach while the library is being configured.',
     cbtHref: '/cbt/setup/neco',
   },
   ...postUtmeSchools.map((school) => ({
@@ -251,8 +249,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     school: school.name,
     formats: ['PDF', 'DOC', 'School materials'],
     subjects: school.subjects.join(', '),
-    description: `Configured material request for ${school.location} applicants. Confirm the current school notice before relying on any paper.`,
-    sourceUrl: SCRIBD_HOME_URL,
+    description: `Timed practice is available now. Request ${school.name} document materials through EduReach and confirm the current school notice before relying on any paper.`,
     cbtHref: school.offersPostUtme ? `/cbt/setup/post-utme?school=${school.id}` : undefined,
   })),
 ];

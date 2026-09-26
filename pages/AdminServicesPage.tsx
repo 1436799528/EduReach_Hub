@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import AdminLayout from './AdminLayout';
 import {
   createAdminService,
   deleteAdminService,
@@ -102,7 +101,6 @@ export default function AdminServicesPage() {
   }
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -219,6 +217,5 @@ export default function AdminServicesPage() {
         </div>
         <p className="admin-footnote">Built-in form services (NELFUND loan, Results, JAMB slip, Admission letters) are protected: they can be edited, reordered, hidden or shown, but not deleted — their application forms are part of the code release.</p>
       </div>
-    </AdminLayout>
   );
 }

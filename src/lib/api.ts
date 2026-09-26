@@ -36,7 +36,18 @@ export type NewsItem = {
   author: string | null;
   last_verified_at: string | null;
   verification_status: string;
+  featured: boolean;
+  tags: string[];
 };
+
+/** Parses the stored comma-separated tag list into clean strings. */
+export function parseNewsTags(value: unknown): string[] {
+  return String(value || '')
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+}
 export type UpcomingItem = {
   id: string;
   kind: 'deadline' | 'exam';
@@ -61,13 +72,19 @@ const fallbackServicesCatalog: ServiceItem[] = hubServices.map((srv, index) => (
 // Upcoming deadlines are loaded from the backend when configured
 const fallbackUpcomingItems: UpcomingItem[] = [];
 
-// Built-in CBT practice catalog
+// Built-in CBT practice catalog.
+//
+// DEVELOPMENT PREVIEW ONLY. When Supabase credentials are configured, the
+// production `cbt_exams` table is the single source of truth and this array
+// is never rendered. It exists so the CBT flow can be exercised locally
+// without a backend; it is not production content.
 const fallbackCbtExams = [
   {
     id: 'practice-exam-jamb',
     title: 'JAMB UTME Comprehensive Practice',
     exam_body: 'JAMB',
     subject: 'General Practice & Use of English',
+    description: 'Local preview question bank used when no CBT catalogue is configured.',
     duration_minutes: 30,
   },
   {
@@ -75,6 +92,7 @@ const fallbackCbtExams = [
     title: 'WAEC Senior Certificate Revision',
     exam_body: 'WAEC',
     subject: 'Use of English',
+    description: 'Local preview question bank used when no CBT catalogue is configured.',
     duration_minutes: 45,
   },
   {
@@ -82,6 +100,7 @@ const fallbackCbtExams = [
     title: 'NECO SSCE Comprehensive Practice',
     exam_body: 'NECO',
     subject: 'Mathematics',
+    description: 'Local preview question bank used when no CBT catalogue is configured.',
     duration_minutes: 40,
   },
   {
@@ -89,10 +108,14 @@ const fallbackCbtExams = [
     title: 'Federal Universities Post-UTME Screening',
     exam_body: 'POST-UTME',
     subject: 'Aptitude & General Studies',
+    description: 'Local preview question bank used when no CBT catalogue is configured.',
     duration_minutes: 25,
   },
 ];
 
+// DEVELOPMENT PREVIEW ONLY — used exclusively when no Supabase backend is
+// configured (see fetchCbtQuestions). Production question pools always come
+// from `exam_questions` rows managed in the Admin CBT console.
 const practiceQuestions = [
   { id: 1, text: 'Choose the word nearest in meaning to "rapid".', options: ['Slow', 'Fast', 'Late', 'Weak'] },
   { id: 2, text: 'What is 15% of 200?', options: ['20', '25', '30', '35'] },
@@ -211,7 +234,7 @@ export async function fetchCbtExams() {
 
   const { data, error } = await supabase
     .from('cbt_exams')
-    .select('id,title,exam_body,subject,duration_minutes')
+    .select('id,title,exam_body,subject,description,duration_minutes')
     .eq('is_active', true)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -539,7 +562,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
 
   const { data, error } = await supabase
     .from('news_articles')
-    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published')
+    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags')
     .eq('published', true)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(30);
@@ -558,6 +581,8 @@ export async function fetchNews(): Promise<NewsItem[]> {
     author: item.source_name || 'EduReach Editorial Desk',
     last_verified_at: item.updated_at,
     verification_status: 'verified',
+    featured: item.featured === true,
+    tags: parseNewsTags(item.tags),
   }));
 }
 
@@ -568,7 +593,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
 
   const { data, error } = await supabase
     .from('news_articles')
-    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published')
+    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags')
     .eq('slug', slug)
     .eq('published', true)
     .maybeSingle();
@@ -588,6 +613,8 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     author: data.source_name || 'EduReach Editorial Desk',
     last_verified_at: data.updated_at,
     verification_status: 'verified',
+    featured: data.featured === true,
+    tags: parseNewsTags(data.tags),
   };
 }
 
@@ -727,6 +754,8 @@ export type AdminNewsArticle = {
   source_name: string | null;
   published: boolean;
   published_at: string | null;
+  featured?: boolean;
+  tags?: string | null;
   updated_at: string;
 };
 
@@ -740,6 +769,9 @@ export type AdminNewsInput = {
   source_url?: string | null;
   source_name?: string | null;
   published?: boolean;
+  published_at?: string | null;
+  featured?: boolean;
+  tags?: string | null;
 };
 
 export async function fetchAdminNews(): Promise<AdminNewsArticle[]> {
@@ -895,4 +927,37 @@ export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; 
     method: 'POST',
     body: JSON.stringify({ dataUrl }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Admin CBT exam management (duration/default settings, active state, delete).
+// Question management lives on the exam detail endpoints above.
+// ---------------------------------------------------------------------------
+
+export type AdminCbtExam = {
+  id: string;
+  title: string;
+  exam_body: string;
+  subject: string;
+  description: string | null;
+  duration_minutes: number;
+  is_active: boolean;
+  created_at?: string;
+};
+
+export async function fetchAdminCbtExams(): Promise<AdminCbtExam[]> {
+  const body = await adminApiFetch<{ items: AdminCbtExam[] }>('/api/admin/cbt/exams');
+  return body.items || [];
+}
+
+export async function updateAdminCbtExam(examId: string, values: Partial<Omit<AdminCbtExam, 'id' | 'created_at'>>): Promise<AdminCbtExam> {
+  const body = await adminApiFetch<{ item: AdminCbtExam }>(`/api/admin/cbt/exams/${encodeURIComponent(examId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(values),
+  });
+  return body.item;
+}
+
+export async function deleteAdminCbtExam(examId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/cbt/exams/${encodeURIComponent(examId)}`, { method: 'DELETE' });
 }

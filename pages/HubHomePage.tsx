@@ -122,7 +122,7 @@ export default function HubHomePage() {
                 <button type="button" className="hub-outline-btn" onClick={() => setFeedVersion((value) => value + 1)} disabled={newsLoading}>Try again</button>
               </div>
             )}
-            {!news.length && !newsLoading && !newsError && <div className="er-empty">News updates will appear here.</div>}
+            {!news.length && !newsLoading && !newsError && <div className="er-empty">No news content available yet. Published updates appear here as soon as they are ready.</div>}
           </section>
 
           <div className="er-two-col">
@@ -131,7 +131,7 @@ export default function HubHomePage() {
               <div className="er-news-list">
                 {news.slice(0, 6).map((item) => <NewsRow key={item.id} item={item} />)}
                 {!news.length && newsLoading && <SkeletonRows rows={4} label="Loading news" />}
-                {!news.length && !newsLoading && !newsError && <div className="er-empty">News updates will appear here.</div>}
+                {!news.length && !newsLoading && !newsError && <div className="er-empty">No news content available yet. Published updates appear here as soon as they are ready.</div>}
               </div>
             </section>
 
@@ -155,7 +155,7 @@ export default function HubHomePage() {
               <section className="er-section">
                 <SectionHead title="Trending" href="/news" linkLabel="More" />
                 <TrendingNews items={news} limit={5} />
-                {!news.length && !newsLoading && !newsError && <div className="er-empty">Trending stories will appear here.</div>}
+                {!news.length && !newsLoading && !newsError && <div className="er-empty">Trending stories will appear here once news is published.</div>}
               </section>
             </div>
           </div>

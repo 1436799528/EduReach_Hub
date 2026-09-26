@@ -15,16 +15,28 @@ import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams } from '../src/lib/api';
 import { SkeletonRows } from '../src/components/Skeleton';
 
-type Exam = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
+type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number };
 
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
+// The card routes into the body-specific setup wizard and carries the real
+// exam id, so the setup page can show THIS exam's configured default duration
+// and start THIS exam's question pool. Durations are deliberately not shown on
+// the card itself — they live on the setup page where the student configures
+// the session.
 function setupPathForExam(exam: Exam) {
   const value = `${exam.exam_body} ${exam.id} ${exam.title}`.toLowerCase();
-  if (value.includes('post-utme') || value.includes('postutme')) return '/cbt/setup/post-utme';
-  if (value.includes('waec')) return '/cbt/setup/waec';
-  if (value.includes('neco')) return '/cbt/setup/neco';
-  return '/cbt/setup/jamb';
+  const base = value.includes('post-utme') || value.includes('postutme')
+    ? '/cbt/setup/post-utme'
+    : value.includes('waec')
+      ? '/cbt/setup/waec'
+      : value.includes('neco')
+        ? '/cbt/setup/neco'
+        : value.includes('jamb') || value.includes('utme')
+          ? '/cbt/setup/jamb'
+          : null;
+  if (!base) return `/cbt/practice?exam=${encodeURIComponent(exam.id)}`;
+  return `${base}?exam=${encodeURIComponent(exam.id)}`;
 }
 const modes: Array<{ id: ExamMode; label: string }> = [
   { id: 'ALL', label: 'All Exams' },
@@ -168,7 +180,15 @@ export default function CbtPage() {
           {!loading && !error && filteredExams.length > 0 && (
             <div className="er-bank-list">
               {filteredExams.map((exam) => (
-                <div key={exam.id} className={`er-bank-card ${identityClassFor(exam.exam_body, 'service')}`}>
+                // The whole card is the link. The duration is intentionally NOT
+                // shown here — the setup page (next step) reads the exam's
+                // configured default duration from the database and lets the
+                // student choose an allowed duration before the timer starts.
+                <a
+                  key={exam.id}
+                  href={setupPathForExam(exam)}
+                  className={`er-bank-card er-bank-card-link ${identityClassFor(exam.exam_body, 'service')}`}
+                >
                   <div className="er-bank-main">
                     <CardIdentityMark value={exam.exam_body} type="service" />
                     <div className="er-bank-copy">
@@ -176,20 +196,14 @@ export default function CbtPage() {
                         {exam.exam_body} • {exam.subject}
                       </span>
                       <h3>{exam.title}</h3>
-                      <span className="er-bank-meta">
-                        <Clock3 size={13} />
-                        {exam.duration_minutes} Minutes
-                      </span>
+                      {exam.description && <span className="er-bank-desc">{exam.description}</span>}
                     </div>
                   </div>
 
-                  <a
-                    href={setupPathForExam(exam)}
-                    className="hub-primary-btn er-bank-cta"
-                  >
+                  <span className="hub-primary-btn er-bank-cta er-card-cta">
                     Set up test <ArrowRight size={14} />
-                  </a>
-                </div>
+                  </span>
+                </a>
               ))}
             </div>
           )}

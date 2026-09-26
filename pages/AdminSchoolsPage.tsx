@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import AdminLayout from './AdminLayout';
 import {
   createAdminInstitution,
   deleteAdminInstitution,
@@ -80,7 +79,6 @@ export default function AdminSchoolsPage() {
   }
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -174,6 +172,5 @@ export default function AdminSchoolsPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }

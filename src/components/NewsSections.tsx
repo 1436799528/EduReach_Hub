@@ -1,20 +1,9 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Newspaper } from 'lucide-react';
 import type { NewsItem } from '../lib/api';
+import { newsCategoryLabel } from '../data/newsCategories';
 import { identityClassFor } from './CardIdentityMark';
 
-export function newsThumbFor(category: string): string {
-  const value = (category || '').toLowerCase();
-  if (value.includes('jamb')) return '/news/photos/jamb-cbt.jpg';
-  if (value.includes('waec') || value.includes('neco') || value.includes('result')) return '/news/photos/waec-result.png';
-  if (value.includes('nelfund') || value.includes('fund') || value.includes('scholar') || value.includes('grant') || value.includes('loan'))
-    return '/news/photos/nelfund.webp';
-  if (value.includes('admission') || value.includes('screen')) return '/news/photos/campus.jpg';
-  return '/news/photos/graduates.jpg';
-}
-
-export function newsCategoryLabel(category: string): string {
-  return category.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
+export { newsCategoryLabel };
 
 export function formatNewsDate(value: string | null): string {
   if (!value) return 'Recent update';
@@ -25,20 +14,61 @@ function articleHref(item: NewsItem): string {
   return `/news/${encodeURIComponent(item.slug)}`;
 }
 
+function safeImageSrc(value: string | null): string | null {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === 'https:' ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Article image with an honest fallback.
+ *
+ * Every article renders its OWN featured image. When an article genuinely has
+ * no image (or the stored image fails to load), we show an intentional neutral
+ * placeholder instead of silently recycling one of the bundled stock photos —
+ * that is what made every card look identical before.
+ */
+export function NewsImage({ item, className }: { item: NewsItem; className?: string }) {
+  const src = safeImageSrc(item.image_url);
+  const label = newsCategoryLabel(item.category);
+  if (!src) {
+    return (
+      <span className={`er-news-noimage ${className || ''}`} aria-hidden="true">
+        <Newspaper size={18} />
+        <small>{label}</small>
+      </span>
+    );
+  }
+  return (
+    <img
+      src={src}
+      className={className}
+      alt={`${item.title} — ${label}`}
+      loading="lazy"
+      onError={(event) => {
+        // Broken media must not masquerade as a generic photo; swap to the
+        // intentional placeholder once and stop handling errors.
+        const element = event.currentTarget;
+        element.onerror = null;
+        const placeholder = document.createElement('span');
+        placeholder.className = `er-news-noimage ${className || ''}`;
+        element.replaceWith(placeholder);
+      }}
+    />
+  );
+}
+
 /** Compact Myschool-style news row: thumb + category/date + headline. */
 export function NewsRow({ item }: { item: NewsItem }) {
   return (
     <a className="er-news-row" href={articleHref(item)}>
-      <img
-        src={item.image_url || newsThumbFor(item.category)}
-        className="er-news-photo"
-        alt={`${item.title} — ${newsCategoryLabel(item.category)}`}
-        loading="lazy"
-        onError={(event) => {
-          event.currentTarget.onerror = null;
-          event.currentTarget.src = newsThumbFor(item.category);
-        }}
-      />
+      <NewsImage item={item} className="er-news-photo" />
       <span>
         <small>
           {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
@@ -50,23 +80,20 @@ export function NewsRow({ item }: { item: NewsItem }) {
   );
 }
 
-/** Two featured cards with banner art, category, date and excerpt. */
+/**
+ * Featured cards. Editorial control first: articles flagged “featured” in the
+ * Newsroom lead; when nothing is flagged the two newest stories fill the slot
+ * so the section never fabricates a feature state.
+ */
 export function FeaturedNews({ items }: { items: NewsItem[] }) {
   if (!items.length) return null;
+  const flagged = items.filter((item) => item.featured);
+  const list = (flagged.length ? flagged : items).slice(0, 2);
   return (
     <div className="er-featured-grid">
-      {items.slice(0, 2).map((item) => (
+      {list.map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
-          <img
-        src={item.image_url || newsThumbFor(item.category)}
-        className="er-news-photo"
-        alt={`${item.title} — ${newsCategoryLabel(item.category)}`}
-        loading="lazy"
-        onError={(event) => {
-          event.currentTarget.onerror = null;
-          event.currentTarget.src = newsThumbFor(item.category);
-        }}
-      />
+          <NewsImage item={item} className="er-news-photo" />
           <span className="er-featured-body">
             <small>
               {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}

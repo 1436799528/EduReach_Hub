@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import AdminLayout from './AdminLayout';
 import { fetchAdminAnalytics } from '../src/lib/api';
 import { AdminEmptyState, AuditTimeline, BarStat, KpiSkeleton, Metric, SectionLabel, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
 
@@ -28,7 +27,6 @@ export default function AdminAnalyticsPage() {
   const events7 = Math.max(num('events_7d'), events24, 1);
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div><h1>Analytics &amp; Reports</h1><p>Live operational metrics from EduReach production data.</p></div>
@@ -118,6 +116,5 @@ export default function AdminAnalyticsPage() {
           </>
         )}
       </div>
-    </AdminLayout>
   );
 }

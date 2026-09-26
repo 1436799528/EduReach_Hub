@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
-import AdminLayout from './AdminLayout';
 import {
   createAdminCalendarItem,
   deleteAdminCalendarItem,
@@ -104,7 +103,6 @@ export default function AdminContentPage() {
   const sorted = useMemo(() => [...items].sort((a, b) => new Date(String(whenField(a))).getTime() - new Date(String(whenField(b))).getTime()), [items]);
 
   return (
-    <AdminLayout>
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
@@ -218,6 +216,5 @@ export default function AdminContentPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }

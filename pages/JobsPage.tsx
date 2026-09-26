@@ -143,11 +143,13 @@ export default function JobsPage() {
               <SectionHead title={`${filteredStatic.length} preview listing${filteredStatic.length === 1 ? '' : 's'}`} />
               <div style={{ display: 'grid', gap: '12px' }}>
                 {filteredStatic.map((item) => (
-                  <div
+                  <a
                     key={item.title}
-                    className={`er-opportunity-card ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
+                    href={jobApplyHref(item.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
                     style={{
-                      display: 'flex',
                       alignItems: 'center',
                       gap: '14px',
                       padding: '16px',
@@ -179,16 +181,13 @@ export default function JobsPage() {
                         {item.note}
                       </p>
                     </div>
-                    <a
-                      href={jobApplyHref(item.title)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hub-primary-btn"
-                      style={{ alignSelf: 'center', flexShrink: 0, textDecoration: 'none', fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                    <span
+                      className="hub-primary-btn er-card-cta"
+                      style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
                     >
                       Apply <ArrowRight size={13} />
-                    </a>
-                  </div>
+                    </span>
+                  </a>
                 ))}
               </div>
             </section>
@@ -199,10 +198,13 @@ export default function JobsPage() {
               <SectionHead title={`${filteredLive.length} open listing${filteredLive.length === 1 ? '' : 's'}`} />
               <div style={{ display: 'grid', gap: '12px' }}>
                 {filteredLive.map((item) => (
-                  <div
+                  <a
                     key={item.id}
-                    className={`er-opportunity-card ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
-                    style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)' }}
+                    href={item.link_url || jobApplyHref(item.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
+                    style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)' }}
                   >
                     <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
                       <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />
@@ -221,16 +223,13 @@ export default function JobsPage() {
                         ? <div style={{ fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(item.description || '') }} />
                         : <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>{item.description}</p>}
                     </div>
-                    <a
-                      href={item.link_url || jobApplyHref(item.title)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hub-primary-btn"
-                      style={{ alignSelf: 'center', flexShrink: 0, textDecoration: 'none', fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                    <span
+                      className="hub-primary-btn er-card-cta"
+                      style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
                     >
                       {item.link_url ? 'Official link' : 'Apply'} <ArrowRight size={13} />
-                    </a>
-                  </div>
+                    </span>
+                  </a>
                 ))}
               </div>
             </section>

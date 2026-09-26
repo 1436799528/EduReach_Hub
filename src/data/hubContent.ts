@@ -15,14 +15,6 @@ export const hubServices: ServiceCatalogItem[] = [
   { slug: 'admission-letters', title: 'Admission Deferment & Supplementary Letters', short: 'Admission Letters', description: 'Prepare a clear application letter around your institution’s actual requirements.', price: 'Letter support', action: 'Apply Now', tone: 'green' },
 ];
 
-export const newsItems = [
-  { slug: 'jamb-caps-status-guide', tag: 'JAMB', title: 'JAMB CAPS: What Students Should Check Before Accepting Admission', date: 'Quick guide', excerpt: 'A compact checklist for checking admission status, CAPS details and the next step.', verified: true },
-  { slug: 'nelfund-student-loan-checklist', tag: 'NELFUND', title: 'NELFUND Student Loan: Information to Organise Before You Apply', date: 'Student guide', excerpt: 'Keep your contact, institution and academic details ready before starting a loan request.', verified: true },
-  { slug: 'waec-neco-result-checking', tag: 'WAEC / NECO', title: 'WAEC / NECO Result Checking: Keep Your Candidate Details Safe', date: 'Reminder', excerpt: 'Simple safety steps for result-checking access details and official portals.', verified: true },
-  { slug: 'campus-gist-week', tag: 'Campus Gist', title: 'Campus Gist: What Students Should Watch This Week', date: 'Weekly', excerpt: 'A student roundup guide for deadlines, notices and useful student updates.', verified: false },
-  { slug: 'student-opportunities', tag: 'Opportunities', title: 'Student Opportunities: Keep Your Documents Ready', date: 'Guide', excerpt: 'How to keep an application-ready student folder for scholarships, internships and opportunities.', verified: false },
-];
-
 export type JobCategory = 'scholarship' | 'internship' | 'campus' | 'part-time';
 
 export type JobListing = {
