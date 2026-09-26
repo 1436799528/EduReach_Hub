@@ -159,7 +159,7 @@ function toRpn(tokens: Token[]): StackToken[] {
     } else if (token.type === 'func' || token.type === 'op') {
       const prec = precOf(token);
       const key = keyOf(token);
-      while (stack.length) {
+      while (stack.length && token.type !== 'func' && !(token.type === 'op' && token.value === 'neg')) {
         const top = stack[stack.length - 1];
         if (top.type === 'lparen') break;
         const topPrec = top.prec;
@@ -181,6 +181,7 @@ function toRpn(tokens: Token[]): StackToken[] {
         output.push(top);
       }
       if (!matched) throw new Error('Mismatched brackets');
+      if (stack[stack.length - 1]?.type === 'func') output.push(stack.pop()!);
     }
   }
 
