@@ -144,15 +144,19 @@ export default function App() {
           the skeleton fallback only appears on a cold load. Admin routes wrap
           the keyed content in a single persistent console shell. */}
       {locationState.pathname.startsWith('/admin') ? (
-        <Suspense fallback={<RouteFallback />}>
-          <AdminShell>
-            <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
-          </AdminShell>
-        </Suspense>
+        <ErrorBoundary key="admin-shell-boundary">
+          <Suspense fallback={<RouteFallback />}>
+            <AdminShell>
+              <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
+            </AdminShell>
+          </Suspense>
+        </ErrorBoundary>
       ) : (
-        <Suspense fallback={<RouteFallback />}>
-          <ErrorBoundary key={locationState.routeKey}>{renderRoute(locationState.pathname)}</ErrorBoundary>
-        </Suspense>
+        <ErrorBoundary key={locationState.routeKey}>
+          <Suspense fallback={<RouteFallback />}>
+            {renderRoute(locationState.pathname)}
+          </Suspense>
+        </ErrorBoundary>
       )}
     </>
   );
