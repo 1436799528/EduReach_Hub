@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, Eye, Pencil, Plus, RefreshCw, Star, Trash2, Upload } from 'lucide-react';
 import {
@@ -67,7 +68,7 @@ export default function AdminNewsPage() {
       setArticles(await fetchAdminNews());
     } catch (e) {
       setArticles([]);
-      setError(e instanceof Error ? e.message : 'Unable to load newsroom articles.');
+      setError(userFacingError(e, 'Unable to load newsroom articles.'));
     } finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
@@ -158,7 +159,7 @@ export default function AdminNewsPage() {
       bodyHtmlRef.current = saved.body || '';
       setMessage(saved.published ? 'Article published — it is live on the news page.' : 'Draft saved.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the article.');
+      setError(userFacingError(e, 'Unable to save the article.'));
     } finally { setSaving(false); }
   }
 
@@ -168,7 +169,7 @@ export default function AdminNewsPage() {
       setArticles((items) => items.map((item) => item.id === updated.id ? updated : item));
       setMessage(updated.published ? `“${updated.title}” is now published.` : `“${updated.title}” is now an unpublished draft.`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update the article.');
+      setError(userFacingError(e, 'Unable to update the article.'));
     }
   }
 
@@ -178,7 +179,7 @@ export default function AdminNewsPage() {
       setArticles((items) => items.map((item) => item.id === updated.id ? updated : item));
       setMessage(updated.featured ? `“${updated.title}” now leads the Featured section.` : `“${updated.title}” removed from Featured.`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update the article.');
+      setError(userFacingError(e, 'Unable to update the article.'));
     }
   }
 
@@ -191,7 +192,7 @@ export default function AdminNewsPage() {
       if (editor?.id === article.id) setEditor(null);
       setMessage('Article permanently deleted.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to delete the article.');
+      setError(userFacingError(e, 'Unable to delete the article.'));
     }
   }
 
@@ -208,7 +209,7 @@ export default function AdminNewsPage() {
       const uploaded = await uploadAdminImage(dataUrl);
       setEditor((state) => state ? { ...state, imageUrl: uploaded.url } : state);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Image upload failed.');
+      setError(userFacingError(e, 'Image upload failed.'));
     } finally { setUploadingImage(false); }
   }
 

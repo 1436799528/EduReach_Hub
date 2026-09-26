@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { ArrowRight, BookOpen, FileText, Laptop, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
@@ -114,7 +115,7 @@ export default function PastQuestionsPage() {
       .catch((value) => {
         if (!active) return;
         setBanks([]);
-        setBanksError(value instanceof Error ? value.message : 'Unable to load the CBT catalogue.');
+        setBanksError(userFacingError(value, 'Unable to load the CBT catalogue.'));
       });
     return () => { active = false; };
   }, []);

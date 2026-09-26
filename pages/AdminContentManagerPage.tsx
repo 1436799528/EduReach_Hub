@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import { Download, Pencil, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { adminApiFetch } from '../src/lib/api';
@@ -89,11 +90,11 @@ export default function AdminContentManagerPage() {
       const data = await adminApiFetch<{ rows: Row[] }>(`/api/admin/content-manager/data/${encodeURIComponent(key)}`);
       setRows(data.rows || []);
     } catch (e) {
-      setRows([]); setError(e instanceof Error ? e.message : 'Unable to load data.');
+      setRows([]); setError(userFacingError(e, 'Unable to load data.'));
     } finally { setLoading(false); }
   }
 
-  useEffect(() => { void loadResources().catch(e => setError(e instanceof Error ? e.message : 'Unable to load content manager.')); }, []);
+  useEffect(() => { void loadResources().catch(e => setError(userFacingError(e, 'Unable to load content manager.'))); }, []);
   useEffect(() => { if (resources.length) void loadRows(resourceKey); }, [resourceKey, resources.length]);
 
   function startNew() {
@@ -119,7 +120,7 @@ export default function AdminContentManagerPage() {
       setRows(current => isEdit ? current.map(row => row.id === editing.id ? data.row : row) : [data.row, ...current]);
       setShowForm(false); setEditing(null); setMessage(isEdit ? 'Record updated.' : 'Record created.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save record.');
+      setError(userFacingError(e, 'Unable to save record.'));
     } finally { setSaving(false); }
   }
 
@@ -130,7 +131,7 @@ export default function AdminContentManagerPage() {
       await adminApiFetch(`/api/admin/content-manager/data/${encodeURIComponent(resource.key)}/${encodeURIComponent(row.id)}`, { method: 'DELETE' });
       setRows(current => current.filter(item => item.id !== row.id));
       setMessage('Record deleted.');
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to delete record.'); }
+    } catch (e) { setError(userFacingError(e, 'Unable to delete record.')); }
   }
 
   async function importCsv(file: File) {
@@ -150,7 +151,7 @@ export default function AdminContentManagerPage() {
       setMessage(`Preview ready: ${dataRows.length} row(s). Review the first rows below, then confirm the import.`);
     } catch (e) {
       setPendingImport([]);
-      setError(e instanceof Error ? e.message : 'Unable to read CSV.');
+      setError(userFacingError(e, 'Unable to read CSV.'));
     }
   }
 
@@ -167,7 +168,7 @@ export default function AdminContentManagerPage() {
       setMessage(`Import complete: ${result.inserted} inserted, ${result.updated} updated, ${result.errors.length} rejected.${result.errors.length ? ' See the error list below.' : ''}`);
       if (result.errors.length) setError(result.errors.map(item => `Row ${item.row}: ${item.error}`).join(' • '));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to import CSV.');
+      setError(userFacingError(e, 'Unable to import CSV.'));
     } finally { setSaving(false); }
   }
 

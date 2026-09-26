@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import {
@@ -53,7 +54,7 @@ export default function AdminOpportunitiesPage() {
       setItems(await fetchAdminOpportunities());
     } catch (e) {
       setItems([]);
-      setError(e instanceof Error ? e.message : 'Unable to load opportunities.');
+      setError(userFacingError(e, 'Unable to load opportunities.'));
     } finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
@@ -93,7 +94,7 @@ export default function AdminOpportunitiesPage() {
       setDescriptionHtml('');
       setMessage(edit.id ? 'Opportunity updated — /jobs reflects it on the next load.' : 'Opportunity published — it is live on /jobs right away.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the opportunity.');
+      setError(userFacingError(e, 'Unable to save the opportunity.'));
     } finally { setSaving(false); }
   }
 
@@ -103,7 +104,7 @@ export default function AdminOpportunitiesPage() {
       setItems((current) => current.map((row) => row.id === updated.id ? updated : row));
       setMessage(updated.is_active ? `“${updated.title}” is visible to students.` : `“${updated.title}” is hidden from students.`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update the opportunity.');
+      setError(userFacingError(e, 'Unable to update the opportunity.'));
     }
   }
 
@@ -115,7 +116,7 @@ export default function AdminOpportunitiesPage() {
       setItems((current) => current.filter((row) => row.id !== item.id));
       setMessage('Opportunity permanently deleted.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to delete the opportunity.');
+      setError(userFacingError(e, 'Unable to delete the opportunity.'));
     }
   }
 

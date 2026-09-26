@@ -1,3 +1,4 @@
+import { userFacingError } from '../../../lib/errors';
 import { useEffect, useState, type FormEvent } from 'react';
 import { KeyRound, Laptop, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -65,7 +66,7 @@ export default function SecurityModal({
         onMfaChange(Boolean(verifiedFactor));
       })
       .catch((value) => {
-        if (active) setError(value instanceof Error ? value.message : 'Unable to load MFA status.');
+        if (active) setError(userFacingError(value, 'Unable to load MFA status.'));
       })
       .finally(() => {
         if (active) setMfaLoading(false);
@@ -105,7 +106,7 @@ export default function SecurityModal({
       setNewPassword('');
       setConfirmNewPassword('');
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Password update failed. Please try again.');
+      setError(userFacingError(value, 'Password update failed. Please try again.'));
     } finally {
       setBusy(false);
     }
@@ -125,7 +126,7 @@ export default function SecurityModal({
       setSessionRevoked(true);
       window.setTimeout(() => setSessionRevoked(false), 3000);
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Unable to sign out other devices right now.');
+      setError(userFacingError(value, 'Unable to sign out other devices right now.'));
     }
   };
 
@@ -165,7 +166,7 @@ export default function SecurityModal({
       setMfaSetup({ factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret, uri: data.totp.uri });
       setMessage('Scan the QR code with your authenticator app, then enter the six-digit code to finish setup.');
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Unable to update MFA settings.');
+      setError(userFacingError(value, 'Unable to update MFA settings.'));
     } finally {
       setMfaBusy(false);
     }
@@ -196,7 +197,7 @@ export default function SecurityModal({
       setMessage('Two-factor authentication is now enabled.');
       void recordSecurityEvent(userId, 'mfa_enabled', 'MFA enabled from student dashboard');
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'The MFA code could not be verified.');
+      setError(userFacingError(value, 'The MFA code could not be verified.'));
     } finally {
       setMfaBusy(false);
     }

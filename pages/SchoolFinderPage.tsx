@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, MapPin, Search, School, X } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
@@ -39,7 +40,7 @@ export default function SchoolFinderPage() {
         if (active) setInstitutions((data || []) as Institution[]);
       } catch (value) {
         if (active) {
-          setError(value instanceof Error ? value.message : 'The school directory could not be loaded.');
+          setError(userFacingError(value, 'The school directory could not be loaded.'));
           // Production never silently substitutes the maintained starter list
           // for a configured-but-failing directory; the starter list is only
           // the unconfigured local-preview source.

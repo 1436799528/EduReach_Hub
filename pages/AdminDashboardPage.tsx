@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Activity,
@@ -57,7 +58,7 @@ export default function AdminDashboardPage() {
       setUpdatedAt(new Date());
     } catch (e) {
       if (!mounted.current) return;
-      setError(e instanceof Error ? e.message : 'Unable to load the operations dashboard.');
+      setError(userFacingError(e, 'Unable to load the operations dashboard.'));
     } finally {
       if (mounted.current) { setLoading(false); setRefreshing(false); }
     }
@@ -76,7 +77,7 @@ export default function AdminDashboardPage() {
       await updateAdminServiceRequest(requestId, nextStatus);
       await load(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update request.');
+      setError(userFacingError(e, 'Unable to update request.'));
     } finally { setBusyId(null); }
   }
 

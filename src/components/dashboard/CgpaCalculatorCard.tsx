@@ -1,3 +1,4 @@
+import { userFacingError } from '../../../lib/errors';
 import { useMemo, useState } from 'react';
 import { Calculator, Trash2 } from 'lucide-react';
 import { calculateCgpa, saveCgpaSnapshot, type CgpaCourseInput, type CgpaSnapshot } from '../../lib/studentDashboard';
@@ -69,7 +70,7 @@ export default function CgpaCalculatorCard({
       onSnapshotSaved(snapshot);
       setMessage('CGPA snapshot saved to your student record.');
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Unable to save CGPA snapshot.');
+      setMessage(userFacingError(err, 'Unable to save CGPA snapshot.'));
     } finally {
       setSaving(false);
     }

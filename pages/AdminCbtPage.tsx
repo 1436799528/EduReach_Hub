@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { FormEvent, useEffect, useState } from 'react';
 import { adminApiFetch, deleteAdminCbtExam, updateAdminCbtExam, type AdminCbtExam } from '../src/lib/api';
 
@@ -32,8 +33,8 @@ export default function AdminCbtPage() {
     const body = await adminApiFetch<{ items: Question[] }>(`/api/admin/cbt/exams/${encodeURIComponent(examId)}/questions`);
     setQuestions(body.items || []);
   }
-  useEffect(() => { void loadExams().catch((e) => setMessage(e.message)).finally(() => setLoading(false)); }, []);
-  useEffect(() => { void loadQuestions(selectedExam).catch((e) => setMessage(e.message)); }, [selectedExam]);
+  useEffect(() => { void loadExams().catch((e) => setMessage(userFacingError(e, 'Unable to load CBT exams.'))).finally(() => setLoading(false)); }, []);
+  useEffect(() => { void loadQuestions(selectedExam).catch((e) => setMessage(userFacingError(e, 'Unable to load exam questions.'))); }, [selectedExam]);
 
   async function saveExam(event: FormEvent) {
     event.preventDefault(); setSaving(true); setMessage('');
@@ -41,7 +42,7 @@ export default function AdminCbtPage() {
       const body = await adminApiFetch<{ item: Exam }>('/api/admin/cbt/exams', { method: 'POST', body: JSON.stringify({ ...examForm, duration_minutes: Number(examForm.duration_minutes) }) });
       setExams((items) => [body.item, ...items]); setSelectedExam(body.item.id); setExamForm(emptyExam); setShowExamForm(false);
       setMessage('Exam created. Add its approved questions below — they become the live question pool immediately.');
-    } catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to save exam.'); } finally { setSaving(false); }
+    } catch (e) { setMessage(userFacingError(e, 'Unable to save exam.')); } finally { setSaving(false); }
   }
 
   function openEditExam(exam: Exam) {
@@ -72,7 +73,7 @@ export default function AdminCbtPage() {
       setEditingExam(null);
       setMessage('Exam configuration updated — the public setup page now shows this default duration.');
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Unable to update the exam.');
+      setMessage(userFacingError(e, 'Unable to update the exam.'));
     } finally { setSaving(false); }
   }
 
@@ -82,7 +83,7 @@ export default function AdminCbtPage() {
       const updated = await updateAdminCbtExam(exam.id, { is_active: !exam.is_active });
       setExams((items) => items.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
       setMessage(updated.is_active ? `“${updated.title}” is live on the CBT page.` : `“${updated.title}” is hidden from students.`);
-    } catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to update the exam.'); }
+    } catch (e) { setMessage(userFacingError(e, 'Unable to update the exam.')); }
   }
 
   async function removeExam(exam: Exam) {
@@ -93,7 +94,7 @@ export default function AdminCbtPage() {
       setExams((items) => items.filter((item) => item.id !== exam.id));
       if (selectedExam === exam.id) { setSelectedExam(''); setQuestions([]); }
       setMessage('Exam deleted.');
-    } catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to delete the exam.'); }
+    } catch (e) { setMessage(userFacingError(e, 'Unable to delete the exam.')); }
   }
 
   function startQuestion(question?: Question) {
@@ -111,13 +112,13 @@ export default function AdminCbtPage() {
         : await adminApiFetch<{ item: Question }>(`/api/admin/cbt/exams/${encodeURIComponent(selectedExam)}/questions`, { method: 'POST', body: JSON.stringify(payload) });
       setQuestions((items) => editingQuestion ? items.map((q) => q.id === editingQuestion ? body.item : q) : [...items, body.item].sort((a,b) => a.position-b.position));
       setShowQuestionForm(false); setEditingQuestion(null); setQuestionForm(emptyQuestion); setMessage('Question saved.');
-    } catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to save question.'); } finally { setSaving(false); }
+    } catch (e) { setMessage(userFacingError(e, 'Unable to save question.')); } finally { setSaving(false); }
   }
 
   async function archiveQuestion(id: string) {
     if (!window.confirm('Remove this question from the exam?')) return;
     try { await adminApiFetch(`/api/admin/cbt/questions/${encodeURIComponent(id)}`, { method: 'DELETE' }); setQuestions((items) => items.filter((q) => q.id !== id)); }
-    catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to remove question.'); }
+    catch (e) { setMessage(userFacingError(e, 'Unable to remove question.')); }
   }
 
   const exam = exams.find((item) => item.id === selectedExam);

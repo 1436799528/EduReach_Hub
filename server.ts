@@ -4,20 +4,10 @@ import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin, type AdminRequest } from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
+import { userFacingError as normalizeUserFacingError } from './lib/errors';
 
 export const app = express();
-function publicErrorMessage(value: unknown, fallback = 'We could not complete that request. Please try again.') {
-  const raw = value instanceof Error ? value.message : String(value || '');
-  const message = raw.trim();
-  if (!message) return fallback;
-  if (/postgres|postgresql|supabase|sqlstate|column .* (ambiguous|does not exist)|relation .* does not exist|constraint|violates|rpc|function .* does not exist|syntax error|stack|at [\w./:-]+\(/i.test(message)) {
-    return fallback;
-  }
-  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) return 'Please check your internet connection and try again.';
-  if (/authentication|required|invalid or expired session/i.test(message)) return 'Your session has expired. Please sign in again.';
-  return message.length <= 180 && !/[\\n\\r]/.test(message) ? message : fallback;
-}
-
+const publicErrorMessage = normalizeUserFacingError;
 
 const PORT = Number(process.env.PORT || 3000);
 const LIVE_SERVICE_KEYS = ['nelfund-loan', 'results', 'jamb-slip', 'admission-letters'] as const;
@@ -1743,7 +1733,7 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
           // Bulk-first; only fall back to individual rows when a mixed batch is rejected.
           for (const item of withoutIds) {
             const single = await supabase.from(resource.table).insert(item.values);
-            if (single.error) errors.push({ row: item.index + 2, error: single.error.message });
+            if (single.error) errors.push({ row: item.index + 2, error: publicErrorMessage(single.error, 'Invalid row.') });
             else inserted += 1;
           }
         }
@@ -1756,7 +1746,7 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
           // Bulk-first; only fall back to individual rows when a mixed batch is rejected.
           for (const item of withIds) {
             const single = await supabase.from(resource.table).upsert(item.values, { onConflict: 'id', ignoreDuplicates: false });
-            if (single.error) errors.push({ row: item.index + 2, error: single.error.message });
+            if (single.error) errors.push({ row: item.index + 2, error: publicErrorMessage(single.error, 'Invalid row.') });
             else updated += 1;
           }
         }

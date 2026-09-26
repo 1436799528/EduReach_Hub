@@ -17,6 +17,7 @@ import HubLayout from '../src/components/HubLayout';
 import { supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
+import { userFacingError } from '../lib/errors';
 import {
   academicSessions,
   academicYears,
@@ -333,7 +334,8 @@ export default function ProfileCompletionPage() {
         if (error) throw error;
       } catch (err) {
         setSaving(false);
-        setMessage(err instanceof Error ? `Profile was not saved: ${err.message}` : 'Profile was not saved. Please try again.');
+        const safeMessage = userFacingError(err, 'Please try again.');
+        setMessage(safeMessage === 'Please try again.' ? 'Profile was not saved. Please try again.' : `Profile was not saved: ${safeMessage}`);
         return;
       }
     }

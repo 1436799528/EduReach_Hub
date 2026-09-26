@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import {
@@ -44,7 +45,7 @@ export default function AdminServicesPage() {
       setServices(await fetchAdminServices());
     } catch (e) {
       setServices([]);
-      setError(e instanceof Error ? e.message : 'Unable to load the service catalogue.');
+      setError(userFacingError(e, 'Unable to load the service catalogue.'));
     } finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
@@ -74,7 +75,7 @@ export default function AdminServicesPage() {
       }
       setEdit(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the service.');
+      setError(userFacingError(e, 'Unable to save the service.'));
     } finally { setSaving(false); }
   }
 
@@ -84,7 +85,7 @@ export default function AdminServicesPage() {
       setServices((current) => current.map((item) => item.id === updated.id ? { ...updated, is_form_service: service.is_form_service } : item));
       setMessage(updated.active ? `“${updated.title}” is visible to students.` : `“${updated.title}” is hidden from students.`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update the service.');
+      setError(userFacingError(e, 'Unable to update the service.'));
     }
   }
 
@@ -96,7 +97,7 @@ export default function AdminServicesPage() {
       setServices((current) => current.filter((item) => item.id !== service.id));
       setMessage('Service permanently deleted.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to delete the service.');
+      setError(userFacingError(e, 'Unable to delete the service.'));
     }
   }
 

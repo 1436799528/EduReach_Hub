@@ -20,3 +20,20 @@ test('turns network failures into a simple user action', () => {
 test('keeps safe validation messages', () => {
   assert.equal(userFacingError(new Error('Article title is required.')), 'Article title is required.');
 });
+
+test('does not stringify object-shaped API errors', () => {
+  const fallback = 'We could not complete that request. Please try again.';
+  assert.equal(userFacingError({ message: { reason: 'private details' } }), fallback);
+  assert.equal(userFacingError({ details: { query: 'select * from profiles' } }), fallback);
+  assert.equal(userFacingError({ error: { message: ['bad', 'shape'] } }), fallback);
+  assert.equal(userFacingError({ message: 'column secret does not exist' }), fallback);
+});
+
+test('uses a safe string nested in a structured API error', () => {
+  assert.equal(userFacingError({ error: { message: 'This service is not available.' } }), 'This service is not currently available. Please choose another option.');
+});
+
+test('preserves safe product-specific unavailable messages', () => {
+  const message = 'EduReach account sign-in is not available until the live account service is configured.';
+  assert.equal(userFacingError(new Error(message)), message);
+});

@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, CheckCircle2, ChevronDown, Download, Printer, RotateCcw, XCircle } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
@@ -35,7 +36,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
     void fetchCbtResult(attemptId)
       .then(setResult)
-      .catch((value) => setError(value instanceof Error ? value.message : 'Unable to load the CBT result.'))
+      .catch((value) => setError(userFacingError(value, 'Unable to load the CBT result.')))
       .finally(() => setLoading(false));
   }, [routeAttemptId]);
 

@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
 import { adminApiFetch, fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, type AdminUser, type AdminUserActivity } from '../src/lib/api';
@@ -29,7 +30,7 @@ export default function AdminUsersPage() {
     try {
       setViewingActivity(await fetchAdminUserActivity(user.id));
     } catch (e) {
-      setViewingError(e instanceof Error ? e.message : 'Unable to load the student activity.');
+      setViewingError(userFacingError(e, 'Unable to load the student activity.'));
     } finally { setViewingLoading(false); }
   }
 
@@ -48,7 +49,7 @@ export default function AdminUsersPage() {
       await loadList(query);
       setMessage(suspend ? 'Account suspended — sign-in is blocked until unsuspended.' : 'Account unsuspended.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update the account.');
+      setError(userFacingError(e, 'Unable to update the account.'));
     } finally { setBusyId(null); }
   }
 
@@ -60,7 +61,7 @@ export default function AdminUsersPage() {
       setProfiles(await fetchAdminUsers(search));
     } catch (value) {
       setProfiles([]);
-      setError(value instanceof Error ? value.message : 'Unable to load student accounts.');
+      setError(userFacingError(value, 'Unable to load student accounts.'));
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useCallback, useEffect, useState } from 'react';
 import {
   fetchAdminServiceRequests,
@@ -35,7 +36,7 @@ export default function AdminQueuePage() {
       setNoteId(null);
       setNoteText('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the note.');
+      setError(userFacingError(e, 'Unable to save the note.'));
     } finally { setBusyId(null); }
   }
 
@@ -46,7 +47,7 @@ export default function AdminQueuePage() {
       setRows(await fetchAdminServiceRequests(status));
     } catch (e) {
       setRows([]);
-      setError(e instanceof Error ? e.message : 'Unable to load queue.');
+      setError(userFacingError(e, 'Unable to load queue.'));
     } finally { setLoading(false); }
   }, []);
 
@@ -58,7 +59,7 @@ export default function AdminQueuePage() {
       await updateAdminServiceRequest(requestId, nextStatus);
       await load(filter);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to update request.');
+      setError(userFacingError(e, 'Unable to update request.'));
     } finally { setBusyId(null); }
   }
 

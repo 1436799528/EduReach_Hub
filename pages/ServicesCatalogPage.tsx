@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { MessageSquare, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
@@ -29,7 +30,7 @@ export default function ServicesCatalogPage() {
     try {
       setServices(await fetchServices());
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Unable to load services.');
+      setError(userFacingError(value, 'Unable to load services.'));
     } finally {
       setLoading(false);
     }
