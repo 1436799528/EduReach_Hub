@@ -3,9 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import { pastQuestionLibrary, studyMaterialLibrary } from '../src/data/examPreparation';
-import { examSimulators } from '../src/components/ExamSimulatorGrid';
+import { simulatorStartHref } from '../src/components/ExamSimulatorGrid';
+import type { CatalogExam } from '../src/lib/cbt-config';
 import { services } from '../src/data/services';
-import { fetchNews, type NewsItem, trackEvent } from '../src/lib/api';
+import { fetchCbtExams, fetchNews, type NewsItem, trackEvent } from '../src/lib/api';
 
 type SearchResult = {
   id: string;
@@ -20,7 +21,7 @@ function readQuery() {
   return new URLSearchParams(window.location.search).get('q')?.trim() || '';
 }
 
-function staticResults(): SearchResult[] {
+function staticResults(exams: CatalogExam[]): SearchResult[] {
   const serviceResults = services.map((service) => ({
     id: `service-${service.key}`,
     title: service.title,
@@ -29,13 +30,13 @@ function staticResults(): SearchResult[] {
     href: service.route,
     identity: service.key,
   }));
-  const examResults = examSimulators.map((exam) => ({
-    id: `exam-${exam.key}`,
+  const examResults = exams.map((exam) => ({
+    id: `exam-${exam.id}`,
     title: exam.title,
-    description: exam.desc,
+    description: exam.description || `Practice ${exam.subject || exam.exam_body} questions.`,
     category: 'CBT Practice',
-    href: `/cbt/setup/${exam.key}`,
-    identity: exam.key,
+    href: simulatorStartHref(exam.exam_body, exam.id),
+    identity: exam.exam_body,
   }));
     const materialResults = studyMaterialLibrary.map((material) => ({
       id: `material-${material.id}`,
@@ -69,6 +70,7 @@ export default function SearchPage() {
   const lastSearchTrackedRef = useRef('');
   const [query, setQuery] = useState(readQuery);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [exams, setExams] = useState<CatalogExam[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
   useEffect(() => {
@@ -82,11 +84,19 @@ export default function SearchPage() {
   }, [query]);
 
   useEffect(() => {
-    void fetchNews().then(setNews).catch(() => setNews([])).finally(() => setLoadingNews(false));
+    let active = true;
+    void Promise.all([fetchNews().catch(() => []), fetchCbtExams().catch(() => [])])
+      .then(([newsItems, examItems]) => {
+        if (!active) return;
+        setNews(newsItems);
+        setExams(examItems);
+        setLoadingNews(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const allResults = useMemo<SearchResult[]>(() => [
-    ...staticResults(),
+    ...staticResults(exams),
     ...news.map((item) => ({
       id: `news-${item.id}`,
       title: item.title,
@@ -95,7 +105,7 @@ export default function SearchPage() {
       href: `/news/${encodeURIComponent(item.slug)}`,
       identity: item.category,
     })),
-  ], [news]);
+  ], [news, exams]);
 
   const results = useMemo(() => {
     const normalized = query.trim();

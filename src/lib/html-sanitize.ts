@@ -32,7 +32,7 @@ function sanitizeStyle(value: string): string {
 function safeHref(value: string): string | null {
   const raw = value.trim();
   if (!raw) return null;
-  if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
+  if (raw.startsWith('/') && !/^[/\\]{2}/.test(raw) && !/[\u0000-\u0020\\]/.test(raw)) return raw;
   try {
     const parsed = new URL(raw);
     return parsed.protocol === 'https:' || parsed.protocol === 'mailto:' ? parsed.toString() : null;
@@ -44,7 +44,7 @@ function safeHref(value: string): string | null {
 function safeImgSrc(value: string): string | null {
   const raw = value.trim();
   if (!raw) return null;
-  if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
+  if (raw.startsWith('/') && !/^[/\\]{2}/.test(raw) && !/[\u0000-\u0020\\]/.test(raw)) return raw;
   if (raw.startsWith('data:image/')) return null; // no inline blobs — images live in Storage
   try {
     const parsed = new URL(raw);
@@ -108,6 +108,12 @@ export function sanitizeRichHtml(input: string): string {
       }
       if (tag === 'img' && (name === 'alt' || name === 'width')) continue;
       element.removeAttribute(attribute.name);
+    }
+    // Set these after stripping input attributes so supplied target/rel cannot
+    // remove or override the safe values based on attribute order.
+    if (tag === 'a' && element.getAttribute('href')) {
+      element.setAttribute('target', '_blank');
+      element.setAttribute('rel', 'noopener noreferrer nofollow');
     }
     if (tag === 'a' && !element.getAttribute('href')) {
       const text = parsed.createTextNode(element.textContent || '');

@@ -1,8 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin, type AdminRequest } from './middleware';
+import { getServerSupabaseKey } from './lib/supabase-config';
 
 export const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -30,17 +31,9 @@ app.use((_req, res, next) => {
       "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://wa.me; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' ws: wss: http: https:; frame-ancestors *",
     );
   }
+  if (_req.path === '/api' || _req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
   next();
 });
-
-function getServerSupabaseKey() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
-  // A publishable/anon key must never be used for server-side admin writes.
-  // It does not bypass RLS and can make the Admin console appear healthy while
-  // protected content remains inaccessible.
-  if (key.startsWith('sb_publishable_') || key.startsWith('eyJ')) return '';
-  return key;
-}
 
 function isServerSupabaseConfigured() {
   return Boolean(process.env.VITE_SUPABASE_URL && getServerSupabaseKey());
@@ -70,7 +63,12 @@ app.get('/api/health', (_req, res) => {
 });
 
 
-app.use(express.json({ limit: '1mb' }));
+// Parse uploads only after authorization, using the endpoint's larger limit.
+const jsonBody = express.json({ limit: '1mb' });
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.path === '/api/admin/uploads') return next();
+  return jsonBody(req, res, next);
+});
 
 app.post('/api/admin/bootstrap', async (req, res) => {
   try {
@@ -1143,7 +1141,7 @@ app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
 
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
-app.post('/api/admin/uploads', express.json({ limit: '5mb' }), requireAdmin, async (req, res) => {
+app.post('/api/admin/uploads', requireAdmin, express.json({ limit: '5mb' }), async (req, res) => {
   try {
     const adminUser = (req as AdminRequest).adminUser!;
     const dataUrl = String(req.body?.dataUrl || '');
@@ -1830,8 +1828,16 @@ app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'API endpoint not found.' });
 });
 
+// API failures must remain JSON and must not disclose parser stacks or bodies.
+const apiErrorHandler: express.ErrorRequestHandler = (error, _req, res, _next) => {
+  const status = error?.type === 'entity.too.large' ? 413 : error?.status === 400 ? 400 : 500;
+  res.status(status).json({ error: status === 413 ? 'Request body is too large.' : status === 400 ? 'Invalid request body or URL.' : 'Internal server error.' });
+};
+app.use('/api', apiErrorHandler);
+
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
@@ -1845,11 +1851,20 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (_req, res) => { res.sendFile(path.join(distPath, 'index.html')); });
+    // Middleware does not decode wildcard params, so malformed percent-encoded
+    // URLs can reach the frontend's safe not-found page rather than Express's error page.
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+      res.setHeader('Cache-Control', 'no-cache');
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
   }
   app.listen(PORT, '0.0.0.0', () => console.log(`EduReach server running on port ${PORT}`));
 }
 
 if (!process.env.NETLIFY) {
-  startServer();
+  startServer().catch((error) => {
+    console.error('Unable to start EduReach:', error);
+    process.exitCode = 1;
+  });
 }

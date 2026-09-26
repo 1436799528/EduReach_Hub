@@ -77,6 +77,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
           {!loading && error && (
             <div className="hub-panel hub-empty">
+              <h1>CBT result unavailable</h1>
               <p>{error}</p>
               <a className="hub-primary-btn" href="/cbt">Choose a CBT test</a>
             </div>

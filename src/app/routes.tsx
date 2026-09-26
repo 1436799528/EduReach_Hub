@@ -89,6 +89,7 @@ function protectedCbtResult(attemptId?: string): ReactElement {
 }
 
 export function renderRoute(pathname: string): ReactElement {
+  try { decodeURIComponent(pathname); } catch { return <NotFoundPage />; }
   const path = pathname.replace(/\/$/, '') || '/';
 
   if (path === '/login' || path === '/signin') return <AuthPageV2 mode="signin" />;
