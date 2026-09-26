@@ -880,7 +880,7 @@ export async function deleteAdminCalendarItem(type: 'deadline' | 'exam', id: str
   await adminApiFetch(`/api/admin/calendar-items/${encodeURIComponent(id)}?type=${type}`, { method: 'DELETE' });
 }
 
-export type AdminInstitution = { id: string; school_name: string; acronym: string | null; state: string | null; institution_type: string | null; website_url: string | null; created_at?: string };
+export type AdminInstitution = { id: string; school_name: string; acronym: string | null; slug: string | null; state: string | null; institution_type: string | null; website_url: string | null; admission_portal_url: string | null; student_portal_url: string | null; is_verified: boolean; created_at?: string; updated_at?: string };
 
 export async function fetchAdminInstitutions(search = ''): Promise<AdminInstitution[]> {
   const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
