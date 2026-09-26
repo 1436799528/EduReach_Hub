@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   CheckCircle2,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
-import { fetchService, submitServiceRequest, type ServiceItem } from '../src/lib/api';
+import { fetchService, submitServiceRequest, trackEvent, type ServiceItem } from '../src/lib/api';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
@@ -94,6 +94,13 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
       // Session storage may be unavailable; the form remains usable in memory.
     }
   }, [form, reference, slug, step]);
+
+  const viewTrackedRef = useRef(false);
+  useEffect(() => {
+    if (viewTrackedRef.current) return;
+    viewTrackedRef.current = true;
+    trackEvent('service_view', { metadata: { slug } });
+  }, [slug]);
 
   useEffect(() => {
     let active = true;
@@ -231,6 +238,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         serviceSlug: service!.service_key,
         details: { ...form, serviceTitle: service!.title, requestCategory: service!.title, requestDescription: form.notes || form.requestType || `Guided support for ${service!.title}.` },
       });
+      trackEvent('service_submit', { metadata: { slug } });
       try { sessionStorage.removeItem(`edureach-service-draft-${slug}`); } catch { /* optional */ }
       setReference(result.reference_code);
       setMessage('');

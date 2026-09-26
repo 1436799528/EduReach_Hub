@@ -27,12 +27,15 @@ All application routes are registered centrally in `src/app/routes.tsx` and reso
 | **Profile & Edit Profile** | `/profile`, `/profile?edit=1`, `/profile/complete` | Saved student details with explicit edit mode and Supabase/local persistence | 🟢 PASS |
 | **School Finder** | `/schools`, `/schools/:slug` | Maintained institution search, autocomplete, honest detail destinations | 🟢 PASS |
 | **Student Dashboard** | `/dashboard` | Personal student workspace, request history, CBT resume and tools | 🟢 PASS |
-| **Admin Dashboard** | `/admin` | Operational admin overview | 🟢 PASS |
+| **Admin Overview** | `/admin` | Control-centre overview: live queue/users/traffic KPIs, needs-attention actions, staff audit trail, 14-day attention analytics | 🟢 PASS |
 | **Admin Queue** | `/admin/queue` | Service request processing pipeline | 🟢 PASS |
 | **Admin CBT** | `/admin/cbt` | CBT questions management | 🟢 PASS |
 | **Admin Users** | `/admin/users` | Student profile records management | 🟢 PASS |
-| **Admin Newsroom** | `/admin/news` | News write/edit/publish/delete CMS | 🟢 PASS |
-| **Admin Analytics** | `/admin/analytics` | Metrics, audit and reports | 🟢 PASS |
+| **Admin Newsroom** | `/admin/news` | News write/edit/publish/delete CMS with rich-text editor, image upload, drafts and preview | 🟢 PASS |
+| **Admin Events & Key Dates** | `/admin/content` | Deadlines and exam dates CRUD feeding /events and the home noticeboard | 🟢 PASS |
+| **Admin Schools** | `/admin/schools` | Institutions CRUD feeding the public School Finder | 🟢 PASS |
+| **Admin Services Catalogue** | `/admin/services` | Service catalogue visibility/content management (four supported keys) | 🟢 PASS |
+| **Admin Analytics** | `/admin/analytics` | Metrics, real traffic/attention telemetry, audit and reports | 🟢 PASS |
 | **Exam Hubs** | `/jamb`, `/waec`, `/neco`, `/post-utme` | Exam information centres | 🟡 REVISE |
 | **Coming Soon** | `/nabteb`, `/support`, `/admission`, `/admission/*`, `/tools`, `/tools/*`, `/services/<inactive-slug>` | Honest unavailable panels for planned or unconfigured sections; each keeps active services, noticeboard and direct support available | 🟢 PASS |
 

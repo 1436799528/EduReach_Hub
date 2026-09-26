@@ -5,6 +5,9 @@ import CardIdentityMark, { identityClassFor } from '../src/components/CardIdenti
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { EDUREACH_WHATSAPP, jobApplyHref, jobs } from '../src/data/hubContent';
+import { fetchOpportunities, type Opportunity } from '../src/lib/api';
+import { isSupabaseConfigured } from '../src/lib/supabase';
+import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 
 const filters = [
   { id: 'ALL', label: 'All Listings' },
@@ -21,6 +24,20 @@ function readOpportunityFilter() {
 
 export default function JobsPage() {
   const [activeFilter, setActiveFilter] = useState(readOpportunityFilter);
+  // When a live backend is configured, the Supabase `opportunities` table is
+  // the only listing source (admin-managed). The static list below exists for
+  // local preview only and never mixes with live rows.
+  const [live, setLive] = useState<Opportunity[] | null>(isSupabaseConfigured ? null : []);
+  const [liveError, setLiveError] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let active = true;
+    fetchOpportunities()
+      .then((items) => { if (active) setLive(items); })
+      .catch(() => { if (active) { setLiveError(true); setLive([]); } });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const syncFromUrl = () => setActiveFilter(readOpportunityFilter());
@@ -33,10 +50,22 @@ export default function JobsPage() {
     window.history.replaceState({}, '', next === 'ALL' ? '/jobs' : `/jobs?category=${encodeURIComponent(next)}`);
   }
 
-  const filteredJobs = useMemo(() => {
+  // Two listing sources, never mixed: with a configured backend the admin-
+  // managed `opportunities` table is the only source; local preview shows the
+  // static directory instead (labelled on the cards).
+  const filteredLive = useMemo(() => {
+    if (live === null) return null;
+    if (activeFilter === 'ALL') return live;
+    return live.filter((item) => item.category === activeFilter);
+  }, [live, activeFilter]);
+
+  const filteredStatic = useMemo(() => {
+    if (isSupabaseConfigured) return [];
     if (activeFilter === 'ALL') return jobs;
     return jobs.filter((item) => item.category === activeFilter);
   }, [activeFilter]);
+
+  const loadingLive = live === null;
 
   return (
     <HubLayout>
@@ -79,7 +108,18 @@ export default function JobsPage() {
             <strong>Catalogue note:</strong> there are no fabricated “all grants” results here. If a scholarship or grant is not in the filtered list, select the Scholarships & Grants filter for the notify option and confirm any opportunity on the organiser’s official channel before sharing documents or paying a fee.
           </div>
 
-          {!filteredJobs.length && (
+          {loadingLive && (
+            <div className="hub-panel hub-empty">Loading opportunities…</div>
+          )}
+
+          {!loadingLive && isSupabaseConfigured && liveError && (
+            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
+              <span>Opportunities are temporarily unavailable.</span>
+              <button type="button" className="hub-outline-btn" onClick={() => { setLive(null); setLiveError(false); fetchOpportunities().then((items) => setLive(items)).catch(() => { setLiveError(true); setLive([]); }); }}>Try again</button>
+            </div>
+          )}
+
+          {!loadingLive && !isSupabaseConfigured && !filteredStatic.length && (
             <div className="hub-panel hub-empty">
               <BellRing size={22} style={{ color: '#C85841', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No verified scholarships listed right now.</h3>
@@ -98,11 +138,11 @@ export default function JobsPage() {
             </div>
           )}
 
-          {filteredJobs.length > 0 && (
+          {!loadingLive && !isSupabaseConfigured && filteredStatic.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
-              <SectionHead title={`${filteredJobs.length} open listing${filteredJobs.length === 1 ? '' : 's'}`} />
+              <SectionHead title={`${filteredStatic.length} preview listing${filteredStatic.length === 1 ? '' : 's'}`} />
               <div style={{ display: 'grid', gap: '12px' }}>
-                {filteredJobs.map((item) => (
+                {filteredStatic.map((item) => (
                   <div
                     key={item.title}
                     className={`er-opportunity-card ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
@@ -152,6 +192,67 @@ export default function JobsPage() {
                 ))}
               </div>
             </section>
+          )}
+
+          {!loadingLive && isSupabaseConfigured && filteredLive && filteredLive.length > 0 && (
+            <section className="er-section" style={{ marginTop: 0 }}>
+              <SectionHead title={`${filteredLive.length} open listing${filteredLive.length === 1 ? '' : 's'}`} />
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {filteredLive.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`er-opportunity-card ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)' }}
+                  >
+                    <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
+                      <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#C85841' }}>
+                          <Tag size={11} /> {item.category}
+                        </span>
+                        {item.deadline && (<><span>•</span><span style={{ fontWeight: 700 }}>Closes {item.deadline}</span></>)}
+                        {item.locations && (<><span>•</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} /> {item.locations}</span></>)}
+                      </div>
+                      <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>{item.title}</h2>
+                      {item.organisation && <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 4px', fontWeight: 700 }}>{item.organisation}</p>}
+                      {looksLikeHtml(item.description || '')
+                        ? <div style={{ fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(item.description || '') }} />
+                        : <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>{item.description}</p>}
+                    </div>
+                    <a
+                      href={item.link_url || jobApplyHref(item.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hub-primary-btn"
+                      style={{ alignSelf: 'center', flexShrink: 0, textDecoration: 'none', fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                    >
+                      {item.link_url ? 'Official link' : 'Apply'} <ArrowRight size={13} />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {!loadingLive && isSupabaseConfigured && filteredLive && !filteredLive.length && !liveError && (
+            <div className="hub-panel hub-empty">
+              <BellRing size={22} style={{ color: '#C85841', marginBottom: '8px' }} />
+              <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No open opportunities in this category right now.</h3>
+              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b' }}>
+                EduReach lists scholarships and grants only after verification. Message the helpline and we will notify you when new ones open.
+              </p>
+              <a
+                className="hub-primary-btn"
+                href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent('Hello EduReach, notify me when new scholarships are listed.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                Notify me <ArrowRight size={13} />
+              </a>
+            </div>
           )}
 
           <div

@@ -269,6 +269,19 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       ? 'Set New Password'
       : 'Reset Your Password';
 
+  // A form is "complete" when every required field for the active mode is
+  // validly filled — the submit button brightens to signal it is ready.
+  const authPhoneDigits = phone.replace(/\D/g, '');
+  const authFormComplete = currentMode === 'signup'
+    ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && authPhoneDigits.length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
+    : currentMode === 'signin'
+      ? Boolean(email.includes('@') && password)
+      : currentMode === 'reset'
+        ? Boolean(password.length >= 8 && confirmPassword === password)
+        : currentMode === 'forgot'
+          ? email.includes('@')
+          : false;
+
   return (
     <div
       style={{
@@ -402,7 +415,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             <p style={{ fontSize: '13.5px', color: '#334155', lineHeight: 1.6, marginBottom: '20px' }}>
               {isSupabaseConfigured
                 ? <>We sent a verification link to <strong>{verifyEmailSent || email}</strong>. Please check your inbox or spam folder to confirm your email.</>
-                : <>This local preview account is ready on this device. No email is sent until a connected EduReach auth service is configured.</>}
+                : <>Email verification needs the live EduReach account service. It is not configured in this environment, so no verification email can be sent yet.</>}
             </p>
 
             <div style={{ display: 'grid', gap: '10px' }}>
@@ -850,12 +863,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               </>
             )}
 
-            {/* SUBMIT BUTTON */}
+            {/* SUBMIT BUTTON — matches the site search button; turns bright orange the moment every required detail is validly filled. */}
             <button
               type="submit"
               disabled={busy}
               style={{
-                background: '#C85841',
+                background: authFormComplete ? '#F97316' : '#c02220',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -863,12 +876,13 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 fontSize: '13.5px',
                 fontWeight: 800,
                 cursor: 'pointer',
+                transition: 'background .2s ease, box-shadow .2s ease',
+                boxShadow: authFormComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 marginTop: '6px',
-                boxShadow: '0 2px 8px rgba(200, 88, 65, 0.25)',
               }}
             >
               {busy

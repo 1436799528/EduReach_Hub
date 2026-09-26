@@ -1,11 +1,11 @@
 import { ArrowRight, Search as SearchIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import { pastQuestionLibrary, studyMaterialLibrary } from '../src/data/examPreparation';
 import { examSimulators } from '../src/components/ExamSimulatorGrid';
 import { services } from '../src/data/services';
-import { fetchNews, type NewsItem } from '../src/lib/api';
+import { fetchNews, type NewsItem, trackEvent } from '../src/lib/api';
 
 type SearchResult = {
   id: string;
@@ -66,9 +66,20 @@ function resultMatches(result: SearchResult, query: string) {
 }
 
 export default function SearchPage() {
+  const lastSearchTrackedRef = useRef('');
   const [query, setQuery] = useState(readQuery);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+
+  useEffect(() => {
+    const term = query.trim();
+    if (!term || term === lastSearchTrackedRef.current) return;
+    const timer = window.setTimeout(() => {
+      lastSearchTrackedRef.current = term;
+      trackEvent('search', { metadata: { q: term.slice(0, 120) } });
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     void fetchNews().then(setNews).catch(() => setNews([])).finally(() => setLoadingNews(false));

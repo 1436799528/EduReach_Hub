@@ -2,6 +2,7 @@ import { CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { newsThumbFor } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
 
@@ -83,10 +84,14 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
               )}
 
               <div className="hub-article-body">
-                {item.body
-                  .split(/\n\s*\n/)
-                  .filter(Boolean)
-                  .map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                {looksLikeHtml(item.body)
+                  ? // Rich bodies are authored in the admin CMS and sanitized
+                    // with a strict allowlist at render time.
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(item.body) }} />
+                  : item.body
+                    .split(/\n\s*\n/)
+                    .filter(Boolean)
+                    .map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
               </div>
 
               <div className="hub-verified-box">

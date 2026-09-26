@@ -13,16 +13,8 @@ function initialServiceSearch() {
 }
 
 function initialServiceFilter() {
-  const value = new URLSearchParams(window.location.search).get('filter') ?? 'ALL';
-  return filters.some((item) => item.id === value) ? value : 'ALL';
+  return new URLSearchParams(window.location.search).get('filter') ?? 'ALL';
 }
-
-const filters = [
-  { id: 'ALL', label: 'All Services' },
-  { id: 'LOAN', label: 'NELFUND Loans' },
-  { id: 'EXAMS', label: 'Result services' },
-  { id: 'ADMISSION', label: 'Admission Letters' },
-];
 
 export default function ServicesCatalogPage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -56,6 +48,20 @@ export default function ServicesCatalogPage() {
     return () => window.removeEventListener('popstate', syncFromUrl);
   }, []);
 
+  // Category pills are derived from the live catalogue itself (the admin-
+  // managed category field), so new categories appear without a code change.
+  const filters = useMemo(() => {
+    const categories = Array.from(new Set(services.map((srv) => srv.category?.trim() || 'Services')));
+    return [
+      { id: 'ALL', label: 'All Services' },
+      ...categories.map((category) => ({ id: category, label: category })),
+    ];
+  }, [services]);
+
+  useEffect(() => {
+    if (activeFilter !== 'ALL' && !filters.some((item) => item.id === activeFilter)) setActiveFilter('ALL');
+  }, [filters, activeFilter]);
+
   const filteredServices = useMemo(() => {
     return services.filter((srv) => {
       const q = search.trim().toLowerCase();
@@ -63,20 +69,7 @@ export default function ServicesCatalogPage() {
         !q || srv.title.toLowerCase().includes(q) || srv.description.toLowerCase().includes(q);
       if (!matchSearch) return false;
       if (activeFilter === 'ALL') return true;
-      if (activeFilter === 'LOAN') return srv.service_key.includes('nelfund') || srv.service_key.includes('loan');
-      if (activeFilter === 'EXAMS')
-        return (
-          srv.service_key.includes('waec') ||
-          srv.service_key.includes('neco') ||
-          srv.service_key.includes('result')
-        );
-      if (activeFilter === 'ADMISSION')
-        return (
-          srv.service_key.includes('admission') ||
-          srv.service_key.includes('slip') ||
-          srv.service_key.includes('jamb')
-        );
-      return true;
+      return (srv.category?.trim() || 'Services') === activeFilter;
     });
   }, [services, search, activeFilter]);
 
