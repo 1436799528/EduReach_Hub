@@ -33,14 +33,25 @@ app.use((_req, res, next) => {
   next();
 });
 
+function getServerSupabaseKey() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
+  // A publishable/anon key must never be used for server-side admin writes.
+  // It does not bypass RLS and can make the Admin console appear healthy while
+  // protected content remains inaccessible.
+  if (key.startsWith('sb_publishable_') || key.startsWith('eyJ')) return '';
+  return key;
+}
+
 function isServerSupabaseConfigured() {
-  return Boolean(process.env.VITE_SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+  return Boolean(process.env.VITE_SUPABASE_URL && getServerSupabaseKey());
 }
 
 function getServerSupabase() {
   const url = process.env.VITE_SUPABASE_URL;
-  const key = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY);
-  if (!url || !key) throw new Error('Supabase server configuration is incomplete.');
+  const key = getServerSupabaseKey();
+  if (!url || !key) {
+    throw new Error('Supabase server admin key is missing or invalid. Configure SUPABASE_SERVICE_ROLE_KEY (preferred) or SUPABASE_SECRET_KEY with the server secret key, not a publishable/anon key.');
+  }
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
