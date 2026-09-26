@@ -2,11 +2,14 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import {
   BarChart3,
+  Briefcase,
+  CalendarDays,
   Globe,
   Laptop,
   LayoutDashboard,
   ListChecks,
   Newspaper,
+  School,
   Users,
 } from 'lucide-react';
 import { NavLink, useNavigate } from './AdminNav';
@@ -82,19 +85,43 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     navigate('/login');
   }
   if (checking) return <div className="admin-loading-screen">Verifying administrative access…</div>;
-  if (!session) return null;
+  if (!session) {
+    return (
+      <div className="admin-access-screen">
+        <div className="admin-access-card">
+          <BrandLogo height={52} radius="50%" />
+          <h1>Administrator access required</h1>
+          <p>This is the EduReach management console. Sign in with an account that has an administrator role.</p>
+          <div className="admin-access-actions">
+            <button type="button" className="admin-btn" onClick={() => navigate('/login?next=%2Fadmin')}>Sign in</button>
+            <button type="button" className="admin-btn secondary-dark" onClick={() => navigate('/')}>Go to the main site</button>
+          </div>
+          <p className="admin-access-note">Access is verified against the live backend on every visit.</p>
+        </div>
+      </div>
+    );
+  }
 
   return <div className="admin-shell">
     <aside className="admin-sidebar">
       <div>
         <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
         <nav className="admin-nav">
-          <NavLink href="/admin" icon={<LayoutDashboard size={15} />}>Operations Dashboard</NavLink>
-          <NavLink href="/admin/analytics" icon={<BarChart3 size={15} />}>Analytics & Reports</NavLink>
-          <NavLink href="/admin/queue" icon={<ListChecks size={15} />}>Service Queue</NavLink>
-          <NavLink href="/admin/cbt" icon={<Laptop size={15} />}>CBT Question Bank</NavLink>
+          <NavLink href="/admin" icon={<LayoutDashboard size={15} />}>Overview</NavLink>
+          <div className="admin-nav-group">Content</div>
           <NavLink href="/admin/news" icon={<Newspaper size={15} />}>Newsroom CMS</NavLink>
+          <NavLink href="/admin/content" icon={<CalendarDays size={15} />}>Events &amp; Key Dates</NavLink>
+          <div className="admin-nav-group">Services</div>
+          <NavLink href="/admin/services" icon={<Briefcase size={15} />}>Service Catalogue</NavLink>
+          <NavLink href="/admin/queue" icon={<ListChecks size={15} />}>Service Queue</NavLink>
+          <div className="admin-nav-group">Academics</div>
+          <NavLink href="/admin/schools" icon={<School size={15} />}>Schools &amp; Institutions</NavLink>
+          <div className="admin-nav-group">Examinations</div>
+          <NavLink href="/admin/cbt" icon={<Laptop size={15} />}>CBT Manager</NavLink>
+          <div className="admin-nav-group">Users</div>
           <NavLink href="/admin/users" icon={<Users size={15} />}>Student Accounts</NavLink>
+          <div className="admin-nav-group">Analytics</div>
+          <NavLink href="/admin/analytics" icon={<BarChart3 size={15} />}>Analytics &amp; Reports</NavLink>
           <NavLink href="/" icon={<Globe size={15} />}>View Public Site</NavLink>
         </nav>
       </div>
@@ -110,7 +137,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     </aside>
     <div className="admin-workspace">
       <header className="admin-topbar">
-        <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · Admin Console</span>
+        <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {session.fullName || session.email}</span>
         <span className={`admin-health-pill ${health.state}`}>
           <i /> {health.state === 'ok' ? `API Online${health.latencyMs !== null ? ` · ${health.latencyMs}ms` : ''}` : health.state === 'down' ? 'API Unreachable' : 'Checking API…'}
         </span>

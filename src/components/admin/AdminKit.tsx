@@ -259,3 +259,25 @@ export function RowSkeleton({ rows = 5 }: { rows?: number }) {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Honest empty state (spec rule: show "No data yet", never fake data)
+// ---------------------------------------------------------------------------
+
+export function AdminEmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
+  return (
+    <div className="admin-empty">
+      <b>{title}</b>
+      {hint && <p>{hint}</p>}
+      {action}
+    </div>
+  );
+}
+
+export function SectionLabel({ live }: { live?: boolean }) {
+  return (
+    <span className={`admin-section-label ${live ? 'live' : ''}`}>
+      <i /> {live ? 'Live now' : 'Last 14 days'}
+    </span>
+  );
+}

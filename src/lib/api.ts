@@ -661,12 +661,25 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
   };
 }
 
+export type AdminActivityBreakdown = {
+  since: string;
+  topPages: Array<{ path: string; views: number }>;
+  topSearches: Array<{ term: string; count: number }>;
+  serviceViews: Array<{ path: string; views: number }>;
+  serviceSubmits: Array<{ path: string; count: number }>;
+  cbtStarts: Array<{ exam: string; count: number }>;
+  eventsTotal: number;
+};
+
 export type AdminAnalytics = {
   metrics: Record<string, number>;
+  activity: AdminActivityBreakdown | null;
   audit: Array<Record<string, unknown>>;
   recentRequests: Array<Record<string, any>>;
   recentUsers: Array<Record<string, any>>;
 };
+
+export type AdminService = { id: string; service_key: string; title: string; description: string | null; application_url: string | null; active: boolean };
 
 export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
   const headers = await authHeaders();
@@ -691,7 +704,7 @@ export async function bootstrapAdmin(): Promise<void> {
   await jsonFetch('/api/admin/bootstrap', { method: 'POST', headers });
 }
 
-export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string };
+export type AdminUser = { id: string; full_name: string; school: string; faculty: string; department: string; level: string; role: string; matric_number: string | null; created_at: string; suspended?: boolean };
 
 export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
   const headers = await authHeaders();
@@ -701,7 +714,7 @@ export async function fetchAdminUsers(search = ''): Promise<AdminUser[]> {
   return body.items || [];
 }
 
-export type AdminServiceRequest = { id: string; user_id: string; status: string; form_data: Record<string, unknown>; created_at: string; updated_at: string; reference_code?: string | null; service_catalog?: { title: string } | null };
+export type AdminServiceRequest = { id: string; user_id: string; status: string; form_data: Record<string, unknown>; created_at: string; updated_at: string; reference_code?: string | null; admin_note?: string | null; service_catalog?: { title: string } | null };
 
 export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminServiceRequest[]> {
   const headers = await authHeaders();
@@ -710,13 +723,14 @@ export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminSe
   return body.items || [];
 }
 
-export async function updateAdminServiceRequest(requestId: string, status: string) {
+export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null }) {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
-  return await jsonFetch<{ item: { id: string; status: string; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, {
+  const body = typeof patch === 'string' ? { status: patch } : patch;
+  return await jsonFetch<{ item: { id: string; status: string; admin_note: string | null; updated_at: string } }>(`/api/admin/service-requests/${encodeURIComponent(requestId)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
 }
 
@@ -780,4 +794,113 @@ export async function deleteAdminNews(id: string): Promise<void> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
   await jsonFetch(`/api/admin/news/${encodeURIComponent(id)}`, { method: 'DELETE', headers });
+}
+
+// ---------------------------------------------------------------------------
+// Real-usage telemetry. The server allowlist accepts page_view, service_view,
+// service_submit, cbt_start, cbt_submit and search; events land in
+// site_analytics_events through the same-origin API. Failures are silent —
+// analytics must never break the student experience.
+// ---------------------------------------------------------------------------
+
+export type TelemetryEvent = 'page_view' | 'service_view' | 'service_submit' | 'cbt_start' | 'cbt_submit' | 'search';
+
+export function analyticsSessionId(): string {
+  const key = 'edureach-analytics-session';
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const value = crypto.randomUUID();
+    sessionStorage.setItem(key, value);
+    return value;
+  } catch {
+    return `session-${Date.now().toString(36)}`;
+  }
+}
+
+export function trackEvent(eventName: TelemetryEvent, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
+  try {
+    void fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        event_name: eventName,
+        path: payload.path ?? window.location.pathname,
+        session_id: analyticsSessionId(),
+        metadata: payload.metadata || {},
+      }),
+    }).catch(() => undefined);
+  } catch {
+    // ignore
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Admin control-centre API wrappers (calendar, institutions, services,
+// account suspension, uploads). All require an admin bearer session and hit
+// the same-origin Express API, which performs the role check server-side.
+// ---------------------------------------------------------------------------
+
+export type AdminCalendarItem = {
+  id: string; title: string; description: string | null;
+  due_at?: string | null; starts_at?: string | null; ends_at?: string | null;
+  location?: string | null; priority: string; status: string; created_at: string;
+};
+
+export async function fetchAdminCalendarItems(type: 'deadline' | 'exam'): Promise<AdminCalendarItem[]> {
+  const body = await adminApiFetch<{ items: AdminCalendarItem[] }>(`/api/admin/calendar-items?type=${type}`);
+  return body.items || [];
+}
+
+export async function createAdminCalendarItem(type: 'deadline' | 'exam', values: Record<string, unknown>): Promise<AdminCalendarItem> {
+  const body = await adminApiFetch<{ item: AdminCalendarItem }>(`/api/admin/calendar-items?type=${type}`, { method: 'POST', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function updateAdminCalendarItem(type: 'deadline' | 'exam', id: string, values: Record<string, unknown>): Promise<AdminCalendarItem> {
+  const body = await adminApiFetch<{ item: AdminCalendarItem }>(`/api/admin/calendar-items/${encodeURIComponent(id)}?type=${type}`, { method: 'PATCH', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function deleteAdminCalendarItem(type: 'deadline' | 'exam', id: string): Promise<void> {
+  await adminApiFetch(`/api/admin/calendar-items/${encodeURIComponent(id)}?type=${type}`, { method: 'DELETE' });
+}
+
+export type AdminInstitution = { id: string; school_name: string; acronym: string | null; state: string | null; institution_type: string | null; website_url: string | null; created_at?: string };
+
+export async function fetchAdminInstitutions(search = ''): Promise<AdminInstitution[]> {
+  const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
+  const body = await adminApiFetch<{ items: AdminInstitution[] }>(`/api/admin/institutions${query}`);
+  return body.items || [];
+}
+
+export async function createAdminInstitution(values: Record<string, unknown>): Promise<AdminInstitution> {
+  const body = await adminApiFetch<{ item: AdminInstitution }>('/api/admin/institutions', { method: 'POST', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function updateAdminInstitution(id: string, values: Record<string, unknown>): Promise<AdminInstitution> {
+  const body = await adminApiFetch<{ item: AdminInstitution }>(`/api/admin/institutions/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function deleteAdminInstitution(id: string): Promise<void> {
+  await adminApiFetch(`/api/admin/institutions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export async function updateAdminService(serviceId: string, values: Record<string, unknown>): Promise<AdminService> {
+  const body = await adminApiFetch<{ item: AdminService }>(`/api/admin/services/${encodeURIComponent(serviceId)}`, { method: 'PATCH', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function setUserSuspended(userId: string, suspended: boolean): Promise<void> {
+  await adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}/${suspended ? 'ban' : 'unban'}`, { method: 'POST' });
+}
+
+export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; path: string; bytes: number }> {
+  return await adminApiFetch<{ url: string; path: string; bytes: number }>('/api/admin/uploads', {
+    method: 'POST',
+    body: JSON.stringify({ dataUrl }),
+  });
 }

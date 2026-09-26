@@ -25,6 +25,20 @@ export default function AdminQueuePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [noteId, setNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+
+  async function saveNote(row: AdminServiceRequest) {
+    setBusyId(row.id);
+    try {
+      await updateAdminServiceRequest(row.id, { admin_note: noteText });
+      setRows((current) => current.map((item) => item.id === row.id ? { ...item, admin_note: noteText || null } : item));
+      setNoteId(null);
+      setNoteText('');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to save the note.');
+    } finally { setBusyId(null); }
+  }
 
   const load = useCallback(async (status: string) => {
     setLoading(true);
@@ -81,7 +95,29 @@ export default function AdminQueuePage() {
                     <td className="accent">{requestStudentName(row)}</td>
                     <td>{row.service_catalog?.title || 'Service request'}</td>
                     <td className="mono">{row.reference_code || '—'}</td>
-                    <td>{String(row.form_data?.message || row.form_data?.requestDetails || '—')}</td>
+                    <td>
+                      {String(row.form_data?.message || row.form_data?.requestDetails || '—')}
+                      {row.admin_note && <div className="muted" style={{ marginTop: 4 }}><b>Note:</b> {row.admin_note}</div>}
+                      <button type="button" className="admin-text-btn" style={{ marginTop: 4 }} onClick={() => { setNoteId(noteId === row.id ? null : row.id); setNoteText(row.admin_note || ''); }}>
+                        {row.admin_note ? 'Edit note' : 'Add note'}
+                      </button>
+                      {noteId === row.id && (
+                        <div className="admin-note-editor">
+                          <textarea
+                            className="admin-textarea"
+                            style={{ minHeight: 56 }}
+                            aria-label="Internal admin note"
+                            placeholder="Internal note (never shown to the student)"
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                          />
+                          <div className="admin-action-row">
+                            <button type="button" className="admin-btn small success" disabled={busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
+                            <button type="button" className="admin-text-btn" onClick={() => setNoteId(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </td>
                     <td><StatusBadge status={row.status} /></td>
                     <td><TimeAgo value={row.created_at} /></td>
                     <td className="right"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>

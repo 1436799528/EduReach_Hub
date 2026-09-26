@@ -19,10 +19,13 @@ import {
 } from '../src/lib/api';
 import {
   ACTIVE_REQUEST_STATUSES,
+  AdminEmptyState,
   AuditTimeline,
+  BarStat,
   KpiSkeleton,
   Metric,
   RequestActions,
+  SectionLabel,
   StatusBadge,
   TimeAgo,
   requestStudentName,
@@ -77,6 +80,7 @@ export default function AdminDashboardPage() {
     } finally { setBusyId(null); }
   }
 
+  const activity = analytics?.activity || null;
   const m = analytics?.metrics || {};
   const attention = queue
     .filter((row) => ACTIVE_REQUEST_STATUSES.includes(row.status))
@@ -130,10 +134,18 @@ export default function AdminDashboardPage() {
               <a className="admin-quick-tile" href="/admin/users"><i className="admin-kpi-icon blue"><Users size={16} /></i><div><b>Student Accounts</b><small>Search profiles and roles</small></div></a>
             </div>
 
+            {num('pending_requests') > 0 && (
+              <div className="admin-alert" role="status">
+                <ListChecks size={15} />
+                <span><b>{num('pending_requests')} service request{num('pending_requests') === 1 ? '' : 's'} need attention.</b> Students are waiting on these.</span>
+                <a className="admin-btn small" href="/admin/queue">Open queue</a>
+              </div>
+            )}
+
             <div className="admin-two-col">
               <div className="admin-card">
                 <div className="admin-card-header">
-                  <h2>Needs Attention</h2>
+                  <h2>Needs Attention <SectionLabel live /></h2>
                   <span>{attention.length ? `${attention.length} active` : 'Queue clear'}</span>
                 </div>
                 <div className="admin-table-wrap">
@@ -161,6 +173,24 @@ export default function AdminDashboardPage() {
                   <AuditTimeline items={(analytics?.audit || []).slice(0, 6)} />
                 </div>
                 <div className="admin-card">
+                  <div className="admin-card-header"><h2>Where attention is going <SectionLabel /></h2><span>Real events</span></div>
+                  <div className="admin-focus-body">
+                    {activity && (activity.topPages.length || activity.topSearches.length || activity.serviceSubmits.length || activity.cbtStarts.length) ? (
+                      <>
+                        <FocusGroup title="Most viewed pages" rows={activity.topPages.map((row) => ({ label: row.path, value: row.views }))} />
+                        <FocusGroup title="Top searches" rows={activity.topSearches.map((row) => ({ label: row.term, value: row.count }))} />
+                        <FocusGroup title="Most-started CBT exams" rows={activity.cbtStarts.map((row) => ({ label: row.exam, value: row.count }))} />
+                        <FocusGroup title="Most-completed services" rows={activity.serviceSubmits.map((row) => ({ label: row.path, value: row.count }))} />
+                      </>
+                    ) : (
+                      <AdminEmptyState
+                        title="No usage telemetry yet"
+                        hint="Page views, searches, service and CBT activity are recorded from real traffic. This fills in as students use the live site — nothing is simulated."
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="admin-card">
                   <div className="admin-card-header"><h2>Newest Accounts</h2><span>Latest sign-ups</span></div>
                   <div className="admin-account-list">
                     {recentUsers.map((u) => (
@@ -182,5 +212,18 @@ export default function AdminDashboardPage() {
         )}
       </div>
     </AdminLayout>
+  );
+}
+
+function FocusGroup({ title, rows }: { title: string; rows: Array<{ label: string; value: number }> }) {
+  const max = Math.max(...rows.map((row) => row.value), 1);
+  if (!rows.length) return null;
+  return (
+    <div className="admin-focus-group">
+      <h3>{title}</h3>
+      {rows.slice(0, 5).map((row) => (
+        <BarStat key={row.label} label={row.label} value={row.value} max={max} tone="orange" />
+      ))}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from './AdminLayout';
 import { fetchAdminAnalytics } from '../src/lib/api';
-import { AuditTimeline, BarStat, KpiSkeleton, Metric, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AuditTimeline, BarStat, KpiSkeleton, Metric, SectionLabel, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchAdminAnalytics>> | null>(null);
@@ -68,6 +68,28 @@ export default function AdminAnalyticsPage() {
                   <BarStat label="Last 7 days" value={num('events_7d')} max={events7} hint={`${num('events_7d')} events`} tone="green" />
                   <p className="admin-footnote" style={{ margin: '4px 0 0' }}>{num('sessions_24h')} unique sessions in the last 24 hours · {num('audit_events')} audit events recorded.</p>
                 </div>
+              </div>
+            </div>
+
+            <div className="admin-card">
+              <div className="admin-card-header"><h2>Where attention is going <SectionLabel /></h2><span>Real recorded events</span></div>
+              <div className="admin-focus-body">
+                {data?.activity && data.activity.topPages.length ? (
+                  <>
+                    <div className="admin-focus-group"><h3>Most viewed pages</h3>{data.activity.topPages.slice(0, 6).map((row) => <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.topPages[0].views} tone="orange" />)}</div>
+                    <div className="admin-focus-group"><h3>Top searches</h3>{data.activity.topSearches.length ? data.activity.topSearches.slice(0, 6).map((row) => <BarStat key={row.term} label={row.term} value={row.count} max={data.activity!.topSearches[0].count} tone="blue" />) : <p className="admin-footnote">No searches recorded yet.</p>}</div>
+                    <div className="admin-focus-group"><h3>Most-started CBT exams</h3>{data.activity.cbtStarts.length ? data.activity.cbtStarts.slice(0, 6).map((row) => <BarStat key={row.exam} label={row.exam} value={row.count} max={data.activity!.cbtStarts[0].count} tone="green" />) : <p className="admin-footnote">No CBT attempts recorded yet.</p>}</div>
+                    <div className="admin-focus-group"><h3>Service funnels (views → submissions)</h3>
+                      {data.activity.serviceViews.length ? data.activity.serviceViews.slice(0, 6).map((row) => {
+                        const submits = data.activity!.serviceSubmits.find((s) => s.path === row.path)?.count || 0;
+                        return <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.serviceViews[0].views} hint={`${row.views} views · ${submits} submitted`} tone="orange" />;
+                      }) : <p className="admin-footnote">No service views recorded yet.</p>}
+                    </div>
+                    <p className="admin-footnote">{data.activity.eventsTotal} events recorded since {new Date(data.activity.since).toLocaleDateString()}.</p>
+                  </>
+                ) : (
+                  <AdminEmptyState title="No usage telemetry yet" hint="Events are recorded from real student traffic (page views, searches, service and CBT activity). This section fills in as the live site is used — nothing is simulated." />
+                )}
               </div>
             </div>
 

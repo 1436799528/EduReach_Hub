@@ -114,16 +114,24 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
         return [];
       }
     };
-    const [canonicalAudit, legacyAudit, recentRequests, recentUsers] = await Promise.all([
+    const [canonicalAudit, legacyAudit, recentRequests, recentUsers, activity] = await Promise.all([
       auditFeed('admin_audit_logs'),
       auditFeed('edureach_audit_logs'),
       supabase.from('service_requests').select('id,reference_code,status,created_at,updated_at,service_catalog(title)').order('created_at',{ascending:false}).limit(10),
-      supabase.from('profiles').select('id,full_name,role,created_at').order('created_at',{ascending:false}).limit(10)
+      supabase.from('profiles').select('id,full_name,role,created_at').order('created_at',{ascending:false}).limit(10),
+      (async () => {
+        // Focus/activity breakdown computed in SQL from real telemetry. Tolerated
+        // as null when the RPC is not applied yet, so analytics still renders.
+        try {
+          const { data, error } = await supabase.rpc('admin_activity_breakdown', { p_days: 14 });
+          return error ? null : data;
+        } catch { return null; }
+      })(),
     ]);
     const audit = [...canonicalAudit, ...legacyAudit]
       .sort((a, b) => new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime())
       .slice(0, 20);
-    res.json({ metrics: metrics || {}, audit, recentRequests: recentRequests.data || [], recentUsers: recentUsers.data || [] });
+    res.json({ metrics: metrics || {}, activity: activity || null, audit, recentRequests: recentRequests.data || [], recentUsers: recentUsers.data || [] });
   } catch (error) {
     console.error('Admin analytics error:', error);
     res.status(503).json({ error: 'Unable to load administrative analytics.' });
@@ -168,9 +176,17 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
       const safe = search.replace(/[%,_]/g, '');
       if (safe) query = query.or(`full_name.ilike.%${safe}%,school.ilike.%${safe}%,department.ilike.%${safe}%,matric_number.ilike.%${safe}%`);
     }
-    const { data, error } = await query;
+    const [{ data, error }, authUsers] = await Promise.all([
+      query,
+      supabase.auth.admin.listUsers({ perPage: 1000 }).catch(() => ({ data: null, error: null })),
+    ]);
     if (error) throw error;
-    res.json({ items: data || [] });
+    const suspendedIds = new Set(
+      (authUsers.data?.users || [])
+        .filter((user) => Boolean((user as { banned_until?: string | null }).banned_until))
+        .map((user) => user.id),
+    );
+    res.json({ items: (data || []).map((row) => ({ ...row, suspended: suspendedIds.has(row.id) })) });
   } catch (error) {
     console.error('Admin users error:', error);
     res.status(503).json({ error: 'Unable to load student accounts.' });
@@ -183,7 +199,7 @@ app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
     const allowed = ['all','submitted','reviewing','processing','awaiting_information','completed','closed','rejected','cancelled'];
     if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status filter.' });
     const supabase = getServerSupabase();
-    let query = supabase.from('service_requests').select('id,user_id,status,form_data,created_at,updated_at,reference_code,service_catalog(title)').order('created_at', { ascending: false }).limit(200);
+    let query = supabase.from('service_requests').select('id,user_id,status,form_data,admin_note,created_at,updated_at,reference_code,service_catalog(title)').order('created_at', { ascending: false }).limit(200);
     if (status !== 'all') query = query.eq('status', status);
     const { data, error } = await query;
     if (error) throw error;
@@ -197,26 +213,47 @@ app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
 app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, res) => {
   try {
     const adminUser = (req as AdminRequest).adminUser!;
-    const nextStatus = String(req.body?.status || '');
-    const allowed = ['submitted','reviewing','processing','awaiting_information','completed','closed','rejected','cancelled'];
-    if (!allowed.includes(nextStatus)) return res.status(400).json({ error: 'Invalid service status.' });
     const supabase = getServerSupabase();
-    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status').eq('id', req.params.requestId).single();
+    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status,admin_note').eq('id', req.params.requestId).single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
-    const transitions: Record<string, string[]> = {
-      submitted: ['reviewing','processing','awaiting_information','rejected','cancelled'],
-      reviewing: ['processing','awaiting_information','completed','rejected','cancelled'],
-      processing: ['awaiting_information','completed','rejected','cancelled'],
-      awaiting_information: ['reviewing','processing','completed','cancelled'],
-      completed: ['closed'],
-      closed: [],
-      rejected: [],
-      cancelled: [],
-    };
-    if (!transitions[request.status]?.includes(nextStatus)) return res.status(409).json({ error: `Cannot change status from ${request.status} to ${nextStatus}.` });
-    const { data, error } = await supabase.from('service_requests').update({ status: nextStatus, updated_at: new Date().toISOString() }).eq('id', request.id).select('id,status,updated_at').single();
+
+    const wantsStatus = req.body?.status !== undefined;
+    const wantsNote = req.body?.admin_note !== undefined;
+    if (!wantsStatus && !wantsNote) return res.status(400).json({ error: 'Nothing to update.' });
+
+    const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+    if (wantsNote) {
+      const note = String(req.body?.admin_note || '').trim().slice(0, 2000);
+      update.admin_note = note || null;
+    }
+
+    let nextStatus: string | null = null;
+    if (wantsStatus) {
+      nextStatus = String(req.body?.status || '');
+      const allowed = ['submitted','reviewing','processing','awaiting_information','completed','closed','rejected','cancelled'];
+      if (!allowed.includes(nextStatus)) return res.status(400).json({ error: 'Invalid service status.' });
+      const transitions: Record<string, string[]> = {
+        submitted: ['reviewing','processing','awaiting_information','rejected','cancelled'],
+        reviewing: ['processing','awaiting_information','completed','rejected','cancelled'],
+        processing: ['awaiting_information','completed','rejected','cancelled'],
+        awaiting_information: ['reviewing','processing','completed','cancelled'],
+        completed: ['closed'],
+        closed: [],
+        rejected: [],
+        cancelled: [],
+      };
+      if (!transitions[request.status]?.includes(nextStatus)) return res.status(409).json({ error: `Cannot change status from ${request.status} to ${nextStatus}.` });
+      update.status = nextStatus;
+    }
+
+    const { data, error } = await supabase.from('service_requests').update(update).eq('id', request.id).select('id,status,admin_note,updated_at').single();
     if (error) throw error;
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
+    if (nextStatus) {
+      await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
+    } else {
+      await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'note', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { note_updated: true } });
+    }
     res.json({ item: data });
   } catch (error) {
     console.error('Admin service status error:', error);
@@ -478,6 +515,302 @@ app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin news delete error:', error);
     res.status(500).json({ error: 'Unable to delete this article.' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Admin control-centre endpoints (2026-09-26): calendar items, institutions,
+// service catalogue visibility, account suspension and content image uploads.
+// All writes use the service-role key after requireAdmin() authorization and
+// are recorded in the staff audit trail.
+// ---------------------------------------------------------------------------
+
+const CALENDAR_PRIORITIES = ['low', 'normal', 'high'];
+const CALENDAR_STATUSES = ['pending', 'cancelled'];
+
+app.get('/api/admin/calendar-items', requireAdmin, async (req, res) => {
+  try {
+    const type = String(req.query.type || 'deadline');
+    if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
+    const supabase = getServerSupabase();
+    const table = type === 'exam' ? 'edureach_exams' : 'edureach_deadlines';
+    const columns = type === 'exam'
+      ? 'id,title,description,starts_at,ends_at,location,priority,status,created_at'
+      : 'id,title,description,due_at,priority,status,created_at';
+    const { data, error } = await supabase.from(table).select(columns).order(type === 'exam' ? 'starts_at' : 'due_at', { ascending: true }).limit(200);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin calendar list error:', error);
+    res.status(503).json({ error: 'Unable to load calendar items.' });
+  }
+});
+
+function validateCalendarPayload(body: any, type: string): { error?: string; values?: Record<string, unknown> } {
+  const title = String(body?.title || '').trim().slice(0, 200);
+  if (!title) return { error: 'A title is required.' };
+  const values: Record<string, unknown> = {
+    title,
+    description: String(body?.description || '').trim().slice(0, 2000) || null,
+    priority: CALENDAR_PRIORITIES.includes(String(body?.priority || 'normal')) ? String(body?.priority || 'normal') : 'normal',
+    status: CALENDAR_STATUSES.includes(String(body?.status || 'pending')) ? String(body?.status || 'pending') : 'pending',
+  };
+  if (type === 'exam') {
+    const startsAt = new Date(String(body?.starts_at || ''));
+    if (!Number.isFinite(startsAt.getTime())) return { error: 'A valid start date/time is required.' };
+    values.starts_at = startsAt.toISOString();
+    if (body?.ends_at) {
+      const endsAt = new Date(String(body.ends_at));
+      if (!Number.isFinite(endsAt.getTime())) return { error: 'The end date/time is invalid.' };
+      values.ends_at = endsAt.toISOString();
+    } else {
+      values.ends_at = null;
+    }
+    values.location = String(body?.location || '').trim().slice(0, 200) || null;
+  } else {
+    const dueAt = new Date(String(body?.due_at || ''));
+    if (!Number.isFinite(dueAt.getTime())) return { error: 'A valid due date/time is required.' };
+    values.due_at = dueAt.toISOString();
+  }
+  return { values };
+}
+
+app.post('/api/admin/calendar-items', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const type = String(req.query.type || 'deadline');
+    if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
+    const check = validateCalendarPayload(req.body, type);
+    if (check.error || !check.values) return res.status(400).json({ error: check.error });
+    const supabase = getServerSupabase();
+    const table = type === 'exam' ? 'edureach_exams' : 'edureach_deadlines';
+    const { data, error } = await supabase.from(table).insert(check.values).select('*').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: type === 'exam' ? 'edureach_exam' : 'edureach_deadline', p_entity_id: data.id, p_metadata: { title: data.title } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin calendar create error:', error);
+    res.status(500).json({ error: 'Unable to create the calendar item.' });
+  }
+});
+
+app.patch('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const type = String(req.query.type || 'deadline');
+    if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
+    const check = validateCalendarPayload(req.body, type);
+    if (check.error || !check.values) return res.status(400).json({ error: check.error });
+    const supabase = getServerSupabase();
+    const table = type === 'exam' ? 'edureach_exams' : 'edureach_deadlines';
+    const { data, error } = await supabase.from(table).update(check.values).eq('id', req.params.itemId).select('*').single();
+    if (error || !data) return res.status(404).json({ error: 'Calendar item not found.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: type === 'exam' ? 'edureach_exam' : 'edureach_deadline', p_entity_id: data.id, p_metadata: { title: data.title } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin calendar update error:', error);
+    res.status(500).json({ error: 'Unable to update the calendar item.' });
+  }
+});
+
+app.delete('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const type = String(req.query.type || 'deadline');
+    if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
+    const supabase = getServerSupabase();
+    const table = type === 'exam' ? 'edureach_exams' : 'edureach_deadlines';
+    const { data, error } = await supabase.from(table).delete().eq('id', req.params.itemId).select('id,title').single();
+    if (error || !data) return res.status(404).json({ error: 'Calendar item not found.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: type === 'exam' ? 'edureach_exam' : 'edureach_deadline', p_entity_id: data.id, p_metadata: { title: data.title } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin calendar delete error:', error);
+    res.status(500).json({ error: 'Unable to delete the calendar item.' });
+  }
+});
+
+// --- Institutions (School Finder catalogue) --------------------------------
+
+function validateInstitutionPayload(body: any): { error?: string; values?: Record<string, unknown> } {
+  const schoolName = String(body?.school_name || '').trim().slice(0, 200);
+  if (!schoolName) return { error: 'The institution name is required.' };
+  let websiteUrl: string | null = null;
+  if (body?.website_url) {
+    const raw = String(body.website_url).trim();
+    try {
+      const parsed = new URL(raw.startsWith('http') ? raw : `https://${raw}`);
+      if (parsed.protocol !== 'https:') return { error: 'The website link must use HTTPS.' };
+      websiteUrl = parsed.toString();
+    } catch {
+      return { error: 'The website link is not a valid URL.' };
+    }
+  }
+  return {
+    values: {
+      school_name: schoolName,
+      acronym: String(body?.acronym || '').trim().slice(0, 40) || null,
+      state: String(body?.state || '').trim().slice(0, 60) || null,
+      institution_type: String(body?.institution_type || '').trim().slice(0, 60) || null,
+      website_url: websiteUrl,
+    },
+  };
+}
+
+app.get('/api/admin/institutions', requireAdmin, async (req, res) => {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const supabase = getServerSupabase();
+    let query = supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url,created_at').order('school_name', { ascending: true }).limit(500);
+    if (search) {
+      const safe = search.replace(/[%,_]/g, '');
+      if (safe) query = query.or(`school_name.ilike.%${safe}%,acronym.ilike.%${safe}%,state.ilike.%${safe}%`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin institutions list error:', error);
+    res.status(503).json({ error: 'Unable to load institutions.' });
+  }
+});
+
+app.post('/api/admin/institutions', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const check = validateInstitutionPayload(req.body);
+    if (check.error || !check.values) return res.status(400).json({ error: check.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin institution create error:', error);
+    res.status(500).json({ error: 'Unable to create the institution.' });
+  }
+});
+
+app.patch('/api/admin/institutions/:institutionId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const check = validateInstitutionPayload(req.body);
+    if (check.error || !check.values) return res.status(400).json({ error: check.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
+    if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin institution update error:', error);
+    res.status(500).json({ error: 'Unable to update the institution.' });
+  }
+});
+
+app.delete('/api/admin/institutions/:institutionId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('institutions').delete().eq('id', req.params.institutionId).select('id,school_name').single();
+    if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin institution delete error:', error);
+    res.status(500).json({ error: 'Unable to delete the institution.' });
+  }
+});
+
+// --- Service catalogue visibility/content ----------------------------------
+
+app.patch('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title,description,application_url,active').eq('id', req.params.serviceId).single();
+    if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
+    if (!LIVE_SERVICE_KEYS.includes(service.service_key as (typeof LIVE_SERVICE_KEYS)[number])) {
+      return res.status(400).json({ error: 'Only the four supported live services can be managed.' });
+    }
+    const update: Record<string, unknown> = {};
+    if (req.body?.title !== undefined) {
+      const title = String(req.body.title).trim().slice(0, 120);
+      if (!title) return res.status(400).json({ error: 'The service title cannot be empty.' });
+      update.title = title;
+    }
+    if (req.body?.description !== undefined) update.description = String(req.body.description).trim().slice(0, 600) || null;
+    if (req.body?.application_url !== undefined) update.application_url = safeContentUrl(req.body.application_url);
+    if (req.body?.active !== undefined) update.active = Boolean(req.body.active);
+    if (!Object.keys(update).length) return res.status(400).json({ error: 'Nothing to update.' });
+    const { data, error } = await supabase.from('service_catalog').update(update).eq('id', service.id).select('id,service_key,title,description,application_url,active').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'service_catalog', p_entity_id: service.id, p_metadata: { key: service.service_key, active: data.active } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin service update error:', error);
+    res.status(500).json({ error: 'Unable to update the service.' });
+  }
+});
+
+// --- Account suspension (Supabase Auth admin ban via service role) ---------
+
+app.post('/api/admin/users/:userId/ban', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    if (adminUser.id === req.params.userId) return res.status(400).json({ error: 'You cannot suspend your own account.' });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.auth.admin.updateUserById(req.params.userId, { ban_duration: '876000h' });
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'user_ban', p_entity_type: 'auth_user', p_entity_id: req.params.userId, p_metadata: { email: data.user?.email || null } });
+    res.json({ success: true, suspended: true });
+  } catch (error) {
+    console.error('Admin user ban error:', error);
+    res.status(500).json({ error: 'Unable to suspend the account.' });
+  }
+});
+
+app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { error } = await supabase.auth.admin.updateUserById(req.params.userId, { ban_duration: 'none' });
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'user_unban', p_entity_type: 'auth_user', p_entity_id: req.params.userId, p_metadata: {} });
+    res.json({ success: true, suspended: false });
+  } catch (error) {
+    console.error('Admin user unban error:', error);
+    res.status(500).json({ error: 'Unable to unsuspend the account.' });
+  }
+});
+
+// --- Content image uploads (Supabase Storage, admin-content bucket) --------
+
+const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+
+app.post('/api/admin/uploads', express.json({ limit: '5mb' }), requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const dataUrl = String(req.body?.dataUrl || '');
+    const match = /^data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=\s]+)$/.exec(dataUrl);
+    if (!match) return res.status(400).json({ error: 'Only PNG, JPEG, WebP or GIF images are supported.' });
+    const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+    const buffer = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
+    if (!buffer.length) return res.status(400).json({ error: 'The uploaded image is empty.' });
+    if (buffer.length > 2 * 1024 * 1024) return res.status(413).json({ error: 'Images must be 2 MB or smaller.' });
+    const supabase = getServerSupabase();
+    const objectPath = `${new Date().toISOString().slice(0, 10)}/${adminUser.id.slice(0, 8)}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('admin-content').upload(objectPath, buffer, {
+      contentType: UPLOAD_MIME_BY_EXT[ext],
+      cacheControl: '31536000',
+      upsert: false,
+    });
+    if (uploadError) throw uploadError;
+    const { data } = supabase.storage.from('admin-content').getPublicUrl(objectPath);
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'upload', p_entity_type: 'storage_object', p_entity_id: null, p_metadata: { path: objectPath, bytes: buffer.length } });
+    res.status(201).json({ url: data.publicUrl, path: objectPath, bytes: buffer.length });
+  } catch (error) {
+    console.error('Admin upload error:', error);
+    res.status(500).json({ error: 'Unable to upload the image.' });
   }
 });
 

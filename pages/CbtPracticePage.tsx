@@ -14,7 +14,7 @@ import {
 import HubLayout from '../src/components/HubLayout';
 import { identityClassFor } from '../src/components/CardIdentityMark';
 import ScientificCalculator from '../src/components/ScientificCalculator';
-import { fetchCbtAttemptProgress, fetchCbtExams, fetchCbtQuestions, saveCbtAttemptProgress, startCbt, submitCbt } from '../src/lib/api';
+import { fetchCbtAttemptProgress, fetchCbtExams, fetchCbtQuestions, saveCbtAttemptProgress, startCbt, submitCbt, trackEvent } from '../src/lib/api';
 import { clearExamProgress, getExamProgress, saveExamProgress } from '../src/lib/cbt-offline';
 import { localStorageKey } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
@@ -128,6 +128,7 @@ export default function CbtPracticePage() {
       // localStorage may be disabled
     }
     if (!started) started = await startCbt(targetExamId, targetDurationMinutes);
+    trackEvent('cbt_start', { metadata: { examId: targetExamId, examTitle } });
     setAttemptId(started.attemptId);
     setAttemptStarted(true);
     setGuestMode(asGuest || Boolean(started.guest) || started.attemptId.startsWith('guest-cbt-'));
@@ -269,6 +270,7 @@ export default function CbtPracticePage() {
     try {
       const activeAttemptId = attemptId || `local-att-${Date.now()}`;
       const result = await submitCbt({ examId, attemptId: activeAttemptId, answers });
+      trackEvent('cbt_submit', { metadata: { examId } });
       localStorage.setItem(localStorageKey('last-cbt-attempt'), result.attemptId);
       localStorage.removeItem(localStorageKey(`cbt-attempt-${examId}`));
       await clearExamProgress(examId).catch(() => undefined);
