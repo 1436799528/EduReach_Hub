@@ -1661,21 +1661,7 @@ const CONTENT_RESOURCES: ContentResource[] = [
     {name:'category',label:'Category',type:'text'},{name:'route',label:'Route',type:'text'},{name:'sort_order',label:'Sort Order',type:'number'},
     {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
   ]},
-  { key: 'deadlines', label: 'Deadlines', table: 'edureach_deadlines', fields: [
-    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'user_id',label:'User ID',type:'uuid',readonly:true},
-    {name:'institution_id',label:'Institution ID',type:'uuid'},{name:'title',label:'Title',type:'text',required:true},{name:'description',label:'Description',type:'text'},
-    {name:'due_at',label:'Due At',type:'timestamptz',required:true},{name:'priority',label:'Priority',type:'text'},{name:'source_id',label:'Source ID',type:'uuid'},
-    {name:'status',label:'Status',type:'text'},{name:'session_id',label:'Session ID',type:'uuid'},
-    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
-  ]},
-  { key: 'calendar_exams', label: 'Calendar Exams', table: 'edureach_exams', fields: [
-    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'user_id',label:'User ID',type:'uuid',readonly:true},
-    {name:'institution_id',label:'Institution ID',type:'uuid'},{name:'course_id',label:'Course ID',type:'uuid'},
-    {name:'title',label:'Title',type:'text',required:true},{name:'starts_at',label:'Starts At',type:'timestamptz',required:true},
-    {name:'ends_at',label:'Ends At',type:'timestamptz'},{name:'location',label:'Location',type:'text'},{name:'description',label:'Description',type:'text'},
-    {name:'priority',label:'Priority',type:'text'},{name:'status',label:'Status',type:'text'},
-    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
-  ]},
+ 
 ];
 
 function getContentResource(key: string) { return CONTENT_RESOURCES.find(item => item.key === key); }
