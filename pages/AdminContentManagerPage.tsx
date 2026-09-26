@@ -23,7 +23,7 @@ type Row = Record<string, unknown> & { id?: string };
 const RESOURCE_KEYS = [
   'institutions','faculties','departments','programmes','courses',
   'cbt_exams','exam_questions','news_articles','opportunities',
-  'service_catalog','deadlines','calendar_exams'
+  'service_catalog'
 ] as const;
 
 function csvParse(text: string): string[][] {
