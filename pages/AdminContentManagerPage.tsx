@@ -73,6 +73,7 @@ export default function AdminContentManagerPage() {
   const [editing, setEditing] = useState<Row | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [pendingImport, setPendingImport] = useState<Row[]>([]);
 
   const resource = useMemo(() => resources.find(r => r.key === resourceKey), [resources, resourceKey]);
 
@@ -133,7 +134,7 @@ export default function AdminContentManagerPage() {
 
   async function importCsv(file: File) {
     if (!resource) return;
-    setSaving(true); setError(''); setMessage('');
+    setError(''); setMessage('');
     try {
       const text = await file.text();
       const parsed = csvParse(text);
@@ -143,12 +144,25 @@ export default function AdminContentManagerPage() {
       const unknown = headers.filter(h => !allowed.has(h));
       if (unknown.length) throw new Error(`Unknown field(s): ${unknown.join(', ')}. Download the template for this section.`);
       const dataRows = parsed.slice(1).map(values => Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ''])));
+      setPendingImport(dataRows);
+      setFileName(file.name);
+      setMessage(`Preview ready: ${dataRows.length} row(s). Review the first rows below, then confirm the import.`);
+    } catch (e) {
+      setPendingImport([]);
+      setError(e instanceof Error ? e.message : 'Unable to read CSV.');
+    }
+  }
+
+  async function confirmImport() {
+    if (!resource || !pendingImport.length) return;
+    setSaving(true); setError(''); setMessage('');
+    try {
       const result = await adminApiFetch<{ inserted: number; updated: number; errors: Array<{ row: number; error: string }> }>(
         `/api/admin/content-manager/import/${encodeURIComponent(resource.key)}`,
-        { method: 'POST', body: JSON.stringify({ rows: dataRows }) }
+        { method: 'POST', body: JSON.stringify({ rows: pendingImport }) }
       );
       await loadRows(resource.key);
-      setFileName(file.name);
+      setPendingImport([]);
       setMessage(`Import complete: ${result.inserted} inserted, ${result.updated} updated, ${result.errors.length} rejected.${result.errors.length ? ' See the error list below.' : ''}`);
       if (result.errors.length) setError(result.errors.map(item => `Row ${item.row}: ${item.error}`).join(' • '));
     } catch (e) {
