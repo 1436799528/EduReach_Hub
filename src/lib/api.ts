@@ -1,51 +1,10 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
+import { userFacingError } from '../../lib/errors';
+import { apiUrl } from './apiBase';
 
-export function userFacingError(value: unknown, fallback = 'We could not complete that request. Please try again.') {
-  let raw = '';
-  if (value instanceof Error) {
-    raw = value.message;
-  } else if (typeof value === 'string') {
-    raw = value;
-  } else if (value && typeof value === 'object') {
-    const candidate = value as Record<string, unknown>;
-    const nested = candidate.error && typeof candidate.error === 'object' ? candidate.error as Record<string, unknown> : null;
-    raw = String(
-      candidate.message ??
-      candidate.error_description ??
-      nested?.message ??
-      nested?.error_description ??
-      candidate.details ??
-      candidate.hint ??
-      '',
-    );
-  }
-  const message = raw.trim();
-  if (!message) return fallback;
-
-  const known: Array<[RegExp, string]> = [
-    [/failed to fetch|networkerror|load failed|fetch failed/i, 'Please check your internet connection and try again.'],
-    [/invalid or expired session|authentication required|administrator session required/i, 'Your session has expired. Please sign in again.'],
-    [/not found|could not be found|no .* was found/i, 'The requested information is not available.'],
-    [/already been submitted|duplicate|already exists/i, 'This action has already been completed.'],
-    [/expired/i, 'This session has expired. Please start again.'],
-    [/no questions|question bank/i, 'This CBT is not ready yet. Please choose another available question bank.'],
-    [/not available|not accepting requests/i, 'This service is not currently available. Please choose another option.'],
-    [/required|invalid.*input|valid .* required/i, 'Please check the information entered and try again.'],
-    [/permission|forbidden|not authorized|access denied/i, 'You do not have permission to perform this action.'],
-    [/too large|payload|size limit/i, 'The submitted file or information is too large. Please reduce it and try again.'],
-    [/timeout|timed out/i, 'The request took too long. Please try again.'],
-  ];
-  const match = known.find(([pattern]) => pattern.test(message));
-  if (match) return match[1];
-
-  // Never expose SQL, database, stack traces, file paths, RPC names or server internals.
-  if (/postgres|postgresql|supabase|sqlstate|column .* (ambiguous|does not exist)|relation .* does not exist|constraint|violates|rpc|function .* does not exist|syntax error|stack|at [\w./:-]+\(/i.test(message)) {
-    return fallback;
-  }
-  return message.length <= 180 && !/[\n\r]/.test(message) ? message : fallback;
-}
+export { userFacingError } from '../../lib/errors';
 
 export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number; guest?: boolean };
@@ -210,23 +169,19 @@ async function authHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
-const API_BASE_PATH = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
-
-function apiPath(path: string): string {
-  if (!path.startsWith('/api/')) return path;
-  return `${API_BASE_PATH}${path.slice('/api'.length)}`;
-}
-
 async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
-    const requestInput = typeof input === 'string' ? apiPath(input) : input;
+    const requestInput = typeof input === 'string' ? apiUrl(input) : input;
     response = await fetch(requestInput, init);
   } catch {
     throw new Error('Please check your internet connection and try again.');
   }
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(userFacingError(body?.error, 'We could not complete that request. Please try again.'));
+  if (!response.ok) throw new Error(userFacingError(body?.error ?? body, 'We could not complete that request. Please try again.'));
+  if (body === null && response.status !== 204) {
+    throw new Error('The server returned an invalid response. Please try again.');
+  }
   return body as T;
 }
 
@@ -272,7 +227,7 @@ export async function fetchService(slug: string): Promise<ServiceItem> {
     .eq('service_key', normalizedSlug)
     .eq('active', true)
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw new Error(userFacingError(error));
   if (data && supportedSlugs.has(data.service_key)) return data as ServiceItem;
   throw new Error('This service is not available. Browse the services catalogue for active student services.');
 }
@@ -297,7 +252,7 @@ export async function fetchCbtExams() {
     .select('id,title,exam_body,subject,description,duration_minutes')
     .eq('is_active', true)
     .order('created_at', { ascending: false });
-  if (error) throw error;
+  if (error) throw new Error(userFacingError(error));
   return data || [];
 }
 
@@ -440,11 +395,11 @@ export async function fetchCbtQuestions(examId: string) {
   }
 
   const { data: exam, error: examError } = await supabase.from('cbt_exams').select('id,title,exam_body,duration_minutes,subject').eq('id', examId).eq('is_active', true).maybeSingle();
-  if (examError) throw examError;
+  if (examError) throw new Error(userFacingError(examError));
   if (!exam) throw new Error('This CBT exam is not available. Choose another question bank.');
 
   const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
-  if (questionError) throw questionError;
+  if (questionError) throw new Error(userFacingError(questionError));
   if (!questions?.length) throw new Error('This CBT exam has no questions yet. Choose another question bank.');
 
   return {
@@ -578,7 +533,7 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
       .eq('service_key', normalizedSlug)
       .eq('active', true)
       .maybeSingle();
-    if (serviceError) throw serviceError;
+    if (serviceError) throw new Error(userFacingError(serviceError));
     if (!service) throw new Error('This service is no longer accepting requests. Browse the services catalogue for active services.');
 
     const { data, error } = await supabase
@@ -586,7 +541,7 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
       .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
       .select('id, reference_code, created_at, status')
       .single();
-    if (error) throw error;
+    if (error) throw new Error(userFacingError(error));
     if (!data) throw new Error('The service request could not be created.');
     return data;
   }
@@ -626,7 +581,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
     .eq('published', true)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(30);
-  if (error) throw error;
+  if (error) throw new Error(userFacingError(error));
   return (data || []).map((item) => ({
     id: item.id,
     slug: item.slug,

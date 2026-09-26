@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import {
   ArrowRight,
   BookOpen,
@@ -64,7 +65,7 @@ export default function CbtPage() {
     try {
       setExams((await fetchCbtExams()) as Exam[]);
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Unable to load CBT exams.');
+      setError(userFacingError(value, 'Unable to load CBT exams.'));
     } finally {
       setLoading(false);
     }

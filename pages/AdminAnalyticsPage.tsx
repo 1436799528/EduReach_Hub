@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { fetchAdminAnalytics } from '../src/lib/api';
 import { AdminEmptyState, AuditTimeline, BarStat, KpiSkeleton, Metric, SectionLabel, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
@@ -8,7 +9,7 @@ export default function AdminAnalyticsPage() {
   const [error, setError] = useState('');
   async function load() {
     setLoading(true);
-    try { setError(''); setData(await fetchAdminAnalytics()); } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load analytics.'); } finally { setLoading(false); }
+    try { setError(''); setData(await fetchAdminAnalytics()); } catch (e) { setError(userFacingError(e, 'Unable to load analytics.')); } finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
 

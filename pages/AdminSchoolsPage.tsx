@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import {
@@ -33,7 +34,7 @@ export default function AdminSchoolsPage() {
       setInstitutions(await fetchAdminInstitutions(search));
     } catch (e) {
       setInstitutions([]);
-      setError(e instanceof Error ? e.message : 'Unable to load institutions.');
+      setError(userFacingError(e, 'Unable to load institutions.'));
     } finally { setLoading(false); }
   }
 
@@ -66,7 +67,7 @@ export default function AdminSchoolsPage() {
       setForm(null);
       setMessage(form.id ? 'Institution updated — the school finder reflects it immediately.' : 'Institution created — it is searchable on /schools right away.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the institution.');
+      setError(userFacingError(e, 'Unable to save the institution.'));
     } finally { setSaving(false); }
   }
 
@@ -78,7 +79,7 @@ export default function AdminSchoolsPage() {
       setInstitutions((current) => current.filter((item) => item.id !== institution.id));
       setMessage('Institution permanently deleted.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to delete the institution.');
+      setError(userFacingError(e, 'Unable to delete the institution.'));
     }
   }
 

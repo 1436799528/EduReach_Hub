@@ -1,3 +1,4 @@
+import { userFacingError } from '../../../lib/errors';
 import { useEffect, useRef, useState } from 'react';
 import {
   AlignCenter, AlignJustify, AlignLeft, AlignRight,
@@ -76,7 +77,7 @@ export default function AdminRichTextEditor({
       const uploaded = await uploadAdminImage(dataUrl);
       exec('insertImage', uploaded.url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Image upload failed.');
+      setError(userFacingError(e, 'Image upload failed.'));
     } finally {
       setUploading(false);
     }

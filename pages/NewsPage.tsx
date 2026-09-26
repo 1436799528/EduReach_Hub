@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import FilterPills from '../src/components/FilterPills';
@@ -43,7 +44,7 @@ export default function NewsPage() {
     try {
       setItems(await fetchNews());
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Unable to load news.');
+      setError(userFacingError(value, 'Unable to load news.'));
     } finally {
       setLoading(false);
     }

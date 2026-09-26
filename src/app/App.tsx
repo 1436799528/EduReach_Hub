@@ -3,6 +3,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
 import { pageTitleFor } from '../lib/pageMeta';
+import { API_BASE_PATH } from '../lib/apiBase';
 
 // The admin console keeps ONE mounted shell (sidebar, top bar, session state)
 // across every /admin route; only the inner content area re-renders. This is
@@ -39,8 +40,6 @@ function analyticsSessionId() {
     return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 }
-
-const API_BASE_PATH = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
 
 function recordPageView(pathname: string) {
   void fetch(`${API_BASE_PATH}/analytics/event`, {

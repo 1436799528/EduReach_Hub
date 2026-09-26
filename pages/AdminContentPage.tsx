@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import {
@@ -53,7 +54,7 @@ export default function AdminContentPage() {
       setItems(await fetchAdminCalendarItems(nextType));
     } catch (e) {
       setItems([]);
-      setError(e instanceof Error ? e.message : 'Unable to load calendar items.');
+      setError(userFacingError(e, 'Unable to load calendar items.'));
     } finally { setLoading(false); }
   }
   useEffect(() => { void load(type); /* eslint-disable-line react-hooks/exhaustive-deps */ }, [type]);
@@ -83,7 +84,7 @@ export default function AdminContentPage() {
       setForm(null);
       setMessage(form.id ? 'Item updated.' : 'Item created — it is live on the events page.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save the item.');
+      setError(userFacingError(e, 'Unable to save the item.'));
     } finally { setSaving(false); }
   }
 
@@ -95,7 +96,7 @@ export default function AdminContentPage() {
       setItems((current) => current.filter((row) => row.id !== item.id));
       setMessage('Item permanently deleted.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to delete the item.');
+      setError(userFacingError(e, 'Unable to delete the item.'));
     }
   }
 

@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
@@ -22,7 +23,7 @@ export default function EventsPage() {
     try {
       setEvents(await fetchUpcoming());
     } catch (value) {
-      setError(value instanceof Error ? value.message : 'Unable to load upcoming events.');
+      setError(userFacingError(value, 'Unable to load upcoming events.'));
     } finally {
       setLoading(false);
     }

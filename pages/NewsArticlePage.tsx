@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { ArrowLeft, CheckCircle2, ExternalLink, Newspaper, Share2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
@@ -34,7 +35,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
     setItem(null);
     void fetchNewsItem(slug)
       .then((article) => active && setItem(article))
-      .catch((value) => active && setError(value instanceof Error ? value.message : 'Unable to load this article.'))
+      .catch((value) => active && setError(userFacingError(value, 'Unable to load this article.')))
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [slug]);
@@ -159,7 +160,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                       setCopied(true);
                       window.setTimeout(() => setCopied(false), 1600);
                     } catch (value) {
-                      setCopyError(value instanceof Error ? value.message : 'Unable to copy this link.');
+                      setCopyError(userFacingError(value, 'Unable to copy this link.'));
                     }
                   }}
                 >

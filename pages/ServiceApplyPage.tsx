@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
@@ -109,7 +110,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         if (active) setService(item);
       })
       .catch((value) => {
-        if (active) setServiceError(value instanceof Error ? value.message : 'Unable to load this service.');
+        if (active) setServiceError(userFacingError(value, 'Unable to load this service.'));
       })
       .finally(() => {
         if (active) setServiceLoading(false);
@@ -243,7 +244,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
       setReference(result.reference_code);
       setMessage('');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Unable to submit request.');
+      setMessage(userFacingError(error, 'Unable to submit request.'));
     } finally {
       setBusy(false);
     }

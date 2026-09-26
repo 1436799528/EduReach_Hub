@@ -1,3 +1,4 @@
+import { userFacingError } from '../../lib/errors';
 import { useEffect, useRef, useState } from 'react';
 import { Calculator, X } from 'lucide-react';
 import { evaluateExpression, formatCalcResult, type AngleMode } from '../lib/calc-engine';
@@ -120,7 +121,7 @@ export default function ScientificCalculator({ onClose }: { onClose: () => void 
       setJustEvaluated(true);
     } catch (err) {
       setResult(null);
-      setError(err instanceof Error ? err.message : 'Syntax error');
+      setError(userFacingError(err, 'Syntax error'));
     }
     inputRef.current?.focus();
   }

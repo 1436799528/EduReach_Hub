@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
@@ -65,15 +66,15 @@ export default function HubHomePage() {
     setNewsError('');
     void fetchNews()
       .then((items) => active && setNews(items))
-      .catch((value) => active && setNewsError(value instanceof Error ? value.message : 'Unable to load news updates.'))
+      .catch((value) => active && setNewsError(userFacingError(value, 'Unable to load news updates.')))
       .finally(() => active && setNewsLoading(false));
     setUpcomingError('');
     void fetchServices()
       .then((items) => active && setServices(items))
-      .catch((value) => active && setServicesError(value instanceof Error ? value.message : 'Unable to load student services.'));
+      .catch((value) => active && setServicesError(userFacingError(value, 'Unable to load student services.')));
     void fetchUpcoming()
       .then((items) => active && setUpcoming(items))
-      .catch((value) => active && setUpcomingError(value instanceof Error ? value.message : 'Unable to load upcoming events.'));
+      .catch((value) => active && setUpcomingError(userFacingError(value, 'Unable to load upcoming events.')));
     return () => { active = false; };
   }, [feedVersion]);
 

@@ -1,3 +1,4 @@
+import { API_BASE_PATH } from '../../lib/apiBase';
 import { useEffect, useState, type ReactNode } from 'react';
 
 // Shared admin toolkit: small presentational building blocks and hooks reused
@@ -40,7 +41,7 @@ export function TimeAgo({ value, className }: { value: unknown; className?: stri
 
 export type AdminHealth = { state: 'checking' | 'ok' | 'down'; latencyMs: number | null };
 
-const ADMIN_API_BASE = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
+const ADMIN_API_BASE = API_BASE_PATH;
 
 export function useAdminHealth(intervalMs = 60_000): AdminHealth {
   const [health, setHealth] = useState<AdminHealth>({ state: 'checking', latencyMs: null });

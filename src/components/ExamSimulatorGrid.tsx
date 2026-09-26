@@ -1,3 +1,4 @@
+import { userFacingError } from '../../lib/errors';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { identityClassFor } from './CardIdentityMark';
@@ -67,7 +68,7 @@ export default function ExamSimulatorGrid({
           };
         }));
       })
-      .catch((value) => active && setError(value instanceof Error ? value.message : 'Unable to load CBT catalog.'));
+      .catch((value) => active && setError(userFacingError(value, 'Unable to load CBT catalog.')));
     return () => { active = false; };
   }, []);
 

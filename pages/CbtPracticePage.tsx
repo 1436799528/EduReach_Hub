@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
@@ -196,7 +197,7 @@ export default function CbtPracticePage() {
         }
       } catch (error) {
         if (!active) return;
-        const text = error instanceof Error ? error.message : 'Unable to load the CBT exam.';
+        const text = userFacingError(error, 'Unable to load the CBT exam.');
         if (/sign in/i.test(text)) setAuthRequired(true);
         else setMessage(text);
       } finally {
@@ -284,7 +285,7 @@ export default function CbtPracticePage() {
       await clearExamProgress(examId).catch(() => undefined);
       navigateInApp(`/cbt/results?attempt=${encodeURIComponent(result.attemptId)}`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Submission failed. Your answers are saved locally.');
+      setMessage(userFacingError(error, 'Submission failed. Your answers are saved locally.'));
       setSubmitting(false);
       setShowSubmitModal(false);
     }

@@ -17,8 +17,9 @@ import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
 import { useAdminHealth } from '../src/components/admin/AdminKit';
+import { API_BASE_PATH } from '../src/lib/apiBase';
 
-const ADMIN_API_BASE = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
+const ADMIN_API_BASE = API_BASE_PATH;
 
 type AdminSession = { id: string; email: string; fullName: string; role: 'admin' };
 

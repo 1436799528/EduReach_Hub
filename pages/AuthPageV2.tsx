@@ -1,3 +1,4 @@
+import { userFacingError } from '../lib/errors';
 import { FormEvent, useEffect, useState } from 'react';
 import {
   ArrowRight,
@@ -88,7 +89,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       if (resendError) throw resendError;
       setMessage('A new verification email has been sent.');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to resend the verification email.');
+      setError(userFacingError(e, 'Unable to resend the verification email.'));
     } finally {
       setBusy(false);
     }
@@ -252,7 +253,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         throw new Error('Unable to confirm your EduReach session. Please try signing in again.');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during authentication.');
+      setError(userFacingError(err, 'An error occurred during authentication.'));
     } finally {
       setBusy(false);
     }
