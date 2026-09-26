@@ -12,12 +12,24 @@ app.disable('x-powered-by');
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://wa.me; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'",
-  );
+  const isProd = process.env.NODE_ENV === 'production';
+  if (isProd) {
+    // Strict production headers. Keep in sync with public/_headers (Netlify).
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://wa.me; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'",
+    );
+  } else {
+    // Development/preview: the Vite dev client needs inline scripts, HMR
+    // websockets and cross-origin iframe embedding (sandbox previews), so the
+    // strict production CSP/X-Frame-Options would blank the page entirely.
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://wa.me; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' ws: wss: http: https:; frame-ancestors *",
+    );
+  }
   next();
 });
 
