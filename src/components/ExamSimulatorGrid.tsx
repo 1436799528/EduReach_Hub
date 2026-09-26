@@ -1,8 +1,10 @@
 import { ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { identityClassFor } from './CardIdentityMark';
+import { fetchCbtExams } from '../lib/api';
 
 export type ExamSimulator = {
-  key: string;
+  id: string;
   title: string;
   mode: string;
   logo: string;
@@ -11,59 +13,28 @@ export type ExamSimulator = {
   guideHref: string;
 };
 
-export const examSimulators: ExamSimulator[] = [
-  {
-    key: 'jamb',
-    title: 'JAMB CBT Simulator',
-    mode: 'JAMB',
-    logo: '/icons/brands/jamb.png',
-    desc: 'UTME past questions in a real CBT environment with timer.',
-    meta: 'Timed practice',
-    guideHref: '/jamb',
-  },
-  {
-    key: 'waec',
-    title: 'WAEC CBT Practice',
-    mode: 'WAEC',
-    logo: '/icons/brands/waec.webp',
-    desc: 'SSCE revision across English, Maths and sciences.',
-    meta: 'Timed practice',
-    guideHref: '/waec',
-  },
-  {
-    key: 'neco',
-    title: 'NECO CBT Practice',
-    mode: 'NECO',
-    logo: '/icons/brands/neco.webp',
-    desc: 'SSCE practice papers by syllabus objective.',
-    meta: 'Timed practice',
-    guideHref: '/neco',
-  },
-  {
-    key: 'post-utme',
-    title: 'Post-UTME Screening Tests',
-    mode: 'POST-UTME',
-    logo: '/icons/brands/jamb.png',
-    desc: 'Screening aptitude tests for federal and state schools.',
-    meta: 'Timed practice',
-    guideHref: '/post-utme',
-  },
-];
+const brandLogo = (mode: string) => {
+  const normalized = mode.toLowerCase();
+  if (normalized === 'waec') return '/icons/brands/waec.webp';
+  if (normalized === 'neco') return '/icons/brands/neco.webp';
+  if (normalized === 'nabteb') return '/icons/brands/nabteb.png';
+  return '/icons/brands/jamb.png';
+};
 
-/** Setup URL for a simulator card: students choose a course, school or subjects before the hall. */
+const guideHref = (mode: string) => {
+  const normalized = mode.toLowerCase();
+  if (normalized === 'post-utme') return '/post-utme';
+  if (normalized === 'jamb') return '/jamb';
+  if (normalized === 'waec') return '/waec';
+  if (normalized === 'neco') return '/neco';
+  if (normalized === 'nabteb') return '/nabteb';
+  return '/cbt';
+};
+
 export function simulatorStartHref(key: string) {
-  return `/cbt/setup/${key}`;
+  return `/cbt/setup/${encodeURIComponent(key)}`;
 }
 
-/**
- * Shared exam simulator grid. Every card enters an exam-specific setup wizard
- * (/cbt/setup/…) before the timed hall; variant="mode" is kept for catalog contexts
- * that deliberately want the filtered question-bank list (/cbt?mode=X).
- *
- * Layout lives in edu-portal.css: 4-up vertical cards on desktop; on mobile the
- * same cards turn horizontal and sit in a 2-row swipe strip (Myschool "Take a
- * test" pattern) with the next column peeking in from the right edge.
- */
 export default function ExamSimulatorGrid({
   variant = 'start',
   showGuides = false,
@@ -71,14 +42,42 @@ export default function ExamSimulatorGrid({
   variant?: 'mode' | 'start';
   showGuides?: boolean;
 }) {
+  const [exams, setExams] = useState<ExamSimulator[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    void fetchCbtExams()
+      .then((items: any[]) => {
+        if (!active) return;
+        setExams(items.map((exam) => {
+          const mode = String(exam.exam_body || exam.subject || 'CBT').trim();
+          return {
+            id: String(exam.id),
+            title: String(exam.title),
+            mode,
+            logo: brandLogo(mode),
+            desc: String(exam.description || `Practice ${mode} questions in the EduReach CBT environment.`),
+            meta: `${Number(exam.duration_minutes || 0)} min timed practice`,
+            guideHref: guideHref(mode),
+          };
+        }));
+      })
+      .catch((value) => active && setError(value instanceof Error ? value.message : 'Unable to load CBT catalog.'));
+    return () => { active = false; };
+  }, []);
+
+  if (error) return <div className="er-empty" role="alert">{error}</div>;
+  if (!exams.length) return <div className="er-empty">No active CBT question banks have been published yet.</div>;
+
   return (
     <div>
       <div className="er-sim-grid">
-        {examSimulators.map((exam) => (
+        {exams.map((exam) => (
           <a
-            key={exam.key}
-            className={`er-sim-card er-sim-${exam.key} ${identityClassFor(exam.mode, 'service')}`}
-            href={variant === 'mode' ? `/cbt?mode=${exam.mode}` : simulatorStartHref(exam.key)}
+            key={exam.id}
+            className={`er-sim-card er-sim-${exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
+            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.id)}
           >
             <span className="er-sim-top">
               <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" />
@@ -89,9 +88,7 @@ export default function ExamSimulatorGrid({
               <small>{exam.desc}</small>
               <span className="er-sim-foot">
                 <span>{exam.meta}</span>
-                <span className="er-sim-cta">
-                  {variant === 'mode' ? 'Practice' : 'Start Test'} <ArrowRight size={12} />
-                </span>
+                <span className="er-sim-cta">{variant === 'mode' ? 'Practice' : 'Start Test'} <ArrowRight size={12} /></span>
               </span>
             </span>
           </a>
@@ -99,8 +96,8 @@ export default function ExamSimulatorGrid({
       </div>
       {showGuides && (
         <div className="er-guide-strip">
-          {examSimulators.map((exam) => (
-            <a key={exam.key} href={exam.guideHref}>
+          {exams.map((exam) => (
+            <a key={exam.id} href={exam.guideHref}>
               {exam.mode === 'POST-UTME' ? 'Post-UTME' : exam.mode} Guide <ArrowRight size={11} />
             </a>
           ))}
