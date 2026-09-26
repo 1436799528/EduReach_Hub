@@ -18,6 +18,8 @@ import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
 import { useAdminHealth } from '../src/components/admin/AdminKit';
 
+const ADMIN_API_BASE = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
+
 type AdminSession = { id: string; email: string; fullName: string; role: 'admin' };
 
 // ---------------------------------------------------------------------------
@@ -44,7 +46,7 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
   const { data: { session: authSession } } = await supabase.auth.getSession();
   if (!authSession?.access_token) return null;
 
-  const response = await fetch('/api/admin/session', {
+  const response = await fetch(`${ADMIN_API_BASE}/admin/session`, {
     headers: { Authorization: `Bearer ${authSession.access_token}` },
   }).catch(() => null);
   const body = response ? await response.json().catch(() => null) : null;
