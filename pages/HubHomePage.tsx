@@ -8,7 +8,6 @@ import { FeaturedNews, NewsRow, TrendingNews } from '../src/components/NewsSecti
 import { SkeletonRows } from '../src/components/Skeleton';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import ServiceCard from '../src/components/ServiceCard';
-import { fetchServices, type ServiceItem } from '../src/lib/api';
 import { fetchNews, fetchUpcoming, fetchServices, type NewsItem, type UpcomingItem, type ServiceItem } from '../src/lib/api';
 
 function navigateInApp(path: string) {
