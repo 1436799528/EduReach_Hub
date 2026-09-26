@@ -39,6 +39,7 @@ const AdminContentPage = lazy(() => import('../../pages/AdminContentPage'));
 const AdminOpportunitiesPage = lazy(() => import('../../pages/AdminOpportunitiesPage'));
 const AdminSchoolsPage = lazy(() => import('../../pages/AdminSchoolsPage'));
 const AdminServicesPage = lazy(() => import('../../pages/AdminServicesPage'));
+const AdminContentManagerPage = lazy(() => import('../../pages/AdminContentManagerPage'));
 
 // Slugs with a live application workflow. Every other /services/* slug renders
 // an honest coming-soon panel instead of a fabricated service form.
@@ -120,6 +121,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/opportunities') return <AdminOpportunitiesPage />;
   if (path === '/admin/schools') return <AdminSchoolsPage />;
   if (path === '/admin/services') return <AdminServicesPage />;
+  if (path === '/admin/content-manager') return <AdminContentManagerPage />;
 
   if (path === '/') return <HubHomePage />;
   if (path === '/jamb') return <ExamHubPage exam="jamb" />;
