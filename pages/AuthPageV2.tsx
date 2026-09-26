@@ -10,7 +10,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
-import { localStorageKey } from '../src/lib/localPreview';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
 import BrandLogo from '../src/components/BrandLogo';
@@ -171,42 +170,38 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
         const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-        // Attempt Supabase sign up when credentials are configured.
-        if (isSupabaseConfigured) {
-          const { error: signUpError } = await supabase.auth.signUp({
-            email: email.trim(),
-            password,
-            options: {
-              data: {
-                first_name: firstName.trim(),
-                last_name: lastName.trim(),
-                full_name: fullName,
-                phone: phone.trim(),
-                account_type: accountType,
-                terms_agreed: true,
-              },
-            },
-          });
-          if (signUpError) throw signUpError;
+        if (!isSupabaseConfigured) {
+          throw new Error('EduReach account registration is not available until the live account service is configured.');
         }
 
-        // Local profile cache for unconfigured preview/offline sessions only.
-        if (!isSupabaseConfigured) {
-          localStorage.setItem('edureach-local-user-email', email.trim());
-          localStorage.setItem(
-            localStorageKey('profile'),
-            JSON.stringify({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
               first_name: firstName.trim(),
               last_name: lastName.trim(),
               full_name: fullName,
-              email: email.trim(),
               phone: phone.trim(),
               account_type: accountType,
-            })
-          );
-        }
-        if (!isSupabaseConfigured) {
+              terms_agreed: true,
+            },
+          },
+        });
+        if (signUpError) throw signUpError;
+
+        if (signUpData.session?.user) {
+          const { error: profileError } = await supabase.from('profiles').upsert({
+            id: signUpData.session.user.id,
+            full_name: fullName,
+            phone: phone.trim(),
+            role: 'student',
+          }, { onConflict: 'id' });
+          if (profileError) throw profileError;
+
           notifyAuthChanged();
+          navigateInApp(getSafeNextPath());
+          return;
         }
         setVerifyEmailSent(email.trim());
         setCurrentMode('verify');
@@ -218,6 +213,10 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       if (currentMode === 'signin') {
         if (!email.trim() || !password) {
           throw new Error('Email address and password are required.');
+        }
+
+        if (!isSupabaseConfigured) {
+          throw new Error('EduReach account sign-in is not available until the live account service is configured.');
         }
 
         try {
@@ -247,14 +246,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             return;
           }
         } catch (signInErr) {
-          if (isSupabaseConfigured) throw signInErr;
-        }
-
-        if (!isSupabaseConfigured) {
-          localStorage.setItem('edureach-local-user-email', email.trim());
-          notifyAuthChanged();
-          navigateInApp(getSafeNextPath());
-          return;
+          throw signInErr;
         }
 
         throw new Error('Unable to confirm your EduReach session. Please try signing in again.');
