@@ -36,7 +36,7 @@ export function userFacingError(value: unknown, fallback = 'We could not complet
     [/already been submitted|duplicate|already exists/i, 'This action has already been completed.'],
     [/expired/i, 'This session has expired. Please start again.'],
     [/no questions|question bank/i, 'This CBT is not ready yet. Please choose another available question bank.'],
-    [/not available|not accepting requests/i, 'This service is not currently available. Please choose another option.'],
+    [/^this service (?:is )?(?:not (?:currently )?available|not accepting requests|no longer accepting requests)/i, 'This service is not currently available. Please choose another option.'],
     [/permission|forbidden|not authorized|access denied/i, 'You do not have permission to perform this action.'],
     [/too large|payload|size limit/i, 'The submitted file or information is too large. Please reduce it and try again.'],
     [/timeout|timed out/i, 'The request took too long. Please try again.'],

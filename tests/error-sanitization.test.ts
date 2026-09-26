@@ -32,3 +32,8 @@ test('does not stringify object-shaped API errors', () => {
 test('uses a safe string nested in a structured API error', () => {
   assert.equal(userFacingError({ error: { message: 'This service is not available.' } }), 'This service is not currently available. Please choose another option.');
 });
+
+test('preserves safe product-specific unavailable messages', () => {
+  const message = 'EduReach account sign-in is not available until the live account service is configured.';
+  assert.equal(userFacingError(new Error(message)), message);
+});
