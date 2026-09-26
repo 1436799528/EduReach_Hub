@@ -154,3 +154,79 @@
   .admin-table-wrap,.admin-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .admin-table{min-width:640px}
 }
+
+/* --- Admin console upgrades (2026-09-26) -------------------------------- */
+
+.admin-shell :focus-visible { outline: 2px solid var(--admin-orange); outline-offset: 2px; }
+
+.admin-header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.admin-updated { color: var(--admin-muted); font: 600 11.5px var(--er-font-sans); }
+.admin-btn.secondary-dark { background: var(--admin-navy); box-shadow: 0 10px 22px rgba(15,23,42,.14); }
+.admin-btn:disabled { opacity: .6; cursor: default; transform: none; }
+.spin { animation: adminSpin 1s linear infinite; }
+@keyframes adminSpin { to { transform: rotate(360deg); } }
+
+.admin-kpi-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.admin-kpi-icon { width: 34px; height: 34px; flex: none; border-radius: 11px; display: grid; place-items: center; background: #fff4e6; color: var(--admin-orange); border: 1px solid #f1d6ac; font-style: normal; }
+.admin-kpi-icon.green { background: var(--admin-green-soft); color: #007147; border-color: #bdeed8; }
+.admin-kpi-icon.blue { background: #eef3ff; color: #42578b; border-color: #ccd7f6; }
+.admin-kpi-icon.purple { background: #f6efff; color: #6f43a1; border-color: #dfc9f6; }
+
+.admin-kpi-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.admin-quick-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
+.admin-quick-tile { display: flex; align-items: center; gap: 12px; padding: 15px 16px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 20px; box-shadow: 0 10px 28px rgba(15,23,42,.05); text-decoration: none; transition: .2s ease; }
+.admin-quick-tile:hover { transform: translateY(-1px); border-color: #cbd2d9; }
+.admin-quick-tile b { display: block; color: var(--admin-navy); font: 700 13px var(--er-font-sans); }
+.admin-quick-tile small { color: var(--admin-muted); font-size: 11.5px; line-height: 1.45; }
+
+.admin-two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; margin-bottom: 18px; }
+
+.admin-bar-row { margin: 12px 0; }
+.admin-bar-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font: 600 12px var(--er-font-sans); color: #41474d; }
+.admin-bar-top b { color: var(--admin-navy); }
+.admin-bar-track { height: 8px; border-radius: 999px; background: var(--admin-surface-2); border: 1px solid var(--admin-border); overflow: hidden; }
+.admin-bar-fill { height: 100%; border-radius: 999px; background: var(--admin-orange); }
+.admin-bar-fill.green { background: var(--admin-green); }
+.admin-bar-fill.blue { background: #42578b; }
+
+.admin-timeline { list-style: none; margin: 0; padding: 18px 20px 8px 22px; }
+.admin-timeline li { position: relative; margin: 0 0 4px 6px; padding: 0 0 16px 18px; border-left: 2px solid var(--admin-border); }
+.admin-timeline li:last-child { padding-bottom: 8px; }
+.admin-timeline li::before { content: ''; position: absolute; left: -6px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--admin-orange); box-shadow: 0 0 0 3px rgba(217,114,18,.15); }
+.admin-timeline .t-action { color: var(--admin-navy); font: 700 12.5px var(--er-font-sans); }
+.admin-timeline .t-meta { margin-top: 2px; color: var(--admin-muted); font-size: 11.5px; line-height: 1.5; }
+
+.admin-account-list { display: grid; gap: 4px; padding: 10px 20px 16px; }
+.admin-account-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--admin-surface-2); }
+.admin-account-item:last-child { border-bottom: 0; }
+.admin-account-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.admin-account-id b { color: var(--admin-navy); font: 700 12.5px var(--er-font-sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-account-id .admin-kpi-icon { width: 28px; height: 28px; border-radius: 9px; }
+.admin-account-side { display: flex; align-items: center; gap: 10px; flex: none; color: var(--admin-muted); font-size: 11.5px; }
+
+.admin-skel { position: relative; overflow: hidden; background: #edf0f3; }
+.admin-skel::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent); animation: adminShimmer 1.4s infinite; }
+@keyframes adminShimmer { to { transform: translateX(100%); } }
+.admin-skel-kpi { height: 112px; border: 1px solid var(--admin-border); border-radius: 24px; margin-bottom: 22px; }
+.admin-kpi-grid .admin-skel-kpi { margin-bottom: 0; }
+.admin-skel-row { height: 42px; margin: 10px 0; border-radius: 10px; }
+
+.admin-footnote { margin: 4px 0 0; color: var(--admin-muted); font-size: 12px; line-height: 1.6; }
+.admin-footnote a { color: var(--admin-orange); font-weight: 700; }
+
+.admin-health-pill.checking { background: #fff7df; color: #8a6700; border-color: #ecd896; }
+.admin-health-pill.checking i { background: #d4af37; box-shadow: 0 0 0 4px rgba(212,175,55,.15); }
+.admin-health-pill.down { background: #fff0ef; color: #a22b21; border-color: #f3c3be; }
+.admin-health-pill.down i { background: var(--admin-danger); box-shadow: 0 0 0 4px rgba(186,26,26,.12); }
+.admin-health-card b.health-bad { color: #ff9d91; }
+
+@media (max-width: 1050px) {
+  .admin-kpi-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-two-col { grid-template-columns: 1fr; }
+}
+@media (max-width: 780px) {
+  .admin-kpi-grid.three, .admin-quick-grid { grid-template-columns: 1fr; }
+  .admin-header-actions { width: 100%; justify-content: space-between; }
+}

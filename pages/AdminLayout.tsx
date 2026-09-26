@@ -12,11 +12,13 @@ import {
 import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
+import { useAdminHealth } from '../src/components/admin/AdminKit';
 
 type AdminSession = { id: string; email: string; fullName: string; role: 'admin' };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const health = useAdminHealth();
   const [checking, setChecking] = useState(true);
   const [session, setSession] = useState<AdminSession | null>(null);
   const [backend, setBackend] = useState('Checking…');
@@ -97,12 +99,23 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
       </div>
       <div className="admin-sidebar-footer">
-        <div className="admin-health-card"><div><span>Backend</span><b>{backend}</b></div><div><span>Session</span><b>Active</b></div></div>
+        <div className="admin-health-card">
+          <div><span>API</span><b className={health.state === 'down' ? 'health-bad' : undefined}>{health.state === 'ok' ? 'Online' : health.state === 'down' ? 'Offline' : 'Checking…'}</b></div>
+          <div><span>Auth source</span><b>{backend}</b></div>
+        </div>
         <div className="admin-user-email">{session.email}</div>
         <button type="button" className="admin-btn secondary" onClick={() => { window.sessionStorage.setItem('edureach-admin-student-view', '1'); navigate('/dashboard?view=student'); }}>View Student Site</button>
         <button type="button" className="admin-logout" onClick={logout}>Terminate Admin Session</button>
       </div>
     </aside>
-    <div className="admin-workspace"><header className="admin-topbar"><span>Production Node: <code>edureach-prod</code></span><span className="admin-health-pill"><i /> Admin Session</span></header><main className="admin-main">{children}</main></div>
+    <div className="admin-workspace">
+      <header className="admin-topbar">
+        <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · Admin Console</span>
+        <span className={`admin-health-pill ${health.state}`}>
+          <i /> {health.state === 'ok' ? `API Online${health.latencyMs !== null ? ` · ${health.latencyMs}ms` : ''}` : health.state === 'down' ? 'API Unreachable' : 'Checking API…'}
+        </span>
+      </header>
+      <main className="admin-main">{children}</main>
+    </div>
   </div>;
 }

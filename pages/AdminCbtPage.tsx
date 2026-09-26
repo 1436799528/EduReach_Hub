@@ -1,23 +1,11 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { supabase } from '../src/lib/supabase';
+import { adminApiFetch } from '../src/lib/api';
 import AdminLayout from './AdminLayout';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number; is_active: boolean; created_at: string };
 type Question = { id: string; exam_id: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string | null; marks: number; position: number };
 const emptyExam = { title: '', exam_body: 'JAMB', subject: 'Use of English', description: '', duration_minutes: '30', is_active: true };
 const emptyQuestion: { question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string; marks: string; position: string } = { question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', explanation: '', marks: '1', position: '1' };
-
-async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new Error('Administrative session has expired.');
-  const response = await fetch(path, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}`, ...(init.headers || {}) },
-  });
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.error || 'Administrative request failed.');
-  return body as T;
-}
 
 export default function AdminCbtPage() {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -33,13 +21,13 @@ export default function AdminCbtPage() {
   const [message, setMessage] = useState('');
 
   async function loadExams() {
-    const body = await adminFetch<{ items: Exam[] }>('/api/admin/cbt/exams');
+    const body = await adminApiFetch<{ items: Exam[] }>('/api/admin/cbt/exams');
     setExams(body.items || []);
     if (!selectedExam && body.items?.[0]) setSelectedExam(body.items[0].id);
   }
   async function loadQuestions(examId: string) {
     if (!examId) { setQuestions([]); return; }
-    const body = await adminFetch<{ items: Question[] }>(`/api/admin/cbt/exams/${encodeURIComponent(examId)}/questions`);
+    const body = await adminApiFetch<{ items: Question[] }>(`/api/admin/cbt/exams/${encodeURIComponent(examId)}/questions`);
     setQuestions(body.items || []);
   }
   useEffect(() => { void loadExams().catch((e) => setMessage(e.message)).finally(() => setLoading(false)); }, []);
@@ -48,7 +36,7 @@ export default function AdminCbtPage() {
   async function saveExam(event: FormEvent) {
     event.preventDefault(); setSaving(true); setMessage('');
     try {
-      const body = await adminFetch<{ item: Exam }>('/api/admin/cbt/exams', { method: 'POST', body: JSON.stringify({ ...examForm, duration_minutes: Number(examForm.duration_minutes) }) });
+      const body = await adminApiFetch<{ item: Exam }>('/api/admin/cbt/exams', { method: 'POST', body: JSON.stringify({ ...examForm, duration_minutes: Number(examForm.duration_minutes) }) });
       setExams((items) => [body.item, ...items]); setSelectedExam(body.item.id); setExamForm(emptyExam); setShowExamForm(false);
       setMessage('Exam created.');
     } catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to save exam.'); } finally { setSaving(false); }
@@ -65,8 +53,8 @@ export default function AdminCbtPage() {
     try {
       const payload = { ...questionForm, marks: Number(questionForm.marks), position: Number(questionForm.position) };
       const body = editingQuestion
-        ? await adminFetch<{ item: Question }>(`/api/admin/cbt/questions/${encodeURIComponent(editingQuestion)}`, { method: 'PATCH', body: JSON.stringify(payload) })
-        : await adminFetch<{ item: Question }>(`/api/admin/cbt/exams/${encodeURIComponent(selectedExam)}/questions`, { method: 'POST', body: JSON.stringify(payload) });
+        ? await adminApiFetch<{ item: Question }>(`/api/admin/cbt/questions/${encodeURIComponent(editingQuestion)}`, { method: 'PATCH', body: JSON.stringify(payload) })
+        : await adminApiFetch<{ item: Question }>(`/api/admin/cbt/exams/${encodeURIComponent(selectedExam)}/questions`, { method: 'POST', body: JSON.stringify(payload) });
       setQuestions((items) => editingQuestion ? items.map((q) => q.id === editingQuestion ? body.item : q) : [...items, body.item].sort((a,b) => a.position-b.position));
       setShowQuestionForm(false); setEditingQuestion(null); setQuestionForm(emptyQuestion); setMessage('Question saved.');
     } catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to save question.'); } finally { setSaving(false); }
@@ -74,7 +62,7 @@ export default function AdminCbtPage() {
 
   async function archiveQuestion(id: string) {
     if (!window.confirm('Remove this question from the exam?')) return;
-    try { await adminFetch(`/api/admin/cbt/questions/${encodeURIComponent(id)}`, { method: 'DELETE' }); setQuestions((items) => items.filter((q) => q.id !== id)); }
+    try { await adminApiFetch(`/api/admin/cbt/questions/${encodeURIComponent(id)}`, { method: 'DELETE' }); setQuestions((items) => items.filter((q) => q.id !== id)); }
     catch (e) { setMessage(e instanceof Error ? e.message : 'Unable to remove question.'); }
   }
 

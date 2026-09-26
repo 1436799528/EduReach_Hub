@@ -675,6 +675,16 @@ export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
   return body;
 }
 
+// Generic authenticated admin fetch for endpoints without a dedicated wrapper.
+export async function adminApiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  return await jsonFetch<T>(path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...headers, ...(init.headers || {}) },
+  });
+}
+
 export async function bootstrapAdmin(): Promise<void> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Sign in with the configured administrator account first.');
