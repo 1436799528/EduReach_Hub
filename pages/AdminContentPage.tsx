@@ -8,7 +8,7 @@ import {
   updateAdminCalendarItem,
   type AdminCalendarItem,
 } from '../src/lib/api';
-import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 
 // Events & key dates: manages the exact rows the /events page (and home
 // noticeboard feed) read through /api/upcoming — edureach_deadlines and
@@ -181,7 +181,7 @@ export default function AdminContentPage() {
             <table className="admin-table">
               <thead><tr><th>Title</th><th>{type === 'exam' ? 'Starts' : 'Due'}</th><th>Priority</th><th>Visibility</th><th>Created</th><th className="right">Actions</th></tr></thead>
               <tbody>
-                {loading && <tr><td colSpan={6} className="empty-state">Loading…</td></tr>}
+                {loading && <TableSkeleton rows={6} columns={6} />}
                 {!loading && sorted.map((item) => (
                   <tr key={item.id}>
                     <td><b>{item.title}</b><div className="muted">{item.description || '—'}</div></td>

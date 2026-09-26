@@ -281,3 +281,32 @@ export function SectionLabel({ live }: { live?: boolean }) {
     </span>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Table loading skeleton — same shimmer system as the public site so admin
+// tables hold their shape while loading instead of showing "Loading…" text.
+// ---------------------------------------------------------------------------
+
+export function TableSkeleton({ rows = 5, columns = 5 }: { rows?: number; columns?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }, (_, rowIndex) => (
+        <tr key={rowIndex} aria-hidden="true">
+          {Array.from({ length: columns }, (_, colIndex) => (
+            <td key={colIndex} className="admin-skel-cell">
+              <div
+                className="admin-skel admin-skel-line"
+                style={{ width: colIndex === 0 ? '55%' : colIndex === columns - 1 ? '70%' : '38%' }}
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+      <tr>
+        <td colSpan={columns} style={{ border: 0 }}>
+          <span className="er-visually-hidden">Loading…</span>
+        </td>
+      </tr>
+    </>
+  );
+}

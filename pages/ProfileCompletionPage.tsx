@@ -245,6 +245,19 @@ export default function ProfileCompletionPage() {
     reader.readAsDataURL(file);
   }
 
+  // Mirror of the save validation: the Save button glows bright orange only
+  // when every required profile detail is filled in.
+  const profileComplete = [
+    school.includes('Other') ? customSchool.trim() : school,
+    courseProgramme || customCourseProgramme.trim(),
+    department || customDepartment.trim(),
+    faculty,
+    level,
+    session,
+    admissionYear,
+    expectedGradYear,
+  ].every((value) => String(value || '').trim().length > 0);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -1027,7 +1040,7 @@ export default function ProfileCompletionPage() {
                 type="submit"
                 disabled={saving || savedSuccess}
                 style={{
-                  background: '#C85841',
+                  background: profileComplete ? '#F97316' : '#c02220',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',
@@ -1035,10 +1048,11 @@ export default function ProfileCompletionPage() {
                   fontSize: '13.5px',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  transition: 'background .2s ease, box-shadow .2s ease',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 2px 8px rgba(200, 88, 65, 0.25)',
+                  boxShadow: profileComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
                 }}
               >
                 {saving ? 'Saving Profile…' : 'Save & Open Dashboard'} <ChevronRight size={16} />

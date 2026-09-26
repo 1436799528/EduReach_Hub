@@ -8,7 +8,7 @@ import {
   updateAdminInstitution,
   type AdminInstitution,
 } from '../src/lib/api';
-import { AdminEmptyState } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, TableSkeleton } from '../src/components/admin/AdminKit';
 
 // Schools manager: direct CRUD over the `institutions` rows the public
 // School Finder (/schools) reads. Same columns, one source of truth.
@@ -142,7 +142,7 @@ export default function AdminSchoolsPage() {
             <table className="admin-table">
               <thead><tr><th>Institution</th><th>State</th><th>Type</th><th>Website</th><th className="right">Actions</th></tr></thead>
               <tbody>
-                {loading && <tr><td colSpan={5} className="empty-state">Loading institutions…</td></tr>}
+                {loading && <TableSkeleton rows={6} columns={5} />}
                 {!loading && institutions.map((institution) => (
                   <tr key={institution.id}>
                     <td><b>{institution.school_name}</b><div className="muted">{institution.acronym || '—'}</div></td>

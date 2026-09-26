@@ -10,7 +10,7 @@ import {
   type AdminNewsArticle,
 } from '../src/lib/api';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
-import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 
 const CATEGORIES = ['general', 'jamb', 'waec', 'neco', 'nelfund', 'admissions', 'scholarships', 'campus'];
@@ -256,7 +256,7 @@ export default function AdminNewsPage() {
             <table className="admin-table">
               <thead><tr><th>Title</th><th>Category</th><th>State</th><th>Updated</th><th className="right">Actions</th></tr></thead>
               <tbody>
-                {loading && <tr><td colSpan={5} className="empty-state">Loading articles…</td></tr>}
+                {loading && <TableSkeleton rows={6} columns={5} />}
                 {!loading && visible.map((article) => (
                   <tr key={article.id}>
                     <td>

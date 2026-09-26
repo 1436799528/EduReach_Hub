@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import { adminApiFetch, fetchAdminUsers, setUserSuspended, type AdminUser } from '../src/lib/api';
-import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 
 function profileCompletion(p: AdminUser): number {
   const fields = [p.full_name, p.school, p.faculty, p.department, p.level, p.matric_number];
@@ -95,13 +95,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading && (
-                  <tr>
-                    <td colSpan={7} className="empty-state">
-                      Loading student accounts…
-                    </td>
-                  </tr>
-                )}
+                {loading && <TableSkeleton rows={6} columns={7} />}
 
                 {!loading &&
                   profiles.map((p) => (

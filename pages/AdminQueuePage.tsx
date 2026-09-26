@@ -5,7 +5,7 @@ import {
   updateAdminServiceRequest,
   type AdminServiceRequest,
 } from '../src/lib/api';
-import { RequestActions, StatusBadge, TimeAgo, requestStudentName } from '../src/components/admin/AdminKit';
+import { RequestActions, StatusBadge, TimeAgo, requestStudentName, TableSkeleton } from '../src/components/admin/AdminKit';
 
 const FILTERS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'All statuses' },
@@ -89,7 +89,7 @@ export default function AdminQueuePage() {
             <table className="admin-table">
               <thead><tr><th>Student</th><th>Service</th><th>Reference</th><th>Details</th><th>Status</th><th>Age</th><th>Action</th></tr></thead>
               <tbody>
-                {loading && <tr><td colSpan={7} className="empty-state">Loading the service queue…</td></tr>}
+                {loading && <TableSkeleton rows={6} columns={7} />}
                 {!loading && rows.map((row) => (
                   <tr key={row.id}>
                     <td className="accent">{requestStudentName(row)}</td>
