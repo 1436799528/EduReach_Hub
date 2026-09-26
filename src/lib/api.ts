@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
-import { hubServices, newsItems as fallbackNews } from '../data/hubContent';
+import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 
 export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
@@ -18,6 +18,9 @@ export type ServiceItem = {
   description: string;
   application_url: string | null;
   active: boolean;
+  route?: string | null;
+  category?: string | null;
+  sort_order?: number | null;
 };
 export type NewsItem = {
   id: string;
@@ -90,84 +93,6 @@ const fallbackCbtExams = [
   },
 ];
 
-// Real photography for the built-in news feed (Supabase rows carry their own image_url)
-const fallbackNewsPhotos: Record<string, string> = {
-  'jamb-caps-status-guide': '/news/photos/jamb-cbt.jpg',
-  'nelfund-student-loan-checklist': '/news/photos/nelfund.webp',
-  'waec-neco-result-checking': '/news/photos/waec-result.png',
-  'campus-gist-week': '/news/photos/campus.jpg',
-  'student-opportunities': '/news/photos/graduates.jpg',
-};
-
-const fallbackNewsAuthors: Record<string, string> = {
-  'jamb-caps-status-guide': 'EduReach Exams Desk',
-  'nelfund-student-loan-checklist': 'EduReach Student Funding Desk',
-  'waec-neco-result-checking': 'EduReach Exams Desk',
-  'campus-gist-week': 'EduReach Campus Desk',
-  'student-opportunities': 'EduReach Opportunities Desk',
-};
-
-/** Built-in stories are guides, not live announcements. Keep the full explainer available offline. */
-const fallbackNewsBodies: Record<string, string> = {
-  'jamb-caps-status-guide': `JAMB CAPS is the admission-status area where a candidate can review an admission offer and follow the next instruction shown on the official JAMB portal. The exact options available to a candidate depend on the current admission cycle and the candidate's record, so this guide is for orientation rather than a substitute for the official portal.
-
-Start with the basics: confirm that you are on the official JAMB website, sign in with the details attached to your registration, and check that the name, registration number and examination year shown on the profile are yours. Do not hand over your password or profile code to a third party who promises to change an admission outcome.
-
-When an offer appears, read the institution and course carefully before taking an action. A candidate should understand the difference between checking an offer, accepting it and declining it. If the page is not loading or the details look inconsistent, save a screenshot and contact JAMB or the institution through an official support channel before making an irreversible choice.
-
-After checking CAPS, keep the evidence you may need later: the status page, admission letter instructions, school screening notice and any payment receipt issued through the official portal. EduReach can help you organise questions for a service request, but it cannot create an admission offer or replace the institution's published instructions.
-
-Before the next deadline, compare the course requirements with your O-Level subjects, confirm the institution's current registration window and use only the official links supplied by JAMB or the school. Requirements and menus can change between admission cycles, so verify them again before submitting anything.`,
-  'nelfund-student-loan-checklist': `A NELFUND application is a funding request, not an automatic award. Before starting, organise the information that the official NELFUND portal asks for and make sure your institution and programme details match the records held by your school.
-
-Prepare access to an active email address and phone number, your student or matriculation information, admission or institutional details, and any identity or banking information requested on the live application. Do not upload a document simply because an unofficial message asks for it; first read the current requirement on the official portal.
-
-Complete the form slowly and review every field before submitting. Names, registration numbers, institution, department and session should be consistent with your school record. If a required field is unavailable or your institution is not listed, stop and confirm the correct process with NELFUND or your institution rather than selecting a random entry.
-
-After submission, keep the reference or confirmation message and monitor the status from the same official account. A request may require institutional verification or additional information, and an approval should not be assumed until the official system shows it.
-
-EduReach can help you prepare a checklist and organise a guided request. We do not approve loans, ask for a password or guarantee funding. Check the current NELFUND notice for eligibility, deadlines, repayment information and the active application URL before you proceed.`,
-  'waec-neco-result-checking': `Result checking should begin on the official WAEC or NECO channel for the examination year. A result checker token, PIN or candidate detail is private information, so avoid sending it in public groups or to an unverified agent.
-
-Before entering any details, confirm the examination body, candidate number, examination year and the exact result-checking instructions. Keep your token or PIN safe and make sure the name and candidate number you enter match the registration record. Repeated failed attempts can create avoidable support problems.
-
-If the result page reports that a result is unavailable, withheld or requires a different checker route, do not conclude that the result has been cancelled. Save the exact message, check the official help guidance and contact the examination body or your school using a verified channel.
-
-Download or print the result statement only from the official flow when it becomes available, and keep a private copy for admission or scholarship applications. Do not pay a social-media contact who promises to alter a grade or release a result outside the examination body's process.
-
-This is a safety and preparation guide. Result availability, fees and checker requirements change, so confirm the active WAEC or NECO notice before using a token or submitting a request.`,
-  'campus-gist-week': `A useful campus update is one a student can trace to an official notice, a named institution or a clearly identified event organiser. This weekly guide helps you sort the updates competing for your attention without treating an unverified rumour as a confirmed announcement.
-
-Begin with the deadlines that affect you directly: registration, course forms, screening, examinations, accommodation and bursary applications. Check the school website, student portal, faculty noticeboard or verified communication channel for the original notice and record the closing date in a place you will revisit.
-
-For a campus event or opportunity, confirm the organiser, venue, eligibility, cost and contact details before sharing it. Be especially careful with messages that demand a transfer to a personal account, request a password or promise admission in exchange for an urgent payment.
-
-When an update cannot be confirmed, EduReach will keep it labelled as unverified or leave it out rather than present it as fact. Students can send the original notice for review, but should still rely on their institution's official channel for a final decision.`,
-  'student-opportunities': `A ready application folder can save time when a verified scholarship, internship or campus opportunity opens. Keep a clean copy of your current CV, a short personal statement, academic results, identification documents and a record of your institution and programme, while sharing only what the application genuinely requires.
-
-Use clear filenames and check that your phone number, email address, course, level and session are current. If a referee or institutional letter is needed, request it early and confirm the required format. Do not reuse a document with an old registration number or deadline without checking it.
-
-Before applying, verify the organisation, eligibility, closing date, official application URL and any stated cost. A genuine listing should explain what is being offered and how applications are assessed. Treat requests for passwords, unexplained fees or guaranteed selection as warning signs.
-
-EduReach lists opportunities only when the available details can be checked. If a category has no verified listing, that means there is no confirmed item in the current catalogue—not that every opportunity has been searched or that a student is ineligible. Recheck the page and the organiser's official channel before a deadline.`,
-};
-
-const fallbackNewsItems: NewsItem[] = fallbackNews.map((n, index) => ({
-  id: `news-${n.slug}-${index + 1}`,
-  slug: n.slug,
-  title: n.title,
-  summary: n.excerpt,
-  body: fallbackNewsBodies[n.slug] || `${n.excerpt}\n\nCheck the current official notice for requirements, deadlines and the correct application route. EduReach does not replace the examination body, institution or organiser's published instructions.`,
-  category: n.tag.toLowerCase().replace(/[\s/]+/g, '_'),
-  priority: 'normal',
-  source_url: null,
-  image_url: fallbackNewsPhotos[n.slug] ?? null,
-  published_at: new Date(Date.now() - index * 86400000 * 2).toISOString(),
-  author: fallbackNewsAuthors[n.slug] || 'EduReach Editorial Desk',
-  last_verified_at: n.verified ? new Date().toISOString() : null,
-  verification_status: n.verified ? 'verified' : 'pending',
-}));
-
 const practiceQuestions = [
   { id: 1, text: 'Choose the word nearest in meaning to "rapid".', options: ['Slow', 'Fast', 'Late', 'Weak'] },
   { id: 2, text: 'What is 15% of 200?', options: ['20', '25', '30', '35'] },
@@ -224,17 +149,21 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
   return body as T;
 }
 
+
+// The full active service catalogue — form services, in-app routes and
+// external links, in admin-controlled order. Without a configured backend the
+// code-defined four form services are shown so local QA stays honest.
 export async function fetchServices(): Promise<ServiceItem[]> {
   if (!isSupabaseConfigured) return fallbackServicesCatalog;
 
   const { data, error } = await supabase
     .from('service_catalog')
-    .select('id,service_key,title,description,application_url,active')
+    .select('id,service_key,title,description,application_url,route,category,sort_order,active')
     .eq('active', true)
-    .order('title');
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('title', { ascending: true });
   if (error) throw error;
-  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
-  return ((data || []) as ServiceItem[]).filter((service) => supportedSlugs.has(service.service_key));
+  return (data || []) as ServiceItem[];
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {
@@ -603,7 +532,10 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
-  if (!isSupabaseConfigured) return fallbackNewsItems;
+  // No hardcoded news dataset: without a configured account service the page
+  // shows its honest empty state; with one configured, Supabase is the only
+  // source of what students read.
+  if (!isSupabaseConfigured) return [];
 
   const { data, error } = await supabase
     .from('news_articles')
@@ -631,9 +563,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
 
 export async function fetchNewsItem(slug: string): Promise<NewsItem> {
   if (!isSupabaseConfigured) {
-    const match = fallbackNewsItems.find((n) => n.slug === slug);
-    if (match) return match;
-    throw new Error('This news article could not be found.');
+    throw new Error('News is not configured in this environment.');
   }
 
   const { data, error } = await supabase
@@ -679,7 +609,58 @@ export type AdminAnalytics = {
   recentUsers: Array<Record<string, any>>;
 };
 
-export type AdminService = { id: string; service_key: string; title: string; description: string | null; application_url: string | null; active: boolean };
+export type AdminService = {
+  id: string; service_key: string; title: string; description: string | null;
+  application_url: string | null; route: string | null; category: string | null;
+  sort_order: number | null; active: boolean; is_form_service?: boolean;
+};
+
+export async function fetchAdminServices(): Promise<AdminService[]> {
+  const body = await adminApiFetch<{ items: AdminService[] }>('/api/admin/services');
+  return body.items || [];
+}
+
+export async function createAdminService(values: Record<string, unknown>): Promise<AdminService> {
+  const body = await adminApiFetch<{ item: AdminService }>('/api/admin/services', { method: 'POST', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function deleteAdminService(serviceId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/services/${encodeURIComponent(serviceId)}`, { method: 'DELETE' });
+}
+
+// ---- Opportunities (scholarships / grants / jobs) ---------------------------
+
+export type Opportunity = {
+  id: string; title: string; organisation: string | null; category: string;
+  description: string | null; link_url: string | null; deadline: string | null;
+  locations: string | null; is_active?: boolean; created_at?: string; updated_at?: string;
+};
+
+export async function fetchOpportunities(): Promise<Opportunity[]> {
+  if (!isSupabaseConfigured) return [];
+  const body = await jsonFetch<{ items: Opportunity[] }>('/api/opportunities');
+  return body.items || [];
+}
+
+export async function fetchAdminOpportunities(): Promise<Opportunity[]> {
+  const body = await adminApiFetch<{ items: Opportunity[] }>('/api/admin/opportunities');
+  return body.items || [];
+}
+
+export async function createAdminOpportunity(values: Record<string, unknown>): Promise<Opportunity> {
+  const body = await adminApiFetch<{ item: Opportunity }>('/api/admin/opportunities', { method: 'POST', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function updateAdminOpportunity(id: string, values: Record<string, unknown>): Promise<Opportunity> {
+  const body = await adminApiFetch<{ item: Opportunity }>(`/api/admin/opportunities/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(values) });
+  return body.item;
+}
+
+export async function deleteAdminOpportunity(id: string): Promise<void> {
+  await adminApiFetch(`/api/admin/opportunities/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
 
 export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
   const headers = await authHeaders();

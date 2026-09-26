@@ -9,6 +9,7 @@ import {
   type AdminCalendarItem,
 } from '../src/lib/api';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
+import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 
 // Events & key dates: manages the exact rows the /events page (and home
 // noticeboard feed) read through /api/upcoming — edureach_deadlines and
@@ -164,9 +165,15 @@ export default function AdminContentPage() {
                     </select>
                   </label>
                 </div>
-                <label className="admin-field"><span>Description</span>
-                  <textarea className="admin-textarea" style={{ minHeight: 70 }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Short supporting detail shown on the events page" />
-                </label>
+                <div className="admin-field"><span>Description</span>
+                  <AdminRichTextEditor
+                    key={form.id || `new-${type}-${form.when}`}
+                    initialValue={form.description}
+                    placeholder="Supporting detail shown on the events page — rich formatting supported."
+                    onChange={(html) => setForm((current) => current ? { ...current, description: html } : current)}
+                    minHeight={170}
+                  />
+                </div>
               </div>
               <div className="admin-news-editor-actions">
                 <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save item'}</button>

@@ -5,6 +5,7 @@ import {
   Briefcase,
   CalendarDays,
   Globe,
+  GraduationCap,
   Laptop,
   LayoutDashboard,
   ListChecks,
@@ -111,6 +112,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="admin-nav-group">Content</div>
           <NavLink href="/admin/news" icon={<Newspaper size={15} />}>Newsroom CMS</NavLink>
           <NavLink href="/admin/content" icon={<CalendarDays size={15} />}>Events &amp; Key Dates</NavLink>
+          <NavLink href="/admin/opportunities" icon={<GraduationCap size={15} />}>Scholarships &amp; Opportunities</NavLink>
           <div className="admin-nav-group">Services</div>
           <NavLink href="/admin/services" icon={<Briefcase size={15} />}>Service Catalogue</NavLink>
           <NavLink href="/admin/queue" icon={<ListChecks size={15} />}>Service Queue</NavLink>

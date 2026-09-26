@@ -36,6 +36,7 @@ const AdminCbtPage = lazy(() => import('../../pages/AdminCbtPage'));
 const AdminUsersPage = lazy(() => import('../../pages/AdminUsersPage'));
 const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 const AdminContentPage = lazy(() => import('../../pages/AdminContentPage'));
+const AdminOpportunitiesPage = lazy(() => import('../../pages/AdminOpportunitiesPage'));
 const AdminSchoolsPage = lazy(() => import('../../pages/AdminSchoolsPage'));
 const AdminServicesPage = lazy(() => import('../../pages/AdminServicesPage'));
 
@@ -116,6 +117,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/news') return <AdminNewsPage />;
   if (path === '/admin/users') return <AdminUsersPage />;
   if (path === '/admin/content') return <AdminContentPage />;
+  if (path === '/admin/opportunities') return <AdminOpportunitiesPage />;
   if (path === '/admin/schools') return <AdminSchoolsPage />;
   if (path === '/admin/services') return <AdminServicesPage />;
 

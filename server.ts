@@ -489,8 +489,17 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     if (req.body?.published !== undefined) {
       const published = req.body.published === true;
       patch.published = published;
-      if (published && !existing.published_at) patch.published_at = new Date().toISOString();
+      if (published && !existing.published_at && req.body?.published_at === undefined) patch.published_at = new Date().toISOString();
       if (!published) patch.published_at = null;
+    }
+    if (req.body?.published_at !== undefined) {
+      if (req.body.published_at) {
+        const parsedAt = new Date(String(req.body.published_at));
+        if (!Number.isFinite(parsedAt.getTime())) return res.status(400).json({ error: 'The publication date is invalid.' });
+        patch.published_at = parsedAt.toISOString();
+      } else {
+        patch.published_at = null;
+      }
     }
     const { data, error } = await supabase.from('news_articles').update(patch).eq('id', existing.id).select(newsRowSelect).single();
     if (error) throw error;
@@ -740,15 +749,219 @@ app.patch('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
     }
     if (req.body?.description !== undefined) update.description = String(req.body.description).trim().slice(0, 600) || null;
     if (req.body?.application_url !== undefined) update.application_url = safeContentUrl(req.body.application_url);
+    if (req.body?.route !== undefined) {
+      const route = validateServiceRoute(req.body.route);
+      if (route === 'invalid') return res.status(400).json({ error: 'The route must be a site-relative path like /schools.' });
+      update.route = route;
+    }
+    if (req.body?.category !== undefined) update.category = String(req.body.category).trim().slice(0, 60) || null;
+    if (req.body?.sort_order !== undefined) {
+      const sort = Number(req.body.sort_order);
+      if (!Number.isFinite(sort)) return res.status(400).json({ error: 'Sort order must be a number.' });
+      update.sort_order = Math.round(sort);
+    }
     if (req.body?.active !== undefined) update.active = Boolean(req.body.active);
     if (!Object.keys(update).length) return res.status(400).json({ error: 'Nothing to update.' });
-    const { data, error } = await supabase.from('service_catalog').update(update).eq('id', service.id).select('id,service_key,title,description,application_url,active').single();
+    const { data, error } = await supabase.from('service_catalog').update(update).eq('id', service.id).select(serviceCatalogSelect).single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'service_catalog', p_entity_id: service.id, p_metadata: { key: service.service_key, active: data.active } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin service update error:', error);
     res.status(500).json({ error: 'Unable to update the service.' });
+  }
+});
+
+const FORM_SERVICE_KEYS: ReadonlySet<string> = new Set(LIVE_SERVICE_KEYS);
+
+function validateServiceRoute(value: unknown): string | null | 'invalid' {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes(' ')) return 'invalid';
+  return raw.slice(0, 200);
+}
+
+app.get('/api/admin/services', requireAdmin, async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('service_catalog')
+      .select(serviceCatalogSelect)
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('title', { ascending: true })
+      .limit(300);
+    if (error) throw error;
+    res.json({ items: (data || []).map((row) => ({ ...row, is_form_service: FORM_SERVICE_KEYS.has(row.service_key) })) });
+  } catch (error) {
+    console.error('Admin services list error:', error);
+    res.status(503).json({ error: 'Unable to load the service catalogue.' });
+  }
+});
+
+app.post('/api/admin/services', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const title = String(req.body?.title || '').trim().slice(0, 120);
+    if (!title) return res.status(400).json({ error: 'A service title is required.' });
+    const serviceKey = slugifyTitle(String(req.body?.service_key || title)).slice(0, 60);
+    if (FORM_SERVICE_KEYS.has(serviceKey)) return res.status(400).json({ error: 'This key belongs to a built-in application form service.' });
+    const route = validateServiceRoute(req.body?.route);
+    if (route === 'invalid') return res.status(400).json({ error: 'The route must be a site-relative path like /schools.' });
+    const applicationUrl = safeContentUrl(req.body?.application_url);
+    if (req.body?.application_url && !applicationUrl) return res.status(400).json({ error: 'External links must use HTTPS.' });
+    const supabase = getServerSupabase();
+    const { data: existing } = await supabase.from('service_catalog').select('id').eq('service_key', serviceKey).maybeSingle();
+    if (existing) return res.status(409).json({ error: 'A service with this key already exists.' });
+    const { data, error } = await supabase.from('service_catalog').insert({
+      service_key: serviceKey,
+      title,
+      description: String(req.body?.description || '').trim().slice(0, 600) || null,
+      application_url: applicationUrl,
+      route,
+      category: String(req.body?.category || '').trim().slice(0, 60) || 'Services',
+      sort_order: Number.isFinite(Number(req.body?.sort_order)) ? Number(req.body.sort_order) : 100,
+      active: req.body?.active !== false,
+      amount_kobo: 0,
+    }).select(serviceCatalogSelect).single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'service_catalog', p_entity_id: data.id, p_metadata: { key: data.service_key } });
+    res.status(201).json({ item: { ...data, is_form_service: false } });
+  } catch (error) {
+    console.error('Admin service create error:', error);
+    res.status(500).json({ error: 'Unable to create the service.' });
+  }
+});
+
+app.delete('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title').eq('id', req.params.serviceId).single();
+    if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
+    if (FORM_SERVICE_KEYS.has(service.service_key)) {
+      return res.status(400).json({ error: 'Built-in application form services cannot be deleted — deactivate them instead.' });
+    }
+    const { error } = await supabase.from('service_catalog').delete().eq('id', service.id);
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'service_catalog', p_entity_id: service.id, p_metadata: { key: service.service_key } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin service delete error:', error);
+    res.status(500).json({ error: 'Unable to delete the service.' });
+  }
+});
+
+// --- Opportunities (scholarships / grants / jobs) ---------------------------
+
+const OPPORTUNITY_CATEGORIES = ['scholarship', 'grant', 'job', 'fellowship', 'competition'];
+
+function validateOpportunityPayload(body: any): { error?: string; values?: Record<string, unknown> } {
+  const title = String(body?.title || '').trim().slice(0, 200);
+  if (!title) return { error: 'A title is required.' };
+  const category = String(body?.category || 'scholarship');
+  if (!OPPORTUNITY_CATEGORIES.includes(category)) return { error: 'Invalid opportunity category.' };
+  let linkUrl: string | null = null;
+  if (body?.link_url) {
+    linkUrl = safeContentUrl(body.link_url);
+    if (!linkUrl) return { error: 'The link must use HTTPS.' };
+  }
+  let deadline: string | null = null;
+  if (body?.deadline) {
+    const parsed = new Date(String(body.deadline));
+    if (!Number.isFinite(parsed.getTime())) return { error: 'The deadline date is invalid.' };
+    deadline = parsed.toISOString().slice(0, 10);
+  }
+  return {
+    values: {
+      title,
+      organisation: String(body?.organisation || '').trim().slice(0, 160) || null,
+      category,
+      description: String(body?.description || '').trim() || null,
+      link_url: linkUrl,
+      deadline,
+      locations: String(body?.locations || '').trim().slice(0, 160) || null,
+      is_active: body?.is_active === undefined ? true : Boolean(body.is_active),
+    },
+  };
+}
+
+app.get('/api/opportunities', async (_req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('opportunities')
+      .select('id,title,organisation,category,description,link_url,deadline,locations')
+      .eq('is_active', true)
+      .order('deadline', { ascending: true, nullsFirst: false })
+      .limit(100);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Opportunities API error:', error);
+    res.status(503).json({ error: 'Opportunities are temporarily unavailable.' });
+  }
+});
+
+app.get('/api/admin/opportunities', requireAdmin, async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('opportunities')
+      .select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(300);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin opportunities list error:', error);
+    res.status(503).json({ error: 'Unable to load opportunities.' });
+  }
+});
+
+app.post('/api/admin/opportunities', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const check = validateOpportunityPayload(req.body);
+    if (check.error || !check.values) return res.status(400).json({ error: check.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('opportunities').insert(check.values).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin opportunity create error:', error);
+    res.status(500).json({ error: 'Unable to create the opportunity.' });
+  }
+});
+
+app.patch('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const check = validateOpportunityPayload(req.body);
+    if (check.error || !check.values) return res.status(400).json({ error: check.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('opportunities').update({ ...check.values, updated_at: new Date().toISOString() }).eq('id', req.params.opportunityId).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
+    if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin opportunity update error:', error);
+    res.status(500).json({ error: 'Unable to update the opportunity.' });
+  }
+});
+
+app.delete('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('opportunities').delete().eq('id', req.params.opportunityId).select('id,title').single();
+    if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin opportunity delete error:', error);
+    res.status(500).json({ error: 'Unable to delete the opportunity.' });
   }
 });
 
@@ -818,16 +1031,20 @@ app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
   res.json({ authenticated: true });
 });
 
+const serviceCatalogSelect = 'id,service_key,title,description,application_url,route,category,sort_order,active';
+
 app.get('/api/services', async (_req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
+    // The full active catalogue: form services, in-app routes and external
+    // links, in admin-controlled order. Cards route themselves by key/url.
     const { data, error } = await supabase
       .from('service_catalog')
-      .select('id,service_key,title,description,application_url,active')
-      .in('service_key', [...LIVE_SERVICE_KEYS])
+      .select(serviceCatalogSelect)
       .eq('active', true)
-      .order('title');
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('title', { ascending: true });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
