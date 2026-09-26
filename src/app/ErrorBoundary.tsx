@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { userFacingError } from '../lib/api';
 
 type Props = {
   children: ReactNode;
@@ -15,7 +16,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): State {
     return {
       hasError: true,
-      message: error.message || 'Something went wrong while loading this page.',
+      message: userFacingError(error, 'This page could not be loaded. Please refresh the page or return to the homepage.'),
     };
   }
 
