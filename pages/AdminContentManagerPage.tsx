@@ -173,7 +173,8 @@ export default function AdminContentManagerPage() {
 
   function exportRows() {
     if (!resource) return;
-    const fields = resource.fields.map(f => f.name);
+    const fields = resource.fields.filter(f => !f.readonly).map(f => f.name);
+    if (resource.fields.some(f => f.name === 'id')) fields.push('id');
     const lines = [fields.map(csvEscape).join(',')];
     for (const row of rows) {
       lines.push(fields.map(field => csvEscape(row[field])).join(','));
