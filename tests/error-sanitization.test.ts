@@ -1,16 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import { userFacingError } from '../src/lib/api';
 
-describe('user-facing error sanitization', () => {
-  it('hides database details', () => {
-    expect(userFacingError(new Error('column "attempt_id" is ambiguous'))).toBe('We could not complete that request. Please try again.');
-  });
 
-  it('turns network failures into a simple user action', () => {
-    expect(userFacingError(new Error('Failed to fetch dynamically imported module'))).toBe('Please check your internet connection and try again.');
-  });
+test('hides database details', () => {
+  assert.equal(
+    userFacingError(new Error('column "attempt_id" is ambiguous')),
+    'We could not complete that request. Please try again.',
+  );
+});
 
-  it('keeps safe validation messages', () => {
-    expect(userFacingError(new Error('Article title is required.'))).toBe('Article title is required.');
-  });
+test('turns network failures into a simple user action', () => {
+  assert.equal(
+    userFacingError(new Error('Failed to fetch dynamically imported module')),
+    'Please check your internet connection and try again.',
+  );
+});
+
+test('keeps safe validation messages', () => {
+  assert.equal(userFacingError(new Error('Article title is required.')), 'Article title is required.');
 });
