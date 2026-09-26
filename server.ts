@@ -872,9 +872,8 @@ app.patch('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
     const supabase = getServerSupabase();
     const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title,description,application_url,active').eq('id', req.params.serviceId).single();
     if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
-    if (!LIVE_SERVICE_KEYS.includes(service.service_key as (typeof LIVE_SERVICE_KEYS)[number])) {
-      return res.status(400).json({ error: 'Only the four supported live services can be managed.' });
-    }
+    // The catalogue is content-managed. All rows may be edited; the built-in
+    // workflow rows only protect their code-owned destination fields.
     const update: Record<string, unknown> = {};
     if (req.body?.title !== undefined) {
       const title = String(req.body.title).trim().slice(0, 120);
