@@ -128,7 +128,10 @@ export default function AdminDashboardPage() {
             <div className="admin-quick-grid">
               <a className="admin-quick-tile" href="/admin/queue"><i className="admin-kpi-icon orange"><ListChecks size={16} /></i><div><b>Process Queue</b><small>Review, complete or reject requests</small></div></a>
               <a className="admin-quick-tile" href="/admin/cbt"><i className="admin-kpi-icon purple"><Laptop size={16} /></i><div><b>CBT Question Bank</b><small>Add exams and timed questions</small></div></a>
-              <a className="admin-quick-tile" href="/admin/news"><i className="admin-kpi-icon orange"><Newspaper size={16} /></i><div><b>Newsroom CMS</b><small>Publish notices to students</small></div></a>
+              <a className="admin-quick-tile" href="/admin/news"><i className="admin-kpi-icon orange"><Newspaper size={16} /></i><div><b>Newsroom CMS</b><small>Create, edit, publish or remove news</small></div></a>
+              <a className="admin-quick-tile" href="/admin/opportunities"><i className="admin-kpi-icon green"><BadgeCheck size={16} /></i><div><b>Opportunities</b><small>Manage scholarships, grants and jobs</small></div></a>
+              <a className="admin-quick-tile" href="/admin/services"><i className="admin-kpi-icon orange"><ListChecks size={16} /></i><div><b>Service Catalogue</b><small>Edit, show, hide or add student services</small></div></a>
+              <a className="admin-quick-tile" href="/admin/content"><i className="admin-kpi-icon blue"><Newspaper size={16} /></i><div><b>Events &amp; Dates</b><small>Manage deadlines and exam dates</small></div></a>
               <a className="admin-quick-tile" href="/admin/users"><i className="admin-kpi-icon blue"><Users size={16} /></i><div><b>Student Accounts</b><small>Search profiles and roles</small></div></a>
             </div>
 
