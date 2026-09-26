@@ -778,33 +778,43 @@ app.delete('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) =
 function validateInstitutionPayload(body: any): { error?: string; values?: Record<string, unknown> } {
   const schoolName = String(body?.school_name || '').trim().slice(0, 200);
   if (!schoolName) return { error: 'The institution name is required.' };
-  let websiteUrl: string | null = null;
-  if (body?.website_url) {
-    const raw = String(body.website_url).trim();
+
+  function httpsUrl(value: unknown, label: string): string | null {
+    if (!value) return null;
+    const raw = String(value).trim();
     try {
       const parsed = new URL(raw.startsWith('http') ? raw : `https://${raw}`);
-      if (parsed.protocol !== 'https:') return { error: 'The website link must use HTTPS.' };
-      websiteUrl = parsed.toString();
+      if (parsed.protocol !== 'https:') throw new Error('protocol');
+      return parsed.toString();
     } catch {
-      return { error: 'The website link is not a valid URL.' };
+      throw new Error(`The ${label} must be a valid HTTPS URL.`);
     }
   }
-  return {
-    values: {
-      school_name: schoolName,
-      acronym: String(body?.acronym || '').trim().slice(0, 40) || null,
-      state: String(body?.state || '').trim().slice(0, 60) || null,
-      institution_type: String(body?.institution_type || '').trim().slice(0, 60) || null,
-      website_url: websiteUrl,
-    },
-  };
+
+  try {
+    return {
+      values: {
+        school_name: schoolName,
+        acronym: String(body?.acronym || '').trim().slice(0, 40) || null,
+        slug: String(body?.slug || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 160) || null,
+        state: String(body?.state || '').trim().slice(0, 60) || null,
+        institution_type: String(body?.institution_type || '').trim().slice(0, 60) || null,
+        website_url: httpsUrl(body?.website_url, 'website URL'),
+        admission_portal_url: httpsUrl(body?.admission_portal_url, 'admission portal URL'),
+        student_portal_url: httpsUrl(body?.student_portal_url, 'student portal URL'),
+        is_verified: Boolean(body?.is_verified),
+      },
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Invalid institution data.' };
+  }
 }
 
 app.get('/api/admin/institutions', requireAdmin, async (req, res) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
-    let query = supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url,created_at').order('school_name', { ascending: true }).limit(500);
+    let query = supabase.from('institutions').select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,created_at,updated_at').order('school_name', { ascending: true }).limit(500);
     if (search) {
       const safe = search.replace(/[%,_]/g, '');
       if (safe) query = query.or(`school_name.ilike.%${safe}%,acronym.ilike.%${safe}%,state.ilike.%${safe}%`);
