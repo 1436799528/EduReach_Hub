@@ -8,6 +8,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Users,
+  Upload,
 } from 'lucide-react';
 import {
   fetchAdminAnalytics,
@@ -133,6 +134,7 @@ export default function AdminDashboardPage() {
               <a className="admin-quick-tile" href="/admin/services"><i className="admin-kpi-icon orange"><ListChecks size={16} /></i><div><b>Service Catalogue</b><small>Edit, show, hide or add student services</small></div></a>
               <a className="admin-quick-tile" href="/admin/content"><i className="admin-kpi-icon blue"><Newspaper size={16} /></i><div><b>Events &amp; Dates</b><small>Manage deadlines and exam dates</small></div></a>
               <a className="admin-quick-tile" href="/admin/users"><i className="admin-kpi-icon blue"><Users size={16} /></i><div><b>Student Accounts</b><small>Search profiles and roles</small></div></a>
+              <a className="admin-quick-tile" href="/admin/content-manager"><i className="admin-kpi-icon green"><Upload size={16} /></i><div><b>Bulk Content Manager</b><small>Import, edit and maintain site data in bulk</small></div></a>
             </div>
 
             {num('pending_requests') > 0 && (
