@@ -158,7 +158,7 @@ export default function AdminContentManagerPage() {
 
   function template() {
     if (!resource) return;
-    download(`edureach-${resource.key}-template.csv`, resource.fields.filter(f => !f.readonly).map(f => f.name).join(',') + '\n');
+    download(`edureach-${resource.key}-template.csv`, resource.fields.filter(f => !f.readonly).map(f => f.name).concat(resource.fields.some(f => f.name === 'id') ? ['id'] : []).join(',') + '\n');
   }
 
   return (
