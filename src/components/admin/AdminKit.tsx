@@ -40,6 +40,8 @@ export function TimeAgo({ value, className }: { value: unknown; className?: stri
 
 export type AdminHealth = { state: 'checking' | 'ok' | 'down'; latencyMs: number | null };
 
+const ADMIN_API_BASE = import.meta.env.PROD ? '/.netlify/functions/api' : '/api';
+
 export function useAdminHealth(intervalMs = 60_000): AdminHealth {
   const [health, setHealth] = useState<AdminHealth>({ state: 'checking', latencyMs: null });
 
@@ -50,7 +52,7 @@ export function useAdminHealth(intervalMs = 60_000): AdminHealth {
     async function probe() {
       const started = Date.now();
       try {
-        const response = await fetch('/api/health', { signal: controller.signal });
+        const response = await fetch(`${ADMIN_API_BASE}/health`, { signal: controller.signal, cache: 'no-store' });
         if (!active) return;
         if (response.ok) setHealth({ state: 'ok', latencyMs: Date.now() - started });
         else setHealth({ state: 'down', latencyMs: null });
