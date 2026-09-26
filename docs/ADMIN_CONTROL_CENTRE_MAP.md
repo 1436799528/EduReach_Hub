@@ -16,7 +16,7 @@ documented as gaps, not invented.
 | Service requests (operations) | `service_requests` | student dashboard "My Requests" | list + status transitions | + persistent `admin_note` column, editable from the queue |
 | CBT exams / questions | `cbt_exams`, `exam_questions` | `/cbt`, `/cbt/setup/*`, `/cbt/practice`, results | full CRUD via server API (unchanged) | — |
 | CBT attempts / results | `cbt_attempts`, `cbt_answers`, `get_cbt_result` RPC | `/cbt/results`, dashboard | counts only (metrics RPC) | counts + per-exam attempt popularity from telemetry |
-| Students / users | `profiles` + Supabase Auth | `/profile`, dashboards | read/search only | + suspend/unsuspend account (Auth admin ban via service role), profile-completion indicator |
+| Students / users | `profiles` + Supabase Auth + `service_requests` + `cbt_attempts` | `/profile`, dashboards | read/search only | + suspend/unsuspend (real Auth ban via service role), profile-completion indicator, per-student activity drill-down (latest 20 requests + 20 CBT attempts, owner-scoped queries) via `/api/admin/users/:id/activity` |
 | Traffic & focus analytics | `site_analytics_events` | internal only | one-way `page_view` inserts | + missing emitters wired (`service_view`, `service_submit`, `cbt_start`, `cbt_submit`, `search`), `admin_activity_breakdown()` RPC, Overview/Analytics rendering |
 | Admin audit trail | `admin_audit_logs` (canonical), `edureach_audit_logs` (legacy) | internal | write-only (never rendered) | rendered in Overview + Analytics timelines |
 | Content images | Supabase Storage bucket `admin-content` (created by migration, public read) | news/featured images | **none** | upload endpoint `POST /api/admin/uploads` (admin bearer + service role, ≤2 MB, mime-allowlisted) |

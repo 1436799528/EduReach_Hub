@@ -875,6 +875,17 @@ export async function updateAdminService(serviceId: string, values: Record<strin
   return body.item;
 }
 
+export type AdminUserActivity = {
+  requests: Array<{ id: string; reference_code: string | null; status: string; created_at: string; service_catalog?: { title: string } | null }>;
+  attempts: Array<{ id: string; status: string; score: number | null; started_at: string; submitted_at: string | null; cbt_exams?: { title: string } | null }>;
+  requestError?: string | null;
+  attemptError?: string | null;
+};
+
+export async function fetchAdminUserActivity(userId: string): Promise<AdminUserActivity> {
+  return await adminApiFetch<AdminUserActivity>(`/api/admin/users/${encodeURIComponent(userId)}/activity`);
+}
+
 export async function setUserSuspended(userId: string, suspended: boolean): Promise<void> {
   await adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}/${suspended ? 'ban' : 'unban'}`, { method: 'POST' });
 }

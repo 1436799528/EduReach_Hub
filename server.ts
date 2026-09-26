@@ -193,6 +193,42 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   }
 });
 
+app.get('/api/admin/users/:userId/activity', requireAdmin, async (req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', req.params.userId)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile) return res.status(404).json({ error: 'Student profile not found.' });
+    const [requests, attempts] = await Promise.all([
+      supabase
+        .from('service_requests')
+        .select('id,reference_code,status,created_at,service_catalog(title)')
+        .eq('user_id', req.params.userId)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      supabase
+        .from('cbt_attempts')
+        .select('id,status,score,started_at,submitted_at,cbt_exams(title)')
+        .eq('user_id', req.params.userId)
+        .order('started_at', { ascending: false })
+        .limit(20),
+    ]);
+    res.json({
+      requests: requests.data || [],
+      attempts: attempts.data || [],
+      requestError: requests.error ? 'History unavailable.' : null,
+      attemptError: attempts.error ? 'CBT history unavailable.' : null,
+    });
+  } catch (error) {
+    console.error('Admin user activity error:', error);
+    res.status(503).json({ error: 'Unable to load the student activity.' });
+  }
+});
+
 app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : 'all';
@@ -560,7 +596,7 @@ function validateCalendarPayload(body: any, type: string): { error?: string; val
   if (!title) return { error: 'A title is required.' };
   const values: Record<string, unknown> = {
     title,
-    description: String(body?.description || '').trim().slice(0, 2000) || null,
+    description: String(body?.description || '').trim().slice(0, 20000) || null,
     priority: CALENDAR_PRIORITIES.includes(String(body?.priority || 'normal')) ? String(body?.priority || 'normal') : 'normal',
     status: CALENDAR_STATUSES.includes(String(body?.status || 'pending')) ? String(body?.status || 'pending') : 'pending',
   };
