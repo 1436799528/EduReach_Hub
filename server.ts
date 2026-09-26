@@ -1686,29 +1686,29 @@ function coerceContentValue(field: ContentField, value: unknown) {
     const s = String(value).trim().toLowerCase();
     if (['true','1','yes','y'].includes(s)) return true;
     if (['false','0','no','n'].includes(s)) return false;
-    throw new Error(\`Invalid boolean for \${field.name}.\`);
+    throw new Error(`Invalid boolean for ${field.name}.`);
   }
   if (field.type === 'number') {
     const n = Number(value);
-    if (!Number.isFinite(n)) throw new Error(\`Invalid number for \${field.name}.\`);
+    if (!Number.isFinite(n)) throw new Error(`Invalid number for ${field.name}.`);
     return n;
   }
   if (field.type === 'timestamptz') {
     const d = new Date(String(value));
-    if (!Number.isFinite(d.getTime())) throw new Error(\`Invalid date/time for \${field.name}.\`);
+    if (!Number.isFinite(d.getTime())) throw new Error(`Invalid date/time for ${field.name}.`);
     return d.toISOString();
   }
   return String(value).trim();
 }
 function validateContentRow(resource: ContentResource, input: Record<string, unknown>) {
   const allowed = new Set(resource.fields.filter(f => !f.readonly).map(f => f.name));
-  for (const key of Object.keys(input)) if (!allowed.has(key) && key !== 'id') throw new Error(\`Field "\${key}" is not editable for this resource.\`);
+  for (const key of Object.keys(input)) if (!allowed.has(key) && key !== 'id') throw new Error(`Field "${key}" is not editable for this resource.`);
   const values: Record<string, unknown> = {};
   if (input.id !== undefined && input.id !== null && String(input.id).trim()) values.id = String(input.id).trim();
   for (const field of resource.fields) {
     if (field.readonly) continue;
     const value = input[field.name];
-    if ((value === undefined || value === null || value === '') && field.required) throw new Error(\`\${field.label} is required.\`);
+    if ((value === undefined || value === null || value === '') && field.required) throw new Error(`${field.label} is required.`);
     if (value !== undefined) values[field.name] = coerceContentValue(field, value);
   }
   return values;
