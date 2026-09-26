@@ -3,7 +3,24 @@ import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 
 export function userFacingError(value: unknown, fallback = 'We could not complete that request. Please try again.') {
-  const raw = value instanceof Error ? value.message : String(value || '');
+  let raw = '';
+  if (value instanceof Error) {
+    raw = value.message;
+  } else if (typeof value === 'string') {
+    raw = value;
+  } else if (value && typeof value === 'object') {
+    const candidate = value as Record<string, unknown>;
+    const nested = candidate.error && typeof candidate.error === 'object' ? candidate.error as Record<string, unknown> : null;
+    raw = String(
+      candidate.message ??
+      candidate.error_description ??
+      nested?.message ??
+      nested?.error_description ??
+      candidate.details ??
+      candidate.hint ??
+      '',
+    );
+  }
   const message = raw.trim();
   if (!message) return fallback;
 
