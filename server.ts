@@ -1577,6 +1577,253 @@ app.post('/api/cbt/submit', async (req, res) => {
   }
 });
 
+// --- Unified admin content manager -----------------------------------------
+// One bulk CMS surface for editable Supabase-backed content. The allowlist is
+// deliberate: admin cannot turn this endpoint into arbitrary SQL/table access.
+type ContentField = { name: string; label: string; type: string; required?: boolean; readonly?: boolean };
+type ContentResource = { key: string; label: string; table: string; fields: ContentField[] };
+
+const CONTENT_RESOURCES: ContentResource[] = [
+  { key: 'institutions', label: 'Institutions', table: 'institutions', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'school_name',label:'School Name',type:'text',required:true},
+    {name:'acronym',label:'Acronym',type:'text'},{name:'slug',label:'Slug',type:'text'},{name:'state',label:'State',type:'text'},
+    {name:'institution_type',label:'Institution Type',type:'text'},{name:'website_url',label:'Website URL',type:'url'},
+    {name:'admission_portal_url',label:'Admission Portal URL',type:'url'},{name:'student_portal_url',label:'Student Portal URL',type:'url'},
+    {name:'is_verified',label:'Verified',type:'boolean'},{name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+    {name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'faculties', label: 'Faculties', table: 'faculties', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'school',label:'School',type:'text',required:true},
+    {name:'name',label:'Faculty Name',type:'text',required:true},{name:'slug',label:'Slug',type:'text',required:true},
+    {name:'institution_id',label:'Institution ID',type:'uuid'},{name:'ccmas_discipline',label:'CCMAS Discipline',type:'text'},
+    {name:'ccmas_source_url',label:'CCMAS Source URL',type:'url'},{name:'ccmas_verified_at',label:'CCMAS Verified At',type:'timestamptz'},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'departments', label: 'Departments', table: 'departments', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'faculty_id',label:'Faculty ID',type:'uuid',required:true},
+    {name:'name',label:'Department Name',type:'text',required:true},{name:'slug',label:'Slug',type:'text',required:true},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'programmes', label: 'Programmes', table: 'programmes', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'institution_id',label:'Institution ID',type:'uuid',required:true},
+    {name:'faculty_id',label:'Faculty ID',type:'uuid',required:true},{name:'department_id',label:'Department ID',type:'uuid',required:true},
+    {name:'ccmas_programme_id',label:'CCMAS Programme ID',type:'uuid'},{name:'programme_code',label:'Programme Code',type:'text',required:true},
+    {name:'programme_name',label:'Programme Name',type:'text',required:true},{name:'degree_title',label:'Degree Title',type:'text'},
+    {name:'is_active',label:'Active',type:'boolean'},{name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+    {name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'courses', label: 'Courses', table: 'courses', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'department_id',label:'Department ID',type:'uuid',required:true},
+    {name:'code',label:'Course Code',type:'text',required:true},{name:'title',label:'Course Title',type:'text',required:true},
+    {name:'units',label:'Units',type:'number',required:true},{name:'level',label:'Level',type:'number',required:true},
+    {name:'semester',label:'Semester',type:'number'},{name:'programme_id',label:'Programme ID',type:'uuid'},
+    {name:'ccmas_course_id',label:'CCMAS Course ID',type:'uuid'},{name:'source_type',label:'Source Type',type:'text'},
+    {name:'requirement_type',label:'Requirement Type',type:'text'},{name:'is_active',label:'Active',type:'boolean'},
+    {name:'source_url',label:'Source URL',type:'url'},{name:'verification_status',label:'Verification Status',type:'text'},
+    {name:'source_note',label:'Source Note',type:'text'},{name:'submitted_by',label:'Submitted By',type:'uuid'},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'cbt_exams', label: 'CBT Exams', table: 'cbt_exams', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'title',label:'Title',type:'text',required:true},
+    {name:'exam_body',label:'Exam Body',type:'text',required:true},{name:'subject',label:'Subject',type:'text',required:true},
+    {name:'description',label:'Description',type:'text'},{name:'duration_minutes',label:'Duration Minutes',type:'number',required:true},
+    {name:'is_active',label:'Active',type:'boolean'},{name:'created_by',label:'Created By',type:'uuid',readonly:true},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'exam_questions', label: 'CBT Questions', table: 'exam_questions', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'exam_id',label:'Exam ID',type:'uuid',required:true},
+    {name:'question_text',label:'Question Text',type:'text',required:true},{name:'option_a',label:'Option A',type:'text',required:true},
+    {name:'option_b',label:'Option B',type:'text',required:true},{name:'option_c',label:'Option C',type:'text',required:true},
+    {name:'option_d',label:'Option D',type:'text',required:true},{name:'correct_option',label:'Correct Option',type:'text',required:true},
+    {name:'explanation',label:'Explanation',type:'text'},{name:'marks',label:'Marks',type:'number',required:true},
+    {name:'position',label:'Position',type:'number',required:true},{name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+    {name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'news_articles', label: 'News', table: 'news_articles', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'slug',label:'Slug',type:'text',required:true},{name:'title',label:'Title',type:'text',required:true},
+    {name:'excerpt',label:'Excerpt',type:'text'},{name:'body',label:'Body',type:'text',required:true},{name:'category',label:'Category',type:'text',required:true},
+    {name:'image_url',label:'Image URL',type:'url'},{name:'source_name',label:'Source Name',type:'text'},{name:'source_url',label:'Source URL',type:'url'},
+    {name:'author_id',label:'Author ID',type:'uuid',readonly:true},{name:'published',label:'Published',type:'boolean'},
+    {name:'published_at',label:'Published At',type:'timestamptz'},{name:'featured',label:'Featured',type:'boolean'},{name:'tags',label:'Tags',type:'text'},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'opportunities', label: 'Opportunities', table: 'opportunities', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'title',label:'Title',type:'text',required:true},{name:'organisation',label:'Organisation',type:'text'},
+    {name:'category',label:'Category',type:'text',required:true},{name:'description',label:'Description',type:'text'},
+    {name:'link_url',label:'Link URL',type:'url'},{name:'deadline',label:'Deadline',type:'date'},{name:'locations',label:'Locations',type:'text'},
+    {name:'is_active',label:'Active',type:'boolean'},{name:'created_at',label:'Created At',type:'timestamptz',readonly:true},
+    {name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'service_catalog', label: 'Services', table: 'service_catalog', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'service_key',label:'Service Key',type:'text',readonly:true},
+    {name:'title',label:'Title',type:'text',required:true},{name:'description',label:'Description',type:'text',required:true},
+    {name:'application_url',label:'Application URL',type:'url'},{name:'active',label:'Active',type:'boolean'},
+    {name:'category',label:'Category',type:'text'},{name:'route',label:'Route',type:'text'},{name:'sort_order',label:'Sort Order',type:'number'},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'deadlines', label: 'Deadlines', table: 'edureach_deadlines', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'user_id',label:'User ID',type:'uuid',readonly:true},
+    {name:'institution_id',label:'Institution ID',type:'uuid'},{name:'title',label:'Title',type:'text',required:true},{name:'description',label:'Description',type:'text'},
+    {name:'due_at',label:'Due At',type:'timestamptz',required:true},{name:'priority',label:'Priority',type:'text'},{name:'source_id',label:'Source ID',type:'uuid'},
+    {name:'status',label:'Status',type:'text'},{name:'session_id',label:'Session ID',type:'uuid'},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+  { key: 'calendar_exams', label: 'Calendar Exams', table: 'edureach_exams', fields: [
+    {name:'id',label:'ID',type:'uuid',readonly:true},{name:'user_id',label:'User ID',type:'uuid',readonly:true},
+    {name:'institution_id',label:'Institution ID',type:'uuid'},{name:'course_id',label:'Course ID',type:'uuid'},
+    {name:'title',label:'Title',type:'text',required:true},{name:'starts_at',label:'Starts At',type:'timestamptz',required:true},
+    {name:'ends_at',label:'Ends At',type:'timestamptz'},{name:'location',label:'Location',type:'text'},{name:'description',label:'Description',type:'text'},
+    {name:'priority',label:'Priority',type:'text'},{name:'status',label:'Status',type:'text'},
+    {name:'created_at',label:'Created At',type:'timestamptz',readonly:true},{name:'updated_at',label:'Updated At',type:'timestamptz',readonly:true},
+  ]},
+];
+
+function getContentResource(key: string) { return CONTENT_RESOURCES.find(item => item.key === key); }
+function coerceContentValue(field: ContentField, value: unknown) {
+  if (value === '' || value === undefined) return null;
+  if (field.type === 'boolean') {
+    if (typeof value === 'boolean') return value;
+    const s = String(value).trim().toLowerCase();
+    if (['true','1','yes','y'].includes(s)) return true;
+    if (['false','0','no','n'].includes(s)) return false;
+    throw new Error(\`Invalid boolean for \${field.name}.\`);
+  }
+  if (field.type === 'number') {
+    const n = Number(value);
+    if (!Number.isFinite(n)) throw new Error(\`Invalid number for \${field.name}.\`);
+    return n;
+  }
+  if (field.type === 'timestamptz') {
+    const d = new Date(String(value));
+    if (!Number.isFinite(d.getTime())) throw new Error(\`Invalid date/time for \${field.name}.\`);
+    return d.toISOString();
+  }
+  return String(value).trim();
+}
+function validateContentRow(resource: ContentResource, input: Record<string, unknown>) {
+  const allowed = new Set(resource.fields.filter(f => !f.readonly).map(f => f.name));
+  for (const key of Object.keys(input)) if (!allowed.has(key) && key !== 'id') throw new Error(\`Field "\${key}" is not editable for this resource.\`);
+  const values: Record<string, unknown> = {};
+  for (const field of resource.fields) {
+    if (field.readonly) continue;
+    const value = input[field.name];
+    if ((value === undefined || value === null || value === '') && field.required) throw new Error(\`\${field.label} is required.\`);
+    if (value !== undefined) values[field.name] = coerceContentValue(field, value);
+  }
+  return values;
+}
+function contentSelect(resource: ContentResource) { return resource.fields.map(f => f.name).join(','); }
+
+app.get('/api/admin/content-manager/resources', requireAdmin, (_req, res) => {
+  res.json({ resources: CONTENT_RESOURCES });
+});
+
+app.get('/api/admin/content-manager/data/:resource', requireAdmin, async (req, res) => {
+  try {
+    const resource = getContentResource(req.params.resource);
+    if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from(resource.table).select(contentSelect(resource)).order(resource.fields.find(f => f.name === 'updated_at') ? 'updated_at' : 'created_at', { ascending: false }).limit(500);
+    if (error) throw error;
+    res.json({ rows: data || [] });
+  } catch (error) {
+    console.error('Content manager list error:', error);
+    res.status(503).json({ error: 'Unable to load this content section.' });
+  }
+});
+
+app.post('/api/admin/content-manager/data/:resource', requireAdmin, async (req, res) => {
+  try {
+    const resource = getContentResource(req.params.resource);
+    if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
+    const values = validateContentRow(resource, req.body || {});
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from(resource.table).insert(values).select(contentSelect(resource)).single();
+    if (error) throw error;
+    res.status(201).json({ row: data });
+  } catch (error) {
+    console.error('Content manager create error:', error);
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to create record.' });
+  }
+});
+
+app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (req, res) => {
+  try {
+    const resource = getContentResource(req.params.resource);
+    if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
+    const values = validateContentRow(resource, req.body || {});
+    if (!Object.keys(values).length) return res.status(400).json({ error: 'No editable fields were supplied.' });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from(resource.table).update(values).eq('id', req.params.id).select(contentSelect(resource)).single();
+    if (error) throw error;
+    res.json({ row: data });
+  } catch (error) {
+    console.error('Content manager update error:', error);
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to update record.' });
+  }
+});
+
+app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (req, res) => {
+  try {
+    const resource = getContentResource(req.params.resource);
+    if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from(resource.table).delete().eq('id', req.params.id).select('id').single();
+    if (error) {
+      const message = String(error.message || '');
+      if (/foreign key|violates|constraint/i.test(message)) return res.status(409).json({ error: 'This record is still referenced by other data. Archive/deactivate it instead of deleting it.' });
+      throw error;
+    }
+    if (!data) return res.status(404).json({ error: 'Record not found.' });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Content manager delete error:', error);
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to delete record.' });
+  }
+});
+
+app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req, res) => {
+  try {
+    const resource = getContentResource(req.params.resource);
+    if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
+    const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    if (!rows.length) return res.status(400).json({ error: 'No import rows were supplied.' });
+    if (rows.length > 2000) return res.status(400).json({ error: 'Import limit is 2,000 rows per batch.' });
+    const supabase = getServerSupabase();
+    const valid: Array<{ index: number; values: Record<string, unknown> }> = [];
+    const errors: Array<{ row: number; error: string }> = [];
+    rows.forEach((row: unknown, index: number) => {
+      try {
+        if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error('Row is not an object.');
+        valid.push({ index, values: validateContentRow(resource, row as Record<string, unknown>) });
+      } catch (error) { errors.push({ row: index + 2, error: error instanceof Error ? error.message : 'Invalid row.' }); }
+    });
+    let inserted = 0, updated = 0;
+    // Use bulk inserts/updates in chunks rather than issuing one request per row.
+    for (let start = 0; start < valid.length; start += 200) {
+      const chunk = valid.slice(start, start + 200);
+      const withIds = chunk.filter(item => item.values.id);
+      const withoutIds = chunk.filter(item => !item.values.id);
+      if (withoutIds.length) {
+        const { error } = await supabase.from(resource.table).insert(withoutIds.map(item => item.values));
+        if (error) {
+          errors.push(...withoutIds.map(item => ({ row: item.index + 2, error: error.message })));
+        } else inserted += withoutIds.length;
+      }
+      if (withIds.length) {
+        const { error } = await supabase.from(resource.table).upsert(withIds.map(item => item.values), { onConflict: 'id', ignoreDuplicates: false });
+        if (error) {
+          errors.push(...withIds.map(item => ({ row: item.index + 2, error: error.message })));
+        } else updated += withIds.length;
+      }
+    }
+    res.json({ inserted, updated, errors });
+  } catch (error) {
+    console.error('Content manager import error:', error);
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Unable to import data.' });
+  }
+});
+
 // Never let an unknown API method/path fall through to the SPA HTML shell.
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'API endpoint not found.' });
