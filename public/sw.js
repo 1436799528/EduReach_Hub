@@ -1,6 +1,6 @@
-const CACHE_NAME = 'edureach-shell-v5';
-const DYNAMIC_CACHE = 'edureach-dynamic-v5';
-const STATIC_ASSETS = ['/manifest.json'];
+const CACHE_NAME = 'edureach-shell-v6';
+const DYNAMIC_CACHE = 'edureach-dynamic-v6';
+const STATIC_ASSETS = ['/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -28,11 +28,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never cache or replay API/authenticated responses across sessions.
   if (url.pathname === '/api' || url.pathname.startsWith('/api/') ||
       url.pathname.startsWith('/.netlify/') || request.headers.has('authorization')) return;
 
-  // Always use a fresh document so a deployment cannot pin a stale JS bundle.
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(fetch(request).catch(() => new Response(
       'EduReach is offline. Reconnect to load this page.',
@@ -41,12 +39,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JavaScript/CSS bundles under /assets are deliberately NOT intercepted.
-  // Hashed bundles are deployment-specific; serving an older cached chunk can
-  // cause React lazy imports to fail after a new deployment. Let the browser/CDN
-  // handle them normally. Only stable visual assets use this small cache.
+  if (url.pathname.startsWith('/assets/')) return;
+
   const isStableAsset = url.pathname.startsWith('/icons/') ||
-    url.pathname.startsWith('/news/photos/') || STATIC_ASSETS.includes(url.pathname);
+    url.pathname.startsWith('/logo/') ||
+    url.pathname.startsWith('/news/photos/') ||
+    STATIC_ASSETS.includes(url.pathname) ||
+    url.pathname === '/favicon.svg';
+
   if (!isStableAsset) return;
 
   event.respondWith(caches.match(request).then(async (cached) => {
