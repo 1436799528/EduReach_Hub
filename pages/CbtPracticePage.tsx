@@ -126,7 +126,7 @@ export default function CbtPracticePage() {
     };
   }, []);
 
-  async function beginAttempt(targetExamId: string, targetDurationMinutes: number, asGuest = false, questionCount = questions.length) {
+  async function beginAttempt(targetExamId: string, targetDurationMinutes: number, asGuest = false, questionCount = questions.length, selectedSubjects: string[] = setupSubjects) {
     const storageKey = localStorageKey(`cbt-attempt-${targetExamId}`);
     let started: { attemptId: string; expiresAt: string; guest?: boolean } | null = null;
     try {
@@ -135,7 +135,7 @@ export default function CbtPracticePage() {
     } catch {
       // localStorage may be disabled
     }
-    if (!started) started = await startCbt(targetExamId, targetDurationMinutes);
+    if (!started) started = await startCbt(targetExamId, targetDurationMinutes, selectedSubjects);
     trackEvent('cbt_start', { metadata: { examId: targetExamId, examTitle } });
     setAttemptId(started.attemptId);
     setAttemptStarted(true);
@@ -169,7 +169,7 @@ export default function CbtPracticePage() {
           setSubject(resolved.summary.subject || '');
         }
 
-        const data = await fetchCbtQuestions(resolved.id);
+        const data = await fetchCbtQuestions(resolved.id, setupSubjects);
         if (!active) return;
         setQuestions(data.questions);
         setExamTitle(data.exam.title || 'CBT Practice Test');
@@ -193,7 +193,7 @@ export default function CbtPracticePage() {
         if (!authUser) {
           setShowAccountPrompt(true);
         } else {
-          await beginAttempt(resolved.id, sessionMinutes, false, data.questions.length);
+          await beginAttempt(resolved.id, sessionMinutes, false, data.questions.length, setupSubjects);
         }
       } catch (error) {
         if (!active) return;
@@ -278,7 +278,7 @@ export default function CbtPracticePage() {
 
     try {
       const activeAttemptId = attemptId || `local-att-${Date.now()}`;
-      const result = await submitCbt({ examId, attemptId: activeAttemptId, answers });
+      const result = await submitCbt({ examId, attemptId: activeAttemptId, answers, subjects: setupSubjects });
       trackEvent('cbt_submit', { metadata: { examId } });
       localStorage.setItem(localStorageKey('last-cbt-attempt'), result.attemptId);
       localStorage.removeItem(localStorageKey(`cbt-attempt-${examId}`));
@@ -429,7 +429,7 @@ export default function CbtPracticePage() {
               <div className="er-exam-gate-actions">
                 <a className="hub-primary-btn" href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign In</a>
                 <a className="hub-outline-btn" href={`/register?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Register</a>
-                <button type="button" className="hub-text-btn" onClick={() => void beginAttempt(examId, durationMinutes, true)}>Continue Without Account</button>
+                <button type="button" className="hub-text-btn" onClick={() => void beginAttempt(examId, durationMinutes, true, questions.length, setupSubjects)}>Continue Without Account</button>
               </div>
               <small className="er-exam-guest-note">Guest results are kept on this device only. Sign in before starting if you need permanent history.</small>
             </div>
