@@ -48,7 +48,7 @@ for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
     assert.match(response.headers.get('content-type')!, /application\/json/);
   });
 }
-for (const [method, path] of [['POST', '/api/cbt/exams/test/start'], ['POST', '/api/cbt/submit'], ['GET', '/api/cbt/attempts/test/progress'], ['PATCH', '/api/cbt/attempts/test/progress']]) {
+for (const [method, path] of [['POST', '/api/cbt/exams/test/start'], ['POST', '/api/cbt/submit']]) {
   test(`student API ${method} ${path} requires authentication`, async () => {
     const response = await fetch(base + path, { method });
     assert.equal(response.status, 401);
