@@ -6,7 +6,7 @@ import { apiUrl } from './apiBase';
 
 export { userFacingError } from '../../lib/errors';
 
-export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number> };
+export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number>; subjects?: string[] };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number; guest?: boolean };
 export type CbtSubmitResponse = {
   attemptId: string;
@@ -256,7 +256,7 @@ export async function fetchCbtExams() {
   return data || [];
 }
 
-export async function startCbt(examId: string, durationMinutes = 30): Promise<CbtStartResponse> {
+export async function startCbt(examId: string, durationMinutes = 30, subjects: string[] = []): Promise<CbtStartResponse> {
   if (isSupabaseConfigured) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -270,7 +270,10 @@ export async function startCbt(examId: string, durationMinutes = 30): Promise<Cb
       };
     }
 
-    const { data, error } = await supabase.rpc('start_cbt_attempt', { p_exam_id: examId });
+    const { data, error } = await supabase.rpc('start_cbt_attempt_for_subjects', {
+      p_exam_id: examId,
+      p_subjects: subjects,
+    });
     if (error || !data?.length) throw new Error(userFacingError(error, 'Unable to start this CBT practice session.'));
     const row = data[0];
     return {
@@ -307,7 +310,7 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
       return guestResult;
     }
 
-    const { data, error } = await supabase.rpc('submit_cbt_attempt', {
+    const { data, error } = await supabase.rpc('submit_cbt_attempt_for_subjects', {
       p_attempt_id: payload.attemptId,
       p_exam_id: payload.examId,
       p_answers: payload.answers,
@@ -375,7 +378,7 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
   return { attemptId: payload.attemptId, score, breakdown };
 }
 
-export async function fetchCbtQuestions(examId: string) {
+export async function fetchCbtQuestions(examId: string, subjects: string[] = []) {
   if (!isSupabaseConfigured) {
     const examMeta = fallbackCbtExams.find((e) => e.id === examId);
     if (!examMeta) throw new Error('This CBT exam is not available. Choose another question bank.');
@@ -387,20 +390,29 @@ export async function fetchCbtQuestions(examId: string) {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions`);
+    const query = subjects.length ? `?subjects=${encodeURIComponent(subjects.join('|'))}` : '';
+    const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions${query}`);
     return {
       exam: { id: guest.exam.id, title: guest.exam.title, examBody: guest.exam.examBody, durationMinutes: guest.exam.durationMinutes, subject: guest.exam.subject },
       questions: guest.questions,
     };
   }
 
-  const { data: exam, error: examError } = await supabase.from('cbt_exams').select('id,title,exam_body,duration_minutes,subject').eq('id', examId).eq('is_active', true).maybeSingle();
+  const { data: exam, error: examError } = await supabase
+    .from('cbt_exams')
+    .select('id,title,exam_body,duration_minutes,subject')
+    .eq('id', examId)
+    .eq('is_active', true)
+    .maybeSingle();
   if (examError) throw new Error(userFacingError(examError));
   if (!exam) throw new Error('This CBT exam is not available. Choose another question bank.');
 
-  const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions', { p_exam_id: examId });
+  const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions_for_subjects', {
+    p_exam_id: examId,
+    p_subjects: subjects,
+  });
   if (questionError) throw new Error(userFacingError(questionError));
-  if (!questions?.length) throw new Error('This CBT exam has no questions yet. Choose another question bank.');
+  if (!questions?.length) throw new Error('This CBT exam has no questions for the selected subjects.');
 
   return {
     exam: { id: exam.id, title: exam.title, examBody: exam.exam_body, durationMinutes: exam.duration_minutes, subject: exam.subject },
