@@ -107,7 +107,8 @@ export default function CbtPracticePage() {
   const setupParams = new URLSearchParams(window.location.search);
   const setupCourse = setupParams.get('course') || '';
   const setupSchool = setupParams.get('schoolName') || '';
-  const setupSubjects = (setupParams.get('subjects') || '').split('|').filter(Boolean);
+  const requestedSubjects = (setupParams.get('subjects') || '').split('|').map((value) => value.trim()).filter(Boolean);
+  const setupSubjects = requestedSubjects.length ? requestedSubjects : ['Use of English', 'Mathematics', 'Physics', 'Chemistry'];
 
   // Exam-focus mode: hide the site footer / mobile tab bar / page bar while a test is open.
   useEffect(() => {
