@@ -440,7 +440,7 @@ export default function CbtPracticePage() {
               <p>Sign in again to save this test securely. Your local answers are still on this device.</p>
               <div className="er-exam-gate-actions">
                 <a className="hub-primary-btn" href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in &amp; continue</a>
-                <button type="button" className="hub-text-btn" onClick={() => void beginAttempt(examId, durationMinutes, true)}>Continue as guest</button>
+                <button type="button" className="hub-text-btn" onClick={() => void beginAttempt(examId, durationMinutes, true, questions.length, setupSubjects)}>Continue as guest</button>
               </div>
             </div>
           ) : !question ? (
