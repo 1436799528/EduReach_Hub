@@ -299,7 +299,7 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
       const guestResult = await jsonFetch<any>('/api/cbt/guest-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examId: payload.examId, answers: payload.answers }),
+        body: JSON.stringify({ examId: payload.examId, answers: payload.answers, subjects: payload.subjects || [] }),
       });
       try {
         localStorage.setItem(localStorageKey(`cbt-result-${guestResult.attemptId}`), JSON.stringify(guestResult));
