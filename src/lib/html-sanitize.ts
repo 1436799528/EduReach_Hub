@@ -127,3 +127,18 @@ export function sanitizeRichHtml(input: string): string {
 export function looksLikeHtml(value: string): boolean {
   return /<[a-z][\s\S]*>/i.test(value || '');
 }
+
+export function plainTextFromHtml(value: string): string {
+  if (!value) return '';
+  if (!looksLikeHtml(value)) return value.trim();
+  if (typeof document !== 'undefined') {
+    try {
+      const parsed = new DOMParser().parseFromString(value, 'text/html');
+      return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
+    } catch {
+      // fall through to regex strip
+    }
+  }
+  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+

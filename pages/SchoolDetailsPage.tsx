@@ -1,5 +1,9 @@
 import { ArrowLeft, ExternalLink, MapPin, School } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
+import { itemKey, type Institution } from '../src/components/dashboard/SchoolFinderCard';
+import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 
 function navigateBack(fallback: string) {
   const params = new URLSearchParams(window.location.search);
@@ -16,14 +20,60 @@ function navigateBack(fallback: string) {
   }
 }
 
+function findStarterInstitution(slug: string): Institution | null {
+  const normalized = itemKey(slug);
+  if (!normalized) return null;
+  for (let index = 0; index < commonInstitutions.length; index += 1) {
+    const raw = commonInstitutions[index];
+    if (raw.startsWith('Other')) continue;
+    const match = raw.match(/^(.*?)(?:\s+\(([^)]+)\))?$/);
+    const schoolName = match?.[1] || raw;
+    const acronym = match?.[2] || null;
+    if (itemKey(schoolName) === normalized || (acronym && itemKey(acronym) === normalized)) {
+      return {
+        id: `starter-school-${index + 1}`,
+        school_name: schoolName,
+        acronym,
+        state: null,
+        institution_type: /polytechnic/i.test(schoolName) ? 'Polytechnic' : /college/i.test(schoolName) ? 'College' : 'University',
+        website_url: null,
+        course_context: institutionCourseContexts[acronym || ''] || null,
+      };
+    }
+  }
+  return null;
+}
+
 export default function SchoolDetailsPage({ slug }: { slug: string }) {
   const params = new URLSearchParams(window.location.search);
-  const name = params.get('name') || slug.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-  const acronym = params.get('acronym') || '';
-  const state = params.get('state') || 'Nigeria';
-  const type = params.get('type') || 'Institution';
-  const courseContext = params.get('course') || '';
-  const websiteCandidate = params.get('website') || '';
+  const starterMatch = useMemo(() => findStarterInstitution(slug), [slug]);
+  const [liveSchool, setLiveSchool] = useState<Institution | null>(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let active = true;
+    const normalized = itemKey(slug);
+    void supabase
+      .from('institutions')
+      .select('id,school_name,acronym,state,institution_type,website_url')
+      .limit(400)
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const found = (data as Institution[]).find(
+          (row) => itemKey(row.school_name) === normalized || (row.acronym && itemKey(row.acronym) === normalized)
+        );
+        if (found) setLiveSchool(found);
+      });
+    return () => { active = false; };
+  }, [slug]);
+
+  const resolved = liveSchool || starterMatch;
+  const name = params.get('name') || resolved?.school_name || slug.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const acronym = params.get('acronym') || resolved?.acronym || '';
+  const state = params.get('state') || resolved?.state || 'Nigeria';
+  const type = params.get('type') || resolved?.institution_type || 'Institution';
+  const courseContext = params.get('course') || resolved?.course_context || (acronym ? institutionCourseContexts[acronym] || '' : '');
+  const websiteCandidate = params.get('website') || resolved?.website_url || '';
   const website = /^https?:\/\//i.test(websiteCandidate) ? websiteCandidate : '';
 
   return (

@@ -178,8 +178,9 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         <div className="hub-page">
           <div className="hub-container hub-narrow">
             <div className="hub-panel hub-empty">
-              {serviceError || 'Service not found.'}
-
+              <h1 style={{ fontSize: '20px', margin: '0 0 8px' }}>Service unavailable</h1>
+              <p style={{ margin: '0 0 14px' }}>{serviceError || 'Service not found.'}</p>
+              <a className="hub-primary-btn" href="/services">Browse active services</a>
             </div>
           </div>
         </div>

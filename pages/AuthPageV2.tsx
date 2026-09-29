@@ -13,6 +13,7 @@ import {
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
+import { apiUrl } from '../src/lib/apiBase';
 import BrandLogo from '../src/components/BrandLogo';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -236,7 +237,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             try { await bootstrapAdmin(); } catch { /* already bootstrapped or not the designated account */ }
             let isAdmin = false;
             try {
-              const adminCheck = await fetch('/api/admin/session', {
+              const adminCheck = await fetch(apiUrl('/api/admin/session'), {
                 headers: { Authorization: `Bearer ${signedInSession.access_token}` },
               });
               isAdmin = adminCheck.ok;

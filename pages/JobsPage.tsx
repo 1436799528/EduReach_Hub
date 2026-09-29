@@ -7,19 +7,39 @@ import SectionHead from '../src/components/SectionHead';
 import { EDUREACH_WHATSAPP, jobApplyHref, jobs } from '../src/data/hubContent';
 import { fetchOpportunities, type Opportunity } from '../src/lib/api';
 import { isSupabaseConfigured } from '../src/lib/supabase';
-import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
+import { plainTextFromHtml } from '../src/lib/html-sanitize';
 
 const filters = [
   { id: 'ALL', label: 'All Listings' },
   { id: 'scholarship', label: 'Scholarships & Grants' },
-  { id: 'internship', label: 'Internships' },
+  { id: 'fellowship', label: 'Fellowships & Competitions' },
+  { id: 'internship', label: 'Jobs & Internships' },
   { id: 'campus', label: 'Campus Roles' },
   { id: 'part-time', label: 'Part-time' },
 ];
 
+const validCategoryParams = new Set([
+  ...filters.map((item) => item.id),
+  'grant',
+  'job',
+  'competition',
+]);
+
 function readOpportunityFilter() {
   const value = new URLSearchParams(window.location.search).get('category') || 'ALL';
-  return filters.some((item) => item.id === value) ? value : 'ALL';
+  if (value === 'grant') return 'scholarship';
+  if (value === 'competition') return 'fellowship';
+  if (value === 'job') return 'internship';
+  return validCategoryParams.has(value) ? value : 'ALL';
+}
+
+export function isOpportunityExpired(deadline?: string | null): boolean {
+  if (!deadline) return false;
+  const trimmed = deadline.trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return false;
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return trimmed < todayIso;
 }
 
 export default function JobsPage() {
@@ -55,8 +75,15 @@ export default function JobsPage() {
   // static directory instead (labelled on the cards).
   const filteredLive = useMemo(() => {
     if (live === null) return null;
-    if (activeFilter === 'ALL') return live;
-    return live.filter((item) => item.category === activeFilter);
+    const matched = activeFilter === 'ALL'
+      ? live
+      : live.filter((item) => {
+          if (activeFilter === 'scholarship') return item.category === 'scholarship' || item.category === 'grant';
+          if (activeFilter === 'fellowship') return item.category === 'fellowship' || item.category === 'competition';
+          if (activeFilter === 'internship') return item.category === 'job' || item.category === 'internship';
+          return item.category === activeFilter;
+        });
+    return [...matched].sort((a, b) => Number(isOpportunityExpired(a.deadline)) - Number(isOpportunityExpired(b.deadline)));
   }, [live, activeFilter]);
 
   const filteredStatic = useMemo(() => {
@@ -195,42 +222,52 @@ export default function JobsPage() {
 
           {!loadingLive && isSupabaseConfigured && filteredLive && filteredLive.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
-              <SectionHead title={`${filteredLive.length} open listing${filteredLive.length === 1 ? '' : 's'}`} />
+              <SectionHead title={`${filteredLive.length} listing${filteredLive.length === 1 ? '' : 's'}`} />
               <div style={{ display: 'grid', gap: '12px' }}>
-                {filteredLive.map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.link_url || jobApplyHref(item.title)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
-                    style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)' }}
-                  >
-                    <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
-                      <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#C85841' }}>
-                          <Tag size={11} /> {item.category}
-                        </span>
-                        {item.deadline && (<><span>•</span><span style={{ fontWeight: 700 }}>Closes {item.deadline}</span></>)}
-                        {item.locations && (<><span>•</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} /> {item.locations}</span></>)}
-                      </div>
-                      <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>{item.title}</h2>
-                      {item.organisation && <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 4px', fontWeight: 700 }}>{item.organisation}</p>}
-                      {looksLikeHtml(item.description || '')
-                        ? <div style={{ fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(item.description || '') }} />
-                        : <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>{item.description}</p>}
-                    </div>
-                    <span
-                      className="hub-primary-btn er-card-cta"
-                      style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                {filteredLive.map((item) => {
+                  const expired = isOpportunityExpired(item.deadline);
+                  return (
+                    <a
+                      key={item.id}
+                      href={item.link_url || jobApplyHref(item.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
+                      style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)', opacity: expired ? 0.78 : 1 }}
                     >
-                      {item.link_url ? 'Official link' : 'Apply'} <ArrowRight size={13} />
-                    </span>
-                  </a>
-                ))}
+                      <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
+                        <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#C85841' }}>
+                            <Tag size={11} /> {item.category}
+                          </span>
+                          {item.deadline && (
+                            <>
+                              <span>•</span>
+                              <span style={{ fontWeight: 700, color: expired ? '#b91c1c' : '#64748b' }}>
+                                {expired ? `Closed ${item.deadline} · Expired` : `Closes ${item.deadline}`}
+                              </span>
+                            </>
+                          )}
+                          {item.locations && (<><span>•</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} /> {item.locations}</span></>)}
+                        </div>
+                        <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>{item.title}</h2>
+                        {item.organisation && <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 4px', fontWeight: 700 }}>{item.organisation}</p>}
+                        <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0, lineHeight: 1.45 }}>
+                          {plainTextFromHtml(item.description || '')}
+                        </p>
+                      </div>
+                      <span
+                        className={expired ? 'hub-outline-btn er-card-cta' : 'hub-primary-btn er-card-cta'}
+                        style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
+                      >
+                        {expired ? 'Expired' : item.link_url ? 'Official link' : 'Apply'} <ArrowRight size={13} />
+                      </span>
+                    </a>
+                  );
+                })}
               </div>
             </section>
           )}

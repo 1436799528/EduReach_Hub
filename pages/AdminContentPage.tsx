@@ -10,6 +10,7 @@ import {
 } from '../src/lib/api';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
+import { plainTextFromHtml } from '../src/lib/html-sanitize';
 
 // Events & key dates: manages the exact rows the /events page (and home
 // noticeboard feed) read through /api/upcoming — edureach_deadlines and
@@ -190,7 +191,7 @@ export default function AdminContentPage() {
                 {loading && <TableSkeleton rows={6} columns={6} />}
                 {!loading && sorted.map((item) => (
                   <tr key={item.id}>
-                    <td><b>{item.title}</b><div className="muted">{item.description || '—'}</div></td>
+                    <td><b>{item.title}</b><div className="muted">{plainTextFromHtml(item.description || '') || '—'}</div></td>
                     <td>{new Date(String(whenField(item))).toLocaleString()}{item.location ? <div className="muted">{item.location}</div> : null}</td>
                     <td><StatusBadge status={item.priority} /></td>
                     <td><StatusBadge status={item.status === 'pending' ? 'published' : 'archived'} /></td>
