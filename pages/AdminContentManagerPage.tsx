@@ -219,6 +219,39 @@ export default function AdminContentManagerPage() {
                   <button className="admin-btn secondary-dark" type="button" onClick={template}><Download size={14} /> Download template</button>
                   <label className="admin-btn" style={{ cursor: 'pointer' }}><Upload size={14} /> Import CSV<input hidden type="file" accept=".csv,text/csv" onChange={e => { const f = e.target.files?.[0]; if (f) void importCsv(f); e.currentTarget.value = ''; }} /></label>
                 </div>
+                {pendingImport.length > 0 && (
+                  <div style={{ marginTop: 14, borderTop: '1px solid var(--admin-border)', paddingTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+                      <strong>{pendingImport.length} row(s) staged from {fileName}</strong>
+                      <div className="admin-action-row">
+                        <button className="admin-btn small success" type="button" onClick={() => void confirmImport()} disabled={saving}>
+                          {saving ? 'Importing…' : `Confirm import (${pendingImport.length})`}
+                        </button>
+                        <button className="admin-text-btn" type="button" onClick={() => { setPendingImport([]); setFileName(''); setMessage(''); }} disabled={saving}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-table-wrap">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            {Object.keys(pendingImport[0] || {}).slice(0, 5).map((col) => <th key={col}>{col}</th>)}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingImport.slice(0, 5).map((item, idx) => (
+                            <tr key={idx}>
+                              {Object.keys(pendingImport[0] || {}).slice(0, 5).map((col) => (
+                                <td key={col}>{String(item[col] ?? '—').slice(0, 60)}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="admin-card">

@@ -14,6 +14,13 @@ const LIVE_SERVICE_KEYS = ['nelfund-loan', 'results', 'jamb-slip', 'admission-le
 app.disable('x-powered-by');
 
 app.use((_req, res, next) => {
+  if (
+    _req.url === '/.netlify/functions/api' ||
+    _req.url.startsWith('/.netlify/functions/api/') ||
+    _req.url.startsWith('/.netlify/functions/api?')
+  ) {
+    _req.url = _req.url.slice('/.netlify/functions'.length);
+  }
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
@@ -412,7 +419,7 @@ app.delete('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
 app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('exam_questions').select('id,exam_id,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').eq('exam_id', req.params.examId).order('position', { ascending: true });
+    const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').eq('exam_id', req.params.examId).order('position', { ascending: true });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -424,19 +431,20 @@ app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res)
 app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
   try {
     const adminUser = (req as AdminRequest).adminUser!;
-    const { question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
+    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
     const supabase = getServerSupabase();
-    const { data: exam } = await supabase.from('cbt_exams').select('id').eq('id', req.params.examId).maybeSingle();
+    const { data: exam } = await supabase.from('cbt_exams').select('id,subject').eq('id', req.params.examId).maybeSingle();
     if (!exam) return res.status(404).json({ error: 'CBT exam not found.' });
+    const questionSubject = (typeof subject === 'string' && subject.trim()) ? subject.trim() : (exam.subject?.trim() || 'General');
     const { data, error } = await supabase.from('exam_questions').insert({
-      exam_id: exam.id, question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(),
+      exam_id: exam.id, subject: questionSubject, question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(),
       option_c: option_c.trim(), option_d: option_d.trim(), correct_option, explanation: explanation?.trim() || null,
       marks: numericMarks, position: numericPosition,
-    }).select('id,exam_id,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
+    }).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'exam_question', p_entity_id: data.id, p_metadata: { exam_id: exam.id, position: numericPosition } });
     res.status(201).json({ item: data });
@@ -450,17 +458,19 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res
 app.patch('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res) => {
   try {
     const adminUser = (req as AdminRequest).adminUser!;
-    const { question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
+    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('exam_questions').update({
+    const updatePayload: Record<string, unknown> = {
       question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(), option_c: option_c.trim(),
       option_d: option_d.trim(), correct_option, explanation: explanation?.trim() || null, marks: numericMarks, position: numericPosition,
       updated_at: new Date().toISOString(),
-    }).eq('id', req.params.questionId).select('id,exam_id,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
+    };
+    if (typeof subject === 'string' && subject.trim()) updatePayload.subject = subject.trim();
+    const { data, error } = await supabase.from('exam_questions').update(updatePayload).eq('id', req.params.questionId).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'exam_question', p_entity_id: data.id, p_metadata: { position: numericPosition } });
     res.json({ item: data });
@@ -1199,13 +1209,12 @@ app.get('/api/services', async (_req, res) => {
 
 app.get('/api/services/:slug', async (req, res) => {
   const slug = req.params.slug.trim().toLowerCase();
-  if (!LIVE_SERVICE_KEYS.includes(slug as (typeof LIVE_SERVICE_KEYS)[number])) return res.status(404).json({ error: 'Service not found.' });
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'Service catalog is not configured.' });
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
       .from('service_catalog')
-      .select('id,service_key,title,description,application_url,active')
+      .select(serviceCatalogSelect)
       .eq('service_key', slug)
       .eq('active', true)
       .maybeSingle();
@@ -1292,17 +1301,47 @@ app.get('/api/news/:slug', async (req, res) => {
   }
 });
 
+function normalizeSubjectKey(value: unknown): string {
+  const s = String(value || '').trim().toLowerCase();
+  if (s === 'use of english' || s === 'english language' || s === 'english') return 'english';
+  return s;
+}
+
 function selectCbtPaperQuestions(rows: any[], subjects: string[]) {
   const requested = Array.from(new Set((subjects || []).map((value) => String(value).trim()).filter(Boolean)));
   if (!requested.length) return rows.map((row, index) => ({ ...row, position: index + 1 }));
   const paper: any[] = [];
+  const usedKeys = new Set<string>();
   for (const subject of requested) {
-    const limit = /^(use of english|english language|english)$/i.test(subject) ? 60 : 40;
-    const matches = rows.filter((row) => String(row.subject || '').trim().toLowerCase() === subject.toLowerCase()).slice(0, limit);
+    const norm = normalizeSubjectKey(subject);
+    if (usedKeys.has(norm)) continue;
+    usedKeys.add(norm);
+    const limit = norm === 'english' ? 60 : 40;
+    const matches = rows.filter((row) => normalizeSubjectKey(row.subject) === norm).slice(0, limit);
     paper.push(...matches);
+  }
+  if (!paper.length && rows.length) {
+    return rows.slice(0, 60).map((row, index) => ({ ...row, position: index + 1 }));
   }
   return paper.map((row, index) => ({ ...row, position: index + 1 }));
 }
+
+app.get('/api/cbt/exams', async (_req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('cbt_exams')
+      .select('id,title,exam_body,subject,description,duration_minutes')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('CBT exams list API error:', error);
+    res.status(503).json({ error: 'CBT exams are temporarily unavailable.' });
+  }
+});
 
 app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   try {
@@ -1474,6 +1513,45 @@ app.post('/api/cbt/submit', async (req, res) => {
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
+  }
+});
+
+app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
+  try {
+    const { supabase, user } = await requireUser(req);
+    const { data: attempt, error } = await supabase
+      .from('cbt_attempts')
+      .select('id,current_question')
+      .eq('id', req.params.attemptId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error || !attempt) return res.status(404).json({ error: 'CBT attempt not found.' });
+    res.json({ answers: {}, questionIndex: Number.isInteger(attempt.current_question) ? attempt.current_question : 0 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to load CBT progress.';
+    const status = /Authentication|required|session/i.test(message) ? 401 : 400;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to load CBT progress.') });
+  }
+});
+
+app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
+  try {
+    const { supabase, user } = await requireUser(req);
+    const questionIndex = Number(req.body?.questionIndex);
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (Number.isInteger(questionIndex) && questionIndex >= 0) patch.current_question = questionIndex;
+    const { error } = await supabase
+      .from('cbt_attempts')
+      .update(patch)
+      .eq('id', req.params.attemptId)
+      .eq('user_id', user.id)
+      .eq('status', 'in_progress');
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
+    const status = /Authentication|required|session/i.test(message) ? 401 : 400;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to save CBT progress.') });
   }
 });
 
