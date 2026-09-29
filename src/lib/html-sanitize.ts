@@ -121,9 +121,61 @@ export function sanitizeRichHtml(input: string): string {
     }
   }
 
+  // Auto-linkify plain https:// URLs in text nodes that are not already inside
+  // an <a>, <code>, or <pre> element.
+  const urlPattern = /(https:\/\/[^\s<]+)/gi;
+  const linkifyTextNodes = (parent: Element) => {
+    const tag = parent.tagName.toLowerCase();
+    if (tag === 'a' || tag === 'code' || tag === 'pre') return;
+    for (const node of Array.from(parent.childNodes)) {
+      if (node.nodeType === 1) {
+        linkifyTextNodes(node as Element);
+      } else if (node.nodeType === 3) {
+        const value = node.nodeValue || '';
+        if (!/https:\/\//i.test(value)) continue;
+        const parts = value.split(urlPattern);
+        if (parts.length <= 1) continue;
+        const fragment = parsed.createDocumentFragment();
+        for (const part of parts) {
+          const candidate = part.replace(/[),.;!?]+$/, '');
+          const trailing = part.slice(candidate.length);
+          const href = /^https:\/\//i.test(candidate) ? safeHref(candidate) : null;
+          if (href) {
+            const anchor = parsed.createElement('a');
+            anchor.setAttribute('href', href);
+            anchor.setAttribute('target', '_blank');
+            anchor.setAttribute('rel', 'noopener noreferrer nofollow');
+            anchor.textContent = candidate;
+            fragment.appendChild(anchor);
+            if (trailing) fragment.appendChild(parsed.createTextNode(trailing));
+          } else if (part) {
+            fragment.appendChild(parsed.createTextNode(part));
+          }
+        }
+        node.replaceWith(fragment);
+      }
+    }
+  };
+  linkifyTextNodes(root);
+
   return root.innerHTML;
 }
 
 export function looksLikeHtml(value: string): boolean {
   return /<[a-z][\s\S]*>/i.test(value || '');
 }
+
+export function plainTextFromHtml(value: string): string {
+  if (!value) return '';
+  if (!looksLikeHtml(value)) return value.trim();
+  if (typeof document !== 'undefined') {
+    try {
+      const parsed = new DOMParser().parseFromString(value, 'text/html');
+      return (parsed.body.textContent || '').replace(/\s+/g, ' ').trim();
+    } catch {
+      // fall through to regex strip
+    }
+  }
+  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+

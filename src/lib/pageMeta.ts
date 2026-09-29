@@ -17,6 +17,8 @@ const routeTitles: Record<string, string> = {
   '/dashboard/cbt/results': 'CBT Results',
   '/screening-calculator': 'Screening Calculator',
   '/calculator': 'Screening Calculator',
+  '/tools/cgpa-calculator': 'CGPA Calculator',
+  '/cgpa-calculator': 'CGPA Calculator',
   '/admission': 'Admission',
   '/tools': 'Academic Tools',
   '/schools': 'School Finder',
@@ -42,6 +44,7 @@ const routeTitles: Record<string, string> = {
   '/verify-email': 'Verify Email',
   '/profile/complete': 'Academic Profile Completion',
   '/profile': 'Academic Profile',
+  '/dashboard/profile': 'Academic Profile',
   '/dashboard': 'Student Dashboard',
   '/dashboard/services': 'My Requests',
   '/dashboard/applications': 'My Requests',
@@ -59,6 +62,11 @@ const routeTitles: Record<string, string> = {
   '/admin/cbt': 'Admin CBT',
   '/admin/news': 'Admin Newsroom',
   '/admin/users': 'Admin Users',
+  '/admin/content': 'Admin Events & Key Dates',
+  '/admin/opportunities': 'Admin Opportunities',
+  '/admin/schools': 'Admin Schools',
+  '/admin/services': 'Admin Services Catalogue',
+  '/admin/content-manager': 'Admin Data Control Center',
 };
 
 export function pageTitleFor(pathname: string): string {

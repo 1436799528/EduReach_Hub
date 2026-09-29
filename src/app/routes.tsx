@@ -7,6 +7,7 @@ import NotFoundPage from '../../pages/NotFoundPage';
 import ComingSoonPage from '../../pages/ComingSoonPage';
 import ProtectedRoute from './ProtectedRoute';
 import type { DashboardTab } from '../../pages/StudentDashboardV2';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 // Route-level code splitting. The home page, exam hubs and the CBT hall ship in
 // the main bundle; everything else is fetched the first time a student opens it,
@@ -20,6 +21,7 @@ const ExamSetupPage = lazy(() => import('../../pages/ExamSetupPage'));
 const PastQuestionsPage = lazy(() => import('../../pages/PastQuestionsPage'));
 const CbtResultsPage = lazy(() => import('../../pages/CbtResultsPage'));
 const ScreeningCalculatorPage = lazy(() => import('../../pages/ScreeningCalculatorPage'));
+const CgpaCalculatorPage = lazy(() => import('../../pages/CgpaCalculatorPage'));
 const ServicesCatalogPage = lazy(() => import('../../pages/ServicesCatalogPage'));
 const SearchPage = lazy(() => import('../../pages/SearchPage'));
 const ServiceApplyPage = lazy(() => import('../../pages/ServiceApplyPage'));
@@ -52,7 +54,7 @@ const liveServiceSlugs = new Set([
 
 function serviceEntry(slug: string): ReactElement {
   const normalized = slug.toLowerCase();
-  if (liveServiceSlugs.has(normalized)) return <ServiceApplyPage slug={normalized} />;
+  if (liveServiceSlugs.has(normalized) || isSupabaseConfigured) return <ServiceApplyPage slug={normalized} />;
   return <ComingSoonPage />;
 }
 
@@ -144,6 +146,7 @@ export function renderRoute(pathname: string): ReactElement {
     return <CbtResultsPage attemptId={decodeURIComponent(path.slice('/cbt/results/'.length))} />;
   }
   if (path === '/screening-calculator' || path === '/calculator') return <ScreeningCalculatorPage />;
+  if (path === '/tools/cgpa-calculator' || path === '/cgpa-calculator') return <CgpaCalculatorPage />;
   if (path === '/admission' || path.startsWith('/admission/')) return <ComingSoonPage />;
   if (path === '/tools' || path.startsWith('/tools/')) return <ComingSoonPage />;
   if (path === '/schools') return <SchoolFinderPage />;

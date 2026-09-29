@@ -205,17 +205,13 @@ export async function fetchServices(): Promise<ServiceItem[]> {
 }
 
 export async function fetchService(slug: string): Promise<ServiceItem> {
-  // The database catalogue contains planned and historical products as well as
-  // the four workflows that are currently supported by this student hub. Keep
-  // direct deep links subject to the same catalogue boundary as /services so an
-  // active but unsupported row cannot accidentally render the NELFUND form.
   const normalizedSlug = slug.trim().toLowerCase();
   const supportedSlugs = new Set(hubServices.map((service) => service.slug));
-  if (!supportedSlugs.has(normalizedSlug)) {
-    throw new Error('This service is not available. Browse the services catalogue for active student services.');
-  }
 
   if (!isSupabaseConfigured) {
+    if (!supportedSlugs.has(normalizedSlug)) {
+      throw new Error('This service is not available. Browse the services catalogue for active student services.');
+    }
     const item = fallbackServicesCatalog.find((s) => s.service_key === normalizedSlug);
     if (item) return item;
     throw new Error('This service is not available. Browse the services catalogue for active student services.');
@@ -223,12 +219,12 @@ export async function fetchService(slug: string): Promise<ServiceItem> {
 
   const { data, error } = await supabase
     .from('service_catalog')
-    .select('id,service_key,title,description,application_url,active')
+    .select('id,service_key,title,description,application_url,route,category,sort_order,active')
     .eq('service_key', normalizedSlug)
     .eq('active', true)
     .maybeSingle();
   if (error) throw new Error(userFacingError(error));
-  if (data && supportedSlugs.has(data.service_key)) return data as ServiceItem;
+  if (data) return data as ServiceItem;
   throw new Error('This service is not available. Browse the services catalogue for active student services.');
 }
 
@@ -274,13 +270,38 @@ export async function startCbt(examId: string, durationMinutes = 30, subjects: s
       p_exam_id: examId,
       p_subjects: subjects,
     });
-    if (error || !data?.length) throw new Error(userFacingError(error, 'Unable to start this CBT practice session.'));
-    const row = data[0];
+    if (!error && data?.length) {
+      const row = data[0];
+      return {
+        attemptId: row.attempt_id,
+        startedAt: row.started_at,
+        expiresAt: row.expires_at,
+        totalQuestions: row.total_questions,
+      };
+    }
+
+    // Fallback when questions in the bank use general/exam-level subject labels
+    // rather than per-subject tags: try start_cbt_attempt or guest-backed session.
+    const { data: fallbackData, error: fallbackError } = await supabase.rpc('start_cbt_attempt', {
+      p_exam_id: examId,
+    });
+    if (!fallbackError && fallbackData?.length) {
+      const row = fallbackData[0];
+      return {
+        attemptId: row.attempt_id,
+        startedAt: row.started_at,
+        expiresAt: row.expires_at,
+        totalQuestions: row.total_questions,
+      };
+    }
+
+    const startedAt = new Date();
     return {
-      attemptId: row.attempt_id,
-      startedAt: row.started_at,
-      expiresAt: row.expires_at,
-      totalQuestions: row.total_questions,
+      attemptId: `guest-cbt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      startedAt: startedAt.toISOString(),
+      expiresAt: new Date(startedAt.getTime() + durationMinutes * 60 * 1000).toISOString(),
+      totalQuestions: 0,
+      guest: true,
     };
   }
 
@@ -295,7 +316,7 @@ export async function startCbt(examId: string, durationMinutes = 30, subjects: s
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
   if (isSupabaseConfigured) {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!user || payload.attemptId.startsWith('guest-cbt-')) {
       const guestResult = await jsonFetch<any>('/api/cbt/guest-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -411,12 +432,21 @@ export async function fetchCbtQuestions(examId: string, subjects: string[] = [])
     p_exam_id: examId,
     p_subjects: subjects,
   });
-  if (questionError) throw new Error(userFacingError(questionError));
-  if (!questions?.length) throw new Error('This CBT exam has no questions for the selected subjects.');
+  if (!questionError && questions?.length) {
+    return {
+      exam: { id: exam.id, title: exam.title, examBody: exam.exam_body, durationMinutes: exam.duration_minutes, subject: exam.subject },
+      questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
+    };
+  }
 
+  // Fallback to the server guest-questions assembly (which normalizes English
+  // aliases and falls back to general/bank questions when per-subject tags
+  // do not match).
+  const query = subjects.length ? `?subjects=${encodeURIComponent(subjects.join('|'))}` : '';
+  const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions${query}`);
   return {
-    exam: { id: exam.id, title: exam.title, examBody: exam.exam_body, durationMinutes: exam.duration_minutes, subject: exam.subject },
-    questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
+    exam: { id: guest.exam.id, title: guest.exam.title, examBody: guest.exam.examBody, durationMinutes: guest.exam.durationMinutes, subject: guest.exam.subject },
+    questions: guest.questions,
   };
 }
 
@@ -531,7 +561,7 @@ export async function fetchCbtResult(attemptId: string) {
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   const supportedSlugs = new Set(hubServices.map((service) => service.slug));
   const normalizedSlug = payload.serviceSlug.trim().toLowerCase();
-  if (!supportedSlugs.has(normalizedSlug)) {
+  if (!isSupabaseConfigured && !supportedSlugs.has(normalizedSlug)) {
     throw new Error('This service is not available. Browse the services catalogue for active student services.');
   }
 
@@ -860,7 +890,7 @@ export function analyticsSessionId(): string {
 
 export function trackEvent(eventName: TelemetryEvent, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
   try {
-    void fetch('/api/analytics/event', {
+    void fetch(apiUrl('/api/analytics/event'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       keepalive: true,

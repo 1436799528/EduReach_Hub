@@ -95,16 +95,43 @@ function readSetupMemory(exam: ExamSetupKey): SetupMemory {
 
 export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const copy = setupCopy[exam];
+  const requestedSubjectParam = useMemo(() => new URLSearchParams(window.location.search).get('subject')?.trim() || '', []);
   // Production CBT configuration (single source of truth). `targetExam` is the
   // concrete exam this setup session will start; its configured default
   // duration drives everything the student sees before the timer begins.
   const [catalogExams, setCatalogExams] = useState<CatalogExam[]>([]);
   const [targetExam, setTargetExam] = useState<CatalogExam | null>(null);
+  const [examsLoading, setExamsLoading] = useState<boolean>(isSupabaseConfigured);
   const [chosenMinutes, setChosenMinutes] = useState<number | null>(null);
   const [memory] = useState(() => readSetupMemory(exam));
-  const [department, setDepartment] = useState(memory.department || 'All departments');
-  const [courseName, setCourseName] = useState(memory.courseName || jambCourses[0].name);
-  const [jambSubjects, setJambSubjects] = useState(memory.jambSubjects?.length === 4 ? memory.jambSubjects : jambCourses[0].subjects);
+  const [department, setDepartment] = useState(() => {
+    if (requestedSubjectParam) {
+      const match = jambCourses.find((c) => c.subjects.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase()));
+      if (match) return match.department;
+    }
+    return memory.department || 'All departments';
+  });
+  const [courseName, setCourseName] = useState(() => {
+    if (requestedSubjectParam) {
+      const match = jambCourses.find((c) => c.subjects.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase()));
+      if (match) return match.name;
+    }
+    return memory.courseName || jambCourses[0].name;
+  });
+  const [jambSubjects, setJambSubjects] = useState(() => {
+    if (requestedSubjectParam) {
+      const match = jambCourses.find((c) => c.subjects.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase()));
+      if (match) return match.subjects;
+      if (requestedSubjectParam.toLowerCase() !== 'use of english') {
+        const base = [...jambCourses[0].subjects];
+        if (!base.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase())) {
+          base[1] = requestedSubjectParam;
+        }
+        return base;
+      }
+    }
+    return memory.jambSubjects?.length === 4 ? memory.jambSubjects : jambCourses[0].subjects;
+  });
   const [secondaryTrack, setSecondaryTrack] = useState<(typeof secondarySubjectTracks)[number]>(memory.secondaryTrack || 'General');
   const [schoolId, setSchoolId] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get('school');
@@ -114,17 +141,16 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   });
   const [schoolSubjects, setSchoolSubjects] = useState<string[]>(memory.schoolSubjects || []);
   const [schoolError, setSchoolError] = useState('');
-  const [secondarySubjects, setSecondarySubjects] = useState<string[]>(memory.secondarySubjects?.length === 9 ? memory.secondarySubjects : [
-    'Use of English',
-    'Mathematics',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-  ]);
+  const [secondarySubjects, setSecondarySubjects] = useState<string[]>(() => {
+    const defaultNine = secondarySchoolSubjects.slice(0, 9);
+    const base = memory.secondarySubjects?.length === 9 && memory.secondarySubjects.every(Boolean)
+      ? [...memory.secondarySubjects]
+      : defaultNine;
+    if (requestedSubjectParam && secondarySchoolSubjects.includes(requestedSubjectParam) && !base.includes(requestedSubjectParam)) {
+      base[2] = requestedSubjectParam;
+    }
+    return base;
+  });
 
   useEffect(() => {
     try {
@@ -135,8 +161,12 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   }, [courseName, department, exam, jambSubjects, schoolId, schoolSubjects, secondarySubjects, secondaryTrack]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) {
+      setExamsLoading(false);
+      return;
+    }
     let active = true;
+    setExamsLoading(true);
     const requestedId = new URLSearchParams(window.location.search).get('exam');
     void fetchCbtExams()
       .then((exams) => {
@@ -146,11 +176,32 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         const resolved = resolveSetupExam(typed, exam, requestedId);
         setTargetExam(resolved);
         setChosenMinutes(resolved ? resolved.duration_minutes : null);
+        if (resolved?.subject) {
+          const subj = resolved.subject.trim();
+          if (exam === 'jamb' && subj && subj.toLowerCase() !== 'use of english' && !subj.toLowerCase().includes('general')) {
+            setJambSubjects((prev) => {
+              if (prev.some((s) => s.toLowerCase() === subj.toLowerCase())) return prev;
+              const next = [...prev];
+              next[1] = subj;
+              return next;
+            });
+          } else if ((exam === 'waec' || exam === 'neco') && secondarySchoolSubjects.includes(subj)) {
+            setSecondarySubjects((prev) => {
+              if (prev.includes(subj)) return prev;
+              const next = [...prev];
+              next[2] = subj;
+              return next;
+            });
+          }
+        }
       })
       .catch(() => {
         // The catalogue read failed; the setup page remains usable and the
         // practice hall will surface the honest question-bank error state.
         if (active) setTargetExam(null);
+      })
+      .finally(() => {
+        if (active) setExamsLoading(false);
       });
     return () => { active = false; };
   }, [exam]);
@@ -199,18 +250,18 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
 
   function changeSecondaryTrack(value: (typeof secondarySubjectTracks)[number]) {
     setSecondaryTrack(value);
-    // Keep the two common core slots where the selected track supports them,
-    // but clear electives so the student makes an explicit, duplicate-free choice.
     const options = value === 'General' ? secondarySchoolSubjects : secondarySubjectCatalog[value];
-    setSecondarySubjects([
-      options.includes('Use of English') ? 'Use of English' : '',
-      options.includes('Mathematics') ? 'Mathematics' : '',
-      '', '', '', '', '', '', '',
-    ]);
+    const defaults = options.slice(0, 9);
+    while (defaults.length < 9) defaults.push('');
+    setSecondarySubjects(defaults);
   }
 
   function startPractice() {
     setSchoolError('');
+    if (isSupabaseConfigured && !examsLoading && !targetExam) {
+      setSchoolError('No active CBT question bank is published for this examination category yet. Please choose an available bank on the CBT Centre.');
+      return;
+    }
     if (exam === 'jamb' && (jambSubjects.length !== 4 || jambSubjects.some((subject) => !subject))) {
       setSchoolError('Choose all four JAMB subjects before entering the practice hall.');
       return;
@@ -403,9 +454,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
               </div>
             )}
 
+            {isSupabaseConfigured && !examsLoading && !targetExam && (
+              <div className="hub-form-error" role="status" style={{ marginBottom: '12px' }}>
+                No active {exam.toUpperCase()} CBT question bank is published yet. Browse <a href="/cbt" style={{ color: 'inherit', fontWeight: 800 }}>available CBT question banks</a> or check back soon.
+              </div>
+            )}
             {schoolError && <div className="hub-form-error" role="alert">{schoolError}</div>}
             <div className="er-setup-actions">
-              <button type="button" className="hub-primary-btn" onClick={startPractice}>Enter practice hall <ArrowRight size={15} /></button>
+              <button type="button" className="hub-primary-btn" onClick={startPractice} disabled={isSupabaseConfigured && !examsLoading && !targetExam}>Enter practice hall <ArrowRight size={15} /></button>
               <a className="hub-outline-btn" href="/past-questions"><BookOpen size={15} /> Browse past questions</a>
             </div>
           </section>

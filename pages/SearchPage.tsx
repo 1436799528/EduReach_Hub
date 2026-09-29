@@ -6,7 +6,9 @@ import { pastQuestionLibrary, studyMaterialLibrary } from '../src/data/examPrepa
 import { simulatorStartHref } from '../src/components/ExamSimulatorGrid';
 import type { CatalogExam } from '../src/lib/cbt-config';
 import { services } from '../src/data/services';
-import { fetchCbtExams, fetchNews, type NewsItem, trackEvent } from '../src/lib/api';
+import { commonInstitutions } from '../src/data/studentOptions';
+import { itemKey } from '../src/components/dashboard/SchoolFinderCard';
+import { fetchCbtExams, fetchNews, fetchOpportunities, type NewsItem, type Opportunity, trackEvent } from '../src/lib/api';
 
 type SearchResult = {
   id: string;
@@ -54,8 +56,25 @@ function staticResults(exams: CatalogExam[]): SearchResult[] {
     href: record.href,
     identity: record.exam,
   }));
-  return [...serviceResults, ...examResults, ...materialResults, ...cbtResults,
+  const schoolResults = commonInstitutions
+    .filter((name) => !name.startsWith('Other'))
+    .map((raw, index) => {
+      const match = raw.match(/^(.*?)(?:\s+\(([^)]+)\))?$/);
+      const schoolName = match?.[1] || raw;
+      const acronym = match?.[2] || '';
+      const slug = itemKey(schoolName);
+      return {
+        id: `school-${index + 1}`,
+        title: raw,
+        description: `${acronym ? `${acronym} · ` : ''}View institution profile in the EduReach School Finder.`,
+        category: 'School Finder',
+        href: `/schools/${encodeURIComponent(slug)}?name=${encodeURIComponent(schoolName)}&acronym=${encodeURIComponent(acronym)}`,
+        identity: acronym || schoolName,
+      };
+    });
+  return [...serviceResults, ...examResults, ...materialResults, ...cbtResults, ...schoolResults,
     { id: 'screening-calculator', title: 'Screening Calculator', description: 'Plan an admission aggregate with an honest institution-specific reminder.', category: 'Student Tool', href: '/screening-calculator', identity: 'calculator' },
+    { id: 'cgpa-calculator-tool', title: 'CGPA Calculator', description: 'Calculate your Nigerian 5.0-scale GPA and degree classification.', category: 'Student Tool', href: '/tools/cgpa-calculator', identity: 'calculator' },
     { id: 'opportunities', title: 'Student Opportunities & Grants', description: 'Browse the configured opportunities catalogue and its honest unavailable states.', category: 'Opportunities', href: '/jobs', identity: 'opportunities' },
     { id: 'news', title: 'News & Updates', description: 'Read verified and clearly labelled student updates.', category: 'Noticeboard', href: '/news', identity: 'news' },
   ];
@@ -71,6 +90,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState(readQuery);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [exams, setExams] = useState<CatalogExam[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
   useEffect(() => {
@@ -85,11 +105,16 @@ export default function SearchPage() {
 
   useEffect(() => {
     let active = true;
-    void Promise.all([fetchNews().catch(() => []), fetchCbtExams().catch(() => [])])
-      .then(([newsItems, examItems]) => {
+    void Promise.all([
+      fetchNews().catch(() => []),
+      fetchCbtExams().catch(() => []),
+      fetchOpportunities().catch(() => []),
+    ])
+      .then(([newsItems, examItems, opportunityItems]) => {
         if (!active) return;
         setNews(newsItems);
         setExams(examItems);
+        setOpportunities(opportunityItems);
         setLoadingNews(false);
       });
     return () => { active = false; };
@@ -97,6 +122,14 @@ export default function SearchPage() {
 
   const allResults = useMemo<SearchResult[]>(() => [
     ...staticResults(exams),
+    ...opportunities.map((item) => ({
+      id: `opportunity-${item.id}`,
+      title: item.title,
+      description: `${item.organisation ? `${item.organisation} · ` : ''}${item.category}${item.deadline ? ` · Deadline ${item.deadline}` : ''}`,
+      category: 'Opportunities & Grants',
+      href: `/jobs?category=${encodeURIComponent(item.category)}`,
+      identity: item.category,
+    })),
     ...news.map((item) => ({
       id: `news-${item.id}`,
       title: item.title,
@@ -105,7 +138,7 @@ export default function SearchPage() {
       href: `/news/${encodeURIComponent(item.slug)}`,
       identity: item.category,
     })),
-  ], [news, exams]);
+  ], [news, exams, opportunities]);
 
   const results = useMemo(() => {
     const normalized = query.trim();

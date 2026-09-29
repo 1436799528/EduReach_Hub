@@ -37,3 +37,13 @@ export const EDUREACH_WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029Va5kl
 export function jobApplyHref(title: string): string {
   return `https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, I want to apply for: ${title}`)}`;
 }
+
+export function isOpportunityExpired(deadline?: string | null): boolean {
+  if (!deadline) return false;
+  const trimmed = deadline.trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return false;
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return trimmed < todayIso;
+}
+

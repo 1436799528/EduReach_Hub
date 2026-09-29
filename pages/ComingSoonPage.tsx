@@ -16,12 +16,12 @@ const copyByPath: Array<{ match: (path: string) => boolean; copy: ComingSoonCopy
     },
   },
   {
-    match: (path) => path === '/schools' || path.startsWith('/admission/'),
+    match: (path) => path.startsWith('/admission/'),
     copy: {
       eyebrow: 'Admission',
       title: 'This admission section is on the way',
       description:
-        'This admission guide has not launched yet. Meanwhile, you can estimate your aggregate with the screening calculator or follow verified admission updates.',
+        'This admission guide has not launched yet. Meanwhile, you can estimate your aggregate with the screening calculator, search the school finder, or follow verified admission updates.',
     },
   },
   {
@@ -119,6 +119,45 @@ export default function ComingSoonPage({ title, description }: { title?: string;
             </p>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              {(path === '/tools' || path.startsWith('/tools/')) && (
+                <>
+                  <a
+                    href="/screening-calculator"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#C85841',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '9px 18px',
+                      fontSize: '12.5px',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Screening Calculator <ArrowRight size={13} />
+                  </a>
+                  <a
+                    href="/tools/cgpa-calculator"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '8px',
+                      padding: '9px 18px',
+                      fontSize: '12.5px',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    CGPA Calculator <ArrowRight size={13} />
+                  </a>
+                </>
+              )}
               <a
                 href="/services"
                 style={{

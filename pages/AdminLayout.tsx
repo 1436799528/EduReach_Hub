@@ -4,6 +4,7 @@ import {
   BarChart3,
   Briefcase,
   CalendarDays,
+  Database,
   Globe,
   GraduationCap,
   Laptop,
@@ -180,6 +181,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <NavLink href="/admin/users" icon={<Users size={15} />}>Student Accounts</NavLink>
           <div className="admin-nav-group">Analytics</div>
           <NavLink href="/admin/analytics" icon={<BarChart3 size={15} />}>Analytics &amp; Reports</NavLink>
+          <NavLink href="/admin/content-manager" icon={<Database size={15} />}>Data Control Center</NavLink>
           <NavLink href="/" icon={<Globe size={15} />}>View Public Site</NavLink>
         </nav>
       </div>

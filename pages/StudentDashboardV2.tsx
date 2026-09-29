@@ -23,6 +23,7 @@ import {
 import BrandLogo from '../src/components/BrandLogo';
 import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
+import { apiUrl } from '../src/lib/apiBase';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
@@ -295,7 +296,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
       let adminSession = false;
       try {
-        const adminResponse = await fetch('/api/admin/session', { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const adminResponse = await fetch(apiUrl('/api/admin/session'), { headers: { Authorization: `Bearer ${session.access_token}` } });
         adminSession = adminResponse.ok;
       } catch {
         adminSession = false;
