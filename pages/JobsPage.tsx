@@ -4,7 +4,7 @@ import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
-import { EDUREACH_WHATSAPP, jobApplyHref, jobs } from '../src/data/hubContent';
+import { EDUREACH_WHATSAPP, isOpportunityExpired, jobApplyHref, jobs } from '../src/data/hubContent';
 import { fetchOpportunities, type Opportunity } from '../src/lib/api';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
@@ -31,15 +31,6 @@ function readOpportunityFilter() {
   if (value === 'competition') return 'fellowship';
   if (value === 'job') return 'internship';
   return validCategoryParams.has(value) ? value : 'ALL';
-}
-
-export function isOpportunityExpired(deadline?: string | null): boolean {
-  if (!deadline) return false;
-  const trimmed = deadline.trim().slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return false;
-  const now = new Date();
-  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  return trimmed < todayIso;
 }
 
 export default function JobsPage() {

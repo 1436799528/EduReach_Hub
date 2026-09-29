@@ -340,12 +340,14 @@ export default function ProfileCompletionPage() {
       }
     }
 
+    const wasEditingExisting = editMode;
     setSaving(false);
     setProfileCompleted(true);
     setSavedSuccess(true);
     window.setTimeout(() => {
       setSavedSuccess(false);
-      window.history.pushState({}, '', '/profile');
+      const destination = wasEditingExisting ? '/profile' : '/dashboard';
+      window.history.pushState({}, '', destination);
       window.dispatchEvent(new PopStateEvent('popstate'));
     }, 1200);
   };
@@ -1057,7 +1059,7 @@ export default function ProfileCompletionPage() {
                   boxShadow: profileComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
                 }}
               >
-                {saving ? 'Saving Profile…' : 'Save & Open Dashboard'} <ChevronRight size={16} />
+                {saving ? 'Saving Profile…' : editMode ? 'Save Profile Changes' : 'Save & Open Dashboard'} <ChevronRight size={16} />
               </button>
             </div>
           </form>

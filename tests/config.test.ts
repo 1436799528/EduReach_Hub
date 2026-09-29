@@ -42,3 +42,12 @@ test('dynamic CBT cards keep the selected bank and use supported setup routes', 
   assert.equal(simulatorStartHref('postutme'), '/cbt/setup/post-utme');
   assert.equal(simulatorStartHref('NABTEB'), '/cbt');
 });
+
+test('opportunity deadline expiry helper flags past dates and keeps future or open deadlines active', async () => {
+  const { isOpportunityExpired } = await import('../src/data/hubContent');
+  assert.equal(isOpportunityExpired('2020-01-01'), true);
+  assert.equal(isOpportunityExpired('2099-12-31'), false);
+  assert.equal(isOpportunityExpired(null), false);
+  assert.equal(isOpportunityExpired(''), false);
+});
+

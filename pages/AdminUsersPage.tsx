@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading && <TableSkeleton rows={6} columns={7} />}
+                {loading && <TableSkeleton rows={6} columns={8} />}
 
                 {!loading &&
                   profiles.map((p) => (
@@ -151,7 +151,7 @@ export default function AdminUsersPage() {
 
                 {!loading && !profiles.length && (
                   <tr>
-                    <td colSpan={7} className="empty-state">
+                    <td colSpan={8} className="empty-state">
                       <AdminEmptyState title="No students match the search" hint="Student accounts appear here as soon as they register." />
                     </td>
                   </tr>

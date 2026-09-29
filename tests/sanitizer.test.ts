@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { JSDOM } from 'jsdom';
-import { sanitizeRichHtml } from '../src/lib/html-sanitize';
+import { plainTextFromHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 const dom = new JSDOM('');
 Object.assign(globalThis, { document: dom.window.document, DOMParser: dom.window.DOMParser });
 after(() => dom.window.close());
@@ -29,3 +29,12 @@ test('images and inline styles are allowlisted', () => {
   assert.equal(body.querySelector('p')?.style.position, '');
   assert.equal(body.querySelector('p')?.style.color, 'red');
 });
+test('plain https URLs in rich HTML text nodes become safe external links and plainTextFromHtml strips markup', () => {
+  const body = parse('<p>Check https://portal.jamb.gov.ng/efacility for updates.</p>');
+  const link = body.querySelector('a')!;
+  assert.equal(link.getAttribute('href'), 'https://portal.jamb.gov.ng/efacility');
+  assert.equal(link.target, '_blank');
+  assert.equal(link.rel, 'noopener noreferrer nofollow');
+  assert.equal(plainTextFromHtml('<p>Hello <strong>World</strong></p>'), 'Hello World');
+});
+

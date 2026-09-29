@@ -48,7 +48,24 @@ for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
     assert.match(response.headers.get('content-type')!, /application\/json/);
   });
 }
-for (const [method, path] of [['POST', '/api/cbt/exams/test/start'], ['POST', '/api/cbt/submit']]) {
+test('netlify functions prefix normalizes to /api under standalone server', async () => {
+  const healthRes = await fetch(`${base}/.netlify/functions/api/health`);
+  assert.equal(healthRes.status, 200);
+  assert.deepEqual(await healthRes.json(), { status: 'ok', service: 'edureach' });
+
+  const eventRes = await fetch(`${base}/.netlify/functions/api/analytics/event`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventName: 'pageview', path: '/' }),
+  });
+  assert.equal(eventRes.status, 204);
+});
+for (const [method, path] of [
+  ['POST', '/api/cbt/exams/test/start'],
+  ['POST', '/api/cbt/submit'],
+  ['GET', '/api/cbt/attempts/test/progress'],
+  ['PATCH', '/api/cbt/attempts/test/progress'],
+]) {
   test(`student API ${method} ${path} requires authentication`, async () => {
     const response = await fetch(base + path, { method });
     assert.equal(response.status, 401);

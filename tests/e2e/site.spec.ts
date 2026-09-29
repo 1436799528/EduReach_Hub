@@ -16,10 +16,10 @@ test.afterEach(async ({ page }) => {
 const publicRoutes = [
   '/', '/services', '/services/nelfund-loan', '/services/results', '/services/jamb-slip',
   '/services/admission-letters', '/services/apply/results', '/news', '/news/missing-article',
-  '/jobs', '/events', '/schools', '/schools/missing-school', '/past-questions', '/search',
+  '/jobs', '/events', '/schools', '/schools/unilag', '/schools/missing-school', '/past-questions', '/search',
   '/jamb', '/waec', '/neco', '/post-utme', '/cbt', '/cbt/setup/jamb', '/cbt/setup/waec',
   '/cbt/setup/neco', '/cbt/setup/post-utme', '/cbt/practice', '/cbt/results',
-  '/screening-calculator', '/nabteb', '/support', '/tools', '/admission',
+  '/screening-calculator', '/tools/cgpa-calculator', '/nabteb', '/support', '/tools', '/admission',
   '/login', '/register', '/forgot-password', '/reset-password', '/verify-email',
 ];
 for (const path of publicRoutes) {
@@ -109,3 +109,15 @@ test('server build and source map are not public assets', async ({ request }) =>
     expect(body).not.toContain('sourcesContent');
   }
 });
+
+test('school finder has no horizontal overflow on small mobile viewports and resolves direct school slugs', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/schools');
+  await expect(page.locator('h1')).toHaveText('Find your school');
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+
+  await page.goto('/schools/unilag');
+  await expect(page.locator('h1')).toContainText('University of Lagos');
+});
+
