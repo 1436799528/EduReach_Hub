@@ -178,6 +178,13 @@ static migration history builds the database the application expects.
 build (no `VITE_SUPABASE_*` credentials), not a production account, and it boots
 the server on port 3100 itself. `audit:ci` is `npm audit --audit-level=low`.
 
+`npm test` also enforces the database access posture (BASE-1b): every table in
+`public` is classified as public-read, owner-scoped, server-only or dormant in
+`scripts/rls-posture.ts`, the test fails if a table is unclassified or the
+database disagrees, and it switches to the `anon`/`authenticated` roles to prove
+the policies actually filter rows. `npm run rls:audit` prints the posture table
+and the findings for the replayed schema.
+
 **In CI** the `EduReach production checks` workflow runs `npm ci`, installs
 Chromium, and then runs `npm run ci` — so every stage above, including the
 PostgreSQL replay, gates every pull request and every push to `main`. The

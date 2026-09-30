@@ -109,10 +109,12 @@ test('a real PostgreSQL replay guards the BASE-1 claims', () => {
   for (const file of ['tests/migrations.test.ts', 'supabase/ci/platform-shims.sql', 'supabase/ci/verify-migrations.sql']) {
     assert.ok(existsSync(join(root, file)), `${file} is missing`);
   }
-  const replay = readFileSync(join(root, 'tests/migrations.test.ts'), 'utf8');
-  assert.match(replay, /platform-shims\.sql/, 'the replay must load the Supabase platform shim');
-  assert.match(replay, /verify-migrations\.sql/, 'the replay must run the post-apply assertions');
-  assert.match(replay, /readdirSync\(migrationsDir\)/, 'the replay must read the migration directory itself');
+  const replay = readFileSync(join(root, 'scripts/replay.ts'), 'utf8');
+  assert.match(replay, /platform-shims\.sql/, 'the replay helper must load the Supabase platform shim');
+  assert.match(replay, /readdirSync\(MIGRATIONS_DIR\)/, 'the replay helper must read the migration directory itself');
+  const migrationsTest = readFileSync(join(root, 'tests/migrations.test.ts'), 'utf8');
+  assert.match(migrationsTest, /applyMigrations/, 'the schema test must use the shared replay helper');
+  assert.match(migrationsTest, /verify-migrations\.sql/, 'the replay must run the post-apply assertions');
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { devDependencies?: Record<string, string> };
   assert.ok(pkg.devDependencies?.['@electric-sql/pglite'], 'the replay engine must be a declared dev dependency');
 });

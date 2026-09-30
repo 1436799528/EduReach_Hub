@@ -250,12 +250,15 @@ project, which remains a manual dependency.
 6. **Five `institutions` columns the application selects were never created** —
    `slug`, `admission_portal_url`, `student_portal_url`, `is_verified`,
    `updated_at`; `GET /api/admin/institutions` would fail on a fresh project.
-7. **Six tables carry no policy in the repository** — `courses`, `resources`,
+7. **Six tables carry no effective policy** — `courses`, `resources`,
    `campus_post_comments`, `campus_post_likes`, `student_wallets`,
-   `edureach_notifications`. Their RLS state is therefore not reproducible from
-   the repository and the baseline does not change it (changing RLS without a
-   policy would silently deny reads that production allows). Recorded as an open
-   security item in the catalogue.
+   `edureach_notifications`: four had no policy at all and two had a policy that
+   could never run because RLS was off. Their RLS state was therefore not
+   reproducible from the repository and the baseline deliberately did not change
+   it (changing RLS without a policy would silently deny reads that production
+   allows). **Resolved by BASE-1b**, which widened the review to every table in
+   `public` after the count in this finding was shown to be imprecise — see
+   `docs/features/BASE-1b.md`.
 8. **`admin_content_versions` is referenced but never created** — the one
    reference is inside a `to_regclass` guard and no application code reads it, so
    the baseline deliberately does not invent its shape.
@@ -342,8 +345,8 @@ browser and dependency checks.
    `on_auth_user_created_wallet` routine remain unknown to the repository. They
    are stubbed/not invented; if production uses them, export their definitions
    and commit them as a migration.
-5. Decide the RLS posture for the six tables listed in finding 7 — that is a
-   security review, not something a baseline may assume.
+5. ~~Decide the RLS posture for the six tables listed in finding 7.~~ **Done in
+   BASE-1b** for every table in `public`, not just the six (`docs/features/BASE-1b.md`).
 6. P0-1 (live migration-state verification) is still open: apply nothing to
    production until the reviewer checklist in PR #11 is done.
 

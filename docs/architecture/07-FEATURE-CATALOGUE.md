@@ -45,7 +45,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | ID | Feature | Why it is next | Depends on | Status | Size |
 |---|---|---|---|---|---|
 | **BASE-1** ✅ | Reproducible baseline schema (`profiles`, `service_catalog`, `service_requests` + the objects the history assumed) | **Delivered:** baseline migration so a fresh project applies end to end, signup-trigger and institutions-column repairs, `npm run schema:audit` + 12 tests, two idempotent renames (`docs/features/BASE-1.md`) | — | 🔴 | S |
-| **BASE-1b** | RLS posture for the six tables the repository defines no policy for (`courses`, `resources`, `campus_post_comments`, `campus_post_likes`, `student_wallets`, `edureach_notifications`) | A baseline may not guess a security boundary; the audit names them and production's state is still unknown | BASE-1 | 🟡 | S |
+| **BASE-1b** ✅ | RLS posture for every table in `public` — the six BASE-1 named, plus the other tables that had RLS disabled, a policy that never ran, or a client grant with no policy | **Delivered** (`docs/features/BASE-1b.md`): one classification per table in `scripts/rls-posture.ts`, enforced by `20260930200000_rls_posture.sql` and verified by `tests/rls-posture.test.ts` on a real engine (catalog **and** `set role` enforcement). Before: 57 findings, 7 tables reachable with RLS off. After: 0. | BASE-1 | 🟡 | S |
 | **ROLE-1** ✅ | Capability layer (role split deferred) | **Delivered:** `resource.action` capabilities enforced on every privileged endpoint, ownership-aware `can()`, capability-aware console, role-assignment endpoint, retired half-roles, migration + 17 tests (`docs/features/ROLE-1.md`). Remaining: assign the narrower roles to real accounts | — | 🔴 | S |
 | **SEO-1** ✅ | Sitemap, robots, per-route canonical, Open Graph, structured data | **Delivered:** server-driven sitemap + `X-Robots-Tag` matrix, canonical aliases, JSON-LD (`docs/features/SEO-1.md`, commit `7c56830`) | — | 🔴 | M |
 | **NTF-1** ✅ | Notification triggers: service status change, deadline approaching | **Delivered (status half):** one notification per real status transition, rendered on the student dashboard. Deadline reminders need a per-student tracking/preferences model and stay with SA-3 (`docs/features/NTF-1.md`) | ROLE-1 (service admin role) | 🔴 | M |
@@ -80,11 +80,12 @@ SA-3  (independent)
 
 **Delivered:** SEO-1 (2026-09-30, commit `7c56830`), ROLE-1 (2026-09-30,
 capability layer), NTF-1 (2026-09-30, service status notifications), BASE-1
-(2026-09-30, reproducible baseline schema) and TEST-1 (2026-09-30, CI quality
-gate with a real PostgreSQL migration replay). Each was documented in
-`docs/features/` before its code, as the process requires. **The next feature is
-unselected** — the highest-value candidates are BASE-1b (RLS posture for the six
-tables with no policy), AN-1 (analytics taxonomy) and A11Y-1/PERF-1.
+(2026-09-30, reproducible baseline schema), TEST-1 (2026-09-30, CI quality gate
+with a real PostgreSQL migration replay) and BASE-1b (2026-09-30, RLS posture for
+every public table). Each was documented in `docs/features/` before its code, as
+the process requires. **The next feature is unselected** — the highest-value
+candidates are A11Y-1 and PERF-1 (the last two of the audit's breadth items),
+then AN-1 (analytics taxonomy).
 
 Whichever is chosen is implemented alone, end to end, and documented with
 `08-FEATURE-TEMPLATE.md` before code is written — including its routes, data,

@@ -197,8 +197,10 @@ applies in order to a real PostgreSQL ≥ 16, and the applied schema satisfies
 `supabase/ci/verify-migrations.sql` (plus a floor of 35 public tables).
 
 Deliberately not tested: YAML syntax and GitHub's interpretation of the workflow
-(GitHub reports those on the check run); RLS enforcement as a non-superuser role;
-anything requiring live Supabase credentials.
+(GitHub reports those on the check run); Supabase's own request path (a real JWT
+through PostgREST — BASE-1b now exercises the roles directly with `set role`,
+which is a real policy check but not that path); anything requiring live Supabase
+credentials.
 
 ## Evidence
 
@@ -283,8 +285,10 @@ access to `.github/workflows/`, e.g. via the GitHub UI editor).
    The gate says: *CI verifies schema consistency through `schema:audit` and
    applies every migration to a real PostgreSQL engine, but does not claim to
    execute `supabase db reset` against a Supabase project.*
-2. No RLS enforcement as a non-superuser role — policies are created and their
-   existence is asserted, not exercised.
+2. RLS is asserted on the catalog and (since BASE-1b) exercised as `anon` and
+   `authenticated` with `set role` in the replay. What is still not exercised is
+   Supabase's request path: a real JWT, PostgREST's role switching, and the
+   `service_role` key over HTTP.
 3. Browser tests do not run in this sandbox (downloads blocked); they do run in
    CI.
 4. No deployment smoke: the Netlify build, redirects and functions are not

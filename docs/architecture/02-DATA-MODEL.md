@@ -35,11 +35,26 @@ documented manual dependency (`docs/features/BASE-1.md`).
 repository*, not production's exact shape. Columns the repository has never seen
 cannot be reproduced; the columns listed for `profiles`, `service_catalog` and
 `service_requests` below are now created by the baseline, and any further column
-in production is a P0-1 drift item for a reviewed migration. Six tables still
-have no policy in the repository (`courses`, `resources`,
-`campus_post_comments`, `campus_post_likes`, `student_wallets`,
-`edureach_notifications`) — their RLS posture is an open security item, not
-something the baseline may assume.
+in production is a P0-1 drift item for a reviewed migration.
+
+**RLS posture (BASE-1b).** Every table in `public` now has an explicit,
+documented and enforced access model — public-read, owner-scoped, server-only or
+dormant — recorded in `scripts/rls-posture.ts` and explained in
+`docs/features/BASE-1b.md`. The baseline could not assume a security boundary;
+BASE-1b decides it: 7 tables had RLS disabled (including `student_wallets`, whose
+balance rows would have been readable with the publishable key wherever the
+project runs Supabase's default grants), 4 had a client grant with no policy at
+all, and 3 had policies that could never run. The migration
+`20260930200000_rls_posture.sql` enables RLS, grants only the verbs the existing
+policies cover, revokes everything else from `anon`/`authenticated`, and narrows
+the default privileges for future tables so a new table cannot be silently
+exposed. `npm run rls:audit` prints the posture; `tests/rls-posture.test.ts`
+enforces it, including real `set role` checks as `anon` and `authenticated`.
+
+**Reviving a dormant feature.** `resources` and `campus_posts` are referenced by
+`storage.objects` policies, so re-granting client SELECT on them is part of any
+materials/Campus-Feed revival, together with the policy work — not a separate
+step.
 
 ## 1. Domains and tables
 

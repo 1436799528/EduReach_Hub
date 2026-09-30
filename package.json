@@ -19,7 +19,8 @@
     "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
     "schema:audit": "tsx scripts/schema-audit.ts",
-    "audit:ci": "npm audit --audit-level=low"
+    "audit:ci": "npm audit --audit-level=low",
+    "rls:audit": "tsx scripts/rls-posture.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

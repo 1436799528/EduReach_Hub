@@ -17,6 +17,16 @@
 -- It does NOT reproduce Supabase's RLS enforcement, its storage service or its
 -- auth service. The replay proves our migrations are valid SQL that applies in
 -- order to a real PostgreSQL; it does not prove a Supabase project accepts them.
+
+-- The permissive bootstrap, reproduced on purpose (BASE-1b) ------------------
+--
+-- A Supabase project grants the API roles broad access to the public schema by
+-- default (`alter default privileges ... grant all on tables to anon,
+-- authenticated, service_role`). Reproducing that here is what makes the replay
+-- measure *exposure* instead of the absence of grants: a table created by a
+-- migration starts reachable by anon/authenticated, and only our own SQL can
+-- restrict it. Without this, a server-only table that simply forgot to revoke
+-- would look safe in the replay and be world-readable in production.
 -- See docs/features/TEST-1.md.
 
 do $roles$
@@ -90,3 +100,10 @@ create table if not exists storage.objects (
 grant usage on schema auth, storage to anon, authenticated, service_role;
 grant select on auth.users to authenticated, service_role;
 grant select, insert, update, delete on storage.buckets, storage.objects to anon, authenticated, service_role;
+
+-- The permissive bootstrap from the header comment. It must run after the roles
+-- exist and before the migrations create their tables: `alter default
+-- privileges` only affects objects created later.
+grant usage on schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
