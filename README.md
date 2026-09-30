@@ -197,6 +197,20 @@ regress quietly. `npm run a11y:audit` prints the findings table for review, and
 desktop and mobile widths as part of `test:e2e`; failing nodes are annotated on
 the check run. See `docs/features/A11Y-1.md`.
 
+`npm test` and the gate also hold the performance budget (PERF-1). `npm run
+perf:audit` measures the built artefact — gzip sizes for the entry chunk, the
+Supabase client, the bundle CSS, the critical path and every asset, the largest
+image and the total image payload, the font chain, the caching headers, and
+whether every raster `<img>` declares a loading strategy — against the budgets
+declared beside them in `scripts/perf-audit.ts`, and it runs inside `npm run ci`
+straight after the build. `tests/perf.test.ts` breaks each budget on purpose to
+prove the check fails, and keeps the layout reservations honest: a placeholder
+row must be exactly as tall as the row it stands in for. The browser half is
+`tests/e2e/perf.spec.ts`: LCP, CLS, total blocking time, TTFB, transfer bytes
+and request count on a 1.6 Mbps / 150 ms / 4x CPU throttled Chromium, printed in
+full and asserted against ceilings — the run that found and then cleared the
+three layout shifts this feature fixed. See `docs/features/PERF-1.md`.
+
 **In CI** the `EduReach production checks` workflow runs `npm ci`, installs
 Chromium, and then runs `npm run ci` — so every stage above, including the
 PostgreSQL replay, gates every pull request and every push to `main`. The

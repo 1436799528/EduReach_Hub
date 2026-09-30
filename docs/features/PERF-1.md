@@ -1,8 +1,9 @@
 # Feature: PERF-1 — Performance measurement and budget
 
-Status: **in progress** — this specification was written before the measurement
-code and the fixes, per `docs/architecture/08-FEATURE-TEMPLATE.md`. Evidence is
-at the end and is filled in as the work lands.
+Status: **delivered** (2026-09-30). This specification was written before the
+measurement code and the fixes, per `docs/architecture/08-FEATURE-TEMPLATE.md`.
+Evidence, including the numbers that drove each change and the CI run that
+proves it, is at the end.
 
 ## Purpose
 
@@ -91,9 +92,15 @@ Touched, each because of a measured number:
 | `public/_headers` | `/assets/*` → `Cache-Control: public, max-age=31536000, immutable` | The filenames are content-hashed; without the header every repeat visit revalidated every chunk. |
 | Image files under `public/` | Re-encoded (and WebP variants added for the code-referenced brand marks) | The brand emblem was 140 KB rendered in a 28 px box. |
 | `<img>` sites | `decoding="async"`, `loading="lazy"` below the fold, explicit dimensions where the box is not already fixed by CSS | LCP and CLS. |
+| `src/components/Skeleton.tsx` | `SkeletonTiles` added — card-shaped placeholders that use the real grid class of the cards they stand in for | The question-bank grid and the CBT simulator grid each replaced a one-line message (or nothing) with a full card grid. |
+| `src/edu-portal.css` | `.er-late-region` and its three floors, `.er-skeleton-grid`, `.er-skeleton-tile` | The CLS half of the feature: a region that fills in after the first paint keeps the footprint of what it is waiting for. |
+| `ExamSimulatorGrid.tsx` | A real pending state (`settled`) instead of "No active CBT question banks have been published yet" while the request is in flight | Measured: one 262px shift at 4.7s moving every section below it. The old message was also untrue. |
 
-No component is rewritten, no stylesheet is reorganised, no dependency is added
-or removed for this feature.
+No page is redesigned, no stylesheet is reorganised, no dependency is added or
+removed for this feature. The one behaviour change beyond loading strategy is
+`ExamSimulatorGrid`'s pending state, which now tells the truth while it waits
+(previously it claimed nothing had been published) and reserves the space the
+cards will occupy.
 
 ## User Actions
 
@@ -215,9 +222,9 @@ the merge, which is the mechanism TEST-1 established rather than a second one.
 
 | Layer | Check | Runs |
 |---|---|---|
-| Unit (node:test) | `tests/perf.test.ts` — the audit's budget arithmetic and its failure paths: a synthetic oversized asset fails, a missing `dist/` fails with instructions, a missing cache header fails, and the repository as committed passes | `npm test`, locally and in CI |
+| Unit (node:test) | `tests/perf.test.ts` — the audit's budget arithmetic and its failure paths: a synthetic oversized asset fails, a missing `dist/` fails with instructions, a missing cache header fails, and the repository as committed passes. It also holds the layout stability: a placeholder row must be exactly as tall as the row it stands in for, the card placeholder must use the same grid and padding as the cards, the reserved floors must be at least as tall as the placeholders, and the pages the measurement named must keep using them | `npm test`, locally and in CI |
 | Tooling | `npm run perf:audit` — the budget table for a human | after `npm run build`, in the gate |
-| Browser (Playwright) | `tests/e2e/perf.spec.ts` — throttled Chromium, LCP/CLS/long tasks/TTFB/transfer bytes, coarse budgets, annotated failures | `npm run test:e2e` (CI: browsers cannot be downloaded in this environment) |
+| Browser (Playwright) | `tests/e2e/perf.spec.ts` — throttled Chromium (1.6 Mbps, 150 ms, 4× CPU), LCP/CLS/long tasks/TTFB/transfer bytes/requests, coarse budgets, annotated failures that carry the shift timeline and the page anatomy | `npm run test:e2e` (CI: browsers cannot be downloaded in this environment) |
 | Field (production) | Not executable here. The runbook: PageSpeed Insights API (`psi` v5) against the deployed origin **three times**, CrUX history for the origin once it has traffic, and Search Console → Core Web Vitals for the URL groups. Record p75 LCP/INP/CLS per group, the date, and the deployment SHA next to them — a number without a SHA is not evidence. | manual, after deployment |
 
 The gate is extended, not duplicated: `perf:audit` joins `npm run ci` after
@@ -227,7 +234,79 @@ asserted rather than assumed.
 
 ## Evidence
 
-Filled in when the measurement and the fixes land (see the end of this file).
+**Baseline measured on `0d0cf65`, before any change in this feature** (gzip
+bytes from the built artefact, mobile geometry from the route table):
+
+| What | Before | After |
+|---|---|---|
+| Entry chunk `index-*.js` | 312 KB raw / 90.6 KB gzip | 90.7 KB gzip (unchanged in size; one stylesheet moved out of the CSS) |
+| `supabase-*.js` on every page | 216 KB / 56.2 KB gzip | 56.3 KB gzip |
+| Bundle CSS | 248 KB / 41.7 KB gzip | 41.7 KB gzip |
+| Critical path (entry + CSS + react + supabase, preloaded) | 192.7 KB gzip | 192.8 KB gzip |
+| Font | CSS `@import` inside the bundle (6 static weights) | `<link>` in the head, 2 preconnects, variable `wght@400..900` — the request starts with the document instead of after the 41.7 KB bundle CSS has parsed |
+| `/assets/*` | no `Cache-Control` | `public, max-age=31536000, immutable` (filenames are content-hashed); `/index.html` and `/sw.js` stay `no-store` |
+| Brand marks | `nelfund.png` 139 KB in a 28px box, `jamb.png` 71 KB, `nabteb.png` 41 KB | WebP variants 3.8–4.4 KB each, originals re-encoded as fallback |
+| `<img>` elements | 16 total: 2 declared `loading`, 0 declared `decoding`, 3 declared dimensions | every raster image declares `loading` (eager above the fold, lazy below), `decoding="async"`, and dimensions where CSS does not already fix the box |
+| Public raster payload | 291.9 KB over 14 files | unchanged (the re-encodes replaced bytes, they did not add files) |
+
+**The browser measurement, which is what found the real problem.** Budgets are
+ceilings (`LCP 8s`, `CLS 0.1`, `TBT 3s`, `1.2 MB`, `90 requests`) and every run
+prints its numbers. The first three runs failed on CLS alone:
+
+| Route | First measurement | After the layout-stability work |
+|---|---|---|
+| `/` | CLS 0.2082 | **passes** |
+| `/news` | CLS 0.1808 | **passes** |
+| `/past-questions` | CLS 0.3135 | **passes** |
+
+LCP, TBT, transfer bytes and request count passed on all three routes from the
+first run, so they were left alone.
+
+The failures were made to name themselves (the job log is not downloadable in
+this environment, so the test's assertion message carries the annotation):
+
+- `/` — one shift, `t=4714ms`, `+262px`, moving every section below it. The
+  source was `ExamSimulatorGrid`: it rendered a one-line "no question banks
+  have been published yet" while its catalogue request was in flight and then
+  replaced it with the card grid.
+- `/news` and `/past-questions` — the news feed, the side rail and the footer
+  moving when a region that had shown a skeleton or a "Loading question
+  banks…" line resolved into its empty, failed or loaded state.
+
+Fixes, each traceable to those numbers: `.er-late-region` reserves the
+footprint a late region is waiting for (542px for the home feed's six rows,
+450px for the noticeboard's five, 670px/1350px for the question-bank grid at
+its two breakpoints); the skeleton row was already 82px — exactly the height of
+the `.er-news-row` it stands in for — and is now proven to stay that way by a
+test; the question-bank placeholder became a card grid mirroring
+`.er-library-grid`; and the CBT simulator section gained a pending state of four
+placeholders in the real `.er-sim-grid`, 98px tall in the swipe layout like the
+cards they replace.
+
+**The gate.** `npm run perf:audit` (10 budgets: entry 100 KB, supabase 60 KB,
+CSS 46 KB, critical path 210 KB, all assets 310 KB, largest image 64 KB, image
+payload 320 KB, immutable assets, no-store shell and worker, and every raster
+`<img>` declaring a loading strategy) runs inside `npm run ci` immediately after
+`build`, and `tests/ci.test.ts` asserts that position so the stage cannot
+quietly disappear. The audit prints its budgets and the measured value next to
+each one, and the five allowlisted eager images each carry a reason.
+
+**Verification.** The CLS investigation is recorded in the check runs, in order:
+`36787281091` (`7cab2a5`, first measurement: three routes over budget),
+`36787733776` (`3e7a57e`, failures made self-annotating), `36788114607`
+(`89a4251`, the shifting element is named), `36788849073` (`fcd38c2`, `/news`
+and `/past-questions` pass), `36789146989` (`b30c49b`) and `36789497589`
+(`6df2c50`, timeline and anatomy added to the annotation) — every one of them
+failing only on the metric it names, in the direction that explains itself.
+`36790053251` (`b8f9ff6`) is the green run: the whole gate, `perf:audit`
+included, plus the throttled browser pass on all three routes. The range
+`df5cea8..b8f9ff6` is on `arena/01a0f3bd-edureach-hub` and inside pull request
+#11.
+
+Local gate at the same commits: `npm run typecheck` clean, `npm test` 275/275
+(one skipped in a clean clone before `dist/` exists, by design), `npm run
+schema:audit` 0 blocking, `npm run build` clean, `npm run perf:audit` 10/10,
+`npm audit` 0 vulnerabilities — reproduced in a fresh clone at `/tmp/clean`.
 
 ## Known limitations (declared up front)
 
@@ -246,6 +325,22 @@ Filled in when the measurement and the fixes land (see the end of this file).
 5. **Third-party scripts were not a factor.** The app loads none; if one is added
    later, this budget does not model it (the static audit will still see its
    bytes only if it is bundled).
-6. **The caching header is host-specific.** `public/_headers` is Netlify syntax.
+6. **The layout reservations are matched to geometry, not to data.** The
+   placeholder heights and the reserved floors come from the CSS of the content
+   they stand in for. A region whose real content is taller than its
+   reservation will still move things when it lands; the runner has no
+   database, so what it measures on the news routes is the pending → empty or
+   failed transition, which is the one that was breaking. In production the
+   feeds fill the reservation; that case is constructed to fit but is not
+   measured here.
+7. **The font swap is not metric-overridden.** Inter loads with
+   `font-display: swap`; a first visit on a slow connection paints the fallback
+   and swaps when the font arrives. `optional` or a `size-adjust` fallback
+   would remove that class of shift entirely, at the cost of typography on
+   first paint. Not changed here because the measurement did not name it.
+8. **Authenticated surfaces are not measured.** The dashboard, the admin
+   console and the CBT hall need credentials the suite deliberately does not
+   have. Their markup is covered by the static rules, not by a browser run.
+9. **The caching header is host-specific.** `public/_headers` is Netlify syntax.
    If the deployment host changes (D5), the rule must be re-expressed in the new
    host's format — recorded here so the optimisation is not silently lost.
