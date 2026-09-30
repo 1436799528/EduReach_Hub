@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditPerf, imgElements, readPerfInput, type PerfInput } from '../scripts/perf-audit';
@@ -135,4 +135,73 @@ test('the repository passes its own budget when a build is present', (context) =
   }
   const failures = auditPerf(readPerfInput(root)).filter((entry) => !entry.ok);
   assert.deepEqual(failures.map((entry) => `${entry.id}: ${entry.measured}`), []);
+});
+
+// ---------------------------------------------------------------------------
+// Layout stability (the CLS half of PERF-1).
+//
+// The numbers here are the ones the browser measurement named: a placeholder
+// that is not the height of the content it stands in for moves everything
+// below it. These tests keep the geometry consistent, so the reservation
+// cannot drift away from the rows it is reserving for.
+
+function stylesheet(path: string): string {
+  return readFileSync(join(root, path), 'utf8');
+}
+
+/** The declaration block for an exact selector (first match, so mobile overrides are separate). */
+function declarations(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`${escaped}\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+}
+
+function pxValue(block: string, property: string): number {
+  const match = new RegExp(`${property}\\s*:\\s*(-?[\\d.]+)px`).exec(block);
+  return match ? Number(match[1]) : Number.NaN;
+}
+
+test('a loading row is exactly the height of the row it stands in for', () => {
+  const css = stylesheet('src/edu-portal.css');
+  const skeletonRow = pxValue(declarations(css, '.er-skeleton-row'), 'padding') * 2
+    + pxValue(declarations(css, '.er-skel-thumb'), 'height')
+    + 2; // the 1px border top and bottom
+  const newsRow = pxValue(declarations(css, '.er-news-row'), 'min-height') + 2;
+  assert.equal(skeletonRow, newsRow, `skeleton row ${skeletonRow}px vs news row ${newsRow}px`);
+});
+
+test('the card placeholder uses the same grid as the cards it replaces', () => {
+  const css = stylesheet('src/edu-portal.css');
+  const columns = (selector: string) => /grid-template-columns:\s*([^;}]+)/.exec(declarations(css, selector))?.[1].trim();
+  assert.equal(columns('.er-skeleton-grid'), columns('.er-library-grid'));
+  assert.equal(
+    pxValue(declarations(css, '.er-skeleton-tile'), 'padding'),
+    pxValue(declarations(css, '.er-library-card'), 'padding'),
+    'the placeholder card and the real card are padded the same',
+  );
+});
+
+test('a region that fills in after the first paint reserves its footprint', () => {
+  const css = stylesheet('src/edu-portal.css');
+  assert.match(declarations(css, '.er-late-region'), /min-height:\s*var\(--er-late-min/);
+  const floor = (selector: string) => pxValue(declarations(css, selector), '--er-late-min');
+  const rows = (count: number, row: number) => count * row + (count - 1) * 10; // 10px gutter
+
+  // 82px rows: the height .er-skeleton-row and .er-news-row share.
+  assert.ok(floor('.er-late-region--feed') >= rows(6, 82), 'the home feed reserves its six rows');
+  assert.ok(floor('.er-late-region--feed-page') >= rows(5, 82), 'the noticeboard reserves its five rows');
+  assert.ok(floor('.er-late-region--library') >= 600, 'the question-bank grid reserves its cards');
+});
+
+test('the pages the measurement named use the reservation', () => {
+  const home = stylesheet('pages/HubHomePage.tsx');
+  assert.match(home, /er-late-region--feed/);
+  const rendered = Number(/news\.slice\(0, (\d+)\)/.exec(home)?.[1]);
+  assert.ok(Number.isFinite(rendered), 'the home feed still renders a fixed number of rows');
+  assert.match(home, new RegExp(`<SkeletonRows rows=\\{${rendered}\\}`), 'the skeleton shows as many rows as the feed');
+
+  assert.match(stylesheet('pages/NewsPage.tsx'), /er-late-region--feed-page/);
+
+  const library = stylesheet('pages/PastQuestionsPage.tsx');
+  assert.match(library, /er-late-region--library/);
+  assert.match(library, /<SkeletonTiles tiles=\{6\}/);
 });

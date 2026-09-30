@@ -1,6 +1,7 @@
 import { userFacingError } from '../lib/errors';
 import { ArrowRight, BookOpen, FileText, Laptop, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { SkeletonTiles } from '../src/components/Skeleton';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
@@ -229,34 +230,35 @@ export default function PastQuestionsPage() {
           </div>
 
           {view === 'CBT' && (
-            banks === null ? (
-              <div className="hub-panel hub-empty">Loading question banks…</div>
-            ) : banksError ? (
-              <div className="hub-form-error" role="alert">{banksError}</div>
-            ) : !records.length ? (
-              <div className="hub-panel hub-empty">
-                <h2>{banks.length ? 'No matching CBT bank' : 'No CBT question banks available yet'}</h2>
-                <p>{banks.length ? 'Try a different examination body, school or subject.' : 'Question banks appear here as soon as they are published through the EduReach CBT catalogue.'}</p>
-              </div>
-            ) : (
-              <div className="er-library-grid">
-                {records.map((record) => (
-                  <a className={`er-library-card er-library-card-link ${identityClassFor(record.exam, 'service')}`} id={`cbt-${record.id}`} key={record.id} href={record.href}>
-                    <div className="er-library-card-top">
-                      <CardIdentityMark value={record.exam} type="service" size="sm" />
-                      <span>{record.year}</span>
-                    </div>
-                    <h2>{record.title}</h2>
-                    <p className="er-library-school">{record.school}</p>
-                    <p>{record.description}</p>
-                    <div className="er-library-subjects"><strong>Subjects</strong><span>{record.subjects}</span></div>
-                    <span className="hub-primary-btn er-card-cta">Set up CBT <ArrowRight size={14} /></span>
-                  </a>
-                ))}
-              </div>
-            )
+            <div className="er-late-region er-late-region--library">
+              {banks === null ? (
+                <SkeletonTiles tiles={6} label="Loading question banks" />
+              ) : banksError ? (
+                <div className="hub-form-error" role="alert">{banksError}</div>
+              ) : !records.length ? (
+                <div className="hub-panel hub-empty">
+                  <h2>{banks.length ? 'No matching CBT bank' : 'No CBT question banks available yet'}</h2>
+                  <p>{banks.length ? 'Try a different examination body, school or subject.' : 'Question banks appear here as soon as they are published through the EduReach CBT catalogue.'}</p>
+                </div>
+              ) : (
+                <div className="er-library-grid">
+                  {records.map((record) => (
+                    <a className={`er-library-card er-library-card-link ${identityClassFor(record.exam, 'service')}`} id={`cbt-${record.id}`} key={record.id} href={record.href}>
+                      <div className="er-library-card-top">
+                        <CardIdentityMark value={record.exam} type="service" size="sm" />
+                        <span>{record.year}</span>
+                      </div>
+                      <h2>{record.title}</h2>
+                      <p className="er-library-school">{record.school}</p>
+                      <p>{record.description}</p>
+                      <div className="er-library-subjects"><strong>Subjects</strong><span>{record.subjects}</span></div>
+                      <span className="hub-primary-btn er-card-cta">Set up CBT <ArrowRight size={14} /></span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
-
           {view === 'MATERIALS' && (
             !materials.length ? (
               <div className="hub-panel hub-empty"><h2>No matching material route</h2><p>Try another examination body or school. EduReach will not claim a document that is not configured.</p></div>

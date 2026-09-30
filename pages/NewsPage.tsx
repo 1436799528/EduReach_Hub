@@ -99,43 +99,45 @@ export default function NewsPage() {
             <FilterPills options={filters} active={activeFilter} onChange={changeFilter} ariaLabel="News categories" />
           </div>
 
-          {loading && <SkeletonRows rows={5} label="Loading updates" />}
-          {error && (
-            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <span>{error}</span>
-              <button type="button" className="hub-outline-btn" onClick={() => void loadNews()} disabled={loading}>Try again</button>
-            </div>
-          )}
-          {!loading && !error && !filteredItems.length && (
-            <div className="hub-panel hub-empty">
-              {items.length
-                ? 'No announcements found matching this category.'
-                : 'No news content available yet. Verified education updates are published here as soon as they are ready.'}
-            </div>
-          )}
+          <div className="er-late-region er-late-region--feed-page">
+            {loading && <SkeletonRows rows={5} label="Loading updates" />}
+            {error && (
+              <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <span>{error}</span>
+                <button type="button" className="hub-outline-btn" onClick={() => void loadNews()} disabled={loading}>Try again</button>
+              </div>
+            )}
+            {!loading && !error && !filteredItems.length && (
+              <div className="hub-panel hub-empty">
+                {items.length
+                  ? 'No announcements found matching this category.'
+                  : 'No news content available yet. Verified education updates are published here as soon as they are ready.'}
+              </div>
+            )}
 
-          {!loading && !error && filteredItems.length > 0 && (
-            <>
-              {activeFilter === 'ALL' && (
-                <section className="er-section" style={{ marginTop: 0 }}>
-                  <SectionHead title="Featured" />
-                  <FeaturedNews items={filteredItems} />
-                </section>
-              )}
-              <section className="er-section" style={{ marginTop: 0 }}>
-                <SectionHead title={activeFilter === 'ALL' ? 'Latest stories' : 'Results'} />
-                {latestItems.length > 0 ? (
-                  <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
-                    {latestItems.map((item) => (
-                      <NewsRow key={item.id} item={item} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="hub-panel hub-empty">No additional stories yet.</div>
+            {!loading && !error && filteredItems.length > 0 && (
+              <>
+                {activeFilter === 'ALL' && (
+                  <section className="er-section" style={{ marginTop: 0 }}>
+                    <SectionHead title="Featured" />
+                    <FeaturedNews items={filteredItems} />
+                  </section>
                 )}
-              </section>
-            </>
-          )}
+                <section className="er-section" style={{ marginTop: 0 }}>
+                  <SectionHead title={activeFilter === 'ALL' ? 'Latest stories' : 'Results'} />
+                  {latestItems.length > 0 ? (
+                    <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
+                      {latestItems.map((item) => (
+                        <NewsRow key={item.id} item={item} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="hub-panel hub-empty">No additional stories yet.</div>
+                  )}
+                </section>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </HubLayout>

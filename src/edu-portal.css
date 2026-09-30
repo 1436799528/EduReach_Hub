@@ -439,6 +439,25 @@ body.er-exam-mode .er-pagebar{display:none!important}
 .er-skeleton-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
 .er-skeleton-row-copy{display:grid;gap:8px}
 .er-skel-thumb{width:56px;height:56px;border-radius:10px}
+/* PERF-1 — regions that fill in after the first paint.
+   Swapping a placeholder for content changes the height of everything below
+   it, and on a phone the footer and the side column sit right there. Measured
+   without this: CLS 0.21 on /, 0.18 on /news, 0.31 on /past-questions at 4G
+   with a 4x CPU slowdown. A late region keeps the footprint of what it is
+   waiting for, so pending, loaded, empty and failed all occupy the same box:
+   .er-skeleton-row is 82px tall, exactly like the .er-news-row it stands in
+   for, and the floors below are the loaded geometry. */
+.er-late-region{min-height:var(--er-late-min,0);display:grid;align-content:start}
+.er-late-region--feed{--er-late-min:542px}       /* 6 news rows: 6x82 + 5x10 gutters */
+.er-late-region--feed-page{--er-late-min:450px}  /* the 5 rows its skeleton shows */
+.er-late-region--library{--er-late-min:670px}    /* 6 cards in two columns: 3x214 + 2x14 */
+@media(max-width:700px){
+  /* .er-library-grid is a single column here, so six cards are six rows tall */
+  .er-late-region--library{--er-late-min:1350px}
+}
+.er-skeleton-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.er-skeleton-tile{display:flex;flex-direction:column;gap:9px;padding:17px;background:#fff;border:1px solid #e2e8f0;border-radius:13px}
+@media(max-width:700px){.er-skeleton-grid{grid-template-columns:1fr}}
 .er-skeleton-article{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px}
 .er-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .er-route-progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:3000;background:linear-gradient(90deg,#b14933,#f0a08f);border-radius:0 3px 3px 0;pointer-events:none;animation:er-route-progress .55s cubic-bezier(.2,.7,.2,1) forwards}

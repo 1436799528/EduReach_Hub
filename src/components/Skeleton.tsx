@@ -47,3 +47,27 @@ export function RouteFallback() {
     </div>
   );
 }
+
+/**
+ * Card placeholders for a grid that fills in after the first paint. The box
+ * mirrors the cards it stands in for — same padding, same radius, same
+ * two-column grid (see .er-library-grid) — so the region is the same height
+ * before and after the data lands and nothing below it moves. PERF-1 measured
+ * the alternative: CLS 0.31 on /past-questions with a throttled phone.
+ */
+export function SkeletonTiles({ tiles = 6, label = 'Loading' }: { tiles?: number; label?: string }) {
+  return (
+    <div className="er-skeleton-grid" role="status" aria-live="polite" aria-label={label}>
+      {Array.from({ length: tiles }).map((_, index) => (
+        <div key={index} className="er-skeleton-tile">
+          <div className="er-skel er-skel-thumb" style={{ width: 34, height: 34, borderRadius: 9 }} />
+          <div className="er-skel er-skel-line" style={{ width: '68%', height: 17 }} />
+          <div className="er-skel er-skel-line" style={{ width: '94%' }} />
+          <div className="er-skel er-skel-line" style={{ width: '62%' }} />
+          <div className="er-skel er-skel-block" style={{ height: 36, marginTop: 'auto' }} />
+        </div>
+      ))}
+      <span className="er-visually-hidden">{label}…</span>
+    </div>
+  );
+}
