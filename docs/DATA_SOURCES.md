@@ -17,7 +17,7 @@ The initial production university directory was seeded from the National Univers
 - Images are uploaded to Supabase Storage (`admin-content` bucket) and the resulting URL is stored on the article row; each article renders its own image. Articles without an image render an intentional neutral placeholder — never a shared stock photo.
 - Unpublished rows are drafts; the public only ever reads `published = true`, ordered by `published_at`.
 - Automated ingestion (the daily newsroom pipeline) writes the same table and adds provenance: `source_key`, `source_tier`, `source_published_at`, `last_verified_at`, `verification_status`, `expires_at`, `dedupe_key`. Tier 1 official sources may auto-publish; every other source lands in the review queue first. Expired rows are hidden from the public feed and served with an `expired` status on their detail page. See [`NEWSROOM_PIPELINE.md`](NEWSROOM_PIPELINE.md).
-- The three prototype rows seeded by `20260915_application_integration_seed.sql` are removed by `20260927000000_postmerge_data_control.sql`. If the news feed is empty, the site shows an honest empty state, not invented stories.
+- The three prototype rows seeded by `20260916000000_application_integration_seed.sql` are removed by `20260927000000_postmerge_data_control.sql`. If the news feed is empty, the site shows an honest empty state, not invented stories.
 
 ## CBT
 

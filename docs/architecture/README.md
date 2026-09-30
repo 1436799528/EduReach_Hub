@@ -43,8 +43,13 @@ Existing documents these extend rather than replace:
 
 Status describes **repository state**. Production state must be confirmed against
 the live Supabase project (audit P0-1) using `npm run newsroom:integrity` and
-`GET /api/health/ready`; the repository cannot certify a database it does not
-create.
+`GET /api/health/ready`.
+
+As of BASE-1 (2026-09-30) the repository *does* create the database: the baseline
+migration plus `npm run schema:audit` prove that a fresh project applies end to
+end, so the remaining P0-1 question is only whether production matches the
+migrations that have been applied to it. Live production state is still not
+certified by this repository.
 
 ## Decisions currently open
 

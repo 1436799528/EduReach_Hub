@@ -4,23 +4,42 @@ Supabase (Postgres) is the authoritative application database. This document
 records what exists, who owns each record, and — the audit's central question —
 **how we know a record is correct**.
 
-## 0. Finding: the baseline schema is not reproducible from this repository
+## 0. Baseline schema (BASE-1) — closed
 
-`profiles`, `service_catalog` and `service_requests` exist in production and are
-read and written all over the codebase, but **no migration in
-`supabase/migrations/` creates them**. They appear only as guarded references
-(`to_regclass('public.profiles')`) and as `alter table`/policy statements that
-assume them. Consequences:
+**Finding (2026-09-30, resolved the same day):** `profiles`, `service_catalog`
+and `service_requests` — and eight further tables and four functions — existed in
+production and were read all over the codebase, but **no migration created
+them**. The history assumed them from its first file, so a fresh environment
+could not be built and no one could diff "what the schema should be" against
+"what production is".
 
-- A fresh environment cannot be built from the repository.
-- Nobody can diff "what the schema should be" against "what production is".
-- Audit P0-1 (live verification) cannot be closed by reading code.
+**Resolution.** `supabase/migrations/20260830000000_baseline_core_schema.sql`
+creates those objects, sorted before every other migration, with
+create-if-absent/`to_regprocedure` guards so an existing project is never
+rewritten. Two further repairs were needed and are part of the same feature:
+`20260930150000_auth_signup_trigger_repair.sql` (nothing recreated the signup
+trigger after `20260919_remove_redundant_auth_trigger.sql`, so fresh signups
+would have had no profile row) and
+`20260930160000_institutions_column_repair.sql` (five columns the admin API
+selects). Two 2026-09-15 migrations that ran before the tables they use were
+renamed to `20260916000000_*` and `20260916010000_*`; both are idempotent.
 
-**Required remediation (do this before further schema work):** export the live
-baseline with `supabase db pull` (or `pg_dump --schema-only`) and commit it as
-`supabase/migrations/20260901000000_baseline_core_tables.sql`, then confirm the
-full sequence applies to an empty database. Until then, treat every column list
-below for those three tables as *observed in code*, not guaranteed.
+**How it is verified without a live database:** `npm run schema:audit` walks
+every migration in filename order and fails if any statement references an
+object no earlier migration created, or if the application uses a table, RPC or
+column no migration defines. `tests/schema.test.ts` asserts the same in CI.
+`supabase db reset` on a scratch project remains the definitive check and is a
+documented manual dependency (`docs/features/BASE-1.md`).
+
+**What the baseline does not claim:** it reconstructs *structure from the
+repository*, not production's exact shape. Columns the repository has never seen
+cannot be reproduced; the columns listed for `profiles`, `service_catalog` and
+`service_requests` below are now created by the baseline, and any further column
+in production is a P0-1 drift item for a reviewed migration. Six tables still
+have no policy in the repository (`courses`, `resources`,
+`campus_post_comments`, `campus_post_likes`, `student_wallets`,
+`edureach_notifications`) — their RLS posture is an open security item, not
+something the baseline may assume.
 
 ## 1. Domains and tables
 

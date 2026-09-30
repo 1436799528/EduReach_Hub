@@ -1,3 +1,11 @@
+-- BASE-1: renamed from 20260915_cbt_news_rls.sql.
+--
+-- This file enables row-level security on the CBT and news tables and defines
+-- their policies, but it used to sort BEFORE 20260915_cbt_news_tables.sql,
+-- which creates those tables, so it failed on an empty database. The statements
+-- are idempotent (enable rls, drop policy if exists + create policy), so
+-- re-running it on an existing project changes nothing.
+
 alter table public.cbt_exams enable row level security;
 alter table public.exam_questions enable row level security;
 alter table public.cbt_attempts enable row level security;

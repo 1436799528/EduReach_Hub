@@ -1,3 +1,13 @@
+-- BASE-1: renamed from 20260915_application_integration_seed.sql.
+--
+-- The file used to sort BEFORE 20260915_cbt_news_tables.sql, which creates the
+-- three tables it seeds (cbt_exams, exam_questions, news_articles), so on an
+-- empty database it failed at its first insert while working fine in production
+-- where those tables already existed. Renaming it to run after them is the
+-- minimal fix; every statement here is idempotent (create ... if not exists,
+-- create or replace, guarded inserts), so re-running it on an existing project
+-- changes nothing. See docs/features/BASE-1.md.
+
 alter table public.service_requests
   add column if not exists reference_code text;
 
