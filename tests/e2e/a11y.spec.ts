@@ -46,12 +46,33 @@ const ROUTES = [
   '/support',
 ];
 
-async function analyse(page: Page) {
+async function collect(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
-  return results.violations.map(
+  return { violations: results.violations, summary: summarise(results.violations) };
+}
+
+function summarise(violations: Awaited<ReturnType<AxeBuilder['analyze']>>['violations']): string[] {
+  return violations.map(
     (violation) =>
       `${violation.id} [${violation.impact}] x${violation.nodes.length} ${violation.nodes[0]?.target?.join(' ')}`.trim(),
   );
+}
+
+/**
+ * axe reports one violation with many nodes. For a colour failure the useful
+ * detail is which element, on which background, at what ratio — so emit that:
+ * the next person fixes the palette instead of hunting for the node.
+ */
+function annotateViolations(route: string, violations: Awaited<ReturnType<AxeBuilder['analyze']>>['violations']) {
+  for (const violation of violations.slice(0, 8)) {
+    const shown = violation.nodes.slice(0, 4).map((node) => {
+      const data = node.any?.[0]?.data as { fgColor?: string; bgColor?: string; contrastRatio?: number } | undefined;
+      const colour = data?.contrastRatio ? ` [${data.fgColor} on ${data.bgColor} = ${data.contrastRatio}:1]` : '';
+      return `${node.target.join(' ')}${colour}`;
+    });
+    const rest = violation.nodes.length - shown.length;
+    console.log(`::error title=axe ${route} ${violation.id}::${shown.join(' | ')}${rest > 0 ? ` (+${rest} more nodes)` : ''}`);
+  }
 }
 
 for (const route of ROUTES) {
@@ -59,14 +80,18 @@ for (const route of ROUTES) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
     await expect(page.locator('#root')).not.toBeEmpty();
-    expect(await analyse(page)).toEqual([]);
+    const { violations, summary } = await collect(page);
+    annotateViolations(route, violations);
+    expect(summary).toEqual([]);
   });
 }
 
 test('axe: home on a phone viewport', async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 720 });
   await page.goto('/');
-  expect(await analyse(page)).toEqual([]);
+  const phone = await collect(page);
+  annotateViolations('/', phone.violations);
+  expect(phone.summary).toEqual([]);
   // The mobile navigation is the surface a phone user actually reaches.
   await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible();
 });
@@ -76,7 +101,9 @@ test('axe: the mobile menu drawer, open', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /menu/i }).first().click();
   await expect(page.locator('#hub-mobile-menu')).toBeVisible();
-  expect(await analyse(page)).toEqual([]);
+  const drawer = await collect(page);
+  annotateViolations('/ (drawer open)', drawer.violations);
+  expect(drawer.summary).toEqual([]);
 });
 
 test('the first Tab reaches a working skip link and Enter lands in main', async ({ page }) => {
