@@ -8,6 +8,7 @@ import ComingSoonPage from '../../pages/ComingSoonPage';
 import ProtectedRoute from './ProtectedRoute';
 import type { DashboardTab } from '../../pages/StudentDashboardV2';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { isLiveServiceSlug } from '../data/liveServices';
 
 // Route-level code splitting. The home page, exam hubs and the CBT hall ship in
 // the main bundle; everything else is fetched the first time a student opens it,
@@ -43,18 +44,13 @@ const AdminSchoolsPage = lazy(() => import('../../pages/AdminSchoolsPage'));
 const AdminServicesPage = lazy(() => import('../../pages/AdminServicesPage'));
 const AdminContentManagerPage = lazy(() => import('../../pages/AdminContentManagerPage'));
 
-// Slugs with a live application workflow. Every other /services/* slug renders
-// an honest coming-soon panel instead of a fabricated service form.
-const liveServiceSlugs = new Set([
-  'nelfund-loan',
-  'results',
-  'jamb-slip',
-  'admission-letters',
-]);
-
+// Slugs with a live application workflow live in src/data/liveServices.ts,
+// shared with the sitemap so the two can never disagree. Every other
+// /services/* slug renders an honest coming-soon panel instead of a fabricated
+// service form (and is excluded from the sitemap).
 function serviceEntry(slug: string): ReactElement {
   const normalized = slug.toLowerCase();
-  if (liveServiceSlugs.has(normalized) || isSupabaseConfigured) return <ServiceApplyPage slug={normalized} />;
+  if (isLiveServiceSlug(normalized) || isSupabaseConfigured) return <ServiceApplyPage slug={normalized} />;
   return <ComingSoonPage />;
 }
 

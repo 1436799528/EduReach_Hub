@@ -5,6 +5,7 @@ import HubLayout from '../src/components/HubLayout';
 import { fetchNews, fetchNewsItem, type NewsItem } from '../src/lib/api';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { newsCategoryLabel } from '../src/data/newsCategories';
+import { applySeo, seoForArticle } from '../src/lib/seoMeta';
 import { formatNewsDate, NewsRow } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
 
@@ -61,6 +62,25 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [slug]);
+
+  useEffect(() => {
+    if (!item) return;
+    // Article-level metadata: headline, summary, image, publication dates and
+    // the source citation. An expired article is deliberately left uncanonical
+    // and noindex so stale deadlines do not keep ranking.
+    applySeo(seoForArticle({
+      slug: item.slug,
+      title: item.title,
+      excerpt: item.summary,
+      image_url: item.image_url,
+      category: item.category,
+      source_name: item.source_name,
+      published_at: item.published_at,
+      updated_at: item.updated_at || item.last_verified_at,
+      expires_at: item.expires_at,
+      verification_status: item.verification_status,
+    }));
+  }, [item]);
 
   useEffect(() => {
     if (!item) return;

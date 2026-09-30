@@ -2,6 +2,18 @@
 
 EduReach Hub is a student-focused platform for Nigerian tertiary students, combining student services, CBT practice, verified academic updates and student opportunities in one responsive workspace.
 
+## Product & system architecture
+
+The authoritative product architecture — product definition, information
+architecture, data model, roles and permissions, user journeys, business rules,
+design-system requirements, the feature catalogue with build order, and the
+required feature template — lives in [`docs/architecture/`](docs/architecture/).
+
+Implementation follows it **one connected feature at a time**: the feature is
+documented first, then built end to end, then validated. Open decisions and the
+recommended next feature are listed in
+[`docs/architecture/README.md`](docs/architecture/README.md).
+
 ## Application architecture
 
 The browser entry point is `src/main.tsx`, which renders `src/app/App.tsx`. The active frontend is React + Vite with an Express production server. Supabase provides authentication and database access; server-side endpoints handle trusted operations such as CBT scoring and protected administration.

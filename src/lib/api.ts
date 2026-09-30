@@ -35,11 +35,16 @@ export type NewsItem = {
   category: string;
   priority: string;
   source_url: string | null;
+  /** Publication that reported the story, when the row carries provenance. */
+  source_name: string | null;
   image_url: string | null;
   published_at: string | null;
+  updated_at: string | null;
   author: string | null;
   last_verified_at: string | null;
   verification_status: string;
+  /** Freshness window from the newsroom pipeline; absent before that migration. */
+  expires_at: string | null;
   featured: boolean;
   tags: string[];
 };
@@ -611,20 +616,34 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   return localRecord;
 }
 
-export async function fetchNews(): Promise<NewsItem[]> {
-  // No hardcoded news dataset: without a configured account service the page
-  // shows its honest empty state; with one configured, Supabase is the only
-  // source of what students read.
-  if (!isSupabaseConfigured) return [];
+const NEWS_COLUMNS_LEGACY =
+  'id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags';
+// Added by the newsroom migration. Read when present so provenance, freshness
+// and expiry travel with the article; the legacy set keeps an unmigrated
+// database working (same fallback the server API uses).
+const NEWS_COLUMNS_GOVERNED = `${NEWS_COLUMNS_LEGACY},verification_status,expires_at,last_verified_at`;
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags')
-    .eq('published', true)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(30);
-  if (error) throw new Error(userFacingError(error));
-  return (data || []).map((item) => ({
+let newsGovernedColumnsAvailable: boolean | null = null;
+
+async function selectNewsColumns(apply: (columns: string) => Promise<{ data: any; error: any }>): Promise<any[]> {
+  if (newsGovernedColumnsAvailable !== false) {
+    const governed = await apply(NEWS_COLUMNS_GOVERNED);
+    if (!governed.error) {
+      newsGovernedColumnsAvailable = true;
+      return governed.data || [];
+    }
+    newsGovernedColumnsAvailable = false;
+  }
+  const legacy = await apply(NEWS_COLUMNS_LEGACY);
+  if (legacy.error) throw new Error(userFacingError(legacy.error));
+  return legacy.data || [];
+}
+
+function mapNewsItem(item: any): NewsItem {
+  const expiresAt = item.expires_at ? String(item.expires_at) : null;
+  const expires = expiresAt ? new Date(expiresAt) : null;
+  const expiredByDate = Boolean(expires && Number.isFinite(expires.getTime()) && expires.getTime() < Date.now());
+  return {
     id: item.id,
     slug: item.slug,
     title: item.title,
@@ -633,14 +652,44 @@ export async function fetchNews(): Promise<NewsItem[]> {
     category: item.category,
     priority: 'normal',
     source_url: item.source_url,
+    source_name: item.source_name ?? null,
     image_url: item.image_url ?? null,
     published_at: item.published_at,
+    updated_at: item.updated_at ?? null,
     author: item.source_name || 'EduReach Editorial Desk',
-    last_verified_at: item.updated_at,
-    verification_status: 'verified',
+    last_verified_at: item.last_verified_at || item.updated_at || null,
+    verification_status: expiredByDate ? 'expired' : (item.verification_status || 'verified'),
+    expires_at: expiresAt,
     featured: item.featured === true,
     tags: parseNewsTags(item.tags),
-  }));
+  };
+}
+
+/** True when the article is still actionable (mirrors src/lib/seoMeta.ts). */
+export function isNewsItemFresh(item: Pick<NewsItem, 'expires_at' | 'verification_status'>): boolean {
+  const status = String(item.verification_status || 'verified').toLowerCase();
+  if (status === 'expired' || status === 'archived' || status === 'superseded') return false;
+  if (!item.expires_at) return true;
+  const expires = new Date(item.expires_at);
+  return !Number.isFinite(expires.getTime()) || expires.getTime() > Date.now();
+}
+
+export async function fetchNews(): Promise<NewsItem[]> {
+  // No hardcoded news dataset: without a configured account service the page
+  // shows its honest empty state; with one configured, Supabase is the only
+  // source of what students read.
+  if (!isSupabaseConfigured) return [];
+
+  const rows = await selectNewsColumns((columns) =>
+    supabase
+      .from('news_articles')
+      .select(columns)
+      .eq('published', true)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(30) as unknown as Promise<{ data: any; error: any }>);
+
+  // Expired updates leave the feed; their pages stay reachable by direct link.
+  return rows.map(mapNewsItem).filter(isNewsItemFresh);
 }
 
 export async function fetchNewsItem(slug: string): Promise<NewsItem> {
@@ -648,31 +697,16 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     throw new Error('News is not configured in this environment.');
   }
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle();
-  if (error) throw new Error(userFacingError(error));
+  const rows = await selectNewsColumns((columns) =>
+    supabase
+      .from('news_articles')
+      .select(columns)
+      .eq('slug', slug)
+      .eq('published', true)
+      .limit(1) as unknown as Promise<{ data: any; error: any }>);
+  const data = rows[0];
   if (!data) throw new Error('This news article could not be found.');
-  return {
-    id: data.id,
-    slug: data.slug,
-    title: data.title,
-    summary: data.excerpt,
-    body: data.body,
-    category: data.category,
-    priority: 'normal',
-    source_url: data.source_url,
-    image_url: data.image_url ?? null,
-    published_at: data.published_at,
-    author: data.source_name || 'EduReach Editorial Desk',
-    last_verified_at: data.updated_at,
-    verification_status: 'verified',
-    featured: data.featured === true,
-    tags: parseNewsTags(data.tags),
-  };
+  return mapNewsItem(data);
 }
 
 export type AdminActivityBreakdown = {

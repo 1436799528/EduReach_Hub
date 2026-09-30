@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, useTransition } from 'reac
 import ErrorBoundary from './ErrorBoundary';
 import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
-import { pageTitleFor } from '../lib/pageMeta';
+import { applyRouteSeo } from '../lib/seoMeta';
 import { API_BASE_PATH } from '../lib/apiBase';
 
 // The admin console keeps ONE mounted shell (sidebar, top bar, session state)
@@ -131,7 +131,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.title = `EduReach — ${pageTitleFor(locationState.pathname)}`;
+    // Title, meta description, canonical URL, Open Graph/Twitter tags and the
+    // noindex directive for private routes all come from one place. Pages with
+    // their own record (article, institution) refine this after data loads.
+    applyRouteSeo(locationState.pathname);
     recordPageView(locationState.pathname);
   }, [locationState.pathname]);
 

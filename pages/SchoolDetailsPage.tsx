@@ -4,6 +4,7 @@ import HubLayout from '../src/components/HubLayout';
 import { itemKey, type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { applySeo, seoForInstitution } from '../src/lib/seoMeta';
 
 function navigateBack(fallback: string) {
   const params = new URLSearchParams(window.location.search);
@@ -75,6 +76,20 @@ export default function SchoolDetailsPage({ slug }: { slug: string }) {
   const courseContext = params.get('course') || resolved?.course_context || (acronym ? institutionCourseContexts[acronym] || '' : '');
   const websiteCandidate = params.get('website') || resolved?.website_url || '';
   const website = /^https?:\/\//i.test(websiteCandidate) ? websiteCandidate : '';
+
+  useEffect(() => {
+    // Institution metadata uses only sourced facts. Programme, fee and cut-off
+    // data are not claimed here because EduReach has no verified dataset for
+    // them (see docs/architecture/02-DATA-MODEL.md).
+    applySeo(seoForInstitution({
+      slug,
+      school_name: name,
+      acronym,
+      state: resolved?.state || null,
+      institution_type: resolved?.institution_type || null,
+      website_url: website || null,
+    }));
+  }, [slug, name, acronym, resolved?.state, resolved?.institution_type, website]);
 
   return (
     <HubLayout>

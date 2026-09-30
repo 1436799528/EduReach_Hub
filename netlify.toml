@@ -16,6 +16,20 @@
   status = 200
   force = true
 
+# Crawler surfaces are generated (the sitemap reads the database), so route them
+# through the API function before the SPA fallback can swallow them.
+[[redirects]]
+  from = "/robots.txt"
+  to = "/.netlify/functions/api/robots.txt"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/api/sitemap.xml"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

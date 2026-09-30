@@ -8,6 +8,7 @@ import { userFacingError as normalizeUserFacingError } from './lib/errors';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
+import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -59,11 +60,24 @@ app.use((_req, res, next) => {
     );
   }
   if (_req.path === '/api' || _req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
+  // Server-side indexability. A client-rendered noindex is a hint; this header
+  // is what a crawler actually receives for student, admin and tracker routes.
+  if (isPrivatePath(_req.path)) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   next();
 });
 
 // Broad per-IP ceiling for the whole API surface, then per-route limits below.
 app.use('/api', rateLimitFor(RATE_LIMIT_RULES.apiGeneral));
+
+/**
+ * Paths that must never be indexed: student, admin, auth, tracker and
+ * placeholder routes, plus service pages with no live workflow. The rule lives
+ * in src/server/seo.ts (`isNonIndexablePath`) so the header, robots.txt and the
+ * sitemap cannot drift apart.
+ */
+function isPrivatePath(pathname: string): boolean {
+  return isNonIndexablePath(pathname);
+}
 
 function isServerSupabaseConfigured() {
   return Boolean(process.env.VITE_SUPABASE_URL && getServerSupabaseKey());
@@ -2099,6 +2113,35 @@ app.get('/api/admin/integrity', requireAdmin, async (_req, res) => {
     res.status(503).json({ error: 'Unable to build the integrity report. Has the newsroom migration been applied?' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Crawler surfaces. Registered for both the bare path (self-hosted Express and
+// Docker) and the /api path, because Netlify rewrites /robots.txt and
+// /sitemap.xml through the API function (see netlify.toml).
+// ---------------------------------------------------------------------------
+
+async function serveRobotsTxt(req: express.Request, res: express.Response) {
+  const origin = resolveSiteOrigin(req);
+  res.type('text/plain').setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(buildRobotsTxt(origin));
+}
+
+async function serveSitemapXml(req: express.Request, res: express.Response) {
+  const origin = resolveSiteOrigin(req);
+  const client = isServerSupabaseConfigured() ? getServerSupabase() : null;
+  const entries = await collectSitemapEntries(client, origin, (source, error) => {
+    console.error(`Sitemap: ${source} entries unavailable:`, error instanceof Error ? error.message : error);
+  });
+  res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(buildSitemapXml(entries));
+}
+
+// Registered as separate string paths (not an array) so route introspection
+// such as the unauthenticated-access matrix in tests/api.test.ts keeps working.
+app.get('/robots.txt', serveRobotsTxt);
+app.get('/api/robots.txt', serveRobotsTxt);
+app.get('/sitemap.xml', serveSitemapXml);
+app.get('/api/sitemap.xml', serveSitemapXml);
 
 // Never let an unknown API method/path fall through to the SPA HTML shell.
 app.use('/api', (_req, res) => {
