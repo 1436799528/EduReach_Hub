@@ -228,6 +228,19 @@ public tables. Engine reported by `select version()`: `PostgreSQL 18.3 (PGlite
 | 36774149773 | earlier PR #11 commit | success (1m56s) |
 | 36775905085 | `f67f01b` (BASE-1) | success (1m59s) — gate steps: install, Chromium, "Run authoritative CI gate" |
 | 36777106149 | `b732752` | **failure** at the gate step after 16s |
+| 36777990665 | `28bfc0b` | **success** — the first run of the complete gate: typecheck → 239 tests (including the PostgreSQL replay) → schema audit → build → browser suite → dependency audit; gate step 73s |
+
+Independent reproduction of that run on a pristine clone (`git clone` →
+`npm ci` → `npm test`): 239/239, with the replay reporting
+`ok 155 - every migration applies, in order, to a real PostgreSQL engine` and
+`ok 156 - the applied schema satisfies the objects the application uses`
+(`npm ci` 4.6s, suite 14.2s after a warm npm cache).
+
+Negative control on the same clone: adding a file
+`supabase/migrations/99999999999999_probe.sql` containing `this is not sql;`
+fails both replay tests with
+`migration 99999999999999_probe.sql failed after 38 applied: syntax error at or near "this"`.
+An unparseable migration cannot reach `main` through this gate.
 
 Run 36777106149 is honest evidence that the gate is not cosmetic: that commit
 pushed a version of `tests/ci.test.ts` that asserted the *planned* workflow
