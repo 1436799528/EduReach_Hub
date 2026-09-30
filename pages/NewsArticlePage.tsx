@@ -134,6 +134,8 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                   className="er-news-hero"
                   src={safeImageUrl}
                   alt={item.title}
+                  fetchPriority="high"
+                  decoding="async"
                   onError={(event) => {
                     const element = event.currentTarget;
                     element.onerror = null;

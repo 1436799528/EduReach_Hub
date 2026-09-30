@@ -5,6 +5,11 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://wa.me; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'
 
+# Content-hashed assets can be cached until the filename changes, which it does
+# when the bytes change. Without this the return visit revalidated every chunk.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
 

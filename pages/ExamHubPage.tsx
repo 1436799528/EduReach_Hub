@@ -66,7 +66,7 @@ export default function ExamHubPage({ exam }: { exam: ExamKey }) {
       <div className="er-major-page">
         <div className="er-major-container">
           <div className="er-major-heading">
-            <div className="er-major-logo"><img src={item.logo} alt={`${item.title} logo`} /></div>
+            <div className="er-major-logo"><img src={item.logo} alt={`${item.title} logo`} loading="lazy" decoding="async" /></div>
             <div><h1>{item.title}</h1><p>{item.description}</p></div>
           </div>
 

@@ -312,7 +312,7 @@ export default function AdminNewsPage() {
               </div>
               <div className="admin-field"><span>Featured image</span>
                 <div className="admin-image-row">
-                  {editor.imageUrl ? <img src={editor.imageUrl} alt="Featured preview" className="admin-image-preview" /> : <div className="admin-image-preview empty">No image</div>}
+                  {editor.imageUrl ? <img src={editor.imageUrl} alt="Featured preview" className="admin-image-preview" loading="lazy" decoding="async" /> : <div className="admin-image-preview empty">No image</div>}
                   <input className="admin-input" aria-label="Featured image URL" style={{ flex: 1 }} value={editor.imageUrl} onChange={(e) => setEditor({ ...editor, imageUrl: e.target.value })} placeholder="https://… or upload" />
                   <button type="button" className="admin-btn small" disabled={uploadingImage} onClick={() => imageFileRef.current?.click()}><Upload size={13} /> {uploadingImage ? 'Uploading…' : 'Upload'}</button>
                   {editor.imageUrl && <button type="button" className="admin-text-btn danger-text" onClick={() => setEditor({ ...editor, imageUrl: '' })}>Remove</button>}
@@ -412,7 +412,7 @@ export default function AdminNewsPage() {
               <button type="button" className="admin-text-btn" onClick={() => setShowPreview(false)}>Close</button>
             </div>
             <div className="admin-modal-body hub-article-body">
-              {editor?.imageUrl ? <img src={editor.imageUrl} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 14 }} /> : <div className="er-news-noimage" style={{ height: 120, borderRadius: 12, marginBottom: 14 }}><small>No featured image</small></div>}
+              {editor?.imageUrl ? <img src={editor.imageUrl} alt="" loading="lazy" decoding="async" style={{ width: '100%', borderRadius: 12, marginBottom: 14 }} /> : <div className="er-news-noimage" style={{ height: 120, borderRadius: 12, marginBottom: 14 }}><small>No featured image</small></div>}
               <span className="status-badge published">{editor ? newsCategoryLabel(editor.category) : ''}</span>
               <h2 style={{ margin: '10px 0 4px' }}>{editor?.title}</h2>
               <div className="muted" style={{ marginBottom: 12 }}>

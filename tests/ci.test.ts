@@ -28,6 +28,7 @@ const REQUIRED_STAGES: Array<[stage: string, command: string]> = [
   ['tests', 'npm test'],
   ['schema audit', 'npm run schema:audit'],
   ['build', 'npm run build'],
+  ['performance budget', 'npm run perf:audit'],
 ];
 
 /** The stages the workflow actually executes, whether directly or via the gate script. */
@@ -49,9 +50,9 @@ test('the authoritative gate script runs every required stage in order', () => {
   for (let i = 1; i < positions.length; i += 1) {
     assert.ok(positions[i] > positions[i - 1], `${REQUIRED_STAGES[i][0]} must run after ${REQUIRED_STAGES[i - 1][0]}`);
   }
-  // Browser tests need the build; the dependency audit is network-dependent and
-  // therefore last.
-  assert.match(ci, /npm run build && npm run test:e2e && npm run audit:ci$/);
+  // Both the performance budget and the browser tests need the build; the
+  // dependency audit is network-dependent and therefore last.
+  assert.match(ci, /npm run build && npm run perf:audit && npm run test:e2e && npm run audit:ci$/);
 });
 
 test('the workflow executes every stage the gate defines', () => {

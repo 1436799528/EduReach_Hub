@@ -15,6 +15,14 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="en_NG" />
     <meta name="twitter:card" content="summary" />
+    <!-- Inter loads from the head so it starts in parallel with the app bundle.
+         It used to be a CSS @import inside src/styles/theme.css, which could not
+         start until the 42 KB bundle CSS had arrived and parsed. The variable range
+         serves one file per subset instead of six static weights, and display=swap
+         keeps text visible while it loads. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/logo/edureach-hub-app-icon.svg" />

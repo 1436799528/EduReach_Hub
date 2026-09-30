@@ -391,7 +391,7 @@ export default function ProfileCompletionPage() {
             </div>
             <section className="profile-summary-card">
               <div className="profile-summary-identity">
-                <div className="profile-summary-avatar" style={{ background: avatarTone }}>{displayAvatar ? <img src={displayAvatar} alt="" /> : avatarInitials}</div>
+                <div className="profile-summary-avatar" style={{ background: avatarTone }}>{displayAvatar ? <img src={displayAvatar} alt="" decoding="async" /> : avatarInitials}</div>
                 <div><h2>{userName || 'Student'}</h2><p>{userEmail || 'Your account email'}</p></div>
               </div>
               <div className="profile-summary-grid">
@@ -515,6 +515,8 @@ export default function ProfileCompletionPage() {
                     <img
                       src={displayAvatar}
                       alt="Avatar"
+                      loading="lazy"
+                      decoding="async"
                       onError={(event) => {
                         (event.target as HTMLImageElement).style.display = 'none';
                       }}

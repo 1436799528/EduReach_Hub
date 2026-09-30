@@ -18,8 +18,8 @@ const brandLogo = (mode: string) => {
   const normalized = mode.toLowerCase();
   if (normalized === 'waec') return '/icons/brands/waec.webp';
   if (normalized === 'neco') return '/icons/brands/neco.webp';
-  if (normalized === 'nabteb') return '/icons/brands/nabteb.png';
-  return '/icons/brands/jamb.png';
+  if (normalized === 'nabteb') return '/icons/brands/nabteb.webp';
+  return '/icons/brands/jamb.webp';
 };
 
 const guideHref = (mode: string) => {
@@ -85,7 +85,7 @@ export default function ExamSimulatorGrid({
             href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.mode, exam.id)}
           >
             <span className="er-sim-top">
-              <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" />
+              <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" decoding="async" />
               <span className="er-sim-badge">{exam.mode}</span>
             </span>
             <span className="er-sim-body">

@@ -329,7 +329,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <div className="er-service-guide-steps">
                     {guide.steps.map((guideStep, index) => (
                       <article className="er-service-guide-step" key={guideStep.title}>
-                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" />
+                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" decoding="async" />
                         <div>
                           <span className="er-service-guide-number">{String(index + 1).padStart(2, '0')}</span>
                           <h3>{guideStep.title}</h3>

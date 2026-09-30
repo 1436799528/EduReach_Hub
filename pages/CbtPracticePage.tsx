@@ -367,7 +367,7 @@ export default function CbtPracticePage() {
         <div className="er-exam-bar">
           <div className="er-exam-bar-inner er-container">
             <div className="er-exam-id">
-              <img src={BRAND_LOGO[brand]} alt={`${brand.toUpperCase()} logo`} width={36} height={36} />
+              <img src={BRAND_LOGO[brand]} alt={`${brand.toUpperCase()} logo`} width={36} height={36} decoding="async" />
               <div className="er-exam-id-copy">
                 <h1>{examTitle}</h1>
                 <span>

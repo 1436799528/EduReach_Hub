@@ -311,6 +311,7 @@ export default function SecurityModal({
                   alt="QR code for EduReach Hub authenticator setup"
                   width={150}
                   height={150}
+                  decoding="async"
                   style={{ background: '#ffffff', padding: '8px', borderRadius: '6px' }}
                 />
                 <div style={{ flex: '1 1 220px', minWidth: 0 }}>

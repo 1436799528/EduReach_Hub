@@ -14,11 +14,12 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "check": "npm run ci",
-    "ci": "npm run typecheck && npm test && npm run schema:audit && npm run build && npm run test:e2e && npm run audit:ci",
+    "ci": "npm run typecheck && npm test && npm run schema:audit && npm run build && npm run perf:audit && npm run test:e2e && npm run audit:ci",
     "newsroom:run": "tsx scripts/newsroom.ts",
     "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
     "schema:audit": "tsx scripts/schema-audit.ts",
+    "perf:audit": "tsx scripts/perf-audit.ts",
     "audit:ci": "npm audit --audit-level=low",
     "rls:audit": "tsx scripts/rls-posture.ts",
     "a11y:audit": "tsx scripts/a11y-audit.ts"
