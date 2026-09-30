@@ -55,7 +55,13 @@ test.describe('throttled mobile profile', () => {
     await page.addInitScript(() => {
       // Attribution, not just the score: a failing CLS assertion has to name the
       // element that moved, or the fix is a guess.
-      const perf = { lcp: 0, cls: 0, longTaskMs: 0, longTasks: 0, shifts: {} as Record<string, { value: number; count: number }> };
+      const perf = {
+        lcp: 0, cls: 0, longTaskMs: 0, longTasks: 0,
+        shifts: {} as Record<string, { value: number; count: number }>,
+        // When and how far: a source name alone cannot tell a placeholder
+        // collapsing from content arriving late.
+        log: [] as Array<{ t: number; value: number; node: string; dy: number | null }>,
+      };
       (window as unknown as { __perf: typeof perf }).__perf = perf;
       const describeNode = (node: Node | null): string => {
         if (!node) return '(node removed)';
@@ -70,7 +76,8 @@ test.describe('throttled mobile profile', () => {
         for (const entry of list.getEntries()) perf.lcp = Math.max(perf.lcp, entry.startTime);
       }).observe({ type: 'largest-contentful-paint', buffered: true });
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries() as Array<PerformanceEntry & { value: number; hadRecentInput: boolean; sources?: Array<{ node: Node | null }> }>) {
+        type ShiftSource = { node: Node | null; previousRect?: DOMRectReadOnly; currentRect?: DOMRectReadOnly };
+        for (const entry of list.getEntries() as Array<PerformanceEntry & { value: number; hadRecentInput: boolean; sources?: ShiftSource[] }>) {
           if (entry.hadRecentInput) continue;
           perf.cls += entry.value;
           const sources = entry.sources?.length ? entry.sources : [{ node: null }];
@@ -79,6 +86,17 @@ test.describe('throttled mobile profile', () => {
             const record = (perf.shifts[key] ??= { value: 0, count: 0 });
             record.value += entry.value / sources.length;
             record.count += 1;
+          }
+          if (perf.log.length < 12) {
+            const biggest = [...sources].sort((left, right) => (right.currentRect?.width ?? 0) * (right.currentRect?.height ?? 0) - (left.currentRect?.width ?? 0) * (left.currentRect?.height ?? 0))[0];
+            perf.log.push({
+              t: Math.round(entry.startTime),
+              value: Number(entry.value.toFixed(4)),
+              node: describeNode(biggest?.node ?? null),
+              dy: biggest?.previousRect && biggest?.currentRect
+                ? Math.round(biggest.currentRect.top - biggest.previousRect.top)
+                : null,
+            });
           }
         }
       }).observe({ type: 'layout-shift', buffered: true });
@@ -109,7 +127,11 @@ test.describe('throttled mobile profile', () => {
 
       const metrics = await page.evaluate(() => {
         const perf = (window as unknown as {
-          __perf: { lcp: number; cls: number; longTaskMs: number; longTasks: number; shifts: Record<string, { value: number; count: number }> };
+          __perf: {
+            lcp: number; cls: number; longTaskMs: number; longTasks: number;
+            shifts: Record<string, { value: number; count: number }>;
+            log: Array<{ t: number; value: number; node: string; dy: number | null }>;
+          };
         }).__perf;
         const shiftSources = Object.entries(perf.shifts)
           .map(([node, record]) => ({ node, ...record }))
@@ -127,6 +149,7 @@ test.describe('throttled mobile profile', () => {
           domContentLoaded: Math.round(navigation?.domContentLoadedEventEnd ?? 0),
           transferBytes,
           requests: resources.length,
+          shiftLog: perf.log,
           fontCssRequested: resources.some((entry) => entry.name.includes('fonts.googleapis.com')),
           shiftSources,
         };
@@ -142,6 +165,7 @@ test.describe('throttled mobile profile', () => {
         `transfer ${(metrics.transferBytes / 1024).toFixed(0)} KB in ${metrics.requests} requests`,
         `font css requested: ${metrics.fontCssRequested}`,
         `shift sources: ${metrics.shiftSources.map((source) => `${source.node} ${source.value.toFixed(3)}x${source.count}`).join(' + ') || 'none'}`,
+        `shift log: ${metrics.shiftLog.map((entry) => `t=${entry.t}ms ${entry.value} ${entry.node} dy=${entry.dy}`).join(' | ') || 'none'}`,
       ].join(' | '));
 
       expect(metrics.fontCssRequested, 'the font stylesheet should be requested by the document').toBe(true);
