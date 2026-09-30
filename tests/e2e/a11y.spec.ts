@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import type { AxeResults } from 'axe-core';
 import { expect, test, type Page } from '@playwright/test';
 
 // A11Y-1: the rendered-page half of the verification.
@@ -16,17 +17,30 @@ import { expect, test, type Page } from '@playwright/test';
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 // A red gate must say what broke. GitHub turns `::error::` lines into
-// annotations on the check run, so the failing test names its own rule and node
-// instead of making the reviewer open a log — and `test:e2e` runs without a
-// browser in some environments, where the log is the only other channel.
+// annotations on the check run, so a failing test names its own rule and node
+// instead of making the reviewer open a log — and in an environment where the
+// browser cannot be installed, the annotation is the only channel back.
 test.afterEach(async ({}, testInfo) => {
   if (testInfo.status === testInfo.expectedStatus) return;
+  if (testInfo.title.startsWith('axe:')) return; // the aggregate report below is more useful
   const detail = testInfo.errors
     .map((error) => error.message ?? String(error))
     .join(' | ')
     .replace(/\s+/g, ' ')
     .slice(0, 900);
   console.log(`::error title=e2e a11y::${testInfo.title} — ${detail}`);
+});
+
+/**
+ * Every failing node, once. axe reports one rule with N nodes per page, and the
+ * same node usually fails on several pages; the aggregate is what makes a
+ * palette decision possible from the check run alone.
+ */
+const axeReport = new Map<string, Set<string>>();
+test.afterAll(() => {
+  if (axeReport.size === 0) return;
+  const lines = [...axeReport.entries()].map(([detail, routes]) => `${[...routes].join(',')} → ${detail}`);
+  console.log(`::error title=axe report (${lines.length} distinct)::${lines.join(' || ').slice(0, 12000)}`);
 });
 
 /** Public routes: the five flows the product is for, plus the entry points. */
@@ -63,15 +77,16 @@ function summarise(violations: Awaited<ReturnType<AxeBuilder['analyze']>>['viola
  * detail is which element, on which background, at what ratio — so emit that:
  * the next person fixes the palette instead of hunting for the node.
  */
-function annotateViolations(route: string, violations: Awaited<ReturnType<AxeBuilder['analyze']>>['violations']) {
-  for (const violation of violations.slice(0, 8)) {
-    const shown = violation.nodes.slice(0, 4).map((node) => {
+function annotateViolations(route: string, violations: AxeResults['violations']) {
+  for (const violation of violations) {
+    for (const node of violation.nodes) {
       const data = node.any?.[0]?.data as { fgColor?: string; bgColor?: string; contrastRatio?: number } | undefined;
       const colour = data?.contrastRatio ? ` [${data.fgColor} on ${data.bgColor} = ${data.contrastRatio}:1]` : '';
-      return `${node.target.join(' ')}${colour}`;
-    });
-    const rest = violation.nodes.length - shown.length;
-    console.log(`::error title=axe ${route} ${violation.id}::${shown.join(' | ')}${rest > 0 ? ` (+${rest} more nodes)` : ''}`);
+      const detail = `${violation.id}: ${node.target.join(' ')}${colour}`;
+      const routes = axeReport.get(detail) ?? new Set<string>();
+      routes.add(route);
+      axeReport.set(detail, routes);
+    }
   }
 }
 
