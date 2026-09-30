@@ -64,3 +64,13 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Target size (WCAG 2.5.8, AA). The password reveal buttons measured 16×16 —
+   below the 24×24 minimum — because they are icons positioned inside the
+   field. Sizing the button, rather than the icon, fixes the target. */
+:root :where(button[aria-label='Show password'], button[aria-label='Hide password']) {
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-grid;
+  place-items: center;
+}
