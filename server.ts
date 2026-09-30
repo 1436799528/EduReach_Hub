@@ -2,8 +2,17 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
-import { requireAdmin, type AdminRequest } from './middleware';
+import {
+  assertOwnership,
+  hasCapability,
+  recordAudit,
+  requireCapability,
+  requireStaff,
+  type AuthorizedRequest,
+} from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
+import { verifyJWT } from './lib/auth';
+import { type Capability } from './src/lib/capabilities';
 import { userFacingError as normalizeUserFacingError } from './lib/errors';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
@@ -92,14 +101,40 @@ function getServerSupabase() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-async function requireUser(req: express.Request) {
+/**
+ * A user-scoped Supabase client (publishable key + the caller's access token).
+ * Ownership-critical RPCs resolve the caller with `auth.uid()`, which is null
+ * for the service-role client — using it here would make those RPCs run as
+ * nobody. Returns null when no publishable key is configured, and the caller
+ * falls back to the service client (the RPC then refuses, as it did before).
+ */
+function getUserScopedSupabase(accessToken: string) {
+  const url = process.env.VITE_SUPABASE_URL;
+  const publishableKey = (process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  if (!url || !publishableKey) return null;
+  return createClient(url, publishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
+}
+
+/**
+ * Resolve the caller from their session, then authorize them. Authorization
+ * failures throw, and every handler maps them to 401 (not signed in) or 403
+ * (signed in, not allowed) — the operation never runs.
+ */
+async function requireUser(req: express.Request, capability: Capability = 'dashboard.access') {
   const auth = req.header('authorization');
   if (!auth?.startsWith('Bearer ')) throw new Error('Authentication required.');
-  const token = auth.slice('Bearer '.length);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) throw new Error('Invalid or expired session.');
-  return { supabase, user: data.user };
+  const token = auth.slice('Bearer '.length).trim();
+  const caller = await verifyJWT(token);
+  if (!caller) throw new Error('Invalid or expired session.');
+  if (!hasCapability(caller, capability)) throw new Error('You do not have permission to perform this action.');
+  return {
+    supabase: getServerSupabase(),
+    rpcSupabase: getUserScopedSupabase(token) || getServerSupabase(),
+    user: caller,
+  };
 }
 
 app.get('/api/health', (_req, res) => {
@@ -171,19 +206,22 @@ app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), 
   }
 });
 
-app.get('/api/admin/session', requireAdmin, async (req, res) => {
-  const adminUser = (req as AdminRequest).adminUser!;
+app.get('/api/admin/session', requireStaff, async (req, res) => {
+  const adminUser = (req as AuthorizedRequest).adminUser!;
+  // The console renders from this: the application role plus the resolved
+  // capability list. It is a UX input only — every endpoint re-checks.
   res.json({
     user: {
       id: adminUser.id,
       email: adminUser.email,
       fullName: adminUser.fullName,
-      role: adminUser.role,
+      role: adminUser.appRole,
+      capabilities: adminUser.capabilities,
     },
   });
 });
 
-app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
+app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data: metrics, error: metricError } = await supabase.rpc('admin_dashboard_metrics');
@@ -203,9 +241,12 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
         return [];
       }
     };
+    // The audit trail is its own capability: analytics staff do not
+    // automatically get to read who did what.
+    const seesAudit = hasCapability((req as AuthorizedRequest).adminUser, 'audit.read');
     const [canonicalAudit, legacyAudit, recentRequests, recentUsers, activity] = await Promise.all([
-      auditFeed('admin_audit_logs'),
-      auditFeed('edureach_audit_logs'),
+      seesAudit ? auditFeed('admin_audit_logs') : Promise.resolve([]),
+      seesAudit ? auditFeed('edureach_audit_logs') : Promise.resolve([]),
       supabase.from('service_requests').select('id,reference_code,status,created_at,updated_at,service_catalog(title)').order('created_at',{ascending:false}).limit(10),
       supabase.from('profiles').select('id,full_name,role,created_at').order('created_at',{ascending:false}).limit(10),
       (async () => {
@@ -256,7 +297,7 @@ app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), 
   }
 });
 
-app.get('/api/admin/users', requireAdmin, async (req, res) => {
+app.get('/api/admin/users', requireCapability('user.read'), async (req, res) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
@@ -282,7 +323,7 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/users/:userId/activity', requireAdmin, async (req, res) => {
+app.get('/api/admin/users/:userId/activity', requireCapability('user.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data: profile, error: profileError } = await supabase
@@ -318,7 +359,7 @@ app.get('/api/admin/users/:userId/activity', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
+app.get('/api/admin/service-requests', requireCapability('service_request.read'), async (req, res) => {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : 'all';
     const allowed = ['all','submitted','reviewing','processing','awaiting_information','completed','closed','rejected','cancelled'];
@@ -335,9 +376,9 @@ app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/service-requests/:requestId', requireCapability('service_request.process'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status,admin_note').eq('id', req.params.requestId).single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
@@ -386,7 +427,7 @@ app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, re
   }
 });
 
-app.get('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
+app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').order('created_at', { ascending: false });
@@ -398,9 +439,9 @@ app.get('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
+app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const { title, exam_body, subject, description, duration_minutes, is_active } = req.body || {};
     const duration = Number(duration_minutes);
     if (!title?.trim() || !exam_body?.trim() || !subject?.trim() || !Number.isInteger(duration) || duration < 5 || duration > 180) {
@@ -421,9 +462,9 @@ app.post('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
@@ -463,9 +504,9 @@ app.patch('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
@@ -486,7 +527,7 @@ app.delete('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
+app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').eq('exam_id', req.params.examId).order('position', { ascending: true });
@@ -498,9 +539,9 @@ app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res)
   }
 });
 
-app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
+app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
@@ -525,9 +566,9 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res
   }
 });
 
-app.patch('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
@@ -551,9 +592,9 @@ app.patch('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res)
   }
 });
 
-app.delete('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('exam_questions').delete().eq('id', req.params.questionId).select('id,exam_id').single();
     if (error) throw error;
@@ -603,7 +644,7 @@ function normalizeTags(value: unknown): string | null {
   return cleaned.length ? cleaned.join(', ') : null;
 }
 
-app.get('/api/admin/news', requireAdmin, async (_req, res) => {
+app.get('/api/admin/news', requireCapability('news.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles').select(newsRowSelect).order('updated_at', { ascending: false }).limit(200);
@@ -615,9 +656,9 @@ app.get('/api/admin/news', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/news', requireAdmin, async (req, res) => {
+app.post('/api/admin/news', requireCapability('news.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const title = String(req.body?.title || '').trim();
     const bodyText = String(req.body?.body || '').trim();
     if (!title || !bodyText) return res.status(400).json({ error: 'Article title and body are required.' });
@@ -630,6 +671,11 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Image and source links must use HTTPS or a site-relative path.' });
     }
     const published = req.body?.published === true;
+    // `news.create` may save drafts; putting a story in front of students is a
+    // separate capability, checked from the payload rather than the route.
+    if (published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
+      return res.status(403).json({ error: 'You do not have permission to perform this action.' });
+    }
     const now = new Date().toISOString();
     let publishedAt: string | null = null;
     if (published) {
@@ -665,9 +711,9 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
@@ -703,6 +749,9 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     if (req.body?.tags !== undefined) patch.tags = normalizeTags(req.body.tags);
     if (req.body?.published !== undefined) {
       const published = req.body.published === true;
+      if (published && !existing.published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
+        return res.status(403).json({ error: 'You do not have permission to perform this action.' });
+      }
       patch.published = published;
       if (published && !existing.published_at && req.body?.published_at === undefined) patch.published_at = new Date().toISOString();
       if (!published) patch.published_at = null;
@@ -726,9 +775,9 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/news/:articleId', requireCapability('news.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
@@ -745,14 +794,14 @@ app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 // Admin control-centre endpoints (2026-09-26): calendar items, institutions,
 // service catalogue visibility, account suspension and content image uploads.
-// All writes use the service-role key after requireAdmin() authorization and
+// All writes use the service-role key after capability authorization and
 // are recorded in the staff audit trail.
 // ---------------------------------------------------------------------------
 
 const CALENDAR_PRIORITIES = ['low', 'normal', 'high'];
 const CALENDAR_STATUSES = ['pending', 'cancelled'];
 
-app.get('/api/admin/calendar-items', requireAdmin, async (req, res) => {
+app.get('/api/admin/calendar-items', requireCapability('calendar.read'), async (req, res) => {
   try {
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
@@ -799,9 +848,9 @@ function validateCalendarPayload(body: any, type: string): { error?: string; val
   return { values };
 }
 
-app.post('/api/admin/calendar-items', requireAdmin, async (req, res) => {
+app.post('/api/admin/calendar-items', requireCapability('calendar.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
     const check = validateCalendarPayload(req.body, type);
@@ -818,9 +867,9 @@ app.post('/api/admin/calendar-items', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/calendar-items/:itemId', requireCapability('calendar.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
     const check = validateCalendarPayload(req.body, type);
@@ -837,9 +886,9 @@ app.patch('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) =>
   }
 });
 
-app.delete('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/calendar-items/:itemId', requireCapability('calendar.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
     const supabase = getServerSupabase();
@@ -891,7 +940,7 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
   }
 }
 
-app.get('/api/admin/institutions', requireAdmin, async (req, res) => {
+app.get('/api/admin/institutions', requireCapability('institution.read'), async (req, res) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
@@ -909,15 +958,16 @@ app.get('/api/admin/institutions', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/institutions', requireAdmin, async (req, res) => {
+app.post('/api/admin/institutions', requireCapability('institution.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.status(201).json({ item: data });
   } catch (error) {
     console.error('Admin institution create error:', error);
@@ -925,15 +975,16 @@ app.post('/api/admin/institutions', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/institutions/:institutionId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/institutions/:institutionId', requireCapability('institution.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin institution update error:', error);
@@ -941,13 +992,14 @@ app.patch('/api/admin/institutions/:institutionId', requireAdmin, async (req, re
   }
 });
 
-app.delete('/api/admin/institutions/:institutionId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/institutions/:institutionId', requireCapability('institution.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').delete().eq('id', req.params.institutionId).select('id,school_name').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.json({ success: true });
   } catch (error) {
     console.error('Admin institution delete error:', error);
@@ -957,9 +1009,9 @@ app.delete('/api/admin/institutions/:institutionId', requireAdmin, async (req, r
 
 // --- Service catalogue visibility/content ----------------------------------
 
-app.patch('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/services/:serviceId', requireCapability('service.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title,description,application_url,active').eq('id', req.params.serviceId).single();
     if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
@@ -1005,7 +1057,7 @@ function validateServiceRoute(value: unknown): string | null | 'invalid' {
   return raw.slice(0, 200);
 }
 
-app.get('/api/admin/services', requireAdmin, async (_req, res) => {
+app.get('/api/admin/services', requireCapability('service.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -1022,9 +1074,9 @@ app.get('/api/admin/services', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/services', requireAdmin, async (req, res) => {
+app.post('/api/admin/services', requireCapability('service.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const title = String(req.body?.title || '').trim().slice(0, 120);
     if (!title) return res.status(400).json({ error: 'A service title is required.' });
     const serviceKey = slugifyTitle(String(req.body?.service_key || title)).slice(0, 60);
@@ -1056,9 +1108,9 @@ app.post('/api/admin/services', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/services/:serviceId', requireCapability('service.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title').eq('id', req.params.serviceId).single();
     if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
@@ -1142,7 +1194,7 @@ app.get('/api/opportunities', async (_req, res) => {
   }
 });
 
-app.get('/api/admin/opportunities', requireAdmin, async (_req, res) => {
+app.get('/api/admin/opportunities', requireCapability('opportunity.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -1158,15 +1210,16 @@ app.get('/api/admin/opportunities', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/opportunities', requireAdmin, async (req, res) => {
+app.post('/api/admin/opportunities', requireCapability('opportunity.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateOpportunityPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').insert(check.values).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.status(201).json({ item: data });
   } catch (error) {
     console.error('Admin opportunity create error:', error);
@@ -1174,15 +1227,16 @@ app.post('/api/admin/opportunities', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/opportunities/:opportunityId', requireCapability('opportunity.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateOpportunityPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').update({ ...check.values, updated_at: new Date().toISOString() }).eq('id', req.params.opportunityId).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
     if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin opportunity update error:', error);
@@ -1190,13 +1244,14 @@ app.patch('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, r
   }
 });
 
-app.delete('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/opportunities/:opportunityId', requireCapability('opportunity.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').delete().eq('id', req.params.opportunityId).select('id,title').single();
     if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.json({ success: true });
   } catch (error) {
     console.error('Admin opportunity delete error:', error);
@@ -1206,9 +1261,9 @@ app.delete('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, 
 
 // --- Account suspension (Supabase Auth admin ban via service role) ---------
 
-app.post('/api/admin/users/:userId/ban', requireAdmin, async (req, res) => {
+app.post('/api/admin/users/:userId/ban', requireCapability('user.suspend'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     if (adminUser.id === req.params.userId) return res.status(400).json({ error: 'You cannot suspend your own account.' });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.auth.admin.updateUserById(req.params.userId, { ban_duration: '876000h' });
@@ -1221,9 +1276,9 @@ app.post('/api/admin/users/:userId/ban', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
+app.post('/api/admin/users/:userId/unban', requireCapability('user.suspend'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { error } = await supabase.auth.admin.updateUserById(req.params.userId, { ban_duration: 'none' });
     if (error) throw error;
@@ -1235,13 +1290,63 @@ app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
   }
 });
 
+
+// --- Role assignment -------------------------------------------------------
+// The capability vocabulary lives in code (src/lib/capabilities.ts); this
+// endpoint is how a stored role changes. It is `user.manage_roles`, it refuses
+// unknown values and self-modification, and every change is audited.
+const ASSIGNABLE_ROLES = ['student', 'content_editor', 'service_admin', 'super_admin'] as const;
+
+app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const role = String(req.body?.role || '').trim().toLowerCase();
+    if (!(ASSIGNABLE_ROLES as readonly string[]).includes(role)) {
+      return res.status(400).json({ error: 'Unknown role.' });
+    }
+    // An owner locking themselves out of the console is never intentional.
+    if (adminUser.id === req.params.userId) {
+      return res.status(400).json({ error: 'You cannot change your own role.' });
+    }
+    const supabase = getServerSupabase();
+    const { data: target, error: readError } = await supabase
+      .from('profiles')
+      .select('id,role,full_name')
+      .eq('id', req.params.userId)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!target) return res.status(404).json({ error: 'Account not found.' });
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', req.params.userId)
+      .select('id,role')
+      .single();
+    if (error) throw error;
+
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'user_role_change',
+      resourceType: 'profile',
+      resourceId: req.params.userId,
+      // The previous role is recorded; the account email is not.
+      metadata: { from: String(target.role || ''), to: role },
+    });
+    res.json({ user: { id: data.id, role: data.role } });
+  } catch (error) {
+    console.error('Admin role change error:', error);
+    res.status(500).json({ error: 'Unable to change this account role.' });
+  }
+});
+
 // --- Content image uploads (Supabase Storage, admin-content bucket) --------
 
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
-app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireAdmin, express.json({ limit: '5mb' }), async (req, res) => {
+app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('news.create', 'opportunity.create', 'institution.update', 'calendar.update'), express.json({ limit: '5mb' }), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const dataUrl = String(req.body?.dataUrl || '');
     const match = /^data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=\s]+)$/.exec(dataUrl);
     if (!match) return res.status(400).json({ error: 'Only PNG, JPEG, WebP or GIF images are supported.' });
@@ -1266,7 +1371,7 @@ app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requi
   }
 });
 
-app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
+app.post('/api/admin/session/verify', requireStaff, (_req, res) => {
   res.json({ authenticated: true });
 });
 
@@ -1479,11 +1584,13 @@ app.get('/api/cbt/exams', async (_req, res) => {
 
 app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   try {
-    const { supabase } = await requireUser(req);
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const subjects = Array.isArray(req.body?.subjects)
       ? req.body.subjects.map((value: unknown) => String(value).trim()).filter(Boolean)
       : [];
-    const { data, error } = await supabase.rpc('start_cbt_attempt_for_subjects', {
+    // The RPC resolves the student from the token, so the attempt is always
+    // created for the caller and never for a client-supplied user id.
+    const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_for_subjects', {
       p_exam_id: req.params.examId,
       p_subjects: subjects,
     });
@@ -1499,7 +1606,7 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   } catch (error) {
     console.error('CBT start API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /no questions|requires Use of English/i.test(message) ? 422 : 409;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : /not found/i.test(message) ? 404 : /no questions|requires Use of English/i.test(message) ? 422 : 409;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this CBT exam. Please try again.') });
   }
 });
@@ -1624,12 +1731,14 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
 
 app.post('/api/cbt/submit', async (req, res) => {
   try {
-    const { supabase } = await requireUser(req);
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const { attemptId, examId, answers } = req.body as { attemptId?: string; examId?: string; answers?: Record<string, unknown> };
     if (!attemptId || !examId || !answers || typeof answers !== 'object' || Array.isArray(answers)) {
       return res.status(400).json({ error: 'attemptId, examId and answers are required.' });
     }
-    const { data, error } = await supabase.rpc('submit_cbt_attempt_for_subjects', {
+    // Ownership (the attempt belongs to the caller) is enforced inside the RPC
+    // through auth.uid(); the server never passes a user id from the request.
+    const { data, error } = await rpcSupabase.rpc('submit_cbt_attempt_for_subjects', {
       p_attempt_id: attemptId,
       p_exam_id: examId,
       p_answers: answers,
@@ -1645,14 +1754,16 @@ app.post('/api/cbt/submit', async (req, res) => {
   } catch (error) {
     console.error('CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
   }
 });
 
 app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   try {
-    const { supabase, user } = await requireUser(req);
+    const { supabase, user } = await requireUser(req, 'cbt.attempt');
+    // Ownership: the row must belong to the caller. A mismatch is a 404, so the
+    // response never reveals that someone else's attempt exists.
     const { data: attempt, error } = await supabase
       .from('cbt_attempts')
       .select('id,current_question')
@@ -1663,14 +1774,14 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
     res.json({ answers: {}, questionIndex: Number.isInteger(attempt.current_question) ? attempt.current_question : 0 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load CBT progress.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : 400;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to load CBT progress.') });
   }
 });
 
 app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   try {
-    const { supabase, user } = await requireUser(req);
+    const { supabase, user } = await requireUser(req, 'cbt.attempt');
     const questionIndex = Number(req.body?.questionIndex);
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (Number.isInteger(questionIndex) && questionIndex >= 0) patch.current_question = questionIndex;
@@ -1684,7 +1795,7 @@ app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
     res.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : 400;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save CBT progress.') });
   }
 });
@@ -1814,11 +1925,11 @@ function validateContentRow(resource: ContentResource, input: Record<string, unk
 }
 function contentSelect(resource: ContentResource) { return resource.fields.map(f => f.name).join(','); }
 
-app.get('/api/admin/content-manager/resources', requireAdmin, (_req, res) => {
+app.get('/api/admin/content-manager/resources', requireCapability('data.read'), (_req, res) => {
   res.json({ resources: CONTENT_RESOURCES });
 });
 
-app.get('/api/admin/content-manager/data/:resource', requireAdmin, async (req, res) => {
+app.get('/api/admin/content-manager/data/:resource', requireCapability('data.read'), async (req, res) => {
   try {
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
@@ -1832,14 +1943,16 @@ app.get('/api/admin/content-manager/data/:resource', requireAdmin, async (req, r
   }
 });
 
-app.post('/api/admin/content-manager/data/:resource', requireAdmin, async (req, res) => {
+app.post('/api/admin/content-manager/data/:resource', requireCapability('data.write'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const values = validateContentRow(resource, req.body || {});
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from(resource.table).insert(values).select(contentSelect(resource)).single();
     if (error) throw error;
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: resource.table, resourceId: (data as { id?: string } | null)?.id ?? null });
     res.status(201).json({ row: data });
   } catch (error) {
     console.error('Content manager create error:', error);
@@ -1847,8 +1960,9 @@ app.post('/api/admin/content-manager/data/:resource', requireAdmin, async (req, 
   }
 });
 
-app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (req, res) => {
+app.patch('/api/admin/content-manager/data/:resource/:id', requireCapability('data.write'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const values = validateContentRow(resource, req.body || {});
@@ -1856,6 +1970,7 @@ app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from(resource.table).update(values).eq('id', req.params.id).select(contentSelect(resource)).single();
     if (error) throw error;
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: resource.table, resourceId: req.params.id });
     res.json({ row: data });
   } catch (error) {
     console.error('Content manager update error:', error);
@@ -1863,8 +1978,9 @@ app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (
   }
 });
 
-app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/content-manager/data/:resource/:id', requireCapability('data.write'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const supabase = getServerSupabase();
@@ -1875,6 +1991,7 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async 
       throw error;
     }
     if (!data) return res.status(404).json({ error: 'Record not found.' });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: resource.table, resourceId: req.params.id });
     res.json({ success: true });
   } catch (error) {
     console.error('Content manager delete error:', error);
@@ -1882,8 +1999,9 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async 
   }
 });
 
-app.post('/api/admin/content-manager/import/:resource', rateLimitFor(RATE_LIMIT_RULES.adminImport), requireAdmin, async (req, res) => {
+app.post('/api/admin/content-manager/import/:resource', rateLimitFor(RATE_LIMIT_RULES.adminImport), requireCapability('data.import'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
@@ -1931,6 +2049,7 @@ app.post('/api/admin/content-manager/import/:resource', rateLimitFor(RATE_LIMIT_
         }
       }
     }
+        await recordAudit(supabase, { actorId: adminUser.id, action: 'import', resourceType: resource.table, metadata: { inserted, updated, errors: errors.length } });
     res.json({ inserted, updated, errors });
   } catch (error) {
     console.error('Content manager import error:', error);
@@ -1942,7 +2061,7 @@ app.post('/api/admin/content-manager/import/:resource', rateLimitFor(RATE_LIMIT_
 // Newsroom: ingestion runs, review queue and content integrity.
 // ---------------------------------------------------------------------------
 
-app.post('/api/admin/newsroom/ingest', rateLimitFor(RATE_LIMIT_RULES.adminNewsroomRun), requireAdmin, async (req, res) => {
+app.post('/api/admin/newsroom/ingest', rateLimitFor(RATE_LIMIT_RULES.adminNewsroomRun), requireCapability('news.create'), async (req, res) => {
   try {
     // Defaults to a real run; pass dry_run: true to preview what would happen.
     const dryRun = req.body?.dry_run === true || req.body?.dry_run === 'true';
@@ -1958,7 +2077,7 @@ app.post('/api/admin/newsroom/ingest', rateLimitFor(RATE_LIMIT_RULES.adminNewsro
   }
 });
 
-app.get('/api/admin/newsroom/runs', requireAdmin, async (_req, res) => {
+app.get('/api/admin/newsroom/runs', requireCapability('news.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -1974,7 +2093,7 @@ app.get('/api/admin/newsroom/runs', requireAdmin, async (_req, res) => {
   }
 });
 
-app.get('/api/admin/newsroom/candidates', requireAdmin, async (req, res) => {
+app.get('/api/admin/newsroom/candidates', requireCapability('news.read'), async (req, res) => {
   try {
     const status = typeof req.query.status === 'string' && req.query.status.trim() ? req.query.status.trim() : 'needs_review';
     const allowed = ['new', 'needs_review', 'approved', 'rejected', 'duplicate', 'published', 'failed'];
@@ -2001,9 +2120,9 @@ app.get('/api/admin/newsroom/candidates', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/newsroom/candidates/:candidateId/approve', requireAdmin, async (req, res) => {
+app.post('/api/admin/newsroom/candidates/:candidateId/approve', requireCapability('news.publish'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: candidate, error: candidateError } = await supabase
       .from('news_ingest_candidates')
@@ -2076,9 +2195,9 @@ app.post('/api/admin/newsroom/candidates/:candidateId/approve', requireAdmin, as
   }
 });
 
-app.post('/api/admin/newsroom/candidates/:candidateId/reject', requireAdmin, async (req, res) => {
+app.post('/api/admin/newsroom/candidates/:candidateId/reject', requireCapability('news.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const reason = String(req.body?.reason || '').trim().slice(0, 500) || 'Rejected by editor.';
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_ingest_candidates')
@@ -2102,7 +2221,7 @@ app.post('/api/admin/newsroom/candidates/:candidateId/reject', requireAdmin, asy
   }
 });
 
-app.get('/api/admin/integrity', requireAdmin, async (_req, res) => {
+app.get('/api/admin/integrity', requireCapability('data.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.rpc('content_integrity_report');

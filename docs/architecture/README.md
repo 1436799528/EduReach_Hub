@@ -53,7 +53,7 @@ assumption so work can continue safely.
 
 | # | Decision | Status | Where it lands |
 |---|---|---|---|
-| D1 | Role granularity: one staff role, or split content editor / service admin / super admin | **Decided (2026-09-30): implement the capability layer now; keep one enforced staff role and defer the role split.** Capacity is enforced per endpoint immediately, so the split later is a role-assignment change, not a rewrite | `03-ROLES-AND-PERMISSIONS.md` |
+| D1 | Role granularity: one staff role, or split content editor / service admin / super admin | **Decided (2026-09-30): capability layer implemented (ROLE-1); the role split is now an assignment, not a rewrite.** Four roles exist end to end, legacy staff map to `super_admin`, and `senate_admin`/`campus_agent` are retired. Remaining: assign the narrower roles to real accounts | `03-ROLES-AND-PERMISSIONS.md`, `../features/ROLE-1.md` |
 | D2 | Payment/wallet: schema exists (`student_wallet_transactions`, `payment_events`), no product surface | **Locked: out of scope** until a fee model with terms, refunds and a disclaimer is agreed. The tables stay unused rather than half-used | `07-FEATURE-CATALOGUE.md` |
 | D3 | Public reference-code tracking by an unauthenticated student | **Locked: tracking stays authenticated-only.** The legacy public lookup RPC was already revoked; a reference code alone must never reveal student data | `05-BUSINESS-RULES.md` |
 | D4 | Search backend: client-side datasets vs Supabase full-text | Open — keep current behaviour; revisit when row counts make it slow | `07-FEATURE-CATALOGUE.md` |

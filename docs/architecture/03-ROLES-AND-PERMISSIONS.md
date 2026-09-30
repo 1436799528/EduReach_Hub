@@ -1,8 +1,6 @@
 # 03 — Roles and Permissions
 
-## 1. Current state (verified in code)
-
-The database carries a wider role vocabulary than the application enforces:
+## 1. State before ROLE-1 (historical)
 
 | Layer | Roles seen | Where |
 |---|---|---|
@@ -10,18 +8,27 @@ The database carries a wider role vocabulary than the application enforces:
 | Server authorization | Every staff role collapses to one: `ADMIN_ROLES = {admin, super_admin, moderator}` in `lib/auth.ts`, returned as `role: 'admin'` | `requireAdmin` in `middleware.ts` |
 | Frontend routing | Depends on the server session check; `ProtectedRoute` redirects unauthenticated users | `src/app/ProtectedRoute.tsx` |
 
-Consequences that matter:
+1. `senate_admin` and `campus_agent` could read staff-scoped rows through RLS but
+   could not pass `requireAdmin` — half-roles: data access without application
+   permission. **Retired and neutralised by ROLE-1.**
+2. There was no capability separation inside the admin console. **Fixed:** every
+   privileged endpoint now names a capability.
+3. Guest CBT scoring still has no role — it is intentionally public and protected
+   by rate limiting (`30 / 10 min`).
+4. Frontend hiding is still not a boundary; server middleware and RLS are.
 
-1. **`senate_admin` and `campus_agent` can read staff-scoped rows through RLS but
-   cannot pass `requireAdmin`.** They are half-roles: data access without
-   application permission. That is an inconsistency to resolve, not a feature.
-2. **There is no capability separation inside the admin console.** Anyone who
-   passes `requireAdmin` can publish news, ban a student, edit the question bank
-   and bulk-import data.
-3. **Guest CBT scoring has no role at all** — it is intentionally public and
-   protected by rate limiting instead (`30 / 10 min`).
-4. Frontend hiding is not relied on as a boundary; server middleware and RLS are.
-   That is correct and must stay.
+## 1a. State after ROLE-1 (current)
+
+| Layer | Vocabulary | Where |
+|---|---|---|
+| Database | `profiles.role ∈ {student, content_editor, service_admin, super_admin}`, enforced by `profiles_role_vocabulary_check` | `supabase/migrations/20260930140000_capability_role_alignment.sql` |
+| Server | The same four roles resolve to capabilities from one module | `src/lib/capabilities.ts`, `lib/authorization.ts`, `middleware.ts` |
+| Console | Sections and buttons render from the capability list the server returns | `pages/AdminLayout.tsx`, `src/components/admin/Can.tsx` |
+
+The vocabulary is `resource.action` (`news.publish`, `service_request.process`,
+`user.manage_roles`, …). `CAPABILITIES` and `ROLE_CAPABILITIES` in
+`src/lib/capabilities.ts` are the definitions; `docs/features/ROLE-1.md` holds the
+endpoint → capability and route → capability mappings.
 
 ## 2. Target model
 
@@ -40,40 +47,51 @@ intent (institution-scoped or campus-scoped moderation) is a future capability
 that requires institution scoping in the data model; until that exists, they stay
 disabled. If any live account holds one, it must be migrated to a defined role.
 
-### Capability map
+### Capability map (as implemented)
 
-Authorization is expressed as capabilities, not route names, so a new endpoint
-declares what it needs rather than which role may call it.
+The planning names below became the `resource.action` vocabulary in
+`src/lib/capabilities.ts`.
 
 | Capability | content_editor | service_admin | super_admin |
 |---|---|---|---|
-| `content.publish` (news publish/feature/unpublish) | ✅ | — | ✅ |
-| `content.review` (ingestion queue approve/reject) | ✅ | — | ✅ |
-| `content.catalogue` (services, institutions, calendar, opportunities) | ✅ | — | ✅ |
-| `cbt.manage` (exams, questions, activation) | ✅ | — | ✅ |
-| `service.process` (status, notes, completion) | — | ✅ | ✅ |
-| `service.read_all` | — | ✅ | ✅ |
-| `user.manage` (suspend, restore) | — | — | ✅ |
-| `user.roles` | — | — | ✅ |
-| `data.import` (bulk import/export) | — | — | ✅ |
-| `audit.read` | — | — | ✅ |
-| `platform.health` | — | — | ✅ |
+| Planned | Implemented | content_editor | service_admin | super_admin |
+|---|---|---|---|---|
+| `content.publish` | `news.publish` | ✅ | — | ✅ |
+| `content.review` | `news.publish` (approve), `news.update` (reject) | ✅ | — | ✅ |
+| `content.catalogue` | `institution.*`, `opportunity.*`, `calendar.*`, `service.*` | ✅ | `service.read` only | ✅ |
+| `cbt.manage` | `cbt.manage`, `cbt.read` | ✅ | — | ✅ |
+| `service.process` | `service_request.process` | — | ✅ | ✅ |
+| `service.read_all` | `service_request.read` | — | ✅ | ✅ |
+| `user.manage` | `user.read`, `user.suspend` | — | — | ✅ |
+| `user.roles` | `user.manage_roles` | — | — | ✅ |
+| `data.import` | `data.import`, `data.write`, `data.read` | `data.read` only | — | ✅ |
+| `audit.read` | `audit.read` | — | — | ✅ |
+| `platform.health` | staff (any capability) | ✅ | ✅ | ✅ |
+
+Every role also holds the owner-scoped student capabilities, because a staff
+member is still a signed-in person who may use the student dashboard. `can()`
+refuses those without a matching owner, so they never expose someone else's
+data; staff read other people's rows through staff capabilities instead.
 
 ## 3. Where enforcement happens
 
 ```
 Browser request
       ↓
-requireAdmin / requireUser            (server middleware — authentication)
+requireStaff / requireCapability      (server — authentication + authorization)
       ↓
-capability check                      (server — authorization)
+can(user, capability, resource?)      (capability + ownership, lib/authorization.ts)
       ↓
-service-role database call or RPC     (database — business rules + RLS for client paths)
+service-role database call or RPC     (database — business rules + RLS)
       ↓
 admin_audit_log(...)                  (audit trail for privileged mutations)
       ↓
 response
 ```
+
+Ownership is checked in the handler (`can()` against the row's owner) and again
+by RLS for anything that goes through the client key. The service-role key is
+only used after authorization and is never shipped to the browser.
 
 Rules that do not change:
 
@@ -104,40 +122,34 @@ Rules that do not change:
 A content editor must not be able to read service-request form data: it contains
 student personal information unrelated to publishing.
 
-## 4a. Decision (2026-09-30)
+## 4a. Decision (2026-09-30) — implemented as ROLE-1
 
 The capability layer is adopted **now**; the role split is **deferred** (open
 decision D1 in `docs/architecture/README.md`). Concretely: every staff endpoint
 declares the capabilities it needs, all current staff roles map to the full
 capability set, and `senate_admin`/`campus_agent` are retired from the
-vocabulary. Splitting `content_editor` from `service_admin` becomes a change of
-role assignments rather than a change of enforcement, so it can happen when a
-second staff member is onboarded without another code rewrite.
+vocabulary. The capability layer is live: splitting `content_editor` from `service_admin` is
+now a change of role assignments, not a change of enforcement. Until step 3
+above is done every staff account is still `super_admin`, so the separation
+exists in code and not yet in who holds what — **assign the narrower roles
+deliberately before onboarding a content-only staff member.**
 
-Until that split happens, the practical rule stands: **do not give a content-only
-staff member an admin account**, because today every staff account can reach
-service-request data.
+## 5. Migration path (implemented, one operational step left)
 
-## 5. Migration path
-
-Ordered so nothing breaks while it happens:
-
-1. **Add the capability layer server-side** (`requireCapability(...)`), mapping
-   the current single staff role to `super_admin` for all capabilities, so
-   behaviour is unchanged until roles are assigned.
-2. **Add an explicit role column value set** in the database: extend the check
-   constraint to `student | content_editor | service_admin | super_admin`, and
-   map existing `admin`/`moderator` → `super_admin`, `super_admin` → `super_admin`.
-3. **Assign real roles** to the accounts that need them.
-4. **Neutralise `senate_admin`/`campus_agent`**: no account may hold them; the
-   RLS policies that reference them are rewritten in terms of `is_staff_user()`
-   so the vocabulary cannot drift from the application again.
-5. **Add tests** proving each capability rejects the wrong role (extending the
-   existing unauthenticated-access matrix in `tests/api.test.ts`).
-6. **Update the admin console** so navigation shows only permitted sections —
-   as a convenience, never as the boundary.
-
-Estimated size with D1 applied: one middleware addition, a capability map, tests,
-and small console changes (no role migration needed yet). It is scheduled as
-`ROLE-1` in the feature catalogue and should land before any second staff member
-is onboarded.
+1. ✅ **Capability layer server-side** — `src/lib/capabilities.ts` +
+   `lib/authorization.ts` + `requireCapability(...)` on every privileged route.
+   Legacy staff roles map to `super_admin`, so existing accounts keep today's
+   access until roles are assigned.
+2. ✅ **Explicit role value set** — `20260930140000_capability_role_alignment.sql`
+   normalises stored values and adds `profiles_role_vocabulary_check`.
+3. ⏳ **Assign real roles** — the mechanism exists
+   (`POST /api/admin/users/:userId/role`, super-admin only, audited); deciding
+   who becomes `content_editor` / `service_admin` is an operational decision.
+4. ✅ **Neutralise `senate_admin`/`campus_agent`** — gone from the staff
+   predicate, the notification policy and the application vocabulary; existing
+   rows migrate to `student` and must be re-assigned deliberately.
+5. ✅ **Tests** — `tests/authorization.test.ts` (allow/deny per role, route
+   coverage, ownership, migration contents) plus the existing anonymous-access
+   matrix in `tests/api.test.ts`.
+6. ✅ **Console** — navigation, section access and the publish/delete/suspend/role
+   controls render from the capability list the server returns.

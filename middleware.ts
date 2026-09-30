@@ -1,20 +1,27 @@
-import type { NextFunction, Request, Response } from 'express';
-import { extractBearerToken, verifyAdminToken, type UserPayload } from './lib/auth';
+/**
+ * Express authorization guards. The logic lives in lib/authorization.ts so the
+ * capability model has one implementation; this file only re-exports it under
+ * the names the server imports.
+ *
+ * `requireAdmin` is kept as an alias of `requireStaff` for the two endpoints
+ * that are deliberately "any staff member" surfaces (`/api/admin/session` and
+ * `/api/admin/session/verify`). Every other admin route names the capability it
+ * needs with `requireCapability(...)`.
+ */
 
-export type AdminRequest = Request & { adminUser?: UserPayload };
+export {
+  authenticateRequest,
+  can,
+  assertOwnership,
+  hasAnyCapability,
+  hasCapability,
+  recordAudit,
+  requireCapability,
+  requireStaff,
+  FORBIDDEN_MESSAGE,
+  type AuthorizedRequest,
+  type OwnedResource,
+} from './lib/authorization';
 
-export async function requireAdmin(req: AdminRequest, res: Response, next: NextFunction) {
-  try {
-    const token = extractBearerToken(req.header('authorization'));
-    if (!token) return res.status(401).json({ error: 'Authentication required.' });
-
-    const user = await verifyAdminToken(token);
-    if (!user) return res.status(403).json({ error: 'Administrator access required.' });
-
-    req.adminUser = user;
-    return next();
-  } catch (error) {
-    console.error('Admin authorization error:', error);
-    return res.status(401).json({ error: 'Invalid or expired administrative session.' });
-  }
-}
+export { requireStaff as requireAdmin } from './lib/authorization';
+export type { AuthorizedRequest as AdminRequest } from './lib/authorization';

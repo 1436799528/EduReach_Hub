@@ -6,6 +6,7 @@ import {
   type AdminServiceRequest,
 } from '../src/lib/api';
 import { RequestActions, StatusBadge, TimeAgo, requestStudentName, TableSkeleton } from '../src/components/admin/AdminKit';
+import { Can } from '../src/components/admin/Can';
 
 const FILTERS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'All statuses' },
@@ -111,7 +112,9 @@ export default function AdminQueuePage() {
                             onChange={(e) => setNoteText(e.target.value)}
                           />
                           <div className="admin-action-row">
-                            <button type="button" className="admin-btn small success" disabled={busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
+                            <Can capability="service_request.process">
+                              <button type="button" className="admin-btn small success" disabled={busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
+                            </Can>
                             <button type="button" className="admin-text-btn" onClick={() => setNoteId(null)}>Cancel</button>
                           </div>
                         </div>

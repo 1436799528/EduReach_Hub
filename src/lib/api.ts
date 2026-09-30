@@ -1127,6 +1127,15 @@ export async function setUserSuspended(userId: string, suspended: boolean): Prom
   await adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}/${suspended ? 'ban' : 'unban'}`, { method: 'POST' });
 }
 
+/** Assign one of the four application roles. Requires `user.manage_roles`. */
+export async function updateAdminUserRole(userId: string, role: string): Promise<{ id: string; role: string }> {
+  const body = await adminApiFetch<{ user: { id: string; role: string } }>(`/api/admin/users/${encodeURIComponent(userId)}/role`, {
+    method: 'POST',
+    body: JSON.stringify({ role }),
+  });
+  return body.user;
+}
+
 export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; path: string; bytes: number }> {
   return await adminApiFetch<{ url: string; path: string; bytes: number }>('/api/admin/uploads', {
     method: 'POST',

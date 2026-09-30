@@ -9,6 +9,7 @@ import {
 } from '../../lib/api';
 import { userFacingError } from '../../../lib/errors';
 import { newsCategoryLabel } from '../../data/newsCategories';
+import { Can } from './Can';
 
 /**
  * Ingestion review queue.
@@ -139,12 +140,16 @@ export default function AdminNewsroomQueue({ onPublished }: { onPublished?: () =
                   </a>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 110 }}>
-                  <button type="button" className="admin-btn small" disabled={busyId === candidate.id} onClick={() => void approve(candidate)}>
-                    <Check size={13} /> Publish
-                  </button>
-                  <button type="button" className="admin-btn small secondary-dark" disabled={busyId === candidate.id} onClick={() => void reject(candidate)}>
-                    <X size={13} /> Reject
-                  </button>
+                  <Can capability="news.publish">
+                    <button type="button" className="admin-btn small" disabled={busyId === candidate.id} onClick={() => void approve(candidate)}>
+                      <Check size={13} /> Publish
+                    </button>
+                  </Can>
+                  <Can capability="news.update">
+                    <button type="button" className="admin-btn small secondary-dark" disabled={busyId === candidate.id} onClick={() => void reject(candidate)}>
+                      <X size={13} /> Reject
+                    </button>
+                  </Can>
                 </div>
               </div>
             </li>

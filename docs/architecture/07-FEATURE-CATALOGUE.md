@@ -45,7 +45,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | ID | Feature | Why it is next | Depends on | Status | Size |
 |---|---|---|---|---|---|
 | **BASE-1** | Commit the production baseline schema (`profiles`, `service_catalog`, `service_requests`) as a migration | A fresh environment cannot be built from the repo, and P0-1 verification is impossible without it | Live DB access (`supabase db pull`) | 🔴 | S |
-| **ROLE-1** | Capability layer (role split deferred) | The DB carries six staff roles and the server enforces one; content staff can currently read student service data. Decision D1: enforce capabilities per endpoint now, keep one staff role, split later | — | 🔴 | S |
+| **ROLE-1** ✅ | Capability layer (role split deferred) | **Delivered:** `resource.action` capabilities enforced on every privileged endpoint, ownership-aware `can()`, capability-aware console, role-assignment endpoint, retired half-roles, migration + 17 tests (`docs/features/ROLE-1.md`). Remaining: assign the narrower roles to real accounts | — | 🔴 | S |
 | **SEO-1** | Sitemap, robots, per-route canonical, Open Graph, structured data | Public content is currently one indexable lump with no canonical rules; the highest-value untapped channel | — | 🔴 | M |
 | **NTF-1** | Notification triggers: service status change, deadline approaching | The notification store exists but almost nothing writes to it, so the tracking journey ends silently | ROLE-1 (service admin role) | 🔴 | M |
 | **SA-3** | Align saved items with `opportunities` (add `opportunity` item type + save affordance) | Students cannot currently save an opportunity from its own surface | — | 🟡 | S |
@@ -77,9 +77,11 @@ SA-3  (independent)
 
 ## Recommended next feature
 
-**Decided: SEO-1** (2026-09-30) — chosen for student acquisition value, and
-because it is fully verifiable in this repository. It is documented in
-`docs/features/SEO-1.md` before implementation, as the process requires.
+**Delivered:** SEO-1 (2026-09-30, commit `7c56830`) and ROLE-1 (2026-09-30,
+capability layer). Both were documented in `docs/features/` before their code,
+as the process requires. The next feature is unselected — from the graph above,
+NTF-1 depends on ROLE-1 and is now unblocked; BASE-1 (baseline schema) and
+TEST-1 (prove CI runs the full gate) are the other high-value candidates.
 
 Whichever is chosen is implemented alone, end to end, and documented with
 `08-FEATURE-TEMPLATE.md` before code is written — including its routes, data,

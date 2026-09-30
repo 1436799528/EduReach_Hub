@@ -14,6 +14,7 @@ import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
+import { Can } from '../src/components/admin/Can';
 
 type EditorState = {
   id: string | null;
@@ -233,7 +234,9 @@ export default function AdminNewsPage() {
         </div>
         <div className="admin-header-actions">
           <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /> Refresh</button>
-          <button type="button" className="admin-btn" onClick={openCreate}><Plus size={14} /> New article</button>
+          <Can capability="news.create">
+            <button type="button" className="admin-btn" onClick={openCreate}><Plus size={14} /> New article</button>
+          </Can>
         </div>
       </div>
 
@@ -333,7 +336,9 @@ export default function AdminNewsPage() {
             <div className="admin-news-editor-actions">
               <button type="button" className="admin-btn secondary-dark" onClick={openPreview}><Eye size={14} /> Preview</button>
               <button type="button" className="admin-btn secondary-dark" onClick={() => void save(false)} disabled={saving}>Save draft</button>
-              <button type="button" className="admin-btn success" onClick={() => void save(true)} disabled={saving}>{saving ? 'Saving…' : editor.published ? 'Save & keep published' : 'Publish'}</button>
+              <Can capability="news.publish" fallback={<span className="muted" style={{ alignSelf: 'center', fontSize: 12 }}>Publishing needs the news.publish capability.</span>}>
+                <button type="button" className="admin-btn success" onClick={() => void save(true)} disabled={saving}>{saving ? 'Saving…' : editor.published ? 'Save & keep published' : 'Publish'}</button>
+              </Can>
             </div>
           </div>
         </div>
@@ -367,12 +372,18 @@ export default function AdminNewsPage() {
                   <td><TimeAgo value={article.updated_at} /></td>
                   <td className="right">
                     <div className="admin-action-row">
-                      <button type="button" className="admin-btn small" onClick={() => openEdit(article)}><Pencil size={12} /> Edit</button>
-                      <button type="button" className="admin-btn small" onClick={() => void togglePublished(article)}>{article.published ? 'Unpublish' : 'Publish'}</button>
+                      <Can capability="news.update">
+                        <button type="button" className="admin-btn small" onClick={() => openEdit(article)}><Pencil size={12} /> Edit</button>
+                      </Can>
+                      <Can capability="news.publish">
+                        <button type="button" className="admin-btn small" onClick={() => void togglePublished(article)}>{article.published ? 'Unpublish' : 'Publish'}</button>
+                      </Can>
                       <button type="button" className="admin-btn small" onClick={() => void toggleFeatured(article)} title={article.featured ? 'Remove from featured' : 'Feature this article'}>
                         <Star size={12} /> {article.featured ? 'Unfeature' : 'Feature'}
                       </button>
-                      <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(article)}><Trash2 size={12} /> Delete</button>
+                      <Can capability="news.delete">
+                        <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(article)}><Trash2 size={12} /> Delete</button>
+                      </Can>
                     </div>
                   </td>
                 </tr>

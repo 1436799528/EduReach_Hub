@@ -49,3 +49,37 @@ test('profile lookup failure never grants admin access', async () => {
   profileFailure = true;
   assert.equal(await verifyAdminToken('valid-session'), null);
 });
+
+// ROLE-1: the payload carries the application role and its capabilities, so
+// every endpoint authorizes through one vocabulary instead of role names.
+test('the session payload carries the application role and capabilities', async () => {
+  profileFailure = false;
+  metadataRole = 'super_admin';
+
+  profileRole = 'student';
+  const student = await verifyJWT('valid-session');
+  assert.equal(student?.appRole, 'student');
+  assert.equal(student?.capabilities.includes('cbt.attempt'), true);
+  assert.equal(student?.capabilities.includes('news.publish'), false);
+
+  profileRole = 'content_editor';
+  const editor = await verifyJWT('valid-session');
+  assert.equal(editor?.appRole, 'content_editor');
+  assert.equal(editor?.role, 'admin');
+  assert.equal(editor?.capabilities.includes('news.publish'), true);
+  assert.equal(editor?.capabilities.includes('user.suspend'), false);
+
+  profileRole = 'service_admin';
+  const service = await verifyJWT('valid-session');
+  assert.equal(service?.appRole, 'service_admin');
+  assert.equal(service?.capabilities.includes('service_request.process'), true);
+  assert.equal(service?.capabilities.includes('news.publish'), false);
+
+  // Retired half-roles resolve to the least-privileged role: RLS grants they
+  // used to hold are gone, and they hold no staff capability here either.
+  profileRole = 'senate_admin';
+  const retired = await verifyJWT('valid-session');
+  assert.equal(retired?.appRole, 'student');
+  assert.equal(retired?.capabilities.includes('news.read'), false);
+  assert.equal(await verifyAdminToken('valid-session'), null);
+});

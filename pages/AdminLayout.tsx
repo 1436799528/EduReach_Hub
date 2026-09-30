@@ -18,11 +18,20 @@ import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
 import { useAdminHealth } from '../src/components/admin/AdminKit';
+import { AdminCapabilityProvider } from '../src/components/admin/Can';
 import { API_BASE_PATH } from '../src/lib/apiBase';
+import {
+  capabilitiesForRole,
+  capabilityForAdminPath,
+  hasCapability,
+  isStaffRole,
+  resolveAppRole,
+  type Capability,
+} from '../src/lib/capabilities';
 
 const ADMIN_API_BASE = API_BASE_PATH;
 
-type AdminSession = { id: string; email: string; fullName: string; role: 'admin' };
+type AdminSession = { id: string; email: string; fullName: string; role: string; capabilities: Capability[] };
 
 // ---------------------------------------------------------------------------
 // Module-scoped admin session cache.
@@ -58,7 +67,10 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
         id: body.user.id,
         email: body.user.email || '',
         fullName: body.user.fullName || '',
-        role: 'admin',
+        role: String(body.user.role || ''),
+        // The server is the source of truth; never derive capabilities from
+        // anything the browser stored.
+        capabilities: Array.isArray(body.user.capabilities) ? (body.user.capabilities as Capability[]) : [],
       },
       backend: 'Connected',
     };
@@ -73,19 +85,84 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
     .eq('id', authSession.user.id)
     .maybeSingle();
 
-  const role = String(profile?.role || '').toLowerCase();
-  if (['admin', 'super_admin', 'moderator'].includes(role)) {
+  // Backend unreachable: fall back to the profile row the account can read
+  // under RLS, resolving capabilities through the same vocabulary the server
+  // uses. The API still authorizes every call, so this cannot grant anything.
+  const appRole = resolveAppRole(profile?.role);
+  if (isStaffRole(appRole)) {
     return {
       session: {
         id: authSession.user.id,
         email: authSession.user.email || '',
         fullName: String(profile?.full_name || authSession.user.user_metadata?.full_name || ''),
-        role: 'admin',
+        role: appRole,
+        capabilities: [...capabilitiesForRole(appRole)],
       },
       backend: 'Profile fallback',
     };
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Console navigation, capability-aware.
+//
+// `capability: null` means any staff member may open the section. The mapping
+// is the same one the server enforces (src/lib/capabilities.ts,
+// ADMIN_ROUTE_CAPABILITIES), so the console never advertises a section the API
+// will refuse.
+// ---------------------------------------------------------------------------
+
+type AdminNavEntry =
+  | { kind: 'group'; label: string }
+  | { kind: 'link'; href: string; label: string; icon: ReactNode; capability: Capability | null };
+
+const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
+  { kind: 'link', href: '/admin', label: 'Overview', icon: <LayoutDashboard size={15} />, capability: null },
+  { kind: 'group', label: 'Content' },
+  { kind: 'link', href: '/admin/news', label: 'Newsroom CMS', icon: <Newspaper size={15} />, capability: 'news.read' },
+  { kind: 'link', href: '/admin/content', label: 'Events & Key Dates', icon: <CalendarDays size={15} />, capability: 'calendar.read' },
+  { kind: 'link', href: '/admin/opportunities', label: 'Scholarships & Opportunities', icon: <GraduationCap size={15} />, capability: 'opportunity.read' },
+  { kind: 'group', label: 'Services' },
+  { kind: 'link', href: '/admin/services', label: 'Service Catalogue', icon: <Briefcase size={15} />, capability: 'service.read' },
+  { kind: 'link', href: '/admin/queue', label: 'Service Queue', icon: <ListChecks size={15} />, capability: 'service_request.read' },
+  { kind: 'group', label: 'Academics' },
+  { kind: 'link', href: '/admin/schools', label: 'Schools & Institutions', icon: <School size={15} />, capability: 'institution.read' },
+  { kind: 'group', label: 'Examinations' },
+  { kind: 'link', href: '/admin/cbt', label: 'CBT Manager', icon: <Laptop size={15} />, capability: 'cbt.read' },
+  { kind: 'group', label: 'Users' },
+  { kind: 'link', href: '/admin/users', label: 'Student Accounts', icon: <Users size={15} />, capability: 'user.read' },
+  { kind: 'group', label: 'Analytics' },
+  { kind: 'link', href: '/admin/analytics', label: 'Analytics & Reports', icon: <BarChart3 size={15} />, capability: 'analytics.read' },
+  { kind: 'link', href: '/admin/content-manager', label: 'Data Control Center', icon: <Database size={15} />, capability: 'data.read' },
+  { kind: 'link', href: '/', label: 'View Public Site', icon: <Globe size={15} />, capability: null },
+];
+
+/** Path changes go through history/popstate in this app, so track them. */
+function useCurrentAdminPath(): string {
+  const [path, setPath] = useState(() => window.location.pathname);
+  useEffect(() => {
+    const onNavigate = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onNavigate);
+    return () => window.removeEventListener('popstate', onNavigate);
+  }, []);
+  return path;
+}
+
+function AdminSectionDenied({ session, capability, onLeave }: { session: AdminSession; capability: Capability; onLeave: () => void }) {
+  return (
+    <div className="admin-access-screen">
+      <div className="admin-access-card">
+        <BrandLogo height={52} radius="50%" />
+        <h1>Not available for your role</h1>
+        <p>This section needs the <code>{capability}</code> capability. Your account ({session.role}) does not have it.</p>
+        <div className="admin-access-actions">
+          <button type="button" className="admin-btn" onClick={() => onLeave()}>Back to overview</button>
+        </div>
+        <p className="admin-access-note">Every admin API re-checks capabilities, so nothing can be reached by editing the URL.</p>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -160,29 +237,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  const pathname = useCurrentAdminPath();
+  const requiredCapability = capabilityForAdminPath(pathname);
+  if (requiredCapability && !hasCapability(session, requiredCapability)) {
+    return <AdminSectionDenied session={session} capability={requiredCapability} onLeave={() => navigate('/admin')} />;
+  }
+
+  const navItems = ADMIN_CONSOLE_NAV.filter((item) => item.kind === 'group' || item.capability === null || hasCapability(session, item.capability));
+
   return <div className="admin-shell">
     <aside className="admin-sidebar">
       <div>
         <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
         <nav className="admin-nav">
-          <NavLink href="/admin" icon={<LayoutDashboard size={15} />}>Overview</NavLink>
-          <div className="admin-nav-group">Content</div>
-          <NavLink href="/admin/news" icon={<Newspaper size={15} />}>Newsroom CMS</NavLink>
-          <NavLink href="/admin/content" icon={<CalendarDays size={15} />}>Events &amp; Key Dates</NavLink>
-          <NavLink href="/admin/opportunities" icon={<GraduationCap size={15} />}>Scholarships &amp; Opportunities</NavLink>
-          <div className="admin-nav-group">Services</div>
-          <NavLink href="/admin/services" icon={<Briefcase size={15} />}>Service Catalogue</NavLink>
-          <NavLink href="/admin/queue" icon={<ListChecks size={15} />}>Service Queue</NavLink>
-          <div className="admin-nav-group">Academics</div>
-          <NavLink href="/admin/schools" icon={<School size={15} />}>Schools &amp; Institutions</NavLink>
-          <div className="admin-nav-group">Examinations</div>
-          <NavLink href="/admin/cbt" icon={<Laptop size={15} />}>CBT Manager</NavLink>
-          <div className="admin-nav-group">Users</div>
-          <NavLink href="/admin/users" icon={<Users size={15} />}>Student Accounts</NavLink>
-          <div className="admin-nav-group">Analytics</div>
-          <NavLink href="/admin/analytics" icon={<BarChart3 size={15} />}>Analytics &amp; Reports</NavLink>
-          <NavLink href="/admin/content-manager" icon={<Database size={15} />}>Data Control Center</NavLink>
-          <NavLink href="/" icon={<Globe size={15} />}>View Public Site</NavLink>
+          {navItems.map((item, index) => (
+            item.kind === 'group'
+              ? <div className="admin-nav-group" key={`group-${index}`}>{item.label}</div>
+              : <NavLink key={item.href} href={item.href} icon={item.icon}>{item.label}</NavLink>
+          ))}
         </nav>
       </div>
       <div className="admin-sidebar-footer">
@@ -202,7 +274,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <i /> {health.state === 'ok' ? `API Online${health.latencyMs !== null ? ` · ${health.latencyMs}ms` : ''}` : health.state === 'down' ? 'API Unreachable' : 'Checking API…'}
         </span>
       </header>
-      <main className="admin-main">{children}</main>
+      <main className="admin-main">
+        <AdminCapabilityProvider value={session}>{children}</AdminCapabilityProvider>
+      </main>
     </div>
   </div>;
 }

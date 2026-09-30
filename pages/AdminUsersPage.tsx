@@ -1,7 +1,8 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
-import { adminApiFetch, fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, type AdminUser, type AdminUserActivity } from '../src/lib/api';
+import { fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, updateAdminUserRole, type AdminUser, type AdminUserActivity } from '../src/lib/api';
+import { Can } from '../src/components/admin/Can';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 
 function profileCompletion(p: AdminUser): number {
@@ -35,6 +36,20 @@ export default function AdminUsersPage() {
   }
 
   async function loadList(search: string) { await load(search); }
+
+  async function changeRole(profile: AdminUser, role: string) {
+    if (role === profile.role) return;
+    const confirmed = window.confirm(`Change ${profile.full_name || 'this account'} from ${profile.role} to ${role}? Capabilities change on their next request.`);
+    if (!confirmed) return;
+    setBusyId(profile.id);
+    try {
+      await updateAdminUserRole(profile.id, role);
+      await loadList(query);
+      setMessage(`Role updated to ${role}. The change is recorded in the audit trail.`);
+    } catch (e) {
+      setError(userFacingError(e, 'Unable to change the account role.'));
+    } finally { setBusyId(null); }
+  }
 
   async function toggleSuspend(p: AdminUser) {
     const suspend = !p.suspended;
@@ -136,14 +151,29 @@ export default function AdminUsersPage() {
                       <td className="right">
                         <div className="admin-action-row">
                           <button type="button" className="admin-btn small" onClick={() => void openActivity(p)}>View</button>
-                          <button
-                            type="button"
-                            className={`admin-btn small ${p.suspended ? '' : 'danger'}`}
-                            disabled={busyId === p.id}
-                            onClick={() => void toggleSuspend(p)}
-                          >
-                            <Ban size={12} /> {p.suspended ? 'Unsuspend' : 'Suspend'}
-                          </button>
+                          <Can capability="user.suspend">
+                            <button
+                              type="button"
+                              className={`admin-btn small ${p.suspended ? '' : 'danger'}`}
+                              disabled={busyId === p.id}
+                              onClick={() => void toggleSuspend(p)}
+                            >
+                              <Ban size={12} /> {p.suspended ? 'Unsuspend' : 'Suspend'}
+                            </button>
+                          </Can>
+                          <Can capability="user.manage_roles">
+                            <select
+                              aria-label={`Role for ${p.full_name || p.id}`}
+                              className="admin-select"
+                              value={p.role}
+                              disabled={busyId === p.id}
+                              onChange={(e) => void changeRole(p, e.target.value)}
+                            >
+                              {['student', 'content_editor', 'service_admin', 'super_admin'].map((role) => (
+                                <option key={role} value={role}>{role}</option>
+                              ))}
+                            </select>
+                          </Can>
                         </div>
                       </td>
                     </tr>
