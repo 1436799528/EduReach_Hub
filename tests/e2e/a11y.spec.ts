@@ -15,6 +15,20 @@ import { expect, test, type Page } from '@playwright/test';
 
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
+// A red gate must say what broke. GitHub turns `::error::` lines into
+// annotations on the check run, so the failing test names its own rule and node
+// instead of making the reviewer open a log — and `test:e2e` runs without a
+// browser in some environments, where the log is the only other channel.
+test.afterEach(async ({}, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return;
+  const detail = testInfo.errors
+    .map((error) => error.message ?? String(error))
+    .join(' | ')
+    .replace(/\s+/g, ' ')
+    .slice(0, 900);
+  console.log(`::error title=e2e a11y::${testInfo.title} — ${detail}`);
+});
+
 /** Public routes: the five flows the product is for, plus the entry points. */
 const ROUTES = [
   '/',
