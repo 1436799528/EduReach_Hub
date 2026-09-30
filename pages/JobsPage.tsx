@@ -91,13 +91,13 @@ export default function JobsPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 800 }}>
                 STUDENT OPPORTUNITIES &amp; GRANTS
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
                 Student Opportunities &amp; Grants
               </h1>
-              <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+              <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
                 Browse the currently configured student opportunities. Grants and scholarships appear only when their source, eligibility and application route have been checked.
               </p>
             </div>
@@ -139,9 +139,9 @@ export default function JobsPage() {
 
           {!loadingLive && !isSupabaseConfigured && !filteredStatic.length && (
             <div className="hub-panel hub-empty">
-              <BellRing size={22} style={{ color: '#C85841', marginBottom: '8px' }} />
+              <BellRing size={22} style={{ color: '#b14933', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No verified scholarships listed right now.</h3>
-              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b' }}>
+              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#5e6c82' }}>
                 New scholarships and grants are added only after verification. Message the helpline and we will notify you.
               </p>
               <a
@@ -181,8 +181,8 @@ export default function JobsPage() {
                       <CardIdentityMark value={`${item.title} ${item.category} ${item.type}`} type="content" size="sm" />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#C85841' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#5e6c82', marginBottom: '3px', flexWrap: 'wrap' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#b14933' }}>
                           <Tag size={11} /> {item.type}
                         </span>
                         <span>•</span>
@@ -190,12 +190,12 @@ export default function JobsPage() {
                           <MapPin size={11} /> {item.mode}
                         </span>
                         <span>•</span>
-                        <span style={{ color: '#64748b', fontWeight: 700 }}>Active EduReach listing</span>
+                        <span style={{ color: '#5e6c82', fontWeight: 700 }}>Active EduReach listing</span>
                       </div>
                       <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
                         {item.title}
                       </h2>
-                      <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0, lineHeight: 1.4 }}>
+                      <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: 0, lineHeight: 1.4 }}>
                         {item.note}
                       </p>
                     </div>
@@ -230,14 +230,14 @@ export default function JobsPage() {
                         <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginBottom: '3px', flexWrap: 'wrap' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#C85841' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#5e6c82', marginBottom: '3px', flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#b14933' }}>
                             <Tag size={11} /> {item.category}
                           </span>
                           {item.deadline && (
                             <>
                               <span>•</span>
-                              <span style={{ fontWeight: 700, color: expired ? '#b91c1c' : '#64748b' }}>
+                              <span style={{ fontWeight: 700, color: expired ? '#b91c1c' : '#5e6c82' }}>
                                 {expired ? `Closed ${item.deadline} · Expired` : `Closes ${item.deadline}`}
                               </span>
                             </>
@@ -246,7 +246,7 @@ export default function JobsPage() {
                         </div>
                         <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>{item.title}</h2>
                         {item.organisation && <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 4px', fontWeight: 700 }}>{item.organisation}</p>}
-                        <p style={{ fontSize: '12.5px', color: '#64748b', margin: 0, lineHeight: 1.45 }}>
+                        <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: 0, lineHeight: 1.45 }}>
                           {plainTextFromHtml(item.description || '')}
                         </p>
                       </div>
@@ -265,9 +265,9 @@ export default function JobsPage() {
 
           {!loadingLive && isSupabaseConfigured && filteredLive && !filteredLive.length && !liveError && (
             <div className="hub-panel hub-empty">
-              <BellRing size={22} style={{ color: '#C85841', marginBottom: '8px' }} />
+              <BellRing size={22} style={{ color: '#b14933', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No open opportunities in this category right now.</h3>
-              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748b' }}>
+              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#5e6c82' }}>
                 EduReach lists scholarships and grants only after verification. Message the helpline and we will notify you when new ones open.
               </p>
               <a
@@ -298,7 +298,7 @@ export default function JobsPage() {
                   height: '40px',
                   borderRadius: '8px',
                   background: '#F9F0EE',
-                  color: '#C85841',
+                  color: '#b14933',
                   display: 'grid',
                   placeItems: 'center',
                   flexShrink: 0,
@@ -310,7 +310,7 @@ export default function JobsPage() {
                 <h3 style={{ margin: '0 0 3px', fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
                   Want to publish a vetted student opportunity or scholarship?
                 </h3>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '12px', lineHeight: 1.4 }}>
+                <p style={{ margin: 0, color: '#5e6c82', fontSize: '12px', lineHeight: 1.4 }}>
                   Verified educational organizations and scholarship boards can list vetted opportunities through EduReach.
                 </p>
               </div>

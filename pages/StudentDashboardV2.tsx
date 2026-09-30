@@ -480,7 +480,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px', textAlign: 'center', maxWidth: '420px' }}>
           <div style={{ margin: '0 auto 12px', display: 'flex', justifyContent: 'center' }}><BrandLogo height={48} radius="50%" /></div>
           <h1 style={{ margin: '0 0 6px', fontSize: '18px', color: '#0f172a' }}>Loading your dashboard…</h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Checking your session and syncing your records.</p>
+          <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Checking your session and syncing your records.</p>
         </div>
       </div>
     );
@@ -615,7 +615,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
       <div className="dash-quick-grid">
         <a href="/cbt" className={`dash-quick-card ${identityClassFor('cbt', 'service')}`}>
-          <div className="dash-quick-card-top"><MonitorPlay size={18} color="#C85841" /></div>
+          <div className="dash-quick-card-top"><MonitorPlay size={18} color="#b14933" /></div>
           <h3 className="dash-quick-card-title">Start a CBT test</h3>
           <span className="dash-quick-card-sub">JAMB • WAEC • NECO • Post-UTME</span>
         </a>

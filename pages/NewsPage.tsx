@@ -83,7 +83,7 @@ export default function NewsPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 800 }}>
                 CAMPUS NOTICEBOARD
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>

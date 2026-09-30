@@ -16,7 +16,7 @@ export default function CgpaCalculatorPage() {
         <div className="hub-container hub-narrow" style={{ maxWidth: '760px' }}>
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '18px' }}>
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841' }}>STUDENT ACADEMIC TOOLS</span>
+              <span className="hub-eyebrow" style={{ color: '#b14933' }}>STUDENT ACADEMIC TOOLS</span>
               <h1>CGPA Calculator</h1>
               <p>Calculate your Nigerian 5.0-scale GPA and degree classification by credit units and grades.</p>
             </div>

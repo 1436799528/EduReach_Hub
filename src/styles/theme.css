@@ -11,7 +11,7 @@
   --er-font-mono: var(--er-font-sans);
 
   /* 1. Primary — Academic Crimson */
-  --er-crimson: #C85841;
+  --er-crimson: #b14933;
   --er-crimson-deep: #B3331A;
 
   /* 2. Secondary — Academic Tangerine */
@@ -40,7 +40,7 @@
   /* 6. Text Colors */
   --er-text-primary: #131B2E;
   --er-text-secondary: #5B403B;
-  --er-text-muted: #64748B;
+  --er-text-muted: #5e6c82;
   --er-text-inverse: #FFFFFF;
 
   /* 7. Border & Divider Colors */

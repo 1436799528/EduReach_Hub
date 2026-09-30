@@ -14,7 +14,7 @@
   justify-content: center;
   gap: 4px;
   background: linear-gradient(135deg, #f9f0ee 0%, #f1f5f9 100%);
-  color: #c85841;
+  color: #b14933;
   overflow: hidden;
 }
 .er-news-noimage small {
@@ -74,7 +74,7 @@ a.er-material-card-link:hover,
 a.er-bank-card-link:hover,
 a.school-finder-result-card-link:hover,
 a.er-opportunity-link:hover {
-  border-color: #c85841;
+  border-color: #b14933;
   box-shadow: 0 4px 14px rgba(200, 88, 65, 0.12);
 }
 a.er-library-card-link:focus-visible,
@@ -82,7 +82,7 @@ a.er-material-card-link:focus-visible,
 a.er-bank-card-link:focus-visible,
 a.school-finder-result-card-link:focus-visible,
 a.er-opportunity-link:focus-visible {
-  outline: 2px solid #c85841;
+  outline: 2px solid #b14933;
   outline-offset: 2px;
 }
 
@@ -116,7 +116,7 @@ a.er-bank-card-link { display: flex; }
   overflow: hidden;
   font-size: 12px;
   line-height: 1.45;
-  color: #64748b;
+  color: #5e6c82;
   margin-top: 2px;
 }
 
@@ -142,17 +142,17 @@ a.er-opportunity-link { display: flex; }
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.er-setup-duration-option:hover { border-color: #c85841; }
+.er-setup-duration-option:hover { border-color: #b14933; }
 .er-setup-duration-option.is-selected {
-  background: #c85841;
-  border-color: #c85841;
+  background: #b14933;
+  border-color: #b14933;
   color: #fff;
 }
 
 /* --- Admin: news editor quality-gate hint --------------------------------- */
 .admin-quality-gate {
   font-size: 12px;
-  color: #64748b;
+  color: #5e6c82;
   line-height: 1.5;
   border-left: 3px solid #e2e8f0;
   padding-left: 10px;

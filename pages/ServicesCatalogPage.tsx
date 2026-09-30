@@ -104,11 +104,11 @@ export default function ServicesCatalogPage() {
               gap: '12px',
               marginBottom: '20px',
               paddingBottom: '14px',
-              borderBottom: '2px solid #C85841',
+              borderBottom: '2px solid #b14933',
             }}
           >
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 800 }}>
                 STUDENT SERVICES
               </span>
               <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 0' }}>
@@ -134,7 +134,7 @@ export default function ServicesCatalogPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
-              <Search size={18} style={{ color: '#C85841' }} />
+              <Search size={18} style={{ color: '#b14933' }} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -147,7 +147,7 @@ export default function ServicesCatalogPage() {
                   type="button"
                   onClick={() => setSearch('')}
                   aria-label="Clear search"
-                  style={{ border: 0, background: 'none', color: '#64748b', cursor: 'pointer', fontSize: '16px' }}
+                  style={{ border: 0, background: 'none', color: '#5e6c82', cursor: 'pointer', fontSize: '16px' }}
                 >
                   ×
                 </button>

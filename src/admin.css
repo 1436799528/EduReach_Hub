@@ -1,7 +1,7 @@
 :root {
   --admin-navy: #0f172a;
   --admin-navy-2: #131b2e;
-  --admin-orange: #C85841; /* EduReach site primary (edu-portal tokens) */
+  --admin-orange: #b14933; /* EduReach site primary (edu-portal tokens) */
   --admin-green: #059669; /* site green */
   --admin-green-soft: #ecfdf5;
   --admin-gold: #d4af37;
@@ -314,8 +314,8 @@
 /* Public rendering of rich article bodies */
 .hub-article-body h2, .hub-article-body h3 { color: inherit; margin: 18px 0 8px; }
 .hub-article-body img { max-width: 100%; height: auto; border-radius: 14px; margin: 10px 0; }
-.hub-article-body blockquote { margin: 12px 0; padding: 10px 16px; border-left: 3px solid #C85841; background: rgba(200,88,65,.06); border-radius: 0 12px 12px 0; }
-.hub-article-body a { color: #C85841; font-weight: 600; }
+.hub-article-body blockquote { margin: 12px 0; padding: 10px 16px; border-left: 3px solid #b14933; background: rgba(200,88,65,.06); border-radius: 0 12px 12px 0; }
+.hub-article-body a { color: #b14933; font-weight: 600; }
 .hub-article-body ul, .hub-article-body ol { padding-left: 24px; margin: 0 0 12px; }
 .hub-article-body pre { overflow-x: auto; background: #0f172a; color: #dbe4f0; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
 

@@ -83,7 +83,7 @@ export default function ProfileCompletionPage() {
   const displayAvatar = rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
   const avatarInitials =
     userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
-  const avatarTones = ['#C85841', '#0F172A', '#B45309', '#0E7490'];
+  const avatarTones = ['#b14933', '#0F172A', '#B45309', '#0E7490'];
   const avatarTone =
     avatarTones[[...userName].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarTones.length];
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -357,7 +357,7 @@ export default function ProfileCompletionPage() {
       <HubLayout>
         <div className="hub-page" style={{ padding: '32px 0 60px' }}>
           <div className="hub-container" style={{ maxWidth: '780px' }}>
-            <div className="hub-panel" style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>Loading your saved profile…</div>
+            <div className="hub-panel" style={{ padding: '30px', textAlign: 'center', color: '#5e6c82' }}>Loading your saved profile…</div>
           </div>
         </div>
       </HubLayout>
@@ -466,7 +466,7 @@ export default function ProfileCompletionPage() {
             }}
           >
             <section className="profile-contact-section">
-              <div className="profile-contact-heading"><Smartphone size={17} color="#C85841" /><h2>Account contact</h2></div>
+              <div className="profile-contact-heading"><Smartphone size={17} color="#b14933" /><h2>Account contact</h2></div>
               <p>Keep a phone number on your account so EduReach can attach service updates to the right student.</p>
               <label className="hub-form-label">Phone number <span>(Optional)</span><input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="080 1234 5678" autoComplete="tel" /></label>
               <div className="profile-contact-email"><Mail size={14} /> <span>Email: <strong>{userEmail || 'Your account email'}</strong></span></div>
@@ -475,12 +475,12 @@ export default function ProfileCompletionPage() {
             {/* 9. PROFILE PHOTO (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Camera size={18} color="#C85841" />
+                <Camera size={18} color="#b14933" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
+                  Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#5e6c82' }}>(Optional)</span>
                 </h2>
               </div>
-              <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 14px' }}>
+              <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: '0 0 14px' }}>
                 Choose a photo from your device, or use a trusted image URL. The photo is saved with your profile; initials remain the fallback.
               </p>
 
@@ -491,7 +491,7 @@ export default function ProfileCompletionPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    border: '3px solid #C85841',
+                    border: '3px solid #b14933',
                     overflow: 'hidden',
                     background: avatarTone,
                     flexShrink: 0,
@@ -579,7 +579,7 @@ export default function ProfileCompletionPage() {
             {/* 10-13. INSTITUTION & FACULTY DETAILS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <School size={18} color="#C85841" />
+                <School size={18} color="#b14933" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Institution &amp; Programme
                 </h2>
@@ -767,7 +767,7 @@ export default function ProfileCompletionPage() {
             {/* 14-16. LEVEL & ACADEMIC YEARS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <GraduationCap size={18} color="#C85841" />
+                <GraduationCap size={18} color="#b14933" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Level &amp; Academic Timeline
                 </h2>
@@ -887,12 +887,12 @@ export default function ProfileCompletionPage() {
             {/* 17. ACADEMIC INTERESTS (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Sparkles size={18} color="#C85841" />
+                <Sparkles size={18} color="#b14933" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#64748b' }}>(Optional)</span>
+                  Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#5e6c82' }}>(Optional)</span>
                 </h2>
               </div>
-              <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 12px' }}>
+              <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: '0 0 12px' }}>
                 Select topics you wish to receive priority alerts and study material recommendations for.
               </p>
 
@@ -910,9 +910,9 @@ export default function ProfileCompletionPage() {
                         fontSize: '12px',
                         fontWeight: 700,
                         border: '1px solid',
-                        borderColor: selected ? '#C85841' : '#cbd5e1',
+                        borderColor: selected ? '#b14933' : '#cbd5e1',
                         background: selected ? '#F9F0EE' : '#ffffff',
-                        color: selected ? '#C85841' : '#475569',
+                        color: selected ? '#b14933' : '#475569',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -931,7 +931,7 @@ export default function ProfileCompletionPage() {
             {/* 18. NOTIFICATION PREFERENCES */}
             <section style={{ marginBottom: '26px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <Bell size={18} color="#C85841" />
+                <Bell size={18} color="#b14933" />
                 <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
                   Notification Preferences
                 </h2>
@@ -954,13 +954,13 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={emailAlerts}
                     onChange={(e) => setEmailAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#b14933' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Mail size={14} color="#C85841" /> Email Notifications
+                      <Mail size={14} color="#b14933" /> Email Notifications
                     </strong>
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                    <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>
                       Receive official examination alerts, result check notifications, and scholarship updates.
                     </span>
                   </div>
@@ -982,13 +982,13 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={whatsappAlerts}
                     onChange={(e) => setWhatsappAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#b14933' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <MessageSquare size={14} color="#C85841" /> WhatsApp Order &amp; Request Alerts
+                      <MessageSquare size={14} color="#b14933" /> WhatsApp Order &amp; Request Alerts
                     </strong>
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                    <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>
                       WhatsApp updates when your service request or result verification is ready.
                     </span>
                   </div>
@@ -1010,13 +1010,13 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#C85841' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#b14933' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Smartphone size={14} color="#C85841" /> SMS Urgent Deadline Reminders
+                      <Smartphone size={14} color="#b14933" /> SMS Urgent Deadline Reminders
                     </strong>
-                    <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                    <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>
                       Receive high-priority SMS reminders for closing dates (e.g. JAMB registration &amp; Post-UTME).
                     </span>
                   </div>
@@ -1033,7 +1033,7 @@ export default function ProfileCompletionPage() {
                 style={{
                   fontSize: '12.5px',
                   fontWeight: 700,
-                  color: '#64748b',
+                  color: '#5e6c82',
                   textDecoration: 'none',
                 }}
               >

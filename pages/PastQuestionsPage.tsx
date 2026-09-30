@@ -193,11 +193,11 @@ export default function PastQuestionsPage() {
         <div className="hub-container hub-narrow" style={{ maxWidth: '980px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841' }}>QUESTION LIBRARY</span>
+              <span className="hub-eyebrow" style={{ color: '#b14933' }}>QUESTION LIBRARY</span>
               <h1>Past Questions &amp; Study Materials</h1>
               <p>Choose between timed CBT practice and EduReach material requests. Coverage reflects what is actually configured — unavailable papers are never invented.</p>
             </div>
-            <BookOpen size={28} color="#C85841" aria-hidden="true" />
+            <BookOpen size={28} color="#b14933" aria-hidden="true" />
           </div>
 
           <div className="er-library-tabs" role="tablist" aria-label="Past question formats">

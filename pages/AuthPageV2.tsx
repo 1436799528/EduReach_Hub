@@ -334,7 +334,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: '#C85841',
+              color: '#b14933',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
             }}
@@ -348,7 +348,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: '4px 0 6px' }}>
             {pageTitle}
           </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
             {currentMode === 'signup'
               ? 'Quick registration for students, parents, and teachers.'
               : currentMode === 'verify'
@@ -407,7 +407,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#C85841',
+                color: '#b14933',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -427,7 +427,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#C85841',
+                  background: '#b14933',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -572,9 +572,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#C85841' : '#cbd5e1',
+                          borderColor: accountType === type ? '#b14933' : '#cbd5e1',
                           background: accountType === type ? '#F9F0EE' : '#ffffff',
-                          color: accountType === type ? '#C85841' : '#475569',
+                          color: accountType === type ? '#b14933' : '#475569',
                           fontWeight: 800,
                           fontSize: '12px',
                           textTransform: 'capitalize',
@@ -677,7 +677,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#C85841', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: '#b14933', marginTop: '2px' }}
                   />
                   <span>
                     I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
@@ -728,7 +728,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#C85841', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: '#b14933', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -923,7 +923,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Already have an account? Sign in
             </button>
@@ -937,7 +937,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#C85841', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Need an account? Register
             </button>
@@ -945,7 +945,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         </div>
 
         <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-          <a href="/" style={{ fontSize: '12.5px', fontWeight: 800, color: '#64748b', textDecoration: 'none' }}>
+          <a href="/" style={{ fontSize: '12.5px', fontWeight: 800, color: '#5e6c82', textDecoration: 'none' }}>
             ← Back to portal
           </a>
         </div>

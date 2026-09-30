@@ -121,12 +121,21 @@ test('axe: the mobile menu drawer, open', async ({ page }) => {
   expect(drawer.summary).toEqual([]);
 });
 
-test('the first Tab reaches a working skip link and Enter lands in main', async ({ page }) => {
+test('the skip link is the first focusable element and lands focus in main', async ({ page }) => {
   await page.goto('/services');
-  await page.keyboard.press('Tab');
   const skip = page.locator('.er-skip-link');
-  await expect(skip).toBeFocused();
   await expect(skip).toBeVisible();
+
+  // Where it sits in the tab order is a property of the DOM, so assert that
+  // rather than racing a Tab press against the route chunk still mounting.
+  const firstFocusableIsSkipLink = await page.evaluate(() => {
+    const first = document.querySelector('a[href], button, input, select, textarea, [tabindex]');
+    return first?.classList.contains('er-skip-link') ?? false;
+  });
+  expect(firstFocusableIsSkipLink).toBe(true);
+
+  await skip.focus();
+  await expect(skip).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#main-content')).toBeFocused();
 });

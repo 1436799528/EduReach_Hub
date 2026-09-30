@@ -100,7 +100,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                 gap: '6px',
                 fontSize: '11px',
                 fontWeight: 900,
-                color: '#C85841',
+                color: '#b14933',
                 background: '#F9F0EE',
                 border: '1px solid #F0D2BC',
                 padding: '4px 12px',
@@ -114,7 +114,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
             <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '14px 0 8px' }}>
               {heading}
             </h1>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 auto 22px', lineHeight: 1.6, maxWidth: '460px' }}>
+            <p style={{ fontSize: '13px', color: '#5e6c82', margin: '0 auto 22px', lineHeight: 1.6, maxWidth: '460px' }}>
               {body}
             </p>
 
@@ -127,7 +127,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      background: '#C85841',
+                      background: '#b14933',
                       color: '#ffffff',
                       borderRadius: '8px',
                       padding: '9px 18px',
@@ -164,7 +164,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: '#C85841',
+                  background: '#b14933',
                   color: '#ffffff',
                   borderRadius: '8px',
                   padding: '9px 18px',

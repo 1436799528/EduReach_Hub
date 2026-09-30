@@ -307,7 +307,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               </div>
               <a
                 href={`/login?next=${encodeURIComponent(`/services/apply/${service.service_key}`)}`}
-                style={{ color: '#C85841', fontWeight: 800, textDecoration: 'none' }}
+                style={{ color: '#b14933', fontWeight: 800, textDecoration: 'none' }}
               >
                 Sign in to link account →
               </a>
@@ -587,7 +587,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <button
                     type="submit"
                     className="hub-primary-btn"
-                    style={{ background: '#C85841' }}
+                    style={{ background: '#b14933' }}
                     disabled={busy}
                   >
                     {busy ? 'Submitting…' : 'Confirm & Submit'} <Check size={16} />
@@ -652,7 +652,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   margin: '0 auto 24px',
                 }}
               >
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>REFERENCE CODE:</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#5e6c82' }}>REFERENCE CODE:</span>
                 <strong style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', letterSpacing: '0.06em' }}>
                   {reference}
                 </strong>
@@ -662,7 +662,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 <a
                   className="hub-primary-btn"
                   href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/login?next=${encodeURIComponent('/dashboard/services')}`}
-                  style={{ textDecoration: 'none', background: '#C85841' }}
+                  style={{ textDecoration: 'none', background: '#b14933' }}
                 >
                   <CheckCircle2 size={15} /> {isAuthenticated ? 'View in My Requests' : 'Sign in to view request'}
                 </a>

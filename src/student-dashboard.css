@@ -63,14 +63,14 @@
 
 .edureach-dash-search input:focus {
   background: #ffffff;
-  border-color: #c85841;
+  border-color: #b14933;
   box-shadow: 0 0 0 2px rgba(200, 88, 65, 0.15);
 }
 
 .edureach-dash-search-icon {
   position: absolute;
   left: 10px;
-  color: #64748b;
+  color: #5e6c82;
   pointer-events: none;
 }
 
@@ -161,7 +161,7 @@
 .dash-sheet-head span {
   display: block;
   font-size: 12px;
-  color: #64748b;
+  color: #5e6c82;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -225,7 +225,7 @@
 
 .edureach-nav-item.active {
   background: #f9f0ee;
-  color: #c85841;
+  color: #b14933;
   font-weight: 800;
 }
 
@@ -285,19 +285,19 @@
 }
 
 .dash-card-title-icon {
-  color: #c85841;
+  color: #b14933;
 }
 
 .dash-card-meta {
   font-size: 12.5px;
   font-weight: 700;
-  color: #64748b;
+  color: #5e6c82;
 }
 
 .dash-card-link {
   font-size: 13px;
   font-weight: 800;
-  color: #c85841;
+  color: #b14933;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -364,7 +364,7 @@
 }
 
 .dash-btn-primary {
-  background: #c85841;
+  background: #b14933;
   color: #ffffff;
   box-shadow: 0 2px 6px rgba(200, 88, 65, 0.22);
 }
@@ -409,7 +409,7 @@
   border-radius: 7px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
-  color: #64748b;
+  color: #5e6c82;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -534,7 +534,7 @@
 
 .dash-section-head p {
   margin: 0;
-  color: #64748b;
+  color: #5e6c82;
   font-size: 12px;
   line-height: 1.45;
 }
@@ -555,7 +555,7 @@
 
 .dash-profile-detail span {
   display: block;
-  color: #64748b;
+  color: #5e6c82;
   font-size: 10.5px;
   font-weight: 700;
   margin-bottom: 3px;
@@ -612,7 +612,7 @@
 }
 
 .dash-quick-card:hover {
-  border-color: #c85841;
+  border-color: #b14933;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(200, 88, 65, 0.08);
 }
@@ -633,7 +633,7 @@
 
 .dash-quick-card-sub {
   font-size: 12px;
-  color: #64748b;
+  color: #5e6c82;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -682,7 +682,7 @@
   text-align: left;
 }
 
-.dash-table-description{display:block;margin-top:3px;color:#64748b;font-size:11px;line-height:1.4;max-width:230px}.dash-request-category{display:block;color:#64748b;font-size:11px;margin-top:3px}.dash-request-description{margin:6px 0;color:#475569;font-size:12px;line-height:1.45}.dash-request-actions{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.dash-table-description{display:block;margin-top:3px;color:#5e6c82;font-size:11px;line-height:1.4;max-width:230px}.dash-request-category{display:block;color:#5e6c82;font-size:11px;margin-top:3px}.dash-request-description{margin:6px 0;color:#475569;font-size:12px;line-height:1.45}.dash-request-actions{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 
 .dash-table th {
   background: #f8fafc;
@@ -726,7 +726,7 @@
 
 .dash-status-processing {
   background: #f9f0ee;
-  color: var(--er-tangerine, #c85841);
+  color: var(--er-tangerine, #b14933);
   border: 1px solid #f0d2bc;
 }
 
@@ -791,7 +791,7 @@
   gap: 10px;
   flex-wrap: wrap;
   font-size: 12.5px;
-  color: #64748b;
+  color: #5e6c82;
 }
 
 /* ---------------------------------------------------------------- */
@@ -814,7 +814,7 @@
 .dash-metric-label {
   font-size: 11px;
   font-weight: 800;
-  color: #64748b;
+  color: #5e6c82;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   display: block;
@@ -884,7 +884,7 @@
 .dash-cgpa-head span {
   font-size: 11px;
   font-weight: 800;
-  color: #64748b;
+  color: #5e6c82;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -896,7 +896,7 @@
   margin-bottom: 12px;
 }
 
-.dash-card-help { margin: -4px 0 12px; color: #64748b; font-size: 12px; line-height: 1.5; }
+.dash-card-help { margin: -4px 0 12px; color: #5e6c82; font-size: 12px; line-height: 1.5; }
 .dash-finder-autocomplete { position: relative; }
 .dash-finder-search-wrap { position: relative; min-width: 0; }
 .dash-finder-search-wrap input { height: 38px; }
@@ -904,7 +904,7 @@
 .dash-finder-suggestions button { display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: #fff; color: #172033; text-align: left; cursor: pointer; }
 .dash-finder-suggestions button:hover { background: #f8fafc; }
 .dash-finder-suggestions strong, .dash-finder-suggestions span { display: block; }
-.dash-finder-suggestions span { margin-top: 2px; color: #64748b; font-size: 11px; }
+.dash-finder-suggestions span { margin-top: 2px; color: #5e6c82; font-size: 11px; }
 
 .dash-finder-controls input,
 .dash-finder-controls select {
@@ -952,7 +952,7 @@
 .dash-list-copy span {
   display: block;
   font-size: 12px;
-  color: #64748b;
+  color: #5e6c82;
   margin-top: 2px;
 }
 
@@ -1053,7 +1053,7 @@
   justify-content: center;
   gap: 3px;
   text-decoration: none;
-  color: #64748b;
+  color: #5e6c82;
   font-size: 11px;
   font-weight: 700;
   background: none;
@@ -1065,7 +1065,7 @@
 }
 
 .edureach-bottom-link.active {
-  color: #c85841;
+  color: #b14933;
   font-weight: 900;
 }
 
