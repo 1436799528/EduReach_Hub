@@ -31,7 +31,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | TOOL-2 | CGPA calculator with saved terms | `/tools/cgpa-calculator`, `student_cgpa_*` | ✅ | Saved per student |
 | SRCH-1 | Cross-entity search | `/search` | 🟡 | Covers services/updates/etc. from loaded datasets; not yet a server-side index |
 | SAVE-1 | Saved items | `student_saved_items`, dashboard tab | 🟡 | `item_type` predates the opportunities model (see SA-3) |
-| NOTF-1 | In-app notification store + display | `student_notifications`, dashboard | 🟡 | Store and display exist; **few triggers** create notifications |
+| NOTF-1 | In-app notification store + display | `student_notifications`, dashboard | ✅ | Service-request status triggers land in the dashboard card (NTF-1); deadline reminders still need a preferences model |
 | AN-1 | Product analytics | `/api/analytics/event`, `site_analytics_events` | 🟡 | Six event names; no retention policy; taxonomy incomplete |
 | ADMIN-1 | Console: dashboard, analytics, users, content, catalogue, data control | `/admin/*` | ✅ | Desktop-first |
 | ADMIN-2 | Bulk data import/export | `/admin/content-manager` | ✅ | Row-level validation, 2,000-row cap |
@@ -46,8 +46,8 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 |---|---|---|---|---|---|
 | **BASE-1** | Commit the production baseline schema (`profiles`, `service_catalog`, `service_requests`) as a migration | A fresh environment cannot be built from the repo, and P0-1 verification is impossible without it | Live DB access (`supabase db pull`) | 🔴 | S |
 | **ROLE-1** ✅ | Capability layer (role split deferred) | **Delivered:** `resource.action` capabilities enforced on every privileged endpoint, ownership-aware `can()`, capability-aware console, role-assignment endpoint, retired half-roles, migration + 17 tests (`docs/features/ROLE-1.md`). Remaining: assign the narrower roles to real accounts | — | 🔴 | S |
-| **SEO-1** | Sitemap, robots, per-route canonical, Open Graph, structured data | Public content is currently one indexable lump with no canonical rules; the highest-value untapped channel | — | 🔴 | M |
-| **NTF-1** | Notification triggers: service status change, deadline approaching | The notification store exists but almost nothing writes to it, so the tracking journey ends silently | ROLE-1 (service admin role) | 🔴 | M |
+| **SEO-1** ✅ | Sitemap, robots, per-route canonical, Open Graph, structured data | **Delivered:** server-driven sitemap + `X-Robots-Tag` matrix, canonical aliases, JSON-LD (`docs/features/SEO-1.md`, commit `7c56830`) | — | 🔴 | M |
+| **NTF-1** ✅ | Notification triggers: service status change, deadline approaching | **Delivered (status half):** one notification per real status transition, rendered on the student dashboard. Deadline reminders need a per-student tracking/preferences model and stay with SA-3 (`docs/features/NTF-1.md`) | ROLE-1 (service admin role) | 🔴 | M |
 | **SA-3** | Align saved items with `opportunities` (add `opportunity` item type + save affordance) | Students cannot currently save an opportunity from its own surface | — | 🟡 | S |
 | **AN-1** | Analytics taxonomy: full event set, documented payloads, retention policy | Product decisions are being made on six events; also a privacy requirement | — | 🟡 | M |
 | **INT-1** | CBT bank validation gate + population runbook | The engine is strong; the content is the product | Content/editorial work | 🟡 | L (operational) |
@@ -77,11 +77,12 @@ SA-3  (independent)
 
 ## Recommended next feature
 
-**Delivered:** SEO-1 (2026-09-30, commit `7c56830`) and ROLE-1 (2026-09-30,
-capability layer). Both were documented in `docs/features/` before their code,
-as the process requires. The next feature is unselected — from the graph above,
-NTF-1 depends on ROLE-1 and is now unblocked; BASE-1 (baseline schema) and
-TEST-1 (prove CI runs the full gate) are the other high-value candidates.
+**Delivered:** SEO-1 (2026-09-30, commit `7c56830`), ROLE-1 (2026-09-30,
+capability layer) and NTF-1 (2026-09-30, service status notifications). Each was
+documented in `docs/features/` before its code, as the process requires. The next
+feature is unselected — BASE-1 (commit the baseline schema) and TEST-1 (prove CI
+runs the full gate) are the highest-value candidates, because every later claim
+depends on a reproducible environment and a gate that actually runs.
 
 Whichever is chosen is implemented alone, end to end, and documented with
 `08-FEATURE-TEMPLATE.md` before code is written — including its routes, data,

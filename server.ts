@@ -12,6 +12,7 @@ import {
 } from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
 import { verifyJWT } from './lib/auth';
+import { notifyServiceRequestStatus } from './src/server/notifications';
 import { type Capability } from './src/lib/capabilities';
 import { userFacingError as normalizeUserFacingError } from './lib/errors';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
@@ -380,7 +381,11 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status,admin_note').eq('id', req.params.requestId).single();
+    const { data: request, error: requestError } = await supabase
+      .from('service_requests')
+      .select('id,status,admin_note,user_id,reference_code,service_catalog(title)')
+      .eq('id', req.params.requestId)
+      .single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
 
     const wantsStatus = req.body?.status !== undefined;
@@ -417,6 +422,13 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     if (error) throw error;
     if (nextStatus) {
       await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
+      // The student is told about the same transition the audit trail recorded.
+      // Best effort: a notification failure must not fail the status change.
+      await notifyServiceRequestStatus(supabase, {
+        request: request as { id: string; user_id: string; status: string; reference_code?: string | null },
+        from: String(request.status || ''),
+        to: nextStatus,
+      });
     } else {
       await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'note', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { note_updated: true } });
     }

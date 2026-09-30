@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Bell,
   Bookmark,
   Calculator,
   CheckSquare,
@@ -35,6 +36,9 @@ import { commonInstitutions, institutionCourseContexts } from '../src/data/stude
 import {
   deleteSavedItem,
   fetchLatestCgpaSnapshot,
+  fetchNotifications,
+  markNotificationsRead,
+  type DashboardNotification,
   fetchSavedItems,
   upsertSavedItem,
   type CgpaCourseInput,
@@ -223,6 +227,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>([]);
+  const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>([]);
   const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
 
@@ -278,12 +284,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         setRequests(readLocalServiceRequests());
         setAttempts(readLocalCbtAttempts());
         setSavedItems(readLocalSavedItems());
+        setNotifications([]);
         setLoading(false);
         return;
       }
 
       const user = session.user;
-      const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot] = await Promise.all([
+      const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot, notificationResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
         supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url').order('school_name').limit(400),
@@ -291,6 +298,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         supabase.from('cbt_attempts').select('id,exam_id,status,score,correct_answers,total_questions,submitted_at,created_at,expires_at,current_question').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
         fetchSavedItems(user.id),
         fetchLatestCgpaSnapshot(user.id),
+        fetchNotifications(user.id),
       ]);
       if (!active) return;
 
@@ -322,6 +330,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       setAttempts((attemptsResult.data || []) as Attempt[]);
       setSavedItems(savedResult);
       setLatestCgpaSnapshot(cgpaSnapshot);
+      setNotifications(notificationResult);
       if (cgpaSnapshot?.courses?.length) setCgpaCourses(cgpaSnapshot.courses);
       setLoading(false);
     }
@@ -331,6 +340,23 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const unreadNotifications = notifications.filter((item) => !item.read).length;
+
+  async function markAllNotificationsRead() {
+    if (!unreadNotifications || notificationsBusy || !userId) return;
+    setNotificationsBusy(true);
+    setNotice('');
+    try {
+      await markNotificationsRead(userId);
+      // Mark by the same predicate the list uses, so the badge and the rows agree.
+      setNotifications((current) => current.map((item) => (item.read ? item : { ...item, read: true })));
+    } catch {
+      setNotice('We could not update your notifications. Please try again.');
+    } finally {
+      setNotificationsBusy(false);
+    }
+  }
 
   /* ---------------- tabs & URL ---------------- */
   const openTab = (tab: DashboardTab) => {
@@ -604,6 +630,34 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-quick-card-sub">Estimate your aggregate</span>
         </a>
       </div>
+
+      <section className="dash-card">
+        <div className="dash-card-header">
+          <h2 className="dash-card-title"><Bell size={14} className="dash-card-title-icon" /> Notifications</h2>
+          {unreadNotifications > 0 && (
+            <button type="button" className="dash-card-link" onClick={markAllNotificationsRead} disabled={notificationsBusy}>
+              {notificationsBusy ? 'Marking…' : `Mark all as read (${unreadNotifications})`}
+            </button>
+          )}
+        </div>
+        {notifications.length ? (
+          <ul className="dash-rows">
+            {notifications.slice(0, 4).map((item) => (
+              <li key={item.id} className={`dash-row ${item.read ? '' : 'dash-notification-unread'}`}>
+                <div className="dash-row-top">
+                  <strong className="dash-row-title">
+                    {!item.read && <span className="dash-notification-dot" aria-label="Unread" />}
+                    {item.title}
+                  </strong>
+                  <span className="dash-row-meta">{item.time}</span>
+                </div>
+                {item.body && <p className="dash-request-description">{item.body}</p>}
+                {item.href && <a className="dash-card-link" href={item.href}>Open</a>}
+              </li>
+            ))}
+          </ul>
+        ) : emptyState('No notifications yet. When a service request you submitted changes status, it appears here.', '/services', 'Browse services')}
+      </section>
 
       <section className="dash-card">
         <div className="dash-card-header">
