@@ -167,32 +167,29 @@ npm run audit:ci
 
 `typecheck` is a real `tsc --noEmit` (the legacy `npm run lint` alias points at
 it; this is not ESLint). `test` runs the Node-based unit/API/security regression
-suites, including the newsroom pipeline, rate limiting, SEO, authorization,
-NTF-1 and BASE-1's schema tests. `schema:audit` is the BASE-1 check that the
-migrations build the database the application expects. `test:e2e` is the
-desktop/mobile Chromium suite — it needs an **unconfigured** build (no
-`VITE_SUPABASE_*` credentials), not a production account, and it boots the server
-on port 3100 itself. `audit:ci` is `npm audit --audit-level=low`.
+suites, including the newsroom pipeline, rate limiting, SEO, authorization, NTF-1
+and BASE-1's schema tests — and `tests/migrations.test.ts`, which applies every
+migration in order to a **real PostgreSQL engine** (a PostgreSQL build compiled
+to WebAssembly, `@electric-sql/pglite`, bundled with the dev dependencies and
+running offline) and then asserts the tables, functions, columns, RLS state and
+signup trigger the application needs. `schema:audit` is the BASE-1 check that the
+static migration history builds the database the application expects.
+`test:e2e` is the desktop/mobile Chromium suite — it needs an **unconfigured**
+build (no `VITE_SUPABASE_*` credentials), not a production account, and it boots
+the server on port 3100 itself. `audit:ci` is `npm audit --audit-level=low`.
 
-**In CI** the same stages run as separate named steps in the
-`EduReach production checks` workflow so a failure says which stage failed, and a
-second job, **`migration-replay`**, applies every migration in order to a
-throwaway PostgreSQL 16 and then asserts the tables, functions, columns, RLS
-state and signup trigger the application needs. That job replays the migrations
-against a real database engine with Supabase's `auth`/`storage` surface shimmed
-(`supabase/ci/platform-shims.sql`); it does **not** run `supabase db reset`
-against Supabase itself, so it proves our SQL applies, not that a Supabase
-project accepts it. Playwright runs in CI (Chromium is installed in the
-workflow); it cannot run in every sandbox because browser downloads are blocked
-there. Node comes from `.nvmrc` in both CI and Netlify's `NODE_VERSION`.
-
-Run the migration replay locally against any scratch PostgreSQL:
-
-```bash
-npm run replay:migrations -- --setup  "$DATABASE_URL"
-npm run replay:migrations -- --apply  "$DATABASE_URL"
-npm run replay:migrations -- --verify "$DATABASE_URL"
-```
+**In CI** the `EduReach production checks` workflow runs `npm ci`, installs
+Chromium, and then runs `npm run ci` — so every stage above, including the
+PostgreSQL replay, gates every pull request and every push to `main`. The
+migration replay replaces Supabase's `auth`/`storage` surface with
+`supabase/ci/platform-shims.sql` (roles, `auth.users`, `auth.uid()`,
+`storage.buckets`/`objects`); it does **not** run `supabase db reset` against a
+Supabase project and does not exercise RLS as a non-superuser role, so it proves
+our SQL applies to a real PostgreSQL engine in order — not that Supabase Cloud
+accepts it. Playwright runs in CI (Chromium is installed in the workflow); it
+cannot run in every sandbox because browser downloads are blocked there. Node
+version: `.nvmrc` here, `NODE_VERSION=22` on Netlify, `engines.node >=22.12.0` in
+`package.json`.
 
 These checks do not certify live RLS, a production Supabase project, real
 sign-in, admin writes, or exam persistence.

@@ -74,10 +74,12 @@ functional gain.
 3. ~~Confirm `npm run ci` runs on `main` in GitHub Actions.~~ **Confirmed
    2026-09-30 (TEST-1):** the `EduReach production checks` workflow is active and
    has run on every push to `main` and every PR to `main`, including the runs
-   behind PR #11. The quality gate now names each stage (`quality-gate` job) and
-   adds a `migration-replay` job that applies the migrations to a scratch
-   PostgreSQL. The earlier audit looked for runs against a specific HEAD and saw
-   none; the runs exist — see `docs/features/TEST-1.md` for the run IDs.
+   behind PR #11. The `quality-gate` job runs `npm ci` → Chromium install →
+   `npm run ci`, and `npm run ci` now includes the schema audit and the
+   real-PostgreSQL migration replay, so both gate every change. The earlier audit
+   looked for runs against a specific HEAD and saw none; the runs exist — see
+   `docs/features/TEST-1.md` for the run IDs and for the one workflow
+   improvement that could not be pushed with this automation token.
 4. Record the outcome by changing the Status line of this document.
 
 Until step 4, treat deployment as **Netlify-defined, Vercel-unverified**.

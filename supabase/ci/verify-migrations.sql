@@ -1,9 +1,9 @@
 -- TEST-1 — post-replay assertions against the scratch database.
 --
--- Runs after every migration has been applied to an empty PostgreSQL. It asserts
--- the objects the application actually uses exist, so a migration that silently
--- stops short (or a repair that was dropped) fails the job instead of passing
--- quietly. Table and function names are the ones `npm run schema:audit` derives
+-- Runs after every migration has been applied to an empty PostgreSQL by
+-- `tests/migrations.test.ts`. It asserts the objects the application actually
+-- uses exist, so a migration that silently stops short (or a repair that was
+-- dropped) fails the test instead of passing quietly. Table and function names are the ones `npm run schema:audit` derives
 -- from the code and the history.
 --
 -- See docs/features/TEST-1.md for what this does and does not prove.

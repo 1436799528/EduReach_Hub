@@ -1,9 +1,10 @@
 -- TEST-1 — the Supabase platform surface our migrations reference.
 --
--- This file is applied ONLY to the throwaway PostgreSQL container in the
--- `migration-replay` CI job (and to a local scratch database when someone runs
--- `npm run replay:migrations`). It must never be applied to a Supabase project:
--- there, auth and storage are the real thing.
+-- This file is applied ONLY to a throwaway PostgreSQL engine: the in-process
+-- replay in `tests/migrations.test.ts` (which runs inside `npm test`, and
+-- therefore in CI) and, if anyone wires one up later, a scratch container. It
+-- must never be applied to a Supabase project: there, auth and storage are the
+-- real thing.
 --
 -- It replaces exactly what `supabase/migrations/` touches and nothing more:
 --

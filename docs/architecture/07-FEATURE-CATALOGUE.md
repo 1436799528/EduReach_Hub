@@ -61,7 +61,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | **A11Y-1** | Accessibility verification pass (keyboard, screen reader, contrast, CBT-specific) | Responsive testing is not accessibility testing | — | 🔴 | M |
 | **PERF-1** | Core Web Vitals measurement on production | Performance is assumed, not measured | Deployment decision D5 | 🔴 | M |
 | **OBS-1** | Scheduled-run monitoring and alerting | A daily job that fails silently is worse than no job | Deployment decision D5 | 🟡 | S |
-| **TEST-1** ✅ | CI quality gate: prove the full gate actually runs (typecheck, tests, schema audit, build, E2E) plus a real PostgreSQL migration replay | **Delivered:** `npm run ci` is the authoritative gate, the workflow runs each stage as a named step, and a `migration-replay` job applies every migration to a scratch PostgreSQL and verifies the objects the application uses (`docs/features/TEST-1.md`) | — | 🔴 | M |
+| **TEST-1** ✅ | CI quality gate: prove the full gate actually runs (typecheck, tests, schema audit, build, E2E) plus a real PostgreSQL migration replay | **Delivered:** `npm run ci` is the authoritative gate the workflow runs; it now includes `schema:audit` and `tests/migrations.test.ts`, which applies all 38 migrations in order to a real PostgreSQL engine (PGlite) and verifies the objects the application uses. The replay caught a migration that could not parse anywhere (`20260926220000`, fixed). `tests/ci.test.ts` fails if a stage disappears or is softened (`docs/features/TEST-1.md`) | — | 🔴 | M |
 | **PAY-1** | Fee model, terms, refunds — only if monetisation is agreed | Payments schema exists with no product | D2 decision | ⚪ | — |
 
 ## Dependency graph (next three features)

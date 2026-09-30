@@ -196,8 +196,14 @@ notice`) for RLS enablement and skipped function definitions.
 ## Evidence
 
 Everything below was produced on 2026-09-30 on `arena/01a0f3bd-edureach-hub`.
-Definitive live checks (`supabase db reset`, crawler, browser) are listed as
-manual dependencies rather than claimed.
+
+TEST-1 later closed the largest gap in this section: `tests/migrations.test.ts`
+now applies all 38 migrations, in filename order, to a real PostgreSQL engine
+(PostgreSQL 18.3 compiled to WebAssembly, `@electric-sql/pglite`) and runs
+`supabase/ci/verify-migrations.sql` against the result. That run is what
+produced finding 9 below — a migration the static audit could not fault and no
+PostgreSQL could parse. It is still not `supabase db reset` against a Supabase
+project, which remains a manual dependency.
 
 ### Migration inventory
 
@@ -254,6 +260,16 @@ manual dependencies rather than claimed.
    reference is inside a `to_regclass` guard and no application code reads it, so
    the baseline deliberately does not invent its shape.
 
+9. **A migration in the history cannot be parsed by PostgreSQL at all** (found
+   later, by TEST-1's real-engine replay). In
+   `20260926220000_admin_full_catalogue_opportunities.sql`, the `do $$ ... $$`
+   block declares `mapping jsonb := $$ ... $$` for its JSON literal; the inner
+   `$$` closes the outer block, so the parser meets `{` at statement level and
+   fails with `syntax error at or near "{"`. Every migration tool — Supabase's
+   included — stops there. The static audit could not see it: it never feeds the
+   text to a parser. Fixed by giving the literal its own dollar tag
+   (`$mapping$`); intent, guards and effects are unchanged.
+
 ### Changes made
 
 | File | Change |
@@ -263,6 +279,7 @@ manual dependencies rather than claimed.
 | `supabase/migrations/20260930160000_institutions_column_repair.sql` | **New.** `add column if not exists` for the five missing `institutions` columns plus a non-unique slug index. |
 | `20260915_application_integration_seed.sql` → `20260916000000_application_integration_seed.sql` | **Renamed** (content unchanged apart from a header note) so it runs after the tables it seeds. |
 | `20260915_cbt_news_rls.sql` → `20260916010000_cbt_news_rls.sql` | **Renamed** (content unchanged apart from a header note) so it runs after the tables it protects. |
+| `supabase/migrations/20260926220000_admin_full_catalogue_opportunities.sql` | **Fixed.** The JSON literal in its `do` block reused the block's own dollar-quote tag, so the file could not parse on any PostgreSQL (finding 9). The literal now uses `$mapping$`; the migration's intent and effects are otherwise untouched. |
 | `scripts/schema-audit.ts` | **New.** The offline fresh-apply simulation and drift report; also `npm run schema:audit`. |
 | `tests/schema.test.ts` | **New.** 12 tests: fresh-apply simulation, app-required objects, ordering, baseline invariants, staff-predicate agreement, bucket creation. |
 
@@ -274,11 +291,20 @@ guarded inserts, `on conflict do update`).
 
 ### Fresh-environment result
 
-`supabase db reset` against a scratch project is the definitive check and
-**could not be executed here** (no Postgres engine installed, no network egress
-to install one). The substitute is `npm run schema:audit` plus
-`tests/schema.test.ts`, which walk every migration in filename order and assert
-that no statement references an object an earlier migration has not created.
+`supabase db reset` against a scratch project is still the definitive check and
+**has not been executed** — no hosted project is reachable from this environment.
+Two substitutes run instead:
+
+- `npm run schema:audit` plus `tests/schema.test.ts`, which walk every migration
+  in filename order and assert that no statement references an object an earlier
+  migration has not created;
+- `tests/migrations.test.ts` (added by TEST-1), which executes every migration on
+  a **real PostgreSQL engine** in-process and then asserts the objects the
+  application uses exist. It applied 37 of 38 files before finding 9, and all 38
+  after the fix, with `verify-migrations.sql` passing. The engine is PostgreSQL
+  compiled to WebAssembly — real parsing and execution, but a single-user
+  instance, so it does not prove Supabase Cloud accepts the SQL or exercise RLS
+  as a restricted role.
 
 | Check | Before | After |
 |---|---|---|
@@ -295,10 +321,17 @@ that no statement references an object an earlier migration has not created.
 - `npm run build` clean (client + `build/server.cjs`).
 - `npm run schema:audit`: "no blocking findings" (exit 0).
 
+The numbers above are BASE-1's own run. TEST-1 subsequently added
+`tests/migrations.test.ts` (the real-engine replay) and `tests/ci.test.ts` (gate
+assertions); the suite is now 239 tests and `npm run ci` runs all of it plus the
+browser and dependency checks.
+
 ### Remaining manual dependencies
 
 1. Run `supabase db reset` (or apply the migrations to a scratch project) once
-   and confirm it completes — the one step this environment cannot perform.
+   and confirm it completes — the one step this environment cannot perform. The
+   in-process replay now covers syntax, ordering and missing objects on a real
+   engine, so what remains unverified here is Supabase-specific behaviour only.
 2. `psql` against the scratch project and compare `information_schema.columns`
    with production: the baseline restores *structure*, but a live project may
    hold columns this repository still does not know about.
