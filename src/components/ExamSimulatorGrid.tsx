@@ -2,6 +2,7 @@ import { userFacingError } from '../../lib/errors';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { identityClassFor } from './CardIdentityMark';
+import { SkeletonTiles } from './Skeleton';
 import { fetchCbtExams } from '../lib/api';
 
 export type ExamSimulator = {
@@ -49,6 +50,11 @@ export default function ExamSimulatorGrid({
 }) {
   const [exams, setExams] = useState<ExamSimulator[]>([]);
   const [error, setError] = useState('');
+  // Whether the catalogue has answered at all. Until it has, the section shows
+  // placeholders: claiming "no question banks have been published" while the
+  // request is still in flight is both wrong and a layout jump when the cards
+  // arrive (PERF-1 measured that jump at 262px).
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -68,15 +74,35 @@ export default function ExamSimulatorGrid({
           };
         }));
       })
-      .catch((value) => active && setError(userFacingError(value, 'Unable to load CBT catalog.')));
+      .catch((value) => active && setError(userFacingError(value, 'Unable to load CBT catalog.')))
+      .finally(() => { if (active) setSettled(true); });
     return () => { active = false; };
   }, []);
 
-  if (error) return <div className="er-empty" role="alert">{error}</div>;
-  if (!exams.length) return <div className="er-empty">No active CBT question banks have been published yet.</div>;
+  if (!settled) {
+    return (
+      <div className="er-late-region er-late-region--simulators">
+        <SkeletonTiles className="er-sim-grid" tiles={4} label="Loading CBT question banks" />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="er-late-region er-late-region--simulators">
+        <div className="er-empty" role="alert">{error}</div>
+      </div>
+    );
+  }
+  if (!exams.length) {
+    return (
+      <div className="er-late-region er-late-region--simulators">
+        <div className="er-empty">No active CBT question banks have been published yet.</div>
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <div className="er-late-region er-late-region--simulators">
       <div className="er-sim-grid">
         {exams.map((exam) => (
           <a

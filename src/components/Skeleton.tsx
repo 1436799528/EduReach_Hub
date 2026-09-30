@@ -55,9 +55,18 @@ export function RouteFallback() {
  * before and after the data lands and nothing below it moves. PERF-1 measured
  * the alternative: CLS 0.31 on /past-questions with a throttled phone.
  */
-export function SkeletonTiles({ tiles = 6, label = 'Loading' }: { tiles?: number; label?: string }) {
+export function SkeletonTiles({
+  tiles = 6,
+  label = 'Loading',
+  className = 'er-skeleton-grid',
+}: {
+  tiles?: number;
+  label?: string;
+  /** The grid class of the cards being replaced, so the placeholder lays out the same way. */
+  className?: string;
+}) {
   return (
-    <div className="er-skeleton-grid" role="status" aria-live="polite" aria-label={label}>
+    <div className={className} role="status" aria-live="polite" aria-label={label}>
       {Array.from({ length: tiles }).map((_, index) => (
         <div key={index} className="er-skeleton-tile">
           <div className="er-skel er-skel-thumb" style={{ width: 34, height: 34, borderRadius: 9 }} />

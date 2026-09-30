@@ -150,7 +150,7 @@ test.describe('throttled mobile profile', () => {
           transferBytes,
           requests: resources.length,
           shiftLog: perf.log,
-          anatomy: (['.er-late-region--feed', '.er-news-list', '.er-section', '.er-two-col', 'main', 'footer']
+          anatomy: (['.er-late-region', '.er-sim-grid', '.er-sim-card', '.er-news-list', '.er-section', '.er-two-col', 'main', 'footer']
             .flatMap((selector) => Array.from(document.querySelectorAll(selector)).slice(0, 3))
             .map((element) => {
               const rect = element.getBoundingClientRect();

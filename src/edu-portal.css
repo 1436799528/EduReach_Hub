@@ -456,6 +456,17 @@ body.er-exam-mode .er-pagebar{display:none!important}
   .er-late-region--library{--er-late-min:1350px}
 }
 .er-skeleton-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+/* The CBT simulator cards are 98px tall in the mobile swipe layout and around
+   150px on a wide grid; the placeholder uses the real .er-sim-grid so it wraps
+   and scrolls exactly like the cards, and the floor covers the guide strip the
+   placeholder does not draw. Measured cause: the section grew 262px at 4.7s
+   and pushed the rest of the page down (CLS 0.21 on /). */
+.er-late-region--simulators{--er-late-min:210px}
+.er-sim-grid .er-skeleton-tile{min-height:150px}
+@media(max-width:700px){
+  .er-late-region--simulators{--er-late-min:280px}
+  .er-sim-grid .er-skeleton-tile{min-height:98px}
+}
 .er-skeleton-tile{display:flex;flex-direction:column;gap:9px;padding:17px;background:#fff;border:1px solid #e2e8f0;border-radius:13px}
 @media(max-width:700px){.er-skeleton-grid{grid-template-columns:1fr}}
 .er-skeleton-article{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px}

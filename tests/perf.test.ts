@@ -171,13 +171,17 @@ test('a loading row is exactly the height of the row it stands in for', () => {
 
 test('the card placeholder uses the same grid as the cards it replaces', () => {
   const css = stylesheet('src/edu-portal.css');
-  const columns = (selector: string) => /grid-template-columns:\s*([^;}]+)/.exec(declarations(css, selector))?.[1].trim();
+  /** Every declaration block for a selector, in file order (mobile overrides included). */
+  const blocks = (selector: string) => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return [...css.matchAll(new RegExp(`${escaped}\\{([^}]*)\\}`, 'g'))].map((match) => match[1]);
+  };
+  const columns = (selector: string) => /grid-template-columns:\s*([^;}]+)/.exec(blocks(selector)[0])?.[1].trim();
+
   assert.equal(columns('.er-skeleton-grid'), columns('.er-library-grid'));
-  assert.equal(
-    pxValue(declarations(css, '.er-skeleton-tile'), 'padding'),
-    pxValue(declarations(css, '.er-library-card'), 'padding'),
-    'the placeholder card and the real card are padded the same',
-  );
+  const tile = blocks('.er-skeleton-tile').find((block) => block.includes('display:flex'));
+  assert.ok(tile, 'the placeholder card rule still exists');
+  assert.equal(pxValue(tile!, 'padding'), pxValue(blocks('.er-library-card')[0], 'padding'), 'the placeholder card and the real card are padded the same');
 });
 
 test('a region that fills in after the first paint reserves its footprint', () => {
@@ -190,6 +194,29 @@ test('a region that fills in after the first paint reserves its footprint', () =
   assert.ok(floor('.er-late-region--feed') >= rows(6, 82), 'the home feed reserves its six rows');
   assert.ok(floor('.er-late-region--feed-page') >= rows(5, 82), 'the noticeboard reserves its five rows');
   assert.ok(floor('.er-late-region--library') >= 600, 'the question-bank grid reserves its cards');
+});
+
+test('the simulator section reserves its footprint while its catalogue loads', () => {
+  const component = stylesheet('src/components/ExamSimulatorGrid.tsx');
+  assert.match(component, /er-late-region--simulators/);
+  assert.match(component, /<SkeletonTiles className="er-sim-grid"/, 'the placeholder uses the real grid, so it wraps and scrolls like the cards');
+  assert.match(component, /!settled/, 'the pending state is its own state, not "nothing published yet"');
+
+  const css = stylesheet('src/edu-portal.css');
+  const blocks = (selector: string) => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return [...css.matchAll(new RegExp(`${escaped}\\{([^}]*)\\}`, 'g'))].map((match) => match[1]);
+  };
+  assert.ok(pxValue(declarations(css, '.er-late-region--simulators'), '--er-late-min') >= 200);
+
+  // The placeholder card is exactly as tall as the card it replaces, in the swipe layout.
+  const mobileCard = blocks('.er-sim-card').find((block) => block.includes('flex-direction:row'));
+  const placeholderHeights = blocks('.er-sim-grid .er-skeleton-tile').map((block) => pxValue(block, 'min-height'));
+  assert.ok(mobileCard, 'the mobile simulator card rule still exists');
+  assert.ok(
+    placeholderHeights.includes(pxValue(mobileCard!, 'min-height')),
+    `the swipe-layout placeholder is ${placeholderHeights.join('/')}px, the card is ${pxValue(mobileCard!, 'min-height')}px`,
+  );
 });
 
 test('the pages the measurement named use the reservation', () => {
