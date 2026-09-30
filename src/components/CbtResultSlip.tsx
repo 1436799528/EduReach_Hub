@@ -85,7 +85,7 @@ export default function CbtResultSlip({ result, studentName, studentId }: { resu
         </div>
         <div className="er-result-subject-table-wrap">
           <table className="er-result-subject-table">
-            <thead><tr><th>Subject</th><th>Questions</th><th>Correct</th><th>Score</th></tr></thead>
+            <thead><tr><th scope="col">Subject</th><th scope="col">Questions</th><th scope="col">Correct</th><th scope="col">Score</th></tr></thead>
             <tbody>
               {subjects.map((item) => (
                 <tr key={item.subject}>

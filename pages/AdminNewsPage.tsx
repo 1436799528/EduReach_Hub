@@ -1,4 +1,5 @@
 import { userFacingError } from '../lib/errors';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, Eye, Pencil, Plus, RefreshCw, Star, Trash2, Upload } from 'lucide-react';
 import {
@@ -73,6 +74,9 @@ export default function AdminNewsPage() {
       setError(userFacingError(e, 'Unable to load newsroom articles.'));
     } finally { setLoading(false); }
   }
+  // A11Y-1: focus enters the preview, Tab stays inside it, Escape closes it.
+  const previewDialogRef = useModalDialog<HTMLDivElement>(showPreview, () => setShowPreview(false));
+
   useEffect(() => { void load(); }, []);
 
   const visible = useMemo(() => articles
@@ -309,7 +313,7 @@ export default function AdminNewsPage() {
               <div className="admin-field"><span>Featured image</span>
                 <div className="admin-image-row">
                   {editor.imageUrl ? <img src={editor.imageUrl} alt="Featured preview" className="admin-image-preview" /> : <div className="admin-image-preview empty">No image</div>}
-                  <input className="admin-input" style={{ flex: 1 }} value={editor.imageUrl} onChange={(e) => setEditor({ ...editor, imageUrl: e.target.value })} placeholder="https://… or upload" />
+                  <input className="admin-input" aria-label="Featured image URL" style={{ flex: 1 }} value={editor.imageUrl} onChange={(e) => setEditor({ ...editor, imageUrl: e.target.value })} placeholder="https://… or upload" />
                   <button type="button" className="admin-btn small" disabled={uploadingImage} onClick={() => imageFileRef.current?.click()}><Upload size={13} /> {uploadingImage ? 'Uploading…' : 'Upload'}</button>
                   {editor.imageUrl && <button type="button" className="admin-text-btn danger-text" onClick={() => setEditor({ ...editor, imageUrl: '' })}>Remove</button>}
                 </div>
@@ -357,7 +361,7 @@ export default function AdminNewsPage() {
       <div className="admin-card">
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th>Title</th><th>Category</th><th>State</th><th>Published</th><th>Updated</th><th className="right">Actions</th></tr></thead>
+            <thead><tr><th scope="col">Title</th><th scope="col">Category</th><th scope="col">State</th><th scope="col">Published</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
             <tbody>
               {loading && <TableSkeleton rows={6} columns={6} />}
               {!loading && visible.map((article) => (
@@ -402,7 +406,7 @@ export default function AdminNewsPage() {
 
       {showPreview && (
         <div className="admin-modal-backdrop" onClick={() => setShowPreview(false)} role="presentation">
-          <div className="admin-modal" role="dialog" aria-modal="true" aria-label="Article preview" onClick={(e) => e.stopPropagation()}>
+          <div ref={previewDialogRef} tabIndex={-1} className="admin-modal" role="dialog" aria-modal="true" aria-label="Article preview" onClick={(e) => e.stopPropagation()}>
             <div className="admin-card-header">
               <h2>Preview — exactly what students will read</h2>
               <button type="button" className="admin-text-btn" onClick={() => setShowPreview(false)}>Close</button>

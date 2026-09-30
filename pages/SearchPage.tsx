@@ -172,7 +172,7 @@ export default function SearchPage() {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '24px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '24px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '940px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
@@ -206,7 +206,7 @@ export default function SearchPage() {
             ))}
           </div>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

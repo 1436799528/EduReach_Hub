@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="admin-table-wrap">
                   <table className="admin-table">
-                    <thead><tr><th>Student</th><th>Service</th><th>Status</th><th>Age</th><th>Action</th></tr></thead>
+                    <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
                     <tbody>
                       {attention.map((row) => (
                         <tr key={row.id}>

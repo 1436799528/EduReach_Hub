@@ -109,7 +109,7 @@ export default function AdminServicesPage() {
             <p>Everything students see on /services: application forms, in-app routes and external links — ordered, described and switched here.</p>
           </div>
           <div className="admin-header-actions">
-            <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /></button>
+            <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading} aria-label="Refresh services"><RefreshCw size={14} /></button>
             <button type="button" className="admin-btn" onClick={() => setEdit({ ...emptyEdit })}><Plus size={14} /> New service</button>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function AdminServicesPage() {
           <div className="admin-card-header"><h2>Catalogue</h2><span>{loading ? 'Loading…' : `${services.length} services`}</span></div>
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Service</th><th>Key</th><th>Destination</th><th>Order</th><th>State</th><th className="right">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Service</th><th scope="col">Key</th><th scope="col">Destination</th><th scope="col">Order</th><th scope="col">State</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <tr><td colSpan={6} className="empty-state">Loading catalogue…</td></tr>}
                 {!loading && services.map((service) => (
@@ -201,7 +201,7 @@ export default function AdminServicesPage() {
                         })}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-btn small" onClick={() => void toggleActive(service)}>{service.active ? 'Hide' : 'Show'}</button>
                         {!service.is_form_service && (
-                          <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(service)}><Trash2 size={12} /></button>
+                          <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${service.title || service.category || 'this service'}`} onClick={() => void remove(service)}><Trash2 size={12} /></button>
                         )}
                       </div>
                     </td>

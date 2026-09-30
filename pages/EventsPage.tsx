@@ -33,7 +33,7 @@ export default function EventsPage() {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '22px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '22px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
@@ -58,7 +58,7 @@ export default function EventsPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

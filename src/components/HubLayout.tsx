@@ -16,6 +16,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
+import SkipLink from './a11y/SkipLink';
 import PageBar from './PageBar';
 import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
@@ -66,6 +67,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <SkipLink />
       {/* CLEAN MAIN HEADER */}
       <header
         style={{
@@ -438,12 +440,13 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               )}
             </div>
           </div>
-          <div style={{ flex: 1 }} onClick={() => setMobileOpen(false)} />
+          {/* Redundant pointer affordance: the drawer has a Close button and closes on Escape. */}
+          <div style={{ flex: 1 }} role="presentation" onClick={() => setMobileOpen(false)} />
         </div>
       )}
 
       {/* MAIN BODY CONTENT */}
-      <main style={{ flex: 1 }}>
+      <main id="main-content" tabIndex={-1} style={{ flex: 1 }}>
         {showRail ? (
           <div className="hub-layout-with-rail">
             <div className="hub-layout-content">{children}</div>

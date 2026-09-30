@@ -87,7 +87,7 @@ export default function AdminQueuePage() {
           <div className="admin-card-header"><h2>{FILTERS.find((f) => f.value === filter)?.label || 'Queue'}</h2><span>{loading ? 'Loading…' : `${rows.length} request${rows.length === 1 ? '' : 's'}`}</span></div>
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Student</th><th>Service</th><th>Reference</th><th>Details</th><th>Status</th><th>Age</th><th>Action</th></tr></thead>
+              <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Reference</th><th scope="col">Details</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={7} />}
                 {!loading && rows.map((row) => (

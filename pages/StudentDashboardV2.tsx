@@ -27,10 +27,12 @@ import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
+import SkipLink from '../src/components/a11y/SkipLink';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { pageTitleFor } from '../src/lib/pageMeta';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import {
@@ -236,6 +238,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+
+  // A11Y-1: the account sheet is a dialog, so it behaves like one.
+  const accountSheetRef = useModalDialog<HTMLDivElement>(accountSheetOpen, () => setAccountSheetOpen(false));
   const focusedRequestReference = new URLSearchParams(window.location.search).get('ref') || '';
 
   /* ---------------- data ---------------- */
@@ -509,7 +514,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <div className="dash-table-wrap dash-desktop-only">
         <table className="dash-table">
-          <thead><tr><th>Reference</th><th>Request</th><th>Type</th><th>Status</th><th>Date</th><th /></tr></thead>
+          <thead><tr><th scope="col">Reference</th><th scope="col">Request</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Date</th><th scope="col" /></tr></thead>
           <tbody>{rows.map((row) => (
             <tr key={row.id} id={`request-${row.reference_code}`}>
               <td className="dash-mono">{row.reference_code}</td>
@@ -538,7 +543,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <div className="dash-table-wrap dash-desktop-only">
         <table className="dash-table">
-          <thead><tr><th>Test</th><th>Score</th><th>Correct</th><th>Date</th><th /></tr></thead>
+          <thead><tr><th scope="col">Test</th><th scope="col">Score</th><th scope="col">Correct</th><th scope="col">Date</th><th scope="col" /></tr></thead>
           <tbody>{rows.map((row) => {
             const active = isActiveCbtAttempt(row);
             const resumeHref = `/cbt/practice?exam=${encodeURIComponent(row.exam_id || '')}`;
@@ -765,6 +770,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   /* ---------------- render ---------------- */
   return (
     <div className="edureach-dash-container">
+      <SkipLink />
       {adminStudentView && (
         <div className="er-admin-view-banner" role="note">
           <span>Admin preview — you are browsing the student portal as a student.</span>
@@ -822,7 +828,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           {accountLinks}
         </aside>
 
-        <main className="edureach-dash-main" id="dashboard-main">
+        <main className="edureach-dash-main" id="main-content" tabIndex={-1}>
           {error && <div className="dash-note is-error">{error}</div>}
           {notice && (
             <div className="dash-note is-error" style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
@@ -848,8 +854,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </nav>
 
       {accountSheetOpen && (
-        <div className="dash-sheet-backdrop" onClick={() => setAccountSheetOpen(false)}>
-          <div className="dash-sheet" role="dialog" aria-label="Account" onClick={(e) => e.stopPropagation()}>
+        // Redundant pointer affordance: the Account button toggles the sheet and Escape closes it.
+        <div className="dash-sheet-backdrop" role="presentation" onClick={() => setAccountSheetOpen(false)}>
+          <div ref={accountSheetRef} tabIndex={-1} className="dash-sheet" role="dialog" aria-modal="true" aria-label="Account" onClick={(e) => e.stopPropagation()}>
             <div className="dash-sheet-head">
               <div className="edureach-dash-avatar">{avatar}</div>
               <div>

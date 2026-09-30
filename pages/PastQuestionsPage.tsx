@@ -189,7 +189,7 @@ export default function PastQuestionsPage() {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '22px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '22px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '980px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
@@ -289,7 +289,7 @@ export default function PastQuestionsPage() {
             )
           )}
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

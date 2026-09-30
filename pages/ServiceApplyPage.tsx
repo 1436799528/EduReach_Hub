@@ -83,6 +83,9 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const [busy, setBusy] = useState(false);
   const [reference, setReference] = useState('');
   const [message, setMessage] = useState('');
+  // A11Y-1: which control the message belongs to, so the failure is announced
+  // and the field is marked invalid rather than only shown in red text.
+  const [errorField, setErrorField] = useState<'' | 'fullName' | 'phone' | 'whatsapp' | 'institution'>('');
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [institutionOtherSelected, setInstitutionOtherSelected] = useState(false);
   const [form, setForm] = useState<FormState>(() => ({ ...emptyForm, ...(draft.form || {}) }));
@@ -204,6 +207,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   function next(event: FormEvent) {
     event.preventDefault();
     setMessage('');
+    setErrorField('');
     if (isSupabaseConfigured && !isAuthenticated) {
       setMessage('Please sign in before submitting this service request.');
       return;
@@ -212,18 +216,22 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
       const phoneDigits = form.phone.replace(/\D/g, '');
       const whatsappDigits = form.whatsapp.replace(/\D/g, '');
       if (form.fullName.trim().split(/\s+/).length < 2) {
+        setErrorField('fullName');
         setMessage('Enter your first and last name so we can identify the request correctly.');
         return;
       }
       if (phoneDigits.length < 10) {
+        setErrorField('phone');
         setMessage('Enter a valid Nigerian phone number with at least 10 digits.');
         return;
       }
       if (form.whatsapp.trim() && whatsappDigits.length < 10) {
+        setErrorField('whatsapp');
         setMessage('Enter a valid WhatsApp number or leave that field blank.');
         return;
       }
       if (!form.institution.trim()) {
+        setErrorField('institution');
         setMessage('Choose an institution or enter it using Other institution.');
         return;
       }
@@ -366,6 +374,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         onChange={(e) => update('fullName', e.target.value)}
                         placeholder="e.g. Ibrahim Abubakar"
                         autoComplete="name"
+                        aria-invalid={errorField === 'fullName' || undefined}
+                        aria-describedby={errorField === 'fullName' ? 'service-apply-error' : undefined}
                         required
                       />
                     </label>
@@ -376,6 +386,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         onChange={(e) => update('phone', e.target.value)}
                         placeholder="e.g. 08012345678"
                         type="tel"
+                        aria-invalid={errorField === 'phone' || undefined}
+                        aria-describedby={errorField === 'phone' ? 'service-apply-error' : undefined}
                         required
                       />
                     </label>
@@ -386,6 +398,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         onChange={(e) => update('whatsapp', e.target.value)}
                         placeholder="e.g. 08012345678"
                         type="tel"
+                        aria-invalid={errorField === 'whatsapp' || undefined}
+                        aria-describedby={errorField === 'whatsapp' ? 'service-apply-error' : undefined}
                       />
                     </label>
                     <label>
@@ -397,6 +411,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                           setInstitutionOtherSelected(isOther);
                           update('institution', isOther ? '' : e.target.value);
                         }}
+                        aria-invalid={errorField === 'institution' || undefined}
+                        aria-describedby={errorField === 'institution' ? 'service-apply-error' : undefined}
                         required
                       >
                         <option value="">Choose an institution</option>
@@ -408,6 +424,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                           value={form.institution}
                           onChange={(e) => update('institution', e.target.value)}
                           placeholder="Enter your institution name"
+                          aria-invalid={errorField === 'institution' || undefined}
+                          aria-describedby={errorField === 'institution' ? 'service-apply-error' : undefined}
                           required
                         />
                       )}
@@ -549,7 +567,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 </div>
               )}
 
-              {message && <div className="hub-form-error" style={{ marginTop: '14px' }}>{message}</div>}
+              {message && <div className="hub-form-error" id="service-apply-error" role="alert" style={{ marginTop: '14px' }}>{message}</div>}
 
               {/* BUTTON ACTIONS */}
               <div className="hub-wizard-actions" style={{ marginTop: '24px' }}>

@@ -300,7 +300,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '22px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '22px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
           <section className="er-setup-hero">
             <div className="er-setup-hero-mark"><img src={copy.logo} alt={`${exam.toUpperCase()} logo`} width={48} height={48} /></div>
@@ -466,7 +466,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </div>
           </section>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

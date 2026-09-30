@@ -2,6 +2,7 @@ import { userFacingError } from '../../../lib/errors';
 import { useEffect, useState, type FormEvent } from 'react';
 import { KeyRound, Laptop, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useModalDialog } from '../../lib/useModalDialog';
 import { recordSecurityEvent } from '../../lib/studentDashboard';
 
 const inputStyle = { width: '100%', padding: '9px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '6px' } as const;
@@ -75,6 +76,10 @@ export default function SecurityModal({
       active = false;
     };
   }, [open, isLocalMode, userId, onMfaChange]);
+
+  // A11Y-1: the security panel is a modal dialog — focus moves in, stays in,
+  // Escape closes it, and focus returns to the Settings button afterwards.
+  const dialogRef = useModalDialog<HTMLDivElement>(open, onClose);
 
   if (!open) return null;
 
@@ -217,8 +222,8 @@ export default function SecurityModal({
   };
 
   return (
-    <div className="dash-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dash-security-title">
-      <div className="dash-modal" style={{ maxWidth: '520px' }}>
+    <div className="dash-modal-backdrop">
+      <div ref={dialogRef} tabIndex={-1} className="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-security-title" style={{ maxWidth: '520px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'grid', placeItems: 'center' }}>

@@ -63,7 +63,7 @@ export default function ExamHubPage({ exam }: { exam: ExamKey }) {
   const item = data[exam];
   return (
     <HubLayout>
-      <main className="er-major-page">
+      <div className="er-major-page">
         <div className="er-major-container">
           <div className="er-major-heading">
             <div className="er-major-logo"><img src={item.logo} alt={`${item.title} logo`} /></div>
@@ -85,7 +85,7 @@ export default function ExamHubPage({ exam }: { exam: ExamKey }) {
             <p>Use this page as the central place for {item.title} information, preparation resources, updates and related student services.</p>
           </section>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

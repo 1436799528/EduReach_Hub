@@ -359,6 +359,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
         {error && (
           <div
+            role="alert"
             style={{
               background: '#fef2f2',
               border: '1px solid #fecaca',

@@ -17,6 +17,7 @@ import {
 import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
+import SkipLink from '../src/components/a11y/SkipLink';
 import { useAdminHealth } from '../src/components/admin/AdminKit';
 import { AdminCapabilityProvider } from '../src/components/admin/Can';
 import { API_BASE_PATH } from '../src/lib/apiBase';
@@ -246,6 +247,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const navItems = ADMIN_CONSOLE_NAV.filter((item) => item.kind === 'group' || item.capability === null || hasCapability(session, item.capability));
 
   return <div className="admin-shell">
+    <SkipLink />
     <aside className="admin-sidebar">
       <div>
         <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
@@ -274,7 +276,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <i /> {health.state === 'ok' ? `API Online${health.latencyMs !== null ? ` · ${health.latencyMs}ms` : ''}` : health.state === 'down' ? 'API Unreachable' : 'Checking API…'}
         </span>
       </header>
-      <main className="admin-main">
+      <main className="admin-main" id="main-content" tabIndex={-1}>
         <AdminCapabilityProvider value={session}>{children}</AdminCapabilityProvider>
       </main>
     </div>

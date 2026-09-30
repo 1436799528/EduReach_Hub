@@ -116,7 +116,7 @@ export default function AdminContentPage() {
               <option value="deadline">Deadlines</option>
               <option value="exam">Exam dates</option>
             </select>
-            <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /></button>
+            <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading} aria-label="Refresh events"><RefreshCw size={14} /></button>
             <button type="button" className="admin-btn" onClick={() => setForm({ ...emptyForm })}><Plus size={14} /> New {type === 'exam' ? 'exam date' : 'deadline'}</button>
           </div>
         </div>
@@ -186,7 +186,7 @@ export default function AdminContentPage() {
           <div className="admin-card-header"><h2>{type === 'exam' ? 'Exam dates' : 'Deadlines'}</h2><span>{loading ? 'Loading…' : `${items.length} item${items.length === 1 ? '' : 's'}`}</span></div>
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Title</th><th>{type === 'exam' ? 'Starts' : 'Due'}</th><th>Priority</th><th>Visibility</th><th>Created</th><th className="right">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Title</th><th scope="col">{type === 'exam' ? 'Starts' : 'Due'}</th><th scope="col">Priority</th><th scope="col">Visibility</th><th scope="col">Created</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={6} />}
                 {!loading && sorted.map((item) => (
@@ -203,7 +203,7 @@ export default function AdminContentPage() {
                           when: toLocalInput(whenField(item)), endsAt: toLocalInput(item.ends_at), location: item.location || '',
                           priority: item.priority, status: item.status,
                         })}><Pencil size={12} /> Edit</button>
-                        <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(item)}><Trash2 size={12} /></button>
+                        <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${item.title || 'this event'}`} onClick={() => void remove(item)}><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>

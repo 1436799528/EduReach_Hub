@@ -20,7 +20,8 @@
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
     "schema:audit": "tsx scripts/schema-audit.ts",
     "audit:ci": "npm audit --audit-level=low",
-    "rls:audit": "tsx scripts/rls-posture.ts"
+    "rls:audit": "tsx scripts/rls-posture.ts",
+    "a11y:audit": "tsx scripts/a11y-audit.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -45,6 +46,7 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@types/jsdom": "^30.0.0",

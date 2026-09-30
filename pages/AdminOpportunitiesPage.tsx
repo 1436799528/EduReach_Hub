@@ -130,7 +130,7 @@ export default function AdminOpportunitiesPage() {
             <p>Scholarships, grants, jobs and fellowships on the student /jobs page — managed here, served from Supabase.</p>
           </div>
           <div className="admin-header-actions">
-            <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /></button>
+            <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading} aria-label="Refresh opportunities"><RefreshCw size={14} /></button>
             <button type="button" className="admin-btn" onClick={() => { setEdit({ ...emptyEdit }); setDescriptionHtml(''); }}><Plus size={14} /> New opportunity</button>
           </div>
         </div>
@@ -207,7 +207,7 @@ export default function AdminOpportunitiesPage() {
           <div className="admin-card-header"><h2>Opportunities</h2><span>{loading ? 'Loading…' : `${items.length} total`}</span></div>
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Opportunity</th><th>Category</th><th>Deadline</th><th>State</th><th>Updated</th><th className="right">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Opportunity</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">State</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <tr><td colSpan={6} className="empty-state">Loading opportunities…</td></tr>}
                 {!loading && visible.map((item) => (
@@ -224,7 +224,7 @@ export default function AdminOpportunitiesPage() {
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => openEdit(item)}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-btn small" onClick={() => void toggleActive(item)}>{item.is_active !== false ? 'Hide' : 'Show'}</button>
-                        <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(item)}><Trash2 size={12} /></button>
+                        <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${item.title || 'this opportunity'}`} onClick={() => void remove(item)}><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>
