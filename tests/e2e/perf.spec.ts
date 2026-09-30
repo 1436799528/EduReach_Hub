@@ -150,6 +150,14 @@ test.describe('throttled mobile profile', () => {
           transferBytes,
           requests: resources.length,
           shiftLog: perf.log,
+          anatomy: (['.er-late-region--feed', '.er-news-list', '.er-section', '.er-two-col', 'main', 'footer']
+            .flatMap((selector) => Array.from(document.querySelectorAll(selector)).slice(0, 3))
+            .map((element) => {
+              const rect = element.getBoundingClientRect();
+              const raw = (element as HTMLElement).className;
+              const classes = typeof raw === 'string' && raw ? `.${raw.trim().split(/\s+/).slice(0, 2).join('.')}` : '';
+              return `${element.tagName.toLowerCase()}${classes}@${Math.round(rect.top)}+${Math.round(rect.height)}`;
+            })),
           fontCssRequested: resources.some((entry) => entry.name.includes('fonts.googleapis.com')),
           shiftSources,
         };
@@ -171,7 +179,11 @@ test.describe('throttled mobile profile', () => {
       expect(metrics.fontCssRequested, 'the font stylesheet should be requested by the document').toBe(true);
       expect(metrics.lcp, 'largest contentful paint').toBeLessThanOrEqual(BUDGET.lcpMs);
       const sources = metrics.shiftSources.map((source) => `${source.node} ${source.value.toFixed(3)}x${source.count}`).join(' + ') || 'none';
-      expect(metrics.cls, `cumulative layout shift — sources: ${sources}`).toBeLessThanOrEqual(BUDGET.cls);
+      const timeline = metrics.shiftLog.map((entry) => `${entry.t}ms ${entry.value} ${entry.node} dy=${entry.dy}`).join(' | ') || 'none';
+      expect(
+        metrics.cls,
+        `cumulative layout shift — sources: ${sources} ;; timeline: ${timeline} ;; anatomy: ${metrics.anatomy.join(' ')}`,
+      ).toBeLessThanOrEqual(BUDGET.cls);
       expect(metrics.longTaskMs, 'total blocking time').toBeLessThanOrEqual(BUDGET.longTaskMs);
       expect(metrics.transferBytes, 'bytes over the wire for this route').toBeLessThanOrEqual(BUDGET.transferBytes);
       expect(metrics.requests, 'requests for this route').toBeLessThanOrEqual(BUDGET.requests);
