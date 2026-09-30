@@ -146,8 +146,10 @@ deliberately before onboarding a content-only staff member.**
    (`POST /api/admin/users/:userId/role`, super-admin only, audited); deciding
    who becomes `content_editor` / `service_admin` is an operational decision.
 4. ✅ **Neutralise `senate_admin`/`campus_agent`** — gone from the staff
-   predicate, the notification policy and the application vocabulary; existing
-   rows migrate to `student` and must be re-assigned deliberately.
+   predicate, the notification policy and the application vocabulary. Accounts
+   still holding those values keep their login and their own data but lose staff
+   access; **the stored value is left untouched** and reported by the migration
+   so re-assignment is a deliberate operator decision.
 5. ✅ **Tests** — `tests/authorization.test.ts` (allow/deny per role, route
    coverage, ownership, migration contents) plus the existing anonymous-access
    matrix in `tests/api.test.ts`.

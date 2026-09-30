@@ -469,9 +469,16 @@ test('critical routes carry the capability the documentation claims', () => {
 test('the role migration normalises the vocabulary and retires the half-roles', () => {
   const sql = readFileSync('supabase/migrations/20260930140000_capability_role_alignment.sql', 'utf8');
 
-  assert.match(sql, /check \(role in \('student', 'content_editor', 'service_admin', 'super_admin'\)\)/);
+  // The retired values stay legal in the constraint, and no statement rewrites
+  // a row that holds one: demoting a real person is an operator decision.
+  assert.match(sql, /check \(role in \('student', 'content_editor', 'service_admin', 'super_admin', 'senate_admin', 'campus_agent'\)\)/);
   assert.match(sql, /update public\.profiles set role = 'super_admin' where role in \('admin', 'moderator'\)/);
-  assert.match(sql, /update public\.profiles set role = 'student' where role in \('senate_admin', 'campus_agent'\)/);
+  assert.equal(
+    /update public\.profiles set role = 'student' where role in \('senate_admin'/.test(sql),
+    false,
+    'the migration must not rewrite retired-role rows',
+  );
+  assert.match(sql, /raise warning 'ROLE-1: % account\(s\) still hold a retired role/);
 
   // The staff predicate must not grant anything to the retired roles...
   const staffPredicate = /p\.role in \(([^)]*)\)/g;

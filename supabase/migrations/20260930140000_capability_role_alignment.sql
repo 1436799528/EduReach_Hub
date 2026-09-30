@@ -8,16 +8,20 @@
 -- staff RLS predicates while never passing the admin gate.
 --
 -- What this migration does, in order:
---   1. normalises stored roles to the four application roles;
---   2. replaces any role check constraint on profiles with the canonical one;
---   3. rewrites the staff predicate and the notification staff-insert policy so
+--   1. normalises the retired *staff* aliases (`admin`, `moderator`) to
+--      `super_admin`, preserving their access exactly;
+--   2. leaves rows holding `senate_admin` / `campus_agent` untouched, and
+--      reports them as a notice so the operator can re-assign deliberately;
+--   3. replaces any role check constraint on profiles with the application
+--      vocabulary (the two retired values stay legal so no row is silently
+--      rewritten or rejected);
+--   4. rewrites the staff predicate and the notification staff-insert policy so
 --      the retired half-roles no longer grant staff data access.
 --
--- Before applying to a live project, review the affected accounts:
---   select id, role, full_name from public.profiles order by role;
--- Rows holding `senate_admin` / `campus_agent` become `student` (least
--- privilege). Re-assign them deliberately through
--- `POST /api/admin/users/:userId/role` afterwards if they should keep staff work.
+-- Before applying to a live project, review the accounts that hold a retired
+-- role:  select id, role, full_name from public.profiles order by role;
+-- They keep their login and their own student data; they simply stop being staff.
+-- Re-assign them with `POST /api/admin/users/:userId/role` if that is wrong.
 --
 -- Every statement is guarded: on a database without the base tables (BASE-1) the
 -- migration is a no-op that raises a notice instead of failing the run.
@@ -46,11 +50,17 @@ begin
   update public.profiles set role = 'super_admin' where role in ('admin', 'moderator');
   get diagnostics v_legacy_staff = row_count;
 
-  -- The half-roles are retired: no application capability, no staff RLS.
-  update public.profiles set role = 'student' where role in ('senate_admin', 'campus_agent');
-  get diagnostics v_retired = row_count;
+  -- The half-roles are retired from the application, but the rows are left
+  -- exactly as they are: this migration must not silently demote a real person.
+  -- They already cannot pass the admin gate; sections 3 and 4 remove the staff
+  -- data access they still had through RLS. Re-assigning them is a human
+  -- decision, taken through POST /api/admin/users/:userId/role.
+  select count(*) into v_retired from public.profiles where role in ('senate_admin', 'campus_agent');
+  if v_retired > 0 then
+    raise warning 'ROLE-1: % account(s) still hold a retired role (senate_admin/campus_agent). They have no capability and no staff data access. Review: select id, role, full_name from public.profiles where role in (''senate_admin'', ''campus_agent'');', v_retired;
+  end if;
 
-  raise notice 'ROLE-1: % legacy staff row(s) -> super_admin; % retired half-role row(s) -> student. Review staff assignments before the next staff onboarding.', v_legacy_staff, v_retired;
+  raise notice 'ROLE-1: % legacy staff alias row(s) normalised to super_admin; rows holding a retired role were left untouched.', v_legacy_staff;
 end
 $role_normalisation$;
 
@@ -80,9 +90,13 @@ begin
     where conrelid = 'public.profiles'::regclass
       and conname = 'profiles_role_vocabulary_check'
   ) then
+    -- The two retired values remain legal on purpose: they are the historical
+    -- vocabulary, the application maps them to `student` (no capability), and
+    -- rewriting someone's stored role is an operator decision, not a migration
+    -- side effect. Anything else is rejected so the vocabulary cannot drift.
     alter table public.profiles
       add constraint profiles_role_vocabulary_check
-      check (role in ('student', 'content_editor', 'service_admin', 'super_admin'));
+      check (role in ('student', 'content_editor', 'service_admin', 'super_admin', 'senate_admin', 'campus_agent'));
   end if;
 end
 $role_constraint$;

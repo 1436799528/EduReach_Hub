@@ -192,10 +192,13 @@ introduced behind the same `hasCapability()` seam without touching call sites.
   callers without `audit.read`; `POST /api/admin/users/:userId/role` assigns a
   role from the vocabulary and audits it.
 - **`supabase/migrations/20260930140000_capability_role_alignment.sql`** —
-  normalizes `profiles.role` to the four application roles, adds a check
-  constraint so the vocabulary cannot drift again, retires `senate_admin` and
+  normalises the retired staff aliases (`admin`, `moderator`) to `super_admin`
+  (identical access), adds a check constraint carrying the application
+  vocabulary plus the two retired values, retires `senate_admin` and
   `campus_agent` from the staff RLS predicates, and narrows the notification
-  staff-insert policy to the same four roles.
+  staff-insert policy. **Rows holding a retired role are left untouched** and are
+  reported as a warning so the operator can re-assign them deliberately — a
+  migration must not silently demote a real person.
 
 The flow for every privileged request is:
 
@@ -245,7 +248,7 @@ Request → bearer token → Supabase session validation → profiles.role
 | Case | Behaviour |
 |---|---|
 | Role value is unknown (typo, legacy, hand-edited) | Treated as `student` — least privilege, never staff |
-| `senate_admin` / `campus_agent` account | No capabilities; 403 on every admin endpoint (was 403 already; now consistent with RLS) |
+| `senate_admin` / `campus_agent` account | No capabilities; 403 on every admin endpoint, and no staff RLS access. The stored role is left as-is and reported by the migration instead of being rewritten |
 | `admin` / `moderator` account | Maps to `super_admin` so behaviour is unchanged until roles are assigned |
 | Profile row missing or unreadable | No capabilities ⇒ 403; never assumes staff |
 | Account banned mid-session | Supabase rejects the token on the next call ⇒ 401 |
@@ -300,7 +303,7 @@ status notifications are NTF-1.)
 | Tests | `npm test` | **205/205** (18 new: 17 in `tests/authorization.test.ts` + 1 auto-derived by the anonymous-access matrix for the new role route) |
 | Build | `npm run build` | client + `build/server.cjs` |
 | Prod smoke (stubbed Supabase contract) | `PORT=3114 node build/server.cjs` + curl | anonymous 401 (`Authentication required.`); student and `senate_admin` 403 on `/api/admin/session`; `content_editor` 200 on `/api/admin/news` and 403 on `/api/admin/users` and `/api/admin/service-requests`; `service_admin` 200 on `/api/admin/service-requests` and 403 on `/api/admin/news`; `super_admin` 200 on all; publishing as `service_admin` 403; role change 200 for `super_admin`, 403 for `content_editor`, 400 for an unknown role and for self-change; another student's CBT attempt 404 |
-| Migration | inspected; **not applied** to a live database | pre-flight query in the migration header and the PR checklist |
+| Migration | inspected; **not applied** to a live database | pre-flight query in the migration header and the PR checklist; retired-role rows are left untouched and reported as a warning |
 
 ### Fixed while implementing
 
