@@ -867,6 +867,120 @@ export async function deleteAdminNews(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Newsroom ingestion: review queue, manual runs and the integrity report.
+// Stories from Tier 1 official sources publish automatically; everything else
+// waits here for an editor. See docs/NEWSROOM_PIPELINE.md.
+// ---------------------------------------------------------------------------
+
+export type NewsroomCandidate = {
+  id: string;
+  source_key: string;
+  source_name: string | null;
+  source_tier: number | null;
+  source_url: string;
+  canonical_url: string;
+  title: string;
+  excerpt: string | null;
+  body: string | null;
+  image_url: string | null;
+  category: string;
+  source_published_at: string | null;
+  relevance_score: number | null;
+  quality_score: number | null;
+  quality_flags?: Array<{ code: string; level: string; message: string }> | null;
+  review_notes: string | null;
+  status: string;
+  rejection_reason: string | null;
+  article_id: string | null;
+  created_at: string;
+};
+
+export type NewsroomRun = {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  status: string;
+  triggered_by: string;
+  dry_run: boolean;
+  sources_checked: number;
+  sources_failed: number;
+  candidates_found: number;
+  duplicates: number;
+  rejected: number;
+  needs_review: number;
+  published: number;
+  images_repaired: number;
+  expired: number;
+  error: string | null;
+};
+
+export type NewsroomIngestReport = {
+  runId: string | null;
+  candidatesFound: number;
+  duplicates: number;
+  rejected: number;
+  needsReview: number;
+  published: number;
+  imagesRepaired: number;
+  expired: number;
+  sourcesChecked: number;
+  sourcesFailed: number;
+  errors: string[];
+  decisions: Array<{ title: string; status: string; reason: string; category: string }>;
+};
+
+export async function fetchNewsroomCandidates(status = 'needs_review'): Promise<{ items: NewsroomCandidate[]; pendingReview: number | null }> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: NewsroomCandidate[]; pending_review: number | null }>(
+    `/api/admin/newsroom/candidates?status=${encodeURIComponent(status)}`,
+    { headers },
+  );
+  return { items: body.items || [], pendingReview: body.pending_review ?? null };
+}
+
+export async function approveNewsroomCandidate(
+  id: string,
+  overrides: { title?: string; excerpt?: string; category?: string; image_url?: string | null } = {},
+): Promise<AdminNewsArticle> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ item: AdminNewsArticle }>(
+    `/api/admin/newsroom/candidates/${encodeURIComponent(id)}/approve`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(overrides) },
+  );
+  return body.item;
+}
+
+export async function rejectNewsroomCandidate(id: string, reason: string): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  await jsonFetch(`/api/admin/newsroom/candidates/${encodeURIComponent(id)}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function runNewsroomIngest(dryRun = false): Promise<NewsroomIngestReport> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ report: NewsroomIngestReport }>('/api/admin/newsroom/ingest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ dry_run: dryRun }),
+  });
+  return body.report;
+}
+
+export async function fetchNewsroomRuns(): Promise<NewsroomRun[]> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: NewsroomRun[] }>('/api/admin/newsroom/runs', { headers });
+  return body.items || [];
+}
+
+// ---------------------------------------------------------------------------
 // Real-usage telemetry. The server allowlist accepts page_view, service_view,
 // service_submit, cbt_start, cbt_submit and search; events land in
 // site_analytics_events through the same-origin API. Failures are silent —

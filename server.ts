@@ -5,6 +5,9 @@ import { createClient } from '@supabase/supabase-js';
 import { requireAdmin, type AdminRequest } from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
 import { userFacingError as normalizeUserFacingError } from './lib/errors';
+import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
+import { runNewsroomRefresh } from './src/server/newsroom/run';
+import { expiresAtFor } from './src/server/newsroom/qualityGate';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -12,6 +15,20 @@ const publicErrorMessage = normalizeUserFacingError;
 const PORT = Number(process.env.PORT || 3000);
 const LIVE_SERVICE_KEYS = ['nelfund-loan', 'results', 'jamb-slip', 'admission-letters'] as const;
 app.disable('x-powered-by');
+
+/**
+ * Abuse control. The in-process limiter is always active; the durable counter
+ * (public.check_rate_limit) makes the sensitive routes hold across instances.
+ * See lib/rate-limit.ts for the policy table.
+ */
+const rateLimitFor = createRateLimiter({
+  callRpc: async (fn, args) => {
+    if (!isServerSupabaseConfigured()) return { data: null, error: { message: 'Supabase is not configured.' } };
+    const result = await getServerSupabase().rpc(fn, args);
+    return { data: result.data, error: result.error ? { message: result.error.message } : null };
+  },
+  log: (message, meta) => console.warn(`[rate-limit] ${message}`, meta ? JSON.stringify(meta) : ''),
+});
 
 app.use((_req, res, next) => {
   if (
@@ -45,6 +62,9 @@ app.use((_req, res, next) => {
   next();
 });
 
+// Broad per-IP ceiling for the whole API surface, then per-route limits below.
+app.use('/api', rateLimitFor(RATE_LIMIT_RULES.apiGeneral));
+
 function isServerSupabaseConfigured() {
   return Boolean(process.env.VITE_SUPABASE_URL && getServerSupabaseKey());
 }
@@ -72,6 +92,42 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'edureach' });
 });
 
+/**
+ * Readiness/dependency health, separate from the liveness probe above.
+ * `/api/health` answers "is the process up"; this answers "can it serve
+ * requests", which is the question a deploy gate or uptime monitor needs.
+ */
+app.get('/api/health/ready', async (_req, res) => {
+  const checks: Record<string, { ok: boolean; detail?: string }> = {
+    server: { ok: true },
+    supabase_configured: {
+      ok: isServerSupabaseConfigured(),
+      detail: isServerSupabaseConfigured() ? undefined : 'VITE_SUPABASE_URL or the server secret key is missing.',
+    },
+  };
+
+  let databaseLatencyMs: number | null = null;
+  if (checks.supabase_configured.ok) {
+    const started = Date.now();
+    try {
+      const supabase = getServerSupabase();
+      const { error } = await supabase.from('news_articles').select('id').limit(1);
+      databaseLatencyMs = Date.now() - started;
+      checks.database = { ok: !error, detail: error ? 'Database read failed.' : undefined };
+    } catch (error) {
+      checks.database = { ok: false, detail: normalizeUserFacingError(error, 'Database read failed.') };
+    }
+  }
+
+  const ready = Object.values(checks).every((check) => check.ok);
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'degraded',
+    checked_at: new Date().toISOString(),
+    checks,
+    database_latency_ms: databaseLatencyMs,
+  });
+});
+
 
 // Parse uploads only after authorization, using the endpoint's larger limit.
 const jsonBody = express.json({ limit: '1mb' });
@@ -80,7 +136,7 @@ app.use((req, res, next) => {
   return jsonBody(req, res, next);
 });
 
-app.post('/api/admin/bootstrap', async (req, res) => {
+app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), async (req, res) => {
   try {
     const configuredEmail = String(process.env.EDUREACH_ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
     if (!configuredEmail) return res.status(503).json({ error: 'Admin bootstrap email is not configured.' });
@@ -157,7 +213,7 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/analytics/event', async (req, res) => {
+app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
     const eventName = String(req.body?.event_name || '').trim().slice(0,80);
@@ -1043,12 +1099,27 @@ app.get('/api/opportunities', async (_req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase
+    // `closed_at` arrives with the newsroom migration; fall back to the legacy
+    // query so an unmigrated database still lists opportunities.
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,description,link_url,deadline,locations')
+      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at')
       .eq('is_active', true)
+      .is('closed_at', null)
       .order('deadline', { ascending: true, nullsFirst: false })
-      .limit(100);
+      .limit(100));
+    if (error) {
+      const fallback = await supabase
+        .from('opportunities')
+        .select('id,title,organisation,category,description,link_url,deadline,locations')
+        .eq('is_active', true)
+        .order('deadline', { ascending: true, nullsFirst: false })
+        .limit(100);
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -1154,7 +1225,7 @@ app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
 
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
-app.post('/api/admin/uploads', requireAdmin, express.json({ limit: '5mb' }), async (req, res) => {
+app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireAdmin, express.json({ limit: '5mb' }), async (req, res) => {
   try {
     const adminUser = (req as AdminRequest).adminUser!;
     const dataUrl = String(req.body?.dataUrl || '');
@@ -1271,15 +1342,53 @@ app.get('/api/upcoming', async (_req, res) => {
   }
 });
 
+/**
+ * News reads. The provenance/freshness columns arrive with the newsroom
+ * migration, so the query degrades to the legacy column set when a database
+ * has not been migrated yet — the site keeps serving either way.
+ */
+const NEWS_ROW_BASE = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags';
+const NEWS_ROW_GOVERNED = `${NEWS_ROW_BASE},verification_status,expires_at,last_verified_at,source_key,source_tier`;
+
+function newsArticleView(item: Record<string, unknown>) {
+  const expiresAt = item.expires_at ? new Date(String(item.expires_at)) : null;
+  const expiredByDate = expiresAt && Number.isFinite(expiresAt.getTime()) && expiresAt.getTime() < Date.now();
+  return {
+    ...item,
+    author: item.source_name || 'EduReach Editorial Desk',
+    summary: item.excerpt,
+    last_verified_at: item.last_verified_at || item.updated_at,
+    verification_status: expiredByDate ? 'expired' : (item.verification_status || 'verified'),
+    priority: 'normal',
+  };
+}
+
+function isFreshArticle(item: Record<string, unknown>): boolean {
+  if (item.verification_status === 'expired' || item.verification_status === 'archived') return false;
+  if (!item.expires_at) return true;
+  const expiresAt = new Date(String(item.expires_at));
+  return !Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() > Date.now();
+}
+
 app.get('/api/news', async (_req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags')
-      .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase.from('news_articles')
+      .select(NEWS_ROW_GOVERNED)
+      .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(40));
+    if (error) {
+      // Pre-newsroom database: fall back to the legacy column set.
+      const fallback = await supabase.from('news_articles')
+        .select(NEWS_ROW_BASE)
+        .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
-    res.json({ items: (data || []).map(item => ({ ...item, author: item.source_name || 'EduReach Editorial Desk', summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
+    res.json({ items: (data || []).filter(isFreshArticle).slice(0, 30).map(newsArticleView) });
   } catch (error) {
     console.error('News API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -1290,11 +1399,22 @@ app.get('/api/news/:slug', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'News content is not configured.' });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags')
-      .eq('slug', req.params.slug).eq('published', true).maybeSingle();
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase.from('news_articles')
+      .select(NEWS_ROW_GOVERNED)
+      .eq('slug', req.params.slug).eq('published', true).maybeSingle());
+    if (error) {
+      const fallback = await supabase.from('news_articles')
+        .select(NEWS_ROW_BASE)
+        .eq('slug', req.params.slug).eq('published', true).maybeSingle();
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error || !data) return res.status(404).json({ error: 'News article not found.' });
-    res.json({ item: { ...data, author: data.source_name || 'EduReach Editorial Desk', summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
+    // An expired article stays readable by direct link, but is presented as
+    // expired so the student is not misled by stale deadlines.
+    res.json({ item: newsArticleView(data) });
   } catch (error) {
     console.error('News article API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -1405,7 +1525,7 @@ app.get('/api/cbt/exams/:examId/guest-questions', async (req, res) => {
   }
 });
 
-app.post('/api/cbt/guest-submit', async (req, res) => {
+app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit), async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'CBT question bank is not configured.' });
   try {
     const examId = String(req.body?.examId || '').trim();
@@ -1748,7 +1868,7 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async 
   }
 });
 
-app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req, res) => {
+app.post('/api/admin/content-manager/import/:resource', rateLimitFor(RATE_LIMIT_RULES.adminImport), requireAdmin, async (req, res) => {
   try {
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
@@ -1801,6 +1921,182 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
   } catch (error) {
     console.error('Content manager import error:', error);
     res.status(400).json({ error: publicErrorMessage(error, 'Unable to import data.') });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Newsroom: ingestion runs, review queue and content integrity.
+// ---------------------------------------------------------------------------
+
+app.post('/api/admin/newsroom/ingest', rateLimitFor(RATE_LIMIT_RULES.adminNewsroomRun), requireAdmin, async (req, res) => {
+  try {
+    // Defaults to a real run; pass dry_run: true to preview what would happen.
+    const dryRun = req.body?.dry_run === true || req.body?.dry_run === 'true';
+    const report = await runNewsroomRefresh({
+      triggeredBy: 'admin',
+      dryRun,
+      repairImages: req.body?.repair_images !== false,
+    });
+    res.json({ report });
+  } catch (error) {
+    console.error('Newsroom ingest error:', error);
+    res.status(503).json({ error: publicErrorMessage(error, 'Unable to run the newsroom refresh.') });
+  }
+});
+
+app.get('/api/admin/newsroom/runs', requireAdmin, async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('news_ingest_runs')
+      .select('id,started_at,finished_at,status,triggered_by,dry_run,sources_checked,sources_failed,candidates_found,duplicates,rejected,needs_review,published,images_repaired,expired,report,error')
+      .order('started_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Newsroom runs error:', error);
+    res.status(503).json({ error: 'Unable to load newsroom runs. Has the newsroom migration been applied?' });
+  }
+});
+
+app.get('/api/admin/newsroom/candidates', requireAdmin, async (req, res) => {
+  try {
+    const status = typeof req.query.status === 'string' && req.query.status.trim() ? req.query.status.trim() : 'needs_review';
+    const allowed = ['new', 'needs_review', 'approved', 'rejected', 'duplicate', 'published', 'failed'];
+    if (!allowed.includes(status)) return res.status(400).json({ error: 'Unsupported candidate status.' });
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('news_ingest_candidates')
+      .select('id,run_id,source_key,source_name,source_tier,source_url,canonical_url,title,excerpt,body,image_url,category,source_published_at,relevance_score,quality_score,quality_flags,review_notes,status,rejection_reason,article_id,created_at')
+      .eq('status', status)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+
+    const { count } = await supabase
+      .from('news_ingest_candidates')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'needs_review');
+
+    res.json({ items: data || [], pending_review: count ?? null });
+  } catch (error) {
+    console.error('Newsroom candidates error:', error);
+    res.status(503).json({ error: 'Unable to load the review queue. Has the newsroom migration been applied?' });
+  }
+});
+
+app.post('/api/admin/newsroom/candidates/:candidateId/approve', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: candidate, error: candidateError } = await supabase
+      .from('news_ingest_candidates')
+      .select('*')
+      .eq('id', req.params.candidateId)
+      .maybeSingle();
+    if (candidateError) throw candidateError;
+    if (!candidate) return res.status(404).json({ error: 'Candidate not found.' });
+    if (candidate.article_id) return res.status(409).json({ error: 'This candidate has already been published.' });
+
+    const title = String(req.body?.title || candidate.title || '').trim();
+    const excerpt = req.body?.excerpt !== undefined ? String(req.body.excerpt || '').trim() || null : candidate.excerpt;
+    const body = String(req.body?.body || candidate.body || '').trim();
+    const category = String(req.body?.category || candidate.category || 'general').trim().toLowerCase();
+    const imageUrl = req.body?.image_url !== undefined ? safeContentUrl(req.body.image_url) : candidate.image_url;
+    if (!title || !body) return res.status(400).json({ error: 'A title and editorial summary are required before publishing.' });
+    const sourceUrl = safeContentUrl(candidate.source_url);
+    if (!sourceUrl) return res.status(400).json({ error: 'The candidate has no valid HTTPS source URL.' });
+
+    const now = new Date();
+    const publishedAt = candidate.source_published_at ? new Date(candidate.source_published_at) : now;
+    const publishedIso = Number.isFinite(publishedAt.getTime()) ? publishedAt.toISOString() : now.toISOString();
+
+    const articleRow: Record<string, unknown> = {
+      slug: await uniqueNewsSlug(supabase, slugifyTitle(title)),
+      title,
+      excerpt,
+      body,
+      category,
+      image_url: imageUrl,
+      source_name: candidate.source_name,
+      source_url: sourceUrl,
+      published: true,
+      published_at: publishedIso,
+      featured: false,
+      tags: normalizeTags(req.body?.tags) || candidate.category || null,
+      source_key: candidate.source_key,
+      source_tier: candidate.source_tier,
+      source_published_at: candidate.source_published_at,
+      last_verified_at: now.toISOString(),
+      verification_status: 'verified',
+      expires_at: expiresAtFor(category, new Date(publishedIso)),
+      content_hash: candidate.content_hash,
+      dedupe_key: candidate.dedupe_key,
+      ingest_candidate_id: candidate.id,
+      review_status: 'editor_approved',
+    };
+
+    const { data, error } = await supabase.from('news_articles').insert(articleRow).select(newsRowSelect).single();
+    if (error) {
+      if (String(error.code) === '23505') return res.status(409).json({ error: 'This story is already published.' });
+      throw error;
+    }
+
+    await supabase.from('news_ingest_candidates')
+      .update({ status: 'published', article_id: data.id, reviewed_by: adminUser.id, reviewed_at: now.toISOString(), updated_at: now.toISOString() })
+      .eq('id', candidate.id);
+    await supabase.rpc('admin_audit_log', {
+      p_admin_user_id: adminUser.id,
+      p_action: 'news_candidate_approve',
+      p_entity_type: 'news_ingest_candidate',
+      p_entity_id: candidate.id,
+      p_metadata: { slug: articleRow.slug, source_key: candidate.source_key },
+    });
+
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Newsroom approve error:', error);
+    res.status(500).json({ error: publicErrorMessage(error, 'Unable to publish this candidate.') });
+  }
+});
+
+app.post('/api/admin/newsroom/candidates/:candidateId/reject', requireAdmin, async (req, res) => {
+  try {
+    const adminUser = (req as AdminRequest).adminUser!;
+    const reason = String(req.body?.reason || '').trim().slice(0, 500) || 'Rejected by editor.';
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('news_ingest_candidates')
+      .update({ status: 'rejected', rejection_reason: reason, reviewed_by: adminUser.id, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('id', req.params.candidateId)
+      .select('id,status,rejection_reason')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Candidate not found.' });
+    await supabase.rpc('admin_audit_log', {
+      p_admin_user_id: adminUser.id,
+      p_action: 'news_candidate_reject',
+      p_entity_type: 'news_ingest_candidate',
+      p_entity_id: req.params.candidateId,
+      p_metadata: { reason },
+    });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Newsroom reject error:', error);
+    res.status(500).json({ error: publicErrorMessage(error, 'Unable to reject this candidate.') });
+  }
+});
+
+app.get('/api/admin/integrity', requireAdmin, async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.rpc('content_integrity_report');
+    if (error) throw error;
+    res.json({ report: data });
+  } catch (error) {
+    console.error('Content integrity error:', error);
+    res.status(503).json({ error: 'Unable to build the integrity report. Has the newsroom migration been applied?' });
   }
 });
 

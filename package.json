@@ -14,7 +14,10 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm audit --audit-level=low",
-    "ci": "npm run check"
+    "ci": "npm run check",
+    "newsroom:run": "tsx scripts/newsroom.ts",
+    "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
+    "newsroom:integrity": "tsx scripts/newsroom.ts --integrity"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

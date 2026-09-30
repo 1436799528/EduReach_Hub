@@ -13,6 +13,7 @@ import { newsCategories, newsCategoryLabel, newsCategoryOptions } from '../src/d
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
+import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
 
 type EditorState = {
   id: string | null;
@@ -238,6 +239,8 @@ export default function AdminNewsPage() {
 
       {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
       {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}
+
+      <AdminNewsroomQueue onPublished={() => void load()} />
 
       {editor && (
         <div className="admin-card admin-news-editor">
