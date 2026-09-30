@@ -13,12 +13,14 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm audit --audit-level=low",
-    "ci": "npm run check",
+    "check": "npm run ci",
+    "ci": "npm run typecheck && npm test && npm run schema:audit && npm run build && npm run test:e2e && npm run audit:ci",
     "newsroom:run": "tsx scripts/newsroom.ts",
     "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
-    "schema:audit": "tsx scripts/schema-audit.ts"
+    "schema:audit": "tsx scripts/schema-audit.ts",
+    "audit:ci": "npm audit --audit-level=low",
+    "replay:migrations": "bash scripts/replay-migrations.sh"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

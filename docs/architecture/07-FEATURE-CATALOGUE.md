@@ -61,7 +61,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | **A11Y-1** | Accessibility verification pass (keyboard, screen reader, contrast, CBT-specific) | Responsive testing is not accessibility testing | — | 🔴 | M |
 | **PERF-1** | Core Web Vitals measurement on production | Performance is assumed, not measured | Deployment decision D5 | 🔴 | M |
 | **OBS-1** | Scheduled-run monitoring and alerting | A daily job that fails silently is worse than no job | Deployment decision D5 | 🟡 | S |
-| **TEST-1** | Confirm CI runs the full gate on `main` (audit could see no workflow runs) | The workflow exists; the evidence does not | — | 🟡 | S |
+| **TEST-1** ✅ | CI quality gate: prove the full gate actually runs (typecheck, tests, schema audit, build, E2E) plus a real PostgreSQL migration replay | **Delivered:** `npm run ci` is the authoritative gate, the workflow runs each stage as a named step, and a `migration-replay` job applies every migration to a scratch PostgreSQL and verifies the objects the application uses (`docs/features/TEST-1.md`) | — | 🔴 | M |
 | **PAY-1** | Fee model, terms, refunds — only if monetisation is agreed | Payments schema exists with no product | D2 decision | ⚪ | — |
 
 ## Dependency graph (next three features)
@@ -79,11 +79,12 @@ SA-3  (independent)
 ## Recommended next feature
 
 **Delivered:** SEO-1 (2026-09-30, commit `7c56830`), ROLE-1 (2026-09-30,
-capability layer), NTF-1 (2026-09-30, service status notifications) and BASE-1
-(2026-09-30, reproducible baseline schema). Each was documented in
+capability layer), NTF-1 (2026-09-30, service status notifications), BASE-1
+(2026-09-30, reproducible baseline schema) and TEST-1 (2026-09-30, CI quality
+gate with a real PostgreSQL migration replay). Each was documented in
 `docs/features/` before its code, as the process requires. **The next feature is
-TEST-1** — the gate has still never been proven to run in CI, which is the last
-remaining obstacle to trusting any of the above without a local re-run.
+unselected** — the highest-value candidates are BASE-1b (RLS posture for the six
+tables with no policy), AN-1 (analytics taxonomy) and A11Y-1/PERF-1.
 
 Whichever is chosen is implemented alone, end to end, and documented with
 `08-FEATURE-TEMPLATE.md` before code is written — including its routes, data,

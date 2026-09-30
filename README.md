@@ -152,24 +152,50 @@ outputs and their Node runtime dependencies.
 
 ## Automated quality gate
 
+The authoritative gate is `npm run ci` (kept as `npm run check` for older
+documentation). It runs, in order:
+
 ```bash
-npm ci
-npx playwright install --with-deps chromium
-npm run check
+npm ci            # the workflow installs; `npm run ci` assumes it
+npm run typecheck
+npm test
+npm run schema:audit
+npm run build
+npm run test:e2e
+npm run audit:ci
 ```
 
-`check` runs TypeScript checking, Node-based unit/API/security regression tests
-(including the newsroom parser/dedupe/quality-gate suite and the rate-limit
-suite), a production build, desktop/mobile Chromium smoke and interaction tests,
-and `npm audit --audit-level=low`. The existing GitHub CI still runs type checking
-and the production build. The expanded CI workflow is retained locally pending
-GitHub Workflows write permission; run the full gate locally before merging.
-Individual commands:
+`typecheck` is a real `tsc --noEmit` (the legacy `npm run lint` alias points at
+it; this is not ESLint). `test` runs the Node-based unit/API/security regression
+suites, including the newsroom pipeline, rate limiting, SEO, authorization,
+NTF-1 and BASE-1's schema tests. `schema:audit` is the BASE-1 check that the
+migrations build the database the application expects. `test:e2e` is the
+desktop/mobile Chromium suite — it needs an **unconfigured** build (no
+`VITE_SUPABASE_*` credentials), not a production account, and it boots the server
+on port 3100 itself. `audit:ci` is `npm audit --audit-level=low`.
 
-- `npm run typecheck` (also available as the legacy `npm run lint`; this is not ESLint)
-- `npm test`
-- `npm run build && npm run test:e2e`
+**In CI** the same stages run as separate named steps in the
+`EduReach production checks` workflow so a failure says which stage failed, and a
+second job, **`migration-replay`**, applies every migration in order to a
+throwaway PostgreSQL 16 and then asserts the tables, functions, columns, RLS
+state and signup trigger the application needs. That job replays the migrations
+against a real database engine with Supabase's `auth`/`storage` surface shimmed
+(`supabase/ci/platform-shims.sql`); it does **not** run `supabase db reset`
+against Supabase itself, so it proves our SQL applies, not that a Supabase
+project accepts it. Playwright runs in CI (Chromium is installed in the
+workflow); it cannot run in every sandbox because browser downloads are blocked
+there. Node comes from `.nvmrc` in both CI and Netlify's `NODE_VERSION`.
 
+Run the migration replay locally against any scratch PostgreSQL:
+
+```bash
+npm run replay:migrations -- --setup  "$DATABASE_URL"
+npm run replay:migrations -- --apply  "$DATABASE_URL"
+npm run replay:migrations -- --verify "$DATABASE_URL"
+```
+
+These checks do not certify live RLS, a production Supabase project, real
+sign-in, admin writes, or exam persistence.
 Browser tests require an **unconfigured build** (no `VITE_SUPABASE_*` credentials),
 not a production account. They test public routes, empty/error states, search,
 navigation and fail-closed authentication. Authentication contract tests use a
