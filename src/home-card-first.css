@@ -4,10 +4,10 @@
 .hub-home-intro h1{margin:5px 0 7px;font-size:clamp(25px,3.1vw,38px);line-height:1.08;letter-spacing:-1.2px}
 .hub-home-intro p{margin:0;color:var(--hub-muted);font-size:12px}
 .hub-home-search{height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--hub-border);border-radius:12px;background:#fff;box-shadow:0 4px 16px rgba(15,23,42,.05)}
-.hub-home-search svg{color:#7b8494;flex:none}
+.hub-home-search svg{color:#5e6c82;flex:none}
 .hub-home-search input{width:100%;border:0;outline:0;background:transparent;color:var(--hub-text);font:inherit;font-size:12px}
-.hub-home-search input::placeholder{color:#9aa3b2}
-.hub-home-search button{border:0;background:transparent;color:#7b8494;font-size:20px;cursor:pointer}
+.hub-home-search input::placeholder{color:#5e6c82}
+.hub-home-search button{border:0;background:transparent;color:#5e6c82;font-size:20px;cursor:pointer}
 .hub-home-section-title{display:flex!important;justify-content:space-between;align-items:end}
 .hub-home-section-title>a{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:var(--hub-blue)}
 .hub-home-card-grid{display:grid;gap:12px}

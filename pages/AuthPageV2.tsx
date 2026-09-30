@@ -525,7 +525,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         color: '#0f172a',
                       }}
                     />
-                    <Mail size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    <Mail size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                   </div>
                 </div>
 
@@ -553,7 +553,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         color: '#0f172a',
                       }}
                     />
-                    <Phone size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    <Phone size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                   </div>
                 </div>
 
@@ -617,7 +617,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -652,7 +652,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
                       >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
@@ -712,7 +712,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         color: '#0f172a',
                       }}
                     />
-                    <Mail size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    <Mail size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                   </div>
                 </div>
 
@@ -752,12 +752,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         color: '#0f172a',
                       }}
                     />
-                    <Lock size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                    <Lock size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -791,7 +791,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       color: '#0f172a',
                     }}
                   />
-                  <Mail size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+                  <Mail size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                 </div>
               </div>
             )}
@@ -825,7 +825,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -857,7 +857,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#94a3b8', cursor: 'pointer' }}
+                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>

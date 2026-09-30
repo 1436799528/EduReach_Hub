@@ -185,6 +185,18 @@ database disagrees, and it switches to the `anon`/`authenticated` roles to prove
 the policies actually filter rows. `npm run rls:audit` prints the posture table
 and the findings for the replayed schema.
 
+`npm test` also enforces the accessibility posture (A11Y-1). Every `.tsx` file is
+parsed as JSX and checked for unnamed controls, dialogs without focus management,
+table headers without `scope`, a second `<main>` nested inside a shell's own, a
+missing or unwired skip link, pointer-only click targets, animations that ignore
+`prefers-reduced-motion`, an `outline: none` with no focus indicator behind it,
+and any rule whose own text/background colour pair misses its contrast minimum —
+the last two are blocking rules added by the pass itself, so the fixes cannot
+regress quietly. `npm run a11y:audit` prints the findings table for review, and
+`tests/e2e/a11y.spec.ts` runs axe-core in Chromium over the public route list at
+desktop and mobile widths as part of `test:e2e`; failing nodes are annotated on
+the check run. See `docs/features/A11Y-1.md`.
+
 **In CI** the `EduReach production checks` workflow runs `npm ci`, installs
 Chromium, and then runs `npm run ci` — so every stage above, including the
 PostgreSQL replay, gates every pull request and every push to `main`. The

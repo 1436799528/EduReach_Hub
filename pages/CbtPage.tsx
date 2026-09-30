@@ -141,7 +141,7 @@ export default function CbtPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CheckCircle2 size={20} style={{ color: '#059669', flexShrink: 0 }} />
+              <CheckCircle2 size={20} style={{ color: '#047857', flexShrink: 0 }} />
               <div>
                 <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Instant Evaluation</strong>
                 <span style={{ fontSize: '12px', color: '#5e6c82' }}>Accurate scoring and percentages</span>

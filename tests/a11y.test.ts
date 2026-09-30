@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
-import { blocking, scanRepo } from '../scripts/a11y-audit';
+import { blocking, findStylesheets, scanRepo, scanStyles } from '../scripts/a11y-audit';
 
 // A11Y-1: the posture, and the behaviour the posture is supposed to produce.
 //
@@ -26,6 +26,58 @@ test('the static accessibility posture has no blocking findings', () => {
     findings.map((finding) => `${finding.rule} ${finding.file}:${finding.line} — ${finding.message}`),
     [],
   );
+});
+
+// The focus-indicator rule is the one rule that judges CSS the repository
+// already contains, so it needs its own controls: one sheet that must fail it,
+// one that must pass, and one that proves the walker sees a reset inside a media
+// query rather than reading the `@media` prelude as the selector.
+const coverageProbe = (sheet: string) => {
+  const findings = scanStyles(
+    new Map([...findStylesheets(root), ['src/styles/probe.css', sheet]]),
+    read('index.html'),
+    read('src/main.tsx'),
+  );
+  return findings.filter((finding) => finding.rule === 'focus-indicator-coverage');
+};
+
+test('an outline reset with no focus indicator behind it fails the audit', () => {
+  const findings = coverageProbe('.fancy-widget { outline: none; }');
+  assert.equal(findings.length, 1);
+  assert.match(findings[0].message, /\.fancy-widget/);
+});
+
+test('a reset inside a media query is judged on its own selector', () => {
+  // A `selector { body }` regex cannot see past the `@media` block and would
+  // silently miss this; the walker has to attribute it like any other reset.
+  const findings = coverageProbe('@media (max-width: 600px) { .fancy-widget { outline: 0; } }');
+  assert.equal(findings.length, 1);
+  assert.match(findings[0].message, /\.fancy-widget/);
+});
+
+test('resets the ring already covers, and hover-only resets, are attributed', () => {
+  assert.deepEqual(coverageProbe(':where(input, select, textarea):focus { outline: 0; }'), []);
+  assert.deepEqual(coverageProbe('.card:hover { outline: none; }'), []);
+});
+
+const contrastProbe = (sheet: string) =>
+  scanStyles(
+    new Map([...findStylesheets(root), ['src/styles/probe.css', sheet]]),
+    read('index.html'),
+    read('src/main.tsx'),
+  ).filter((finding) => finding.rule === 'text-contrast');
+
+test('a rule that states its own text and background colours is judged on them', () => {
+  const findings = contrastProbe('.faint { color: #cbd5e1; background: #ffffff; }');
+  assert.equal(findings.length, 1);
+  assert.match(findings[0].message, /\.faint sets color:#cbd5e1 on background:#ffffff/);
+});
+
+test('the large-text allowance is read from the rule, including inside a media query', () => {
+  // 3.06:1 is a failure for body text and a pass for 26px text — and the rule
+  // has to be seen through the `@media` block to be judged at all.
+  assert.deepEqual(contrastProbe('.mid { color: #8a94a6; background: #ffffff; }').length, 1);
+  assert.deepEqual(contrastProbe('@media (max-width: 600px) { .big { color: #8a94a6; background: #ffffff; font-size: 26px; } }'), []);
 });
 
 test('a skip link exists in every shell and targets the shell main', () => {

@@ -2,7 +2,7 @@
   --admin-navy: #0f172a;
   --admin-navy-2: #131b2e;
   --admin-orange: #b14933; /* EduReach site primary (edu-portal tokens) */
-  --admin-green: #059669; /* site green */
+  --admin-green: #047857; /* site green */
   --admin-green-soft: #ecfdf5;
   --admin-gold: #d4af37;
   --admin-bg: #f7f9fb;
@@ -90,14 +90,14 @@
 
 .admin-table-wrap { overflow: auto; }
 .admin-table { width: 100%; min-width: 820px; border-collapse: collapse; font-size: 12px; }
-.admin-table th { padding: 13px 14px; background: var(--admin-surface-2); color: #747a81; text-align: left; font: 700 11px var(--er-font-sans); text-transform: uppercase; letter-spacing: .06em; }
+.admin-table th { padding: 13px 14px; background: var(--admin-surface-2); color: #5e6c82; text-align: left; font: 700 11px var(--er-font-sans); text-transform: uppercase; letter-spacing: .06em; }
 .admin-table td { padding: 14px; border-top: 1px solid var(--admin-border); color: #41474d; vertical-align: top; line-height: 1.5; }
 .admin-table tr:hover td { background: #fbfcfd; }
 .admin-table .right { text-align: right; }
 .mono { font-family: var(--er-font-sans); }
 .accent { color: var(--admin-navy)!important; font-weight: 700; }
 .money { color: var(--admin-green)!important; font-weight: 800; }
-.muted { margin-top: 3px; color: #7a8087; font-size: 12px; }
+.muted { margin-top: 3px; color: #5e6c82; font-size: 12px; }
 .sensitive { letter-spacing: .04em; }
 
 .status-badge { display: inline-flex; align-items: center; padding: 6px 9px; border-radius: 999px; background: var(--admin-surface-2); color: #4f555b; border: 1px solid var(--admin-border); font: 700 10px var(--er-font-sans); text-transform: capitalize; }
@@ -106,7 +106,7 @@
 .status-badge.completed,.status-badge.paid,.status-badge.published { background: var(--admin-green-soft); color: #047857; border-color: #a7f3d0; }
 .status-badge.rejected,.status-badge.failed,.status-badge.archived,.status-badge.void { background: #fff0ef; color: #a22b21; border-color: #f3c3be; }
 .status-badge.admin,.status-badge.super_admin,.status-badge.moderator { background: #f6efff; color: #6f43a1; border-color: #dfc9f6; }
-.status-badge.unpaid { background: #f2f4f6; color: #71777e; }
+.status-badge.unpaid { background: #f2f4f6; color: #5e6c82; }
 .status-badge.refunded { background: #fffbeb; color: #a05a00; border-color: #fde68a; }
 
 .empty-state { padding: 42px!important; text-align: center; color: var(--admin-muted)!important; }
@@ -246,10 +246,10 @@
 .admin-access-card p { margin: 0 0 18px; color: var(--admin-muted); font-size: 13px; line-height: 1.6; }
 .admin-access-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .admin-access-actions .admin-btn.secondary-dark { width: auto; }
-.admin-access-note { margin-top: 16px !important; color: #9aa3ad !important; font-size: 11.5px !important; }
+.admin-access-note { margin-top: 16px !important; color: #5e6c82 !important; font-size: 11.5px !important; }
 
 .admin-alert { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; padding: 14px 18px; background: #fff7df; border: 1px solid #ecd896; border-radius: 16px; color: #6d5200; font-size: 13px; }
-.admin-alert svg { color: #b58900; }
+.admin-alert svg { color: #8a5a00; }
 .admin-alert span { flex: 1; min-width: 200px; }
 .admin-alert .admin-btn { box-shadow: none; }
 
@@ -299,7 +299,7 @@
 .admin-rte-color input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .admin-rte-imgtools { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #fffbeb; border-bottom: 1px solid #fde68a; font-size: 11.5px; color: #6d5200; }
 .admin-rte-area { padding: 14px 16px; outline: none; font-size: 14px; line-height: 1.65; color: var(--admin-text); overflow-y: auto; max-height: 480px; }
-.admin-rte-area:empty::before { content: attr(data-placeholder); color: #9aa3ad; }
+.admin-rte-area:empty::before { content: attr(data-placeholder); color: #5e6c82; }
 .admin-rte-area img { max-width: 100%; height: auto; border-radius: 10px; margin: 6px 0; }
 .admin-rte-area h2 { font: 800 20px/1.3 var(--er-font-sans); color: var(--admin-navy); margin: 12px 0 6px; }
 .admin-rte-area h3 { font: 700 16px/1.3 var(--er-font-sans); color: var(--admin-navy); margin: 10px 0 5px; }

@@ -450,7 +450,7 @@ export default function ProfileCompletionPage() {
                 fontSize: '14px',
               }}
             >
-              <CheckCircle2 size={20} color="#059669" />
+              <CheckCircle2 size={20} color="#047857" />
               <span>Profile completed successfully! Redirecting to your student dashboard…</span>
             </div>
           )}

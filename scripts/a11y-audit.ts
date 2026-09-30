@@ -52,6 +52,26 @@ const CLICK_ALLOWLIST = new Map<string, string>([
   ['src/components/ScientificCalculator.tsx', 'the calculator screen is a label wrapping its own input, so the click is a native label click'],
 ]);
 
+/**
+ * `outline: none` is only acceptable when something else draws the focus
+ * indicator. A selector made of element names can be checked against the
+ * last-loaded ring in a11y.css automatically; a selector made only of classes
+ * cannot, because a stylesheet does not say which element a class ends up on.
+ * Those go here, with the element it is really attached to and where the
+ * indicator comes from. A reset that is neither covered by the ring nor listed
+ * here fails the audit, and a note that no longer matches a reset also fails —
+ * so the map cannot quietly grow stale and hide a regression.
+ */
+const OUTLINE_RESET_ATTRIBUTIONS = new Map<string, string>([
+  ['src/admin.css::.admin-select', 'a <select>; the a11y.css ring matches the element'],
+  ['src/admin.css::.admin-input', 'an <input>; the a11y.css ring matches the element'],
+  ['src/admin.css::.admin-textarea', 'a <textarea>; the a11y.css ring matches the element'],
+  ['src/admin.css::.admin-rte-area', 'a contentEditable [role="textbox"] div; .admin-shell :focus-visible (admin.css) draws its ring'],
+  ['src/edu-portal.css::.er-calc-input', 'the calculator screen input; the a11y.css ring matches the element and out-specifies this reset'],
+  ['src/hub.css::.hub-field', 'a text input when it is used (no markup renders it today); the a11y.css ring matches the element'],
+  ['src/myschool-clean.css::.ms-search-input', 'the school-finder search input; the a11y.css ring matches the element'],
+]);
+
 /** Colour the focus ring must reach 3:1 against; kept next to the value it judges. */
 export function findSourceFiles(root: string): Map<string, string> {
   const files = new Map<string, string>();
@@ -327,6 +347,112 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
 
 // --- CSS and document rules -------------------------------------------------
 
+/**
+ * The selector of the innermost rule containing `index`. Walking back to the
+ * enclosing `{` keeps nested at-rules honest: a declaration inside `@media`
+ * belongs to the style rule around it, not to the media prelude, and a rule
+ * inside a media query must not be missed because a naive `selector { body }`
+ * regex cannot see past the outer block.
+ */
+function enclosingSelector(css: string, index: number): string | null {
+  let depth = 0;
+  for (let cursor = index; cursor >= 0; cursor -= 1) {
+    const character = css[cursor];
+    if (character === '}') depth += 1;
+    else if (character === '{') {
+      if (depth === 0) {
+        let start = cursor - 1;
+        while (start >= 0 && !'{};'.includes(css[start])) start -= 1;
+        return css.slice(start + 1, cursor).trim();
+      }
+      depth -= 1;
+    }
+  }
+  return null;
+}
+
+/** `:where(a, button)` is two selectors wearing one hat; expand before judging. */
+function expandSelectorWrappers(selector: string): string[] {
+  const wrapper = selector.match(/:(?:where|is)\(([^()]*)\)/);
+  if (!wrapper) return [selector];
+  return wrapper[1]
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .flatMap((part) => expandSelectorWrappers(selector.replace(wrapper[0], part)));
+}
+
+/** The element names and attribute selectors a ring rule matches. */
+function ringScope(selectorList: string): { elements: Set<string>; attributes: Set<string> } {
+  const elements = new Set<string>();
+  const attributes = new Set<string>();
+  for (const selector of expandSelectorWrappers(selectorList)) {
+    for (const compound of selector.split(/[\s>+~]+/).filter(Boolean)) {
+      const element = compound.match(/^[a-z]+/)?.[0];
+      if (element) elements.add(element);
+      for (const attribute of compound.match(/\[[^\]]+\]/g) ?? []) {
+        attributes.add(attribute.replace(/\s+/g, '').replace(/["']/g, "'").toLowerCase());
+      }
+    }
+  }
+  return { elements, attributes };
+}
+
+/** Does the last-loaded ring in a11y.css reach this selector? */
+function coveredByRing(selector: string, ring: { elements: Set<string>; attributes: Set<string> }): boolean {
+  return expandSelectorWrappers(selector).every((expanded) => {
+    const compound = expanded.split(/[\s>+~]+/).filter(Boolean).at(-1) ?? expanded;
+    const element = compound.match(/^[a-z]+/)?.[0];
+    const attributes = (compound.match(/\[[^\]]+\]/g) ?? []).map((attribute) =>
+      attribute.replace(/\s+/g, '').replace(/["']/g, "'").toLowerCase(),
+    );
+    if (!element && attributes.length === 0) return false; // class/id only — needs a decision, not a guess
+    if (element && !ring.elements.has(element)) return false;
+    return attributes.every((attribute) => ring.attributes.has(attribute));
+  });
+}
+
+/** sRGB relative luminance (WCAG 2.x colour-contrast definition). */
+function luminance(hex: string): number {
+  const value = hex.replace('#', '');
+  const expanded = value.length === 3 ? [...value].map((character) => character + character).join('') : value;
+  const [r, g, b] = [0, 2, 4].map((offset) => parseInt(expanded.slice(offset, offset + 2), 16) / 255);
+  const channel = (component: number): number => (component <= 0.03928 ? component / 12.92 : ((component + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+/** Contrast ratio between two `#rgb`/`#rrggbb` colours. */
+export function contrastRatio(foreground: string, background: string): number {
+  const [light, dark] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (light + 0.05) / (dark + 0.05);
+}
+
+/**
+ * Every style rule in a sheet, at any nesting depth, with the body it owns.
+ * A `selector { body }` regex stops at the first `}` and therefore never sees
+ * the rules inside a media query; walking the braces does.
+ */
+function styleRules(css: string): Array<{ selector: string; body: string; index: number }> {
+  const rules: Array<{ selector: string; body: string; index: number }> = [];
+  const stack: number[] = [];
+  for (let cursor = 0; cursor < css.length; cursor += 1) {
+    if (css[cursor] === '{') {
+      let start = cursor - 1;
+      while (start >= 0 && !'{};'.includes(css[start])) start -= 1;
+      stack.push(start + 1);
+    } else if (css[cursor] === '}') {
+      const start = stack.pop();
+      if (start === undefined) continue;
+      const open = css.indexOf('{', start);
+      if (open === -1 || open > cursor) continue;
+      const selector = css.slice(start, open).trim();
+      const body = css.slice(open + 1, cursor);
+      if (selector && !selector.startsWith('@') && !body.includes('{')) rules.push({ selector, body, index: open + 1 });
+    }
+  }
+  return rules;
+}
+
 function stripCssComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, '');
 }
@@ -383,17 +509,23 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
 
   // The focus ring must be defined last and must not be a translucent wash.
   const a11y = stylesheets.get('src/styles/a11y.css');
+  let ringSelectorList = '';
   if (!a11y) {
     findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: 'src/styles/a11y.css is missing — the focus ring has no last-loaded owner' });
   } else {
-    const focusRules = [...a11y.matchAll(/:focus-visible[^{]*\{([^}]*)\}/g)].map((match) => match[1]);
-    const indicator = focusRules.find((body) => /outline:\s*(?!none|0)\S+/.test(body));
+    const ringRules = [...a11y.matchAll(/([^{}]*:focus-visible[^{}]*)\{([^{}]*)\}/g)].map((match) => ({ selector: match[1].trim(), body: match[2] }));
+    const focusRules = ringRules.map((rule) => rule.body);
+    const indicator = ringRules.find((rule) => /outline:\s*(?!none|0)\S+/.test(rule.body));
     if (focusRules.length === 0) {
       findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: ':focus-visible rule not found' });
     } else if (!indicator) {
       findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: ':focus-visible does not set a visible outline' });
-    } else if (/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(indicator)) {
+    } else if (/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(indicator.body)) {
       findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: ':focus-visible uses a translucent colour, which loses the 3:1 indicator contrast' });
+    } else {
+      // The ring that other stylesheets have to answer to, read from the file
+      // itself so widening the ring widens the coverage check with it.
+      ringSelectorList = indicator.selector;
     }
     const imports = mainTsx.match(/import\s+'\.\/[^']+\.css';/g) ?? [];
     const last = imports.at(-1);
@@ -402,13 +534,90 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
     }
   }
 
-  // Informational: outline resets are fine when a :focus-visible rule follows in
-  // the same sheet, but they are worth counting so a reviewer can see the size.
+  // Every `outline: none` has to be attributable to an indicator: either the
+  // selector names its own focus state, or it applies only while hovered (a
+  // pointer cannot reach an element the keyboard ring does not already cover),
+  // or its element kind is one the last-loaded ring matches, or it is written
+  // down in OUTLINE_RESET_ATTRIBUTIONS with the reason. A reset with none of
+  // those is how a control ends up with no visible focus at all.
+  const ring = ringScope(ringSelectorList);
+  const attributed = new Set<string>();
   let outlineResets = 0;
-  for (const css of stylesheets.values()) {
-    outlineResets += (stripCssComments(css).match(/outline:\s*(none|0)\b/g) ?? []).length;
+  for (const [file, rawCss] of stylesheets) {
+    const css = stripCssComments(rawCss);
+    for (const match of css.matchAll(/outline:\s*(?:none|0)\b/g)) {
+      const selector = enclosingSelector(css, match.index ?? 0);
+      if (!selector) continue;
+      outlineResets += 1;
+      const line = css.slice(0, match.index).split('\n').length;
+      const parts = expandSelectorWrappers(selector)
+        .flatMap((expanded) => expanded.split(','))
+        .map((piece) => piece.trim())
+        .filter(Boolean);
+      for (const part of parts) {
+        if (/^@/.test(part) || /^(from|to|[\d.]+%)$/.test(part)) continue; // keyframe steps, at-rule preludes
+        if (/:focus(-visible)?\b/.test(part)) continue; // the author declares the focus state here
+        if (/:hover\b/.test(part)) continue; // hover alone cannot remove the keyboard ring
+        if (coveredByRing(part, ring)) continue;
+        const key = `${file}::${part}`;
+        if (OUTLINE_RESET_ATTRIBUTIONS.has(key)) {
+          attributed.add(key);
+          continue;
+        }
+        findings.push({
+          rule: 'focus-indicator-coverage',
+          severity: 'blocking',
+          file,
+          line,
+          message: `\`${part}\` removes the outline and nothing draws a focus indicator back — give it a :focus-visible rule, widen the a11y.css ring, or add it to OUTLINE_RESET_ATTRIBUTIONS with the element and the reason`,
+        });
+      }
+    }
   }
-  findings.push({ rule: 'outline-resets', severity: 'info', file: 'src/**/*.css', line: 1, message: `${outlineResets} outline:none/0 declarations (each must be paired with a focus indicator)` });
+  for (const [key, reason] of OUTLINE_RESET_ATTRIBUTIONS) {
+    if (attributed.has(key)) continue;
+    findings.push({
+      rule: 'focus-indicator-coverage',
+      severity: 'blocking',
+      file: key.split('::')[0],
+      line: 1,
+      message: `OUTLINE_RESET_ATTRIBUTIONS lists \`${key.split('::')[1]}\` ("${reason}") but that selector no longer resets the outline — delete the note so it cannot hide a future gap`,
+    });
+  }
+  findings.push({ rule: 'outline-resets', severity: 'info', file: 'src/**/*.css', line: 1, message: `${outlineResets} outline:none/0 declarations, each attributed to a focus indicator (${attributed.size} by explicit note, the rest by the a11y.css ring or their own :focus-visible)` });
+
+  // Contrast, statically. When one rule states both the text colour and the
+  // background, the pair is exact — this is the same arithmetic axe runs per
+  // rendered node, applied to the stylesheet, so the answer does not depend on
+  // a screenshot or on the route being reachable. Rule-scoped pairs are the
+  // common case in this codebase; text that inherits its background from an
+  // ancestor still needs axe, and gradients/rgba()/images are skipped because
+  // there is no single colour to compare against. The 3:1 large-text allowance
+  // is read from the rule's own font-size and font-weight.
+  const hex = String.raw`#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b`;
+  for (const [file, rawCss] of stylesheets) {
+    const css = stripCssComments(rawCss);
+    for (const { selector, body, index } of styleRules(css)) {
+      const colour = body.match(new RegExp(String.raw`(?:^|;)\s*color\s*:\s*(${hex})`, 'i'));
+      const background = body.match(new RegExp(String.raw`(?:^|;)\s*background(?:-color)?\s*:\s*(${hex})\s*(?:;|$)`, 'i'));
+      if (!colour || !background) continue;
+      const font = body.match(/font-size\s*:\s*([\d.]+)px/i);
+      const weight = body.match(/font-weight\s*:\s*(\d{3}|bold)/i);
+      const pixels = font ? Number(font[1]) : 16;
+      const bold = weight ? weight[1] === 'bold' || Number(weight[1]) >= 700 : false;
+      const large = pixels >= 24 || (pixels >= 18.66 && bold);
+      const required = large ? 3 : 4.5;
+      const ratio = contrastRatio(colour[1], background[1]);
+      if (ratio + 0.005 >= required) continue;
+      findings.push({
+        rule: 'text-contrast',
+        severity: 'blocking',
+        file,
+        line: css.slice(0, index).split('\n').length,
+        message: `${selector} sets color:${colour[1]} on background:${background[1]} — ${ratio.toFixed(2)}:1, under the ${required}:1 ${large ? 'large-text' : 'body-text'} minimum`,
+      });
+    }
+  }
 
   return findings;
 }

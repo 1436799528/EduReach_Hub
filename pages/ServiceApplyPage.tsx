@@ -296,7 +296,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck size={16} color="#059669" />
+                <ShieldCheck size={16} color="#047857" />
                 <span>
                   {isSupabaseConfigured ? (
                     <><strong>Sign-in required:</strong> Submit from your student account so the request is linked to your dashboard.</>
@@ -614,7 +614,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   height: '56px',
                   borderRadius: '50%',
                   background: '#ecfdf5',
-                  color: '#059669',
+                  color: '#047857',
                   display: 'grid',
                   placeItems: 'center',
                   margin: '0 auto 16px',
@@ -626,7 +626,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 style={{
                   fontSize: '11px',
                   fontWeight: 800,
-                  color: '#059669',
+                  color: '#047857',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                 }}
@@ -646,7 +646,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   alignItems: 'center',
                   gap: '10px',
                   background: '#f8fafc',
-                  border: '2px dashed #059669',
+                  border: '2px dashed #047857',
                   padding: '12px 24px',
                   borderRadius: '12px',
                   margin: '0 auto 24px',
@@ -683,7 +683,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ textDecoration: 'none', color: '#059669', borderColor: '#a7f3d0' }}
+                  style={{ textDecoration: 'none', color: '#047857', borderColor: '#a7f3d0' }}
                 >
                   <MessageSquare size={15} /> Continue on WhatsApp
                 </a>

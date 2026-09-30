@@ -37,7 +37,7 @@
    Two tones: the dark ring reads on the light surfaces that dominate the app,
    the white ring underneath reads on the dark header and sidebar. `:root` is
    there to out-specify the `!important` resets in the earlier stylesheets. */
-:root :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+:root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
   outline: 3px solid #8f1d18 !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 2px #ffffff !important;
@@ -45,7 +45,7 @@
 
 /* Dark surfaces: the white under-ring carries the indicator, so keep the dark
    outline from sitting flush against a dark background. */
-:root :where(.hub-header, .hub-utility, .student-portal-header, .edureach-dash-sidebar, .er-mobile-bottom-nav) :where(a, button, [tabindex]):focus-visible {
+:root :where(.hub-header, .hub-utility, .student-portal-header, .edureach-dash-sidebar, .er-mobile-bottom-nav) :where(a, button, [tabindex], [contenteditable]):focus-visible {
   outline-color: #f8fafc !important;
 }
 

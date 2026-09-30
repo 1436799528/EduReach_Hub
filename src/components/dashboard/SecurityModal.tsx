@@ -226,7 +226,7 @@ export default function SecurityModal({
       <div ref={dialogRef} tabIndex={-1} className="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-security-title" style={{ maxWidth: '520px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#047857', display: 'grid', placeItems: 'center' }}>
               <KeyRound size={20} />
             </div>
             <div>
@@ -294,7 +294,7 @@ export default function SecurityModal({
                 onClick={() => void handleMfaToggle()}
                 disabled={isLocalMode || mfaLoading || mfaBusy}
                 className="dash-btn"
-                style={{ background: mfaEnabled ? '#059669' : '#e2e8f0', color: mfaEnabled ? '#ffffff' : '#475569', whiteSpace: 'nowrap' }}
+                style={{ background: mfaEnabled ? '#047857' : '#e2e8f0', color: mfaEnabled ? '#ffffff' : '#475569', whiteSpace: 'nowrap' }}
               >
                 {mfaLoading ? 'Checking…' : mfaBusy ? 'Working…' : mfaEnabled ? 'Disable MFA' : 'Set up MFA'}
               </button>

@@ -58,10 +58,10 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | **PRIV-1** | Privacy policy, terms, disclaimer/independence statement pages | Required before scale; also a trust feature | — | 🔴 | S |
 | **PRIV-2** | Data export/deletion, analytics retention, cookie/analytics notice | Nigerian data-protection compliance | PRIV-1 | 🔴 | M |
 | **UPL-1** | Upload hardening review (MIME/extension/size, SVG policy, orphan cleanup) | Admin uploads exist; the current validation depth must be confirmed and tightened | — | 🟡 | S |
-| **A11Y-1** | Accessibility verification pass (keyboard, screen reader, contrast, CBT-specific) | Responsive testing is not accessibility testing | — | 🔴 | M |
 | **PERF-1** | Core Web Vitals measurement on production | Performance is assumed, not measured | Deployment decision D5 | 🔴 | M |
 | **OBS-1** | Scheduled-run monitoring and alerting | A daily job that fails silently is worse than no job | Deployment decision D5 | 🟡 | S |
 | **TEST-1** ✅ | CI quality gate: prove the full gate actually runs (typecheck, tests, schema audit, build, E2E) plus a real PostgreSQL migration replay | **Delivered:** `npm run ci` is the authoritative gate the workflow runs; it now includes `schema:audit` and `tests/migrations.test.ts`, which applies all 38 migrations in order to a real PostgreSQL engine (PGlite) and verifies the objects the application uses. The replay caught a migration that could not parse anywhere (`20260926220000`, fixed). `tests/ci.test.ts` fails if a stage disappears or is softened (`docs/features/TEST-1.md`) | — | 🔴 | M |
+| **A11Y-1** ✅ | Accessibility verification pass (keyboard, screen reader, contrast, CBT-specific) | **Delivered** (`docs/features/A11Y-1.md`): static posture 128 blocking findings → 0, and a real-browser axe pass that went 49 distinct failing nodes → 0 (`npm run a11y:audit`, `tests/a11y.test.ts`, `tests/e2e/a11y.spec.ts`). Two new blocking rules keep it: every `outline: none` must be attributable to a focus indicator, and every rule that states its own text and background colours must reach 4.5:1 (which is what audits the authenticated screens axe cannot reach). | — | 🔴 | M |
 | **PAY-1** | Fee model, terms, refunds — only if monetisation is agreed | Payments schema exists with no product | D2 decision | ⚪ | — |
 
 ## Dependency graph (next three features)
@@ -81,11 +81,13 @@ SA-3  (independent)
 **Delivered:** SEO-1 (2026-09-30, commit `7c56830`), ROLE-1 (2026-09-30,
 capability layer), NTF-1 (2026-09-30, service status notifications), BASE-1
 (2026-09-30, reproducible baseline schema), TEST-1 (2026-09-30, CI quality gate
-with a real PostgreSQL migration replay) and BASE-1b (2026-09-30, RLS posture for
-every public table). Each was documented in `docs/features/` before its code, as
-the process requires. **The next feature is unselected** — the highest-value
-candidates are A11Y-1 and PERF-1 (the last two of the audit's breadth items),
-then AN-1 (analytics taxonomy).
+with a real PostgreSQL migration replay), BASE-1b (2026-09-30, RLS posture for
+every public table) and A11Y-1 (2026-09-30, accessibility verification pass).
+Each was documented in `docs/features/` before its code, as the process
+requires. **PERF-1 is next** — Core Web Vitals measurement (the last of the
+audit's breadth items); AN-1 (analytics taxonomy) follows. One operational item
+still sits with the repository owner: branch protection on `main` must require
+the `quality-gate` check (a repository setting, not a code change).
 
 Whichever is chosen is implemented alone, end to end, and documented with
 `08-FEATURE-TEMPLATE.md` before code is written — including its routes, data,

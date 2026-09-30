@@ -625,7 +625,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-quick-card-sub">NELFUND, results, slips</span>
         </a>
         <a href="/dashboard/services" className={`dash-quick-card ${identityClassFor('track request', 'service')}`}>
-          <div className="dash-quick-card-top"><ScanSearch size={18} color="#059669" /></div>
+          <div className="dash-quick-card-top"><ScanSearch size={18} color="#047857" /></div>
           <h3 className="dash-quick-card-title">Track a request</h3>
           <span className="dash-quick-card-sub">Live status by reference</span>
         </a>

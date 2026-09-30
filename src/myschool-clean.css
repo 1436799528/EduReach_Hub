@@ -161,7 +161,7 @@
 }
 
 .ms-search-input::placeholder {
-  color: #94a3b8;
+  color: #5e6c82;
 }
 
 /* 4. MYSCHOOL TOP 4 EXAM & SERVICE TILES (Compact, Just Like Myschool.ng) */
@@ -284,7 +284,7 @@
 
 .ms-mark-tone-emerald {
   background: #EAF8EE;
-  color: #16A34A;
+  color: #047857;
   border: 1px solid #bbf7d0;
 }
 
@@ -296,7 +296,7 @@
 
 .ms-mark-tone-amber {
   background: #FFF8DF;
-  color: #CA8A04;
+  color: #9a5f00;
   border: 1px solid #fef08a;
 }
 
@@ -958,7 +958,7 @@
   font-size:7.5px !important;
 }
 .ms-top-tile > svg{
-  color:#94a3b8 !important;
+  color:#5e6c82 !important;
 }
 .ms-top-tile:hover{
   transform:none !important;

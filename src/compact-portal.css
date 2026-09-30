@@ -185,7 +185,7 @@
   cursor:pointer;
 }
 .hub-news-feed-row .hub-news-thumb{grid-column:1;grid-row:1}
-.hub-news-feed-row .hub-feed-tag{grid-column:2;font-size:8px;font-weight:900;color:#7a8494;text-transform:uppercase;white-space:nowrap}
+.hub-news-feed-row .hub-feed-tag{grid-column:2;font-size:8px;font-weight:900;color:#5e6c82;text-transform:uppercase;white-space:nowrap}
 .hub-news-feed-row .hub-feed-main{grid-column:3}
 .hub-news-feed-row .hub-feed-main h2{margin:3px 0;font-size:13px;line-height:1.25}
 .hub-news-feed-row .hub-feed-main p{margin:0;font-size:10px;line-height:1.4;color:var(--hub-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
@@ -333,12 +333,12 @@
 .student-brand{color:#202938 !important;font-size:15px !important}
 .student-brand>span:first-child{background:var(--hub-blue-soft) !important;color:var(--hub-blue) !important}
 .student-brand-suffix{color:var(--hub-blue) !important}
-.student-search{background:#fafbfc !important;border-color:var(--hub-border) !important;color:#8a94a6 !important}
+.student-search{background:#fafbfc !important;border-color:var(--hub-border) !important;color:#5e6c82 !important}
 .student-search input{color:#202938 !important}
-.student-search input::placeholder{color:#9aa3b2 !important}
+.student-search input::placeholder{color:#5e6c82 !important}
 .student-header-actions .student-header-link{color:#475467 !important}
 .student-profile-menu,.wallet-mini{background:#fff !important;color:#475467 !important;border-color:var(--hub-border) !important}
-.student-trust-strip{border-top:0 !important;background:#fafbfc;color:#7a8494;padding:6px 18px}
+.student-trust-strip{border-top:0 !important;background:#fafbfc;color:#5e6c82;padding:6px 18px}
 .student-portal-main{padding:13px !important}
 .student-grid{gap:10px !important}
 .student-card{

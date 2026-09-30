@@ -381,7 +381,7 @@
 
 .dash-btn-secondary:hover:not(:disabled) {
   background: #f8fafc;
-  border-color: #94a3b8;
+  border-color: #5e6c82;
 }
 
 .dash-btn-small {
@@ -588,7 +588,7 @@
 .dash-pill-green {
   background: #eaf8ee;
   border-color: #bbf7d0;
-  color: #16a34a;
+  color: #047857;
 }
 
 .dash-quick-grid {
@@ -732,7 +732,7 @@
 
 .dash-status-completed {
   background: #eaf8ee;
-  color: #16a34a;
+  color: #047857;
   border: 1px solid #bbf7d0;
 }
 
@@ -854,7 +854,7 @@
 .dash-cgpa-value {
   font-size: 32px;
   font-weight: 900;
-  color: #059669;
+  color: #047857;
   line-height: 1.1;
 }
 
