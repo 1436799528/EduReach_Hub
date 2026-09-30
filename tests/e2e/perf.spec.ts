@@ -53,14 +53,33 @@ test.describe('throttled mobile profile', () => {
     await page.route('https://fonts.gstatic.com/**', (route) => route.abort());
 
     await page.addInitScript(() => {
-      const perf = { lcp: 0, cls: 0, longTaskMs: 0, longTasks: 0 };
+      // Attribution, not just the score: a failing CLS assertion has to name the
+      // element that moved, or the fix is a guess.
+      const perf = { lcp: 0, cls: 0, longTaskMs: 0, longTasks: 0, shifts: {} as Record<string, { value: number; count: number }> };
       (window as unknown as { __perf: typeof perf }).__perf = perf;
+      const describeNode = (node: Node | null): string => {
+        if (!node) return '(node removed)';
+        if (node.nodeType !== 1) return `${node.nodeName.toLowerCase()} (text)`;
+        const element = node as Element;
+        const id = element.id ? `#${element.id}` : '';
+        const raw = (element as HTMLElement).className;
+        const classes = typeof raw === 'string' && raw ? `.${raw.trim().split(/\s+/).slice(0, 3).join('.')}` : '';
+        return `${element.tagName.toLowerCase()}${id}${classes}`;
+      };
       new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) perf.lcp = Math.max(perf.lcp, entry.startTime);
       }).observe({ type: 'largest-contentful-paint', buffered: true });
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries() as Array<PerformanceEntry & { value: number; hadRecentInput: boolean }>) {
-          if (!entry.hadRecentInput) perf.cls += entry.value;
+        for (const entry of list.getEntries() as Array<PerformanceEntry & { value: number; hadRecentInput: boolean; sources?: Array<{ node: Node | null }> }>) {
+          if (entry.hadRecentInput) continue;
+          perf.cls += entry.value;
+          const sources = entry.sources?.length ? entry.sources : [{ node: null }];
+          for (const source of sources) {
+            const key = describeNode(source.node);
+            const record = (perf.shifts[key] ??= { value: 0, count: 0 });
+            record.value += entry.value / sources.length;
+            record.count += 1;
+          }
         }
       }).observe({ type: 'layout-shift', buffered: true });
       new PerformanceObserver((list) => {
@@ -89,7 +108,13 @@ test.describe('throttled mobile profile', () => {
       await page.waitForTimeout(1200);
 
       const metrics = await page.evaluate(() => {
-        const perf = (window as unknown as { __perf: { lcp: number; cls: number; longTaskMs: number; longTasks: number } }).__perf;
+        const perf = (window as unknown as {
+          __perf: { lcp: number; cls: number; longTaskMs: number; longTasks: number; shifts: Record<string, { value: number; count: number }> };
+        }).__perf;
+        const shiftSources = Object.entries(perf.shifts)
+          .map(([node, record]) => ({ node, ...record }))
+          .sort((left, right) => right.value - left.value)
+          .slice(0, 4);
         const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
         const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
         const transferBytes = resources.reduce((total, entry) => total + (entry.transferSize || 0), 0) + (navigation?.transferSize || 0);
@@ -103,6 +128,7 @@ test.describe('throttled mobile profile', () => {
           transferBytes,
           requests: resources.length,
           fontCssRequested: resources.some((entry) => entry.name.includes('fonts.googleapis.com')),
+          shiftSources,
         };
       });
 
@@ -115,11 +141,13 @@ test.describe('throttled mobile profile', () => {
         `DCL ${metrics.domContentLoaded} ms`,
         `transfer ${(metrics.transferBytes / 1024).toFixed(0)} KB in ${metrics.requests} requests`,
         `font css requested: ${metrics.fontCssRequested}`,
+        `shift sources: ${metrics.shiftSources.map((source) => `${source.node} ${source.value.toFixed(3)}x${source.count}`).join(' + ') || 'none'}`,
       ].join(' | '));
 
       expect(metrics.fontCssRequested, 'the font stylesheet should be requested by the document').toBe(true);
       expect(metrics.lcp, 'largest contentful paint').toBeLessThanOrEqual(BUDGET.lcpMs);
-      expect(metrics.cls, 'cumulative layout shift').toBeLessThanOrEqual(BUDGET.cls);
+      const sources = metrics.shiftSources.map((source) => `${source.node} ${source.value.toFixed(3)}x${source.count}`).join(' + ') || 'none';
+      expect(metrics.cls, `cumulative layout shift — sources: ${sources}`).toBeLessThanOrEqual(BUDGET.cls);
       expect(metrics.longTaskMs, 'total blocking time').toBeLessThanOrEqual(BUDGET.longTaskMs);
       expect(metrics.transferBytes, 'bytes over the wire for this route').toBeLessThanOrEqual(BUDGET.transferBytes);
       expect(metrics.requests, 'requests for this route').toBeLessThanOrEqual(BUDGET.requests);
