@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { annotateFailure } from './report';
 
 // PERF-1: what a throttled browser actually experiences.
 //
@@ -31,6 +32,10 @@ const BUDGET = {
   transferBytes: 1_200_000,
   requests: 90,
 };
+
+test.afterEach(async ({}, testInfo) => {
+  annotateFailure(testInfo);
+});
 
 test.describe('throttled mobile profile', () => {
   test.skip(({ isMobile }) => !isMobile, 'the perf profile is measured on the mobile project only');

@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { AxeResults } from 'axe-core';
 import { expect, test, type Page } from '@playwright/test';
+import { annotateFailure } from './report';
 
 // A11Y-1: the rendered-page half of the verification.
 //
@@ -16,19 +17,11 @@ import { expect, test, type Page } from '@playwright/test';
 
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
-// A red gate must say what broke. GitHub turns `::error::` lines into
-// annotations on the check run, so a failing test names its own rule and node
-// instead of making the reviewer open a log — and in an environment where the
-// browser cannot be installed, the annotation is the only channel back.
+// A red gate must say what broke (see tests/e2e/report.ts). The per-page axe
+// tests stay quiet because the aggregate report below is more useful.
 test.afterEach(async ({}, testInfo) => {
-  if (testInfo.status === testInfo.expectedStatus) return;
-  if (testInfo.title.startsWith('axe:')) return; // the aggregate report below is more useful
-  const detail = testInfo.errors
-    .map((error) => error.message ?? String(error))
-    .join(' | ')
-    .replace(/\s+/g, ' ')
-    .slice(0, 900);
-  console.log(`::error title=e2e a11y::${testInfo.title} — ${detail}`);
+  if (testInfo.title.startsWith('axe:')) return;
+  annotateFailure(testInfo);
 });
 
 /**
