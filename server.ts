@@ -57,6 +57,10 @@ app.use((_req, res, next) => {
   if (isProd) {
     // Strict production headers. Keep in sync with public/_headers (Netlify).
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // HSTS: the site is HTTPS-only in production. Deliberately without
+    // `includeSubDomains` or `preload` - both are one-way decisions that would
+    // also bind any future subdomain (staging, a CDN host) to HTTPS-only.
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://wa.me; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'",
