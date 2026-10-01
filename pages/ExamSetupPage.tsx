@@ -12,7 +12,7 @@ import {
   secondarySubjectTracks,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtExams } from '../src/lib/api';
+import { fetchCbtExams, trackEvent } from '../src/lib/api';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { durationOptionsFor, resolveSetupExam, type CatalogExam } from '../src/lib/cbt-config';
 
@@ -159,6 +159,12 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       // Session storage may be unavailable; the form remains usable in memory.
     }
   }, [courseName, department, exam, jambSubjects, schoolId, schoolSubjects, secondarySubjects, secondaryTrack]);
+
+  useEffect(() => {
+    // AN-1: which exam bodies reach the setup wizard — the step before any
+    // attempt starts, which is where a funnel loses people.
+    trackEvent('cbt_setup_view', { metadata: { mode: exam } });
+  }, [exam]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {

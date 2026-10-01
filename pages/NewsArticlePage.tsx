@@ -2,7 +2,7 @@ import { userFacingError } from '../lib/errors';
 import { ArrowLeft, CheckCircle2, ExternalLink, Newspaper, Share2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import { fetchNews, fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { fetchNews, fetchNewsItem, trackEvent, type NewsItem } from '../src/lib/api';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { newsCategoryLabel } from '../src/data/newsCategories';
 import { applySeo, seoForArticle } from '../src/lib/seoMeta';
@@ -57,7 +57,12 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
     setError('');
     setItem(null);
     void fetchNewsItem(slug)
-      .then((article) => active && setItem(article))
+      .then((article) => {
+        if (!active) return;
+        setItem(article);
+        // AN-1: which articles are actually read, not just listed.
+        trackEvent('news_view', { metadata: { slug: article.slug, category: article.category || undefined } });
+      })
       .catch((value) => active && setError(userFacingError(value, 'Unable to load this article.')))
       .finally(() => active && setLoading(false));
     return () => { active = false; };

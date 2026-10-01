@@ -37,6 +37,7 @@ begin
   foreach item in array array[
     'is_staff', 'is_staff_user', 'handle_new_user', 'admin_audit_log',
     'admin_activity_breakdown', 'admin_bootstrap_first_admin', 'admin_dashboard_metrics',
+    'prune_site_analytics_events',
     'check_rate_limit', 'close_expired_opportunities', 'content_integrity_report',
     'credit_wallet_payment', 'expire_stale_news', 'get_campus_feed_profiles',
     'get_cbt_questions', 'get_cbt_questions_for_subjects', 'get_cbt_result',

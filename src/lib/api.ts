@@ -3,6 +3,13 @@ import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 import { userFacingError } from '../../lib/errors';
 import { apiUrl } from './apiBase';
+import {
+  isAnalyticsEvent,
+  sanitizeAnalyticsPath,
+  sanitizeReferrer,
+  validateAnalyticsMetadata,
+  type AnalyticsEventName,
+} from './analyticsTaxonomy';
 
 export { userFacingError } from '../../lib/errors';
 
@@ -712,7 +719,9 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
 export type AdminActivityBreakdown = {
   since: string;
   topPages: Array<{ path: string; views: number }>;
-  topSearches: Array<{ term: string; count: number }>;
+  /** AN-1: search volume and zero-result volume. The terms themselves are never collected. */
+  searches: number;
+  zeroResultSearches: number;
   serviceViews: Array<{ path: string; views: number }>;
   serviceSubmits: Array<{ path: string; count: number }>;
   cbtStarts: Array<{ exam: string; count: number }>;
@@ -1015,13 +1024,18 @@ export async function fetchNewsroomRuns(): Promise<NewsroomRun[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Real-usage telemetry. The server allowlist accepts page_view, service_view,
-// service_submit, cbt_start, cbt_submit and search; events land in
-// site_analytics_events through the same-origin API. Failures are silent —
-// analytics must never break the student experience.
+// Real-usage telemetry (AN-1). Every event and every payload field is declared
+// in src/lib/analyticsTaxonomy.ts, which the server also validates against — the
+// client checks first so a bad call site disappears here rather than being
+// dropped silently in production. Two rules come from that file: nothing a
+// student typed is ever sent (the search term is a length and a result count,
+// not a string), and every value is capped.
+//
+// Events land in site_analytics_events through the same-origin API. Failures are
+// silent — analytics must never break the student experience.
 // ---------------------------------------------------------------------------
 
-export type TelemetryEvent = 'page_view' | 'service_view' | 'service_submit' | 'cbt_start' | 'cbt_submit' | 'search';
+export type TelemetryEvent = AnalyticsEventName;
 
 export function analyticsSessionId(): string {
   const key = 'edureach-analytics-session';
@@ -1036,17 +1050,30 @@ export function analyticsSessionId(): string {
   }
 }
 
-export function trackEvent(eventName: TelemetryEvent, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
+export function trackEvent(eventName: AnalyticsEventName, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
   try {
+    if (!isAnalyticsEvent(eventName)) return;
+    const validation = validateAnalyticsMetadata(eventName, payload.metadata || {});
+    // `=== false`, not `!`: this project compiles without strictNullChecks, where
+    // a negated boolean discriminant does not narrow the union.
+    if (validation.ok === false) {
+      if (import.meta.env?.DEV) console.warn(`[analytics] ${eventName}: ${validation.reason}`);
+      return;
+    }
+    if (validation.dropped.length && import.meta.env?.DEV) {
+      console.warn(`[analytics] ${eventName}: dropped undeclared metadata ${validation.dropped.join(', ')} (see src/lib/analyticsTaxonomy.ts)`);
+    }
     void fetch(apiUrl('/api/analytics/event'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       keepalive: true,
       body: JSON.stringify({
         event_name: eventName,
-        path: payload.path ?? window.location.pathname,
+        path: sanitizeAnalyticsPath(payload.path ?? window.location.pathname, window.location.pathname),
         session_id: analyticsSessionId(),
-        metadata: payload.metadata || {},
+        // The server keeps origin + path only; a referrer can carry a query.
+        referrer: sanitizeReferrer(document.referrer || null),
+        metadata: validation.value,
       }),
     }).catch(() => undefined);
   } catch {

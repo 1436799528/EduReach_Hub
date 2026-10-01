@@ -31,6 +31,8 @@ export type DashboardNotification = {
   time: string;
   read: boolean;
   type: string;
+  /** The service status this notification announced (NTF-1 writes it into metadata.to). */
+  status?: string;
   href?: string;
   created_at: string;
 };
@@ -176,7 +178,7 @@ export async function deleteSavedItem(id: string) {
 export async function fetchNotifications(userId: string): Promise<DashboardNotification[]> {
   const { data, error } = await supabase
     .from('student_notifications')
-    .select('id,title,body,notification_type,href,read_at,created_at')
+    .select('id,title,body,notification_type,href,read_at,created_at,metadata')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -193,6 +195,7 @@ export async function fetchNotifications(userId: string): Promise<DashboardNotif
     time: timeAgo(String(row.created_at)),
     read: Boolean(row.read_at),
     type: String(row.notification_type || 'system'),
+    status: typeof row.metadata?.to === 'string' && row.metadata.to ? row.metadata.to : undefined,
     href: row.href || undefined,
     created_at: String(row.created_at),
   }));

@@ -179,10 +179,10 @@ export default function AdminDashboardPage() {
                 <div className="admin-card">
                   <div className="admin-card-header"><h2>Where attention is going <SectionLabel /></h2><span>Real events</span></div>
                   <div className="admin-focus-body">
-                    {activity && (activity.topPages.length || activity.topSearches.length || activity.serviceSubmits.length || activity.cbtStarts.length) ? (
+                    {activity && (activity.topPages.length || activity.searches || activity.serviceSubmits.length || activity.cbtStarts.length) ? (
                       <>
                         <FocusGroup title="Most viewed pages" rows={activity.topPages.map((row) => ({ label: row.path, value: row.views }))} />
-                        <FocusGroup title="Top searches" rows={activity.topSearches.map((row) => ({ label: row.term, value: row.count }))} />
+                        <FocusGroup title="Searches" rows={[{ label: 'Searches performed', value: activity.searches }, { label: 'Found no result', value: activity.zeroResultSearches }]} />
                         <FocusGroup title="Most-started CBT exams" rows={activity.cbtStarts.map((row) => ({ label: row.exam, value: row.count }))} />
                         <FocusGroup title="Most-completed services" rows={activity.serviceSubmits.map((row) => ({ label: row.path, value: row.count }))} />
                       </>

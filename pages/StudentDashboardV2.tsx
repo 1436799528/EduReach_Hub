@@ -25,6 +25,7 @@ import BrandLogo from '../src/components/BrandLogo';
 import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
+import { trackEvent } from '../src/lib/api';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
 import SkipLink from '../src/components/a11y/SkipLink';
@@ -657,7 +658,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   <span className="dash-row-meta">{item.time}</span>
                 </div>
                 {item.body && <p className="dash-request-description">{item.body}</p>}
-                {item.href && <a className="dash-card-link" href={item.href}>Open</a>}
+                {item.href && (
+                  <a
+                    className="dash-card-link"
+                    href={item.href}
+                    onClick={() => trackEvent('notification_open', { metadata: { status: item.status } })}
+                  >
+                    Open
+                  </a>
+                )}
               </li>
             ))}
           </ul>

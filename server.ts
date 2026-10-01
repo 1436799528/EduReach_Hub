@@ -19,6 +19,7 @@ import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
 import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
+import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -272,11 +273,20 @@ app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req,
 app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
-    const eventName = String(req.body?.event_name || '').trim().slice(0,80);
-    const pathName = String(req.body?.path || '').trim().slice(0,500);
-    const sessionId = String(req.body?.session_id || '').trim().slice(0,120);
-    if (!eventName || !sessionId) return res.status(400).json({ error: 'event_name and session_id are required.' });
-    if (!/^page_view$|^service_view$|^service_submit$|^cbt_start$|^cbt_submit$|^search$/.test(eventName)) return res.status(400).json({ error: 'Unsupported analytics event.' });
+    // AN-1: the taxonomy in src/lib/analyticsTaxonomy.ts is the allowlist — the
+    // event name, the metadata keys, their types, their caps and the payload
+    // cap. Nothing a student typed is accepted, because no free-text field is
+    // declared; an undeclared key is dropped rather than stored. See
+    // docs/features/AN-1.md.
+    const eventName = String(req.body?.event_name || '').trim();
+    const sessionId = String(req.body?.session_id || '').trim().slice(0, 120);
+    if (!sessionId) return res.status(400).json({ error: 'session_id is required.' });
+    if (!isAnalyticsEvent(eventName)) return res.status(400).json({ error: 'Unsupported analytics event.' });
+
+    const validation = validateAnalyticsMetadata(eventName, req.body?.metadata);
+    if (!validation.ok) return res.status(400).json({ error: 'Invalid analytics payload.' });
+    const pathName = sanitizeAnalyticsPath(req.body?.path);
+
     const supabase = getServerSupabase();
     const auth = req.header('authorization');
     let userId: string | null = null;
@@ -285,10 +295,10 @@ app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), 
       userId = data.user?.id || null;
     }
     const { error } = await supabase.from('site_analytics_events').insert({
-      event_name:eventName,path:pathName || null,session_id:sessionId,user_id:userId,
-      referrer:String(req.body?.referrer || '').slice(0,1000) || null,
-      user_agent:String(req.headers['user-agent'] || '').slice(0,1000) || null,
-      metadata:req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
+      event_name:eventName,path:pathName,session_id:sessionId,user_id:userId,
+      referrer:sanitizeReferrer(req.body?.referrer),
+      user_agent:sanitizeUserAgent(req.headers['user-agent']),
+      metadata:validation.value
     });
     if (error) throw error;
     res.status(204).end();

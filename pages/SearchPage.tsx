@@ -87,6 +87,9 @@ function resultMatches(result: SearchResult, query: string) {
 
 export default function SearchPage() {
   const lastSearchTrackedRef = useRef('');
+  // What the debounced tracker reports as the outcome of the search. A ref, not
+  // state, so the timeout effect does not re-run on every result update.
+  const resultCountRef = useRef(0);
   const [query, setQuery] = useState(readQuery);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [exams, setExams] = useState<CatalogExam[]>([]);
@@ -98,7 +101,9 @@ export default function SearchPage() {
     if (!term || term === lastSearchTrackedRef.current) return;
     const timer = window.setTimeout(() => {
       lastSearchTrackedRef.current = term;
-      trackEvent('search', { metadata: { q: term.slice(0, 120) } });
+      // AN-1: the term itself is never sent — a search box is where a student
+      // writes their name and their problem. Shape and outcome only.
+      trackEvent('search', { metadata: { query_length: term.length, result_count: resultCountRef.current } });
     }, 900);
     return () => window.clearTimeout(timer);
   }, [query]);
@@ -145,6 +150,10 @@ export default function SearchPage() {
     if (!normalized) return allResults.slice(0, 12);
     return allResults.filter((result) => resultMatches(result, normalized)).slice(0, 40);
   }, [allResults, query]);
+
+  useEffect(() => {
+    resultCountRef.current = results.length;
+  }, [results]);
 
   useEffect(() => {
     if (!query.trim() || !results.length) return;

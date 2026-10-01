@@ -76,7 +76,12 @@ export default function AdminAnalyticsPage() {
                 {data?.activity && data.activity.topPages.length ? (
                   <>
                     <div className="admin-focus-group"><h3>Most viewed pages</h3>{data.activity.topPages.slice(0, 6).map((row) => <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.topPages[0].views} tone="orange" />)}</div>
-                    <div className="admin-focus-group"><h3>Top searches</h3>{data.activity.topSearches.length ? data.activity.topSearches.slice(0, 6).map((row) => <BarStat key={row.term} label={row.term} value={row.count} max={data.activity!.topSearches[0].count} tone="blue" />) : <p className="admin-footnote">No searches recorded yet.</p>}</div>
+                    <div className="admin-focus-group">
+                      <h3>Searches</h3>
+                      <BarStat label="Searches performed" value={data.activity.searches} max={Math.max(data.activity.searches, 1)} tone="blue" />
+                      <BarStat label="Found no result" value={data.activity.zeroResultSearches} max={Math.max(data.activity.searches, 1)} tone="orange" />
+                      <p className="admin-footnote">Search terms are deliberately not collected — only how many searches happened and how many found nothing, which is what this panel was used for.</p>
+                    </div>
                     <div className="admin-focus-group"><h3>Most-started CBT exams</h3>{data.activity.cbtStarts.length ? data.activity.cbtStarts.slice(0, 6).map((row) => <BarStat key={row.exam} label={row.exam} value={row.count} max={data.activity!.cbtStarts[0].count} tone="green" />) : <p className="admin-footnote">No CBT attempts recorded yet.</p>}</div>
                     <div className="admin-focus-group"><h3>Service funnels (views → submissions)</h3>
                       {data.activity.serviceViews.length ? data.activity.serviceViews.slice(0, 6).map((row) => {

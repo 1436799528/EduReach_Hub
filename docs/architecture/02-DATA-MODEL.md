@@ -149,7 +149,7 @@ confirmed against the live constraint during P0-1.
 
 | Table | Purpose | Owner | Verification |
 |---|---|---|---|
-| `site_analytics_events` | Product events (`event_name`, `path`, `session_id`, `user_id`, `referrer`, `user_agent`, `metadata`) | Ops | Server allowlist of six event names; no retention policy yet (gap, PRIV-2) |
+| `site_analytics_events` | Product events (`event_name`, `path`, `session_id`, `user_id`, `referrer`, `user_agent`, `metadata`) | Ops | Ten declared events in `src/lib/analyticsTaxonomy.ts`, metadata keys allowlisted per event, no free text (a search stores its length and result count, never the term), `path` stored without its query string; raw rows pruned after 90 days by `prune_site_analytics_events()` (`npm run analytics:retention`) — see `docs/features/AN-1.md` |
 | `admin_audit_logs` / `edureach_audit_logs` | Administrative audit trail via `admin_audit_log(...)` | Ops | Written by the server on privileged actions; this is the system of record for "who changed what" |
 | `rate_limit_hits` | Durable rate-limit counters | System | Maintenance-free (self-cleaning); service-role only |
 | `content_integrity_report()` | Read-only JSON over news, CBT, opportunities and institutions | Ops | This is how the running database vouches for itself |
