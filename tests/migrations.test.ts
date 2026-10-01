@@ -51,3 +51,68 @@ test('the applied schema satisfies the objects the application uses', async () =
     assert.ok(rows[0].n >= 35, `expected at least 35 public tables, found ${rows[0].n}`);
   });
 });
+
+// AN-1 / CBT readiness: both new functions sit behind dynamic SQL or plpgsql
+// bodies, which PostgreSQL does not validate when the function is created. A
+// replay therefore proves they *apply* but not that they *run*, so these tests
+// insert real rows and call them.
+test('content_integrity_report() runs and reports CBT subject coverage', async () => {
+  await withDatabase(async (db) => {
+    await applyMigrations(db);
+
+    // An active bank with a healthy subject and a thin one: total question count
+    // looks fine, but a student selecting the thin subject gets a failing paper.
+    await db.exec(`
+      insert into public.cbt_exams (id, title, exam_body, subject, is_active)
+      values ('11111111-1111-4111-8111-111111111111', 'JAMB UTME 2026', 'JAMB', 'General', true);
+      insert into public.exam_questions (exam_id, subject, question_text, option_a, option_b, option_c, option_d, correct_option, position)
+      select '11111111-1111-4111-8111-111111111111', 'Use of English', 'q' || n, 'a', 'b', 'c', 'd', 'A', n
+        from generate_series(1, 12) as n;
+      insert into public.exam_questions (exam_id, subject, question_text, option_a, option_b, option_c, option_d, correct_option, position)
+      select '11111111-1111-4111-8111-111111111111', 'Physics', 'q' || n, 'a', 'b', 'c', 'd', 'A', 100 + n
+        from generate_series(1, 2) as n;
+    `);
+
+    const { rows } = await db.query<{ report: Record<string, any> }>(
+      'select public.content_integrity_report() as report',
+    );
+    const cbt = rows[0].report.cbt;
+    assert.ok(cbt, 'the report has no cbt section');
+    assert.equal(cbt.active_exams_without_questions, 0, 'this bank has questions; the old metric must stay quiet');
+    assert.equal(cbt.active_exams_with_thin_subjects, 1, 'Physics has 2 questions and must be reported as thin');
+    const coverage = cbt.subject_coverage as Array<{ exam_title: string; subject: string; questions: number }>;
+    assert.ok(Array.isArray(coverage) && coverage.length === 2, `expected 2 coverage rows, got ${JSON.stringify(coverage)}`);
+    const physics = coverage.find((row) => row.subject === 'physics');
+    assert.equal(physics?.questions, 2);
+  });
+});
+
+test('prune_site_analytics_events() deletes only rows older than the window', async () => {
+  await withDatabase(async (db) => {
+    await applyMigrations(db);
+
+    await db.exec(`
+      insert into public.site_analytics_events (event_name, path, session_id, created_at) values
+        ('page_view', '/', 'session-old', now() - interval '120 days'),
+        ('page_view', '/news', 'session-mid', now() - interval '91 days'),
+        ('page_view', '/services', 'session-new', now() - interval '10 days');
+    `);
+
+    const { rows } = await db.query<{ result: Record<string, any> }>(
+      'select public.prune_site_analytics_events(90) as result',
+    );
+    assert.equal(rows[0].result.deleted, 2, 'the two rows past the window must go, the recent one must stay');
+    assert.equal(rows[0].result.retentionDays, 90);
+
+    const remaining = await db.query<{ session_id: string }>(
+      'select session_id from public.site_analytics_events order by created_at',
+    );
+    assert.deepEqual(remaining.rows.map((row) => row.session_id), ['session-new']);
+
+    // Idempotent: a second run in the same moment deletes nothing new.
+    const again = await db.query<{ result: Record<string, any> }>(
+      'select public.prune_site_analytics_events(90) as result',
+    );
+    assert.equal(again.rows[0].result.deleted, 0);
+  });
+});
