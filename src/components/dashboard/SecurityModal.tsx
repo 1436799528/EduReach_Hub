@@ -2,6 +2,7 @@ import { userFacingError } from '../../../lib/errors';
 import { useEffect, useState, type FormEvent } from 'react';
 import { KeyRound, Laptop, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useModalDialog } from '../../lib/useModalDialog';
 import { recordSecurityEvent } from '../../lib/studentDashboard';
 
 const inputStyle = { width: '100%', padding: '9px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '6px' } as const;
@@ -75,6 +76,10 @@ export default function SecurityModal({
       active = false;
     };
   }, [open, isLocalMode, userId, onMfaChange]);
+
+  // A11Y-1: the security panel is a modal dialog — focus moves in, stays in,
+  // Escape closes it, and focus returns to the Settings button afterwards.
+  const dialogRef = useModalDialog<HTMLDivElement>(open, onClose);
 
   if (!open) return null;
 
@@ -217,26 +222,26 @@ export default function SecurityModal({
   };
 
   return (
-    <div className="dash-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dash-security-title">
-      <div className="dash-modal" style={{ maxWidth: '520px' }}>
+    <div className="dash-modal-backdrop">
+      <div ref={dialogRef} tabIndex={-1} className="dash-modal" role="dialog" aria-modal="true" aria-labelledby="dash-security-title" style={{ maxWidth: '520px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#047857', display: 'grid', placeItems: 'center' }}>
               <KeyRound size={20} />
             </div>
             <div>
               <h3 id="dash-security-title" style={{ margin: 0, fontSize: '16px', fontWeight: 900, color: '#0f172a' }}>Account Security &amp; Devices</h3>
-              <span style={{ fontSize: '12px', color: '#64748b' }}>Password, active sessions &amp; authenticator MFA</span>
+              <span style={{ fontSize: '12px', color: '#5e6c82' }}>Password, active sessions &amp; authenticator MFA</span>
             </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close security settings" style={{ background: 'none', border: 0, color: '#64748b', cursor: 'pointer' }}>
+          <button type="button" onClick={onClose} aria-label="Close security settings" style={{ background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}>
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handlePasswordChange} style={{ marginBottom: '22px', paddingBottom: '20px', borderBottom: '1px solid #f1f5f9' }}>
           <h4 style={{ margin: '0 0 4px', fontSize: '13.5px', fontWeight: 800, color: '#0f172a' }}>Change Password</h4>
-          <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#64748b' }}>Your active signed-in session is used to authorize this change.</p>
+          <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#5e6c82' }}>Your active signed-in session is used to authorize this change.</p>
           {isLocalMode && <div style={{ background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a', padding: '8px 12px', borderRadius: '6px', fontSize: '12.5px', marginBottom: '10px' }}>Password changes are disabled in local preview mode.</div>}
           {message && <div style={{ background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '8px 12px', borderRadius: '6px', fontSize: '12.5px', marginBottom: '10px' }}>{message}</div>}
           {error && <div role="alert" style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', fontSize: '12.5px', marginBottom: '10px' }}>{error}</div>}
@@ -264,10 +269,10 @@ export default function SecurityModal({
           {sessionRevoked && <div style={{ background: '#ecfdf5', color: '#047857', padding: '8px 12px', borderRadius: '6px', fontSize: '12.5px', marginBottom: '10px' }}>All other devices have been logged out.</div>}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-              <Laptop size={18} color="#C85841" />
+              <Laptop size={18} color="#b14933" />
               <div style={{ minWidth: 0 }}>
                 <strong style={{ fontSize: '12.5px', display: 'block', color: '#0f172a' }}>Current Web Session • {describeDevice()}</strong>
-                <span style={{ fontSize: '11.5px', color: '#64748b' }}>This device • Active now</span>
+                <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>This device • Active now</span>
               </div>
             </div>
             <span style={{ fontSize: '11px', background: '#ecfdf5', color: '#047857', padding: '2px 6px', borderRadius: '4px', fontWeight: 800, whiteSpace: 'nowrap' }}>THIS DEVICE</span>
@@ -281,7 +286,7 @@ export default function SecurityModal({
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
             <div>
               <h4 style={{ margin: '0 0 2px', fontSize: '13.5px', fontWeight: 800, color: '#0f172a' }}>Two-Factor Authentication (MFA)</h4>
-              <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Use an authenticator app such as Google Authenticator or Authy.</p>
+              <p style={{ margin: 0, fontSize: '12px', color: '#5e6c82' }}>Use an authenticator app such as Google Authenticator or Authy.</p>
             </div>
             {!mfaSetup && (
               <button
@@ -289,7 +294,7 @@ export default function SecurityModal({
                 onClick={() => void handleMfaToggle()}
                 disabled={isLocalMode || mfaLoading || mfaBusy}
                 className="dash-btn"
-                style={{ background: mfaEnabled ? '#059669' : '#e2e8f0', color: mfaEnabled ? '#ffffff' : '#475569', whiteSpace: 'nowrap' }}
+                style={{ background: mfaEnabled ? '#047857' : '#e2e8f0', color: mfaEnabled ? '#ffffff' : '#475569', whiteSpace: 'nowrap' }}
               >
                 {mfaLoading ? 'Checking…' : mfaBusy ? 'Working…' : mfaEnabled ? 'Disable MFA' : 'Set up MFA'}
               </button>
@@ -306,6 +311,7 @@ export default function SecurityModal({
                   alt="QR code for EduReach Hub authenticator setup"
                   width={150}
                   height={150}
+                  decoding="async"
                   style={{ background: '#ffffff', padding: '8px', borderRadius: '6px' }}
                 />
                 <div style={{ flex: '1 1 220px', minWidth: 0 }}>

@@ -76,7 +76,12 @@ export default function AdminAnalyticsPage() {
                 {data?.activity && data.activity.topPages.length ? (
                   <>
                     <div className="admin-focus-group"><h3>Most viewed pages</h3>{data.activity.topPages.slice(0, 6).map((row) => <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.topPages[0].views} tone="orange" />)}</div>
-                    <div className="admin-focus-group"><h3>Top searches</h3>{data.activity.topSearches.length ? data.activity.topSearches.slice(0, 6).map((row) => <BarStat key={row.term} label={row.term} value={row.count} max={data.activity!.topSearches[0].count} tone="blue" />) : <p className="admin-footnote">No searches recorded yet.</p>}</div>
+                    <div className="admin-focus-group">
+                      <h3>Searches</h3>
+                      <BarStat label="Searches performed" value={data.activity.searches} max={Math.max(data.activity.searches, 1)} tone="blue" />
+                      <BarStat label="Found no result" value={data.activity.zeroResultSearches} max={Math.max(data.activity.searches, 1)} tone="orange" />
+                      <p className="admin-footnote">Search terms are deliberately not collected — only how many searches happened and how many found nothing, which is what this panel was used for.</p>
+                    </div>
                     <div className="admin-focus-group"><h3>Most-started CBT exams</h3>{data.activity.cbtStarts.length ? data.activity.cbtStarts.slice(0, 6).map((row) => <BarStat key={row.exam} label={row.exam} value={row.count} max={data.activity!.cbtStarts[0].count} tone="green" />) : <p className="admin-footnote">No CBT attempts recorded yet.</p>}</div>
                     <div className="admin-focus-group"><h3>Service funnels (views → submissions)</h3>
                       {data.activity.serviceViews.length ? data.activity.serviceViews.slice(0, 6).map((row) => {
@@ -100,7 +105,7 @@ export default function AdminAnalyticsPage() {
 
               <div className="admin-card">
                 <div className="admin-card-header"><h2>Recent Service Activity</h2><span>Latest 10</span></div>
-                <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Reference</th><th>Service</th><th>Status</th><th>Created</th></tr></thead><tbody>
+                <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Created</th></tr></thead><tbody>
                   {(data?.recentRequests || []).map((r) => <tr key={String(r.id)}><td className="mono accent">{String(r.reference_code || String(r.id).slice(0, 8))}</td><td>{r.service_catalog?.title || 'Service'}</td><td><StatusBadge status={String(r.status)} /></td><td><TimeAgo value={r.created_at} /></td></tr>)}
                   {!data?.recentRequests?.length && <tr><td colSpan={4} className="empty-state">No service activity yet.</td></tr>}
                 </tbody></table></div>
@@ -109,7 +114,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="admin-card">
               <div className="admin-card-header"><h2>Recent Accounts</h2><span>Latest 10</span></div>
-              <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Role</th><th>Joined</th></tr></thead><tbody>
+              <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Joined</th></tr></thead><tbody>
                 {(data?.recentUsers || []).map((u) => <tr key={String(u.id)}><td>{String(u.full_name || 'Unnamed user')}</td><td><StatusBadge status={String(u.role || 'student')} /></td><td><TimeAgo value={u.created_at} /></td></tr>)}
                 {!data?.recentUsers?.length && <tr><td colSpan={3} className="empty-state">No accounts yet.</td></tr>}
               </tbody></table></div>

@@ -46,12 +46,12 @@ export function resolveIdentity(
     return { icon: Wallet, image: '/news/photos/nelfund.webp', label: 'FUNDING ALERT', tone: 'amber', ariaLabel: 'Student Funding' };
   }
   if (v.includes('jamb slip') || (v.includes('slip') && v.includes('jamb')) || v.includes('exam slip')) {
-    return { icon: Printer, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Exam Slip Printing' };
+    return { icon: Printer, image: '/icons/brands/jamb.webp', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Exam Slip Printing' };
   }
 
   // Brand-first resolution: an explicitly named organisation uses its real brand mark.
   if (v.includes('jamb')) {
-    return { icon: GraduationCap, image: '/icons/brands/jamb.png', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Services' };
+    return { icon: GraduationCap, image: '/icons/brands/jamb.webp', label: 'JAMB', tone: 'crimson', brand: 'jamb', ariaLabel: 'JAMB Services' };
   }
   if (v.includes('neco')) {
     return { icon: Award, image: '/icons/brands/neco.webp', label: 'NECO', tone: 'blue', brand: 'neco', ariaLabel: 'NECO Services' };
@@ -60,10 +60,10 @@ export function resolveIdentity(
     return { icon: FileCheck2, image: '/icons/brands/waec.webp', label: 'WAEC', tone: 'blue', brand: 'waec', ariaLabel: 'WAEC Services' };
   }
   if (v.includes('nabteb')) {
-    return { icon: Award, image: '/icons/brands/nabteb.png', label: 'NABTEB', tone: 'blue', brand: 'nabteb', ariaLabel: 'NABTEB Services' };
+    return { icon: Award, image: '/icons/brands/nabteb.webp', label: 'NABTEB', tone: 'blue', brand: 'nabteb', ariaLabel: 'NABTEB Services' };
   }
   if (v.includes('nelfund')) {
-    return { icon: Wallet, image: '/icons/brands/nelfund.png', label: 'NELFUND', tone: 'emerald', brand: 'nelfund', ariaLabel: 'NELFUND Services' };
+    return { icon: Wallet, image: '/icons/brands/nelfund.webp', label: 'NELFUND', tone: 'emerald', brand: 'nelfund', ariaLabel: 'NELFUND Services' };
   }
 
   // News (brand-named stories already returned above with real marks)
@@ -92,7 +92,7 @@ export function resolveIdentity(
   if (v.includes('nelfund') || v.includes('student-loan') || v.includes('loan')) {
     return {
       icon: Wallet,
-      image: '/icons/brands/nelfund.png',
+      image: '/icons/brands/nelfund.webp',
       label: 'NELFUND',
       badge: 'LOAN',
       tone: 'emerald',
@@ -103,7 +103,7 @@ export function resolveIdentity(
   if (v.includes('slip') || v.includes('print')) {
     return {
       icon: Printer,
-      image: '/icons/brands/jamb.png',
+      image: '/icons/brands/jamb.webp',
       label: 'JAMB SLIP',
       badge: 'PRINT',
       tone: 'crimson',
@@ -163,7 +163,7 @@ export function resolveIdentity(
   if (v.includes('post-utme') || v.includes('postutme')) {
     return {
       icon: GraduationCap,
-      image: '/icons/brands/jamb.png',
+      image: '/icons/brands/jamb.webp',
       label: 'POST-UTME',
       badge: 'SCREENING',
       tone: 'blue',
@@ -174,7 +174,7 @@ export function resolveIdentity(
   if (v.includes('jamb') || v.includes('utme')) {
     return {
       icon: GraduationCap,
-      image: '/icons/brands/jamb.png',
+      image: '/icons/brands/jamb.webp',
       label: 'JAMB',
       badge: 'UTME',
       tone: 'crimson',
@@ -342,6 +342,7 @@ export default function CardIdentityMark({
           height={imgHeight}
           style={{ width: 'auto', maxWidth: imgHeight * 2.6, objectFit: 'contain' }}
           loading="lazy"
+          decoding="async"
         />
       ) : (
         <Icon className="ms-identity-icon" size={size === 'sm' ? 14 : size === 'lg' ? 22 : 17} strokeWidth={2.2} />

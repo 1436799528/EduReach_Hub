@@ -83,6 +83,9 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const [busy, setBusy] = useState(false);
   const [reference, setReference] = useState('');
   const [message, setMessage] = useState('');
+  // A11Y-1: which control the message belongs to, so the failure is announced
+  // and the field is marked invalid rather than only shown in red text.
+  const [errorField, setErrorField] = useState<'' | 'fullName' | 'phone' | 'whatsapp' | 'institution'>('');
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [institutionOtherSelected, setInstitutionOtherSelected] = useState(false);
   const [form, setForm] = useState<FormState>(() => ({ ...emptyForm, ...(draft.form || {}) }));
@@ -204,6 +207,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   function next(event: FormEvent) {
     event.preventDefault();
     setMessage('');
+    setErrorField('');
     if (isSupabaseConfigured && !isAuthenticated) {
       setMessage('Please sign in before submitting this service request.');
       return;
@@ -212,18 +216,22 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
       const phoneDigits = form.phone.replace(/\D/g, '');
       const whatsappDigits = form.whatsapp.replace(/\D/g, '');
       if (form.fullName.trim().split(/\s+/).length < 2) {
+        setErrorField('fullName');
         setMessage('Enter your first and last name so we can identify the request correctly.');
         return;
       }
       if (phoneDigits.length < 10) {
+        setErrorField('phone');
         setMessage('Enter a valid Nigerian phone number with at least 10 digits.');
         return;
       }
       if (form.whatsapp.trim() && whatsappDigits.length < 10) {
+        setErrorField('whatsapp');
         setMessage('Enter a valid WhatsApp number or leave that field blank.');
         return;
       }
       if (!form.institution.trim()) {
+        setErrorField('institution');
         setMessage('Choose an institution or enter it using Other institution.');
         return;
       }
@@ -288,7 +296,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck size={16} color="#059669" />
+                <ShieldCheck size={16} color="#047857" />
                 <span>
                   {isSupabaseConfigured ? (
                     <><strong>Sign-in required:</strong> Submit from your student account so the request is linked to your dashboard.</>
@@ -299,7 +307,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               </div>
               <a
                 href={`/login?next=${encodeURIComponent(`/services/apply/${service.service_key}`)}`}
-                style={{ color: '#C85841', fontWeight: 800, textDecoration: 'none' }}
+                style={{ color: '#b14933', fontWeight: 800, textDecoration: 'none' }}
               >
                 Sign in to link account →
               </a>
@@ -321,7 +329,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <div className="er-service-guide-steps">
                     {guide.steps.map((guideStep, index) => (
                       <article className="er-service-guide-step" key={guideStep.title}>
-                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" />
+                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" decoding="async" />
                         <div>
                           <span className="er-service-guide-number">{String(index + 1).padStart(2, '0')}</span>
                           <h3>{guideStep.title}</h3>
@@ -366,6 +374,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         onChange={(e) => update('fullName', e.target.value)}
                         placeholder="e.g. Ibrahim Abubakar"
                         autoComplete="name"
+                        aria-invalid={errorField === 'fullName' || undefined}
+                        aria-describedby={errorField === 'fullName' ? 'service-apply-error' : undefined}
                         required
                       />
                     </label>
@@ -376,6 +386,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         onChange={(e) => update('phone', e.target.value)}
                         placeholder="e.g. 08012345678"
                         type="tel"
+                        aria-invalid={errorField === 'phone' || undefined}
+                        aria-describedby={errorField === 'phone' ? 'service-apply-error' : undefined}
                         required
                       />
                     </label>
@@ -386,6 +398,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                         onChange={(e) => update('whatsapp', e.target.value)}
                         placeholder="e.g. 08012345678"
                         type="tel"
+                        aria-invalid={errorField === 'whatsapp' || undefined}
+                        aria-describedby={errorField === 'whatsapp' ? 'service-apply-error' : undefined}
                       />
                     </label>
                     <label>
@@ -397,6 +411,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                           setInstitutionOtherSelected(isOther);
                           update('institution', isOther ? '' : e.target.value);
                         }}
+                        aria-invalid={errorField === 'institution' || undefined}
+                        aria-describedby={errorField === 'institution' ? 'service-apply-error' : undefined}
                         required
                       >
                         <option value="">Choose an institution</option>
@@ -408,6 +424,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                           value={form.institution}
                           onChange={(e) => update('institution', e.target.value)}
                           placeholder="Enter your institution name"
+                          aria-invalid={errorField === 'institution' || undefined}
+                          aria-describedby={errorField === 'institution' ? 'service-apply-error' : undefined}
                           required
                         />
                       )}
@@ -549,7 +567,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 </div>
               )}
 
-              {message && <div className="hub-form-error" style={{ marginTop: '14px' }}>{message}</div>}
+              {message && <div className="hub-form-error" id="service-apply-error" role="alert" style={{ marginTop: '14px' }}>{message}</div>}
 
               {/* BUTTON ACTIONS */}
               <div className="hub-wizard-actions" style={{ marginTop: '24px' }}>
@@ -569,7 +587,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <button
                     type="submit"
                     className="hub-primary-btn"
-                    style={{ background: '#C85841' }}
+                    style={{ background: '#b14933' }}
                     disabled={busy}
                   >
                     {busy ? 'Submitting…' : 'Confirm & Submit'} <Check size={16} />
@@ -596,7 +614,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   height: '56px',
                   borderRadius: '50%',
                   background: '#ecfdf5',
-                  color: '#059669',
+                  color: '#047857',
                   display: 'grid',
                   placeItems: 'center',
                   margin: '0 auto 16px',
@@ -608,7 +626,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 style={{
                   fontSize: '11px',
                   fontWeight: 800,
-                  color: '#059669',
+                  color: '#047857',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                 }}
@@ -628,13 +646,13 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   alignItems: 'center',
                   gap: '10px',
                   background: '#f8fafc',
-                  border: '2px dashed #059669',
+                  border: '2px dashed #047857',
                   padding: '12px 24px',
                   borderRadius: '12px',
                   margin: '0 auto 24px',
                 }}
               >
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>REFERENCE CODE:</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#5e6c82' }}>REFERENCE CODE:</span>
                 <strong style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', letterSpacing: '0.06em' }}>
                   {reference}
                 </strong>
@@ -644,7 +662,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 <a
                   className="hub-primary-btn"
                   href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/login?next=${encodeURIComponent('/dashboard/services')}`}
-                  style={{ textDecoration: 'none', background: '#C85841' }}
+                  style={{ textDecoration: 'none', background: '#b14933' }}
                 >
                   <CheckCircle2 size={15} /> {isAuthenticated ? 'View in My Requests' : 'Sign in to view request'}
                 </a>
@@ -665,7 +683,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ textDecoration: 'none', color: '#059669', borderColor: '#a7f3d0' }}
+                  style={{ textDecoration: 'none', color: '#047857', borderColor: '#a7f3d0' }}
                 >
                   <MessageSquare size={15} /> Continue on WhatsApp
                 </a>

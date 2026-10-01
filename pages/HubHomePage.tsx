@@ -98,7 +98,7 @@ export default function HubHomePage() {
 
           <a href="/past-questions" className="er-banner">
             <div className="er-banner-art">
-              <img src="/news/photos/jamb-cbt.jpg" alt="CBT study centre" />
+              <img src="/news/photos/jamb-cbt-banner.webp" alt="CBT study centre" width={160} height={80} loading="lazy" decoding="async" />
             </div>
             <div>
               <small>EDUREACH STUDY CENTRE</small>
@@ -135,10 +135,21 @@ export default function HubHomePage() {
           <div className="er-two-col">
             <section className="er-section">
               <SectionHead title="Latest Educational News" href="/news" linkLabel="View all" />
-              <div className="er-news-list">
-                {news.slice(0, 6).map((item) => <NewsRow key={item.id} item={item} />)}
-                {!news.length && newsLoading && <SkeletonRows rows={4} label="Loading news" />}
-                {!news.length && !newsLoading && !newsError && <div className="er-empty">No news content available yet. Published updates appear here as soon as they are ready.</div>}
+              <div className="er-late-region er-late-region--feed">
+                <div className="er-news-list">
+                  {news.slice(0, 6).map((item) => <NewsRow key={item.id} item={item} />)}
+                  {/* PERF-1: six rows, the count this list renders, so the skeleton and
+                      the list occupy the same box; the region keeps that footprint when
+                      the feed comes back empty or failed. */}
+                  {!news.length && newsLoading && <SkeletonRows rows={6} label="Loading news" />}
+                  {!news.length && !newsLoading && (
+                    <div className="er-empty">
+                      {newsError
+                        ? 'Latest updates could not be loaded right now. Use Try again above to reload them.'
+                        : 'No news content available yet. Published updates appear here as soon as they are ready.'}
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 

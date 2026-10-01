@@ -58,7 +58,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               placeItems: 'center',
               margin: '0 auto 12px',
               background: '#F9F0EE',
-              color: '#C85841',
+              color: '#b14933',
               fontWeight: 900,
             }}
           >
@@ -67,7 +67,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <h1 style={{ margin: '0 0 8px', fontSize: '18px', color: '#0F172A' }}>
             Page could not load
           </h1>
-          <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: '12.5px', lineHeight: 1.55 }}>
+          <p style={{ margin: '0 0 16px', color: '#5e6c82', fontSize: '12.5px', lineHeight: 1.55 }}>
             {this.state.message}. Please refresh the page or return to the portal homepage.
           </p>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -76,7 +76,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               onClick={() => window.location.reload()}
               style={{
                 border: 0,
-                background: '#C85841',
+                background: '#b14933',
                 color: '#ffffff',
                 borderRadius: '7px',
                 padding: '8px 12px',

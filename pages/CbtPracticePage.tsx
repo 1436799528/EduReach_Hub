@@ -1,5 +1,5 @@
 import { userFacingError } from '../lib/errors';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Calculator,
@@ -19,6 +19,7 @@ import { fetchCbtAttemptProgress, fetchCbtExams, fetchCbtQuestions, saveCbtAttem
 import { clearExamProgress, getExamProgress, saveExamProgress } from '../src/lib/cbt-offline';
 import { localStorageKey } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
+import { useModalDialog } from '../src/lib/useModalDialog';
 
 type Question = { id: number; text: string; options: string[] };
 type ExamSummary = { id: string; title: string; exam_body: string; subject: string; duration_minutes: number };
@@ -100,6 +101,24 @@ export default function CbtPracticePage() {
   const [submitting, setSubmitting] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // A11Y-1: both exam overlays take focus, contain Tab, close on Escape and
+  // hand focus back to the control that opened them.
+  const submitDialogRef = useModalDialog<HTMLDivElement>(showSubmitModal, () => setShowSubmitModal(false));
+  const paletteDialogRef = useModalDialog<HTMLDivElement>(paletteOpen, () => setPaletteOpen(false));
+
+  // The clock is heard, not just seen: a candidate who cannot see the timer is
+  // told once at five minutes and once at one minute.
+  const [clockNotice, setClockNotice] = useState('');
+  useEffect(() => {
+    const next = !attemptStarted ? '' : seconds <= 60 && seconds > 0 ? 'One minute remaining.' : seconds <= 300 ? 'Five minutes remaining.' : '';
+    setClockNotice((current) => (current === next ? current : next));
+  }, [seconds, attemptStarted]);
+
+  // Roving focus for the answer group: the option group behaves like the radio
+  // group it claims to be. Arrow keys stay inside the group; N/P still move
+  // between questions, and A–D still answer from anywhere on the page.
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const question = questions[index];
   const total = questions.length;
@@ -348,7 +367,7 @@ export default function CbtPracticePage() {
         <div className="er-exam-bar">
           <div className="er-exam-bar-inner er-container">
             <div className="er-exam-id">
-              <img src={BRAND_LOGO[brand]} alt={`${brand.toUpperCase()} logo`} width={36} height={36} />
+              <img src={BRAND_LOGO[brand]} alt={`${brand.toUpperCase()} logo`} width={36} height={36} decoding="async" />
               <div className="er-exam-id-copy">
                 <h1>{examTitle}</h1>
                 <span>
@@ -370,6 +389,9 @@ export default function CbtPracticePage() {
               <Clock size={16} />
               <span>{formatClock(seconds)}</span>
             </div>
+
+            {/* Threshold announcements only; the ticking clock itself stays silent. */}
+            <span className="er-visually-hidden" role="status">{clockNotice}</span>
 
             <div className="er-exam-controls">
               <button
@@ -474,12 +496,25 @@ export default function CbtPracticePage() {
                 <div className="er-exam-options" role="radiogroup" aria-label="Answer options">
                   {question.options.map((option, optIdx) => {
                     const isSelected = answers[question.id] === optIdx;
+                    const isFirstWithoutAnswer = answers[question.id] === undefined && optIdx === 0;
                     return (
                       <button
                         key={optIdx}
+                        ref={(element) => { optionRefs.current[optIdx] = element; }}
                         type="button"
                         role="radio"
                         aria-checked={isSelected}
+                        tabIndex={isSelected || isFirstWithoutAnswer ? 0 : -1}
+                        onKeyDown={(event) => {
+                          const step = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1
+                            : event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -1 : 0;
+                          if (step === 0) return;
+                          event.preventDefault();
+                          event.stopPropagation();
+                          const next = (optIdx + step + question.options.length) % question.options.length;
+                          setAnswers((prev) => ({ ...prev, [question.id]: next }));
+                          optionRefs.current[next]?.focus();
+                        }}
                         className={`er-exam-option${isSelected ? ' is-selected' : ''}`}
                         onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: optIdx }))}
                       >
@@ -494,7 +529,7 @@ export default function CbtPracticePage() {
                   <button type="button" className="hub-outline-btn er-exam-nav-btn" disabled={index === 0} onClick={goPrev}>
                     <ChevronLeft size={16} /> Previous
                   </button>
-                  <span className="er-exam-hint">Keyboard: A–D answer · N next · P previous · F flag · S submit</span>
+                  <span className="er-exam-hint">Keyboard: A–D or ↑↓ answer · N next · P previous · F flag · S submit</span>
                   <button type="button" className="hub-primary-btn er-exam-nav-btn" onClick={goNext}>
                     {isLast ? 'Finish' : 'Next'} <ChevronRight size={16} />
                   </button>
@@ -533,8 +568,9 @@ export default function CbtPracticePage() {
 
         {/* MOBILE PALETTE SHEET */}
         {paletteOpen && (
-          <div className="er-exam-sheet-backdrop" onClick={() => setPaletteOpen(false)}>
-            <div className="er-exam-sheet" role="dialog" aria-label="Question palette" onClick={(event) => event.stopPropagation()}>
+          // Redundant pointer affordance: the sheet also has a Close button and Escape.
+          <div className="er-exam-sheet-backdrop" role="presentation" onClick={() => setPaletteOpen(false)}>
+            <div ref={paletteDialogRef} tabIndex={-1} className="er-exam-sheet" role="dialog" aria-modal="true" aria-label="Question palette" onClick={(event) => event.stopPropagation()}>
               <div className="er-exam-sheet-head">
                 <strong>Questions · {answeredCount}/{total} answered</strong>
                 <button type="button" onClick={() => setPaletteOpen(false)} aria-label="Close palette"><X size={18} /></button>
@@ -560,7 +596,7 @@ export default function CbtPracticePage() {
         {/* SUBMIT CONFIRMATION */}
         {showSubmitModal && (
           <div className="er-exam-modal-backdrop">
-            <div className="er-exam-modal" role="dialog" aria-modal="true" aria-labelledby="er-exam-submit-title">
+            <div ref={submitDialogRef} tabIndex={-1} className="er-exam-modal" role="dialog" aria-modal="true" aria-labelledby="er-exam-submit-title">
               <h3 id="er-exam-submit-title">{seconds === 0 ? 'Time is up' : 'Submit your test?'}</h3>
               <p>
                 You have answered <strong>{answeredCount}</strong> of <strong>{total}</strong> questions.

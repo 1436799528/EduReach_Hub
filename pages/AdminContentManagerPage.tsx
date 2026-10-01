@@ -196,10 +196,10 @@ export default function AdminContentManagerPage() {
           <p>One bulk workspace for the editable Supabase data that powers the site. No code changes are required for routine content updates.</p>
         </div>
         <div className="admin-header-actions">
-          <select className="admin-select" value={resourceKey} onChange={e => { setResourceKey(e.target.value); setShowForm(false); }}>
+          <select className="admin-select" aria-label="Content table" value={resourceKey} onChange={e => { setResourceKey(e.target.value); setShowForm(false); }}>
             {resources.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
           </select>
-          <button className="admin-btn secondary-dark" type="button" onClick={() => void loadRows()} disabled={loading}><RefreshCw size={14} /></button>
+          <button className="admin-btn secondary-dark" type="button" onClick={() => void loadRows()} disabled={loading} aria-label="Refresh content rows"><RefreshCw size={14} /></button>
           <button className="admin-btn secondary-dark" type="button" onClick={exportRows} disabled={loading || !rows.length}><Download size={14} /> Export</button>
           <button className="admin-btn" type="button" onClick={startNew}><Plus size={14} /> New</button>
         </div>
@@ -236,7 +236,7 @@ export default function AdminContentManagerPage() {
                       <table className="admin-table">
                         <thead>
                           <tr>
-                            {Object.keys(pendingImport[0] || {}).slice(0, 5).map((col) => <th key={col}>{col}</th>)}
+                            {Object.keys(pendingImport[0] || {}).slice(0, 5).map((col) => <th scope="col" key={col}>{col}</th>)}
                           </tr>
                         </thead>
                         <tbody>
@@ -257,7 +257,7 @@ export default function AdminContentManagerPage() {
             <div className="admin-card">
               <div className="admin-card-header"><h2>Database fields</h2><span>{resource.table}</span></div>
               <div className="admin-table-wrap">
-                <table className="admin-table"><thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Mode</th></tr></thead><tbody>
+                <table className="admin-table"><thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Required</th><th scope="col">Mode</th></tr></thead><tbody>
                   {resource.fields.map(field => <tr key={field.name}><td><b>{field.label}</b><div className="muted">{field.name}</div></td><td>{field.type}</td><td>{field.required ? 'Yes' : 'No'}</td><td>{field.readonly ? 'Read-only' : 'Editable'}</td></tr>)}
                 </tbody></table>
               </div>
@@ -294,6 +294,7 @@ export default function AdminContentManagerPage() {
               <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--admin-border)' }}>
                 <input
                   className="admin-input"
+                  aria-label="Search rows"
                   style={{ width: '100%' }}
                   placeholder={`Search ${resource.label.toLowerCase()}…`}
                   value={search}
@@ -301,9 +302,9 @@ export default function AdminContentManagerPage() {
                 />
               </div>
             <div className="admin-table-wrap">
-              <table className="admin-table"><thead><tr>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <th key={f.name}>{f.label}</th>)}<th className="right">Actions</th></tr></thead>
+              <table className="admin-table"><thead><tr>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <th scope="col" key={f.name}>{f.label}</th>)}<th scope="col" className="right">Actions</th></tr></thead>
                 <tbody>
-                  {!loading && rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}
+                  {!loading && rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" aria-label="Delete this row" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}
                   {loading && <tr><td colSpan={7} className="empty-state">Loading…</td></tr>}
                   {!loading && !rows.length && <tr><td colSpan={7} className="empty-state">No records yet.</td></tr>}
                 </tbody>

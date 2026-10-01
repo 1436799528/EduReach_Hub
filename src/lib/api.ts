@@ -3,6 +3,13 @@ import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 import { userFacingError } from '../../lib/errors';
 import { apiUrl } from './apiBase';
+import {
+  isAnalyticsEvent,
+  sanitizeAnalyticsPath,
+  sanitizeReferrer,
+  validateAnalyticsMetadata,
+  type AnalyticsEventName,
+} from './analyticsTaxonomy';
 
 export { userFacingError } from '../../lib/errors';
 
@@ -35,11 +42,16 @@ export type NewsItem = {
   category: string;
   priority: string;
   source_url: string | null;
+  /** Publication that reported the story, when the row carries provenance. */
+  source_name: string | null;
   image_url: string | null;
   published_at: string | null;
+  updated_at: string | null;
   author: string | null;
   last_verified_at: string | null;
   verification_status: string;
+  /** Freshness window from the newsroom pipeline; absent before that migration. */
+  expires_at: string | null;
   featured: boolean;
   tags: string[];
 };
@@ -611,20 +623,34 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
   return localRecord;
 }
 
-export async function fetchNews(): Promise<NewsItem[]> {
-  // No hardcoded news dataset: without a configured account service the page
-  // shows its honest empty state; with one configured, Supabase is the only
-  // source of what students read.
-  if (!isSupabaseConfigured) return [];
+const NEWS_COLUMNS_LEGACY =
+  'id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags';
+// Added by the newsroom migration. Read when present so provenance, freshness
+// and expiry travel with the article; the legacy set keeps an unmigrated
+// database working (same fallback the server API uses).
+const NEWS_COLUMNS_GOVERNED = `${NEWS_COLUMNS_LEGACY},verification_status,expires_at,last_verified_at`;
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags')
-    .eq('published', true)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(30);
-  if (error) throw new Error(userFacingError(error));
-  return (data || []).map((item) => ({
+let newsGovernedColumnsAvailable: boolean | null = null;
+
+async function selectNewsColumns(apply: (columns: string) => Promise<{ data: any; error: any }>): Promise<any[]> {
+  if (newsGovernedColumnsAvailable !== false) {
+    const governed = await apply(NEWS_COLUMNS_GOVERNED);
+    if (!governed.error) {
+      newsGovernedColumnsAvailable = true;
+      return governed.data || [];
+    }
+    newsGovernedColumnsAvailable = false;
+  }
+  const legacy = await apply(NEWS_COLUMNS_LEGACY);
+  if (legacy.error) throw new Error(userFacingError(legacy.error));
+  return legacy.data || [];
+}
+
+function mapNewsItem(item: any): NewsItem {
+  const expiresAt = item.expires_at ? String(item.expires_at) : null;
+  const expires = expiresAt ? new Date(expiresAt) : null;
+  const expiredByDate = Boolean(expires && Number.isFinite(expires.getTime()) && expires.getTime() < Date.now());
+  return {
     id: item.id,
     slug: item.slug,
     title: item.title,
@@ -633,14 +659,44 @@ export async function fetchNews(): Promise<NewsItem[]> {
     category: item.category,
     priority: 'normal',
     source_url: item.source_url,
+    source_name: item.source_name ?? null,
     image_url: item.image_url ?? null,
     published_at: item.published_at,
+    updated_at: item.updated_at ?? null,
     author: item.source_name || 'EduReach Editorial Desk',
-    last_verified_at: item.updated_at,
-    verification_status: 'verified',
+    last_verified_at: item.last_verified_at || item.updated_at || null,
+    verification_status: expiredByDate ? 'expired' : (item.verification_status || 'verified'),
+    expires_at: expiresAt,
     featured: item.featured === true,
     tags: parseNewsTags(item.tags),
-  }));
+  };
+}
+
+/** True when the article is still actionable (mirrors src/lib/seoMeta.ts). */
+export function isNewsItemFresh(item: Pick<NewsItem, 'expires_at' | 'verification_status'>): boolean {
+  const status = String(item.verification_status || 'verified').toLowerCase();
+  if (status === 'expired' || status === 'archived' || status === 'superseded') return false;
+  if (!item.expires_at) return true;
+  const expires = new Date(item.expires_at);
+  return !Number.isFinite(expires.getTime()) || expires.getTime() > Date.now();
+}
+
+export async function fetchNews(): Promise<NewsItem[]> {
+  // No hardcoded news dataset: without a configured account service the page
+  // shows its honest empty state; with one configured, Supabase is the only
+  // source of what students read.
+  if (!isSupabaseConfigured) return [];
+
+  const rows = await selectNewsColumns((columns) =>
+    supabase
+      .from('news_articles')
+      .select(columns)
+      .eq('published', true)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(30) as unknown as Promise<{ data: any; error: any }>);
+
+  // Expired updates leave the feed; their pages stay reachable by direct link.
+  return rows.map(mapNewsItem).filter(isNewsItemFresh);
 }
 
 export async function fetchNewsItem(slug: string): Promise<NewsItem> {
@@ -648,37 +704,24 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
     throw new Error('News is not configured in this environment.');
   }
 
-  const { data, error } = await supabase
-    .from('news_articles')
-    .select('id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle();
-  if (error) throw new Error(userFacingError(error));
+  const rows = await selectNewsColumns((columns) =>
+    supabase
+      .from('news_articles')
+      .select(columns)
+      .eq('slug', slug)
+      .eq('published', true)
+      .limit(1) as unknown as Promise<{ data: any; error: any }>);
+  const data = rows[0];
   if (!data) throw new Error('This news article could not be found.');
-  return {
-    id: data.id,
-    slug: data.slug,
-    title: data.title,
-    summary: data.excerpt,
-    body: data.body,
-    category: data.category,
-    priority: 'normal',
-    source_url: data.source_url,
-    image_url: data.image_url ?? null,
-    published_at: data.published_at,
-    author: data.source_name || 'EduReach Editorial Desk',
-    last_verified_at: data.updated_at,
-    verification_status: 'verified',
-    featured: data.featured === true,
-    tags: parseNewsTags(data.tags),
-  };
+  return mapNewsItem(data);
 }
 
 export type AdminActivityBreakdown = {
   since: string;
   topPages: Array<{ path: string; views: number }>;
-  topSearches: Array<{ term: string; count: number }>;
+  /** AN-1: search volume and zero-result volume. The terms themselves are never collected. */
+  searches: number;
+  zeroResultSearches: number;
   serviceViews: Array<{ path: string; views: number }>;
   serviceSubmits: Array<{ path: string; count: number }>;
   cbtStarts: Array<{ exam: string; count: number }>;
@@ -867,13 +910,132 @@ export async function deleteAdminNews(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Real-usage telemetry. The server allowlist accepts page_view, service_view,
-// service_submit, cbt_start, cbt_submit and search; events land in
-// site_analytics_events through the same-origin API. Failures are silent —
-// analytics must never break the student experience.
+// Newsroom ingestion: review queue, manual runs and the integrity report.
+// Stories from Tier 1 official sources publish automatically; everything else
+// waits here for an editor. See docs/NEWSROOM_PIPELINE.md.
 // ---------------------------------------------------------------------------
 
-export type TelemetryEvent = 'page_view' | 'service_view' | 'service_submit' | 'cbt_start' | 'cbt_submit' | 'search';
+export type NewsroomCandidate = {
+  id: string;
+  source_key: string;
+  source_name: string | null;
+  source_tier: number | null;
+  source_url: string;
+  canonical_url: string;
+  title: string;
+  excerpt: string | null;
+  body: string | null;
+  image_url: string | null;
+  category: string;
+  source_published_at: string | null;
+  relevance_score: number | null;
+  quality_score: number | null;
+  quality_flags?: Array<{ code: string; level: string; message: string }> | null;
+  review_notes: string | null;
+  status: string;
+  rejection_reason: string | null;
+  article_id: string | null;
+  created_at: string;
+};
+
+export type NewsroomRun = {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  status: string;
+  triggered_by: string;
+  dry_run: boolean;
+  sources_checked: number;
+  sources_failed: number;
+  candidates_found: number;
+  duplicates: number;
+  rejected: number;
+  needs_review: number;
+  published: number;
+  images_repaired: number;
+  expired: number;
+  error: string | null;
+};
+
+export type NewsroomIngestReport = {
+  runId: string | null;
+  candidatesFound: number;
+  duplicates: number;
+  rejected: number;
+  needsReview: number;
+  published: number;
+  imagesRepaired: number;
+  expired: number;
+  sourcesChecked: number;
+  sourcesFailed: number;
+  errors: string[];
+  decisions: Array<{ title: string; status: string; reason: string; category: string }>;
+};
+
+export async function fetchNewsroomCandidates(status = 'needs_review'): Promise<{ items: NewsroomCandidate[]; pendingReview: number | null }> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: NewsroomCandidate[]; pending_review: number | null }>(
+    `/api/admin/newsroom/candidates?status=${encodeURIComponent(status)}`,
+    { headers },
+  );
+  return { items: body.items || [], pendingReview: body.pending_review ?? null };
+}
+
+export async function approveNewsroomCandidate(
+  id: string,
+  overrides: { title?: string; excerpt?: string; category?: string; image_url?: string | null } = {},
+): Promise<AdminNewsArticle> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ item: AdminNewsArticle }>(
+    `/api/admin/newsroom/candidates/${encodeURIComponent(id)}/approve`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(overrides) },
+  );
+  return body.item;
+}
+
+export async function rejectNewsroomCandidate(id: string, reason: string): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  await jsonFetch(`/api/admin/newsroom/candidates/${encodeURIComponent(id)}/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function runNewsroomIngest(dryRun = false): Promise<NewsroomIngestReport> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ report: NewsroomIngestReport }>('/api/admin/newsroom/ingest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ dry_run: dryRun }),
+  });
+  return body.report;
+}
+
+export async function fetchNewsroomRuns(): Promise<NewsroomRun[]> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ items: NewsroomRun[] }>('/api/admin/newsroom/runs', { headers });
+  return body.items || [];
+}
+
+// ---------------------------------------------------------------------------
+// Real-usage telemetry (AN-1). Every event and every payload field is declared
+// in src/lib/analyticsTaxonomy.ts, which the server also validates against — the
+// client checks first so a bad call site disappears here rather than being
+// dropped silently in production. Two rules come from that file: nothing a
+// student typed is ever sent (the search term is a length and a result count,
+// not a string), and every value is capped.
+//
+// Events land in site_analytics_events through the same-origin API. Failures are
+// silent — analytics must never break the student experience.
+// ---------------------------------------------------------------------------
+
+export type TelemetryEvent = AnalyticsEventName;
 
 export function analyticsSessionId(): string {
   const key = 'edureach-analytics-session';
@@ -888,17 +1050,30 @@ export function analyticsSessionId(): string {
   }
 }
 
-export function trackEvent(eventName: TelemetryEvent, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
+export function trackEvent(eventName: AnalyticsEventName, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
   try {
+    if (!isAnalyticsEvent(eventName)) return;
+    const validation = validateAnalyticsMetadata(eventName, payload.metadata || {});
+    // `=== false`, not `!`: this project compiles without strictNullChecks, where
+    // a negated boolean discriminant does not narrow the union.
+    if (validation.ok === false) {
+      if (import.meta.env?.DEV) console.warn(`[analytics] ${eventName}: ${validation.reason}`);
+      return;
+    }
+    if (validation.dropped.length && import.meta.env?.DEV) {
+      console.warn(`[analytics] ${eventName}: dropped undeclared metadata ${validation.dropped.join(', ')} (see src/lib/analyticsTaxonomy.ts)`);
+    }
     void fetch(apiUrl('/api/analytics/event'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       keepalive: true,
       body: JSON.stringify({
         event_name: eventName,
-        path: payload.path ?? window.location.pathname,
+        path: sanitizeAnalyticsPath(payload.path ?? window.location.pathname, window.location.pathname),
         session_id: analyticsSessionId(),
-        metadata: payload.metadata || {},
+        // The server keeps origin + path only; a referrer can carry a query.
+        referrer: sanitizeReferrer(document.referrer || null),
+        metadata: validation.value,
       }),
     }).catch(() => undefined);
   } catch {
@@ -977,6 +1152,15 @@ export async function fetchAdminUserActivity(userId: string): Promise<AdminUserA
 
 export async function setUserSuspended(userId: string, suspended: boolean): Promise<void> {
   await adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}/${suspended ? 'ban' : 'unban'}`, { method: 'POST' });
+}
+
+/** Assign one of the four application roles. Requires `user.manage_roles`. */
+export async function updateAdminUserRole(userId: string, role: string): Promise<{ id: string; role: string }> {
+  const body = await adminApiFetch<{ user: { id: string; role: string } }>(`/api/admin/users/${encodeURIComponent(userId)}/role`, {
+    method: 'POST',
+    body: JSON.stringify({ role }),
+  });
+  return body.user;
 }
 
 export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; path: string; bytes: number }> {

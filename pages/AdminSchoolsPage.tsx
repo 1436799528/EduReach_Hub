@@ -91,7 +91,7 @@ export default function AdminSchoolsPage() {
             <p>The live School Finder catalogue. Edits here change what students see on /schools without touching Supabase directly.</p>
           </div>
           <div className="admin-header-actions">
-            <button type="button" className="admin-btn secondary-dark" onClick={() => void load(query)} disabled={loading}><RefreshCw size={14} /></button>
+            <button type="button" className="admin-btn secondary-dark" onClick={() => void load(query)} disabled={loading} aria-label="Refresh institutions"><RefreshCw size={14} /></button>
             <button type="button" className="admin-btn" onClick={() => setForm({ ...emptyForm })}><Plus size={14} /> New institution</button>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function AdminSchoolsPage() {
         <div className="admin-card">
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Institution</th><th>State</th><th>Type</th><th>Website</th><th className="right">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Institution</th><th scope="col">State</th><th scope="col">Type</th><th scope="col">Website</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={5} />}
                 {!loading && institutions.map((institution) => (
@@ -182,7 +182,7 @@ export default function AdminSchoolsPage() {
                           student_portal_url: institution.student_portal_url || '',
                           is_verified: institution.is_verified,
                         })}><Pencil size={12} /> Edit</button>
-                        <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(institution)}><Trash2 size={12} /></button>
+                        <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${institution.school_name || 'this institution'}`} onClick={() => void remove(institution)}><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>

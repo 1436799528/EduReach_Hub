@@ -28,7 +28,10 @@ end $$;
 --    value an admin sets later is never overwritten by re-running).
 do $$
 declare
-  mapping jsonb := $$
+  -- NOTE: the JSON literal must use its own dollar tag. Reusing the block's
+  -- tag would close this do block early, making the file a syntax error on any
+  -- PostgreSQL (found by the real-engine replay added in TEST-1, 2026-09-30).
+  mapping jsonb := $mapping$
   {
     "jamb":            { "route": "/jamb",           "category": "Examinations", "sort": 10 },
     "jamb-cbt":        { "route": "/cbt",            "category": "Examinations", "sort": 11 },
@@ -44,7 +47,7 @@ declare
     "jamb-slip":       { "route": null,              "category": "Services",     "sort": 3 },
     "admission-letters": { "route": null,            "category": "Services",     "sort": 4 }
   }
-  $$;
+  $mapping$;
   key text;
   entry jsonb;
 begin

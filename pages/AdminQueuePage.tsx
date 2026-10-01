@@ -6,6 +6,7 @@ import {
   type AdminServiceRequest,
 } from '../src/lib/api';
 import { RequestActions, StatusBadge, TimeAgo, requestStudentName, TableSkeleton } from '../src/components/admin/AdminKit';
+import { Can } from '../src/components/admin/Can';
 
 const FILTERS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'All statuses' },
@@ -86,7 +87,7 @@ export default function AdminQueuePage() {
           <div className="admin-card-header"><h2>{FILTERS.find((f) => f.value === filter)?.label || 'Queue'}</h2><span>{loading ? 'Loading…' : `${rows.length} request${rows.length === 1 ? '' : 's'}`}</span></div>
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th>Student</th><th>Service</th><th>Reference</th><th>Details</th><th>Status</th><th>Age</th><th>Action</th></tr></thead>
+              <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Reference</th><th scope="col">Details</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={7} />}
                 {!loading && rows.map((row) => (
@@ -111,7 +112,9 @@ export default function AdminQueuePage() {
                             onChange={(e) => setNoteText(e.target.value)}
                           />
                           <div className="admin-action-row">
-                            <button type="button" className="admin-btn small success" disabled={busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
+                            <Can capability="service_request.process">
+                              <button type="button" className="admin-btn small success" disabled={busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
+                            </Can>
                             <button type="button" className="admin-text-btn" onClick={() => setNoteId(null)}>Cancel</button>
                           </div>
                         </div>

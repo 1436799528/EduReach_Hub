@@ -38,7 +38,7 @@ The existing `server.ts` starts the Vite development server and exposes protecte
 For a local Supabase CLI database, apply the repository migrations with the normal Supabase workflow. The migration that seeds application-integration data is:
 
 ```text
-supabase/migrations/20260915_application_integration_seed.sql
+supabase/migrations/20260916000000_application_integration_seed.sql
 ```
 
 After a local reset, the database should contain the active service definitions, the seed CBT practice exam/question bank and the prototype news records. Apply the later retirement migration to deactivate legacy service-catalog rows and apply `supabase/migrations/20260925213000_cbt_attempt_question_position.sql` plus `supabase/migrations/20260925214000_service_request_statuses.sql` before testing signed-in CBT resume position or administrative request state changes.

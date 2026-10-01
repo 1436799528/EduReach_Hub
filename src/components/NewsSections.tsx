@@ -51,6 +51,7 @@ export function NewsImage({ item, className }: { item: NewsItem; className?: str
       className={className}
       alt={`${item.title} — ${label}`}
       loading="lazy"
+      decoding="async"
       onError={(event) => {
         // Broken media must not masquerade as a generic photo; swap to the
         // intentional placeholder once and stop handling errors.

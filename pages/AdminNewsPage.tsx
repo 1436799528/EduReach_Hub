@@ -1,4 +1,5 @@
 import { userFacingError } from '../lib/errors';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, Eye, Pencil, Plus, RefreshCw, Star, Trash2, Upload } from 'lucide-react';
 import {
@@ -13,6 +14,8 @@ import { newsCategories, newsCategoryLabel, newsCategoryOptions } from '../src/d
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
+import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
+import { Can } from '../src/components/admin/Can';
 
 type EditorState = {
   id: string | null;
@@ -71,6 +74,9 @@ export default function AdminNewsPage() {
       setError(userFacingError(e, 'Unable to load newsroom articles.'));
     } finally { setLoading(false); }
   }
+  // A11Y-1: focus enters the preview, Tab stays inside it, Escape closes it.
+  const previewDialogRef = useModalDialog<HTMLDivElement>(showPreview, () => setShowPreview(false));
+
   useEffect(() => { void load(); }, []);
 
   const visible = useMemo(() => articles
@@ -232,12 +238,16 @@ export default function AdminNewsPage() {
         </div>
         <div className="admin-header-actions">
           <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /> Refresh</button>
-          <button type="button" className="admin-btn" onClick={openCreate}><Plus size={14} /> New article</button>
+          <Can capability="news.create">
+            <button type="button" className="admin-btn" onClick={openCreate}><Plus size={14} /> New article</button>
+          </Can>
         </div>
       </div>
 
       {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
       {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}
+
+      <AdminNewsroomQueue onPublished={() => void load()} />
 
       {editor && (
         <div className="admin-card admin-news-editor">
@@ -302,8 +312,8 @@ export default function AdminNewsPage() {
               </div>
               <div className="admin-field"><span>Featured image</span>
                 <div className="admin-image-row">
-                  {editor.imageUrl ? <img src={editor.imageUrl} alt="Featured preview" className="admin-image-preview" /> : <div className="admin-image-preview empty">No image</div>}
-                  <input className="admin-input" style={{ flex: 1 }} value={editor.imageUrl} onChange={(e) => setEditor({ ...editor, imageUrl: e.target.value })} placeholder="https://… or upload" />
+                  {editor.imageUrl ? <img src={editor.imageUrl} alt="Featured preview" className="admin-image-preview" loading="lazy" decoding="async" /> : <div className="admin-image-preview empty">No image</div>}
+                  <input className="admin-input" aria-label="Featured image URL" style={{ flex: 1 }} value={editor.imageUrl} onChange={(e) => setEditor({ ...editor, imageUrl: e.target.value })} placeholder="https://… or upload" />
                   <button type="button" className="admin-btn small" disabled={uploadingImage} onClick={() => imageFileRef.current?.click()}><Upload size={13} /> {uploadingImage ? 'Uploading…' : 'Upload'}</button>
                   {editor.imageUrl && <button type="button" className="admin-text-btn danger-text" onClick={() => setEditor({ ...editor, imageUrl: '' })}>Remove</button>}
                 </div>
@@ -330,7 +340,9 @@ export default function AdminNewsPage() {
             <div className="admin-news-editor-actions">
               <button type="button" className="admin-btn secondary-dark" onClick={openPreview}><Eye size={14} /> Preview</button>
               <button type="button" className="admin-btn secondary-dark" onClick={() => void save(false)} disabled={saving}>Save draft</button>
-              <button type="button" className="admin-btn success" onClick={() => void save(true)} disabled={saving}>{saving ? 'Saving…' : editor.published ? 'Save & keep published' : 'Publish'}</button>
+              <Can capability="news.publish" fallback={<span className="muted" style={{ alignSelf: 'center', fontSize: 12 }}>Publishing needs the news.publish capability.</span>}>
+                <button type="button" className="admin-btn success" onClick={() => void save(true)} disabled={saving}>{saving ? 'Saving…' : editor.published ? 'Save & keep published' : 'Publish'}</button>
+              </Can>
             </div>
           </div>
         </div>
@@ -349,7 +361,7 @@ export default function AdminNewsPage() {
       <div className="admin-card">
         <div className="admin-table-wrap">
           <table className="admin-table">
-            <thead><tr><th>Title</th><th>Category</th><th>State</th><th>Published</th><th>Updated</th><th className="right">Actions</th></tr></thead>
+            <thead><tr><th scope="col">Title</th><th scope="col">Category</th><th scope="col">State</th><th scope="col">Published</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
             <tbody>
               {loading && <TableSkeleton rows={6} columns={6} />}
               {!loading && visible.map((article) => (
@@ -364,12 +376,18 @@ export default function AdminNewsPage() {
                   <td><TimeAgo value={article.updated_at} /></td>
                   <td className="right">
                     <div className="admin-action-row">
-                      <button type="button" className="admin-btn small" onClick={() => openEdit(article)}><Pencil size={12} /> Edit</button>
-                      <button type="button" className="admin-btn small" onClick={() => void togglePublished(article)}>{article.published ? 'Unpublish' : 'Publish'}</button>
+                      <Can capability="news.update">
+                        <button type="button" className="admin-btn small" onClick={() => openEdit(article)}><Pencil size={12} /> Edit</button>
+                      </Can>
+                      <Can capability="news.publish">
+                        <button type="button" className="admin-btn small" onClick={() => void togglePublished(article)}>{article.published ? 'Unpublish' : 'Publish'}</button>
+                      </Can>
                       <button type="button" className="admin-btn small" onClick={() => void toggleFeatured(article)} title={article.featured ? 'Remove from featured' : 'Feature this article'}>
                         <Star size={12} /> {article.featured ? 'Unfeature' : 'Feature'}
                       </button>
-                      <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(article)}><Trash2 size={12} /> Delete</button>
+                      <Can capability="news.delete">
+                        <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(article)}><Trash2 size={12} /> Delete</button>
+                      </Can>
                     </div>
                   </td>
                 </tr>
@@ -388,13 +406,13 @@ export default function AdminNewsPage() {
 
       {showPreview && (
         <div className="admin-modal-backdrop" onClick={() => setShowPreview(false)} role="presentation">
-          <div className="admin-modal" role="dialog" aria-modal="true" aria-label="Article preview" onClick={(e) => e.stopPropagation()}>
+          <div ref={previewDialogRef} tabIndex={-1} className="admin-modal" role="dialog" aria-modal="true" aria-label="Article preview" onClick={(e) => e.stopPropagation()}>
             <div className="admin-card-header">
               <h2>Preview — exactly what students will read</h2>
               <button type="button" className="admin-text-btn" onClick={() => setShowPreview(false)}>Close</button>
             </div>
             <div className="admin-modal-body hub-article-body">
-              {editor?.imageUrl ? <img src={editor.imageUrl} alt="" style={{ width: '100%', borderRadius: 12, marginBottom: 14 }} /> : <div className="er-news-noimage" style={{ height: 120, borderRadius: 12, marginBottom: 14 }}><small>No featured image</small></div>}
+              {editor?.imageUrl ? <img src={editor.imageUrl} alt="" loading="lazy" decoding="async" style={{ width: '100%', borderRadius: 12, marginBottom: 14 }} /> : <div className="er-news-noimage" style={{ height: 120, borderRadius: 12, marginBottom: 14 }}><small>No featured image</small></div>}
               <span className="status-badge published">{editor ? newsCategoryLabel(editor.category) : ''}</span>
               <h2 style={{ margin: '10px 0 4px' }}>{editor?.title}</h2>
               <div className="muted" style={{ marginBottom: 12 }}>

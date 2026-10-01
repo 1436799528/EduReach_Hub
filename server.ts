@@ -2,9 +2,25 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
-import { requireAdmin, type AdminRequest } from './middleware';
+import {
+  assertOwnership,
+  hasCapability,
+  recordAudit,
+  requireCapability,
+  requireStaff,
+  type AuthorizedRequest,
+} from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
+import { verifyJWT } from './lib/auth';
+import { notifyServiceRequestStatus } from './src/server/notifications';
+import { type Capability } from './src/lib/capabilities';
 import { userFacingError as normalizeUserFacingError } from './lib/errors';
+import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
+import { runNewsroomRefresh } from './src/server/newsroom/run';
+import { expiresAtFor } from './src/server/newsroom/qualityGate';
+import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
+import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
+import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -12,6 +28,20 @@ const publicErrorMessage = normalizeUserFacingError;
 const PORT = Number(process.env.PORT || 3000);
 const LIVE_SERVICE_KEYS = ['nelfund-loan', 'results', 'jamb-slip', 'admission-letters'] as const;
 app.disable('x-powered-by');
+
+/**
+ * Abuse control. The in-process limiter is always active; the durable counter
+ * (public.check_rate_limit) makes the sensitive routes hold across instances.
+ * See lib/rate-limit.ts for the policy table.
+ */
+const rateLimitFor = createRateLimiter({
+  callRpc: async (fn, args) => {
+    if (!isServerSupabaseConfigured()) return { data: null, error: { message: 'Supabase is not configured.' } };
+    const result = await getServerSupabase().rpc(fn, args);
+    return { data: result.data, error: result.error ? { message: result.error.message } : null };
+  },
+  log: (message, meta) => console.warn(`[rate-limit] ${message}`, meta ? JSON.stringify(meta) : ''),
+});
 
 app.use((_req, res, next) => {
   if (
@@ -28,6 +58,10 @@ app.use((_req, res, next) => {
   if (isProd) {
     // Strict production headers. Keep in sync with public/_headers (Netlify).
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // HSTS: the site is HTTPS-only in production. Deliberately without
+    // `includeSubDomains` or `preload` - both are one-way decisions that would
+    // also bind any future subdomain (staging, a CDN host) to HTTPS-only.
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://wa.me; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'",
@@ -42,8 +76,24 @@ app.use((_req, res, next) => {
     );
   }
   if (_req.path === '/api' || _req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
+  // Server-side indexability. A client-rendered noindex is a hint; this header
+  // is what a crawler actually receives for student, admin and tracker routes.
+  if (isPrivatePath(_req.path)) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   next();
 });
+
+// Broad per-IP ceiling for the whole API surface, then per-route limits below.
+app.use('/api', rateLimitFor(RATE_LIMIT_RULES.apiGeneral));
+
+/**
+ * Paths that must never be indexed: student, admin, auth, tracker and
+ * placeholder routes, plus service pages with no live workflow. The rule lives
+ * in src/server/seo.ts (`isNonIndexablePath`) so the header, robots.txt and the
+ * sitemap cannot drift apart.
+ */
+function isPrivatePath(pathname: string): boolean {
+  return isNonIndexablePath(pathname);
+}
 
 function isServerSupabaseConfigured() {
   return Boolean(process.env.VITE_SUPABASE_URL && getServerSupabaseKey());
@@ -58,18 +108,80 @@ function getServerSupabase() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-async function requireUser(req: express.Request) {
+/**
+ * A user-scoped Supabase client (publishable key + the caller's access token).
+ * Ownership-critical RPCs resolve the caller with `auth.uid()`, which is null
+ * for the service-role client — using it here would make those RPCs run as
+ * nobody. Returns null when no publishable key is configured, and the caller
+ * falls back to the service client (the RPC then refuses, as it did before).
+ */
+function getUserScopedSupabase(accessToken: string) {
+  const url = process.env.VITE_SUPABASE_URL;
+  const publishableKey = (process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  if (!url || !publishableKey) return null;
+  return createClient(url, publishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
+}
+
+/**
+ * Resolve the caller from their session, then authorize them. Authorization
+ * failures throw, and every handler maps them to 401 (not signed in) or 403
+ * (signed in, not allowed) — the operation never runs.
+ */
+async function requireUser(req: express.Request, capability: Capability = 'dashboard.access') {
   const auth = req.header('authorization');
   if (!auth?.startsWith('Bearer ')) throw new Error('Authentication required.');
-  const token = auth.slice('Bearer '.length);
-  const supabase = getServerSupabase();
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) throw new Error('Invalid or expired session.');
-  return { supabase, user: data.user };
+  const token = auth.slice('Bearer '.length).trim();
+  const caller = await verifyJWT(token);
+  if (!caller) throw new Error('Invalid or expired session.');
+  if (!hasCapability(caller, capability)) throw new Error('You do not have permission to perform this action.');
+  return {
+    supabase: getServerSupabase(),
+    rpcSupabase: getUserScopedSupabase(token) || getServerSupabase(),
+    user: caller,
+  };
 }
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'edureach' });
+});
+
+/**
+ * Readiness/dependency health, separate from the liveness probe above.
+ * `/api/health` answers "is the process up"; this answers "can it serve
+ * requests", which is the question a deploy gate or uptime monitor needs.
+ */
+app.get('/api/health/ready', async (_req, res) => {
+  const checks: Record<string, { ok: boolean; detail?: string }> = {
+    server: { ok: true },
+    supabase_configured: {
+      ok: isServerSupabaseConfigured(),
+      detail: isServerSupabaseConfigured() ? undefined : 'VITE_SUPABASE_URL or the server secret key is missing.',
+    },
+  };
+
+  let databaseLatencyMs: number | null = null;
+  if (checks.supabase_configured.ok) {
+    const started = Date.now();
+    try {
+      const supabase = getServerSupabase();
+      const { error } = await supabase.from('news_articles').select('id').limit(1);
+      databaseLatencyMs = Date.now() - started;
+      checks.database = { ok: !error, detail: error ? 'Database read failed.' : undefined };
+    } catch (error) {
+      checks.database = { ok: false, detail: normalizeUserFacingError(error, 'Database read failed.') };
+    }
+  }
+
+  const ready = Object.values(checks).every((check) => check.ok);
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ready' : 'degraded',
+    checked_at: new Date().toISOString(),
+    checks,
+    database_latency_ms: databaseLatencyMs,
+  });
 });
 
 
@@ -80,7 +192,7 @@ app.use((req, res, next) => {
   return jsonBody(req, res, next);
 });
 
-app.post('/api/admin/bootstrap', async (req, res) => {
+app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), async (req, res) => {
   try {
     const configuredEmail = String(process.env.EDUREACH_ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
     if (!configuredEmail) return res.status(503).json({ error: 'Admin bootstrap email is not configured.' });
@@ -101,19 +213,40 @@ app.post('/api/admin/bootstrap', async (req, res) => {
   }
 });
 
-app.get('/api/admin/session', requireAdmin, async (req, res) => {
-  const adminUser = (req as AdminRequest).adminUser!;
+app.get('/api/admin/session', requireStaff, async (req, res) => {
+  const adminUser = (req as AuthorizedRequest).adminUser!;
+  // The console renders from this: the application role plus the resolved
+  // capability list. It is a UX input only — every endpoint re-checks.
   res.json({
     user: {
       id: adminUser.id,
       email: adminUser.email,
       fullName: adminUser.fullName,
-      role: adminUser.role,
+      role: adminUser.appRole,
+      capabilities: adminUser.capabilities,
     },
   });
 });
 
-app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
+app.get('/api/admin/jobs', requireCapability('analytics.read'), async (req, res) => {
+  try {
+    // OBS-1: last success, last failure and freshness per scheduled job. Read-only,
+    // and it deliberately reports jobs that have *no* row at all — a schedule that
+    // stopped firing is the failure mode that produces no error anywhere.
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.rpc('scheduled_job_status', {
+      p_stale_after_hours: STALE_AFTER_HOURS,
+    });
+    if (error) throw error;
+    const health = evaluateJobHealth(data as { sinceHours: number; jobs: Array<Record<string, unknown>> });
+    res.json({ ...(data as Record<string, unknown>), health });
+  } catch (error) {
+    console.error('Admin job status error:', error);
+    res.status(503).json({ error: 'Unable to load scheduled job status.' });
+  }
+});
+
+app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data: metrics, error: metricError } = await supabase.rpc('admin_dashboard_metrics');
@@ -133,9 +266,12 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
         return [];
       }
     };
+    // The audit trail is its own capability: analytics staff do not
+    // automatically get to read who did what.
+    const seesAudit = hasCapability((req as AuthorizedRequest).adminUser, 'audit.read');
     const [canonicalAudit, legacyAudit, recentRequests, recentUsers, activity] = await Promise.all([
-      auditFeed('admin_audit_logs'),
-      auditFeed('edureach_audit_logs'),
+      seesAudit ? auditFeed('admin_audit_logs') : Promise.resolve([]),
+      seesAudit ? auditFeed('edureach_audit_logs') : Promise.resolve([]),
       supabase.from('service_requests').select('id,reference_code,status,created_at,updated_at,service_catalog(title)').order('created_at',{ascending:false}).limit(10),
       supabase.from('profiles').select('id,full_name,role,created_at').order('created_at',{ascending:false}).limit(10),
       (async () => {
@@ -157,14 +293,23 @@ app.get('/api/admin/analytics', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/analytics/event', async (req, res) => {
+app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
-    const eventName = String(req.body?.event_name || '').trim().slice(0,80);
-    const pathName = String(req.body?.path || '').trim().slice(0,500);
-    const sessionId = String(req.body?.session_id || '').trim().slice(0,120);
-    if (!eventName || !sessionId) return res.status(400).json({ error: 'event_name and session_id are required.' });
-    if (!/^page_view$|^service_view$|^service_submit$|^cbt_start$|^cbt_submit$|^search$/.test(eventName)) return res.status(400).json({ error: 'Unsupported analytics event.' });
+    // AN-1: the taxonomy in src/lib/analyticsTaxonomy.ts is the allowlist — the
+    // event name, the metadata keys, their types, their caps and the payload
+    // cap. Nothing a student typed is accepted, because no free-text field is
+    // declared; an undeclared key is dropped rather than stored. See
+    // docs/features/AN-1.md.
+    const eventName = String(req.body?.event_name || '').trim();
+    const sessionId = String(req.body?.session_id || '').trim().slice(0, 120);
+    if (!sessionId) return res.status(400).json({ error: 'session_id is required.' });
+    if (!isAnalyticsEvent(eventName)) return res.status(400).json({ error: 'Unsupported analytics event.' });
+
+    const validation = validateAnalyticsMetadata(eventName, req.body?.metadata);
+    if (!validation.ok) return res.status(400).json({ error: 'Invalid analytics payload.' });
+    const pathName = sanitizeAnalyticsPath(req.body?.path);
+
     const supabase = getServerSupabase();
     const auth = req.header('authorization');
     let userId: string | null = null;
@@ -173,10 +318,10 @@ app.post('/api/analytics/event', async (req, res) => {
       userId = data.user?.id || null;
     }
     const { error } = await supabase.from('site_analytics_events').insert({
-      event_name:eventName,path:pathName || null,session_id:sessionId,user_id:userId,
-      referrer:String(req.body?.referrer || '').slice(0,1000) || null,
-      user_agent:String(req.headers['user-agent'] || '').slice(0,1000) || null,
-      metadata:req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
+      event_name:eventName,path:pathName,session_id:sessionId,user_id:userId,
+      referrer:sanitizeReferrer(req.body?.referrer),
+      user_agent:sanitizeUserAgent(req.headers['user-agent']),
+      metadata:validation.value
     });
     if (error) throw error;
     res.status(204).end();
@@ -186,7 +331,7 @@ app.post('/api/analytics/event', async (req, res) => {
   }
 });
 
-app.get('/api/admin/users', requireAdmin, async (req, res) => {
+app.get('/api/admin/users', requireCapability('user.read'), async (req, res) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
@@ -212,7 +357,7 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/users/:userId/activity', requireAdmin, async (req, res) => {
+app.get('/api/admin/users/:userId/activity', requireCapability('user.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data: profile, error: profileError } = await supabase
@@ -248,7 +393,7 @@ app.get('/api/admin/users/:userId/activity', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
+app.get('/api/admin/service-requests', requireCapability('service_request.read'), async (req, res) => {
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : 'all';
     const allowed = ['all','submitted','reviewing','processing','awaiting_information','completed','closed','rejected','cancelled'];
@@ -265,11 +410,15 @@ app.get('/api/admin/service-requests', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/service-requests/:requestId', requireCapability('service_request.process'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: request, error: requestError } = await supabase.from('service_requests').select('id,status,admin_note').eq('id', req.params.requestId).single();
+    const { data: request, error: requestError } = await supabase
+      .from('service_requests')
+      .select('id,status,admin_note,user_id,reference_code,service_catalog(title)')
+      .eq('id', req.params.requestId)
+      .single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
 
     const wantsStatus = req.body?.status !== undefined;
@@ -306,6 +455,13 @@ app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, re
     if (error) throw error;
     if (nextStatus) {
       await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
+      // The student is told about the same transition the audit trail recorded.
+      // Best effort: a notification failure must not fail the status change.
+      await notifyServiceRequestStatus(supabase, {
+        request: request as { id: string; user_id: string; status: string; reference_code?: string | null },
+        from: String(request.status || ''),
+        to: nextStatus,
+      });
     } else {
       await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'note', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { note_updated: true } });
     }
@@ -316,7 +472,7 @@ app.patch('/api/admin/service-requests/:requestId', requireAdmin, async (req, re
   }
 });
 
-app.get('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
+app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').order('created_at', { ascending: false });
@@ -328,9 +484,9 @@ app.get('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
+app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const { title, exam_body, subject, description, duration_minutes, is_active } = req.body || {};
     const duration = Number(duration_minutes);
     if (!title?.trim() || !exam_body?.trim() || !subject?.trim() || !Number.isInteger(duration) || duration < 5 || duration > 180) {
@@ -351,9 +507,9 @@ app.post('/api/admin/cbt/exams', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
@@ -393,9 +549,9 @@ app.patch('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
@@ -416,7 +572,7 @@ app.delete('/api/admin/cbt/exams/:examId', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
+app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').eq('exam_id', req.params.examId).order('position', { ascending: true });
@@ -428,9 +584,9 @@ app.get('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res)
   }
 });
 
-app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res) => {
+app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
@@ -455,9 +611,9 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireAdmin, async (req, res
   }
 });
 
-app.patch('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
@@ -481,9 +637,9 @@ app.patch('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res)
   }
 });
 
-app.delete('/api/admin/cbt/questions/:questionId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('exam_questions').delete().eq('id', req.params.questionId).select('id,exam_id').single();
     if (error) throw error;
@@ -533,7 +689,7 @@ function normalizeTags(value: unknown): string | null {
   return cleaned.length ? cleaned.join(', ') : null;
 }
 
-app.get('/api/admin/news', requireAdmin, async (_req, res) => {
+app.get('/api/admin/news', requireCapability('news.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('news_articles').select(newsRowSelect).order('updated_at', { ascending: false }).limit(200);
@@ -545,9 +701,9 @@ app.get('/api/admin/news', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/news', requireAdmin, async (req, res) => {
+app.post('/api/admin/news', requireCapability('news.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const title = String(req.body?.title || '').trim();
     const bodyText = String(req.body?.body || '').trim();
     if (!title || !bodyText) return res.status(400).json({ error: 'Article title and body are required.' });
@@ -560,6 +716,11 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Image and source links must use HTTPS or a site-relative path.' });
     }
     const published = req.body?.published === true;
+    // `news.create` may save drafts; putting a story in front of students is a
+    // separate capability, checked from the payload rather than the route.
+    if (published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
+      return res.status(403).json({ error: 'You do not have permission to perform this action.' });
+    }
     const now = new Date().toISOString();
     let publishedAt: string | null = null;
     if (published) {
@@ -595,9 +756,9 @@ app.post('/api/admin/news', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
@@ -633,6 +794,9 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
     if (req.body?.tags !== undefined) patch.tags = normalizeTags(req.body.tags);
     if (req.body?.published !== undefined) {
       const published = req.body.published === true;
+      if (published && !existing.published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
+        return res.status(403).json({ error: 'You do not have permission to perform this action.' });
+      }
       patch.published = published;
       if (published && !existing.published_at && req.body?.published_at === undefined) patch.published_at = new Date().toISOString();
       if (!published) patch.published_at = null;
@@ -656,9 +820,9 @@ app.patch('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/news/:articleId', requireCapability('news.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
@@ -675,14 +839,14 @@ app.delete('/api/admin/news/:articleId', requireAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 // Admin control-centre endpoints (2026-09-26): calendar items, institutions,
 // service catalogue visibility, account suspension and content image uploads.
-// All writes use the service-role key after requireAdmin() authorization and
+// All writes use the service-role key after capability authorization and
 // are recorded in the staff audit trail.
 // ---------------------------------------------------------------------------
 
 const CALENDAR_PRIORITIES = ['low', 'normal', 'high'];
 const CALENDAR_STATUSES = ['pending', 'cancelled'];
 
-app.get('/api/admin/calendar-items', requireAdmin, async (req, res) => {
+app.get('/api/admin/calendar-items', requireCapability('calendar.read'), async (req, res) => {
   try {
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
@@ -729,9 +893,9 @@ function validateCalendarPayload(body: any, type: string): { error?: string; val
   return { values };
 }
 
-app.post('/api/admin/calendar-items', requireAdmin, async (req, res) => {
+app.post('/api/admin/calendar-items', requireCapability('calendar.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
     const check = validateCalendarPayload(req.body, type);
@@ -748,9 +912,9 @@ app.post('/api/admin/calendar-items', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/calendar-items/:itemId', requireCapability('calendar.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
     const check = validateCalendarPayload(req.body, type);
@@ -767,9 +931,9 @@ app.patch('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) =>
   }
 });
 
-app.delete('/api/admin/calendar-items/:itemId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/calendar-items/:itemId', requireCapability('calendar.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const type = String(req.query.type || 'deadline');
     if (!['deadline', 'exam'].includes(type)) return res.status(400).json({ error: 'Invalid calendar item type.' });
     const supabase = getServerSupabase();
@@ -821,7 +985,7 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
   }
 }
 
-app.get('/api/admin/institutions', requireAdmin, async (req, res) => {
+app.get('/api/admin/institutions', requireCapability('institution.read'), async (req, res) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
@@ -839,15 +1003,16 @@ app.get('/api/admin/institutions', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/institutions', requireAdmin, async (req, res) => {
+app.post('/api/admin/institutions', requireCapability('institution.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.status(201).json({ item: data });
   } catch (error) {
     console.error('Admin institution create error:', error);
@@ -855,15 +1020,16 @@ app.post('/api/admin/institutions', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/institutions/:institutionId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/institutions/:institutionId', requireCapability('institution.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin institution update error:', error);
@@ -871,13 +1037,14 @@ app.patch('/api/admin/institutions/:institutionId', requireAdmin, async (req, re
   }
 });
 
-app.delete('/api/admin/institutions/:institutionId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/institutions/:institutionId', requireCapability('institution.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').delete().eq('id', req.params.institutionId).select('id,school_name').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.json({ success: true });
   } catch (error) {
     console.error('Admin institution delete error:', error);
@@ -887,9 +1054,9 @@ app.delete('/api/admin/institutions/:institutionId', requireAdmin, async (req, r
 
 // --- Service catalogue visibility/content ----------------------------------
 
-app.patch('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/services/:serviceId', requireCapability('service.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title,description,application_url,active').eq('id', req.params.serviceId).single();
     if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
@@ -935,7 +1102,7 @@ function validateServiceRoute(value: unknown): string | null | 'invalid' {
   return raw.slice(0, 200);
 }
 
-app.get('/api/admin/services', requireAdmin, async (_req, res) => {
+app.get('/api/admin/services', requireCapability('service.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -952,9 +1119,9 @@ app.get('/api/admin/services', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/services', requireAdmin, async (req, res) => {
+app.post('/api/admin/services', requireCapability('service.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const title = String(req.body?.title || '').trim().slice(0, 120);
     if (!title) return res.status(400).json({ error: 'A service title is required.' });
     const serviceKey = slugifyTitle(String(req.body?.service_key || title)).slice(0, 60);
@@ -986,9 +1153,9 @@ app.post('/api/admin/services', requireAdmin, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/services/:serviceId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/services/:serviceId', requireCapability('service.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title').eq('id', req.params.serviceId).single();
     if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
@@ -1043,12 +1210,27 @@ app.get('/api/opportunities', async (_req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase
+    // `closed_at` arrives with the newsroom migration; fall back to the legacy
+    // query so an unmigrated database still lists opportunities.
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,description,link_url,deadline,locations')
+      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at')
       .eq('is_active', true)
+      .is('closed_at', null)
       .order('deadline', { ascending: true, nullsFirst: false })
-      .limit(100);
+      .limit(100));
+    if (error) {
+      const fallback = await supabase
+        .from('opportunities')
+        .select('id,title,organisation,category,description,link_url,deadline,locations')
+        .eq('is_active', true)
+        .order('deadline', { ascending: true, nullsFirst: false })
+        .limit(100);
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -1057,7 +1239,7 @@ app.get('/api/opportunities', async (_req, res) => {
   }
 });
 
-app.get('/api/admin/opportunities', requireAdmin, async (_req, res) => {
+app.get('/api/admin/opportunities', requireCapability('opportunity.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
@@ -1073,15 +1255,16 @@ app.get('/api/admin/opportunities', requireAdmin, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/opportunities', requireAdmin, async (req, res) => {
+app.post('/api/admin/opportunities', requireCapability('opportunity.create'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateOpportunityPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').insert(check.values).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.status(201).json({ item: data });
   } catch (error) {
     console.error('Admin opportunity create error:', error);
@@ -1089,15 +1272,16 @@ app.post('/api/admin/opportunities', requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, res) => {
+app.patch('/api/admin/opportunities/:opportunityId', requireCapability('opportunity.update'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const check = validateOpportunityPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').update({ ...check.values, updated_at: new Date().toISOString() }).eq('id', req.params.opportunityId).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
     if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin opportunity update error:', error);
@@ -1105,13 +1289,14 @@ app.patch('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, r
   }
 });
 
-app.delete('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, res) => {
+app.delete('/api/admin/opportunities/:opportunityId', requireCapability('opportunity.delete'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').delete().eq('id', req.params.opportunityId).select('id,title').single();
     if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.json({ success: true });
   } catch (error) {
     console.error('Admin opportunity delete error:', error);
@@ -1121,9 +1306,9 @@ app.delete('/api/admin/opportunities/:opportunityId', requireAdmin, async (req, 
 
 // --- Account suspension (Supabase Auth admin ban via service role) ---------
 
-app.post('/api/admin/users/:userId/ban', requireAdmin, async (req, res) => {
+app.post('/api/admin/users/:userId/ban', requireCapability('user.suspend'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     if (adminUser.id === req.params.userId) return res.status(400).json({ error: 'You cannot suspend your own account.' });
     const supabase = getServerSupabase();
     const { data, error } = await supabase.auth.admin.updateUserById(req.params.userId, { ban_duration: '876000h' });
@@ -1136,9 +1321,9 @@ app.post('/api/admin/users/:userId/ban', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
+app.post('/api/admin/users/:userId/unban', requireCapability('user.suspend'), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { error } = await supabase.auth.admin.updateUserById(req.params.userId, { ban_duration: 'none' });
     if (error) throw error;
@@ -1150,13 +1335,63 @@ app.post('/api/admin/users/:userId/unban', requireAdmin, async (req, res) => {
   }
 });
 
+
+// --- Role assignment -------------------------------------------------------
+// The capability vocabulary lives in code (src/lib/capabilities.ts); this
+// endpoint is how a stored role changes. It is `user.manage_roles`, it refuses
+// unknown values and self-modification, and every change is audited.
+const ASSIGNABLE_ROLES = ['student', 'content_editor', 'service_admin', 'super_admin'] as const;
+
+app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const role = String(req.body?.role || '').trim().toLowerCase();
+    if (!(ASSIGNABLE_ROLES as readonly string[]).includes(role)) {
+      return res.status(400).json({ error: 'Unknown role.' });
+    }
+    // An owner locking themselves out of the console is never intentional.
+    if (adminUser.id === req.params.userId) {
+      return res.status(400).json({ error: 'You cannot change your own role.' });
+    }
+    const supabase = getServerSupabase();
+    const { data: target, error: readError } = await supabase
+      .from('profiles')
+      .select('id,role,full_name')
+      .eq('id', req.params.userId)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!target) return res.status(404).json({ error: 'Account not found.' });
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', req.params.userId)
+      .select('id,role')
+      .single();
+    if (error) throw error;
+
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'user_role_change',
+      resourceType: 'profile',
+      resourceId: req.params.userId,
+      // The previous role is recorded; the account email is not.
+      metadata: { from: String(target.role || ''), to: role },
+    });
+    res.json({ user: { id: data.id, role: data.role } });
+  } catch (error) {
+    console.error('Admin role change error:', error);
+    res.status(500).json({ error: 'Unable to change this account role.' });
+  }
+});
+
 // --- Content image uploads (Supabase Storage, admin-content bucket) --------
 
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
-app.post('/api/admin/uploads', requireAdmin, express.json({ limit: '5mb' }), async (req, res) => {
+app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('news.create', 'opportunity.create', 'institution.update', 'calendar.update'), express.json({ limit: '5mb' }), async (req, res) => {
   try {
-    const adminUser = (req as AdminRequest).adminUser!;
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const dataUrl = String(req.body?.dataUrl || '');
     const match = /^data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=\s]+)$/.exec(dataUrl);
     if (!match) return res.status(400).json({ error: 'Only PNG, JPEG, WebP or GIF images are supported.' });
@@ -1181,7 +1416,7 @@ app.post('/api/admin/uploads', requireAdmin, express.json({ limit: '5mb' }), asy
   }
 });
 
-app.post('/api/admin/session/verify', requireAdmin, (_req, res) => {
+app.post('/api/admin/session/verify', requireStaff, (_req, res) => {
   res.json({ authenticated: true });
 });
 
@@ -1271,15 +1506,53 @@ app.get('/api/upcoming', async (_req, res) => {
   }
 });
 
+/**
+ * News reads. The provenance/freshness columns arrive with the newsroom
+ * migration, so the query degrades to the legacy column set when a database
+ * has not been migrated yet — the site keeps serving either way.
+ */
+const NEWS_ROW_BASE = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags';
+const NEWS_ROW_GOVERNED = `${NEWS_ROW_BASE},verification_status,expires_at,last_verified_at,source_key,source_tier`;
+
+function newsArticleView(item: Record<string, unknown>) {
+  const expiresAt = item.expires_at ? new Date(String(item.expires_at)) : null;
+  const expiredByDate = expiresAt && Number.isFinite(expiresAt.getTime()) && expiresAt.getTime() < Date.now();
+  return {
+    ...item,
+    author: item.source_name || 'EduReach Editorial Desk',
+    summary: item.excerpt,
+    last_verified_at: item.last_verified_at || item.updated_at,
+    verification_status: expiredByDate ? 'expired' : (item.verification_status || 'verified'),
+    priority: 'normal',
+  };
+}
+
+function isFreshArticle(item: Record<string, unknown>): boolean {
+  if (item.verification_status === 'expired' || item.verification_status === 'archived') return false;
+  if (!item.expires_at) return true;
+  const expiresAt = new Date(String(item.expires_at));
+  return !Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() > Date.now();
+}
+
 app.get('/api/news', async (_req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags')
-      .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase.from('news_articles')
+      .select(NEWS_ROW_GOVERNED)
+      .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(40));
+    if (error) {
+      // Pre-newsroom database: fall back to the legacy column set.
+      const fallback = await supabase.from('news_articles')
+        .select(NEWS_ROW_BASE)
+        .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(30);
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
-    res.json({ items: (data || []).map(item => ({ ...item, author: item.source_name || 'EduReach Editorial Desk', summary: item.excerpt, last_verified_at: item.updated_at, verification_status: 'verified', priority: 'normal' })) });
+    res.json({ items: (data || []).filter(isFreshArticle).slice(0, 30).map(newsArticleView) });
   } catch (error) {
     console.error('News API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -1290,11 +1563,22 @@ app.get('/api/news/:slug', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'News content is not configured.' });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('news_articles')
-      .select('id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags')
-      .eq('slug', req.params.slug).eq('published', true).maybeSingle();
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase.from('news_articles')
+      .select(NEWS_ROW_GOVERNED)
+      .eq('slug', req.params.slug).eq('published', true).maybeSingle());
+    if (error) {
+      const fallback = await supabase.from('news_articles')
+        .select(NEWS_ROW_BASE)
+        .eq('slug', req.params.slug).eq('published', true).maybeSingle();
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error || !data) return res.status(404).json({ error: 'News article not found.' });
-    res.json({ item: { ...data, author: data.source_name || 'EduReach Editorial Desk', summary: data.excerpt, last_verified_at: data.updated_at, verification_status: 'verified', priority: 'normal' } });
+    // An expired article stays readable by direct link, but is presented as
+    // expired so the student is not misled by stale deadlines.
+    res.json({ item: newsArticleView(data) });
   } catch (error) {
     console.error('News article API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -1345,11 +1629,13 @@ app.get('/api/cbt/exams', async (_req, res) => {
 
 app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   try {
-    const { supabase } = await requireUser(req);
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const subjects = Array.isArray(req.body?.subjects)
       ? req.body.subjects.map((value: unknown) => String(value).trim()).filter(Boolean)
       : [];
-    const { data, error } = await supabase.rpc('start_cbt_attempt_for_subjects', {
+    // The RPC resolves the student from the token, so the attempt is always
+    // created for the caller and never for a client-supplied user id.
+    const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_for_subjects', {
       p_exam_id: req.params.examId,
       p_subjects: subjects,
     });
@@ -1365,7 +1651,7 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   } catch (error) {
     console.error('CBT start API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /no questions|requires Use of English/i.test(message) ? 422 : 409;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : /not found/i.test(message) ? 404 : /no questions|requires Use of English/i.test(message) ? 422 : 409;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this CBT exam. Please try again.') });
   }
 });
@@ -1405,7 +1691,7 @@ app.get('/api/cbt/exams/:examId/guest-questions', async (req, res) => {
   }
 });
 
-app.post('/api/cbt/guest-submit', async (req, res) => {
+app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit), async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'CBT question bank is not configured.' });
   try {
     const examId = String(req.body?.examId || '').trim();
@@ -1490,12 +1776,14 @@ app.post('/api/cbt/guest-submit', async (req, res) => {
 
 app.post('/api/cbt/submit', async (req, res) => {
   try {
-    const { supabase } = await requireUser(req);
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const { attemptId, examId, answers } = req.body as { attemptId?: string; examId?: string; answers?: Record<string, unknown> };
     if (!attemptId || !examId || !answers || typeof answers !== 'object' || Array.isArray(answers)) {
       return res.status(400).json({ error: 'attemptId, examId and answers are required.' });
     }
-    const { data, error } = await supabase.rpc('submit_cbt_attempt_for_subjects', {
+    // Ownership (the attempt belongs to the caller) is enforced inside the RPC
+    // through auth.uid(); the server never passes a user id from the request.
+    const { data, error } = await rpcSupabase.rpc('submit_cbt_attempt_for_subjects', {
       p_attempt_id: attemptId,
       p_exam_id: examId,
       p_answers: answers,
@@ -1511,14 +1799,16 @@ app.post('/api/cbt/submit', async (req, res) => {
   } catch (error) {
     console.error('CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : /not found/i.test(message) ? 404 : /already been submitted/i.test(message) ? 409 : /expired/i.test(message) ? 409 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
   }
 });
 
 app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   try {
-    const { supabase, user } = await requireUser(req);
+    const { supabase, user } = await requireUser(req, 'cbt.attempt');
+    // Ownership: the row must belong to the caller. A mismatch is a 404, so the
+    // response never reveals that someone else's attempt exists.
     const { data: attempt, error } = await supabase
       .from('cbt_attempts')
       .select('id,current_question')
@@ -1529,14 +1819,14 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
     res.json({ answers: {}, questionIndex: Number.isInteger(attempt.current_question) ? attempt.current_question : 0 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load CBT progress.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : 400;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to load CBT progress.') });
   }
 });
 
 app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   try {
-    const { supabase, user } = await requireUser(req);
+    const { supabase, user } = await requireUser(req, 'cbt.attempt');
     const questionIndex = Number(req.body?.questionIndex);
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (Number.isInteger(questionIndex) && questionIndex >= 0) patch.current_question = questionIndex;
@@ -1550,7 +1840,7 @@ app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
     res.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : 400;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save CBT progress.') });
   }
 });
@@ -1680,11 +1970,11 @@ function validateContentRow(resource: ContentResource, input: Record<string, unk
 }
 function contentSelect(resource: ContentResource) { return resource.fields.map(f => f.name).join(','); }
 
-app.get('/api/admin/content-manager/resources', requireAdmin, (_req, res) => {
+app.get('/api/admin/content-manager/resources', requireCapability('data.read'), (_req, res) => {
   res.json({ resources: CONTENT_RESOURCES });
 });
 
-app.get('/api/admin/content-manager/data/:resource', requireAdmin, async (req, res) => {
+app.get('/api/admin/content-manager/data/:resource', requireCapability('data.read'), async (req, res) => {
   try {
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
@@ -1698,14 +1988,16 @@ app.get('/api/admin/content-manager/data/:resource', requireAdmin, async (req, r
   }
 });
 
-app.post('/api/admin/content-manager/data/:resource', requireAdmin, async (req, res) => {
+app.post('/api/admin/content-manager/data/:resource', requireCapability('data.write'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const values = validateContentRow(resource, req.body || {});
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from(resource.table).insert(values).select(contentSelect(resource)).single();
     if (error) throw error;
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: resource.table, resourceId: (data as { id?: string } | null)?.id ?? null });
     res.status(201).json({ row: data });
   } catch (error) {
     console.error('Content manager create error:', error);
@@ -1713,8 +2005,9 @@ app.post('/api/admin/content-manager/data/:resource', requireAdmin, async (req, 
   }
 });
 
-app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (req, res) => {
+app.patch('/api/admin/content-manager/data/:resource/:id', requireCapability('data.write'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const values = validateContentRow(resource, req.body || {});
@@ -1722,6 +2015,7 @@ app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from(resource.table).update(values).eq('id', req.params.id).select(contentSelect(resource)).single();
     if (error) throw error;
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: resource.table, resourceId: req.params.id });
     res.json({ row: data });
   } catch (error) {
     console.error('Content manager update error:', error);
@@ -1729,8 +2023,9 @@ app.patch('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (
   }
 });
 
-app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async (req, res) => {
+app.delete('/api/admin/content-manager/data/:resource/:id', requireCapability('data.write'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const supabase = getServerSupabase();
@@ -1741,6 +2036,7 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async 
       throw error;
     }
     if (!data) return res.status(404).json({ error: 'Record not found.' });
+    await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: resource.table, resourceId: req.params.id });
     res.json({ success: true });
   } catch (error) {
     console.error('Content manager delete error:', error);
@@ -1748,8 +2044,9 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireAdmin, async 
   }
 });
 
-app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req, res) => {
+app.post('/api/admin/content-manager/import/:resource', rateLimitFor(RATE_LIMIT_RULES.adminImport), requireCapability('data.import'), async (req, res) => {
   try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
     const resource = getContentResource(req.params.resource);
     if (!resource) return res.status(404).json({ error: 'Content resource not found.' });
     const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
@@ -1797,12 +2094,218 @@ app.post('/api/admin/content-manager/import/:resource', requireAdmin, async (req
         }
       }
     }
+        await recordAudit(supabase, { actorId: adminUser.id, action: 'import', resourceType: resource.table, metadata: { inserted, updated, errors: errors.length } });
     res.json({ inserted, updated, errors });
   } catch (error) {
     console.error('Content manager import error:', error);
     res.status(400).json({ error: publicErrorMessage(error, 'Unable to import data.') });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Newsroom: ingestion runs, review queue and content integrity.
+// ---------------------------------------------------------------------------
+
+app.post('/api/admin/newsroom/ingest', rateLimitFor(RATE_LIMIT_RULES.adminNewsroomRun), requireCapability('news.create'), async (req, res) => {
+  try {
+    // Defaults to a real run; pass dry_run: true to preview what would happen.
+    const dryRun = req.body?.dry_run === true || req.body?.dry_run === 'true';
+    const report = await runNewsroomRefresh({
+      triggeredBy: 'admin',
+      dryRun,
+      repairImages: req.body?.repair_images !== false,
+    });
+    res.json({ report });
+  } catch (error) {
+    console.error('Newsroom ingest error:', error);
+    res.status(503).json({ error: publicErrorMessage(error, 'Unable to run the newsroom refresh.') });
+  }
+});
+
+app.get('/api/admin/newsroom/runs', requireCapability('news.read'), async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('news_ingest_runs')
+      .select('id,started_at,finished_at,status,triggered_by,dry_run,sources_checked,sources_failed,candidates_found,duplicates,rejected,needs_review,published,images_repaired,expired,report,error')
+      .order('started_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Newsroom runs error:', error);
+    res.status(503).json({ error: 'Unable to load newsroom runs. Has the newsroom migration been applied?' });
+  }
+});
+
+app.get('/api/admin/newsroom/candidates', requireCapability('news.read'), async (req, res) => {
+  try {
+    const status = typeof req.query.status === 'string' && req.query.status.trim() ? req.query.status.trim() : 'needs_review';
+    const allowed = ['new', 'needs_review', 'approved', 'rejected', 'duplicate', 'published', 'failed'];
+    if (!allowed.includes(status)) return res.status(400).json({ error: 'Unsupported candidate status.' });
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('news_ingest_candidates')
+      .select('id,run_id,source_key,source_name,source_tier,source_url,canonical_url,title,excerpt,body,image_url,category,source_published_at,relevance_score,quality_score,quality_flags,review_notes,status,rejection_reason,article_id,created_at')
+      .eq('status', status)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+
+    const { count } = await supabase
+      .from('news_ingest_candidates')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'needs_review');
+
+    res.json({ items: data || [], pending_review: count ?? null });
+  } catch (error) {
+    console.error('Newsroom candidates error:', error);
+    res.status(503).json({ error: 'Unable to load the review queue. Has the newsroom migration been applied?' });
+  }
+});
+
+app.post('/api/admin/newsroom/candidates/:candidateId/approve', requireCapability('news.publish'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: candidate, error: candidateError } = await supabase
+      .from('news_ingest_candidates')
+      .select('*')
+      .eq('id', req.params.candidateId)
+      .maybeSingle();
+    if (candidateError) throw candidateError;
+    if (!candidate) return res.status(404).json({ error: 'Candidate not found.' });
+    if (candidate.article_id) return res.status(409).json({ error: 'This candidate has already been published.' });
+
+    const title = String(req.body?.title || candidate.title || '').trim();
+    const excerpt = req.body?.excerpt !== undefined ? String(req.body.excerpt || '').trim() || null : candidate.excerpt;
+    const body = String(req.body?.body || candidate.body || '').trim();
+    const category = String(req.body?.category || candidate.category || 'general').trim().toLowerCase();
+    const imageUrl = req.body?.image_url !== undefined ? safeContentUrl(req.body.image_url) : candidate.image_url;
+    if (!title || !body) return res.status(400).json({ error: 'A title and editorial summary are required before publishing.' });
+    const sourceUrl = safeContentUrl(candidate.source_url);
+    if (!sourceUrl) return res.status(400).json({ error: 'The candidate has no valid HTTPS source URL.' });
+
+    const now = new Date();
+    const publishedAt = candidate.source_published_at ? new Date(candidate.source_published_at) : now;
+    const publishedIso = Number.isFinite(publishedAt.getTime()) ? publishedAt.toISOString() : now.toISOString();
+
+    const articleRow: Record<string, unknown> = {
+      slug: await uniqueNewsSlug(supabase, slugifyTitle(title)),
+      title,
+      excerpt,
+      body,
+      category,
+      image_url: imageUrl,
+      source_name: candidate.source_name,
+      source_url: sourceUrl,
+      published: true,
+      published_at: publishedIso,
+      featured: false,
+      tags: normalizeTags(req.body?.tags) || candidate.category || null,
+      source_key: candidate.source_key,
+      source_tier: candidate.source_tier,
+      source_published_at: candidate.source_published_at,
+      last_verified_at: now.toISOString(),
+      verification_status: 'verified',
+      expires_at: expiresAtFor(category, new Date(publishedIso)),
+      content_hash: candidate.content_hash,
+      dedupe_key: candidate.dedupe_key,
+      ingest_candidate_id: candidate.id,
+      review_status: 'editor_approved',
+    };
+
+    const { data, error } = await supabase.from('news_articles').insert(articleRow).select(newsRowSelect).single();
+    if (error) {
+      if (String(error.code) === '23505') return res.status(409).json({ error: 'This story is already published.' });
+      throw error;
+    }
+
+    await supabase.from('news_ingest_candidates')
+      .update({ status: 'published', article_id: data.id, reviewed_by: adminUser.id, reviewed_at: now.toISOString(), updated_at: now.toISOString() })
+      .eq('id', candidate.id);
+    await supabase.rpc('admin_audit_log', {
+      p_admin_user_id: adminUser.id,
+      p_action: 'news_candidate_approve',
+      p_entity_type: 'news_ingest_candidate',
+      p_entity_id: candidate.id,
+      p_metadata: { slug: articleRow.slug, source_key: candidate.source_key },
+    });
+
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Newsroom approve error:', error);
+    res.status(500).json({ error: publicErrorMessage(error, 'Unable to publish this candidate.') });
+  }
+});
+
+app.post('/api/admin/newsroom/candidates/:candidateId/reject', requireCapability('news.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const reason = String(req.body?.reason || '').trim().slice(0, 500) || 'Rejected by editor.';
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('news_ingest_candidates')
+      .update({ status: 'rejected', rejection_reason: reason, reviewed_by: adminUser.id, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('id', req.params.candidateId)
+      .select('id,status,rejection_reason')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Candidate not found.' });
+    await supabase.rpc('admin_audit_log', {
+      p_admin_user_id: adminUser.id,
+      p_action: 'news_candidate_reject',
+      p_entity_type: 'news_ingest_candidate',
+      p_entity_id: req.params.candidateId,
+      p_metadata: { reason },
+    });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Newsroom reject error:', error);
+    res.status(500).json({ error: publicErrorMessage(error, 'Unable to reject this candidate.') });
+  }
+});
+
+app.get('/api/admin/integrity', requireCapability('data.read'), async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.rpc('content_integrity_report');
+    if (error) throw error;
+    res.json({ report: data });
+  } catch (error) {
+    console.error('Content integrity error:', error);
+    res.status(503).json({ error: 'Unable to build the integrity report. Has the newsroom migration been applied?' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Crawler surfaces. Registered for both the bare path (self-hosted Express and
+// Docker) and the /api path, because Netlify rewrites /robots.txt and
+// /sitemap.xml through the API function (see netlify.toml).
+// ---------------------------------------------------------------------------
+
+async function serveRobotsTxt(req: express.Request, res: express.Response) {
+  const origin = resolveSiteOrigin(req);
+  res.type('text/plain').setHeader('Cache-Control', 'public, max-age=86400');
+  res.send(buildRobotsTxt(origin));
+}
+
+async function serveSitemapXml(req: express.Request, res: express.Response) {
+  const origin = resolveSiteOrigin(req);
+  const client = isServerSupabaseConfigured() ? getServerSupabase() : null;
+  const entries = await collectSitemapEntries(client, origin, (source, error) => {
+    console.error(`Sitemap: ${source} entries unavailable:`, error instanceof Error ? error.message : error);
+  });
+  res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(buildSitemapXml(entries));
+}
+
+// Registered as separate string paths (not an array) so route introspection
+// such as the unauthenticated-access matrix in tests/api.test.ts keeps working.
+app.get('/robots.txt', serveRobotsTxt);
+app.get('/api/robots.txt', serveRobotsTxt);
+app.get('/sitemap.xml', serveSitemapXml);
+app.get('/api/sitemap.xml', serveSitemapXml);
 
 // Never let an unknown API method/path fall through to the SPA HTML shell.
 app.use('/api', (_req, res) => {

@@ -87,6 +87,9 @@ function resultMatches(result: SearchResult, query: string) {
 
 export default function SearchPage() {
   const lastSearchTrackedRef = useRef('');
+  // What the debounced tracker reports as the outcome of the search. A ref, not
+  // state, so the timeout effect does not re-run on every result update.
+  const resultCountRef = useRef(0);
   const [query, setQuery] = useState(readQuery);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [exams, setExams] = useState<CatalogExam[]>([]);
@@ -98,7 +101,9 @@ export default function SearchPage() {
     if (!term || term === lastSearchTrackedRef.current) return;
     const timer = window.setTimeout(() => {
       lastSearchTrackedRef.current = term;
-      trackEvent('search', { metadata: { q: term.slice(0, 120) } });
+      // AN-1: the term itself is never sent — a search box is where a student
+      // writes their name and their problem. Shape and outcome only.
+      trackEvent('search', { metadata: { query_length: term.length, result_count: resultCountRef.current } });
     }, 900);
     return () => window.clearTimeout(timer);
   }, [query]);
@@ -147,6 +152,10 @@ export default function SearchPage() {
   }, [allResults, query]);
 
   useEffect(() => {
+    resultCountRef.current = results.length;
+  }, [results]);
+
+  useEffect(() => {
     if (!query.trim() || !results.length) return;
     window.requestAnimationFrame(() => {
       const target = document.getElementById('search-result-0');
@@ -172,11 +181,11 @@ export default function SearchPage() {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '24px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '24px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '940px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841' }}>EDUREACH SEARCH</span>
+              <span className="hub-eyebrow" style={{ color: '#b14933' }}>EDUREACH SEARCH</span>
               <h1>{query ? `Search results for “${query}”` : 'Search EduReach'}</h1>
               <p>Find a direct destination across services, CBT, past questions, materials, news and opportunities.</p>
             </div>
@@ -206,7 +215,7 @@ export default function SearchPage() {
             ))}
           </div>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

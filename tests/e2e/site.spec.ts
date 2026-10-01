@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { annotateFailure } from './report';
 
 // These tests exercise the built production frontend without live credentials.
 // Empty/error states are expected; fabricated authentication is never accepted.
@@ -9,7 +10,8 @@ test.beforeEach(async ({ page }) => {
   await page.route('https://fonts.gstatic.com/**', route => route.abort());
   (page as any).runtimeErrors = errors;
 });
-test.afterEach(async ({ page }) => {
+test.afterEach(async ({ page }, testInfo) => {
+  annotateFailure(testInfo);
   expect((page as any).runtimeErrors).toEqual([]);
   await expect(page.getByRole('heading', { name: 'Page could not load', exact: true })).toHaveCount(0);
 });

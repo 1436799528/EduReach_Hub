@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="admin-table-wrap">
                   <table className="admin-table">
-                    <thead><tr><th>Student</th><th>Service</th><th>Status</th><th>Age</th><th>Action</th></tr></thead>
+                    <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
                     <tbody>
                       {attention.map((row) => (
                         <tr key={row.id}>
@@ -179,10 +179,10 @@ export default function AdminDashboardPage() {
                 <div className="admin-card">
                   <div className="admin-card-header"><h2>Where attention is going <SectionLabel /></h2><span>Real events</span></div>
                   <div className="admin-focus-body">
-                    {activity && (activity.topPages.length || activity.topSearches.length || activity.serviceSubmits.length || activity.cbtStarts.length) ? (
+                    {activity && (activity.topPages.length || activity.searches || activity.serviceSubmits.length || activity.cbtStarts.length) ? (
                       <>
                         <FocusGroup title="Most viewed pages" rows={activity.topPages.map((row) => ({ label: row.path, value: row.views }))} />
-                        <FocusGroup title="Top searches" rows={activity.topSearches.map((row) => ({ label: row.term, value: row.count }))} />
+                        <FocusGroup title="Searches" rows={[{ label: 'Searches performed', value: activity.searches }, { label: 'Found no result', value: activity.zeroResultSearches }]} />
                         <FocusGroup title="Most-started CBT exams" rows={activity.cbtStarts.map((row) => ({ label: row.exam, value: row.count }))} />
                         <FocusGroup title="Most-completed services" rows={activity.serviceSubmits.map((row) => ({ label: row.path, value: row.count }))} />
                       </>

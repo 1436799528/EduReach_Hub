@@ -1,5 +1,6 @@
 import { API_BASE_PATH } from '../../lib/apiBase';
 import { useEffect, useState, type ReactNode } from 'react';
+import { Can } from './Can';
 
 // Shared admin toolkit: small presentational building blocks and hooks reused
 // across the admin console (dashboard, analytics, queue). Any pattern that
@@ -157,20 +158,24 @@ export function RequestActions({ row, disabled, onAction }: {
   }
 
   if (!transitions.length) return <span className="muted">No action</span>;
+  // Processing a request is `service_request.process`; without it the console
+  // shows the status as read-only (the API refuses the call regardless).
   return (
-    <div className="admin-action-row">
-      {transitions.map((t) => (
-        <button
-          key={t.next}
-          type="button"
-          className={`admin-btn small ${t.kind || ''}`}
-          disabled={disabled || busy}
-          onClick={() => void run(t.next)}
-        >
-          {busy ? '…' : t.label}
-        </button>
-      ))}
-    </div>
+    <Can capability="service_request.process" fallback={<span className="muted">Read only</span>}>
+      <div className="admin-action-row">
+        {transitions.map((t) => (
+          <button
+            key={t.next}
+            type="button"
+            className={`admin-btn small ${t.kind || ''}`}
+            disabled={disabled || busy}
+            onClick={() => void run(t.next)}
+          >
+            {busy ? '…' : t.label}
+          </button>
+        ))}
+      </div>
+    </Can>
   );
 }
 

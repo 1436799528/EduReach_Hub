@@ -58,7 +58,7 @@ export default function ScreeningCalculatorPage() {
                 <h1 style={{ fontSize: '19px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
                   Screening Aggregate Calculator
                 </h1>
-                <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#64748b' }}>
+                <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#5e6c82' }}>
                   Enter your JAMB and Post-UTME scores to estimate your aggregate.
                 </p>
               </div>
@@ -87,7 +87,7 @@ export default function ScreeningCalculatorPage() {
                 >
                   {admissionMethodProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.school}</option>)}
                 </select>
-                <p style={{ margin: '6px 0 0', fontSize: '11.5px', color: '#64748b', lineHeight: 1.45 }}>{methodProfile.method}: {methodProfile.explanation}</p>
+                <p style={{ margin: '6px 0 0', fontSize: '11.5px', color: '#5e6c82', lineHeight: 1.45 }}>{methodProfile.method}: {methodProfile.explanation}</p>
               </div>
 
               <div
@@ -108,7 +108,7 @@ export default function ScreeningCalculatorPage() {
                     placeholder="0 – 400"
                     style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
                   />
-                  <small style={{ display: 'block', marginTop: '4px', color: '#64748b', fontWeight: 400, fontSize: '12px' }}>
+                  <small style={{ display: 'block', marginTop: '4px', color: '#5e6c82', fontWeight: 400, fontSize: '12px' }}>
                     Your JAMB score out of 400.
                   </small>
                 </label>
@@ -124,7 +124,7 @@ export default function ScreeningCalculatorPage() {
                     placeholder="0 – 100"
                     style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
                   />
-                  <small style={{ display: 'block', marginTop: '4px', color: '#64748b', fontWeight: 400, fontSize: '12px' }}>
+                  <small style={{ display: 'block', marginTop: '4px', color: '#5e6c82', fontWeight: 400, fontSize: '12px' }}>
                     Your screening score out of 100.
                   </small>
                 </label>
@@ -154,7 +154,7 @@ export default function ScreeningCalculatorPage() {
                     </label>
                   ))}
                 </div>
-                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: '#64748b', lineHeight: 1.5 }}>
+                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: '#5e6c82', lineHeight: 1.5 }}>
                   These are planning models, not a claim that every school uses them. Always confirm the current school brochure; some institutions use O-Level points, cut-offs or programme-specific requirements instead.
                 </p>
               </div>
@@ -188,7 +188,7 @@ export default function ScreeningCalculatorPage() {
                 </div>
               </div>
 
-              <div style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '11px', color: '#5e6c82', lineHeight: 1.5 }}>
                 <strong style={{ color: '#334155' }}>How it works:</strong> JAMB is first converted from 400 to 100, then the selected percentages are applied. For example, 240 JAMB becomes 60/100.
               </div>
             </div>

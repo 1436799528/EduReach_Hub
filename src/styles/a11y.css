@@ -1,0 +1,76 @@
+/*
+ * A11Y-1 — accessibility primitives that must win over the rest of the cascade.
+ *
+ * This file is imported LAST in src/main.tsx, and deliberately so. There are
+ * seventeen stylesheets in src/ and eleven of them reset `outline` on some
+ * focusable element; the previous focus indicator lived in the middle of that
+ * load order as `rgba(200, 88, 65, 0.24)` — about 1.3:1 against white, which is
+ * not a focus indicator anyone can see. One last-loaded owner makes the ring
+ * predictable and lets `tests/a11y.test.ts` assert it stays that way.
+ *
+ * See docs/features/A11Y-1.md.
+ */
+
+/* Skip link (WCAG 2.4.1). Off-screen until focused; fixed so no transformed
+   ancestor can become its containing block. */
+.er-skip-link {
+  position: fixed;
+  top: -64px;
+  left: 12px;
+  z-index: 3000;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  font: 800 13px/1.2 var(--er-font-sans, system-ui, sans-serif);
+  text-decoration: none;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  transition: top 0.15s ease;
+}
+
+.er-skip-link:focus,
+.er-skip-link:focus-visible {
+  top: 12px;
+}
+
+/* Focus indicator (WCAG 2.4.7 / 2.4.11).
+   Two tones: the dark ring reads on the light surfaces that dominate the app,
+   the white ring underneath reads on the dark header and sidebar. `:root` is
+   there to out-specify the `!important` resets in the earlier stylesheets. */
+:root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
+  outline: 3px solid #8f1d18 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #ffffff !important;
+}
+
+/* Dark surfaces: the white under-ring carries the indicator, so keep the dark
+   outline from sitting flush against a dark background. */
+:root :where(.hub-header, .hub-utility, .student-portal-header, .edureach-dash-sidebar, .er-mobile-bottom-nav) :where(a, button, [tabindex], [contenteditable]):focus-visible {
+  outline-color: #f8fafc !important;
+}
+
+/* Reduced motion (WCAG 2.3.3). src/edu-portal.css and src/image-card-system.css
+   already neutralise the skeleton and card animations by name; a global
+   duration reset is the belt-and-braces version, because a new keyframe defined
+   tomorrow would otherwise silently ignore the preference. Nothing in this app
+   conveys information through motion alone. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Target size (WCAG 2.5.8, AA). The password reveal buttons measured 16×16 —
+   below the 24×24 minimum — because they are icons positioned inside the
+   field. Sizing the button, rather than the icon, fixes the target. */
+:root :where(button[aria-label='Show password'], button[aria-label='Hide password']) {
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-grid;
+  place-items: center;
+}

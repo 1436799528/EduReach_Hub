@@ -147,7 +147,8 @@ export default function ScientificCalculator({ onClose }: { onClose: () => void 
         </button>
       </div>
 
-      <div className="er-calc-screen" onClick={() => inputRef.current?.focus()}>
+      {/* A label focuses its own input, so the old onClick-to-focus div becomes native behaviour. */}
+      <label className="er-calc-screen">
         <input
           ref={inputRef}
           className="er-calc-input"
@@ -167,7 +168,7 @@ export default function ScientificCalculator({ onClose }: { onClose: () => void 
         <div className={`er-calc-result${error ? ' is-error' : ''}`} aria-live="polite">
           {error || (result !== null ? `= ${result}` : '\u00a0')}
         </div>
-      </div>
+      </label>
 
       <div className="er-calc-keys">
         {KEYS.flat().map((key) => (

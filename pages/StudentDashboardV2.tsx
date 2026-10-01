@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Bell,
   Bookmark,
   Calculator,
   CheckSquare,
@@ -24,17 +25,23 @@ import BrandLogo from '../src/components/BrandLogo';
 import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
+import { trackEvent } from '../src/lib/api';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
+import SkipLink from '../src/components/a11y/SkipLink';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { pageTitleFor } from '../src/lib/pageMeta';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import {
   deleteSavedItem,
   fetchLatestCgpaSnapshot,
+  fetchNotifications,
+  markNotificationsRead,
+  type DashboardNotification,
   fetchSavedItems,
   upsertSavedItem,
   type CgpaCourseInput,
@@ -223,6 +230,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>([]);
+  const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>([]);
   const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
 
@@ -230,6 +239,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
+
+  // A11Y-1: the account sheet is a dialog, so it behaves like one.
+  const accountSheetRef = useModalDialog<HTMLDivElement>(accountSheetOpen, () => setAccountSheetOpen(false));
   const focusedRequestReference = new URLSearchParams(window.location.search).get('ref') || '';
 
   /* ---------------- data ---------------- */
@@ -278,12 +290,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         setRequests(readLocalServiceRequests());
         setAttempts(readLocalCbtAttempts());
         setSavedItems(readLocalSavedItems());
+        setNotifications([]);
         setLoading(false);
         return;
       }
 
       const user = session.user;
-      const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot] = await Promise.all([
+      const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot, notificationResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
         supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url').order('school_name').limit(400),
@@ -291,6 +304,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         supabase.from('cbt_attempts').select('id,exam_id,status,score,correct_answers,total_questions,submitted_at,created_at,expires_at,current_question').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
         fetchSavedItems(user.id),
         fetchLatestCgpaSnapshot(user.id),
+        fetchNotifications(user.id),
       ]);
       if (!active) return;
 
@@ -322,6 +336,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       setAttempts((attemptsResult.data || []) as Attempt[]);
       setSavedItems(savedResult);
       setLatestCgpaSnapshot(cgpaSnapshot);
+      setNotifications(notificationResult);
       if (cgpaSnapshot?.courses?.length) setCgpaCourses(cgpaSnapshot.courses);
       setLoading(false);
     }
@@ -331,6 +346,23 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const unreadNotifications = notifications.filter((item) => !item.read).length;
+
+  async function markAllNotificationsRead() {
+    if (!unreadNotifications || notificationsBusy || !userId) return;
+    setNotificationsBusy(true);
+    setNotice('');
+    try {
+      await markNotificationsRead(userId);
+      // Mark by the same predicate the list uses, so the badge and the rows agree.
+      setNotifications((current) => current.map((item) => (item.read ? item : { ...item, read: true })));
+    } catch {
+      setNotice('We could not update your notifications. Please try again.');
+    } finally {
+      setNotificationsBusy(false);
+    }
+  }
 
   /* ---------------- tabs & URL ---------------- */
   const openTab = (tab: DashboardTab) => {
@@ -449,7 +481,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px', textAlign: 'center', maxWidth: '420px' }}>
           <div style={{ margin: '0 auto 12px', display: 'flex', justifyContent: 'center' }}><BrandLogo height={48} radius="50%" /></div>
           <h1 style={{ margin: '0 0 6px', fontSize: '18px', color: '#0f172a' }}>Loading your dashboard…</h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Checking your session and syncing your records.</p>
+          <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Checking your session and syncing your records.</p>
         </div>
       </div>
     );
@@ -483,7 +515,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <div className="dash-table-wrap dash-desktop-only">
         <table className="dash-table">
-          <thead><tr><th>Reference</th><th>Request</th><th>Type</th><th>Status</th><th>Date</th><th /></tr></thead>
+          <thead><tr><th scope="col">Reference</th><th scope="col">Request</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Date</th><th scope="col" /></tr></thead>
           <tbody>{rows.map((row) => (
             <tr key={row.id} id={`request-${row.reference_code}`}>
               <td className="dash-mono">{row.reference_code}</td>
@@ -512,7 +544,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <div className="dash-table-wrap dash-desktop-only">
         <table className="dash-table">
-          <thead><tr><th>Test</th><th>Score</th><th>Correct</th><th>Date</th><th /></tr></thead>
+          <thead><tr><th scope="col">Test</th><th scope="col">Score</th><th scope="col">Correct</th><th scope="col">Date</th><th scope="col" /></tr></thead>
           <tbody>{rows.map((row) => {
             const active = isActiveCbtAttempt(row);
             const resumeHref = `/cbt/practice?exam=${encodeURIComponent(row.exam_id || '')}`;
@@ -584,7 +616,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
       <div className="dash-quick-grid">
         <a href="/cbt" className={`dash-quick-card ${identityClassFor('cbt', 'service')}`}>
-          <div className="dash-quick-card-top"><MonitorPlay size={18} color="#C85841" /></div>
+          <div className="dash-quick-card-top"><MonitorPlay size={18} color="#b14933" /></div>
           <h3 className="dash-quick-card-title">Start a CBT test</h3>
           <span className="dash-quick-card-sub">JAMB • WAEC • NECO • Post-UTME</span>
         </a>
@@ -594,7 +626,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-quick-card-sub">NELFUND, results, slips</span>
         </a>
         <a href="/dashboard/services" className={`dash-quick-card ${identityClassFor('track request', 'service')}`}>
-          <div className="dash-quick-card-top"><ScanSearch size={18} color="#059669" /></div>
+          <div className="dash-quick-card-top"><ScanSearch size={18} color="#047857" /></div>
           <h3 className="dash-quick-card-title">Track a request</h3>
           <span className="dash-quick-card-sub">Live status by reference</span>
         </a>
@@ -604,6 +636,42 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-quick-card-sub">Estimate your aggregate</span>
         </a>
       </div>
+
+      <section className="dash-card">
+        <div className="dash-card-header">
+          <h2 className="dash-card-title"><Bell size={14} className="dash-card-title-icon" /> Notifications</h2>
+          {unreadNotifications > 0 && (
+            <button type="button" className="dash-card-link" onClick={markAllNotificationsRead} disabled={notificationsBusy}>
+              {notificationsBusy ? 'Marking…' : `Mark all as read (${unreadNotifications})`}
+            </button>
+          )}
+        </div>
+        {notifications.length ? (
+          <ul className="dash-rows">
+            {notifications.slice(0, 4).map((item) => (
+              <li key={item.id} className={`dash-row ${item.read ? '' : 'dash-notification-unread'}`}>
+                <div className="dash-row-top">
+                  <strong className="dash-row-title">
+                    {!item.read && <span className="dash-notification-dot" aria-label="Unread" />}
+                    {item.title}
+                  </strong>
+                  <span className="dash-row-meta">{item.time}</span>
+                </div>
+                {item.body && <p className="dash-request-description">{item.body}</p>}
+                {item.href && (
+                  <a
+                    className="dash-card-link"
+                    href={item.href}
+                    onClick={() => trackEvent('notification_open', { metadata: { status: item.status } })}
+                  >
+                    Open
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : emptyState('No notifications yet. When a service request you submitted changes status, it appears here.', '/services', 'Browse services')}
+      </section>
 
       <section className="dash-card">
         <div className="dash-card-header">
@@ -711,6 +779,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   /* ---------------- render ---------------- */
   return (
     <div className="edureach-dash-container">
+      <SkipLink />
       {adminStudentView && (
         <div className="er-admin-view-banner" role="note">
           <span>Admin preview — you are browsing the student portal as a student.</span>
@@ -768,7 +837,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           {accountLinks}
         </aside>
 
-        <main className="edureach-dash-main" id="dashboard-main">
+        <main className="edureach-dash-main" id="main-content" tabIndex={-1}>
           {error && <div className="dash-note is-error">{error}</div>}
           {notice && (
             <div className="dash-note is-error" style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
@@ -794,8 +863,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </nav>
 
       {accountSheetOpen && (
-        <div className="dash-sheet-backdrop" onClick={() => setAccountSheetOpen(false)}>
-          <div className="dash-sheet" role="dialog" aria-label="Account" onClick={(e) => e.stopPropagation()}>
+        // Redundant pointer affordance: the Account button toggles the sheet and Escape closes it.
+        <div className="dash-sheet-backdrop" role="presentation" onClick={() => setAccountSheetOpen(false)}>
+          <div ref={accountSheetRef} tabIndex={-1} className="dash-sheet" role="dialog" aria-modal="true" aria-label="Account" onClick={(e) => e.stopPropagation()}>
             <div className="dash-sheet-head">
               <div className="edureach-dash-avatar">{avatar}</div>
               <div>

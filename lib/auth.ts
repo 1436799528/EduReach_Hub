@@ -1,14 +1,32 @@
 import { getServerSupabaseKey } from './supabase-config';
 import { createClient, type User } from '@supabase/supabase-js';
+import {
+  capabilitiesForRole,
+  isStaffRole,
+  resolveAppRole,
+  type AppRole,
+  type Capability,
+} from '../src/lib/capabilities';
 
+/**
+ * The resolved caller. Everything authorization needs is derived here, from the
+ * validated Supabase session plus the trusted `profiles` row:
+ *
+ *  - `role`      coarse, kept for existing call sites and tests ('admin' | 'student');
+ *  - `appRole`   the application role used for capability lookups;
+ *  - `capabilities` the resolved capability list (see src/lib/capabilities.ts).
+ *
+ * User-editable `user_metadata` is never consulted for authorization.
+ */
 export interface UserPayload {
   id: string;
   email: string;
   fullName: string;
   role: 'admin' | 'student';
+  appRole: AppRole;
+  capabilities: Capability[];
 }
 
-const ADMIN_ROLES = new Set(['admin', 'super_admin', 'moderator']);
 type ServerSupabase = ReturnType<typeof createClient> | null;
 
 function getServerSupabase(): ServerSupabase {
@@ -31,25 +49,31 @@ export async function verifyJWT(token: string): Promise<UserPayload | null> {
   if (error || !data.user) return null;
 
   const user = data.user as User;
-  const { data: profileData } = await supabase
+  const { data: profileData, error: profileError } = await supabase
     .from('profiles')
     .select('role, full_name')
     .eq('id', user.id)
     .maybeSingle();
+  // A missing or unreadable profile row must never grant staff access.
+  if (profileError) return null;
   const profile = profileData as { role?: unknown; full_name?: unknown } | null;
 
-  const profileRole = String(profile?.role || 'student');
-  const role: UserPayload['role'] = ADMIN_ROLES.has(profileRole) ? 'admin' : 'student';
+  const appRole = resolveAppRole(profile?.role);
+  const capabilities = [...capabilitiesForRole(appRole)];
 
   return {
     id: user.id,
     email: user.email || '',
     fullName: String(profile?.full_name || user.user_metadata?.full_name || ''),
-    role,
+    role: isStaffRole(appRole) ? 'admin' : 'student',
+    appRole,
+    capabilities,
   };
 }
 
+/** Any staff capability means the account may use the admin console. */
 export async function verifyAdminToken(token: string) {
   const user = await verifyJWT(token);
-  return user?.role === 'admin' ? user : null;
+  if (!user) return null;
+  return isStaffRole(user.appRole) ? user : null;
 }

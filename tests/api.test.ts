@@ -37,9 +37,13 @@ for (const { method, path } of adminRoutes) {
     assert.deepEqual(await response.json(), { error: 'Authentication required.' });
   });
 }
-test('invalid admin token cannot establish a session', async () => {
+test('an unverifiable admin token is treated as unauthenticated (401, not 403)', async () => {
+  // ROLE-1: 401 means "we could not authenticate you"; 403 is reserved for a
+  // signed-in account that lacks the capability. An unverifiable bearer token
+  // is not a session, so it must not reach the authorization stage.
   const response = await fetch(`${base}/api/admin/session`, { headers: { Authorization: 'Bearer fake' } });
-  assert.equal(response.status, 403);
+  assert.equal(response.status, 401);
+  assert.deepEqual(await response.json(), { error: 'Invalid or expired session.' });
 });
 for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
   test(`unknown API ${method} remains JSON 404`, async () => {

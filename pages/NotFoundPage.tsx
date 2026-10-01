@@ -34,7 +34,7 @@ export default function NotFoundPage() {
             <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>
               Page Not Found
             </h1>
-            <p style={{ fontSize: '13.5px', color: '#64748b', margin: '0 0 24px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '13.5px', color: '#5e6c82', margin: '0 0 24px', lineHeight: 1.5 }}>
               The page you are looking for does not exist, has been moved, or the link may have expired. Jump directly to verified portal areas below:
             </p>
 
@@ -42,7 +42,7 @@ export default function NotFoundPage() {
               <a
                 className="hub-primary-btn"
                 href="/"
-                style={{ textDecoration: 'none', background: '#C85841', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                style={{ textDecoration: 'none', background: '#b14933', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
                 <Home size={15} /> Portal Home
               </a>

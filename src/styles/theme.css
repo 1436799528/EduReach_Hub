@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 /* ========================================================================
    EduReach Hub — Official Color & Theme Design System
    Academic Blue + Institutional Navy + Crimson Action + Tangerine Energy
@@ -11,7 +9,7 @@
   --er-font-mono: var(--er-font-sans);
 
   /* 1. Primary — Academic Crimson */
-  --er-crimson: #C85841;
+  --er-crimson: #b14933;
   --er-crimson-deep: #B3331A;
 
   /* 2. Secondary — Academic Tangerine */
@@ -32,15 +30,15 @@
 
   /* 5. Supporting Colors */
   --er-burgundy: #54080C;
-  --er-success: #16A34A;
+  --er-success: #047857;
   --er-success-soft: #EAF8EE;
-  --er-gold: #CA8A04;
+  --er-gold: #9a5f00;
   --er-gold-soft: #FFF8DF;
 
   /* 6. Text Colors */
   --er-text-primary: #131B2E;
   --er-text-secondary: #5B403B;
-  --er-text-muted: #64748B;
+  --er-text-muted: #5e6c82;
   --er-text-inverse: #FFFFFF;
 
   /* 7. Border & Divider Colors */

@@ -1,7 +1,9 @@
 import { userFacingError } from '../lib/errors';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
-import { adminApiFetch, fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, type AdminUser, type AdminUserActivity } from '../src/lib/api';
+import { fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, updateAdminUserRole, type AdminUser, type AdminUserActivity } from '../src/lib/api';
+import { Can } from '../src/components/admin/Can';
 import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 
 function profileCompletion(p: AdminUser): number {
@@ -36,6 +38,20 @@ export default function AdminUsersPage() {
 
   async function loadList(search: string) { await load(search); }
 
+  async function changeRole(profile: AdminUser, role: string) {
+    if (role === profile.role) return;
+    const confirmed = window.confirm(`Change ${profile.full_name || 'this account'} from ${profile.role} to ${role}? Capabilities change on their next request.`);
+    if (!confirmed) return;
+    setBusyId(profile.id);
+    try {
+      await updateAdminUserRole(profile.id, role);
+      await loadList(query);
+      setMessage(`Role updated to ${role}. The change is recorded in the audit trail.`);
+    } catch (e) {
+      setError(userFacingError(e, 'Unable to change the account role.'));
+    } finally { setBusyId(null); }
+  }
+
   async function toggleSuspend(p: AdminUser) {
     const suspend = !p.suspended;
     const confirmation = window.confirm(suspend
@@ -67,6 +83,9 @@ export default function AdminUsersPage() {
     }
   }
 
+  // A11Y-1: focus enters the activity panel, Tab stays inside it, Escape closes it.
+  const activityDialogRef = useModalDialog<HTMLDivElement>(Boolean(viewing), () => setViewing(null));
+
   useEffect(() => {
     const timer = window.setTimeout(() => load(query), 250);
     return () => window.clearTimeout(timer);
@@ -80,7 +99,7 @@ export default function AdminUsersPage() {
             <p>Review student profiles and staff roles through the protected admin API.</p>
           </div>
           <div className="admin-header-actions">
-            <button type="button" className="admin-btn secondary-dark" onClick={() => void load(query)} disabled={loading}><RefreshCw size={14} /></button>
+            <button type="button" className="admin-btn secondary-dark" onClick={() => void load(query)} disabled={loading} aria-label="Refresh student accounts"><RefreshCw size={14} /></button>
             <input
               className="admin-input admin-search"
               aria-label="Search student accounts"
@@ -99,14 +118,14 @@ export default function AdminUsersPage() {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Institution</th>
-                  <th>Department</th>
-                  <th>Level</th>
-                  <th>Role</th>
-                  <th>Profile</th>
-                  <th>Joined</th>
-                  <th className="right">Actions</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Institution</th>
+                  <th scope="col">Department</th>
+                  <th scope="col">Level</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Profile</th>
+                  <th scope="col">Joined</th>
+                  <th scope="col" className="right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,14 +155,29 @@ export default function AdminUsersPage() {
                       <td className="right">
                         <div className="admin-action-row">
                           <button type="button" className="admin-btn small" onClick={() => void openActivity(p)}>View</button>
-                          <button
-                            type="button"
-                            className={`admin-btn small ${p.suspended ? '' : 'danger'}`}
-                            disabled={busyId === p.id}
-                            onClick={() => void toggleSuspend(p)}
-                          >
-                            <Ban size={12} /> {p.suspended ? 'Unsuspend' : 'Suspend'}
-                          </button>
+                          <Can capability="user.suspend">
+                            <button
+                              type="button"
+                              className={`admin-btn small ${p.suspended ? '' : 'danger'}`}
+                              disabled={busyId === p.id}
+                              onClick={() => void toggleSuspend(p)}
+                            >
+                              <Ban size={12} /> {p.suspended ? 'Unsuspend' : 'Suspend'}
+                            </button>
+                          </Can>
+                          <Can capability="user.manage_roles">
+                            <select
+                              aria-label={`Role for ${p.full_name || p.id}`}
+                              className="admin-select"
+                              value={p.role}
+                              disabled={busyId === p.id}
+                              onChange={(e) => void changeRole(p, e.target.value)}
+                            >
+                              {['student', 'content_editor', 'service_admin', 'super_admin'].map((role) => (
+                                <option key={role} value={role}>{role}</option>
+                              ))}
+                            </select>
+                          </Can>
                         </div>
                       </td>
                     </tr>
@@ -163,7 +197,7 @@ export default function AdminUsersPage() {
 
         {viewing && (
           <div className="admin-modal-backdrop" onClick={() => setViewing(null)} role="presentation">
-            <div className="admin-modal" role="dialog" aria-modal="true" aria-label={`Activity for ${viewing.full_name || 'student'}`} onClick={(e) => e.stopPropagation()}>
+            <div ref={activityDialogRef} tabIndex={-1} className="admin-modal" role="dialog" aria-modal="true" aria-label={`Activity for ${viewing.full_name || 'student'}`} onClick={(e) => e.stopPropagation()}>
               <div className="admin-card-header">
                 <h2>{viewing.full_name || 'Unnamed student'} — activity</h2>
                 <button type="button" className="admin-text-btn" onClick={() => setViewing(null)}>Close</button>
@@ -179,7 +213,7 @@ export default function AdminUsersPage() {
                     <h3 style={{ margin: '0 0 8px', color: 'var(--admin-navy)', fontSize: 14 }}>Service requests</h3>
                     <div className="admin-table-wrap" style={{ marginBottom: 18 }}>
                       <table className="admin-table">
-                        <thead><tr><th>Reference</th><th>Service</th><th>Status</th><th>Date</th></tr></thead>
+                        <thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Date</th></tr></thead>
                         <tbody>
                           {viewingActivity.requests.map((row) => (
                             <tr key={row.id}>
@@ -196,7 +230,7 @@ export default function AdminUsersPage() {
                     <h3 style={{ margin: '0 0 8px', color: 'var(--admin-navy)', fontSize: 14 }}>CBT attempts</h3>
                     <div className="admin-table-wrap">
                       <table className="admin-table">
-                        <thead><tr><th>Exam</th><th>Status</th><th>Score</th><th>Started</th></tr></thead>
+                        <thead><tr><th scope="col">Exam</th><th scope="col">Status</th><th scope="col">Score</th><th scope="col">Started</th></tr></thead>
                         <tbody>
                           {viewingActivity.attempts.map((row) => (
                             <tr key={row.id}>

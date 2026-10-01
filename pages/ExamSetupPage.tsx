@@ -12,7 +12,7 @@ import {
   secondarySubjectTracks,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtExams } from '../src/lib/api';
+import { fetchCbtExams, trackEvent } from '../src/lib/api';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { durationOptionsFor, resolveSetupExam, type CatalogExam } from '../src/lib/cbt-config';
 
@@ -161,6 +161,12 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   }, [courseName, department, exam, jambSubjects, schoolId, schoolSubjects, secondarySubjects, secondaryTrack]);
 
   useEffect(() => {
+    // AN-1: which exam bodies reach the setup wizard — the step before any
+    // attempt starts, which is where a funnel loses people.
+    trackEvent('cbt_setup_view', { metadata: { mode: exam } });
+  }, [exam]);
+
+  useEffect(() => {
     if (!isSupabaseConfigured) {
       setExamsLoading(false);
       return;
@@ -300,10 +306,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '22px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '22px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
           <section className="er-setup-hero">
-            <div className="er-setup-hero-mark"><img src={copy.logo} alt={`${exam.toUpperCase()} logo`} width={48} height={48} /></div>
+            <div className="er-setup-hero-mark"><img src={copy.logo} alt={`${exam.toUpperCase()} logo`} width={48} height={48} decoding="async" /></div>
             <div>
               <span className="hub-eyebrow">{copy.eyebrow}</span>
               <h1>{copy.title}</h1>
@@ -466,7 +472,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </div>
           </section>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

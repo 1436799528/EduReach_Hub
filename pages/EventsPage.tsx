@@ -33,15 +33,15 @@ export default function EventsPage() {
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '22px 0 64px' }}>
+      <div className="hub-page" style={{ padding: '22px 0 64px' }}>
         <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#C85841' }}>NOTICEBOARD CALENDAR</span>
+              <span className="hub-eyebrow" style={{ color: '#b14933' }}>NOTICEBOARD CALENDAR</span>
               <h1>Upcoming events</h1>
               <p>Only future deadlines and examination events published through the EduReach calendar appear here.</p>
             </div>
-            <CalendarDays size={28} color="#C85841" aria-hidden="true" />
+            <CalendarDays size={28} color="#b14933" aria-hidden="true" />
           </div>
 
           {loading && <SkeletonRows rows={4} label="Loading upcoming events" />}
@@ -58,7 +58,7 @@ export default function EventsPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

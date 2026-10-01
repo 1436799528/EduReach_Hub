@@ -2,8 +2,9 @@ import { lazy, Suspense, useEffect, useRef, useState, useTransition } from 'reac
 import ErrorBoundary from './ErrorBoundary';
 import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
-import { pageTitleFor } from '../lib/pageMeta';
+import { applyRouteSeo } from '../lib/seoMeta';
 import { API_BASE_PATH } from '../lib/apiBase';
+import { trackEvent } from '../lib/api';
 
 // The admin console keeps ONE mounted shell (sidebar, top bar, session state)
 // across every /admin route; only the inner content area re-renders. This is
@@ -26,33 +27,6 @@ function readLocation() {
     pathname: window.location.pathname,
     routeKey: `${window.location.pathname}${window.location.search}`,
   };
-}
-
-function analyticsSessionId() {
-  const key = 'edureach-analytics-session';
-  try {
-    const existing = sessionStorage.getItem(key);
-    if (existing) return existing;
-    const value = crypto.randomUUID();
-    sessionStorage.setItem(key, value);
-    return value;
-  } catch {
-    return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }
-}
-
-function recordPageView(pathname: string) {
-  void fetch(`${API_BASE_PATH}/analytics/event`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    keepalive: true,
-    body: JSON.stringify({
-      event_name: 'page_view',
-      path: pathname,
-      session_id: analyticsSessionId(),
-      referrer: document.referrer || null,
-    }),
-  }).catch(() => undefined);
 }
 
 export default function App() {
@@ -131,8 +105,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.title = `EduReach — ${pageTitleFor(locationState.pathname)}`;
-    recordPageView(locationState.pathname);
+    // Title, meta description, canonical URL, Open Graph/Twitter tags and the
+    // noindex directive for private routes all come from one place. Pages with
+    // their own record (article, institution) refine this after data loads.
+    applyRouteSeo(locationState.pathname);
+    trackEvent('page_view', { path: locationState.pathname });
   }, [locationState.pathname]);
 
   return (

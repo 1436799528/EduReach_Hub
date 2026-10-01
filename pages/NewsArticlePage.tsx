@@ -2,9 +2,10 @@ import { userFacingError } from '../lib/errors';
 import { ArrowLeft, CheckCircle2, ExternalLink, Newspaper, Share2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import { fetchNews, fetchNewsItem, type NewsItem } from '../src/lib/api';
+import { fetchNews, fetchNewsItem, trackEvent, type NewsItem } from '../src/lib/api';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { newsCategoryLabel } from '../src/data/newsCategories';
+import { applySeo, seoForArticle } from '../src/lib/seoMeta';
 import { formatNewsDate, NewsRow } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
 
@@ -56,11 +57,35 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
     setError('');
     setItem(null);
     void fetchNewsItem(slug)
-      .then((article) => active && setItem(article))
+      .then((article) => {
+        if (!active) return;
+        setItem(article);
+        // AN-1: which articles are actually read, not just listed.
+        trackEvent('news_view', { metadata: { slug: article.slug, category: article.category || undefined } });
+      })
       .catch((value) => active && setError(userFacingError(value, 'Unable to load this article.')))
       .finally(() => active && setLoading(false));
     return () => { active = false; };
   }, [slug]);
+
+  useEffect(() => {
+    if (!item) return;
+    // Article-level metadata: headline, summary, image, publication dates and
+    // the source citation. An expired article is deliberately left uncanonical
+    // and noindex so stale deadlines do not keep ranking.
+    applySeo(seoForArticle({
+      slug: item.slug,
+      title: item.title,
+      excerpt: item.summary,
+      image_url: item.image_url,
+      category: item.category,
+      source_name: item.source_name,
+      published_at: item.published_at,
+      updated_at: item.updated_at || item.last_verified_at,
+      expires_at: item.expires_at,
+      verification_status: item.verification_status,
+    }));
+  }, [item]);
 
   useEffect(() => {
     if (!item) return;
@@ -114,6 +139,8 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                   className="er-news-hero"
                   src={safeImageUrl}
                   alt={item.title}
+                  fetchPriority="high"
+                  decoding="async"
                   onError={(event) => {
                     const element = event.currentTarget;
                     element.onerror = null;

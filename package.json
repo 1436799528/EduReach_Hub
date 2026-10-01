@@ -13,8 +13,19 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm test && npm run build && npm run test:e2e && npm audit --audit-level=low",
-    "ci": "npm run check"
+    "check": "npm run ci",
+    "ci": "npm run typecheck && npm test && npm run schema:audit && npm run build && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run audit:ci",
+    "newsroom:run": "tsx scripts/newsroom.ts",
+    "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
+    "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
+    "schema:audit": "tsx scripts/schema-audit.ts",
+    "perf:audit": "tsx scripts/perf-audit.ts",
+    "audit:ci": "npm audit --audit-level=low",
+    "analytics:audit": "tsx scripts/analytics-audit.ts",
+    "prod:validate": "tsx scripts/prod-validate.ts",
+    "analytics:retention": "tsx scripts/analytics-retention.ts",
+    "rls:audit": "tsx scripts/rls-posture.ts",
+    "a11y:audit": "tsx scripts/a11y-audit.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -39,6 +50,8 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@types/jsdom": "^30.0.0",
     "@types/react": "^19.2.18",

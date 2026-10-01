@@ -2,6 +2,18 @@
 
 EduReach Hub is a student-focused platform for Nigerian tertiary students, combining student services, CBT practice, verified academic updates and student opportunities in one responsive workspace.
 
+## Product & system architecture
+
+The authoritative product architecture — product definition, information
+architecture, data model, roles and permissions, user journeys, business rules,
+design-system requirements, the feature catalogue with build order, and the
+required feature template — lives in [`docs/architecture/`](docs/architecture/).
+
+Implementation follows it **one connected feature at a time**: the feature is
+documented first, then built end to end, then validated. Open decisions and the
+recommended next feature are listed in
+[`docs/architecture/README.md`](docs/architecture/README.md).
+
 ## Application architecture
 
 The browser entry point is `src/main.tsx`, which renders `src/app/App.tsx`. The active frontend is React + Vite with an Express production server. Supabase provides authentication and database access; server-side endpoints handle trusted operations such as CBT scoring and protected administration.
@@ -57,18 +69,51 @@ Key tables include:
 
 ### Server API
 
-- `GET /api/health` — service health/configuration check
+- `GET /api/health` — liveness check
+- `GET /api/health/ready` — readiness/dependency check (database reachability and latency)
 - `GET /api/news` — verified published announcements
 - `GET /api/news/:slug` — verified announcement detail
 - `GET /api/cbt/exams/:examId/questions` — authenticated active-exam questions without answer keys
 - `POST /api/cbt/submit` — authenticated server-side scoring and attempt persistence
 - `/api/admin/*` — protected administrative endpoints
+- `/api/admin/newsroom/*` — ingestion runs, review queue, manual runs
+- `/api/admin/integrity` — content integrity report (news, CBT, opportunities, institutions)
 
 ### Security rules
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` to the browser. Browser code uses the Supabase publishable key only. Authentication is enforced before service requests, student dashboards and CBT submissions.
 
 Service request references are unique, and a student cannot have two concurrent in-progress attempts for the same CBT exam. CBT answer keys are not browser-readable.
+
+## Newsroom automation
+
+`netlify/functions/daily-news-refresh.ts` runs daily and is the full ingestion
+pipeline — source discovery, fetch, parse, deduplicate, classify, quality gate,
+publish or queue for review — followed by image repair and the freshness sweeps.
+It replaces the earlier image-only job, which is why "daily refresh" previously
+did not mean "daily news".
+
+Editorial rules: Tier 1 official sources (JAMB, WAEC, NECO, NABTEB, NELFUND,
+NUC, NBTE, TETFund, the Federal Ministry of Education, NYSC) may publish
+automatically when relevance and the quality gate pass with no warnings.
+Everything else waits in **Admin → Newsroom CMS → Ingestion review queue** for a
+human decision. Stories carry provenance (source key, tier, source publication
+time, last verified time, verification state) and an expiry date, so stale
+deadline news stops being shown as current.
+
+```bash
+npm run newsroom:run                 # one real ingestion run
+npm run newsroom:run -- --dry-run    # decisions only, no writes
+npm run newsroom:check               # probe every source, record health
+npm run newsroom:integrity           # content integrity report
+```
+
+Full policy, dedupe signals, rate limits and failure modes:
+[`docs/NEWSROOM_PIPELINE.md`](docs/NEWSROOM_PIPELINE.md). Apply
+`supabase/migrations/20260930120000_newsroom_ingestion_pipeline.sql` before the
+first run; the scheduled function and the console degrade gracefully (with a log
+line) until it is applied. Deployment platform decision (audit P0-4):
+[`docs/DEPLOYMENT_DECISION.md`](docs/DEPLOYMENT_DECISION.md).
 
 ## Environment
 
@@ -107,23 +152,80 @@ outputs and their Node runtime dependencies.
 
 ## Automated quality gate
 
+The authoritative gate is `npm run ci` (kept as `npm run check` for older
+documentation). It runs, in order:
+
 ```bash
-npm ci
-npx playwright install --with-deps chromium
-npm run check
+npm ci            # the workflow installs; `npm run ci` assumes it
+npm run typecheck
+npm test
+npm run schema:audit
+npm run build
+npm run test:e2e
+npm run audit:ci
 ```
 
-`check` runs TypeScript checking, Node-based unit/API/security regression tests,
-a production build, desktop/mobile Chromium smoke and interaction tests, and
-`npm audit --audit-level=low`. The existing GitHub CI still runs type checking
-and the production build. The expanded CI workflow is retained locally pending
-GitHub Workflows write permission; run the full gate locally before merging.
-Individual commands:
+`typecheck` is a real `tsc --noEmit` (the legacy `npm run lint` alias points at
+it; this is not ESLint). `test` runs the Node-based unit/API/security regression
+suites, including the newsroom pipeline, rate limiting, SEO, authorization, NTF-1
+and BASE-1's schema tests — and `tests/migrations.test.ts`, which applies every
+migration in order to a **real PostgreSQL engine** (a PostgreSQL build compiled
+to WebAssembly, `@electric-sql/pglite`, bundled with the dev dependencies and
+running offline) and then asserts the tables, functions, columns, RLS state and
+signup trigger the application needs. `schema:audit` is the BASE-1 check that the
+static migration history builds the database the application expects.
+`test:e2e` is the desktop/mobile Chromium suite — it needs an **unconfigured**
+build (no `VITE_SUPABASE_*` credentials), not a production account, and it boots
+the server on port 3100 itself. `audit:ci` is `npm audit --audit-level=low`.
 
-- `npm run typecheck` (also available as the legacy `npm run lint`; this is not ESLint)
-- `npm test`
-- `npm run build && npm run test:e2e`
+`npm test` also enforces the database access posture (BASE-1b): every table in
+`public` is classified as public-read, owner-scoped, server-only or dormant in
+`scripts/rls-posture.ts`, the test fails if a table is unclassified or the
+database disagrees, and it switches to the `anon`/`authenticated` roles to prove
+the policies actually filter rows. `npm run rls:audit` prints the posture table
+and the findings for the replayed schema.
 
+`npm test` also enforces the accessibility posture (A11Y-1). Every `.tsx` file is
+parsed as JSX and checked for unnamed controls, dialogs without focus management,
+table headers without `scope`, a second `<main>` nested inside a shell's own, a
+missing or unwired skip link, pointer-only click targets, animations that ignore
+`prefers-reduced-motion`, an `outline: none` with no focus indicator behind it,
+and any rule whose own text/background colour pair misses its contrast minimum —
+the last two are blocking rules added by the pass itself, so the fixes cannot
+regress quietly. `npm run a11y:audit` prints the findings table for review, and
+`tests/e2e/a11y.spec.ts` runs axe-core in Chromium over the public route list at
+desktop and mobile widths as part of `test:e2e`; failing nodes are annotated on
+the check run. See `docs/features/A11Y-1.md`.
+
+`npm test` and the gate also hold the performance budget (PERF-1). `npm run
+perf:audit` measures the built artefact — gzip sizes for the entry chunk, the
+Supabase client, the bundle CSS, the critical path and every asset, the largest
+image and the total image payload, the font chain, the caching headers, and
+whether every raster `<img>` declares a loading strategy — against the budgets
+declared beside them in `scripts/perf-audit.ts`, and it runs inside `npm run ci`
+straight after the build. `tests/perf.test.ts` breaks each budget on purpose to
+prove the check fails, and keeps the layout reservations honest: a placeholder
+row must be exactly as tall as the row it stands in for. The browser half is
+`tests/e2e/perf.spec.ts`: LCP, CLS, total blocking time, TTFB, transfer bytes
+and request count on a 1.6 Mbps / 150 ms / 4x CPU throttled Chromium, printed in
+full and asserted against ceilings — the run that found and then cleared the
+three layout shifts this feature fixed. See `docs/features/PERF-1.md`.
+
+**In CI** the `EduReach production checks` workflow runs `npm ci`, installs
+Chromium, and then runs `npm run ci` — so every stage above, including the
+PostgreSQL replay, gates every pull request and every push to `main`. The
+migration replay replaces Supabase's `auth`/`storage` surface with
+`supabase/ci/platform-shims.sql` (roles, `auth.users`, `auth.uid()`,
+`storage.buckets`/`objects`); it does **not** run `supabase db reset` against a
+Supabase project and does not exercise RLS as a non-superuser role, so it proves
+our SQL applies to a real PostgreSQL engine in order — not that Supabase Cloud
+accepts it. Playwright runs in CI (Chromium is installed in the workflow); it
+cannot run in every sandbox because browser downloads are blocked there. Node
+version: `.nvmrc` here, `NODE_VERSION=22` on Netlify, `engines.node >=22.12.0` in
+`package.json`.
+
+These checks do not certify live RLS, a production Supabase project, real
+sign-in, admin writes, or exam persistence.
 Browser tests require an **unconfigured build** (no `VITE_SUPABASE_*` credentials),
 not a production account. They test public routes, empty/error states, search,
 navigation and fail-closed authentication. Authentication contract tests use a
