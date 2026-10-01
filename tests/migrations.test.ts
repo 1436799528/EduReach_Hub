@@ -116,3 +116,80 @@ test('prune_site_analytics_events() deletes only rows older than the window', as
     assert.equal(again.rows[0].result.deleted, 0);
   });
 });
+
+test('scheduled_job_status() reports last success, last failure and freshness', async () => {
+  await withDatabase(async (db) => {
+    await applyMigrations(db);
+
+    await db.exec(`
+      insert into public.scheduled_job_runs (job_name, status, started_at, finished_at, error) values
+        ('newsroom-refresh', 'succeeded', now() - interval '2 hours', now() - interval '2 hours', null),
+        ('newsroom-refresh', 'failed',    now() - interval '26 hours', now() - interval '26 hours', 'fetch timeout'),
+        ('analytics-retention', 'succeeded', now() - interval '80 hours', now() - interval '80 hours', null);
+    `);
+
+    const { rows } = await db.query<{ status: Record<string, any> }>(
+      'select public.scheduled_job_status(48) as status',
+    );
+    const jobs = rows[0].status.jobs as Array<Record<string, any>>;
+    assert.equal(jobs.length, 2, 'both jobs must appear');
+
+    const newsroom = jobs.find((job) => job.job_name === 'newsroom-refresh')!;
+    assert.equal(newsroom.runs, 2);
+    assert.equal(newsroom.failures, 1);
+    assert.equal(newsroom.last_error, 'fetch timeout');
+    assert.equal(newsroom.fresh, true, 'a success two hours old is inside the 48-hour window');
+
+    const retention = jobs.find((job) => job.job_name === 'analytics-retention')!;
+    assert.equal(retention.fresh, false, 'a success 80 hours old is stale for a daily job');
+  });
+});
+
+test('prune_scheduled_job_runs() removes only rows past its window', async () => {
+  await withDatabase(async (db) => {
+    await applyMigrations(db);
+
+    await db.exec(`
+      insert into public.scheduled_job_runs (job_name, status, started_at) values
+        ('newsroom-refresh', 'succeeded', now() - interval '200 days'),
+        ('newsroom-refresh', 'succeeded', now() - interval '30 days');
+    `);
+
+    const { rows } = await db.query<{ result: Record<string, any> }>(
+      'select public.prune_scheduled_job_runs(180) as result',
+    );
+    assert.equal(rows[0].result.deleted, 1);
+    assert.equal(rows[0].result.retentionDays, 180);
+
+    const remaining = await db.query<{ n: number }>('select count(*)::int as n from public.scheduled_job_runs');
+    assert.equal(remaining.rows[0].n, 1, 'the recent run must survive');
+  });
+});
+
+test('scheduled_job_runs is closed to client roles', async () => {
+  await withDatabase(async (db) => {
+    await applyMigrations(db);
+
+    // RLS must be on, and no policy may grant a client role anything.
+    const { rows } = await db.query<{ rls: boolean; policies: number }>(`
+      select c.relrowsecurity as rls,
+             (select count(*)::int from pg_policies p
+               where p.schemaname = 'public' and p.tablename = 'scheduled_job_runs') as policies
+        from pg_class c join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public' and c.relname = 'scheduled_job_runs'
+    `);
+    assert.equal(rows[0].rls, true, 'RLS must be enabled');
+    assert.equal(rows[0].policies, 1, 'only the deny-client policy should exist');
+
+    const grants = await db.query<{ rolname: string }>(`
+      select distinct g.rolname
+        from pg_class c
+        join pg_namespace n on n.oid = c.relnamespace
+        cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) a
+        join pg_roles g on g.oid = a.grantee
+       where n.nspname = 'public' and c.relname = 'scheduled_job_runs'
+         and g.rolname in ('anon', 'authenticated')
+    `);
+    assert.deepEqual(grants.rows, [], 'no client role may hold a grant on the job log');
+  });
+});

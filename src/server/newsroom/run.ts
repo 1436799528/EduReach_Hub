@@ -10,6 +10,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getServerSupabaseKey } from '../../../lib/supabase-config';
 import { runIngestion, type IngestOptions, type IngestReport, type NewsroomSupabase } from './pipeline';
+import { recordJobRun } from '../jobRuns';
 
 export interface RunEnvironment {
   VITE_SUPABASE_URL?: string;
@@ -35,11 +36,37 @@ export async function runNewsroomRefresh(
 ): Promise<IngestReport> {
   const { env, ...ingestOptions } = options;
   const supabase = createNewsroomClient(env);
-  return runIngestion(supabase, {
-    userAgent: env?.EDUREACH_NEWSROOM_USER_AGENT,
-    triggeredBy: options.triggeredBy ?? 'schedule',
-    ...ingestOptions,
-  });
+  const startedAt = new Date();
+  try {
+    const report = await runIngestion(supabase, {
+      userAgent: env?.EDUREACH_NEWSROOM_USER_AGENT,
+      triggeredBy: options.triggeredBy ?? 'schedule',
+      ...ingestOptions,
+    });
+    // OBS-1: a partial run (some sources failed) is recorded as `partial`, not
+    // `succeeded`, so "the job ran" and "the job fully worked" stay distinguishable.
+    // Best effort — a telemetry failure must not turn a good refresh into a bad one.
+    await recordJobRun(supabase, 'newsroom-refresh', {
+      status: report.errors.length ? 'partial' : 'succeeded',
+      startedAt,
+      detail: {
+        sourcesChecked: report.sourcesChecked,
+        sourcesFailed: report.sourcesFailed,
+        candidatesFound: report.candidatesFound,
+        duplicates: report.duplicates,
+        rejected: report.rejected,
+        needsReview: report.needsReview,
+        published: report.published,
+        expired: report.expired,
+        errors: report.errors.length,
+        dryRun: Boolean(report.dryRun),
+      },
+    });
+    return report;
+  } catch (error) {
+    await recordJobRun(supabase, 'newsroom-refresh', { status: 'failed', startedAt, error });
+    throw error;
+  }
 }
 
 /** One-line summary used by logs and the daily report. */

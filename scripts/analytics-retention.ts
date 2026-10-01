@@ -16,6 +16,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getServerSupabaseKey } from '../lib/supabase-config';
 import { RETENTION_DAYS } from '../src/lib/analyticsTaxonomy';
+import { recordJobRun } from '../src/server/jobRuns';
 
 export type RetentionPlan = {
   retentionDays: number;
@@ -75,9 +76,11 @@ async function main() {
   }
 
   const supabase = createClient(url, key, { auth: { persistSession: false } });
+  const startedAt = new Date();
   const { data, error } = await supabase.rpc('prune_site_analytics_events', { p_retention_days: plan.retentionDays });
   if (error) {
     console.error(`  prune failed: ${error.message}`);
+    if (apply) await recordJobRun(supabase, 'analytics-retention', { status: 'failed', startedAt, error });
     if (/could not find the function|does not exist/i.test(error.message)) {
       console.error('  apply supabase/migrations/20261001120000_analytics_retention.sql first.');
     }
@@ -87,8 +90,18 @@ async function main() {
   const result = readRetentionResult(data);
   if (result.ok === false) {
     console.error(`  ${result.reason}`);
+    // OBS-1: a failed prune is recorded so the console can see it. Best effort, and
+    // only on --apply: a dry run is not a job execution.
+    if (apply) await recordJobRun(supabase, 'analytics-retention', { status: 'failed', startedAt, error: result.reason });
     process.exitCode = 1;
     return;
+  }
+  if (apply) {
+    await recordJobRun(supabase, 'analytics-retention', {
+      status: 'succeeded',
+      startedAt,
+      detail: { deleted: result.deleted, retentionDays: result.retentionDays },
+    });
   }
   console.log(`  deleted ${result.deleted} row(s) older than ${result.cutoff}.`);
 }

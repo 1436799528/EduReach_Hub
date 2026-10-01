@@ -22,6 +22,7 @@
     "perf:audit": "tsx scripts/perf-audit.ts",
     "audit:ci": "npm audit --audit-level=low",
     "analytics:audit": "tsx scripts/analytics-audit.ts",
+    "prod:validate": "tsx scripts/prod-validate.ts",
     "analytics:retention": "tsx scripts/analytics-retention.ts",
     "rls:audit": "tsx scripts/rls-posture.ts",
     "a11y:audit": "tsx scripts/a11y-audit.ts"

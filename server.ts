@@ -20,6 +20,7 @@ import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
 import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
 import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
+import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -225,6 +226,24 @@ app.get('/api/admin/session', requireStaff, async (req, res) => {
       capabilities: adminUser.capabilities,
     },
   });
+});
+
+app.get('/api/admin/jobs', requireCapability('analytics.read'), async (req, res) => {
+  try {
+    // OBS-1: last success, last failure and freshness per scheduled job. Read-only,
+    // and it deliberately reports jobs that have *no* row at all — a schedule that
+    // stopped firing is the failure mode that produces no error anywhere.
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.rpc('scheduled_job_status', {
+      p_stale_after_hours: STALE_AFTER_HOURS,
+    });
+    if (error) throw error;
+    const health = evaluateJobHealth(data as { sinceHours: number; jobs: Array<Record<string, unknown>> });
+    res.json({ ...(data as Record<string, unknown>), health });
+  } catch (error) {
+    console.error('Admin job status error:', error);
+    res.status(503).json({ error: 'Unable to load scheduled job status.' });
+  }
 });
 
 app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req, res) => {

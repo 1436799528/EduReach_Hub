@@ -121,6 +121,10 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Analytics arrive through the API, not PostgREST.',
   },
   {
+    table: 'scheduled_job_runs', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Operational telemetry written by scheduled jobs and read only by the admin console through the API (OBS-1).',
+  },
+  {
     table: 'news_sources', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
     why: 'Newsroom configuration; managed by the pipeline.',
   },
