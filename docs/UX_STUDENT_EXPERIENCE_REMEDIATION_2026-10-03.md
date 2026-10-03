@@ -1,6 +1,6 @@
 # EDUREACH — UX & STUDENT EXPERIENCE REMEDIATION REPORT
 
-**Branch:** `arena/01a0fe6f-edureach-hub` · **Commits:** `05789a1`, `3eff11a`, `270fa50` (PR [#13](https://github.com/1436799528/EduReach_Hub/pull/13))
+**Branch:** `arena/01a0fe6f-edureach-hub` · **Commits:** `05789a1`, `3eff11a`, `270fa50`, `426018f`, `e33630a` (PR [#13](https://github.com/1436799528/EduReach_Hub/pull/13))
 **Base:** `aa60b53` (main) · **Report written:** 2026-10-03
 
 This report covers the four implementation phases that followed the completion
@@ -156,6 +156,10 @@ inline style must be one of the six values, enforced by `tests/type-system.test.
 7. **Environment:** `node_modules` is not preserved by the workspace snapshot, so a
    bare `npm test` in a fresh sandbox reports 28 instant file failures. `npm ci`
    first.
+8. **A test pinned copy, not behaviour.** `tests/e2e/site.spec.ts` asserted the
+   exact string “No matching result”, so improving the empty state broke the
+   gate. Rewritten to assert the observable rule; every Phase D copy change is
+   now covered by a rule-level assertion instead.
 
 ---
 
@@ -203,7 +207,14 @@ npm run build       → success; entry 95.0 KB gzip, css 45.1 KB gzip
 | `npm run analytics:audit` | taxonomy / call sites / server / document agree |
 | `npm run rls:audit` | **37 public tables, 37 classified, 0 findings** |
 | `npm audit --audit-level=low` | 0 vulnerabilities |
-| CI `quality-gate` (PR #13) | **passed** on `3eff11a` — full `npm run ci` incl. Playwright e2e and `npm audit` |
+| CI `quality-gate` (PR #13) | **passed** on `e33630a` — full `npm run ci`: typecheck, 435 tests, schema audit, build, perf audit, analytics audit, **Playwright e2e (desktop + mobile Chromium)**, `npm audit` |
+
+The CI gate failed once, on the Phase D commit: a Playwright spec pinned the exact
+heading of the old search empty state (`'No matching result'`), which that commit
+intentionally replaced. The fix asserted the rule the test was protecting — a
+visible heading for the query plus a next step — instead of the wording, and CI
+then passed. This is the useful kind of failure: the browser gate caught a
+copy-bound assertion that no unit test could.
 
 No existing test was deleted or weakened. The suite count is explained by
 addition: 385 (pre-remediation) → 393 + 11 new Phase C/D files → 435.
@@ -235,6 +246,7 @@ two files cannot be restored.
 | End Test vs Submit | distinct actions, both confirmed, progress consequences stated | verified by test |
 | Submission | server-side scoring and ownership, duplicate protection | pre-existing; unchanged |
 | Result | subject merge client-side; `get_cbt_result` backfill still outstanding | **partial — see §7** |
+| Browser interaction (whole suite) | CI `quality-gate` on `e33630a`, incl. desktop + mobile Chromium and the axe sweep | **passed in CI** |
 
 ---
 
@@ -242,9 +254,12 @@ two files cannot be restored.
 
 **Not verified in this environment**
 - **Browser rendering.** Playwright browsers cannot be downloaded in this
-  sandbox, so all visual and interaction verification rests on CI's e2e run
-  (which passed on `3eff11a`; the Phase D/E commit is running through CI now).
-  No claim of pixel-level correctness is made for any Phase D screen.
+  sandbox, so I could not run the suite myself; it runs in CI, which passed on
+  `e33630a` and includes the axe sweep over the public routes in a real browser.
+  No claim of pixel-level correctness is made for any Phase D screen, and the
+  sandbox could not read the CI job logs (the storage blob is unreachable), so
+  the failure diagnosis above is from the specs and the passing re-run rather
+  than from the log text.
 - **No device testing.** Nothing was tested on a real phone or in Safari; the
   mobile work is CSS and layout reasoning plus the CI mobile-Chromium project.
 - **No penetration testing** and no WCAG conformance audit. `a11y:audit` is a
