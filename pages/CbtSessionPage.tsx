@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ScientificCalculator from '../src/components/ScientificCalculator';
 import ConnectionBanner from '../src/components/ConnectionBanner';
 import { ErrorState } from '../src/components/AsyncState';
+import { useAuth } from '../src/lib/auth';
 import {
   abandonConfiguredCbt, fetchCbtAttemptPaper, saveConfiguredCbtDraft, submitConfiguredCbt,
   type CbtAttemptPayload, type CbtQuestionPayload,
@@ -66,6 +67,7 @@ function formatClock(totalSeconds: number) {
 type SaveState = 'idle' | 'saving' | 'saved' | 'pending' | 'error';
 
 export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
+  const { user } = useAuth();
   const [attempt, setAttempt] = useState<CbtAttemptPayload | null>(null);
   const [questions, setQuestions] = useState<CbtQuestionPayload[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const [closed, setClosed] = useState<'expired' | 'submitted' | 'cancelled' | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [calcOpen, setCalcOpen] = useState(false);
-  const [confirmKind, setConfirmKind] = useState<'submit' | 'end' | null>(null);
+  const [confirmKind, setConfirmKind] = useState<'submit' | 'end' | 'unanswered' | null>(null);
 
   const submitDialog = useRef<HTMLDialogElement | null>(null);
   const endDialog = useRef<HTMLDialogElement | null>(null);
@@ -113,8 +115,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
-    document.body.classList.add('er-exam-shell');
-    return () => { document.body.classList.remove('er-exam-shell'); };
+    document.body.classList.add('er-exam-mode');
+    // Ensure the mobile bottom nav / site chrome stay hidden during an exam.
+    document.documentElement.classList.add('er-exam-mode');
+    return () => {
+      document.body.classList.remove('er-exam-mode');
+      document.documentElement.classList.remove('er-exam-mode');
+    };
   }, []);
 
   useEffect(() => {
@@ -265,9 +272,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [choose, confirmKind, goTo, index, questions]);
 
+  const unansweredDialog = useRef<HTMLDialogElement | null>(null);
+
   useEffect(() => {
     if (confirmKind === 'submit' && submitDialog.current && !submitDialog.current.open) submitDialog.current.showModal();
     if (confirmKind === 'end' && endDialog.current && !endDialog.current.open) endDialog.current.showModal();
+    if (confirmKind === 'unanswered' && unansweredDialog.current && !unansweredDialog.current.open) unansweredDialog.current.showModal();
   }, [confirmKind]);
 
   const bySubject = useMemo(() => {
@@ -341,6 +351,36 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const isMarked = Boolean(marked[question?.position]);
   const timeAlmostUp = remainingSeconds <= 300;
   const progressPercent = totalSeconds ? Math.min(100, Math.round(((totalSeconds - remainingSeconds) / totalSeconds) * 100)) : 0;
+  const isLastQuestion = index === questions.length - 1;
+  const unansweredCount = questions.length - answeredCount;
+  const currentSubjectEntry = subjectPlan.length > 1
+    ? subjectPlan.find((plan) => question?.position >= plan.first && question?.position <= plan.last)
+    : null;
+  // Compact student identity (initials) — never push the question content aside.
+  const studentInitials = useMemo(() => {
+    const name = (user?.name || 'Student').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (parts[0]?.slice(0, 2) || 'ST').toUpperCase();
+  }, [user?.name]);
+  const studentDisplayName = useMemo(() => {
+    const name = (user?.name || 'Student').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    return parts.length > 2 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : name;
+  }, [user?.name]);
+
+  function handlePrimaryAction() {
+    if (isLastQuestion) {
+      // Final question: check for unanswered before confirming.
+      if (unansweredCount > 0) {
+        setConfirmKind('unanswered');
+      } else {
+        setConfirmKind('submit');
+      }
+    } else {
+      goTo(index + 1);
+    }
+  }
 
   return (
     <div className="er-exam-shell">
@@ -348,39 +388,34 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
 
       <header className="er-exam-bar">
         <div className="er-exam-bar-left">
-          <img src="/icons/logo.png" alt="EduReach" width={26} height={26} loading="lazy" fetchPriority="low" />
-          <div>
-            <strong>{attempt.exam.title}</strong>
-            <span>
-              {attempt.mode === 'mock' ? 'Mock examination' : 'Practice'}
-              {attempt.programme ? ` · ${attempt.programme}` : ''}
-              {' · '}
-              {questions.length} question{questions.length === 1 ? '' : 's'}
-              {' · '}
-              {attempt.durationMinutes ? `${attempt.durationMinutes} minutes` : 'untimed'}
-            </span>
+          <div className="er-exam-candidate" aria-label="Candidate information">
+            <div className="er-exam-candidate-avatar" aria-hidden="true">{studentInitials}</div>
+            <div className="er-exam-candidate-meta">
+              <strong>{studentDisplayName}</strong>
+              <span>
+                {attempt.mode === 'mock' ? 'Mock examination' : 'Practice'}
+                {attempt.programme ? ` · ${attempt.programme}` : ''}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="er-exam-timer" role="timer" aria-live="off">
-          <Clock3 size={15} aria-hidden="true" />
-          <b className={timeAlmostUp ? 'is-critical' : ''}>{formatClock(remainingSeconds)}</b>
-          <span>remaining</span>
-          <i className="er-exam-timer-track" aria-hidden="true"><span style={{ width: `${progressPercent}%` }} /></i>
-        </div>
+        <div className="er-exam-bar-controls">
+          <div className="er-exam-timer" role="timer" aria-live="off">
+            <Clock3 size={15} aria-hidden="true" />
+            <b className={timeAlmostUp ? 'is-critical' : ''}>{formatClock(remainingSeconds)}</b>
+            <span>remaining</span>
+            <i className="er-exam-timer-track" aria-hidden="true"><span style={{ width: `${progressPercent}%` }} /></i>
+          </div>
 
-        <div className="er-exam-bar-actions">
-          <button type="button" className="er-exam-ghost" onClick={() => setCalcOpen(true)}>
-            <Calculator size={15} /> <span>Calculator</span>
+          <button type="button" className="er-exam-tool" onClick={() => setCalcOpen(true)} aria-label="Open calculator">
+            <Calculator size={15} /> <span className="er-exam-tool-label">Calculator</span>
           </button>
-          <button type="button" className="er-exam-ghost" onClick={() => setPaletteOpen(true)}>
-            <Grid3X3 size={15} /> <span>Questions</span>
+          <button type="button" className="er-exam-tool" onClick={() => setPaletteOpen(true)} aria-label="Open question navigator">
+            <Grid3X3 size={15} /> <span className="er-exam-tool-label">Questions</span>
           </button>
           <button type="button" className="er-exam-end" onClick={() => setConfirmKind('end')}>
-            <LogOut size={15} /> <span>End Test</span>
-          </button>
-          <button type="button" className="er-exam-submit" onClick={() => setConfirmKind('submit')}>
-            <Send size={15} /> Submit
+            <LogOut size={15} /> <span className="er-exam-tool-label">End Test</span>
           </button>
         </div>
       </header>
@@ -388,14 +423,19 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       <main className="er-exam-main">
         <div className="er-exam-paper">
           <div className="er-exam-question-head">
-            <span className="er-exam-subject-pill">{question?.subject}</span>
-            <span className="er-exam-position">
-              Question {index + 1} of {questions.length}
-              {subjectPlan.length > 1 && (() => {
-                const entry = subjectPlan.find((plan) => question?.position >= plan.first && question?.position <= plan.last);
-                return entry ? <em> · {entry.subject} {question.position - entry.first + 1} of {entry.questions}</em> : null;
-              })()}
-            </span>
+            <div className="er-exam-subject-context">
+              <span className="er-exam-subject-name er-exam-subject-pill">{(question?.subject || '').toUpperCase()}</span>
+              {currentSubjectEntry ? (
+                <span className="er-exam-position">
+                  {currentSubjectEntry.subject} — Question {question.position - currentSubjectEntry.first + 1} of {currentSubjectEntry.questions}
+                  <em> · Question {index + 1} of {questions.length}</em>
+                </span>
+              ) : (
+                <span className="er-exam-position">
+                  Question {index + 1} of {questions.length}
+                </span>
+              )}
+            </div>
             <span className="er-exam-save-state" role="status">
               {saveState === 'saving' && <><Loader2 className="er-spin" size={13} /> saving…</>}
               {saveState === 'saved' && <><CheckCircle2 size={13} /> saved</>}
@@ -444,9 +484,15 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                 <Eraser size={15} /> Clear answer
               </button>
             )}
-            <button type="button" className="er-exam-next" onClick={() => goTo(index + 1)} disabled={index === questions.length - 1}>
-              Next <ArrowRight size={15} />
-            </button>
+            {isLastQuestion ? (
+              <button type="button" className="er-exam-next er-exam-submit-primary" onClick={handlePrimaryAction}>
+                Submit Examination <Send size={15} />
+              </button>
+            ) : (
+              <button type="button" className="er-exam-next" onClick={handlePrimaryAction}>
+                Next <ArrowRight size={15} />
+              </button>
+            )}
           </div>
 
           {subjectPlan.length > 1 && (
@@ -520,7 +566,43 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         )}
       </main>
 
-      {/* Submit confirmation: what is answered, what is not, and what happens next. */}
+      {/* Unanswered questions warning: return or submit anyway. */}
+      <dialog
+        ref={unansweredDialog}
+        className="er-confirm"
+        onClose={() => setConfirmKind(null)}
+        aria-labelledby="er-unanswered-title"
+      >
+        <div className="er-confirm-body">
+          <h2 id="er-unanswered-title">You have {unansweredCount} unanswered question{unansweredCount === 1 ? '' : 's'}</h2>
+          <p>
+            You have answered <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions.
+            Unanswered questions score zero.
+          </p>
+          <div className="er-confirm-actions">
+            <button
+              type="button"
+              className="hub-outline-btn"
+              onClick={() => { setConfirmKind(null); unansweredDialog.current?.close(); }}
+            >
+              Return to questions
+            </button>
+            <button
+              type="button"
+              className="hub-primary-btn"
+              onClick={() => {
+                setConfirmKind(null);
+                unansweredDialog.current?.close();
+                setConfirmKind('submit');
+              }}
+            >
+              Submit anyway
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      {/* Final submit confirmation: concise, states what happens next. */}
       <dialog
         ref={submitDialog}
         className="er-confirm"
@@ -528,26 +610,23 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         aria-labelledby="er-submit-title"
       >
         <div className="er-confirm-body">
-          <h2 id="er-submit-title">Submit this paper?</h2>
+          <h2 id="er-submit-title">Submit examination?</h2>
           <p>
-            <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions answered
-            {questions.length - answeredCount > 0 && <> · <strong>{questions.length - answeredCount}</strong> left unanswered</>}
-            {markedCount > 0 && <> · <strong>{markedCount}</strong> marked for review</>}
-            . Time remaining: <strong>{formatClock(remainingSeconds)}</strong>.
+            You have answered <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions.
           </p>
           <p>
-            Submitting scores the paper and closes the session — you cannot change an answer afterwards.
-            {questions.length - answeredCount > 0 && ' Unanswered questions score zero.'}
+            Once submitted, you cannot return to this examination.
+            {unansweredCount > 0 && <> Unanswered questions will score zero.</>}
           </p>
           <div className="er-confirm-actions">
-            <button type="button" className="hub-outline-btn" onClick={() => { setConfirmKind(null); submitDialog.current?.close(); }}>Keep working</button>
+            <button type="button" className="hub-outline-btn" onClick={() => { setConfirmKind(null); submitDialog.current?.close(); }}>Cancel</button>
             <button
               type="button"
               className="hub-primary-btn"
               disabled={submitting}
               onClick={() => { setConfirmKind(null); submitDialog.current?.close(); void submit('manual'); }}
             >
-              {submitting ? 'Submitting…' : 'Submit and see result'}
+              {submitting ? 'Submitting…' : 'Submit Examination'}
             </button>
           </div>
         </div>

@@ -165,7 +165,17 @@ export default function ServicesCatalogPage() {
             </div>
           )}
           {!loading && !error && !filteredServices.length && (
-            <div className="hub-panel hub-empty">No student services matched your search filter.</div>
+            <div className="hub-panel hub-empty">
+              <h3>{search.trim() ? 'No matching service' : 'No services published yet'}</h3>
+              <p>
+                {search.trim()
+                  ? `No service matches "${search.trim()}". Try a different keyword, or clear the search to see everything.`
+                  : 'Services appear here as they are published. If you need help with something specific, reach out on WhatsApp.'}
+              </p>
+              {search.trim() && (
+                <button type="button" className="hub-outline-btn" onClick={() => setSearch('')}>Clear search</button>
+              )}
+            </div>
           )}
 
           {!loading && !error && filteredServices.length > 0 && (

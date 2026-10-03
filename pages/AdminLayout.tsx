@@ -58,10 +58,19 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
   const { data: { session: authSession } } = await supabase.auth.getSession();
   if (!authSession?.access_token) return null;
 
-  const response = await fetch(`${ADMIN_API_BASE}/admin/session`, {
-    headers: { Authorization: `Bearer ${authSession.access_token}` },
-  }).catch(() => null);
-  const body = response ? await response.json().catch(() => null) : null;
+  let response: Response | null = null;
+  let body: any = null;
+  try {
+    response = await fetch(`${ADMIN_API_BASE}/admin/session`, {
+      headers: { Authorization: `Bearer ${authSession.access_token}` },
+      // Short timeout: do not block the console for 90s if the backend is slow.
+      signal: AbortSignal.timeout(6000),
+    });
+    body = await response.json().catch(() => null);
+  } catch {
+    // Network error / timeout — fall through to the profile fallback below.
+    response = null;
+  }
   if (response?.ok && body?.user) {
     return {
       session: {
@@ -77,30 +86,36 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
     };
   }
 
-  // Keep the admin shell accessible when the local API is unavailable,
-  // while still requiring the authenticated Supabase account to have an
-  // explicit admin role in its own profile.
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, role')
-    .eq('id', authSession.user.id)
-    .maybeSingle();
+  // Keep the admin shell accessible when the local API is unavailable
+  // (e.g. preview or a brief outage), while still requiring the authenticated
+  // Supabase account to have an explicit admin role in its own profile.
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .eq('id', authSession.user.id)
+      .maybeSingle();
 
-  // Backend unreachable: fall back to the profile row the account can read
-  // under RLS, resolving capabilities through the same vocabulary the server
-  // uses. The API still authorizes every call, so this cannot grant anything.
-  const appRole = resolveAppRole(profile?.role);
-  if (isStaffRole(appRole)) {
-    return {
-      session: {
-        id: authSession.user.id,
-        email: authSession.user.email || '',
-        fullName: String(profile?.full_name || authSession.user.user_metadata?.full_name || ''),
-        role: appRole,
-        capabilities: [...capabilitiesForRole(appRole)],
-      },
-      backend: 'Profile fallback',
-    };
+    // Backend unreachable: fall back to the profile row the account can read
+    // under RLS, resolving capabilities through the same vocabulary the server
+    // uses. The API still authorizes every call, so this cannot grant anything.
+    const rawRole = profile?.role ?? authSession.user.app_metadata?.role ?? authSession.user.user_metadata?.role;
+    const appRole = resolveAppRole(rawRole);
+    if (isStaffRole(appRole)) {
+      return {
+        session: {
+          id: authSession.user.id,
+          email: authSession.user.email || '',
+          fullName: String(profile?.full_name || authSession.user.user_metadata?.full_name || ''),
+          role: appRole,
+          capabilities: [...capabilitiesForRole(appRole)],
+        },
+        backend: 'Profile fallback',
+      };
+    }
+  } catch {
+    // RLS/profile read failed — do not treat that as admin access; return null
+    // so the guard shows the sign-in prompt.
   }
   return null;
 }
@@ -177,9 +192,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    async function check() {
-      // With a cached session the console is already interactive; revalidate
-      // quietly and only tear the session down if the server rejects it.
+    async function check(attempt = 0) {
       const blocking = !cached;
       if (blocking) setChecking(true);
       try {
@@ -195,20 +208,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         sessionCache = null;
         setSession(null);
         setChecking(false);
-        navigate('/login');
-      } catch {
-        // Network/backend hiccup: keep a cached session alive rather than
-        // locking an administrator out mid-navigation.
+        // Preserve the admin destination so the sign-in page can return here
+        // after a valid session is established (no /login → / loop).
+        const next = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+        navigate(`/login?next=${next}`);
+      } catch (err) {
         if (!active) return;
+        // Network/backend hiccup: retry once, then keep a cached session alive
+        // rather than locking an administrator out mid-navigation.
+        if (attempt < 2 && !cached) {
+          window.setTimeout(() => void check(attempt + 1), 600 * (attempt + 1));
+          return;
+        }
         if (!cached) {
+          sessionCache = null;
           setSession(null);
           setChecking(false);
-          navigate('/login');
+          const next = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+          navigate(`/login?next=${next}`);
         }
       }
     }
 
-    check();
+    void check();
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
