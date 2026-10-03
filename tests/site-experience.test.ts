@@ -87,6 +87,13 @@ test('the shared rules are used, not re-implemented per page', () => {
   }
 });
 
+test('the dark footer does not override its accessible muted text color', () => {
+  const layout = read('src/components/HubLayout.tsx');
+  const footer = layout.slice(layout.indexOf('<footer className="er-footer"'), layout.indexOf('</footer>'));
+  assert.match(footer, /color: '#94a3b8'/, 'the footer provides a readable text color on navy');
+  assert.ok(!/color: '#64748b'/.test(footer), 'copyright text must not override it with low-contrast slate');
+});
+
 test('the product uses one name for the collection and one for each CBT action', () => {
   const files = [
     'pages/HubHomePage.tsx', 'pages/PastQuestionsPage.tsx', 'pages/StudentDashboardV2.tsx',

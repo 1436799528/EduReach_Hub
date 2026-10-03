@@ -496,7 +496,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Privacy</a>
               <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Terms</a>
             </nav>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>© {new Date().getFullYear()} EduReach Hub</div>
+            <div style={{ fontSize: '11px' }}>© {new Date().getFullYear()} EduReach Hub</div>
           </div>
         </div>
       </footer>
