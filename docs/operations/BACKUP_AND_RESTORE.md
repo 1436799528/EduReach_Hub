@@ -210,7 +210,7 @@ that do not exist yet.
 6. proves database functions survive (the restored copy still canonicalises
    `'Scholarships & Funding'` to `scholarships`).
 
-Last local run: **46 migrations, 5,048 KB archive, 37 tables, 406 columns, 47
+Last local run: **52 migrations, 5,055 KB archive, 37 tables, 406 columns, 47
 policies, 37 tables with RLS — all identical after restore.**
 
 Step 5 is the part that matters most and that a naive rehearsal skips: a backup that
@@ -250,7 +250,7 @@ has not been done.
 
 | Date | Item | Result | Evidence |
 | --- | --- | --- | --- |
-| 2026-10-03 | Schema + data round trip (rehearsal) | **pass** | `npm run backup:rehearsal` → 46 migrations, 5,048 KB, 37 tables / 47 policies identical after restore |
+| 2026-10-03 | Schema + data round trip (rehearsal) | **pass** | `npm run backup:rehearsal` → 52 migrations, 5,055 KB, 37 tables / 47 policies identical after restore |
 | 2026-10-03 | Supabase plan backup configuration | **NOT VERIFIED** | needs dashboard access (§3) |
 | 2026-10-03 | RPO / RTO chosen | **NOT DECIDED** | business decision (§2) |
 | 2026-10-03 | Storage bucket export | **NOT DONE** | needs credentials (§4.3) |

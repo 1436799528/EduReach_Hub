@@ -137,22 +137,37 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 46 then 'pass' else 'fail' end as result,
+  case when count(*) >= 52 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 46)' as detail
+  count(*)::text || ' migrations recorded (repository holds 52)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
--- Check 8 counts rows in the migration history, which answers "how many?" but not
--- "which?". This is the sync check: it names each object the 2026-10-02/03 release
--- adds, so a partially applied production database is visible in one query. It is
--- read-only and safe to run at any time.
-select
-  case when count(*) = 0 then 'pass' else 'fail' end as result,
-  'every object added by the 2026-10-02/03 release exists' as check_name,
-  coalesce(string_agg(missing.object || ' — apply ' || missing.migration, '; '),
-           'CBT modes, news category slug, past-question library and opportunity eligibility all present') as detail
-from (
+-- Check 8 counts rows, which answers "how many?" but not "which?". Compare the
+-- exact release versions so data-only migrations are covered, then inspect the
+-- important objects/security properties as well. Output every missing version or
+-- object with the migration file an operator should apply. Read-only and safe to
+-- run at any time.
+with expected(version, migration) as (
+  values
+    ('20261002120000', '20261002120000_cbt_practice_and_mock_modes.sql'),
+    ('20261002130000', '20261002130000_news_category_contract.sql'),
+    ('20261002140000', '20261002140000_past_question_resources.sql'),
+    ('20261002150000', '20261002150000_opportunity_eligibility.sql'),
+    ('20261003080000', '20261003080000_backend_security_hardening.sql'),
+    ('20261003090000', '20261003090000_verify_opportunity_data.sql'),
+    ('20261003100000', '20261003100000_cbt_server_authority_alignment.sql'),
+    ('20261003101000', '20261003101000_expire_stale_cbt_attempts.sql'),
+    ('20261003102000', '20261003102000_normalize_published_news_category_labels.sql'),
+    ('20261003103000', '20261003103000_cbt_paper_expiry_volatility.sql')
+), missing_versions as (
+  select 'migration ' || e.version as object, e.migration
+  from expected e
+  where not exists (
+    select 1 from supabase_migrations.schema_migrations applied
+    where applied.version = e.version
+  )
+), missing_objects as (
   select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'mode')
@@ -181,8 +196,6 @@ from (
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                     where n.nspname = 'public' and p.proname = 'past_question_coverage')
   union all
-  -- The live API drops back to a legacy field set when these two are missing,
-  -- which silently removes provenance from every public listing.
   select 'public.opportunities.last_verified_at', '20260930120000_newsroom_ingestion_pipeline.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'opportunities' and column_name = 'last_verified_at')
@@ -194,7 +207,21 @@ from (
   select 'public.opportunities.eligibility', '20261002150000_opportunity_eligibility.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'opportunities' and column_name = 'eligibility')
-) as missing;
+  union all
+  select 'public.get_cbt_attempt_paper() VOLATILE', '20261003103000_cbt_paper_expiry_volatility.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'get_cbt_attempt_paper' and p.provolatile = 'v')
+), missing as (
+  select object, migration from missing_versions
+  union all
+  select object, migration from missing_objects
+)
+select
+  case when count(*) = 0 then 'pass' else 'fail' end as result,
+  'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
+  coalesce(string_agg(object || ' — apply ' || migration, '; '),
+           'all 10 release migrations and checked objects are present') as detail
+from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------
 -- content_integrity_report() is service-role only; in the SQL editor it runs as

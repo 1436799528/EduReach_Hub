@@ -40,7 +40,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-46 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
+52 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
 CLI against a **scratch project first**:
 
 ```bash
@@ -68,8 +68,10 @@ migrations were not applied. Nothing failed loudly: the news pages rendered, the
 APIs answered `200`, and the *only* symptom was silently reduced data and two
 endpoints returning `503`. Counting rows in the migration history is not enough —
 it says how many migrations ran, not which. Check 9 of
-`supabase/ci/production-validation.sql` names each missing object and the file to
-apply:
+`supabase/ci/production-validation.sql` now compares the exact release versions
+and names every missing migration, including data-only migrations. Run it, then
+apply every file named in its `detail` column. The four files reported during that
+original incident were:
 
 ```
 apply 20261002120000_cbt_practice_and_mock_modes.sql
@@ -78,9 +80,8 @@ apply 20261002140000_past_question_resources.sql
 apply 20261002150000_opportunity_eligibility.sql
 ```
 
-**Pass:** check 9 prints `pass` and its detail reads “CBT modes, news category slug,
-past-question library and opportunity eligibility all present”; check 8 reports at
-least 46 recorded migrations.
+**Pass:** check 9 prints `pass` and confirms all release migrations are recorded;
+check 8 reports at least 52 recorded migrations.
 
 ### 3b. What “not applied” looked like from outside, on 2026-10-03
 

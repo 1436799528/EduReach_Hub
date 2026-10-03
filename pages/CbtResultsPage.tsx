@@ -2,6 +2,7 @@ import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ChevronDown, Download, Printer, RotateCcw } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import CbtResultSlip from '../src/components/CbtResultSlip';
 import { fetchCbtResult } from '../src/lib/api';
 import { localStorageKey } from '../src/lib/localPreview';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
@@ -157,6 +158,13 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                   </table>
                 </section>
               )}
+
+              <div
+                aria-hidden="true"
+                style={{ position: 'fixed', top: 0, left: '-10000px', width: 820, pointerEvents: 'none' }}
+              >
+                <CbtResultSlip result={result} studentName={studentName} studentId={studentId} />
+              </div>
 
               <div className="er-result-actions" aria-label="Result actions">
                 <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
