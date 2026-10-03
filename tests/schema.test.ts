@@ -102,13 +102,19 @@ test('every table the baseline adds is used by the history or the application', 
 });
 
 test('the known deferred (runtime-resolved) references have not grown', () => {
-  // plpgsql bodies are not resolved when the migration runs. These six are
+  // plpgsql bodies are not resolved when the migration runs. These are
   // pre-existing and documented; a new one means a function may fail at call
-  // time in a fresh environment.
+  // time in a fresh environment. `get_cbt_attempt_paper` was added by CBT-2 —
+  // it is defined in the same migration before the function that calls it, and
+  // tests/cbt-modes.test.ts exercises the call for real, so the entry records a
+  // scanner limitation rather than a production risk.
   const tables = report.deferredWarnings
     .map((warning) => /public\.([a-z_]+)/.exec(warning)![1])
     .sort();
-  assert.deepEqual([...new Set(tables)], ['get_cbt_questions_for_subjects', 'institutions', 'site_analytics_events']);
+  assert.deepEqual(
+    [...new Set(tables)],
+    ['get_cbt_attempt_paper', 'get_cbt_questions_for_subjects', 'institutions', 'site_analytics_events'],
+  );
 });
 
 test('storage buckets the application uses are created by migrations', () => {

@@ -69,12 +69,33 @@ for (const [method, path] of [
   ['POST', '/api/cbt/submit'],
   ['GET', '/api/cbt/attempts/test/progress'],
   ['PATCH', '/api/cbt/attempts/test/progress'],
+  // CBT-2: the configured-session API is a student's own data end to end.
+  ['POST', '/api/cbt/exams/test/attempts'],
+  ['GET', '/api/cbt/attempts/test/paper'],
+  ['POST', '/api/cbt/attempts/test/submit'],
+  ['PATCH', '/api/cbt/attempts/test/draft'],
+  ['POST', '/api/cbt/attempts/test/abandon'],
+  ['DELETE', '/api/cbt/attempts/test'],
+  ['GET', '/api/cbt/attempts'],
 ]) {
   test(`student API ${method} ${path} requires authentication`, async () => {
     const response = await fetch(base + path, { method });
     assert.equal(response.status, 401);
   });
 }
+test('CBT bank availability answers 404, never an empty catalogue, when no bank is configured', async () => {
+  // The setup wizard must not offer subjects it cannot deliver. With no backend
+  // the honest answer is "this bank is not available", not an empty list that
+  // looks like a working bank with nothing in it.
+  const response = await fetch(`${base}/api/cbt/exams/test/subjects`);
+  assert.equal(response.status, 404);
+  assert.match((await response.json()).error, /not configured/);
+});
+test('CBT exam catalogue reports real question counts instead of inventing them', async () => {
+  const response = await fetch(`${base}/api/cbt/exams`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { items: [] });
+});
 test('bootstrap is disabled without explicit configuration', async () => {
   const response = await fetch(`${base}/api/admin/bootstrap`, { method: 'POST' });
   assert.equal(response.status, 503);

@@ -1,7 +1,8 @@
-import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, ShieldCheck } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, Info, RotateCcw, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
+import CardIdentityMark from '../src/components/CardIdentityMark';
+import { ErrorState, InlineNotice } from '../src/components/AsyncState';
 import {
   jambCourses,
   jambDepartments,
@@ -12,9 +13,22 @@ import {
   secondarySubjectTracks,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtExams, trackEvent } from '../src/lib/api';
+import { fetchCbtBank, fetchCbtExams, startConfiguredCbt, trackEvent, type CbtBankPayload } from '../src/lib/api';
+import { useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
-import { durationOptionsFor, resolveSetupExam, type CatalogExam } from '../src/lib/cbt-config';
+import { userFacingError } from '../lib/errors';
+import {
+  DEFAULT_CBT_LIMITS,
+  describeSession,
+  normalizeSubject,
+  practiceDurationOptions,
+  previewPlan,
+  questionCountOptions,
+  resolveSetupExam,
+  validateSession,
+  type CatalogExam,
+  type CbtMode,
+} from '../src/lib/cbt-config';
 
 type SetupCopy = {
   eyebrow: string;
@@ -30,39 +44,39 @@ type SetupCopy = {
 const setupCopy: Record<ExamSetupKey, SetupCopy> = {
   jamb: {
     eyebrow: 'JAMB CBT entry',
-    title: 'Choose your JAMB course and subjects',
-    intro: 'Enter the practice hall with a subject combination that matches the course you want to study. Use of English is selected by default because it is compulsory for UTME candidates.',
+    title: 'Set up your JAMB practice or mock',
+    intro: 'Choose the subjects you want, how many questions and how long you want — or sit a full mock based on the course you are applying for. Use of English is compulsory for UTME.',
     duration: 'Practice session',
     logo: '/icons/brands/jamb.png',
   },
   waec: {
     eyebrow: 'WAEC CBT entry',
-    title: 'Set up your WAEC practice plan',
-    intro: 'Settle in first: learn how the CBT works, then choose the nine subjects you are offering. Your selections are carried into the practice hall.',
+    title: 'Set up your WAEC practice or mock',
+    intro: 'Practise the subjects you are sitting, or run a full mock across nine subjects with the time WAEC allows.',
     duration: 'Practice session',
-    logo: '/icons/brands/waec.webp',
+    logo: '/icons/brands/waec.png',
   },
   neco: {
     eyebrow: 'NECO CBT entry',
-    title: 'Set up your NECO practice plan',
-    intro: 'Read the short exam guide and choose the nine subjects you are offering before you begin your NECO practice session.',
+    title: 'Set up your NECO practice or mock',
+    intro: 'Practise the subjects you are sitting, or run a full mock across nine subjects with the time NECO allows.',
     duration: 'Practice session',
-    logo: '/icons/brands/neco.webp',
+    logo: '/icons/brands/neco.png',
   },
   'post-utme': {
     eyebrow: 'Post-UTME CBT entry',
-    title: 'Choose your school before you practise',
-    intro: 'Post-UTME tests are school-specific. Select an institution from the active Post-UTME practice catalogue so the hall can show the right preparation context.',
+    title: 'Set up your Post-UTME practice or mock',
+    intro: 'Practise the subjects in your school’s screening, or run a timed mock using the school’s published subject list.',
     duration: 'Practice session',
     logo: '/icons/brands/jamb.png',
   },
 };
 
 const guideItems = [
-  { title: 'Read each question carefully', body: 'Choose an answer by tapping an option. You can move backwards, forwards or open the question palette.' },
-  { title: 'Watch the timer', body: 'The countdown stays visible and the test submits when time expires. Your progress is saved while you practise.' },
-  { title: 'Use the calculator when allowed', body: 'Open the on-screen scientific calculator from the exam bar. It does not leave the CBT page.' },
-  { title: 'Review before submitting', body: 'Flag questions for review, check the palette and submit when you are ready. Explanations appear on the scorecard.' },
+  { title: 'You choose the paper', body: 'Practice sessions are yours: pick the subjects, the number of questions and the time you want to spend.' },
+  { title: 'The timer is real', body: 'Once a session starts, the countdown is authoritative and keeps running. Refreshing or leaving the page does not add time.' },
+  { title: 'Your work is saved', body: 'Answers are saved as you go, so a lost connection or a closed tab does not throw away the session.' },
+  { title: 'Nothing is invented', body: 'Only subjects with questions in the bank are offered. You can always see how many questions each subject has.' },
 ];
 
 function navigateInApp(path: string) {
@@ -70,95 +84,67 @@ function navigateInApp(path: string) {
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-function encodedSubjects(subjects: string[]) {
-  return encodeURIComponent(subjects.filter(Boolean).join('|'));
-}
-
-type SetupMemory = {
-  department?: string;
-  courseName?: string;
-  jambSubjects?: string[];
-  secondaryTrack?: (typeof secondarySubjectTracks)[number];
-  schoolId?: string;
-  schoolSubjects?: string[];
-  secondarySubjects?: string[];
-};
-
-function readSetupMemory(exam: ExamSetupKey): SetupMemory {
-  try {
-    const stored = sessionStorage.getItem(`edureach-setup-${exam}`);
-    return stored ? JSON.parse(stored) as SetupMemory : {};
-  } catch {
-    return {};
-  }
-}
-
 export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const copy = setupCopy[exam];
-  const requestedSubjectParam = useMemo(() => new URLSearchParams(window.location.search).get('subject')?.trim() || '', []);
-  // Production CBT configuration (single source of truth). `targetExam` is the
-  // concrete exam this setup session will start; its configured default
-  // duration drives everything the student sees before the timer begins.
-  const [catalogExams, setCatalogExams] = useState<CatalogExam[]>([]);
-  const [targetExam, setTargetExam] = useState<CatalogExam | null>(null);
-  const [examsLoading, setExamsLoading] = useState<boolean>(isSupabaseConfigured);
-  const [chosenMinutes, setChosenMinutes] = useState<number | null>(null);
-  const [memory] = useState(() => readSetupMemory(exam));
-  const [department, setDepartment] = useState(() => {
-    if (requestedSubjectParam) {
-      const match = jambCourses.find((c) => c.subjects.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase()));
-      if (match) return match.department;
-    }
-    return memory.department || 'All departments';
-  });
-  const [courseName, setCourseName] = useState(() => {
-    if (requestedSubjectParam) {
-      const match = jambCourses.find((c) => c.subjects.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase()));
-      if (match) return match.name;
-    }
-    return memory.courseName || jambCourses[0].name;
-  });
-  const [jambSubjects, setJambSubjects] = useState(() => {
-    if (requestedSubjectParam) {
-      const match = jambCourses.find((c) => c.subjects.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase()));
-      if (match) return match.subjects;
-      if (requestedSubjectParam.toLowerCase() !== 'use of english') {
-        const base = [...jambCourses[0].subjects];
-        if (!base.some((s) => s.toLowerCase() === requestedSubjectParam.toLowerCase())) {
-          base[1] = requestedSubjectParam;
-        }
-        return base;
-      }
-    }
-    return memory.jambSubjects?.length === 4 ? memory.jambSubjects : jambCourses[0].subjects;
-  });
-  const [secondaryTrack, setSecondaryTrack] = useState<(typeof secondarySubjectTracks)[number]>(memory.secondaryTrack || 'General');
-  const [schoolId, setSchoolId] = useState(() => {
-    const requested = new URLSearchParams(window.location.search).get('school');
-    const remembered = memory.schoolId;
-    const candidate = remembered || requested;
-    return postUtmeSchools.some((school) => school.id === candidate && school.offersPostUtme) ? candidate || postUtmeSchools[0].id : postUtmeSchools[0].id;
-  });
-  const [schoolSubjects, setSchoolSubjects] = useState<string[]>(memory.schoolSubjects || []);
-  const [schoolError, setSchoolError] = useState('');
-  const [secondarySubjects, setSecondarySubjects] = useState<string[]>(() => {
-    const defaultNine = secondarySchoolSubjects.slice(0, 9);
-    const base = memory.secondarySubjects?.length === 9 && memory.secondarySubjects.every(Boolean)
-      ? [...memory.secondarySubjects]
-      : defaultNine;
-    if (requestedSubjectParam && secondarySchoolSubjects.includes(requestedSubjectParam) && !base.includes(requestedSubjectParam)) {
-      base[2] = requestedSubjectParam;
-    }
-    return base;
-  });
+  const { user } = useAuth();
 
-  useEffect(() => {
+  const [catalog, setCatalog] = useState<CatalogExam[]>([]);
+  const [targetExam, setTargetExam] = useState<CatalogExam | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<unknown>(null);
+  const [bank, setBank] = useState<CbtBankPayload | null>(null);
+  const [bankError, setBankError] = useState<unknown>(null);
+  const [mode, setMode] = useState<CbtMode>(() => (new URLSearchParams(window.location.search).get('mode') === 'mock' ? 'mock' : 'practice'));
+
+  // Practice configuration — the student's own session.
+  const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
+  const [questionCount, setQuestionCount] = useState<number | null>(null);
+  const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
+
+  // Mock configuration — the governed combination for a programme.
+  const [department, setDepartment] = useState(jambDepartments[0]);
+  const [courseName, setCourseName] = useState(jambCourses[0].name);
+  const [schoolId, setSchoolId] = useState(postUtmeSchools[0].id);
+  const [secondaryTrack, setSecondaryTrack] = useState<(typeof secondarySubjectTracks)[number]>('General');
+  const [mockSubjects, setMockSubjects] = useState<string[]>([]);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  const limits = bank?.limits || DEFAULT_CBT_LIMITS;
+  const availability = bank?.subjects || [];
+
+  const loadBank = useCallback(async (examId: string) => {
+    setBankError(null);
+    setBank(null);
     try {
-      sessionStorage.setItem(`edureach-setup-${exam}`, JSON.stringify({ department, courseName, jambSubjects, secondaryTrack, schoolId, schoolSubjects, secondarySubjects } satisfies SetupMemory));
-    } catch {
-      // Session storage may be unavailable; the form remains usable in memory.
+      const payload = await fetchCbtBank(examId);
+      setBank(payload);
+      return payload;
+    } catch (error) {
+      setBankError(error);
+      return null;
     }
-  }, [courseName, department, exam, jambSubjects, schoolId, schoolSubjects, secondarySubjects, secondaryTrack]);
+  }, []);
+
+  const resolveCatalogAndBank = useCallback(async () => {
+    setCatalogLoading(true);
+    setCatalogError(null);
+    try {
+      const requestedId = new URLSearchParams(window.location.search).get('exam');
+      const exams = (await fetchCbtExams()) as CatalogExam[];
+      setCatalog(exams);
+      const resolved = resolveSetupExam(exams, exam, requestedId);
+      setTargetExam(resolved);
+      if (resolved) await loadBank(resolved.id);
+    } catch (error) {
+      setCatalogError(error);
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [exam, loadBank]);
+
+  useEffect(() => { void resolveCatalogAndBank(); }, [resolveCatalogAndBank]);
 
   useEffect(() => {
     // AN-1: which exam bodies reach the setup wizard — the step before any
@@ -166,155 +152,174 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     trackEvent('cbt_setup_view', { metadata: { mode: exam } });
   }, [exam]);
 
+  // The subject list is the bank's real content, so a student can never
+  // configure a paper the bank cannot serve. When the bank loads, preselect a
+  // sensible default rather than an empty form, and honour a `subjects` wish
+  // passed by a deep link (for example from past questions) when the bank has
+  // those subjects.
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setExamsLoading(false);
-      return;
-    }
-    let active = true;
-    setExamsLoading(true);
-    const requestedId = new URLSearchParams(window.location.search).get('exam');
-    void fetchCbtExams()
-      .then((exams) => {
-        if (!active) return;
-        const typed = exams as CatalogExam[];
-        setCatalogExams(typed);
-        const resolved = resolveSetupExam(typed, exam, requestedId);
-        setTargetExam(resolved);
-        setChosenMinutes(resolved ? resolved.duration_minutes : null);
-        if (resolved?.subject) {
-          const subj = resolved.subject.trim();
-          if (exam === 'jamb' && subj && subj.toLowerCase() !== 'use of english' && !subj.toLowerCase().includes('general')) {
-            setJambSubjects((prev) => {
-              if (prev.some((s) => s.toLowerCase() === subj.toLowerCase())) return prev;
-              const next = [...prev];
-              next[1] = subj;
-              return next;
-            });
-          } else if ((exam === 'waec' || exam === 'neco') && secondarySchoolSubjects.includes(subj)) {
-            setSecondarySubjects((prev) => {
-              if (prev.includes(subj)) return prev;
-              const next = [...prev];
-              next[2] = subj;
-              return next;
-            });
-          }
-        }
-      })
-      .catch(() => {
-        // The catalogue read failed; the setup page remains usable and the
-        // practice hall will surface the honest question-bank error state.
-        if (active) setTargetExam(null);
-      })
-      .finally(() => {
-        if (active) setExamsLoading(false);
-      });
-    return () => { active = false; };
-  }, [exam]);
+    if (!availability.length) return;
+    setPracticeSubjects((current) => {
+      if (current.length) return current;
+      const requested = (new URLSearchParams(window.location.search).get('subjects') || '')
+        .split(/[|,;]/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const matched = requested.filter((subject) => availability.some(
+        (entry) => normalizeSubject(entry.subject) === normalizeSubject(subject),
+      ));
+      if (matched.length) {
+        return matched.slice(0, limits.maxSubjects).map((subject) => (
+          availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))?.subject || subject
+        ));
+      }
+      return availability.slice(0, Math.min(2, availability.length)).map((entry) => entry.subject);
+    });
+    setQuestionCount((current) => current ?? Math.min(20, bank?.totalQuestions || 20));
+    setDurationMinutes((current) => current ?? bank?.exam.defaultDurationMinutes ?? 60);
+  }, [availability, bank]);
 
-  const defaultMinutes = targetExam?.duration_minutes ?? null;
-  const durationChoices = defaultMinutes ? durationOptionsFor(defaultMinutes) : [];
-  const effectiveMinutes = chosenMinutes ?? defaultMinutes;
-
-  const filteredCourses = useMemo(
-    () => department === 'All departments' ? jambCourses : jambCourses.filter((course) => course.department === department),
-    [department],
+  // ---- Derived practice configuration ---------------------------------
+  const selectedAvailability = useMemo(
+    () => availability.filter((entry) => practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject))),
+    [availability, practiceSubjects],
   );
-  const selectedCourse = jambCourses.find((course) => course.name === courseName) || filteredCourses[0] || jambCourses[0];
-  const selectedSchool = postUtmeSchools.find((school) => school.id === schoolId) || postUtmeSchools[0];
-  const jambOptions = jambSubjectCatalog[selectedCourse.department];
-  const secondaryOptions = secondaryTrack === 'General'
-    ? secondarySchoolSubjects
-    : secondarySubjectCatalog[secondaryTrack];
+  const selectedBankTotal = selectedAvailability.reduce((sum, entry) => sum + entry.questionCount, 0);
+  const countChoices = useMemo(() => questionCountOptions(selectedBankTotal || bank?.totalQuestions || 0, limits), [selectedBankTotal, bank, limits]);
+  const effectiveCount = questionCount && countChoices.includes(questionCount) ? questionCount : countChoices[countChoices.length - 1] ?? limits.minQuestions;
+  const durationChoices = useMemo(
+    () => practiceDurationOptions(bank?.exam.defaultDurationMinutes ?? 120, limits),
+    [bank, limits],
+  );
+  const effectiveDuration = durationMinutes && durationChoices.includes(durationMinutes) ? durationMinutes : bank?.exam.defaultDurationMinutes ?? durationChoices[durationChoices.length - 1] ?? 60;
+  const practicePlan = useMemo(() => previewPlan(selectedAvailability, effectiveCount), [selectedAvailability, effectiveCount]);
+
+  // ---- Derived mock combination ---------------------------------------
+  const governedCombination = useMemo(() => {
+    if (mode !== 'mock') return [];
+    if (exam === 'jamb') return jambCourses.find((course) => course.name === courseName)?.subjects ?? [];
+    if (exam === 'post-utme') return postUtmeSchools.find((school) => school.id === schoolId)?.subjects ?? [];
+    return mockSubjects;
+  }, [mode, exam, courseName, schoolId, mockSubjects]);
+
+  const coverage = useMemo(() => governedCombination.map((subject) => {
+    const entry = availability.find((item) => normalizeSubject(item.subject) === normalizeSubject(subject));
+    return { subject, questionCount: entry?.questionCount ?? 0 };
+  }), [governedCombination, availability]);
+  const uncovered = coverage.filter((entry) => entry.questionCount === 0);
+  const mockBankTotal = coverage.reduce((sum, entry) => sum + entry.questionCount, 0);
+  const mockCount = Math.min(mockBankTotal, limits.maxQuestions);
+
+  /** Courses whose full governed combination this bank can actually serve. */
+  const coveredCourses = useMemo(() => {
+    if (exam !== 'jamb') return [];
+    return jambCourses.filter((course) => course.subjects.every((subject) => availability.some(
+      (entry) => normalizeSubject(entry.subject) === normalizeSubject(subject) && entry.questionCount > 0,
+    )));
+  }, [exam, availability]);
+
+  const alternativeCourses = useMemo(() => {
+    if (exam !== 'jamb') return [];
+    const sameDepartment = coveredCourses.filter((course) => course.department === (jambCourses.find((item) => item.name === courseName)?.department ?? ''));
+    return (sameDepartment.length ? sameDepartment : coveredCourses).filter((course) => course.name !== courseName).slice(0, 3);
+  }, [exam, coveredCourses, courseName]);
 
   function changeDepartment(value: string) {
     setDepartment(value);
     const nextCourse = value === 'All departments' ? jambCourses[0] : jambCourses.find((course) => course.department === value) || jambCourses[0];
     setCourseName(nextCourse.name);
-    setJambSubjects(nextCourse.subjects);
   }
 
-  function changeCourse(value: string) {
-    const nextCourse = jambCourses.find((course) => course.name === value) || jambCourses[0];
-    setCourseName(nextCourse.name);
-    setJambSubjects(nextCourse.subjects);
+  function startPracticeWithAvailableSubjects() {
+    // Recovery path: use only the subjects the bank can serve, in practice mode.
+    setMode('practice');
+    setPracticeSubjects(availability.slice(0, Math.min(limits.maxSubjects, availability.length)).map((entry) => entry.subject));
+    setFormError('');
   }
 
-  function changeSchool(value: string) {
-    setSchoolId(value);
-    const school = postUtmeSchools.find((item) => item.id === value);
-    setSchoolSubjects(school?.subjects || []);
+  function togglePracticeSubject(subject: string) {
+    setFormError('');
+    setPracticeSubjects((current) => {
+      const exists = current.some((item) => normalizeSubject(item) === normalizeSubject(subject));
+      if (exists) return current.filter((item) => normalizeSubject(item) !== normalizeSubject(subject));
+      if (current.length >= limits.maxSubjects) {
+        setFormError(`A session can include at most ${limits.maxSubjects} subjects. Remove one before adding another.`);
+        return current;
+      }
+      return [...current, subject];
+    });
   }
 
-  function updateJambSubject(index: number, value: string) {
-    setJambSubjects((current) => current.map((subject, subjectIndex) => subjectIndex === index ? value : subject));
-  }
+  async function startSession() {
+    if (!targetExam) return;
+    const subjects = mode === 'practice' ? practiceSubjects : governedCombination.filter(Boolean);
+    const config = {
+      mode,
+      subjects,
+      questionCount: mode === 'practice' ? effectiveCount : mockCount,
+      durationMinutes: mode === 'practice' ? effectiveDuration : (bank?.exam.defaultDurationMinutes ?? 0),
+    };
 
-  function updateSecondarySubject(index: number, value: string) {
-    setSecondarySubjects((current) => current.map((subject, subjectIndex) => subjectIndex === index ? value : subject));
-  }
-
-  function changeSecondaryTrack(value: (typeof secondarySubjectTracks)[number]) {
-    setSecondaryTrack(value);
-    const options = value === 'General' ? secondarySchoolSubjects : secondarySubjectCatalog[value];
-    const defaults = options.slice(0, 9);
-    while (defaults.length < 9) defaults.push('');
-    setSecondarySubjects(defaults);
-  }
-
-  function startPractice() {
-    setSchoolError('');
-    if (isSupabaseConfigured && !examsLoading && !targetExam) {
-      setSchoolError('No active CBT question bank is published for this examination category yet. Please choose an available bank on the CBT Centre.');
+    const localError = validateSession(config, availability, limits);
+    if (localError) {
+      setFormError(localError);
       return;
     }
-    if (exam === 'jamb' && (jambSubjects.length !== 4 || jambSubjects.some((subject) => !subject))) {
-      setSchoolError('Choose all four JAMB subjects before entering the practice hall.');
-      return;
-    }
-    if (exam === 'jamb' && (jambSubjects[0] !== 'Use of English' || new Set(jambSubjects).size !== jambSubjects.length)) {
-      setSchoolError('Use of English must be first, and each JAMB subject can be selected only once.');
-      return;
-    }
-    if ((exam === 'waec' || exam === 'neco') && secondarySubjects.some((subject) => !subject)) {
-      setSchoolError('Choose all nine subjects before entering the practice hall.');
-      return;
-    }
-    if ((exam === 'waec' || exam === 'neco') && new Set(secondarySubjects).size !== secondarySubjects.length) {
-      setSchoolError('Choose each subject only once.');
+    if (mode === 'mock' && uncovered.length) {
+      setFormError(`This bank has no questions for: ${uncovered.map((entry) => entry.subject).join(', ')}. Choose a course the bank can serve, or practise the available subjects instead.`);
       return;
     }
 
-    // Prefer the concrete production exam id; fall back to the stable local
-    // preview id only when no catalogue is configured/resolvable.
-    const examId = targetExam?.id || `practice-exam-${exam}`;
-    const params = new URLSearchParams({ exam: examId });
-    if (effectiveMinutes) params.set('duration', String(effectiveMinutes));
-    if (exam === 'jamb') {
-      params.set('course', courseName);
-      params.set('department', selectedCourse.department);
-      params.set('subjects', encodedSubjects(jambSubjects));
-    } else if (exam === 'post-utme') {
-      params.set('school', selectedSchool.id);
-      params.set('schoolName', selectedSchool.name);
-      params.set('subjects', encodedSubjects(schoolSubjects.length ? schoolSubjects : selectedSchool.subjects));
-    } else {
-      params.set('subjects', encodedSubjects(secondarySubjects));
+    setSubmitting(true);
+    setFormError('');
+    try {
+      const started = await startConfiguredCbt({
+        examId: targetExam.id,
+        mode,
+        subjects,
+        questionCount: config.questionCount,
+        durationMinutes: mode === 'practice' ? config.durationMinutes : null,
+        programme: mode === 'mock' ? (exam === 'jamb' ? courseName : exam === 'post-utme' ? postUtmeSchools.find((school) => school.id === schoolId)?.name ?? null : secondaryTrack) : null,
+      });
+      trackEvent('cbt_start', { metadata: { examId: targetExam.id, examTitle: targetExam.title, mode } });
+      const params = new URLSearchParams();
+      if (started.resumed) params.set('resumed', '1');
+      const query = params.toString();
+      navigateInApp(`/cbt/session/${encodeURIComponent(started.id)}${query ? `?${query}` : ''}`);
+    } catch (error) {
+      setFormError(userFacingError(error, 'This session could not be started. Please try again.'));
+    } finally {
+      setSubmitting(false);
     }
-    navigateInApp(`/cbt/practice?${params.toString()}`);
   }
+
+  const summaryLines = describeSession(
+    {
+      mode,
+      subjects: mode === 'practice' ? practiceSubjects : governedCombination,
+      questionCount: mode === 'practice' ? effectiveCount : mockCount,
+      durationMinutes: mode === 'practice' ? effectiveDuration : (bank?.exam.defaultDurationMinutes ?? 0),
+    },
+    mode === 'practice' ? practicePlan : previewPlan(coverage, mockCount),
+  );
+
+  const defaultMinutes = bank?.exam.defaultDurationMinutes ?? null;
+  const filteredCourses = department === 'All departments' ? jambCourses : jambCourses.filter((course) => course.department === department);
+  const selectedSchool = postUtmeSchools.find((school) => school.id === schoolId) || postUtmeSchools[0];
+  const secondaryOptions = secondaryTrack === 'General' ? secondarySchoolSubjects : secondarySubjectCatalog[secondaryTrack];
+  const catalogEmpty = catalogLoading === false && !targetExam && !catalogError;
 
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '22px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
+        <div className="hub-container hub-narrow" style={{ maxWidth: '860px' }}>
           <section className="er-setup-hero">
             <div className="er-setup-hero-mark"><img src={copy.logo} alt={`${exam.toUpperCase()} logo`} width={48} height={48} decoding="async" /></div>
             <div>
               <span className="hub-eyebrow">{copy.eyebrow}</span>
               <h1>{copy.title}</h1>
               <p>{copy.intro}</p>
-              <span className="er-setup-duration"><Clock3 size={14} /> {defaultMinutes ? `Default time: ${defaultMinutes} minutes` : copy.duration}</span>
+              <span className="er-setup-duration"><Clock3 size={14} /> {defaultMinutes ? `${targetExam?.title || 'This bank'} · standard time ${defaultMinutes} minutes` : copy.duration}</span>
             </div>
           </section>
 
@@ -323,7 +328,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
               <div className="er-setup-section-heading">
                 <div>
                   <span className="hub-eyebrow">Before you begin</span>
-                  <h2 id="cbt-guide-title">How this CBT practice works</h2>
+                  <h2 id="cbt-guide-title">How this CBT session works</h2>
                 </div>
                 <Calculator size={22} aria-hidden="true" />
               </div>
@@ -339,138 +344,304 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </section>
           )}
 
-          <section className="er-setup-panel" aria-labelledby="setup-selection-title">
-            <div className="er-setup-section-heading">
-              <div>
-                <span className="hub-eyebrow">Your setup</span>
-                <h2 id="setup-selection-title">{exam === 'jamb' ? 'Select a course combination' : exam === 'post-utme' ? 'Select your school' : 'Select your nine subjects'}</h2>
-              </div>
-              <CardIdentityMark value={exam} type="service" size="sm" />
-            </div>
+          {catalogError && !targetExam && (
+            <ErrorState error={catalogError} onRetry={() => void resolveCatalogAndBank()} />
+          )}
 
-            {exam === 'jamb' && (
-              <div className="er-setup-form-grid">
-                <label>
-                  Department / interest area
-                  <select value={department} onChange={(event) => changeDepartment(event.target.value)}>
-                    {jambDepartments.map((item) => <option key={item} value={item}>{item}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Course you want to study
-                  <select value={courseName} onChange={(event) => changeCourse(event.target.value)}>
-                    {filteredCourses.map((course) => <option key={course.name} value={course.name}>{course.name}</option>)}
-                  </select>
-                </label>
-                <div className="er-setup-full-width">
-                  <span className="er-setup-label">Choose your four UTME subjects</span>
-                  <div className="er-setup-subject-grid er-setup-jamb-subject-grid">
-                    {jambSubjects.map((subject, index) => {
-                      const usedByOtherSlot = new Set(jambSubjects.filter((_, subjectIndex) => subjectIndex !== index));
-                      return (
-                        <label key={index}>
-                          Subject {index + 1}{index === 0 ? ' · compulsory' : ''}
-                          <select
-                            value={subject}
-                            onChange={(event) => updateJambSubject(index, event.target.value)}
-                          >
-                            {index !== 0 && <option value="">Choose a subject</option>}
-                            {(index === 0 ? ['Use of English'] : jambOptions).map((option) => (
-                              <option key={option} value={option} disabled={index !== 0 && usedByOtherSlot.has(option)}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      );
-                    })}
+          {catalogEmpty && (
+            <InlineNotice tone="warning" title="No question bank is published for this examination yet">
+              Nothing has been added for {exam.toUpperCase()} yet, so there is no paper to sit. <a href="/cbt">Browse available CBT question banks</a> or check back soon.
+            </InlineNotice>
+          )}
+
+          {bankError && targetExam && (
+            <ErrorState
+              error={bankError}
+              onRetry={() => void loadBank(targetExam.id)}
+              action={<a className="hub-outline-btn" href="/cbt"><RotateCcw size={14} /> Choose another bank</a>}
+            />
+          )}
+
+          {targetExam && bank && (
+            <>
+              {/* Mode choice: the student decides what kind of session this is. */}
+              <section className="er-setup-panel" aria-labelledby="mode-title">
+                <div className="er-setup-section-heading">
+                  <div>
+                    <span className="hub-eyebrow">Session type</span>
+                    <h2 id="mode-title">Practice or mock?</h2>
                   </div>
-                  <p className="er-setup-field-note">Use of English is required for UTME. The other slots are personalised to the selected interest area and course; confirm the current JAMB brochure for your institution before registering.</p>
+                  <CardIdentityMark value={exam} type="service" size="sm" />
                 </div>
-              </div>
-            )}
+                <div className="er-mode-choice" role="radiogroup" aria-label="Choose session type">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={mode === 'practice'}
+                    className={mode === 'practice' ? 'er-mode-option is-selected' : 'er-mode-option'}
+                    onClick={() => { setMode('practice'); setFormError(''); }}
+                  >
+                    <strong>Practice</strong>
+                    <span>You choose the subjects, the number of questions and the time. Saved as practice — you can restart, resume or delete it.</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={mode === 'mock'}
+                    className={mode === 'mock' ? 'er-mode-option is-selected' : 'er-mode-option'}
+                    onClick={() => { setMode('mock'); setFormError(''); }}
+                  >
+                    <strong>Mock examination</strong>
+                    <span>An exam-style paper built from your course or school, with the standard time for {exam.toUpperCase()}. Treated as an examination record.</span>
+                  </button>
+                </div>
+              </section>
 
-            {(exam === 'waec' || exam === 'neco') && (
-              <div>
-                <div className="er-setup-form-grid" style={{ marginBottom: '12px' }}>
-                  <label>
-                    Track / subject area
-                    <select value={secondaryTrack} onChange={(event) => changeSecondaryTrack(event.target.value as (typeof secondarySubjectTracks)[number])}>
-                      {secondarySubjectTracks.map((track) => <option key={track} value={track}>{track}</option>)}
-                    </select>
-                  </label>
+              <section className="er-setup-panel" aria-labelledby="setup-selection-title">
+                <div className="er-setup-section-heading">
+                  <div>
+                    <span className="hub-eyebrow">{mode === 'practice' ? 'Your paper' : 'Your programme'}</span>
+                    <h2 id="setup-selection-title">
+                      {mode === 'practice' ? 'Choose subjects, questions and time' : exam === 'jamb' ? 'Choose the course you are applying for' : exam === 'post-utme' ? 'Choose your school' : 'Choose your nine subjects'}
+                    </h2>
+                  </div>
+                  <Calculator size={22} aria-hidden="true" />
                 </div>
-                <p className="er-setup-field-note" style={{ marginTop: 0 }}>English Language and Mathematics are preselected where they are present in the selected track. Choose nine distinct subjects and confirm your school’s current WAEC or NECO registration requirements.</p>
-                <div className="er-setup-subject-grid">
-                  {secondarySubjects.map((subject, index) => {
-                    const usedByOtherSlot = new Set(secondarySubjects.filter((_, subjectIndex) => subjectIndex !== index));
-                    return (
-                      <label key={index}>
-                        Subject {index + 1}{index < 2 ? ' · core' : ''}
-                        <select value={subject} onChange={(event) => updateSecondarySubject(index, event.target.value)}>
-                          <option value="">Choose a subject</option>
-                          {secondaryOptions.map((option) => <option key={option} value={option} disabled={usedByOtherSlot.has(option)}>{option}</option>)}
+
+                {mode === 'practice' && (
+                  <div className="er-setup-form-grid">
+                    <div className="er-setup-full-width">
+                      <span className="er-setup-label">Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected)</span>
+                      <div className="er-setup-subject-chips">
+                        {availability.map((entry) => {
+                          const checked = practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject));
+                          return (
+                            <label key={entry.subject} className="er-setup-subject-chip">
+                              <input type="checkbox" checked={checked} onChange={() => togglePracticeSubject(entry.subject)} />
+                              <span>{entry.subject}</span>
+                              <b className="er-chip-count">{entry.questionCount}</b>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <p className="er-setup-field-note">
+                        <Info size={14} /> Every subject listed has questions in this bank — the number beside it is how many. You can practise one subject or combine several.
+                      </p>
+                    </div>
+
+                    <div className="er-setup-full-width">
+                      <span className="er-setup-label">Number of questions</span>
+                      <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose how many questions">
+                        {countChoices.map((count) => (
+                          <button
+                            key={count}
+                            type="button"
+                            role="radio"
+                            aria-checked={effectiveCount === count}
+                            className={`er-setup-duration-option${effectiveCount === count ? ' is-selected' : ''}`}
+                            onClick={() => setQuestionCount(count)}
+                          >
+                            {count} question{count === 1 ? '' : 's'}{count === selectedBankTotal ? ' · all available' : ''}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="er-setup-full-width">
+                      <span className="er-setup-label">Time for this session</span>
+                      <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose your practice duration">
+                        {durationChoices.map((minutes) => (
+                          <button
+                            key={minutes}
+                            type="button"
+                            role="radio"
+                            aria-checked={effectiveDuration === minutes}
+                            className={`er-setup-duration-option${effectiveDuration === minutes ? ' is-selected' : ''}`}
+                            onClick={() => setDurationMinutes(minutes)}
+                          >
+                            {minutes} min{minutes === defaultMinutes ? ' · exam standard' : ''}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="er-setup-field-note">
+                        <Clock3 size={14} /> This is the actual countdown once you start. It cannot be extended, and refreshing the page does not reset it.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {mode === 'mock' && exam === 'jamb' && (
+                  <div className="er-setup-form-grid">
+                    <label>
+                      Department / interest area
+                      <select value={department} onChange={(event) => changeDepartment(event.target.value)}>
+                        {jambDepartments.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </label>
+                    <label>
+                      Course you are applying for
+                      <select value={courseName} onChange={(event) => { setCourseName(event.target.value); setFormError(''); }}>
+                        {filteredCourses.map((course) => <option key={course.name} value={course.name}>{course.name}</option>)}
+                      </select>
+                    </label>
+                    <div className="er-setup-full-width">
+                      <span className="er-setup-label">Subject combination EduReach will use</span>
+                      <ul className="er-plan-list">
+                        {coverage.map((entry) => (
+                          <li key={entry.subject} className={entry.questionCount ? 'is-covered' : 'is-missing'}>
+                            {entry.questionCount
+                              ? <CheckCircle2 size={15} />
+                              : <TriangleAlert size={15} />}
+                            <span>{entry.subject}</span>
+                            <b>{entry.questionCount ? `${entry.questionCount} in bank` : 'not in this bank'}</b>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="er-setup-field-note">
+                        <ShieldCheck size={14} /> This combination comes from EduReach&rsquo;s UTME subject guide for the selected course. It is a study aid, not an official JAMB registration — confirm the current JAMB brochure and your institution&rsquo;s requirement before you register.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {mode === 'mock' && (exam === 'waec' || exam === 'neco') && (
+                  <div>
+                    <div className="er-setup-form-grid" style={{ marginBottom: '12px' }}>
+                      <label>
+                        Track / subject area
+                        <select
+                          value={secondaryTrack}
+                          onChange={(event) => {
+                            const value = event.target.value as (typeof secondarySubjectTracks)[number];
+                            setSecondaryTrack(value);
+                            const options = (value === 'General' ? secondarySchoolSubjects : secondarySubjectCatalog[value]).slice(0, 9);
+                            setMockSubjects(options);
+                            setFormError('');
+                          }}
+                        >
+                          {secondarySubjectTracks.map((track) => <option key={track} value={track}>{track}</option>)}
                         </select>
                       </label>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                    </div>
+                    <p className="er-setup-field-note" style={{ marginTop: 0 }}>
+                      Nine subjects are required for the mock paper, as in the real examination. Choose nine distinct subjects — English Language and Mathematics are suggested as core subjects.
+                    </p>
+                    <div className="er-setup-subject-grid">
+                      {Array.from({ length: 9 }).map((_, index) => {
+                        const value = mockSubjects[index] || '';
+                        const used = new Set(mockSubjects.filter((_, slot) => slot !== index));
+                        return (
+                          <label key={index}>
+                            Subject {index + 1}{index < 2 ? ' · core' : ''}
+                            <select
+                              value={value}
+                              onChange={(event) => {
+                                const next = [...(mockSubjects.length === 9 ? mockSubjects : secondaryOptions.slice(0, 9))];
+                                next[index] = event.target.value;
+                                setMockSubjects(next);
+                                setFormError('');
+                              }}
+                            >
+                              <option value="">Choose a subject</option>
+                              {secondaryOptions.map((option) => <option key={option} value={option} disabled={used.has(option)}>{option}</option>)}
+                            </select>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-            {exam === 'post-utme' && (
-              <div className="er-setup-form-grid">
-                <label className="er-setup-full-width">
-                  School of choice
-                  <select value={schoolId} onChange={(event) => changeSchool(event.target.value)}>
-                    {postUtmeSchools.filter((school) => school.offersPostUtme).map((school) => <option key={school.id} value={school.id}>{school.name} · {school.location}</option>)}
-                  </select>
-                </label>
-                <div className={`er-setup-school-card er-setup-full-width ${identityClassFor('post-utme', 'service')}`}>
-                  <CheckCircle2 size={18} />
-                  <div><strong>{selectedSchool.examLabel}</strong><span>{selectedSchool.subjects.join(' · ')}</span><small>Only schools with an active Post-UTME practice profile are listed here. Check the school’s current admission notice before applying.</small></div>
-                </div>
-              </div>
-            )}
+                {mode === 'mock' && exam === 'post-utme' && (
+                  <div className="er-setup-form-grid">
+                    <label className="er-setup-full-width">
+                      School of choice
+                      <select value={schoolId} onChange={(event) => { setSchoolId(event.target.value); setFormError(''); }}>
+                        {postUtmeSchools.filter((school) => school.offersPostUtme).map((school) => <option key={school.id} value={school.id}>{school.name} · {school.location}</option>)}
+                      </select>
+                    </label>
+                    <div className="er-setup-school-card er-setup-full-width">
+                      <CheckCircle2 size={18} />
+                      <div>
+                        <strong>{selectedSchool.examLabel}</strong>
+                        <span>{selectedSchool.subjects.join(' · ')}</span>
+                        <small>Only schools with an active Post-UTME practice profile are listed. Check the school&rsquo;s current admission notice before applying.</small>
+                      </div>
+                    </div>
+                    <div className="er-setup-full-width">
+                      <span className="er-setup-label">Subject coverage in this bank</span>
+                      <ul className="er-plan-list">
+                        {coverage.map((entry) => (
+                          <li key={entry.subject} className={entry.questionCount ? 'is-covered' : 'is-missing'}>
+                            {entry.questionCount ? <CheckCircle2 size={15} /> : <TriangleAlert size={15} />}
+                            <span>{entry.subject}</span>
+                            <b>{entry.questionCount ? `${entry.questionCount} in bank` : 'not in this bank'}</b>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
 
-            {durationChoices.length > 0 && defaultMinutes !== null && (
-              <div className="er-setup-duration-picker er-setup-full-width">
-                <span className="er-setup-label">Session length</span>
-                <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose your practice duration">
-                  {durationChoices.map((minutes) => {
-                    const isDefault = minutes === defaultMinutes;
-                    const isSelected = (effectiveMinutes ?? defaultMinutes) === minutes;
-                    return (
-                      <button
-                        key={minutes}
-                        type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        className={`er-setup-duration-option${isSelected ? ' is-selected' : ''}`}
-                        onClick={() => setChosenMinutes(minutes)}
-                      >
-                        {minutes} min{isDefault ? ' · default' : ''}
+                {/* Recovery: never silently build a wrong paper. */}
+                {mode === 'mock' && uncovered.length > 0 && (
+                  <InlineNotice tone="warning" title={`This bank cannot build the full ${exam === 'jamb' ? 'course' : 'school'} paper yet`}>
+                    {uncovered.map((entry) => entry.subject).join(', ')} {uncovered.length === 1 ? 'has' : 'have'} no questions in this bank. You can:
+                    <span className="er-recovery-actions">
+                      {alternativeCourses.map((course) => (
+                        <button key={course.name} type="button" className="er-link-btn" onClick={() => { setCourseName(course.name); setFormError(''); }}>
+                          {course.name}
+                        </button>
+                      ))}
+                      <button type="button" className="er-link-btn" onClick={startPracticeWithAvailableSubjects}>
+                        practise the {availability.length} available subject{availability.length === 1 ? '' : 's'} instead
                       </button>
-                    );
-                  })}
-                </div>
-                <p className="er-setup-field-note">
-                  Default time for this exam is {defaultMinutes} minutes. The countdown starts only when you enter the practice hall.
-                </p>
-              </div>
-            )}
+                      <a className="er-link-btn" href="/cbt">choose another question bank</a>
+                    </span>
+                  </InlineNotice>
+                )}
 
-            {isSupabaseConfigured && !examsLoading && !targetExam && (
-              <div className="hub-form-error" role="status" style={{ marginBottom: '12px' }}>
-                No active {exam.toUpperCase()} CBT question bank is published yet. Browse <a href="/cbt" style={{ color: 'inherit', fontWeight: 800 }}>available CBT question banks</a> or check back soon.
-              </div>
-            )}
-            {schoolError && <div className="hub-form-error" role="alert">{schoolError}</div>}
-            <div className="er-setup-actions">
-              <button type="button" className="hub-primary-btn" onClick={startPractice} disabled={isSupabaseConfigured && !examsLoading && !targetExam}>Enter practice hall <ArrowRight size={15} /></button>
-              <a className="hub-outline-btn" href="/past-questions"><BookOpen size={15} /> Browse past questions</a>
-            </div>
-          </section>
+                {/* What is about to happen, in one place. */}
+                <div className="er-summary" aria-live="polite">
+                  <h3>Before you start</h3>
+                  <ul>
+                    {summaryLines.map((line) => <li key={line}>{line}</li>)}
+                  </ul>
+                  <p className="er-setup-field-note">
+                    <ShieldCheck size={14} /> {mode === 'mock'
+                      ? 'The timer is fixed by the examination standard and starts the moment you press Start mock. Submitting or ending the test closes it.'
+                      : 'You can leave and come back: your answers are saved and the remaining time is preserved.'}
+                  </p>
+                </div>
+
+                {!user && (
+                  <InlineNotice tone="info" title="You need an account to sit a paper">
+                    Practice and mock sessions are saved to your account, so answers, time and results survive a lost connection. <a href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in</a> or register, then come back — your setup stays as you left it.
+                  </InlineNotice>
+                )}
+
+                {formError && <div className="hub-form-error" role="alert">{formError}</div>}
+
+                <div className="er-setup-actions">
+                  <button
+                    type="button"
+                    className="hub-primary-btn"
+                    onClick={() => void startSession()}
+                    disabled={submitting || catalogLoading || (mode === 'mock' && uncovered.length > 0)}
+                  >
+                    {submitting ? 'Starting…' : mode === 'mock' ? 'Start mock examination' : 'Start practice'} <ArrowRight size={15} />
+                  </button>
+                  <a className="hub-outline-btn" href="/past-questions"><BookOpen size={15} /> Browse past questions</a>
+                </div>
+              </section>
+            </>
+          )}
+
+          {isSupabaseConfigured && catalog.length === 0 && !catalogLoading && !catalogError && (
+            <InlineNotice tone="warning" title="No question bank is published yet">
+              No active CBT question bank is available. <a href="/cbt">Browse the CBT Centre</a> or check back soon.
+            </InlineNotice>
+          )}
         </div>
       </div>
     </HubLayout>

@@ -420,7 +420,7 @@
 .hub-global-compact .hub-card-identity--images.is-fallback .hub-card-identity-image-fallback{
   display:flex;
 }
-.hub-card-identity-image-fallback{display:none;align-items:center;justify-content:center;font-size:11px;font-weight:900;letter-spacing:.04em}
+.hub-card-identity-image-fallback{display:none;align-items:center;justify-content:center;font-size:11px;font-weight: 560;letter-spacing:.04em}
 .hub-global-compact .hub-compact-card::before{
   content:'';
   position:absolute;

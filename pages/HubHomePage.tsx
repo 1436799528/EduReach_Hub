@@ -44,7 +44,7 @@ function Deadline({ item }: { item: UpcomingItem }) {
 }
 
 const toolTiles = [
-  { title: 'Past Question Library', href: '/past-questions' },
+  { title: 'Past questions', href: '/past-questions' },
   { title: 'Screening Calculator', href: '/screening-calculator' },
   { title: 'Scholarships', href: '/jobs' },
 ];
@@ -102,7 +102,7 @@ export default function HubHomePage() {
             </div>
             <div>
               <small>EDUREACH STUDY CENTRE</small>
-              <strong>Past Questions &amp; CBT Practice</strong>
+              <strong>Past questions &amp; CBT practice</strong>
               <p>Timed JAMB, WAEC, NECO and Post-UTME practice.</p>
             </div>
             <ArrowRight size={18} />

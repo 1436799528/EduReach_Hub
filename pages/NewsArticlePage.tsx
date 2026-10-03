@@ -211,7 +211,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               {related.length > 0 && (
                 <section className="er-section" style={{ marginTop: '26px' }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 900, margin: '0 0 10px' }}>Related updates</h2>
+                  <h2 style={{ fontSize: 16, fontWeight: 620, margin: '0 0 10px' }}>Related updates</h2>
                   <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
                     {related.map((relatedItem) => <NewsRow key={relatedItem.id} item={relatedItem} />)}
                   </div>

@@ -53,7 +53,7 @@
 .admin-health-card { margin-bottom: 12px; padding: 12px 13px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; }
 .admin-health-card div { display: flex; justify-content: space-between; gap: 10px; margin: 6px 0; font-size: 12px; }
 .admin-health-card span { color: #92a0b4; }
-.admin-health-card b { color: #75f8b3; font-weight: 700; }
+.admin-health-card b { color: #75f8b3; font-weight: 560; }
 .admin-user-email { margin: 12px 3px; overflow: hidden; text-overflow: ellipsis; color: #c1c9d8; font-size: 12px; }
 .admin-logout { width: 100%; border: 0; background: transparent; color: #ff9d91; text-align: left; padding: 10px 3px; font: 700 11px var(--er-font-sans); cursor: pointer; }
 
@@ -95,8 +95,8 @@
 .admin-table tr:hover td { background: #fbfcfd; }
 .admin-table .right { text-align: right; }
 .mono { font-family: var(--er-font-sans); }
-.accent { color: var(--admin-navy)!important; font-weight: 700; }
-.money { color: var(--admin-green)!important; font-weight: 800; }
+.accent { color: var(--admin-navy)!important; font-weight: 620; }
+.money { color: var(--admin-green)!important; font-weight: 680; }
 .muted { margin-top: 3px; color: #5e6c82; font-size: 12px; }
 .sensitive { letter-spacing: .04em; }
 
@@ -217,7 +217,7 @@
 .admin-skel-row { height: 42px; margin: 10px 0; border-radius: 10px; }
 
 .admin-footnote { margin: 4px 0 0; color: var(--admin-muted); font-size: 12px; line-height: 1.6; }
-.admin-footnote a { color: var(--admin-orange); font-weight: 700; }
+.admin-footnote a { color: var(--admin-orange); font-weight: 500; }
 
 .admin-health-pill.checking { background: #fff7df; color: #8a6700; border-color: #ecd896; }
 .admin-health-pill.checking i { background: #d4af37; box-shadow: 0 0 0 4px rgba(212,175,55,.15); }
@@ -315,7 +315,7 @@
 .hub-article-body h2, .hub-article-body h3 { color: inherit; margin: 18px 0 8px; }
 .hub-article-body img { max-width: 100%; height: auto; border-radius: 14px; margin: 10px 0; }
 .hub-article-body blockquote { margin: 12px 0; padding: 10px 16px; border-left: 3px solid #b14933; background: rgba(200,88,65,.06); border-radius: 0 12px 12px 0; }
-.hub-article-body a { color: #b14933; font-weight: 600; }
+.hub-article-body a { color: #b14933; font-weight: 620; }
 .hub-article-body ul, .hub-article-body ol { padding-left: 24px; margin: 0 0 12px; }
 .hub-article-body pre { overflow-x: auto; background: #0f172a; color: #dbe4f0; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
 

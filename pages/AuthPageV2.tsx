@@ -308,7 +308,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             textDecoration: 'none',
             color: '#0f172a',
             fontSize: '22px',
-            fontWeight: 900,
+            fontWeight: 680,
             letterSpacing: '-0.02em',
           }}
         >
@@ -333,7 +333,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           <span
             style={{
               fontSize: '11px',
-              fontWeight: 800,
+              fontWeight: 620,
               color: '#b14933',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
@@ -345,7 +345,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               ? 'EMAIL VERIFICATION'
               : 'ACADEMIC PORTAL ACCESS'}
           </span>
-          <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: '4px 0 6px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 680, color: '#0f172a', margin: '4px 0 6px' }}>
             {pageTitle}
           </h1>
           <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
@@ -454,7 +454,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 1. FIRST NAME & 2. LAST NAME */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label htmlFor="auth-first-name" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-first-name" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                       First Name *
                     </label>
                     <input
@@ -477,7 +477,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     />
                   </div>
                   <div>
-                    <label htmlFor="auth-last-name" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-last-name" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                       Last Name *
                     </label>
                     <input
@@ -503,7 +503,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 {/* 3. EMAIL ADDRESS */}
                 <div>
-                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Email Address *
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -531,7 +531,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 {/* 4. PHONE NUMBER */}
                 <div>
-                  <label htmlFor="auth-phone" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-phone" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Phone Number *
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -559,7 +559,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 {/* 7. ACCOUNT TYPE — Student / Parent / Teacher */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Account Type *
                   </label>
                   <div role="group" aria-label="Account type" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
@@ -575,7 +575,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           borderColor: accountType === type ? '#b14933' : '#cbd5e1',
                           background: accountType === type ? '#F9F0EE' : '#ffffff',
                           color: accountType === type ? '#b14933' : '#475569',
-                          fontWeight: 800,
+                          fontWeight: 620,
                           fontSize: '12px',
                           textTransform: 'capitalize',
                           cursor: 'pointer',
@@ -590,7 +590,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 {/* 5. PASSWORD & 6. CONFIRM PASSWORD */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label htmlFor="auth-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                       Password *
                     </label>
                     <div style={{ position: 'relative' }}>
@@ -625,7 +625,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
 
                   <div>
-                    <label htmlFor="auth-confirm-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                    <label htmlFor="auth-confirm-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                       Confirm Password *
                     </label>
                     <div style={{ position: 'relative' }}>
@@ -690,7 +690,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {currentMode === 'signin' && (
               <>
                 <div>
-                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Email Address
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -718,7 +718,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <label htmlFor="auth-password" style={{ fontSize: '12px', fontWeight: 800, color: '#334155' }}>
+                    <label htmlFor="auth-password" style={{ fontSize: '12px', fontWeight: 560, color: '#334155' }}>
                       Password
                     </label>
                     <button
@@ -728,7 +728,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#b14933', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: '#b14933', fontSize: '11.5px', fontWeight: 620, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -770,7 +770,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {/* FORGOT PASSWORD FORM */}
             {currentMode === 'forgot' && (
               <div>
-                <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                   Enter Account Email
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -800,7 +800,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {currentMode === 'reset' && (
               <>
                 <div>
-                  <label htmlFor="auth-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     New Password
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -832,7 +832,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="auth-confirm-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '5px' }}>
+                  <label htmlFor="auth-confirm-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Confirm New Password
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -877,7 +877,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 borderRadius: '9px',
                 padding: '12px',
                 fontSize: '13.5px',
-                fontWeight: 800,
+                fontWeight: 620,
                 cursor: 'pointer',
                 transition: 'background .2s ease, box-shadow .2s ease',
                 boxShadow: authFormComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
@@ -923,7 +923,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Already have an account? Sign in
             </button>
@@ -937,7 +937,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Need an account? Register
             </button>
@@ -945,7 +945,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         </div>
 
         <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-          <a href="/" style={{ fontSize: '12.5px', fontWeight: 800, color: '#5e6c82', textDecoration: 'none' }}>
+          <a href="/" style={{ fontSize: '12.5px', fontWeight: 620, color: '#5e6c82', textDecoration: 'none' }}>
             ← Back to portal
           </a>
         </div>

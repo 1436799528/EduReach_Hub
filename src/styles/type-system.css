@@ -1,0 +1,207 @@
+/* ========================================================================
+   EduReach type system — one deliberate weight scale (APP-1)
+
+   The product had grown a habit: almost every label, badge, caption, meta row
+   and button was 800 or 900, so nothing looked emphasised because everything
+   did, and long passages of small bold text were hard to read on a phone.
+
+   This layer is loaded last, so it wins ties against the component sheets, and
+   it sets weights by *role* rather than by file:
+
+     display / page title  730   the one thing a page is about
+     section title         680   h2-level headings
+     subhead               620   h3-level headings, card titles
+     body                  400   paragraphs, answers, descriptions
+     label / control       560   form labels, buttons, table headers, tabs
+     meta / caption        500   dates, counts, statuses, helper copy
+     numeric emphasis      680   scores and statistics
+
+   Nothing below uses !important. Component sheets that genuinely need a heavier
+   weight still win on specificity; this only removes accidental heaviness.
+   ======================================================================== */
+
+:root {
+  --er-w-title: 730;
+  --er-w-section: 680;
+  --er-w-subhead: 620;
+  --er-w-body: 400;
+  --er-w-label: 560;
+  --er-w-meta: 500;
+  --er-w-numeric: 680;
+}
+
+/* ---- Base roles ------------------------------------------------------- */
+
+body, p, li, dd, dt, blockquote, figcaption {
+  font-weight: var(--er-w-body);
+}
+
+h1 { font-weight: var(--er-w-title); }
+h2 { font-weight: var(--er-w-section); }
+h3 { font-weight: var(--er-w-subhead); }
+h4, h5, h6 { font-weight: var(--er-w-subhead); }
+
+strong, b { font-weight: var(--er-w-subhead); }
+
+small, .er-caption, figcaption {
+  font-weight: var(--er-w-meta);
+}
+
+label, legend, th {
+  font-weight: var(--er-w-label);
+}
+
+input, select, textarea, button {
+  font-weight: var(--er-w-label);
+}
+
+/* Helper and metadata copy stays readable rather than shouty. */
+[class*="meta"], [class*="caption"], [class*="helper"], [class*="note"],
+[class*="subtitle"], [class*="timestamp"], [class*="byline"], [class*="source"],
+[class*="eyebrow"], [class*="kicker"], [class*="badge"], [class*="tag"],
+[class*="chip"], [class*="pill"], [class*="status"], [class*="muted"] {
+  font-weight: var(--er-w-meta);
+}
+
+[class*="label"] { font-weight: var(--er-w-label); }
+
+/* Interactive elements read as controls, not as headlines. */
+[class*="btn"], [class*="button"], [class*="tab"], [class*="nav-link"],
+[class*="action"] {
+  font-weight: var(--er-w-label);
+}
+
+/* Statistics and scores are the numbers a student scans for. */
+[class*="stat"], [class*="score"], [class*="metric"], [class*="count"] {
+  font-weight: var(--er-w-numeric);
+}
+
+/* Tabular figures wherever outcomes are compared column to column. */
+td, .er-numeric, [class*="stat"] b, [class*="score"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Very small uppercase text needs weight to stay legible — but 900 was still
+   too heavy next to body copy, so it settles at the label level. */
+[class*="eyebrow"], [class*="kicker"] {
+  letter-spacing: .07em;
+}
+
+/* ---- Role classes for new and migrated surfaces ----------------------- */
+
+.er-type-display { font-size: clamp(24px, 4vw, 34px); font-weight: var(--er-w-title); line-height: 1.15; letter-spacing: -.02em; }
+.er-type-title { font-size: 20px; font-weight: var(--er-w-section); line-height: 1.25; }
+.er-type-subhead { font-size: 15px; font-weight: var(--er-w-subhead); line-height: 1.35; }
+.er-type-body { font-size: 14px; font-weight: var(--er-w-body); line-height: 1.65; }
+.er-type-label { font-size: 12px; font-weight: var(--er-w-label); }
+.er-type-meta { font-size: 12px; font-weight: var(--er-w-meta); color: var(--er-text-muted); }
+.er-type-stat { font-size: 26px; font-weight: var(--er-w-numeric); letter-spacing: -.01em; }
+
+/* ========================================================================
+   Shared student-state surfaces (APP-4)
+   ======================================================================== */
+
+.er-state {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid var(--er-border);
+  border-radius: 12px;
+  background: var(--er-surface);
+}
+
+.er-state.is-compact { padding: 12px; }
+
+.er-state-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 10px;
+  background: var(--er-surface-soft);
+  color: var(--er-navy-soft);
+}
+
+.er-state strong { display: block; font-size: 14px; font-weight: var(--er-w-subhead); }
+.er-state p { margin: 4px 0 0; font-size: 13px; color: var(--er-text-muted); }
+.er-state-action { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+.er-state-error { border-color: #f2c9c2; background: #fff8f7; }
+.er-state-error .er-state-icon { background: #fde7e2; color: var(--er-error); }
+
+.er-inline-notice {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--er-border);
+  background: var(--er-surface-soft);
+  font-size: 12px;
+}
+
+.er-inline-notice strong { font-weight: var(--er-w-label); }
+.er-inline-notice p { margin: 2px 0 0; color: var(--er-text-secondary); }
+.er-inline-notice.is-warning { border-color: #f0d7b0; background: #fff8ec; }
+.er-inline-notice.is-danger { border-color: #f2c9c2; background: #fff5f3; }
+.er-inline-notice.is-success { border-color: #bfe6cf; background: #f2fbf5; }
+.er-inline-notice-action {
+  border: 0;
+  background: transparent;
+  color: var(--er-crimson-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+
+/* Connection strip: visible, never in the way, never a full-page takeover. */
+.er-connection-strip {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 14px;
+  background: #3a2d24;
+  color: #fff6ee;
+  font-size: 12px;
+}
+
+.er-connection-strip strong { font-weight: var(--er-w-label); }
+
+/* Destructive actions must never look like ordinary ones. */
+.er-danger-btn {
+  border: 1px solid #e5b6ae;
+  background: #fff5f3;
+  color: #8f2a17;
+  border-radius: 9px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.er-danger-btn:hover { background: #fdeae6; }
+
+/* Confirmation prompt for destructive actions (native dialog element). */
+.er-confirm {
+  border: 0;
+  border-radius: 14px;
+  padding: 0;
+  max-width: 460px;
+  width: min(100% - 32px, 460px);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, .28);
+}
+
+.er-confirm::backdrop { background: rgba(15, 23, 42, .45); }
+.er-confirm-body { padding: 20px; display: grid; gap: 10px; }
+.er-confirm-body h2 { margin: 0; font-size: 18px; }
+.er-confirm-body p { margin: 0; font-size: 13px; color: var(--er-text-secondary); line-height: 1.6; }
+.er-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; flex-wrap: wrap; }

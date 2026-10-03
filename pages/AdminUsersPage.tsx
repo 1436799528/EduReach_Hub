@@ -143,7 +143,7 @@ export default function AdminUsersPage() {
                       <td>{p.level || '—'}</td>
                       <td>
                         <span className={`status-badge ${p.role}`}>{p.role}</span>
-                        {p.suspended && <div className="muted" style={{ color: 'var(--admin-danger)', fontWeight: 700 }}>Suspended</div>}
+                        {p.suspended && <div className="muted" style={{ color: 'var(--admin-danger)', fontWeight: 620 }}>Suspended</div>}
                       </td>
                       <td>
                         <div className="admin-meter" title={`${profileCompletion(p)}% of profile fields completed`}>

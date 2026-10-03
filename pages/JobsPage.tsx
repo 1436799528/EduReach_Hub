@@ -1,11 +1,12 @@
-import { ArrowRight, BellRing, Briefcase, MapPin, Tag } from 'lucide-react';
+import { ArrowRight, BellRing, Briefcase, CalendarClock, MapPin, ShieldCheck, ShieldQuestion, Tag, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
-import { EDUREACH_WHATSAPP, isOpportunityExpired, jobApplyHref, jobs } from '../src/data/hubContent';
+import { EDUREACH_WHATSAPP, jobApplyHref, jobs } from '../src/data/hubContent';
 import { fetchOpportunities, type Opportunity } from '../src/lib/api';
+import { opportunityStatus, type OpportunityState } from '../src/lib/opportunityStatus';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
 
@@ -25,6 +26,24 @@ const validCategoryParams = new Set([
   'competition',
 ]);
 
+const statusFilters = [
+  { id: 'ALL', label: 'Any status' },
+  { id: 'OPEN', label: 'Open now' },
+  { id: 'CLOSING', label: 'Closing soon' },
+  { id: 'UNVERIFIED', label: 'Not checked yet' },
+  { id: 'EXPIRED', label: 'Closed' },
+];
+
+type StatusFilter = 'ALL' | 'OPEN' | 'CLOSING' | 'UNVERIFIED' | 'EXPIRED';
+
+function matchesStatus(status: OpportunityState, verification: 'verified' | 'unverified', filter: StatusFilter): boolean {
+  if (filter === 'ALL') return true;
+  if (filter === 'EXPIRED') return status === 'expired' || status === 'closed';
+  if (filter === 'UNVERIFIED') return verification === 'unverified';
+  if (filter === 'CLOSING') return status === 'closing-soon';
+  return status === 'open' || status === 'closing-soon';
+}
+
 function readOpportunityFilter() {
   const value = new URLSearchParams(window.location.search).get('category') || 'ALL';
   if (value === 'grant') return 'scholarship';
@@ -35,6 +54,7 @@ function readOpportunityFilter() {
 
 export default function JobsPage() {
   const [activeFilter, setActiveFilter] = useState(readOpportunityFilter);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   // When a live backend is configured, the Supabase `opportunities` table is
   // the only listing source (admin-managed). The static list below exists for
   // local preview only and never mixes with live rows.
@@ -74,8 +94,21 @@ export default function JobsPage() {
           if (activeFilter === 'internship') return item.category === 'job' || item.category === 'internship';
           return item.category === activeFilter;
         });
-    return [...matched].sort((a, b) => Number(isOpportunityExpired(a.deadline)) - Number(isOpportunityExpired(b.deadline)));
-  }, [live, activeFilter]);
+    // OPP-1: what can still be applied to comes first; what has been checked by
+    // EduReach comes before what has not, at equal urgency.
+    return matched
+      .filter((item) => {
+        const status = opportunityStatus(item);
+        return matchesStatus(status.state, status.verification, statusFilter);
+      })
+      .sort((a, b) => {
+        const left = opportunityStatus(a);
+        const right = opportunityStatus(b);
+        if (left.actionable !== right.actionable) return left.actionable ? -1 : 1;
+        if (left.verification !== right.verification) return left.verification === 'verified' ? -1 : 1;
+        return Number(left.daysLeft ?? Number.POSITIVE_INFINITY) - Number(right.daysLeft ?? Number.POSITIVE_INFINITY);
+      });
+  }, [live, activeFilter, statusFilter]);
 
   const filteredStatic = useMemo(() => {
     if (isSupabaseConfigured) return [];
@@ -91,14 +124,14 @@ export default function JobsPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
-              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 560 }}>
                 STUDENT OPPORTUNITIES &amp; GRANTS
               </span>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '2px 0 4px' }}>
                 Student Opportunities &amp; Grants
               </h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
-                Browse the currently configured student opportunities. Grants and scholarships appear only when their source, eligibility and application route have been checked.
+                Every listing states where it came from, when EduReach last checked it, and whether it is still open. A listing EduReach has not checked yet is labelled as such — never presented as verified.
               </p>
             </div>
             <a className="hub-outline-btn" href="/news" style={{ textDecoration: 'none', fontSize: '12px' }}>
@@ -106,8 +139,18 @@ export default function JobsPage() {
             </a>
           </div>
 
-          <div style={{ marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+          <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
             <FilterPills options={filters} active={activeFilter} onChange={changeFilter} ariaLabel="Opportunity categories" />
+          </div>
+
+          <div className="er-status-filter" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '18px' }}>
+            <span className="er-library-filter-label"><CalendarClock size={15} /> Show</span>
+            <FilterPills
+              options={statusFilters}
+              active={statusFilter}
+              onChange={(next) => setStatusFilter(next as StatusFilter)}
+              ariaLabel="Filter by deadline and verification state"
+            />
           </div>
 
           <div
@@ -123,7 +166,7 @@ export default function JobsPage() {
               lineHeight: 1.5,
             }}
           >
-            <strong>Catalogue note:</strong> there are no fabricated “all grants” results here. If a scholarship or grant is not in the filtered list, select the Scholarships & Grants filter for the notify option and confirm any opportunity on the organiser’s official channel before sharing documents or paying a fee.
+            <strong>Before you apply:</strong> EduReach lists an opportunity only with its source. “Checked by EduReach” means the organiser's page was open and the details matched when we last looked — it is not a guarantee, and no listing is ever a reason to pay a fee. If a filter shows nothing, that is the honest state of the catalogue.
           </div>
 
           {loadingLive && (
@@ -182,7 +225,7 @@ export default function JobsPage() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#5e6c82', marginBottom: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#b14933' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 620, color: '#b14933' }}>
                           <Tag size={11} /> {item.type}
                         </span>
                         <span>•</span>
@@ -190,9 +233,9 @@ export default function JobsPage() {
                           <MapPin size={11} /> {item.mode}
                         </span>
                         <span>•</span>
-                        <span style={{ color: '#5e6c82', fontWeight: 700 }}>Active EduReach listing</span>
+                        <span style={{ color: '#5e6c82', fontWeight: 620 }}>Active EduReach listing</span>
                       </div>
-                      <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
+                      <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>
                         {item.title}
                       </h2>
                       <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: 0, lineHeight: 1.4 }}>
@@ -216,45 +259,55 @@ export default function JobsPage() {
               <SectionHead title={`${filteredLive.length} listing${filteredLive.length === 1 ? '' : 's'}`} />
               <div style={{ display: 'grid', gap: '12px' }}>
                 {filteredLive.map((item) => {
-                  const expired = isOpportunityExpired(item.deadline);
+                  const status = opportunityStatus(item);
                   return (
                     <a
                       key={item.id}
                       href={item.link_url || jobApplyHref(item.title)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
-                      style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)', opacity: expired ? 0.78 : 1 }}
+                      className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}${status.actionable ? '' : ' is-expired'}`}
+                      style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)', opacity: status.actionable ? 1 : 0.78 }}
                     >
                       <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
                         <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#5e6c82', marginBottom: '3px', flexWrap: 'wrap' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 700, color: '#b14933' }}>
-                            <Tag size={11} /> {item.category}
+                        <div className="er-opportunity-chips">
+                          <span className="er-opp-chip is-category"><Tag size={11} /> {item.category}</span>
+                          <span className={`er-opp-chip ${status.actionable ? (status.state === 'closing-soon' ? 'is-closing' : 'is-open') : 'is-expired'}`}>
+                            <CalendarClock size={11} /> {status.stateLabel}
                           </span>
-                          {item.deadline && (
-                            <>
-                              <span>•</span>
-                              <span style={{ fontWeight: 700, color: expired ? '#b91c1c' : '#5e6c82' }}>
-                                {expired ? `Closed ${item.deadline} · Expired` : `Closes ${item.deadline}`}
-                              </span>
-                            </>
-                          )}
-                          {item.locations && (<><span>•</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><MapPin size={11} /> {item.locations}</span></>)}
+                          <span className={`er-opp-chip ${status.verification === 'verified' ? 'is-verified' : 'is-unverified'}`}>
+                            {status.verification === 'verified' ? <ShieldCheck size={11} /> : <ShieldQuestion size={11} />} {status.verificationLabel}
+                          </span>
+                          {item.locations && <span className="er-opp-chip"><MapPin size={11} /> {item.locations}</span>}
                         </div>
-                        <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: '0 0 3px', lineHeight: 1.35 }}>{item.title}</h2>
-                        {item.organisation && <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 4px', fontWeight: 700 }}>{item.organisation}</p>}
+                        <h2 style={{ fontSize: '15px', color: '#0f172a', margin: '6px 0 3px', lineHeight: 1.35 }}>{item.title}</h2>
+                        {item.organisation && <p className="er-opp-organisation">{item.organisation}</p>}
                         <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: 0, lineHeight: 1.45 }}>
                           {plainTextFromHtml(item.description || '')}
                         </p>
+                        <dl className="er-opp-facts">
+                          <div>
+                            <dt><Users size={12} /> Eligibility</dt>
+                            <dd>{item.eligibility?.trim() ? item.eligibility : 'Not recorded — check the organiser’s page'}</dd>
+                          </div>
+                          <div>
+                            <dt>Source</dt>
+                            <dd>{item.source_name?.trim() ? item.source_name : item.link_url ? 'Organiser’s own page' : 'No source recorded'}</dd>
+                          </div>
+                          <div>
+                            <dt>Last checked</dt>
+                            <dd>{status.verifiedOn ? new Date(status.verifiedOn).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not yet checked by EduReach'}</dd>
+                          </div>
+                        </dl>
                       </div>
                       <span
-                        className={expired ? 'hub-outline-btn er-card-cta' : 'hub-primary-btn er-card-cta'}
+                        className={status.actionable ? 'hub-primary-btn er-card-cta' : 'hub-outline-btn er-card-cta'}
                         style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
                       >
-                        {expired ? 'Expired' : item.link_url ? 'Official link' : 'Apply'} <ArrowRight size={13} />
+                        {status.cta} <ArrowRight size={13} />
                       </span>
                     </a>
                   );
@@ -307,7 +360,7 @@ export default function JobsPage() {
                 <Briefcase size={20} />
               </div>
               <div>
-                <h3 style={{ margin: '0 0 3px', fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>
+                <h3 style={{ margin: '0 0 3px', fontSize: '14px', fontWeight: 620, color: '#0f172a' }}>
                   Want to publish a vetted student opportunity or scholarship?
                 </h3>
                 <p style={{ margin: 0, color: '#5e6c82', fontSize: '12px', lineHeight: 1.4 }}>

@@ -205,7 +205,12 @@ export type StudyMaterialRecord = {
   title: string;
   exam: PastQuestionRecord['exam'];
   school: string;
-  formats: string[];
+  /**
+   * What actually exists for this record. `practice-only` means the CBT bank is
+   * the real resource; `on-request` means no document is published and the
+   * student can ask EduReach for one. Neither claims a PDF exists.
+   */
+  availability: 'practice-only' | 'on-request';
   subjects: string;
   description: string;
   cbtHref?: string;
@@ -217,7 +222,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     title: 'JAMB UTME Past Questions & Study Materials',
     exam: 'JAMB',
     school: 'JAMB / UTME',
-    formats: ['PDF', 'DOC', 'Study materials'],
+    availability: 'on-request',
     subjects: 'Use of English, Mathematics, Biology, Chemistry and Physics',
     description: 'Timed JAMB practice is available now. Request document materials through EduReach while the library is being configured.',
     cbtHref: '/cbt/setup/jamb',
@@ -227,7 +232,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     title: 'WAEC SSCE Past Questions & Study Materials',
     exam: 'WAEC',
     school: 'WAEC',
-    formats: ['PDF', 'DOC', 'Revision materials'],
+    availability: 'on-request',
     subjects: 'English, Mathematics and elective subjects',
     description: 'Timed practice is available now. Request document materials through EduReach while the library is being configured.',
     cbtHref: '/cbt/setup/waec',
@@ -237,7 +242,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     title: 'NECO SSCE Past Questions & Study Materials',
     exam: 'NECO',
     school: 'NECO',
-    formats: ['PDF', 'DOC', 'Revision materials'],
+    availability: 'on-request',
     subjects: 'English, Mathematics and elective subjects',
     description: 'Timed practice is available now. Request document materials through EduReach while the library is being configured.',
     cbtHref: '/cbt/setup/neco',
@@ -247,7 +252,7 @@ export const studyMaterialLibrary: StudyMaterialRecord[] = [
     title: `${school.name} Past Questions & Materials`,
     exam: 'Post-UTME' as const,
     school: school.name,
-    formats: ['PDF', 'DOC', 'School materials'],
+    availability: 'on-request' as const,
     subjects: school.subjects.join(', '),
     description: `Timed practice is available now. Request ${school.name} document materials through EduReach and confirm the current school notice before relying on any paper.`,
     cbtHref: school.offersPostUtme ? `/cbt/setup/post-utme?school=${school.id}` : undefined,

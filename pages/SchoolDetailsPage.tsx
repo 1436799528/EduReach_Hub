@@ -6,6 +6,7 @@ import { commonInstitutions, institutionCourseContexts } from '../src/data/stude
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { applySeo, seoForInstitution } from '../src/lib/seoMeta';
 import { trackEvent } from '../src/lib/api';
+import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 
 function navigateBack(fallback: string) {
   const params = new URLSearchParams(window.location.search);
@@ -109,7 +110,28 @@ export default function SchoolDetailsPage({ slug }: { slug: string }) {
             <h1>{name}</h1>
             <p className="school-details-meta">{acronym && <b>{acronym} · </b>}{type} <span>·</span> <MapPin size={14} /> {state}</p>
             <div className="school-details-copy"><h2>What we know</h2><p>This school is in the maintained EduReach institution directory. Programme, fees, admission cut-off and current screening details are not shown unless they have been verified and configured for this institution.</p>{courseContext && <p className="school-details-course-context"><strong>Configured course search tags:</strong> {courseContext.split(' ').slice(0, 12).join(', ')}{courseContext.split(' ').length > 12 ? '…' : ''}. Verify the current programme list with the school.</p>}</div>
-            <div className="school-details-actions">{website ? <a className="hub-primary-btn" href={website} target="_blank" rel="noopener noreferrer">Visit official website <ExternalLink size={14} /></a> : <span className="school-details-unavailable">Official website link not configured</span>}<button type="button" className="hub-outline-btn" onClick={() => navigateBack('/schools')}><ArrowLeft size={14} /> Back to search</button></div>
+            <div className="school-details-actions">
+              {website
+                ? <a className="hub-primary-btn" href={website} target="_blank" rel="noopener noreferrer">Visit official website <ExternalLink size={14} /></a>
+                : (
+                  <div className="school-details-no-site">
+                    <span className="school-details-unavailable">No official website recorded for this institution</span>
+                    <p>
+                      EduReach will not guess a URL — a wrong link is worse than none. Ask us for the verified address and we will
+                      send it, or check the institution&rsquo;s name with JAMB&rsquo;s institution list before you search elsewhere.
+                    </p>
+                    <a
+                      className="hub-primary-btn"
+                      href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, please send me the verified official website and contact details for ${name}.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Request the verified link <ExternalLink size={14} />
+                    </a>
+                  </div>
+                )}
+              <button type="button" className="hub-outline-btn" onClick={() => navigateBack('/schools')}><ArrowLeft size={14} /> Back to search</button>
+            </div>
           </section>
         </div>
       </div>

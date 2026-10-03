@@ -55,7 +55,7 @@ export default function ScreeningCalculatorPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
               <CardIdentityMark value="calculator" type="service" size="sm" />
               <div>
-                <h1 style={{ fontSize: '19px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
+                <h1 style={{ fontSize: '19px', fontWeight: 680, margin: 0, color: '#0f172a' }}>
                   Screening Aggregate Calculator
                 </h1>
                 <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#5e6c82' }}>
@@ -72,7 +72,7 @@ export default function ScreeningCalculatorPage() {
 
             <div style={{ display: 'grid', gap: '12px' }}>
               <div>
-                <label htmlFor="screening-institution" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '5px' }}>
+                <label htmlFor="screening-institution" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                   School method profile
                 </label>
                 <select
@@ -97,7 +97,7 @@ export default function ScreeningCalculatorPage() {
                   gap: '10px',
                 }}
               >
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155' }}>
                   JAMB / UTME score
                   <input
                     type="number"
@@ -113,7 +113,7 @@ export default function ScreeningCalculatorPage() {
                   </small>
                 </label>
 
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155' }}>
                   Post-UTME score
                   <input
                     type="number"
@@ -131,7 +131,7 @@ export default function ScreeningCalculatorPage() {
               </div>
 
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '7px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 620, color: '#334155', marginBottom: '7px' }}>
                   Which formula should I use?
                 </div>
                 <div style={{ display: 'grid', gap: '6px' }}>
@@ -142,7 +142,7 @@ export default function ScreeningCalculatorPage() {
                     ['jamb-only', 'JAMB score / cut-off planning'],
                     ['points', 'Points or requirement planning'],
                   ] as const).map(([value, label]) => (
-                    <label key={value} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '11.5px', color: '#334155', fontWeight: 600 }}>
+                    <label key={value} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '11.5px', color: '#334155', fontWeight: 680 }}>
                       <input
                         type="radio"
                         name="formula"
@@ -172,7 +172,7 @@ export default function ScreeningCalculatorPage() {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#047857', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 620, color: '#047857', textTransform: 'uppercase', letterSpacing: '.04em' }}>
                     Estimated aggregate
                   </div>
                   <strong style={{ display: 'block', marginTop: '2px', fontSize: '30px', lineHeight: 1, color: '#065f46' }}>

@@ -12,6 +12,7 @@ import {
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchService, submitServiceRequest, trackEvent, type ServiceItem } from '../src/lib/api';
+import { serviceTimeline } from '../src/lib/serviceLifecycle';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
@@ -266,7 +267,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
               <CardIdentityMark value={service.service_key + ' ' + service.title} type="service" size="sm" />
-              <h1 style={{ fontSize: '19px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+              <h1 style={{ fontSize: '19px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                 {service.title}
               </h1>
             </div>
@@ -307,7 +308,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               </div>
               <a
                 href={`/login?next=${encodeURIComponent(`/services/apply/${service.service_key}`)}`}
-                style={{ color: '#b14933', fontWeight: 800, textDecoration: 'none' }}
+                style={{ color: '#b14933', fontWeight: 620, textDecoration: 'none' }}
               >
                 Sign in to link account →
               </a>
@@ -363,7 +364,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               {/* STEP 1: STUDENT DETAILS */}
               {step === 1 && (
                 <div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 16px', color: '#0f172a' }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 620, margin: '0 0 16px', color: '#0f172a' }}>
                     Student Identification
                   </h2>
                   <div className="hub-form-grid">
@@ -453,7 +454,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               {/* STEP 2: SERVICE-SPECIFIC DETAILS */}
               {step === 2 && (
                 <div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 16px', color: '#0f172a' }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 620, margin: '0 0 16px', color: '#0f172a' }}>
                     {variant.extra === 'results'
                       ? 'Result Verification Details'
                       : variant.extra === 'jamb'
@@ -525,7 +526,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               {/* STEP 3: REVIEW */}
               {step === 3 && (
                 <div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 16px', color: '#0f172a' }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 620, margin: '0 0 16px', color: '#0f172a' }}>
                     Review Application Summary
                   </h2>
                   <div className="hub-review-list">
@@ -564,6 +565,25 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="er-service-promise" role="note">
+                  <strong>After you press Submit</strong>
+                  <ol>
+                    {serviceTimeline().map((stage) => (
+                      <li key={stage.status}>
+                        <span>{stage.label}</span>
+                        {stage.meaning}
+                      </li>
+                    ))}
+                    <li>
+                      <span>Waiting on you</span>
+                      Only if we need something. The request pauses and you get a notification — nothing is lost while you gather it.
+                    </li>
+                  </ol>
+                  <p>You will get a reference code immediately. EduReach does not promise a number of days: requests are handled in the order they arrive, and you can see the current state at any time.</p>
                 </div>
               )}
 
@@ -625,7 +645,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <span
                 style={{
                   fontSize: '11px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   color: '#047857',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
@@ -633,11 +653,11 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               >
                 REQUEST CONFIRMED
               </span>
-              <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: '4px 0 8px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: 680, color: '#0f172a', margin: '4px 0 8px' }}>
                 Application Successfully Logged
               </h2>
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 20px', maxWidth: '500px', marginInline: 'auto' }}>
-                Your request has been registered in the EduReach academic queue. Save your reference code. Signed-in students can view the request and its milestones from My Requests in the dashboard.
+                Your request is registered in the EduReach academic queue. Save your reference code. Signed-in students can follow every step below from My Requests in the dashboard.
               </p>
 
               <div
@@ -652,10 +672,23 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   margin: '0 auto 24px',
                 }}
               >
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#5e6c82' }}>REFERENCE CODE:</span>
-                <strong style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: '12px', fontWeight: 620, color: '#5e6c82' }}>REFERENCE CODE:</span>
+                <strong style={{ fontSize: '18px', fontWeight: 620, color: '#0f172a', letterSpacing: '0.06em' }}>
                   {reference}
                 </strong>
+              </div>
+
+              <div className="er-service-promise is-success" role="note">
+                <strong>What happens next</strong>
+                <ol>
+                  {serviceTimeline().map((stage, index) => (
+                    <li key={stage.status} className={index === 0 ? 'is-current' : ''}>
+                      <span>{stage.label}</span>
+                      {index === 0 ? 'Reached — your request is queued in the order it arrived.' : stage.meaning}
+                    </li>
+                  ))}
+                </ol>
+                <p>If we need anything from you, the request shows “Waiting on you” and you are notified. Nothing moves silently.</p>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>

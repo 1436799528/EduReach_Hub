@@ -1216,7 +1216,7 @@ app.get('/api/opportunities', async (_req, res) => {
     let error: any = null;
     ({ data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at')
+      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at,source_name,eligibility')
       .eq('is_active', true)
       .is('closed_at', null)
       .order('deadline', { ascending: true, nullsFirst: false })
@@ -1513,6 +1513,11 @@ app.get('/api/upcoming', async (_req, res) => {
  */
 const NEWS_ROW_BASE = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags';
 const NEWS_ROW_GOVERNED = `${NEWS_ROW_BASE},verification_status,expires_at,last_verified_at,source_key,source_tier`;
+// NEWS-1: the database-derived canonical slug. Requested with the governed set so
+// a migrated database answers a category filter with an index lookup; a
+// pre-migration database falls back to the legacy columns and the client applies
+// the same rule locally.
+const NEWS_ROW_CATEGORISED = `${NEWS_ROW_GOVERNED},category_slug`;
 
 function newsArticleView(item: Record<string, unknown>) {
   const expiresAt = item.expires_at ? new Date(String(item.expires_at)) : null;
@@ -1524,6 +1529,7 @@ function newsArticleView(item: Record<string, unknown>) {
     last_verified_at: item.last_verified_at || item.updated_at,
     verification_status: expiredByDate ? 'expired' : (item.verification_status || 'verified'),
     priority: 'normal',
+    category_slug: item.category_slug || String(item.category || 'general').trim().toLowerCase(),
   };
 }
 
@@ -1541,8 +1547,14 @@ app.get('/api/news', async (_req, res) => {
     let data: any = null;
     let error: any = null;
     ({ data, error } = await supabase.from('news_articles')
-      .select(NEWS_ROW_GOVERNED)
+      .select(NEWS_ROW_CATEGORISED)
       .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(40));
+    if (error) {
+      // Pre-NEWS-1 database: retry without the derived column.
+      ({ data, error } = await supabase.from('news_articles')
+        .select(NEWS_ROW_GOVERNED)
+        .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(40));
+    }
     if (error) {
       // Pre-newsroom database: fall back to the legacy column set.
       const fallback = await supabase.from('news_articles')
@@ -1620,10 +1632,453 @@ app.get('/api/cbt/exams', async (_req, res) => {
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    res.json({ items: data || [] });
+
+    // Availability is stated up front, so a student never has to complete a setup
+    // wizard to discover that a bank has no questions for a subject they want.
+    const exams = data || [];
+    const counts = new Map<string, { questions: number; subjects: Set<string> }>();
+    if (exams.length) {
+      const { data: questionRows } = await supabase
+        .from('exam_questions')
+        .select('exam_id,subject')
+        .in('exam_id', exams.map((exam) => exam.id));
+      for (const row of questionRows || []) {
+        const key = String((row as { exam_id: string }).exam_id);
+        const entry = counts.get(key) || { questions: 0, subjects: new Set<string>() };
+        entry.questions += 1;
+        const subject = String((row as { subject?: string }).subject || '').trim();
+        if (subject) entry.subjects.add(subject.toLowerCase());
+        counts.set(key, entry);
+      }
+    }
+
+    res.json({
+      items: exams.map((exam) => {
+        const entry = counts.get(exam.id);
+        return {
+          ...exam,
+          question_count: entry?.questions ?? 0,
+          subject_count: entry?.subjects.size ?? 0,
+        };
+      }),
+    });
   } catch (error) {
     console.error('CBT exams list API error:', error);
     res.status(503).json({ error: 'CBT exams are temporarily unavailable.' });
+  }
+});
+
+/**
+ * Mark an attempt expired after the database refused it for being out of time.
+ *
+ * The RPCs raise on expiry (a raise rolls back every write in the same call, so
+ * they cannot persist the status themselves). By the time this runs the RPC has
+ * already proved the attempt belongs to the caller, and the update is filtered by
+ * `user_id` as well, so it can never touch another student's row.
+ */
+async function expireCbtAttempt(attemptId: string, userId: string): Promise<void> {
+  if (!attemptId || !userId) return;
+  try {
+    const supabase = getServerSupabase();
+    await supabase
+      .from('cbt_attempts')
+      .update({ status: 'expired', updated_at: new Date().toISOString() })
+      .eq('id', attemptId)
+      .eq('user_id', userId)
+      .eq('status', 'in_progress');
+  } catch (error) {
+    console.warn('CBT expiry marking failed:', error);
+  }
+}
+
+/**
+ * Subject availability for one bank, from the real question data.
+ *
+ * The setup wizard used to offer a static subject catalogue, so a student could
+ * configure a session the bank could not serve and only find out when the paper
+ * failed to start ("This CBT is not ready yet"). This endpoint is the list the
+ * wizard renders and the limit the server will enforce, in one response.
+ */
+app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'CBT question bank is not configured.' });
+  try {
+    const supabase = getServerSupabase();
+    const { data: exam, error: examError } = await supabase
+      .from('cbt_exams')
+      .select('id,title,exam_body,subject,description,duration_minutes,is_active')
+      .eq('id', req.params.examId)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (examError || !exam) return res.status(404).json({ error: 'CBT exam not found.' });
+
+    const { data: subjects, error: subjectError } = await supabase.rpc('cbt_subject_availability', {
+      p_exam_id: exam.id,
+    });
+    if (subjectError) throw subjectError;
+
+    const { data: limits, error: limitsError } = await supabase.rpc('cbt_limits');
+    if (limitsError) throw limitsError;
+
+    const available = (subjects || []) as Array<{ subject: string; question_count: number }>;
+    res.json({
+      exam: {
+        id: exam.id,
+        title: exam.title,
+        examBody: exam.exam_body,
+        subject: exam.subject,
+        description: exam.description,
+        defaultDurationMinutes: exam.duration_minutes,
+      },
+      subjects: available.map((row) => ({ subject: row.subject, questionCount: Number(row.question_count) })),
+      totalQuestions: available.reduce((sum, row) => sum + Number(row.question_count), 0),
+      limits: limits || null,
+    });
+  } catch (error) {
+    console.error('CBT subject availability error:', error);
+    res.status(503).json({ error: 'CBT subjects are temporarily unavailable.' });
+  }
+});
+
+/**
+ * Start (or resume) a configured attempt.
+ *
+ * The body is a *request*, not a decision: the database validates the subjects
+ * against the real bank, derives the mock duration from the exam configuration,
+ * plans the paper, freezes it and returns what was actually created — including
+ * `resumed: true` when an identical unfinished session already existed.
+ */
+app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtStart), async (req, res) => {
+  try {
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
+    const mode = String(req.body?.mode || 'practice').trim().toLowerCase();
+    const subjects = Array.isArray(req.body?.subjects)
+      ? req.body.subjects.map((value: unknown) => String(value).trim()).filter(Boolean)
+      : [];
+    const questionCount = req.body?.questionCount === undefined || req.body?.questionCount === null
+      ? null
+      : Number(req.body.questionCount);
+    const durationMinutes = req.body?.durationMinutes === undefined || req.body?.durationMinutes === null
+      ? null
+      : Number(req.body.durationMinutes);
+    const programme = req.body?.programme ? String(req.body.programme).trim().slice(0, 160) : null;
+
+    if (questionCount !== null && (!Number.isInteger(questionCount) || questionCount < 1)) {
+      return res.status(400).json({ error: 'Choose how many questions you want.' });
+    }
+    if (durationMinutes !== null && (!Number.isInteger(durationMinutes) || durationMinutes < 1)) {
+      return res.status(400).json({ error: 'Choose how long you want to practise for.' });
+    }
+
+    const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_configured', {
+      p_exam_id: req.params.examId,
+      p_subjects: subjects,
+      p_question_count: questionCount,
+      p_duration_minutes: durationMinutes,
+      p_mode: mode,
+      p_programme: programme,
+    });
+    if (error) throw error;
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, any> | null;
+    if (!row) return res.status(409).json({ error: 'The practice session could not be created. Please try again.' });
+
+    res.status(row.resumed ? 200 : 201).json({
+      attempt: {
+        id: row.attempt_id,
+        startedAt: row.started_at,
+        expiresAt: row.expires_at,
+        totalQuestions: row.total_questions,
+        mode: row.mode,
+        durationMinutes: row.duration_minutes,
+        subjects: row.selected_subjects || [],
+        plan: row.subject_plan || [],
+        resumed: Boolean(row.resumed),
+      },
+    });
+  } catch (error) {
+    console.error('CBT start API error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to start this CBT exam.';
+    const status = /Authentication|required|session/i.test(message) ? 401
+      : /permission/i.test(message) ? 403
+        : /not found/i.test(message) ? 404
+          : /No questions are available|Choose at least one subject|Choose a duration|Use of English plus|A session can include|Unknown CBT mode/i.test(message) ? 422
+            : 409;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this practice session. Please try again.') });
+  }
+});
+
+/**
+ * PQR-1 — the past-question resource library, read-only and public.
+ *
+ * The library is empty until staff publish a paper that they have verified, and
+ * this endpoint says exactly that instead of implying documents exist. When a
+ * row is hosted by EduReach, the private `resource-files` copy is opened with a
+ * short-lived signed URL, and only then: a row the server cannot sign is
+ * reported as unavailable rather than shown as a working download.
+ */
+app.get('/api/past-questions/resources', async (req, res) => {
+  if (!isServerSupabaseConfigured()) {
+    return res.json({ items: [], coverage: [], configured: false, state: 'not-configured' });
+  }
+  try {
+    const supabase = getServerSupabase();
+    const exam = String(req.query.exam || '').trim().toUpperCase();
+    const subject = String(req.query.subject || '').trim();
+    const institution = String(req.query.institution || '').trim();
+
+    let query = supabase
+      .from('past_question_resources')
+      .select('id,exam_body,institution_id,subject,course,paper_year,title,description,source_name,source_url,storage_path,access,verified_at')
+      .eq('published', true)
+      .not('verified_at', 'is', null)
+      .order('paper_year', { ascending: false, nullsFirst: false })
+      .limit(200);
+    if (exam) query = query.ilike('exam_body', exam);
+    if (subject) query = query.ilike('subject', subject);
+    if (institution) query = query.eq('institution_id', institution);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const items = await Promise.all((data || []).map(async (row: Record<string, any>) => {
+      let signedUrl: string | null = null;
+      if (row.storage_path) {
+        const { data: signed } = await supabase.storage.from('resource-files').createSignedUrl(row.storage_path, 300);
+        signedUrl = signed?.signedUrl ?? null;
+      }
+      const href = signedUrl || row.source_url || null;
+      return {
+        id: row.id,
+        examBody: row.exam_body,
+        institutionId: row.institution_id,
+        subject: row.subject,
+        course: row.course,
+        year: row.paper_year,
+        title: row.title,
+        description: row.description,
+        sourceName: row.source_name,
+        sourceUrl: row.source_url,
+        // available  — a paper a student can open right now
+        // external   — hosted elsewhere; the link leaves EduReach
+        // unavailable— published, but neither copy can be opened
+        state: href ? (signedUrl ? 'available' : 'external') : 'unavailable',
+        access: row.access,
+        href,
+        verifiedAt: row.verified_at,
+      };
+    }));
+
+    const { data: coverage } = await supabase.rpc('past_question_coverage', { p_exam_body: exam || null });
+    res.json({
+      items,
+      coverage: coverage || [],
+      configured: true,
+      // The page needs to distinguish "nothing published yet" (an honest empty
+      // state) from "the service could not answer" (an error state).
+      state: items.length ? 'available' : 'not-published',
+    });
+  } catch (error) {
+    console.error('Past-question resources API error:', error);
+    res.status(503).json({ error: 'The resource library is temporarily unavailable.' });
+  }
+});
+
+/** The frozen paper for one attempt, plus the student's saved draft. Owner only. */
+app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
+  try {
+    const { supabase, rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
+    const { data: attemptRow, error: attemptError } = await supabase
+      .from('cbt_attempts')
+      .select('id,exam_id,status,started_at,expires_at,current_question,answers_draft,selected_subjects,mode,duration_minutes,programme,subject_plan,question_ids,cbt_exams(title,exam_body,subject)')
+      .eq('id', req.params.attemptId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (attemptError || !attemptRow) return res.status(404).json({ error: 'CBT attempt not found.' });
+
+    const { data: paper, error: paperError } = await rpcSupabase.rpc('get_cbt_attempt_paper', {
+      p_attempt_id: req.params.attemptId,
+    });
+    if (paperError) throw paperError;
+
+    const examMeta = (attemptRow as Record<string, any>).cbt_exams || {};
+    res.json({
+      // The server clock, so a device with the wrong time still shows the true
+      // remaining time instead of extending or shortening the examination.
+      serverTime: new Date().toISOString(),
+      attempt: {
+        id: attemptRow.id,
+        examId: attemptRow.exam_id,
+        status: attemptRow.status,
+        startedAt: attemptRow.started_at,
+        expiresAt: attemptRow.expires_at,
+        mode: attemptRow.mode,
+        durationMinutes: attemptRow.duration_minutes,
+        programme: attemptRow.programme,
+        subjects: attemptRow.selected_subjects || [],
+        plan: attemptRow.subject_plan || [],
+        totalQuestions: Array.isArray(attemptRow.question_ids) ? attemptRow.question_ids.length : 0,
+        questionIndex: Number.isInteger(attemptRow.current_question) ? attemptRow.current_question : 0,
+        savedAnswers: attemptRow.answers_draft || {},
+        exam: {
+          id: attemptRow.exam_id,
+          title: examMeta.title || 'CBT practice',
+          examBody: examMeta.exam_body || '',
+          subject: examMeta.subject || '',
+        },
+      },
+      questions: (paper || []).map((row: Record<string, any>) => ({
+        position: row.position,
+        subject: row.subject,
+        id: row.question_id,
+        text: row.question_text,
+        options: [row.option_a, row.option_b, row.option_c, row.option_d],
+      })),
+    });
+  } catch (error) {
+    console.error('CBT paper API error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to load this CBT attempt.';
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 404;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to load this CBT attempt.') });
+  }
+});
+
+/** Submit against the frozen paper. A retried submit returns the stored result. */
+app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
+  let callerId = '';
+  try {
+    const { rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
+    callerId = user.id;
+    const answers = req.body?.answers;
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+      return res.status(400).json({ error: 'Submit your answers with the attempt.' });
+    }
+
+    const { data, error } = await rpcSupabase.rpc('submit_cbt_attempt_configured', {
+      p_attempt_id: req.params.attemptId,
+      p_answers: answers,
+    });
+    if (error) throw error;
+
+    const row = (Array.isArray(data) ? data[0] : data) as Record<string, any> | null;
+    if (!row) return res.status(409).json({ error: 'CBT submission did not produce a result.' });
+    res.json({
+      attemptId: row.attempt_id,
+      score: Number(row.score),
+      correctAnswers: Number(row.correct_answers),
+      totalQuestions: Number(row.total_questions),
+      breakdown: row.breakdown || [],
+    });
+  } catch (error) {
+    console.error('CBT submit API error:', error);
+    const message = error instanceof Error ? error.message : 'CBT submission failed.';
+    if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
+    const status = /Authentication|required|session/i.test(message) ? 401
+      : /permission/i.test(message) ? 403
+        : /not found/i.test(message) ? 404
+          : /expired|already/i.test(message) ? 409
+            : 400;
+    res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
+  }
+});
+
+/** Save in-progress answers and the current question so nothing is lost. */
+app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
+  let callerId = '';
+  try {
+    const { rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
+    callerId = user.id;
+    const answers = req.body?.answers;
+    if (answers !== undefined && (answers === null || typeof answers !== 'object' || Array.isArray(answers))) {
+      return res.status(400).json({ error: 'Answers must be an object.' });
+    }
+    const questionIndex = Number.isInteger(Number(req.body?.questionIndex)) ? Number(req.body.questionIndex) : null;
+
+    const { data, error } = await rpcSupabase.rpc('save_cbt_attempt_draft', {
+      p_attempt_id: req.params.attemptId,
+      p_answers: answers || {},
+      p_question_index: questionIndex,
+    });
+    if (error) throw error;
+    res.json({ saved: true, ...(data as Record<string, unknown>) });
+  } catch (error) {
+    console.error('CBT draft API error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to save your progress.';
+    if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
+    const status = /Authentication|required|session/i.test(message) ? 401
+      : /permission/i.test(message) ? 403
+        : /not found/i.test(message) ? 404
+          : /expired|already/i.test(message) ? 409
+            : 400;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to save your progress.') });
+  }
+});
+
+/** Leave an active examination. Practice attempts can also be deleted outright. */
+app.post('/api/cbt/attempts/:attemptId/abandon', async (req, res) => {
+  try {
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
+    const { error } = await rpcSupabase.rpc('abandon_cbt_attempt', { p_attempt_id: req.params.attemptId });
+    if (error) throw error;
+    res.json({ abandoned: true });
+  } catch (error) {
+    console.error('CBT abandon API error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to end this attempt.';
+    const status = /Authentication|required|session/i.test(message) ? 401
+      : /permission/i.test(message) ? 403
+        : /not found/i.test(message) ? 404
+          : 409;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to end this attempt.') });
+  }
+});
+
+/** Delete a practice attempt. Mock results are examination records and are refused. */
+app.delete('/api/cbt/attempts/:attemptId', async (req, res) => {
+  try {
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
+    const { data, error } = await rpcSupabase.rpc('delete_cbt_practice_attempt', { p_attempt_id: req.params.attemptId });
+    if (error) throw error;
+    res.json({ deleted: Boolean(data) });
+  } catch (error) {
+    console.error('CBT delete API error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to delete this practice attempt.';
+    const status = /Authentication|required|session/i.test(message) ? 401
+      : /permission/i.test(message) ? 403
+        : /not found/i.test(message) ? 404
+          : 409;
+    res.status(status).json({ error: publicErrorMessage(message, 'Unable to delete this practice attempt.') });
+  }
+});
+
+/** The student's own study history, newest first. */
+app.get('/api/cbt/attempts', async (req, res) => {
+  try {
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
+    const limit = Number.isInteger(Number(req.query.limit)) ? Math.min(Math.max(Number(req.query.limit), 1), 100) : 25;
+    const { data, error } = await rpcSupabase.rpc('get_cbt_attempt_history', { p_limit: limit });
+    if (error) throw error;
+    res.json({
+      items: (data || []).map((row: Record<string, any>) => ({
+        id: row.attempt_id,
+        examId: row.exam_id,
+        examTitle: row.exam_title,
+        examBody: row.exam_body,
+        mode: row.mode,
+        programme: row.programme,
+        status: row.status,
+        score: row.score === null ? null : Number(row.score),
+        correctAnswers: Number(row.correct_answers),
+        totalQuestions: Number(row.total_questions),
+        durationMinutes: row.duration_minutes,
+        subjects: row.selected_subjects || [],
+        startedAt: row.started_at,
+        expiresAt: row.expires_at,
+        submittedAt: row.submitted_at,
+        answered: Number(row.answered),
+        resumable: row.status === 'in_progress' && row.expires_at && new Date(row.expires_at).getTime() > Date.now(),
+      })),
+    });
+  } catch (error) {
+    console.error('CBT history API error:', error);
+    res.status(401).json({ error: 'Please sign in to see your practice history.' });
   }
 });
 
@@ -1804,6 +2259,14 @@ app.post('/api/cbt/submit', async (req, res) => {
   }
 });
 
+/**
+ * Legacy progress endpoints, kept for compatibility.
+ *
+ * They used to store only the question index and drop the answers they were
+ * sent, so a student who reconnected resumed at the right question with an empty
+ * paper. Both verbs now go through the same validated draft path the configured
+ * API uses, which is why an older client stops losing work too.
+ */
 app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   try {
     const { supabase, user } = await requireUser(req, 'cbt.attempt');
@@ -1811,12 +2274,17 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
     // response never reveals that someone else's attempt exists.
     const { data: attempt, error } = await supabase
       .from('cbt_attempts')
-      .select('id,current_question')
+      .select('id,current_question,answers_draft,expires_at,status')
       .eq('id', req.params.attemptId)
       .eq('user_id', user.id)
       .maybeSingle();
     if (error || !attempt) return res.status(404).json({ error: 'CBT attempt not found.' });
-    res.json({ answers: {}, questionIndex: Number.isInteger(attempt.current_question) ? attempt.current_question : 0 });
+    res.json({
+      answers: attempt.answers_draft || {},
+      questionIndex: Number.isInteger(attempt.current_question) ? attempt.current_question : 0,
+      expiresAt: attempt.expires_at,
+      status: attempt.status,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load CBT progress.';
     const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
@@ -1825,22 +2293,30 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
 });
 
 app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
+  let callerId = '';
   try {
-    const { supabase, user } = await requireUser(req, 'cbt.attempt');
-    const questionIndex = Number(req.body?.questionIndex);
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (Number.isInteger(questionIndex) && questionIndex >= 0) patch.current_question = questionIndex;
-    const { error } = await supabase
-      .from('cbt_attempts')
-      .update(patch)
-      .eq('id', req.params.attemptId)
-      .eq('user_id', user.id)
-      .eq('status', 'in_progress');
+    const { rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
+    callerId = user.id;
+    const answers = req.body?.answers && typeof req.body.answers === 'object' && !Array.isArray(req.body.answers)
+      ? req.body.answers
+      : {};
+    const questionIndex = Number.isInteger(Number(req.body?.questionIndex)) ? Number(req.body.questionIndex) : null;
+
+    const { data, error } = await rpcSupabase.rpc('save_cbt_attempt_draft', {
+      p_attempt_id: req.params.attemptId,
+      p_answers: answers,
+      p_question_index: questionIndex,
+    });
     if (error) throw error;
-    res.json({ ok: true });
+    res.json({ ok: true, saved: data || null });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
+    if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
+    const status = /Authentication|required|session/i.test(message) ? 401
+      : /permission/i.test(message) ? 403
+        : /not found/i.test(message) ? 404
+          : /expired|already/i.test(message) ? 409
+            : 400;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save CBT progress.') });
   }
 });

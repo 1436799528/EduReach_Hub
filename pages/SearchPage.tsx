@@ -7,6 +7,7 @@ import { simulatorStartHref } from '../src/components/ExamSimulatorGrid';
 import type { CatalogExam } from '../src/lib/cbt-config';
 import { services } from '../src/data/services';
 import { commonInstitutions } from '../src/data/studentOptions';
+import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { itemKey } from '../src/components/dashboard/SchoolFinderCard';
 import { fetchCbtExams, fetchNews, fetchOpportunities, type NewsItem, type Opportunity, trackEvent } from '../src/lib/api';
 
@@ -43,8 +44,8 @@ function staticResults(exams: CatalogExam[]): SearchResult[] {
     const materialResults = studyMaterialLibrary.map((material) => ({
       id: `material-${material.id}`,
       title: material.title,
-      description: `${material.school} · ${material.formats.join(', ')} · request through EduReach.`,
-      category: 'Past Questions & Materials',
+      description: `${material.school} · ${material.availability === 'on-request' ? 'document on request' : 'timed practice available'} through EduReach.`,
+      category: 'Past questions & materials',
     href: `/past-questions?view=materials&exam=${encodeURIComponent(material.exam)}&q=${encodeURIComponent(material.school)}`,
     identity: material.exam,
   }));
@@ -198,7 +199,23 @@ export default function SearchPage() {
           </form>
 
           {!query.trim() && <p className="er-search-help">Start typing to search the configured catalogue. Results are direct links; no extra intermediary page is inserted.</p>}
-          {!results.length && !loadingNews && <div className="hub-panel hub-empty"><h2>No matching result</h2><p>Try JAMB, WAEC, NELFUND, a service name, a school or “materials”.</p></div>}
+          {!results.length && !loadingNews && (
+            <div className="hub-panel hub-empty">
+              <h2>Nothing on EduReach matches “{query.trim()}”</h2>
+              <p>
+                That is the honest result, not a broken search. Try JAMB, WAEC, NELFUND, a service name, a school or
+                “materials” — or ask us and we will point you at the right page.
+              </p>
+              <a
+                className="hub-primary-btn"
+                href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, I could not find anything for "${query.trim()}" on the site. Can you point me to it?`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ask EduReach <ArrowRight size={13} />
+              </a>
+            </div>
+          )}
           {loadingNews && query.trim() && !results.length && <div className="hub-panel hub-empty">Checking news updates…</div>}
 
           <div className="er-search-results" aria-live="polite">

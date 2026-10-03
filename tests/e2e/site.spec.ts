@@ -66,7 +66,12 @@ test('search filters services, updates URL and follows its direct result', async
 });
 test('search has an honest no-match state', async ({ page }) => {
   await page.goto('/search?q=zzzz-no-such-service');
-  await expect(page.getByRole('heading', { name: 'No matching result' })).toBeVisible();
+  // The heading echoes the query (D/Search: an empty result says what was
+  // searched and offers a next step), so the assertion is on the rule — a
+  // visible heading for this query plus the offer to ask — not on the wording.
+  const emptyState = page.locator('.hub-panel.hub-empty');
+  await expect(emptyState.getByRole('heading')).toContainText('zzzz-no-such-service');
+  await expect(emptyState.getByRole('link', { name: /Ask EduReach/ })).toBeVisible();
 });
 test('unconfigured login fails closed and cannot create a local session', async ({ page }) => {
   await page.goto('/login');

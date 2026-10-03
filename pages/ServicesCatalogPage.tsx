@@ -108,10 +108,10 @@ export default function ServicesCatalogPage() {
             }}
           >
             <div>
-              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 800 }}>
+              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 560 }}>
                 STUDENT SERVICES
               </span>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 0' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '2px 0 0' }}>
                 Services
               </h1>
             </div>

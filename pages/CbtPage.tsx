@@ -15,6 +15,7 @@ import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams } from '../src/lib/api';
 import { SkeletonRows } from '../src/components/Skeleton';
+import CbtHistoryPanel from '../src/components/CbtHistoryPanel';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number };
 
@@ -105,8 +106,8 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 800 }}>QUESTION BANKS</span>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
+              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 560 }}>QUESTION BANKS</span>
+              <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
                 Pick a question bank below — each test opens a short setup page before the timed CBT simulator and on-screen calculator.
               </p>
@@ -177,6 +178,12 @@ export default function CbtPage() {
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Select another category to practice.</p>
             </div>
           )}
+
+          {/* The student's own sessions sit directly under the banks so a
+              half-finished paper is one tap away, not buried in a dashboard. */}
+          <section className="er-section" style={{ marginTop: '26px' }}>
+            <CbtHistoryPanel />
+          </section>
 
           {!loading && !error && filteredExams.length > 0 && (
             <div className="er-bank-list">

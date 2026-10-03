@@ -1,13 +1,17 @@
 import { ArrowRight, Newspaper } from 'lucide-react';
 import type { NewsItem } from '../lib/api';
 import { newsCategoryLabel } from '../data/newsCategories';
+import { freshnessDate, newsFreshness } from '../lib/newsFreshness';
 import { identityClassFor } from './CardIdentityMark';
 
 export { newsCategoryLabel };
 
+/**
+ * The list-row date. Delegates to the shared news formatter and supplies the
+ * visible fallback a row needs (the freshness line uses the empty string).
+ */
 export function formatNewsDate(value: string | null): string {
-  if (!value) return 'Recent update';
-  return new Date(value).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
+  return freshnessDate(value) || 'Recent update';
 }
 
 function articleHref(item: NewsItem): string {
@@ -67,14 +71,25 @@ export function NewsImage({ item, className }: { item: NewsItem; className?: str
 
 /** Compact Myschool-style news row: thumb + category/date + headline. */
 export function NewsRow({ item }: { item: NewsItem }) {
+  const freshness = newsFreshness(item);
+  const checked = freshnessDate(freshness.checkedOn);
   return (
-    <a className="er-news-row" href={articleHref(item)}>
+    <a className={`er-news-row is-${freshness.state}`} href={articleHref(item)}>
       <NewsImage item={item} className="er-news-photo" />
       <span>
         <small>
           {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
+          {item.source_name ? ` · ${item.source_name}` : ''}
         </small>
         <strong>{item.title}</strong>
+        {!freshness.current ? (
+          <small className="er-news-freshness is-warning">{freshness.label}</small>
+        ) : freshness.state === 'stale' || freshness.state === 'unverified' ? (
+          <small className="er-news-freshness">
+            {freshness.label}
+            {checked ? ` ${checked}` : ''}
+          </small>
+        ) : null}
       </span>
       <ArrowRight size={13} />
     </a>
@@ -101,6 +116,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
             </small>
             <strong>{item.title}</strong>
             {item.summary && <small className="er-featured-excerpt">{item.summary}</small>}
+            {!newsFreshness(item).current && <small className="er-news-freshness is-warning">{newsFreshness(item).label}</small>}
           </span>
         </a>
       ))}

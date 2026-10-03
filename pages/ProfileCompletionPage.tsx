@@ -410,7 +410,7 @@ export default function ProfileCompletionPage() {
       <div className="hub-page" style={{ padding: '24px 0 60px' }}>
         <div className="hub-container" style={{ maxWidth: '780px' }}>
           <div style={{ marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
-            <h1 style={{ fontSize: '19px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            <h1 style={{ fontSize: '19px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
               Academic Profile &amp; Preferences
             </h1>
           </div>
@@ -446,7 +446,7 @@ export default function ProfileCompletionPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                fontWeight: 800,
+                fontWeight: 620,
                 fontSize: '14px',
               }}
             >
@@ -476,7 +476,7 @@ export default function ProfileCompletionPage() {
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                 <Camera size={18} color="#b14933" />
-                <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#5e6c82' }}>(Optional)</span>
                 </h2>
               </div>
@@ -505,7 +505,7 @@ export default function ProfileCompletionPage() {
                       display: 'grid',
                       placeItems: 'center',
                       color: '#ffffff',
-                      fontWeight: 900,
+                      fontWeight: 620,
                       fontSize: '20px',
                     }}
                   >
@@ -582,7 +582,7 @@ export default function ProfileCompletionPage() {
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                 <School size={18} color="#b14933" />
-                <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Institution &amp; Programme
                 </h2>
               </div>
@@ -590,7 +590,7 @@ export default function ProfileCompletionPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
                 {/* 10. INSTITUTION */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Institution / School *
                   </label>
                   <select
@@ -638,7 +638,7 @@ export default function ProfileCompletionPage() {
 
                 {/* 11. COURSE / PROGRAMME */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Course / Programme *
                   </label>
                   <select
@@ -687,7 +687,7 @@ export default function ProfileCompletionPage() {
 
                 {/* 12. DEPARTMENT */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Department *
                   </label>
                   <select
@@ -736,7 +736,7 @@ export default function ProfileCompletionPage() {
 
                 {/* 13. FACULTY */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Faculty *
                   </label>
                   <select
@@ -770,7 +770,7 @@ export default function ProfileCompletionPage() {
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                 <GraduationCap size={18} color="#b14933" />
-                <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Level &amp; Academic Timeline
                 </h2>
               </div>
@@ -778,7 +778,7 @@ export default function ProfileCompletionPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
                 {/* 14. CURRENT LEVEL */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Current Level *
                   </label>
                   <select
@@ -808,7 +808,7 @@ export default function ProfileCompletionPage() {
 
                 {/* 15. ACADEMIC SESSION */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Academic Session *
                   </label>
                   <select
@@ -834,7 +834,7 @@ export default function ProfileCompletionPage() {
 
                 {/* 16. ADMISSION YEAR */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Admission Year *
                   </label>
                   <select
@@ -860,7 +860,7 @@ export default function ProfileCompletionPage() {
 
                 {/* 16. EXPECTED GRADUATION YEAR */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '6px' }}>
                     Expected Graduation Year *
                   </label>
                   <select
@@ -890,7 +890,7 @@ export default function ProfileCompletionPage() {
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                 <Sparkles size={18} color="#b14933" />
-                <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#5e6c82' }}>(Optional)</span>
                 </h2>
               </div>
@@ -910,7 +910,7 @@ export default function ProfileCompletionPage() {
                         padding: '6px 12px',
                         borderRadius: '999px',
                         fontSize: '12px',
-                        fontWeight: 700,
+                        fontWeight: 620,
                         border: '1px solid',
                         borderColor: selected ? '#b14933' : '#cbd5e1',
                         background: selected ? '#F9F0EE' : '#ffffff',
@@ -934,7 +934,7 @@ export default function ProfileCompletionPage() {
             <section style={{ marginBottom: '26px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
                 <Bell size={18} color="#b14933" />
-                <h2 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Notification Preferences
                 </h2>
               </div>
@@ -1034,7 +1034,7 @@ export default function ProfileCompletionPage() {
                 href="/dashboard"
                 style={{
                   fontSize: '12.5px',
-                  fontWeight: 700,
+                  fontWeight: 620,
                   color: '#5e6c82',
                   textDecoration: 'none',
                 }}
@@ -1052,7 +1052,7 @@ export default function ProfileCompletionPage() {
                   borderRadius: '10px',
                   padding: '12px 24px',
                   fontSize: '13.5px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   cursor: 'pointer',
                   transition: 'background .2s ease, box-shadow .2s ease',
                   display: 'inline-flex',

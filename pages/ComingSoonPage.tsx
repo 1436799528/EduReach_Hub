@@ -99,7 +99,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                 alignItems: 'center',
                 gap: '6px',
                 fontSize: '11px',
-                fontWeight: 900,
+                fontWeight: 620,
                 color: '#b14933',
                 background: '#F9F0EE',
                 border: '1px solid #F0D2BC',
@@ -111,7 +111,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
             >
               <BellRing size={13} /> {copy.eyebrow} · Coming soon
             </span>
-            <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', margin: '14px 0 8px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '14px 0 8px' }}>
               {heading}
             </h1>
             <p style={{ fontSize: '13px', color: '#5e6c82', margin: '0 auto 22px', lineHeight: 1.6, maxWidth: '460px' }}>
@@ -132,7 +132,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                       borderRadius: '8px',
                       padding: '9px 18px',
                       fontSize: '12.5px',
-                      fontWeight: 800,
+                      fontWeight: 620,
                       textDecoration: 'none',
                     }}
                   >
@@ -150,7 +150,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                       borderRadius: '8px',
                       padding: '9px 18px',
                       fontSize: '12.5px',
-                      fontWeight: 800,
+                      fontWeight: 620,
                       textDecoration: 'none',
                     }}
                   >
@@ -169,7 +169,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   borderRadius: '8px',
                   padding: '9px 18px',
                   fontSize: '12.5px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   textDecoration: 'none',
                 }}
               >
@@ -187,7 +187,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   borderRadius: '8px',
                   padding: '9px 18px',
                   fontSize: '12.5px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   textDecoration: 'none',
                 }}
               >
@@ -207,7 +207,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   borderRadius: '8px',
                   padding: '9px 18px',
                   fontSize: '12.5px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   textDecoration: 'none',
                 }}
               >

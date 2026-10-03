@@ -55,20 +55,72 @@ export function newsCategoryOptions(current?: string): NewsCategory[] {
   return newsCategories;
 }
 
-/** True when an article's stored category matches a filter slug (with legacy aliases). */
+/**
+ * The canonical slug for a stored category.
+ *
+ * This mirrors `public.news_category_slug(text)` in the database (migration
+ * 20261002130000), which is the generated `news_articles.category_slug` column.
+ * The rule lives in both places on purpose: the database makes the stored value
+ * filterable and indexed, and the client keeps working against an older payload
+ * or a cached response.
+ *
+ * The bug this closes: editors wrote labels ("Scholarships & Funding",
+ * "NABTEB") while the page filtered by slug ("scholarships", "nabteb"), so a
+ * live article could be invisible under its own category.
+ */
+const ALIAS_SLUGS: Record<string, string> = {
+  // Keys are already normalised (lowercase, punctuation collapsed to dashes),
+  // because that is what the lookup receives.
+  'scholarships-funding': 'scholarships',
+  'scholarship-funding': 'scholarships',
+  'scholarships-and-funding': 'scholarships',
+  funding: 'scholarships',
+  grant: 'scholarships',
+  grants: 'scholarships',
+  scholarship: 'scholarships',
+  scholarships: 'scholarships',
+  admission: 'admissions',
+  admissions: 'admissions',
+  campus: 'school-updates',
+  'campus-updates': 'school-updates',
+  'school-updates': 'school-updates',
+  'school-update': 'school-updates',
+  results: 'examination-updates',
+  result: 'examination-updates',
+  'exam-updates': 'examination-updates',
+  'exam-update': 'examination-updates',
+  'examination-updates': 'examination-updates',
+  'examination-update': 'examination-updates',
+  utme: 'jamb',
+  'jamb-utme': 'jamb',
+  'jamb-and-utme': 'jamb',
+  jamb: 'jamb',
+  'post-utme': 'post-utme',
+  postutme: 'post-utme',
+  'college-of-education': 'colleges-of-education',
+  'colleges-of-education': 'colleges-of-education',
+  university: 'universities',
+  universities: 'universities',
+  polytechnic: 'polytechnics',
+  polytechnics: 'polytechnics',
+  general: 'general',
+  'general-education': 'general',
+  education: 'general',
+};
+
+export function newsCategorySlug(value: string): string {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (!normalized) return 'general';
+  return ALIAS_SLUGS[normalized] || normalized;
+}
+
+/** True when an article's stored category matches a filter slug (labels, legacy slugs and case all resolve). */
 export function newsCategoryMatches(articleCategory: string, filterSlug: string): boolean {
-  const article = String(articleCategory || '').trim().toLowerCase();
-  const filter = filterSlug.trim().toLowerCase();
+  const filter = newsCategorySlug(filterSlug);
   if (!filter || filter === 'all') return true;
-  if (article === filter) return true;
-  // Alias groups so older rows respond to the current filter names.
-  const aliases: Record<string, string[]> = {
-    admissions: ['admission'],
-    scholarships: ['funding', 'grant'],
-    'school-updates': ['campus'],
-    'examination-updates': ['results', 'result'],
-    jamb: ['utme'],
-    'post-utme': ['postutme'],
-  };
-  return (aliases[filter] || []).some((alias) => article === alias);
+  return newsCategorySlug(articleCategory) === filter;
 }
