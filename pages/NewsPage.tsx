@@ -108,9 +108,10 @@ export default function NewsPage() {
 
           <div style={{ marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
             <FilterPills options={filters} active={activeFilter} onChange={changeFilter} ariaLabel="News categories" />
-            <label className="er-library-search" style={{ marginTop: '12px', maxWidth: '420px', width: '100%' }}>
+            {/* A control group, not a <label>: the clear button must not be
+                nested inside the label element that annotates the input. */}
+            <div className="er-library-search" role="search" aria-label="Search news" style={{ marginTop: '12px', maxWidth: '420px', width: '100%' }}>
               <Search size={17} aria-hidden="true" />
-              <span className="er-visually-hidden">Search news</span>
               <input
                 type="search"
                 value={query}
@@ -119,11 +120,11 @@ export default function NewsPage() {
                 aria-label="Search news"
               />
               {query && (
-                <button type="button" className="er-search-clear" onClick={() => setQuery('')} aria-label="Clear search">
+                <button type="button" className="er-search-clear" onClick={() => setQuery('')} aria-label="Clear news search">
                   <X size={14} />
                 </button>
               )}
-            </label>
+            </div>
           </div>
 
           <div className="er-late-region er-late-region--feed-page">

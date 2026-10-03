@@ -174,7 +174,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </nav>
 
-          <form className="hub-global-search" role="search" onSubmit={(event) => { event.preventDefault(); navigateToSearch(siteSearch); }}>
+          <form className="hub-global-search" role="search" aria-label="Site search" onSubmit={(event) => { event.preventDefault(); navigateToSearch(siteSearch); }}>
             <SearchIcon size={15} aria-hidden="true" />
             <input value={siteSearch} onChange={(event) => setSiteSearch(event.target.value)} placeholder="Search" aria-label="Search EduReach" />
           </form>
@@ -371,7 +371,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
-            <form className="hub-mobile-search" role="search" onSubmit={(event) => { event.preventDefault(); setMobileOpen(false); navigateToSearch(siteSearch); }}>
+            <form className="hub-mobile-search" role="search" aria-label="Site search (mobile)" onSubmit={(event) => { event.preventDefault(); setMobileOpen(false); navigateToSearch(siteSearch); }}>
               <SearchIcon size={16} aria-hidden="true" />
               <input value={siteSearch} onChange={(event) => setSiteSearch(event.target.value)} placeholder="Search EduReach" aria-label="Search EduReach" />
               <button type="submit">Go</button>
