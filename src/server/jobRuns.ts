@@ -21,8 +21,13 @@
 
 export type JobStatus = 'succeeded' | 'partial' | 'failed';
 
-/** Jobs that are expected to run on a schedule. Used to notice a job that stopped. */
-export const KNOWN_JOBS = ['newsroom-refresh', 'analytics-retention'] as const;
+/** Jobs that are expected to run on the daily schedule. */
+export const KNOWN_JOBS = [
+  'newsroom-refresh',
+  'analytics-retention',
+  'opportunity-expiry',
+  'scheduled-job-prune',
+] as const;
 export type KnownJob = (typeof KNOWN_JOBS)[number];
 
 /** How recently a daily job must have succeeded to count as healthy. */
@@ -49,7 +54,6 @@ export function sanitizeDetail(detail: Record<string, unknown> | undefined | nul
       const trimmed = value.trim().slice(0, MAX_DETAIL_STRING);
       if (trimmed) out[key] = trimmed;
     }
-    // objects, arrays, null and undefined are dropped
   }
   return out;
 }
@@ -68,15 +72,10 @@ interface MinimalClient {
 export interface RunOutcome {
   status: JobStatus;
   startedAt: Date;
-  /** Operator-safe counters and identifiers. Sanitised before it is written. */
   detail?: Record<string, unknown>;
   error?: unknown;
 }
 
-/**
- * Write one run row. Returns false if the write failed — the caller must not treat a
- * telemetry failure as a job failure.
- */
 export async function recordJobRun(
   supabase: MinimalClient,
   jobName: string,
@@ -100,13 +99,6 @@ export async function recordJobRun(
   }
 }
 
-/**
- * Run a job and record the outcome, so no call site can forget the recording. The
- * job's own result is returned unchanged; only the recording is best-effort.
- *
- * A thrown job error is recorded as `failed` and re-thrown — the caller decides what
- * a failure means, this module only makes sure it was written down first.
- */
 export async function runRecorded<T>(
   supabase: MinimalClient,
   jobName: string,
@@ -123,10 +115,6 @@ export async function runRecorded<T>(
   }
 }
 
-/**
- * Decide whether a job looks healthy from its status rows. Exported because both the
- * readiness endpoint and the tests need the same answer, and they must not disagree.
- */
 export function evaluateJobHealth(
   status: { sinceHours: number; jobs: Array<Record<string, any>> } | null | undefined,
   expected: readonly string[] = KNOWN_JOBS,
