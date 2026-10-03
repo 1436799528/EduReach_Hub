@@ -56,6 +56,10 @@ export const RLS_POSTURE: TablePosture[] = [
     table: 'opportunities', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
     why: 'Scholarships and jobs are public content; the policy filters to active rows.',
   },
+  {
+    table: 'past_question_resources', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
+    why: 'PQR-1: the policy is published = true and verified_at is not null, so an unverified paper is never shown as available. Publishing is server-side only.',
+  },
 
   // --- owner-scoped: authenticated, restricted to its own rows by policy ----
   {

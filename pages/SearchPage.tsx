@@ -43,7 +43,7 @@ function staticResults(exams: CatalogExam[]): SearchResult[] {
     const materialResults = studyMaterialLibrary.map((material) => ({
       id: `material-${material.id}`,
       title: material.title,
-      description: `${material.school} · ${material.formats.join(', ')} · request through EduReach.`,
+      description: `${material.school} · ${material.availability === 'on-request' ? 'document on request' : 'timed practice available'} through EduReach.`,
       category: 'Past Questions & Materials',
     href: `/past-questions?view=materials&exam=${encodeURIComponent(material.exam)}&q=${encodeURIComponent(material.school)}`,
     identity: material.exam,

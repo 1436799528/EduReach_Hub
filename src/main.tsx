@@ -18,6 +18,10 @@ import './compact-design-system.css';
 import './compact-structural.css';
 import './edu-portal.css';
 import './data-control.css';
+// The shared type scale and student-state surfaces are collected here, after
+// the component sheets they standardise (see the file header), but a11y.css must
+// remain the final import: it owns the focus-ring cascade the a11y gate checks.
+import './styles/type-system.css';
 import './styles/a11y.css';
 
 createRoot(document.getElementById('root')!).render(

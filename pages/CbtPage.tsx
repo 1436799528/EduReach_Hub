@@ -15,6 +15,7 @@ import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams } from '../src/lib/api';
 import { SkeletonRows } from '../src/components/Skeleton';
+import CbtHistoryPanel from '../src/components/CbtHistoryPanel';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number };
 
@@ -177,6 +178,12 @@ export default function CbtPage() {
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Select another category to practice.</p>
             </div>
           )}
+
+          {/* The student's own sessions sit directly under the banks so a
+              half-finished paper is one tap away, not buried in a dashboard. */}
+          <section className="er-section" style={{ marginTop: '26px' }}>
+            <CbtHistoryPanel />
+          </section>
 
           {!loading && !error && filteredExams.length > 0 && (
             <div className="er-bank-list">

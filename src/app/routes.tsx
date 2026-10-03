@@ -17,7 +17,8 @@ import { isLiveServiceSlug } from '../data/liveServices';
 const AuthPageV2 = lazy(() => import('../../pages/AuthPageV2'));
 const ProfileCompletionPage = lazy(() => import('../../pages/ProfileCompletionPage'));
 const StudentDashboardV2 = lazy(() => import('../../pages/StudentDashboardV2'));
-const CbtPracticePage = lazy(() => import('../../pages/CbtPracticePage'));
+const CbtPracticeEntryPage = lazy(() => import('../../pages/CbtPracticeEntryPage'));
+const CbtSessionPage = lazy(() => import('../../pages/CbtSessionPage'));
 const ExamSetupPage = lazy(() => import('../../pages/ExamSetupPage'));
 const PastQuestionsPage = lazy(() => import('../../pages/PastQuestionsPage'));
 const CbtResultsPage = lazy(() => import('../../pages/CbtResultsPage'));
@@ -130,7 +131,12 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/nabteb') return <ComingSoonPage />;
   if (path === '/past-questions') return <PastQuestionsPage />;
   if (path === '/cbt') return <CbtPage />;
-  if (path === '/cbt/practice') return <CbtPracticePage />;
+  // Legacy deep links keep working: the entry page resolves the bank and sends
+  // the student to the configured setup instead of straight into a paper.
+  if (path === '/cbt/practice') return <CbtPracticeEntryPage />;
+  if (path.startsWith('/cbt/session/')) {
+    return <CbtSessionPage attemptId={decodeURIComponent(path.slice('/cbt/session/'.length))} />;
+  }
   if (path === '/cbt/setup/jamb') return <ExamSetupPage exam="jamb" />;
   if (path === '/cbt/setup/waec') return <ExamSetupPage exam="waec" />;
   if (path === '/cbt/setup/neco') return <ExamSetupPage exam="neco" />;

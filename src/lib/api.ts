@@ -1,6 +1,8 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
+import { EduReachError, isOffline } from './failures';
+import { newsCategorySlug } from '../data/newsCategories';
 import { userFacingError } from '../../lib/errors';
 import { apiUrl } from './apiBase';
 import {
@@ -40,6 +42,8 @@ export type NewsItem = {
   summary: string | null;
   body: string;
   category: string;
+  /** Canonical slug (NEWS-1). Computed locally when an older payload omits it. */
+  category_slug?: string;
   priority: string;
   source_url: string | null;
   /** Publication that reported the story, when the row carries provenance. */
@@ -182,19 +186,53 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  // A caller-supplied signal is respected as well, so unmounting a screen can
+  // cancel its request rather than leave the timeout to fire later.
+  const externalSignal = init?.signal;
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
   let response: Response;
   try {
     const requestInput = typeof input === 'string' ? apiUrl(input) : input;
-    response = await fetch(requestInput, init);
-  } catch {
-    throw new Error('Please check your internet connection and try again.');
+    response = await fetch(requestInput, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (externalSignal?.aborted) throw new EduReachError('Request cancelled.', 'unknown');
+    if (isOffline()) throw new EduReachError('You appear to be offline.', 'offline');
+    if (controller.signal.aborted) throw new EduReachError('The request timed out.', 'timeout');
+    throw new EduReachError('The request could not reach EduReach.', 'server');
+  } finally {
+    clearTimeout(timeout);
   }
+
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(userFacingError(body?.error ?? body, 'We could not complete that request. Please try again.'));
+  if (!response.ok) {
+    throw new EduReachError(
+      userFacingError(body?.error ?? body, 'We could not complete that request. Please try again.'),
+      failureKindForStatus(response.status),
+      response.status,
+    );
+  }
   if (body === null && response.status !== 204) {
-    throw new Error('The server returned an invalid response. Please try again.');
+    throw new EduReachError('The server returned an invalid response. Please try again.', 'server', response.status);
   }
   return body as T;
+}
+
+/** How long a single API request may take before the student is told it is slow. */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+function failureKindForStatus(status: number) {
+  if (status === 401 || status === 403) return 'auth' as const;
+  if (status === 404) return 'not-found' as const;
+  if (status === 422) return 'validation' as const;
+  if (status === 429) return 'rate-limited' as const;
+  if (status >= 500) return 'server' as const;
+  return 'validation' as const;
 }
 
 
@@ -546,7 +584,24 @@ export async function fetchCbtResult(attemptId: string) {
       correct_option: row.correct_option,
       explanation: row.explanation,
     }));
-    return { attempt, exam: exam || null, answers, questions };
+    // The stored result RPC predates multi-subject papers, so the review does not
+    // carry subject names. The frozen paper does, so the subject is attached for
+    // the "performance by subject" breakdown. Best effort: a failure here must
+    // never stop a student from reading a result they already earned.
+    let attemptSubjects: string[] = [];
+    let plan: Array<{ subject: string; questions: number }> = [];
+    try {
+      const paper = await fetchCbtAttemptPaper(attemptId);
+      const byId = new Map(paper.questions.map((question) => [question.id, question.subject]));
+      questions.forEach((question: { id: string; subject?: string }) => { question.subject = byId.get(question.id) || ''; });
+      attemptSubjects = paper.attempt.subjects;
+      plan = paper.attempt.plan;
+      (attempt as Record<string, unknown>).mode = paper.attempt.mode;
+      (attempt as Record<string, unknown>).subjects = paper.attempt.subjects;
+    } catch {
+      // Result stays readable without the subject breakdown.
+    }
+    return { attempt, exam: exam || null, answers, questions, subjects: attemptSubjects, plan };
   }
 
   try {
@@ -625,6 +680,10 @@ export async function submitServiceRequest(payload: ServiceSubmitPayload) {
 
 const NEWS_COLUMNS_LEGACY =
   'id,slug,title,excerpt,body,category,image_url,source_url,source_name,published_at,updated_at,published,featured,tags';
+// NEWS-1: the canonical slug is derived by the database. Read when present so the
+// filter and the stored label can never disagree; the client computes the same
+// slug locally when this column is absent (an unmigrated database or cache).
+const NEWS_COLUMNS_CATEGORISED = `${NEWS_COLUMNS_LEGACY},category_slug`;
 // Added by the newsroom migration. Read when present so provenance, freshness
 // and expiry travel with the article; the legacy set keeps an unmigrated
 // database working (same fallback the server API uses).
@@ -632,14 +691,28 @@ const NEWS_COLUMNS_GOVERNED = `${NEWS_COLUMNS_LEGACY},verification_status,expire
 
 let newsGovernedColumnsAvailable: boolean | null = null;
 
+let newsCategoryColumnAvailable: boolean | null = null;
+
 async function selectNewsColumns(apply: (columns: string) => Promise<{ data: any; error: any }>): Promise<any[]> {
+  const governedColumns = newsCategoryColumnAvailable === false
+    ? NEWS_COLUMNS_GOVERNED
+    : `${NEWS_COLUMNS_GOVERNED},${NEWS_COLUMNS_CATEGORISED.split(',').pop()}`;
   if (newsGovernedColumnsAvailable !== false) {
-    const governed = await apply(NEWS_COLUMNS_GOVERNED);
+    const governed = await apply(governedColumns);
     if (!governed.error) {
       newsGovernedColumnsAvailable = true;
+      newsCategoryColumnAvailable = true;
       return governed.data || [];
     }
     newsGovernedColumnsAvailable = false;
+  }
+  if (newsCategoryColumnAvailable !== false) {
+    const categorised = await apply(NEWS_COLUMNS_CATEGORISED);
+    if (!categorised.error) {
+      newsCategoryColumnAvailable = true;
+      return categorised.data || [];
+    }
+    newsCategoryColumnAvailable = false;
   }
   const legacy = await apply(NEWS_COLUMNS_LEGACY);
   if (legacy.error) throw new Error(userFacingError(legacy.error));
@@ -657,6 +730,7 @@ function mapNewsItem(item: any): NewsItem {
     summary: item.excerpt,
     body: item.body,
     category: item.category,
+    category_slug: item.category_slug || newsCategorySlug(item.category),
     priority: 'normal',
     source_url: item.source_url,
     source_name: item.source_name ?? null,
@@ -1202,3 +1276,241 @@ export async function updateAdminCbtExam(examId: string, values: Partial<Omit<Ad
 export async function deleteAdminCbtExam(examId: string): Promise<void> {
   await adminApiFetch(`/api/admin/cbt/exams/${encodeURIComponent(examId)}`, { method: 'DELETE' });
 }
+
+/* ------------------------------------------------------------------ *
+ * PQR-1 — the past-question resource library.
+ *
+ * The library is authoritative on the server. The client never invents a
+ * resource, and it distinguishes three states: a paper is available, a paper
+ * exists on an official site (external), or nothing has been published yet.
+ * ------------------------------------------------------------------ */
+
+export type PastQuestionResource = {
+  id: string;
+  examBody: string;
+  institutionId: string | null;
+  subject: string | null;
+  course: string | null;
+  year: number | null;
+  title: string;
+  description: string | null;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  state: 'available' | 'external' | 'unavailable';
+  access: 'view' | 'download';
+  href: string | null;
+  verifiedAt: string | null;
+};
+
+export type PastQuestionLibrary = {
+  items: PastQuestionResource[];
+  coverage: Array<{ exam_body: string; subjects: number; papers: number; institutions: number; latest_year: number | null }>;
+  configured: boolean;
+  state: 'available' | 'not-published' | 'not-configured';
+};
+
+export async function fetchPastQuestionResources(filter: { exam?: string; subject?: string; institution?: string } = {}): Promise<PastQuestionLibrary> {
+  const params = new URLSearchParams();
+  if (filter.exam) params.set('exam', filter.exam);
+  if (filter.subject) params.set('subject', filter.subject);
+  if (filter.institution) params.set('institution', filter.institution);
+  const query = params.toString();
+  try {
+    return await jsonFetch<PastQuestionLibrary>(`/api/past-questions/resources${query ? `?${query}` : ''}`);
+  } catch (error) {
+    // A library that cannot answer must say so; an empty list would read as
+    // "no papers exist", which is a different and misleading statement.
+    throw error;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * CBT-2 — configured sessions (practice and mock)
+ *
+ * The student configures; the server validates against the real question bank
+ * and freezes the paper. These calls deliberately do not fall back to a local
+ * question set when the backend is unreachable: a paper the server has not
+ * authorised cannot be scored, so the UI must say the session is unavailable
+ * rather than show questions it cannot grade.
+ * ------------------------------------------------------------------ */
+
+export type CbtQuestionPayload = {
+  position: number;
+  subject: string;
+  id: string;
+  text: string;
+  options: string[];
+};
+
+export type CbtAttemptPayload = {
+  id: string;
+  examId: string;
+  status: 'in_progress' | 'submitted' | 'expired' | 'cancelled';
+  startedAt: string;
+  expiresAt: string | null;
+  mode: 'practice' | 'mock';
+  durationMinutes: number | null;
+  programme: string | null;
+  subjects: string[];
+  plan: Array<{ subject: string; questions: number; first: number; last: number }>;
+  totalQuestions: number;
+  questionIndex: number;
+  savedAnswers: Record<string, number>;
+  exam: { id: string; title: string; examBody: string; subject: string };
+};
+
+export type CbtBankSubject = { subject: string; questionCount: number };
+
+export type CbtBankPayload = {
+  exam: { id: string; title: string; examBody: string; subject: string; description: string | null; defaultDurationMinutes: number | null };
+  subjects: CbtBankSubject[];
+  totalQuestions: number;
+  limits: { minQuestions: number; maxQuestions: number; minMinutes: number; maxMinutes: number; maxSubjects: number } | null;
+};
+
+export type CbtHistoryItem = {
+  id: string;
+  examId: string;
+  examTitle: string;
+  examBody: string;
+  mode: 'practice' | 'mock';
+  programme: string | null;
+  status: 'in_progress' | 'submitted' | 'expired' | 'cancelled';
+  score: number | null;
+  correctAnswers: number;
+  totalQuestions: number;
+  durationMinutes: number | null;
+  subjects: string[];
+  startedAt: string;
+  expiresAt: string | null;
+  submittedAt: string | null;
+  answered: number;
+  resumable: boolean;
+};
+
+export type CbtConfiguredStart = {
+  id: string;
+  startedAt: string;
+  expiresAt: string;
+  totalQuestions: number;
+  mode: 'practice' | 'mock';
+  durationMinutes: number;
+  subjects: string[];
+  plan: Array<{ subject: string; questions: number; first: number; last: number }>;
+  resumed: boolean;
+};
+
+export async function fetchCbtBank(examId: string): Promise<CbtBankPayload> {
+  return jsonFetch<CbtBankPayload>(`/api/cbt/exams/${encodeURIComponent(examId)}/subjects`);
+}
+
+export async function fetchCbtExamsWithAvailability(): Promise<Array<Record<string, unknown>>> {
+  const body = await jsonFetch<{ items: Array<Record<string, unknown>> }>('/api/cbt/exams');
+  return body.items || [];
+}
+
+export async function startConfiguredCbt(payload: {
+  examId: string;
+  mode: 'practice' | 'mock';
+  subjects: string[];
+  questionCount?: number | null;
+  durationMinutes?: number | null;
+  programme?: string | null;
+}): Promise<CbtConfiguredStart> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Please sign in to start this practice session.');
+  const body = await jsonFetch<{ attempt: CbtConfiguredStart }>(`/api/cbt/exams/${encodeURIComponent(payload.examId)}/attempts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({
+      mode: payload.mode,
+      subjects: payload.subjects,
+      questionCount: payload.questionCount ?? null,
+      durationMinutes: payload.durationMinutes ?? null,
+      programme: payload.programme ?? null,
+    }),
+  });
+  return body.attempt;
+}
+
+export async function fetchCbtAttemptPaper(attemptId: string): Promise<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime: string }> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Please sign in to continue this session.');
+  const body = await jsonFetch<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime?: string }>(
+    `/api/cbt/attempts/${encodeURIComponent(attemptId)}/paper`,
+    { headers },
+  );
+  return { ...body, serverTime: body.serverTime || new Date().toISOString() };
+}
+
+export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) return;
+  await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ answers, questionIndex }),
+  });
+}
+
+export async function submitConfiguredCbt(attemptId: string, answers: Record<number, number>): Promise<CbtSubmitResponse> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Please sign in to submit this session.');
+  const body = await jsonFetch<{
+    attemptId: string;
+    score: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    breakdown: Array<{ question: number; subject?: string; selected: number | null; correct: number; explanation?: string }>;
+  }>(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ answers }),
+  });
+  try {
+    localStorage.setItem(localStorageKey(`cbt-result-${body.attemptId}`), JSON.stringify(body));
+    localStorage.setItem(localStorageKey('last-cbt-attempt'), body.attemptId);
+  } catch {
+    // localStorage may be disabled
+  }
+  return { ...body, result: { correctAnswers: body.correctAnswers, totalQuestions: body.totalQuestions } };
+}
+
+export async function abandonConfiguredCbt(attemptId: string): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) return;
+  await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/abandon`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({}),
+  });
+  try {
+    localStorage.removeItem(localStorageKey('last-cbt-attempt'));
+  } catch {
+    // localStorage may be disabled
+  }
+}
+
+export async function deleteCbtAttempt(attemptId: string): Promise<void> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Please sign in to manage your practice history.');
+  await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}`, { method: 'DELETE', headers });
+  try {
+    localStorage.removeItem(localStorageKey(`cbt-result-${attemptId}`));
+    if (localStorage.getItem(localStorageKey('last-cbt-attempt')) === attemptId) {
+      localStorage.removeItem(localStorageKey('last-cbt-attempt'));
+    }
+  } catch {
+    // localStorage may be disabled
+  }
+}
+
+export async function fetchCbtHistory(limit = 25): Promise<CbtHistoryItem[]> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) return [];
+  const body = await jsonFetch<{ items: CbtHistoryItem[] }>(`/api/cbt/attempts?limit=${limit}`, { headers });
+  return body.items || [];
+}
+
+/** Which course/programme combinations the governed catalogue can produce. */
+export type { JambCourse } from '../data/examPreparation';

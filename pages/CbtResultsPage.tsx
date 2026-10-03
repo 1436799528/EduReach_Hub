@@ -51,6 +51,21 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     });
   }, [user]);
 
+  const subjectRows = (() => {
+    const questions: any[] = result?.questions || [];
+    if (!questions.some((question) => question?.subject)) return [] as Array<{ subject: string; correct: number; total: number }>;
+    const answers: any[] = result?.answers || [];
+    const map = new Map<string, { subject: string; correct: number; total: number }>();
+    questions.forEach((question) => {
+      const key = String(question.subject || 'General');
+      const entry = map.get(key) || { subject: key, correct: 0, total: 0 };
+      entry.total += 1;
+      if (answers.find((answer) => answer.question_id === question.id)?.is_correct) entry.correct += 1;
+      map.set(key, entry);
+    });
+    return Array.from(map.values());
+  })();
+
   const score = Number(result?.attempt?.score || 0);
   const isPass = score >= 60;
   const correctCount = Number(result?.attempt?.correct_answers || 0);
@@ -105,6 +120,23 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
               <CbtResultSlip result={result} studentName={studentName} studentId={studentId} />
 
+              {subjectRows.length > 0 && (
+                <section className="er-result-subjects" aria-label="Performance by subject">
+                  <h2>Performance by subject</h2>
+                  <ul>
+                    {subjectRows.map((row) => (
+                      <li key={row.subject}>
+                        <span>{row.subject}</span>
+                        <b>{row.correct}/{row.total}</b>
+                        <i aria-hidden="true"><span style={{ width: `${row.total ? Math.round((row.correct / row.total) * 100) : 0}%` }} /></i>
+                        <em>{row.total ? Math.round((row.correct / row.total) * 100) : 0}%</em>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="er-result-review-intro">A subject below 60% is the one to practise next.</p>
+                </section>
+              )}
+
               <section className="er-result-quick-stats" aria-label="Score details">
                 <div><span>Correct</span><strong>{correctCount}</strong></div>
                 <div><span>Incorrect</span><strong>{missedCount}</strong></div>
@@ -124,7 +156,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                       const options = [question.option_a, question.option_b, question.option_c, question.option_d];
                       return (
                         <article className={`er-result-review-card ${answer?.is_correct ? 'is-correct' : 'is-wrong'}`} key={question.id}>
-                          <div className="er-result-review-head"><strong>Question {question.position}</strong><span>{answer?.is_correct ? 'Correct' : 'Review this answer'}</span></div>
+                          <div className="er-result-review-head"><strong>Question {question.position}{question.subject ? ` · ${question.subject}` : ''}</strong><span>{answer?.is_correct ? 'Correct' : 'Review this answer'}</span></div>
                           <h3>{question.question_text}</h3>
                           <div className="er-result-review-options">
                             {options.map((option: string, index: number) => <div className={`${index === correctIndex ? 'is-answer' : ''} ${index === selectedIndex && index !== correctIndex ? 'is-selected-wrong' : ''}`} key={index}><b>{String.fromCharCode(65 + index)}.</b> {option}</div>)}

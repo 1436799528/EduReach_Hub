@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import SkipLink from './a11y/SkipLink';
+import ConnectionBanner from './ConnectionBanner';
 import PageBar from './PageBar';
 import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
@@ -68,6 +69,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <SkipLink />
+      {/* APP-3: a strip, never a takeover. The page stays usable offline. */}
+      <ConnectionBanner />
       {/* CLEAN MAIN HEADER */}
       <header
         style={{
