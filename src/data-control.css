@@ -19,7 +19,7 @@
 }
 .er-news-noimage small {
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #5e6c82;
@@ -48,7 +48,7 @@
 .hub-article-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 0; }
 .hub-tag-chip {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 560;
   color: #7c2d12;
   background: #f9f0ee;
   border: 1px solid #f3d1c9;
@@ -104,7 +104,7 @@ a.er-opportunity-link:focus-visible {
   gap: 5px;
   color: #334155;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 620;
 }
 
 /* CBT question-bank card as a link */
@@ -138,7 +138,7 @@ a.er-opportunity-link { display: flex; }
   border-radius: 999px;
   padding: 8px 14px;
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 620;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }

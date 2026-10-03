@@ -119,7 +119,7 @@ export default function ExamSimulatorGrid({
               <small>{exam.desc}</small>
               <span className="er-sim-foot">
                 <span>{exam.meta}</span>
-                <span className="er-sim-cta">{variant === 'mode' ? 'Practice' : 'Start Test'} <ArrowRight size={12} /></span>
+                <span className="er-sim-cta">{variant === 'mode' ? 'Practice' : 'Start practice'} <ArrowRight size={12} /></span>
               </span>
             </span>
           </a>

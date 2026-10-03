@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  AlarmClock,
   Bell,
   Bookmark,
   Calculator,
@@ -33,9 +34,11 @@ import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { pageTitleFor } from '../src/lib/pageMeta';
+import { needsStudentAction, serviceStatusMeaning } from '../src/lib/serviceLifecycle';
 import { useModalDialog } from '../src/lib/useModalDialog';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
+import { cbtAttemptState, dashboardPriorities } from '../src/lib/dashboardPriority';
 import {
   deleteSavedItem,
   fetchLatestCgpaSnapshot,
@@ -193,7 +196,8 @@ function fmtDate(value: string) {
   return new Intl.DateTimeFormat('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
 }
 function statusLabel(status: string) {
-  return status.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  // SERVICE-1: one description of the status machine, shared with the apply page.
+  return serviceStatusMeaning(status).label;
 }
 function statusClass(status: string) {
   if (status === 'completed' || status === 'closed') return 'dash-status-pill dash-status-completed';
@@ -416,8 +420,29 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const requestWhatsAppHref = (row: RequestRow) => `https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(`Hello EduReach, I am following up on request ${row.reference_code}. Request: ${requestTitle(row)}.`)}`;
   const openRequests = requests.filter((r) => !['completed', 'closed', 'rejected', 'cancelled'].includes(r.status)).length;
   const activeSaved = savedItems.filter((item) => item.saved);
-  const isActiveCbtAttempt = (attempt: Attempt) => attempt.status === 'in_progress';
-  const completedAttempts = attempts.filter((attempt) => !isActiveCbtAttempt(attempt));
+  // DASH-1: the server expires an attempt when its own clock runs out. The page
+  // reads the same rule, so it never offers "Resume" for a test the server will
+  // refuse — and never counts an expired attempt as one still in progress.
+  const isActiveCbtAttempt = (attempt: Attempt) => cbtAttemptState(attempt) === 'active';
+  const completedAttempts = attempts.filter((attempt) => cbtAttemptState(attempt) !== 'active');
+  const expiredAttempts = attempts.filter((attempt) => cbtAttemptState(attempt) === 'expired');
+  const profileMissing = [
+    ['Institution', profile?.school],
+    ['Course / programme', profile?.course_programme],
+    ['Department', profile?.department],
+    ['Faculty', profile?.faculty],
+    ['Level', profile?.level],
+    ['Session', profile?.session],
+  ].filter(([, value]) => !String(value || '').trim()).map(([label]) => label as string);
+  const priorities = dashboardPriorities({
+    profileComplete,
+    profileMissing,
+    attempts,
+    requests,
+    unreadNotifications,
+    savedCount: activeSaved.length,
+    attemptCount: attempts.length,
+  });
   const averageScore = completedAttempts.length ? Math.round(completedAttempts.reduce((sum, a) => sum + Number(a.score || 0), 0) / completedAttempts.length) : 0;
   const bestScore = completedAttempts.length ? Math.max(...completedAttempts.map((a) => Number(a.score || 0))) : 0;
   const questionsAnswered = completedAttempts.reduce((sum, a) => sum + Number(a.total_questions || 0), 0);
@@ -521,7 +546,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <td className="dash-mono">{row.reference_code}</td>
               <td><strong>{requestTitle(row)}</strong><small className="dash-table-description">{requestDescription(row)}</small></td>
               <td>{requestCategory(row)}</td>
-              <td><span className={statusClass(row.status)}>{statusLabel(row.status)}</span></td>
+              <td><span className={statusClass(row.status)}>{statusLabel(row.status)}</span><small className="dash-table-description">{serviceStatusMeaning(row.status).meaning}</small></td>
               <td>{fmtDate(row.created_at)}</td>
               <td><div className="dash-request-actions"><a className="dash-card-link" href={`/dashboard/services?ref=${encodeURIComponent(row.reference_code)}`}>View</a><a className="dash-card-link" href={requestWhatsAppHref(row)} target="_blank" rel="noopener noreferrer">WhatsApp</a></div></td>
             </tr>
@@ -534,6 +559,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <strong className="dash-row-title">{requestTitle(row)}</strong>
           <span className="dash-request-category">{requestCategory(row)}</span>
           <p className="dash-request-description">{requestDescription(row)}</p>
+          <p className={`dash-request-status-meaning${needsStudentAction(row.status) ? ' is-action' : ''}`}>
+            {serviceStatusMeaning(row.status).meaning}
+          </p>
           <div className="dash-row-meta"><span>{fmtDate(row.created_at)}</span><span className="dash-request-actions"><a className="dash-card-link" href={`/dashboard/services?ref=${encodeURIComponent(row.reference_code)}`}>View</a><a className="dash-card-link" href={requestWhatsAppHref(row)} target="_blank" rel="noopener noreferrer">WhatsApp</a></span></div>
         </li>
       ))}</ul>
@@ -544,32 +572,40 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <div className="dash-table-wrap dash-desktop-only">
         <table className="dash-table">
-          <thead><tr><th scope="col">Test</th><th scope="col">Score</th><th scope="col">Correct</th><th scope="col">Date</th><th scope="col" /></tr></thead>
+          <thead><tr><th scope="col">Test</th><th scope="col">Status</th><th scope="col">Score</th><th scope="col">Date</th><th scope="col" /></tr></thead>
           <tbody>{rows.map((row) => {
-            const active = isActiveCbtAttempt(row);
-            const resumeHref = `/cbt/practice?exam=${encodeURIComponent(row.exam_id || '')}`;
+            const state = cbtAttemptState(row);
+            const label = state === 'active' ? 'In progress' : state === 'expired' ? 'Time ran out' : 'Completed';
             return <tr key={row.id}>
-              <td>{row.subject || 'CBT Practice'}{active && <small className="dash-table-description">Unfinished attempt</small>}</td>
-              <td><strong>{active ? 'In progress' : `${Math.round(Number(row.score || 0))}%`}</strong></td>
-              <td>{active ? '—' : `${row.correct_answers}/${row.total_questions}`}</td>
+              <td>{row.subject || 'CBT Practice'}{state === 'active' && <small className="dash-table-description">Unfinished attempt</small>}</td>
+              <td><span className={`dash-status-pill ${state === 'active' ? 'dash-status-processing' : state === 'expired' ? 'dash-status-rejected' : 'dash-status-completed'}`}>{label}</span></td>
+              <td><strong>{state === 'finished' ? `${Math.round(Number(row.score || 0))}%` : '—'}</strong></td>
               <td>{fmtDate(row.submitted_at || row.created_at)}</td>
-              <td><a className="dash-card-link" href={active ? resumeHref : `/cbt/results?attempt=${encodeURIComponent(row.id)}`}>{active ? 'Resume' : 'Review'}</a></td>
+              <td>
+                {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
+                {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test</a>}
+                {state === 'finished' && <a className="dash-card-link" href={`/cbt/results?attempt=${encodeURIComponent(row.id)}`}>Review</a>}
+              </td>
             </tr>;
           })}</tbody>
         </table>
       </div>
       <ul className="dash-rows dash-mobile-only">{rows.map((row) => {
-        const active = isActiveCbtAttempt(row);
-        const resumeHref = `/cbt/practice?exam=${encodeURIComponent(row.exam_id || '')}`;
-        return <li key={row.id} className={`dash-row${active ? ' dash-cbt-active-row' : ''}`}>
-          <div className="dash-row-top"><strong className="dash-row-title">{row.subject || 'CBT Practice'}</strong><span className="dash-row-score">{active ? 'In progress' : `${Math.round(Number(row.score || 0))}%`}</span></div>
-          <div className="dash-row-meta"><span>{active ? 'Unfinished attempt' : `${row.correct_answers}/${row.total_questions} correct`} • {fmtDate(row.submitted_at || row.created_at)}</span><a className="dash-card-link" href={active ? resumeHref : `/cbt/results?attempt=${encodeURIComponent(row.id)}`}>{active ? 'Resume →' : 'Review →'}</a></div>
+        const state = cbtAttemptState(row);
+        const label = state === 'active' ? 'In progress' : state === 'expired' ? 'Time ran out' : `${Math.round(Number(row.score || 0))}%`;
+        return <li key={row.id} className={`dash-row${state === 'active' ? ' dash-cbt-active-row' : ''}`}>
+          <div className="dash-row-top"><strong className="dash-row-title">{row.subject || 'CBT Practice'}</strong><span className="dash-row-score">{label}</span></div>
+          <div className="dash-row-meta">
+            <span>{state === 'finished' ? `${row.correct_answers}/${row.total_questions} correct` : state === 'expired' ? 'Answers were submitted automatically' : 'Unfinished attempt'} • {fmtDate(row.submitted_at || row.created_at)}</span>
+            {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume →</a>}
+            {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test →</a>}
+            {state === 'finished' && <a className="dash-card-link" href={`/cbt/results?attempt=${encodeURIComponent(row.id)}`}>Review →</a>}
+          </div>
         </li>;
       })}</ul>
     </>
   );
 
-  /* ---------------- views ---------------- */
   const overview = (
     <>
       <section className="dash-welcome-card">
@@ -589,29 +625,27 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
       </section>
 
-      <section className="dash-profile-summary" aria-labelledby="saved-profile-heading">
+      <section className="dash-priority" aria-labelledby="dash-priority-heading">
         <div className="dash-section-head">
           <div>
-            <h2 id="saved-profile-heading">Saved profile details</h2>
-            <p>{profileComplete ? 'These details are used to personalise exam and service guidance.' : 'Add the missing details so exam and service guidance can be personalised.'}</p>
+            <h2 id="dash-priority-heading">What matters now</h2>
+            <p>Ordered by what is time-critical: a running test expires, a request can be blocked waiting on you.</p>
           </div>
-          <a href="/profile" className="dash-card-link">{profileComplete ? 'Update details' : 'Complete profile'} <ChevronRight size={13} /></a>
         </div>
-        <div className="dash-profile-detail-grid">
-          {[
-            ['Institution', profile?.school],
-            ['Course / programme', profile?.course_programme],
-            ['Department', profile?.department],
-            ['Faculty', profile?.faculty],
-            ['Level', profile?.level],
-            ['Session', profile?.session],
-          ].map(([label, value]) => (
-            <div className="dash-profile-detail" key={label}>
-              <span>{label}</span>
-              <strong>{value || 'Not added yet'}</strong>
-            </div>
+        <ul className="dash-priority-list">
+          {priorities.map((item) => (
+            <li key={item.id} className={`dash-priority-item is-${item.tone}`}>
+              <span className="dash-priority-icon" aria-hidden="true">
+                {item.tone === 'urgent' ? <AlarmClock size={16} /> : item.id === 'request-needs-info' ? <ClipboardList size={16} /> : item.id === 'profile-incomplete' ? <User size={16} /> : <Bell size={16} />}
+              </span>
+              <div className="dash-priority-copy">
+                <strong>{item.title}</strong>
+                <span>{item.detail}</span>
+              </div>
+              <a className={`dash-btn ${item.tone === 'urgent' ? 'dash-btn-primary' : 'dash-btn-secondary'}`} href={item.href}>{item.cta}</a>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
       <div className="dash-quick-grid">
@@ -690,7 +724,32 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
         {attempts.length
           ? attemptsTable(attempts.slice(0, 3))
-          : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start a practice test')}
+          : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start practice')}
+      </section>
+
+      <section className="dash-profile-summary" aria-labelledby="saved-profile-heading">
+        <div className="dash-section-head">
+          <div>
+            <h2 id="saved-profile-heading">Saved profile details</h2>
+            <p>{profileComplete ? 'These details are used to personalise exam and service guidance.' : 'Add the missing details so exam and service guidance can be personalised.'}</p>
+          </div>
+          <a href="/profile" className="dash-card-link">{profileComplete ? 'Update details' : 'Complete profile'} <ChevronRight size={13} /></a>
+        </div>
+        <div className="dash-profile-detail-grid">
+          {[
+            ['Institution', profile?.school],
+            ['Course / programme', profile?.course_programme],
+            ['Department', profile?.department],
+            ['Faculty', profile?.faculty],
+            ['Level', profile?.level],
+            ['Session', profile?.session],
+          ].map(([label, value]) => (
+            <div className="dash-profile-detail" key={label}>
+              <span>{label}</span>
+              <strong>{value || 'Not added yet'}</strong>
+            </div>
+          ))}
+        </div>
       </section>
 
       <a className="dash-help" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer">
@@ -722,18 +781,19 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <h1 className="dash-page-title">My CBT</h1>
           <p className="dash-page-sub">Timed practice attempts across JAMB, WAEC, NECO and Post-UTME.</p>
         </div>
-        <a href="/cbt" className="dash-btn dash-btn-primary">Start a test</a>
+        <a href="/cbt" className="dash-btn dash-btn-primary">Start practice</a>
       </div>
       <div className="dash-metric-strip">
         <div className="dash-metric-card"><span className="dash-metric-label">Tests taken</span><span className="dash-metric-val">{completedAttempts.length}</span></div>
         <div className="dash-metric-card"><span className="dash-metric-label">Average score</span><span className="dash-metric-val">{averageScore}%</span></div>
         <div className="dash-metric-card"><span className="dash-metric-label">Best score</span><span className="dash-metric-val">{bestScore}%</span></div>
         <div className="dash-metric-card"><span className="dash-metric-label">In progress</span><span className="dash-metric-val">{attempts.filter(isActiveCbtAttempt).length}</span></div>
+        {expiredAttempts.length > 0 && <div className="dash-metric-card"><span className="dash-metric-label">Ran out of time</span><span className="dash-metric-val">{expiredAttempts.length}</span></div>}
         <div className="dash-metric-card"><span className="dash-metric-label">Questions in tests</span><span className="dash-metric-val">{questionsAnswered}</span></div>
       </div>
       {attempts.length
         ? attemptsTable(attempts)
-        : emptyState('No attempts yet. Your scores, best result and question count will build up here after your first practice test.', '/cbt', 'Start a practice test')}
+        : emptyState('No attempts yet. Your scores, best result and question count will build up here after your first practice test.', '/cbt', 'Start practice')}
     </section>
   );
 

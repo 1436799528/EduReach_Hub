@@ -19,7 +19,7 @@
 .hub-panel.hub-empty p{max-width:660px;margin:0 auto 18px;color:#71777a;line-height:1.7}
 .hub-calculator-card{background:#fff;border:1px solid #e4e6ef;box-shadow:0 10px 35px rgba(23,23,36,.06);padding:26px}
 .hub-calculator-intro{margin-bottom:24px}
-.hub-calc-badge{display:inline-block;padding:6px 9px;background:#eef0ff;color:#525fe1;font-size:11px;font-weight:800;letter-spacing:.08em}
+.hub-calc-badge{display:inline-block;padding:6px 9px;background:#eef0ff;color:#525fe1;font-size:11px;font-weight: 560;letter-spacing:.08em}
 .hub-calculator-intro h2{margin:10px 0 8px;color:#0b104a}
 .hub-calculator-intro p{margin:0;color:#71777a;line-height:1.7}
 .hub-form-grid small{display:block;margin-top:5px;color:#8a8f91;font-size:12px}
@@ -29,7 +29,7 @@
 .hub-calc-weight-warn{color:#9a6413}
 .hub-calculator-result{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:28px;padding:22px;background:#0b104a;color:#fff}
 .hub-calculator-result>div:first-child span{display:block}
-.hub-calculator-result>div:first-child span:first-child{color:#aeb6ff;font-size:11px;font-weight:800;letter-spacing:.08em}
+.hub-calculator-result>div:first-child span:first-child{color:#aeb6ff;font-size:11px;font-weight: 620;letter-spacing:.08em}
 .hub-calculator-result>div:first-child strong{display:block;font-size:48px;line-height:1;margin:10px 0}
 .hub-calculator-result>div:first-child span:last-child{color:#d8dcff}
 .hub-calculator-breakdown{display:grid;gap:10px;align-content:center}
@@ -59,11 +59,11 @@
 
 .hub-cbt-logo-container{width:62px;height:62px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;z-index:3;box-shadow:0 3px 10px rgba(0,0,0,.16);overflow:hidden}
 .hub-cbt-logo-container img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;padding:5px}
-.hub-cbt-logo-text{font-size:13px;font-weight:800;color:#5c3fc4}
+.hub-cbt-logo-text{font-size:13px;font-weight: 730;color:#5c3fc4}
 
 .hub-cbt-service-content{flex:1;min-width:0;padding:15px 22px}
-.hub-cbt-service-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#808891;margin-bottom:3px}
-.hub-cbt-service-content h3{font-size:18px;font-weight:750;line-height:1.15;color:#1b2530;margin:0}
+.hub-cbt-service-label{display:block;font-size:10px;font-weight: 560;text-transform:uppercase;letter-spacing:.7px;color:#808891;margin-bottom:3px}
+.hub-cbt-service-content h3{font-size:18px;font-weight: 620;line-height:1.15;color:#1b2530;margin:0}
 .hub-cbt-service-content p{margin:6px 0 0;font-size:12px;line-height:1.4;color:#747d86;max-width:500px}
 
 @media(max-width:620px){

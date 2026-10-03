@@ -836,6 +836,15 @@ export type Opportunity = {
   id: string; title: string; organisation: string | null; category: string;
   description: string | null; link_url: string | null; deadline: string | null;
   locations: string | null; is_active?: boolean; created_at?: string; updated_at?: string;
+  /**
+   * OPP-1. Absent when the database predates the newsroom/eligibility
+   * migrations, in which case the listing is presented as unverified — which is
+   * what "we have no record of checking this" honestly means.
+   */
+  last_verified_at?: string | null;
+  source_name?: string | null;
+  eligibility?: string | null;
+  closed_at?: string | null;
 };
 
 export async function fetchOpportunities(): Promise<Opportunity[]> {

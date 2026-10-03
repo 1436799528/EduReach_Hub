@@ -104,7 +104,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 textDecoration: 'none',
                 color: '#0f172a',
                 fontSize: '20px',
-                fontWeight: 900,
+                fontWeight: 680,
                 letterSpacing: '-0.02em',
               }}
             >
@@ -169,7 +169,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             >
               Grants
             </a>
-            <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#047857', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 0', fontWeight: 800 }}>
+            <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#047857', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 0', fontWeight: 620 }}>
               <MessageCircle size={14} /> Talk to Us
             </a>
           </nav>
@@ -191,7 +191,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   borderRadius: '7px',
                   padding: '6px 12px',
                   fontSize: '12px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -213,7 +213,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   borderRadius: '7px',
                   padding: '6px 14px',
                   fontSize: '12px',
-                  fontWeight: 800,
+                  fontWeight: 620,
                   textDecoration: 'none',
                   boxShadow: '0 2px 6px rgba(200, 88, 65, 0.25)',
                 }}
@@ -237,7 +237,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     borderRadius: '7px',
                     padding: '6px 11px',
                     fontSize: '12px',
-                    fontWeight: 800,
+                    fontWeight: 620,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -268,22 +268,22 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                       <strong style={{ display: 'block', fontSize: '12.5px', color: '#0f172a' }}>{user?.name}</strong>
                       <span style={{ display: 'block', fontSize: '10.5px', color: '#5e6c82', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</span>
                     </div>
-                    <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                    <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
                       <LayoutDashboard size={14} /> Dashboard
                     </a>
-                    <a href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                    <a href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
                       <User size={14} /> Profile
                     </a>
-                    <a href="/dashboard/services" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                    <a href="/dashboard/services" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
                       <ScanSearch size={14} /> My Requests
                     </a>
-                    <a href="/dashboard/cbt" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 800 }}>
+                    <a href="/dashboard/cbt" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
                       <Laptop size={14} /> My CBT
                     </a>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', border: 0, background: 'transparent', color: '#dc2626', fontSize: '12px', fontWeight: 800, cursor: 'pointer', textAlign: 'left' }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', border: 0, background: 'transparent', color: '#dc2626', fontSize: '12px', fontWeight: 620, cursor: 'pointer', textAlign: 'left' }}
                     >
                       <LogOut size={14} /> Logout
                     </button>
@@ -377,7 +377,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <button type="submit">Go</button>
             </form>
 
-            <nav style={{ display: 'grid', gap: '12px', fontSize: '14px', fontWeight: 700 }}>
+            <nav style={{ display: 'grid', gap: '12px', fontSize: '14px', fontWeight: 560 }}>
               <a href="/" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Home
               </a>
@@ -477,13 +477,13 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <div style={{ marginBottom: '10px', display: 'inline-flex', padding: '3px', background: '#ffffff', borderRadius: '50%' }}>
                 <BrandLogo height={46} radius="50%" />
               </div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#ffffff', marginBottom: '8px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 620, color: '#ffffff', marginBottom: '8px' }}>
                 EduReach<span style={{ color: 'var(--er-tangerine)' }}>.ng</span>
               </div>
               <p style={{ margin: '0 0 14px', lineHeight: 1.6, fontSize: '12px' }}>
                 Nigeria's student support portal for CBT practice, guided services, NELFUND assistance, and admission updates.
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#86efac', fontSize: '12px', fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#86efac', fontSize: '12px', fontWeight: 620 }}>
                 <ShieldCheck size={16} /> Verified Academic Portal
               </div>
             </div>
@@ -492,7 +492,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <h4 className="er-footer-heading">Explore</h4>
               <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
                 <a href="/cbt">CBT Practice Center</a>
-                <a href="/past-questions">Past Questions &amp; Materials</a>
+                <a href="/past-questions">Past questions &amp; materials</a>
                 <a href="/services">Student Services</a>
                 <a href="/schools">School Finder</a>
                 <a href="/news">News &amp; Updates</a>
@@ -507,8 +507,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 <a href="/screening-calculator">Screening Calculator</a>
                 <a href="/services/apply/nelfund-loan">NELFUND guidance</a>
                 <a href="/services/apply/results">Result checking support</a>
-                <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 800 }}>Follow EduReach Hub NG on WhatsApp</a>
-                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 800 }}>Talk to Us on WhatsApp</a>
+                <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620 }}>Follow EduReach Hub NG on WhatsApp</a>
+                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620 }}>Talk to Us on WhatsApp</a>
               </div>
             </div>
           </div>

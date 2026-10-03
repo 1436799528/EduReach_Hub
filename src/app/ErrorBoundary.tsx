@@ -59,7 +59,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               margin: '0 auto 12px',
               background: '#F9F0EE',
               color: '#b14933',
-              fontWeight: 900,
+              fontWeight: 680,
             }}
           >
             ER
@@ -81,7 +81,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 borderRadius: '7px',
                 padding: '8px 12px',
                 fontSize: '12px',
-                fontWeight: 800,
+                fontWeight: 560,
                 cursor: 'pointer',
               }}
             >
@@ -96,7 +96,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 borderRadius: '7px',
                 padding: '8px 12px',
                 fontSize: '12px',
-                fontWeight: 800,
+                fontWeight: 560,
                 textDecoration: 'none',
               }}
             >

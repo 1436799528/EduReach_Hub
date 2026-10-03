@@ -1216,7 +1216,7 @@ app.get('/api/opportunities', async (_req, res) => {
     let error: any = null;
     ({ data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at')
+      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at,source_name,eligibility')
       .eq('is_active', true)
       .is('closed_at', null)
       .order('deadline', { ascending: true, nullsFirst: false })

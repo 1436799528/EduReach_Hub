@@ -9,7 +9,7 @@
 .hub-home-search input::placeholder{color:#5e6c82}
 .hub-home-search button{border:0;background:transparent;color:#5e6c82;font-size:20px;cursor:pointer}
 .hub-home-section-title{display:flex!important;justify-content:space-between;align-items:end}
-.hub-home-section-title>a{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:var(--hub-blue)}
+.hub-home-section-title>a{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight: 560;color:var(--hub-blue)}
 .hub-home-card-grid{display:grid;gap:12px}
 .hub-home-card-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .hub-home-card-grid .hub-compact-card{min-height:156px!important}

@@ -18,7 +18,7 @@ export default function NotFoundPage() {
             <span
               style={{
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 620,
                 color: '#b91c1c',
                 background: '#fef2f2',
                 padding: '4px 12px',
@@ -31,7 +31,7 @@ export default function NotFoundPage() {
             >
               404 ERROR
             </span>
-            <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', margin: '0 0 8px' }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 680, color: '#0f172a', margin: '0 0 8px' }}>
               Page Not Found
             </h1>
             <p style={{ fontSize: '13.5px', color: '#5e6c82', margin: '0 0 24px', lineHeight: 1.5 }}>

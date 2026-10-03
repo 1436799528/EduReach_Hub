@@ -221,7 +221,7 @@ export function resolveIdentity(
       badge: 'STUDY',
       tone: 'purple',
       brand: 'study',
-      ariaLabel: 'Past Questions Bank',
+      ariaLabel: 'Past questions',
     };
   }
   if (v.includes('cgpa') || v.includes('gpa') || v.includes('calc') || v.includes('screen') || v.includes('aggregate')) {
