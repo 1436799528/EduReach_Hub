@@ -1,4 +1,4 @@
-import { ArrowRight, BellRing, Briefcase, CalendarClock, MapPin, ShieldCheck, ShieldQuestion, Tag, Users } from 'lucide-react';
+import { ArrowRight, BellRing, Briefcase, CalendarClock, MapPin, Search, ShieldCheck, ShieldQuestion, Tag, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
@@ -55,6 +55,12 @@ function readOpportunityFilter() {
 export default function JobsPage() {
   const [activeFilter, setActiveFilter] = useState(readOpportunityFilter);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get('q') || '');
+  const [educationFilter, setEducationFilter] = useState('');
+  const [disciplineFilter, setDisciplineFilter] = useState('');
+  const [workModeFilter, setWorkModeFilter] = useState('');
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [sortMode, setSortMode] = useState<'deadline' | 'latest' | 'featured'>('deadline');
   // When a live backend is configured, the Supabase `opportunities` table is
   // the only listing source (admin-managed). The static list below exists for
   // local preview only and never mixes with live rows.
@@ -76,39 +82,62 @@ export default function JobsPage() {
     return () => window.removeEventListener('popstate', syncFromUrl);
   }, []);
 
+  function updateUrl(nextCategory = activeFilter, nextSearch = search) {
+    const params = new URLSearchParams();
+    if (nextCategory !== 'ALL') params.set('category', nextCategory);
+    if (nextSearch.trim()) params.set('q', nextSearch.trim());
+    window.history.replaceState({}, '', params.toString() ? `/jobs?${params.toString()}` : '/jobs');
+  }
+
   function changeFilter(next: string) {
     setActiveFilter(next);
-    window.history.replaceState({}, '', next === 'ALL' ? '/jobs' : `/jobs?category=${encodeURIComponent(next)}`);
+    updateUrl(next);
   }
 
   // Two listing sources, never mixed: with a configured backend the admin-
   // managed `opportunities` table is the only source; local preview shows the
   // static directory instead (labelled on the cards).
+  const filterOptions = useMemo(() => {
+    const source = live || [];
+    return {
+      education: Array.from(new Set(source.flatMap((item) => item.education_levels || []))).sort(),
+      disciplines: Array.from(new Set(source.flatMap((item) => item.disciplines || []))).sort(),
+    };
+  }, [live]);
+
   const filteredLive = useMemo(() => {
     if (live === null) return null;
-    const matched = activeFilter === 'ALL'
-      ? live
-      : live.filter((item) => {
-          if (activeFilter === 'scholarship') return item.category === 'scholarship' || item.category === 'grant';
-          if (activeFilter === 'fellowship') return item.category === 'fellowship' || item.category === 'competition';
-          if (activeFilter === 'internship') return item.category === 'job' || item.category === 'internship';
-          return item.category === activeFilter;
-        });
-    // OPP-1: what can still be applied to comes first; what has been checked by
-    // EduReach comes before what has not, at equal urgency.
-    return matched
-      .filter((item) => {
-        const status = opportunityStatus(item);
-        return matchesStatus(status.state, status.verification, statusFilter);
-      })
-      .sort((a, b) => {
-        const left = opportunityStatus(a);
-        const right = opportunityStatus(b);
-        if (left.actionable !== right.actionable) return left.actionable ? -1 : 1;
-        if (left.verification !== right.verification) return left.verification === 'verified' ? -1 : 1;
-        return Number(left.daysLeft ?? Number.POSITIVE_INFINITY) - Number(right.daysLeft ?? Number.POSITIVE_INFINITY);
-      });
-  }, [live, activeFilter, statusFilter]);
+    const query = search.trim().toLowerCase();
+    const matched = live.filter((item) => {
+      const categoryMatch = activeFilter === 'ALL'
+        || (activeFilter === 'scholarship' && (item.category === 'scholarship' || item.category === 'grant'))
+        || (activeFilter === 'fellowship' && (item.category === 'fellowship' || item.category === 'competition'))
+        || (activeFilter === 'internship' && (item.category === 'job' || item.category === 'internship'))
+        || item.category === activeFilter;
+      if (!categoryMatch) return false;
+      const status = opportunityStatus(item);
+      if (!matchesStatus(status.state, status.verification, statusFilter)) return false;
+      const haystack = [
+        item.title, item.organisation, item.description, item.locations, item.eligibility,
+        item.subcategory, ...(item.education_levels || []), ...(item.disciplines || []),
+      ].join(' ').toLowerCase();
+      if (query && !haystack.includes(query)) return false;
+      if (educationFilter && !(item.education_levels || []).includes(educationFilter)) return false;
+      if (disciplineFilter && !(item.disciplines || []).includes(disciplineFilter)) return false;
+      if (workModeFilter && item.work_mode !== workModeFilter) return false;
+      if (featuredOnly && !item.is_featured) return false;
+      return true;
+    });
+    return matched.sort((a, b) => {
+      const left = opportunityStatus(a);
+      const right = opportunityStatus(b);
+      if (sortMode === 'latest') return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+      if (sortMode === 'featured' && Boolean(a.is_featured) !== Boolean(b.is_featured)) return a.is_featured ? -1 : 1;
+      if (left.actionable !== right.actionable) return left.actionable ? -1 : 1;
+      if (left.verification !== right.verification) return left.verification === 'verified' ? -1 : 1;
+      return Number(left.daysLeft ?? Number.POSITIVE_INFINITY) - Number(right.daysLeft ?? Number.POSITIVE_INFINITY);
+    });
+  }, [live, activeFilter, statusFilter, search, educationFilter, disciplineFilter, workModeFilter, featuredOnly, sortMode]);
 
   const filteredStatic = useMemo(() => {
     if (isSupabaseConfigured) return [];
@@ -137,6 +166,51 @@ export default function JobsPage() {
             <a className="hub-outline-btn" href="/news" style={{ textDecoration: 'none', fontSize: '12px' }}>
               News &amp; Updates →
             </a>
+          </div>
+
+          <div style={{ marginBottom: '14px', padding: '14px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '9px', padding: '0 11px', minHeight: '42px' }}>
+              <Search size={17} style={{ color: '#64748b', flexShrink: 0 }} />
+              <input
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); updateUrl(activeFilter, e.target.value); }}
+                placeholder="Search jobs, scholarships, internships, grants…"
+                aria-label="Search opportunities"
+                style={{ border: 0, outline: 0, background: 'transparent', width: '100%', fontSize: '13px', color: '#0f172a' }}
+              />
+              {search && <button type="button" onClick={() => { setSearch(''); updateUrl(activeFilter, ''); }} aria-label="Clear search" style={{ border: 0, background: 'transparent', padding: 4, cursor: 'pointer' }}><X size={15} /></button>}
+            </label>
+            {isSupabaseConfigured && live && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: '8px', marginTop: '10px' }}>
+                <select value={educationFilter} onChange={(e) => setEducationFilter(e.target.value)} aria-label="Filter by education level" className="admin-select">
+                  <option value="">Any education level</option>
+                  {filterOptions.education.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+                <select value={disciplineFilter} onChange={(e) => setDisciplineFilter(e.target.value)} aria-label="Filter by discipline" className="admin-select">
+                  <option value="">Any discipline</option>
+                  {filterOptions.disciplines.map((value) => <option key={value} value={value}>{value}</option>)}
+                </select>
+                <select value={workModeFilter} onChange={(e) => setWorkModeFilter(e.target.value)} aria-label="Filter by work mode" className="admin-select">
+                  <option value="">Any work mode</option>
+                  <option value="remote">Remote</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="onsite">On-site</option>
+                </select>
+                <select value={sortMode} onChange={(e) => setSortMode(e.target.value as typeof sortMode)} aria-label="Sort opportunities" className="admin-select">
+                  <option value="deadline">Sort: Deadline</option>
+                  <option value="latest">Sort: Latest</option>
+                  <option value="featured">Sort: Featured</option>
+                </select>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap', marginTop: '10px' }}>
+              <button type="button" className={featuredOnly ? 'hub-primary-btn' : 'hub-outline-btn'} onClick={() => setFeaturedOnly((value) => !value)} style={{ fontSize: '11.5px', padding: '6px 10px' }}>
+                Featured
+              </button>
+              <button type="button" className={statusFilter === 'CLOSING' ? 'hub-primary-btn' : 'hub-outline-btn'} onClick={() => setStatusFilter(statusFilter === 'CLOSING' ? 'ALL' : 'CLOSING')} style={{ fontSize: '11.5px', padding: '6px 10px' }}>
+                Closing soon
+              </button>
+            </div>
           </div>
 
           <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
@@ -256,7 +330,7 @@ export default function JobsPage() {
 
           {!loadingLive && isSupabaseConfigured && filteredLive && filteredLive.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
-              <SectionHead title={`${filteredLive.length} listing${filteredLive.length === 1 ? '' : 's'}`} />
+              <SectionHead title={`${filteredLive.length} matching listing${filteredLive.length === 1 ? '' : 's'}`} />
               <div style={{ display: 'grid', gap: '12px' }}>
                 {filteredLive.map((item) => {
                   const status = opportunityStatus(item);
