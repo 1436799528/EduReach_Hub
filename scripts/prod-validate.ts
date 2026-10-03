@@ -63,8 +63,36 @@ export const EXPECTED_FUNCTIONS = [
   'start_cbt_attempt_for_subjects',
 ];
 
-/** Buckets the application writes to. None may be public. */
-export const EXPECTED_BUCKETS = ['admin-content', 'resource-files', 'campus-uploads'];
+/**
+ * Buckets the application writes to, each with the read access the application
+ * actually relies on.
+ *
+ * The previous version of this file asserted that *all three* must be private,
+ * while `20260926200000_admin_control_centre_backend.sql` creates `admin-content`
+ * with `public = true`. The gate could therefore never pass, and the runbook
+ * told an operator to make private a bucket the upload route reads back through
+ * `getPublicUrl` — following it would have 404'd every published news image.
+ *
+ * The split is not a preference, it is what the code does:
+ *
+ *   admin-content   PUBLIC    `POST /api/admin/uploads` (admin-only, images only,
+ *                             <=2 MB) returns `getPublicUrl(...)` and the URL is
+ *                             stored on the published article row. Published news
+ *                             images are public content; serving them by signed
+ *                             URL would expire out of cached pages and social
+ *                             previews.
+ *   resource-files  PRIVATE   entitlement-gated past-question documents; signed
+ *                             for 300 s by `GET /api/past-questions/resources`.
+ *   campus-uploads  PRIVATE   campus post attachments; nothing client-side reads
+ *                             them directly.
+ *
+ * A bucket declared PUBLIC must therefore *be* public (private would break the
+ * content it serves), and a bucket declared PRIVATE must not be — that one is a
+ * data-exposure bug no policy can paper over.
+ */
+export const PUBLIC_BUCKETS = ['admin-content'];
+export const PRIVATE_BUCKETS = ['resource-files', 'campus-uploads'];
+export const EXPECTED_BUCKETS = [...PUBLIC_BUCKETS, ...PRIVATE_BUCKETS];
 
 /** Tables the browser or the server reads directly. */
 export const PROBED_TABLES = [
@@ -81,8 +109,9 @@ export const PROBED_TABLES = [
 ];
 
 /**
- * Storage validation. A bucket the application treats as private must not be public —
- * that is a data-exposure bug no policy can paper over.
+ * Storage validation, in both directions: a bucket declared private must not be
+ * public (data exposure), and a bucket declared public must not be private (the
+ * content it serves would break). See the constants above for the evidence.
  */
 export function checkBuckets(
   buckets: Array<{ name: string; public: boolean }> | null | undefined,
@@ -90,9 +119,9 @@ export function checkBuckets(
   const list = buckets ?? [];
   const names = new Set(list.map((bucket) => bucket.name));
   const missing = EXPECTED_BUCKETS.filter((bucket) => !names.has(bucket));
-  const wronglyPublic = list
-    .filter((bucket) => EXPECTED_BUCKETS.includes(bucket.name) && bucket.public)
-    .map((bucket) => bucket.name);
+  const byName = new Map(list.map((bucket) => [bucket.name, bucket]));
+  const wronglyPublic = PRIVATE_BUCKETS.filter((name) => byName.get(name)?.public === true);
+  const wronglyPrivate = PUBLIC_BUCKETS.filter((name) => byName.get(name)?.public === false);
   return [
     {
       group: 'storage',
@@ -102,9 +131,17 @@ export function checkBuckets(
     },
     {
       group: 'storage',
-      name: 'no application bucket is publicly readable',
+      name: 'no bucket that holds private content is publicly readable',
       state: wronglyPublic.length ? 'fail' : 'pass',
-      detail: wronglyPublic.length ? `public but must not be: ${wronglyPublic.join(', ')}` : 'all private',
+      detail: wronglyPublic.length ? `public but must not be: ${wronglyPublic.join(', ')}` : `${PRIVATE_BUCKETS.join(', ')} are private`,
+    },
+    {
+      group: 'storage',
+      name: 'every bucket the application reads back through a public URL is public',
+      state: wronglyPrivate.length ? 'fail' : 'pass',
+      detail: wronglyPrivate.length
+        ? `private but must be public: ${wronglyPrivate.join(', ')} — getPublicUrl output would 404`
+        : `${PUBLIC_BUCKETS.join(', ')} serves published content by public URL`,
     },
   ];
 }

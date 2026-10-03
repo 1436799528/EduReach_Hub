@@ -40,7 +40,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-41 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
+46 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
 CLI against a **scratch project first**:
 
 ```bash
@@ -52,8 +52,54 @@ Compare the scratch project's `information_schema.columns` against production
 before applying there; the baseline restores structure, and any column production
 has that the repository has never seen is drift requiring a reviewed migration.
 
+> **Take a backup first.** Causing a migration incident without one is the single
+> most expensive mistake available in this document. See
+> `docs/operations/BACKUP_AND_RESTORE.md` §4 (platform backup, or the `pg_dump`
+> path if the plan's backup status is unknown) and record it in that document's
+> evidence log.
+
 **Pass:** `supabase db reset` completes with no error on the scratch project, then
 the same history applies to production.
+
+### 3a. The production sync check (run this when code is live but migrations are not)
+
+On 2026-10-03 the merged application code was live in production while four
+migrations were not applied. Nothing failed loudly: the news pages rendered, the
+APIs answered `200`, and the *only* symptom was silently reduced data and two
+endpoints returning `503`. Counting rows in the migration history is not enough —
+it says how many migrations ran, not which. Check 9 of
+`supabase/ci/production-validation.sql` names each missing object and the file to
+apply:
+
+```
+apply 20261002120000_cbt_practice_and_mock_modes.sql
+apply 20261002130000_news_category_contract.sql
+apply 20261002140000_past_question_resources.sql
+apply 20261002150000_opportunity_eligibility.sql
+```
+
+**Pass:** check 9 prints `pass` and its detail reads “CBT modes, news category slug,
+past-question library and opportunity eligibility all present”; check 8 reports at
+least 46 recorded migrations.
+
+### 3b. What “not applied” looked like from outside, on 2026-10-03
+
+Recorded because each of these symptoms is easy to misread as something else. All
+observations are from the public production API.
+
+| Probe | Observed | Real meaning |
+| --- | --- | --- |
+| `GET /api/cbt/exams/<id>/subjects` | `503 {"error":"CBT subjects are temporarily unavailable."}` | `cbt_limits(body)` from `20261002120000` is missing. The route itself is fine. |
+| `GET /api/past-questions/resources` | `503 {"error":"The resource library is temporarily unavailable."}` | `past_question_resources` from `20261002140000` is missing. |
+| `GET /api/opportunities` | `200`, but every item lacks `last_verified_at`, `source_name`, `eligibility` | `20261002150000` is missing. The route degrades to a legacy column set *when any one* of the governed columns is absent, so provenance that already exists is dropped too. A newer migration can therefore make an older field disappear — the fallback is coarser than it needs to be. |
+| `GET /api/news` | `200`, with `verification_status`, `source_key`, `source_tier` | `20260930120000_newsroom_ingestion_pipeline.sql` **is** applied. |
+| `GET /api/news/<slug>` | `200`, `category_slug` equals the lowercased label (`"scholarships & funding"`) | the code's own fallback ran, i.e. that request asked for a column set without `category_slug`. |
+
+> **Do not conclude a migration is applied from a list payload alone.** The news
+> list and the article endpoint disagreed on the same article, because they select
+> different column sets and have different fallbacks. Only check 9 answers the
+> question. If a value looks impossible (a slug the canonical function cannot
+> produce), treat the database as drifted and re-run check 9 before trusting it.
 
 > The repository's own replay (`tests/migrations.test.ts`) proves the history applies
 > to a real PostgreSQL engine and that the resulting objects behave — including
@@ -70,7 +116,8 @@ Run the read-only validation SQL in the Supabase SQL editor:
 supabase/ci/production-validation.sql
 ```
 
-It prints `pass` / `fail` per check and mutates nothing.
+It prints `pass` / `fail` per check and mutates nothing. Check 9 is the migration
+sync check described in §3a — run it first if you suspect production is behind.
 
 **Pass:** no row prints `fail`. It covers expected tables, RLS enablement on every
 public table, every function the application calls, function grants to `anon` /
@@ -98,12 +145,25 @@ stop-the-line finding.
 
 ## 6. Verify storage
 
-`npm run prod:validate` checks bucket existence and that none of `admin-content`,
-`resource-files`, `campus-uploads` is public. Then confirm, in the dashboard, the
-per-bucket policies for upload, read, update and delete.
+`npm run prod:validate` checks bucket existence *and* that each bucket has the read
+access the application actually uses — the rule is declared once, in
+`PUBLIC_BUCKETS` / `PRIVATE_BUCKETS` in `scripts/prod-validate.ts`, with the code
+that depends on it named there. Then confirm, in the dashboard, the per-bucket
+policies for upload, read, update and delete.
 
-**Pass:** buckets exist, all three private, policies present for the roles that need
-them.
+| Bucket | Read access | Why |
+| --- | --- | --- |
+| `admin-content` | **public** | Holds published news/featured images. `POST /api/admin/uploads` (admin-only, images ≤2 MB) returns `getPublicUrl(...)` and that URL is stored on the article row. Making it private would 404 every published image. |
+| `resource-files` | **private** | Entitlement-gated past-question documents, signed for 300 s by `GET /api/past-questions/resources`. |
+| `campus-uploads` | **private** | Campus post attachments. |
+
+**Pass:** buckets exist, `admin-content` is public, `resource-files` and
+`campus-uploads` are private, and policies are present for the roles that need them.
+
+**If `admin-content` is reported private:** do not "fix" it by making it public
+without checking, and do not make the private buckets public to match it. A private
+`admin-content` breaks every news image; a public `resource-files` exposes gated
+papers. Both are stop-the-line findings with different causes.
 
 ## 7. Seed required system data
 
