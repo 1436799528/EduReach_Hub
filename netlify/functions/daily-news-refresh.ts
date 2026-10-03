@@ -8,7 +8,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { runNewsroomRefresh, summarizeRun, createNewsroomClient } from '../../src/server/newsroom/run';
+import { runNewsroomRefresh, summarizeRun } from '../../src/server/newsroom/run';
 import { recordJobRun } from '../../src/server/jobRuns';
 import type { RunEnvironment } from '../../src/server/newsroom/run';
 
