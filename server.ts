@@ -1176,6 +1176,14 @@ app.delete('/api/admin/services/:serviceId', requireCapability('service.delete')
 
 const OPPORTUNITY_CATEGORIES = ['scholarship', 'grant', 'job', 'fellowship', 'competition'];
 
+function normalizeOpportunityArray(value: unknown, maxItems = 12, maxLength = 80): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value
+    .map((item) => String(item || '').trim().slice(0, maxLength))
+    .filter(Boolean)
+  )).slice(0, maxItems);
+}
+
 function validateOpportunityPayload(body: any): { error?: string; values?: Record<string, unknown> } {
   const title = String(body?.title || '').trim().slice(0, 200);
   if (!title) return { error: 'A title is required.' };
@@ -1192,47 +1200,63 @@ function validateOpportunityPayload(body: any): { error?: string; values?: Recor
     if (!Number.isFinite(parsed.getTime())) return { error: 'The deadline date is invalid.' };
     deadline = parsed.toISOString().slice(0, 10);
   }
+  const workMode = body?.work_mode ? String(body.work_mode).trim().slice(0, 40) : null;
+  if (workMode && !['remote', 'hybrid', 'onsite', 'not-specified'].includes(workMode)) {
+    return { error: 'Invalid work mode.' };
+  }
   return {
     values: {
       title,
       organisation: String(body?.organisation || '').trim().slice(0, 160) || null,
       category,
+      subcategory: String(body?.subcategory || '').trim().slice(0, 100) || null,
       description: String(body?.description || '').trim() || null,
       link_url: linkUrl,
       deadline,
       locations: String(body?.locations || '').trim().slice(0, 160) || null,
+      eligibility: String(body?.eligibility || '').trim().slice(0, 1000) || null,
+      education_levels: normalizeOpportunityArray(body?.education_levels),
+      disciplines: normalizeOpportunityArray(body?.disciplines),
+      work_mode: workMode,
+      is_featured: Boolean(body?.is_featured),
       is_active: body?.is_active === undefined ? true : Boolean(body.is_active),
     },
   };
 }
 
-app.get('/api/opportunities', async (_req, res) => {
+app.get('/api/opportunities', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    // `closed_at` arrives with the newsroom migration; fall back to the legacy
-    // query so an unmigrated database still lists opportunities.
-    let data: any = null;
-    let error: any = null;
-    ({ data, error } = await supabase
+    const { data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,description,link_url,deadline,locations,last_verified_at,source_name,eligibility')
+      .select('id,title,organisation,category,subcategory,description,link_url,deadline,locations,last_verified_at,source_name,eligibility,education_levels,disciplines,work_mode,is_featured')
       .eq('is_active', true)
       .is('closed_at', null)
+      .order('is_featured', { ascending: false })
       .order('deadline', { ascending: true, nullsFirst: false })
-      .limit(100));
-    if (error) {
-      const fallback = await supabase
-        .from('opportunities')
-        .select('id,title,organisation,category,description,link_url,deadline,locations')
-        .eq('is_active', true)
-        .order('deadline', { ascending: true, nullsFirst: false })
-        .limit(100);
-      data = fallback.data;
-      error = fallback.error;
-    }
+      .limit(300);
     if (error) throw error;
-    res.json({ items: data || [] });
+
+    const q = String(req.query.q || '').trim().toLowerCase();
+    const category = String(req.query.category || 'all').trim().toLowerCase();
+    const education = String(req.query.education || '').trim().toLowerCase();
+    const discipline = String(req.query.discipline || '').trim().toLowerCase();
+    const workMode = String(req.query.work_mode || '').trim().toLowerCase();
+    const featuredOnly = String(req.query.featured || '') === 'true';
+
+    const items = (data || []).filter((item: any) => {
+      const haystack = [item.title, item.organisation, item.description, item.locations, item.eligibility, item.subcategory, ...(item.education_levels || []), ...(item.disciplines || [])].join(' ').toLowerCase();
+      if (q && !haystack.includes(q)) return false;
+      if (category !== 'all' && category !== item.category) return false;
+      if (education && !(item.education_levels || []).some((value: string) => value.toLowerCase() === education)) return false;
+      if (discipline && !(item.disciplines || []).some((value: string) => value.toLowerCase() === discipline)) return false;
+      if (workMode && workMode !== item.work_mode) return false;
+      if (featuredOnly && !item.is_featured) return false;
+      return true;
+    });
+
+    res.json({ items });
   } catch (error) {
     console.error('Opportunities API error:', error);
     res.status(503).json({ error: 'Opportunities are temporarily unavailable.' });
@@ -1244,7 +1268,7 @@ app.get('/api/admin/opportunities', requireCapability('opportunity.read'), async
     const supabase = getServerSupabase();
     const { data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at')
+      .select('id,title,organisation,category,subcategory,description,link_url,deadline,locations,eligibility,education_levels,disciplines,work_mode,is_featured,is_active,created_at,updated_at')
       .order('updated_at', { ascending: false })
       .limit(300);
     if (error) throw error;

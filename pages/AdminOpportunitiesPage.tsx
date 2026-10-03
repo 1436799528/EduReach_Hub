@@ -28,14 +28,20 @@ type EditState = {
   title: string;
   organisation: string;
   category: string;
+  subcategory: string;
   description: string;
   link_url: string;
   deadline: string;
   locations: string;
+  eligibility: string;
+  education_levels: string;
+  disciplines: string;
+  work_mode: string;
+  is_featured: boolean;
   is_active: boolean;
 };
 
-const emptyEdit: EditState = { id: null, title: '', organisation: '', category: 'scholarship', description: '', link_url: '', deadline: '', locations: '', is_active: true };
+const emptyEdit: EditState = { id: null, title: '', organisation: '', category: 'scholarship', subcategory: '', description: '', link_url: '', deadline: '', locations: '', eligibility: '', education_levels: '', disciplines: '', work_mode: '', is_featured: false, is_active: true };
 
 export default function AdminOpportunitiesPage() {
   const [items, setItems] = useState<Opportunity[]>([]);
@@ -62,9 +68,13 @@ export default function AdminOpportunitiesPage() {
   function openEdit(item: Opportunity) {
     setEdit({
       id: item.id, title: item.title, organisation: item.organisation || '',
-      category: item.category, description: item.description || '',
+      category: item.category, subcategory: item.subcategory || '', description: item.description || '',
       link_url: item.link_url || '', deadline: item.deadline || '',
-      locations: item.locations || '', is_active: item.is_active !== false,
+      locations: item.locations || '', eligibility: item.eligibility || '',
+      education_levels: (item.education_levels || []).join(', '),
+      disciplines: (item.disciplines || []).join(', '),
+      work_mode: item.work_mode || '', is_featured: Boolean(item.is_featured),
+      is_active: item.is_active !== false,
     });
     setDescriptionHtml(item.description || '');
     setMessage('');
@@ -79,10 +89,16 @@ export default function AdminOpportunitiesPage() {
         title: edit.title.trim(),
         organisation: edit.organisation.trim() || null,
         category: edit.category,
+        subcategory: edit.subcategory.trim() || null,
         description: descriptionHtml.trim() || null,
         link_url: edit.link_url.trim() || null,
         deadline: edit.deadline || null,
         locations: edit.locations.trim() || null,
+        eligibility: edit.eligibility.trim() || null,
+        education_levels: edit.education_levels.split(',').map((value) => value.trim()).filter(Boolean),
+        disciplines: edit.disciplines.split(',').map((value) => value.trim()).filter(Boolean),
+        work_mode: edit.work_mode || null,
+        is_featured: edit.is_featured,
         is_active: edit.is_active,
       };
       const saved = edit.id ? await updateAdminOpportunity(edit.id, values) : await createAdminOpportunity(values);
@@ -160,11 +176,38 @@ export default function AdminOpportunitiesPage() {
                       {CATEGORIES.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}
                     </select>
                   </label>
+                  <label className="admin-field"><span>Subcategory</span>
+                    <input className="admin-input" value={edit.subcategory} onChange={(e) => setEdit({ ...edit, subcategory: e.target.value })} placeholder="e.g. Undergraduate scholarship" />
+                  </label>
                   <label className="admin-field"><span>Deadline</span>
                     <input className="admin-input" type="date" value={edit.deadline} onChange={(e) => setEdit({ ...edit, deadline: e.target.value })} />
                   </label>
-                  <label className="admin-field"><span>Locations / eligibility</span>
-                    <input className="admin-input" value={edit.locations} onChange={(e) => setEdit({ ...edit, locations: e.target.value })} placeholder="e.g. Nationwide · 200L students" />
+                </div>
+                <div className="admin-field-row">
+                  <label className="admin-field"><span>Location</span>
+                    <input className="admin-input" value={edit.locations} onChange={(e) => setEdit({ ...edit, locations: e.target.value })} placeholder="e.g. Nationwide · Lagos · Remote" />
+                  </label>
+                  <label className="admin-field"><span>Eligibility</span>
+                    <input className="admin-input" value={edit.eligibility} onChange={(e) => setEdit({ ...edit, eligibility: e.target.value })} placeholder="Who can apply?" />
+                  </label>
+                  <label className="admin-field"><span>Work mode</span>
+                    <select className="admin-select" value={edit.work_mode} onChange={(e) => setEdit({ ...edit, work_mode: e.target.value })}>
+                      <option value="">Not specified</option><option value="remote">Remote</option><option value="hybrid">Hybrid</option><option value="onsite">On-site</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="admin-field-row">
+                  <label className="admin-field"><span>Education levels</span>
+                    <input className="admin-input" value={edit.education_levels} onChange={(e) => setEdit({ ...edit, education_levels: e.target.value })} placeholder="Undergraduate, Graduate" />
+                  </label>
+                  <label className="admin-field"><span>Disciplines</span>
+                    <input className="admin-input" value={edit.disciplines} onChange={(e) => setEdit({ ...edit, disciplines: e.target.value })} placeholder="Engineering, STEM, Computer Science" />
+                  </label>
+                  <label className="admin-field admin-field-check"><span>Discovery</span>
+                    <span className="admin-check-row">
+                      <input id="opp-featured" type="checkbox" checked={edit.is_featured} onChange={(e) => setEdit({ ...edit, is_featured: e.target.checked })} />
+                      <label htmlFor="opp-featured">Featured</label>
+                    </span>
                   </label>
                 </div>
                 <div className="admin-field-row">
