@@ -19,6 +19,8 @@ import {
 } from '../src/lib/envContract';
 import {
   EXPECTED_BUCKETS,
+  PUBLIC_BUCKETS,
+  PRIVATE_BUCKETS,
   EXPECTED_FUNCTIONS,
   PROBED_TABLES,
   SQL_ARTIFACT,
@@ -151,20 +153,59 @@ test('describing the environment never includes a value', () => {
 /* ------------------------------------------------------------------ */
 
 test('a private bucket that is public fails, a missing bucket fails', () => {
-  const good = checkBuckets(EXPECTED_BUCKETS.map((name) => ({ name, public: false })));
-  assert.deepEqual(good.map((check) => check.state), ['pass', 'pass']);
+  const good = checkBuckets([
+    { name: 'admin-content', public: true },
+    { name: 'resource-files', public: false },
+    { name: 'campus-uploads', public: false },
+  ]);
+  assert.deepEqual(good.map((check) => check.state), ['pass', 'pass', 'pass']);
 
-  const missing = checkBuckets([{ name: 'admin-content', public: false }]);
+  const missing = checkBuckets([{ name: 'admin-content', public: true }]);
   assert.equal(missing[0].state, 'fail');
   assert.match(missing[0].detail || '', /resource-files/);
 
-  const publicBucket = checkBuckets(EXPECTED_BUCKETS.map((name) => ({ name, public: true })));
-  assert.equal(publicBucket[1].state, 'fail');
-  assert.match(publicBucket[1].detail || '', /must not be/);
+  // Data exposure: a bucket declared private must not be public.
+  const leaked = checkBuckets([
+    { name: 'admin-content', public: true },
+    { name: 'resource-files', public: true },
+    { name: 'campus-uploads', public: false },
+  ]);
+  assert.equal(leaked[1].state, 'fail');
+  assert.match(leaked[1].detail || '', /must not be/);
 
-  // A bucket the application does not use is none of its business.
-  const unrelated = checkBuckets([...EXPECTED_BUCKETS.map((name) => ({ name, public: false })), { name: 'avatars', public: true }]);
-  assert.deepEqual(unrelated.map((check) => check.state), ['pass', 'pass']);
+  // The other direction: a bucket the app reads back by public URL must be
+  // public, or every published news image 404s.
+  const broken = checkBuckets([
+    { name: 'admin-content', public: false },
+    { name: 'resource-files', public: false },
+    { name: 'campus-uploads', public: false },
+  ]);
+  assert.equal(broken[2].state, 'fail');
+  assert.match(broken[2].detail || '', /must be public/);
+
+  // A bucket outside the application's set is not this check's business.
+  const unrelated = checkBuckets([
+    { name: 'admin-content', public: true },
+    { name: 'resource-files', public: false },
+    { name: 'campus-uploads', public: false },
+    { name: 'avatars', public: true },
+  ]);
+  assert.deepEqual(unrelated.map((check) => check.state), ['pass', 'pass', 'pass']);
+});
+
+test('the bucket rule matches what the upload route and the paper route do', () => {
+  // The evidence for the split lives in the code, so the test reads the code.
+  const server = readFileSync(join(ROOT, 'server.ts'), 'utf8');
+  assert.match(server, /storage\.from\('admin-content'\)\.upload/, 'admin-content is the upload bucket');
+  assert.match(server, /storage\.from\('admin-content'\)\.getPublicUrl/, 'and it is read back by public URL');
+  assert.match(server, /storage\.from\('resource-files'\)\.createSignedUrl/, 'resource-files is served by signed URL');
+  assert.ok(
+    PUBLIC_BUCKETS.includes('admin-content'),
+    'admin-content is declared public because getPublicUrl output is stored on published rows',
+  );
+  for (const bucket of PRIVATE_BUCKETS) {
+    assert.ok(!PUBLIC_BUCKETS.includes(bucket), `${bucket} cannot be both public and private`);
+  }
 });
 
 test('an empty report fails rather than passing on missing numbers', () => {
@@ -230,4 +271,70 @@ test('the expectations in the script match what the repository actually uses', (
   assert.ok(EXPECTED_BUCKETS.length >= 3);
   assert.ok(EXPECTED_FUNCTIONS.includes('prune_site_analytics_events'), 'the AN-1 retention function must be validated');
   assert.ok(EXPECTED_FUNCTIONS.includes('content_integrity_report'));
+});
+
+test('the release-sync query names the migrations production is missing, and passes once they land', async () => {
+  // PROD-1. Counting rows in `supabase_migrations.schema_migrations` (check 8) says
+  // how many migrations ran, not which. Production was found serving merged code
+  // against a half-applied schema, so the artifact now names each object the
+  // 2026-10-02/03 release adds. This test runs that query for real: against the
+  // full schema it must pass, and against a schema missing the newest migrations it
+  // must fail *and* say which migration to apply.
+  const { PGlite } = await import('@electric-sql/pglite');
+  const { applyMigrations, SHIM_PATH } = await import('../scripts/replay');
+  const sql = readFileSync(join(ROOT, SQL_ARTIFACT), 'utf8');
+  const marker = '-- 9. The objects this release introduces are present';
+  assert.ok(sql.includes(marker), 'the sync check is missing from the artifact');
+  const start = sql.indexOf(marker);
+  const end = sql.indexOf("-- 10. Data quality");
+  assert.ok(start > 0 && end > start, 'the sync check must precede the data-quality report');
+  const syncQuery = sql.slice(start, end);
+
+  const full = new PGlite();
+  try {
+    await applyMigrations(full);
+    const rows = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
+    assert.equal(rows.length, 1, 'the sync check must return exactly one verdict row');
+    assert.equal(rows[0].result, 'pass', `fully migrated schema reported: ${rows[0].detail}`);
+  } finally {
+    await full.close();
+  }
+
+  // A database stopped one release short: the pre-release migrations only.
+  const partial = new PGlite();
+  try {
+    await partial.exec(readFileSync(SHIM_PATH, 'utf8'));
+    const { readdirSync } = await import('node:fs');
+    const dir = join(ROOT, 'supabase/migrations');
+    const files = readdirSync(dir).filter((name) => name.endsWith('.sql')).sort();
+    const release = files.filter((name) => name >= '20261002120000');
+    assert.ok(release.length >= 3, 'the release under test has several migrations');
+    for (const file of files.filter((name) => name < '20261002120000')) {
+      await partial.exec(readFileSync(join(dir, file), 'utf8'));
+    }
+    const rows = (await partial.exec(syncQuery)).at(-1)?.rows ?? [];
+    assert.equal(rows[0].result, 'fail', 'a half-applied database must not pass the sync check');
+    for (const file of release) {
+      assert.ok(
+        String(rows[0].detail).includes(file),
+        `the sync check does not name ${file}; an operator would not know what to apply`,
+      );
+    }
+  } finally {
+    await partial.close();
+  }
+});
+
+test('the migration counts in the artifact, the runbook and the repository cannot drift apart', async () => {
+  // The count was wrong in three places at once (the artifact said 41 while the
+  // repository held 46), which is how the sync check's own premise went stale.
+  // One source of truth: the directory listing.
+  const { readdirSync } = await import('node:fs');
+  const count = readdirSync(join(ROOT, 'supabase/migrations')).filter((name) => name.endsWith('.sql')).length;
+  const sql = readFileSync(join(ROOT, SQL_ARTIFACT), 'utf8');
+  const runbook = readFileSync(join(ROOT, 'docs/operations/PRODUCTION_RUNBOOK.md'), 'utf8');
+
+  assert.match(sql, new RegExp(`count\\(\\*\\) >= ${count}\\b`), `the artifact's threshold is not ${count}`);
+  assert.match(sql, new RegExp(`repository holds ${count}\\)`), `the artifact's detail does not say ${count}`);
+  assert.match(runbook, new RegExp(`${count} migrations in `), `the runbook does not say ${count} migrations`);
 });

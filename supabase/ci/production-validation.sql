@@ -119,23 +119,84 @@ where n.nspname = 'public'
   and c.relname = 'site_analytics_events'
   and g.rolname in ('anon', 'authenticated');
 
--- 7. Storage buckets exist and are private -----------------------------------
+-- 7. Storage buckets exist, and each has the read access the app needs --------
+-- Intent comes from scripts/prod-validate.ts (PUBLIC_BUCKETS / PRIVATE_BUCKETS).
+-- `admin-content` is public *by design*: the admin upload route returns
+-- getPublicUrl(...) and the URL is stored on the published article row, so a
+-- private bucket would 404 every published news image. `resource-files` and
+-- `campus-uploads` hold gated content and must stay private.
 select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
-  'application buckets exist and are not public' as check_name,
-  coalesce(string_agg(b.name, ', '), 'all present and private') as detail
-from (values ('admin-content'),('resource-files'),('campus-uploads')) as expected(name)
+  'application buckets exist and match their declared read access' as check_name,
+  coalesce(string_agg(expected.name || ' (' || coalesce(b.public::text, 'missing') || ')', ', '),
+           'all present, admin-content public by design, the rest private') as detail
+from (values ('admin-content', true), ('resource-files', false), ('campus-uploads', false)) as expected(name, should_be_public)
 left join storage.buckets b on b.id = expected.name
-where b.id is null or b.public = true;
+where b.id is null or b.public is distinct from expected.should_be_public;
 
 -- 8. The migration history is fully applied ----------------------------------
+-- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 41 then 'pass' else 'fail' end as result,
+  case when count(*) >= 46 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 41)' as detail
+  count(*)::text || ' migrations recorded (repository holds 46)' as detail
 from supabase_migrations.schema_migrations;
 
--- 9. Data quality, from the database's own report -----------------------------
+-- 9. The objects this release introduces are present -------------------------
+-- Check 8 counts rows in the migration history, which answers "how many?" but not
+-- "which?". This is the sync check: it names each object the 2026-10-02/03 release
+-- adds, so a partially applied production database is visible in one query. It is
+-- read-only and safe to run at any time.
+select
+  case when count(*) = 0 then 'pass' else 'fail' end as result,
+  'every object added by the 2026-10-02/03 release exists' as check_name,
+  coalesce(string_agg(missing.object || ' — apply ' || missing.migration, '; '),
+           'CBT modes, news category slug, past-question library and opportunity eligibility all present') as detail
+from (
+  select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'mode')
+  union all
+  select 'public.plan_cbt_paper()', '20261002120000_cbt_practice_and_mock_modes.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'plan_cbt_paper')
+  union all
+  select 'public.get_cbt_attempt_history()', '20261002120000_cbt_practice_and_mock_modes.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'get_cbt_attempt_history')
+  union all
+  select 'public.news_category_slug()', '20261002130000_news_category_contract.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'news_category_slug')
+  union all
+  select 'public.news_articles.category_slug', '20261002130000_news_category_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'news_articles' and column_name = 'category_slug')
+  union all
+  select 'public.past_question_resources', '20261002140000_past_question_resources.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'past_question_resources')
+  union all
+  select 'public.past_question_coverage()', '20261002140000_past_question_resources.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'past_question_coverage')
+  union all
+  -- The live API drops back to a legacy field set when these two are missing,
+  -- which silently removes provenance from every public listing.
+  select 'public.opportunities.last_verified_at', '20260930120000_newsroom_ingestion_pipeline.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'last_verified_at')
+  union all
+  select 'public.opportunities.source_name', '20260930120000_newsroom_ingestion_pipeline.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'source_name')
+  union all
+  select 'public.opportunities.eligibility', '20261002150000_opportunity_eligibility.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'eligibility')
+) as missing;
+
+-- 10. Data quality, from the database's own report -----------------------------
 -- content_integrity_report() is service-role only; in the SQL editor it runs as
 -- postgres and returns the same JSON the admin console reads.
 select
