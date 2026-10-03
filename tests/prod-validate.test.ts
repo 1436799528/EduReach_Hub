@@ -275,11 +275,10 @@ test('the expectations in the script match what the repository actually uses', (
 
 test('the release-sync query names the migrations production is missing, and passes once they land', async () => {
   // PROD-1. Counting rows in `supabase_migrations.schema_migrations` (check 8) says
-  // how many migrations ran, not which. Production was found serving merged code
-  // against a half-applied schema, so the artifact now names each object the
-  // 2026-10-02/03 release adds. This test runs that query for real: against the
-  // full schema it must pass, and against a schema missing the newest migrations it
-  // must fail *and* say which migration to apply.
+  // how many migrations ran, not which. The artifact now checks exact release
+  // versions (including data-only migrations) and important resulting objects.
+  // Against a fully migrated schema it must pass; against one missing the release
+  // it must fail and name every migration an operator needs to apply.
   const { PGlite } = await import('@electric-sql/pglite');
   const { applyMigrations, SHIM_PATH } = await import('../scripts/replay');
   const sql = readFileSync(join(ROOT, SQL_ARTIFACT), 'utf8');
@@ -290,9 +289,29 @@ test('the release-sync query names the migrations production is missing, and pas
   assert.ok(start > 0 && end > start, 'the sync check must precede the data-quality report');
   const syncQuery = sql.slice(start, end);
 
+  const { readdirSync } = await import('node:fs');
+  const dir = join(ROOT, 'supabase/migrations');
+  const files = readdirSync(dir).filter((name) => name.endsWith('.sql')).sort();
+  const release = files.filter((name) => name >= '20261002120000');
+  const createHistory = `
+    create schema if not exists supabase_migrations;
+    create table supabase_migrations.schema_migrations (version text primary key, name text);
+  `;
+  const recordHistory = async (db: InstanceType<typeof PGlite>, applied: string[]) => {
+    await db.exec(createHistory);
+    for (const file of applied) {
+      const separator = file.indexOf('_');
+      await db.query(
+        'insert into supabase_migrations.schema_migrations (version, name) values ($1, $2) on conflict (version) do nothing',
+        [file.slice(0, separator), file.slice(separator + 1, -4)],
+      );
+    }
+  };
+
   const full = new PGlite();
   try {
-    await applyMigrations(full);
+    const applied = await applyMigrations(full);
+    await recordHistory(full, applied);
     const rows = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
     assert.equal(rows.length, 1, 'the sync check must return exactly one verdict row');
     assert.equal(rows[0].result, 'pass', `fully migrated schema reported: ${rows[0].detail}`);
@@ -304,14 +323,13 @@ test('the release-sync query names the migrations production is missing, and pas
   const partial = new PGlite();
   try {
     await partial.exec(readFileSync(SHIM_PATH, 'utf8'));
-    const { readdirSync } = await import('node:fs');
-    const dir = join(ROOT, 'supabase/migrations');
-    const files = readdirSync(dir).filter((name) => name.endsWith('.sql')).sort();
-    const release = files.filter((name) => name >= '20261002120000');
     assert.ok(release.length >= 3, 'the release under test has several migrations');
+    const applied: string[] = [];
     for (const file of files.filter((name) => name < '20261002120000')) {
       await partial.exec(readFileSync(join(dir, file), 'utf8'));
+      applied.push(file);
     }
+    await recordHistory(partial, applied);
     const rows = (await partial.exec(syncQuery)).at(-1)?.rows ?? [];
     assert.equal(rows[0].result, 'fail', 'a half-applied database must not pass the sync check');
     for (const file of release) {
@@ -326,9 +344,9 @@ test('the release-sync query names the migrations production is missing, and pas
 });
 
 test('the migration counts in the artifact, the runbook and the repository cannot drift apart', async () => {
-  // The count was wrong in three places at once (the artifact said 41 while the
-  // repository held 46), which is how the sync check's own premise went stale.
-  // One source of truth: the directory listing.
+  // The checked-in count drifts whenever a migration is appended unless the
+  // artifact and operator runbook are reconciled in the same change. The
+  // repository directory is the source of truth for this assertion.
   const { readdirSync } = await import('node:fs');
   const count = readdirSync(join(ROOT, 'supabase/migrations')).filter((name) => name.endsWith('.sql')).length;
   const sql = readFileSync(join(ROOT, SQL_ARTIFACT), 'utf8');

@@ -141,15 +141,21 @@ test('runRecorded records the failure and still re-throws it', async () => {
 
 const freshJob = { job_name: 'newsroom-refresh', fresh: true, last_success_at: '2026-10-01T09:00:00Z', last_failure_at: null };
 const retentionJob = { job_name: 'analytics-retention', fresh: true, last_success_at: '2026-10-01T09:05:00Z', last_failure_at: null };
+const opportunityJob = { job_name: 'opportunity-expiry', fresh: true, last_success_at: '2026-10-01T09:10:00Z', last_failure_at: null };
+const pruneJob = { job_name: 'scheduled-job-prune', fresh: true, last_success_at: '2026-10-01T09:15:00Z', last_failure_at: null };
+const allFreshJobs = [freshJob, retentionJob, opportunityJob, pruneJob];
 
-test('both known jobs running fresh is healthy', () => {
-  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [freshJob, retentionJob] });
+test('all known jobs running fresh is healthy', () => {
+  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: allFreshJobs });
   assert.equal(health.ok, true);
   assert.deepEqual(health, { ok: true, missing: [], stale: [], failing: [] });
 });
 
 test('a job that never recorded is reported as missing, not healthy', () => {
-  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [freshJob] });
+  const health = evaluateJobHealth({
+    sinceHours: STALE_AFTER_HOURS,
+    jobs: allFreshJobs.filter((job) => job.job_name !== 'analytics-retention'),
+  });
   assert.equal(health.ok, false);
   assert.deepEqual(health.missing, ['analytics-retention']);
 });
@@ -162,21 +168,21 @@ test('an empty status is not a pass', () => {
 
 test('a job whose last success is stale is reported as stale', () => {
   const stale = { ...freshJob, fresh: false, last_success_at: '2026-09-20T09:00:00Z' };
-  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [stale, retentionJob] });
+  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [stale, retentionJob, opportunityJob, pruneJob] });
   assert.equal(health.ok, false);
   assert.deepEqual(health.stale, ['newsroom-refresh']);
 });
 
 test('a failure more recent than the last success is reported as failing', () => {
   const failing = { ...freshJob, last_failure_at: '2026-10-01T10:00:00Z', last_error: 'fetch timeout' };
-  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [failing, retentionJob] });
+  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [failing, retentionJob, opportunityJob, pruneJob] });
   assert.equal(health.ok, false);
   assert.deepEqual(health.failing, ['newsroom-refresh']);
 });
 
 test('an old failure followed by a success is not a current failure', () => {
   const recovered = { ...freshJob, last_failure_at: '2026-09-28T10:00:00Z' };
-  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [recovered, retentionJob] });
+  const health = evaluateJobHealth({ sinceHours: STALE_AFTER_HOURS, jobs: [recovered, retentionJob, opportunityJob, pruneJob] });
   assert.deepEqual(health.failing, [], 'a recovered job must not keep being reported as failing');
   assert.equal(health.ok, true);
 });
@@ -184,7 +190,7 @@ test('an old failure followed by a success is not a current failure', () => {
 test('an unexpected job in the table does not affect the verdict', () => {
   const health = evaluateJobHealth({
     sinceHours: STALE_AFTER_HOURS,
-    jobs: [freshJob, retentionJob, { job_name: 'some-future-job', fresh: false }],
+    jobs: [...allFreshJobs, { job_name: 'some-future-job', fresh: false }],
   });
   assert.equal(health.ok, true);
 });
