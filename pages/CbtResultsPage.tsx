@@ -1,8 +1,7 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, CheckCircle2, ChevronDown, Download, Printer, RotateCcw, XCircle } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, Printer, RotateCcw } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
-import CbtResultSlip from '../src/components/CbtResultSlip';
 import { fetchCbtResult } from '../src/lib/api';
 import { localStorageKey } from '../src/lib/localPreview';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
@@ -85,6 +84,18 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     URL.revokeObjectURL(url);
   };
 
+  const unansweredCount = Math.max(0, totalCount - correctCount - (Number(result?.attempt?.wrong_answers) || missedCount - (Number(result?.attempt?.correct_answers) || correctCount)));
+  const wrongCount = totalCount - correctCount;
+  const timeUsed = result?.attempt?.duration_minutes
+    ? `${result.attempt.duration_minutes} minutes`
+    : (result?.attempt?.started_at && result?.attempt?.submitted_at
+      ? (() => {
+          const ms = Math.max(0, new Date(result.attempt.submitted_at).getTime() - new Date(result.attempt.started_at).getTime());
+          const mins = Math.round(ms / 60000);
+          return `${mins} minute${mins === 1 ? '' : 's'}`;
+        })()
+      : '—');
+
   return (
     <HubLayout>
       <div className="hub-page er-results-page">
@@ -95,54 +106,67 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
             <div className="hub-panel hub-empty">
               <h1>CBT result unavailable</h1>
               <p>{error}</p>
-              <a className="hub-primary-btn" href="/cbt">Choose a CBT test</a>
+              <a className="hub-primary-btn" href="/cbt">Back to CBT</a>
             </div>
           )}
 
           {!loading && result && (
             <>
-              <section className={`er-result-status ${isPass ? 'is-pass' : 'is-fail'}`} aria-labelledby="result-status-heading">
-                <div className="er-result-status-icon">{isPass ? <CheckCircle2 size={30} /> : <XCircle size={30} />}</div>
-                <div>
-                  <span className="er-result-status-kicker">CBT test completed</span>
-                  <h1 id="result-status-heading">{isPass ? 'Passed' : 'Completed — keep practising'}</h1>
-                  <p>Score: <strong>{score.toFixed(1)}%</strong> · {isPass ? 'Good performance.' : 'You did not meet the 60% practice target.'}</p>
-                </div>
+              <section className="er-result-header" aria-labelledby="result-heading">
+                <span className="er-result-kicker">CBT RESULT</span>
+                <h1 id="result-heading">Overall Score</h1>
+                <div className="er-result-score">{score.toFixed(0)}<span>%</span></div>
               </section>
 
-              <div className="er-result-actions" aria-label="Result actions">
-                <button type="button" className="hub-primary-btn" onClick={printResult}><Printer size={15} /> Print Result</button>
-                <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download Result</button>
-                <button type="button" className="hub-outline-btn" onClick={() => setShowReview((open) => !open)}><ChevronDown size={15} /> {showReview ? 'Hide Answers' : 'Review Answers'}</button>
-                <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Take Another Test</a>
-                <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt') }><ArrowLeft size={15} /> Return to CBT</button>
-              </div>
-
-              <CbtResultSlip result={result} studentName={studentName} studentId={studentId} />
+              <section className="er-result-counts-block" aria-label="Score summary">
+                <div><span>Questions</span><strong>{totalCount}</strong></div>
+                <div><span>Correct</span><strong className="is-correct">{correctCount}</strong></div>
+                <div><span>Wrong</span><strong className="is-wrong">{wrongCount}</strong></div>
+                <div><span>Unanswered</span><strong>{Math.max(0, totalCount - correctCount - wrongCount)}</strong></div>
+                <div><span>Time used</span><strong>{timeUsed}</strong></div>
+              </section>
 
               {subjectRows.length > 0 && (
-                <section className="er-result-subjects" aria-label="Performance by subject">
-                  <h2>Performance by subject</h2>
-                  <ul>
-                    {subjectRows.map((row) => (
-                      <li key={row.subject}>
-                        <span>{row.subject}</span>
-                        <b>{row.correct}/{row.total}</b>
-                        <i aria-hidden="true"><span style={{ width: `${row.total ? Math.round((row.correct / row.total) * 100) : 0}%` }} /></i>
-                        <em>{row.total ? Math.round((row.correct / row.total) * 100) : 0}%</em>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="er-result-review-intro">A subject below 60% is the one to practise next.</p>
+                <section className="er-result-subject-table-wrap" aria-label="Performance by subject">
+                  <h2 className="er-result-section-title">Performance by subject</h2>
+                  <table className="er-result-subject-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Subject</th>
+                        <th scope="col" className="num">Questions</th>
+                        <th scope="col" className="num">Correct</th>
+                        <th scope="col" className="num">Wrong</th>
+                        <th scope="col" className="num">Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subjectRows.map((row) => {
+                        const wrong = row.total - row.correct;
+                        const pct = row.total ? Math.round((row.correct / row.total) * 100) : 0;
+                        return (
+                          <tr key={row.subject}>
+                            <td>{row.subject}</td>
+                            <td className="num">{row.total}</td>
+                            <td className="num">{row.correct}</td>
+                            <td className="num">{wrong}</td>
+                            <td className="num"><b>{pct}%</b></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </section>
               )}
 
-              <section className="er-result-quick-stats" aria-label="Score details">
-                <div><span>Correct</span><strong>{correctCount}</strong></div>
-                <div><span>Incorrect</span><strong>{missedCount}</strong></div>
-                <div><span>Total questions</span><strong>{totalCount}</strong></div>
-                <div><span>Reference</span><strong>{result.attempt?.id || '—'}</strong></div>
-              </section>
+              <div className="er-result-actions" aria-label="Result actions">
+                <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
+                  {showReview ? 'Hide Answers' : 'Review Answers'}
+                </button>
+                <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
+                <button type="button" className="hub-outline-btn" onClick={printResult}><Printer size={15} /> Print</button>
+                <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download</button>
+                <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt')}><ArrowLeft size={15} /> Back to CBT</button>
+              </div>
 
               {showReview && (
                 <section className="er-result-review" aria-labelledby="review-heading">

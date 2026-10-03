@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   MoreVertical,
   X,
   ScanSearch,
   User,
-  ShieldCheck,
   LogOut,
   LayoutDashboard,
   Home,
@@ -52,6 +51,13 @@ export default function HubLayout({ children }: { children: ReactNode }) {
   };
 
   const firstName = user?.name?.split(/\s+/)[0] || 'Student';
+  // Compact initials for mobile — never force the full name into the header.
+  const userInitials = useMemo(() => {
+    const name = (user?.name || 'Student').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (parts[0]?.slice(0, 2) || 'ST').toUpperCase();
+  }, [user?.name]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -230,6 +236,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
                   aria-controls="hub-profile-menu"
+                  aria-label={`Account menu for ${user?.name || 'Student'}`}
+                  className="hub-profile-trigger"
                   style={{
                     background: '#b14933',
                     color: '#ffffff',
@@ -245,7 +253,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     boxShadow: '0 2px 6px rgba(200, 88, 65, 0.22)',
                   }}
                 >
-                  <User size={14} /> {firstName}
+                  <span className="hub-profile-trigger-name"><User size={14} /> {firstName}</span>
+                  <span className="hub-profile-trigger-initials" aria-hidden="true">{userInitials}</span>
                 </button>
                 {profileOpen && (
                   <div
@@ -469,53 +478,25 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
-      {/* CONSOLIDATED FOOTER: primary destinations only; duplicate exam/service lists live on their destination pages. */}
-      <footer className="er-footer" style={{ background: '#0f172a', color: '#94a3b8', padding: '40px 0 24px', borderTop: '3px solid #b14933', marginTop: 'auto', fontSize: '13px' }}>
+      {/* Minimal footer — secondary navigation only; sits naturally at the bottom of content. */}
+      <footer className="er-footer" style={{ background: '#0f172a', color: '#94a3b8', padding: '24px 0', borderTop: '1px solid #1e293b', marginTop: 'auto', fontSize: '12px' }}>
         <div className="hub-container">
-          <div className="er-footer-grid" style={{ display: 'grid', gridTemplateColumns: '1.35fr 1fr 1fr', gap: '28px', marginBottom: '32px' }}>
-            <div className="er-footer-brand">
-              <div style={{ marginBottom: '10px', display: 'inline-flex', padding: '3px', background: '#ffffff', borderRadius: '50%' }}>
-                <BrandLogo height={46} radius="50%" />
-              </div>
-              <div style={{ fontSize: '18px', fontWeight: 620, color: '#ffffff', marginBottom: '8px' }}>
-                EduReach<span style={{ color: 'var(--er-tangerine)' }}>.ng</span>
-              </div>
-              <p style={{ margin: '0 0 14px', lineHeight: 1.6, fontSize: '12px' }}>
-                Nigeria's student support portal for CBT practice, guided services, NELFUND assistance, and admission updates.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#86efac', fontSize: '12px', fontWeight: 620 }}>
-                <ShieldCheck size={16} /> Verified Academic Portal
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <BrandLogo height={28} radius="50%" />
+              <strong style={{ color: '#ffffff', fontSize: '13px', fontWeight: 620 }}>EduReach Hub</strong>
             </div>
-
-            <div>
-              <h4 className="er-footer-heading">Explore</h4>
-              <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/cbt">CBT Practice Center</a>
-                <a href="/past-questions">Past questions &amp; materials</a>
-                <a href="/services">Student Services</a>
-                <a href="/schools">School Finder</a>
-                <a href="/news">News &amp; Updates</a>
-                <a href="/jobs">Scholarships &amp; Grants</a>
-                <a href="/dashboard">Student Dashboard</a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="er-footer-heading">Support</h4>
-              <div className="er-footer-links" style={{ display: 'grid', gap: '8px', fontSize: '12.5px' }}>
-                <a href="/screening-calculator">Screening Calculator</a>
-                <a href="/services/apply/nelfund-loan">NELFUND guidance</a>
-                <a href="/services/apply/results">Result checking support</a>
-                <a href={EDUREACH_WHATSAPP_CHANNEL} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620 }}>Follow EduReach Hub NG on WhatsApp</a>
-                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620 }}>Talk to Us on WhatsApp</a>
-              </div>
-            </div>
-          </div>
-
-          <div className="er-footer-bottom" style={{ paddingTop: '20px', borderTop: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', fontSize: '11px', color: '#94a3b8' }}>
-            <div>© {new Date().getFullYear()} EduReach.ng. All rights reserved.</div>
-            <div>Independent academic support network. JAMB, WAEC, NECO, and university trademarks belong to their statutory bodies.</div>
+            <nav className="er-footer-links" aria-label="Footer" style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px' }}>
+              <a href="/" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Home</a>
+              <a href="/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>CBT</a>
+              <a href="/services" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Services</a>
+              <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>News</a>
+              <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620, textDecoration: 'none' }}>Help</a>
+              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Contact</a>
+              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Privacy</a>
+              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Terms</a>
+            </nav>
+            <div style={{ fontSize: '11px', color: '#64748b' }}>© {new Date().getFullYear()} EduReach Hub</div>
           </div>
         </div>
       </footer>

@@ -265,7 +265,14 @@ export default function PastQuestionsPage() {
               ) : !records.length ? (
                 <div className="hub-panel hub-empty">
                   <h2>{banks.length ? 'No matching CBT bank' : 'No CBT question banks available yet'}</h2>
-                  <p>{banks.length ? 'Try a different examination body, school or subject.' : 'Question banks appear here as soon as they are published through the EduReach CBT catalogue.'}</p>
+                  <p>
+                    {banks.length
+                      ? 'Try a different examination body, school or subject. You can also clear the search/filter to see everything.'
+                      : 'CBT question banks appear here as soon as they are published. You can still request past papers through the Papers & materials tab.'}
+                  </p>
+                  {banks.length > 0 && search && (
+                    <button type="button" className="hub-outline-btn" onClick={() => changeSearch('')}>Clear search</button>
+                  )}
                 </div>
               ) : (
                 <div className="er-library-grid">
@@ -349,8 +356,8 @@ export default function PastQuestionsPage() {
               )}
 
               {!libraryLoading && !libraryError && visibleResources.length === 0 && (
-                <InlineNotice tone="info" title={library?.configured === false ? 'The document library is not connected yet' : 'No document papers published for this selection yet'}>
-                  Nothing has been published here, so there is no paper to open. This is not a missing file on your side. You can practise with the timed CBT bank now, or ask EduReach to source a paper — requests are tracked and you will be told when a verified copy is available.
+                <InlineNotice tone="info" title={library?.configured === false ? 'The document library is not connected yet' : 'No document papers for this selection yet'}>
+                  We don't have a past-question paper for this selection yet. This is not a missing file on your side. You can practise with the timed CBT bank above, or ask EduReach to source a paper — requests are tracked and you will be told when a verified copy is available.
                 </InlineNotice>
               )}
             </div>
@@ -358,7 +365,11 @@ export default function PastQuestionsPage() {
 
           {view === 'MATERIALS' && (
             !materials.length ? (
-              <div className="hub-panel hub-empty"><h2>No matching material route</h2><p>Try another examination body or school. EduReach will not claim a document that is not configured.</p></div>
+              <div className="hub-panel hub-empty">
+                <h2>We don't have study materials for this selection yet</h2>
+                <p>Try another examination body or school. EduReach will not claim a document that is not configured. Reach out on WhatsApp if you need help sourcing a paper — we will tell you when a verified copy is available.</p>
+                <a className="hub-primary-btn" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer">Request a paper</a>
+              </div>
             ) : (
               <div className="er-material-grid">
                 {materials.map((material) => (

@@ -333,7 +333,10 @@
 /* ------------------------------------------------------------------ */
 body.er-exam-mode footer,
 body.er-exam-mode .er-mobile-bottom-nav,
-body.er-exam-mode .er-pagebar{display:none!important}
+body.er-exam-mode .er-pagebar,
+html.er-exam-mode .er-mobile-bottom-nav{display:none!important}
+body.er-exam-mode{padding-bottom:0!important}
+.er-exam-shell .er-exam-closed-actions a{text-decoration:none;display:inline-flex;align-items:center;gap:5px}
 .er-exam{--er-exam-accent:#b14933;--er-exam-ink:#0f172a;background:#eef2f6;min-height:calc(100vh - var(--er-exam-top,60px));padding-bottom:32px}
 .er-exam-bar{position:sticky;top:var(--er-exam-top,60px);z-index:80;background:var(--er-exam-ink);color:#fff;box-shadow:0 4px 14px rgba(15,23,42,.18)}
 .er-exam-bar-inner{display:flex;align-items:center;gap:10px;min-height:64px;padding:8px 0}

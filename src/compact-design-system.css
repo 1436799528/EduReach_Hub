@@ -124,3 +124,12 @@ input.hub-input,select.hub-input,textarea.hub-input{min-height:34px!important;fo
   .hub-cbt-service-content p{display:-webkit-box!important;-webkit-line-clamp:1!important;-webkit-box-orient:vertical!important;overflow:hidden!important}
   .hub-home-footer-callout{padding:10px 12px!important}
 }
+
+/* Primary navigation visibility */
+.hub-desktop-nav{display:flex;align-items:center;gap:18px}
+.hub-desktop-nav a{font-size:13px;font-weight:560}
+.hub-mobile-trigger{display:none!important}
+@media(max-width:900px){
+  .hub-desktop-nav{display:none}
+  .hub-mobile-trigger{display:inline-flex!important}
+}
