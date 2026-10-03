@@ -845,6 +845,11 @@ export type Opportunity = {
   source_name?: string | null;
   eligibility?: string | null;
   closed_at?: string | null;
+  subcategory?: string | null;
+  education_levels?: string[];
+  disciplines?: string[];
+  work_mode?: string | null;
+  is_featured?: boolean;
 };
 
 export async function fetchOpportunities(): Promise<Opportunity[]> {
