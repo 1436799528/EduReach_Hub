@@ -77,7 +77,10 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
 
   return (
     <HubLayout>
-      <main className="hub-page" style={{ padding: '24px 0 70px' }}>
+      {/* A plain div, not <main>: HubLayout already renders the page's single
+          <main id="main-content"> landmark, and a second one makes landmark
+          navigation ambiguous (audit P1-2 / the A11Y-1 nested-main check). */}
+      <div className="hub-page" style={{ padding: '24px 0 70px' }}>
         <div className="hub-container hub-narrow">
           <a href="/jobs" className="hub-outline-btn" style={{ textDecoration: 'none', marginBottom: '16px' }}>
             <ArrowLeft size={14} /> Back to opportunities
@@ -98,7 +101,9 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                     </span>
                   </div>
                   <h1 style={{ margin: '8px 0 5px', fontSize: '26px', lineHeight: 1.2, color: '#0f172a' }}>{item.title}</h1>
-                  {item.organisation && <p style={{ margin: 0, color: '#5e6c82', fontSize: '14px', fontWeight: 600 }}>{item.organisation}</p>}
+                  {/* 500 is the 'meta' role on the shared type scale; 600 was not
+                      a step on it (audit P1-3, tests/type-system.test.ts). */}
+                  {item.organisation && <p style={{ margin: 0, color: '#5e6c82', fontSize: '14px', fontWeight: 500 }}>{item.organisation}</p>}
                 </div>
               </div>
 
@@ -169,7 +174,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
             </div>
           </article>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }

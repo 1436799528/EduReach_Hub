@@ -32,11 +32,15 @@ export const ANALYTICS_EVENT_NAMES = [
   'cbt_start',
   'cbt_submit',
   'notification_open',
+  'client_error',
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENT_NAMES)[number];
 
-export type AnalyticsFunnel = 'discovery' | 'service' | 'cbt' | 'notification';
+/** The funnel vocabulary, exported so the type and its reviewers share one list. */
+export const ANALYTICS_FUNNELS = ['discovery', 'service', 'cbt', 'notification', 'reliability'] as const;
+
+export type AnalyticsFunnel = (typeof ANALYTICS_FUNNELS)[number];
 
 export type AnalyticsMetadataField = {
   type: 'string' | 'number' | 'boolean';
@@ -143,6 +147,18 @@ export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> 
     purpose: 'Whether NTF-1 notifications are opened, not merely delivered.',
     metadata: {
       status: { type: 'string', max: 30, note: 'The service status the notification announced.' },
+    },
+  },
+  client_error: {
+    // P2-2: the browser had no error signal at all — a broken route was visible
+    // only as a support ticket. This is deliberately *not* an error message:
+    // `source` is a three-value enum and `kind` is a constructor name. An error
+    // message can embed anything the page was holding, so it is never sent.
+    funnel: 'reliability',
+    purpose: 'That a page failed in the browser, and roughly how — the alert, not the trace.',
+    metadata: {
+      source: { type: 'string', max: 24, required: true, note: 'Where it was caught: boundary, window_error or unhandled_rejection.' },
+      kind: { type: 'string', max: 64, note: 'The error constructor name (TypeError, ChunkLoadError…), never the message.' },
     },
   },
 };

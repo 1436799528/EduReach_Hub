@@ -40,7 +40,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-52 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
+55 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
 CLI against a **scratch project first**:
 
 ```bash
@@ -81,7 +81,7 @@ apply 20261002150000_opportunity_eligibility.sql
 ```
 
 **Pass:** check 9 prints `pass` and confirms all release migrations are recorded;
-check 8 reports at least 52 recorded migrations.
+check 8 reports at least 55 recorded migrations.
 
 ### 3b. What “not applied” looked like from outside, on 2026-10-03
 
@@ -92,7 +92,7 @@ observations are from the public production API.
 | --- | --- | --- |
 | `GET /api/cbt/exams/<id>/subjects` | `503 {"error":"CBT subjects are temporarily unavailable."}` | `cbt_limits(body)` from `20261002120000` is missing. The route itself is fine. |
 | `GET /api/past-questions/resources` | `503 {"error":"The resource library is temporarily unavailable."}` | `past_question_resources` from `20261002140000` is missing. |
-| `GET /api/opportunities` | `200`, but every item lacks `last_verified_at`, `source_name`, `eligibility` | `20261002150000` is missing. The route degrades to a legacy column set *when any one* of the governed columns is absent, so provenance that already exists is dropped too. A newer migration can therefore make an older field disappear — the fallback is coarser than it needs to be. |
+| `GET /api/opportunities` | `200`, but every item lacks `last_verified_at`, `source_name`, `eligibility` | The select has stepped down a tier. The route tries the full discovery column set, then provenance + `eligibility`, then the legacy set, and reports what the database can actually serve — so a missing `subcategory` no longer hides provenance that does exist (audit P0-4). Check the applied migration list rather than the payload shape. |
 | `GET /api/news` | `200`, with `verification_status`, `source_key`, `source_tier` | `20260930120000_newsroom_ingestion_pipeline.sql` **is** applied. |
 | `GET /api/news/<slug>` | `200`, `category_slug` equals the lowercased label (`"scholarships & funding"`) | the code's own fallback ran, i.e. that request asked for a column set without `category_slug`. |
 

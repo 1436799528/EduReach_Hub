@@ -86,7 +86,6 @@ test('every alias satisfies only through the code that actually reads it', () =>
     'lib/supabase-config.ts',
     'src/lib/supabase.ts',
     'src/server/seo.ts',
-    'src/server/whatsapp.ts',
     'src/server/newsroom/run.ts',
     'netlify/functions/daily-news-refresh.ts',
   ]

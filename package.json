@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs",
+    "build": "tsx scripts/client-env-check.ts && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs",
     "start": "NODE_ENV=production node build/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist build server.js",
@@ -26,7 +26,8 @@
     "analytics:retention": "tsx scripts/analytics-retention.ts",
     "rls:audit": "tsx scripts/rls-posture.ts",
     "a11y:audit": "tsx scripts/a11y-audit.ts",
-    "backup:rehearsal": "tsx scripts/backup-rehearsal.ts"
+    "backup:rehearsal": "tsx scripts/backup-rehearsal.ts",
+    "smoke": "tsx scripts/smoke-check.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

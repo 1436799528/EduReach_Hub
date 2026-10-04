@@ -56,14 +56,18 @@ export const BUDGETS = {
   supabaseChunkGzip: 60 * 1024, // measured 56.2 KB — the session client, on every page by design
   criticalPathGzip: 210 * 1024, // measured 192.7 KB: entry + react + supabase + bundle CSS
   totalJsGzip: 310 * 1024, // measured 280.9 KB across 58 chunks
-  cssGzip: 46 * 1024, // measured 41.0 KB
+  // Measured 46.0 KB. The budget used to be 46 KB, i.e. an exact tie with the
+  // measurement, so the gate failed on any CSS addition at all — a budget with
+  // no headroom stops being a reviewable threshold and becomes an accident
+  // (audit P3-1). Raised deliberately; the stylesheet consolidation that would
+  // let this come back down is tracked in the audit's P3-5.
+  cssGzip: 50 * 1024,
   largestImage: 64 * 1024, // measured 60.6 KB (news photo); was 139 KB before PERF-1
   totalImages: 320 * 1024, // measured 291.9 KB; was 532 KB before PERF-1
 } as const;
 
 /** Images that are deliberately eager: small, dimensioned, above the fold. */
 const IMG_LOADING_ALLOWLIST = new Map<string, string>([
-  ['pages/CbtPracticePage.tsx', 'exam header emblem: 36×36, explicit dimensions, first thing on the screen'],
   ['pages/ExamSetupPage.tsx', 'setup hero emblem: 48×48, explicit dimensions, above the fold'],
   ['pages/ProfileCompletionPage.tsx', 'account avatar: 64×64 box fixed in CSS, above the fold'],
   ['pages/StudentDashboardV2.tsx', "dashboard avatar: fixed box, above the fold, a remote URL that is the student's own"],

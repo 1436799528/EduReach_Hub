@@ -25,6 +25,7 @@ import {
   sanitizeReferrer,
   sanitizeUserAgent,
   validateAnalyticsMetadata,
+  ANALYTICS_FUNNELS,
 } from '../src/lib/analyticsTaxonomy';
 import {
   buildRetentionPlan,
@@ -48,7 +49,7 @@ test('every declared event has a funnel, a purpose and a declared payload', () =
   for (const name of ANALYTICS_EVENT_NAMES) {
     const spec = ANALYTICS_TAXONOMY[name];
     assert.ok(spec, `${name} is declared but has no spec`);
-    assert.ok(['discovery', 'service', 'cbt', 'notification'].includes(spec.funnel), `${name} has an unknown funnel`);
+    assert.ok(ANALYTICS_FUNNELS.includes(spec.funnel), `${name} has an unknown funnel`);
     assert.ok(spec.purpose.trim().length > 20, `${name} has no stated purpose`);
     for (const [key, field] of Object.entries(spec.metadata)) {
       assert.ok(['string', 'number', 'boolean'].includes(field.type), `${name}.${key} has an unknown type`);

@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 52 then 'pass' else 'fail' end as result,
+  case when count(*) >= 55 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 52)' as detail
+  count(*)::text || ' migrations recorded (repository holds 55)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -159,7 +159,10 @@ with expected(version, migration) as (
     ('20261003100000', '20261003100000_cbt_server_authority_alignment.sql'),
     ('20261003101000', '20261003101000_expire_stale_cbt_attempts.sql'),
     ('20261003102000', '20261003102000_normalize_published_news_category_labels.sql'),
-    ('20261003103000', '20261003103000_cbt_paper_expiry_volatility.sql')
+    ('20261003103000', '20261003103000_cbt_paper_expiry_volatility.sql'),
+    ('20261003170000', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'),
+    ('20261003175703', '20261003175703_backfill_verified_academic_catalogue_and_daily_quiz_v2.sql'),
+    ('20261003190000', '20261003190000_opportunity_discovery_engine.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -211,6 +214,26 @@ with expected(version, migration) as (
   select 'public.get_cbt_attempt_paper() VOLATILE', '20261003103000_cbt_paper_expiry_volatility.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                     where n.nspname = 'public' and p.proname = 'get_cbt_attempt_paper' and p.provolatile = 'v')
+  union all
+  select 'public.ccmas_disciplines', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'ccmas_disciplines')
+  union all
+  select 'public.daily_quizzes', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'daily_quizzes')
+  union all
+  select 'public.daily_quiz_questions', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'daily_quiz_questions')
+  union all
+  select 'public.opportunities.subcategory', '20261003190000_opportunity_discovery_engine.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'subcategory')
+  union all
+  select 'public.opportunities.is_featured', '20261003190000_opportunity_discovery_engine.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'is_featured')
 ), missing as (
   select object, migration from missing_versions
   union all
@@ -220,7 +243,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 10 release migrations and checked objects are present') as detail
+           'all 13 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------

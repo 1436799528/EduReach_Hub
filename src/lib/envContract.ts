@@ -128,24 +128,12 @@ export const ENV_CONTRACT: EnvSpec[] = [
     secret: false,
     consumedBy: ['server.ts'],
   },
-  {
-    name: 'WHATSAPP_API_ENDPOINT',
-    aliases: [],
-    purpose: 'Outbound WhatsApp API base URL for student communication links. Feature is inert without it.',
-    requirement: 'optional',
-    visibility: 'server',
-    secret: false,
-    consumedBy: ['src/server/whatsapp.ts'],
-  },
-  {
-    name: 'WHATSAPP_API_TOKEN',
-    aliases: [],
-    purpose: 'Credential for the outbound WhatsApp API.',
-    requirement: 'optional',
-    visibility: 'server',
-    secret: true,
-    consumedBy: ['src/server/whatsapp.ts'],
-  },
+  // WHATSAPP_API_ENDPOINT / WHATSAPP_API_TOKEN were declared here and consumed by
+  // src/server/whatsapp.ts, which had no caller anywhere in the repository: the
+  // contract advertised an outbound integration that could never run (audit
+  // P2-3, previously MED-8 in the 2026-10-02 audit). Both the module and the
+  // variables are gone. Student-facing WhatsApp links are static `wa.me`
+  // deep links built from src/data/hubContent.ts and need no credential.
   {
     name: 'PORT',
     aliases: [],
