@@ -149,6 +149,29 @@ function tagName(tag: ts.JsxOpeningLikeElement): string {
   return tag.tagName.getText();
 }
 
+/**
+ * True when the file renders an actual `<main>` element.
+ *
+ * This is an AST question, not a substring question. A `text.includes('<main')`
+ * test is satisfied by the words `<main>` inside a comment or a string — which
+ * makes the shell rule pass without a landmark, and the nested-main rule fail on
+ * a file whose only mention of `<main>` is prose explaining why it has none.
+ * The rest of this file scans the AST for exactly this reason.
+ */
+function rendersMainLandmark(source: ts.SourceFile): boolean {
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (!found
+      && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))
+      && tagName(node) === 'main') {
+      found = true;
+    }
+    node.forEachChild(visit);
+  };
+  visit(source);
+  return found;
+}
+
 function attributeText(tag: ts.JsxOpeningLikeElement, name: string): string[] {
   const attr = getAttribute(tag, name);
   if (!attr?.initializer) return [];
@@ -242,7 +265,7 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
   const icons = iconImports(source);
   const ids = idsInFile(source);
   const labelled = labelTargets(source);
-  const rendersMain = text.includes('<main');
+  const rendersMain = rendersMainLandmark(source);
   const usesHubLayout = /import\s+HubLayout/.test(text);
   const usesModalHook = text.includes('useModalDialog');
 
@@ -330,7 +353,7 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
     findings.push({ rule: 'skip-link', severity: 'blocking', file, line: 1, message: 'shell does not render <SkipLink> — there is no bypass mechanism' });
   }
 
-  if (SHELLS.includes(file) && !usesModalHook && file === 'src/components/HubLayout.tsx' && !/<main/.test(text)) {
+  if (SHELLS.includes(file) && !usesModalHook && file === 'src/components/HubLayout.tsx' && !rendersMain) {
     findings.push({ rule: 'shell-main-target', severity: 'blocking', file, line: 1, message: 'shell renders no <main>' });
   }
 

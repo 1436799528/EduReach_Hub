@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState, useTransition } from 'react';
 import ErrorBoundary from './ErrorBoundary';
+import EnvironmentBanner from '../components/EnvironmentBanner';
 import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
 import { applyRouteSeo } from '../lib/seoMeta';
@@ -114,6 +115,8 @@ export default function App() {
 
   return (
     <>
+      {/* P2-1: says so when a production build is running without its backend. */}
+      <EnvironmentBanner />
       {/* Thin top progress bar: in-app navigation never triggers the browser's own loading UI. */}
       <div key={`progress:${locationState.routeKey}`} className="er-route-progress" aria-hidden="true" />
       {isPending && <div className="er-route-progress is-pending" aria-hidden="true" />}

@@ -210,8 +210,8 @@ that do not exist yet.
 6. proves database functions survive (the restored copy still canonicalises
    `'Scholarships & Funding'` to `scholarships`).
 
-Last local run: **52 migrations, 5,055 KB archive, 37 tables, 406 columns, 47
-policies, 37 tables with RLS — all identical after restore.**
+Last local run: **55 migrations, 5,105 KB archive, 42 tables, 454 columns, 52
+policies, 42 tables with RLS — all identical after restore.**
 
 Step 5 is the part that matters most and that a naive rehearsal skips: a backup that
 restores rows but not policies is a data breach with a green tick next to it.
