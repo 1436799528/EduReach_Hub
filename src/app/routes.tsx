@@ -31,6 +31,7 @@ const NewsPage = lazy(() => import('../../pages/NewsPage'));
 const EventsPage = lazy(() => import('../../pages/EventsPage'));
 const NewsArticlePage = lazy(() => import('../../pages/NewsArticlePage'));
 const JobsPage = lazy(() => import('../../pages/JobsPage'));
+const OpportunityDetailsPage = lazy(() => import('../../pages/OpportunityDetailsPage'));
 const SchoolFinderPage = lazy(() => import('../../pages/SchoolFinderPage'));
 const SchoolDetailsPage = lazy(() => import('../../pages/SchoolDetailsPage'));
 const AdminDashboardPage = lazy(() => import('../../pages/AdminDashboardPage'));
@@ -172,6 +173,9 @@ export function renderRoute(pathname: string): ReactElement {
     return <NewsArticlePage slug={decodeURIComponent(path.slice('/news/'.length))} />;
   }
   if (path === '/jobs' || path === '/scholarships') return <JobsPage />;
+  if (path.startsWith('/jobs/')) {
+    return <OpportunityDetailsPage opportunityId={decodeURIComponent(path.slice('/jobs/'.length))} />;
+  }
 
   return <NotFoundPage />;
 }

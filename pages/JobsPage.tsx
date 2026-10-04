@@ -337,9 +337,7 @@ export default function JobsPage() {
                   return (
                     <a
                       key={item.id}
-                      href={item.link_url || jobApplyHref(item.title)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/jobs/${encodeURIComponent(item.id)}`}
                       className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}${status.actionable ? '' : ' is-expired'}`}
                       style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)', opacity: status.actionable ? 1 : 0.78 }}
                     >

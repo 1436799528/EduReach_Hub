@@ -1263,6 +1263,26 @@ app.get('/api/opportunities', async (req, res) => {
   }
 });
 
+app.get('/api/opportunities/:opportunityId', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'Opportunity not found.' });
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('opportunities')
+      .select('id,title,organisation,category,subcategory,description,link_url,deadline,locations,last_verified_at,source_name,eligibility,education_levels,disciplines,work_mode,is_featured,is_active,created_at,updated_at')
+      .eq('id', req.params.opportunityId)
+      .eq('is_active', true)
+      .is('closed_at', null)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Opportunity not found.' });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Opportunity detail API error:', error);
+    res.status(503).json({ error: 'Opportunity details are temporarily unavailable.' });
+  }
+});
+
 app.get('/api/admin/opportunities', requireCapability('opportunity.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();

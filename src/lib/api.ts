@@ -852,6 +852,11 @@ export type Opportunity = {
   is_featured?: boolean;
 };
 
+export async function fetchOpportunity(opportunityId: string): Promise<Opportunity> {
+  const body = await jsonFetch<{ item: Opportunity }>(`/api/opportunities/${encodeURIComponent(opportunityId)}`);
+  return body.item;
+}
+
 export async function fetchOpportunities(): Promise<Opportunity[]> {
   if (!isSupabaseConfigured) return [];
   const body = await jsonFetch<{ items: Opportunity[] }>('/api/opportunities');
