@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 52 then 'pass' else 'fail' end as result,
+  case when count(*) >= 56 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 52)' as detail
+  count(*)::text || ' migrations recorded (repository holds 56)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -150,16 +150,20 @@ from supabase_migrations.schema_migrations;
 -- run at any time.
 with expected(version, migration) as (
   values
-    ('20261002120000', '20261002120000_cbt_practice_and_mock_modes.sql'),
-    ('20261002130000', '20261002130000_news_category_contract.sql'),
-    ('20261002140000', '20261002140000_past_question_resources.sql'),
-    ('20261002150000', '20261002150000_opportunity_eligibility.sql'),
-    ('20261003080000', '20261003080000_backend_security_hardening.sql'),
-    ('20261003090000', '20261003090000_verify_opportunity_data.sql'),
-    ('20261003100000', '20261003100000_cbt_server_authority_alignment.sql'),
-    ('20261003101000', '20261003101000_expire_stale_cbt_attempts.sql'),
-    ('20261003102000', '20261003102000_normalize_published_news_category_labels.sql'),
-    ('20261003103000', '20261003103000_cbt_paper_expiry_volatility.sql')
+    ('20261003070830', '20261002120000_cbt_practice_and_mock_modes.sql'),
+    ('20261003070835', '20261002130000_news_category_contract.sql'),
+    ('20261003070841', '20261002140000_past_question_resources.sql'),
+    ('20261003070845', '20261002150000_opportunity_eligibility.sql'),
+    ('20261003071718', '20261003080000_backend_security_hardening.sql'),
+    ('20261003071918', '20261003090000_verify_opportunity_data.sql'),
+    ('20261003090713', '20261003100000_cbt_server_authority_alignment.sql'),
+    ('20261003090824', '20261003101000_expire_stale_cbt_attempts.sql'),
+    ('20261003090810', '20261003102000_normalize_published_news_category_labels.sql'),
+    ('20261003130327', '20261003103000_cbt_paper_expiry_volatility.sql'),
+    ('20261004202655', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'),
+    ('20261003175703', '20261003175703_backfill_verified_academic_catalogue_and_daily_quiz_v2.sql'),
+    ('20261004202656', '20261003190000_opportunity_discovery_engine.sql'),
+    ('20261016160000', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -211,6 +215,97 @@ with expected(version, migration) as (
   select 'public.get_cbt_attempt_paper() VOLATILE', '20261003103000_cbt_paper_expiry_volatility.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                     where n.nspname = 'public' and p.proname = 'get_cbt_attempt_paper' and p.provolatile = 'v')
+  union all
+  select 'public.ccmas_disciplines', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'ccmas_disciplines')
+  union all
+  select 'public.daily_quizzes', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'daily_quizzes')
+  union all
+  select 'public.daily_quiz_questions', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'daily_quiz_questions')
+  union all
+  select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'ccmas_programmes' and column_name = 'degree_title')
+  union all
+  select 'public.ccmas_programmes.version', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'ccmas_programmes' and column_name = 'version')
+  union all
+  select 'ccmas_programmes required fields/status/unique constraint', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.ccmas_programmes')
+                      and conname = 'ccmas_programmes_programme_code_version_name_key')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.ccmas_programmes')
+                      and conname = 'ccmas_programmes_status_check')
+     or exists (select 1 from information_schema.columns
+                where table_schema = 'public' and table_name = 'ccmas_programmes'
+                  and column_name in ('discipline','programme_code','programme_name') and is_nullable <> 'NO')
+  union all
+  select 'national_programme_catalogue source/uniqueness constraints', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where exists (select 1 from information_schema.columns
+                where table_schema = 'public' and table_name = 'national_programme_catalogue'
+                  and column_name = 'source_url' and is_nullable <> 'NO')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.national_programme_catalogue')
+                      and conname = 'national_programme_catalogue_programme_name_key')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.national_programme_catalogue')
+                      and conname = 'national_programme_catalogue_source_type_check')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.national_programme_catalogue')
+                      and conname = 'national_programme_catalogue_status_check')
+  union all
+  select 'daily_quizzes.updated_at and nullable discipline', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quizzes' and column_name = 'updated_at')
+     or not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quizzes'
+                      and column_name = 'discipline' and is_nullable = 'YES')
+  union all
+  select 'daily_quiz_questions course/bounds contract', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quiz_questions' and column_name = 'course_id')
+     or not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quiz_questions'
+                      and column_name = 'points' and data_type = 'smallint')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.daily_quiz_questions')
+                      and conname = 'daily_quiz_questions_course_id_fkey')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.daily_quiz_questions')
+                      and conname = 'daily_quiz_questions_points_check'
+                      and pg_get_constraintdef(oid) like '%100%')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = to_regclass('public.daily_quiz_questions')
+                      and conname = 'daily_quiz_questions_position_check'
+                      and pg_get_constraintdef(oid) like '%20%')
+  union all
+  select 'service_requests active-service submission policy', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_policies
+                    where schemaname = 'public' and tablename = 'service_requests'
+                      and policyname = 'service_requests_insert_own'
+                      and with_check like '%service_catalog%'
+                      and with_check like '%active%')
+  union all
+  select 'ccmas_programmes discipline_id index', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_indexes
+                    where schemaname = 'public' and tablename = 'ccmas_programmes'
+                      and indexname = 'ccmas_programmes_discipline_idx'
+                      and indexdef like '%(discipline_id)%')
+  union all
+  select 'public.opportunities.subcategory', '20261003190000_opportunity_discovery_engine.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'subcategory')
+  union all
+  select 'public.opportunities.is_featured', '20261003190000_opportunity_discovery_engine.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'opportunities' and column_name = 'is_featured')
 ), missing as (
   select object, migration from missing_versions
   union all
@@ -220,7 +315,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 10 release migrations and checked objects are present') as detail
+           'all 14 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------

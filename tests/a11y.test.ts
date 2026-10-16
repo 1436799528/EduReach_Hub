@@ -95,11 +95,13 @@ test('a skip link exists in every shell and targets the shell main', () => {
 });
 
 test('every modal dialog manages focus through the shared hook', () => {
+  // Live pages only. pages/CbtPracticePage.tsx used to be listed here while
+  // being unreachable from any route (audit P2-4); the live CBT session uses
+  // native <dialog>.showModal(), which supplies the focus behaviour itself.
   const dialogs = [
     ['src/components/dashboard/SecurityModal.tsx', 'dash-modal'],
     ['pages/AdminNewsPage.tsx', 'admin-modal'],
     ['pages/AdminUsersPage.tsx', 'admin-modal'],
-    ['pages/CbtPracticePage.tsx', 'er-exam-modal'],
   ];
   for (const [file, className] of dialogs) {
     const source = read(file);
@@ -109,18 +111,29 @@ test('every modal dialog manages focus through the shared hook', () => {
   }
 });
 
-test('the exam clock is announced at its thresholds', () => {
-  const source = read('pages/CbtPracticePage.tsx');
+test('the exam clock is announced at its thresholds on the live session page', () => {
+  // Asserted against the page a candidate actually reaches (audit P2-4: this
+  // behaviour previously existed only in an unrouted page, so the gate was
+  // certifying an experience nobody could use).
+  const source = read('pages/CbtSessionPage.tsx');
   assert.match(source, /One minute remaining\./);
   assert.match(source, /Five minutes remaining\./);
-  assert.match(source, /role="status"\{clockNotice\}|role="status">\{clockNotice\}/, 'the threshold notices need a live region');
+  assert.match(source, /role="status">\{clockNotice\}/, 'the threshold notices need a live region');
+  assert.match(source, /aria-live="off"/, 'the ticking clock itself must stay silent');
 });
 
-test('answer options behave like the radio group they declare', () => {
-  const source = read('pages/CbtPracticePage.tsx');
+test('answer options on the live session page are operable from the keyboard', () => {
+  const source = read('pages/CbtSessionPage.tsx');
   assert.match(source, /role="radiogroup"/);
-  assert.match(source, /tabIndex=\{isSelected \|\| isFirstWithoutAnswer \? 0 : -1\}/, 'roving tabindex is what makes a radiogroup usable with arrows');
-  assert.match(source, /event\.key === 'ArrowDown' \|\| event\.key === 'ArrowRight'/);
+  assert.match(source, /role="radio"/);
+  assert.match(source, /aria-checked=\{isSelected\}/, 'the selected option must be exposed to assistive technology');
+  // 1–4 and A–D answer from anywhere on the page; arrows move between questions.
+  // (The page does not use roving tabindex inside the group — its documented
+  // keyboard model is question-level arrows plus letter/digit selection.)
+  assert.match(source, /event\.key >= '1' && event\.key <= '4'/);
+  assert.match(source, /\^\[a-dA-D\]\$/);
+  assert.match(source, /event\.key === 'ArrowRight'/);
+  assert.match(source, /event\.key === 'ArrowLeft'/);
 });
 
 test('failure messages that used to be silent are announced', () => {

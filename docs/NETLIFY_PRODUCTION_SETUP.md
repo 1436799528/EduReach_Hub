@@ -12,8 +12,6 @@ Add these under Netlify > Project configuration > Environment variables:
 | SUPABASE_SECRET_KEY | Functions, Runtime | Yes |
 | SUPABASE_SERVICE_ROLE_KEY | Functions, Runtime | Legacy fallback only |
 | EDUREACH_ADMIN_BOOTSTRAP_EMAIL | Functions, Runtime | Yes |
-| WHATSAPP_API_ENDPOINT | Functions, Runtime | Yes if an API provider is configured |
-| WHATSAPP_API_TOKEN | Functions, Runtime | Yes if an API provider is configured |
 
 Do not add SUPABASE_SECRET_KEY with a VITE_ prefix. VITE_ variables are intended for values shipped to browser code.
 

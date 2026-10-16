@@ -76,10 +76,23 @@ test('the procedure is documented, actionable and honest about its gaps', () => 
   assert.match(doc, /No Supabase production backup has been restored/, 'the document states what is not proven');
   assert.match(doc, /procedure documented,\s*\n?schema-and-data round trip rehearsed, production restore untested/, 'the status line does not overclaim');
 
-  // The claim in §6 must match the rehearsal this test just ran.
+  // The claim in §6 must match the rehearsal this test just ran, and it is
+  // derived from that run rather than from a hardcoded number: the previous
+  // constant silently stopped describing reality once migrations added tables,
+  // columns and policies.
   assert.match(doc, new RegExp(`${report.migrations} migrations`), 'the documented migration count matches the run');
   // Whitespace-tolerant: the documented line wraps in the middle of the numbers.
-  assert.match(doc, /37\s+tables,\s+406\s+columns,\s+47\s+policies/, 'the documented fingerprint matches the run');
+  const { tables, columns, policies } = report.fingerprint;
+  assert.match(
+    doc,
+    new RegExp(`${tables}\\s+tables,\\s+${columns}\\s+columns,\\s+${policies}\\s+policies`),
+    'the documented fingerprint matches the run',
+  );
+  assert.match(
+    doc,
+    new RegExp(`${report.fingerprint.rlsTables}\\s+tables with RLS`),
+    'the documented RLS table count matches the run',
+  );
 });
 
 test('no dump or credential can be committed', () => {

@@ -11,6 +11,7 @@ import {
   type AuthorizedRequest,
 } from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
+import { matchesDeclaredImageType } from './lib/image-signature';
 import { verifyJWT } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
 import { type Capability } from './src/lib/capabilities';
@@ -337,7 +338,10 @@ app.get('/api/admin/users', requireCapability('user.read'), async (req, res) => 
     const supabase = getServerSupabase();
     let query = supabase.from('profiles').select('id,full_name,school,faculty,department,level,role,matric_number,created_at').order('created_at', { ascending: false }).limit(200);
     if (search) {
-      const safe = search.replace(/[%,_]/g, '');
+      // PostgREST's filter grammar uses , . ( ) as structure, and % / _ as ILIKE
+      // wildcards. Strip all of them, not just the wildcards: a stray parenthesis
+      // or dot changes the shape of the filter expression (audit P3-2).
+      const safe = search.replace(/[%,_.()\\]/g, '');
       if (safe) query = query.or(`full_name.ilike.%${safe}%,school.ilike.%${safe}%,department.ilike.%${safe}%,matric_number.ilike.%${safe}%`);
     }
     const [{ data, error }, authUsers] = await Promise.all([
@@ -991,7 +995,10 @@ app.get('/api/admin/institutions', requireCapability('institution.read'), async 
     const supabase = getServerSupabase();
     let query = supabase.from('institutions').select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,created_at,updated_at').order('school_name', { ascending: true }).limit(500);
     if (search) {
-      const safe = search.replace(/[%,_]/g, '');
+      // PostgREST's filter grammar uses , . ( ) as structure, and % / _ as ILIKE
+      // wildcards. Strip all of them, not just the wildcards: a stray parenthesis
+      // or dot changes the shape of the filter expression (audit P3-2).
+      const safe = search.replace(/[%,_.()\\]/g, '');
       if (safe) query = query.or(`school_name.ilike.%${safe}%,acronym.ilike.%${safe}%,state.ilike.%${safe}%`);
     }
     const { data, error } = await query;
@@ -1224,18 +1231,57 @@ function validateOpportunityPayload(body: any): { error?: string; values?: Recor
   };
 }
 
+/**
+ * Opportunities column tiers.
+ *
+ * The catalogue grew in three separate migrations — provenance and `closed_at`
+ * (20260930120000), `eligibility` (20261002150000) and the discovery fields
+ * (20261003190000) — so a database that is one release behind is a normal
+ * state, not a fault. Each tier retries with fewer columns instead of failing
+ * the whole surface, the same way NEWS_ROW_* does below. Hard-coding the newest
+ * select meant a single absent column answered 503 for every jobs page
+ * (audit P0-4), and the degraded column set silently reported "no source" for
+ * data the database actually held.
+ */
+const OPPORTUNITY_ROW_BASE = 'id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at';
+const OPPORTUNITY_ROW_GOVERNED = `${OPPORTUNITY_ROW_BASE},closed_at,last_verified_at,source_name,eligibility`;
+const OPPORTUNITY_ROW_DISCOVERY = `${OPPORTUNITY_ROW_GOVERNED},subcategory,education_levels,disciplines,work_mode,is_featured`;
+
 app.get('/api/opportunities', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase
+    let data: any = null;
+    let error: any = null;
+    ({ data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,subcategory,description,link_url,deadline,locations,last_verified_at,source_name,eligibility,education_levels,disciplines,work_mode,is_featured')
+      .select(OPPORTUNITY_ROW_DISCOVERY)
       .eq('is_active', true)
       .is('closed_at', null)
       .order('is_featured', { ascending: false })
       .order('deadline', { ascending: true, nullsFirst: false })
-      .limit(300);
+      .limit(300));
+    if (error) {
+      // Pre-discovery database: no subcategory / education_levels / work_mode.
+      ({ data, error } = await supabase
+        .from('opportunities')
+        .select(OPPORTUNITY_ROW_GOVERNED)
+        .eq('is_active', true)
+        .is('closed_at', null)
+        .order('deadline', { ascending: true, nullsFirst: false })
+        .limit(300));
+    }
+    if (error) {
+      // Pre-newsroom database: no provenance columns and no closed_at either.
+      const fallback = await supabase
+        .from('opportunities')
+        .select(OPPORTUNITY_ROW_BASE)
+        .eq('is_active', true)
+        .order('deadline', { ascending: true, nullsFirst: false })
+        .limit(300);
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
 
     const q = String(req.query.q || '').trim().toLowerCase();
@@ -1267,13 +1313,36 @@ app.get('/api/opportunities/:opportunityId', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'Opportunity not found.' });
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase
+    let data: any = null;
+    let error: any = null;
+    // Same three tiers as the list endpoint: a detail page must not 503 because
+    // one column from the newest migration is absent (audit P0-4).
+    ({ data, error } = await supabase
       .from('opportunities')
-      .select('id,title,organisation,category,subcategory,description,link_url,deadline,locations,last_verified_at,source_name,eligibility,education_levels,disciplines,work_mode,is_featured,is_active,created_at,updated_at')
+      .select(OPPORTUNITY_ROW_DISCOVERY)
       .eq('id', req.params.opportunityId)
       .eq('is_active', true)
       .is('closed_at', null)
-      .maybeSingle();
+      .maybeSingle());
+    if (error) {
+      ({ data, error } = await supabase
+        .from('opportunities')
+        .select(OPPORTUNITY_ROW_GOVERNED)
+        .eq('id', req.params.opportunityId)
+        .eq('is_active', true)
+        .is('closed_at', null)
+        .maybeSingle());
+    }
+    if (error) {
+      const fallback = await supabase
+        .from('opportunities')
+        .select(OPPORTUNITY_ROW_BASE)
+        .eq('id', req.params.opportunityId)
+        .eq('is_active', true)
+        .maybeSingle();
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Opportunity not found.' });
     res.json({ item: data });
@@ -1443,6 +1512,11 @@ app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requi
     const buffer = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
     if (!buffer.length) return res.status(400).json({ error: 'The uploaded image is empty.' });
     if (buffer.length > 2 * 1024 * 1024) return res.status(413).json({ error: 'Images must be 2 MB or smaller.' });
+    // The declared MIME type is a claim; check it against the bytes before the
+    // object is written to the public bucket (audit P3-3).
+    if (!matchesDeclaredImageType(buffer, match[1])) {
+      return res.status(400).json({ error: 'That file is not a valid PNG, JPEG, WebP or GIF image.' });
+    }
     const supabase = getServerSupabase();
     const objectPath = `${new Date().toISOString().slice(0, 10)}/${adminUser.id.slice(0, 8)}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
     const { error: uploadError } = await supabase.storage.from('admin-content').upload(objectPath, buffer, {
@@ -2221,19 +2295,36 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
     const paper = selectCbtPaperQuestions(questions || [], subjects);
     if (!paper.length) return res.status(422).json({ error: 'This CBT exam has no questions for the selected subjects.' });
 
+    // Corrections are released per attempted question, never for the paper as a
+    // whole. This endpoint is unauthenticated, and a submission that does not
+    // answer a question must not receive that question's key: an empty payload
+    // (`{"answers":{}}`) previously returned correct_option and explanation for
+    // every question, which disclosed the whole answer key to anyone who could
+    // name an exam id (audit P0-3). A student who answers a question still gets
+    // the full correction for it, which is what the review screen needs.
+    const attemptedPositions = new Set(
+      paper
+        .filter((question) => {
+          const raw = answers[String(question.position)];
+          return raw !== undefined && raw !== null;
+        })
+        .map((question) => question.position),
+    );
+
     const breakdown = paper.map((question) => {
       const raw = answers[String(question.position)];
       const valid = raw === null || raw === undefined || (typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 && raw <= 3);
       if (!valid) throw new Error(`Invalid answer for question ${question.position}.`);
       const selected = raw === undefined || raw === null ? null : Number(raw);
       const selectedOption = selected === null ? null : String.fromCharCode(65 + selected);
+      const attempted = attemptedPositions.has(question.position);
       const correctIndex = question.correct_option.charCodeAt(0) - 65;
       return {
         question: question.position,
         selected,
-        correct: correctIndex,
+        correct: attempted ? correctIndex : null,
         isCorrect: selectedOption === question.correct_option,
-        explanation: question.explanation || null,
+        explanation: attempted ? (question.explanation || null) : null,
         questionId: question.id,
         subject: question.subject,
       };
@@ -2261,8 +2352,8 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
         option_b: question.option_b,
         option_c: question.option_c,
         option_d: question.option_d,
-        correct_option: question.correct_option,
-        explanation: question.explanation,
+        correct_option: attemptedPositions.has(question.position) ? question.correct_option : null,
+        explanation: attemptedPositions.has(question.position) ? (question.explanation || null) : null,
       })),
       breakdown,
     });
@@ -2854,12 +2945,26 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    // Cache policy, kept in step with public/_headers (the Netlify deployment).
+    // Express used to serve index.html as `public, max-age=0` while Netlify sent
+    // `no-store`, so a self-hosted deployment and a Netlify one disagreed about
+    // the shell — and a cached shell references chunk filenames that a deploy
+    // has already replaced (audit P3-4). Content-hashed assets are immutable on
+    // both platforms.
+    app.use(express.static(distPath, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      },
+    }));
     // Middleware does not decode wildcard params, so malformed percent-encoded
     // URLs can reach the frontend's safe not-found page rather than Express's error page.
     app.use((req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

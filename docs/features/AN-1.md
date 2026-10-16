@@ -87,6 +87,7 @@ None added. The event names are not routes and get no URL.
 | `pages/SchoolDetailsPage.tsx` | `school_view` when a school resolves |
 | `pages/ExamSetupPage.tsx` | `cbt_setup_view` when a setup wizard opens |
 | `pages/StudentDashboardV2.tsx` | `notification_open` when a notification is opened |
+| `src/lib/errorTelemetry.ts` (**P2-2**) | `client_error` from the route ErrorBoundary and the global `error` / `unhandledrejection` listeners — constructor name and source only, never the message |
 | `supabase/migrations/20261001120000_analytics_retention.sql` (**new**) | `created_at` index, `prune_site_analytics_events(p_days)`, and the replacement `admin_activity_breakdown` that no longer returns query text |
 | `scripts/analytics-retention.ts` (**new**) | `npm run analytics:retention` — prints what would be pruned; `--apply` deletes. Refuses to run without service-role credentials |
 | `scripts/analytics-audit.ts` (**new**) | The static gate: taxonomy ↔ emit sites ↔ server ↔ this document |
@@ -113,7 +114,7 @@ panel is read-only in both shapes.
 **Storage:** `site_analytics_events` (unchanged shape). No column is added or
 dropped; what changes is which rows may reach it and for how long they stay.
 
-**Taxonomy (the single source of truth).** Ten events across five funnels. Every
+**Taxonomy (the single source of truth).** Eleven events across five funnels. Every
 `metadata` key is declared with a type and a cap; anything else is dropped before
 the insert.
 
@@ -129,6 +130,7 @@ the insert.
 | `cbt_start` | cbt | Which banks are actually attempted | `examId` (string, 64), `examTitle` (string, 120) |
 | `cbt_submit` | cbt | Attempt completion — the denominator for `cbt_start` | `examId` (string, 64) |
 | `notification_open` | notification | Whether NTF-1's notifications are read, not just delivered | `status` (string, 30) |
+| `client_error` | reliability | That a page failed in the browser (P2-2) — an alert, not a trace | `source` (string, 24, required), `kind` (string, 64) |
 
 `search` deliberately does **not** carry the query. The two numbers answer the
 product question ("are people searching, and is the catalogue answering?") and
@@ -265,7 +267,7 @@ kind; the data-model row said so in its own words ("no retention policy yet").
 were two ingest paths to keep in agreement.
 
 **What changed.** `src/lib/analyticsTaxonomy.ts` is now the single source of
-truth: ten events across four funnels, each with its purpose and its declared
+truth: eleven events across five funnels, each with its purpose and its declared
 metadata keys (type, cap, reason). Both the client and `server.ts` validate
 through it; the inline regex is gone, and `tests/ci.test.ts` fails the gate if
 `npm run analytics:audit` is ever removed from `npm run ci`. `search` sends
@@ -277,6 +279,17 @@ now goes through `trackEvent` with the rest. Four events close real gaps:
 `news_view`, `school_view`, `cbt_setup_view` and `notification_open` (the last
 closes the loop NTF-1 opened — whether a notification was read, not just
 delivered).
+
+**Client error telemetry (P2-2).** `client_error` is the one event whose user
+action is not a page view: `src/app/ErrorBoundary.tsx` reports when a route
+throws, and `installGlobalErrorReporting()` (called from `src/main.tsx` in
+production builds only) captures `error` and `unhandledrejection` outside React.
+The payload is a source enum and the error constructor name — deliberately not
+the message and not the component stack, both of which can contain whatever the
+page was holding. Reports are deduplicated per session and capped, so one broken
+render loop cannot become a flood. The admin console reads the same
+`site_analytics_events` rows as every other event; nothing new is redacted
+because nothing sensitive is sent.
 
 **Retention.** `supabase/migrations/20261001120000_analytics_retention.sql` adds
 the `created_at` index, `prune_site_analytics_events(p_retention_days int default

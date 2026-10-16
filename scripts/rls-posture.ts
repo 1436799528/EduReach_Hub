@@ -152,6 +152,26 @@ export const RLS_POSTURE: TablePosture[] = [
     table: 'exam_questions', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
     why: 'Answer key. exam_questions_deny_client is a belt-and-braces policy behind the missing grant.',
   },
+  {
+    table: 'ccmas_disciplines', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
+    why: 'NUC/CCMAS discipline reference data (audit P0-1). Written by the backfill migration as service_role; no UI reads it, so a deny-client policy backs the missing grant.',
+  },
+  {
+    table: 'ccmas_programmes', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
+    why: 'CCMAS programme rows referenced by the catalogue backfill; server-side only until an academic-catalogue UI exists.',
+  },
+  {
+    table: 'national_programme_catalogue', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
+    why: 'National programme catalogue built from CCMAS rows; no browser module reads it, so the deny-client policy is the whole posture.',
+  },
+  {
+    table: 'daily_quizzes', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
+    why: 'Daily quiz header seeded from the governed CBT bank. Serving it to students must be a reviewed change that grants select together with a published-status policy.',
+  },
+  {
+    table: 'daily_quiz_questions', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
+    why: 'Daily quiz questions, copied from answer-key-bearing exam_questions, so it inherits the same closed posture as the answer key itself.',
+  },
 
   // --- dormant / legacy: kept, closed, no application code path ------------
   {

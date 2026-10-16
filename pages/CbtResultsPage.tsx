@@ -184,16 +184,22 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                     {(result.questions || []).map((question: any) => {
                       const answer = (result.answers || []).find((item: any) => item.question_id === question.id);
                       const selectedIndex = answer?.selected_option ? String(answer.selected_option).charCodeAt(0) - 65 : null;
-                      const correctIndex = String(question.correct_option || 'A').charCodeAt(0) - 65;
+                      // The key is released only for questions the student attempted
+                      // (audit P0-3), so `correct_option` can legitimately be null. A
+                      // null must render as "not attempted" — falling back to 'A'
+                      // would point at the wrong option.
+                      const keyReleased = Boolean(question.correct_option);
+                      const correctIndex = keyReleased ? String(question.correct_option).charCodeAt(0) - 65 : -1;
                       const options = [question.option_a, question.option_b, question.option_c, question.option_d];
                       return (
-                        <article className={`er-result-review-card ${answer?.is_correct ? 'is-correct' : 'is-wrong'}`} key={question.id}>
-                          <div className="er-result-review-head"><strong>Question {question.position}{question.subject ? ` · ${question.subject}` : ''}</strong><span>{answer?.is_correct ? 'Correct' : 'Review this answer'}</span></div>
+                        <article className={`er-result-review-card ${keyReleased ? (answer?.is_correct ? 'is-correct' : 'is-wrong') : ''}`} key={question.id}>
+                          <div className="er-result-review-head"><strong>Question {question.position}{question.subject ? ` · ${question.subject}` : ''}</strong><span>{keyReleased ? (answer?.is_correct ? 'Correct' : 'Review this answer') : 'Not attempted'}</span></div>
                           <h3>{question.question_text}</h3>
                           <div className="er-result-review-options">
                             {options.map((option: string, index: number) => <div className={`${index === correctIndex ? 'is-answer' : ''} ${index === selectedIndex && index !== correctIndex ? 'is-selected-wrong' : ''}`} key={index}><b>{String.fromCharCode(65 + index)}.</b> {option}</div>)}
                           </div>
                           {question.explanation && <p><strong>Explanation:</strong> {question.explanation}</p>}
+                          {!keyReleased && <p>You did not attempt this question, so its answer is not shown.</p>}
                         </article>
                       );
                     })}

@@ -41,6 +41,12 @@ export type RehearsalReport = {
   passed: boolean;
   backupBytes: number;
   migrations: number;
+  /**
+   * The source schema's fingerprint. Exposed so the numbers quoted in
+   * docs/operations/BACKUP_AND_RESTORE.md can be asserted against a real run
+   * rather than against constants that drift as migrations land.
+   */
+  fingerprint: Awaited<ReturnType<typeof schemaFingerprint>>;
 };
 
 /** Tables seeded before the backup, and what each row proves survived. */
@@ -210,6 +216,10 @@ export async function runBackupRehearsal(): Promise<RehearsalReport> {
     passed: steps.every((step) => step.state === 'pass'),
     backupBytes: bytes.byteLength,
     migrations: migrations.length,
+    // Exposed so the documented fingerprint in BACKUP_AND_RESTORE.md is checked
+    // against the run instead of against a hardcoded number that drifts the
+    // moment a migration adds a table, column or policy.
+    fingerprint: sourceFingerprint,
   };
 }
 

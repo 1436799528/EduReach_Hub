@@ -8,7 +8,7 @@ import ConnectionBanner from '../src/components/ConnectionBanner';
 import { ErrorState } from '../src/components/AsyncState';
 import { useAuth } from '../src/lib/auth';
 import {
-  abandonConfiguredCbt, fetchCbtAttemptPaper, saveConfiguredCbtDraft, submitConfiguredCbt,
+  abandonConfiguredCbt, fetchCbtAttemptPaper, saveConfiguredCbtDraft, submitConfiguredCbt, trackEvent,
   type CbtAttemptPayload, type CbtQuestionPayload,
 } from '../src/lib/api';
 import { userFacingError } from '../lib/errors';
@@ -133,6 +133,23 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const remainingSeconds = expiresAt === null ? 0 : Math.max(0, Math.floor((expiresAt - (now + clockOffsetMs)) / 1000));
   const totalSeconds = (attempt?.durationMinutes || 0) * 60;
 
+  // The clock is heard, not just seen. The ticking timer stays silent
+  // (`aria-live="off"` below); a candidate who cannot see it is told once at
+  // five minutes and once at one minute through the live region in the bar.
+  // This is the affordance the retired pages/CbtPracticePage.tsx had and the
+  // live session page had lost (audit P2-4).
+  const [clockNotice, setClockNotice] = useState('');
+  useEffect(() => {
+    const next = expiresAt === null || remainingSeconds <= 0
+      ? ''
+      : remainingSeconds <= 60
+        ? 'One minute remaining.'
+        : remainingSeconds <= 300
+          ? 'Five minutes remaining.'
+          : '';
+    setClockNotice((current) => (current === next ? current : next));
+  }, [remainingSeconds, expiresAt]);
+
   /** Save the current answers, retrying once the connection returns. */
   const flush = useCallback(async (nextAnswers: Record<number, number>, nextIndex: number) => {
     pendingAnswers.current = nextAnswers;
@@ -187,6 +204,10 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     setActionError('');
     try {
       await submitConfiguredCbt(attempt.id, answers);
+      // AN-1: attempt completion is the denominator for cbt_start. Only a
+      // submission the server accepted is counted, so a failed or expired
+      // attempt never inflates the funnel.
+      trackEvent('cbt_submit', { metadata: { examId: attempt.examId } });
       setClosed('submitted');
       navigateInApp(`/cbt/results/${encodeURIComponent(attempt.id)}`, true);
     } catch (error) {
@@ -407,6 +428,9 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <span>remaining</span>
             <i className="er-exam-timer-track" aria-hidden="true"><span style={{ width: `${progressPercent}%` }} /></i>
           </div>
+
+          {/* Threshold announcements only; the ticking clock itself stays silent. */}
+          <span className="er-visually-hidden" role="status">{clockNotice}</span>
 
           <button type="button" className="er-exam-tool" onClick={() => setCalcOpen(true)} aria-label="Open calculator">
             <Calculator size={15} /> <span className="er-exam-tool-label">Calculator</span>

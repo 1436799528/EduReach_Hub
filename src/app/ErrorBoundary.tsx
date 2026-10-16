@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { userFacingError } from '../lib/api';
+import { reportClientError } from '../lib/errorTelemetry';
 
 type Props = {
   children: ReactNode;
@@ -22,6 +23,10 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('EduReach route error:', error, info.componentStack);
+    // P2-2: the console line above is for the developer; this is the signal the
+    // team can actually see. It sends the constructor name only — never the
+    // message and never the component stack.
+    reportClientError('boundary', error);
   }
 
   render() {
