@@ -355,6 +355,9 @@ for select to authenticated using (user_id = (select auth.uid()));
 create policy student_security_events_owner_insert on public.student_security_events
 for insert to authenticated with check (user_id = (select auth.uid()));
 
+revoke all on table public.student_saved_items, public.student_notifications,
+  public.student_cgpa_terms, public.student_cgpa_courses, public.student_security_events
+  from public, anon, authenticated;
 grant select, insert, update, delete on table public.student_saved_items to authenticated;
 grant select, insert, update, delete on table public.student_notifications to authenticated;
 grant select, insert, update, delete on table public.student_cgpa_terms to authenticated;
