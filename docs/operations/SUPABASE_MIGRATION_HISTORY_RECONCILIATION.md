@@ -7,7 +7,8 @@
 - Live project: `gjdfatwcoosyuhakrrhh`.
 - Remote migration ledger: **173 entries**.
 - Repository migration directory on `arena/01a10833-edureach-hub`, after the new reconciliation migration: **56 files**.
-- **28** local migration versions are not present verbatim in the remote ledger.
+- **19 filenames use legacy 8-digit prefixes**, not the 14-digit version format used by the live ledger. These also need explicit mapping before any production push.
+- Among the 37 files with 14-digit prefixes, **28 local versions are not present verbatim** in the remote ledger.
 - Of those 28, **23** have a clear same-name remote ledger entry under a different version timestamp. Examples:
   - local `20260916000000_application_integration_seed.sql` ↔ remote `20260915200936 / application_integration_seed`
   - local `20260916010000_cbt_news_rls.sql` ↔ remote `20260915185555 / 20260915_cbt_news_rls`
