@@ -210,7 +210,7 @@ that do not exist yet.
 6. proves database functions survive (the restored copy still canonicalises
    `'Scholarships & Funding'` to `scholarships`).
 
-Last local run: **55 migrations, 5,105 KB archive, 42 tables, 454 columns, 52
+Last local run: **56 migrations, 5,105 KB archive, 42 tables, 454 columns, 52
 policies, 42 tables with RLS — all identical after restore.**
 
 Step 5 is the part that matters most and that a naive rehearsal skips: a backup that
