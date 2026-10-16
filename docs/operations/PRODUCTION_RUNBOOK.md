@@ -40,7 +40,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-55 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
+56 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
 CLI against a **scratch project first**:
 
 ```bash
@@ -81,7 +81,7 @@ apply 20261002150000_opportunity_eligibility.sql
 ```
 
 **Pass:** check 9 prints `pass` and confirms all release migrations are recorded;
-check 8 reports at least 55 recorded migrations.
+check 8 reports at least 56 recorded migrations.
 
 ### 3b. What “not applied” looked like from outside, on 2026-10-03
 
