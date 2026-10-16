@@ -2,8 +2,6 @@
 -- Safe to apply to populated projects: this migration never deletes or rewrites table rows.
 -- It intentionally fails before tightening a constraint if existing data violates the target contract.
 
-begin;
-
 -- ccmas_programmes: align columns, required fields, status and uniqueness with the live contract.
 alter table public.ccmas_programmes
   add column if not exists degree_title text,
@@ -21,6 +19,7 @@ begin
 
   if exists (
     select 1 from public.ccmas_programmes
+    where version is not null
     group by programme_code, version, programme_name
     having count(*) > 1
   ) then
@@ -179,4 +178,3 @@ create policy service_requests_insert_own
     )
   );
 
-commit;
