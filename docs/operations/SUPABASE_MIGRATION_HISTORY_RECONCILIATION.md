@@ -6,8 +6,8 @@
 
 - Live project: `gjdfatwcoosyuhakrrhh`.
 - Remote migration ledger: **173 entries**.
-- Repository migration directory on `arena/01a10833-edureach-hub`, before the new reconciliation migration: **55 files**.
-- **27** local migration versions were not present verbatim in the remote ledger.
+- Repository migration directory on `arena/01a10833-edureach-hub`, after the new reconciliation migration: **56 files**.
+- **28** local migration versions are not present verbatim in the remote ledger.
 - Of those 28, **23** have a clear same-name remote ledger entry under a different version timestamp. Examples:
   - local `20260916000000_application_integration_seed.sql` ↔ remote `20260915200936 / application_integration_seed`
   - local `20260916010000_cbt_news_rls.sql` ↔ remote `20260915185555 / 20260915_cbt_news_rls`
