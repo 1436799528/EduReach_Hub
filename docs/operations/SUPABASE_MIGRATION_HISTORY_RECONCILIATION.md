@@ -15,7 +15,8 @@
   - local `20261003170000_create_academic_catalogue_and_daily_quiz.sql` ↔ remote `20261004202655 / 20261003170000_create_academic_catalogue_and_daily_quiz`
   - local `20261003190000_opportunity_discovery_engine.sql` ↔ remote `20261004202656 / 20261003190000_opportunity_discovery_engine`
 - **4** local versions had no exact version match or clear name match in the remote ledger, plus the baseline migration whose purpose is to replace older history. These need file-by-file source and behavior review.
-- The remote ledger also contains many historical entries not represented as individual local files. The repository's `20260830000000_baseline_core_schema.sql` appears to be an intentional schema baseline, but it has not been proven to be a valid replacement for every absent historical migration.
+- The full 186-row inventory is in [`MIGRATION_HISTORY_MAP_2026-10-16.csv`](./MIGRATION_HISTORY_MAP_2026-10-16.csv): it maps all 56 local files against the 173 live ledger entries, including 13 local/unmapped or baseline/new cases and 130 remote-only ledger entries. Remote-only entries may be historical or covered by the baseline; that has not been proven.
+- The repository's `20260830000000_baseline_core_schema.sql` appears to be an intentional schema baseline, but it has not been proven to be a valid replacement for every absent historical migration.
 
 The remote ledger records the creation migration and the opportunity migration under later version numbers than the timestamps in their local filenames. It also records `remove_legacy_client_policies_from_academic_catalogue` at `20261004202746`, but no file with that exact version exists in the repository snapshot inspected.
 
