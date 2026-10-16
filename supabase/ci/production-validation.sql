@@ -228,6 +228,77 @@ with expected(version, migration) as (
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'daily_quiz_questions')
   union all
+  select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'ccmas_programmes' and column_name = 'degree_title')
+  union all
+  select 'public.ccmas_programmes.version', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'ccmas_programmes' and column_name = 'version')
+  union all
+  select 'ccmas_programmes required fields/status/unique constraint', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_constraint
+                    where conrelid = 'public.ccmas_programmes'::regclass
+                      and conname = 'ccmas_programmes_programme_code_version_name_key')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.ccmas_programmes'::regclass
+                      and conname = 'ccmas_programmes_status_check')
+     or exists (select 1 from information_schema.columns
+                where table_schema = 'public' and table_name = 'ccmas_programmes'
+                  and column_name in ('discipline','programme_code','programme_name') and is_nullable <> 'NO')
+  union all
+  select 'national_programme_catalogue source/uniqueness constraints', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where exists (select 1 from information_schema.columns
+                where table_schema = 'public' and table_name = 'national_programme_catalogue'
+                  and column_name = 'source_url' and is_nullable <> 'NO')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.national_programme_catalogue'::regclass
+                      and conname = 'national_programme_catalogue_programme_name_key')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.national_programme_catalogue'::regclass
+                      and conname = 'national_programme_catalogue_source_type_check')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.national_programme_catalogue'::regclass
+                      and conname = 'national_programme_catalogue_status_check')
+  union all
+  select 'daily_quizzes.updated_at and nullable discipline', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quizzes' and column_name = 'updated_at')
+     or not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quizzes'
+                      and column_name = 'discipline' and is_nullable = 'YES')
+  union all
+  select 'daily_quiz_questions course/bounds contract', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quiz_questions' and column_name = 'course_id')
+     or not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'daily_quiz_questions'
+                      and column_name = 'points' and data_type = 'smallint')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.daily_quiz_questions'::regclass
+                      and conname = 'daily_quiz_questions_course_id_fkey')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.daily_quiz_questions'::regclass
+                      and conname = 'daily_quiz_questions_points_check'
+                      and pg_get_constraintdef(oid) like '%100%')
+     or not exists (select 1 from pg_constraint
+                    where conrelid = 'public.daily_quiz_questions'::regclass
+                      and conname = 'daily_quiz_questions_position_check'
+                      and pg_get_constraintdef(oid) like '%20%')
+  union all
+  select 'service_requests active-service insert policy', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_policies
+                    where schemaname = 'public' and tablename = 'service_requests'
+                      and policyname = 'service_requests_insert_own'
+                      and with_check like '%service_catalog%'
+                      and with_check like '%active%')
+  union all
+  select 'ccmas_programmes discipline_id index', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_indexes
+                    where schemaname = 'public' and tablename = 'ccmas_programmes'
+                      and indexname = 'ccmas_programmes_discipline_idx'
+                      and indexdef like '%(discipline_id)%')
+  union all
   select 'public.opportunities.subcategory', '20261003190000_opportunity_discovery_engine.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'opportunities' and column_name = 'subcategory')
