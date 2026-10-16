@@ -8,12 +8,12 @@
 - Remote migration ledger: **173 entries**.
 - Repository migration directory on `arena/01a10833-edureach-hub`, before the new reconciliation migration: **55 files**.
 - **27** local migration versions were not present verbatim in the remote ledger.
-- Of those 27, **20** have a clear same-name remote ledger entry under a different version timestamp. Examples:
+- Of those 28, **23** have a clear same-name remote ledger entry under a different version timestamp. Examples:
   - local `20260916000000_application_integration_seed.sql` ↔ remote `20260915200936 / application_integration_seed`
   - local `20260916010000_cbt_news_rls.sql` ↔ remote `20260915185555 / 20260915_cbt_news_rls`
   - local `20261003170000_create_academic_catalogue_and_daily_quiz.sql` ↔ remote `20261004202655 / 20261003170000_create_academic_catalogue_and_daily_quiz`
   - local `20261003190000_opportunity_discovery_engine.sql` ↔ remote `20261004202656 / 20261003190000_opportunity_discovery_engine`
-- **7** local versions had no exact version match or clear name match in the remote ledger. These need file-by-file source and behavior review.
+- **4** local versions had no exact version match or clear name match in the remote ledger, plus the baseline migration whose purpose is to replace older history. These need file-by-file source and behavior review.
 - The remote ledger also contains many historical entries not represented as individual local files. The repository's `20260830000000_baseline_core_schema.sql` appears to be an intentional schema baseline, but it has not been proven to be a valid replacement for every absent historical migration.
 
 The remote ledger records the creation migration and the opportunity migration under later version numbers than the timestamps in their local filenames. It also records `remove_legacy_client_policies_from_academic_catalogue` at `20261004202746`, but no file with that exact version exists in the repository snapshot inspected.
