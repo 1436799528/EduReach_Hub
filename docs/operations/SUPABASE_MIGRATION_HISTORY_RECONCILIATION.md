@@ -36,7 +36,7 @@ The remote ledger records the creation migration and the opportunity migration u
 
 ## New forward-only schema correction
 
-`20261016160000_reconcile_live_catalogue_and_service_request_contract.sql` aligns the CCMAS programme/catalogue constraints, daily quiz columns and bounds, course reference, discipline index, and service-request insert policy. A live-data preflight on 2026-10-16 returned zero rows violating its required-field, uniqueness, provenance, vocabulary, quiz-bound, or service-reference checks. This is **preflight evidence, not proof the migration has been applied**.
+`20261016160000_reconcile_live_catalogue_and_service_request_contract.sql` aligns the CCMAS programme/catalogue constraints, daily quiz columns and bounds, course reference, discipline index, and service-request active-service policy. It also restores the missing student portal tables used by `src/lib/studentDashboard.ts`, adds the canonical admin audit table/RPC used by `server.ts`, and keeps CBT answer-key/attempt writes behind server-authoritative RPCs. It intentionally does not recreate retired payment tables/functions. A live-data preflight on 2026-10-16 returned zero rows violating its required-field, uniqueness, provenance, vocabulary, quiz-bound, or service-reference checks. This is **preflight evidence, not proof the migration has been applied**.
 
 ## Acceptance criteria
 
