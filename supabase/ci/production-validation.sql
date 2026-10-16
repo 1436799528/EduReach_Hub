@@ -334,7 +334,7 @@ with expected(version, migration) as (
      or has_table_privilege('anon',to_regclass('public.admin_audit_logs'),'SELECT')
      or has_table_privilege('authenticated',to_regclass('public.admin_audit_logs'),'SELECT')
      or not has_table_privilege('service_role',to_regclass('public.admin_audit_logs'),'SELECT')
-     or not has_table_privilege('service_role',to_regclass('public.admin_audit_logs'),'IN' || 'SERT')
+     or has_table_privilege('service_role',to_regclass('public.admin_audit_logs'),'IN' || 'SERT')
      or not has_function_privilege('service_role',to_regprocedure('public.admin_audit_log(uuid,text,text,uuid,jsonb)'),'EXECUTE')
   union all
   select 'CBT answer-key table permissions', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
