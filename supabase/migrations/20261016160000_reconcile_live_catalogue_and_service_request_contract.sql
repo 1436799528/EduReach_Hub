@@ -411,7 +411,7 @@ grant execute on function public.admin_audit_log(uuid,text,text,uuid,jsonb) to s
 -- Keep answer-key and attempt mutations behind the server-authoritative RPCs.
 revoke all on table public.exam_questions from public, anon, authenticated;
 revoke insert, update, delete on table public.cbt_attempts from public, authenticated;
-revoke insert, update, delete on table public.cbt_answers from public, authenticated;
+revoke all on table public.cbt_answers from public, anon, authenticated;
 
 -- Service requests may be created only for an active catalogue item.
 -- This uses the existing active-only SELECT policy on service_catalog; no SECURITY DEFINER
