@@ -299,6 +299,44 @@ with expected(version, migration) as (
                       and indexname = 'ccmas_programmes_discipline_idx'
                       and indexdef like '%(discipline_id)%')
   union all
+  select 'public.student_saved_items', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where to_regclass('public.student_saved_items') is null
+  union all
+  select 'public.student_notifications', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where to_regclass('public.student_notifications') is null
+  union all
+  select 'public.student_cgpa_terms', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where to_regclass('public.student_cgpa_terms') is null
+  union all
+  select 'public.student_cgpa_courses', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where to_regclass('public.student_cgpa_courses') is null
+  union all
+  select 'public.student_security_events', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where to_regclass('public.student_security_events') is null
+  union all
+  select 'public.admin_audit_logs', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where to_regclass('public.admin_audit_logs') is null
+  union all
+  select 'public.admin_audit_log(uuid,text,text,uuid,jsonb)', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                    where n.nspname='public' and p.proname='admin_audit_log'
+                      and pg_get_function_identity_arguments(p.oid)='p_admin_user_id uuid, p_action text, p_entity_type text, p_entity_id uuid, p_metadata jsonb')
+  union all
+  select 'student_saved_items owner access policy', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_policies
+                    where schemaname='public' and tablename='student_saved_items'
+                      and policyname='student_saved_items_owner_select'
+                      and qual like '%auth.uid%')
+  union all
+  select 'admin audit permissions', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='admin_audit_logs' and c.relrowsecurity)
+     or has_table_privilege('anon','public.admin_audit_logs','SELECT')
+     or has_table_privilege('authenticated','public.admin_audit_logs','SELECT')
+     or not has_table_privilege('service_role','public.admin_audit_logs','SELECT')
+     or not has_table_privilege('service_role','public.admin_audit_logs','INSERT')
+     or not has_function_privilege('service_role','public.admin_audit_log(uuid,text,text,uuid,jsonb)','EXECUTE')
+  union all
   select 'public.opportunities.subcategory', '20261003190000_opportunity_discovery_engine.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'opportunities' and column_name = 'subcategory')
