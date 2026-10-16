@@ -296,13 +296,27 @@ test('the release-sync query names the migrations production is missing, and pas
     create schema if not exists supabase_migrations;
     create table supabase_migrations.schema_migrations (version text primary key, name text);
   `;
+  const REMOTE_VERSION_BY_FILE: Record<string, string> = {
+    '20261002120000_cbt_practice_and_mock_modes.sql': '20261003070830',
+    '20261002130000_news_category_contract.sql': '20261003070835',
+    '20261002140000_past_question_resources.sql': '20261003070841',
+    '20261002150000_opportunity_eligibility.sql': '20261003070845',
+    '20261003080000_backend_security_hardening.sql': '20261003071718',
+    '20261003090000_verify_opportunity_data.sql': '20261003071918',
+    '20261003100000_cbt_server_authority_alignment.sql': '20261003090713',
+    '20261003101000_expire_stale_cbt_attempts.sql': '20261003090824',
+    '20261003102000_normalize_published_news_category_labels.sql': '20261003090810',
+    '20261003103000_cbt_paper_expiry_volatility.sql': '20261003130327',
+    '20261003170000_create_academic_catalogue_and_daily_quiz.sql': '20261004202655',
+    '20261003190000_opportunity_discovery_engine.sql': '20261004202656',
+  };
   const recordHistory = async (db: InstanceType<typeof PGlite>, applied: string[]) => {
     await db.exec(createHistory);
     for (const file of applied) {
       const separator = file.indexOf('_');
       await db.query(
         'insert into supabase_migrations.schema_migrations (version, name) values ($1, $2) on conflict (version) do nothing',
-        [file.slice(0, separator), file.slice(separator + 1, -4)],
+        [REMOTE_VERSION_BY_FILE[file] ?? file.slice(0, separator), file.slice(separator + 1, -4)],
       );
     }
   };
