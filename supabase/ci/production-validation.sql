@@ -238,10 +238,10 @@ with expected(version, migration) as (
   union all
   select 'ccmas_programmes required fields/status/unique constraint', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from pg_constraint
-                    where conrelid = 'public.ccmas_programmes'::regclass
+                    where conrelid = to_regclass('public.ccmas_programmes')
                       and conname = 'ccmas_programmes_programme_code_version_name_key')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.ccmas_programmes'::regclass
+                    where conrelid = to_regclass('public.ccmas_programmes')
                       and conname = 'ccmas_programmes_status_check')
      or exists (select 1 from information_schema.columns
                 where table_schema = 'public' and table_name = 'ccmas_programmes'
@@ -252,13 +252,13 @@ with expected(version, migration) as (
                 where table_schema = 'public' and table_name = 'national_programme_catalogue'
                   and column_name = 'source_url' and is_nullable <> 'NO')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.national_programme_catalogue'::regclass
+                    where conrelid = to_regclass('public.national_programme_catalogue')
                       and conname = 'national_programme_catalogue_programme_name_key')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.national_programme_catalogue'::regclass
+                    where conrelid = to_regclass('public.national_programme_catalogue')
                       and conname = 'national_programme_catalogue_source_type_check')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.national_programme_catalogue'::regclass
+                    where conrelid = to_regclass('public.national_programme_catalogue')
                       and conname = 'national_programme_catalogue_status_check')
   union all
   select 'daily_quizzes.updated_at and nullable discipline', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
@@ -275,18 +275,18 @@ with expected(version, migration) as (
                     where table_schema = 'public' and table_name = 'daily_quiz_questions'
                       and column_name = 'points' and data_type = 'smallint')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.daily_quiz_questions'::regclass
+                    where conrelid = to_regclass('public.daily_quiz_questions')
                       and conname = 'daily_quiz_questions_course_id_fkey')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.daily_quiz_questions'::regclass
+                    where conrelid = to_regclass('public.daily_quiz_questions')
                       and conname = 'daily_quiz_questions_points_check'
                       and pg_get_constraintdef(oid) like '%100%')
      or not exists (select 1 from pg_constraint
-                    where conrelid = 'public.daily_quiz_questions'::regclass
+                    where conrelid = to_regclass('public.daily_quiz_questions')
                       and conname = 'daily_quiz_questions_position_check'
                       and pg_get_constraintdef(oid) like '%20%')
   union all
-  select 'service_requests active-service insert policy', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
+  select 'service_requests active-service submission policy', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from pg_policies
                     where schemaname = 'public' and tablename = 'service_requests'
                       and policyname = 'service_requests_insert_own'
