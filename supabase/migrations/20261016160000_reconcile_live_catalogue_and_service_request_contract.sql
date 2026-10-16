@@ -159,6 +159,252 @@ alter table public.daily_quiz_questions
   drop constraint if exists daily_quiz_questions_position_check,
   add constraint daily_quiz_questions_position_check check (position > 0 and position <= 20);
 
+-- Student portal tables used by src/lib/studentDashboard.ts were absent from the live
+-- project. Create the non-payment workflows forward-only; do not recreate wallet/payment
+-- transaction tables because payment integration is retired.
+
+create table if not exists public.student_saved_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  item_type text not null check (item_type in ('school', 'course', 'service', 'scholarship', 'custom')),
+  item_key text not null,
+  title text not null,
+  subtitle text,
+  detail text,
+  location text,
+  href text,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, item_type, item_key)
+);
+create index if not exists student_saved_items_user_created_idx
+  on public.student_saved_items (user_id, created_at desc);
+
+create table if not exists public.student_notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null,
+  body text,
+  notification_type text not null default 'system',
+  href text,
+  read_at timestamptz,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists student_notifications_user_read_created_idx
+  on public.student_notifications (user_id, read_at, created_at desc);
+
+create table if not exists public.student_cgpa_terms (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  term_label text not null default 'Current Semester',
+  gpa numeric(4,2) not null default 0 check (gpa >= 0 and gpa <= 5),
+  total_units integer not null default 0 check (total_units >= 0),
+  classification text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists student_cgpa_terms_user_created_idx
+  on public.student_cgpa_terms (user_id, created_at desc);
+
+create table if not exists public.student_cgpa_courses (
+  id uuid primary key default gen_random_uuid(),
+  term_id uuid not null references public.student_cgpa_terms(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  course_code text not null,
+  units integer not null check (units > 0 and units <= 10),
+  grade text not null check (grade in ('A', 'B', 'C', 'D', 'E', 'F')),
+  grade_points integer not null check (grade_points >= 0 and grade_points <= 5),
+  created_at timestamptz not null default now()
+);
+create index if not exists student_cgpa_courses_term_idx
+  on public.student_cgpa_courses (term_id, created_at asc);
+
+create table if not exists public.student_security_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  event_type text not null,
+  event_label text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists student_security_events_user_created_idx
+  on public.student_security_events (user_id, created_at desc);
+
+create or replace function public.set_student_portal_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$;
+
+drop trigger if exists student_saved_items_set_updated_at on public.student_saved_items;
+create trigger student_saved_items_set_updated_at
+before update on public.student_saved_items
+for each row execute function public.set_student_portal_updated_at();
+
+drop trigger if exists student_cgpa_terms_set_updated_at on public.student_cgpa_terms;
+create trigger student_cgpa_terms_set_updated_at
+before update on public.student_cgpa_terms
+for each row execute function public.set_student_portal_updated_at();
+
+alter table public.student_saved_items enable row level security;
+alter table public.student_notifications enable row level security;
+alter table public.student_cgpa_terms enable row level security;
+alter table public.student_cgpa_courses enable row level security;
+alter table public.student_security_events enable row level security;
+
+drop policy if exists student_saved_items_owner_select on public.student_saved_items;
+drop policy if exists student_saved_items_owner_insert on public.student_saved_items;
+drop policy if exists student_saved_items_owner_update on public.student_saved_items;
+drop policy if exists student_saved_items_owner_delete on public.student_saved_items;
+create policy student_saved_items_owner_select on public.student_saved_items
+for select to authenticated using (user_id = (select auth.uid()));
+create policy student_saved_items_owner_insert on public.student_saved_items
+for insert to authenticated with check (user_id = (select auth.uid()));
+create policy student_saved_items_owner_update on public.student_saved_items
+for update to authenticated using (user_id = (select auth.uid()))
+with check (user_id = (select auth.uid()));
+create policy student_saved_items_owner_delete on public.student_saved_items
+for delete to authenticated using (user_id = (select auth.uid()));
+
+drop policy if exists student_notifications_owner_select on public.student_notifications;
+drop policy if exists student_notifications_owner_insert on public.student_notifications;
+drop policy if exists student_notifications_owner_update on public.student_notifications;
+drop policy if exists student_notifications_owner_delete on public.student_notifications;
+drop policy if exists student_notifications_staff_insert on public.student_notifications;
+create policy student_notifications_owner_select on public.student_notifications
+for select to authenticated using (user_id = (select auth.uid()));
+create policy student_notifications_owner_insert on public.student_notifications
+for insert to authenticated with check (user_id = (select auth.uid()));
+create policy student_notifications_owner_update on public.student_notifications
+for update to authenticated using (user_id = (select auth.uid()))
+with check (user_id = (select auth.uid()));
+create policy student_notifications_owner_delete on public.student_notifications
+for delete to authenticated using (user_id = (select auth.uid()));
+create policy student_notifications_staff_insert on public.student_notifications
+for insert to authenticated
+with check (
+  exists (
+    select 1 from public.profiles p
+    where p.id = (select auth.uid())
+      and p.role in ('admin','super_admin','moderator','senate_admin','campus_agent')
+  )
+);
+
+drop policy if exists student_cgpa_terms_owner_select on public.student_cgpa_terms;
+drop policy if exists student_cgpa_terms_owner_insert on public.student_cgpa_terms;
+drop policy if exists student_cgpa_terms_owner_update on public.student_cgpa_terms;
+drop policy if exists student_cgpa_terms_owner_delete on public.student_cgpa_terms;
+create policy student_cgpa_terms_owner_select on public.student_cgpa_terms
+for select to authenticated using (user_id = (select auth.uid()));
+create policy student_cgpa_terms_owner_insert on public.student_cgpa_terms
+for insert to authenticated with check (user_id = (select auth.uid()));
+create policy student_cgpa_terms_owner_update on public.student_cgpa_terms
+for update to authenticated using (user_id = (select auth.uid()))
+with check (user_id = (select auth.uid()));
+create policy student_cgpa_terms_owner_delete on public.student_cgpa_terms
+for delete to authenticated using (user_id = (select auth.uid()));
+
+drop policy if exists student_cgpa_courses_owner_select on public.student_cgpa_courses;
+drop policy if exists student_cgpa_courses_owner_insert on public.student_cgpa_courses;
+drop policy if exists student_cgpa_courses_owner_update on public.student_cgpa_courses;
+drop policy if exists student_cgpa_courses_owner_delete on public.student_cgpa_courses;
+create policy student_cgpa_courses_owner_select on public.student_cgpa_courses
+for select to authenticated using (
+  user_id = (select auth.uid())
+  and exists (
+    select 1 from public.student_cgpa_terms t
+    where t.id = term_id and t.user_id = (select auth.uid())
+  )
+);
+create policy student_cgpa_courses_owner_insert on public.student_cgpa_courses
+for insert to authenticated with check (
+  user_id = (select auth.uid())
+  and exists (
+    select 1 from public.student_cgpa_terms t
+    where t.id = term_id and t.user_id = (select auth.uid())
+  )
+);
+create policy student_cgpa_courses_owner_update on public.student_cgpa_courses
+for update to authenticated using (
+  user_id = (select auth.uid())
+  and exists (
+    select 1 from public.student_cgpa_terms t
+    where t.id = term_id and t.user_id = (select auth.uid())
+  )
+) with check (
+  user_id = (select auth.uid())
+  and exists (
+    select 1 from public.student_cgpa_terms t
+    where t.id = term_id and t.user_id = (select auth.uid())
+  )
+);
+create policy student_cgpa_courses_owner_delete on public.student_cgpa_courses
+for delete to authenticated using (user_id = (select auth.uid()));
+
+drop policy if exists student_security_events_owner_select on public.student_security_events;
+drop policy if exists student_security_events_owner_insert on public.student_security_events;
+create policy student_security_events_owner_select on public.student_security_events
+for select to authenticated using (user_id = (select auth.uid()));
+create policy student_security_events_owner_insert on public.student_security_events
+for insert to authenticated with check (user_id = (select auth.uid()));
+
+grant select, insert, update, delete on table public.student_saved_items to authenticated;
+grant select, insert, update, delete on table public.student_notifications to authenticated;
+grant select, insert, update, delete on table public.student_cgpa_terms to authenticated;
+grant select, insert, update, delete on table public.student_cgpa_courses to authenticated;
+grant select, insert on table public.student_security_events to authenticated;
+
+-- Canonical admin audit log used by server.ts. Client roles have no table access.
+create table if not exists public.admin_audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  admin_user_id uuid not null references auth.users(id) on delete restrict,
+  action text not null,
+  entity_type text not null,
+  entity_id uuid,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists admin_audit_logs_created_idx
+  on public.admin_audit_logs (created_at desc);
+create index if not exists admin_audit_logs_entity_idx
+  on public.admin_audit_logs (entity_type, entity_id);
+alter table public.admin_audit_logs enable row level security;
+revoke all on table public.admin_audit_logs from public, anon, authenticated;
+grant select, insert on table public.admin_audit_logs to service_role;
+
+create or replace function public.admin_audit_log(
+  p_admin_user_id uuid,
+  p_action text,
+  p_entity_type text,
+  p_entity_id uuid default null,
+  p_metadata jsonb default '{}'::jsonb
+) returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_id uuid;
+begin
+  insert into public.admin_audit_logs(admin_user_id, action, entity_type, entity_id, metadata)
+  values (p_admin_user_id, p_action, p_entity_type, p_entity_id, coalesce(p_metadata, '{}'::jsonb))
+  returning id into v_id;
+  return v_id;
+end;
+$function$;
+revoke all on function public.admin_audit_log(uuid,text,text,uuid,jsonb) from public, anon, authenticated;
+grant execute on function public.admin_audit_log(uuid,text,text,uuid,jsonb) to service_role;
+
+-- Existing payment-related tables/functions are intentionally not recreated:
+-- payments are out of scope, and the student portal uses no wallet transaction write path.
+
 -- Service requests may be created only for an active catalogue item.
 -- This uses the existing active-only SELECT policy on service_catalog; no SECURITY DEFINER
 -- function is needed, and the caller can still submit only for their own account.
