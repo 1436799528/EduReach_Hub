@@ -376,8 +376,8 @@ create index if not exists admin_audit_logs_created_idx
 create index if not exists admin_audit_logs_entity_idx
   on public.admin_audit_logs (entity_type, entity_id);
 alter table public.admin_audit_logs enable row level security;
-revoke all on table public.admin_audit_logs from public, anon, authenticated;
-grant select, insert on table public.admin_audit_logs to service_role;
+revoke all on table public.admin_audit_logs from public, anon, authenticated, service_role;
+grant select on table public.admin_audit_logs to service_role;
 
 create or replace function public.admin_audit_log(
   p_admin_user_id uuid,
