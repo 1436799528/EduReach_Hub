@@ -45,7 +45,7 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /Subject group/, 'students can choose a subject group');
   assert.match(setup, /English compulsory/, 'English is treated as compulsory when available');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
-  assert.match(setup, /mode === 'practice' \? <>, 'question and timer controls are practice-only');
+  assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
   assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
 });
 
