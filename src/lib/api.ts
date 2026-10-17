@@ -1601,17 +1601,27 @@ export async function abandonConfiguredCbt(attemptId: string): Promise<void> {
 }
 
 export async function deleteCbtAttempt(attemptId: string): Promise<void> {
+  const removeLocalResult = () => {
+    try {
+      localStorage.removeItem(localStorageKey(`cbt-result-${attemptId}`));
+      if (localStorage.getItem(localStorageKey('last-cbt-attempt')) === attemptId) {
+        localStorage.removeItem(localStorageKey('last-cbt-attempt'));
+      }
+    } catch {
+      // localStorage may be disabled
+    }
+  };
+
+  // Guest and local-preview scorecards are browser-owned, not server attempts.
+  if (attemptId.startsWith('guest-cbt-') || attemptId.startsWith('local-cbt-') || !isSupabaseConfigured) {
+    removeLocalResult();
+    return;
+  }
+
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Please sign in to manage your CBT history.');
   await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}`, { method: 'DELETE', headers });
-  try {
-    localStorage.removeItem(localStorageKey(`cbt-result-${attemptId}`));
-    if (localStorage.getItem(localStorageKey('last-cbt-attempt')) === attemptId) {
-      localStorage.removeItem(localStorageKey('last-cbt-attempt'));
-    }
-  } catch {
-    // localStorage may be disabled
-  }
+  removeLocalResult();
 }
 
 export async function fetchCbtHistory(limit = 25): Promise<CbtHistoryItem[]> {
