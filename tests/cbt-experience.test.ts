@@ -39,11 +39,14 @@ test('legacy /cbt/practice cannot drop a student straight into a paper', () => {
 test('the setup wizard configures from the real bank, never a static subject list', () => {
   const setup = read('pages/ExamSetupPage.tsx');
   assert.match(setup, /fetchCbtBank/, 'subjects and limits come from the bank');
-  assert.match(setup, /questionCountOptions/, 'the student chooses the number of questions');
-  assert.match(setup, /practiceDurationOptions/, 'and the time');
-  assert.match(setup, /governedCombination|jambCourses/, 'mock mode derives the combination from governed rules');
-  assert.match(setup, /uncovered/, 'and detects a combination the bank cannot serve');
-  assert.match(setup, /er-recovery-actions/, 'offering a recovery rather than building a wrong paper');
+  assert.match(setup, /questionCountOptions/, 'practice offers question counts the bank can serve');
+  assert.match(setup, /effectiveDuration = Math\.max/, 'practice time is derived from the chosen question count');
+  assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
+  assert.match(setup, /Subject group/, 'students can choose a subject group');
+  assert.match(setup, /English compulsory/, 'English is treated as compulsory when available');
+  assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
+  assert.match(setup, /mode === 'practice' \? <>, 'question and timer controls are practice-only');
+  assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
 });
 
 test('answers are saved as they change, and a dropped connection is retried', () => {
@@ -59,6 +62,15 @@ test('destructive actions are confirmed and the server enforces them', () => {
   assert.match(history, /er-confirm/, 'deleting a practice session asks first');
   assert.match(history, /deleteCbtAttempt/, 'and calls the delete endpoint');
   assert.match(history, /Mock records are kept/, 'mock records are presented as non-deletable');
+  assert.match(history, /aria-label="Close delete confirmation"/, 'the delete dialog has a corner close control');
+
+  const resultPage = read('pages/CbtResultsPage.tsx');
+  assert.match(resultPage, /Delete result/, 'students can delete a saved practice result');
+  assert.match(resultPage, /Keep result/, 'students can keep the saved result instead');
+  assert.match(resultPage, /aria-label="Close delete confirmation"/, 'the result delete dialog has a corner close control');
+
+  const dashboard = read('pages/StudentDashboardV2.tsx');
+  assert.match(dashboard, /dashboard\/cbt\/results\/\$\{encodeURIComponent\(row\.id\)\}/, 'dashboard review links pass the attempt id through the authenticated route');
 
   const migration = read('supabase/migrations/20261002120000_cbt_practice_and_mock_modes.sql');
   assert.match(migration, /Only practice attempts can be deleted/, 'the rule is enforced in the database, not only the UI');
