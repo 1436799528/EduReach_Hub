@@ -44,6 +44,7 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
   assert.match(setup, /Subject group/, 'students can choose a subject group');
   assert.match(setup, /English compulsory/, 'English is treated as compulsory when available');
+  assert.match(setup, /English Language is compulsory/, 'the setup cannot start a bank without English questions');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
   assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
   assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
@@ -75,6 +76,7 @@ test('destructive actions are confirmed and the server enforces them', () => {
   const api = read('src/lib/api.ts');
   assert.match(api, /savedAttempt && savedAttempt\.status === 'submitted'/, 'result review falls back to the owner-scoped saved score');
   assert.match(api, /Number\(stored\.score\) === Number\(savedAttempt\.score\)/, 'local answer details are only used when they agree with the saved score');
+  assert.match(api, /attemptId\.startsWith\('guest-cbt-'/, 'guest scorecards can be deleted from local storage without an account');
 
   const migration = read('supabase/migrations/20261017123909_cbt_result_retention.sql');
   assert.match(migration, /where id = p_attempt_id and user_id = v_user/, 'deletion is scoped to the authenticated owner');
