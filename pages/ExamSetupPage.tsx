@@ -262,6 +262,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   async function startSession() {
     if (!targetExam) return;
     const subjects = mode === 'practice' ? practiceSubjects : governedCombination.filter(Boolean);
+    if (!compulsoryEnglish) {
+      setFormError('English Language is compulsory, but this question bank has no English questions available. Choose another bank.');
+      return;
+    }
+    if (!subjects.some((subject) => normalizeSubject(subject) === normalizeSubject(compulsoryEnglish))) {
+      setFormError('English Language is compulsory. Keep it selected before starting the test.');
+      return;
+    }
     const config = {
       mode,
       subjects,
@@ -630,6 +638,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </InlineNotice>
                 )}
 
+                {!compulsoryEnglish && <InlineNotice tone="warning" title="English Language is required">This question bank has no English questions available yet. Choose another bank to start a session.</InlineNotice>}
                 {formError && <div className="hub-form-error" role="alert">{formError}</div>}
 
                 <div className="er-setup-actions">
@@ -637,7 +646,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     type="button"
                     className="hub-primary-btn"
                     onClick={() => void startSession()}
-                    disabled={submitting || catalogLoading || (mode === 'mock' && uncovered.length > 0)}
+                    disabled={submitting || catalogLoading || !compulsoryEnglish || (mode === 'mock' && uncovered.length > 0)}
                   >
                     {submitting ? 'Starting…' : mode === 'mock' ? 'Start mock examination' : 'Start practice'} <ArrowRight size={15} />
                   </button>
