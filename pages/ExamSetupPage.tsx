@@ -21,7 +21,6 @@ import {
   DEFAULT_CBT_LIMITS,
   describeSession,
   normalizeSubject,
-  practiceDurationOptions,
   previewPlan,
   questionCountOptions,
   resolveSetupExam,
@@ -99,7 +98,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // Practice configuration — the student's own session.
   const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
-  const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
+  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities'>('General');
 
   // Mock configuration — the governed combination for a programme.
   const [department, setDepartment] = useState(jambDepartments[0]);
@@ -167,16 +166,15 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         .filter(Boolean);
       const matched = requested.filter((subject) => availability.some(
         (entry) => normalizeSubject(entry.subject) === normalizeSubject(subject),
-      ));
-      if (matched.length) {
-        return matched.slice(0, limits.maxSubjects).map((subject) => (
-          availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))?.subject || subject
-        ));
-      }
-      return availability.slice(0, Math.min(2, availability.length)).map((entry) => entry.subject);
+      )).map((subject) => availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))?.subject || subject);
+      const defaultSubjects = matched.length ? matched : availability.slice(0, Math.min(2, availability.length)).map((entry) => entry.subject);
+      const english = availability.find((entry) => /english/i.test(entry.subject))?.subject;
+      const withCompulsoryEnglish = english
+        ? [english, ...defaultSubjects.filter((subject) => normalizeSubject(subject) !== normalizeSubject(english))]
+        : defaultSubjects;
+      return withCompulsoryEnglish.slice(0, limits.maxSubjects);
     });
     setQuestionCount((current) => current ?? Math.min(20, bank?.totalQuestions || 20));
-    setDurationMinutes((current) => current ?? bank?.exam.defaultDurationMinutes ?? 60);
   }, [availability, bank]);
 
   // ---- Derived practice configuration ---------------------------------
@@ -187,11 +185,22 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const selectedBankTotal = selectedAvailability.reduce((sum, entry) => sum + entry.questionCount, 0);
   const countChoices = useMemo(() => questionCountOptions(selectedBankTotal || bank?.totalQuestions || 0, limits), [selectedBankTotal, bank, limits]);
   const effectiveCount = questionCount && countChoices.includes(questionCount) ? questionCount : countChoices[countChoices.length - 1] ?? limits.minQuestions;
-  const durationChoices = useMemo(
-    () => practiceDurationOptions(bank?.exam.defaultDurationMinutes ?? 120, limits),
-    [bank, limits],
-  );
-  const effectiveDuration = durationMinutes && durationChoices.includes(durationMinutes) ? durationMinutes : bank?.exam.defaultDurationMinutes ?? durationChoices[durationChoices.length - 1] ?? 60;
+  // The question count determines the time allocation; no separate timer choice is shown.
+  const effectiveDuration = Math.max(limits.minMinutes, Math.min(
+    limits.maxMinutes,
+    Math.ceil((effectiveCount / Math.max(1, limits.maxQuestions)) * (bank?.exam.defaultDurationMinutes ?? 120)),
+  ));
+  const trackSubjectNames = useMemo(() => {
+    if (practiceTrack === 'General') return null;
+    const secondary = secondarySubjectCatalog[practiceTrack];
+    const jamb = practiceTrack === 'Science'
+      ? [...jambSubjectCatalog.Science, ...jambSubjectCatalog.Engineering, ...jambSubjectCatalog['Medicine & Health'], ...jambSubjectCatalog.Education]
+      : practiceTrack === 'Commercial'
+        ? [...jambSubjectCatalog.Commercial, ...jambSubjectCatalog['Social Science']]
+        : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
+    return new Set([...secondary, ...jamb].map(normalizeSubject));
+  }, [practiceTrack]);
+  const visiblePracticeAvailability = availability.filter((entry) => !trackSubjectNames || trackSubjectNames.has(normalizeSubject(entry.subject)) || /english/i.test(entry.subject));
   const practicePlan = useMemo(() => previewPlan(selectedAvailability, effectiveCount), [selectedAvailability, effectiveCount]);
 
   // ---- Derived mock combination ---------------------------------------
@@ -241,6 +250,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     setFormError('');
     setPracticeSubjects((current) => {
       const exists = current.some((item) => normalizeSubject(item) === normalizeSubject(subject));
+      const english = availability.find((entry) => /english/i.test(entry.subject))?.subject;
+      if (exists && english && normalizeSubject(subject) === normalizeSubject(english)) return current; // English is compulsory.
       if (exists) return current.filter((item) => normalizeSubject(item) !== normalizeSubject(subject));
       if (current.length >= limits.maxSubjects) {
         setFormError(`A session can include at most ${limits.maxSubjects} subjects. Remove one before adding another.`);
@@ -323,7 +334,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </div>
           </section>
 
-          {(exam === 'waec' || exam === 'neco') && (
+          {(
             <section className="er-setup-guide" aria-labelledby="cbt-guide-title">
               <div className="er-setup-section-heading">
                 <div>
@@ -411,21 +422,31 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 {mode === 'practice' && (
                   <div className="er-setup-form-grid">
                     <div className="er-setup-full-width">
+                      <span className="er-setup-label">Subject group</span>
+                      <div className="er-setup-duration-options" role="radiogroup" aria-label="Filter subjects by group">
+                        {(['General', 'Science', 'Commercial', 'Arts & Humanities'] as const).map((track) => (
+                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); setFormError(''); }}>
+                            {track === 'Arts & Humanities' ? 'Arts' : track}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="er-setup-full-width">
                       <span className="er-setup-label">Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected)</span>
                       <div className="er-setup-subject-chips">
-                        {availability.map((entry) => {
+                        {visiblePracticeAvailability.map((entry) => {
                           const checked = practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject));
                           return (
                             <label key={entry.subject} className="er-setup-subject-chip">
                               <input type="checkbox" checked={checked} onChange={() => togglePracticeSubject(entry.subject)} />
-                              <span>{entry.subject}</span>
+                              <span>{entry.subject}{/english/i.test(entry.subject) ? ' · compulsory' : ''}</span>
                               <b className="er-chip-count">{entry.questionCount}</b>
                             </label>
                           );
                         })}
                       </div>
                       <p className="er-setup-field-note">
-                        <Info size={14} /> Every subject listed has questions in this bank — the number beside it is how many. You can practise one subject or combine several.
+                        <Info size={14} /> Every subject listed has questions in this bank — the number beside it is how many. English is compulsory when available in this bank.
                       </p>
                     </div>
 
@@ -448,23 +469,12 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     </div>
 
                     <div className="er-setup-full-width">
-                      <span className="er-setup-label">Time for this session</span>
-                      <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose your practice duration">
-                        {durationChoices.map((minutes) => (
-                          <button
-                            key={minutes}
-                            type="button"
-                            role="radio"
-                            aria-checked={effectiveDuration === minutes}
-                            className={`er-setup-duration-option${effectiveDuration === minutes ? ' is-selected' : ''}`}
-                            onClick={() => setDurationMinutes(minutes)}
-                          >
-                            {minutes} min{minutes === defaultMinutes ? ' · exam standard' : ''}
-                          </button>
-                        ))}
+                      <span className="er-setup-label">Allocated time</span>
+                      <div className="er-setup-duration-options" aria-live="polite">
+                        <span className="er-setup-duration-option is-selected"><Clock3 size={14} /> {effectiveDuration} minutes for {effectiveCount} questions</span>
                       </div>
                       <p className="er-setup-field-note">
-                        <Clock3 size={14} /> This is the actual countdown once you start. It cannot be extended, and refreshing the page does not reset it.
+                        <Clock3 size={14} /> Time is calculated automatically from the question count and the exam's standard duration. The countdown cannot be extended once the test starts.
                       </p>
                     </div>
                   </div>
