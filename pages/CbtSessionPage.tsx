@@ -599,7 +599,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       <dialog
         ref={unansweredDialog}
         className="er-confirm"
-        onClose={() => setConfirmKind(null)}
+        onClose={() => setConfirmKind((current) => current === 'unanswered' ? null : current)}
         aria-labelledby="er-unanswered-title"
       >
         <div className="er-confirm-body">
@@ -635,7 +635,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       <dialog
         ref={submitDialog}
         className="er-confirm"
-        onClose={() => setConfirmKind(null)}
+        onClose={() => setConfirmKind((current) => current === 'submit' ? null : current)}
         aria-labelledby="er-submit-title"
       >
         <div className="er-confirm-body">
@@ -662,7 +662,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       </dialog>
 
       {/* End Test: distinct from Submit, and explicit about what is kept. */}
-      <dialog ref={endDialog} className="er-confirm" onClose={() => setConfirmKind(null)} aria-labelledby="er-end-title">
+      <dialog ref={endDialog} className="er-confirm" onClose={() => setConfirmKind((current) => current === 'end' ? null : current)} aria-labelledby="er-end-title">
         <div className="er-confirm-body">
           <h2 id="er-end-title">End this test now?</h2>
           <p>
