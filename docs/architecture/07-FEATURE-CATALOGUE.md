@@ -22,10 +22,10 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | SVC-2 | Application wizard with validation | `/services/apply/:slug` | ✅ | 4 live services |
 | SVC-3 | Request tracking (authenticated) | `/dashboard/services` | ✅ | Owner-scoped; no public reference lookup |
 | SVC-4 | Processing queue, statuses, notes, audit | `/admin/queue`, `/api/admin/service-requests/*` | ✅ | Status vocabulary enforced by constraint |
-| CBT-1 | Exam selection, setup, subject-aware papers | `/cbt`, `/cbt/setup/:exam` | ✅ | English 60 / others 40, alias normalisation |
+| CBT-1 | Exam selection, setup, subject-aware papers | `/cbt`, `/cbt/setup/:exam` | ✅ | Instructions precede mode selection; Practice and Mock share category-filtered subject selection; English is compulsory when present; practice time is derived from question count |
 | CBT-2 | Attempt engine with resume and server scoring | `/cbt/practice`, `start_/submit_cbt_attempt_for_subjects` | ✅ | Answer keys server-only |
 | CBT-3 | Guest practice with server scoring | `/api/cbt/guest-submit` | ✅ | Rate-limited |
-| CBT-4 | Results and result slip | `/cbt/results`, `CbtResultSlip` | ✅ | Guest scorecard + saved attempts |
+| CBT-4 | Results and result slip | `/cbt/results`, `CbtResultSlip` | ✅ | Dashboard Review uses the authenticated result route; practice results offer Keep/Delete with a confirmed, closable dialog; mock records remain protected from deletion |
 | CBT-5 | Exam and question-bank admin | `/admin/cbt` | ✅ | Content management only; bank population is operational |
 | TOOL-1 | Screening calculator | `/screening-calculator` | ✅ | Client-side, documented formula |
 | TOOL-2 | CGPA calculator with saved terms | `/tools/cgpa-calculator`, `student_cgpa_*` | ✅ | Saved per student |
