@@ -54,15 +54,57 @@ export async function fetchText(url: string, options: FetchOptions = {}): Promis
       return { ok: false, status: response.status, text: '', contentType, finalUrl: url, error: `HTTP ${response.status}`, bytes: 0 };
     }
 
-    const raw = await response.text();
-    const text = raw.length > maxBytes ? raw.slice(0, maxBytes) : raw;
+    // Enforce the limit while reading the response, not after buffering an
+    // untrusted feed in full. The old response.text() path could allocate an
+    // arbitrarily large body before slicing it to maxBytes.
+    const reader = response.body?.getReader();
+    let text = '';
+    let bytes = 0;
+
+    if (reader) {
+      const chunks: Uint8Array[] = [];
+      try {
+        while (bytes < maxBytes) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (!value?.length) continue;
+          const remaining = maxBytes - bytes;
+          const chunk = value.byteLength > remaining ? value.subarray(0, remaining) : value;
+          chunks.push(chunk);
+          bytes += chunk.byteLength;
+          if (chunk.byteLength < value.byteLength) {
+            await reader.cancel('response body limit reached').catch(() => undefined);
+            break;
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      const body = new Uint8Array(bytes);
+      let offset = 0;
+      for (const chunk of chunks) {
+        body.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      text = new TextDecoder().decode(body);
+    } else {
+      // Responses without a stream are unusual (mostly test doubles). Retain
+      // compatibility while still reporting the UTF-8 byte count accurately.
+      const raw = await response.text();
+      const encoded = new TextEncoder().encode(raw);
+      const bounded = encoded.byteLength > maxBytes ? encoded.subarray(0, maxBytes) : encoded;
+      bytes = bounded.byteLength;
+      text = new TextDecoder().decode(bounded);
+    }
+
     return {
       ok: true,
       status: response.status,
       text,
       contentType,
       finalUrl: (response as Response).url || url,
-      bytes: raw.length,
+      bytes,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'fetch failed';
