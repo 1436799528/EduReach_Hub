@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Clock3, Play, RotateCcw, Trash2 } from 'lucide-react';
+import { Clock3, Play, RotateCcw, Trash2, X } from 'lucide-react';
 import { EmptyState, ErrorState } from './AsyncState';
 import { deleteCbtAttempt, fetchCbtHistory, type CbtHistoryItem } from '../lib/api';
 import { userFacingError } from '../../lib/errors';
@@ -160,8 +160,18 @@ export default function CbtHistoryPanel() {
       )}
 
       <dialog ref={dialog} className="er-confirm" onClose={() => setConfirming(null)} aria-labelledby="er-delete-title">
-        <div className="er-confirm-body">
-          <h2 id="er-delete-title">Delete this practice session?</h2>
+        <div className="er-confirm-body" style={{ position: 'relative' }}>
+          <button
+            type="button"
+            aria-label="Close delete confirmation"
+            title="Close"
+            onClick={() => { setConfirming(null); dialog.current?.close(); }}
+            disabled={Boolean(busyId)}
+            style={{ position: 'absolute', top: 8, right: 8, display: 'grid', placeItems: 'center', width: 34, height: 34, border: '1px solid #d8dee8', borderRadius: 8, background: '#fff', color: '#344054', cursor: 'pointer' }}
+          >
+            <X size={18} />
+          </button>
+          <h2 id="er-delete-title" style={{ paddingRight: 36 }}>Delete this practice session?</h2>
           <p>
             <strong>{confirming?.examTitle}</strong> from {formatWhen(confirming?.startedAt ?? null)} and every answer in it
             will be removed from your account. This cannot be undone. Mock examination records cannot be deleted, and are not affected.
