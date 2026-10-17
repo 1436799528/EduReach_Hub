@@ -2148,16 +2148,16 @@ app.post('/api/cbt/attempts/:attemptId/abandon', async (req, res) => {
   }
 });
 
-/** Delete a practice attempt. Mock results are examination records and are refused. */
+/** Delete the authenticated student's own CBT attempt or result. */
 app.delete('/api/cbt/attempts/:attemptId', async (req, res) => {
   try {
     const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
-    const { data, error } = await rpcSupabase.rpc('delete_cbt_practice_attempt', { p_attempt_id: req.params.attemptId });
+    const { data, error } = await rpcSupabase.rpc('delete_cbt_attempt', { p_attempt_id: req.params.attemptId });
     if (error) throw error;
     res.json({ deleted: Boolean(data) });
   } catch (error) {
     console.error('CBT delete API error:', error);
-    const message = error instanceof Error ? error.message : 'Unable to delete this practice attempt.';
+    const message = error instanceof Error ? error.message : 'Unable to delete this CBT result.';
     const status = /Authentication|required|session/i.test(message) ? 401
       : /permission/i.test(message) ? 403
         : /not found/i.test(message) ? 404
