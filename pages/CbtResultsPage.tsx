@@ -57,7 +57,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
       await deleteCbtAttempt(attemptId);
       setConfirmDelete(false);
       deleteDialog.current?.close();
-      navigateInApp('/dashboard/cbt');
+      navigateInApp(user ? '/dashboard/cbt' : '/cbt');
     } catch (value) {
       setDeleteError(userFacingError(value, 'This result could not be deleted.'));
     } finally {
@@ -191,6 +191,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 <CbtResultSlip result={result} studentName={studentName} studentId={studentId} />
               </div>
 
+              <p className="er-result-review-intro">Your result is saved in CBT history. Leave it here to keep it, or choose Delete result to remove it.</p>
               <div className="er-result-actions" aria-label="Result actions">
                 {result.questions?.length > 0 ? (
                   <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
@@ -244,7 +245,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
         <div className="er-confirm-body" style={{ position: 'relative' }}>
           <button type="button" aria-label="Close delete confirmation" title="Close" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }} disabled={deleteBusy} style={{ position: 'absolute', top: 8, right: 8, display: 'grid', placeItems: 'center', width: 34, height: 34, border: '1px solid #d8dee8', borderRadius: 8, background: '#fff', color: '#344054', cursor: 'pointer' }}><X size={18} /></button>
           <h2 id="er-result-delete-title" style={{ paddingRight: 36 }}>Delete this CBT result?</h2>
-          <p>This will permanently remove this CBT result and its saved answers from your account. This cannot be undone.</p>
+          <p>This will permanently remove this CBT result and its saved answers from your saved history. This cannot be undone.</p>
           {deleteError && <p role="alert" className="hub-form-error">{deleteError}</p>}
           <div className="er-confirm-actions">
             <button type="button" className="hub-outline-btn" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }}>Keep result</button>
