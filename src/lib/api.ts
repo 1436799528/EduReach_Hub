@@ -551,8 +551,98 @@ export async function fetchCbtResult(attemptId: string) {
     if (!user) throw new Error('Please sign in to view this CBT result.');
 
     const { data, error } = await supabase.rpc('get_cbt_result', { p_attempt_id: attemptId });
-    if (error) throw new Error(userFacingError(error));
-    if (!data?.length) throw new Error('No CBT result was found for this attempt.');
+    if (error || !data?.length) {
+      // Dashboard attempts are already owner-scoped in cbt_attempts. If the
+      // legacy result RPC has no rows for a configured attempt, still show the
+      // authoritative saved score instead of leaving Review on an error screen.
+      const { data: savedAttempt } = await supabase
+        .from('cbt_attempts')
+        .select('id,exam_id,status,score,correct_answers,total_questions,submitted_at,mode,duration_minutes,selected_subjects,subject_plan')
+        .eq('id', attemptId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (savedAttempt && savedAttempt.status === 'submitted') {
+        const { data: savedExam } = await supabase
+          .from('cbt_exams')
+          .select('id,title,exam_body,subject,duration_minutes')
+          .eq('id', savedAttempt.exam_id)
+          .maybeSingle();
+
+        const stored = readLocalCbtResult(attemptId);
+        let questions: Array<Record<string, any>> = [];
+        let answers: Array<Record<string, any>> = [];
+        // Only use the local answer breakdown for review if its score agrees
+        // with the score stored on the server. The score itself always comes
+        // from the owner-scoped database row above.
+        const breakdown = Array.isArray(stored?.breakdown)
+          && Number(stored.score) === Number(savedAttempt.score)
+          && Number(stored.correctAnswers) === Number(savedAttempt.correct_answers)
+          ? stored.breakdown
+          : null;
+
+        if (breakdown) {
+          try {
+            const paper = await fetchCbtAttemptPaper(attemptId);
+            questions = paper.questions.map((question) => {
+              const item = breakdown.find((entry: any) => Number(entry.question) === Number(question.position));
+              const correctIndex = Number(item?.correct);
+              return {
+                id: question.id,
+                position: question.position,
+                subject: question.subject,
+                question_text: question.text,
+                option_a: question.options[0],
+                option_b: question.options[1],
+                option_c: question.options[2],
+                option_d: question.options[3],
+                correct_option: Number.isInteger(correctIndex) && correctIndex >= 0 && correctIndex <= 3
+                  ? String.fromCharCode(65 + correctIndex)
+                  : null,
+                explanation: item?.explanation,
+              };
+            });
+            answers = paper.questions.map((question) => {
+              const item = breakdown.find((entry: any) => Number(entry.question) === Number(question.position));
+              const selectedIndex = Number(item?.selected);
+              const correctIndex = Number(item?.correct);
+              return {
+                question_id: question.id,
+                selected_option: item?.selected !== null && item?.selected !== undefined && Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex <= 3
+                  ? String.fromCharCode(65 + selectedIndex)
+                  : null,
+                is_correct: Number.isInteger(selectedIndex) && selectedIndex === correctIndex,
+              };
+            });
+          } catch {
+            // The saved scorecard remains available even if the question paper
+            // cannot be loaded for answer-by-answer review.
+          }
+        }
+
+        return {
+          attempt: {
+            id: savedAttempt.id,
+            exam_id: savedAttempt.exam_id,
+            score: savedAttempt.score,
+            correct_answers: savedAttempt.correct_answers,
+            total_questions: savedAttempt.total_questions,
+            submitted_at: savedAttempt.submitted_at,
+            mode: savedAttempt.mode,
+            duration_minutes: savedAttempt.duration_minutes,
+            subjects: savedAttempt.selected_subjects || [],
+          },
+          exam: savedExam || null,
+          answers,
+          questions,
+          subjects: savedAttempt.selected_subjects || [],
+          plan: savedAttempt.subject_plan || [],
+        };
+      }
+
+      if (error) throw new Error(userFacingError(error));
+      throw new Error('No CBT result was found for this attempt.');
+    }
 
     const first = data[0];
     const { data: exam } = await supabase
