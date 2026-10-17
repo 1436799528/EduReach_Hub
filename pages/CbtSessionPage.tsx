@@ -470,7 +470,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             })}
           </div>
         )}
-        <div className="er-exam-layout">        <div className="er-exam-paper">
+        <div className="er-exam-layout">
+          <div className="er-exam-paper">
           <div className="er-exam-question-head">
             <div className="er-exam-subject-context">
               <span className="er-exam-subject-name er-exam-subject-pill">{(question?.subject || '').toUpperCase()}</span>
