@@ -290,6 +290,7 @@
   .er-exam-layout { grid-template-columns: minmax(0, 1fr); }
   .er-exam-palette { display: none; position: static; max-height: none; margin-top: 0; }
   .er-exam-palette.is-open { display: block; }
+  .er-exam-palette.is-open { order: -1; }
   .er-exam-palette-close { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; border-radius: var(--er-radius-sm); border: 1px solid var(--er-border); background: var(--er-surface); }
   .er-exam-subject-tab { min-width: 132px; }
 }
