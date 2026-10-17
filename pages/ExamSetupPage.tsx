@@ -410,7 +410,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <div>
                     <span className="hub-eyebrow">{mode === 'practice' ? 'Your paper' : 'Your programme'}</span>
                     <h2 id="setup-selection-title">
-                      {mode === 'practice' ? 'Choose subjects, questions and time' : exam === 'jamb' ? 'Choose the course you are applying for' : exam === 'post-utme' ? 'Choose your school' : 'Choose your nine subjects'}
+                      {mode === 'practice' ? 'Choose subjects, questions and time' : 'Choose subjects for your mock'}
                     </h2>
                   </div>
                   <Calculator size={22} aria-hidden="true" />
