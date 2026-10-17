@@ -204,12 +204,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const practicePlan = useMemo(() => previewPlan(selectedAvailability, effectiveCount), [selectedAvailability, effectiveCount]);
 
   // ---- Derived mock combination ---------------------------------------
-  const governedCombination = useMemo(() => {
-    if (mode !== 'mock') return [];
-    if (exam === 'jamb') return jambCourses.find((course) => course.name === courseName)?.subjects ?? [];
-    if (exam === 'post-utme') return postUtmeSchools.find((school) => school.id === schoolId)?.subjects ?? [];
-    return mockSubjects;
-  }, [mode, exam, courseName, schoolId, mockSubjects]);
+  // Both modes use the same available subject picker. A mock simply lets the system
+  // determine the question count and standard duration from the selected subjects.
+  const governedCombination = useMemo(() => mode === 'mock' ? practiceSubjects : [], [mode, practiceSubjects]);
 
   const coverage = useMemo(() => governedCombination.map((subject) => {
     const entry = availability.find((item) => normalizeSubject(item.subject) === normalizeSubject(subject));
@@ -393,7 +390,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     onClick={() => { setMode('practice'); setFormError(''); }}
                   >
                     <strong>Practice</strong>
-                    <span>You choose the subjects, the number of questions and the time. Saved as practice — you can restart, resume or delete it.</span>
+                    <span>You choose a subject group and subjects. Question count determines the allocated time; your practice result can be kept or deleted.</span>
                   </button>
                   <button
                     type="button"
@@ -403,7 +400,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     onClick={() => { setMode('mock'); setFormError(''); }}
                   >
                     <strong>Mock examination</strong>
-                    <span>An exam-style paper built from your course or school, with the standard time for {exam.toUpperCase()}. Treated as an examination record.</span>
+                    <span>Choose your subject group and subjects. EduReach sets the question count and standard time automatically.</span>
                   </button>
                 </div>
               </section>
@@ -419,7 +416,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <Calculator size={22} aria-hidden="true" />
                 </div>
 
-                {mode === 'practice' && (
+                {(mode === 'practice' || mode === 'mock') && (
                   <div className="er-setup-form-grid">
                     <div className="er-setup-full-width">
                       <span className="er-setup-label">Subject group</span>
@@ -432,7 +429,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       </div>
                     </div>
                     <div className="er-setup-full-width">
-                      <span className="er-setup-label">Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected)</span>
+                      <span className="er-setup-label">Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected){compulsoryEnglish ? ' · English compulsory' : ''}</span>
                       <div className="er-setup-subject-chips">
                         {visiblePracticeAvailability.map((entry) => {
                           const checked = practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject));
@@ -450,7 +447,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       </p>
                     </div>
 
-                    <div className="er-setup-full-width">
+                    {mode === 'practice' && <div className="er-setup-full-width">
                       <span className="er-setup-label">Number of questions</span>
                       <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose how many questions">
                         {countChoices.map((count) => (
@@ -476,11 +473,11 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       <p className="er-setup-field-note">
                         <Clock3 size={14} /> Time is calculated automatically from the question count and the exam's standard duration. The countdown cannot be extended once the test starts.
                       </p>
-                    </div>
+                    </div>}
                   </div>
                 )}
 
-                {mode === 'mock' && exam === 'jamb' && (
+                {false && mode === 'mock' && exam === 'jamb' && (
                   <div className="er-setup-form-grid">
                     <label>
                       Department / interest area
@@ -514,7 +511,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </div>
                 )}
 
-                {mode === 'mock' && (exam === 'waec' || exam === 'neco') && (
+                {false && mode === 'mock' && (exam === 'waec' || exam === 'neco') && (
                   <div>
                     <div className="er-setup-form-grid" style={{ marginBottom: '12px' }}>
                       <label>
@@ -562,7 +559,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </div>
                 )}
 
-                {mode === 'mock' && exam === 'post-utme' && (
+                {false && mode === 'mock' && exam === 'post-utme' && (
                   <div className="er-setup-form-grid">
                     <label className="er-setup-full-width">
                       School of choice
@@ -594,7 +591,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 )}
 
                 {/* Recovery: never silently build a wrong paper. */}
-                {mode === 'mock' && uncovered.length > 0 && (
+                {false && mode === 'mock' && uncovered.length > 0 && (
                   <InlineNotice tone="warning" title={`This bank cannot build the full ${exam === 'jamb' ? 'course' : 'school'} paper yet`}>
                     {uncovered.map((entry) => entry.subject).join(', ')} {uncovered.length === 1 ? 'has' : 'have'} no questions in this bank. You can:
                     <span className="er-recovery-actions">
