@@ -195,8 +195,9 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
 
   const currentSubject = questions[index]?.subject || attempt?.subjects[0] || '';
   const subjectPlan = attempt?.plan || [];
-  const answeredCount = Object.keys(answers).length;
-  const markedCount = Object.values(marked).filter(Boolean).length;
+  // Count only questions on this paper so stale local draft keys cannot inflate progress.
+  const answeredCount = questions.filter((item) => answers[item.position] !== undefined).length;
+  const markedCount = questions.filter((item) => Boolean(marked[item.position])).length;
 
   const submit = useCallback(async (reason: 'manual' | 'timer') => {
     if (submitting || !attempt || closed === 'submitted') return;
