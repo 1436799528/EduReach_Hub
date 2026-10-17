@@ -311,6 +311,20 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     return Array.from(groups.entries());
   }, [questions]);
 
+  // Compact student identity (initials) — never push the question content aside.
+  const studentInitials = useMemo(() => {
+    const name = (user?.name || 'Student').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return (parts[0]?.slice(0, 2) || 'ST').toUpperCase();
+  }, [user?.name]);
+  const studentDisplayName = useMemo(() => {
+    const name = (user?.name || 'Student').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    return parts.length > 2 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : name;
+  }, [user?.name]);
+
+
   if (loading) {
     return (
       <div className="er-exam-shell">
@@ -377,19 +391,6 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const currentSubjectEntry = subjectPlan.length > 1
     ? subjectPlan.find((plan) => question?.position >= plan.first && question?.position <= plan.last)
     : null;
-  // Compact student identity (initials) — never push the question content aside.
-  const studentInitials = useMemo(() => {
-    const name = (user?.name || 'Student').trim();
-    const parts = name.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    return (parts[0]?.slice(0, 2) || 'ST').toUpperCase();
-  }, [user?.name]);
-  const studentDisplayName = useMemo(() => {
-    const name = (user?.name || 'Student').trim();
-    const parts = name.split(/\s+/).filter(Boolean);
-    return parts.length > 2 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : name;
-  }, [user?.name]);
-
   function handlePrimaryAction() {
     if (isLastQuestion) {
       // Final question: check for unanswered before confirming.
@@ -435,7 +436,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <button type="button" className="er-exam-tool" onClick={() => setCalcOpen(true)} aria-label="Open calculator">
             <Calculator size={15} /> <span className="er-exam-tool-label">Calculator</span>
           </button>
-          <button type="button" className="er-exam-tool" onClick={() => setPaletteOpen(true)} aria-label="Open question navigator">
+          <button type="button" className="er-exam-tool" onClick={() => setPaletteOpen((current) => !current)} aria-expanded={paletteOpen} aria-controls="er-exam-question-navigator" aria-label="Toggle question navigator">
             <Grid3X3 size={15} /> <span className="er-exam-tool-label">Questions</span>
           </button>
           <button type="button" className="er-exam-end" onClick={() => setConfirmKind('end')}>
@@ -445,7 +446,31 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       </header>
 
       <main className="er-exam-main">
-        <div className="er-exam-paper">
+
+        {subjectPlan.length > 1 && (
+          <div className="er-exam-subject-tabs" role="tablist" aria-label="Exam subjects">
+            {subjectPlan.map((entry) => {
+              const answeredInBlock = questions.filter((item) =>
+                item.position >= entry.first && item.position <= entry.last && answers[item.position] !== undefined
+              ).length;
+              const current = Boolean(question && question.position >= entry.first && question.position <= entry.last);
+              return (
+                <button
+                  key={entry.subject}
+                  type="button"
+                  role="tab"
+                  aria-selected={current}
+                  className={current ? 'er-exam-subject-tab is-current' : 'er-exam-subject-tab'}
+                  onClick={() => goTo(entry.first - 1)}
+                >
+                  <span>{entry.subject}</span>
+                  <small>{answeredInBlock}/{entry.questions} answered</small>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div className="er-exam-layout">        <div className="er-exam-paper">
           <div className="er-exam-question-head">
             <div className="er-exam-subject-context">
               <span className="er-exam-subject-name er-exam-subject-pill">{(question?.subject || '').toUpperCase()}</span>
@@ -519,34 +544,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             )}
           </div>
 
-          {subjectPlan.length > 1 && (
-            <div className="er-exam-subject-rail" aria-label="Paper structure">
-              {subjectPlan.map((entry) => {
-                const answeredInBlock = Object.keys(answers).filter((position) => Number(position) >= entry.first && Number(position) <= entry.last).length;
-                const current = question?.position >= entry.first && question?.position <= entry.last;
-                return (
-                  <button
-                    key={entry.subject}
-                    type="button"
-                    className={current ? 'er-exam-subject-block is-current' : 'er-exam-subject-block'}
-                    onClick={() => goTo(entry.first - 1)}
-                  >
-                    <strong>{entry.subject}</strong>
-                    <span>{answeredInBlock} of {entry.questions} answered</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {actionError && <div className="hub-form-error" role="alert">{actionError}</div>}
         </div>
-
-        {paletteOpen && (
-          <div className="er-exam-palette" role="dialog" aria-label="Question navigator">
+          <aside id="er-exam-question-navigator" className={paletteOpen ? 'er-exam-palette is-open' : 'er-exam-palette'} aria-label="Question navigator">
             <div className="er-exam-palette-head">
               <strong>Question navigator</strong>
-              <button type="button" onClick={() => setPaletteOpen(false)} aria-label="Close navigator"><X size={16} /></button>
+              <button type="button" className="er-exam-palette-close" onClick={() => setPaletteOpen(false)} aria-label="Close navigator"><X size={16} /></button>
             </div>
             <p className="er-exam-palette-legend">
               <span className="is-answered">{answeredCount} answered</span>
@@ -573,7 +576,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                         type="button"
                         className={classes.join(' ')}
                         aria-current={isCurrent ? 'true' : undefined}
-                        aria-label={`Question ${questions.indexOf(item) + 1}, ${subject}, ${isAnswered ? 'answered' : 'unanswered'}${isMarkedItem ? ', marked for review' : ''}`}
+                        aria-label={'Question ' + (questions.indexOf(item) + 1) + ', ' + subject + ', ' + (isAnswered ? 'answered' : 'unanswered') + (isMarkedItem ? ', marked for review' : '')}
                         onClick={() => { goTo(questions.indexOf(item)); setPaletteOpen(false); }}
                       >
                         {questions.indexOf(item) + 1}
@@ -586,8 +589,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <button type="button" className="hub-primary-btn er-exam-palette-submit" onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
               <Send size={15} /> Submit paper
             </button>
-          </div>
-        )}
+          </aside>
+        </div>
       </main>
 
       {/* Unanswered questions warning: return or submit anyway. */}
