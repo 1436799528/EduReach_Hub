@@ -184,6 +184,10 @@ function AdminSectionDenied({ session, capability, onLeave }: { session: AdminSe
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const health = useAdminHealth();
+  // Hooks must run in the same order while the session is loading, unauthenticated,
+  // and authenticated. This hook was previously below the early-return guards,
+  // triggering React error #310 when session verification completed.
+  const pathname = useCurrentAdminPath();
   const cached = sessionCache && Date.now() - sessionCache.verifiedAt < SESSION_CACHE_TTL_MS ? sessionCache : null;
   const [checking, setChecking] = useState(!cached);
   const [session, setSession] = useState<AdminSession | null>(cached?.session || null);
@@ -260,7 +264,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  const pathname = useCurrentAdminPath();
   const requiredCapability = capabilityForAdminPath(pathname);
   if (requiredCapability && !hasCapability(session, requiredCapability)) {
     return <AdminSectionDenied session={session} capability={requiredCapability} onLeave={() => navigate('/admin')} />;
