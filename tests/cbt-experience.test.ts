@@ -76,7 +76,7 @@ test('destructive actions are confirmed and the server enforces them', () => {
   assert.match(api, /savedAttempt && savedAttempt\.status === 'submitted'/, 'result review falls back to the owner-scoped saved score');
   assert.match(api, /Number\(stored\.score\) === Number\(savedAttempt\.score\)/, 'local answer details are only used when they agree with the saved score');
 
-  const migration = read('supabase/migrations/20261017140000_cbt_result_retention.sql');
+  const migration = read('supabase/migrations/20261017123909_cbt_result_retention.sql');
   assert.match(migration, /where id = p_attempt_id and user_id = v_user/, 'deletion is scoped to the authenticated owner');
   assert.match(migration, /delete from public\\.cbt_attempts where id = v_attempt\\.id/, 'the owned result and cascading answers are removed');
   assert.doesNotMatch(migration, /Only practice attempts can be deleted/, 'mock results can also be removed by their owner');
