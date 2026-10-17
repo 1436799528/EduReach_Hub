@@ -74,7 +74,7 @@ export default function CbtHistoryPanel() {
     try {
       await deleteCbtAttempt(item.id);
       setItems((current) => current.filter((entry) => entry.id !== item.id));
-      setNotice('Practice session deleted.');
+      setNotice('CBT record deleted.');
     } catch (value) {
       setNotice(userFacingError(value, 'That practice session could not be deleted.'));
     } finally {
@@ -147,12 +147,9 @@ export default function CbtHistoryPanel() {
                 {item.status !== 'in_progress' && (
                   <a className="hub-outline-btn" href={`/cbt/setup/jamb?mode=${item.mode}`}><RotateCcw size={14} /> Start a new session</a>
                 )}
-                {item.mode === 'practice' && (
-                  <button type="button" className="er-danger-btn" onClick={() => setConfirming(item)} disabled={busyId === item.id}>
-                    <Trash2 size={14} /> {busyId === item.id ? 'Deleting…' : 'Delete'}
-                  </button>
-                )}
-                {item.mode === 'mock' && <span className="er-type-meta">Mock records are kept as examination history.</span>}
+                <button type="button" className="er-danger-btn" onClick={() => setConfirming(item)} disabled={busyId === item.id}>
+                  <Trash2 size={14} /> {busyId === item.id ? 'Deleting…' : 'Delete result'}
+                </button>
               </div>
             </div>
           ))}
@@ -171,15 +168,15 @@ export default function CbtHistoryPanel() {
           >
             <X size={18} />
           </button>
-          <h2 id="er-delete-title" style={{ paddingRight: 36 }}>Delete this practice session?</h2>
+          <h2 id="er-delete-title" style={{ paddingRight: 36 }}>Delete this CBT result?</h2>
           <p>
-            <strong>{confirming?.examTitle}</strong> from {formatWhen(confirming?.startedAt ?? null)} and every answer in it
-            will be removed from your account. This cannot be undone. Mock examination records cannot be deleted, and are not affected.
+            <strong>{confirming?.examTitle}</strong> from {formatWhen(confirming?.startedAt ?? null)} and every saved answer in it
+            will be permanently removed from your account. This cannot be undone.
           </p>
           <div className="er-confirm-actions">
             <button type="button" className="hub-outline-btn" onClick={() => { setConfirming(null); dialog.current?.close(); }}>Keep it</button>
-            <button type="button" className="er-danger-btn" onClick={() => confirming && void remove(confirming)}>
-              <Trash2 size={14} /> Delete session
+            <button type="button" className="er-danger-btn" onClick={() => confirming && void remove(confirming)} disabled={Boolean(busyId)}>
+              <Trash2 size={14} /> Delete result
             </button>
           </div>
         </div>
