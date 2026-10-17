@@ -584,7 +584,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <td>
                 {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
                 {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test</a>}
-                {state === 'finished' && <a className="dash-card-link" href={`/cbt/results?attempt=${encodeURIComponent(row.id)}`}>Review</a>}
+                {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review</a>}
               </td>
             </tr>;
           })}</tbody>
@@ -599,7 +599,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <span>{state === 'finished' ? `${row.correct_answers}/${row.total_questions} correct` : state === 'expired' ? 'Answers were submitted automatically' : 'Unfinished attempt'} • {fmtDate(row.submitted_at || row.created_at)}</span>
             {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume →</a>}
             {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test →</a>}
-            {state === 'finished' && <a className="dash-card-link" href={`/cbt/results?attempt=${encodeURIComponent(row.id)}`}>Review →</a>}
+            {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review →</a>}
           </div>
         </li>;
       })}</ul>
