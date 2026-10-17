@@ -78,11 +78,11 @@ test('destructive actions are confirmed and the server enforces them', () => {
 
   const migration = read('supabase/migrations/20261017123909_cbt_result_retention.sql');
   assert.match(migration, /where id = p_attempt_id and user_id = v_user/, 'deletion is scoped to the authenticated owner');
-  assert.match(migration, /delete from public\\.cbt_attempts where id = v_attempt\\.id/, 'the owned result and cascading answers are removed');
+  assert.ok(migration.includes('delete from public.cbt_attempts where id = v_attempt.id'), 'the owned result and cascading answers are removed');
   assert.doesNotMatch(migration, /Only practice attempts can be deleted/, 'mock results can also be removed by their owner');
 
   const server = read('server.ts');
-  assert.match(server, /rpcSupabase\\.rpc\\('delete_cbt_attempt'/, 'the API calls the owner-scoped deletion function');
+  assert.ok(server.includes("rpcSupabase.rpc('delete_cbt_attempt'"), 'the API calls the owner-scoped deletion function');
 });
 
 test('the timer is server-authoritative and cannot be reset by a refresh', () => {
