@@ -190,6 +190,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     limits.maxMinutes,
     Math.ceil((effectiveCount / Math.max(1, limits.maxQuestions)) * (bank?.exam.defaultDurationMinutes ?? 120)),
   ));
+  const compulsoryEnglish = availability.find((entry) => /english/i.test(entry.subject))?.subject || null;
   const trackSubjectNames = useMemo(() => {
     if (practiceTrack === 'General') return null;
     const secondary = secondarySubjectCatalog[practiceTrack];
