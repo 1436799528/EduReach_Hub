@@ -25,7 +25,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | CBT-1 | Exam selection, setup, subject-aware papers | `/cbt`, `/cbt/setup/:exam` | ✅ | Instructions precede mode selection; Practice and Mock share category-filtered subject selection; English is compulsory when present; practice time is derived from question count |
 | CBT-2 | Attempt engine with resume and server scoring | `/cbt/practice`, `start_/submit_cbt_attempt_for_subjects` | ✅ | Answer keys server-only |
 | CBT-3 | Guest practice with server scoring | `/api/cbt/guest-submit` | ✅ | Rate-limited |
-| CBT-4 | Results and result slip | `/cbt/results`, `CbtResultSlip` | ✅ | Dashboard Review uses the authenticated result route; practice results offer Keep/Delete with a confirmed, closable dialog; mock records remain protected from deletion |
+| CBT-4 | Results and result slip | `/cbt/results`, `CbtResultSlip` | ✅ | Dashboard Review uses the authenticated result route; practice and mock results offer Keep/Delete with a confirmed, closable dialog; deletion is owner-scoped |
 | CBT-5 | Exam and question-bank admin | `/admin/cbt` | ✅ | Content management only; bank population is operational |
 | TOOL-1 | Screening calculator | `/screening-calculator` | ✅ | Client-side, documented formula |
 | TOOL-2 | CGPA calculator with saved terms | `/tools/cgpa-calculator`, `student_cgpa_*` | ✅ | Saved per student |
