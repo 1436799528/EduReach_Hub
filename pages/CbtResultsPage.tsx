@@ -192,9 +192,13 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
               </div>
 
               <div className="er-result-actions" aria-label="Result actions">
-                <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
-                  {showReview ? 'Hide Answers' : 'Review Answers'}
-                </button>
+                {result.questions?.length > 0 ? (
+                  <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
+                    {showReview ? 'Hide Answers' : 'Review Answers'}
+                  </button>
+                ) : (
+                  <p role="status" className="er-result-review-intro">Your saved score is available. Answer-by-answer review is unavailable for this attempt.</p>
+                )}
                 <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
                 <button type="button" className="hub-outline-btn" onClick={printResult}><Printer size={15} /> Print</button>
                 <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download</button>
