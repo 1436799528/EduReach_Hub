@@ -1,9 +1,9 @@
 import { userFacingError } from '../lib/errors';
-import { useEffect, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, Printer, RotateCcw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ChevronDown, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CbtResultSlip from '../src/components/CbtResultSlip';
-import { fetchCbtResult } from '../src/lib/api';
+import { deleteCbtAttempt, fetchCbtResult } from '../src/lib/api';
 import { localStorageKey } from '../src/lib/localPreview';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
@@ -25,6 +25,10 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const [studentName, setStudentName] = useState('Guest student');
   const [studentId, setStudentId] = useState('');
   const [showReview, setShowReview] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const deleteDialog = useRef<HTMLDialogElement | null>(null);
 
   useEffect(() => {
     const attemptId = routeAttemptId || new URLSearchParams(window.location.search).get('attempt') || localStorage.getItem(localStorageKey('last-cbt-attempt')) || '';
@@ -39,6 +43,27 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
       .catch((value) => setError(userFacingError(value, 'Unable to load the CBT result.')))
       .finally(() => setLoading(false));
   }, [routeAttemptId]);
+
+  useEffect(() => {
+    if (confirmDelete && deleteDialog.current && !deleteDialog.current.open) deleteDialog.current.showModal();
+  }, [confirmDelete]);
+
+  async function removeResult() {
+    const attemptId = String(result?.attempt?.id || routeAttemptId || '');
+    if (!attemptId) return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    try {
+      await deleteCbtAttempt(attemptId);
+      setConfirmDelete(false);
+      deleteDialog.current?.close();
+      navigateInApp('/dashboard/cbt');
+    } catch (value) {
+      setDeleteError(userFacingError(value, 'This result could not be deleted.'));
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -173,6 +198,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
                 <button type="button" className="hub-outline-btn" onClick={printResult}><Printer size={15} /> Print</button>
                 <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download</button>
+                {result?.attempt?.mode === 'practice' && <button type="button" className="hub-outline-btn" onClick={() => { setDeleteError(''); setConfirmDelete(true); }}><Trash2 size={15} /> Delete result</button>}
                 <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt')}><ArrowLeft size={15} /> Back to CBT</button>
               </div>
 
@@ -210,6 +236,18 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
           )}
         </div>
       </div>
+      <dialog ref={deleteDialog} className="er-confirm" onClose={() => setConfirmDelete(false)} aria-labelledby="er-result-delete-title">
+        <div className="er-confirm-body" style={{ position: 'relative' }}>
+          <button type="button" aria-label="Close delete confirmation" title="Close" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }} disabled={deleteBusy} style={{ position: 'absolute', top: 8, right: 8, display: 'grid', placeItems: 'center', width: 34, height: 34, border: '1px solid #d8dee8', borderRadius: 8, background: '#fff', color: '#344054', cursor: 'pointer' }}><X size={18} /></button>
+          <h2 id="er-result-delete-title" style={{ paddingRight: 36 }}>Delete this CBT result?</h2>
+          <p>This will permanently remove this practice result and its saved answers from your account. This cannot be undone.</p>
+          {deleteError && <p role="alert" className="hub-form-error">{deleteError}</p>}
+          <div className="er-confirm-actions">
+            <button type="button" className="hub-outline-btn" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }}>Keep result</button>
+            <button type="button" className="er-danger-btn" onClick={() => void removeResult()} disabled={deleteBusy}><Trash2 size={14} /> {deleteBusy ? 'Deleting…' : 'Delete result'}</button>
+          </div>
+        </div>
+      </dialog>
     </HubLayout>
   );
 }
