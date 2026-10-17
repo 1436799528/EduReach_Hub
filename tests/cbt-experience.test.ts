@@ -85,7 +85,7 @@ test('question positions and subjects are stated per question', () => {
   const shell = read('pages/CbtSessionPage.tsx');
   assert.match(shell, /Question \{index \+ 1\} of \{questions\.length\}/, 'the position is always visible');
   assert.match(shell, /er-exam-subject-pill/, 'and so is the subject');
-  assert.match(shell, /er-exam-subject-rail/, 'with the paper structure shown across subjects');
+  assert.match(shell, /er-exam-subject-tabs/, 'with subject tabs shown across the paper');
 });
 
 test('the offline strategy never replaces the page', () => {
