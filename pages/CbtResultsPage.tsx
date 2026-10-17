@@ -202,7 +202,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
                 <button type="button" className="hub-outline-btn" onClick={printResult}><Printer size={15} /> Print</button>
                 <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download</button>
-                {result?.attempt?.mode === 'practice' && <button type="button" className="hub-outline-btn" onClick={() => { setDeleteError(''); setConfirmDelete(true); }}><Trash2 size={15} /> Delete result</button>}
+                {result?.attempt?.id && <button type="button" className="hub-outline-btn" onClick={() => { setDeleteError(''); setConfirmDelete(true); }}><Trash2 size={15} /> Delete result</button>}
                 <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt')}><ArrowLeft size={15} /> Back to CBT</button>
               </div>
 
@@ -244,7 +244,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
         <div className="er-confirm-body" style={{ position: 'relative' }}>
           <button type="button" aria-label="Close delete confirmation" title="Close" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }} disabled={deleteBusy} style={{ position: 'absolute', top: 8, right: 8, display: 'grid', placeItems: 'center', width: 34, height: 34, border: '1px solid #d8dee8', borderRadius: 8, background: '#fff', color: '#344054', cursor: 'pointer' }}><X size={18} /></button>
           <h2 id="er-result-delete-title" style={{ paddingRight: 36 }}>Delete this CBT result?</h2>
-          <p>This will permanently remove this practice result and its saved answers from your account. This cannot be undone.</p>
+          <p>This will permanently remove this CBT result and its saved answers from your account. This cannot be undone.</p>
           {deleteError && <p role="alert" className="hub-form-error">{deleteError}</p>}
           <div className="er-confirm-actions">
             <button type="button" className="hub-outline-btn" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }}>Keep result</button>
