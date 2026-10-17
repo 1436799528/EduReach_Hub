@@ -447,7 +447,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       </p>
                     </div>
 
-                    {mode === 'practice' && <div className="er-setup-full-width">
+                    {mode === 'practice' && <>
+                    <div className="er-setup-full-width">
                       <span className="er-setup-label">Number of questions</span>
                       <div className="er-setup-duration-options" role="radiogroup" aria-label="Choose how many questions">
                         {countChoices.map((count) => (
@@ -473,7 +474,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       <p className="er-setup-field-note">
                         <Clock3 size={14} /> Time is calculated automatically from the question count and the exam's standard duration. The countdown cannot be extended once the test starts.
                       </p>
-                    </div>}
+                    </div>
+                    </>}
                   </div>
                 )}
 
