@@ -423,7 +423,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       <span className="er-setup-label">Subject group</span>
                       <div className="er-setup-duration-options" role="radiogroup" aria-label="Filter subjects by group">
                         {(['General', 'Science', 'Commercial', 'Arts & Humanities'] as const).map((track) => (
-                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); setFormError(''); }}>
+                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); const english = availability.find((entry) => /english/i.test(entry.subject))?.subject; setPracticeSubjects(english ? [english] : []); setFormError(''); }}>
                             {track === 'Arts & Humanities' ? 'Arts' : track}
                           </button>
                         ))}
