@@ -240,7 +240,7 @@
 .er-exam-timer { background: var(--er-navy-soft); }
 .er-exam-timer-track { background: rgba(255,255,255,.18); }
 .er-exam-timer-track span { background: var(--er-tangerine); }
-.er-exam-timer b.is-critical { color: #ffd3cc; }
+.er-exam-timer b.is-critical { color: var(--er-error-surface); }
 .er-exam-tool { background: var(--er-navy-soft); border-color: rgba(255,255,255,.18); color: #fff; }
 .er-exam-tool:hover { background: var(--er-crimson-deep); }
 .er-exam-end { color: #ffe2dc; border-color: rgba(255,255,255,.35); }
@@ -277,7 +277,7 @@
 .er-exam-palette-legend .is-marked { color: var(--er-gold); }
 .er-exam-palette-group h3 { color: var(--er-navy); }
 .er-exam-palette-cell { min-height: 40px; border-radius: var(--er-radius-sm); border-color: var(--er-border-strong); background: var(--er-surface); color: var(--er-text-primary); }
-.er-exam-palette-cell.is-answered { background: var(--er-success-soft); border-color: #bfe6cf; color: var(--er-success); }
+.er-exam-palette-cell.is-answered { background: var(--er-success-soft); border-color: var(--er-success); color: var(--er-success); }
 .er-exam-palette-cell.is-marked { border-color: var(--er-gold); background: var(--er-gold-soft); color: var(--er-gold); }
 .er-exam-palette-cell.is-current { outline: 2px solid var(--er-crimson); }
 .er-exam-palette-submit { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
