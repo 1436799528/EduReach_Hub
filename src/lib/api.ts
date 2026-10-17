@@ -1602,7 +1602,7 @@ export async function abandonConfiguredCbt(attemptId: string): Promise<void> {
 
 export async function deleteCbtAttempt(attemptId: string): Promise<void> {
   const headers = await authHeaders();
-  if (!headers.Authorization) throw new Error('Please sign in to manage your practice history.');
+  if (!headers.Authorization) throw new Error('Please sign in to manage your CBT history.');
   await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}`, { method: 'DELETE', headers });
   try {
     localStorage.removeItem(localStorageKey(`cbt-result-${attemptId}`));
