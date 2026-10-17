@@ -72,6 +72,10 @@ test('destructive actions are confirmed and the server enforces them', () => {
   const dashboard = read('pages/StudentDashboardV2.tsx');
   assert.match(dashboard, /dashboard\/cbt\/results\/\$\{encodeURIComponent\(row\.id\)\}/, 'dashboard review links pass the attempt id through the authenticated route');
 
+  const api = read('src/lib/api.ts');
+  assert.match(api, /savedAttempt && savedAttempt\.status === 'submitted'/, 'result review falls back to the owner-scoped saved score');
+  assert.match(api, /Number\(stored\.score\) === Number\(savedAttempt\.score\)/, 'local answer details are only used when they agree with the saved score');
+
   const migration = read('supabase/migrations/20261002120000_cbt_practice_and_mock_modes.sql');
   assert.match(migration, /Only practice attempts can be deleted/, 'the rule is enforced in the database, not only the UI');
 });
