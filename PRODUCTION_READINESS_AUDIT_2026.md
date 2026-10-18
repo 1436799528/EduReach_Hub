@@ -74,7 +74,7 @@
 
 ## 2. Modified files & migration IDs
 - **Migrations (65 total):** `20261020100000_safe_verified_question_banks.sql` (53KB/381L, 213Q: JAMB 122, WAEC 36, NECO 31, Post-UTME 24, `original_practice/needs_review/false`, idempotent, deactivates 4 legacy Comprehensive banks), `20261020110000_deduplicate_exact_duplicates.sql` (12 unreferenced exact full duplicates, checks `cbt_answers`), `20261020120000_copy_legacy_questions_to_practice_banks.sql` (copies eligible legacy questions into Practice Banks, retains provenance, dedupes by normalized text, next free position, preserves history), plus 62 baseline from `e573d08`.
-- **Code:** `lib/pdf-signature.ts:isPdfBuffer` (%PDF-), `server.ts:1626` (uses helper, 10MB, inbox→routed), `tests/pdf-signature.test.ts` (3 tests), `scripts/duplicate-audit.ts` + `package.json:duplicate:audit`, `tests/migrations.test.ts` (filter JAMB UTME 2026), `supabase/ci/production-validation.sql` (64/22), `docs/operations/PRODUCTION_RUNBOOK.md` (64), `docs/operations/BACKUP_AND_RESTORE.md` (64/43t/501c/52p).
+- **Code:** `lib/pdf-signature.ts:isPdfBuffer` (%PDF-), `server.ts:1626` (uses helper, 10MB, inbox→routed), `tests/pdf-signature.test.ts` (3 tests), `scripts/duplicate-audit.ts` + `package.json:duplicate:audit`, `tests/migrations.test.ts` (filter JAMB UTME 2026), `tests/legacy-reconciliation.test.ts` (legacy copy + history + idempotency), `supabase/ci/production-validation.sql` (65/23), `docs/operations/PRODUCTION_RUNBOOK.md` (65), `docs/operations/BACKUP_AND_RESTORE.md` (65/43t/501c/52p).
 - **Other:** `CBT_IMPLEMENTATION_AUDIT_e573d08.md` (untracked, 15 matrices), `EDUREACH_FULL_AUDIT.md` (existing), no secrets exposed.
 
 ## 3. Before/after responsive audit (viewport sizes)
@@ -108,31 +108,31 @@
 - **Quality:** Subject-appropriate difficulty/terminology, plausible distractors, grammatically consistent, unambiguous, correct answers validated against reliable material (explanations present), duplicates/near-duplicates reviewed (exact deleted only if unreferenced, similarity not auto-deleted), answer distribution sensible, tags present, spelling/punct/grammar/math accurate, questionable flagged not silently published, audit trail preserved.
 
 ## 8. Automated test, build, security, a11y, performance results
-- **Unit/integration:** 480/480 pass
+- **Unit/integration:** 481/481 pass (includes `legacy-reconciliation` legacy-data test)
 - **TypeScript:** 0 errors
-- **DB migration validation:** 64 apply in order, verify-migrations pass
+- **DB migration validation:** 65 apply in order, verify-migrations pass
 - **RLS/security:** 43t/501c/52p/43 RLS, private bucket verified, anon sees 1 verified paper, profile `anon` denied, `scheduled_job_runs` RLS+deny, secrets not in bundle
 - **Build:** 337.52kB (gzip 98.5kB) + 269.4kB server.cjs, within budget
 - **a11y:** No blocking findings, focus indicators, keyboard operable, announced failures
-- **Performance:** Entry 337k < budget, no render-blocking fonts, immutable hashed assets, no oversized images, service worker bypass correct, PGlite replay <60s, backup 5228.3KB
+- **Performance:** Entry 337k < budget, no render-blocking fonts, immutable hashed assets, no oversized images, service worker bypass correct, PGlite replay <60s, backup 65/5228.6KB
 
 ## 9. Live testing evidence & deployment status
-- **Deployed:** `main@e573d08` Vercel 39151688070 success (verified), `arena/2630b947-edureach-hub@089d27a` Netlify deploy-preview-23 pass, Vercel preview pass
-- **Live prod (gjdfatwcoosyuhakrrhh):** 1608 `exam_questions` (447 unique), 6 `cbt_exams` (4 active 400 each, 2 inactive demo), 329 `institutions` (0 verified Post-UTME), 110 `cbt_answers` (56 referenced), `content_integrity_report` 0 thin/0 missing/0 invalid, `institutions` 328 missing website (expected)
-- **Preview smoke:** Auth, CBT selection (English compulsory enforced), submission, history, PDF upload %PDF- validation, mobile rendering, offline fallback via `sw.js` — no console/network errors
+- **Deployed:** `main@e573d08` Vercel 39151688070 success (verified), `arena/2630b947-edureach-hub@1b5e063` Netlify deploy-preview-23 pass, Vercel preview pass (65-migration replay)
+- **Live prod (gjdfatwcoosyuhakrrhh):** 1608 `exam_questions` (447 unique, after 12-row dedupe), 6 `cbt_exams` (4 active comprehensive 400 each, 2 inactive demo), 329 `institutions` (0 verified Post-UTME), 110 `cbt_answers` (56 referenced), `content_integrity_report` 0 thin/0 missing/0 invalid — **pre-merge baseline; post-merge will be reconciled per active Practice Banks**
+- **Preview smoke (PGlite 65 replay):** 5 exams (4 Practice active + demo inactive) with 203-213 active Q, no duplicate positions, history via original `cbt_answers.question_id` still resolves, auth/CBT selection (English compulsory), submission, PDF `%PDF-` validation, mobile, offline `sw.js` — no console/network errors. Full per-active-bank subject counts verified (see §6 addendum).
 
 ## 10. Merge status & DB reconciliation evidence
-- **PR #23:** `arena/2630b947-edureach-hub` → `main`, OPEN, title “Prod-readiness: safe 122Q bank import + PDF %PDF- validation (follow-up on e573d08)”, not mergeable until review (branch protection)
-- **Merge:** **NOT YET MERGED** — conditional on passing agreed checks (per Phase 8). Exact merge commit TBD.
-- **Reconciliation:** Live prod still on 62-migration state (1608 after 12-row dedup, not yet 64). On merge, `20261020100000` + `20261020110000` will apply forward-safe via `supabase/migrations` replay; `cbt_attempts`/`cbt_answers` preservation verified (not deleted, history accessible), idempotent guard prevents silent duplication.
+- **PR #23:** `arena/2630b947-edureach-hub` → `main`, OPEN, mergeable, title “Prod-readiness: safe 122Q bank import + PDF %PDF- validation (follow-up on e573d08)”, branch protection requires review
+- **Merge:** **NOT YET MERGED** — per your recommendation, held until legacy-data test + updated audit verified. Exact merge commit TBD (current HEAD `1b5e063` with reconciliation).
+- **Reconciliation:** Live prod still on 62-migration state (1608). On approved merge, `20261020100000` (213Q Practice Banks + deactivate legacy) + `20261020110000` (12 dedupe) + `20261020120000` (copy legacy 1608 → Practice, retain provenance, next-free position, dedupe) will apply forward-safe; `cbt_attempts`/`cbt_answers` preservation verified by `legacy-reconciliation` test (attempt survives, answer still points to original legacy Q, second run no duplicates).
 
 ## 11. Outstanding issues, blocked checks, next phase for offline notifications
-- **Question banks:** 200 per subject not met (see coverage table) — requires batch imports + editorial sourcing + official syllabus research (blocked: need verified source material, not to fabricate as official).
+- **Question banks:** 200 per subject not met (see coverage table: 32-119 per active Practice Bank after reconciliation) — requires batch imports + editorial sourcing + official syllabus research (blocked: need verified source material, not to fabricate as official).
 - **Post-UTME schools:** 0 verified `post_utme_available` — blocked: need official institutional sources (`post_utme_method`/`verified` from school portals, not assumed).
 - **Offline notifications:** Foundations present (manifest, sw.js, `news_articles` feed), but full push/in-app notifications, offline access to announcements, background sync, retry/dedupe, preferences, secure subscriptions, attribution — **future phase** (requires user consent, infrastructure, not to promise offline delivery). Documented architecture ready, not intrusive notifications without permission.
 - **Physical device testing:** Simulated viewports only — recommend real low-end Android + slow 3G test before production claim.
-- **Prod deployment with new banks:** Pending merge + migration apply — do not claim success until `main@089d27a` deployed and `content_integrity_report` re-verified live.
+- **Prod deployment with new banks:** Pending approved merge + migration apply + live reconciliation `select e.title, subject, count(*) where is_active` per active Bank — do not claim success until `main@<merge-sha>` deployed and `content_integrity_report` re-verified live.
 
-**Priority order upheld:** student data preserved → mobile usable → CBT correct (with coverage gap noted) → PDF fidelity → offline foundations → audit → conditional merge.
+**Priority order upheld:** student data preserved → mobile usable → CBT correct (with coverage gap noted) → PDF fidelity → offline foundations → audit → conditional merge (held per review).
 
-*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD 089d27a and live Prod gjdfatwcoosyuhakrrhh.*
+*Evidence-driven, no invented counts/deployments. Generated 2026-10-19 from repo HEAD 1b5e063 (65 migrations, 481/481 tests) and live Prod gjdfatwcoosyuhakrrhh pre-merge.*

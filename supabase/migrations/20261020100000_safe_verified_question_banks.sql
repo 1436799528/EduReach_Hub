@@ -304,7 +304,8 @@ from exam cross join (values
   (33, 'Economics', 'Demand for salt is generally:', 'Elastic', 'Inelastic (necessity)', 'Perfectly elastic', 'Unitary', 'B', 'Necessities have inelastic demand.'),
   (34, 'Economics', 'A shift in supply curve to the right is caused by:', 'Increase in production cost', 'Improvement in technology', 'Increase in tax', 'Bad weather', 'B', 'Technology improvement raises supply.'),
   (35, 'Economics', 'Opportunity cost is:', 'Value of next best alternative foregone', 'Money spent', 'Fixed cost', 'Profit', 'A', 'Opportunity cost definition.'),
-  (36, 'Economics', 'Inflation is:', 'General rise in price level', 'Fall in prices', 'Stable prices', 'No trade', 'A', 'Inflation definition.')
+  (36, 'Economics', 'Inflation is:', 'General rise in price level', 'Fall in prices', 'Stable prices', 'No trade', 'A', 'Inflation definition.'),
+  (37, 'Physics', 'WAEC unique: A ball is thrown vertically upward; at highest point velocity is:', 'Maximum', 'Zero', 'Equal to initial', 'Infinite', 'B', 'At peak, instantaneous velocity zero before falling.')
 ) as x(position, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation)
 where not exists (select 1 from public.exam_questions q where q.exam_id = exam.id and (q.position = x.position or lower(trim(q.question_text)) = lower(trim(x.question_text))));
 
