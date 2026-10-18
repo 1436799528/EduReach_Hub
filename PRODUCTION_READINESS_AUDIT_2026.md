@@ -112,7 +112,7 @@
 - **Quality:** Subject-appropriate difficulty/terminology, plausible distractors, grammatically consistent, unambiguous, correct answers validated against reliable material (explanations present), duplicates/near-duplicates reviewed (exact deleted only if unreferenced, similarity not auto-deleted), answer distribution sensible, tags present, spelling/punct/grammar/math accurate, questionable flagged not silently published, audit trail preserved.
 
 ## 8. Automated test, build, security, a11y, performance results
-- **Unit/integration:** 481/481 pass (includes `legacy-reconciliation` legacy-data test)
+- **Unit/integration:** 480/480 pass (includes `legacy-reconciliation` legacy-data test — 481 in prior draft included an extra debug test; 480 is verified post-fix)
 - **TypeScript:** 0 errors
 - **DB migration validation:** 65 apply in order, verify-migrations pass
 - **RLS/security:** 43t/501c/52p/43 RLS, private bucket verified, anon sees 1 verified paper, profile `anon` denied, `scheduled_job_runs` RLS+deny, secrets not in bundle
@@ -139,4 +139,4 @@
 
 **Priority order upheld:** student data preserved → mobile usable → CBT correct (with coverage gap noted) → PDF fidelity → offline foundations → audit → conditional merge (held per review).
 
-*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD ee56454 (65 migrations, 481/481 tests) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO count reconciled: 31 is active Practice Bank count (test fixtures add +1 only in test DB, not in replay).*
+*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD fd40d26 (65 migrations, 480/480 tests verified 18 Oct 22:59 UTC) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO count reconciled: 31 is active Practice Bank count (test fixtures add +1 only in test DB, not in replay).*
