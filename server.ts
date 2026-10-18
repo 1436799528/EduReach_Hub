@@ -493,6 +493,7 @@ app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, re
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const { title, exam_body, subject, description, duration_minutes, is_active, format_status, official_guidance_url, format_notes, guidance_year } = req.body || {};
     const duration = Number(duration_minutes);
+    if (format_status === 'verified' && !(typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()))) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
     if (!title?.trim() || !exam_body?.trim() || !subject?.trim() || !Number.isInteger(duration) || duration < 5 || duration > 180) {
       return res.status(400).json({ error: 'Valid title, exam body, subject and duration are required.' });
     }
@@ -541,6 +542,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     if (req.body?.format_status !== undefined) {
       const value = String(req.body.format_status);
       if (!['verified', 'partially_verified', 'unverified'].includes(value)) return res.status(400).json({ error: 'Invalid exam format verification status.' });
+      if (value === 'verified' && !(typeof req.body?.official_guidance_url === 'string' && /^https:\/\//i.test(req.body.official_guidance_url.trim())) && !existing) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
       patch.format_status = value;
     }
     if (req.body?.official_guidance_url !== undefined) {
@@ -616,6 +618,8 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
+    if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
+    if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
     const supabase = getServerSupabase();
     const { data: exam } = await supabase.from('cbt_exams').select('id,subject').eq('id', req.params.examId).maybeSingle();
     if (!exam) return res.status(404).json({ error: 'CBT exam not found.' });
