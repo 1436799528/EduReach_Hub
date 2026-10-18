@@ -491,7 +491,7 @@ app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) 
 app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { title, exam_body, subject, description, duration_minutes, is_active, format_status, official_guidance_url, format_notes, guidance_year } = req.body || {};
+    const { title, exam_body, subject, description, duration_minutes, is_active, format_status, official_guidance_url, format_notes, guidance_year, institution_id } = req.body || {};
     const duration = Number(duration_minutes);
     if (format_status === 'verified' && !(typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()))) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
     if (!title?.trim() || !exam_body?.trim() || !subject?.trim() || !Number.isInteger(duration) || duration < 5 || duration > 180) {
@@ -505,8 +505,9 @@ app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, re
       official_guidance_url: typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()) ? official_guidance_url.trim().slice(0, 1000) : null,
       format_notes: typeof format_notes === 'string' ? format_notes.trim().slice(0, 1200) || null : null,
       guidance_year: Number.isInteger(Number(guidance_year)) && Number(guidance_year) >= 2000 && Number(guidance_year) <= 2100 ? Number(guidance_year) : null,
+      institution_id: String(exam_body).trim().toUpperCase() === 'POST-UTME' ? (String(institution_id || '').trim() || null) : null,
       created_by: adminUser.id,
-    }).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,created_at').single();
+    }).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'cbt_exam', p_entity_id: data.id, p_metadata: { title: data.title } });
     res.status(201).json({ item: data });
@@ -520,7 +521,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active,official_guidance_url').eq('id', req.params.examId).single();
+    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active,official_guidance_url,exam_body,institution_id').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (req.body?.title !== undefined) {
@@ -539,6 +540,10 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
       patch.subject = subject;
     }
     if (req.body?.description !== undefined) patch.description = String(req.body.description).trim().slice(0, 600) || null;
+    if (req.body?.institution_id !== undefined || req.body?.exam_body !== undefined) {
+      const body = String(req.body?.exam_body ?? existing.exam_body).trim().toUpperCase();
+      patch.institution_id = body === 'POST-UTME' ? (String(req.body?.institution_id ?? existing.institution_id ?? '').trim() || null) : null;
+    }
     if (req.body?.format_status !== undefined) {
       const value = String(req.body.format_status);
       if (!['verified', 'partially_verified', 'unverified'].includes(value)) return res.status(400).json({ error: 'Invalid exam format verification status.' });
@@ -565,7 +570,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     }
     if (req.body?.is_active !== undefined) patch.is_active = req.body.is_active === true;
     if (Object.keys(patch).length === 1) return res.status(400).json({ error: 'Nothing to update.' });
-    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,created_at').single();
+    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'cbt_exam', p_entity_id: existing.id, p_metadata: { title: data.title, is_active: data.is_active } });
     res.json({ item: data });
@@ -1929,7 +1934,7 @@ app.get('/api/cbt/exams', async (_req, res) => {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
       .from('cbt_exams')
-      .select('id,title,exam_body,subject,description,duration_minutes')
+      .select('id,title,exam_body,subject,description,duration_minutes,institution_id')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -2006,7 +2011,7 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
     const supabase = getServerSupabase();
     const { data: exam, error: examError } = await supabase
       .from('cbt_exams')
-       .select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year')
+       .select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id')
       .eq('id', req.params.examId)
       .eq('is_active', true)
       .maybeSingle();
