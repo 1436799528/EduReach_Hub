@@ -1,16 +1,16 @@
 -- Safe verified question-bank import — arena 122Q banks, deduplicated
--- Baseline: main @ e573d08 (62 migrations, no real banks, only 10Q demo)
+-- Reconciliation: preserve legacy comprehensive banks/history but deactivate them; activate the preferred Practice Bank catalogue.
 -- Source inspected: arena/2630b947-edureach-hub @ 5549783 (58 migrations, 212Q: JAMB 122, WAEC 36, NECO 30, Post-UTME 24)
 -- Verification:
 --   * Arena banks are original clones (no official past-question claim), style-matched to exam blueprints
 --   * Source metadata: original_practice, needs_review, format_verified=false (not claimed official)
 --   * No official source URL — presence does not prove official provenance (per 18120000 comment)
---   * Compared with main: main has only 'EduReach General Practice Demo' (10Q, active, Mixed) — zero overlap on normalized text
+--   * Production may already contain active '* Comprehensive Practice Bank' rows; those are deactivated after the preferred Practice Bank rows are created, preserving their history.
 --   * Deduplication: exact normalized question_text match (lower(trim())) is skipped; position guard also preserved
---   * No overwrite: existing exam rows kept, inserts are `where not exists` only; no UPDATE/DELETE of questions
+--   * Legacy exam/question rows and all attempt/answer history are preserved; old comprehensive exams are deactivated, never deleted.
 --   * Demo bank deactivated (is_active=false) but row kept for history — preserves student data
 --   * Near-duplicate (similarity) analysis NOT used for deletion — requires manual review (see duplicate audit note)
--- This migration is idempotent and safe to run on a database with existing student attempts.
+-- This migration is idempotent for question inserts and preserves existing student attempts/answers.
 
 -- Real JAMB/WAEC/NECO-style question banks — authentic exam feel
 -- Deactivates the generic demo bank and seeds curated, subject-aware banks that
@@ -46,6 +46,45 @@ insert into public.cbt_exams (title, exam_body, subject, description, duration_m
 select 'Post-UTME Practice Bank', 'Post-UTME', 'Multiple subjects',
        'Post-UTME screening practice — Use of English, Mathematics and General Knowledge as most schools set it. Timed 60 minutes.', 60, true
 where not exists (select 1 from public.cbt_exams where title = 'Post-UTME Practice Bank');
+
+-- Reconcile the legacy catalogue to the preferred Practice Bank records.
+-- Keep the old comprehensive rows and their questions for historical attempts,
+-- but retire them from the active catalogue. Do not delete or re-parent anything:
+-- cbt_attempts/cbt_answers may still reference the old exam/question IDs.
+update public.cbt_exams
+set is_active = false, updated_at = now()
+where is_active = true
+  and title in (
+    'JAMB UTME Comprehensive Practice Bank',
+    'WAEC SSCE Comprehensive Practice Bank',
+    'NECO SSCE Comprehensive Practice Bank',
+    'Post-UTME Comprehensive Practice Bank'
+  );
+
+-- Fail the migration if the intended four banks are not the only active
+-- records for these four exam bodies. This guards against duplicate catalogue
+-- entries if a legacy title differs from the known production pattern.
+do $
+declare
+  active_jamb integer;
+  active_waec integer;
+  active_neco integer;
+  active_post_utme integer;
+begin
+  select count(*) into active_jamb from public.cbt_exams
+    where is_active = true and exam_body = 'JAMB';
+  select count(*) into active_waec from public.cbt_exams
+    where is_active = true and exam_body = 'WAEC';
+  select count(*) into active_neco from public.cbt_exams
+    where is_active = true and exam_body = 'NECO';
+  select count(*) into active_post_utme from public.cbt_exams
+    where is_active = true and exam_body = 'Post-UTME';
+
+  if active_jamb <> 1 or active_waec <> 1 or active_neco <> 1 or active_post_utme <> 1 then
+    raise exception 'Question bank reconciliation failed: active counts JAMB %, WAEC %, NECO %, Post-UTME %',
+      active_jamb, active_waec, active_neco, active_post_utme;
+  end if;
+end $;
 
 -- JAMB UTME — Use of English 1-24 (passage, lexis, antonyms, grammar, idioms) --
 with exam as (select id from public.cbt_exams where title = 'JAMB UTME Practice Bank' limit 1)
