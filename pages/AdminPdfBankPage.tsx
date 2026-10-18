@@ -3,10 +3,14 @@ import { FileText, RefreshCw, Upload, Route, FolderOpen } from 'lucide-react';
 import { userFacingError } from '../lib/errors';
 import {
   fetchAdminInstitutions,
+  fetchAdminNews,
+  fetchAdminOpportunities,
   fetchAdminPdfBank,
   routeAdminPdf,
   uploadAdminPdf,
   type AdminInstitution,
+  type AdminNewsArticle,
+  type Opportunity,
   type AdminPdfDocument,
 } from '../src/lib/api';
 
@@ -23,6 +27,8 @@ type Draft = {
   source_name: string;
   source_url: string;
   source_verified: boolean;
+  news_article_id: string;
+  opportunity_id: string;
 };
 const destinations: Array<{ value: Destination; label: string }> = [
   { value: 'inbox', label: 'Keep in inbox' },
@@ -46,6 +52,8 @@ function draftFor(item: AdminPdfDocument): Draft {
     source_name: item.source_name || '',
     source_url: item.source_url || '',
     source_verified: item.source_verified || false,
+    news_article_id: item.news_article_id || '',
+    opportunity_id: item.opportunity_id || '',
   };
 }
 function fileAsDataUrl(file: File): Promise<string> {
@@ -60,6 +68,8 @@ function fileAsDataUrl(file: File): Promise<string> {
 export default function AdminPdfBankPage() {
   const [items, setItems] = useState<AdminPdfDocument[]>([]);
   const [institutions, setInstitutions] = useState<AdminInstitution[]>([]);
+  const [newsArticles, setNewsArticles] = useState<AdminNewsArticle[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
@@ -75,9 +85,11 @@ export default function AdminPdfBankPage() {
     setLoading(true);
     try {
       setError('');
-      const [documents, schools] = await Promise.all([fetchAdminPdfBank(), fetchAdminInstitutions()]);
+      const [documents, schools, news, opportunityRows] = await Promise.all([fetchAdminPdfBank(), fetchAdminInstitutions(), fetchAdminNews(), fetchAdminOpportunities()]);
       setItems(documents);
       setInstitutions(schools);
+      setNewsArticles(news);
+      setOpportunities(opportunityRows);
       setDrafts(Object.fromEntries(documents.map((item) => [item.id, draftFor(item)])));
     } catch (e) {
       setError(userFacingError(e, 'Unable to load the PDF bank.'));
@@ -112,18 +124,22 @@ export default function AdminPdfBankPage() {
     if (draft.destination === 'past_questions' && !draft.exam_body) { setError('Choose the examination body for this past question.'); return; }
     if (draft.destination === 'past_questions' && draft.exam_body === 'POST-UTME' && !draft.institution_id) { setError('Choose the institution for this Post-UTME paper.'); return; }
     if (draft.destination === 'past_questions' && draft.source_verified && !draft.source_name.trim()) { setError('Enter the source or organisation before marking this paper verified.'); return; }
+    if (['admission_guides', 'school_resources'].includes(draft.destination) && !draft.institution_id) { setError('Choose the institution this PDF belongs to.'); return; }
+    if (draft.destination === 'scholarships' && !draft.opportunity_id) { setError('Choose the opportunity this PDF supports.'); return; }
+    if (draft.destination === 'news_attachments' && !draft.news_article_id) { setError('Choose the news article this PDF attaches to.'); return; }
+    if (['past_questions', 'admission_guides', 'scholarships', 'news_attachments', 'school_resources'].includes(draft.destination) && draft.source_verified && !draft.source_name.trim()) { setError('Enter the source or organisation before marking this PDF verified.'); return; }
     setRoutingId(item.id); setError(''); setMessage('');
     try {
       const updated = await routeAdminPdf(item.id, { ...draft, paper_year: draft.paper_year || null });
       setItems((current) => current.map((row) => row.id === updated.id ? updated : row));
       setDrafts((current) => ({ ...current, [updated.id]: draftFor(updated) }));
-      setMessage(updated.destination === 'past_questions'
-        ? (updated.source_verified
-          ? 'PDF routed and marked source-verified. It is available in the matching student past-question filters.'
-          : 'PDF routed to the past-question library as an unpublished draft. Students cannot see it until you verify its source and classification.')
-        : updated.destination === 'inbox'
-          ? 'PDF returned to the inbox.'
-          : 'PDF filed under the selected destination in the central document bank.');
+      setMessage(updated.destination === 'inbox'
+        ? 'PDF returned to the inbox.'
+        : ['past_questions', 'admission_guides', 'scholarships', 'news_attachments', 'school_resources'].includes(updated.destination)
+          ? (updated.source_verified
+            ? 'PDF routed and published in its selected student section.'
+            : 'PDF routed as an unpublished draft. Students cannot see it until you verify its source and classification.')
+          : 'PDF filed in the private central bank for reference.');
     } catch (e) { setError(userFacingError(e, 'Unable to route this PDF.')); }
     finally { setRoutingId(''); }
   }
@@ -161,7 +177,7 @@ export default function AdminPdfBankPage() {
           return <article className="admin-card" key={item.id} style={{ padding: 18 }}>
             <div className="admin-card-header">
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><FileText size={22} /><div><h2 style={{ margin: 0 }}>{item.title}</h2><p className="muted" style={{ margin: '4px 0' }}>{item.original_filename} · {(item.file_bytes / 1024 / 1024).toFixed(2)} MB</p><small className="muted">Uploaded {new Date(item.created_at).toLocaleString()}</small></div></div>
-              <span className="admin-filter-count">{item.status === 'routed' ? (item.destination === 'past_questions' && !item.source_verified ? 'Routed · pending verification' : destinations.find((d) => d.value === item.destination)?.label || 'Routed') : item.status === 'rejected' ? 'Rejected' : 'Needs routing'}</span>
+              <span className="admin-filter-count">{item.status === 'routed' ? (['past_questions', 'admission_guides', 'scholarships', 'news_attachments', 'school_resources'].includes(item.destination) && !item.source_verified ? 'Routed · pending verification' : destinations.find((d) => d.value === item.destination)?.label || 'Routed') : item.status === 'rejected' ? 'Rejected' : 'Needs routing'}</span>
             </div>
             <div className="admin-news-form-grid">
               <label className="admin-field"><span>Title *</span><input className="admin-input" value={draft.title} onChange={(e) => patchDraft(item.id, { title: e.target.value })} /></label>
@@ -173,12 +189,15 @@ export default function AdminPdfBankPage() {
                 <label className="admin-field"><span>Course (optional)</span><input className="admin-input" value={draft.course} onChange={(e) => patchDraft(item.id, { course: e.target.value })} /></label>
                 <label className="admin-field"><span>Paper year</span><input className="admin-input" type="number" min="1954" max="2100" value={draft.paper_year} onChange={(e) => patchDraft(item.id, { paper_year: e.target.value })} /></label>
               </>}
+              {['admission_guides', 'school_resources'].includes(draft.destination) && <label className="admin-field"><span>Institution *</span><select className="admin-select" value={draft.institution_id} onChange={(e) => patchDraft(item.id, { institution_id: e.target.value })}><option value="">Choose school…</option>{institutions.map((school) => <option key={school.id} value={school.id}>{school.school_name}{school.state ? ` · ${school.state}` : ''}</option>)}</select></label>}
+              {draft.destination === 'scholarships' && <label className="admin-field"><span>Opportunity *</span><select className="admin-select" value={draft.opportunity_id} onChange={(e) => patchDraft(item.id, { opportunity_id: e.target.value })}><option value="">Choose opportunity…</option>{opportunities.map((opportunity) => <option key={opportunity.id} value={opportunity.id}>{opportunity.title}</option>)}</select></label>}
+              {draft.destination === 'news_attachments' && <label className="admin-field"><span>News article *</span><select className="admin-select" value={draft.news_article_id} onChange={(e) => patchDraft(item.id, { news_article_id: e.target.value })}><option value="">Choose news article…</option>{newsArticles.map((article) => <option key={article.id} value={article.id}>{article.title}</option>)}</select></label>}
               <label className="admin-field"><span>Description</span><textarea className="admin-textarea" value={draft.description} onChange={(e) => patchDraft(item.id, { description: e.target.value })} /></label>
               <label className="admin-field"><span>Source / organisation</span><input className="admin-input" value={draft.source_name} onChange={(e) => patchDraft(item.id, { source_name: e.target.value })} placeholder="e.g. Official university portal" /></label>
               <label className="admin-field"><span>Source URL (HTTPS)</span><input className="admin-input" value={draft.source_url} onChange={(e) => patchDraft(item.id, { source_url: e.target.value })} placeholder="https://…" /></label>
-              {draft.destination === 'past_questions' && <label className="admin-check-row" style={{ gridColumn: '1 / -1' }}>
+              {['past_questions', 'admission_guides', 'scholarships', 'news_attachments', 'school_resources'].includes(draft.destination) && <label className="admin-check-row" style={{ gridColumn: '1 / -1' }}>
                 <input type="checkbox" checked={draft.source_verified} onChange={(e) => patchDraft(item.id, { source_verified: e.target.checked })} />
-                <span><strong>Verify source and classification</strong><small className="muted" style={{ display: 'block' }}>Confirm you reviewed the document, exam body, school (if applicable), subject/year and provenance. If unchecked, it remains unpublished and students cannot access it.</small></span>
+                <span><strong>Verify source and classification</strong><small className="muted" style={{ display: 'block' }}>Confirm you reviewed the document, destination, linked school/article/opportunity and provenance. If unchecked, it remains unpublished and students cannot access it.</small></span>
               </label>}
             </div>
             {draft.destination !== 'inbox' && draft.destination !== 'past_questions' && <p className="admin-quality-gate">This destination is recorded in the central PDF bank. Student-facing attachment support for this content type must be connected before this file appears in that module.</p>}
