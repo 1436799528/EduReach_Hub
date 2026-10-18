@@ -2194,6 +2194,14 @@ app.get('/api/public/documents', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
+    if (destination === 'news_attachments') {
+      const { data: article, error: articleError } = await supabase.from('news_articles').select('id,published').eq('id', newsArticleId).maybeSingle();
+      if (articleError || !article?.published) return res.json({ items: [] });
+    }
+    if (destination === 'scholarships') {
+      const { data: opportunity, error: opportunityError } = await supabase.from('opportunities').select('id,is_active').eq('id', opportunityId).maybeSingle();
+      if (opportunityError || opportunity?.is_active !== true) return res.json({ items: [] });
+    }
     let query = supabase.from('document_bank')
       .select('id,title,description,source_name,source_url,storage_path,destination,institution_id,news_article_id,opportunity_id,subject,course,paper_year,created_at')
       .eq('destination', destination).eq('status', 'routed').eq('source_verified', true)
