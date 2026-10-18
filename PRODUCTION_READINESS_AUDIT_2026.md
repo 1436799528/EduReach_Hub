@@ -1,6 +1,6 @@
 # EduReach Hub — Production Readiness Audit 2026-10-18 (Addendum 2026-10-18 — Legacy Reconciliation)
 **Branch:** `arena/2630b947-edureach-hub` → `main` (PR #23 OPEN, not merged)  
-**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → `4de7bea` → `ee56454` → `fd40d26` → `9a2705e` → `e22fbae` → **65 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql`)  
+**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → `4de7bea` → `ee56454` → `fd40d26` → `9a2705e` → `e22fbae` → `b4c467b` → **65 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql`) · *This audit commit will become PR head on push*  
 **Baseline:** `main@c909ae2` / `e573d08` (62 migrations) → **65 migrations** after this work  
 **Live prod:** `EduReach-V1 gjdfatwcoosyuhakrrhh` eu-west-1 ACTIVE_HEALTHY, `main@e573d08` deployed, **PR not merged — reconciliation implemented, PR open per review**
 
@@ -121,13 +121,13 @@
 - **Performance:** Entry 337k < budget, no render-blocking fonts, immutable hashed assets, no oversized images, service worker bypass correct, PGlite replay <60s, backup 65/5228.6KB
 
 ## 9. Live testing evidence & deployment status
-- **Deployed:** `main@e573d08` Vercel 39151688070 success (verified), `arena/2630b947-edureach-hub@e22fbae` Netlify deploy-preview-23 pass, Vercel preview pass (65-migration replay)
+- **Deployed:** `main@e573d08` Vercel 39151688070 success (verified), `arena/2630b947-edureach-hub@b4c467b` Netlify deploy-preview-23 pass, Vercel preview pass (65-migration replay)
 - **Live prod (gjdfatwcoosyuhakrrhh):** 1608 `exam_questions` (447 unique, after 12-row dedupe), 6 `cbt_exams` (4 active comprehensive 400 each, 2 inactive demo), 329 `institutions` (0 verified Post-UTME), 110 `cbt_answers` (56 referenced), `content_integrity_report` 0 thin/0 missing/0 invalid — **pre-merge baseline; post-merge will be reconciled per active Practice Banks**
 - **Preview smoke (PGlite 65 replay):** 5 exams (4 Practice active + demo inactive) with 203-213 active Q, no duplicate positions, history via original `cbt_answers.question_id` still resolves, auth/CBT selection (English compulsory), submission, PDF `%PDF-` validation, mobile, offline `sw.js` — no console/network errors. Full per-active-bank subject counts verified (see §6 addendum).
 
 ## 10. Merge status & DB reconciliation evidence
 - **PR #23:** `arena/2630b947-edureach-hub` → `main`, OPEN, mergeable, title “Prod-readiness: safe 122Q bank import + PDF %PDF- validation (follow-up on e573d08)”, branch protection requires review
-- **Merge:** **NOT YET MERGED** — per your recommendation, held until legacy-data test + updated audit verified. Exact merge commit TBD (current HEAD `e22fbae` with reconciliation, 65 migrations, 480/480 tests).
+- **Merge:** **NOT YET MERGED** — per your recommendation, held until legacy-data test + updated audit verified. Exact merge commit TBD (current HEAD `b4c467b` with reconciliation, 65 migrations, 480/480 tests).
 - **Reconciliation:** Live prod still on 62-migration state (1608). On approved merge, `20261020100000` (213Q Practice Banks + deactivate legacy) + `20261020110000` (12 dedupe) + `20261020120000` (copy legacy 1608 → Practice, retain provenance, next-free position, dedupe) will apply forward-safe; `cbt_attempts`/`cbt_answers` preservation verified by `legacy-reconciliation` test (attempt survives, answer still points to original legacy Q, second run no duplicates).
 
 ## 11. Outstanding issues, blocked checks, next phase for offline notifications
@@ -139,4 +139,4 @@
 
 **Priority order upheld:** student data preserved → mobile usable → CBT correct (with coverage gap noted) → PDF fidelity → offline foundations → audit → conditional merge (held per review).
 
-*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD e22fbae (65 migrations, 480/480 tests verified 18 Oct 22:59 UTC, previews passing) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO 31 is active Practice Bank replay count (test fixtures add +1 only in test DB, not in replay). Content gate 200/subject unmet, 0 verified — PR held open per review.*
+*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD b4c467b (parent of this commit; this commit becomes PR head on push — 65 migrations, 480/480 tests verified 18 Oct 23:11 UTC, previews passing) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO 31 is active Practice Bank replay count (test fixtures add +1 only in test DB, not in replay). Content gate 200/subject unmet, 0 verified — PR held open per review.*
