@@ -13,8 +13,8 @@ import { AdminEmptyState, TableSkeleton } from '../src/components/admin/AdminKit
 // Schools manager: direct CRUD over the `institutions` rows the public
 // School Finder (/schools) reads. Same columns, one source of truth.
 
-type FormState = { id: string | null; school_name: string; acronym: string; slug: string; state: string; institution_type: string; website_url: string; admission_portal_url: string; student_portal_url: string; is_verified: boolean };
-const emptyForm: FormState = { id: null, school_name: '', acronym: '', slug: '', state: '', institution_type: '', website_url: '', admission_portal_url: '', student_portal_url: '', is_verified: false };
+type FormState = { id: string | null; school_name: string; acronym: string; slug: string; state: string; institution_type: string; website_url: string; admission_portal_url: string; student_portal_url: string; is_verified: boolean; post_utme_available: boolean; post_utme_method: ''|'cbt'|'handwritten'; post_utme_source_url: string; post_utme_verified: boolean };
+const emptyForm: FormState = { id: null, school_name: '', acronym: '', slug: '', state: '', institution_type: '', website_url: '', admission_portal_url: '', student_portal_url: '', is_verified: false, post_utme_available: false, post_utme_method: '', post_utme_source_url: '', post_utme_verified: false };
 
 const TYPES = ['university', 'polytechnic', 'college of education', 'other'];
 
@@ -58,6 +58,10 @@ export default function AdminSchoolsPage() {
         admission_portal_url: form.admission_portal_url.trim() || null,
         student_portal_url: form.student_portal_url.trim() || null,
         is_verified: form.is_verified,
+        post_utme_available: form.post_utme_available,
+        post_utme_method: form.post_utme_available ? form.post_utme_method || null : null,
+        post_utme_source_url: form.post_utme_available ? form.post_utme_source_url.trim() || null : null,
+        post_utme_verified: form.post_utme_available && form.post_utme_verified,
       };
       const saved = form.id ? await updateAdminInstitution(form.id, payload) : await createAdminInstitution(payload);
       setInstitutions((current) => {
@@ -143,6 +147,30 @@ export default function AdminSchoolsPage() {
                 <label className="admin-field"><span>Student portal URL (https)</span>
                   <input className="admin-input" style={{ width: '100%' }} value={form.student_portal_url} onChange={(e) => setForm({ ...form, student_portal_url: e.target.value })} placeholder="https://studentportal.unilag.edu.ng" />
                 </label>
+                <div className="admin-card" style={{ padding: 14, marginTop: 8 }}>
+                  <h3 style={{ margin: '0 0 6px' }}>Post-UTME participation</h3>
+                  <p className="muted" style={{ margin: '0 0 12px' }}>Only schools explicitly confirmed here will appear to students. Use the school's official announcement as evidence.</p>
+                  <label className="admin-check-row">
+                    <input type="checkbox" checked={form.post_utme_available} onChange={(e) => setForm({ ...form, post_utme_available: e.target.checked, post_utme_verified: e.target.checked ? form.post_utme_verified : false })} />
+                    <span>This institution conducts Post-UTME screening</span>
+                  </label>
+                  {form.post_utme_available && <>
+                    <div className="admin-field-row" style={{ marginTop: 12 }}>
+                      <label className="admin-field"><span>Screening method *</span>
+                        <select className="admin-select" value={form.post_utme_method} onChange={(e) => setForm({ ...form, post_utme_method: e.target.value as FormState['post_utme_method'], post_utme_verified: false })} required>
+                          <option value="">Choose method…</option><option value="cbt">Computer-based test (CBT)</option><option value="handwritten">Handwritten / paper-based</option>
+                        </select>
+                      </label>
+                      <label className="admin-field"><span>Official announcement URL *</span>
+                        <input className="admin-input" value={form.post_utme_source_url} onChange={(e) => setForm({ ...form, post_utme_source_url: e.target.value, post_utme_verified: false })} placeholder="https://school.edu.ng/..." required />
+                      </label>
+                    </div>
+                    <label className="admin-check-row">
+                      <input type="checkbox" checked={form.post_utme_verified} onChange={(e) => setForm({ ...form, post_utme_verified: e.target.checked })} disabled={!form.post_utme_method || !form.post_utme_source_url.trim()} />
+                      <span>Verified against the official school announcement</span>
+                    </label>
+                  </>}
+                </div>
               </div>
               <div className="admin-news-editor-actions">
                 <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save institution'}</button>
@@ -159,15 +187,16 @@ export default function AdminSchoolsPage() {
         <div className="admin-card">
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th scope="col">Institution</th><th scope="col">State</th><th scope="col">Type</th><th scope="col">Website</th><th scope="col" className="right">Actions</th></tr></thead>
+              <thead><tr><th scope="col">Institution</th><th scope="col">State</th><th scope="col">Type</th><th scope="col">Website</th><th scope="col">Post-UTME</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
-                {loading && <TableSkeleton rows={6} columns={5} />}
+                {loading && <TableSkeleton rows={6} columns={6} />}
                 {!loading && institutions.map((institution) => (
                   <tr key={institution.id}>
                     <td><b>{institution.school_name}</b><div className="muted">{institution.acronym || '—'}</div></td>
                     <td>{institution.state || '—'}</td>
                     <td>{institution.institution_type || '—'}</td>
                     <td>{institution.website_url ? <a href={institution.website_url} target="_blank" rel="noopener noreferrer">Open</a> : '—'}</td>
+                    <td>{institution.post_utme_available && institution.post_utme_verified ? (institution.post_utme_method === 'cbt' ? 'CBT verified' : 'Handwritten verified') : 'Not listed'}</td>
                     <td className="right">
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => setForm({
@@ -181,6 +210,10 @@ export default function AdminSchoolsPage() {
                           admission_portal_url: institution.admission_portal_url || '',
                           student_portal_url: institution.student_portal_url || '',
                           is_verified: institution.is_verified,
+                          post_utme_available: institution.post_utme_available || false,
+                          post_utme_method: institution.post_utme_method || '',
+                          post_utme_source_url: institution.post_utme_source_url || '',
+                          post_utme_verified: institution.post_utme_verified || false,
                         })}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${institution.school_name || 'this institution'}`} onClick={() => void remove(institution)}><Trash2 size={12} /></button>
                       </div>
