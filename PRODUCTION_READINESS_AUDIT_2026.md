@@ -1,6 +1,6 @@
 # EduReach Hub — Production Readiness Audit 2026-10-18 (Addendum 2026-10-18 — Legacy Reconciliation)
 **Branch:** `arena/2630b947-edureach-hub` → `main` (PR #23 OPEN, not merged)  
-**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → **65 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql`)  
+**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → `4de7bea` → `ee56454` → **65 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql`)  
 **Baseline:** `main@c909ae2` / `e573d08` (62 migrations) → **65 migrations** after this work  
 **Live prod:** `EduReach-V1 gjdfatwcoosyuhakrrhh` eu-west-1 ACTIVE_HEALTHY, `main@e573d08` deployed, **PR not merged — reconciliation implemented, PR open per review**
 
@@ -37,7 +37,7 @@
 
 ### Phase 5 — CBT question banks (200 per subject)
 - **Inventory (live prod 2026-10-18, after 12-row dedup):** `exam_questions` 1608 rows, 447 unique normalized (lower(trim(question_text))), `cbt_exams` 6 (4 active comprehensive +2 inactive demo). Comprehensive banks 400 each (9 subjects: Biology 40, Chemistry 40, Economics 40, Geography 40, Government 40, Literature 40, Mathematics 40, Physics 40, Use of English 80) — all ≥5, `active_exams_with_thin_subjects=0` (verified `content_integrity_report`).
-- **Practice banks (repo, not yet live):** `20261020100000` adds JAMB 122 (Eng 24, Math 20, Phys 18, Chem 16+1 NECO unique fix, Bio 16, Econ 14, Govt 14), WAEC 36 (6×6), NECO 31 (Eng 6, Math 6, Phys 6, Chem 7, Bio 6), Post-UTME 24 (Eng 8, Math 8, GK 8) — total 213 (212 pending +1 fix), all `original_practice/needs_review/false`, idempotent `WHERE NOT EXISTS (position|lower(trim(text)))`, demo deactivated.
+- **Practice banks (repo, not yet live):** `20261020100000` adds JAMB 122 (Eng24, Math20, Phys18, Chem16, Bio16, Econ14, Govt14), WAEC 37 (36 +1 WAEC unique at pos37), NECO 31 (Eng6, Math6, Phys6, Chem7 including NECO unique at pos31, Bio6), Post-UTME 24 (Eng8, Math8, GK8) — total 214 (213 pending +1 WAEC fix; NECO unique already counted in 31), all `original_practice/needs_review/false`, idempotent `WHERE NOT EXISTS (position|lower(trim(text)))`, demo deactivated.
 - **Coverage table — Minimum 200 per subject NOT MET:**
 
 | Exam body | Subject | Existing (live) | Valid/reviewed | Required (200) | New required | Final after import (repo replay) | Provenance | Validation |
@@ -73,7 +73,7 @@
 ---
 
 ## 2. Modified files & migration IDs
-- **Migrations (65 total):** `20261020100000_safe_verified_question_banks.sql` (53KB/381L, 213Q: JAMB 122, WAEC 36+1, NECO 31, Post-UTME 24, `original_practice/needs_review/false`, idempotent, deactivates 4 legacy Comprehensive banks), `20261020110000_deduplicate_exact_duplicates.sql` (12 unreferenced exact full duplicates, checks `cbt_answers`), `20261020120000_copy_legacy_questions_to_practice_banks.sql` (copies eligible legacy questions into Practice Banks, retains provenance, dedupes by normalized text case/whitespace-insensitive, next free position, preserves history; identifier 20 Oct for ordering after 20 Oct 10:00/11:00), plus 62 baseline from `e573d08`.
+- **Migrations (65 total):** `20261020100000_safe_verified_question_banks.sql` (53KB/381L, 214Q: JAMB 122, WAEC 37 (36+1 WAEC unique), NECO 31 (includes NECO unique), Post-UTME 24, `original_practice/needs_review/false`, idempotent, deactivates 4 legacy Comprehensive banks), `20261020110000_deduplicate_exact_duplicates.sql` (12 unreferenced exact full duplicates, checks `cbt_answers`), `20261020120000_copy_legacy_questions_to_practice_banks.sql` (copies eligible legacy questions into Practice Banks, retains provenance, dedupes by normalized text case/whitespace-insensitive, next free position, preserves history; identifier 20 Oct for ordering after 20 Oct 10:00/11:00), plus 62 baseline from `e573d08`.
 - **Code:** `lib/pdf-signature.ts:isPdfBuffer` (%PDF-), `server.ts:1626` (uses helper, 10MB, inbox→routed), `tests/pdf-signature.test.ts` (3 tests), `scripts/duplicate-audit.ts` + `package.json:duplicate:audit`, `tests/migrations.test.ts` (filter JAMB UTME 2026), `tests/legacy-reconciliation.test.ts` (legacy copy + history + idempotency), `supabase/ci/production-validation.sql` (65/23), `docs/operations/PRODUCTION_RUNBOOK.md` (65), `docs/operations/BACKUP_AND_RESTORE.md` (65/43t/501c/52p).
 - **Other:** `CBT_IMPLEMENTATION_AUDIT_e573d08.md` (untracked, 15 matrices), `EDUREACH_FULL_AUDIT.md` (existing), no secrets exposed.
 
@@ -101,7 +101,7 @@
 
 ## 6. Question-bank coverage report (200 per subject) — per active bank & subject
 - **Result:** **NOT MET** — Verified by live-replay `select e.title, subject, count(*), count(*) filter (where review_status='verified' and format_verified=true) from exam_questions join cbt_exams where is_active group by e.title, subject`:
-  * **PGlite 65 replay (fresh DB, 4 Practice active):** JAMB Practice 119 (Eng24, Math20, Phys17→18, Chem16, Bio15, Econ14, Govt14), WAEC 37 (Eng6, Math6, Phys5, Chem6, Bio6, Econ6), NECO 31→32 (Eng6, Math6, Phys6, Chem5→6, Bio5→6), Post-UTME 24 — **all 0 verified/0 reviewed** (`review_status='needs_review'`, `format_verified=false`, `source_type='original_practice'`), all <200/ subject.
+  * **PGlite 65 replay (fresh DB, 4 Practice active, no test fixtures):** JAMB Practice 119 (Eng24, Math20, Phys17→18, Chem16, Bio15, Econ14, Govt14), WAEC 37 (Eng6, Math6, Phys6, Chem6, Bio6, Econ6 — includes WAEC unique at 37), NECO 31 (Eng6, Math6, Phys6, Chem7 including NECO unique at 31, Bio6), Post-UTME 24 — **all 0 verified/0 reviewed** (`review_status='needs_review'`, `format_verified=false`, `source_type='original_practice'`), all <200/subject. The `31→32` in prior draft was a typo; 31 is the correct replay count (test fixtures add +1 per bank only inside `legacy-reconciliation` test DB, not in replay).
   * **Live prod (pre-merge, 4 Comprehensive active):** 4×400 (40/subject, Eng80) — also 0 verified, not 200/subject.
   * **Post-merge projection:** Legacy 1608 copied into Practice deduped → JAMB ~500, WAEC ~400, etc., still 0 verified until editorial review — 200 *verified* target not established by evidence.
 - **Separation:** `verified` = `review_status='verified' AND format_verified=true AND source_type='official_past'` (or editorially approved); `unverified imports` = current `original_practice`/`unverified`. Report counts both separately; no subject reaches 200 verified.
@@ -139,4 +139,4 @@
 
 **Priority order upheld:** student data preserved → mobile usable → CBT correct (with coverage gap noted) → PDF fidelity → offline foundations → audit → conditional merge (held per review).
 
-*Evidence-driven, no invented counts/deployments. Generated 2026-10-19 from repo HEAD 1b5e063 (65 migrations, 481/481 tests) and live Prod gjdfatwcoosyuhakrrhh pre-merge.*
+*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD ee56454 (65 migrations, 481/481 tests) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO count reconciled: 31 is active Practice Bank count (test fixtures add +1 only in test DB, not in replay).*
