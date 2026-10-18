@@ -479,7 +479,7 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
 app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,created_at').order('created_at', { ascending: false });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -491,7 +491,7 @@ app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) 
 app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { title, exam_body, subject, description, duration_minutes, is_active } = req.body || {};
+    const { title, exam_body, subject, description, duration_minutes, is_active, format_status, official_guidance_url, format_notes, guidance_year } = req.body || {};
     const duration = Number(duration_minutes);
     if (!title?.trim() || !exam_body?.trim() || !subject?.trim() || !Number.isInteger(duration) || duration < 5 || duration > 180) {
       return res.status(400).json({ error: 'Valid title, exam body, subject and duration are required.' });
@@ -500,8 +500,12 @@ app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, re
     const { data, error } = await supabase.from('cbt_exams').insert({
       title: title.trim(), exam_body: exam_body.trim().toUpperCase(), subject: subject.trim(),
       description: description?.trim() || null, duration_minutes: duration, is_active: is_active !== false,
+      format_status: ['verified', 'partially_verified', 'unverified'].includes(format_status) ? format_status : 'unverified',
+      official_guidance_url: typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()) ? official_guidance_url.trim().slice(0, 1000) : null,
+      format_notes: typeof format_notes === 'string' ? format_notes.trim().slice(0, 1200) || null : null,
+      guidance_year: Number.isInteger(Number(guidance_year)) && Number(guidance_year) >= 2000 && Number(guidance_year) <= 2100 ? Number(guidance_year) : null,
       created_by: adminUser.id,
-    }).select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').single();
+    }).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'cbt_exam', p_entity_id: data.id, p_metadata: { title: data.title } });
     res.status(201).json({ item: data });
@@ -534,6 +538,22 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
       patch.subject = subject;
     }
     if (req.body?.description !== undefined) patch.description = String(req.body.description).trim().slice(0, 600) || null;
+    if (req.body?.format_status !== undefined) {
+      const value = String(req.body.format_status);
+      if (!['verified', 'partially_verified', 'unverified'].includes(value)) return res.status(400).json({ error: 'Invalid exam format verification status.' });
+      patch.format_status = value;
+    }
+    if (req.body?.official_guidance_url !== undefined) {
+      const value = String(req.body.official_guidance_url || '').trim();
+      if (value && !/^https:\/\//i.test(value)) return res.status(400).json({ error: 'Official guidance links must use HTTPS.' });
+      patch.official_guidance_url = value.slice(0, 1000) || null;
+    }
+    if (req.body?.format_notes !== undefined) patch.format_notes = String(req.body.format_notes || '').trim().slice(0, 1200) || null;
+    if (req.body?.guidance_year !== undefined) {
+      const year = Number(req.body.guidance_year);
+      if (req.body.guidance_year !== null && req.body.guidance_year !== '' && (!Number.isInteger(year) || year < 2000 || year > 2100)) return res.status(400).json({ error: 'Guidance year must be between 2000 and 2100.' });
+      patch.guidance_year = req.body.guidance_year === null || req.body.guidance_year === '' ? null : year;
+    }
     if (req.body?.duration_minutes !== undefined) {
       const duration = Number(req.body.duration_minutes);
       if (!Number.isInteger(duration) || duration < 5 || duration > 180) {
@@ -543,7 +563,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     }
     if (req.body?.is_active !== undefined) patch.is_active = req.body.is_active === true;
     if (Object.keys(patch).length === 1) return res.status(400).json({ error: 'Nothing to update.' });
-    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').single();
+    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'cbt_exam', p_entity_id: existing.id, p_metadata: { title: data.title, is_active: data.is_active } });
     res.json({ item: data });
@@ -579,7 +599,7 @@ app.delete('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), asyn
 app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').eq('exam_id', req.params.examId).order('position', { ascending: true });
+    const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position,source_type,source_name,source_url,source_year,syllabus_topic,difficulty,review_status,format_verified,response_type').eq('exam_id', req.params.examId).order('position', { ascending: true });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -591,7 +611,7 @@ app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'),
 app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
+    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_url, source_year, syllabus_topic, difficulty, review_status, format_verified } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
@@ -604,7 +624,15 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
       exam_id: exam.id, subject: questionSubject, question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(),
       option_c: option_c.trim(), option_d: option_d.trim(), correct_option, explanation: explanation?.trim() || null,
       marks: numericMarks, position: numericPosition,
-    }).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
+      source_type: ['official_past_question','adapted_practice','original_practice','unverified'].includes(source_type) ? source_type : 'unverified',
+      source_name: typeof source_name === 'string' ? source_name.trim().slice(0, 200) || null : null,
+      source_url: typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim()) ? source_url.trim().slice(0, 1000) : null,
+      source_year: Number.isInteger(Number(source_year)) && Number(source_year) >= 1990 && Number(source_year) <= 2100 ? Number(source_year) : null,
+      syllabus_topic: typeof syllabus_topic === 'string' ? syllabus_topic.trim().slice(0, 200) || null : null,
+      difficulty: ['easy','moderate','difficult'].includes(difficulty) ? difficulty : null,
+      review_status: ['needs_review','approved','rejected'].includes(review_status) ? review_status : 'needs_review',
+      format_verified: format_verified === true,
+    }).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position,source_type,source_name,source_url,source_year,syllabus_topic,difficulty,review_status,format_verified,response_type').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'exam_question', p_entity_id: data.id, p_metadata: { exam_id: exam.id, position: numericPosition } });
     res.status(201).json({ item: data });
@@ -618,7 +646,7 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
 app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
+    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_url, source_year, syllabus_topic, difficulty, review_status, format_verified } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
@@ -630,7 +658,32 @@ app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'
       updated_at: new Date().toISOString(),
     };
     if (typeof subject === 'string' && subject.trim()) updatePayload.subject = subject.trim();
-    const { data, error } = await supabase.from('exam_questions').update(updatePayload).eq('id', req.params.questionId).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
+    if (source_type !== undefined) {
+      if (!['official_past_question','adapted_practice','original_practice','unverified'].includes(source_type)) return res.status(400).json({ error: 'Invalid question source type.' });
+      updatePayload.source_type = source_type;
+    }
+    if (source_name !== undefined) updatePayload.source_name = String(source_name || '').trim().slice(0, 200) || null;
+    if (source_url !== undefined) {
+      const value = String(source_url || '').trim();
+      if (value && !/^https:\/\//i.test(value)) return res.status(400).json({ error: 'Question source links must use HTTPS.' });
+      updatePayload.source_url = value.slice(0, 1000) || null;
+    }
+    if (source_year !== undefined) {
+      const year = Number(source_year);
+      if (source_year !== null && source_year !== '' && (!Number.isInteger(year) || year < 1990 || year > 2100)) return res.status(400).json({ error: 'Source year must be between 1990 and 2100.' });
+      updatePayload.source_year = source_year === null || source_year === '' ? null : year;
+    }
+    if (syllabus_topic !== undefined) updatePayload.syllabus_topic = String(syllabus_topic || '').trim().slice(0, 200) || null;
+    if (difficulty !== undefined) {
+      if (difficulty !== null && difficulty !== '' && !['easy','moderate','difficult'].includes(difficulty)) return res.status(400).json({ error: 'Invalid difficulty level.' });
+      updatePayload.difficulty = difficulty || null;
+    }
+    if (review_status !== undefined) {
+      if (!['needs_review','approved','rejected'].includes(review_status)) return res.status(400).json({ error: 'Invalid review status.' });
+      updatePayload.review_status = review_status;
+    }
+    if (format_verified !== undefined) updatePayload.format_verified = format_verified === true;
+    const { data, error } = await supabase.from('exam_questions').update(updatePayload).eq('id', req.params.questionId).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position,source_type,source_name,source_url,source_year,syllabus_topic,difficulty,review_status,format_verified,response_type').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'exam_question', p_entity_id: data.id, p_metadata: { position: numericPosition } });
     res.json({ item: data });
@@ -1823,7 +1876,7 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
     const supabase = getServerSupabase();
     const { data: exam, error: examError } = await supabase
       .from('cbt_exams')
-      .select('id,title,exam_body,subject,description,duration_minutes,is_active')
+       .select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year')
       .eq('id', req.params.examId)
       .eq('is_active', true)
       .maybeSingle();
@@ -1846,6 +1899,10 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
         subject: exam.subject,
         description: exam.description,
         defaultDurationMinutes: exam.duration_minutes,
+        formatStatus: exam.format_status || 'unverified',
+        officialGuidanceUrl: exam.official_guidance_url || null,
+        formatNotes: exam.format_notes || null,
+        guidanceYear: exam.guidance_year || null,
       },
       subjects: available.map((row) => ({ subject: row.subject, questionCount: Number(row.question_count) })),
       totalQuestions: available.reduce((sum, row) => sum + Number(row.question_count), 0),
