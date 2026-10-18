@@ -1966,9 +1966,23 @@ function normalizeSubjectKey(value: unknown): string {
   return s;
 }
 
-function selectCbtPaperQuestions(rows: any[], subjects: string[]) {
+function cbtSeededRank(seed: string, row: any): number {
+  // Stable FNV-1a hash: the same seed yields the same paper for guest display and scoring.
+  const input = `${seed}|${row.position}|${normalizeSubjectKey(row.subject)}|${row.question_text || ''}`;
+  let hash = 2166136261;
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function selectCbtPaperQuestions(rows: any[], subjects: string[], seed = '') {
   const requested = Array.from(new Set((subjects || []).map((value) => String(value).trim()).filter(Boolean)));
-  if (!requested.length) return rows.map((row, index) => ({ ...row, position: index + 1 }));
+  const rank = (row: any) => seed ? cbtSeededRank(seed, row) : Number(row.position) || 0;
+  if (!requested.length) {
+    return [...rows].sort((a, b) => rank(a) - rank(b)).map((row, index) => ({ ...row, position: index + 1 }));
+  }
   const paper: any[] = [];
   const usedKeys = new Set<string>();
   for (const subject of requested) {
@@ -1976,11 +1990,15 @@ function selectCbtPaperQuestions(rows: any[], subjects: string[]) {
     if (usedKeys.has(norm)) continue;
     usedKeys.add(norm);
     const limit = norm === 'english' ? 60 : 40;
-    const matches = rows.filter((row) => normalizeSubjectKey(row.subject) === norm).slice(0, limit);
+    const matches = rows
+      .filter((row) => normalizeSubjectKey(row.subject) === norm)
+      .sort((a, b) => rank(a) - rank(b))
+      .slice(0, limit);
     paper.push(...matches);
   }
   if (!paper.length && rows.length) {
-    return rows.slice(0, 60).map((row, index) => ({ ...row, position: index + 1 }));
+    return [...rows].sort((a, b) => rank(a) - rank(b)).slice(0, 60)
+      .map((row, index) => ({ ...row, position: index + 1 }));
   }
   return paper.map((row, index) => ({ ...row, position: index + 1 }));
 }
@@ -2551,7 +2569,7 @@ app.get('/api/cbt/exams/:examId/guest-questions', async (req, res) => {
       .order('position', { ascending: true });
     if (questionsError) throw questionsError;
 
-    const paper = selectCbtPaperQuestions(questions || [], subjects);
+    const paper = selectCbtPaperQuestions(questions || [], subjects, String(req.query.seed || '').slice(0, 128));
     if (!paper.length) return res.status(422).json({ error: 'This CBT exam has no questions for the selected subjects.' });
 
     res.json({
@@ -2592,7 +2610,7 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
       .order('position', { ascending: true });
     if (questionsError) throw questionsError;
 
-    const paper = selectCbtPaperQuestions(questions || [], subjects);
+    const paper = selectCbtPaperQuestions(questions || [], subjects, String(req.body?.paperSeed || '').slice(0, 128));
     if (!paper.length) return res.status(422).json({ error: 'This CBT exam has no questions for the selected subjects.' });
 
     // Corrections are released per attempted question, never for the paper as a
