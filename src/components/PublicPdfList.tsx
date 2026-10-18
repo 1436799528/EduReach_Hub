@@ -24,6 +24,7 @@ export default function PublicPdfList({
     const needsInstitution = destination === 'admission_guides' || destination === 'school_resources';
     if ((needsInstitution && !institutionId) || (destination === 'scholarships' && !opportunityId) || (destination === 'news_attachments' && !newsArticleId)) {
       setItems([]);
+      setLoading(false);
       return;
     }
     let active = true;
