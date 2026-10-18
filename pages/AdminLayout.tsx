@@ -5,6 +5,7 @@ import {
   Briefcase,
   CalendarDays,
   Database,
+  FileText,
   Globe,
   GraduationCap,
   Laptop,
@@ -151,6 +152,7 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'group', label: 'Analytics' },
   { kind: 'link', href: '/admin/analytics', label: 'Analytics & Reports', icon: <BarChart3 size={15} />, capability: 'analytics.read' },
   { kind: 'link', href: '/admin/content-manager', label: 'Data Control Center', icon: <Database size={15} />, capability: 'data.read' },
+  { kind: 'link', href: '/admin/pdf-bank', label: 'PDF Bank', icon: <FileText size={15} />, capability: 'data.read' },
   { kind: 'link', href: '/', label: 'View Public Site', icon: <Globe size={15} />, capability: null },
 ];
 
