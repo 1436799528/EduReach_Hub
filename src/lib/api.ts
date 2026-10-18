@@ -1366,6 +1366,10 @@ export type AdminCbtExam = {
   description: string | null;
   duration_minutes: number;
   is_active: boolean;
+  format_status: 'verified' | 'partially_verified' | 'unverified';
+  official_guidance_url: string | null;
+  format_notes: string | null;
+  guidance_year: number | null;
   created_at?: string;
 };
 
@@ -1471,7 +1475,7 @@ export type CbtAttemptPayload = {
 export type CbtBankSubject = { subject: string; questionCount: number };
 
 export type CbtBankPayload = {
-  exam: { id: string; title: string; examBody: string; subject: string; description: string | null; defaultDurationMinutes: number | null };
+  exam: { id: string; title: string; examBody: string; subject: string; description: string | null; defaultDurationMinutes: number | null; formatStatus?: 'verified' | 'partially_verified' | 'unverified'; officialGuidanceUrl?: string | null; formatNotes?: string | null; guidanceYear?: number | null };
   subjects: CbtBankSubject[];
   totalQuestions: number;
   limits: { minQuestions: number; maxQuestions: number; minMinutes: number; maxMinutes: number; maxSubjects: number } | null;
