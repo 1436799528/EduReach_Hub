@@ -1677,6 +1677,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     if (['admission_guides', 'school_resources'].includes(destination) && !institutionId) return res.status(400).json({ error: 'Choose the institution this school resource belongs to.' });
     if (destination === 'scholarships' && !opportunityId) return res.status(400).json({ error: 'Choose the opportunity this PDF supports.' });
     if (destination === 'news_attachments' && !newsArticleId) return res.status(400).json({ error: 'Choose the news article this PDF attaches to.' });
+    const supabase = getServerSupabase();
     if (destination === 'scholarships') {
       const { data: opportunity, error: opportunityError } = await supabase.from('opportunities').select('id').eq('id', opportunityId).maybeSingle();
       if (opportunityError || !opportunity) return res.status(400).json({ error: 'The selected opportunity could not be found.' });
@@ -1685,7 +1686,6 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
       const { data: article, error: articleError } = await supabase.from('news_articles').select('id').eq('id', newsArticleId).maybeSingle();
       if (articleError || !article) return res.status(400).json({ error: 'The selected news article could not be found.' });
     }
-    const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
     if (existingError || !existing) return res.status(404).json({ error: 'PDF document not found.' });
     let routedResourceId: string | null = existing.routed_resource_id || null;
@@ -1724,7 +1724,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     }
     const { data, error } = await supabase.from('document_bank').update({
       title, destination, exam_body: destination === 'past_questions' ? examBody : null,
-      institution_id: institutionId, subject, course, paper_year: paperYear,
+      subject, course, paper_year: paperYear,
       description: String(req.body?.description || '').trim().slice(0, 2000) || null,
       source_name: String(req.body?.source_name || '').trim().slice(0, 160) || null,
       source_url: sourceUrl, source_verified: req.body?.source_verified === true,
