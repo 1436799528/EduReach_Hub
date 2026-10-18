@@ -111,7 +111,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
     <div className="er-featured-grid">
       {list.map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
-          <NewsImage item={item} className="er-news-photo" />
+          <span className="er-featured-media"><NewsImage item={item} className="er-news-photo" /></span>
           <span className="er-featured-body">
             <small>
               {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}
