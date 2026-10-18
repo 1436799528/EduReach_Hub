@@ -78,15 +78,12 @@ export default function NewsPage() {
     [filteredItems],
   );
 
-  // The “Latest stories” list shows every published article; the two feature
-  // cards are already rendered above, so they are excluded there to avoid
-  // showing the same story twice back-to-back.
+  // The “Latest stories” list shows every published article. Only explicitly
+  // highlighted stories (maximum two) are excluded to avoid duplicate cards.
   const latestItems = useMemo(() => {
-    if (activeFilter !== 'ALL') return orderedItems;
-    const flagged = orderedItems.filter((item) => item.featured);
-    const featuredIds = new Set(flagged.slice(0, 2).map((item) => item.id));
+    const featuredIds = new Set(orderedItems.filter((item) => item.featured).slice(0, 2).map((item) => item.id));
     return orderedItems.filter((item) => !featuredIds.has(item.id));
-  }, [activeFilter, orderedItems]);
+  }, [orderedItems]);
 
   return (
     <HubLayout>
