@@ -1109,7 +1109,7 @@ app.post('/api/admin/institutions', requireCapability('institution.create'), asy
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
+    const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified,created_at,updated_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
@@ -1126,7 +1126,7 @@ app.patch('/api/admin/institutions/:institutionId', requireCapability('instituti
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
+    const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified,created_at,updated_at').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
