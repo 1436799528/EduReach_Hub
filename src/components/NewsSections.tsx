@@ -97,9 +97,8 @@ export function NewsRow({ item }: { item: NewsItem }) {
 }
 
 /**
- * Featured cards. Editorial control first: articles flagged “featured” in the
- * Newsroom lead; when nothing is flagged the two newest stories fill the slot
- * so the section never fabricates a feature state.
+ * Featured cards. Only articles explicitly flagged as student-critical in the
+ * Newsroom lead; ordinary recency does not promote a story into a highlight.
  */
 export function FeaturedNews({ items }: { items: NewsItem[] }) {
   if (!items.length) return null;
