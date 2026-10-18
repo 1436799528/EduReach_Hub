@@ -97,19 +97,20 @@ export function NewsRow({ item }: { item: NewsItem }) {
 }
 
 /**
- * Featured cards. Editorial control first: articles flagged “featured” in the
- * Newsroom lead; when nothing is flagged the two newest stories fill the slot
- * so the section never fabricates a feature state.
+ * Featured cards. Only articles explicitly flagged as student-critical in the
+ * Newsroom lead; ordinary recency does not promote a story into a highlight.
  */
 export function FeaturedNews({ items }: { items: NewsItem[] }) {
   if (!items.length) return null;
   const flagged = items.filter((item) => item.featured);
-  const list = (flagged.length ? flagged : items).slice(0, 2);
+  // Highlights are editorially selected; routine recency alone is not enough.
+  if (!flagged.length) return null;
+  const list = flagged.slice(0, 2);
   return (
     <div className="er-featured-grid">
       {list.map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
-          <NewsImage item={item} className="er-news-photo" />
+          <span className="er-featured-media"><NewsImage item={item} className="er-news-photo" /></span>
           <span className="er-featured-body">
             <small>
               {newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}

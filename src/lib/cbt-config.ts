@@ -10,6 +10,7 @@ export type CatalogExam = {
   subject: string;
   description: string | null;
   duration_minutes: number;
+  institution_id?: string | null;
 };
 
 export type SetupExamKey = 'jamb' | 'waec' | 'neco' | 'post-utme';

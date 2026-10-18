@@ -6,6 +6,7 @@ import { fetchOpportunity, type Opportunity } from '../src/lib/api';
 import { opportunityStatus } from '../src/lib/opportunityStatus';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
 import { isSupabaseConfigured } from '../src/lib/supabase';
+import PublicPdfList from '../src/components/PublicPdfList';
 
 function formatDate(value: string | null | undefined) {
   if (!value) return 'Not specified';
@@ -172,6 +173,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                 </div>
               </aside>
             </div>
+            <div style={{ padding: '0 22px 22px' }}><PublicPdfList destination="scholarships" title="Related documents" opportunityId={item.id} /></div>
           </article>
         </div>
       </div>

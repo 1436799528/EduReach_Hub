@@ -45,6 +45,7 @@ const AdminOpportunitiesPage = lazy(() => import('../../pages/AdminOpportunities
 const AdminSchoolsPage = lazy(() => import('../../pages/AdminSchoolsPage'));
 const AdminServicesPage = lazy(() => import('../../pages/AdminServicesPage'));
 const AdminContentManagerPage = lazy(() => import('../../pages/AdminContentManagerPage'));
+const AdminPdfBankPage = lazy(() => import('../../pages/AdminPdfBankPage'));
 
 // Slugs with a live application workflow live in src/data/liveServices.ts,
 // shared with the sitemap so the two can never disagree. Every other
@@ -123,6 +124,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/schools') return <AdminSchoolsPage />;
   if (path === '/admin/services') return <AdminServicesPage />;
   if (path === '/admin/content-manager') return <AdminContentManagerPage />;
+  if (path === '/admin/pdf-bank') return <AdminPdfBankPage />;
 
   if (path === '/') return <HubHomePage />;
   if (path === '/jamb') return <ExamHubPage exam="jamb" />;

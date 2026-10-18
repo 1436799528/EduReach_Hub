@@ -238,6 +238,7 @@ export const ADMIN_ROUTE_CAPABILITIES: ReadonlyArray<{ path: string; capability:
   { path: '/admin/users', capability: 'user.read' },
   { path: '/admin/analytics', capability: 'analytics.read' },
   { path: '/admin/content-manager', capability: 'data.read' },
+  { path: '/admin/pdf-bank', capability: 'data.read' },
 ];
 
 /**

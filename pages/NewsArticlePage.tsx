@@ -8,6 +8,7 @@ import { newsCategoryLabel } from '../src/data/newsCategories';
 import { applySeo, seoForArticle } from '../src/lib/seoMeta';
 import { formatNewsDate, NewsRow } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
+import PublicPdfList from '../src/components/PublicPdfList';
 
 function safeContentUrl(value: string | null) {
   const raw = String(value || '').trim();
@@ -187,6 +188,8 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                   <span className="hub-muted-label">No source link</span>
                 )}
               </div>
+
+              <PublicPdfList destination="news_attachments" title="Documents for this update" newsArticleId={item.id} />
 
               <div className="hub-share-strip">
                 <span>Share</span>

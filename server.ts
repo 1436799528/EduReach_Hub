@@ -189,7 +189,7 @@ app.get('/api/health/ready', async (_req, res) => {
 // Parse uploads only after authorization, using the endpoint's larger limit.
 const jsonBody = express.json({ limit: '1mb' });
 app.use((req, res, next) => {
-  if (req.method === 'POST' && req.path === '/api/admin/uploads') return next();
+  if (req.method === 'POST' && (req.path === '/api/admin/uploads' || req.path === '/api/admin/pdf-bank/upload')) return next();
   return jsonBody(req, res, next);
 });
 
@@ -479,7 +479,7 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
 app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').order('created_at', { ascending: false });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -491,17 +491,34 @@ app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) 
 app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { title, exam_body, subject, description, duration_minutes, is_active } = req.body || {};
+    const { title, exam_body, subject, description, duration_minutes, is_active, format_status, official_guidance_url, format_notes, guidance_year, institution_id } = req.body || {};
     const duration = Number(duration_minutes);
+    if (format_status === 'verified' && !(typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()))) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
     if (!title?.trim() || !exam_body?.trim() || !subject?.trim() || !Number.isInteger(duration) || duration < 5 || duration > 180) {
       return res.status(400).json({ error: 'Valid title, exam body, subject and duration are required.' });
     }
     const supabase = getServerSupabase();
+    const normalizedBody = String(exam_body).trim().toUpperCase();
+    const institutionId = String(institution_id || '').trim() || null;
+    if (normalizedBody === 'POST-UTME') {
+      if (!institutionId) return res.status(400).json({ error: 'Select a verified institution for a Post-UTME CBT bank.' });
+      const { data: school, error: schoolError } = await supabase.from('institutions')
+        .select('id,post_utme_available,post_utme_method,post_utme_verified')
+        .eq('id', institutionId).maybeSingle();
+      if (schoolError || !school || school.post_utme_available !== true || school.post_utme_verified !== true || school.post_utme_method !== 'cbt') {
+        return res.status(400).json({ error: 'A Post-UTME CBT bank can only be linked to a verified school that uses CBT.' });
+      }
+    }
     const { data, error } = await supabase.from('cbt_exams').insert({
       title: title.trim(), exam_body: exam_body.trim().toUpperCase(), subject: subject.trim(),
       description: description?.trim() || null, duration_minutes: duration, is_active: is_active !== false,
+      format_status: ['verified', 'partially_verified', 'unverified'].includes(format_status) ? format_status : 'unverified',
+      official_guidance_url: typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()) ? official_guidance_url.trim().slice(0, 1000) : null,
+      format_notes: typeof format_notes === 'string' ? format_notes.trim().slice(0, 1200) || null : null,
+      guidance_year: Number.isInteger(Number(guidance_year)) && Number(guidance_year) >= 2000 && Number(guidance_year) <= 2100 ? Number(guidance_year) : null,
+      institution_id: normalizedBody === 'POST-UTME' ? institutionId : null,
       created_by: adminUser.id,
-    }).select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').single();
+    }).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'cbt_exam', p_entity_id: data.id, p_metadata: { title: data.title } });
     res.status(201).json({ item: data });
@@ -515,7 +532,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active').eq('id', req.params.examId).single();
+    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active,official_guidance_url,exam_body,institution_id').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (req.body?.title !== undefined) {
@@ -534,6 +551,37 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
       patch.subject = subject;
     }
     if (req.body?.description !== undefined) patch.description = String(req.body.description).trim().slice(0, 600) || null;
+    if (req.body?.institution_id !== undefined || req.body?.exam_body !== undefined) {
+      const body = String(req.body?.exam_body ?? existing.exam_body).trim().toUpperCase();
+      const institutionId = String(req.body?.institution_id ?? existing.institution_id ?? '').trim() || null;
+      if (body === 'POST-UTME') {
+        if (!institutionId) return res.status(400).json({ error: 'Select a verified institution for a Post-UTME CBT bank.' });
+        const { data: school, error: schoolError } = await supabase.from('institutions')
+          .select('id,post_utme_available,post_utme_method,post_utme_verified')
+          .eq('id', institutionId).maybeSingle();
+        if (schoolError || !school || school.post_utme_available !== true || school.post_utme_verified !== true || school.post_utme_method !== 'cbt') {
+          return res.status(400).json({ error: 'A Post-UTME CBT bank can only be linked to a verified school that uses CBT.' });
+        }
+      }
+      patch.institution_id = body === 'POST-UTME' ? institutionId : null;
+    }
+    if (req.body?.format_status !== undefined) {
+      const value = String(req.body.format_status);
+      if (!['verified', 'partially_verified', 'unverified'].includes(value)) return res.status(400).json({ error: 'Invalid exam format verification status.' });
+      if (value === 'verified' && !(typeof req.body?.official_guidance_url === 'string' && /^https:\/\//i.test(req.body.official_guidance_url.trim())) && !(typeof existing.official_guidance_url === 'string' && /^https:\/\//i.test(existing.official_guidance_url.trim()))) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
+      patch.format_status = value;
+    }
+    if (req.body?.official_guidance_url !== undefined) {
+      const value = String(req.body.official_guidance_url || '').trim();
+      if (value && !/^https:\/\//i.test(value)) return res.status(400).json({ error: 'Official guidance links must use HTTPS.' });
+      patch.official_guidance_url = value.slice(0, 1000) || null;
+    }
+    if (req.body?.format_notes !== undefined) patch.format_notes = String(req.body.format_notes || '').trim().slice(0, 1200) || null;
+    if (req.body?.guidance_year !== undefined) {
+      const year = Number(req.body.guidance_year);
+      if (req.body.guidance_year !== null && req.body.guidance_year !== '' && (!Number.isInteger(year) || year < 2000 || year > 2100)) return res.status(400).json({ error: 'Guidance year must be between 2000 and 2100.' });
+      patch.guidance_year = req.body.guidance_year === null || req.body.guidance_year === '' ? null : year;
+    }
     if (req.body?.duration_minutes !== undefined) {
       const duration = Number(req.body.duration_minutes);
       if (!Number.isInteger(duration) || duration < 5 || duration > 180) {
@@ -543,7 +591,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     }
     if (req.body?.is_active !== undefined) patch.is_active = req.body.is_active === true;
     if (Object.keys(patch).length === 1) return res.status(400).json({ error: 'Nothing to update.' });
-    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,created_at').single();
+    const { data, error } = await supabase.from('cbt_exams').update(patch).eq('id', existing.id).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'cbt_exam', p_entity_id: existing.id, p_metadata: { title: data.title, is_active: data.is_active } });
     res.json({ item: data });
@@ -579,7 +627,7 @@ app.delete('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), asyn
 app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').eq('exam_id', req.params.examId).order('position', { ascending: true });
+    const { data, error } = await supabase.from('exam_questions').select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position,source_type,source_name,source_url,source_year,syllabus_topic,difficulty,review_status,format_verified,response_type').eq('exam_id', req.params.examId).order('position', { ascending: true });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
@@ -591,11 +639,12 @@ app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'),
 app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
+    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_url, source_year, syllabus_topic, difficulty, review_status, format_verified } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
+    if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
     const supabase = getServerSupabase();
     const { data: exam } = await supabase.from('cbt_exams').select('id,subject').eq('id', req.params.examId).maybeSingle();
     if (!exam) return res.status(404).json({ error: 'CBT exam not found.' });
@@ -604,7 +653,15 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
       exam_id: exam.id, subject: questionSubject, question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(),
       option_c: option_c.trim(), option_d: option_d.trim(), correct_option, explanation: explanation?.trim() || null,
       marks: numericMarks, position: numericPosition,
-    }).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
+      source_type: ['official_past_question','adapted_practice','original_practice','unverified'].includes(source_type) ? source_type : 'unverified',
+      source_name: typeof source_name === 'string' ? source_name.trim().slice(0, 200) || null : null,
+      source_url: typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim()) ? source_url.trim().slice(0, 1000) : null,
+      source_year: Number.isInteger(Number(source_year)) && Number(source_year) >= 1990 && Number(source_year) <= 2100 ? Number(source_year) : null,
+      syllabus_topic: typeof syllabus_topic === 'string' ? syllabus_topic.trim().slice(0, 200) || null : null,
+      difficulty: ['easy','moderate','difficult'].includes(difficulty) ? difficulty : null,
+      review_status: ['needs_review','approved','rejected'].includes(review_status) ? review_status : 'needs_review',
+      format_verified: format_verified === true,
+    }).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position,source_type,source_name,source_url,source_year,syllabus_topic,difficulty,review_status,format_verified,response_type').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'exam_question', p_entity_id: data.id, p_metadata: { exam_id: exam.id, position: numericPosition } });
     res.status(201).json({ item: data });
@@ -618,11 +675,12 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
 app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position } = req.body || {};
+    const { subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_url, source_year, syllabus_topic, difficulty, review_status, format_verified } = req.body || {};
     const numericMarks = Number(marks || 1); const numericPosition = Number(position);
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
+    if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
     const supabase = getServerSupabase();
     const updatePayload: Record<string, unknown> = {
       question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(), option_c: option_c.trim(),
@@ -630,7 +688,32 @@ app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'
       updated_at: new Date().toISOString(),
     };
     if (typeof subject === 'string' && subject.trim()) updatePayload.subject = subject.trim();
-    const { data, error } = await supabase.from('exam_questions').update(updatePayload).eq('id', req.params.questionId).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position').single();
+    if (source_type !== undefined) {
+      if (!['official_past_question','adapted_practice','original_practice','unverified'].includes(source_type)) return res.status(400).json({ error: 'Invalid question source type.' });
+      updatePayload.source_type = source_type;
+    }
+    if (source_name !== undefined) updatePayload.source_name = String(source_name || '').trim().slice(0, 200) || null;
+    if (source_url !== undefined) {
+      const value = String(source_url || '').trim();
+      if (value && !/^https:\/\//i.test(value)) return res.status(400).json({ error: 'Question source links must use HTTPS.' });
+      updatePayload.source_url = value.slice(0, 1000) || null;
+    }
+    if (source_year !== undefined) {
+      const year = Number(source_year);
+      if (source_year !== null && source_year !== '' && (!Number.isInteger(year) || year < 1990 || year > 2100)) return res.status(400).json({ error: 'Source year must be between 1990 and 2100.' });
+      updatePayload.source_year = source_year === null || source_year === '' ? null : year;
+    }
+    if (syllabus_topic !== undefined) updatePayload.syllabus_topic = String(syllabus_topic || '').trim().slice(0, 200) || null;
+    if (difficulty !== undefined) {
+      if (difficulty !== null && difficulty !== '' && !['easy','moderate','difficult'].includes(difficulty)) return res.status(400).json({ error: 'Invalid difficulty level.' });
+      updatePayload.difficulty = difficulty || null;
+    }
+    if (review_status !== undefined) {
+      if (!['needs_review','approved','rejected'].includes(review_status)) return res.status(400).json({ error: 'Invalid review status.' });
+      updatePayload.review_status = review_status;
+    }
+    if (format_verified !== undefined) updatePayload.format_verified = format_verified === true;
+    const { data, error } = await supabase.from('exam_questions').update(updatePayload).eq('id', req.params.questionId).select('id,exam_id,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation,marks,position,source_type,source_name,source_url,source_year,syllabus_topic,difficulty,review_status,format_verified,response_type').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'exam_question', p_entity_id: data.id, p_metadata: { position: numericPosition } });
     res.json({ item: data });
@@ -971,6 +1054,12 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
   }
 
   try {
+    const postUtmeAvailable = Boolean(body?.post_utme_available);
+    const postUtmeMethod = String(body?.post_utme_method || '');
+    const postUtmeVerified = Boolean(body?.post_utme_verified);
+    if (postUtmeAvailable && !['cbt', 'handwritten'].includes(postUtmeMethod)) return { error: 'Choose whether this institution uses CBT or handwritten Post-UTME.' };
+    if (postUtmeAvailable && !body?.post_utme_source_url) return { error: 'Add the official Post-UTME source URL before listing this school.' };
+    if (postUtmeVerified && (!postUtmeAvailable || !['cbt', 'handwritten'].includes(postUtmeMethod) || !body?.post_utme_source_url)) return { error: 'Verify Post-UTME participation only after setting its method and official source URL.' };
     return {
       values: {
         school_name: schoolName,
@@ -982,6 +1071,10 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
         admission_portal_url: httpsUrl(body?.admission_portal_url, 'admission portal URL'),
         student_portal_url: httpsUrl(body?.student_portal_url, 'student portal URL'),
         is_verified: Boolean(body?.is_verified),
+        post_utme_available: Boolean(body?.post_utme_available),
+        post_utme_method: ['cbt', 'handwritten'].includes(String(body?.post_utme_method || '')) ? String(body.post_utme_method) : null,
+        post_utme_source_url: httpsUrl(body?.post_utme_source_url, 'Post-UTME official source URL'),
+        post_utme_verified: Boolean(body?.post_utme_verified),
       },
     };
   } catch (error) {
@@ -993,7 +1086,7 @@ app.get('/api/admin/institutions', requireCapability('institution.read'), async 
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
-    let query = supabase.from('institutions').select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,created_at,updated_at').order('school_name', { ascending: true }).limit(500);
+    let query = supabase.from('institutions').select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,created_at,updated_at,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified').order('school_name', { ascending: true }).limit(500);
     if (search) {
       // PostgREST's filter grammar uses , . ( ) as structure, and % / _ as ILIKE
       // wildcards. Strip all of them, not just the wildcards: a stray parenthesis
@@ -1016,7 +1109,7 @@ app.post('/api/admin/institutions', requireCapability('institution.create'), asy
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
+    const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified,created_at,updated_at').single();
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
@@ -1033,7 +1126,7 @@ app.patch('/api/admin/institutions/:institutionId', requireCapability('instituti
     const check = validateInstitutionPayload(req.body);
     if (check.error || !check.values) return res.status(400).json({ error: check.error });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,state,institution_type,website_url,created_at').single();
+    const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified,created_at,updated_at').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
@@ -1500,6 +1593,157 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
 
 // --- Content image uploads (Supabase Storage, admin-content bucket) --------
 
+
+const PDF_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+const PDF_BANK_SELECT = 'id,title,original_filename,file_bytes,storage_path,destination,exam_body,institution_id,subject,course,paper_year,description,source_name,source_url,source_verified,news_article_id,opportunity_id,status,routed_resource_id,created_at';
+
+app.get('/api/admin/pdf-bank', requireCapability('data.read'), async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('document_bank').select(PDF_BANK_SELECT).order('created_at', { ascending: false }).limit(300);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin PDF bank list error:', error);
+    res.status(503).json({ error: 'Unable to load the PDF bank.' });
+  }
+});
+
+app.post('/api/admin/pdf-bank/upload', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('data.write', 'institution.update', 'cbt.manage'), express.json({ limit: '15mb' }), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const filenameRaw = String(req.body?.filename || '').split(/[\\/]/).pop()?.replace(/[\x00-\x1f\x7f]/g, '').trim() || '';
+    const filename = filenameRaw.slice(-180);
+    const title = String(req.body?.title || filename.replace(/\.pdf$/i, '')).trim().slice(0, 240);
+    const dataUrl = String(req.body?.dataUrl || '');
+    const match = /^data:application\/pdf;base64,([A-Za-z0-9+/=\s]+)$/i.exec(dataUrl);
+    if (!filename || !/\.pdf$/i.test(filename)) return res.status(400).json({ error: 'Choose a PDF file.' });
+    if (!title) return res.status(400).json({ error: 'A document title is required.' });
+    if (!match) return res.status(400).json({ error: 'The upload must be a PDF file.' });
+    const buffer = Buffer.from(match[1].replace(/\s+/g, ''), 'base64');
+    if (!buffer.length) return res.status(400).json({ error: 'The PDF is empty.' });
+    if (buffer.length > PDF_UPLOAD_MAX_BYTES) return res.status(413).json({ error: 'PDF files must be 10 MB or smaller.' });
+    if (buffer.subarray(0, 5).toString('ascii') !== '%PDF-') return res.status(400).json({ error: 'The file does not have a valid PDF signature.' });
+    const supabase = getServerSupabase();
+    const safeName = filename.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-120) || 'document.pdf';
+    const now = new Date();
+    const objectPath = `pdf-bank/${now.getUTCFullYear()}/${String(now.getUTCMonth()+1).padStart(2,'0')}/${crypto.randomUUID()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage.from('resource-files').upload(objectPath, buffer, {
+      contentType: 'application/pdf',
+      cacheControl: '3600',
+      upsert: false,
+    });
+    if (uploadError) throw uploadError;
+    const { data, error } = await supabase.from('document_bank').insert({
+      title, original_filename: filename, mime_type: 'application/pdf', file_bytes: buffer.length,
+      storage_path: objectPath, description: String(req.body?.description || '').trim().slice(0, 2000) || null,
+      uploaded_by: adminUser.id,
+    }).select(PDF_BANK_SELECT).single();
+    if (error) {
+      await supabase.storage.from('resource-files').remove([objectPath]);
+      throw error;
+    }
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'upload', p_entity_type: 'document_bank', p_entity_id: data.id, p_metadata: { filename, bytes: buffer.length, storage_path: objectPath } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin PDF upload error:', error);
+    res.status(500).json({ error: 'Unable to upload this PDF.' });
+  }
+});
+
+app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write', 'institution.update', 'cbt.manage'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const id = String(req.params.documentId || '');
+    const destination = String(req.body?.destination || 'inbox');
+    const allowed = ['inbox','past_questions','admission_guides','scholarships','news_attachments','school_resources','other'];
+    if (!allowed.includes(destination)) return res.status(400).json({ error: 'Choose a valid destination.' });
+    const title = String(req.body?.title || '').trim().slice(0, 240);
+    if (!title) return res.status(400).json({ error: 'A document title is required.' });
+    const examBodyRaw = String(req.body?.exam_body || '').trim().toUpperCase();
+    const examBody = ['JAMB','WAEC','NECO','POST-UTME'].includes(examBodyRaw) ? examBodyRaw : null;
+    const institutionId = String(req.body?.institution_id || '').trim() || null;
+    const newsArticleId = String(req.body?.news_article_id || '').trim() || null;
+    const opportunityId = String(req.body?.opportunity_id || '').trim() || null;
+    const subject = String(req.body?.subject || '').trim().slice(0, 120) || null;
+    const course = String(req.body?.course || '').trim().slice(0, 160) || null;
+    const yearRaw = req.body?.paper_year === '' || req.body?.paper_year === null || req.body?.paper_year === undefined ? null : Number(req.body.paper_year);
+    const paperYear = yearRaw === null ? null : yearRaw;
+    if (paperYear !== null && (!Number.isInteger(paperYear) || paperYear < 1954 || paperYear > 2100)) return res.status(400).json({ error: 'Enter a valid paper year.' });
+    const sourceUrl = String(req.body?.source_url || '').trim() || null;
+    if (sourceUrl) { try { if (new URL(sourceUrl).protocol !== 'https:') throw new Error(); } catch { return res.status(400).json({ error: 'Source links must use HTTPS.' }); } }
+    if (req.body?.source_verified === true && !String(req.body?.source_name || '').trim()) return res.status(400).json({ error: 'Enter the source or organisation before marking this PDF verified.' });
+    if (destination === 'past_questions' && !examBody) return res.status(400).json({ error: 'Select the exam body before routing to Past Questions.' });
+    if (['admission_guides', 'school_resources'].includes(destination) && !institutionId) return res.status(400).json({ error: 'Choose the institution this school resource belongs to.' });
+    if (destination === 'scholarships' && !opportunityId) return res.status(400).json({ error: 'Choose the opportunity this PDF supports.' });
+    if (destination === 'news_attachments' && !newsArticleId) return res.status(400).json({ error: 'Choose the news article this PDF attaches to.' });
+    const supabase = getServerSupabase();
+    if (destination === 'scholarships') {
+      const { data: opportunity, error: opportunityError } = await supabase.from('opportunities').select('id').eq('id', opportunityId).maybeSingle();
+      if (opportunityError || !opportunity) return res.status(400).json({ error: 'The selected opportunity could not be found.' });
+    }
+    if (destination === 'news_attachments') {
+      const { data: article, error: articleError } = await supabase.from('news_articles').select('id').eq('id', newsArticleId).maybeSingle();
+      if (articleError || !article) return res.status(400).json({ error: 'The selected news article could not be found.' });
+    }
+    const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
+    if (existingError || !existing) return res.status(404).json({ error: 'PDF document not found.' });
+    let routedResourceId: string | null = existing.routed_resource_id || null;
+    if (destination !== 'past_questions' && existing.routed_resource_id) {
+      const { error: hideError } = await supabase.from('past_question_resources')
+        .update({ published: false, verified_at: null, updated_at: new Date().toISOString() })
+        .eq('id', existing.routed_resource_id);
+      if (hideError) throw hideError;
+      routedResourceId = null;
+    }
+    if (destination === 'past_questions') {
+      if (examBody === 'POST-UTME' && !institutionId) return res.status(400).json({ error: 'Select the institution for a Post-UTME paper.' });
+      if (examBody === 'POST-UTME') {
+        const { data: school, error: schoolError } = await supabase.from('institutions')
+          .select('id,post_utme_available,post_utme_method,post_utme_verified')
+          .eq('id', institutionId).maybeSingle();
+        if (schoolError || !school || school.post_utme_available !== true || school.post_utme_verified !== true || school.post_utme_method !== 'handwritten') {
+          return res.status(400).json({ error: 'Post-UTME PDFs can only be routed to a verified institution that uses handwritten/paper-based screening.' });
+        }
+      }
+      const resource = {
+        exam_body: examBody, institution_id: institutionId, subject, course, paper_year: paperYear,
+        title, description: String(req.body?.description || existing.description || '').trim().slice(0, 2000) || null,
+        source_name: String(req.body?.source_name || '').trim().slice(0, 160) || 'EduReach PDF Bank',
+        source_url: sourceUrl, storage_path: existing.storage_path, access: 'download',
+        published: Boolean(req.body?.source_verified), verified_at: req.body?.source_verified === true ? new Date().toISOString() : null,
+      };
+      if (routedResourceId) {
+        const { error } = await supabase.from('past_question_resources').update(resource).eq('id', routedResourceId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('past_question_resources').insert(resource).select('id').single();
+        if (error) throw error;
+        routedResourceId = data.id;
+      }
+    }
+    const { data, error } = await supabase.from('document_bank').update({
+      title, destination, exam_body: destination === 'past_questions' ? examBody : null,
+      subject, course, paper_year: paperYear,
+      description: String(req.body?.description || '').trim().slice(0, 2000) || null,
+      source_name: String(req.body?.source_name || '').trim().slice(0, 160) || null,
+      source_url: sourceUrl, source_verified: req.body?.source_verified === true,
+      institution_id: ['admission_guides', 'school_resources'].includes(destination) || (destination === 'past_questions' && examBody === 'POST-UTME') ? institutionId : null,
+      news_article_id: destination === 'news_attachments' ? newsArticleId : null,
+      opportunity_id: destination === 'scholarships' ? opportunityId : null,
+      status: destination === 'inbox' ? 'inbox' : 'routed',
+      routed_resource_id: routedResourceId, routed_by: adminUser.id,
+      routed_at: destination === 'inbox' ? null : new Date().toISOString(), updated_at: new Date().toISOString(),
+    }).eq('id', id).select(PDF_BANK_SELECT).single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'route', p_entity_type: 'document_bank', p_entity_id: id, p_metadata: { destination, exam_body: examBody, institution_id: institutionId } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin PDF routing error:', error);
+    res.status(500).json({ error: 'Unable to route this PDF.' });
+  }
+});
+
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
 app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('news.create', 'opportunity.create', 'institution.update', 'calendar.update'), express.json({ limit: '5mb' }), async (req, res) => {
@@ -1746,7 +1990,7 @@ app.get('/api/cbt/exams', async (_req, res) => {
     const supabase = getServerSupabase();
     const { data, error } = await supabase
       .from('cbt_exams')
-      .select('id,title,exam_body,subject,description,duration_minutes')
+      .select('id,title,exam_body,subject,description,duration_minutes,institution_id')
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -1823,7 +2067,7 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
     const supabase = getServerSupabase();
     const { data: exam, error: examError } = await supabase
       .from('cbt_exams')
-      .select('id,title,exam_body,subject,description,duration_minutes,is_active')
+       .select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id')
       .eq('id', req.params.examId)
       .eq('is_active', true)
       .maybeSingle();
@@ -1846,6 +2090,10 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
         subject: exam.subject,
         description: exam.description,
         defaultDurationMinutes: exam.duration_minutes,
+        formatStatus: exam.format_status || 'unverified',
+        officialGuidanceUrl: exam.official_guidance_url || null,
+        formatNotes: exam.format_notes || null,
+        guidanceYear: exam.guidance_year || null,
       },
       subjects: available.map((row) => ({ subject: row.subject, questionCount: Number(row.question_count) })),
       totalQuestions: available.reduce((sum, row) => sum + Number(row.question_count), 0),
@@ -1933,6 +2181,57 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
  * short-lived signed URL, and only then: a row the server cannot sign is
  * reported as unavailable rather than shown as a working download.
  */
+app.get('/api/public/documents', async (req, res) => {
+  const destination = String(req.query.destination || '').trim();
+  const allowed = ['admission_guides', 'scholarships', 'news_attachments', 'school_resources'];
+  if (!allowed.includes(destination)) return res.status(400).json({ error: 'Choose a supported public document destination.' });
+  const institutionId = String(req.query.institution_id || '').trim();
+  const opportunityId = String(req.query.opportunity_id || '').trim();
+  const newsArticleId = String(req.query.news_article_id || '').trim();
+  if (['admission_guides', 'school_resources'].includes(destination) && !institutionId) return res.json({ items: [] });
+  if (destination === 'scholarships' && !opportunityId) return res.json({ items: [] });
+  if (destination === 'news_attachments' && !newsArticleId) return res.json({ items: [] });
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
+  try {
+    const supabase = getServerSupabase();
+    if (destination === 'news_attachments') {
+      const { data: article, error: articleError } = await supabase.from('news_articles').select('id,published').eq('id', newsArticleId).maybeSingle();
+      if (articleError || !article?.published) return res.json({ items: [] });
+    }
+    if (destination === 'scholarships') {
+      const { data: opportunity, error: opportunityError } = await supabase.from('opportunities').select('id,is_active').eq('id', opportunityId).maybeSingle();
+      if (opportunityError || opportunity?.is_active !== true) return res.json({ items: [] });
+    }
+    let query = supabase.from('document_bank')
+      .select('id,title,description,source_name,source_url,storage_path,destination,institution_id,news_article_id,opportunity_id,subject,course,paper_year,created_at')
+      .eq('destination', destination).eq('status', 'routed').eq('source_verified', true)
+      .order('created_at', { ascending: false }).limit(50);
+    if (institutionId) query = query.eq('institution_id', institutionId);
+    if (opportunityId) query = query.eq('opportunity_id', opportunityId);
+    if (newsArticleId) query = query.eq('news_article_id', newsArticleId);
+    const { data, error } = await query;
+    if (error) throw error;
+    const items = await Promise.all((data || []).map(async (row: Record<string, any>) => {
+      let signedUrl: string | null = null;
+      if (row.storage_path) {
+        const { data: signed } = await supabase.storage.from('resource-files').createSignedUrl(row.storage_path, 300);
+        signedUrl = signed?.signedUrl ?? null;
+      }
+      return {
+        id: row.id, title: row.title, description: row.description, source_name: row.source_name,
+        source_url: row.source_url, destination: row.destination, institution_id: row.institution_id,
+        news_article_id: row.news_article_id, opportunity_id: row.opportunity_id, subject: row.subject,
+        course: row.course, paper_year: row.paper_year, href: signedUrl || row.source_url || null,
+        created_at: row.created_at,
+      };
+    }));
+    res.json({ items });
+  } catch (error) {
+    console.error('Public PDF document list error:', error);
+    res.status(503).json({ error: 'Unable to load these documents right now.' });
+  }
+});
+
 app.get('/api/past-questions/resources', async (req, res) => {
   if (!isServerSupabaseConfigured()) {
     return res.json({ items: [], coverage: [], configured: false, state: 'not-configured' });

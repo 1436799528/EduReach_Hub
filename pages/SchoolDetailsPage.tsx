@@ -7,6 +7,7 @@ import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { applySeo, seoForInstitution } from '../src/lib/seoMeta';
 import { trackEvent } from '../src/lib/api';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
+import PublicPdfList from '../src/components/PublicPdfList';
 
 function navigateBack(fallback: string) {
   const params = new URLSearchParams(window.location.search);
@@ -84,6 +85,7 @@ export default function SchoolDetailsPage({ slug }: { slug: string }) {
   const courseContext = params.get('course') || resolved?.course_context || (acronym ? institutionCourseContexts[acronym] || '' : '');
   const websiteCandidate = params.get('website') || resolved?.website_url || '';
   const website = /^https?:\/\//i.test(websiteCandidate) ? websiteCandidate : '';
+  const documentInstitutionId = resolved?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(resolved.id) ? resolved.id : null;
 
   useEffect(() => {
     // Institution metadata uses only sourced facts. Programme, fee and cut-off
@@ -133,6 +135,8 @@ export default function SchoolDetailsPage({ slug }: { slug: string }) {
               <button type="button" className="hub-outline-btn" onClick={() => navigateBack('/schools')}><ArrowLeft size={14} /> Back to search</button>
             </div>
           </section>
+          <PublicPdfList destination="admission_guides" title="Admission guides for this school" institutionId={documentInstitutionId} />
+          <PublicPdfList destination="school_resources" title="School resources" institutionId={documentInstitutionId} />
         </div>
       </div>
     </HubLayout>

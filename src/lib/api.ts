@@ -295,7 +295,7 @@ export async function fetchCbtExams() {
 
   const { data, error } = await supabase
     .from('cbt_exams')
-    .select('id,title,exam_body,subject,description,duration_minutes')
+    .select('id,title,exam_body,subject,description,duration_minutes,institution_id')
     .eq('is_active', true)
     .order('created_at', { ascending: false });
   if (error) throw new Error(userFacingError(error));
@@ -1295,7 +1295,7 @@ export async function deleteAdminCalendarItem(type: 'deadline' | 'exam', id: str
   await adminApiFetch(`/api/admin/calendar-items/${encodeURIComponent(id)}?type=${type}`, { method: 'DELETE' });
 }
 
-export type AdminInstitution = { id: string; school_name: string; acronym: string | null; slug: string | null; state: string | null; institution_type: string | null; website_url: string | null; admission_portal_url: string | null; student_portal_url: string | null; is_verified: boolean; created_at?: string; updated_at?: string };
+export type AdminInstitution = { id: string; school_name: string; acronym: string | null; slug: string | null; state: string | null; institution_type: string | null; website_url: string | null; admission_portal_url: string | null; student_portal_url: string | null; is_verified: boolean; post_utme_available: boolean; post_utme_method: 'cbt'|'handwritten'|null; post_utme_source_url: string|null; post_utme_verified: boolean; created_at?: string; updated_at?: string };
 
 export async function fetchAdminInstitutions(search = ''): Promise<AdminInstitution[]> {
   const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
@@ -1353,6 +1353,104 @@ export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; 
   });
 }
 
+export type AdminPdfDocument = {
+  id: string;
+  title: string;
+  original_filename: string;
+  file_bytes: number;
+  storage_path: string;
+  destination: 'inbox'|'past_questions'|'admission_guides'|'scholarships'|'news_attachments'|'school_resources'|'other';
+  exam_body: 'JAMB'|'WAEC'|'NECO'|'POST-UTME'|null;
+  institution_id: string | null;
+  subject: string | null;
+  course: string | null;
+  paper_year: number | null;
+  description: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  source_verified: boolean;
+  news_article_id: string | null;
+  opportunity_id: string | null;
+  status: 'inbox'|'routed'|'rejected';
+  routed_resource_id: string | null;
+  created_at: string;
+};
+
+export async function uploadAdminPdf(input: { dataUrl: string; filename: string; title: string; description?: string }): Promise<AdminPdfDocument> {
+  const body = await adminApiFetch<{ item: AdminPdfDocument }>('/api/admin/pdf-bank/upload', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function fetchAdminPdfBank(): Promise<AdminPdfDocument[]> {
+  const body = await adminApiFetch<{ items: AdminPdfDocument[] }>('/api/admin/pdf-bank');
+  return body.items || [];
+}
+
+export async function routeAdminPdf(id: string, values: Record<string, unknown>): Promise<AdminPdfDocument> {
+  const body = await adminApiFetch<{ item: AdminPdfDocument }>(`/api/admin/pdf-bank/${encodeURIComponent(id)}/route`, {
+    method: 'PATCH',
+    body: JSON.stringify(values),
+  });
+  return body.item;
+}
+
+export type PublicPdfDocument = {
+  id: string;
+  title: string;
+  description: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  destination: AdminPdfDocument['destination'];
+  institution_id: string | null;
+  news_article_id: string | null;
+  opportunity_id: string | null;
+  subject: string | null;
+  course: string | null;
+  paper_year: number | null;
+  href: string | null;
+  created_at: string;
+};
+
+export async function fetchPublicPdfDocuments(filter: {
+  destination: 'admission_guides'|'scholarships'|'news_attachments'|'school_resources';
+  institutionId?: string;
+  opportunityId?: string;
+  newsArticleId?: string;
+}): Promise<PublicPdfDocument[]> {
+  const params = new URLSearchParams({ destination: filter.destination });
+  if (filter.institutionId) params.set('institution_id', filter.institutionId);
+  if (filter.opportunityId) params.set('opportunity_id', filter.opportunityId);
+  if (filter.newsArticleId) params.set('news_article_id', filter.newsArticleId);
+  const body = await jsonFetch<{ items: PublicPdfDocument[] }>(`/api/public/documents?${params.toString()}`);
+  return body.items || [];
+}
+
+export type PostUtmeInstitution = {
+  id: string;
+  school_name: string;
+  acronym: string | null;
+  state: string | null;
+  post_utme_method: 'cbt' | 'handwritten';
+  post_utme_source_url: string;
+};
+
+export async function fetchPostUtmeInstitutions(): Promise<PostUtmeInstitution[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from('institutions')
+    .select('id,school_name,acronym,state,post_utme_method,post_utme_source_url')
+    .eq('post_utme_available', true)
+    .eq('post_utme_verified', true)
+    .not('post_utme_method', 'is', null)
+    .not('post_utme_source_url', 'is', null)
+    .order('school_name');
+  if (error) throw new Error(userFacingError(error));
+  return (data || []) as PostUtmeInstitution[];
+}
+
 // ---------------------------------------------------------------------------
 // Admin CBT exam management (duration/default settings, active state, delete).
 // Question management lives on the exam detail endpoints above.
@@ -1366,6 +1464,11 @@ export type AdminCbtExam = {
   description: string | null;
   duration_minutes: number;
   is_active: boolean;
+  format_status: 'verified' | 'partially_verified' | 'unverified';
+  official_guidance_url: string | null;
+  format_notes: string | null;
+  guidance_year: number | null;
+  institution_id?: string | null;
   created_at?: string;
 };
 
@@ -1471,7 +1574,7 @@ export type CbtAttemptPayload = {
 export type CbtBankSubject = { subject: string; questionCount: number };
 
 export type CbtBankPayload = {
-  exam: { id: string; title: string; examBody: string; subject: string; description: string | null; defaultDurationMinutes: number | null };
+  exam: { id: string; title: string; examBody: string; subject: string; description: string | null; defaultDurationMinutes: number | null; formatStatus?: 'verified' | 'partially_verified' | 'unverified'; officialGuidanceUrl?: string | null; formatNotes?: string | null; guidanceYear?: number | null };
   subjects: CbtBankSubject[];
   totalQuestions: number;
   limits: { minQuestions: number; maxQuestions: number; minMinutes: number; maxMinutes: number; maxSubjects: number } | null;

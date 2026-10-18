@@ -284,13 +284,14 @@ export default function AdminNewsPage() {
                   </span>
                 </label>
                 <label className="admin-field admin-field-check">
-                  <span>Featured</span>
+                  <span>Highlight on homepage</span>
                   <span className="admin-check-row">
                     <input id="news-featured" type="checkbox" checked={editor.featured} onChange={(e) => setEditor({ ...editor, featured: e.target.checked })} />
-                    <label htmlFor="news-featured">{editor.featured ? 'Leads the Featured section' : 'Not featured'}</label>
+                    <label htmlFor="news-featured">{editor.featured ? 'Selected for student-critical highlights' : 'Regular news feed only'}</label>
                   </span>
                 </label>
               </div>
+              <p className="admin-quality-gate">Highlight only high-impact student updates: exam and admission decisions, registration changes, results, deadlines, funding decisions or policy changes students are actively waiting for. Routine announcements remain in the regular news feed. Only the first two highlighted stories appear in the featured section.</p>
               <div className="admin-field-row">
                 <label className="admin-field"><span>Publication date {editor.published ? '*' : '(set when publishing)'}</span>
                   <input className="admin-input" type="datetime-local" value={editor.publishedAt} onChange={(e) => setEditor({ ...editor, publishedAt: e.target.value })} />
