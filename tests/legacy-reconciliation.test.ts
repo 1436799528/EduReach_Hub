@@ -100,6 +100,8 @@ test('legacy comprehensive banks are reconciled into Practice Banks with history
     const beforePostLegacy = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${legacyPostId}'`)).rows[0].c;
     const beforeJambPractice = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practiceJambId}'`)).rows[0].c;
     const beforeWaecPractice = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practiceWaecId}'`)).rows[0].c;
+    const beforeNecoPractice = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practiceNecoId}'`)).rows[0].c;
+    const beforePostPractice = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practicePostId}'`)).rows[0].c;
 
     assert.equal(beforeJambLegacy, 3);
     assert.equal(beforeWaecLegacy, 1);
@@ -129,9 +131,8 @@ test('legacy comprehensive banks are reconciled into Practice Banks with history
     // JAMB: 3 legacy, but 1 deduped by case/whitespace variant already in dest, so only 2 should copy
     assert.equal(afterJambPractice, beforeJambPractice + 2, 'JAMB: 2 of 3 legacy should copy (1 blocked by normalized dedup)');
     assert.equal(afterWaecPractice, beforeWaecPractice + 1, 'WAEC: 1 legacy should copy');
-    assert.equal(afterNecoPractice, (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practiceNecoId}'`)).rows[0].c, 'NECO count increased');
-    const necoCount = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practiceNecoId}'`)).rows[0].c;
-    assert.ok(necoCount > 0);
+    assert.equal(afterNecoPractice, beforeNecoPractice + 1, 'NECO: 1 legacy should copy (before +1)');
+    assert.equal(afterPostPractice, beforePostPractice + 1, 'Post-UTME: 1 legacy should copy (before +1)');
     // More explicit: NECO and Post check
     const afterNeco = (await db.query<{ c: number }>(`select count(*)::int as c from public.exam_questions where exam_id='${practiceNecoId}' and question_text='Legacy NECO Mathematics Q1 - neco unique'`)).rows[0].c;
     assert.equal(afterNeco, 1, 'NECO legacy question should land in NECO Practice Bank');
