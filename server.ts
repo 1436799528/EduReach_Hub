@@ -520,7 +520,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active').eq('id', req.params.examId).single();
+    const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title,is_active,official_guidance_url').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (req.body?.title !== undefined) {
@@ -542,7 +542,7 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     if (req.body?.format_status !== undefined) {
       const value = String(req.body.format_status);
       if (!['verified', 'partially_verified', 'unverified'].includes(value)) return res.status(400).json({ error: 'Invalid exam format verification status.' });
-      if (value === 'verified' && !(typeof req.body?.official_guidance_url === 'string' && /^https:\/\//i.test(req.body.official_guidance_url.trim())) && !existing) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
+      if (value === 'verified' && !(typeof req.body?.official_guidance_url === 'string' && /^https:\/\//i.test(req.body.official_guidance_url.trim())) && !(typeof existing.official_guidance_url === 'string' && /^https:\/\//i.test(existing.official_guidance_url.trim()))) return res.status(400).json({ error: 'A verified exam format requires an official HTTPS guidance link.' });
       patch.format_status = value;
     }
     if (req.body?.official_guidance_url !== undefined) {
