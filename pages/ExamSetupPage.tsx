@@ -379,6 +379,22 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             />
           )}
 
+          {targetExam && bank && exam === 'waec' && (
+            <InlineNotice tone="warning" title="WAEC practice format: objective questions only">
+              This EduReach bank currently supports four-option multiple-choice questions. WASSCE paper types and timings vary by subject, and some papers require written, practical or oral responses. Do not treat this session as a full WASSCE simulation or as official past questions unless the individual items have verified sources.
+              {bank.exam.officialGuidanceUrl ? <> Official guidance: <a href={bank.exam.officialGuidanceUrl} target="_blank" rel="noreferrer">view source</a>.</> : null}
+              {bank.exam.formatNotes ? <> Editorial note: {bank.exam.formatNotes}</> : null}
+            </InlineNotice>
+          )}
+
+          {targetExam && bank && exam !== 'waec' && bank.exam.formatStatus !== 'verified' && (
+            <InlineNotice tone="warning" title="Exam format has not been verified for this bank">
+              This bank is available for practice, but its paper structure has not been fully verified against official guidance. Treat the questions as practice material, not certified official past questions.
+              {bank.exam.officialGuidanceUrl ? <> Official guidance: <a href={bank.exam.officialGuidanceUrl} target="_blank" rel="noreferrer">view source</a>.</> : null}
+              {bank.exam.formatNotes ? <> Editorial note: {bank.exam.formatNotes}</> : null}
+            </InlineNotice>
+          )}
+
           {targetExam && bank && (
             <>
               {/* Mode choice: the student decides what kind of session this is. */}
