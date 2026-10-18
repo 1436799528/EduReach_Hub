@@ -619,7 +619,6 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
     if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
-    if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
     const supabase = getServerSupabase();
     const { data: exam } = await supabase.from('cbt_exams').select('id,subject').eq('id', req.params.examId).maybeSingle();
     if (!exam) return res.status(404).json({ error: 'CBT exam not found.' });
@@ -655,6 +654,7 @@ app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'
     if (!question_text?.trim() || !option_a?.trim() || !option_b?.trim() || !option_c?.trim() || !option_d?.trim() ||
       !['A','B','C','D'].includes(correct_option) || !Number.isInteger(numericMarks) || numericMarks < 1 ||
       !Number.isInteger(numericPosition) || numericPosition < 1) return res.status(400).json({ error: 'Invalid CBT question data.' });
+    if (source_type === 'official_past_question' && (!(typeof source_url === 'string' && /^https:\/\//i.test(source_url.trim())) || !(typeof source_name === 'string' && source_name.trim()))) return res.status(400).json({ error: 'Official past questions require a verified HTTPS source URL and source name.' });
     const supabase = getServerSupabase();
     const updatePayload: Record<string, unknown> = {
       question_text: question_text.trim(), option_a: option_a.trim(), option_b: option_b.trim(), option_c: option_c.trim(),
