@@ -51,14 +51,14 @@ const setupCopy: Record<ExamSetupKey, SetupCopy> = {
   waec: {
     eyebrow: 'WAEC CBT entry',
     title: 'Set up your WAEC practice or mock',
-    intro: 'Practise the subjects you are sitting, or run a full mock across nine subjects with the time WAEC allows.',
+    intro: 'Choose a subject bank for objective practice. WASSCE paper types, marks and timings depend on the subject and official guidance.',
     duration: 'Practice session',
     logo: '/icons/brands/waec.png',
   },
   neco: {
     eyebrow: 'NECO CBT entry',
     title: 'Set up your NECO practice or mock',
-    intro: 'Practise the subjects you are sitting, or run a full mock across nine subjects with the time NECO allows.',
+    intro: 'Choose a subject bank for practice. Confirm the paper types, marks and timings against current NECO guidance for each subject.',
     duration: 'Practice session',
     logo: '/icons/brands/neco.png',
   },
@@ -75,7 +75,7 @@ const guideItems = [
   { title: 'You choose the paper', body: 'Practice sessions are yours: pick the subjects, the number of questions and the time you want to spend.' },
   { title: 'The timer is real', body: 'Once a session starts, the countdown is authoritative and keeps running. Refreshing or leaving the page does not add time.' },
   { title: 'Your work is saved', body: 'Answers are saved as you go, so a lost connection or a closed tab does not throw away the session.' },
-  { title: 'Nothing is invented', body: 'Only subjects with questions in the bank are offered. You can always see how many questions each subject has.' },
+  { title: 'Bank coverage is explicit', body: 'Only subjects with questions in the bank are offered. Question counts show availability, not proof of official source or format accuracy.' },
 ];
 
 function navigateInApp(path: string) {
