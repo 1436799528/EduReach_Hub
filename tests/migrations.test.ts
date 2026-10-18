@@ -193,3 +193,33 @@ test('scheduled_job_runs is closed to client roles', async () => {
     assert.deepEqual(grants.rows, [], 'no client role may hold a grant on the job log');
   });
 });
+
+
+test('exam-specific CBT metadata defaults to unverified until editorial review', async () => {
+  await withDatabase(async (db) => {
+    await applyMigrations(db);
+    await db.exec(\`
+      insert into public.cbt_exams (id, title, exam_body, subject, is_active)
+      values ('22222222-2222-4222-8222-222222222222', 'WAEC review test', 'WAEC', 'Biology', true);
+      insert into public.exam_questions (exam_id, subject, question_text, option_a, option_b, option_c, option_d, correct_option, position)
+      values ('22222222-2222-4222-8222-222222222222', 'Biology', 'Test item', 'A', 'B', 'C', 'D', 'A', 1);
+    \`);
+    const { rows } = await db.query<{
+      format_status: string;
+      source_type: string;
+      review_status: string;
+      format_verified: boolean;
+      response_type: string;
+    }>(\`
+      select e.format_status, q.source_type, q.review_status, q.format_verified, q.response_type
+      from public.cbt_exams e
+      join public.exam_questions q on q.exam_id = e.id
+      where e.id = '22222222-2222-4222-8222-222222222222'
+    \`);
+    assert.equal(rows[0].format_status, 'unverified');
+    assert.equal(rows[0].source_type, 'unverified');
+    assert.equal(rows[0].review_status, 'needs_review');
+    assert.equal(rows[0].format_verified, false);
+    assert.equal(rows[0].response_type, 'single_choice');
+  });
+});
