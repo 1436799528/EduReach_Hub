@@ -9,7 +9,10 @@
  * When SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are not set, it reports
  * BLOCKED (missing credentials) and exits 0 so CI stays green but does not
  * overclaim. When credentials are present, it prints exact-duplicate groups
- * and near-duplicate candidates for manual review.
+ * and near-duplicate candidates for manual review. Exact duplicate coverage is
+ * limited to the first 20,000 rows returned by Supabase; near-duplicate analysis
+ * is explicitly a sample of the first 200 rows (19,900 maximum pairs), not a
+ * full-bank near-duplicate audit.
  *
  * Usage:
  *   npm run duplicate:audit          # requires env
@@ -59,15 +62,16 @@ async function run() {
   }
 
   const exactGroups = [...byNorm.entries()].filter(([, list]) => list.length > 1);
-  console.log(`Total questions: ${data?.length}`);
+  console.log(`Questions examined for exact duplicates: ${data?.length} (query cap: 20,000; larger banks may be truncated)`);
   console.log(`Exact duplicate groups (normalized text identical): ${exactGroups.length}`);
   for (const [norm, list] of exactGroups.slice(0, 20)) {
     console.log(`  - "${norm.slice(0, 80)}" ×${list.length} [${list.map((r) => `${r.exam_id}:${r.subject}`).join(', ')}]`);
   }
   if (exactGroups.length > 20) console.log(`  ... and ${exactGroups.length - 20} more exact groups`);
 
-  // Near-duplicate: simple Jaccard on trigram for demonstration, threshold 0.85
-  // Not used for deletion — manual review required.
+  // Near-duplicate: token-set Jaccard (not trigram similarity), threshold 0.85.
+  // SAMPLE ONLY: first 200 rows, at most 19,900 pair comparisons. Not a full audit.
+  // Never used for deletion — manual review required.
   const candidates: Array<{ a: string; b: string; similarity: number }> = [];
   const rows = data || [];
   // Limit to 500 comparisons for performance in this example
@@ -84,7 +88,7 @@ async function run() {
       if (jaccard >= 0.85) candidates.push({ a: rows[i].question_text.slice(0, 60), b: rows[j].question_text.slice(0, 60), similarity: jaccard });
     }
   }
-  console.log(`Near-duplicate candidates (Jaccard >= 0.85, sample 200): ${candidates.length}`);
+  console.log(`Near-duplicate SAMPLE only (token Jaccard >= 0.85; first 200 rows / at most 19,900 pairs): ${candidates.length} candidates`);
   for (const c of candidates.slice(0, 10)) {
     console.log(`  ~ ${c.similarity.toFixed(2)} "${c.a}" ↔ "${c.b}"`);
   }
