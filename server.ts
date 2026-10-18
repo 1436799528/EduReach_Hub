@@ -1591,15 +1591,15 @@ app.get('/api/admin/pdf-bank', requireCapability('data.read'), async (_req, res)
 app.post('/api/admin/pdf-bank/upload', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('data.write', 'institution.update', 'cbt.manage'), express.json({ limit: '15mb' }), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
-    const filenameRaw = String(req.body?.filename || '').split(/[\\/]/).pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim() || '';
+    const filenameRaw = String(req.body?.filename || '').split(/[\\/]/).pop()?.replace(/[\x00-\x1f\x7f]/g, '').trim() || '';
     const filename = filenameRaw.slice(-180);
-    const title = String(req.body?.title || filename.replace(/\\.pdf$/i, '')).trim().slice(0, 240);
+    const title = String(req.body?.title || filename.replace(/\.pdf$/i, '')).trim().slice(0, 240);
     const dataUrl = String(req.body?.dataUrl || '');
-    const match = /^data:application\\/pdf;base64,([A-Za-z0-9+/=\\s]+)$/i.exec(dataUrl);
-    if (!filename || !/\\.pdf$/i.test(filename)) return res.status(400).json({ error: 'Choose a PDF file.' });
+    const match = /^data:application\/pdf;base64,([A-Za-z0-9+/=\s]+)$/i.exec(dataUrl);
+    if (!filename || !/\.pdf$/i.test(filename)) return res.status(400).json({ error: 'Choose a PDF file.' });
     if (!title) return res.status(400).json({ error: 'A document title is required.' });
     if (!match) return res.status(400).json({ error: 'The upload must be a PDF file.' });
-    const buffer = Buffer.from(match[1].replace(/\\s+/g, ''), 'base64');
+    const buffer = Buffer.from(match[1].replace(/\s+/g, ''), 'base64');
     if (!buffer.length) return res.status(400).json({ error: 'The PDF is empty.' });
     if (buffer.length > PDF_UPLOAD_MAX_BYTES) return res.status(413).json({ error: 'PDF files must be 10 MB or smaller.' });
     if (buffer.subarray(0, 5).toString('ascii') !== '%PDF-') return res.status(400).json({ error: 'The file does not have a valid PDF signature.' });
