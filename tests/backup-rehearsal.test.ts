@@ -86,7 +86,7 @@ test('the procedure is documented, actionable and honest about its gaps', () => 
   assert.match(
     doc,
     new RegExp(`${tables}\\s+tables,\\s+${columns}\\s+columns,\\s+${policies}\\s+policies`),
-    'the documented fingerprint matches the run',
+    `the documented fingerprint matches the run (${tables} tables, ${columns} columns, ${policies} policies, ${report.fingerprint.rlsTables} tables with RLS)`,
   );
   assert.match(
     doc,
