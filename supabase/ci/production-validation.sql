@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 56 then 'pass' else 'fail' end as result,
+  case when count(*) >= 58 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 56)' as detail
+  count(*)::text || ' migrations recorded (repository holds 58)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -164,6 +164,8 @@ with expected(version, migration) as (
     ('20261003175703', '20261003175703_backfill_verified_academic_catalogue_and_daily_quiz_v2.sql'),
     ('20261004202656', '20261003190000_opportunity_discovery_engine.sql'),
     ('20261016160000', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql')
+    ,('20261017123909', '20261017123909_cbt_result_retention.sql')
+    ,('20261018165635', '20261018120000_exam_specific_question_provenance.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -227,6 +229,14 @@ with expected(version, migration) as (
   select 'public.daily_quiz_questions', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'daily_quiz_questions')
+  union all
+  select 'public.cbt_exams.format_status', '20261018120000_exam_specific_question_provenance.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='cbt_exams' and column_name='format_status')
+  union all
+  select 'public.exam_questions.source_type/review_status/format_verified', '20261018120000_exam_specific_question_provenance.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='exam_questions' and column_name='source_type')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='exam_questions' and column_name='review_status')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='exam_questions' and column_name='format_verified')
   union all
   select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from information_schema.columns
@@ -379,7 +389,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 14 release migrations and checked objects are present') as detail
+           'all 16 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------
