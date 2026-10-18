@@ -295,7 +295,7 @@ export async function fetchCbtExams() {
 
   const { data, error } = await supabase
     .from('cbt_exams')
-    .select('id,title,exam_body,subject,description,duration_minutes')
+    .select('id,title,exam_body,subject,description,duration_minutes,institution_id')
     .eq('is_active', true)
     .order('created_at', { ascending: false });
   if (error) throw new Error(userFacingError(error));
@@ -1351,6 +1351,70 @@ export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; 
     method: 'POST',
     body: JSON.stringify({ dataUrl }),
   });
+}
+
+export type AdminPdfDocument = {
+  id: string;
+  title: string;
+  original_filename: string;
+  file_bytes: number;
+  storage_path: string;
+  destination: 'inbox'|'past_questions'|'admission_guides'|'scholarships'|'news_attachments'|'school_resources'|'other';
+  exam_body: 'JAMB'|'WAEC'|'NECO'|'POST-UTME'|null;
+  institution_id: string | null;
+  subject: string | null;
+  course: string | null;
+  paper_year: number | null;
+  description: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  status: 'inbox'|'routed'|'rejected';
+  routed_resource_id: string | null;
+  created_at: string;
+};
+
+export async function uploadAdminPdf(input: { dataUrl: string; filename: string; title: string; description?: string }): Promise<AdminPdfDocument> {
+  const body = await adminApiFetch<{ item: AdminPdfDocument }>('/api/admin/pdf-bank/upload', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function fetchAdminPdfBank(): Promise<AdminPdfDocument[]> {
+  const body = await adminApiFetch<{ items: AdminPdfDocument[] }>('/api/admin/pdf-bank');
+  return body.items || [];
+}
+
+export async function routeAdminPdf(id: string, values: Record<string, unknown>): Promise<AdminPdfDocument> {
+  const body = await adminApiFetch<{ item: AdminPdfDocument }>(`/api/admin/pdf-bank/${encodeURIComponent(id)}/route`, {
+    method: 'PATCH',
+    body: JSON.stringify(values),
+  });
+  return body.item;
+}
+
+export type PostUtmeInstitution = {
+  id: string;
+  school_name: string;
+  acronym: string | null;
+  state: string | null;
+  post_utme_method: 'cbt' | 'handwritten';
+  post_utme_source_url: string;
+};
+
+export async function fetchPostUtmeInstitutions(): Promise<PostUtmeInstitution[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from('institutions')
+    .select('id,school_name,acronym,state,post_utme_method,post_utme_source_url')
+    .eq('post_utme_available', true)
+    .eq('post_utme_verified', true)
+    .not('post_utme_method', 'is', null)
+    .not('post_utme_source_url', 'is', null)
+    .order('school_name');
+  if (error) throw new Error(userFacingError(error));
+  return (data || []) as PostUtmeInstitution[];
 }
 
 // ---------------------------------------------------------------------------
