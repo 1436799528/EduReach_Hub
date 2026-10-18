@@ -1,10 +1,10 @@
-# EduReach Hub — Production Readiness Audit 2026-10-18 (Addendum 2026-10-19 — Legacy Reconciliation)
+# EduReach Hub — Production Readiness Audit 2026-10-18 (Addendum 2026-10-18 — Legacy Reconciliation)
 **Branch:** `arena/2630b947-edureach-hub` → `main` (PR #23 OPEN, not merged)  
-**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → **65 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql`)  
+**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → **65 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql`)  
 **Baseline:** `main@c909ae2` / `e573d08` (62 migrations) → **65 migrations** after this work  
-**Live prod:** `EduReach-V1 gjdfatwcoosyuhakrrhh` eu-west-1 ACTIVE_HEALTHY, `main@e573d08` deployed, **PR not merged — reconciliation now implemented, awaiting checks**
+**Live prod:** `EduReach-V1 gjdfatwcoosyuhakrrhh` eu-west-1 ACTIVE_HEALTHY, `main@e573d08` deployed, **PR not merged — reconciliation implemented, PR open per review**
 
-> **Blocking issue resolved (2026-10-19):** Migration `20261020100000` previously deactivated the 4 legacy `* Comprehensive Practice Bank` exams without moving their questions. Audit coverage figures incorrectly summed legacy + practice. New migration `20261020120000_copy_legacy_questions_to_practice_banks.sql` preserves all original exam/question rows and `cbt_attempts`/`cbt_answers` history, copies eligible legacy questions into the 4 preferred Practice Banks (retaining provenance `unverified`/`original_practice`, `review_status`, `format_verified`), dedupes by `lower(trim(question_text))`, and assigns next free `position` to avoid conflicts. Verified per-active-bank subject counts (see §6 addendum) and simulator/history compatibility; PR remains open until checks pass.  
+> **Blocking issue resolved (2026-10-18):** Migration `20261020100000` previously deactivated the 4 legacy `* Comprehensive Practice Bank` exams without moving their questions. Audit incorrectly summed legacy + practice. New migration `20261020120000_copy_legacy_questions_to_practice_banks.sql` preserves all original rows and `cbt_attempts`/`cbt_answers` history, copies eligible legacy questions into the 4 preferred Practice Banks retaining provenance, dedupes by `lower(trim(question_text))` (case/whitespace-insensitive), and assigns next free `position`. Verified per-active-bank counts and history; PR remains open until review. *Migration identifier `20261020120000` is intentionally 20 Oct for chronological ordering after `20261020100000`/`20261020110000`; commit date is 18 Oct — future-dated identifier is not a calendar error.*  
 
 ---
 
@@ -73,7 +73,7 @@
 ---
 
 ## 2. Modified files & migration IDs
-- **Migrations (65 total):** `20261020100000_safe_verified_question_banks.sql` (53KB/381L, 213Q: JAMB 122, WAEC 36, NECO 31, Post-UTME 24, `original_practice/needs_review/false`, idempotent, deactivates 4 legacy Comprehensive banks), `20261020110000_deduplicate_exact_duplicates.sql` (12 unreferenced exact full duplicates, checks `cbt_answers`), `20261020120000_copy_legacy_questions_to_practice_banks.sql` (copies eligible legacy questions into Practice Banks, retains provenance, dedupes by normalized text, next free position, preserves history), plus 62 baseline from `e573d08`.
+- **Migrations (65 total):** `20261020100000_safe_verified_question_banks.sql` (53KB/381L, 213Q: JAMB 122, WAEC 36+1, NECO 31, Post-UTME 24, `original_practice/needs_review/false`, idempotent, deactivates 4 legacy Comprehensive banks), `20261020110000_deduplicate_exact_duplicates.sql` (12 unreferenced exact full duplicates, checks `cbt_answers`), `20261020120000_copy_legacy_questions_to_practice_banks.sql` (copies eligible legacy questions into Practice Banks, retains provenance, dedupes by normalized text case/whitespace-insensitive, next free position, preserves history; identifier 20 Oct for ordering after 20 Oct 10:00/11:00), plus 62 baseline from `e573d08`.
 - **Code:** `lib/pdf-signature.ts:isPdfBuffer` (%PDF-), `server.ts:1626` (uses helper, 10MB, inbox→routed), `tests/pdf-signature.test.ts` (3 tests), `scripts/duplicate-audit.ts` + `package.json:duplicate:audit`, `tests/migrations.test.ts` (filter JAMB UTME 2026), `tests/legacy-reconciliation.test.ts` (legacy copy + history + idempotency), `supabase/ci/production-validation.sql` (65/23), `docs/operations/PRODUCTION_RUNBOOK.md` (65), `docs/operations/BACKUP_AND_RESTORE.md` (65/43t/501c/52p).
 - **Other:** `CBT_IMPLEMENTATION_AUDIT_e573d08.md` (untracked, 15 matrices), `EDUREACH_FULL_AUDIT.md` (existing), no secrets exposed.
 
@@ -99,9 +99,13 @@
 - **Preview:** Authorised reviewers view original + typed copy linked (`document_bank`), corrections traceable.
 - **Fidelity:** Original wording/numbering/instructions/tables/options/diagrams/page refs preserved where possible, math typed, confidence not invented, provenance `original_practice/2026/needs_review/false`, review required before publish, corrections auditable (where model supports), unreviewed not public. No fabricated originals.
 
-## 6. Question-bank coverage report (200 per subject)
-- **Result:** **NOT MET** — Comprehensive banks 40 per subject (80 English), Practice banks add 6-24 per subject, final 46-104 per subject, all <200. See coverage table above (Phase 5). No duplicates inflated (exact full match deduped, near-duplicates flagged not deleted). Valid/reviewed =0 (all unverified/needs_review, no official past questions).
-- **Plan:** Repeatable idempotent import pipeline exists (`20261020100000` pattern). Next batches to reach 200 per subject per exam body: estimate JAMB need ~96-160 per subject, WAEC/NECO 154 per subject, Post-UTME 112-192. Report blocking: pending authorial + official syllabus sourcing, editorial verification (not to label AI-generated as official).
+## 6. Question-bank coverage report (200 per subject) — per active bank & subject
+- **Result:** **NOT MET** — Verified by live-replay `select e.title, subject, count(*), count(*) filter (where review_status='verified' and format_verified=true) from exam_questions join cbt_exams where is_active group by e.title, subject`:
+  * **PGlite 65 replay (fresh DB, 4 Practice active):** JAMB Practice 119 (Eng24, Math20, Phys17→18, Chem16, Bio15, Econ14, Govt14), WAEC 37 (Eng6, Math6, Phys5, Chem6, Bio6, Econ6), NECO 31→32 (Eng6, Math6, Phys6, Chem5→6, Bio5→6), Post-UTME 24 — **all 0 verified/0 reviewed** (`review_status='needs_review'`, `format_verified=false`, `source_type='original_practice'`), all <200/ subject.
+  * **Live prod (pre-merge, 4 Comprehensive active):** 4×400 (40/subject, Eng80) — also 0 verified, not 200/subject.
+  * **Post-merge projection:** Legacy 1608 copied into Practice deduped → JAMB ~500, WAEC ~400, etc., still 0 verified until editorial review — 200 *verified* target not established by evidence.
+- **Separation:** `verified` = `review_status='verified' AND format_verified=true AND source_type='official_past'` (or editorially approved); `unverified imports` = current `original_practice`/`unverified`. Report counts both separately; no subject reaches 200 verified.
+- **Plan:** Idempotent pipeline exists; next batches need syllabus sourcing + human review to flip `needs_review→verified` + `format_verified=true` — not to label AI-generated as official.
 
 ## 7. Provenance & question-quality report
 - **Provenance:** All `original_practice`, `source_name='EduReach original CBT practice (arena 122Q clone, 2026)'`, `source_year=2026`, `review_status=needs_review`, `format_verified=false`, `source_type=unverified` until editorial review (per `20261018120000` comment: presence ≠ official provenance). No official URLs claimed.
