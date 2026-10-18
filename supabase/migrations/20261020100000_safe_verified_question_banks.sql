@@ -342,7 +342,8 @@ from exam cross join (values
   (27, 'Biology', 'Inheritance unit is:', 'Cell', 'Gene', 'Tissue', 'Organ', 'B', 'Gene carries hereditary info.'),
   (28, 'Biology', 'Photosynthesis occurs mainly in:', 'Mitochondria', 'Chloroplasts', 'Nucleus', 'Golgi body', 'B', 'Chloroplasts with chlorophyll.'),
   (29, 'Biology', 'Which organelle is powerhouse of cell?', 'Nucleus', 'Mitochondrion', 'Chloroplast', 'Ribosome', 'B', 'Mitochondrion generates ATP.'),
-  (30, 'Biology', 'The functional unit of kidney is:', 'Nephron', 'Alveolus', 'Villus', 'Neuron', 'A', 'Nephron filters urine.')
+  (30, 'Biology', 'The functional unit of kidney is:', 'Nephron', 'Alveolus', 'Villus', 'Neuron', 'A', 'Nephron filters urine.'),
+  (31, 'Chemistry', 'NECO unique: Which element has symbol K?', 'Potassium', 'Krypton', 'Calcium', 'Sodium', 'A', 'K is potassium from Latin Kalium.')
 ) as x(position, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation)
 where not exists (select 1 from public.exam_questions q where q.exam_id = exam.id and (q.position = x.position or lower(trim(q.question_text)) = lower(trim(x.question_text))));
 
