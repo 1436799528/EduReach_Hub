@@ -84,7 +84,7 @@ export default function NewsPage() {
   const latestItems = useMemo(() => {
     if (activeFilter !== 'ALL') return orderedItems;
     const flagged = orderedItems.filter((item) => item.featured);
-    const featuredIds = new Set((flagged.length ? flagged : orderedItems).slice(0, 2).map((item) => item.id));
+    const featuredIds = new Set(flagged.slice(0, 2).map((item) => item.id));
     return orderedItems.filter((item) => !featuredIds.has(item.id));
   }, [activeFilter, orderedItems]);
 
