@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 63 then 'pass' else 'fail' end as result,
+  case when count(*) >= 64 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 63)' as detail
+  count(*)::text || ' migrations recorded (repository holds 64)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -171,6 +171,7 @@ with expected(version, migration) as (
     ,('20261018172823', '20261018172823_pdf_bank_explicit_source_verification.sql')
     ,('20261018174207', '20261018174207_pdf_bank_destination_links.sql')
     ,('20261020100000', '20261020100000_safe_verified_question_banks.sql')
+    ,('20261020110000', '20261020110000_deduplicate_exact_duplicates.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -411,7 +412,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 21 release migrations and checked objects are present') as detail
+           'all 22 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------
