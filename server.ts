@@ -498,6 +498,17 @@ app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, re
       return res.status(400).json({ error: 'Valid title, exam body, subject and duration are required.' });
     }
     const supabase = getServerSupabase();
+    const normalizedBody = String(exam_body).trim().toUpperCase();
+    const institutionId = String(institution_id || '').trim() || null;
+    if (normalizedBody === 'POST-UTME') {
+      if (!institutionId) return res.status(400).json({ error: 'Select a verified institution for a Post-UTME CBT bank.' });
+      const { data: school, error: schoolError } = await supabase.from('institutions')
+        .select('id,post_utme_available,post_utme_method,post_utme_verified')
+        .eq('id', institutionId).maybeSingle();
+      if (schoolError || !school || school.post_utme_available !== true || school.post_utme_verified !== true || school.post_utme_method !== 'cbt') {
+        return res.status(400).json({ error: 'A Post-UTME CBT bank can only be linked to a verified school that uses CBT.' });
+      }
+    }
     const { data, error } = await supabase.from('cbt_exams').insert({
       title: title.trim(), exam_body: exam_body.trim().toUpperCase(), subject: subject.trim(),
       description: description?.trim() || null, duration_minutes: duration, is_active: is_active !== false,
@@ -505,7 +516,7 @@ app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, re
       official_guidance_url: typeof official_guidance_url === 'string' && /^https:\/\//i.test(official_guidance_url.trim()) ? official_guidance_url.trim().slice(0, 1000) : null,
       format_notes: typeof format_notes === 'string' ? format_notes.trim().slice(0, 1200) || null : null,
       guidance_year: Number.isInteger(Number(guidance_year)) && Number(guidance_year) >= 2000 && Number(guidance_year) <= 2100 ? Number(guidance_year) : null,
-      institution_id: String(exam_body).trim().toUpperCase() === 'POST-UTME' ? (String(institution_id || '').trim() || null) : null,
+      institution_id: normalizedBody === 'POST-UTME' ? institutionId : null,
       created_by: adminUser.id,
     }).select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').single();
     if (error) throw error;
@@ -542,7 +553,17 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     if (req.body?.description !== undefined) patch.description = String(req.body.description).trim().slice(0, 600) || null;
     if (req.body?.institution_id !== undefined || req.body?.exam_body !== undefined) {
       const body = String(req.body?.exam_body ?? existing.exam_body).trim().toUpperCase();
-      patch.institution_id = body === 'POST-UTME' ? (String(req.body?.institution_id ?? existing.institution_id ?? '').trim() || null) : null;
+      const institutionId = String(req.body?.institution_id ?? existing.institution_id ?? '').trim() || null;
+      if (body === 'POST-UTME') {
+        if (!institutionId) return res.status(400).json({ error: 'Select a verified institution for a Post-UTME CBT bank.' });
+        const { data: school, error: schoolError } = await supabase.from('institutions')
+          .select('id,post_utme_available,post_utme_method,post_utme_verified')
+          .eq('id', institutionId).maybeSingle();
+        if (schoolError || !school || school.post_utme_available !== true || school.post_utme_verified !== true || school.post_utme_method !== 'cbt') {
+          return res.status(400).json({ error: 'A Post-UTME CBT bank can only be linked to a verified school that uses CBT.' });
+        }
+      }
+      patch.institution_id = body === 'POST-UTME' ? institutionId : null;
     }
     if (req.body?.format_status !== undefined) {
       const value = String(req.body.format_status);
@@ -1654,6 +1675,13 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
     if (existingError || !existing) return res.status(404).json({ error: 'PDF document not found.' });
     let routedResourceId: string | null = existing.routed_resource_id || null;
+    if (destination !== 'past_questions' && existing.routed_resource_id) {
+      const { error: hideError } = await supabase.from('past_question_resources')
+        .update({ published: false, verified_at: null, updated_at: new Date().toISOString() })
+        .eq('id', existing.routed_resource_id);
+      if (hideError) throw hideError;
+      routedResourceId = null;
+    }
     if (destination === 'past_questions') {
       if (examBody === 'POST-UTME' && !institutionId) return res.status(400).json({ error: 'Select the institution for a Post-UTME paper.' });
       if (examBody === 'POST-UTME') {
