@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 58 then 'pass' else 'fail' end as result,
+  case when count(*) >= 60 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 58)' as detail
+  count(*)::text || ' migrations recorded (repository holds 60)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -166,6 +166,8 @@ with expected(version, migration) as (
     ('20261016160000', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql')
     ,('20261017123909', '20261017123909_cbt_result_retention.sql')
     ,('20261018165635', '20261018120000_exam_specific_question_provenance.sql')
+    ,('20261018172307', '20261018172307_post_utme_school_modes_and_pdf_bank.sql')
+    ,('20261018172404', '20261018172404_post_utme_pdf_bank_registry_replay.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -237,6 +239,16 @@ with expected(version, migration) as (
   where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='exam_questions' and column_name='source_type')
      or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='exam_questions' and column_name='review_status')
      or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='exam_questions' and column_name='format_verified')
+  union all
+  select 'public.institutions Post-UTME method and verification fields', '20261018172307_post_utme_school_modes_and_pdf_bank.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='institutions' and column_name='post_utme_method')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='institutions' and column_name='post_utme_verified')
+  union all
+  select 'public.cbt_exams.institution_id', '20261018172307_post_utme_school_modes_and_pdf_bank.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='cbt_exams' and column_name='institution_id')
+  union all
+  select 'public.document_bank', '20261018172307_post_utme_school_modes_and_pdf_bank.sql'
+  where to_regclass('public.document_bank') is null
   union all
   select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from information_schema.columns
@@ -389,7 +401,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 16 release migrations and checked objects are present') as detail
+           'all 18 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------
