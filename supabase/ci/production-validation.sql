@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 60 then 'pass' else 'fail' end as result,
+  case when count(*) >= 61 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 60)' as detail
+  count(*)::text || ' migrations recorded (repository holds 61)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -405,7 +405,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 18 release migrations and checked objects are present') as detail
+           'all 19 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------
