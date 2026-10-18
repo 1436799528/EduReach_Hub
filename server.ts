@@ -479,7 +479,7 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
 app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,created_at').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').order('created_at', { ascending: false });
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
