@@ -1595,7 +1595,7 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
 
 
 const PDF_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
-const PDF_BANK_SELECT = 'id,title,original_filename,file_bytes,storage_path,destination,exam_body,institution_id,subject,course,paper_year,description,source_name,source_url,status,routed_resource_id,created_at';
+const PDF_BANK_SELECT = 'id,title,original_filename,file_bytes,storage_path,destination,exam_body,institution_id,subject,course,paper_year,description,source_name,source_url,source_verified,status,routed_resource_id,created_at';
 
 app.get('/api/admin/pdf-bank', requireCapability('data.read'), async (_req, res) => {
   try {
@@ -1697,7 +1697,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
         title, description: String(req.body?.description || existing.description || '').trim().slice(0, 2000) || null,
         source_name: String(req.body?.source_name || '').trim().slice(0, 160) || 'EduReach PDF Bank',
         source_url: sourceUrl, storage_path: existing.storage_path, access: 'download',
-        published: true, verified_at: new Date().toISOString(),
+        published: Boolean(req.body?.source_verified), verified_at: req.body?.source_verified === true ? new Date().toISOString() : null,
       };
       if (routedResourceId) {
         const { error } = await supabase.from('past_question_resources').update(resource).eq('id', routedResourceId);
@@ -1713,7 +1713,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
       institution_id: institutionId, subject, course, paper_year: paperYear,
       description: String(req.body?.description || '').trim().slice(0, 2000) || null,
       source_name: String(req.body?.source_name || '').trim().slice(0, 160) || null,
-      source_url: sourceUrl, status: destination === 'inbox' ? 'inbox' : 'routed',
+      source_url: sourceUrl, source_verified: req.body?.source_verified === true, status: destination === 'inbox' ? 'inbox' : 'routed',
       routed_resource_id: routedResourceId, routed_by: adminUser.id,
       routed_at: destination === 'inbox' ? null : new Date().toISOString(), updated_at: new Date().toISOString(),
     }).eq('id', id).select(PDF_BANK_SELECT).single();
