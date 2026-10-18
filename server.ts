@@ -1595,7 +1595,7 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
 
 
 const PDF_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
-const PDF_BANK_SELECT = 'id,title,original_filename,file_bytes,storage_path,destination,exam_body,institution_id,subject,course,paper_year,description,source_name,source_url,source_verified,status,routed_resource_id,created_at';
+const PDF_BANK_SELECT = 'id,title,original_filename,file_bytes,storage_path,destination,exam_body,institution_id,subject,course,paper_year,description,source_name,source_url,source_verified,news_article_id,opportunity_id,status,routed_resource_id,created_at';
 
 app.get('/api/admin/pdf-bank', requireCapability('data.read'), async (_req, res) => {
   try {
@@ -1663,6 +1663,8 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     const examBodyRaw = String(req.body?.exam_body || '').trim().toUpperCase();
     const examBody = ['JAMB','WAEC','NECO','POST-UTME'].includes(examBodyRaw) ? examBodyRaw : null;
     const institutionId = String(req.body?.institution_id || '').trim() || null;
+    const newsArticleId = String(req.body?.news_article_id || '').trim() || null;
+    const opportunityId = String(req.body?.opportunity_id || '').trim() || null;
     const subject = String(req.body?.subject || '').trim().slice(0, 120) || null;
     const course = String(req.body?.course || '').trim().slice(0, 160) || null;
     const yearRaw = req.body?.paper_year === '' || req.body?.paper_year === null || req.body?.paper_year === undefined ? null : Number(req.body.paper_year);
@@ -1672,6 +1674,9 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     if (sourceUrl) { try { if (new URL(sourceUrl).protocol !== 'https:') throw new Error(); } catch { return res.status(400).json({ error: 'Source links must use HTTPS.' }); } }
     if (req.body?.source_verified === true && !String(req.body?.source_name || '').trim()) return res.status(400).json({ error: 'Enter the source or organisation before marking this PDF verified.' });
     if (destination === 'past_questions' && !examBody) return res.status(400).json({ error: 'Select the exam body before routing to Past Questions.' });
+    if (['admission_guides', 'school_resources'].includes(destination) && !institutionId) return res.status(400).json({ error: 'Choose the institution this school resource belongs to.' });
+    if (destination === 'scholarships' && !opportunityId) return res.status(400).json({ error: 'Choose the opportunity this PDF supports.' });
+    if (destination === 'news_attachments' && !newsArticleId) return res.status(400).json({ error: 'Choose the news article this PDF attaches to.' });
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
     if (existingError || !existing) return res.status(404).json({ error: 'PDF document not found.' });
@@ -1714,7 +1719,11 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
       institution_id: institutionId, subject, course, paper_year: paperYear,
       description: String(req.body?.description || '').trim().slice(0, 2000) || null,
       source_name: String(req.body?.source_name || '').trim().slice(0, 160) || null,
-      source_url: sourceUrl, source_verified: req.body?.source_verified === true, status: destination === 'inbox' ? 'inbox' : 'routed',
+      source_url: sourceUrl, source_verified: req.body?.source_verified === true,
+      institution_id: ['admission_guides', 'school_resources'].includes(destination) || (destination === 'past_questions' && examBody === 'POST-UTME') ? institutionId : null,
+      news_article_id: destination === 'news_attachments' ? newsArticleId : null,
+      opportunity_id: destination === 'scholarships' ? opportunityId : null,
+      status: destination === 'inbox' ? 'inbox' : 'routed',
       routed_resource_id: routedResourceId, routed_by: adminUser.id,
       routed_at: destination === 'inbox' ? null : new Date().toISOString(), updated_at: new Date().toISOString(),
     }).eq('id', id).select(PDF_BANK_SELECT).single();
@@ -2164,6 +2173,49 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
  * short-lived signed URL, and only then: a row the server cannot sign is
  * reported as unavailable rather than shown as a working download.
  */
+app.get('/api/public/documents', async (req, res) => {
+  const destination = String(req.query.destination || '').trim();
+  const allowed = ['admission_guides', 'scholarships', 'news_attachments', 'school_resources'];
+  if (!allowed.includes(destination)) return res.status(400).json({ error: 'Choose a supported public document destination.' });
+  const institutionId = String(req.query.institution_id || '').trim();
+  const opportunityId = String(req.query.opportunity_id || '').trim();
+  const newsArticleId = String(req.query.news_article_id || '').trim();
+  if (['admission_guides', 'school_resources'].includes(destination) && !institutionId) return res.json({ items: [] });
+  if (destination === 'scholarships' && !opportunityId) return res.json({ items: [] });
+  if (destination === 'news_attachments' && !newsArticleId) return res.json({ items: [] });
+  if (!isServerSupabaseConfigured()) return res.json({ items: [] });
+  try {
+    const supabase = getServerSupabase();
+    let query = supabase.from('document_bank')
+      .select('id,title,description,source_name,source_url,storage_path,destination,institution_id,news_article_id,opportunity_id,subject,course,paper_year,created_at')
+      .eq('destination', destination).eq('status', 'routed').eq('source_verified', true)
+      .order('created_at', { ascending: false }).limit(50);
+    if (institutionId) query = query.eq('institution_id', institutionId);
+    if (opportunityId) query = query.eq('opportunity_id', opportunityId);
+    if (newsArticleId) query = query.eq('news_article_id', newsArticleId);
+    const { data, error } = await query;
+    if (error) throw error;
+    const items = await Promise.all((data || []).map(async (row: Record<string, any>) => {
+      let signedUrl: string | null = null;
+      if (row.storage_path) {
+        const { data: signed } = await supabase.storage.from('resource-files').createSignedUrl(row.storage_path, 300);
+        signedUrl = signed?.signedUrl ?? null;
+      }
+      return {
+        id: row.id, title: row.title, description: row.description, source_name: row.source_name,
+        source_url: row.source_url, destination: row.destination, institution_id: row.institution_id,
+        news_article_id: row.news_article_id, opportunity_id: row.opportunity_id, subject: row.subject,
+        course: row.course, paper_year: row.paper_year, href: signedUrl || row.source_url || null,
+        created_at: row.created_at,
+      };
+    }));
+    res.json({ items });
+  } catch (error) {
+    console.error('Public PDF document list error:', error);
+    res.status(503).json({ error: 'Unable to load these documents right now.' });
+  }
+});
+
 app.get('/api/past-questions/resources', async (req, res) => {
   if (!isServerSupabaseConfigured()) {
     return res.json({ items: [], coverage: [], configured: false, state: 'not-configured' });
