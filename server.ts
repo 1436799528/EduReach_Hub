@@ -1723,7 +1723,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
       }
     }
     const { data, error } = await supabase.from('document_bank').update({
-      title, destination, exam_body: destination === 'past_questions' ? examBody : examBody,
+      title, destination, exam_body: destination === 'past_questions' ? examBody : null,
       institution_id: institutionId, subject, course, paper_year: paperYear,
       description: String(req.body?.description || '').trim().slice(0, 2000) || null,
       source_name: String(req.body?.source_name || '').trim().slice(0, 160) || null,
