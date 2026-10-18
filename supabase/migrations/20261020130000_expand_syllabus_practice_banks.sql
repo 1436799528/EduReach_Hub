@@ -97,7 +97,7 @@ begin
               ans := a * b; q := format('A force of %s N acts through %s m in the direction of motion. Calculate the work done.', a, b);
               explanation := 'Work done = force × distance = '||a||' × '||b||' = '||ans||' J.';
             when 2 then
-              ans := a * 2; q := format('A device draws %s A from a %s V supply? (Use the stated values: current %s A, resistance 2 Ω.) Find the voltage.', a, b, a);
+              ans := a * 2; q := format('A current of %s A flows through a resistor of 2 Ω. Calculate the potential difference across the resistor.', a);
               explanation := 'Using V = IR, V = '||a||' × 2 = '||ans||' V.';
             when 3 then
               ans := a + b; q := format('Two collinear forces of %s N and %s N act in the same direction. Find their resultant.', a, b);
@@ -202,7 +202,7 @@ begin
            correct_option, explanation, marks, position, source_type, source_name,
            source_year, review_status, format_verified, response_type, difficulty)
         values
-          (bank.id, subj, q || ' [Practice item ' || current_count + i || ']',
+          (bank.id, subj, q || ' [Practice item ' || (current_count + i)::text || ']',
            oa, ob, oc, od, correct, explanation, 1, p,
            'original_practice', 'EduReach syllabus practice expansion', 2026,
            'needs_review', false, 'single_choice', 'moderate')
