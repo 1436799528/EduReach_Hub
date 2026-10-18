@@ -1369,6 +1369,8 @@ export type AdminPdfDocument = {
   source_name: string | null;
   source_url: string | null;
   source_verified: boolean;
+  news_article_id: string | null;
+  opportunity_id: string | null;
   status: 'inbox'|'routed'|'rejected';
   routed_resource_id: string | null;
   created_at: string;
@@ -1393,6 +1395,37 @@ export async function routeAdminPdf(id: string, values: Record<string, unknown>)
     body: JSON.stringify(values),
   });
   return body.item;
+}
+
+export type PublicPdfDocument = {
+  id: string;
+  title: string;
+  description: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  destination: AdminPdfDocument['destination'];
+  institution_id: string | null;
+  news_article_id: string | null;
+  opportunity_id: string | null;
+  subject: string | null;
+  course: string | null;
+  paper_year: number | null;
+  href: string | null;
+  created_at: string;
+};
+
+export async function fetchPublicPdfDocuments(filter: {
+  destination: 'admission_guides'|'scholarships'|'news_attachments'|'school_resources';
+  institutionId?: string;
+  opportunityId?: string;
+  newsArticleId?: string;
+}): Promise<PublicPdfDocument[]> {
+  const params = new URLSearchParams({ destination: filter.destination });
+  if (filter.institutionId) params.set('institution_id', filter.institutionId);
+  if (filter.opportunityId) params.set('opportunity_id', filter.opportunityId);
+  if (filter.newsArticleId) params.set('news_article_id', filter.newsArticleId);
+  const body = await jsonFetch<{ items: PublicPdfDocument[] }>(`/api/public/documents?${params.toString()}`);
+  return body.items || [];
 }
 
 export type PostUtmeInstitution = {
