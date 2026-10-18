@@ -1,6 +1,6 @@
 -- Safe verified question-bank import — arena 122Q banks, deduplicated
 -- Reconciliation: preserve legacy comprehensive banks/history but deactivate them; activate the preferred Practice Bank catalogue.
--- Source inspected: arena/2630b947-edureach-hub @ 5549783 (58 migrations, 212Q: JAMB 122, WAEC 36, NECO 30, Post-UTME 24)
+-- Source inspected: arena/2630b947-edureach-hub @ 5549783 (58 migrations; current seed contains 214 original-practice items: JAMB 122, WAEC 37, NECO 31, Post-UTME 24)
 -- Verification:
 --   * Arena banks are original clones (no official past-question claim), style-matched to exam blueprints
 --   * Source metadata: original_practice, needs_review, format_verified=false (not claimed official)
@@ -104,7 +104,7 @@ from exam cross join (values
   (11, 'Use of English', 'Choose the option opposite in meaning to the underlined word: The exam was RIGOROUS.', 'Demanding and thorough', 'Lax and undemanding', 'Expensive', 'Long', 'B', 'Rigorous means thorough/demanding; opposite is lax.'),
   (12, 'Use of English', 'Choose the option that best completes the gap: If the students ___ earlier, they would have met the registration deadline.', 'have come', 'had come', 'will come', 'come', 'B', 'Past unreal condition requires had + past participle.'),
   (13, 'Use of English', 'Choose the option that best completes the gap: Neither the principal ___ the teachers ___ in support of the proposal.', 'nor / was', 'or / were', 'nor / were', 'or / was', 'C', 'Neither ... nor takes plural verb closer to subject (teachers were).'),
-  (14, 'Use of English', 'Choose the option that best completes the gap: The committee ___ its report before the end of the session.', 'would have submitted', 'will submit', 'has submitted', 'had been submitted', 'A', 'Before end of future session from past view → would have submitted; context is unreal past.'),
+  (14, 'Use of English', 'By the end of the session, the committee ___ its report.', 'will have submitted', 'will submit', 'has submitted', 'had been submitted', 'A', 'The future perfect describes an action completed by a specified future time.'),
   (15, 'Use of English', 'From the words lettered A–D, choose the one that has the same vowel sound as the underlined word: beat.', 'Bit', 'Seat', 'Bet', 'But', 'B', 'beat (/iː/) matches seat (/iː/).'),
   (16, 'Use of English', 'Choose the option that best explains the idiom: “The team decided to CUT CORNERS during the project.”', 'To take shortcuts, often at the expense of quality', 'To work extra hard', 'To celebrate openly', 'To divide money fairly', 'A', 'Cut corners = take shortcuts, compromising standards.'),
   (17, 'Use of English', 'Choose the option that best explains the idiom: “After the announcement, she was ON CLOUD NINE.”', 'Extremely happy', 'Very confused', 'Deeply asleep', 'Under arrest', 'A', 'On cloud nine = elated.'),
@@ -138,7 +138,7 @@ from exam cross join (values
   (37, 'Mathematics', 'Solve for x: x² -5x+6=0', 'x=2 or 3', 'x=-2 or -3', 'x=1 or 6', 'x=0 or 5', 'A', 'Factors (x-2)(x-3)=0.'),
   (38, 'Mathematics', 'The mode of 2,3,3,4,5,5,5,6 is:', '3', '4', '5', '6', 'C', '5 occurs most (3 times).'),
   (39, 'Mathematics', 'Increase 400 by 12.5% gives:', '412.5', '450', '480', '500', 'B', '400*1.125=450.'),
-  (40, 'Mathematics', 'Find |2a - b| if a=(3,4), b=(1,2): magnitude of 2a−b.', '5', '√29', '√45', '√37', 'C', 'Vector 2a-b=(5,6), magnitude √(25+36)=√61 — original option set adjusted for exam printing.'),
+  (40, 'Mathematics', 'Find |2a - b| if a=(3,4), b=(1,2): magnitude of 2a−b.', '5', '√29', '√61', '√37', 'C', '2a−b=(6,8)−(1,2)=(5,6); magnitude = √(5²+6²)=√61.'),
   (41, 'Mathematics', 'A trader allows 10% discount and still makes 20% profit. If cost is ₦900, marked price is:', '₦1080', '₦1100', '₦1200', '₦1320', 'C', 'SP=1.2*900=1080=0.9MP ⇒MP=1200.'),
   (42, 'Mathematics', 'Evaluate: sin30° + cos60°', '0', '0.5', '1', '1.5', 'C', 'sin30=0.5, cos60=0.5, sum=1.'),
   (43, 'Mathematics', 'Find the median of 7, 3, 9, 5, 2.', '2', '5', '7', '9', 'B', 'Ordered 2,3,5,7,9 median 5.'),
@@ -155,7 +155,7 @@ from exam cross join (values
   (46, 'Physics', 'The SI unit of pressure is:', 'Newton', 'Pascal', 'Joule', 'Watt', 'B', 'Pressure = force/area, unit Pascal (Pa).'),
   (47, 'Physics', 'An object 20 cm from a concave mirror of focal length 10 cm forms an image at:', 'At infinity', '20 cm in front', '10 cm behind', '40 cm in front', 'B', '1/f=1/u+1/v ⇒1/10=1/20+1/v ⇒v=20 cm real in front.'),
   (48, 'Physics', 'Which wave requires no medium?', 'Sound', 'Water wave', 'Light wave', 'Seismic wave', 'C', 'Electromagnetic waves need no medium.'),
-  (49, 'Physics', 'A 2000 W heater runs for 30 s. Energy dissipated is:', '60 kJ', '30 kJ', '60000 J', 'Both A and C', 'D', 'Energy=Pt=2000*30=60000 J =60 kJ; A and C are same.'),
+  (49, 'Physics', 'A 2000 W heater runs for 30 s. Energy dissipated is:', '60 kJ', '30 kJ', '6000 J', '120 kJ', 'A', 'Energy = power × time = 2000 × 30 = 60000 J = 60 kJ.'),
   (50, 'Physics', 'The acceleration due to gravity on Earth is approx.:', '0 m/s²', '9.8 m/s²', '98 m/s²', '980 m/s²', 'B', 'Standard g≈9.8 m/s².'),
   (51, 'Physics', 'Ohm’s law states V ∝ I provided:', 'Temperature remains constant', 'Pressure remains constant', 'Volume remains constant', 'Mass remains constant', 'A', 'Metallic conductor at constant temperature.'),
   (52, 'Physics', 'A satellite in orbit experiences weightlessness because:', 'No gravity acts', 'It is in free fall around Earth', 'It is far from Earth', 'Air resistance balances weight', 'B', 'Orbit is continuous free fall; gravity provides centripetal force.'),
@@ -264,7 +264,7 @@ from exam cross join (values
 ) as x(position, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation)
 where not exists (select 1 from public.exam_questions q where q.exam_id = exam.id and (q.position = x.position or lower(trim(q.question_text)) = lower(trim(x.question_text))));
 
--- WAEC bank — 30 questions, 6 per subject (WAEC objective style, balanced for integrity gate) --
+-- WAEC bank — 37 original-practice questions across six subjects (not official past-paper reproductions) --
 with exam as (select id from public.cbt_exams where title = 'WAEC SSCE Practice Bank' limit 1)
 insert into public.exam_questions (exam_id, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_year, review_status, format_verified, response_type, difficulty)
 select exam.id, x.subject, x.question_text, x.option_a, x.option_b, x.option_c, x.option_d, x.correct_option, x.explanation, 1, x.position, 'original_practice', 'EduReach original CBT practice (arena 122Q clone, 2026)', 2026, 'needs_review', false, 'single_choice', 'moderate'
@@ -272,7 +272,7 @@ from exam cross join (values
   (1, 'Use of English', 'Choose the option that best completes the sentence: The new library ___ commissioned last Monday.', 'is', 'was', 'has', 'were', 'B', 'Past event “last Monday” → past tense was commissioned.'),
   (2, 'Use of English', 'Choose the word nearest in meaning to VIVID in “She gave a vivid account of the incident.”', 'Dull', 'Clear and detailed', 'Brief', 'Secret', 'B', 'Vivid = strikingly clear/detailed.'),
   (3, 'Use of English', 'From the words A–D, choose the one that rhymes with “bought”:', 'Boot', 'Court', 'But', 'Bet', 'B', 'bought /bɔːt/ rhymes with court.'),
-  (4, 'Use of English', 'Identify the correctly punctuated sentence:', 'Its a rainy day', 'It’s a rainy day.', 'Its a rainy day.', 'It''s a rainy day', 'D', 'Contraction It’s + period.'),
+  (4, 'Use of English', 'Identify the correctly punctuated sentence:', 'Its a rainy day', 'It’s a rainy day.', 'Its a rainy day.', 'It''s a rainy day', 'B', 'Option B uses the contraction correctly and ends the sentence with a full stop; D lacks final punctuation.'),
   (5, 'Use of English', 'After the announcement, the hall was filled with loud APPLAUSE. Choose nearest meaning:', 'Silence', 'Clapping approval', 'Anger', 'Criticism', 'B', 'Applause = clapping.'),
   (6, 'Use of English', 'Choose the option opposite in meaning to OBSCURE in “obscure instructions”:', 'Clear and distinct', 'Dark and hidden', 'Expensive', 'Loud', 'A', 'Obscure = not clear; opposite clear.'),
   (7, 'Mathematics', 'Factorize: x² - 9', '(x-3)(x+3)', '(x-9)(x+1)', '(x-3)²', '(x+9)(x-3)', 'A', 'Difference of squares a²-b²=(a-b)(a+b).'),
@@ -309,7 +309,7 @@ from exam cross join (values
 ) as x(position, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation)
 where not exists (select 1 from public.exam_questions q where q.exam_id = exam.id and (q.position = x.position or lower(trim(q.question_text)) = lower(trim(x.question_text))));
 
--- NECO bank — 30 questions, 6 per subject (NECO objective style) --
+-- NECO bank — 31 original-practice questions across five subjects (not official past-paper reproductions) --
 with exam as (select id from public.cbt_exams where title = 'NECO SSCE Practice Bank' limit 1)
 insert into public.exam_questions (exam_id, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_year, review_status, format_verified, response_type, difficulty)
 select exam.id, x.subject, x.question_text, x.option_a, x.option_b, x.option_c, x.option_d, x.correct_option, x.explanation, 1, x.position, 'original_practice', 'EduReach original CBT practice (arena 122Q clone, 2026)', 2026, 'needs_review', false, 'single_choice', 'moderate'
@@ -329,7 +329,7 @@ from exam cross join (values
   (13, 'Physics', 'Mass 10 kg weight on Earth (g=10 m/s²) is:', '1 N', '10 N', '100 N', '1000 N', 'C', 'W=mg=10*10=100 N.'),
   (14, 'Physics', 'Angle of incidence equals angle of ...', 'Refraction', 'Reflection', 'Diffraction', 'Interference', 'B', 'Law of reflection.'),
   (15, 'Physics', 'Light travels fastest in:', 'Water', 'Glass', 'Vacuum', 'Oil', 'C', 'Vacuum c≈3×10⁸ m/s.'),
-  (16, 'Physics', 'Friction always:', 'Opposes motion', 'Aids motion always', 'Is zero', 'Creates light', 'A', 'Friction resists relative motion.'),
+  (16, 'Physics', 'Friction between two surfaces generally opposes their:', 'Relative motion or tendency to move', 'Motion in every reference frame', 'Weight', 'Electric charge', 'A', 'Friction opposes relative motion or the tendency for relative motion between contacting surfaces.'),
   (17, 'Physics', 'Frequency 50 Hz, wavelength 2 m. Wave speed is:', '25 m/s', '50 m/s', '100 m/s', '200 m/s', 'C', 'v=fλ=100.'),
   (18, 'Physics', 'The SI unit of power is:', 'Joule', 'Watt', 'Newton', 'Pascal', 'B', 'Power watt (W).'),
   (19, 'Chemistry', 'Sodium chloride is:', 'Acid', 'Base', 'Salt', 'Gas', 'C', 'NaCl neutral salt from acid+base.'),
