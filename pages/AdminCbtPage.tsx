@@ -3,11 +3,11 @@ import { FormEvent, useEffect, useState } from 'react';
 import { adminApiFetch, deleteAdminCbtExam, updateAdminCbtExam, type AdminCbtExam } from '../src/lib/api';
 
 type Exam = AdminCbtExam;
-type Question = { id: string; exam_id: string; subject?: string | null; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string | null; marks: number; position: number };
-const emptyExam = { title: '', exam_body: 'JAMB', subject: 'Use of English', description: '', duration_minutes: '30', is_active: true };
-const emptyQuestion: { subject: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string; marks: string; position: string } = { subject: 'Use of English', question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', explanation: '', marks: '1', position: '1' };
+type Question = { id: string; exam_id: string; subject?: string | null; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string | null; marks: number; position: number; source_type: 'official_past_question'|'adapted_practice'|'original_practice'|'unverified'; source_name: string | null; source_url: string | null; source_year: number | null; syllabus_topic: string | null; difficulty: 'easy'|'moderate'|'difficult'|null; review_status: 'needs_review'|'approved'|'rejected'; format_verified: boolean; response_type: string };
+const emptyExam = { title: '', exam_body: 'JAMB', subject: 'Use of English', description: '', duration_minutes: '30', is_active: true, format_status: 'unverified' as const, official_guidance_url: '', format_notes: '', guidance_year: '' };
+const emptyQuestion: { subject: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string; marks: string; position: string; source_type: Question['source_type']; source_name: string; source_url: string; source_year: string; syllabus_topic: string; difficulty: ''|'easy'|'moderate'|'difficult'; review_status: Question['review_status']; format_verified: boolean } = { subject: 'Use of English', question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', explanation: '', marks: '1', position: '1', source_type: 'unverified', source_name: '', source_url: '', source_year: '', syllabus_topic: '', difficulty: '', review_status: 'needs_review', format_verified: false };
 
-type ExamForm = { title: string; exam_body: string; subject: string; description: string; duration_minutes: string; is_active: boolean };
+type ExamForm = { title: string; exam_body: string; subject: string; description: string; duration_minutes: string; is_active: boolean; format_status: 'verified'|'partially_verified'|'unverified'; official_guidance_url: string; format_notes: string; guidance_year: string };
 
 export default function AdminCbtPage() {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -41,7 +41,7 @@ export default function AdminCbtPage() {
     try {
       const body = await adminApiFetch<{ item: Exam }>('/api/admin/cbt/exams', { method: 'POST', body: JSON.stringify({ ...examForm, duration_minutes: Number(examForm.duration_minutes) }) });
       setExams((items) => [body.item, ...items]); setSelectedExam(body.item.id); setExamForm(emptyExam); setShowExamForm(false);
-      setMessage('Exam created. Add its approved questions below — they become the live question pool immediately.');
+      setMessage('Exam created. Its format defaults to unverified, and new questions require editorial review before they can be described as official past questions.');
     } catch (e) { setMessage(userFacingError(e, 'Unable to save exam.')); } finally { setSaving(false); }
   }
 
@@ -53,6 +53,10 @@ export default function AdminCbtPage() {
       description: exam.description || '',
       duration_minutes: String(exam.duration_minutes),
       is_active: exam.is_active,
+      format_status: exam.format_status || 'unverified',
+      official_guidance_url: exam.official_guidance_url || '',
+      format_notes: exam.format_notes || '',
+      guidance_year: exam.guidance_year ? String(exam.guidance_year) : '',
     });
   }
 
@@ -68,6 +72,10 @@ export default function AdminCbtPage() {
         description: editingExam.description.trim(),
         duration_minutes: Number(editingExam.duration_minutes),
         is_active: editingExam.is_active,
+        format_status: editingExam.format_status,
+        official_guidance_url: editingExam.official_guidance_url.trim(),
+        format_notes: editingExam.format_notes.trim(),
+        guidance_year: editingExam.guidance_year ? Number(editingExam.guidance_year) : null,
       });
       setExams((items) => items.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
       setEditingExam(null);
@@ -100,7 +108,7 @@ export default function AdminCbtPage() {
   function startQuestion(question?: Question) {
     const defaultSubject = exams.find((item) => item.id === selectedExam)?.subject || 'Use of English';
     if (!question) { setEditingQuestion(null); setQuestionForm({ ...emptyQuestion, subject: defaultSubject, position: String(questions.length + 1) }); }
-    else { setEditingQuestion(question.id); setQuestionForm({ subject: question.subject || defaultSubject, question_text: question.question_text, option_a: question.option_a, option_b: question.option_b, option_c: question.option_c, option_d: question.option_d, correct_option: question.correct_option, explanation: question.explanation || '', marks: String(question.marks), position: String(question.position) }); }
+    else { setEditingQuestion(question.id); setQuestionForm({ subject: question.subject || defaultSubject, question_text: question.question_text, option_a: question.option_a, option_b: question.option_b, option_c: question.option_c, option_d: question.option_d, correct_option: question.correct_option, explanation: question.explanation || '', marks: String(question.marks), position: String(question.position), source_type: question.source_type || 'unverified', source_name: question.source_name || '', source_url: question.source_url || '', source_year: question.source_year ? String(question.source_year) : '', syllabus_topic: question.syllabus_topic || '', difficulty: question.difficulty || '', review_status: question.review_status || 'needs_review', format_verified: question.format_verified === true }); }
     setShowQuestionForm(true);
   }
 
