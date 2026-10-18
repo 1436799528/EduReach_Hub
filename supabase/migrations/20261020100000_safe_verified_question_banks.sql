@@ -64,7 +64,7 @@ where is_active = true
 -- Fail the migration if the intended four banks are not the only active
 -- records for these four exam bodies. This guards against duplicate catalogue
 -- entries if a legacy title differs from the known production pattern.
-do $
+do $reconcile$
 declare
   active_jamb integer;
   active_waec integer;
@@ -84,7 +84,7 @@ begin
     raise exception 'Question bank reconciliation failed: active counts JAMB %, WAEC %, NECO %, Post-UTME %',
       active_jamb, active_waec, active_neco, active_post_utme;
   end if;
-end $;
+end $reconcile$;
 
 -- JAMB UTME — Use of English 1-24 (passage, lexis, antonyms, grammar, idioms) --
 with exam as (select id from public.cbt_exams where title = 'JAMB UTME Practice Bank' limit 1)
