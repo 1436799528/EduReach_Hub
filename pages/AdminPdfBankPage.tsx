@@ -22,6 +22,7 @@ type Draft = {
   description: string;
   source_name: string;
   source_url: string;
+  source_verified: boolean;
 };
 const destinations: Array<{ value: Destination; label: string }> = [
   { value: 'inbox', label: 'Keep in inbox' },
@@ -44,6 +45,7 @@ function draftFor(item: AdminPdfDocument): Draft {
     description: item.description || '',
     source_name: item.source_name || '',
     source_url: item.source_url || '',
+    source_verified: item.source_verified || false,
   };
 }
 function fileAsDataUrl(file: File): Promise<string> {
@@ -109,13 +111,16 @@ export default function AdminPdfBankPage() {
     if (!draft) return;
     if (draft.destination === 'past_questions' && !draft.exam_body) { setError('Choose the examination body for this past question.'); return; }
     if (draft.destination === 'past_questions' && draft.exam_body === 'POST-UTME' && !draft.institution_id) { setError('Choose the institution for this Post-UTME paper.'); return; }
+    if (draft.destination === 'past_questions' && draft.source_verified && !draft.source_name.trim()) { setError('Enter the source or organisation before marking this paper verified.'); return; }
     setRoutingId(item.id); setError(''); setMessage('');
     try {
       const updated = await routeAdminPdf(item.id, { ...draft, paper_year: draft.paper_year || null });
       setItems((current) => current.map((row) => row.id === updated.id ? updated : row));
       setDrafts((current) => ({ ...current, [updated.id]: draftFor(updated) }));
       setMessage(updated.destination === 'past_questions'
-        ? 'PDF routed into the past-question library. It is now available only through the verified library filters.'
+        ? (updated.source_verified
+          ? 'PDF routed and marked source-verified. It is available in the matching student past-question filters.'
+          : 'PDF routed to the past-question library as an unpublished draft. Students cannot see it until you verify its source and classification.')
         : updated.destination === 'inbox'
           ? 'PDF returned to the inbox.'
           : 'PDF filed under the selected destination in the central document bank.');
@@ -156,7 +161,7 @@ export default function AdminPdfBankPage() {
           return <article className="admin-card" key={item.id} style={{ padding: 18 }}>
             <div className="admin-card-header">
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}><FileText size={22} /><div><h2 style={{ margin: 0 }}>{item.title}</h2><p className="muted" style={{ margin: '4px 0' }}>{item.original_filename} · {(item.file_bytes / 1024 / 1024).toFixed(2)} MB</p><small className="muted">Uploaded {new Date(item.created_at).toLocaleString()}</small></div></div>
-              <span className="admin-filter-count">{item.status === 'routed' ? destinations.find((d) => d.value === item.destination)?.label || 'Routed' : item.status === 'rejected' ? 'Rejected' : 'Needs routing'}</span>
+              <span className="admin-filter-count">{item.status === 'routed' ? (item.destination === 'past_questions' && !item.source_verified ? 'Routed · pending verification' : destinations.find((d) => d.value === item.destination)?.label || 'Routed') : item.status === 'rejected' ? 'Rejected' : 'Needs routing'}</span>
             </div>
             <div className="admin-news-form-grid">
               <label className="admin-field"><span>Title *</span><input className="admin-input" value={draft.title} onChange={(e) => patchDraft(item.id, { title: e.target.value })} /></label>
@@ -171,6 +176,10 @@ export default function AdminPdfBankPage() {
               <label className="admin-field"><span>Description</span><textarea className="admin-textarea" value={draft.description} onChange={(e) => patchDraft(item.id, { description: e.target.value })} /></label>
               <label className="admin-field"><span>Source / organisation</span><input className="admin-input" value={draft.source_name} onChange={(e) => patchDraft(item.id, { source_name: e.target.value })} placeholder="e.g. Official university portal" /></label>
               <label className="admin-field"><span>Source URL (HTTPS)</span><input className="admin-input" value={draft.source_url} onChange={(e) => patchDraft(item.id, { source_url: e.target.value })} placeholder="https://…" /></label>
+              {draft.destination === 'past_questions' && <label className="admin-check-row" style={{ gridColumn: '1 / -1' }}>
+                <input type="checkbox" checked={draft.source_verified} onChange={(e) => patchDraft(item.id, { source_verified: e.target.checked })} />
+                <span><strong>Verify source and classification</strong><small className="muted" style={{ display: 'block' }}>Confirm you reviewed the document, exam body, school (if applicable), subject/year and provenance. If unchecked, it remains unpublished and students cannot access it.</small></span>
+              </label>}
             </div>
             {draft.destination !== 'inbox' && draft.destination !== 'past_questions' && <p className="admin-quality-gate">This destination is recorded in the central PDF bank. Student-facing attachment support for this content type must be connected before this file appears in that module.</p>}
             <div className="admin-news-editor-actions"><button type="button" className="admin-btn" onClick={() => void route(item)} disabled={routingId === item.id}><Route size={14} /> {routingId === item.id ? 'Routing…' : draft.destination === 'inbox' ? 'Save as inbox item' : 'Route PDF'}</button></div>
