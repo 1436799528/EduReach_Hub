@@ -1033,6 +1033,12 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
   }
 
   try {
+    const postUtmeAvailable = Boolean(body?.post_utme_available);
+    const postUtmeMethod = String(body?.post_utme_method || '');
+    const postUtmeVerified = Boolean(body?.post_utme_verified);
+    if (postUtmeAvailable && !['cbt', 'handwritten'].includes(postUtmeMethod)) return { error: 'Choose whether this institution uses CBT or handwritten Post-UTME.' };
+    if (postUtmeAvailable && !body?.post_utme_source_url) return { error: 'Add the official Post-UTME source URL before listing this school.' };
+    if (postUtmeVerified && (!postUtmeAvailable || !['cbt', 'handwritten'].includes(postUtmeMethod) || !body?.post_utme_source_url)) return { error: 'Verify Post-UTME participation only after setting its method and official source URL.' };
     return {
       values: {
         school_name: schoolName,
@@ -1044,6 +1050,10 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
         admission_portal_url: httpsUrl(body?.admission_portal_url, 'admission portal URL'),
         student_portal_url: httpsUrl(body?.student_portal_url, 'student portal URL'),
         is_verified: Boolean(body?.is_verified),
+        post_utme_available: Boolean(body?.post_utme_available),
+        post_utme_method: ['cbt', 'handwritten'].includes(String(body?.post_utme_method || '')) ? String(body.post_utme_method) : null,
+        post_utme_source_url: httpsUrl(body?.post_utme_source_url, 'Post-UTME official source URL'),
+        post_utme_verified: Boolean(body?.post_utme_verified),
       },
     };
   } catch (error) {
@@ -1055,7 +1065,7 @@ app.get('/api/admin/institutions', requireCapability('institution.read'), async 
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
     const supabase = getServerSupabase();
-    let query = supabase.from('institutions').select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,created_at,updated_at').order('school_name', { ascending: true }).limit(500);
+    let query = supabase.from('institutions').select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,created_at,updated_at,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified').order('school_name', { ascending: true }).limit(500);
     if (search) {
       // PostgREST's filter grammar uses , . ( ) as structure, and % / _ as ILIKE
       // wildcards. Strip all of them, not just the wildcards: a stray parenthesis
