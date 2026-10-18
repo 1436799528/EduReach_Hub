@@ -169,6 +169,7 @@ with expected(version, migration) as (
     ,('20261018172307', '20261018172307_post_utme_school_modes_and_pdf_bank.sql')
     ,('20261018172404', '20261018172404_post_utme_pdf_bank_registry_replay.sql')
     ,('20261018172823', '20261018172823_pdf_bank_explicit_source_verification.sql')
+    ,('20261018174207', '20261018174207_pdf_bank_destination_links.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -253,6 +254,10 @@ with expected(version, migration) as (
   union all
   select 'public.document_bank.source_verified', '20261018172823_pdf_bank_explicit_source_verification.sql'
   where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='document_bank' and column_name='source_verified')
+  union all
+  select 'public.document_bank destination links', '20261018174207_pdf_bank_destination_links.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='document_bank' and column_name='news_article_id')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='document_bank' and column_name='opportunity_id')
   union all
   select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from information_schema.columns
@@ -405,7 +410,7 @@ select
   case when count(*) = 0 then 'pass' else 'fail' end as result,
   'every migration in the 2026-10-02/03 release and its key objects are present' as check_name,
   coalesce(string_agg(object || ' — apply ' || migration, '; '),
-           'all 19 release migrations and checked objects are present') as detail
+           'all 20 release migrations and checked objects are present') as detail
 from missing;
 
 -- 10. Data quality, from the database's own report -----------------------------
