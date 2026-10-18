@@ -1434,6 +1434,7 @@ export type AdminCbtExam = {
   official_guidance_url: string | null;
   format_notes: string | null;
   guidance_year: number | null;
+  institution_id?: string | null;
   created_at?: string;
 };
 
