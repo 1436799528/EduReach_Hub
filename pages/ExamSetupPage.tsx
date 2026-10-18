@@ -13,7 +13,7 @@ import {
   secondarySubjectTracks,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtBank, fetchCbtExams, startConfiguredCbt, trackEvent, type CbtBankPayload } from '../src/lib/api';
+import { fetchCbtBank, fetchCbtExams, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { userFacingError } from '../lib/errors';
@@ -88,6 +88,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const { user } = useAuth();
 
   const [catalog, setCatalog] = useState<CatalogExam[]>([]);
+  const [postUtmeInstitutions, setPostUtmeInstitutions] = useState<PostUtmeInstitution[]>([]);
+  const [postUtmeInstitutionId, setPostUtmeInstitutionId] = useState(() => new URLSearchParams(window.location.search).get('school') || '');
+  const [postUtmePapers, setPostUtmePapers] = useState<PastQuestionResource[]>([]);
+  const [postUtmePapersLoading, setPostUtmePapersLoading] = useState(false);
   const [targetExam, setTargetExam] = useState<CatalogExam | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<unknown>(null);
@@ -130,10 +134,35 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      const requestedId = new URLSearchParams(window.location.search).get('exam');
+      const params = new URLSearchParams(window.location.search);
+      const requestedId = params.get('exam');
       const exams = (await fetchCbtExams()) as CatalogExam[];
       setCatalog(exams);
-      const resolved = resolveSetupExam(exams, exam, requestedId);
+      let eligibleExams = exams;
+      if (exam === 'post-utme') {
+        const schools = await fetchPostUtmeInstitutions();
+        setPostUtmeInstitutions(schools);
+        const selectedId = postUtmeInstitutionId && schools.some((school) => school.id === postUtmeInstitutionId)
+          ? postUtmeInstitutionId
+          : (params.get('school') && schools.some((school) => school.id === params.get('school')) ? params.get('school')! : schools[0]?.id || '');
+        if (selectedId !== postUtmeInstitutionId) setPostUtmeInstitutionId(selectedId);
+        const selectedSchool = schools.find((school) => school.id === selectedId);
+        if (!selectedSchool) {
+          setTargetExam(null); setBank(null); setPostUtmePapers([]);
+          return;
+        }
+        if (selectedSchool.post_utme_method === 'handwritten') {
+          setTargetExam(null); setBank(null); setPostUtmePapersLoading(true);
+          try {
+            const library = await fetchPastQuestionResources({ exam: 'POST-UTME', institution: selectedSchool.id });
+            setPostUtmePapers(library.items);
+          } finally { setPostUtmePapersLoading(false); }
+          return;
+        }
+        setPostUtmePapers([]);
+        eligibleExams = exams.filter((item) => String(item.exam_body).toUpperCase() === 'POST-UTME' && item.institution_id === selectedSchool.id);
+      }
+      const resolved = resolveSetupExam(eligibleExams, exam, requestedId);
       setTargetExam(resolved);
       if (resolved) await loadBank(resolved.id);
     } catch (error) {
@@ -141,7 +170,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     } finally {
       setCatalogLoading(false);
     }
-  }, [exam, loadBank]);
+  }, [exam, loadBank, postUtmeInstitutionId]);
 
   useEffect(() => { void resolveCatalogAndBank(); }, [resolveCatalogAndBank]);
 
@@ -324,7 +353,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const filteredCourses = department === 'All departments' ? jambCourses : jambCourses.filter((course) => course.department === department);
   const selectedSchool = postUtmeSchools.find((school) => school.id === schoolId) || postUtmeSchools[0];
   const secondaryOptions = secondaryTrack === 'General' ? secondarySchoolSubjects : secondarySubjectCatalog[secondaryTrack];
-  const catalogEmpty = catalogLoading === false && !targetExam && !catalogError;
+  const selectedPostUtmeInstitution = postUtmeInstitutions.find((school) => school.id === postUtmeInstitutionId) || null;
+  const catalogEmpty = catalogLoading === false && !targetExam && !catalogError && !(exam === 'post-utme' && selectedPostUtmeInstitution?.post_utme_method === 'handwritten');
 
   return (
     <HubLayout>
@@ -340,7 +370,59 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </div>
           </section>
 
-          {(
+          {exam === 'post-utme' && (
+            <section className="er-setup-panel" aria-labelledby="post-utme-school-title">
+              <div className="er-setup-section-heading">
+                <div><span className="hub-eyebrow">Institution-specific screening</span><h2 id="post-utme-school-title">Choose your school</h2></div>
+                <BookOpen size={22} aria-hidden="true" />
+              </div>
+              <p>Post-UTME is not the same across institutions. EduReach lists only schools whose participation and screening method have been verified from an official school source.</p>
+              <label className="admin-field" style={{ maxWidth: 560 }}>
+                <span>Participating institution</span>
+                <select className="admin-select" value={postUtmeInstitutionId} onChange={(event) => {
+                  const id = event.target.value;
+                  setPostUtmeInstitutionId(id);
+                  const params = new URLSearchParams(window.location.search);
+                  if (id) params.set('school', id); else params.delete('school');
+                  window.history.replaceState({}, '', `/cbt/setup/post-utme${params.toString() ? `?${params.toString()}` : ''}`);
+                  setFormError('');
+                }}>
+                  <option value="">Select a verified school…</option>
+                  {postUtmeInstitutions.map((school) => <option key={school.id} value={school.id}>{school.school_name}{school.acronym ? ` (${school.acronym})` : ''}{school.state ? ` · ${school.state}` : ''}</option>)}
+                </select>
+              </label>
+              {!catalogLoading && postUtmeInstitutions.length === 0 && (
+                <InlineNotice tone="warning" title="No verified Post-UTME schools listed yet">
+                  EduReach will not assume that a school conducts screening or guess its method. The admin team must verify participation and the official school announcement first.
+                </InlineNotice>
+              )}
+              {selectedPostUtmeInstitution && (
+                <InlineNotice tone="info" title={selectedPostUtmeInstitution.post_utme_method === 'cbt' ? 'This school uses CBT' : 'This school uses handwritten / paper-based screening'}>
+                  Official school source: <a href={selectedPostUtmeInstitution.post_utme_source_url} target="_blank" rel="noreferrer">view announcement</a>.
+                  {selectedPostUtmeInstitution.post_utme_method === 'cbt'
+                    ? ' EduReach will show a CBT setup only when a question bank is configured specifically for this institution.'
+                    : ' EduReach keeps a separate paper/PDF area for this school; it will not launch a CBT session for a handwritten examination.'}
+                </InlineNotice>
+              )}
+            </section>
+          )}
+
+          {exam === 'post-utme' && selectedPostUtmeInstitution?.post_utme_method === 'handwritten' && (
+            <section className="er-setup-panel" aria-labelledby="post-utme-paper-title">
+              <div className="er-setup-section-heading"><div><span className="hub-eyebrow">Paper-based preparation</span><h2 id="post-utme-paper-title">Handwritten Post-UTME papers</h2></div><BookOpen size={22} /></div>
+              {postUtmePapersLoading ? <p>Loading verified papers…</p> : postUtmePapers.length ? (
+                <div className="er-setup-guide-grid">
+                  {postUtmePapers.map((paper) => <article className="er-setup-guide-item" key={paper.id}>
+                    <span><BookOpen size={16} /></span><div><strong>{paper.title}</strong><p>{[paper.subject, paper.course, paper.year].filter(Boolean).join(' · ') || 'School-specific paper'}</p>
+                    {paper.description && <p>{paper.description}</p>}
+                    {paper.href ? <a href={paper.href} target="_blank" rel="noreferrer">{paper.access === 'download' ? 'Open / download PDF' : 'View paper'} <ArrowRight size={13} /></a> : <small>File not available right now.</small>}
+                  </div></article>)}
+                </div>
+              ) : <InlineNotice tone="info" title="No papers uploaded for this school yet">This school is verified as handwritten, but EduReach has no reviewed PDF papers for it yet. Check back after the admin team uploads and routes the documents.</InlineNotice>}
+            </section>
+          )}
+
+          {(exam !== 'post-utme' || selectedPostUtmeInstitution?.post_utme_method === 'cbt') && (
             <section className="er-setup-guide" aria-labelledby="cbt-guide-title">
               <div className="er-setup-section-heading">
                 <div>
