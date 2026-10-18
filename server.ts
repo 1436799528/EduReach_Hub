@@ -1677,6 +1677,14 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     if (['admission_guides', 'school_resources'].includes(destination) && !institutionId) return res.status(400).json({ error: 'Choose the institution this school resource belongs to.' });
     if (destination === 'scholarships' && !opportunityId) return res.status(400).json({ error: 'Choose the opportunity this PDF supports.' });
     if (destination === 'news_attachments' && !newsArticleId) return res.status(400).json({ error: 'Choose the news article this PDF attaches to.' });
+    if (destination === 'scholarships') {
+      const { data: opportunity, error: opportunityError } = await supabase.from('opportunities').select('id').eq('id', opportunityId).maybeSingle();
+      if (opportunityError || !opportunity) return res.status(400).json({ error: 'The selected opportunity could not be found.' });
+    }
+    if (destination === 'news_attachments') {
+      const { data: article, error: articleError } = await supabase.from('news_articles').select('id').eq('id', newsArticleId).maybeSingle();
+      if (articleError || !article) return res.status(400).json({ error: 'The selected news article could not be found.' });
+    }
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
     if (existingError || !existing) return res.status(404).json({ error: 'PDF document not found.' });
