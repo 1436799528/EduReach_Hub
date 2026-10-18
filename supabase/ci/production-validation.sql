@@ -168,6 +168,7 @@ with expected(version, migration) as (
     ,('20261018165635', '20261018120000_exam_specific_question_provenance.sql')
     ,('20261018172307', '20261018172307_post_utme_school_modes_and_pdf_bank.sql')
     ,('20261018172404', '20261018172404_post_utme_pdf_bank_registry_replay.sql')
+    ,('20261018172823', '20261018172823_pdf_bank_explicit_source_verification.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -249,6 +250,9 @@ with expected(version, migration) as (
   union all
   select 'public.document_bank', '20261018172307_post_utme_school_modes_and_pdf_bank.sql'
   where to_regclass('public.document_bank') is null
+  union all
+  select 'public.document_bank.source_verified', '20261018172823_pdf_bank_explicit_source_verification.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='document_bank' and column_name='source_verified')
   union all
   select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from information_schema.columns
