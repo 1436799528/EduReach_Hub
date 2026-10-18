@@ -104,7 +104,9 @@ export function NewsRow({ item }: { item: NewsItem }) {
 export function FeaturedNews({ items }: { items: NewsItem[] }) {
   if (!items.length) return null;
   const flagged = items.filter((item) => item.featured);
-  const list = (flagged.length ? flagged : items).slice(0, 2);
+  // Highlights are editorially selected; routine recency alone is not enough.
+  if (!flagged.length) return null;
+  const list = flagged.slice(0, 2);
   return (
     <div className="er-featured-grid">
       {list.map((item) => (
