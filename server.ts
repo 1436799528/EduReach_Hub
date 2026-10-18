@@ -12,6 +12,7 @@ import {
 } from './middleware';
 import { getServerSupabaseKey } from './lib/supabase-config';
 import { matchesDeclaredImageType } from './lib/image-signature';
+import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
 import { type Capability } from './src/lib/capabilities';
@@ -1623,7 +1624,7 @@ app.post('/api/admin/pdf-bank/upload', rateLimitFor(RATE_LIMIT_RULES.adminUpload
     const buffer = Buffer.from(match[1].replace(/\s+/g, ''), 'base64');
     if (!buffer.length) return res.status(400).json({ error: 'The PDF is empty.' });
     if (buffer.length > PDF_UPLOAD_MAX_BYTES) return res.status(413).json({ error: 'PDF files must be 10 MB or smaller.' });
-    if (buffer.subarray(0, 5).toString('ascii') !== '%PDF-') return res.status(400).json({ error: 'The file does not have a valid PDF signature.' });
+    if (!isPdfBuffer(buffer)) return res.status(400).json({ error: 'The file does not have a valid PDF signature.' });
     const supabase = getServerSupabase();
     const safeName = filename.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-120) || 'document.pdf';
     const now = new Date();

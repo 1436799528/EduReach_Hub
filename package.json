@@ -27,6 +27,7 @@
     "rls:audit": "tsx scripts/rls-posture.ts",
     "a11y:audit": "tsx scripts/a11y-audit.ts",
     "backup:rehearsal": "tsx scripts/backup-rehearsal.ts",
+    "duplicate:audit": "tsx scripts/duplicate-audit.ts",
     "smoke": "tsx scripts/smoke-check.ts"
   },
   "dependencies": {
