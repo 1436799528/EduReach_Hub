@@ -1368,6 +1368,7 @@ export type AdminPdfDocument = {
   description: string | null;
   source_name: string | null;
   source_url: string | null;
+  source_verified: boolean;
   status: 'inbox'|'routed'|'rejected';
   routed_resource_id: string | null;
   created_at: string;
