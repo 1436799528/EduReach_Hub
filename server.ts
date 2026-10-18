@@ -189,7 +189,7 @@ app.get('/api/health/ready', async (_req, res) => {
 // Parse uploads only after authorization, using the endpoint's larger limit.
 const jsonBody = express.json({ limit: '1mb' });
 app.use((req, res, next) => {
-  if (req.method === 'POST' && req.path === '/api/admin/uploads') return next();
+  if (req.method === 'POST' && (req.path === '/api/admin/uploads' || req.path === '/api/admin/pdf-bank/upload')) return next();
   return jsonBody(req, res, next);
 });
 
@@ -1556,6 +1556,132 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
 });
 
 // --- Content image uploads (Supabase Storage, admin-content bucket) --------
+
+
+const PDF_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+const PDF_BANK_SELECT = 'id,title,original_filename,file_bytes,storage_path,destination,exam_body,institution_id,subject,course,paper_year,description,source_name,source_url,status,routed_resource_id,created_at';
+
+app.get('/api/admin/pdf-bank', requireCapability('data.read'), async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('document_bank').select(PDF_BANK_SELECT).order('created_at', { ascending: false }).limit(300);
+    if (error) throw error;
+    res.json({ items: data || [] });
+  } catch (error) {
+    console.error('Admin PDF bank list error:', error);
+    res.status(503).json({ error: 'Unable to load the PDF bank.' });
+  }
+});
+
+app.post('/api/admin/pdf-bank/upload', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('data.write', 'institution.update', 'cbt.manage'), express.json({ limit: '15mb' }), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const filenameRaw = String(req.body?.filename || '').split(/[\\/]/).pop()?.replace(/[\\x00-\\x1f\\x7f]/g, '').trim() || '';
+    const filename = filenameRaw.slice(-180);
+    const title = String(req.body?.title || filename.replace(/\\.pdf$/i, '')).trim().slice(0, 240);
+    const dataUrl = String(req.body?.dataUrl || '');
+    const match = /^data:application\\/pdf;base64,([A-Za-z0-9+/=\\s]+)$/i.exec(dataUrl);
+    if (!filename || !/\\.pdf$/i.test(filename)) return res.status(400).json({ error: 'Choose a PDF file.' });
+    if (!title) return res.status(400).json({ error: 'A document title is required.' });
+    if (!match) return res.status(400).json({ error: 'The upload must be a PDF file.' });
+    const buffer = Buffer.from(match[1].replace(/\\s+/g, ''), 'base64');
+    if (!buffer.length) return res.status(400).json({ error: 'The PDF is empty.' });
+    if (buffer.length > PDF_UPLOAD_MAX_BYTES) return res.status(413).json({ error: 'PDF files must be 10 MB or smaller.' });
+    if (buffer.subarray(0, 5).toString('ascii') !== '%PDF-') return res.status(400).json({ error: 'The file does not have a valid PDF signature.' });
+    const supabase = getServerSupabase();
+    const safeName = filename.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(-120) || 'document.pdf';
+    const now = new Date();
+    const objectPath = `pdf-bank/${now.getUTCFullYear()}/${String(now.getUTCMonth()+1).padStart(2,'0')}/${crypto.randomUUID()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage.from('resource-files').upload(objectPath, buffer, {
+      contentType: 'application/pdf',
+      cacheControl: '3600',
+      upsert: false,
+    });
+    if (uploadError) throw uploadError;
+    const { data, error } = await supabase.from('document_bank').insert({
+      title, original_filename: filename, mime_type: 'application/pdf', file_bytes: buffer.length,
+      storage_path: objectPath, description: String(req.body?.description || '').trim().slice(0, 2000) || null,
+      uploaded_by: adminUser.id,
+    }).select(PDF_BANK_SELECT).single();
+    if (error) {
+      await supabase.storage.from('resource-files').remove([objectPath]);
+      throw error;
+    }
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'upload', p_entity_type: 'document_bank', p_entity_id: data.id, p_metadata: { filename, bytes: buffer.length, storage_path: objectPath } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin PDF upload error:', error);
+    res.status(500).json({ error: 'Unable to upload this PDF.' });
+  }
+});
+
+app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write', 'institution.update', 'cbt.manage'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const id = String(req.params.documentId || '');
+    const destination = String(req.body?.destination || 'inbox');
+    const allowed = ['inbox','past_questions','admission_guides','scholarships','news_attachments','school_resources','other'];
+    if (!allowed.includes(destination)) return res.status(400).json({ error: 'Choose a valid destination.' });
+    const title = String(req.body?.title || '').trim().slice(0, 240);
+    if (!title) return res.status(400).json({ error: 'A document title is required.' });
+    const examBodyRaw = String(req.body?.exam_body || '').trim().toUpperCase();
+    const examBody = ['JAMB','WAEC','NECO','POST-UTME'].includes(examBodyRaw) ? examBodyRaw : null;
+    const institutionId = String(req.body?.institution_id || '').trim() || null;
+    const subject = String(req.body?.subject || '').trim().slice(0, 120) || null;
+    const course = String(req.body?.course || '').trim().slice(0, 160) || null;
+    const yearRaw = req.body?.paper_year === '' || req.body?.paper_year === null || req.body?.paper_year === undefined ? null : Number(req.body.paper_year);
+    const paperYear = yearRaw === null ? null : yearRaw;
+    if (paperYear !== null && (!Number.isInteger(paperYear) || paperYear < 1954 || paperYear > 2100)) return res.status(400).json({ error: 'Enter a valid paper year.' });
+    const sourceUrl = String(req.body?.source_url || '').trim() || null;
+    if (sourceUrl) { try { if (new URL(sourceUrl).protocol !== 'https:') throw new Error(); } catch { return res.status(400).json({ error: 'Source links must use HTTPS.' }); } }
+    if (destination === 'past_questions' && !examBody) return res.status(400).json({ error: 'Select the exam body before routing to Past Questions.' });
+    const supabase = getServerSupabase();
+    const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
+    if (existingError || !existing) return res.status(404).json({ error: 'PDF document not found.' });
+    let routedResourceId: string | null = existing.routed_resource_id || null;
+    if (destination === 'past_questions') {
+      if (examBody === 'POST-UTME' && !institutionId) return res.status(400).json({ error: 'Select the institution for a Post-UTME paper.' });
+      if (examBody === 'POST-UTME') {
+        const { data: school, error: schoolError } = await supabase.from('institutions')
+          .select('id,post_utme_available,post_utme_method,post_utme_verified')
+          .eq('id', institutionId).maybeSingle();
+        if (schoolError || !school || school.post_utme_available !== true || school.post_utme_verified !== true || school.post_utme_method !== 'handwritten') {
+          return res.status(400).json({ error: 'Post-UTME PDFs can only be routed to a verified institution that uses handwritten/paper-based screening.' });
+        }
+      }
+      const resource = {
+        exam_body: examBody, institution_id: institutionId, subject, course, paper_year: paperYear,
+        title, description: String(req.body?.description || existing.description || '').trim().slice(0, 2000) || null,
+        source_name: String(req.body?.source_name || '').trim().slice(0, 160) || 'EduReach PDF Bank',
+        source_url: sourceUrl, storage_path: existing.storage_path, access: 'download',
+        published: true, verified_at: new Date().toISOString(),
+      };
+      if (routedResourceId) {
+        const { error } = await supabase.from('past_question_resources').update(resource).eq('id', routedResourceId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('past_question_resources').insert(resource).select('id').single();
+        if (error) throw error;
+        routedResourceId = data.id;
+      }
+    }
+    const { data, error } = await supabase.from('document_bank').update({
+      title, destination, exam_body: destination === 'past_questions' ? examBody : examBody,
+      institution_id: institutionId, subject, course, paper_year: paperYear,
+      description: String(req.body?.description || '').trim().slice(0, 2000) || null,
+      source_name: String(req.body?.source_name || '').trim().slice(0, 160) || null,
+      source_url: sourceUrl, status: destination === 'inbox' ? 'inbox' : 'routed',
+      routed_resource_id: routedResourceId, routed_by: adminUser.id,
+      routed_at: destination === 'inbox' ? null : new Date().toISOString(), updated_at: new Date().toISOString(),
+    }).eq('id', id).select(PDF_BANK_SELECT).single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'route', p_entity_type: 'document_bank', p_entity_id: id, p_metadata: { destination, exam_body: examBody, institution_id: institutionId } });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin PDF routing error:', error);
+    res.status(500).json({ error: 'Unable to route this PDF.' });
+  }
+});
 
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
