@@ -113,6 +113,10 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Audit trail. Reachable through admin_audit_log(), which is granted to service_role alone.',
   },
   {
+    table: 'document_bank', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Central PDF intake and routing metadata contains private storage paths; all upload, review, signing and routing operations go through authenticated staff APIs.',
+  },
+  {
     table: 'edureach_audit_logs', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
     why: 'Legacy audit trail, server-only.',
   },
