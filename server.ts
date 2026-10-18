@@ -1670,6 +1670,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
     if (paperYear !== null && (!Number.isInteger(paperYear) || paperYear < 1954 || paperYear > 2100)) return res.status(400).json({ error: 'Enter a valid paper year.' });
     const sourceUrl = String(req.body?.source_url || '').trim() || null;
     if (sourceUrl) { try { if (new URL(sourceUrl).protocol !== 'https:') throw new Error(); } catch { return res.status(400).json({ error: 'Source links must use HTTPS.' }); } }
+    if (req.body?.source_verified === true && !String(req.body?.source_name || '').trim()) return res.status(400).json({ error: 'Enter the source or organisation before marking this PDF verified.' });
     if (destination === 'past_questions' && !examBody) return res.status(400).json({ error: 'Select the exam body before routing to Past Questions.' });
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('document_bank').select(PDF_BANK_SELECT).eq('id', id).maybeSingle();
