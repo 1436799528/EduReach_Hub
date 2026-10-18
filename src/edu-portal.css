@@ -757,3 +757,9 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-setup-actions .hub-primary-btn{min-height:46px;font-size:14px}
   .dash-priority-item .dash-btn{min-height:44px}
 }
+
+
+/* NEWS-HIGHLIGHT: preserve the complete image in featured-news boxes. */
+.er-featured-card>img{display:block;width:100%;height:auto;aspect-ratio:1/1;max-height:240px;object-fit:contain;object-position:center;padding:10px;box-sizing:border-box;background:#f4f6f8}
+@media(max-width:640px){.er-featured-card>img{height:auto;aspect-ratio:1/1;max-height:none;padding:8px}}
+.er-news-feature img.er-news-photo{object-fit:contain;object-position:center;background:#f4f6f8;padding:8px;box-sizing:border-box}
