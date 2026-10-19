@@ -173,6 +173,8 @@ with expected(version, migration) as (
     ,('20261020100000', '20261020100000_safe_verified_question_banks.sql')
     ,('20261020110000', '20261020110000_deduplicate_exact_duplicates.sql')
     ,('20261020120000', '20261020120000_copy_legacy_questions_to_practice_banks.sql')
+    ,('20261020130000', '20261020130000_expand_syllabus_practice_banks.sql')
+    ,('20261020140000', '20261020140000_populate_200_per_subject.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
