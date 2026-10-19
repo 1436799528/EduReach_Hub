@@ -228,9 +228,11 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const countChoices = useMemo(() => questionCountOptions(selectedBankTotal || bank?.totalQuestions || 0, limits), [selectedBankTotal, bank, limits]);
   const effectiveCount = questionCount && countChoices.includes(questionCount) ? questionCount : countChoices[countChoices.length - 1] ?? limits.minQuestions;
   // The question count determines the time allocation; no separate timer choice is shown.
+  const standardQuestionCount = exam === 'jamb' ? 180 : Math.max(1, limits.maxQuestions);
+  const standardDurationMinutes = exam === 'jamb' ? 120 : (bank?.exam.defaultDurationMinutes ?? 120);
   const effectiveDuration = Math.max(limits.minMinutes, Math.min(
     limits.maxMinutes,
-    Math.ceil((effectiveCount / Math.max(1, limits.maxQuestions)) * (bank?.exam.defaultDurationMinutes ?? 120)),
+    Math.ceil((effectiveCount / standardQuestionCount) * standardDurationMinutes),
   ));
   // Server rules win; the exam-key rule is the offline/older-API fallback.
   // For WAEC/NECO/Post-UTME this is null — English is selectable, never forced.
