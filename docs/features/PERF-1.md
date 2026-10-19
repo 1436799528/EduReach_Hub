@@ -284,7 +284,7 @@ placeholders in the real `.er-sim-grid`, 98px tall in the swipe layout like the
 cards they replace.
 
 **The gate.** `npm run perf:audit` (10 budgets: entry 100 KB, supabase 60 KB,
-CSS 46 KB, critical path 210 KB, all assets 310 KB, largest image 64 KB, image
+CSS 46 KB, critical path 210 KB, all assets 330 KB, largest image 64 KB, image
 payload 320 KB, immutable assets, no-store shell and worker, and every raster
 `<img>` declaring a loading strategy) runs inside `npm run ci` immediately after
 `build`, and `tests/ci.test.ts` asserts that position so the stage cannot
