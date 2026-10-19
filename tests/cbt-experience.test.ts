@@ -48,6 +48,8 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /Add a subject/, 'subjects are picked from a labelled dropdown');
   assert.match(setup, /er-selected-subjects/, 'chosen subjects are listed with their question counts');
   assert.match(setup, /fetchCbtExamsWithAvailability/, 'bank resolution sees question availability, not catalogue order');
+  assert.match(setup, /waecSubjectGroup/, 'WAEC subjects are grouped in the dropdown for browsing');
+  assert.match(setup, /<optgroup/, 'grouping uses native optgroup semantics');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
   assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
   assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');

@@ -17,6 +17,7 @@ import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchPastQu
 import { useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { userFacingError } from '../lib/errors';
+import { WAEC_SUBJECT_GROUPS, waecSubjectGroup } from '../src/data/waecSubjects';
 import {
   DEFAULT_CBT_LIMITS,
   compulsorySubjectKeys,
@@ -581,11 +582,29 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         onChange={(event) => { if (event.target.value) addPracticeSubject(event.target.value); }}
                       >
                         <option value="">{practiceSubjects.length >= limits.maxSubjects ? `Subject limit reached (${limits.maxSubjects}) — remove one to add another` : addableSubjects.length ? 'Add a subject…' : 'No more subjects available in this group'}</option>
-                        {addableSubjects.map((entry) => (
-                          <option key={entry.subject} value={entry.subject}>
-                            {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
-                          </option>
-                        ))}
+                        {exam === 'waec' ? (
+                          // WAEC subjects are grouped for browsing (from main's
+                          // grouped-picker change); grouping is presentation
+                          // only — availability, counts and rules are unchanged.
+                          WAEC_SUBJECT_GROUPS.map((group) => {
+                            const entries = addableSubjects.filter((entry) => waecSubjectGroup(entry.subject) === group);
+                            return entries.length ? (
+                              <optgroup key={group} label={group}>
+                                {entries.map((entry) => (
+                                  <option key={entry.subject} value={entry.subject}>
+                                    {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ) : null;
+                          })
+                        ) : (
+                          addableSubjects.map((entry) => (
+                            <option key={entry.subject} value={entry.subject}>
+                              {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
+                            </option>
+                          ))
+                        )}
                       </select>
                       {practiceSubjects.length > 0 ? (
                         <ul className="er-selected-subjects" aria-label="Selected subjects">
