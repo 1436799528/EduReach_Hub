@@ -47,40 +47,39 @@ type SetupCopy = {
 // from the CBT catalogue - never a hard-coded time.
 const setupCopy: Record<ExamSetupKey, SetupCopy> = {
   jamb: {
-    eyebrow: 'JAMB CBT entry',
+    eyebrow: 'Practice or mock',
     title: 'Set up your JAMB practice or mock',
-    intro: 'Choose your subjects and how many questions you want. The time is set from the examination pace, so a longer paper gives you proportionally more minutes. Use of English is compulsory for UTME.',
+    intro: 'Choose four subjects, including Use of English, and how many questions you want. Time follows the exam pace.',
     duration: 'Practice session',
     logo: '/icons/brands/jamb.png',
   },
   waec: {
-    eyebrow: 'WAEC CBT entry',
+    eyebrow: 'Practice or mock',
     title: 'Set up your WAEC practice or mock',
-    intro: 'Choose a subject bank for objective practice. WASSCE paper types, marks and timings depend on the subject and official guidance.',
+    intro: 'Choose a subject bank for objective practice. Paper structure varies by subject.',
     duration: 'Practice session',
     logo: '/icons/brands/waec.png',
   },
   neco: {
-    eyebrow: 'NECO CBT entry',
+    eyebrow: 'Practice or mock',
     title: 'Set up your NECO practice or mock',
-    intro: 'Choose a subject bank for practice. Confirm the paper types, marks and timings against current NECO guidance for each subject.',
+    intro: 'Choose a subject bank for practice. Paper structure varies by subject.',
     duration: 'Practice session',
     logo: '/icons/brands/neco.png',
   },
   'post-utme': {
-    eyebrow: 'Post-UTME CBT entry',
+    eyebrow: 'Practice or mock',
     title: 'Set up your Post-UTME practice or mock',
-    intro: 'Practise the subjects in your school’s screening, with the time set from the paper pace, or run a timed mock using the school’s published subject list.',
+    intro: 'Practise your school’s screening subjects, or run a timed mock from its published subject list.',
     duration: 'Practice session',
     logo: '/icons/brands/jamb.png',
   },
 };
 
 const guideItems = [
-  { title: 'You choose the paper', body: 'Practice sessions are yours: pick the subjects and the number of questions. The time follows the examination pace, not a separate setting.' },
-  { title: 'The timer is real', body: 'Once a session starts, the countdown is authoritative and keeps running. Refreshing or leaving the page does not add time.' },
-  { title: 'Your work is saved', body: 'Answers are saved as you go, so a lost connection or a closed tab does not throw away the session.' },
-  { title: 'Bank coverage is explicit', body: 'Only subjects with questions in the bank are offered. Question counts show availability, not proof of official source or format accuracy.' },
+  { title: 'You choose the paper', body: 'Pick the subjects and the number of questions. Time follows the exam pace.' },
+  { title: 'The timer is real', body: 'The countdown keeps running when you refresh or leave the page.' },
+  { title: 'Your work is saved', body: 'Answers are saved as you go, so a lost connection does not lose the session.' },
 ];
 
 export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
@@ -674,7 +673,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         </InlineNotice>
                       )}
                       <p className="er-setup-field-note" id="cbt-subject-help">
-                        <Info size={14} /> Only subjects with questions in this bank are listed, with how many. The subject group above filters available subjects. Tap the plus icon to add one; selected subjects appear below. For JAMB, Use of English is compulsory and the combination is capped at four subjects.
+                        <Info size={14} /> Only subjects with questions are listed. For JAMB, Use of English is compulsory and the combination is capped at four subjects.
                         {compulsoryEnglish ? ` ${compulsoryEnglish} is compulsory for this examination and cannot be removed.` : ''}
                       </p>
                     </div>
@@ -732,16 +731,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </InlineNotice>
                 )}
 
-                {targetExam && bank?.review && bank.review.total - bank.review.rejected > 0
-                  && bank.review.approved < bank.review.total - bank.review.rejected && (
-                  <InlineNotice tone="info" title="Not every question has been editorially reviewed">
-                    {bank.review.approved === 0
-                      ? `None of the ${bank.review.total - bank.review.rejected} questions in this bank has been editorially approved yet.`
-                      : `${bank.review.approved} of ${bank.review.total - bank.review.rejected} questions in this bank have been editorially approved.`}
-                    {' '}The rest are served as unverified practice material, not certified past questions.
-                    {bank.review.rejected > 0 ? ` ${bank.review.rejected} rejected item${bank.review.rejected === 1 ? ' is' : 's are'} hidden from every paper.` : ''}
-                  </InlineNotice>
-                )}
+                <p className="er-setup-field-note">
+                  <ShieldCheck size={14} /> These are practice questions, not certified official past papers.
+                </p>
                 {compulsoryMissing && <InlineNotice tone="warning" title="Use of English is required for JAMB">This question bank has no English questions available yet, and a JAMB paper cannot start without them. Choose another bank to start a session.</InlineNotice>}
                 {mode === 'mock' && practiceSubjects.length > 0 && mockRuleError && (
                   <InlineNotice tone="info" title="Your mock needs four subjects">{mockRuleError}</InlineNotice>

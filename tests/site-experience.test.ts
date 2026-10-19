@@ -133,3 +133,10 @@ test('the home resume card is lazy, signed-in only and follows the shared expiry
   assert.match(card, /selectResumableAttempt\(/, 'the decision is the tested rule, not a local status check');
   assert.match(card, /\/cbt\/session\/\$\{encodeURIComponent\(attempt\.id\)\}/, 'it goes straight into the attempt');
 });
+
+test('the setup screen keeps internal review counts in the admin console', () => {
+  const setup = read('pages/ExamSetupPage.tsx');
+  assert.doesNotMatch(setup, /bank\.review\.approved/, 'students do not see editorial counts');
+  assert.doesNotMatch(setup, /editorially approved/, 'approval progress is an admin statistic');
+  assert.match(setup, /These are practice questions, not certified official past papers\./, 'the honesty note replaces the counts');
+});

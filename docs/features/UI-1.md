@@ -71,7 +71,7 @@ unchanged by this feature.
 ## Verification
 
 - `npx tsc --noEmit`
-- `npm test` — 551/551
+- `npm test` — 552/552
 - `npm run build`
 - `npm run perf:audit` — 10/10
 - `npm run schema:audit`, `npm run analytics:audit`, `scripts/a11y-audit.ts`
