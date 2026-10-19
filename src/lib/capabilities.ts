@@ -1,14 +1,14 @@
 /**
- * The capability vocabulary — one place that answers "what may this account do?"
+ * The capability vocabulary - one place that answers "what may this account do?"
  *
  * Authorization is expressed as `resource.action` capabilities rather than role
  * names, so an endpoint declares what it needs instead of hard-coding who may
  * call it, and a new role is a change to ROLE_CAPABILITIES rather than a change
  * to every call site.
  *
- * This module is intentionally dependency-free: it is imported by the Express
+ * This module is dependency-free: it is imported by the Express
  * server, by the browser console and by the tests, so there is exactly one
- * vocabulary. It is the ONLY place capabilities are defined — see
+ * vocabulary. It is the ONLY place capabilities are defined - see
  * docs/features/ROLE-1.md for the role → capability mapping and why the mapping
  * lives in code rather than in database tables.
  */
@@ -57,7 +57,7 @@ export const CAPABILITIES = [
   'service.update',
   'service.delete',
 
-  // Student service requests — operational data containing personal details.
+  // Student service requests - operational data containing personal details.
   // Read and process are separate so a content editor can never see them.
   'service_request.read',
   'service_request.process',
@@ -90,7 +90,7 @@ export type AppRole = 'student' | 'content_editor' | 'service_admin' | 'super_ad
 /**
  * Capabilities that only ever apply to rows the caller owns. `can()` refuses
  * them without an owning resource, and refuses a mismatch even for a super
- * admin — staff read other people's data through staff capabilities
+ * admin - staff read other people's data through staff capabilities
  * (`cbt.read`, `service_request.read`), never by impersonating an owner.
  */
 export const OWNER_SCOPED_CAPABILITIES: readonly Capability[] = [
@@ -184,7 +184,7 @@ export function isRetiredStaffRole(rawRole: unknown): boolean {
 
 /**
  * Map a `profiles.role` value to an application role. Unknown values resolve to
- * `student` — least privilege, and never an accidental staff grant.
+ * `student` - least privilege, and never an accidental staff grant.
  */
 export function resolveAppRole(rawRole: unknown): AppRole {
   const value = String(rawRole ?? '').trim().toLowerCase();
@@ -224,7 +224,7 @@ export function hasAnyCapability(user: CapabilityHolder | null | undefined, capa
 
 /**
  * Console sections and the capability each needs. Used to render navigation and
- * to refuse a deep link in the UI — the server enforces the same rule, and the
+ * to refuse a deep link in the UI - the server enforces the same rule, and the
  * server is the boundary.
  */
 export const ADMIN_ROUTE_CAPABILITIES: ReadonlyArray<{ path: string; capability: Capability }> = [

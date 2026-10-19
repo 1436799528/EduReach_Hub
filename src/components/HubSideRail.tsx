@@ -2,17 +2,13 @@ import { ArrowRight, BookOpen, Newspaper, ShieldCheck, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react';
 import { fetchNews, fetchServices, type NewsItem, type ServiceItem } from '../lib/api';
 import CardIdentityMark, { identityClassFor } from './CardIdentityMark';
+import { freshnessDate } from '../lib/newsFreshness';
 
 const quickLinks = [
   { label: 'CBT Practice', href: '/cbt', icon: Zap },
   { label: 'Student Services', href: '/services', icon: BookOpen },
   { label: 'News & Updates', href: '/news', icon: Newspaper },
 ];
-
-function formatDate(value: string | null) {
-  if (!value) return 'Update';
-  return new Date(value).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
-}
 
 export default function HubSideRail() {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -56,7 +52,7 @@ export default function HubSideRail() {
             <div className="hub-rail-service-thumb"><CardIdentityMark value={item.category} type="news" /></div>
             <span>{item.category.replaceAll('_', ' ')}</span>
             <strong>{item.title}</strong>
-            <small>{formatDate(item.published_at)}</small>
+            <small>{freshnessDate(item.published_at) || 'Update'}</small>
           </a>
         ))}
       </div>}

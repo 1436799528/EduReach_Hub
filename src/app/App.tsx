@@ -4,7 +4,6 @@ import EnvironmentBanner from '../components/EnvironmentBanner';
 import { RouteFallback } from '../components/Skeleton';
 import { renderRoute } from './routes';
 import { applyRouteSeo } from '../lib/seoMeta';
-import { API_BASE_PATH } from '../lib/apiBase';
 import { trackEvent } from '../lib/api';
 
 // The admin console keeps ONE mounted shell (sidebar, top bar, session state)

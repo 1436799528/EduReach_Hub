@@ -14,6 +14,7 @@ import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
 import { apiUrl } from '../src/lib/apiBase';
+import { navigateInApp } from '../src/lib/navigation';
 import BrandLogo from '../src/components/BrandLogo';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -21,11 +22,6 @@ type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 function getSafeNextPath() {
   const next = new URLSearchParams(window.location.search).get('next');
   return next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
-}
-
-function navigateInApp(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
@@ -44,7 +40,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [password, setPassword] = useState('');
   // 6. Confirm Password
   const [confirmPassword, setConfirmPassword] = useState('');
-  // 7. Account Type — Student / Parent / Teacher
+  // 7. Account Type - Student / Parent / Teacher
   const [accountType, setAccountType] = useState<'student' | 'parent' | 'teacher'>('student');
   // 8. Terms & Privacy agreement
   const [termsAgreed, setTermsAgreed] = useState(false);
@@ -79,7 +75,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       return;
     }
     if (!isSupabaseConfigured) {
-      setMessage('Email service is not configured yet — your verification link will send once it is.');
+      setMessage('Email service is not configured yet. Your verification link will send once it is.');
       return;
     }
     try {
@@ -241,7 +237,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 headers: { Authorization: `Bearer ${signedInSession.access_token}` },
               });
               isAdmin = adminCheck.ok;
-            } catch { /* backend unreachable — continue as a regular student session */ }
+            } catch { /* backend unreachable; continue as a regular student session */ }
             window.sessionStorage.removeItem('edureach-admin-student-view');
             notifyAuthChanged();
             navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
@@ -272,7 +268,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       : 'Reset Your Password';
 
   // A form is "complete" when every required field for the active mode is
-  // validly filled — the submit button brightens to signal it is ready.
+  // validly filled - the submit button brightens to signal it is ready.
   const authPhoneDigits = phone.replace(/\D/g, '');
   const authFormComplete = currentMode === 'signup'
     ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && authPhoneDigits.length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
@@ -557,7 +553,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                 </div>
 
-                {/* 7. ACCOUNT TYPE — Student / Parent / Teacher */}
+                {/* 7. ACCOUNT TYPE - Student / Parent / Teacher */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Account Type *
@@ -866,7 +862,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               </>
             )}
 
-            {/* SUBMIT BUTTON — matches the site search button; turns bright orange the moment every required detail is validly filled. */}
+            {/* SUBMIT BUTTON - matches the site search button; turns bright orange the moment every required detail is validly filled. */}
             <button
               type="submit"
               disabled={busy}

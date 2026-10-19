@@ -16,7 +16,7 @@ export default function AdminAnalyticsPage() {
   const m = data?.metrics || {};
   const num = (key: string) => Number(m[key] ?? 0);
 
-  // Queue composition bars — derived from server metrics, never invented client-side.
+  // Queue composition bars - derived from server metrics, never invented client-side.
   const pending = num('pending_requests');
   const completed = num('completed_requests');
   const rejected = num('rejected_requests');
@@ -80,7 +80,7 @@ export default function AdminAnalyticsPage() {
                       <h3>Searches</h3>
                       <BarStat label="Searches performed" value={data.activity.searches} max={Math.max(data.activity.searches, 1)} tone="blue" />
                       <BarStat label="Found no result" value={data.activity.zeroResultSearches} max={Math.max(data.activity.searches, 1)} tone="orange" />
-                      <p className="admin-footnote">Search terms are deliberately not collected — only how many searches happened and how many found nothing, which is what this panel was used for.</p>
+                      <p className="admin-footnote">Search terms are not collected, only how many searches happened and how many found nothing. That is what this panel is for.</p>
                     </div>
                     <div className="admin-focus-group"><h3>Most-started CBT exams</h3>{data.activity.cbtStarts.length ? data.activity.cbtStarts.slice(0, 6).map((row) => <BarStat key={row.exam} label={row.exam} value={row.count} max={data.activity!.cbtStarts[0].count} tone="green" />) : <p className="admin-footnote">No CBT attempts recorded yet.</p>}</div>
                     <div className="admin-focus-group"><h3>Service funnels (views → submissions)</h3>
@@ -92,7 +92,7 @@ export default function AdminAnalyticsPage() {
                     <p className="admin-footnote">{data.activity.eventsTotal} events recorded since {new Date(data.activity.since).toLocaleDateString()}.</p>
                   </>
                 ) : (
-                  <AdminEmptyState title="No usage telemetry yet" hint="Events are recorded from real student traffic (page views, searches, service and CBT activity). This section fills in as the live site is used — nothing is simulated." />
+                  <AdminEmptyState title="No usage telemetry yet" hint="Events are recorded from real student traffic (page views, searches, service and CBT activity). This section fills in as the live site is used. Nothing is simulated." />
                 )}
               </div>
             </div>

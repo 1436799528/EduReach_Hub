@@ -65,7 +65,7 @@ backend.patch('/rest/v1/profiles', (req, res) => {
   return res.json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/news_articles', (req, res) => {
+backend.get('/rest/v1/news_articles', (_req, res) => {
   recorded.push('GET news_articles');
   return res.json([]);
 });
@@ -77,7 +77,7 @@ backend.post('/rest/v1/news_articles', (req, res) => {
   return res.status(201).json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/service_requests', (req, res) => {
+backend.get('/rest/v1/service_requests', (_req, res) => {
   recorded.push('GET service_requests');
   return res.json([]);
 });

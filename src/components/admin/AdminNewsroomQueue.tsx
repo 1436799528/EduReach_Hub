@@ -83,7 +83,7 @@ export default function AdminNewsroomQueue({ onPublished }: { onPublished?: () =
     setError('');
     try {
       const report = await runNewsroomIngest(false);
-      setMessage(`Run complete — ${report.published} published, ${report.needsReview} queued, ${report.duplicates} duplicates skipped.`);
+      setMessage(`Run complete. ${report.published} published, ${report.needsReview} queued, ${report.duplicates} duplicates skipped.`);
       await load();
     } catch (runError) {
       setError(userFacingError(runError, 'The ingestion run could not start.'));

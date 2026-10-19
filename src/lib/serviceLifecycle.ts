@@ -1,5 +1,5 @@
 /**
- * SERVICE-1 — can a student tell exactly what happens after they press Submit?
+ * SERVICE-1 - can a student tell exactly what happens after they press Submit?
  *
  * The apply page explained what the student must do before applying (the guides)
  * and then ended at "your request has been registered". The status machine it
@@ -115,7 +115,7 @@ export function serviceStageIndex(status: string): number {
   return key === 'awaiting_information' ? 2 : index;
 }
 
-/** Requests that cannot move until the student acts — the dashboard's signal. */
+/** Requests that cannot move until the student acts - the dashboard's signal. */
 export function needsStudentAction(status: string): boolean {
   return serviceStatusMeaning(status).awaitsStudent;
 }

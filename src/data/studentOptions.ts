@@ -1,7 +1,7 @@
 /**
  * Student-facing option catalogues.
  *
- * These are intentionally finite, editable lists. They keep common profile and
+ * These are finite, editable lists. They keep common profile and
  * service fields predictable without pretending that EduReach has an exhaustive
  * catalogue of every Nigerian institution or programme.
  */

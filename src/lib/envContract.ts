@@ -1,5 +1,5 @@
 /**
- * D5 — the production environment-variable contract.
+ * D5 - the production environment-variable contract.
  *
  * One declaration of every variable the application reads, so three things cannot
  * drift apart: what the code consumes, what the runbook tells an operator to set,
@@ -10,7 +10,7 @@
  *    not secrets and must never hold one.
  *  - Server-only variables are read at runtime by Express or a Netlify function.
  *    Anything classified `secret` is never printed, logged, or returned by an
- *    endpoint — `describeEnv` reports presence, never value.
+ *    endpoint - `describeEnv` reports presence, never value.
  *  - `aliases` exist because the repository accepts both the modern Supabase key
  *    names and the legacy ones; a deployment may satisfy a variable through any
  *    alias, and the contract says so rather than forcing a rename.
@@ -75,7 +75,7 @@ export const ENV_CONTRACT: EnvSpec[] = [
         note: 'Server-side fallback only. Not inlined into the browser bundle.',
       },
     ],
-    purpose: 'Browser-facing Supabase key. Deliberately public; every browser request is subject to RLS.',
+    purpose: 'Browser-facing Supabase key. Public by design; every browser request is subject to RLS.',
     requirement: 'required',
     visibility: 'client',
     secret: false,
@@ -130,9 +130,8 @@ export const ENV_CONTRACT: EnvSpec[] = [
   },
   // WHATSAPP_API_ENDPOINT / WHATSAPP_API_TOKEN were declared here and consumed by
   // src/server/whatsapp.ts, which had no caller anywhere in the repository: the
-  // contract advertised an outbound integration that could never run (audit
-  // P2-3, previously MED-8 in the 2026-10-02 audit). Both the module and the
-  // variables are gone. Student-facing WhatsApp links are static `wa.me`
+  // contract advertised an outbound integration that could never run. Both the
+  // module and the variables are gone. Student-facing WhatsApp links are static `wa.me`
   // deep links built from src/data/hubContent.ts and need no credential.
   {
     name: 'PORT',

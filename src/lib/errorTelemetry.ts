@@ -1,12 +1,12 @@
 import { trackEvent } from './api';
 
 /**
- * P2-2 — client-side error telemetry.
+ * P2-2 - client-side error telemetry.
  *
  * There was no error signal from the browser anywhere in the repository: a
  * broken route rendered a friendly panel and logged to a console nobody reads,
  * and an unhandled rejection was not captured at all. The audit found two
- * defects (P1-2, P1-3) by running gates, not by monitoring — this is the
+ * defects (P1-2, P1-3) by running gates, not by monitoring - this is the
  * missing signal.
  *
  * Design constraints, all load-bearing:
@@ -30,7 +30,7 @@ type Emit = (event: 'client_error', payload: { metadata: Record<string, unknown>
 
 /**
  * The production transport. Written as an explicit literal `trackEvent` call
- * because `scripts/analytics-audit.ts` reads call sites statically — it must be
+ * because `scripts/analytics-audit.ts` reads call sites statically - it must be
  * able to see that this module emits the declared event, and exactly which
  * metadata keys it sends.
  */

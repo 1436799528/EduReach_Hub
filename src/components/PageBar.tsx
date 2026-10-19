@@ -1,6 +1,7 @@
 import { ArrowLeft, Home } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { pageTitleFor } from '../lib/pageMeta';
+import { navigateInApp } from '../lib/navigation';
 
 /**
  * Global return-navigation bar rendered under the header on every public
@@ -35,8 +36,7 @@ export default function PageBar() {
 
     if ((sameOriginReferrer || appHistory) && window.history.length > 1) window.history.back();
     else {
-      window.history.pushState({}, '', '/');
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      navigateInApp('/');
     }
   };
 

@@ -1,5 +1,5 @@
 /* ========================================================================
-   EduReach type system — one deliberate weight scale (APP-1)
+   EduReach type system - one deliberate weight scale (APP-1)
 
    The product had grown a habit: almost every label, badge, caption, meta row
    and button was 800 or 900, so nothing looked emphasised because everything
@@ -81,7 +81,7 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* Very small uppercase text needs weight to stay legible — but 900 was still
+/* Very small uppercase text needs weight to stay legible - but 900 was still
    too heavy next to body copy, so it settles at the label level. */
 [class*="eyebrow"], [class*="kicker"] {
   letter-spacing: .07em;

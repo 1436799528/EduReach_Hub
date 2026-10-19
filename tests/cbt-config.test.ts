@@ -2,14 +2,22 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   DEFAULT_CBT_LIMITS,
+  JAMB_PAPER_STANDARD,
   compulsorySubjectKeys,
   describeSession,
+  durationForQuestionCount,
   isStartableBank,
+  mockCombinationError,
+  mockDurationMinutes,
+  mockPaperError,
+  mockPaperFor,
   normalizeSubject,
+  paperStandardFor,
   practiceDurationOptions,
   previewPlan,
   questionCountOptions,
   resolveSetupExam,
+  subjectLimitFor,
   validateSession,
   type CatalogExam,
 } from '../src/lib/cbt-config';
@@ -175,4 +183,128 @@ test('bank resolution never lets a newer near-empty bank hijack the default rout
   });
   assert.equal(isStartableBank(waec, 'waec'), true);
   assert.equal(resolveSetupExam([waec], 'waec', null)?.id, 'waec1');
+});
+
+test('practice time is proportional to the examination pace, within limits', () => {
+  // JAMB sets 180 questions in 120 minutes: 20 questions take 14 minutes at
+  // that pace. Nobody types that ratio into a page.
+  assert.equal(durationForQuestionCount(20, { standard: paperStandardFor('jamb') }), 14);
+  assert.equal(durationForQuestionCount(90, { standard: paperStandardFor('jamb') }), 60);
+  assert.equal(durationForQuestionCount(180, { standard: paperStandardFor('jamb') }), 120);
+  assert.equal(durationForQuestionCount(0, { standard: paperStandardFor('jamb') }), DEFAULT_CBT_LIMITS.minMinutes);
+  assert.equal(
+    durationForQuestionCount(1000, { standard: paperStandardFor('jamb') }),
+    DEFAULT_CBT_LIMITS.maxMinutes,
+    'an absurd count is clamped, never sent as an excessive duration',
+  );
+
+  // Without a national standard the bank duration is spread over the largest
+  // paper the server allows (100 questions by default).
+  assert.equal(durationForQuestionCount(50, { defaultMinutes: 90 }), 45);
+  assert.equal(durationForQuestionCount(100, { defaultMinutes: 90 }), 90);
+
+  // Post-UTME carries no JAMB standard even though its name contains "UTME".
+  assert.equal(paperStandardFor('post-utme'), null);
+  assert.equal(paperStandardFor('JAMB'), JAMB_PAPER_STANDARD);
+});
+
+test('the subject cap follows the examination, not the bank default', () => {
+  assert.equal(subjectLimitFor('jamb'), 4, 'JAMB UTME is Use of English plus three');
+  assert.equal(subjectLimitFor('JAMB UTME'), 4);
+  assert.equal(subjectLimitFor('jamb', { ...DEFAULT_CBT_LIMITS, maxSubjects: 3 }), 3, 'the server limit still wins when lower');
+  assert.equal(subjectLimitFor('waec'), DEFAULT_CBT_LIMITS.maxSubjects);
+  assert.equal(subjectLimitFor('neco'), DEFAULT_CBT_LIMITS.maxSubjects);
+  assert.equal(subjectLimitFor('post-utme'), DEFAULT_CBT_LIMITS.maxSubjects);
+});
+
+test('a JAMB mock is a four-subject paper and says what is missing', () => {
+  assert.match(String(mockCombinationError(['Mathematics', 'Physics'], 'jamb')), /Use of English is compulsory/);
+  assert.match(
+    String(mockCombinationError(['Use of English', 'Mathematics'], 'jamb')),
+    /Add 2 more subjects/,
+  );
+  assert.equal(mockCombinationError(['Use of English', 'Mathematics', 'Physics', 'Chemistry'], 'jamb'), null);
+  assert.equal(mockCombinationError(['Mathematics'], 'waec'), null, 'only JAMB governs the combination');
+  assert.equal(
+    mockCombinationError(['Use of English', 'Mathematics', 'Physics', 'Use of English'], 'jamb'),
+    'A JAMB mock is Use of English plus three other subjects. Add 1 more subject.',
+    'a duplicate spelling is one subject, not two',
+  );
+});
+
+test('mock duration is the examination duration, never zero or negative', () => {
+  assert.equal(mockDurationMinutes(120), 120);
+  assert.equal(mockDurationMinutes(90), 90);
+  assert.equal(mockDurationMinutes(null), 120);
+  assert.equal(mockDurationMinutes(undefined), 120);
+  assert.equal(mockDurationMinutes(0), 120);
+  assert.equal(mockDurationMinutes(-30), 120);
+});
+
+test('the mock paper comes from the bank, with the JAMB standard as fallback', () => {
+  assert.deepEqual(mockPaperFor('jamb'), { questions: 180, subjectQuota: { english: 60, other: 40 } });
+  assert.deepEqual(
+    mockPaperFor('jamb', { questionCount: 180, subjectQuota: { english: 60, other: 40 } }),
+    { questions: 180, subjectQuota: { english: 60, other: 40 } },
+    'the database value is used as reported',
+  );
+  assert.deepEqual(
+    mockPaperFor('jamb', { questionCount: 120, subjectQuota: null }),
+    { questions: 120, subjectQuota: null },
+    'a bank can change the paper without a release',
+  );
+  assert.equal(mockPaperFor('waec'), null, 'WAEC has no fixed cross-subject paper');
+  assert.equal(
+    mockPaperFor('jamb', { questionCount: null, subjectQuota: null }),
+    null,
+    'a bank that reports no fixed paper is not overridden by the JAMB default',
+  );
+  assert.deepEqual(mockPaperFor('waec', { questionCount: 90, subjectQuota: null }), { questions: 90, subjectQuota: null });
+});
+
+test('a mock that the bank cannot fill is blocked before the API call', () => {
+  const paper = mockPaperFor('jamb');
+  const full = [
+    { subject: 'Use of English', questionCount: 120 },
+    { subject: 'Mathematics', questionCount: 60 },
+    { subject: 'Physics', questionCount: 60 },
+    { subject: 'Chemistry', questionCount: 60 },
+  ];
+  assert.equal(mockPaperError(['Use of English', 'Mathematics', 'Physics', 'Chemistry'], full, paper), null);
+
+  const shallow = full.map((entry) => entry.subject === 'Use of English' ? { ...entry, questionCount: 24 } : entry);
+  assert.match(
+    String(mockPaperError(['Use of English', 'Mathematics', 'Physics', 'Chemistry'], shallow, paper)),
+    /Use of English needs 60 but the bank has 24/,
+    'the subject that is short is named, with both numbers',
+  );
+
+  assert.match(
+    String(mockPaperError(
+      ['Biology', 'Physics'],
+      [{ subject: 'Biology', questionCount: 12 }, { subject: 'Physics', questionCount: 8 }],
+      { questions: 100, subjectQuota: null },
+    )),
+    /needs 100 questions .* this bank has 20/,
+    'a paper without quotas is still checked against the total pool',
+  );
+  assert.equal(mockPaperError([], full, paper), null, 'the combination rule reports an empty selection');
+});
+
+test('the mock preview allocates the examination quota, not a proportional split', () => {
+  const plan = previewPlan([
+    { subject: 'Use of English', questionCount: 120 },
+    { subject: 'Mathematics', questionCount: 120 },
+    { subject: 'Physics', questionCount: 120 },
+    { subject: 'Chemistry', questionCount: 120 },
+  ], 180, { english: 60, other: 40 });
+  assert.deepEqual(plan.map((entry) => entry.questions), [60, 40, 40, 40]);
+  assert.deepEqual(plan.map((entry) => entry.first), [1, 61, 101, 141]);
+  assert.equal(plan[plan.length - 1].last, 180);
+
+  const clamped = previewPlan([
+    { subject: 'Use of English', questionCount: 30 },
+    { subject: 'Mathematics', questionCount: 120 },
+  ], 180, { english: 60, other: 40 });
+  assert.equal(clamped[0].questions, 30, 'a preview never promises questions the bank does not have');
 });

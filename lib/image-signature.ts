@@ -1,14 +1,14 @@
 /**
- * Content sniffing for admin image uploads (audit P3-3).
+ * Content sniffing for admin image uploads.
  *
  * The upload endpoint used to derive the stored object's type from the MIME
- * string the client put in the data URL — `data:image/png;base64,...` — and
+ * string the client put in the data URL - `data:image/png;base64,...` - and
  * never look at the bytes. Anything an authenticated editor could encode would
  * therefore be written to the public `admin-content` bucket labelled as an
  * image. The declared type is a claim; these PNG/JPEG/GIF/WebP signatures are
  * the bytes, and both must agree before an object is stored.
  *
- * Deliberately tiny and dependency-free so it can be unit-tested directly.
+ * Small and dependency-free so it can be unit-tested directly.
  */
 
 export type ImageKind = 'png' | 'jpeg' | 'gif' | 'webp';

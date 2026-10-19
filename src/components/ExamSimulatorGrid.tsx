@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { identityClassFor } from './CardIdentityMark';
 import { SkeletonTiles } from './Skeleton';
-import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../lib/api';
+import { fetchCbtExams, fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
 import { isSupabaseConfigured } from '../lib/supabase';
 
 export type ExamSimulator = {
@@ -60,7 +60,7 @@ export default function ExamSimulatorGrid({
   useEffect(() => {
     let active = true;
     void (isSupabaseConfigured ? fetchCbtExamsWithAvailability() : fetchCbtExams())
-      .then((items: any[]) => {
+      .then((items: CbtExamSummary[]) => {
         if (!active) return;
         // Never advertise a bank a student cannot start (too few questions
         // for the minimum session, or no subjects at all). Catalogues

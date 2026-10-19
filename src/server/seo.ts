@@ -15,6 +15,7 @@
  */
 
 import { LIVE_SERVICE_SLUGS, isLiveServiceSlug } from '../../src/data/liveServices';
+import { isArticleCurrent } from '../lib/newsFreshness';
 
 export interface SitemapEntry {
   loc: string;
@@ -23,8 +24,20 @@ export interface SitemapEntry {
   priority?: number;
 }
 
+export interface SitemapQuery extends PromiseLike<{ data: Record<string, unknown>[] | null; error: { message?: string } | null }> {
+  select(columns: string): SitemapQuery;
+  eq(column: string, value: unknown): SitemapQuery;
+  order(column: string, options?: { ascending?: boolean }): SitemapQuery;
+  limit(count: number): SitemapQuery;
+}
+
+interface SitemapTable {
+  select(columns: string): SitemapQuery;
+}
+
+/** A database the sitemap can read from: two ordered selects, nothing more. */
 export interface MinimalSupabase {
-  from(table: string): any;
+  from(table: string): unknown;
 }
 
 const STATIC_ENTRIES: Array<{ path: string; changefreq: SitemapEntry['changefreq']; priority: number }> = [
@@ -68,8 +81,8 @@ export const DISALLOWED_PATHS = [
 
 /**
  * Exact paths whose UI is a "coming soon" placeholder: linkable, but nothing
- * worth indexing. Deliberately kept out of DISALLOWED_PATHS because robots.txt
- * matches by prefix — disallowing /tools would also block the live
+ * worth indexing. Kept out of DISALLOWED_PATHS because robots.txt
+ * matches by prefix - disallowing /tools would also block the live
  * /tools/cgpa-calculator page.
  */
 const PLACEHOLDER_EXACT_PATHS = new Set(['/nabteb', '/tools', '/support', '/admission']);
@@ -129,7 +142,7 @@ export function escapeXml(value: string): string {
 
 export function buildRobotsTxt(origin: string): string {
   const lines = [
-    '# EduReach Hub — https://github.com/1436799528/EduReach_Hub',
+    '# EduReach Hub - https://github.com/1436799528/EduReach_Hub',
     '# Public content is open to crawlers. Student, admin and tracker surfaces are not.',
     'User-agent: *',
     'Allow: /',
@@ -180,14 +193,6 @@ export function staticSitemapEntries(origin: string): SitemapEntry[] {
   return entries;
 }
 
-function isFreshArticle(row: Record<string, unknown>): boolean {
-  const status = String(row.verification_status || 'verified').toLowerCase();
-  if (status === 'expired' || status === 'archived' || status === 'superseded') return false;
-  if (!row.expires_at) return true;
-  const expires = new Date(String(row.expires_at));
-  return !Number.isFinite(expires.getTime()) || expires.getTime() > Date.now();
-}
-
 function isoOrUndefined(value: unknown): string | undefined {
   if (!value) return undefined;
   const date = new Date(String(value));
@@ -207,16 +212,15 @@ export async function collectSitemapEntries(
   if (!client) return entries;
 
   try {
-    let { data, error } = await client
-      .from('news_articles')
+    const newsTable = client.from('news_articles') as SitemapTable;
+    let { data, error } = await newsTable
       .select('slug,updated_at,published_at,expires_at,verification_status')
       .eq('published', true)
       .order('published_at', { ascending: false })
       .limit(SITEMAP_MAX_ARTICLES);
     if (error) {
       // Unmigrated database: retry with the legacy column set.
-      ({ data, error } = await client
-        .from('news_articles')
+      ({ data, error } = await newsTable
         .select('slug,updated_at,published_at')
         .eq('published', true)
         .order('published_at', { ascending: false })
@@ -227,7 +231,7 @@ export async function collectSitemapEntries(
     for (const row of data || []) {
       const record = row as Record<string, unknown>;
       const slug = String(record.slug || '').trim();
-      if (!slug || !isFreshArticle(record)) continue;
+      if (!slug || !isArticleCurrent(record)) continue;
       entries.push({
         loc: `${origin}/news/${encodeURIComponent(slug)}`,
         lastmod: isoOrUndefined(record.updated_at) || isoOrUndefined(record.published_at),
@@ -240,8 +244,8 @@ export async function collectSitemapEntries(
   }
 
   try {
-    const { data, error } = await client
-      .from('institutions')
+    const schoolTable = client.from('institutions') as SitemapTable;
+    const { data, error } = await schoolTable
       .select('school_name,acronym,state')
       .order('school_name', { ascending: true })
       .limit(SITEMAP_MAX_INSTITUTIONS);

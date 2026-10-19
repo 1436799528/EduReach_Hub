@@ -45,7 +45,7 @@ export default function CgpaCalculatorCard({
     try {
       localStorage.setItem(localCoursesKey(), JSON.stringify(next));
     } catch {
-      // storage unavailable — calculator still works for this session
+      // storage unavailable - calculator still works for this session
     }
   };
 
@@ -114,7 +114,7 @@ export default function CgpaCalculatorCard({
                 try {
                   localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
                 } catch {
-                  // storage unavailable — calculator still works for this session
+                  // storage unavailable - calculator still works for this session
                 }
               }}
               aria-label={`Remove course ${index + 1}`}
@@ -141,7 +141,7 @@ export default function CgpaCalculatorCard({
             try {
               localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
             } catch {
-              // storage unavailable — calculator still works for this session
+              // storage unavailable - calculator still works for this session
             }
           }}
         >

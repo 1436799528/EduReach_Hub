@@ -94,7 +94,7 @@
 .hub-cbt-feature span{font-size:8px !important;line-height:1.3 !important}
 
 /* ========================================================================
-   CBT-3 — the examination shell, the setup choices and practice history.
+   CBT-3 - the examination shell, the setup choices and practice history.
 
    Compact on purpose: every rule here earns its bytes (the CSS budget is
    enforced by the performance gate). Desktop is a paper with a side palette;

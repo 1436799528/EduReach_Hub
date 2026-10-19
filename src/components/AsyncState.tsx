@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { classifyFailure } from '../lib/failures';
 
 /**
- * APP-4 — the shared empty / error / loading states.
+ * APP-4 - the shared empty / error / loading states.
  *
  * Every list in the product used to answer "there is nothing here" and "the
  * request failed" with the same empty area, so a student could not tell a
@@ -72,7 +72,7 @@ export function ErrorState({
 
 /**
  * A non-blocking "this part of the page could not load" note, used when the rest
- * of the screen is still useful. It keeps the failure honest without replacing
+ * of the screen is still useful. It reports the failure without replacing
  * working content with an error page.
  */
 export function InlineNotice({

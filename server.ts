@@ -1,22 +1,21 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
-  assertOwnership,
   hasCapability,
   recordAudit,
   requireCapability,
   requireStaff,
   type AuthorizedRequest,
-} from './middleware';
+} from './lib/authorization';
 import { getServerSupabaseKey } from './lib/supabase-config';
 import { matchesDeclaredImageType } from './lib/image-signature';
 import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
 import { type Capability } from './src/lib/capabilities';
-import { previewPlan } from './src/lib/cbt-config';
+import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
 import { userFacingError as normalizeUserFacingError } from './lib/errors';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
@@ -24,6 +23,7 @@ import { expiresAtFor } from './src/server/newsroom/qualityGate';
 import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
 import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
+import { isArticleCurrent } from './src/lib/newsFreshness';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -61,7 +61,7 @@ app.use((_req, res, next) => {
   if (isProd) {
     // Strict production headers. Keep in sync with public/_headers (Netlify).
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-    // HSTS: the site is HTTPS-only in production. Deliberately without
+    // HSTS: the site is HTTPS-only in production. Without
     // `includeSubDomains` or `preload` - both are one-way decisions that would
     // also bind any future subdomain (staging, a CDN host) to HTTPS-only.
     res.setHeader('Strict-Transport-Security', 'max-age=31536000');
@@ -114,7 +114,7 @@ function getServerSupabase() {
 /**
  * A user-scoped Supabase client (publishable key + the caller's access token).
  * Ownership-critical RPCs resolve the caller with `auth.uid()`, which is null
- * for the service-role client — using it here would make those RPCs run as
+ * for the service-role client - using it here would make those RPCs run as
  * nobody. Returns null when no publishable key is configured, and the caller
  * falls back to the service client (the RPC then refuses, as it did before).
  */
@@ -131,7 +131,7 @@ function getUserScopedSupabase(accessToken: string) {
 /**
  * Resolve the caller from their session, then authorize them. Authorization
  * failures throw, and every handler maps them to 401 (not signed in) or 403
- * (signed in, not allowed) — the operation never runs.
+ * (signed in, not allowed) - the operation never runs.
  */
 async function requireUser(req: express.Request, capability: Capability = 'dashboard.access') {
   const auth = req.header('authorization');
@@ -219,7 +219,7 @@ app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), 
 app.get('/api/admin/session', requireStaff, async (req, res) => {
   const adminUser = (req as AuthorizedRequest).adminUser!;
   // The console renders from this: the application role plus the resolved
-  // capability list. It is a UX input only — every endpoint re-checks.
+  // capability list. It is a UX input only - every endpoint re-checks.
   res.json({
     user: {
       id: adminUser.id,
@@ -231,10 +231,10 @@ app.get('/api/admin/session', requireStaff, async (req, res) => {
   });
 });
 
-app.get('/api/admin/jobs', requireCapability('analytics.read'), async (req, res) => {
+app.get('/api/admin/jobs', requireCapability('analytics.read'), async (_req, res) => {
   try {
     // OBS-1: last success, last failure and freshness per scheduled job. Read-only,
-    // and it deliberately reports jobs that have *no* row at all — a schedule that
+    // and it reports jobs that have *no* row at all. A schedule that
     // stopped firing is the failure mode that produces no error anywhere.
     const supabase = getServerSupabase();
     const { data, error } = await supabase.rpc('scheduled_job_status', {
@@ -299,7 +299,7 @@ app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req,
 app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
-    // AN-1: the taxonomy in src/lib/analyticsTaxonomy.ts is the allowlist — the
+    // AN-1: the taxonomy in src/lib/analyticsTaxonomy.ts is the allowlist - the
     // event name, the metadata keys, their types, their caps and the payload
     // cap. Nothing a student typed is accepted, because no free-text field is
     // declared; an undeclared key is dropped rather than stored. See
@@ -342,7 +342,7 @@ app.get('/api/admin/users', requireCapability('user.read'), async (req, res) => 
     if (search) {
       // PostgREST's filter grammar uses , . ( ) as structure, and % / _ as ILIKE
       // wildcards. Strip all of them, not just the wildcards: a stray parenthesis
-      // or dot changes the shape of the filter expression (audit P3-2).
+      // or dot changes the shape of the filter expression.
       const safe = search.replace(/[%,_.()\\]/g, '');
       if (safe) query = query.or(`full_name.ilike.%${safe}%,school.ilike.%${safe}%,department.ilike.%${safe}%,matric_number.ilike.%${safe}%`);
     }
@@ -478,7 +478,7 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
   }
 });
 
-app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (req, res) => {
+app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (_req, res) => {
   try {
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('cbt_exams').select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,created_at').order('created_at', { ascending: false });
@@ -609,7 +609,7 @@ app.delete('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), asyn
     const supabase = getServerSupabase();
     const { data: existing, error: existingError } = await supabase.from('cbt_exams').select('id,title').eq('id', req.params.examId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'CBT exam not found.' });
-    // Never erase a bank students have attempted — history integrity wins.
+    // Never erase a bank students have attempted - history integrity wins.
     const { count: attemptCount, error: attemptError } = await supabase
       .from('cbt_attempts').select('id', { count: 'exact', head: true }).eq('exam_id', existing.id);
     if (attemptError) throw attemptError;
@@ -756,7 +756,7 @@ function safeContentUrl(value: unknown): string | null {
   }
 }
 
-async function uniqueNewsSlug(supabase: any, base: string, excludeId?: string): Promise<string> {
+async function uniqueNewsSlug(supabase: SupabaseClient, base: string, excludeId?: string): Promise<string> {
   let candidate = base;
   for (let attempt = 0; attempt < 25; attempt++) {
     let query = supabase.from('news_articles').select('id').eq('slug', candidate).limit(1);
@@ -953,29 +953,30 @@ app.get('/api/admin/calendar-items', requireCapability('calendar.read'), async (
   }
 });
 
-function validateCalendarPayload(body: any, type: string): { error?: string; values?: Record<string, unknown> } {
-  const title = String(body?.title || '').trim().slice(0, 200);
+function validateCalendarPayload(body: unknown, type: string): { error?: string; values?: Record<string, unknown> } {
+  const input = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  const title = String(input.title || '').trim().slice(0, 200);
   if (!title) return { error: 'A title is required.' };
   const values: Record<string, unknown> = {
     title,
-    description: String(body?.description || '').trim().slice(0, 20000) || null,
-    priority: CALENDAR_PRIORITIES.includes(String(body?.priority || 'normal')) ? String(body?.priority || 'normal') : 'normal',
-    status: CALENDAR_STATUSES.includes(String(body?.status || 'pending')) ? String(body?.status || 'pending') : 'pending',
+    description: String(input.description || '').trim().slice(0, 20000) || null,
+    priority: CALENDAR_PRIORITIES.includes(String(input.priority || 'normal')) ? String(input.priority || 'normal') : 'normal',
+    status: CALENDAR_STATUSES.includes(String(input.status || 'pending')) ? String(input.status || 'pending') : 'pending',
   };
   if (type === 'exam') {
-    const startsAt = new Date(String(body?.starts_at || ''));
+    const startsAt = new Date(String(input.starts_at || ''));
     if (!Number.isFinite(startsAt.getTime())) return { error: 'A valid start date/time is required.' };
     values.starts_at = startsAt.toISOString();
-    if (body?.ends_at) {
-      const endsAt = new Date(String(body.ends_at));
+    if (input.ends_at) {
+      const endsAt = new Date(String(input.ends_at));
       if (!Number.isFinite(endsAt.getTime())) return { error: 'The end date/time is invalid.' };
       values.ends_at = endsAt.toISOString();
     } else {
       values.ends_at = null;
     }
-    values.location = String(body?.location || '').trim().slice(0, 200) || null;
+    values.location = String(input.location || '').trim().slice(0, 200) || null;
   } else {
-    const dueAt = new Date(String(body?.due_at || ''));
+    const dueAt = new Date(String(input.due_at || ''));
     if (!Number.isFinite(dueAt.getTime())) return { error: 'A valid due date/time is required.' };
     values.due_at = dueAt.toISOString();
   }
@@ -1039,8 +1040,9 @@ app.delete('/api/admin/calendar-items/:itemId', requireCapability('calendar.dele
 
 // --- Institutions (School Finder catalogue) --------------------------------
 
-function validateInstitutionPayload(body: any): { error?: string; values?: Record<string, unknown> } {
-  const schoolName = String(body?.school_name || '').trim().slice(0, 200);
+function validateInstitutionPayload(body: unknown): { error?: string; values?: Record<string, unknown> } {
+  const input = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  const schoolName = String(input.school_name || '').trim().slice(0, 200);
   if (!schoolName) return { error: 'The institution name is required.' };
 
   function httpsUrl(value: unknown, label: string): string | null {
@@ -1056,27 +1058,27 @@ function validateInstitutionPayload(body: any): { error?: string; values?: Recor
   }
 
   try {
-    const postUtmeAvailable = Boolean(body?.post_utme_available);
-    const postUtmeMethod = String(body?.post_utme_method || '');
-    const postUtmeVerified = Boolean(body?.post_utme_verified);
+    const postUtmeAvailable = Boolean(input.post_utme_available);
+    const postUtmeMethod = String(input.post_utme_method || '');
+    const postUtmeVerified = Boolean(input.post_utme_verified);
     if (postUtmeAvailable && !['cbt', 'handwritten'].includes(postUtmeMethod)) return { error: 'Choose whether this institution uses CBT or handwritten Post-UTME.' };
-    if (postUtmeAvailable && !body?.post_utme_source_url) return { error: 'Add the official Post-UTME source URL before listing this school.' };
-    if (postUtmeVerified && (!postUtmeAvailable || !['cbt', 'handwritten'].includes(postUtmeMethod) || !body?.post_utme_source_url)) return { error: 'Verify Post-UTME participation only after setting its method and official source URL.' };
+    if (postUtmeAvailable && !input.post_utme_source_url) return { error: 'Add the official Post-UTME source URL before listing this school.' };
+    if (postUtmeVerified && (!postUtmeAvailable || !['cbt', 'handwritten'].includes(postUtmeMethod) || !input.post_utme_source_url)) return { error: 'Verify Post-UTME participation only after setting its method and official source URL.' };
     return {
       values: {
         school_name: schoolName,
-        acronym: String(body?.acronym || '').trim().slice(0, 40) || null,
-        slug: String(body?.slug || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 160) || null,
-        state: String(body?.state || '').trim().slice(0, 60) || null,
-        institution_type: String(body?.institution_type || '').trim().slice(0, 60) || null,
-        website_url: httpsUrl(body?.website_url, 'website URL'),
-        admission_portal_url: httpsUrl(body?.admission_portal_url, 'admission portal URL'),
-        student_portal_url: httpsUrl(body?.student_portal_url, 'student portal URL'),
-        is_verified: Boolean(body?.is_verified),
-        post_utme_available: Boolean(body?.post_utme_available),
-        post_utme_method: ['cbt', 'handwritten'].includes(String(body?.post_utme_method || '')) ? String(body.post_utme_method) : null,
-        post_utme_source_url: httpsUrl(body?.post_utme_source_url, 'Post-UTME official source URL'),
-        post_utme_verified: Boolean(body?.post_utme_verified),
+        acronym: String(input.acronym || '').trim().slice(0, 40) || null,
+        slug: String(input.slug || '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 160) || null,
+        state: String(input.state || '').trim().slice(0, 60) || null,
+        institution_type: String(input.institution_type || '').trim().slice(0, 60) || null,
+        website_url: httpsUrl(input.website_url, 'website URL'),
+        admission_portal_url: httpsUrl(input.admission_portal_url, 'admission portal URL'),
+        student_portal_url: httpsUrl(input.student_portal_url, 'student portal URL'),
+        is_verified: Boolean(input.is_verified),
+        post_utme_available: Boolean(input.post_utme_available),
+        post_utme_method: ['cbt', 'handwritten'].includes(String(input.post_utme_method || '')) ? String(input.post_utme_method) : null,
+        post_utme_source_url: httpsUrl(input.post_utme_source_url, 'Post-UTME official source URL'),
+        post_utme_verified: Boolean(input.post_utme_verified),
       },
     };
   } catch (error) {
@@ -1092,7 +1094,7 @@ app.get('/api/admin/institutions', requireCapability('institution.read'), async 
     if (search) {
       // PostgREST's filter grammar uses , . ( ) as structure, and % / _ as ILIKE
       // wildcards. Strip all of them, not just the wildcards: a stray parenthesis
-      // or dot changes the shape of the filter expression (audit P3-2).
+      // or dot changes the shape of the filter expression.
       const safe = search.replace(/[%,_.()\\]/g, '');
       if (safe) query = query.or(`school_name.ilike.%${safe}%,acronym.ilike.%${safe}%,state.ilike.%${safe}%`);
     }
@@ -1262,7 +1264,7 @@ app.delete('/api/admin/services/:serviceId', requireCapability('service.delete')
     const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key,title').eq('id', req.params.serviceId).single();
     if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
     if (FORM_SERVICE_KEYS.has(service.service_key)) {
-      return res.status(400).json({ error: 'Built-in application form services cannot be deleted — deactivate them instead.' });
+      return res.status(400).json({ error: 'Built-in application form services cannot be deleted. Deactivate them instead.' });
     }
     const { error } = await supabase.from('service_catalog').delete().eq('id', service.id);
     if (error) throw error;
@@ -1286,42 +1288,43 @@ function normalizeOpportunityArray(value: unknown, maxItems = 12, maxLength = 80
   )).slice(0, maxItems);
 }
 
-function validateOpportunityPayload(body: any): { error?: string; values?: Record<string, unknown> } {
-  const title = String(body?.title || '').trim().slice(0, 200);
+function validateOpportunityPayload(body: unknown): { error?: string; values?: Record<string, unknown> } {
+  const input = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  const title = String(input.title || '').trim().slice(0, 200);
   if (!title) return { error: 'A title is required.' };
-  const category = String(body?.category || 'scholarship');
+  const category = String(input.category || 'scholarship');
   if (!OPPORTUNITY_CATEGORIES.includes(category)) return { error: 'Invalid opportunity category.' };
   let linkUrl: string | null = null;
-  if (body?.link_url) {
-    linkUrl = safeContentUrl(body.link_url);
+  if (input.link_url) {
+    linkUrl = safeContentUrl(input.link_url);
     if (!linkUrl) return { error: 'The link must use HTTPS.' };
   }
   let deadline: string | null = null;
-  if (body?.deadline) {
-    const parsed = new Date(String(body.deadline));
+  if (input.deadline) {
+    const parsed = new Date(String(input.deadline));
     if (!Number.isFinite(parsed.getTime())) return { error: 'The deadline date is invalid.' };
     deadline = parsed.toISOString().slice(0, 10);
   }
-  const workMode = body?.work_mode ? String(body.work_mode).trim().slice(0, 40) : null;
+  const workMode = input.work_mode ? String(input.work_mode).trim().slice(0, 40) : null;
   if (workMode && !['remote', 'hybrid', 'onsite', 'not-specified'].includes(workMode)) {
     return { error: 'Invalid work mode.' };
   }
   return {
     values: {
       title,
-      organisation: String(body?.organisation || '').trim().slice(0, 160) || null,
+      organisation: String(input.organisation || '').trim().slice(0, 160) || null,
       category,
-      subcategory: String(body?.subcategory || '').trim().slice(0, 100) || null,
-      description: String(body?.description || '').trim() || null,
+      subcategory: String(input.subcategory || '').trim().slice(0, 100) || null,
+      description: String(input.description || '').trim() || null,
       link_url: linkUrl,
       deadline,
-      locations: String(body?.locations || '').trim().slice(0, 160) || null,
-      eligibility: String(body?.eligibility || '').trim().slice(0, 1000) || null,
-      education_levels: normalizeOpportunityArray(body?.education_levels),
-      disciplines: normalizeOpportunityArray(body?.disciplines),
+      locations: String(input.locations || '').trim().slice(0, 160) || null,
+      eligibility: String(input.eligibility || '').trim().slice(0, 1000) || null,
+      education_levels: normalizeOpportunityArray(input.education_levels),
+      disciplines: normalizeOpportunityArray(input.disciplines),
       work_mode: workMode,
-      is_featured: Boolean(body?.is_featured),
-      is_active: body?.is_active === undefined ? true : Boolean(body.is_active),
+      is_featured: Boolean(input.is_featured),
+      is_active: input.is_active === undefined ? true : Boolean(input.is_active),
     },
   };
 }
@@ -1329,15 +1332,41 @@ function validateOpportunityPayload(body: any): { error?: string; values?: Recor
 /**
  * Opportunities column tiers.
  *
- * The catalogue grew in three separate migrations — provenance and `closed_at`
+ * The catalogue grew in three separate migrations - provenance and `closed_at`
  * (20260930120000), `eligibility` (20261002150000) and the discovery fields
- * (20261003190000) — so a database that is one release behind is a normal
+ * (20261003190000) - so a database that is one release behind is a normal
  * state, not a fault. Each tier retries with fewer columns instead of failing
  * the whole surface, the same way NEWS_ROW_* does below. Hard-coding the newest
- * select meant a single absent column answered 503 for every jobs page
- * (audit P0-4), and the degraded column set silently reported "no source" for
- * data the database actually held.
+ * select meant a single absent column answered 503 for every jobs page, and the
+ * degraded column set reported "no source" for data the database actually held.
  */
+/**
+ * A catalogue row, as far as these pages read it. The newer columns are
+ * optional because an older database returns the smaller select.
+ */
+type OpportunityRow = {
+  id: string;
+  title: string;
+  organisation: string | null;
+  category: string;
+  description: string | null;
+  link_url: string | null;
+  deadline: string | null;
+  locations: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string | null;
+  last_verified_at?: string | null;
+  source_name?: string | null;
+  eligibility?: string | null;
+  subcategory?: string | null;
+  education_levels?: string[] | null;
+  disciplines?: string[] | null;
+  work_mode?: string | null;
+  is_featured?: boolean | null;
+};
+
 const OPPORTUNITY_ROW_BASE = 'id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at';
 const OPPORTUNITY_ROW_GOVERNED = `${OPPORTUNITY_ROW_BASE},closed_at,last_verified_at,source_name,eligibility`;
 const OPPORTUNITY_ROW_DISCOVERY = `${OPPORTUNITY_ROW_GOVERNED},subcategory,education_levels,disciplines,work_mode,is_featured`;
@@ -1346,8 +1375,8 @@ app.get('/api/opportunities', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    let data: any = null;
-    let error: any = null;
+    let data: OpportunityRow[] | null = null;
+    let error: { message?: string } | null = null;
     ({ data, error } = await supabase
       .from('opportunities')
       .select(OPPORTUNITY_ROW_DISCOVERY)
@@ -1386,7 +1415,7 @@ app.get('/api/opportunities', async (req, res) => {
     const workMode = String(req.query.work_mode || '').trim().toLowerCase();
     const featuredOnly = String(req.query.featured || '') === 'true';
 
-    const items = (data || []).filter((item: any) => {
+    const items = (data || []).filter((item: OpportunityRow) => {
       const haystack = [item.title, item.organisation, item.description, item.locations, item.eligibility, item.subcategory, ...(item.education_levels || []), ...(item.disciplines || [])].join(' ').toLowerCase();
       if (q && !haystack.includes(q)) return false;
       if (category !== 'all' && category !== item.category) return false;
@@ -1408,10 +1437,10 @@ app.get('/api/opportunities/:opportunityId', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'Opportunity not found.' });
   try {
     const supabase = getServerSupabase();
-    let data: any = null;
-    let error: any = null;
+    let data: OpportunityRow | null = null;
+    let error: { message?: string } | null = null;
     // Same three tiers as the list endpoint: a detail page must not 503 because
-    // one column from the newest migration is absent (audit P0-4).
+    // one column from the newest migration is absent.
     ({ data, error } = await supabase
       .from('opportunities')
       .select(OPPORTUNITY_ROW_DISCOVERY)
@@ -1557,7 +1586,7 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
     if (!(ASSIGNABLE_ROLES as readonly string[]).includes(role)) {
       return res.status(400).json({ error: 'Unknown role.' });
     }
-    // An owner locking themselves out of the console is never intentional.
+    // An owner locking themselves out of the console is never desirable.
     if (adminUser.id === req.params.userId) {
       return res.status(400).json({ error: 'You cannot change your own role.' });
     }
@@ -1759,7 +1788,7 @@ app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requi
     if (!buffer.length) return res.status(400).json({ error: 'The uploaded image is empty.' });
     if (buffer.length > 2 * 1024 * 1024) return res.status(413).json({ error: 'Images must be 2 MB or smaller.' });
     // The declared MIME type is a claim; check it against the bytes before the
-    // object is written to the public bucket (audit P3-3).
+    // object is written to the public bucket.
     if (!matchesDeclaredImageType(buffer, match[1])) {
       return res.status(400).json({ error: 'That file is not a valid PNG, JPEG, WebP or GIF image.' });
     }
@@ -1873,7 +1902,7 @@ app.get('/api/upcoming', async (_req, res) => {
 /**
  * News reads. The provenance/freshness columns arrive with the newsroom
  * migration, so the query degrades to the legacy column set when a database
- * has not been migrated yet — the site keeps serving either way.
+ * has not been migrated yet - the site keeps serving either way.
  */
 const NEWS_ROW_BASE = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published_at,updated_at,published,featured,tags';
 const NEWS_ROW_GOVERNED = `${NEWS_ROW_BASE},verification_status,expires_at,last_verified_at,source_key,source_tier`;
@@ -1883,7 +1912,30 @@ const NEWS_ROW_GOVERNED = `${NEWS_ROW_BASE},verification_status,expires_at,last_
 // the same rule locally.
 const NEWS_ROW_CATEGORISED = `${NEWS_ROW_GOVERNED},category_slug`;
 
-function newsArticleView(item: Record<string, unknown>) {
+type NewsRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string | null;
+  category: string | null;
+  image_url: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  published_at: string | null;
+  updated_at: string | null;
+  published?: boolean;
+  featured?: boolean | null;
+  tags?: unknown;
+  category_slug?: string | null;
+  verification_status?: string | null;
+  expires_at?: string | null;
+  last_verified_at?: string | null;
+  source_key?: string | null;
+  source_tier?: string | null;
+};
+
+function newsArticleView(item: NewsRow) {
   const expiresAt = item.expires_at ? new Date(String(item.expires_at)) : null;
   const expiredByDate = expiresAt && Number.isFinite(expiresAt.getTime()) && expiresAt.getTime() < Date.now();
   return {
@@ -1897,19 +1949,12 @@ function newsArticleView(item: Record<string, unknown>) {
   };
 }
 
-function isFreshArticle(item: Record<string, unknown>): boolean {
-  if (item.verification_status === 'expired' || item.verification_status === 'archived') return false;
-  if (!item.expires_at) return true;
-  const expiresAt = new Date(String(item.expires_at));
-  return !Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() > Date.now();
-}
-
 app.get('/api/news', async (_req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
-    let data: any = null;
-    let error: any = null;
+    let data: NewsRow[] | null = null;
+    let error: { message?: string } | null = null;
     ({ data, error } = await supabase.from('news_articles')
       .select(NEWS_ROW_CATEGORISED)
       .eq('published', true).order('published_at', { ascending: false, nullsFirst: false }).limit(40));
@@ -1928,7 +1973,7 @@ app.get('/api/news', async (_req, res) => {
       error = fallback.error;
     }
     if (error) throw error;
-    res.json({ items: (data || []).filter(isFreshArticle).slice(0, 30).map(newsArticleView) });
+    res.json({ items: (data || []).filter(isArticleCurrent).slice(0, 30).map(newsArticleView) });
   } catch (error) {
     console.error('News API error:', error);
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
@@ -1939,8 +1984,8 @@ app.get('/api/news/:slug', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.status(404).json({ error: 'News content is not configured.' });
   try {
     const supabase = getServerSupabase();
-    let data: any = null;
-    let error: any = null;
+    let data: NewsRow | null = null;
+    let error: { message?: string } | null = null;
     ({ data, error } = await supabase.from('news_articles')
       .select(NEWS_ROW_GOVERNED)
       .eq('slug', req.params.slug).eq('published', true).maybeSingle());
@@ -1962,7 +2007,7 @@ app.get('/api/news/:slug', async (req, res) => {
 });
 
 function normalizeSubjectKey(value: unknown): string {
-  // Canonical subject key — must stay in step with normalizeSubject() in
+  // Canonical subject key - must stay in step with normalizeSubject() in
   // src/lib/cbt-config.ts and the SQL canonicalisation in plan_cbt_paper.
   const s = String(value || '').trim().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').toLowerCase();
   if (s === 'use of english' || s === 'english language' || s === 'english') return 'english';
@@ -1971,7 +2016,7 @@ function normalizeSubjectKey(value: unknown): string {
 
 /**
  * PostgREST returns at most 1,000 rows per request. Every "read the whole
- * bank" query must page explicitly or it silently truncates — that cap is
+ * bank" query must page explicitly or it silently truncates - that cap is
  * what made production report 0 questions for a 395-question bank. Pages are
  * walked in a stable order supplied by the caller-ordered query factory.
  */
@@ -1986,7 +2031,103 @@ async function fetchAllRows<T>(buildQuery: (from: number, to: number) => Promise
   }
 }
 
-function cbtSeededRank(seed: string, row: any): number {
+type CbtQuestionRow = {
+  id: string;
+  position: number;
+  subject: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_option: string;
+  explanation?: string | null;
+};
+
+type StartAttemptRow = {
+  attempt_id: string;
+  started_at: string | null;
+  expires_at: string | null;
+  total_questions: number | null;
+  mode: string | null;
+  duration_minutes: number | null;
+  selected_subjects?: string[] | null;
+  subject_plan?: unknown[] | null;
+  resumed?: boolean;
+};
+
+type DocumentBankRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  storage_path: string | null;
+  destination: string | null;
+  institution_id: string | null;
+  news_article_id: string | null;
+  opportunity_id: string | null;
+  subject: string | null;
+  course: string | null;
+  paper_year: number | null;
+  created_at: string | null;
+};
+
+type PastQuestionRow = {
+  id: string;
+  exam_body: string | null;
+  institution_id: string | null;
+  subject: string | null;
+  course: string | null;
+  paper_year: number | null;
+  title: string;
+  description: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  storage_path: string | null;
+  access: string | null;
+  verified_at: string | null;
+};
+
+type CbtPaperRow = {
+  position: number;
+  subject: string;
+  question_id: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+};
+
+type CbtSubmitResultRow = {
+  attempt_id: string;
+  score: number | string | null;
+  correct_answers: number;
+  total_questions: number;
+  breakdown?: unknown[] | null;
+};
+
+type CbtHistoryRow = {
+  attempt_id: string;
+  exam_id: string;
+  exam_title: string | null;
+  exam_body: string | null;
+  mode: string | null;
+  programme: string | null;
+  status: string;
+  score: number | string | null;
+  correct_answers: number;
+  total_questions: number;
+  duration_minutes: number | null;
+  selected_subjects?: string[] | null;
+  started_at: string | null;
+  expires_at: string | null;
+  submitted_at: string | null;
+  answered: number;
+};
+
+function cbtSeededRank(seed: string, row: Pick<CbtQuestionRow, 'position' | 'subject' | 'question_text'>): number {
   // Stable FNV-1a hash: the same seed yields the same paper for guest display and scoring.
   const input = `${seed}|${row.position}|${normalizeSubjectKey(row.subject)}|${row.question_text || ''}`;
   let hash = 2166136261;
@@ -2000,16 +2141,16 @@ function cbtSeededRank(seed: string, row: any): number {
 /**
  * Guest paper assembly, on the same planner as configured attempts.
  *
- * Quotas come from previewPlan() — the shared proportional, capacity-aware
- * allocation that mirrors plan_cbt_paper — capped at the CBT max-questions
+ * Quotas come from previewPlan() - the shared proportional, capacity-aware
+ * allocation that mirrors plan_cbt_paper - capped at the CBT max-questions
  * limit, with the student's seed ordering questions inside each subject so
  * display and scoring rebuild the identical paper. A requested subject with
- * no questions is an error naming the subject; there is deliberately no
+ * no questions is an error naming the subject; there is no
  * fallback to "the first N questions of any subject", which previously
  * handed a guest a paper for subjects they never chose.
  */
-function selectCbtPaperQuestions(rows: any[], subjects: string[], seed = '', maxQuestions = 100) {
-  const rank = (row: any) => seed ? cbtSeededRank(seed, row) : Number(row.position) || 0;
+function selectCbtPaperQuestions(rows: CbtQuestionRow[], subjects: string[], seed = '', maxQuestions = 100): CbtQuestionRow[] {
+  const rank = (row: CbtQuestionRow) => seed ? cbtSeededRank(seed, row) : Number(row.position) || 0;
 
   // Distinct requested subjects by canonical key, in the order asked for.
   // No explicit selection means "the whole bank", in bank subject order.
@@ -2045,7 +2186,7 @@ function selectCbtPaperQuestions(rows: any[], subjects: string[], seed = '', max
     target,
   );
 
-  const paper: any[] = [];
+  const paper: CbtQuestionRow[] = [];
   usable.forEach((pool, index) => {
     const quota = plan[index]?.questions ?? 0;
     paper.push(...[...pool.rows].sort((a, b) => rank(a) - rank(b)).slice(0, quota));
@@ -2054,13 +2195,16 @@ function selectCbtPaperQuestions(rows: any[], subjects: string[], seed = '', max
 }
 
 /** Whole-bank question reads, paged past the PostgREST 1,000-row cap. */
-async function fetchGuestBankQuestions(supabase: any, examId: string, columns: string) {
-  return fetchAllRows<any>((from, to) => supabase
+async function fetchGuestBankQuestions(supabase: SupabaseClient, examId: string, columns: string): Promise<CbtQuestionRow[]> {
+  // The column list is chosen by the caller, so PostgREST's generated row type
+  // cannot describe it. The shape is asserted here, at the one I/O boundary.
+  return fetchAllRows<CbtQuestionRow>((from, to) => supabase
     .from('exam_questions')
     .select(columns)
     .eq('exam_id', examId)
+    .neq('review_status', 'rejected')
     .order('position', { ascending: true })
-    .range(from, to));
+    .range(from, to) as unknown as PromiseLike<{ data: CbtQuestionRow[] | null; error: unknown }>);
 }
 
 app.get('/api/cbt/exams', async (_req, res) => {
@@ -2088,6 +2232,7 @@ app.get('/api/cbt/exams', async (_req, res) => {
         .from('exam_questions')
         .select('exam_id,subject')
         .in('exam_id', exams.map((exam) => exam.id))
+        .neq('review_status', 'rejected')
         .order('id', { ascending: true })
         .range(from, to));
       for (const row of questionRows) {
@@ -2161,7 +2306,7 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
     const supabase = getServerSupabase();
     const { data: exam, error: examError } = await supabase
       .from('cbt_exams')
-       .select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id')
+       .select('id,title,exam_body,subject,description,duration_minutes,is_active,format_status,official_guidance_url,format_notes,guidance_year,institution_id,mock_question_count,mock_subject_quota')
       .eq('id', req.params.examId)
       .eq('is_active', true)
       .maybeSingle();
@@ -2174,6 +2319,29 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
 
     const { data: limits, error: limitsError } = await supabase.rpc('cbt_limits');
     if (limitsError) throw limitsError;
+    const cbtLimits = limits as { minQuestions?: number; maxQuestions?: number; maxSubjects?: number } | null;
+
+    // Editorial state of the bank, so the wizard can say plainly how much of
+    // what it is offering has actually been reviewed. It does not change what
+    // is servable: unapproved items are unverified practice material, not
+    // approved content, and the page says so.
+    const reviewRows = await fetchAllRows<{ review_status?: string }>((from, to) => supabase
+      .from('exam_questions')
+      .select('review_status')
+      .eq('exam_id', exam.id)
+      .order('id', { ascending: true })
+      .range(from, to));
+    const review = reviewRows.reduce(
+      (totals, row) => {
+        const status = String(row.review_status || 'needs_review');
+        if (status === 'approved') totals.approved += 1;
+        else if (status === 'rejected') totals.rejected += 1;
+        else totals.needsReview += 1;
+        totals.total += 1;
+        return totals;
+      },
+      { approved: 0, needsReview: 0, rejected: 0, total: 0 },
+    );
 
     const available = (subjects || []) as Array<{ subject: string; question_count: number }>;
     // Compulsory-subject rule, stated once here and enforced again in
@@ -2201,11 +2369,17 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
       subjects: available.map((row) => ({ subject: row.subject, questionCount: Number(row.question_count) })),
       totalQuestions: available.reduce((sum, row) => sum + Number(row.question_count), 0),
       limits: limits || null,
+      review,
+      mock: {
+        questionCount: exam.mock_question_count ? Number(exam.mock_question_count) : null,
+        subjectQuota: (exam.mock_subject_quota || null) as Record<string, number> | null,
+        durationMinutes: exam.duration_minutes ? Number(exam.duration_minutes) : null,
+      },
       rules: {
         compulsorySubjects,
         compulsoryMissing: isJamb && !englishEntry,
         minSubjects: 1,
-        maxSubjects: Number((limits as any)?.maxSubjects ?? 6),
+        maxSubjects: Number(cbtLimits?.maxSubjects ?? 6),
       },
     });
   } catch (error) {
@@ -2219,7 +2393,7 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
  *
  * The body is a *request*, not a decision: the database validates the subjects
  * against the real bank, derives the mock duration from the exam configuration,
- * plans the paper, freezes it and returns what was actually created — including
+ * plans the paper, freezes it and returns what was actually created - including
  * `resumed: true` when an identical unfinished session already existed.
  */
 app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtStart), async (req, res) => {
@@ -2261,13 +2435,16 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
       return res.status(422).json({ error: 'Choose at least one subject to practise.' });
     }
     const { data: limitData } = await rpcSupabase.rpc('cbt_limits');
-    const minQuestions = Number((limitData as any)?.minQuestions ?? 5);
-    const maxQuestions = Number((limitData as any)?.maxQuestions ?? 100);
-    const maxSubjects = Number((limitData as any)?.maxSubjects ?? 6);
+    const limits = limitData as { minQuestions?: number; maxQuestions?: number; maxSubjects?: number } | null;
+    const minQuestions = Number(limits?.minQuestions ?? 5);
+    const maxQuestions = Number(limits?.maxQuestions ?? 100);
+    const maxSubjects = Number(limits?.maxSubjects ?? 6);
     if (canonicalSubjects.length > maxSubjects) {
       return res.status(422).json({ error: `A session can include at most ${maxSubjects} subjects.` });
     }
-    if (questionCount !== null && (questionCount < minQuestions || questionCount > maxQuestions)) {
+    // A mock's size comes from the examination (cbt_exams.mock_question_count);
+    // only a practice session is sized by the student.
+    if (mode === 'practice' && questionCount !== null && (questionCount < minQuestions || questionCount > maxQuestions)) {
       return res.status(422).json({ error: `Choose between ${minQuestions} and ${maxQuestions} questions.` });
     }
     const { data: examRow } = await getServerSupabase()
@@ -2281,6 +2458,15 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
       if (isJamb && !canonicalSubjects.some((subject) => normalizeSubjectKey(subject) === 'english')) {
         return res.status(422).json({ error: 'Use of English is compulsory for JAMB UTME. Include it in your subject combination.' });
       }
+      if (isJamb && canonicalSubjects.length > 4) {
+        return res.status(422).json({ error: 'A JAMB session can include Use of English plus three other subjects.' });
+      }
+      if (mode === 'mock') {
+        // The same rule the RPC enforces, answered before the call so the
+        // student gets a message naming what is missing rather than a 409.
+        const combinationError = mockCombinationError(canonicalSubjects, examRow.exam_body);
+        if (combinationError) return res.status(422).json({ error: combinationError });
+      }
     }
 
     const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_configured', {
@@ -2292,7 +2478,7 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
       p_programme: programme,
     });
     if (error) throw error;
-    const row = (Array.isArray(data) ? data[0] : data) as Record<string, any> | null;
+    const row = (Array.isArray(data) ? data[0] : data) as StartAttemptRow | null;
     if (!row) return res.status(409).json({ error: 'The practice session could not be created. Please try again.' });
 
     res.status(row.resumed ? 200 : 201).json({
@@ -2314,14 +2500,14 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
     const status = /Authentication|required|session/i.test(message) ? 401
       : /permission/i.test(message) ? 403
         : /not found/i.test(message) ? 404
-          : /No questions are available|Choose at least one subject|Choose a duration|Use of English plus|A session can include|Unknown CBT mode/i.test(message) ? 422
+          : /No questions are available|Choose at least one subject|Choose a duration|Use of English plus|A JAMB mock paper|A session can include|Unknown CBT mode|cannot fill the|can only supply/i.test(message) ? 422
             : 409;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this practice session. Please try again.') });
   }
 });
 
 /**
- * PQR-1 — the past-question resource library, read-only and public.
+ * PQR-1 - the past-question resource library, read-only and public.
  *
  * The library is empty until staff publish a paper that they have verified, and
  * this endpoint says exactly that instead of implying documents exist. When a
@@ -2359,7 +2545,7 @@ app.get('/api/public/documents', async (req, res) => {
     if (newsArticleId) query = query.eq('news_article_id', newsArticleId);
     const { data, error } = await query;
     if (error) throw error;
-    const items = await Promise.all((data || []).map(async (row: Record<string, any>) => {
+    const items = await Promise.all((data || []).map(async (row: DocumentBankRow) => {
       let signedUrl: string | null = null;
       if (row.storage_path) {
         const { data: signed } = await supabase.storage.from('resource-files').createSignedUrl(row.storage_path, 300);
@@ -2404,7 +2590,7 @@ app.get('/api/past-questions/resources', async (req, res) => {
     const { data, error } = await query;
     if (error) throw error;
 
-    const items = await Promise.all((data || []).map(async (row: Record<string, any>) => {
+    const items = await Promise.all((data || []).map(async (row: PastQuestionRow) => {
       let signedUrl: string | null = null;
       if (row.storage_path) {
         const { data: signed } = await supabase.storage.from('resource-files').createSignedUrl(row.storage_path, 300);
@@ -2422,9 +2608,9 @@ app.get('/api/past-questions/resources', async (req, res) => {
         description: row.description,
         sourceName: row.source_name,
         sourceUrl: row.source_url,
-        // available  — a paper a student can open right now
-        // external   — hosted elsewhere; the link leaves EduReach
-        // unavailable— published, but neither copy can be opened
+        // available  - a paper a student can open right now
+        // external   - hosted elsewhere; the link leaves EduReach
+        // unavailable- published, but neither copy can be opened
         state: href ? (signedUrl ? 'available' : 'external') : 'unavailable',
         access: row.access,
         href,
@@ -2437,7 +2623,7 @@ app.get('/api/past-questions/resources', async (req, res) => {
       items,
       coverage: coverage || [],
       configured: true,
-      // The page needs to distinguish "nothing published yet" (an honest empty
+      // The page needs to distinguish "nothing published yet" (an empty
       // state) from "the service could not answer" (an error state).
       state: items.length ? 'available' : 'not-published',
     });
@@ -2464,7 +2650,7 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
     });
     if (paperError) throw paperError;
 
-    const examMeta = (attemptRow as Record<string, any>).cbt_exams || {};
+    const examMeta = (attemptRow.cbt_exams || {}) as { title?: string | null; exam_body?: string | null; subject?: string | null };
     res.json({
       // The server clock, so a device with the wrong time still shows the true
       // remaining time instead of extending or shortening the examination.
@@ -2490,7 +2676,7 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
           subject: examMeta.subject || '',
         },
       },
-      questions: (paper || []).map((row: Record<string, any>) => ({
+      questions: (paper || []).map((row: CbtPaperRow) => ({
         position: row.position,
         subject: row.subject,
         id: row.question_id,
@@ -2523,7 +2709,7 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
     });
     if (error) throw error;
 
-    const row = (Array.isArray(data) ? data[0] : data) as Record<string, any> | null;
+    const row = (Array.isArray(data) ? data[0] : data) as CbtSubmitResultRow | null;
     if (!row) return res.status(409).json({ error: 'CBT submission did not produce a result.' });
     res.json({
       attemptId: row.attempt_id,
@@ -2621,7 +2807,7 @@ app.get('/api/cbt/attempts', async (req, res) => {
     const { data, error } = await rpcSupabase.rpc('get_cbt_attempt_history', { p_limit: limit });
     if (error) throw error;
     res.json({
-      items: (data || []).map((row: Record<string, any>) => ({
+      items: (data || []).map((row: CbtHistoryRow) => ({
         id: row.attempt_id,
         examId: row.exam_id,
         examTitle: row.exam_title,
@@ -2654,13 +2840,16 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
       ? req.body.subjects.map((value: unknown) => String(value).trim()).filter(Boolean)
       : [];
     // The RPC resolves the student from the token, so the attempt is always
-    // created for the caller and never for a client-supplied user id.
-    const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_for_subjects', {
+    // created for the caller and never for a client-supplied user id. It is the
+    // same planner the configured wizard uses, so a legacy link cannot start a
+    // paper outside the session limits or the compulsory-subject rules.
+    const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_configured', {
       p_exam_id: req.params.examId,
       p_subjects: subjects,
+      p_mode: 'practice',
     });
     if (error) throw error;
-    const row = Array.isArray(data) ? data[0] : data;
+    const row = (Array.isArray(data) ? data[0] : data) as StartAttemptRow | null;
     if (!row) return res.status(404).json({ error: 'Unable to start this CBT exam.' });
     res.status(201).json({
       attemptId: row.attempt_id,
@@ -2671,7 +2860,7 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
   } catch (error) {
     console.error('CBT start API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : /not found/i.test(message) ? 404 : /no questions|requires Use of English/i.test(message) ? 422 : 409;
+    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : /not found/i.test(message) ? 404 : /no questions|requires Use of English|Use of English is compulsory|Choose at least one subject|A session can include/i.test(message) ? 422 : 409;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this CBT exam. Please try again.') });
   }
 });
@@ -2741,7 +2930,7 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
     // answer a question must not receive that question's key: an empty payload
     // (`{"answers":{}}`) previously returned correct_option and explanation for
     // every question, which disclosed the whole answer key to anyone who could
-    // name an exam id (audit P0-3). A student who answers a question still gets
+    // name an exam id. A student who answers a question still gets
     // the full correction for it, which is what the review screen needs.
     const attemptedPositions = new Set(
       paper
@@ -2809,15 +2998,18 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
 app.post('/api/cbt/submit', async (req, res) => {
   try {
     const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
-    const { attemptId, examId, answers } = req.body as { attemptId?: string; examId?: string; answers?: Record<string, unknown> };
-    if (!attemptId || !examId || !answers || typeof answers !== 'object' || Array.isArray(answers)) {
-      return res.status(400).json({ error: 'attemptId, examId and answers are required.' });
+    // `examId` is still accepted for older clients but no longer used: the
+    // attempt id is the identity, and the RPC resolves its exam, paper and
+    // owner itself. Submitting through one scorer means the legacy endpoint
+    // cannot grade a different paper from /attempts/:id/submit.
+    const { attemptId, answers } = req.body as { attemptId?: string; examId?: string; answers?: Record<string, unknown> };
+    if (!attemptId || !answers || typeof answers !== 'object' || Array.isArray(answers)) {
+      return res.status(400).json({ error: 'attemptId and answers are required.' });
     }
     // Ownership (the attempt belongs to the caller) is enforced inside the RPC
     // through auth.uid(); the server never passes a user id from the request.
-    const { data, error } = await rpcSupabase.rpc('submit_cbt_attempt_for_subjects', {
+    const { data, error } = await rpcSupabase.rpc('submit_cbt_attempt_configured', {
       p_attempt_id: attemptId,
-      p_exam_id: examId,
       p_answers: answers,
     });
     if (error) throw error;
@@ -2900,8 +3092,8 @@ app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
 
 
 // --- Unified admin content manager -----------------------------------------
-// One bulk CMS surface for editable Supabase-backed content. The allowlist is
-// deliberate: admin cannot turn this endpoint into arbitrary SQL/table access.
+// One bulk CMS surface for editable Supabase-backed content. The allowlist keeps
+// the endpoint from becoming arbitrary SQL/table access.
 type ContentField = { name: string; label: string; type: string; required?: boolean; readonly?: boolean };
 type ContentResource = { key: string; label: string; table: string; fields: ContentField[] };
 
@@ -3390,8 +3582,8 @@ async function startServer() {
     // Cache policy, kept in step with public/_headers (the Netlify deployment).
     // Express used to serve index.html as `public, max-age=0` while Netlify sent
     // `no-store`, so a self-hosted deployment and a Netlify one disagreed about
-    // the shell — and a cached shell references chunk filenames that a deploy
-    // has already replaced (audit P3-4). Content-hashed assets are immutable on
+    // the shell - and a cached shell references chunk filenames that a deploy
+    // has already replaced. Content-hashed assets are immutable on
     // both platforms.
     app.use(express.static(distPath, {
       setHeaders: (res, filePath) => {

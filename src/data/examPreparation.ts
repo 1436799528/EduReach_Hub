@@ -67,7 +67,7 @@ export const jambSubjectCatalog: Record<JambCourse['department'], string[]> = {
 
 export type SecondarySubjectTrack = 'General' | 'Science' | 'Arts & Humanities' | 'Social Science' | 'Commercial' | 'Technical / Vocational';
 
-/** Track filters are deliberately transparent and fall back to the maintained general catalogue. */
+/** Track filters are visible and fall back to the maintained general catalogue. */
 export const secondarySubjectTracks: SecondarySubjectTrack[] = ['General', 'Science', 'Arts & Humanities', 'Social Science', 'Commercial', 'Technical / Vocational'];
 
 export const secondarySubjectCatalog: Record<SecondarySubjectTrack, string[]> = {
@@ -129,7 +129,7 @@ export type PostUtmeSchool = {
 };
 
 /**
- * Schools in this starter catalogue are deliberately limited to institutions
+ * Schools in this starter catalogue are limited to institutions
  * with a Post-UTME practice profile. The list is an editable product data
  * source, not a claim that every school runs a screening exercise every year.
  */
@@ -192,7 +192,7 @@ export const admissionMethodProfiles: AdmissionMethodProfile[] = [
 ];
 
 /**
- * Study-material records are honest route cards, never document claims.
+ * Study-material records are route cards, not document claims.
  *
  * There are no third-party document links (Scribd was removed entirely on
  * 2026-09-27): each record either routes into the first-party CBT practice

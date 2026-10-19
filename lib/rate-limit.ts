@@ -3,9 +3,9 @@
  *
  * Two layers, because EduReach runs on serverless infrastructure:
  *
- *   1. in-process — cheap, always on. It stops request floods against a warm
+ *   1. in-process - cheap, always on. It stops request floods against a warm
  *      instance but cannot see other instances.
- *   2. durable (`check_rate_limit` RPC) — counts across instances in Postgres.
+ *   2. durable (`check_rate_limit` RPC) - counts across instances in Postgres.
  *      Used for the endpoints where abuse is expensive or sensitive: admin
  *      bootstrap, guest CBT scoring, uploads, bulk import and newsroom runs.
  *
@@ -140,7 +140,7 @@ export function createRateLimiter(
 
 /**
  * Every limited route in one place, so the policy can be reviewed like the
- * editorial policy is. Limits are deliberate but generous: an ordinary student
+ * editorial policy is. Limits are generous: an ordinary student
  * never reaches them; a script does.
  */
 export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {

@@ -3,9 +3,9 @@ import { WifiOff } from 'lucide-react';
 import { isOffline } from '../lib/failures';
 
 /**
- * APP-3 — the connection strip.
+ * APP-3 - the connection strip.
  *
- * Rules this follows deliberately:
+ * Rules:
  *  - It never replaces the page. The student keeps working, keeps their typed
  *    answers, and keeps reading content that is already on screen.
  *  - It is announced politely, not as an alert, so a screen reader is not
@@ -36,7 +36,7 @@ export default function ConnectionBanner() {
     <div className="er-connection-strip" role="status" aria-live="polite">
       <WifiOff size={15} aria-hidden="true" />
       <span>
-        <strong>You are offline.</strong> You can keep reading and working — anything you save is kept on this device and sent when you reconnect.
+        <strong>You are offline.</strong> You can keep reading and working. Anything you save is kept on this device and sent when you reconnect.
       </span>
     </div>
   );

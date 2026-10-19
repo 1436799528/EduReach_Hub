@@ -12,7 +12,7 @@ import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/A
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 
 // Opportunities manager: scholarships, grants, jobs and fellowships listed on
-// the public /jobs page. Full CRUD over the `opportunities` table — the same
+// the public /jobs page. Full CRUD over the `opportunities` table - the same
 // records the site reads. Descriptions use the rich-text editor.
 
 const CATEGORIES = [
@@ -108,7 +108,7 @@ export default function AdminOpportunitiesPage() {
       });
       setEdit(null);
       setDescriptionHtml('');
-      setMessage(edit.id ? 'Opportunity updated — /jobs reflects it on the next load.' : 'Opportunity published — it is live on /jobs right away.');
+      setMessage(edit.id ? 'Opportunity updated. /jobs reflects it on the next load.' : 'Opportunity published. It is live on /jobs right away.');
     } catch (e) {
       setError(userFacingError(e, 'Unable to save the opportunity.'));
     } finally { setSaving(false); }
@@ -143,7 +143,7 @@ export default function AdminOpportunitiesPage() {
         <div className="admin-page-header">
           <div>
             <h1>Scholarships &amp; Opportunities</h1>
-            <p>Scholarships, grants, jobs and fellowships on the student /jobs page — managed here, served from Supabase.</p>
+            <p>Scholarships, grants, jobs and fellowships on the student /jobs page, managed here and served from Supabase.</p>
           </div>
           <div className="admin-header-actions">
             <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading} aria-label="Refresh opportunities"><RefreshCw size={14} /></button>
@@ -274,7 +274,7 @@ export default function AdminOpportunitiesPage() {
                 ))}
                 {!loading && !visible.length && (
                   <tr><td colSpan={6} className="empty-state">
-                    <AdminEmptyState title="No opportunities yet" hint="Publish the first scholarship or grant — it appears on the student /jobs page immediately." action={<button type="button" className="admin-btn small" onClick={() => { setEdit({ ...emptyEdit }); setDescriptionHtml(''); }}><Plus size={13} /> New opportunity</button>} />
+                    <AdminEmptyState title="No opportunities yet" hint="Publish the first scholarship or grant. It appears on the student /jobs page immediately." action={<button type="button" className="admin-btn small" onClick={() => { setEdit({ ...emptyEdit }); setDescriptionHtml(''); }}><Plus size={13} /> New opportunity</button>} />
                   </td></tr>
                 )}
               </tbody>

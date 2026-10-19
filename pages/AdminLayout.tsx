@@ -39,7 +39,7 @@ type AdminSession = { id: string; email: string; fullName: string; role: string;
 // Module-scoped admin session cache.
 //
 // The admin shell mounts once for the whole console (see App.tsx), so a normal
-// page change never re-verifies anything. The cache additionally covers the
+// page change never re-verifies anything. The cache also covers the
 // cases where the shell is remounted (cold load of an /admin deep link, or
 // returning from the public site): a recent verified session renders the
 // console immediately while a silent revalidation runs in the background.
@@ -55,21 +55,31 @@ export function clearAdminSessionCache() {
   sessionCache = null;
 }
 
+type AdminSessionResponse = {
+  user?: {
+    id: string;
+    email?: string | null;
+    fullName?: string | null;
+    role?: string | null;
+    capabilities?: unknown;
+  };
+};
+
 async function verifyAdminSession(): Promise<{ session: AdminSession; backend: string } | null> {
   const { data: { session: authSession } } = await supabase.auth.getSession();
   if (!authSession?.access_token) return null;
 
   let response: Response | null = null;
-  let body: any = null;
+  let body: AdminSessionResponse | null = null;
   try {
     response = await fetch(`${ADMIN_API_BASE}/admin/session`, {
       headers: { Authorization: `Bearer ${authSession.access_token}` },
       // Short timeout: do not block the console for 90s if the backend is slow.
       signal: AbortSignal.timeout(6000),
     });
-    body = await response.json().catch(() => null);
+    body = await response.json().catch(() => null) as AdminSessionResponse | null;
   } catch {
-    // Network error / timeout — fall through to the profile fallback below.
+    // Network error / timeout - fall through to the profile fallback below.
     response = null;
   }
   if (response?.ok && body?.user) {
@@ -115,7 +125,7 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
       };
     }
   } catch {
-    // RLS/profile read failed — do not treat that as admin access; return null
+    // RLS/profile read failed - do not treat that as admin access; return null
     // so the guard shows the sign-in prompt.
   }
   return null;

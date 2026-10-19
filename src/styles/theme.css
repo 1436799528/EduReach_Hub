@@ -1,5 +1,5 @@
 /* ========================================================================
-   EduReach Hub — Official Color & Theme Design System
+   EduReach Hub - Official Color & Theme Design System
    Academic Blue + Institutional Navy + Crimson Action + Tangerine Energy
    ========================================================================== */
 
@@ -8,11 +8,11 @@
   --er-font-sans: Inter, Arial, sans-serif;
   --er-font-mono: var(--er-font-sans);
 
-  /* 1. Primary — Academic Crimson */
+  /* 1. Primary - Academic Crimson */
   --er-crimson: #b14933;
   --er-crimson-deep: #B3331A;
 
-  /* 2. Secondary — Academic Tangerine */
+  /* 2. Secondary - Academic Tangerine */
   --er-tangerine: #D2732A;
   --er-secondary-soft: #F9F0EE;
 

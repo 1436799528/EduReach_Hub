@@ -3,7 +3,7 @@ import CardIdentityMark, { identityClassFor } from './CardIdentityMark';
 import type { ServiceItem } from '../lib/api';
 
 /**
- * Canonical compact service card. The whole card is the link —
+ * Canonical compact service card. The whole card is the link -
  * no redundant APPLY NOW buttons inside cards.
  */
 const directDestinations: Record<string, string> = {

@@ -5,6 +5,7 @@ import { ErrorState } from '../src/components/AsyncState';
 import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../src/lib/api';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { resolveSetupExam, type CatalogExam, type SetupExamKey } from '../src/lib/cbt-config';
+import { navigateInApp } from '../src/lib/navigation';
 
 /**
  * Legacy entry point for `/cbt/practice`.
@@ -25,11 +26,6 @@ function guessKeyFromId(value: string): SetupExamKey | null {
   if (normalized.includes('utme')) return 'jamb';
   if (normalized.includes('ssce')) return 'waec';
   return null;
-}
-
-function navigateInApp(path: string) {
-  window.history.replaceState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function CbtPracticeEntryPage() {
@@ -59,7 +55,7 @@ export default function CbtPracticeEntryPage() {
         if (target?.id) next.set('exam', target.id);
         next.set('mode', requestedMode);
         if (requestedSubjects) next.set('subjects', requestedSubjects);
-        navigateInApp(`/cbt/setup/${resolvedKey}?${next.toString()}`);
+        navigateInApp(`/cbt/setup/${resolvedKey}?${next.toString()}`, { replace: true });
       })
       .catch((value) => { if (active) setError(value); });
 
@@ -86,7 +82,7 @@ export default function CbtPracticeEntryPage() {
             <span className="er-state-icon" aria-hidden="true"><Loader2 className="er-spin" size={20} /></span>
             <div>
               <strong>Opening the CBT setup</strong>
-              <p>Practice now starts from a session you configure — subjects, number of questions and time.</p>
+              <p>Practice now starts from a session you configure: subjects and number of questions, with the time set by the paper pace.</p>
             </div>
           </div>
         </div>

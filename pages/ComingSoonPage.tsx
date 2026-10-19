@@ -68,7 +68,7 @@ function copyFor(path: string): ComingSoonCopy {
     return {
       eyebrow: definition.category,
       title: `${definition.title} is not live yet`,
-      description: `${definition.description} This service has not launched yet — browse the active services catalogue for a guided service workflow.`,
+      description: `${definition.description} This service has not launched yet. Browse the active services catalogue for a guided service workflow.`,
     };
   }
   return copyByPath.find((entry) => entry.match(path))?.copy || fallbackCopy;

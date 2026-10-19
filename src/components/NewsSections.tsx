@@ -31,12 +31,12 @@ function safeImageSrc(value: string | null): string | null {
 }
 
 /**
- * Article image with an honest fallback.
+ * Article image with a fallback.
  *
  * Every article renders its OWN featured image. When an article genuinely has
- * no image (or the stored image fails to load), we show an intentional neutral
- * placeholder instead of silently recycling one of the bundled stock photos —
- * that is what made every card look identical before.
+ * no image (or the stored image fails to load), we render a neutral placeholder
+ * instead of reusing one of the bundled stock photos. That reuse is what made
+ * every card look identical.
  */
 export function NewsImage({ item, className }: { item: NewsItem; className?: string }) {
   const src = safeImageSrc(item.image_url);
@@ -53,12 +53,12 @@ export function NewsImage({ item, className }: { item: NewsItem; className?: str
     <img
       src={src}
       className={className}
-      alt={`${item.title} — ${label}`}
+      alt={`${item.title}, ${label}`}
       loading="lazy"
       decoding="async"
       onError={(event) => {
         // Broken media must not masquerade as a generic photo; swap to the
-        // intentional placeholder once and stop handling errors.
+        // placeholder once and stop handling errors.
         const element = event.currentTarget;
         element.onerror = null;
         const placeholder = document.createElement('span');

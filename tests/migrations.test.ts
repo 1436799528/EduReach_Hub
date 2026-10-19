@@ -226,3 +226,25 @@ test('exam-specific CBT metadata defaults to unverified until editorial review',
     assert.equal(rows[0].response_type, 'single_choice');
   });
 });
+
+test('the disabled generator migrations stay outside the replay path', async () => {
+  // The two syllabus generators produce template questions with rotated
+  // numbers and, in places, an explanation that contradicts the marked answer.
+  // They were moved to `supabase/disabled-migrations/` so a replay no longer
+  // seeds 200 questions per subject from a loop. This test keeps them out: a
+  // future move back into the replay directory would silently restore the
+  // fabricated banks and change what students can start.
+  const { readdirSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const disabled = readdirSync(join(REPO_ROOT, 'supabase/disabled-migrations')).filter((name) => name.endsWith('.sql'));
+  assert.ok(disabled.length >= 2, 'the disabled generators are kept for the record');
+  const applied = migrationFiles();
+  for (const file of disabled) {
+    assert.ok(!applied.includes(file), `${file} is in the replay path`);
+  }
+  for (const file of applied) {
+    const sql = readFileSync(join(REPO_ROOT, 'supabase/migrations', file), 'utf8');
+    assert.doesNotMatch(sql, /disabled-migrations\/20261020130000_expand_syllabus_practice_banks\.sql\s*;/,
+      `${file} sources the disabled syllabus generator`);
+  }
+});

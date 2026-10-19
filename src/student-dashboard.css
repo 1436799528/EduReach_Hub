@@ -1,4 +1,4 @@
-/* EduReach Student Dashboard — compact, four-page layout
+/* EduReach Student Dashboard - compact, four-page layout
    (Overview · My Requests · My CBT · Tools & Saved) */
 
 .edureach-dash-container {
@@ -1170,7 +1170,7 @@
 .dash-notification-unread .dash-row-title {
   font-weight: 620;
 }
-/* DASH-1 — what matters now. Ordered, capped, and visually plain: the urgent
+/* DASH-1 - what matters now. Ordered, capped, and visually plain: the urgent
    row is the only one with a filled button. */
 .dash-priority{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px}
 .dash-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}

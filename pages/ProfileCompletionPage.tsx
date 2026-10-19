@@ -18,6 +18,7 @@ import { supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { userFacingError } from '../lib/errors';
+import { navigateInApp } from '../src/lib/navigation';
 import {
   academicSessions,
   academicYears,
@@ -347,8 +348,7 @@ export default function ProfileCompletionPage() {
     window.setTimeout(() => {
       setSavedSuccess(false);
       const destination = wasEditingExisting ? '/profile' : '/dashboard';
-      window.history.pushState({}, '', destination);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      navigateInApp(destination);
     }, 1200);
   };
 

@@ -67,7 +67,7 @@ capability):
 | Route | Method | Capability |
 |---|---|---|
 | `/api/admin/session`, `/api/admin/session/verify` | GET/POST | staff (any capability) |
-| `/api/admin/analytics` | GET | `analytics.read` (audit feed additionally needs `audit.read`) |
+| `/api/admin/analytics` | GET | `analytics.read` (the audit feed also needs `audit.read`) |
 | `/api/admin/integrity` | GET | `data.read` |
 | `/api/admin/users`, `/api/admin/users/:id/activity` | GET | `user.read` |
 | `/api/admin/users/:id/ban`, `…/unban` | POST | `user.suspend` |
@@ -147,7 +147,7 @@ Public (`/`, `/news`, `/jobs`, `/schools`, `/services`, `/cbt`, `/tools/…`) | 
   (`<Can>`), and the endpoint repeats the check. Hiding is UX; the 403 is the rule.
 - A 403 from the server is shown as a readable error and leaves the page state
   untouched (no optimistic success).
-- `Publish` on a news article sends `published: true`; the server additionally
+- `Publish` on a news article sends `published: true`; the server also
   requires `news.publish`, so a role with only `news.create`/`news.update`
   receives 403 rather than an accidental publication.
 - Role change requires an explicit selection and a confirm step; the server

@@ -217,7 +217,7 @@ export function AuditTimeline({ items, emptyText = 'No staff activity recorded y
             <div className="t-action">{ACTION_LABELS[action] || action.replace(/_/g, ' ')}</div>
             <div className="t-meta">
               {ENTITY_LABELS[entity] || entity}
-              {detail ? ` — ${detail}` : ''}
+              {detail ? `: ${detail}` : ''}
               {' · '}
               <TimeAgo value={item.created_at} />
             </div>
@@ -269,7 +269,7 @@ export function RowSkeleton({ rows = 5 }: { rows?: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Honest empty state (spec rule: show "No data yet", never fake data)
+// Empty state (spec rule: show "No data yet", never fake data)
 // ---------------------------------------------------------------------------
 
 export function AdminEmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
@@ -291,7 +291,7 @@ export function SectionLabel({ live }: { live?: boolean }) {
 }
 
 // ---------------------------------------------------------------------------
-// Table loading skeleton — same shimmer system as the public site so admin
+// Table loading skeleton - same shimmer system as the public site so admin
 // tables hold their shape while loading instead of showing "Loading…" text.
 // ---------------------------------------------------------------------------
 

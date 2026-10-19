@@ -108,14 +108,16 @@ test('practice configuration is server-authoritative and freezes the paper', asy
   );
   const attempt = rows[0];
   assert.equal(attempt.total_questions, 20, 'the requested question count is honoured');
-  assert.equal(attempt.duration_minutes, 45, 'the chosen duration is stored on the attempt');
+  // WAEC's row is 90 minutes over the 100-question session cap: 20 questions
+  // are 18 minutes at that pace. The 45 the caller sent is not used.
+  assert.equal(attempt.duration_minutes, 18, 'the paper pace sets the time, not the request');
   assert.equal(attempt.mode, 'practice');
   assert.equal(attempt.resumed, false);
 
-  // Expiry must equal start + the student's chosen time, not the exam default.
+  // Expiry must equal start + the derived time, and the plan it describes.
   const startedAt = new Date(attempt.started_at).getTime();
   const expiresAt = new Date(attempt.expires_at).getTime();
-  assert.equal(Math.round((expiresAt - startedAt) / 60000), 45, 'the timer cannot disagree with the configuration');
+  assert.equal(Math.round((expiresAt - startedAt) / 60000), 18, 'the timer cannot disagree with the configuration');
 
   assert.equal(attempt.subject_plan.length, 2, 'the plan names each subject block');
   assert.deepEqual(attempt.subject_plan.map((entry: any) => entry.subject), ['Physics', 'Mathematics'], 'subjects keep the order the student chose');
@@ -145,10 +147,13 @@ test('an unknown subject fails with the subject named, not a generic message', a
 });
 
 test('practice limits are validated server-side', async () => {
-  await assert.rejects(
-    () => db.query(`select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 999, 'practice', null)`, [JAMB]),
-    /Choose a duration between/,
+  // A duration is derived from the paper, so a caller cannot buy extra time by
+  // sending one: 5 questions of this 120-minute bank are 6 minutes.
+  const { rows: timed } = await db.query<any>(
+    `select duration_minutes from public.start_cbt_attempt_configured($1, array['Physics','Use of English'], 5, 999, 'practice', null)`,
+    [JAMB],
   );
+  assert.equal(timed[0].duration_minutes, 5, 'the request duration is ignored in favour of the paper pace');
   await assert.rejects(
     () => db.query(`select * from public.start_cbt_attempt_configured($1, array[]::text[], 10, 30, 'practice', null)`, [JAMB]),
     /Choose at least one subject/,
@@ -167,7 +172,9 @@ test('mock duration comes from the exam configuration, never from the client', a
   const attempt = rows[0];
   assert.equal(attempt.duration_minutes, 90, "the exam's configured duration wins over the request");
   assert.equal(attempt.mode, 'mock');
-  assert.equal(attempt.total_questions, 5, 'a mock may still be a short paper');
+  // A bank with no fixed paper sits every usable question from the chosen
+  // subjects at the exam's duration; the student does not choose the mock size.
+  assert.equal(attempt.total_questions, 12, 'the whole usable Biology pool is the mock paper');
 
   const { rows: stored } = await db.query<{ programme: string }>(
     `select programme from public.cbt_attempts where id = $1`,
@@ -181,18 +188,19 @@ test('a JAMB mock is the governed four-subject combination', async () => {
     () => db.query(`select * from public.start_cbt_attempt_configured($1, array['Mathematics','Physics'], 10, null, 'mock', null)`, [JAMB]),
     /Use of English plus three other subjects/,
   );
-  const { rows } = await db.query<any>(
-    `select * from public.start_cbt_attempt_configured($1, array['Use of English','Mathematics','Physics','Chemistry'], 40, null, 'mock', 'Medicine and Surgery')`,
-    [JAMB],
+  // Every JAMB bank carries the 180-question standard, so this shallow test
+  // bank is refused rather than silently sitting a 73-question "mock".
+  await assert.rejects(
+    () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Use of English','Mathematics','Physics','Chemistry'], 40, null, 'mock', null)`,
+      [JAMB],
+    ),
+    /cannot fill the 180-question mock paper/,
   );
-  assert.equal(rows[0].duration_minutes, 120, 'the JAMB bank default is used for the mock');
-  assert.equal(rows[0].total_questions, 40, 'a governed mock still respects the requested paper size');
-  assert.deepEqual(
-    rows[0].subject_plan.map((entry: any) => entry.subject),
-    ['Use of English', 'Mathematics', 'Physics', 'Chemistry'],
-    'the governed combination is planned in the official order',
+  const { rows: spec } = await db.query<{ mock_question_count: number }>(
+    `select mock_question_count from public.cbt_exams where id = $1`, [JAMB],
   );
-  await db.query(`select public.delete_cbt_practice_attempt($1)`, [rows[0].attempt_id]).catch(() => undefined);
+  assert.equal(spec[0].mock_question_count, 180, 'the trigger gives every JAMB bank the standard');
 });
 
 test('draft answers are validated, bounded and persisted for resume', async () => {
@@ -312,7 +320,7 @@ test('starting a differently configured session supersedes the old one without d
   assert.equal(same.resumed, true, 'and says so, so the UI can explain it');
 
   const changed = await asUser(STUDENT, async () => (await db.query<any>(
-    `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 10, 60, 'practice', null)`,
+    `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 12, 60, 'practice', null)`,
     [WAEC],
   )).rows[0]);
   assert.notEqual(changed.attempt_id, first.attempt_id, 'a new configuration is a new session');
@@ -435,5 +443,45 @@ test('a bank too small for the minimum session explains itself', async () => {
     )),
     /only 2 questions/,
     'the error names the real problem (bank size) instead of a generic refusal',
+  );
+});
+
+test('an auto-submit that lands just after zero is graded, not discarded', async () => {
+  const id = await asUser(STUDENT, async () => (await db.query<any>(
+    `select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 31, 'practice', null)`,
+    [WAEC],
+  )).rows[0].attempt_id);
+  // The client submits on the first tick after the deadline; the request
+  // reaches the server a few hundred milliseconds later.
+  await db.exec(`update public.cbt_attempts set expires_at = now() - interval '10 seconds' where id = '${id}'`);
+
+  const { rows } = await asUser(STUDENT, async () => db.query<any>(
+    `select * from public.submit_cbt_attempt_configured($1, '{"1":0,"2":0,"3":0,"4":0,"5":0}'::jsonb)`,
+    [id],
+  ));
+  assert.equal(Number(rows[0].total_questions), 5);
+  assert.equal(Number(rows[0].correct_answers), 5, 'the answers that arrived at the deadline are scored');
+  const { rows: stored } = await db.query<{ status: string; score: string }>(
+    `select status, score from public.cbt_attempts where id = $1`, [id],
+  );
+  assert.equal(stored[0].status, 'submitted');
+  assert.equal(Number(stored[0].score), 100);
+});
+
+test('reading the paper of an out-of-time attempt reports expiry, not a SQL error', async () => {
+  const id = await asUser(STUDENT, async () => (await db.query<any>(
+    `select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 32, 'practice', null)`,
+    [WAEC],
+  )).rows[0].attempt_id);
+  await db.exec(`update public.cbt_attempts set expires_at = now() - interval '10 minutes' where id = '${id}'`);
+
+  await assert.rejects(
+    () => asUser(STUDENT, async () => db.query(`select * from public.get_cbt_attempt_paper($1)`, [id])),
+    (error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      assert.match(message, /expired/);
+      assert.doesNotMatch(message, /non-volatile/, 'the paper read is allowed to record the expiry');
+      return true;
+    },
   );
 });

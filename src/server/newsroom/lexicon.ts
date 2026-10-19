@@ -67,7 +67,7 @@ export const OFF_TOPIC_TERMS = [
   'forex', 'betting odds', 'horoscope', 'recipe', 'fashion week',
 ];
 
-/** Category routing, in priority order — the first match with the highest weight wins. */
+/** Category routing, in priority order - the first match with the highest weight wins. */
 export const CATEGORY_RULES: CategoryRule[] = [
   { category: 'nelfund', terms: ['nelfund', 'student loan', 'students loan', 'education loan', 'loan scheme'] },
   { category: 'jamb', terms: ['jamb', 'utme', 'jamb cbt', 'jamb portal', 'jamb profile', 'caps', 'change of institution', 'jamb slip', 'exam slip', 'mock'] },

@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, Download, ExternalLink, FileText, Laptop, Link2Of
 import { useEffect, useMemo, useState } from 'react';
 import { SkeletonTiles } from '../src/components/Skeleton';
 import HubLayout from '../src/components/HubLayout';
-import { EmptyState, ErrorState, InlineNotice } from '../src/components/AsyncState';
+import { ErrorState, InlineNotice } from '../src/components/AsyncState';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
@@ -223,7 +223,7 @@ export default function PastQuestionsPage() {
             <div>
               <span className="hub-eyebrow" style={{ color: '#b14933' }}>QUESTION LIBRARY</span>
               <h1>Past questions &amp; study materials</h1>
-              <p>Choose between timed CBT practice and EduReach material requests. Coverage reflects what is actually configured — unavailable papers are never invented.</p>
+              <p>Choose between timed CBT practice and EduReach material requests. Coverage reflects what is actually configured. Unavailable papers are never invented.</p>
             </div>
             <BookOpen size={28} color="#b14933" aria-hidden="true" />
           </div>
@@ -252,7 +252,7 @@ export default function PastQuestionsPage() {
             <span>
               {view === 'CBT'
                 ? 'Choose a configured bank to set your subjects or school before entering the timed hall. The calculator remains inside the CBT experience.'
-                : 'Document materials that are not yet available on EduReach open our own request channel — you stay inside EduReach and never get redirected to a third-party reading platform.'}
+                : 'Document materials that are not yet available on EduReach open our own request channel, so you stay inside EduReach and are never redirected to a third-party reading platform.'}
             </span>
           </div>
 
@@ -309,7 +309,7 @@ export default function PastQuestionsPage() {
 
               {libraryLoading && <div className="er-state" role="status"><span className="er-state-icon" aria-hidden="true"><FileText size={20} /></span><div><strong>Checking the library…</strong></div></div>}
 
-              {!libraryLoading && libraryError && (
+              {!libraryLoading && libraryError !== null && (
                 <ErrorState
                   error={libraryError}
                   onRetry={() => {
@@ -321,7 +321,7 @@ export default function PastQuestionsPage() {
                 />
               )}
 
-              {!libraryLoading && !libraryError && visibleResources.length > 0 && (
+              {!libraryLoading && libraryError === null && visibleResources.length > 0 && (
                 <ul className="er-resource-list">
                   {visibleResources.map((resource) => (
                     <li key={resource.id}>
@@ -355,9 +355,9 @@ export default function PastQuestionsPage() {
                 </ul>
               )}
 
-              {!libraryLoading && !libraryError && visibleResources.length === 0 && (
+              {!libraryLoading && libraryError === null && visibleResources.length === 0 && (
                 <InlineNotice tone="info" title={library?.configured === false ? 'The document library is not connected yet' : 'No document papers for this selection yet'}>
-                  We don't have a past-question paper for this selection yet. This is not a missing file on your side. You can practise with the timed CBT bank above, or ask EduReach to source a paper — requests are tracked and you will be told when a verified copy is available.
+                  We don't have a past-question paper for this selection yet. This is not a missing file on your side. You can practise with the timed CBT bank above, or ask EduReach to source a paper. Requests are tracked and you will be told when a verified copy is available.
                 </InlineNotice>
               )}
             </div>
@@ -367,7 +367,7 @@ export default function PastQuestionsPage() {
             !materials.length ? (
               <div className="hub-panel hub-empty">
                 <h2>We don't have study materials for this selection yet</h2>
-                <p>Try another examination body or school. EduReach will not claim a document that is not configured. Reach out on WhatsApp if you need help sourcing a paper — we will tell you when a verified copy is available.</p>
+                <p>Try another examination body or school. EduReach will not claim a document that is not configured. Reach out on WhatsApp if you need help sourcing a paper, and we will tell you when a verified copy is available.</p>
                 <a className="hub-primary-btn" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer">Request a paper</a>
               </div>
             ) : (

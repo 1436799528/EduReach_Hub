@@ -22,7 +22,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | SVC-2 | Application wizard with validation | `/services/apply/:slug` | ✅ | 4 live services |
 | SVC-3 | Request tracking (authenticated) | `/dashboard/services` | ✅ | Owner-scoped; no public reference lookup |
 | SVC-4 | Processing queue, statuses, notes, audit | `/admin/queue`, `/api/admin/service-requests/*` | ✅ | Status vocabulary enforced by constraint |
-| CBT-1 | Exam selection, setup, subject-aware papers | `/cbt`, `/cbt/setup/:exam` | ✅ | Instructions precede mode selection; Practice and Mock share category-filtered subject selection; English is compulsory when present; practice time is derived from question count |
+| CBT-1 | Exam selection, setup, subject-aware papers | `/cbt`, `/cbt/setup/:exam` | ✅ | Instructions precede mode selection; Practice and Mock share category-filtered subject selection; Use of English is pinned for JAMB (four subjects maximum) and no subject is compulsory for other bodies; practice time is derived from the bank's paper pace; a JAMB mock is the 180-question paper (60 English, 40 per other subject) at 120 minutes |
 | CBT-2 | Attempt engine with resume and server scoring | `/cbt/practice`, `start_/submit_cbt_attempt_for_subjects` | ✅ | Answer keys server-only |
 | CBT-3 | Guest practice with server scoring | `/api/cbt/guest-submit` | ✅ | Rate-limited |
 | CBT-4 | Results and result slip | `/cbt/results`, `CbtResultSlip` | ✅ | Dashboard Review uses the authenticated result route; practice and mock results offer Keep/Delete with a confirmed, closable dialog; deletion is owner-scoped |

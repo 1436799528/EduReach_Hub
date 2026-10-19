@@ -9,6 +9,7 @@ import ProtectedRoute from './ProtectedRoute';
 import type { DashboardTab } from '../../pages/StudentDashboardV2';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { isLiveServiceSlug } from '../data/liveServices';
+import { navigateInApp } from '../lib/navigation';
 
 // Route-level code splitting. The home page, exam hubs and the CBT hall ship in
 // the main bundle; everything else is fetched the first time a student opens it,
@@ -49,7 +50,7 @@ const AdminPdfBankPage = lazy(() => import('../../pages/AdminPdfBankPage'));
 
 // Slugs with a live application workflow live in src/data/liveServices.ts,
 // shared with the sitemap so the two can never disagree. Every other
-// /services/* slug renders an honest coming-soon panel instead of a fabricated
+// /services/* slug renders a coming-soon panel instead of a fabricated
 // service form (and is excluded from the sitemap).
 function serviceEntry(slug: string): ReactElement {
   const normalized = slug.toLowerCase();
@@ -67,8 +68,7 @@ function protectedDashboard(initialTab: DashboardTab = 'dashboard', openSettings
 
 function RedirectTo({ path }: { path: string }): ReactElement {
   useEffect(() => {
-    window.history.replaceState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateInApp(path, { replace: true });
   }, [path]);
   return <></>;
 }

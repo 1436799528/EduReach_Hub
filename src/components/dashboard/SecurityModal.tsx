@@ -24,7 +24,7 @@ function describeDevice() {
 
 /**
  * Account security dialog: password change, other-device sign-out and real
- * Supabase TOTP MFA enrollment. Local preview mode deliberately disables the
+ * Supabase TOTP MFA enrollment. Local preview mode disables the
  * controls that cannot persist or revoke a real account session.
  */
 export default function SecurityModal({
@@ -77,7 +77,7 @@ export default function SecurityModal({
     };
   }, [open, isLocalMode, userId, onMfaChange]);
 
-  // A11Y-1: the security panel is a modal dialog — focus moves in, stays in,
+  // A11Y-1: the security panel is a modal dialog - focus moves in, stays in,
   // Escape closes it, and focus returns to the Settings button afterwards.
   const dialogRef = useModalDialog<HTMLDivElement>(open, onClose);
 

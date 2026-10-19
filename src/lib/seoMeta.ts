@@ -4,7 +4,7 @@
  *
  * The public site is a client-rendered SPA, so this module is the single place
  * that turns "which route is open" and "which record is loaded" into what a
- * crawler or link preview should read. Two rules keep it honest:
+ * crawler or link preview should read. Two rules apply:
  *
  *   1. There is exactly one canonical URL per resource. Aliases canonicalise.
  *   2. Nothing that should not be indexed is ever given a canonical URL that
@@ -18,7 +18,7 @@ import { isLiveServiceSlug } from '../data/liveServices';
 import { pageTitleFor } from './pageMeta';
 
 export const SITE_NAME = 'EduReach Hub';
-export const DEFAULT_TITLE = 'EduReach Hub — Student Services, CBT & Education Updates';
+export const DEFAULT_TITLE = 'EduReach Hub | Student Services, CBT & Education Updates';
 export const DEFAULT_DESCRIPTION =
   'EduReach Hub brings verified student services, CBT practice, education news, scholarships, admission tools and a student dashboard together for Nigerian students.';
 
@@ -66,7 +66,7 @@ const PRIVATE_PREFIXES = [
 
 const AUTH_AND_PRIVATE_EXACT = new Set(['/services/track', '/track']);
 
-/** Routes that render an honest placeholder until real content exists. */
+/** Routes that render a placeholder until real content exists. */
 const PLACEHOLDER_PATHS = new Set(['/nabteb', '/tools', '/support']);
 const PLACEHOLDER_PREFIXES = ['/admission'];
 
@@ -79,7 +79,7 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
   '/news': {
     title: 'Education News & Verified Student Updates | EduReach Hub',
     description:
-      'Verified updates for Nigerian students: JAMB, WAEC, NECO, NABTEB, admission lists, NELFUND, school notices and deadlines — each with its source and expiry.',
+      'Verified updates for Nigerian students: JAMB, WAEC, NECO, NABTEB, admission lists, NELFUND, school notices and deadlines, each with its source and expiry.',
   },
   '/events': {
     title: 'Student Deadlines & Academic Calendar | EduReach Hub',
@@ -124,7 +124,7 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
   '/jamb': {
     title: 'JAMB UTME Hub: Registration, CBT & Admission Updates | EduReach Hub',
     description:
-      'JAMB UTME guidance, practice and verified updates — registration windows, exam slips, CAPS and admission lists, always pointing at the official JAMB portal.',
+      'JAMB UTME guidance, practice and verified updates: registration windows, exam slips, CAPS and admission lists, always pointing at the official JAMB portal.',
   },
   '/waec': {
     title: 'WAEC Hub: WASSCE Registration, Timetable & Results | EduReach Hub',
@@ -259,7 +259,7 @@ export function seoForArticle(article: ArticleSeoInput): SeoMeta {
   const fresh = isArticleFresh(article);
   const image = httpsImage(article.image_url);
   const description = truncate(
-    article.excerpt || `${article.title} — verified update for Nigerian students on EduReach Hub.`,
+    article.excerpt || `${article.title}. Verified update for Nigerian students on EduReach Hub.`,
     158,
   );
   const publishedTime = article.published_at || null;
@@ -319,14 +319,14 @@ export function seoForInstitution(institution: InstitutionSeoInput): SeoMeta {
   // mistaken for the institution's own site, and always carries the
   // independence statement.
   const description = truncate(
-    `Official EduReach page for ${name}${acronym ? ` (${acronym})` : ''} — ${type}${state ? ` in ${state} state` : ''}. Independent platform, not affiliated with this institution.`,
+    `Official EduReach page for ${name}${acronym ? ` (${acronym})` : ''}: ${type}${state ? ` in ${state} state` : ''}. Independent platform, not affiliated with this institution.`,
     158,
   );
 
   const structuredType = /universit|polytechnic|college/i.test(type) ? 'CollegeOrUniversity' : 'EducationalOrganization';
 
   return {
-    title: truncate(`${name}${acronym ? ` (${acronym})` : ''} — Institution Profile | EduReach Hub`, 70),
+    title: truncate(`${name}${acronym ? ` (${acronym})` : ''} Institution Profile | EduReach Hub`, 70),
     description,
     canonicalPath,
     indexable: true,

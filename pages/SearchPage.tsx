@@ -10,6 +10,7 @@ import { commonInstitutions } from '../src/data/studentOptions';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { itemKey } from '../src/components/dashboard/SchoolFinderCard';
 import { fetchCbtExams, fetchNews, fetchOpportunities, type NewsItem, type Opportunity, trackEvent } from '../src/lib/api';
+import { navigateInApp } from '../src/lib/navigation';
 
 type SearchResult = {
   id: string;
@@ -74,9 +75,9 @@ function staticResults(exams: CatalogExam[]): SearchResult[] {
       };
     });
   return [...serviceResults, ...examResults, ...materialResults, ...cbtResults, ...schoolResults,
-    { id: 'screening-calculator', title: 'Screening Calculator', description: 'Plan an admission aggregate with an honest institution-specific reminder.', category: 'Student Tool', href: '/screening-calculator', identity: 'calculator' },
+    { id: 'screening-calculator', title: 'Screening Calculator', description: 'Plan an admission aggregate with an institution-specific reminder.', category: 'Student Tool', href: '/screening-calculator', identity: 'calculator' },
     { id: 'cgpa-calculator-tool', title: 'CGPA Calculator', description: 'Calculate your Nigerian 5.0-scale GPA and degree classification.', category: 'Student Tool', href: '/tools/cgpa-calculator', identity: 'calculator' },
-    { id: 'opportunities', title: 'Student Opportunities & Grants', description: 'Browse the configured opportunities catalogue and its honest unavailable states.', category: 'Opportunities', href: '/jobs', identity: 'opportunities' },
+    { id: 'opportunities', title: 'Student Opportunities & Grants', description: 'Browse the configured opportunities catalogue and its unavailable states.', category: 'Opportunities', href: '/jobs', identity: 'opportunities' },
     { id: 'news', title: 'News & Updates', description: 'Read verified and clearly labelled student updates.', category: 'Noticeboard', href: '/news', identity: 'news' },
   ];
 }
@@ -102,7 +103,7 @@ export default function SearchPage() {
     if (!term || term === lastSearchTrackedRef.current) return;
     const timer = window.setTimeout(() => {
       lastSearchTrackedRef.current = term;
-      // AN-1: the term itself is never sent — a search box is where a student
+      // AN-1: the term itself is never sent - a search box is where a student
       // writes their name and their problem. Shape and outcome only.
       trackEvent('search', { metadata: { query_length: term.length, result_count: resultCountRef.current } });
     }, 900);
@@ -176,8 +177,7 @@ export default function SearchPage() {
     event.preventDefault();
     const normalized = query.trim();
     const path = normalized ? `/search?q=${encodeURIComponent(normalized)}` : '/search';
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateInApp(path);
   }
 
   return (
@@ -203,8 +203,8 @@ export default function SearchPage() {
             <div className="hub-panel hub-empty">
               <h2>Nothing on EduReach matches “{query.trim()}”</h2>
               <p>
-                That is the honest result, not a broken search. Try JAMB, WAEC, NELFUND, a service name, a school or
-                “materials” — or ask us and we will point you at the right page.
+                Nothing matched. Try JAMB, WAEC, NELFUND, a service name, a school name or
+                “materials”, or ask us and we will point you at the right page.
               </p>
               <a
                 className="hub-primary-btn"

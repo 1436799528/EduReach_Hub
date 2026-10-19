@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 68 then 'pass' else 'fail' end as result,
+  case when count(*) >= 69 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 68)' as detail
+  count(*)::text || ' migrations recorded (repository holds 69)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -173,9 +173,10 @@ with expected(version, migration) as (
     ,('20261020100000', '20261020100000_safe_verified_question_banks.sql')
     ,('20261020110000', '20261020110000_deduplicate_exact_duplicates.sql')
     ,('20261020120000', '20261020120000_copy_legacy_questions_to_practice_banks.sql')
-    ,('20261020130000', '20261020130000_expand_syllabus_practice_banks.sql')
-    ,('20261020140000', '20261020140000_populate_200_per_subject.sql')
     ,('20261019184519', '20261021120000_cbt_subject_selection_rules.sql')
+    ,('20261022090000', '20261022090000_cbt_question_serving_rules.sql')
+    ,('20261022091500', '20261022091500_cbt_mock_paper_spec.sql')
+    ,('20261022093000', '20261022093000_cbt_deadline_grace.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e

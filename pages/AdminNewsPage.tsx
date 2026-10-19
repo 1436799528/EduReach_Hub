@@ -100,13 +100,13 @@ export default function AdminNewsPage() {
 
   /**
    * Publication quality gate (§21). A published article must look like a
-   * finished education-news article — the save is refused until it does.
+   * finished education-news article - the save is refused until it does.
    * Drafts only need a title so work is never lost.
    */
   function validateForPublish(next: EditorState, body: string): string | null {
     if (!next.title.trim()) return 'A meaningful title is required before publishing.';
-    if (next.title.trim().length < 15) return 'The title is too short — write a meaningful headline students can understand.';
-    if (!next.excerpt.trim()) return 'Add a summary/excerpt — it appears on cards and at the top of the article.';
+    if (next.title.trim().length < 15) return 'The title is too short. Write a headline students can understand.';
+    if (!next.excerpt.trim()) return 'Add a summary. It appears on cards and at the top of the article.';
     if (!body.trim() || body.replace(/<[^>]*>/g, '').trim().length < 80) return 'The article body is too short to publish. Write the full story first.';
     if (!next.category.trim()) return 'Choose a category before publishing.';
     if (next.publishedAt && !Number.isFinite(new Date(next.publishedAt).getTime())) return 'The publication date is invalid.';
@@ -163,7 +163,7 @@ export default function AdminNewsPage() {
         tags: saved.tags || '', body: saved.body || '',
       });
       bodyHtmlRef.current = saved.body || '';
-      setMessage(saved.published ? 'Article published — it is live on the news page.' : 'Draft saved.');
+      setMessage(saved.published ? 'Article published. It is live on the news page.' : 'Draft saved.');
     } catch (e) {
       setError(userFacingError(e, 'Unable to save the article.'));
     } finally { setSaving(false); }
@@ -222,7 +222,7 @@ export default function AdminNewsPage() {
   function openPreview() {
     if (!editor) return;
     const html = bodyHtmlRef.current;
-    if (!html.trim()) { setError('Nothing to preview yet — write the article body first.'); return; }
+    if (!html.trim()) { setError('Nothing to preview yet. Write the article body first.'); return; }
     setPreviewHtml(html);
     setShowPreview(true);
   }
@@ -234,7 +234,7 @@ export default function AdminNewsPage() {
       <div className="admin-page-header">
         <div>
           <h1>Newsroom CMS</h1>
-          <p>Publish notices to the student news page. Saved here means saved in Supabase — the site reads the same records.</p>
+          <p>Publish notices to the student news page. Saved here means saved in Supabase. The site reads the same records.</p>
         </div>
         <div className="admin-header-actions">
           <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /> Refresh</button>
@@ -323,7 +323,7 @@ export default function AdminNewsPage() {
                   event.target.value = '';
                   if (file) void uploadFeaturedImage(file);
                 }} />
-                <small className="admin-quality-gate">Uploads go to the Supabase Storage `admin-content` bucket and the URL is stored on this article. Each article shows its own image — articles without one render an intentional placeholder, never a shared stock photo.</small>
+                <small className="admin-quality-gate">Uploads go to the Supabase Storage `admin-content` bucket and the URL is stored on this article. Each article shows its own image. Articles without one render a placeholder, never a shared stock photo.</small>
               </div>
             </div>
 
@@ -397,7 +397,7 @@ export default function AdminNewsPage() {
                 <tr><td colSpan={6} className="empty-state">
                   {articles.length
                     ? 'No articles match this filter.'
-                    : <AdminEmptyState title="No news articles yet" hint="Create the first article — it goes straight to the live news page when published. The public site shows an honest empty state until then." action={<button type="button" className="admin-btn small" onClick={openCreate}><Plus size={13} /> New article</button>} />}
+                    : <AdminEmptyState title="No news articles yet" hint="Create the first article. It goes straight to the live news page when published. The public site shows an empty state until then." action={<button type="button" className="admin-btn small" onClick={openCreate}><Plus size={13} /> New article</button>} />}
                 </td></tr>
               )}
             </tbody>
@@ -409,7 +409,7 @@ export default function AdminNewsPage() {
         <div className="admin-modal-backdrop" onClick={() => setShowPreview(false)} role="presentation">
           <div ref={previewDialogRef} tabIndex={-1} className="admin-modal" role="dialog" aria-modal="true" aria-label="Article preview" onClick={(e) => e.stopPropagation()}>
             <div className="admin-card-header">
-              <h2>Preview — exactly what students will read</h2>
+              <h2>Preview: exactly what students will read</h2>
               <button type="button" className="admin-text-btn" onClick={() => setShowPreview(false)}>Close</button>
             </div>
             <div className="admin-modal-body hub-article-body">

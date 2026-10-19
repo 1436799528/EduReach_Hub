@@ -1,8 +1,8 @@
 /**
- * Content sniffing for PDF uploads (audit follow-up).
+ * Content sniffing for PDF uploads.
  *
  * The PDF bank endpoint must not trust the MIME string or extension the
- * client declares — `data:application/pdf;base64,...` or `.pdf` — alone.
+ * client declares - `data:application/pdf;base64,...` or `.pdf` - alone.
  * A valid PDF file starts with the magic header `%PDF-` (0x25 0x50 0x44 0x46
  * 0x2D) in its first bytes. This helper checks that signature.
  *
@@ -10,7 +10,7 @@
  * destination checks, 10 MB limit, HTTPS source_url) are preserved; this adds
  * the missing bytes check.
  *
- * Deliberately tiny and dependency-free so it can be unit-tested directly.
+ * Small and dependency-free so it can be unit-tested directly.
  */
 
 export function isPdfBuffer(bytes: Uint8Array): boolean {

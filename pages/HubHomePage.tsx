@@ -7,14 +7,9 @@ import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import { FeaturedNews, NewsRow, TrendingNews } from '../src/components/NewsSections';
 import { SkeletonRows } from '../src/components/Skeleton';
-import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import ServiceCard from '../src/components/ServiceCard';
+import { navigateInApp } from '../src/lib/navigation';
 import { fetchNews, fetchUpcoming, fetchServices, type NewsItem, type UpcomingItem, type ServiceItem } from '../src/lib/api';
-
-function navigateInApp(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
 
 function LinkTile({ title, href, external = false }: { title: string; href: string; external?: boolean }) {
   return (
@@ -90,7 +85,7 @@ export default function HubHomePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services — NELFUND, result checking, JAMB slips…"
+              placeholder="Search services: NELFUND, result checking, JAMB slips…"
               aria-label="Search services"
             />
             <button type="submit">Search</button>

@@ -1,11 +1,11 @@
 /**
- * APP-4 — one vocabulary for "what went wrong", shared by every screen.
+ * APP-4 - one vocabulary for "what went wrong", shared by every screen.
  *
  * Before this existed, each page invented its own copy: a dropped connection, a
  * five-second timeout, a 500 and an expired session could all surface as either
  * "Failed to fetch", a raw Supabase code, or a blank area. A student in Lagos on
  * a weak mobile connection needs to know three things: is it my connection, is it
- * the server, or do I need to sign in again — and is it worth retrying.
+ * the server, or do I need to sign in again - and is it worth retrying.
  *
  * Nothing here touches the network itself; it classifies an error that already
  * happened and describes the recovery the UI should offer.
@@ -42,13 +42,13 @@ const MESSAGES: Record<FailureKind, Omit<Failure, 'kind'>> = {
   },
   timeout: {
     title: 'This is taking too long',
-    detail: 'The request did not finish in time. This is usually a slow connection — try again in a moment.',
+    detail: 'The request did not finish in time. This is usually a slow connection. Try again in a moment.',
     retryable: true,
     preserveInput: true,
   },
   server: {
     title: 'EduReach is having a problem',
-    detail: 'The service could not complete that request. It is not something you did — please try again shortly.',
+    detail: 'The service could not complete that request. It is not something you did. Please try again shortly.',
     retryable: true,
     preserveInput: true,
   },

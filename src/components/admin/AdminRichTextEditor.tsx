@@ -121,10 +121,6 @@ export default function AdminRichTextEditor({
     emit();
   }
 
-  function getValue(): string {
-    return editorRef.current ? sanitizeRichHtml(editorRef.current.innerHTML) : '';
-  }
-
   const commands: Command[] = [
     { id: 'bold', label: <Bold size={14} />, title: 'Bold', run: () => exec('bold') },
     { id: 'italic', label: <Italic size={14} />, title: 'Italic', run: () => exec('italic') },

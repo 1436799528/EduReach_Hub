@@ -38,7 +38,14 @@ import {
   truncate,
 } from './text';
 
-/** Minimal surface of the Supabase admin client used here (stub-friendly). */
+/**
+ * The part of the Supabase client the pipeline actually calls.
+ *
+ * It stays loosely typed on purpose: the run touches a dozen tables with
+ * different column sets, and the tests drive it through an in-memory stub, so a
+ * generated row type per table would be re-declared here without being checked
+ * anywhere. Call sites narrow the rows they read.
+ */
 export interface NewsroomSupabase {
   from(table: string): any;
   rpc(fn: string, args?: Record<string, unknown>): any;
@@ -147,7 +154,7 @@ export function buildArticleBody(input: {
   const parts = [
     summary || 'EduReach recorded this update from the source below.',
     advisoryForCategory(input.category),
-    `Source: ${input.sourceName} — ${input.sourceUrl}`,
+    `Source: ${input.sourceName} (${input.sourceUrl})`,
     'EduReach is an independent student-support platform and is not affiliated with any examination body, government agency or institution.',
   ];
   return parts.join('\n\n').trim();
@@ -282,7 +289,9 @@ export async function syncSourceRegistry(
     .select('source_key,name,homepage,feed_url,tier,discovery,category_hint,trust_score,is_managed,is_active,notes');
   if (error) throw error;
 
-  const existing = new Map<string, any>((rows || []).map((row: any) => [row.source_key, row]));
+  const existing = new Map<string, Record<string, unknown>>(
+    (rows || []).map((row: Record<string, unknown>): [string, Record<string, unknown>] => [String(row.source_key), row]),
+  );
   const merged: SourceDefinition[] = [];
   const nowIso = new Date().toISOString();
 
@@ -371,7 +380,7 @@ async function discoverForSource(
       const fallback = await politeFetch(source.homepage, context);
       if (fallback.ok) return itemsFromHtml(fallback.text, source.homepage, context);
       // Both paths failed: record the original failure so it is visible in the
-      // run report and in news_sources health instead of silently reporting zero.
+      // run report and in news_sources health instead of reporting zero.
       throw new Error(result.error || fallback.error || 'source fetch failed');
     }
     throw new Error(result.error || 'source fetch failed');
@@ -519,7 +528,7 @@ export async function runIngestion(
   const knownSlugs = options.dryRun ? new Set<string>() : await (async () => {
     try {
       const { data } = await supabase.from('news_articles').select('slug').limit(2000);
-      return new Set<string>((data || []).map((row: any) => String(row.slug)));
+      return new Set<string>((data || []).map((row: Record<string, unknown>) => String(row.slug)));
     } catch {
       return new Set<string>();
     }
@@ -686,8 +695,8 @@ export async function runIngestion(
         errors.push(`candidate insert failed: ${error.message}`);
         continue;
       }
-      (data || []).forEach((row: any, position: number) => {
-        if (chunk[position]) insertedIds.set(chunk[position], row.id);
+      (data || []).forEach((row: Record<string, unknown>, position: number) => {
+        if (chunk[position]) insertedIds.set(chunk[position], String(row.id));
       });
     }
 

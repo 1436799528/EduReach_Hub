@@ -120,7 +120,17 @@ export async function fetchSavedItems(userId: string): Promise<DashboardSavedIte
     return [];
   }
 
-  return (data || []).map((row: any) => ({
+  return (data || []).map((row: {
+    id: string;
+    item_key?: string | null;
+    item_type?: string | null;
+    title?: string | null;
+    subtitle?: string | null;
+    detail?: string | null;
+    location?: string | null;
+    href?: string | null;
+    created_at?: string | null;
+  }) => ({
     id: String(row.id),
     key: String(row.item_key || row.id),
     type: row.item_type as SavedItemType,
@@ -188,7 +198,16 @@ export async function fetchNotifications(userId: string): Promise<DashboardNotif
     return [];
   }
 
-  return (data || []).map((row: any) => ({
+  return (data || []).map((row: {
+    id: string;
+    title?: string | null;
+    body?: string | null;
+    read_at?: string | null;
+    created_at?: string | null;
+    notification_type?: string | null;
+    metadata?: { to?: unknown } | null;
+    href?: string | null;
+  }) => ({
     id: String(row.id),
     title: String(row.title),
     body: row.body || undefined,
@@ -277,7 +296,7 @@ export async function fetchLatestCgpaSnapshot(userId: string): Promise<CgpaSnaps
     totalUnits: Number(term.total_units || 0),
     classification: String(term.classification || ''),
     createdAt: String(term.created_at),
-    courses: (courses || []).map((course: any) => ({
+    courses: (courses || []).map((course: { course_code?: string | null; units?: number | null; grade?: string | null }) => ({
       code: String(course.course_code),
       units: Number(course.units || 0),
       grade: String(course.grade || 'A'),

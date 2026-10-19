@@ -1,12 +1,12 @@
 /**
- * OBS-1 — scheduled job run recording.
+ * OBS-1 - scheduled job run recording.
  *
  * A scheduled job that fails silently is worse than no job: the site keeps looking
  * healthy while news stops arriving or analytics stop being pruned. This module is
- * the smallest thing that makes a failure visible — one row per run in
+ * the smallest thing that makes a failure visible - one row per run in
  * `scheduled_job_runs`, read back by `scheduled_job_status()` and the admin console.
  *
- * Design rules, all deliberate:
+ * Design rules:
  *
  *  - **Recording a run can never fail the job.** A telemetry write that throws would
  *    turn a successful newsroom refresh into a failed one. Every function here is
@@ -16,7 +16,7 @@
  *    write a credential, a token or a student's data into an operational log.
  *  - **A job that never records is still visible.** `scheduled_job_status()` reports
  *    `fresh: false` for a job whose last success is older than the window, and a job
- *    with no rows at all is absent from the list — both are signals, not silence.
+ *    with no rows at all is absent from the list - both are signals, not silence.
  */
 
 export type JobStatus = 'succeeded' | 'partial' | 'failed';
@@ -65,8 +65,18 @@ export function sanitizeError(error: unknown): string | null {
   return trimmed || null;
 }
 
+/**
+ * The recorder only inserts, so that is all it asks of the client. `from`
+ * returns `unknown` and the insert surface is asserted once, below: a real
+ * Supabase client and a test double both satisfy it without dragging the
+ * library's generic query types into this module.
+ */
 interface MinimalClient {
-  from(table: string): any;
+  from(table: string): unknown;
+}
+
+interface Insertable {
+  insert(row: Record<string, unknown>): PromiseLike<{ error: { message?: string } | null }>;
 }
 
 export interface RunOutcome {
@@ -84,7 +94,8 @@ export async function recordJobRun(
   const finishedAt = new Date();
   const durationMs = Math.max(0, finishedAt.getTime() - outcome.startedAt.getTime());
   try {
-    const { error } = await supabase.from('scheduled_job_runs').insert({
+    const table = supabase.from('scheduled_job_runs') as Insertable;
+    const { error } = await table.insert({
       job_name: jobName.slice(0, 60),
       status: outcome.status,
       started_at: outcome.startedAt.toISOString(),
@@ -124,7 +135,7 @@ export function evaluateJobHealth(
 
   const missing = expected.filter((name) => !byName.has(name));
   const stale = expected
-    .filter((name) => byName.has(name) && byName.get(name).fresh === false)
+    .filter((name) => byName.get(name)?.fresh === false)
     .map((name) => name);
   const failing = expected
     .filter((name) => {

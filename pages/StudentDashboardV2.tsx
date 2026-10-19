@@ -33,6 +33,7 @@ import SkipLink from '../src/components/a11y/SkipLink';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
+import { navigateInApp } from '../src/lib/navigation';
 import { pageTitleFor } from '../src/lib/pageMeta';
 import { needsStudentAction, serviceStatusMeaning } from '../src/lib/serviceLifecycle';
 import { useModalDialog } from '../src/lib/useModalDialog';
@@ -115,7 +116,16 @@ function readLocalServiceRequests(): RequestRow[] {
     const parsed = JSON.parse(localStorage.getItem(localStorageKey('service-requests')) || '[]');
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .map((item: any) => ({
+      .map((item: {
+        id?: unknown;
+        service_id?: unknown;
+        status?: unknown;
+        reference_code?: unknown;
+        created_at?: unknown;
+        service_title?: unknown;
+        service_catalog?: { title?: unknown } | null;
+        form_data?: { serviceSlug?: unknown; serviceTitle?: unknown; [key: string]: unknown } | null;
+      }) => ({
         id: String(item.id || `local-${item.reference_code}`),
         service_id: String(item.service_id || item.form_data?.serviceSlug || 'local-service'),
         status: String(item.status || 'submitted'),
@@ -175,9 +185,9 @@ function writeLocalSavedItems(items: DashboardSavedItem[]) {
   }
 }
 
-function readStoredProfile(): any {
+function readStoredProfile(): (Partial<Profile> & { email?: string }) | null {
   try {
-    return JSON.parse(readLocalPreviewValue('profile') || 'null');
+    return JSON.parse(readLocalPreviewValue('profile') || 'null') as Partial<Profile> & { email?: string };
   } catch {
     return null;
   }
@@ -205,11 +215,6 @@ function statusClass(status: string) {
   if (status === 'processing' || status === 'reviewing' || status === 'awaiting_information') return 'dash-status-pill dash-status-processing';
   return 'dash-status-pill dash-status-submitted';
 }
-function navigateInApp(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
-
 /* ------------------------------------------------------------------ */
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
@@ -266,7 +271,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           window.dispatchEvent(new PopStateEvent('popstate'));
           return;
         }
-        // Local preview session: only real locally-entered data, honest empty states elsewhere.
+        // Local preview session: only real locally-entered data, empty states elsewhere.
         const stored = readStoredProfile();
         if (!active) return;
         setIsLocalMode(true);
@@ -376,7 +381,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     const route = TAB_ROUTES[tab];
     if (`${window.location.pathname}` !== route) {
       window.history.pushState({}, '', route);
-      document.title = `EduReach — ${pageTitleFor(route)}`;
+      document.title = `${pageTitleFor(route)} | EduReach`;
     }
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
@@ -422,7 +427,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const activeSaved = savedItems.filter((item) => item.saved);
   // DASH-1: the server expires an attempt when its own clock runs out. The page
   // reads the same rule, so it never offers "Resume" for a test the server will
-  // refuse — and never counts an expired attempt as one still in progress.
+  // refuse - and never counts an expired attempt as one still in progress.
   const isActiveCbtAttempt = (attempt: Attempt) => cbtAttemptState(attempt) === 'active';
   const completedAttempts = attempts.filter((attempt) => cbtAttemptState(attempt) !== 'active');
   const expiredAttempts = attempts.filter((attempt) => cbtAttemptState(attempt) === 'expired');
@@ -770,7 +775,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </div>
       {requests.length
         ? requestsTable(requests)
-        : emptyState('No service requests yet. Choose a service to get started — NELFUND loan support, WAEC/NECO result checking, JAMB slips or admission letters.', '/services', 'Browse services')}
+        : emptyState('No service requests yet. Choose a service to get started: NELFUND loan support, WAEC/NECO result checking, JAMB slips or admission letters.', '/services', 'Browse services')}
     </section>
   );
 
@@ -842,7 +847,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       <SkipLink />
       {adminStudentView && (
         <div className="er-admin-view-banner" role="note">
-          <span>Admin preview — you are browsing the student portal as a student.</span>
+          <span>Admin preview: you are browsing the student portal as a student.</span>
           <button type="button" onClick={() => { window.sessionStorage.removeItem('edureach-admin-student-view'); navigateInApp('/admin'); }}>← Return to admin</button>
         </div>
       )}

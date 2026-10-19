@@ -1,4 +1,4 @@
-/* EduReach portal — MySchool-inspired information architecture.
+/* EduReach portal - MySchool-inspired information architecture.
    The goal is portal density: grouped modules, compact rows, restrained surfaces.
    EduReach branding/assets only. */
 .er-portal{background:#f7f9fb;min-height:100%;padding:14px 0 28px;color:#1a1a1a}
@@ -328,7 +328,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* CBT simulator (/cbt/practice) — real-CBT layout: sticky control bar, */
+/* CBT simulator (/cbt/practice) - real-CBT layout: sticky control bar, */
 /* question workspace, palette, on-screen calculator, exam-focus mode.  */
 /* ------------------------------------------------------------------ */
 body.er-exam-mode footer,
@@ -442,7 +442,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-skeleton-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
 .er-skeleton-row-copy{display:grid;gap:8px}
 .er-skel-thumb{width:56px;height:56px;border-radius:10px}
-/* PERF-1 — regions that fill in after the first paint.
+/* PERF-1 - regions that fill in after the first paint.
    Swapping a placeholder for content changes the height of everything below
    it, and on a phone the footer and the side column sit right there. Measured
    without this: CLS 0.21 on /, 0.18 on /news, 0.31 on /past-questions at 4G
@@ -728,7 +728,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-resource-list strong{display:block;font-size:14px}
 .er-resource-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .er-resource-unavailable{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#8a4b12;background:#fff8ec;border:1px solid #f0d7b0;border-radius:9px;padding:7px 10px}
-/* OPP-1 — opportunity status chips and facts. */
+/* OPP-1 - opportunity status chips and facts. */
 .er-opportunity-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11px}
 .er-opp-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569}
 .er-opp-chip.is-category{color:#b14933;border-color:#f0d7c9;background:#fdf4f1}
@@ -742,12 +742,12 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-opp-facts>div{display:flex;gap:8px;font-size:11.5px;line-height:1.4}
 .er-opp-facts dt{display:inline-flex;align-items:center;gap:4px;flex:0 0 92px;color:#5e6c82;font-weight:560}
 .er-opp-facts dd{margin:0;color:#334155;min-width:0}
-/* NEWS-2 — freshness line on rows and cards. */
+/* NEWS-2 - freshness line on rows and cards. */
 .er-news-freshness{display:block;margin-top:3px;font-size:11px;color:#5e6c82}
 .er-news-freshness.is-warning{color:#92400e}
 .er-news-row.is-expired strong{color:#64748b}
 .er-search-clear{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:6px;background:#eef2f7;color:#475569;cursor:pointer}
-/* SERVICE-1 — what happens after Submit. */
+/* SERVICE-1 - what happens after Submit. */
 .er-service-promise{margin:16px 0 0;padding:14px 16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
 .er-service-promise.is-success{margin:0 0 22px;text-align:left;border-color:#bbe7d3;background:#f0fdf7}
 .er-service-promise>strong{display:block;margin-bottom:8px;font-size:13px;color:#0f172a}
@@ -758,7 +758,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-service-promise p{margin:10px 0 0;font-size:11.5px;line-height:1.5;color:#5e6c82}
 .school-details-no-site{display:grid;gap:8px;max-width:560px}
 .school-details-no-site p{margin:0;font-size:12.5px;line-height:1.5;color:#5e6c82}
-/* MOBILE-1 — the CBT start action stays under the thumb on a phone. The setup
+/* MOBILE-1 - the CBT start action stays under the thumb on a phone. The setup
    page is long (subjects, timing, summary), so the primary action is pinned
    above the mobile nav bar instead of only at the end of the scroll. */
 @media (max-width:640px){

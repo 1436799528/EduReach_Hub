@@ -13,27 +13,22 @@ import {
 } from '../src/lib/api';
 import { userFacingError } from '../lib/errors';
 import { classifyFailure } from '../src/lib/failures';
+import { navigateInApp } from '../src/lib/navigation';
 
 /**
- * CBT-3 — the examination hall.
+ * CBT-3 - the examination hall.
  *
  * This is a dedicated shell on purpose: no site header, no footer, no navigation
- * away. The student sees one paper, one timer and two deliberate exits:
+ * away. The student sees one paper, one timer and two ways out:
  *
- *   Submit  — ends the examination, scores the paper and shows the result.
- *   End Test — leaves the examination; the paper is closed, not scored.
+ *   Submit  - ends the examination, scores the paper and shows the result.
+ *   End Test - leaves the examination; the paper is closed, not scored.
  *
  * The countdown is driven by the server's `expiresAt` (offset against the
  * server's own clock so a device with the wrong time cannot change it), the
  * paper is the frozen one the server planned, and answers are saved as they are
- * chosen — including retrying after a connection drop.
+ * chosen - including retrying after a connection drop.
  */
-
-function navigateInApp(path: string, replace = false) {
-  if (replace) window.history.replaceState({}, '', path);
-  else window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
 
 const PENDING_PREFIX = 'edureach-cbt-pending:';
 
@@ -136,8 +131,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   // The clock is heard, not just seen. The ticking timer stays silent
   // (`aria-live="off"` below); a candidate who cannot see it is told once at
   // five minutes and once at one minute through the live region in the bar.
-  // This is the affordance the retired pages/CbtPracticePage.tsx had and the
-  // live session page had lost (audit P2-4).
+  // The retired pages/CbtPracticePage.tsx had this; the live session page had
+  // lost it.
   const [clockNotice, setClockNotice] = useState('');
   useEffect(() => {
     const next = expiresAt === null || remainingSeconds <= 0
@@ -167,7 +162,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         setSaveState('pending');
       } else if (failure.kind === 'auth') {
         setSaveState('error');
-        setActionError('Your session ended. Sign in again in this tab to keep saving — your answers are still on this device.');
+        setActionError('Your session ended. Sign in again in this tab to keep saving. Your answers are still on this device.');
       } else {
         setSaveState('error');
       }
@@ -193,7 +188,6 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     return () => document.removeEventListener('visibilitychange', onHide);
   }, [flush, index]);
 
-  const currentSubject = questions[index]?.subject || attempt?.subjects[0] || '';
   const subjectPlan = attempt?.plan || [];
   // Count only questions on this paper so stale local draft keys cannot inflate progress.
   const answeredCount = questions.filter((item) => answers[item.position] !== undefined).length;
@@ -210,7 +204,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       // attempt never inflates the funnel.
       trackEvent('cbt_submit', { metadata: { examId: attempt.examId } });
       setClosed('submitted');
-      navigateInApp(`/cbt/results/${encodeURIComponent(attempt.id)}`, true);
+      navigateInApp(`/cbt/results/${encodeURIComponent(attempt.id)}`, { replace: true });
     } catch (error) {
       const failure = classifyFailure(error);
       if (failure.kind === 'not-found' || /expired/i.test(String((error as Error)?.message || ''))) {
@@ -219,7 +213,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           ? 'Time is up. The examination was closed and nothing was submitted.'
           : 'This attempt had already expired, so nothing was submitted.');
       } else if (failure.kind === 'offline' || failure.kind === 'timeout' || failure.kind === 'server') {
-        setActionError('Your submission did not reach EduReach. Your answers are saved on this device — check your connection and press Submit again.');
+        setActionError('Your submission did not reach EduReach. Your answers are saved on this device. Check your connection and press Submit again.');
       } else {
         setActionError(userFacingError(error, 'Your paper could not be submitted. Please try again.'));
       }
@@ -244,7 +238,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       if (pendingAnswers.current) writePending(attemptId, pendingAnswers.current);
       await abandonConfiguredCbt(attemptId);
       setClosed('cancelled');
-      navigateInApp(attempt?.mode === 'practice' ? '/cbt?ended=practice' : '/cbt?ended=mock', true);
+      navigateInApp(attempt?.mode === 'practice' ? '/cbt?ended=practice' : '/cbt?ended=mock', { replace: true });
     } catch (error) {
       setActionError(userFacingError(error, 'The test could not be ended. Check your connection and try again.'));
     } finally {
@@ -312,7 +306,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     return Array.from(groups.entries());
   }, [questions]);
 
-  // Compact student identity (initials) — never push the question content aside.
+  // Compact student identity (initials) - never push the question content aside.
   const studentInitials = useMemo(() => {
     const name = (user?.name || 'Student').trim();
     const parts = name.split(/\s+/).filter(Boolean);
@@ -478,7 +472,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               <span className="er-exam-subject-name er-exam-subject-pill">{(question?.subject || '').toUpperCase()}</span>
               {currentSubjectEntry ? (
                 <span className="er-exam-position">
-                  {currentSubjectEntry.subject} — Question {question.position - currentSubjectEntry.first + 1} of {currentSubjectEntry.questions}
+                  {currentSubjectEntry.subject} · Question {question.position - currentSubjectEntry.first + 1} of {currentSubjectEntry.questions}
                   <em> · Question {index + 1} of {questions.length}</em>
                 </span>
               ) : (
@@ -490,7 +484,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <span className="er-exam-save-state" role="status">
               {saveState === 'saving' && <><Loader2 className="er-spin" size={13} /> saving…</>}
               {saveState === 'saved' && <><CheckCircle2 size={13} /> saved</>}
-              {saveState === 'pending' && <><AlertTriangle size={13} /> saved on this device — will sync</>}
+              {saveState === 'pending' && <><AlertTriangle size={13} /> saved on this device, will sync</>}
               {saveState === 'error' && <><AlertTriangle size={13} /> not saved</>}
             </span>
           </div>

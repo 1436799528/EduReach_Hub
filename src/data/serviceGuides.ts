@@ -15,7 +15,7 @@ export type ServiceGuide = {
 
 /**
  * Plain-language guidance shown before every live service request form. The
- * copy is intentionally procedural: official portals and current institution
+ * copy is procedural: official portals and current institution
  * notices remain the authority when requirements change.
  */
 export const serviceGuides: Record<string, ServiceGuide> = {

@@ -8,19 +8,18 @@ import { applySeo, seoForInstitution } from '../src/lib/seoMeta';
 import { trackEvent } from '../src/lib/api';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import PublicPdfList from '../src/components/PublicPdfList';
+import { navigateInApp } from '../src/lib/navigation';
 
 function navigateBack(fallback: string) {
   const params = new URLSearchParams(window.location.search);
   const returnTo = params.get('return');
   if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
-    window.history.pushState({}, '', returnTo);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateInApp(returnTo);
     return;
   }
   if (window.history.length > 1) window.history.back();
   else {
-    window.history.pushState({}, '', fallback);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateInApp(fallback);
   }
 }
 
@@ -75,7 +74,7 @@ export default function SchoolDetailsPage({ slug }: { slug: string }) {
 
   useEffect(() => {
     // AN-1: which institutions students look up. The id is the directory key;
-    // the URL parameters a visitor can hand-craft are deliberately not sent.
+    // the URL parameters a visitor can hand-craft are not sent.
     trackEvent('school_view', { metadata: { schoolId: slug } });
   }, [slug]);
   const name = params.get('name') || resolved?.school_name || slug.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -119,7 +118,7 @@ export default function SchoolDetailsPage({ slug }: { slug: string }) {
                   <div className="school-details-no-site">
                     <span className="school-details-unavailable">No official website recorded for this institution</span>
                     <p>
-                      EduReach will not guess a URL — a wrong link is worse than none. Ask us for the verified address and we will
+                      EduReach will not guess a URL. A wrong link is worse than none. Ask us for the verified address and we will
                       send it, or check the institution&rsquo;s name with JAMB&rsquo;s institution list before you search elsewhere.
                     </p>
                     <a

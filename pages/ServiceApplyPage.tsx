@@ -580,7 +580,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     ))}
                     <li>
                       <span>Waiting on you</span>
-                      Only if we need something. The request pauses and you get a notification — nothing is lost while you gather it.
+                      Only if we need something. The request pauses and you get a notification. Nothing is lost while you gather it.
                     </li>
                   </ol>
                   <p>You will get a reference code immediately. EduReach does not promise a number of days: requests are handled in the order they arrive, and you can see the current state at any time.</p>
@@ -684,7 +684,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   {serviceTimeline().map((stage, index) => (
                     <li key={stage.status} className={index === 0 ? 'is-current' : ''}>
                       <span>{stage.label}</span>
-                      {index === 0 ? 'Reached — your request is queued in the order it arrived.' : stage.meaning}
+                      {index === 0 ? 'Reached. Your request is queued in the order it arrived.' : stage.meaning}
                     </li>
                   ))}
                 </ol>

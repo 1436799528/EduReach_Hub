@@ -20,14 +20,13 @@ import ConnectionBanner from './ConnectionBanner';
 import PageBar from './PageBar';
 import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
-import { EDUREACH_WHATSAPP, EDUREACH_WHATSAPP_CHANNEL } from '../data/hubContent';
+import { navigateInApp } from '../lib/navigation';
+import { EDUREACH_WHATSAPP } from '../data/hubContent';
 import '../hub-rail.css';
 
 function navigateToSearch(term: string) {
   const query = term.trim();
-  const path = query ? `/search?q=${encodeURIComponent(query)}` : '/search';
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  navigateInApp(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
 }
 
 export default function HubLayout({ children }: { children: ReactNode }) {
@@ -46,12 +45,11 @@ export default function HubLayout({ children }: { children: ReactNode }) {
     await signOut();
     setProfileOpen(false);
     setMobileOpen(false);
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateInApp('/');
   };
 
   const firstName = user?.name?.split(/\s+/)[0] || 'Student';
-  // Compact initials for mobile — never force the full name into the header.
+  // Compact initials for mobile - never force the full name into the header.
   const userInitials = useMemo(() => {
     const name = (user?.name || 'Student').trim();
     const parts = name.split(/\s+/).filter(Boolean);
@@ -478,7 +476,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
-      {/* Minimal footer — secondary navigation only; sits naturally at the bottom of content. */}
+      {/* Minimal footer - secondary navigation only; sits naturally at the bottom of content. */}
       <footer className="er-footer" style={{ background: '#0f172a', color: '#94a3b8', padding: '24px 0', borderTop: '1px solid #1e293b', marginTop: 'auto', fontSize: '12px' }}>
         <div className="hub-container">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>

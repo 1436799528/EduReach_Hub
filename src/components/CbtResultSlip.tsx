@@ -1,18 +1,19 @@
 import BrandLogo from './BrandLogo';
+import { formatLongDate } from '../lib/dates';
 
 type ResultQuestion = {
   position?: number;
   question_text?: string;
-  correct_option?: string;
+  correct_option?: string | null;
 };
 
 type ResultData = {
   attempt?: {
     id?: string;
     exam_id?: string;
-    score?: number;
-    correct_answers?: number;
-    total_questions?: number;
+    score?: number | string | null;
+    correct_answers?: number | string | null;
+    total_questions?: number | string | null;
     submitted_at?: string | null;
   };
   exam?: {
@@ -22,14 +23,9 @@ type ResultData = {
     duration_minutes?: number | null;
   } | null;
   questions?: ResultQuestion[];
-  subjects?: Array<{ subject: string; questions: number; correct: number; score: number }>;
 };
 
-function formatDate(value?: string | null) {
-  if (!value) return '—';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('en-NG', { day: '2-digit', month: 'long', year: 'numeric' }).format(date);
-}
+type SubjectBreakdown = { subject: string; questions: number; correct: number; score: number };
 
 function gradeFor(score: number) {
   if (score >= 70) return { grade: 'A', remark: 'Excellent performance' };
@@ -39,15 +35,20 @@ function gradeFor(score: number) {
   return { grade: 'E', remark: 'More practice is needed' };
 }
 
-export default function CbtResultSlip({ result, studentName, studentId }: { result: ResultData; studentName: string; studentId: string }) {
+export default function CbtResultSlip({ result, studentName, studentId, subjectBreakdown }: {
+  result: ResultData;
+  studentName: string;
+  studentId: string;
+  subjectBreakdown?: SubjectBreakdown[];
+}) {
   const attempt = result.attempt || {};
   const score = Number(attempt.score || 0);
   const total = Number(attempt.total_questions || result.questions?.length || 0);
   const correct = Number(attempt.correct_answers || 0);
   const incorrect = Math.max(0, total - correct);
   const grade = gradeFor(score);
-  const subjects = result.subjects?.length
-    ? result.subjects
+  const subjects: SubjectBreakdown[] = subjectBreakdown?.length
+    ? subjectBreakdown
     : [{ subject: result.exam?.subject || result.exam?.title || 'CBT Practice', questions: total, correct, score }];
   const reference = attempt.id ? `ER-CBT-${attempt.id.replace(/[^a-zA-Z0-9]/g, '').slice(-12).toUpperCase()}` : 'ER-CBT-PENDING';
 
@@ -74,7 +75,7 @@ export default function CbtResultSlip({ result, studentName, studentId }: { resu
         <div><span>Registration / user ID</span><strong>{studentId || 'Guest attempt'}</strong></div>
         <div><span>Examination type</span><strong>{result.exam?.exam_body || 'EduReach CBT Practice'}</strong></div>
         <div><span>Subject / course</span><strong>{result.exam?.subject || result.exam?.title || 'CBT Practice'}</strong></div>
-        <div><span>Date of examination</span><strong>{formatDate(attempt.submitted_at)}</strong></div>
+        <div><span>Date of examination</span><strong>{formatLongDate(attempt.submitted_at)}</strong></div>
         <div><span>Duration</span><strong>{result.exam?.duration_minutes ? `${result.exam.duration_minutes} minutes` : '—'}</strong></div>
       </section>
 
@@ -123,5 +124,3 @@ export default function CbtResultSlip({ result, studentName, studentId }: { resu
     </article>
   );
 }
-
-export { formatDate, gradeFor };

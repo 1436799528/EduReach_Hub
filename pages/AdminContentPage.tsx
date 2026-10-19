@@ -13,7 +13,7 @@ import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
 
 // Events & key dates: manages the exact rows the /events page (and home
-// noticeboard feed) read through /api/upcoming — edureach_deadlines and
+// noticeboard feed) read through /api/upcoming - edureach_deadlines and
 // edureach_exams. "pending" items are visible; "cancelled" items are hidden.
 
 type ItemType = 'deadline' | 'exam';
@@ -83,7 +83,7 @@ export default function AdminContentPage() {
         return [...rest, saved].sort((a, b) => new Date(String(a.starts_at || a.due_at)).getTime() - new Date(String(b.starts_at || b.due_at)).getTime());
       });
       setForm(null);
-      setMessage(form.id ? 'Item updated.' : 'Item created — it is live on the events page.');
+      setMessage(form.id ? 'Item updated.' : 'Item created. It is live on the events page.');
     } catch (e) {
       setError(userFacingError(e, 'Unable to save the item.'));
     } finally { setSaving(false); }
@@ -169,7 +169,7 @@ export default function AdminContentPage() {
                   <AdminRichTextEditor
                     key={form.id || `new-${type}-${form.when}`}
                     initialValue={form.description}
-                    placeholder="Supporting detail shown on the events page — rich formatting supported."
+                    placeholder="Supporting detail shown on the events page. Rich formatting is supported."
                     onChange={(html) => setForm((current) => current ? { ...current, description: html } : current)}
                     minHeight={170}
                   />
@@ -210,7 +210,7 @@ export default function AdminContentPage() {
                 ))}
                 {!loading && !sorted.length && (
                   <tr><td colSpan={6} className="empty-state">
-                    <AdminEmptyState title="No items yet" hint={`Create the first ${type === 'exam' ? 'exam date' : 'deadline'} — it appears on the events page immediately.`} />
+                    <AdminEmptyState title="No items yet" hint={`Create the first ${type === 'exam' ? 'exam date' : 'deadline'}. It appears on the events page immediately.`} />
                   </td></tr>
                 )}
               </tbody>

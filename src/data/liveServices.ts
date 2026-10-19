@@ -2,9 +2,9 @@
  * Services with a live application workflow.
  *
  * Single source of truth shared by the router (`src/app/routes.tsx`) and the
- * sitemap (`src/server/seo.ts`). Every other /services/:slug renders the honest
+ * sitemap (`src/server/seo.ts`). Every other /services/:slug renders the
  * coming-soon panel, so it must not be indexed and must not appear in the
- * sitemap — which is exactly why this list cannot live in two places.
+ * sitemap. That is why this list cannot live in two places.
  */
 
 export const LIVE_SERVICE_SLUGS: readonly string[] = [

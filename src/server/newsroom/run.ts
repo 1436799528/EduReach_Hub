@@ -45,7 +45,7 @@ export async function runNewsroomRefresh(
     });
     // OBS-1: a partial run (some sources failed) is recorded as `partial`, not
     // `succeeded`, so "the job ran" and "the job fully worked" stay distinguishable.
-    // Best effort — a telemetry failure must not turn a good refresh into a bad one.
+    // Best effort - a telemetry failure must not turn a good refresh into a bad one.
     await recordJobRun(supabase, 'newsroom-refresh', {
       status: report.errors.length ? 'partial' : 'succeeded',
       startedAt,

@@ -1,7 +1,7 @@
 /**
  * Feed, HTML and metadata parsing for the newsroom.
  *
- * Deliberately regex-based and dependency-free: feeds are the only structured
+ * Regex-based and dependency-free: feeds are the only structured
  * input we accept, the extraction targets are well-known meta tags, and a
  * small parser is far easier to test and audit than a general document model.
  *

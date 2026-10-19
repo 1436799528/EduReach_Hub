@@ -1,5 +1,5 @@
 /**
- * Shared CBT configuration helpers — pure functions consumed by the setup
+ * Shared CBT configuration helpers - pure functions consumed by the setup
  * wizard and unit-testable without any UI import chain.
  */
 
@@ -9,7 +9,7 @@ export type CatalogExam = {
   exam_body: string;
   subject: string;
   description: string | null;
-  duration_minutes: number;
+  duration_minutes: number | null;
   institution_id?: string | null;
   /** Present when the catalogue came from GET /api/cbt/exams (availability-aware). */
   question_count?: number;
@@ -29,7 +29,7 @@ export const MIN_CHOSEN_MINUTES = 15;
  * present (GET /api/cbt/exams), a startable bank holds at least the minimum
  * session size across at least one subject, and a JAMB bank must contain the
  * compulsory English pool. Without counts (legacy/local-preview catalogues)
- * the bank cannot be judged here and is treated as startable — the bank
+ * the bank cannot be judged here and is treated as startable - the bank
  * payload loaded afterwards remains the final arbiter.
  */
 export function isStartableBank(exam: CatalogExam, key: SetupExamKey, minQuestions = 5): boolean {
@@ -88,7 +88,7 @@ export function durationOptionsFor(defaultMinutes: number): number[] {
 }
 
 /* ------------------------------------------------------------------ *
- * CBT-2 — session modes, limits and configuration summaries.
+ * CBT-2 - session modes, limits and configuration summaries.
  *
  * The student configures a practice session; the server validates it. These
  * helpers exist so the wizard can show the same numbers the server enforces and
@@ -127,7 +127,7 @@ export type CbtPlanEntry = { subject: string; questions: number; first: number; 
  * Canonical subject key for every comparison (selection, filters, coverage).
  *
  * Banks, static catalogues and course guides spell the same subject three
- * ways — "Use of English" / "English Language" / "English", and
+ * ways - "Use of English" / "English Language" / "English", and
  * "Literature-in-English" / "Literature in English". Comparing raw labels
  * made real bank subjects vanish from filtered lists, so punctuation and the
  * English aliases collapse to one key. Display names are never rewritten;
@@ -145,7 +145,7 @@ export function isEnglishSubject(value: string): boolean {
 }
 
 /**
- * Compulsory subjects, by exam body — product rule, enforced identically by
+ * Compulsory subjects, by exam body - product rule, enforced identically by
  * the wizard and (for JAMB) by `start_cbt_attempt_configured`. Use of
  * English is compulsory for JAMB UTME in both practice and mock mode. WAEC,
  * NECO and Post-UTME impose no compulsory subject in EduReach practice/mock
@@ -157,6 +157,164 @@ export function compulsorySubjectKeys(examBodyOrKey: string): string[] {
   if (body.includes('POST')) return [];
   if (body === 'JAMB' || body === 'UTME' || body.includes('JAMB')) return ['english'];
   return [];
+}
+
+/* ------------------------------------------------------------------ *
+ * Paper standards and the rules shared by the wizard and the API.
+ * ------------------------------------------------------------------ */
+
+/** The paper a national examination sets, used to derive a fair pace. */
+export type ExamPaperStandard = { questions: number; minutes: number };
+
+/**
+ * JAMB UTME: 180 objective questions in 120 minutes, made up of Use of English
+ * 60 plus 40 from each of the three other subjects.
+ *
+ * The numbers belong to the examination, not to a student's session: practice
+ * keeps the same pace over a shorter paper, and a mock is the full paper.
+ * `cbt_exams.mock_question_count` / `mock_subject_quota` carry the same
+ * specification in the database, which is authoritative at start time; this
+ * constant is the fallback when a catalogue does not report it.
+ */
+export const JAMB_PAPER_STANDARD: ExamPaperStandard & { subjectQuota: Record<string, number> } = {
+  questions: 180,
+  minutes: 120,
+  subjectQuota: { english: 60, other: 40 },
+};
+
+/**
+ * A mock paper as reported by the bank, or as the examination defines it.
+ * `subjectQuota` maps canonical subject keys to required questions; the key
+ * "other" applies to subjects without an explicit entry.
+ */
+export type MockPaper = { questions: number; subjectQuota: Record<string, number> | null };
+
+export type MockPaperMeta = {
+  questionCount: number | null;
+  subjectQuota: Record<string, number> | null;
+};
+
+export function paperStandardFor(examBodyOrKey: string): ExamPaperStandard | null {
+  return compulsorySubjectKeys(examBodyOrKey).includes('english') ? JAMB_PAPER_STANDARD : null;
+}
+
+/**
+ * The paper a mock must reproduce.
+ *
+ * A value reported by the bank wins: an exam row can change its mock size
+ * without a code release. When it reports none (WAEC, NECO and Post-UTME have
+ * no fixed cross-subject paper), a JAMB bank falls back to the national
+ * standard and any other body has no fixed paper at all.
+ */
+export function mockPaperFor(examBodyOrKey: string, meta?: MockPaperMeta | null): MockPaper | null {
+  // `undefined` means no bank payload was loaded, so the examination default
+  // applies. `null` (or a meta object with no count) means the bank reported
+  // that it has no fixed paper, which must not be overridden by that default.
+  if (meta !== undefined) {
+    const questions = Math.floor(Number(meta?.questionCount) || 0);
+    if (questions <= 0) return null;
+    const quota = meta?.subjectQuota && Object.keys(meta.subjectQuota).length ? meta.subjectQuota : null;
+    return { questions, subjectQuota: quota };
+  }
+  const standard = paperStandardFor(examBodyOrKey);
+  return standard ? { questions: standard.questions, subjectQuota: JAMB_PAPER_STANDARD.subjectQuota } : null;
+}
+
+function quotaForSubject(subject: string, quota: Record<string, number>): number | null {
+  const key = normalizeSubject(subject);
+  const explicit = Number(quota[key]);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  const fallback = Number(quota.other);
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
+}
+
+/**
+ * Why the selected subjects cannot fill this mock paper, or null when they
+ * can. A short paper under the mock's name is not a mock: the database
+ * refuses it, so the wizard names the subject that is short instead.
+ */
+export function mockPaperError(
+  subjects: string[],
+  availability: Array<{ subject: string; questionCount: number }>,
+  paper: MockPaper | null,
+): string | null {
+  if (!paper || !subjects.length) return null;
+  const shortfalls: string[] = [];
+  let total = 0;
+  for (const subject of subjects) {
+    const key = normalizeSubject(subject);
+    const entry = availability.find((item) => normalizeSubject(item.subject) === key);
+    const available = entry?.questionCount ?? 0;
+    total += available;
+    const required = paper.subjectQuota ? quotaForSubject(subject, paper.subjectQuota) : null;
+    if (required !== null && available < required) {
+      shortfalls.push(`${entry?.subject ?? subject} needs ${required} but the bank has ${available}`);
+    }
+  }
+  if (shortfalls.length) {
+    return `This bank cannot fill a ${paper.questions}-question mock paper: ${shortfalls.join('; ')}. Choose practice for these subjects, or a bank with deeper coverage.`;
+  }
+  if (total < paper.questions) {
+    return `A ${paper.questions}-question mock paper needs ${paper.questions} questions from the selected subjects; this bank has ${total}. Choose practice, or a bank with deeper coverage.`;
+  }
+  return null;
+}
+
+/**
+ * How long a paper of `questionCount` questions should take.
+ *
+ * With a national standard (JAMB) the chosen count keeps the examination's own
+ * pace: 20 questions take one ninth of 120 minutes. Without one (WAEC, NECO,
+ * Post-UTME), the configured bank duration is spread across the largest paper a
+ * session may hold, which is the only denominator the product defines. The
+ * result never leaves the server limits, so it cannot be zero, negative or
+ * longer than a session may run.
+ */
+export function durationForQuestionCount(
+  questionCount: number,
+  options: { standard?: ExamPaperStandard | null; defaultMinutes?: number | null; limits?: CbtLimits },
+): number {
+  const limits = options.limits ?? DEFAULT_CBT_LIMITS;
+  const count = Math.max(0, Math.floor(Number(questionCount) || 0));
+  const standard = options.standard ?? null;
+  const questions = standard && standard.questions > 0 ? standard.questions : Math.max(1, limits.maxQuestions);
+  const minutes = standard && standard.minutes > 0
+    ? standard.minutes
+    : Math.max(limits.minMinutes, Math.round(Number(options.defaultMinutes) || limits.maxMinutes));
+  const proportional = Math.ceil((count / questions) * minutes);
+  return Math.max(limits.minMinutes, Math.min(limits.maxMinutes, proportional));
+}
+
+/** The time a mock runs for: the exam's configured duration, or 120 minutes. */
+export function mockDurationMinutes(defaultMinutes?: number | null): number {
+  const value = Math.round(Number(defaultMinutes));
+  return Number.isFinite(value) && value > 0 ? value : 120;
+}
+
+/** How many subjects one session may include for this examination. */
+export function subjectLimitFor(examBodyOrKey: string, limits: CbtLimits = DEFAULT_CBT_LIMITS): number {
+  // JAMB UTME combines Use of English with three others; no other body has an
+  // EduReach-imposed combination.
+  return compulsorySubjectKeys(examBodyOrKey).includes('english')
+    ? Math.min(4, limits.maxSubjects)
+    : limits.maxSubjects;
+}
+
+/**
+ * The one rule a mock combination must satisfy before the server will create
+ * it. Mirrors `start_cbt_attempt_configured`: a JAMB mock is exactly four
+ * subjects including Use of English. Returns a message a student can act on,
+ * or null when the combination is acceptable.
+ */
+export function mockCombinationError(subjects: string[], examBodyOrKey: string): string | null {
+  if (!compulsorySubjectKeys(examBodyOrKey).includes('english')) return null;
+  const unique = new Set(subjects.map(normalizeSubject));
+  if (!unique.has('english')) return 'Use of English is compulsory for a JAMB mock. Add it before starting.';
+  if (unique.size !== 4) {
+    const missing = 4 - unique.size;
+    return `A JAMB mock is Use of English plus three other subjects. Add ${missing} more subject${missing === 1 ? '' : 's'}.`;
+  }
+  return null;
 }
 
 /**
@@ -191,6 +349,7 @@ export function practiceDurationOptions(defaultMinutes: number, limits: CbtLimit
 export function previewPlan(
   selections: Array<{ subject: string; questionCount: number }>,
   totalQuestions: number,
+  subjectQuota?: Record<string, number> | null,
 ): CbtPlanEntry[] {
   const pool = selections
     .filter((entry) => entry.questionCount > 0)
@@ -201,7 +360,24 @@ export function previewPlan(
   const target = Math.min(Math.max(Math.floor(totalQuestions) || 0, 0), capacity);
   let assigned = 0;
 
-  if (target >= pool.length) {
+  // A paper with a subject quota (a JAMB mock) is shown exactly as it will be
+  // planned: required questions first, then the remainder by capacity.
+  if (subjectQuota && Object.keys(subjectQuota).length) {
+    for (const entry of pool) {
+      const required = quotaForSubject(entry.subject, subjectQuota);
+      if (required !== null) entry.quota = Math.min(required, entry.available, target);
+      assigned += entry.quota;
+    }
+    if (assigned > target) {
+      for (let index = pool.length - 1; index >= 0 && assigned > target; index -= 1) {
+        const trim = Math.min(pool[index].quota, assigned - target);
+        pool[index].quota -= trim;
+        assigned -= trim;
+      }
+    }
+  }
+
+  if (assigned === 0 && target >= pool.length) {
     pool.forEach((entry) => { entry.quota = 1; assigned += 1; });
   }
   while (assigned < target) {
@@ -271,7 +447,9 @@ export function validateSession(
   const available = availability
     .filter((entry) => config.subjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)))
     .reduce((sum, entry) => sum + entry.questionCount, 0);
-  if (available < (config.mode === 'mock' ? Math.min(limits.minQuestions, available) : config.questionCount)) {
+  // A mock's size is the bank's paper, and its coverage is checked against the
+  // paper spec; only a practice session is sized by the student.
+  if (config.mode === 'practice' && available < config.questionCount) {
     return `This bank has ${available} question${available === 1 ? '' : 's'} for the subjects you chose. Choose fewer questions.`;
   }
   return null;

@@ -24,9 +24,8 @@ type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
 // The card routes into the body-specific setup wizard and carries the real
 // exam id, so the setup page can show THIS exam's configured default duration
-// and start THIS exam's question pool. Durations are deliberately not shown on
-// the card itself — they live on the setup page where the student configures
-// the session.
+// and start THIS exam's question pool. Durations are not shown on the card
+// itself; they live on the setup page where the student configures the session.
 function setupPathForExam(exam: Exam) {
   const value = `${exam.exam_body} ${exam.id} ${exam.title}`.toLowerCase();
   const base = value.includes('post-utme') || value.includes('postutme')
@@ -115,7 +114,7 @@ export default function CbtPage() {
               <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 560 }}>QUESTION BANKS</span>
               <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
-                Pick a question bank below — each test opens a short setup page before the timed CBT simulator and on-screen calculator.
+                Pick a question bank below. Each test opens a short setup page before the timed CBT simulator and on-screen calculator.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -194,8 +193,8 @@ export default function CbtPage() {
           {!loading && !error && filteredExams.length > 0 && (
             <div className="er-bank-list">
               {filteredExams.map((exam) => (
-                // The whole card is the link. The duration is intentionally NOT
-                // shown here — the setup page (next step) reads the exam's
+                // The whole card is the link. The duration is NOT
+                // shown here - the setup page (next step) reads the exam's
                 // configured default duration from the database and lets the
                 // student choose an allowed duration before the timer starts.
                 <a

@@ -185,18 +185,6 @@ function attributeText(tag: ts.JsxOpeningLikeElement, name: string): string[] {
   return values;
 }
 
-function idsInFile(source: ts.SourceFile): Set<string> {
-  const ids = new Set<string>();
-  const visit = (node: ts.Node): void => {
-    if (ts.isJsxAttribute(node) && attrName(node) === 'id' && node.initializer && ts.isStringLiteral(node.initializer)) {
-      ids.add(node.initializer.text);
-    }
-    node.forEachChild(visit);
-  };
-  visit(source);
-  return ids;
-}
-
 function labelTargets(source: ts.SourceFile): Set<string> {
   const targets = new Set<string>();
   const visit = (node: ts.Node): void => {
@@ -263,7 +251,6 @@ const NON_TEXT_INPUT_TYPES = new Set(['hidden', 'submit', 'button', 'reset', 'im
 function scanFile(file: string, text: string, findings: Finding[]): void {
   const source = parse(file, text);
   const icons = iconImports(source);
-  const ids = idsInFile(source);
   const labelled = labelTargets(source);
   const rendersMain = rendersMainLandmark(source);
   const usesHubLayout = /import\s+HubLayout/.test(text);

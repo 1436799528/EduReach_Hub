@@ -97,7 +97,7 @@ export function tokenize(value: string): string[] {
     .filter((token) => token.length > 2 && !STOP_WORDS.has(token));
 }
 
-/** Jaccard similarity over token sets — 0 (unrelated) to 1 (identical). */
+/** Jaccard similarity over token sets - 0 (unrelated) to 1 (identical). */
 export function jaccard(a: string[], b: string[]): number {
   if (!a.length || !b.length) return 0;
   const setA = new Set(a);

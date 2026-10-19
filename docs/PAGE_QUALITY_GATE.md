@@ -119,7 +119,7 @@ Every route must answer clearly:
 * `/jobs` → Search student scholarships, grants, and opportunities
 * `/login` & `/register` → Streamlined, privacy-focused student authentication
 * `/profile/complete` → Complete academic institution, department, and preferences
-* `/dashboard` → Comprehensive student workspace (applications, tests, saved, tools)
+* `/dashboard` → Student workspace for applications, tests, saved items and tools
 
 If a page starts becoming an incoherent collection of unrelated features, split it.
 

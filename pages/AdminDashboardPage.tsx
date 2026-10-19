@@ -95,7 +95,7 @@ export default function AdminDashboardPage() {
         <div className="admin-page-header">
           <div>
             <h1>Operations Control</h1>
-            <p>Live EduReach production overview — queue, students, traffic, CBT and content in one place.</p>
+            <p>Live production overview: queue, students, traffic, CBT and content in one place.</p>
           </div>
           <div className="admin-header-actions">
             {updatedAt && <span className="admin-updated">Updated <TimeAgo value={updatedAt.toISOString()} /></span>}
@@ -165,7 +165,7 @@ export default function AdminDashboardPage() {
                           <td className="right"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
                         </tr>
                       ))}
-                      {!attention.length && <tr><td colSpan={5} className="empty-state">Queue is clear — no active service requests.</td></tr>}
+                      {!attention.length && <tr><td colSpan={5} className="empty-state">Queue is clear. No active service requests.</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
                     ) : (
                       <AdminEmptyState
                         title="No usage telemetry yet"
-                        hint="Page views, searches, service and CBT activity are recorded from real traffic. This fills in as students use the live site — nothing is simulated."
+                        hint="Page views, searches, service and CBT activity are recorded from real traffic. This fills in as students use the live site. Nothing is simulated."
                       />
                     )}
                   </div>

@@ -1,9 +1,9 @@
 /**
- * OPP-1 — never present an unverified listing as confidently active.
+ * OPP-1 - never present an unverified listing as confidently active.
  *
  * The two live opportunities had `deadline` and `last_verified_at` both null
  * while the page header claimed the source, eligibility and application route
- * had been checked. This module derives what can honestly be said about a
+ * had been checked. This module derives what can be said about a
  * listing from the fields that exist, so the page cannot over-claim again.
  *
  * Two independent facts are reported, because they are independent:
@@ -11,8 +11,8 @@
  *   verification  did EduReach check this listing?   verified | unverified
  *   state         is it still open to apply to?      open | closing-soon | expired | undated
  *
- * An unverified listing that has not expired is still shown — hiding it would
- * lose a real opportunity — but it is labelled, and its call to action is
+ * An unverified listing that has not expired is still shown - hiding it would
+ * lose a real opportunity - but it is labelled, and its call to action is
  * "Check the source" rather than "Apply".
  */
 

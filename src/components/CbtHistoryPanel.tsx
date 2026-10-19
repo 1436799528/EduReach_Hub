@@ -6,12 +6,12 @@ import { userFacingError } from '../../lib/errors';
 import { useAuth } from '../lib/auth';
 
 /**
- * CBT-5 — the student's own practice record.
+ * CBT-5 - the student's own practice record.
  *
  * Practice and mock are kept visibly distinct here: a practice session can be
  * resumed, restarted or deleted by the student, while a mock is an examination
  * record and offers review only. Deletion is confirmed, and the confirmation
- * says what will actually be removed — the server enforces the same rule.
+ * says what will actually be removed - the server enforces the same rule.
  */
 
 const STATUS_LABEL: Record<CbtHistoryItem['status'], string> = {
@@ -107,12 +107,12 @@ export default function CbtHistoryPanel() {
 
       {notice && <div className="er-inline-notice is-success" role="status"><div><p>{notice}</p></div></div>}
       {loading && <div className="er-state" role="status"><span className="er-state-icon" aria-hidden="true"><Clock3 size={20} /></span><div><strong>Loading your sessions…</strong></div></div>}
-      {!loading && error && <ErrorState error={error} onRetry={() => void load()} compact />}
+      {!loading && error !== null && <ErrorState error={error} onRetry={() => void load()} compact />}
 
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="No sessions yet"
-          detail="Start a practice session and it will appear here — with your answers, time and result."
+          detail="Start a practice session and it will appear here, with your answers, time and result."
           action={<a className="hub-primary-btn" href="/cbt">Choose a question bank</a>}
         />
       )}

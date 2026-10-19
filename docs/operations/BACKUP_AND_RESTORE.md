@@ -4,9 +4,8 @@
 **Status of the procedure:** documented and rehearsed — see §6 for exactly what has
 and has not been exercised.
 
-This document closes **CRIT-1** from `docs/FINAL_COMPLETION_AUDIT_2026-10-02.md`
-("no backup, restore or rollback procedure documented anywhere"). It is written so
-that a person who did not build this system can follow it at 2am.
+It is written for someone who did not build the system and may be following it
+under pressure.
 
 ---
 
@@ -155,7 +154,7 @@ restoring but the code is intact:
 npm run backup:rehearsal     # proves the migrations still build a working database
 ```
 
-Current committed migration set: **68 migrations** in `supabase/migrations/`; the migration replay test verifies the complete set applies from an empty schema. The dated rehearsal figures below are historical snapshots. Current CI schema fingerprint: **68 migrations, 43 tables, 501 columns, 52 policies, 43 tables with RLS**.
+Current committed migration set: **69 migrations** in `supabase/migrations/`; the migration replay test verifies the complete set applies from an empty schema. The dated rehearsal figures below are historical snapshots. Current CI schema fingerprint: **69 migrations, 43 tables, 503 columns, 52 policies, 43 tables with RLS**.
 
 Applying migrations is the riskiest routine operation in
 `docs/operations/PRODUCTION_RUNBOOK.md` §3; §3a there is the sync check that

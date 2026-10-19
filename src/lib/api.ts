@@ -4,6 +4,7 @@ import { localStorageKey } from './localPreview';
 import { EduReachError, isOffline } from './failures';
 import { newsCategorySlug } from '../data/newsCategories';
 import { userFacingError } from '../../lib/errors';
+import { isArticleCurrent } from './newsFreshness';
 import { apiUrl } from './apiBase';
 import {
   isAnalyticsEvent,
@@ -15,12 +16,18 @@ import {
 
 export { userFacingError } from '../../lib/errors';
 
-export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number>; subjects?: string[]; paperSeed?: string };
-export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number; guest?: boolean };
 export type CbtSubmitResponse = {
   attemptId: string;
   score: number;
-  breakdown: Array<{ question: number; selected: number | null; correct: number; explanation?: string }>;
+  breakdown: Array<{
+    question: number;
+    subject?: string;
+    selected: number | null;
+    /** Null when the guest key is withheld for an unattempted question. */
+    correct: number | null;
+    explanation?: string | null;
+    isCorrect?: boolean;
+  }>;
   result?: Record<string, unknown>;
 };
 export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown> };
@@ -91,89 +98,6 @@ const fallbackServicesCatalog: ServiceItem[] = hubServices.map((srv, index) => (
 
 // Upcoming deadlines are loaded from the backend when configured
 const fallbackUpcomingItems: UpcomingItem[] = [];
-
-// Built-in CBT practice catalog.
-//
-// DEVELOPMENT PREVIEW ONLY. When Supabase credentials are configured, the
-// production `cbt_exams` table is the single source of truth and this array
-// is never rendered. It exists so the CBT flow can be exercised locally
-// without a backend; it is not production content.
-const fallbackCbtExams = [
-  {
-    id: 'practice-exam-jamb',
-    title: 'JAMB UTME Comprehensive Practice',
-    exam_body: 'JAMB',
-    subject: 'General Practice & Use of English',
-    description: 'Local preview question bank used when no CBT catalogue is configured.',
-    duration_minutes: 30,
-  },
-  {
-    id: 'practice-exam-waec',
-    title: 'WAEC Senior Certificate Revision',
-    exam_body: 'WAEC',
-    subject: 'Use of English',
-    description: 'Local preview question bank used when no CBT catalogue is configured.',
-    duration_minutes: 45,
-  },
-  {
-    id: 'practice-exam-neco',
-    title: 'NECO SSCE Comprehensive Practice',
-    exam_body: 'NECO',
-    subject: 'Mathematics',
-    description: 'Local preview question bank used when no CBT catalogue is configured.',
-    duration_minutes: 40,
-  },
-  {
-    id: 'practice-exam-post-utme',
-    title: 'Federal Universities Post-UTME Screening',
-    exam_body: 'POST-UTME',
-    subject: 'Aptitude & General Studies',
-    description: 'Local preview question bank used when no CBT catalogue is configured.',
-    duration_minutes: 25,
-  },
-];
-
-// DEVELOPMENT PREVIEW ONLY — used exclusively when no Supabase backend is
-// configured (see fetchCbtQuestions). Production question pools always come
-// from `exam_questions` rows managed in the Admin CBT console.
-const practiceQuestions = [
-  { id: 1, text: 'Choose the word nearest in meaning to "rapid".', options: ['Slow', 'Fast', 'Late', 'Weak'] },
-  { id: 2, text: 'What is 15% of 200?', options: ['20', '25', '30', '35'] },
-  { id: 3, text: 'Which quantity is measured in newtons?', options: ['Power', 'Force', 'Energy', 'Pressure'] },
-  { id: 4, text: 'What is the chemical symbol for sodium?', options: ['S', 'Sd', 'Na', 'Sn'] },
-  { id: 5, text: 'Choose the correctly spelled word.', options: ['Accomodate', 'Acommodate', 'Accommodate', 'Accomoddate'] },
-  { id: 6, text: 'Solve for x: 3x = 21.', options: ['5', '6', '7', '8'] },
-  { id: 7, text: 'Which organelle is commonly called the powerhouse of the cell?', options: ['Nucleus', 'Ribosome', 'Mitochondrion', 'Golgi body'] },
-  { id: 8, text: 'What is the SI unit of electric current?', options: ['Volt', 'Ohm', 'Ampere', 'Watt'] },
-  { id: 9, text: 'What is the next prime number after 11?', options: ['12', '13', '14', '15'] },
-  { id: 10, text: 'Nigeria is located on which continent?', options: ['Asia', 'Africa', 'Europe', 'South America'] },
-];
-
-const correctAnswersMap: Record<number, number> = {
-  1: 1, // Fast
-  2: 2, // 30
-  3: 1, // Force
-  4: 2, // Na
-  5: 2, // Accommodate
-  6: 2, // 7
-  7: 2, // Mitochondrion
-  8: 2, // Ampere
-  9: 1, // 13
-  10: 1, // Africa
-};
-
-const explanationsMap: Record<number, string> = {
-  1: 'Rapid means happening at high speed or moving fast.',
-  2: '15% of 200 is (15 / 100) * 200 = 30.',
-  3: 'Force is measured in newtons (N), named after Isaac Newton.',
-  4: 'Na (from Latin Natrium) is the chemical symbol for sodium.',
-  5: 'Accommodate is spelled with two "c"s and two "m"s.',
-  6: 'Divide both sides of 3x = 21 by 3 to get x = 7.',
-  7: 'Mitochondria generate cellular energy through ATP production.',
-  8: 'The SI unit of electric current is the Ampere (A).',
-  9: '13 is a prime number because it only has factors of 1 and 13.',
-  10: 'Nigeria is a country situated in West Africa.',
-};
 
 async function authHeaders(): Promise<Record<string, string>> {
   try {
@@ -290,8 +214,11 @@ export async function fetchUpcoming(): Promise<UpcomingItem[]> {
   return fallbackUpcomingItems;
 }
 
-export async function fetchCbtExams() {
-  if (!isSupabaseConfigured) return fallbackCbtExams;
+export async function fetchCbtExams(): Promise<CbtExamSummary[]> {
+  // Without a backend there is no bank to describe. Returning invented
+  // "preview" exams here used to produce cards that could never start, because
+  // the questions they referenced no longer exist anywhere.
+  if (!isSupabaseConfigured) return [];
 
   const { data, error } = await supabase
     .from('cbt_exams')
@@ -302,260 +229,19 @@ export async function fetchCbtExams() {
   return data || [];
 }
 
-export async function startCbt(examId: string, durationMinutes = 30, subjects: string[] = []): Promise<CbtStartResponse> {
-  if (isSupabaseConfigured) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      const startedAt = new Date();
-      return {
-        attemptId: `guest-cbt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        startedAt: startedAt.toISOString(),
-        expiresAt: new Date(startedAt.getTime() + durationMinutes * 60 * 1000).toISOString(),
-        totalQuestions: 0,
-        guest: true,
-      };
-    }
 
-    const { data, error } = await supabase.rpc('start_cbt_attempt_for_subjects', {
-      p_exam_id: examId,
-      p_subjects: subjects,
-    });
-    if (!error && data?.length) {
-      const row = data[0];
-      return {
-        attemptId: row.attempt_id,
-        startedAt: row.started_at,
-        expiresAt: row.expires_at,
-        totalQuestions: row.total_questions,
-      };
-    }
 
-    // Fallback when questions in the bank use general/exam-level subject labels
-    // rather than per-subject tags: try start_cbt_attempt or guest-backed session.
-    const { data: fallbackData, error: fallbackError } = await supabase.rpc('start_cbt_attempt', {
-      p_exam_id: examId,
-    });
-    if (!fallbackError && fallbackData?.length) {
-      const row = fallbackData[0];
-      return {
-        attemptId: row.attempt_id,
-        startedAt: row.started_at,
-        expiresAt: row.expires_at,
-        totalQuestions: row.total_questions,
-      };
-    }
 
-    const startedAt = new Date();
-    return {
-      attemptId: `guest-cbt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      startedAt: startedAt.toISOString(),
-      expiresAt: new Date(startedAt.getTime() + durationMinutes * 60 * 1000).toISOString(),
-      totalQuestions: 0,
-      guest: true,
-    };
-  }
-
-  return {
-    attemptId: `local-cbt-${examId}-${Date.now()}`,
-    startedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + durationMinutes * 60 * 1000).toISOString(),
-    totalQuestions: practiceQuestions.length,
-  };
-}
-
-function guestCbtSeedStorageKey(examId: string, subjects: string[] = []): string {
-  const normalizedSubjects = [...new Set(subjects.map((subject) => subject.trim().toLowerCase()).filter(Boolean))].sort();
-  return localStorageKey(`cbt-guest-paper-seed:${examId}:${normalizedSubjects.join('|')}`);
-}
-
-function getGuestCbtPaperSeed(examId: string, subjects: string[] = []): string {
-  const key = guestCbtSeedStorageKey(examId, subjects);
-  try {
-    const existing = localStorage.getItem(key);
-    if (existing) return existing;
-    const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
-    localStorage.setItem(key, seed);
-    return seed;
-  } catch {
-    // Keep a seed on the in-memory payload path where storage is unavailable.
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
-  }
-}
-
-export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
-  if (isSupabaseConfigured) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || payload.attemptId.startsWith('guest-cbt-')) {
-      const guestResult = await jsonFetch<any>('/api/cbt/guest-submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examId: payload.examId, answers: payload.answers, subjects: payload.subjects || [], paperSeed: payload.paperSeed || getGuestCbtPaperSeed(payload.examId, payload.subjects || []) }),
-      });
-      try {
-        localStorage.setItem(localStorageKey(`cbt-result-${guestResult.attemptId}`), JSON.stringify(guestResult));
-        localStorage.setItem(localStorageKey('last-cbt-attempt'), guestResult.attemptId);
-      } catch {
-        // localStorage may be disabled
-      }
-      return guestResult;
-    }
-
-    const { data, error } = await supabase.rpc('submit_cbt_attempt_for_subjects', {
-      p_attempt_id: payload.attemptId,
-      p_exam_id: payload.examId,
-      p_answers: payload.answers,
-    });
-    if (error || !data?.length) throw new Error(userFacingError(error, 'CBT submission failed.'));
-    const row = data[0];
-    return {
-      attemptId: row.attempt_id,
-      score: Number(row.score),
-      breakdown: row.breakdown || [],
-    };
-  }
-
-  let correctCount = 0;
-  const breakdown = practiceQuestions.map((q) => {
-    const selected = payload.answers[q.id] ?? null;
-    const correct = correctAnswersMap[q.id];
-    const isCorrect = selected === correct;
-    if (isCorrect) correctCount++;
-    return {
-      question: q.id,
-      selected,
-      correct,
-      explanation: explanationsMap[q.id] || 'Review syllabus and textbook references.',
-    };
-  });
-
-  const score = Math.round((correctCount / practiceQuestions.length) * 100);
-  const fallbackExam = fallbackCbtExams.find((exam) => exam.id === payload.examId);
-  const resultData = {
-    exam: fallbackExam ? { title: fallbackExam.title, exam_body: fallbackExam.exam_body, subject: fallbackExam.subject, duration_minutes: fallbackExam.duration_minutes } : null,
-    attempt: {
-      id: payload.attemptId,
-      exam_id: payload.examId,
-      score,
-      correct_answers: correctCount,
-      total_questions: practiceQuestions.length,
-      submitted_at: new Date().toISOString(),
-    },
-    answers: practiceQuestions.map((q) => ({
-      question_id: q.id,
-      selected_option: payload.answers[q.id] !== undefined ? String.fromCharCode(65 + payload.answers[q.id]) : null,
-      is_correct: payload.answers[q.id] === correctAnswersMap[q.id],
-    })),
-    questions: practiceQuestions.map((q, idx) => ({
-      id: q.id,
-      position: idx + 1,
-      question_text: q.text,
-      option_a: q.options[0],
-      option_b: q.options[1],
-      option_c: q.options[2],
-      option_d: q.options[3],
-      correct_option: String.fromCharCode(65 + correctAnswersMap[q.id]),
-      explanation: explanationsMap[q.id],
-    })),
-  };
-
-  try {
-    localStorage.setItem(localStorageKey(`cbt-result-${payload.attemptId}`), JSON.stringify(resultData));
-    localStorage.setItem(localStorageKey('last-cbt-attempt'), payload.attemptId);
-  } catch {
-    // localStorage may be disabled
-  }
-
-  return { attemptId: payload.attemptId, score, breakdown };
-}
-
-export async function fetchCbtQuestions(examId: string, subjects: string[] = []) {
-  if (!isSupabaseConfigured) {
-    const examMeta = fallbackCbtExams.find((e) => e.id === examId);
-    if (!examMeta) throw new Error('This CBT exam is not available. Choose another question bank.');
-    return {
-      exam: { id: examId, title: examMeta.title, durationMinutes: examMeta.duration_minutes, subject: examMeta.subject },
-      questions: practiceQuestions,
-    };
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    const seed = getGuestCbtPaperSeed(examId, subjects);
-    const params = new URLSearchParams();
-    if (subjects.length) params.set('subjects', subjects.join('|'));
-    params.set('seed', seed);
-    const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions?${params.toString()}`);
-    return {
-      exam: { id: guest.exam.id, title: guest.exam.title, examBody: guest.exam.examBody, durationMinutes: guest.exam.durationMinutes, subject: guest.exam.subject },
-      questions: guest.questions,
-    };
-  }
-
-  const { data: exam, error: examError } = await supabase
-    .from('cbt_exams')
-    .select('id,title,exam_body,duration_minutes,subject')
-    .eq('id', examId)
-    .eq('is_active', true)
-    .maybeSingle();
-  if (examError) throw new Error(userFacingError(examError));
-  if (!exam) throw new Error('This CBT exam is not available. Choose another question bank.');
-
-  const { data: questions, error: questionError } = await supabase.rpc('get_cbt_questions_for_subjects', {
-    p_exam_id: examId,
-    p_subjects: subjects,
-  });
-  if (!questionError && questions?.length) {
-    return {
-      exam: { id: exam.id, title: exam.title, examBody: exam.exam_body, durationMinutes: exam.duration_minutes, subject: exam.subject },
-      questions: questions.map((q: any) => ({ id: q.position, text: q.question_text, options: [q.option_a, q.option_b, q.option_c, q.option_d] })),
-    };
-  }
-
-  // Fallback to the server guest-questions assembly (which normalizes English
-  // aliases and falls back to general/bank questions when per-subject tags
-  // do not match).
-  const query = subjects.length ? `?subjects=${encodeURIComponent(subjects.join('|'))}` : '';
-  const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions${query}`);
-  return {
-    exam: { id: guest.exam.id, title: guest.exam.title, examBody: guest.exam.examBody, durationMinutes: guest.exam.durationMinutes, subject: guest.exam.subject },
-    questions: guest.questions,
-  };
-}
-
-export type CbtAttemptProgress = { answers: Record<number, number>; questionIndex?: number };
-
-export async function fetchCbtAttemptProgress(attemptId: string): Promise<CbtAttemptProgress> {
-  if (!isSupabaseConfigured || !attemptId || attemptId.startsWith('guest-cbt-')) return { answers: {} };
-  const headers = await authHeaders();
-  if (!headers.Authorization) return { answers: {} };
-  const body = await jsonFetch<{ answers: Record<string, number>; questionIndex?: number }>(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/progress`, { headers });
-  return {
-    answers: Object.fromEntries(Object.entries(body.answers || {}).map(([key, value]) => [Number(key), value])),
-    questionIndex: Number.isInteger(body.questionIndex) ? body.questionIndex : undefined,
-  };
-}
-
-export async function saveCbtAttemptProgress(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<void> {
-  if (!isSupabaseConfigured || !attemptId || attemptId.startsWith('guest-cbt-')) return;
-  const headers = await authHeaders();
-  if (!headers.Authorization) return;
-  await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/progress`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ answers, questionIndex }),
-  });
-}
-
-function readLocalCbtResult(attemptId: string): any | null {
+function readLocalCbtResult(attemptId: string): CbtResultPayload | null {
   try {
     const direct = localStorage.getItem(localStorageKey(`cbt-result-${attemptId}`));
-    if (direct) return JSON.parse(direct);
+    if (direct) return JSON.parse(direct) as CbtResultPayload;
     const suffix = `:cbt-result-${attemptId}`;
     for (let index = 0; index < localStorage.length; index += 1) {
       const key = localStorage.key(index);
       if (key?.startsWith('edureach-local:') && key.endsWith(suffix)) {
         const stored = localStorage.getItem(key);
-        if (stored) return JSON.parse(stored);
+        if (stored) return JSON.parse(stored) as CbtResultPayload;
       }
     }
   } catch {
@@ -564,7 +250,7 @@ function readLocalCbtResult(attemptId: string): any | null {
   return null;
 }
 
-export async function fetchCbtResult(attemptId: string) {
+export async function fetchCbtResult(attemptId: string): Promise<CbtResultPayload> {
   const localResult = readLocalCbtResult(attemptId);
   if (localResult && (attemptId.startsWith('guest-cbt-') || !isSupabaseConfigured)) return localResult;
 
@@ -592,8 +278,8 @@ export async function fetchCbtResult(attemptId: string) {
           .maybeSingle();
 
         const stored = readLocalCbtResult(attemptId);
-        let questions: Array<Record<string, any>> = [];
-        let answers: Array<Record<string, any>> = [];
+        let questions: CbtResultQuestion[] = [];
+        let answers: CbtResultAnswer[] = [];
         // Only use the local answer breakdown for review if its score agrees
         // with the score stored on the server. The score itself always comes
         // from the owner-scoped database row above.
@@ -607,7 +293,7 @@ export async function fetchCbtResult(attemptId: string) {
           try {
             const paper = await fetchCbtAttemptPaper(attemptId);
             questions = paper.questions.map((question) => {
-              const item = breakdown.find((entry: any) => Number(entry.question) === Number(question.position));
+              const item = breakdown.find((entry) => Number(entry.question) === Number(question.position));
               const correctIndex = Number(item?.correct);
               return {
                 id: question.id,
@@ -625,7 +311,7 @@ export async function fetchCbtResult(attemptId: string) {
               };
             });
             answers = paper.questions.map((question) => {
-              const item = breakdown.find((entry: any) => Number(entry.question) === Number(question.position));
+              const item = breakdown.find((entry) => Number(entry.question) === Number(question.position));
               const selectedIndex = Number(item?.selected);
               const correctIndex = Number(item?.correct);
               return {
@@ -680,12 +366,12 @@ export async function fetchCbtResult(attemptId: string) {
       total_questions: first.total_questions,
       submitted_at: first.submitted_at,
     };
-    const answers = data.map((row: any) => ({
+    const answers: CbtResultAnswer[] = data.map((row: { question_id: string; selected_option?: string | null; is_correct?: boolean }) => ({
       question_id: row.question_id,
       selected_option: row.selected_option,
       is_correct: row.is_correct,
     }));
-    const questions = data.map((row: any) => ({
+    const questions: CbtResultQuestion[] = data.map((row: { question_id: string; position: number; question_text?: string; option_a?: string; option_b?: string; option_c?: string; option_d?: string; correct_option?: string | null; explanation?: string | null }) => ({
       id: row.question_id,
       position: row.position,
       question_text: row.question_text,
@@ -705,7 +391,7 @@ export async function fetchCbtResult(attemptId: string) {
     try {
       const paper = await fetchCbtAttemptPaper(attemptId);
       const byId = new Map(paper.questions.map((question) => [question.id, question.subject]));
-      questions.forEach((question: { id: string; subject?: string }) => { question.subject = byId.get(question.id) || ''; });
+      questions.forEach((question) => { question.subject = byId.get(question.id) || ''; });
       attemptSubjects = paper.attempt.subjects;
       plan = paper.attempt.plan;
       (attempt as Record<string, unknown>).mode = paper.attempt.mode;
@@ -728,7 +414,7 @@ export async function fetchCbtResult(attemptId: string) {
     }
     for (const key of candidateKeys) {
       const stored = localStorage.getItem(key);
-      if (stored) return JSON.parse(stored);
+      if (stored) return JSON.parse(stored) as CbtResultPayload;
     }
   } catch {
     // localStorage may be disabled
@@ -805,7 +491,27 @@ let newsGovernedColumnsAvailable: boolean | null = null;
 
 let newsCategoryColumnAvailable: boolean | null = null;
 
-async function selectNewsColumns(apply: (columns: string) => Promise<{ data: any; error: any }>): Promise<any[]> {
+type NewsRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  body: string;
+  category: string;
+  category_slug?: string | null;
+  image_url: string | null;
+  source_name: string | null;
+  source_url: string | null;
+  published_at: string | null;
+  updated_at: string | null;
+  last_verified_at?: string | null;
+  verification_status?: string | null;
+  expires_at?: string | null;
+  featured?: boolean | null;
+  tags?: unknown;
+};
+
+async function selectNewsColumns(apply: (columns: string) => Promise<{ data: NewsRow[] | null; error: unknown }>): Promise<NewsRow[]> {
   const governedColumns = newsCategoryColumnAvailable === false
     ? NEWS_COLUMNS_GOVERNED
     : `${NEWS_COLUMNS_GOVERNED},${NEWS_COLUMNS_CATEGORISED.split(',').pop()}`;
@@ -831,7 +537,7 @@ async function selectNewsColumns(apply: (columns: string) => Promise<{ data: any
   return legacy.data || [];
 }
 
-function mapNewsItem(item: any): NewsItem {
+function mapNewsItem(item: NewsRow): NewsItem {
   const expiresAt = item.expires_at ? String(item.expires_at) : null;
   const expires = expiresAt ? new Date(expiresAt) : null;
   const expiredByDate = Boolean(expires && Number.isFinite(expires.getTime()) && expires.getTime() < Date.now());
@@ -858,18 +564,14 @@ function mapNewsItem(item: any): NewsItem {
   };
 }
 
-/** True when the article is still actionable (mirrors src/lib/seoMeta.ts). */
+/** True when the article is still actionable (rules in src/lib/newsFreshness.ts). */
 export function isNewsItemFresh(item: Pick<NewsItem, 'expires_at' | 'verification_status'>): boolean {
-  const status = String(item.verification_status || 'verified').toLowerCase();
-  if (status === 'expired' || status === 'archived' || status === 'superseded') return false;
-  if (!item.expires_at) return true;
-  const expires = new Date(item.expires_at);
-  return !Number.isFinite(expires.getTime()) || expires.getTime() > Date.now();
+  return isArticleCurrent(item);
 }
 
 export async function fetchNews(): Promise<NewsItem[]> {
   // No hardcoded news dataset: without a configured account service the page
-  // shows its honest empty state; with one configured, Supabase is the only
+  // shows an empty state; with one configured, Supabase is the only
   // source of what students read.
   if (!isSupabaseConfigured) return [];
 
@@ -879,7 +581,7 @@ export async function fetchNews(): Promise<NewsItem[]> {
       .select(columns)
       .eq('published', true)
       .order('published_at', { ascending: false, nullsFirst: false })
-      .limit(30) as unknown as Promise<{ data: any; error: any }>);
+      .limit(30) as unknown as Promise<{ data: NewsRow[] | null; error: unknown }>);
 
   // Expired updates leave the feed; their pages stay reachable by direct link.
   return rows.map(mapNewsItem).filter(isNewsItemFresh);
@@ -896,7 +598,7 @@ export async function fetchNewsItem(slug: string): Promise<NewsItem> {
       .select(columns)
       .eq('slug', slug)
       .eq('published', true)
-      .limit(1) as unknown as Promise<{ data: any; error: any }>);
+      .limit(1) as unknown as Promise<{ data: NewsRow[] | null; error: unknown }>);
   const data = rows[0];
   if (!data) throw new Error('This news article could not be found.');
   return mapNewsItem(data);
@@ -950,8 +652,8 @@ export type Opportunity = {
   locations: string | null; is_active?: boolean; created_at?: string; updated_at?: string;
   /**
    * OPP-1. Absent when the database predates the newsroom/eligibility
-   * migrations, in which case the listing is presented as unverified — which is
-   * what "we have no record of checking this" honestly means.
+   * migrations, in which case the listing is presented as unverified - which is
+   * what "we have no record of checking this" means.
    */
   last_verified_at?: string | null;
   source_name?: string | null;
@@ -1230,14 +932,14 @@ export async function fetchNewsroomRuns(): Promise<NewsroomRun[]> {
 
 // ---------------------------------------------------------------------------
 // Real-usage telemetry (AN-1). Every event and every payload field is declared
-// in src/lib/analyticsTaxonomy.ts, which the server also validates against — the
+// in src/lib/analyticsTaxonomy.ts, which the server also validates against - the
 // client checks first so a bad call site disappears here rather than being
 // dropped silently in production. Two rules come from that file: nothing a
 // student typed is ever sent (the search term is a length and a result count,
 // not a string), and every value is capped.
 //
 // Events land in site_analytics_events through the same-origin API. Failures are
-// silent — analytics must never break the student experience.
+// silent - analytics must never break the student experience.
 // ---------------------------------------------------------------------------
 
 export type TelemetryEvent = AnalyticsEventName;
@@ -1512,7 +1214,7 @@ export async function deleteAdminCbtExam(examId: string): Promise<void> {
 }
 
 /* ------------------------------------------------------------------ *
- * PQR-1 — the past-question resource library.
+ * PQR-1 - the past-question resource library.
  *
  * The library is authoritative on the server. The client never invents a
  * resource, and it distinguishes three states: a paper is available, a paper
@@ -1559,10 +1261,10 @@ export async function fetchPastQuestionResources(filter: { exam?: string; subjec
 }
 
 /* ------------------------------------------------------------------ *
- * CBT-2 — configured sessions (practice and mock)
+ * CBT-2 - configured sessions (practice and mock)
  *
  * The student configures; the server validates against the real question bank
- * and freezes the paper. These calls deliberately do not fall back to a local
+ * and freezes the paper. These calls do not fall back to a local
  * question set when the backend is unreachable: a paper the server has not
  * authorised cannot be scored, so the UI must say the session is unavailable
  * rather than show questions it cannot grade.
@@ -1593,6 +1295,19 @@ export type CbtAttemptPayload = {
   exam: { id: string; title: string; examBody: string; subject: string };
 };
 
+export type CbtExamSummary = {
+  id: string;
+  title: string;
+  exam_body: string;
+  subject: string;
+  description: string | null;
+  duration_minutes: number | null;
+  institution_id?: string | null;
+  question_count?: number;
+  subject_count?: number;
+  subjects?: Array<{ subject: string; questionCount: number }>;
+};
+
 export type CbtBankSubject = { subject: string; questionCount: number };
 
 export type CbtBankPayload = {
@@ -1600,6 +1315,14 @@ export type CbtBankPayload = {
   subjects: CbtBankSubject[];
   totalQuestions: number;
   limits: { minQuestions: number; maxQuestions: number; minMinutes: number; maxMinutes: number; maxSubjects: number } | null;
+  /** Editorial state of every question in the bank, including rejected ones. */
+  review?: { approved: number; needsReview: number; rejected: number; total: number };
+  /** The bank's own mock paper, when it has a fixed size and subject split. */
+  mock?: {
+    questionCount: number | null;
+    subjectQuota: Record<string, number> | null;
+    durationMinutes: number | null;
+  };
   /** Server-owned session rules (single source with start_cbt_attempt_configured). */
   rules?: {
     compulsorySubjects: string[];
@@ -1629,6 +1352,56 @@ export type CbtHistoryItem = {
   resumable: boolean;
 };
 
+export type CbtResultQuestion = {
+  id: string;
+  position: number;
+  subject?: string | null;
+  question_text?: string;
+  option_a?: string;
+  option_b?: string;
+  option_c?: string;
+  option_d?: string;
+  correct_option?: string | null;
+  explanation?: string | null;
+};
+
+export type CbtResultAnswer = {
+  question_id: string;
+  selected_option?: string | null;
+  is_correct?: boolean;
+};
+
+export type CbtResultPayload = {
+  attempt: {
+    id: string;
+    exam_id?: string;
+    score?: number | string | null;
+    correct_answers?: number | string | null;
+    total_questions?: number | string | null;
+    submitted_at?: string | null;
+    started_at?: string | null;
+    mode?: string;
+    duration_minutes?: number | null;
+    subjects?: string[];
+  };
+  exam?: {
+    id?: string;
+    title?: string | null;
+    exam_body?: string | null;
+    subject?: string | null;
+    duration_minutes?: number | null;
+  } | null;
+  answers?: CbtResultAnswer[];
+  questions?: CbtResultQuestion[];
+  subjects?: string[];
+  plan?: Array<{ subject: string; questions: number; first?: number; last?: number }>;
+  breakdown?: Array<{ question: number; subject?: string; selected: number | null; correct: number | null; explanation?: string | null; isCorrect?: boolean }>;
+  /** Guest submissions store the score alongside the attempt. */
+  score?: number;
+  correctAnswers?: number;
+  totalQuestions?: number;
+};
+
 export type CbtConfiguredStart = {
   id: string;
   startedAt: string;
@@ -1645,8 +1418,8 @@ export async function fetchCbtBank(examId: string): Promise<CbtBankPayload> {
   return jsonFetch<CbtBankPayload>(`/api/cbt/exams/${encodeURIComponent(examId)}/subjects`);
 }
 
-export async function fetchCbtExamsWithAvailability(): Promise<Array<Record<string, unknown>>> {
-  const body = await jsonFetch<{ items: Array<Record<string, unknown>> }>('/api/cbt/exams');
+export async function fetchCbtExamsWithAvailability(): Promise<CbtExamSummary[]> {
+  const body = await jsonFetch<{ items: CbtExamSummary[] }>('/api/cbt/exams');
   return body.items || [];
 }
 

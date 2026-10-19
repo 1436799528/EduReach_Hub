@@ -15,7 +15,6 @@ import {
   Calendar,
   School,
   Layers,
-  Sparkles,
   Briefcase,
   MessageCircle,
   BookOpenCheck,

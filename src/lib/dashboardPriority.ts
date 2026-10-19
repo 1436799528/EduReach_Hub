@@ -1,5 +1,5 @@
 /**
- * DASH-1 — "what matters to me right now?".
+ * DASH-1 - "what matters to me right now?".
  *
  * The dashboard used to lead with static profile details and treat every
  * `in_progress` attempt as resumable, even one the server had already expired.
@@ -8,11 +8,11 @@
  * This module holds the two rules that decide that, as pure functions, so they
  * can be tested without a browser:
  *
- *   1. `cbtAttemptState` — an attempt is only resumable while its own
+ *   1. `cbtAttemptState` - an attempt is only resumable while its own
  *      server-issued expiry is in the future. The server enforces the same
  *      rule; this keeps the card from promising something the server will
  *      refuse.
- *   2. `dashboardPriorities` — an ordered, capped list of what to do next,
+ *   2. `dashboardPriorities` - an ordered, capped list of what to do next,
  *      most time-critical first. It never invents a task: every item is derived
  *      from state the page already loaded, and when there is nothing to do it
  *      says so with a single sensible next step.
@@ -95,8 +95,6 @@ export type DashboardPriorityInput = {
 
 const MAX_ITEMS = 3;
 
-const FINISHED_REQUEST_STATUSES = new Set(['completed', 'closed', 'rejected', 'cancelled']);
-
 function listMissing(labels: string[]): string {
   const shown = labels.slice(0, 3);
   const extra = labels.length - shown.length;
@@ -126,7 +124,7 @@ export function dashboardPriorities(input: DashboardPriorityInput): PriorityItem
     items.push({
       id: 'resume-attempt',
       tone: 'urgent',
-      title: resumable.length > 1 ? `Finish your ${attempt.subject || 'practice test'} — ${resumable.length - 1} more open` : `Finish your ${attempt.subject || 'practice test'}`,
+      title: resumable.length > 1 ? `Finish your ${attempt.subject || 'practice test'} (${resumable.length - 1} more open)` : `Finish your ${attempt.subject || 'practice test'}`,
       detail: left
         ? `${left}. Your answers are saved, so you can pick up exactly where you stopped.`
         : 'Your answers are saved, so you can pick up exactly where you stopped.',
@@ -179,7 +177,7 @@ export function dashboardPriorities(input: DashboardPriorityInput): PriorityItem
     });
   }
 
-  // 5. Nothing needs the student: one honest next step rather than an empty box.
+  // 5. Nothing needs the student: one next step rather than an empty box.
   if (items.length === 0) {
     if ((input.attemptCount ?? (input.attempts || []).length) === 0) {
       items.push({
