@@ -74,3 +74,19 @@
   display: inline-grid;
   place-items: center;
 }
+
+/* Touch targets (the design system asks for 44px; the compact layer sets 32px
+   for density). Coarse pointers get the larger control without changing
+   desktop density or the admin tables, which use their own button class. */
+@media (pointer: coarse) {
+  :root :where(.hub-primary-btn, .hub-ghost-btn, .hub-outline-btn, .hub-icon-btn) {
+    min-height: 44px !important;
+    height: auto !important;
+    padding-block: 10px !important;
+  }
+  :root :where(.hub-nav a, .hub-utility-links a) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}

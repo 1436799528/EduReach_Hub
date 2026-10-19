@@ -72,6 +72,23 @@
 .admin-btn { min-height: 44px; border: 0; border-radius: 999px; background: var(--admin-orange); color: #fff; padding: 10px 17px; font: 700 12px var(--er-font-sans); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 10px 22px rgba(217,114,18,.18); transition: .2s ease; }
 .admin-btn:hover { transform: translateY(-1px); filter: brightness(.96); }
 .admin-btn.secondary { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.2); box-shadow: none; width: 100%; }
+/* The sidebar footer is dark; the rest of the console is not. A secondary
+   button used in a page header or card needs a visible surface and dark text. */
+.admin-page-header .admin-btn.secondary,
+.admin-card .admin-btn.secondary,
+.admin-inline-form .admin-btn.secondary {
+  width: auto;
+  background: #fff;
+  color: var(--admin-navy);
+  border: 1px solid #d7dee8;
+  box-shadow: none;
+}
+.admin-page-header .admin-btn.secondary:hover,
+.admin-card .admin-btn.secondary:hover,
+.admin-inline-form .admin-btn.secondary:hover {
+  background: #f8fafc;
+  transform: none;
+}
 .admin-btn.success { background: var(--admin-green); box-shadow: 0 10px 22px rgba(5,150,105,.15); }
 .admin-btn.danger { background: var(--admin-danger); box-shadow: 0 10px 22px rgba(186,26,26,.12); }
 .admin-btn.small { min-height: 36px; padding: 8px 12px; font-size: 12px; }
