@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, Info, Lock, RotateCcw, ShieldCheck, TriangleAlert, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, Info, Lock, Plus, RotateCcw, ShieldCheck, TriangleAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -205,7 +205,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       const matched = requested.filter((subject) => availability.some(
         (entry) => normalizeSubject(entry.subject) === normalizeSubject(subject),
       )).map((subject) => availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))?.subject || subject);
-      const defaultSubjects = matched.length ? matched : availability.slice(0, Math.min(2, availability.length)).map((entry) => entry.subject);
+      const defaultSubjects = matched.length ? matched : (exam === 'jamb' ? [] : availability.slice(0, Math.min(2, availability.length)).map((entry) => entry.subject));
       // Only bodies with a compulsory subject (JAMB: Use of English) have it
       // pinned into the default selection; other bodies start from the
       // student's own choice, never from JAMB's rules.
@@ -309,8 +309,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     setFormError('');
     setPracticeSubjects((current) => {
       if (current.some((item) => normalizeSubject(item) === normalizeSubject(subject))) return current;
-      if (current.length >= limits.maxSubjects) {
-        setFormError(`A session can include at most ${limits.maxSubjects} subjects. Remove one before adding another.`);
+      const subjectLimit = exam === 'jamb' ? Math.min(4, limits.maxSubjects) : limits.maxSubjects;
+      if (current.length >= subjectLimit) {
+        setFormError(`A session can include at most ${subjectLimit} subjects${exam === 'jamb' ? ' for JAMB UTME' : ''}. Remove one before adding another.`);
         return current;
       }
       return [...current, subject];
@@ -570,42 +571,31 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       </div>
                     </div>
                     <div className="er-setup-full-width">
-                      <label className="er-setup-label" htmlFor="cbt-add-subject">
-                        Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected){compulsoryEnglish ? ` · ${compulsoryEnglish} compulsory` : ''}
-                      </label>
-                      <select
-                        id="cbt-add-subject"
-                        className="admin-select er-setup-subject-select"
-                        value=""
-                        disabled={!addableSubjects.length || practiceSubjects.length >= limits.maxSubjects}
-                        aria-describedby="cbt-subject-help"
-                        onChange={(event) => { if (event.target.value) addPracticeSubject(event.target.value); }}
-                      >
-                        <option value="">{practiceSubjects.length >= limits.maxSubjects ? `Subject limit reached (${limits.maxSubjects}) — remove one to add another` : addableSubjects.length ? 'Add a subject…' : 'No more subjects available in this group'}</option>
-                        {exam === 'waec' ? (
-                          // WAEC subjects are grouped for browsing (from main's
-                          // grouped-picker change); grouping is presentation
-                          // only — availability, counts and rules are unchanged.
-                          WAEC_SUBJECT_GROUPS.map((group) => {
-                            const entries = addableSubjects.filter((entry) => waecSubjectGroup(entry.subject) === group);
-                            return entries.length ? (
-                              <optgroup key={group} label={group}>
-                                {entries.map((entry) => (
-                                  <option key={entry.subject} value={entry.subject}>
-                                    {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
-                                  </option>
-                                ))}
-                              </optgroup>
-                            ) : null;
-                          })
-                        ) : (
-                          addableSubjects.map((entry) => (
-                            <option key={entry.subject} value={entry.subject}>
-                              {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
-                            </option>
-                          ))
+                      <div className="er-setup-label">
+                        Subjects ({practiceSubjects.length} of {exam === 'jamb' ? Math.min(4, limits.maxSubjects) : limits.maxSubjects} selected){compulsoryEnglish ? ` · ${compulsoryEnglish} compulsory` : ''}
+                      </div>
+                      <div className="er-setup-subject-grid" aria-label="Available subjects">
+                        {addableSubjects.length ? addableSubjects.map((entry) => {
+                          const lockedAtLimit = practiceSubjects.length >= (exam === 'jamb' ? Math.min(4, limits.maxSubjects) : limits.maxSubjects);
+                          return (
+                            <button
+                              key={entry.subject}
+                              type="button"
+                              className="er-setup-duration-option"
+                              disabled={lockedAtLimit}
+                              onClick={() => addPracticeSubject(entry.subject)}
+                              aria-label={`Add ${entry.subject}`}
+                              title={lockedAtLimit ? 'Required subject combination is complete' : `Add ${entry.subject}`}
+                            >
+                              <Plus size={15} aria-hidden="true" />
+                              <span>{entry.subject}</span>
+                              <small>{entry.questionCount} available</small>
+                            </button>
+                          );
+                        }) : (
+                          <p className="er-setup-field-note">{practiceSubjects.length >= (exam === 'jamb' ? Math.min(4, limits.maxSubjects) : limits.maxSubjects) ? 'Subject combination complete. Remove a subject only if you need to change it.' : 'No more subjects available in this group.'}</p>
                         )}
-                      </select>
+                      </div>
                       {practiceSubjects.length > 0 ? (
                         <ul className="er-selected-subjects" aria-label="Selected subjects">
                           {practiceSubjects.map((subject) => {
@@ -639,7 +629,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         </InlineNotice>
                       )}
                       <p className="er-setup-field-note" id="cbt-subject-help">
-                        <Info size={14} /> Only subjects with questions in this bank are listed, with how many. The subject group above only filters this list — changing it never removes a subject you have already selected.
+                        <Info size={14} /> Only subjects with questions in this bank are listed, with how many. The subject group above filters available subjects. Tap the plus icon to add one; selected subjects appear below. For JAMB, Use of English is compulsory and the combination is capped at four subjects.
                         {compulsoryEnglish ? ` ${compulsoryEnglish} is compulsory for this examination and cannot be removed.` : ''}
                       </p>
                     </div>
