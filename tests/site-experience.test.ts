@@ -108,3 +108,26 @@ test('the product uses one name for the collection and one for each CBT action',
   assert.match(setup, /'Start mock examination' : 'Start practice'/);
   assert.match(read('pages/StudentDashboardV2.tsx'), /Start practice</);
 });
+
+test('the home page leads with a display headline and a touch-sized action', () => {
+  const home = read('pages/HubHomePage.tsx');
+  assert.match(home, /<h1>Practise the exam you are sitting\.<\/h1>/, 'the page states its purpose as the h1');
+  const density = read('src/compact-design-system.css');
+  assert.match(
+    density,
+    /\.hub-home-intro h1\{[^}]*font-size:clamp\(28px,3\.4vw,40px\)!important/,
+    'the compact layer does not flatten the hero to a card label',
+  );
+  assert.match(density, /\.hub-home-intro p\{[^}]*font-size:15px!important/, 'the hero paragraph is readable body copy');
+  const css = read('src/home-card-first.css');
+  assert.match(css, /\.hub-home-actions \.hub-primary-btn[^{]*\{[^}]*min-height:44px/, 'the primary action is a touch target');
+});
+
+test('the home resume card is lazy, signed-in only and follows the shared expiry rule', () => {
+  const home = read('pages/HubHomePage.tsx');
+  assert.match(home, /lazy\(\(\) => import\('\.\.\/src\/components\/ContinuePracticeCard'\)\)/, 'the card is code-split');
+  assert.match(home, /\{isAuthenticated && \(/, 'guests do not download it');
+  const card = read('src/components/ContinuePracticeCard.tsx');
+  assert.match(card, /selectResumableAttempt\(/, 'the decision is the tested rule, not a local status check');
+  assert.match(card, /\/cbt\/session\/\$\{encodeURIComponent\(attempt\.id\)\}/, 'it goes straight into the attempt');
+});

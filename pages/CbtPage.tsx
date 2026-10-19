@@ -108,8 +108,7 @@ export default function CbtPage() {
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 560 }}>QUESTION BANKS</span>
-              <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
+              <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '0 0 4px' }}>CBT practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
                 Choose a bank, then pick your subjects and the number of questions.
               </p>

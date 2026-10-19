@@ -32,9 +32,11 @@
 .hub-section-heading h2{font-size:16px!important;line-height:1.3!important}
 .hub-section-heading p{font-size:12px!important;line-height:1.3!important}
 .hub-home-container{width:min(1240px,calc(100% - 28px))!important}
-.hub-home-intro{gap:16px!important;padding:12px 0 16px!important}
-.hub-home-intro h1{font-size:20px!important;line-height:1.25!important}
-.hub-home-intro p{font-size:12px!important}
+.hub-home-intro{gap:16px!important;padding:20px 0 18px!important}
+/* The hero is the one place the compact density layer must not flatten: it is
+   the page's title, not a card label. Its paragraph is read, not scanned. */
+.hub-home-intro h1{font-size:clamp(28px,3.4vw,40px)!important;line-height:1.08!important;letter-spacing:-.025em!important}
+.hub-home-intro p{font-size:15px!important;line-height:1.6!important;max-width:60ch}
 .hub-home-search{height:34px!important;padding:0 10px!important;border-radius:8px!important;box-shadow:0 1px 2px rgba(0,0,0,.05)!important}
 .hub-home-card-grid,.hub-home-news-deadline-grid{gap:12px!important}
 .hub-home-news-deadline-grid{margin-top:16px!important}

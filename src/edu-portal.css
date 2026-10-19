@@ -451,7 +451,7 @@ body.er-exam-mode{padding-bottom:0!important}
    .er-skeleton-row is 82px tall, exactly like the .er-news-row it stands in
    for, and the floors below are the loaded geometry. */
 .er-late-region{min-height:var(--er-late-min,0);display:grid;align-content:start}
-.er-late-region--feed{--er-late-min:542px}       /* 6 news rows: 6x82 + 5x10 gutters */
+.er-late-region--feed{--er-late-min:266px}       /* the 3 news rows the home page shows */
 .er-late-region--feed-page{--er-late-min:450px}  /* the 5 rows its skeleton shows */
 .er-late-region--library{--er-late-min:670px}    /* 6 cards in two columns: 3x214 + 2x14 */
 @media(max-width:700px){

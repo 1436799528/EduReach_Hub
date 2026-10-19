@@ -1,12 +1,17 @@
 import { userFacingError } from '../lib/errors';
 import { ArrowRight, Calculator, FileText, GraduationCap, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import { NewsRow } from '../src/components/NewsSections';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { fetchNews, type NewsItem } from '../src/lib/api';
+import { useAuth } from '../src/lib/auth';
+
+// The resume card is for signed-in students with an unfinished paper. Loading
+// it after the shell keeps a convenience out of the first-paint bundle.
+const ContinuePracticeCard = lazy(() => import('../src/components/ContinuePracticeCard'));
 
 // The home page is the simulator's front door, not a magazine cover. It keeps
 // three things above the fold: what the site is for, the exam a student is
@@ -14,12 +19,13 @@ import { fetchNews, type NewsItem } from '../src/lib/api';
 // headlines; anything more belongs on /news.
 
 const studyTools = [
-  { title: 'Past questions', description: 'Download papers by exam and subject.', href: '/past-questions', icon: FileText },
+  { title: 'Past questions', description: 'Find papers by exam and subject.', href: '/past-questions', icon: FileText },
   { title: 'Screening calculator', description: 'Check your aggregate before you apply.', href: '/screening-calculator', icon: Calculator },
   { title: 'CGPA calculator', description: 'Work out your current standing.', href: '/tools/cgpa-calculator', icon: GraduationCap },
 ];
 
 export default function HubHomePage() {
+  const { isAuthenticated } = useAuth();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState('');
@@ -51,6 +57,12 @@ export default function HubHomePage() {
               </div>
             </div>
           </section>
+
+          {isAuthenticated && (
+            <Suspense fallback={null}>
+              <ContinuePracticeCard />
+            </Suspense>
+          )}
 
           <section className="er-section">
             <SectionHead title="Choose your exam" />

@@ -74,11 +74,11 @@ export default function ExamSimulatorGrid({
             title: String(exam.title),
             mode,
             logo: brandLogo(mode),
-            desc: String(exam.description || `Practice ${mode} questions in the EduReach CBT environment.`),
-            // A bank's size is an editorial number, not a selling point. The
-            // card says how long a paper runs; the setup screen reports what
-            // is actually available once a subject is chosen.
-            meta: `${Number(exam.duration_minutes || 0)} min timed practice`,
+            desc: String(exam.description || 'Choose your subjects and start a timed paper.'),
+            // A bank's size and the standard paper time are configuration, not
+            // a promise about every practice session. The setup screen derives
+            // the real time from the subjects and question count.
+            meta: 'Timed practice',
             guideHref: guideHref(mode),
           };
         }));
