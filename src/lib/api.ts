@@ -15,7 +15,7 @@ import {
 
 export { userFacingError } from '../../lib/errors';
 
-export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number>; subjects?: string[] };
+export type CbtSubmitPayload = { examId: string; attemptId: string; answers: Record<number, number>; subjects?: string[]; paperSeed?: string };
 export type CbtStartResponse = { attemptId: string; startedAt: string; expiresAt: string; totalQuestions: number; guest?: boolean };
 export type CbtSubmitResponse = {
   attemptId: string;
@@ -363,6 +363,25 @@ export async function startCbt(examId: string, durationMinutes = 30, subjects: s
   };
 }
 
+function guestCbtSeedStorageKey(examId: string, subjects: string[] = []): string {
+  const normalizedSubjects = [...new Set(subjects.map((subject) => subject.trim().toLowerCase()).filter(Boolean))].sort();
+  return localStorageKey(`cbt-guest-paper-seed:${examId}:${normalizedSubjects.join('|')}`);
+}
+
+function getGuestCbtPaperSeed(examId: string, subjects: string[] = []): string {
+  const key = guestCbtSeedStorageKey(examId, subjects);
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing) return existing;
+    const seed = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+    localStorage.setItem(key, seed);
+    return seed;
+  } catch {
+    // Keep a seed on the in-memory payload path where storage is unavailable.
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
+  }
+}
+
 export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitResponse> {
   if (isSupabaseConfigured) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -370,7 +389,7 @@ export async function submitCbt(payload: CbtSubmitPayload): Promise<CbtSubmitRes
       const guestResult = await jsonFetch<any>('/api/cbt/guest-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ examId: payload.examId, answers: payload.answers, subjects: payload.subjects || [] }),
+        body: JSON.stringify({ examId: payload.examId, answers: payload.answers, subjects: payload.subjects || [], paperSeed: payload.paperSeed || getGuestCbtPaperSeed(payload.examId, payload.subjects || []) }),
       });
       try {
         localStorage.setItem(localStorageKey(`cbt-result-${guestResult.attemptId}`), JSON.stringify(guestResult));
@@ -461,8 +480,11 @@ export async function fetchCbtQuestions(examId: string, subjects: string[] = [])
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    const query = subjects.length ? `?subjects=${encodeURIComponent(subjects.join('|'))}` : '';
-    const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions${query}`);
+    const seed = getGuestCbtPaperSeed(examId, subjects);
+    const params = new URLSearchParams();
+    if (subjects.length) params.set('subjects', subjects.join('|'));
+    params.set('seed', seed);
+    const guest = await jsonFetch<any>(`/api/cbt/exams/${encodeURIComponent(examId)}/guest-questions?${params.toString()}`);
     return {
       exam: { id: guest.exam.id, title: guest.exam.title, examBody: guest.exam.examBody, durationMinutes: guest.exam.durationMinutes, subject: guest.exam.subject },
       questions: guest.questions,
