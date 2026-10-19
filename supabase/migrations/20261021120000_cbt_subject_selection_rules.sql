@@ -52,6 +52,10 @@ as $function$
 $function$;
 
 revoke all on function public.cbt_subject_key(text) from public;
+-- Supabase default privileges also grant EXECUTE to the client roles at
+-- creation time; this is an internal helper for the SECURITY DEFINER
+-- functions below (which run as owner), so no client role needs it.
+revoke all on function public.cbt_subject_key(text) from anon, authenticated;
 
 -- 3. Subject availability, grouped canonically --------------------------------
 create or replace function public.cbt_subject_availability(p_exam_id uuid)

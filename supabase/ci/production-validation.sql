@@ -175,7 +175,7 @@ with expected(version, migration) as (
     ,('20261020120000', '20261020120000_copy_legacy_questions_to_practice_banks.sql')
     ,('20261020130000', '20261020130000_expand_syllabus_practice_banks.sql')
     ,('20261020140000', '20261020140000_populate_200_per_subject.sql')
-    ,('20261021120000', '20261021120000_cbt_subject_selection_rules.sql')
+    ,('20261019184519', '20261021120000_cbt_subject_selection_rules.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e

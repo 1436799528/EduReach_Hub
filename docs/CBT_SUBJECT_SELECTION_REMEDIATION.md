@@ -1,9 +1,13 @@
 # CBT subject selection — remediation note (Phase 2A + 2B)
 
-**Date:** 2026-10-19 · **Status:** code + migration drafted; not released. The
-migration in `supabase/migrations/20261021120000_cbt_subject_selection_rules.sql`
-must be applied **before** (or with) the application code at an approved
-release. It has been exercised only against the pglite replay in tests.
+**Date:** 2026-10-19 · **Status:** released 2026-10-19 (operator-approved).
+The migration in `supabase/migrations/20261021120000_cbt_subject_selection_rules.sql`
+was applied to production first (recorded remotely as version
+`20261019184519`, the file slug kept as the migration name); the application
+code followed via PR #25. One post-apply hardening — revoking `anon` /
+`authenticated` EXECUTE on `cbt_subject_key`, which Supabase default
+privileges granted at creation — was executed the same day and folded back
+into the migration file so file and database end-state match.
 
 ## Root cause of “subjects are not showing for selection”
 
