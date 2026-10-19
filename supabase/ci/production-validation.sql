@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 67 then 'pass' else 'fail' end as result,
+  case when count(*) >= 68 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 67)' as detail
+  count(*)::text || ' migrations recorded (repository holds 68)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -175,6 +175,7 @@ with expected(version, migration) as (
     ,('20261020120000', '20261020120000_copy_legacy_questions_to_practice_banks.sql')
     ,('20261020130000', '20261020130000_expand_syllabus_practice_banks.sql')
     ,('20261020140000', '20261020140000_populate_200_per_subject.sql')
+    ,('20261019184519', '20261021120000_cbt_subject_selection_rules.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -226,6 +227,10 @@ with expected(version, migration) as (
   select 'public.get_cbt_attempt_paper() VOLATILE', '20261003103000_cbt_paper_expiry_volatility.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                     where n.nspname = 'public' and p.proname = 'get_cbt_attempt_paper' and p.provolatile = 'v')
+  union all
+  select 'public.cbt_subject_key()', '20261021120000_cbt_subject_selection_rules.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'cbt_subject_key')
   union all
   select 'public.ccmas_disciplines', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'
   where not exists (select 1 from information_schema.tables

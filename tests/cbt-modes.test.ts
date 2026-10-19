@@ -50,6 +50,10 @@ before(async () => {
   await db.exec(insertQuestions(JAMB, 'Physics', 8, 300));
   await db.exec(insertQuestions(JAMB, 'Chemistry', 10, 500));
   await db.exec(insertQuestions(WAEC, 'Biology', 12, 400));
+  // Rule-agnostic practice tests run against WAEC: JAMB practice now
+  // (correctly) refuses any combination without Use of English.
+  await db.exec(insertQuestions(WAEC, 'Physics', 8, 600));
+  await db.exec(insertQuestions(WAEC, 'Mathematics', 25, 700));
   // The signed-in student for the whole suite; individual tests switch to
   // another account with asUser() to prove the ownership boundary.
   await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [STUDENT]);
@@ -100,7 +104,7 @@ test('planning respects the requested size and per-subject capacity', async () =
 test('practice configuration is server-authoritative and freezes the paper', async () => {
   const { rows } = await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Physics','Mathematics'], 20, 45, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   );
   const attempt = rows[0];
   assert.equal(attempt.total_questions, 20, 'the requested question count is honoured');
@@ -194,7 +198,7 @@ test('a JAMB mock is the governed four-subject combination', async () => {
 test('draft answers are validated, bounded and persisted for resume', async () => {
   const id = await asUser(STUDENT, async () => (await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 10, 30, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   )).rows[0].attempt_id);
 
   const { rows } = await asUser(STUDENT, async () => db.query<any>(
@@ -260,7 +264,7 @@ test('submission scores the frozen paper and is idempotent on retry', async () =
 test('a student can delete practice data but never a mock record', async () => {
   const practiceId = await asUser(STUDENT, async () => (await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 20, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   )).rows[0].attempt_id);
 
   const { rows: deleted } = await asUser(STUDENT, async () => db.query<any>(
@@ -297,19 +301,19 @@ test('a student can delete practice data but never a mock record', async () => {
 test('starting a differently configured session supersedes the old one without deleting it', async () => {
   const first = await asUser(STUDENT, async () => (await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 10, 20, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   )).rows[0]);
 
   const same = await asUser(STUDENT, async () => (await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 10, 20, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   )).rows[0]);
   assert.equal(same.attempt_id, first.attempt_id, 'the same configuration resumes the same paper');
   assert.equal(same.resumed, true, 'and says so, so the UI can explain it');
 
   const changed = await asUser(STUDENT, async () => (await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 10, 60, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   )).rows[0]);
   assert.notEqual(changed.attempt_id, first.attempt_id, 'a new configuration is a new session');
   const { rows: prior } = await db.query<{ status: string }>(`select status from public.cbt_attempts where id = $1`, [first.attempt_id]);
@@ -319,7 +323,7 @@ test('starting a differently configured session supersedes the old one without d
 test('expired attempts cannot accept drafts or submissions', async () => {
   const id = await asUser(STUDENT, async () => (await db.query<any>(
     `select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 30, 'practice', null)`,
-    [JAMB],
+    [WAEC],
   )).rows[0].attempt_id);
   await db.exec(`update public.cbt_attempts set expires_at = now() - interval '1 minute' where id = '${id}'`);
 
@@ -356,4 +360,80 @@ test('study history is owner-scoped and carries the configuration', async () => 
     `select * from public.get_cbt_attempt_history(50)`,
   ));
   assert.equal(others.length, 0, 'another student sees none of these attempts');
+});
+
+test('JAMB practice requires Use of English; other bodies do not', async () => {
+  await assert.rejects(
+    () => asUser(OTHER_STUDENT, async () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Mathematics','Physics'], 10, 30, 'practice', null)`, [JAMB],
+    )),
+    /Use of English is compulsory for JAMB UTME/,
+    'a tampered JAMB practice start without English is refused by the database, not just the UI',
+  );
+
+  // English anywhere in the combination satisfies practice (order preserved).
+  const jamb = await asUser(OTHER_STUDENT, async () => (await db.query<any>(
+    `select * from public.start_cbt_attempt_configured($1, array['Mathematics','Use of English'], 10, 30, 'practice', null)`, [JAMB],
+  )).rows[0]);
+  assert.deepEqual(jamb.selected_subjects, ['Mathematics', 'Use of English']);
+  await asUser(OTHER_STUDENT, async () => db.query(`select public.abandon_cbt_attempt($1)`, [jamb.attempt_id]));
+
+  // WAEC practice carries no compulsory subject.
+  const waec = await asUser(OTHER_STUDENT, async () => (await db.query<any>(
+    `select * from public.start_cbt_attempt_configured($1, array['Biology'], 5, 20, 'practice', null)`, [WAEC],
+  )).rows[0]);
+  assert.equal(waec.total_questions, 5);
+  await asUser(OTHER_STUDENT, async () => db.query(`select public.abandon_cbt_attempt($1)`, [waec.attempt_id]));
+});
+
+test('explicit question counts are bounded by the server limits', async () => {
+  await assert.rejects(
+    () => asUser(OTHER_STUDENT, async () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Biology'], 2, 20, 'practice', null)`, [WAEC],
+    )),
+    /Choose between 5 and 100 questions/,
+  );
+  await assert.rejects(
+    () => asUser(OTHER_STUDENT, async () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Biology'], 101, 20, 'practice', null)`, [WAEC],
+    )),
+    /Choose between 5 and 100 questions/,
+  );
+});
+
+test('case-variant subjects are one pool, never double-allocated', async () => {
+  const { rows } = await db.query<{ ids: string[] }>(
+    `select public.plan_cbt_paper($1, array['Physics','physics'], 20) as ids`,
+    [JAMB],
+  );
+  assert.equal(rows[0].ids.length, 8, 'Physics has 8 questions; spelling variants cannot mint more');
+  assert.equal(new Set(rows[0].ids).size, rows[0].ids.length, 'no question appears twice');
+});
+
+test('subject availability groups spelling variants under one subject', async () => {
+  const CANON = '99999999-9999-9999-9999-999999999999';
+  await db.exec(`insert into public.cbt_exams (id,title,exam_body,subject,description,duration_minutes,is_active) values ('${CANON}','Canonical Bank','WAEC','Multiple subjects','bank',60,true);`);
+  await db.exec(insertQuestions(CANON, 'Physics', 3, 1));
+  await db.exec(insertQuestions(CANON, ' physics ', 2, 10));
+  await db.exec(insertQuestions(CANON, 'PHYSICS', 1, 20));
+  const { rows } = await db.query<{ subject: string; question_count: number }>(
+    `select subject, question_count from public.cbt_subject_availability($1)`,
+    [CANON],
+  );
+  assert.equal(rows.length, 1, 'variants collapse to a single offered subject');
+  assert.equal(rows[0].subject, 'Physics', 'the most common spelling is the display name');
+  assert.equal(rows[0].question_count, 6);
+});
+
+test('a bank too small for the minimum session explains itself', async () => {
+  const TINY = '88888888-8888-8888-8888-888888888888';
+  await db.exec(`insert into public.cbt_exams (id,title,exam_body,subject,description,duration_minutes,is_active) values ('${TINY}','Tiny Bank','WAEC','Multiple subjects','bank',30,true);`);
+  await db.exec(insertQuestions(TINY, 'Physics', 2, 1));
+  await assert.rejects(
+    () => asUser(OTHER_STUDENT, async () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 20, 'practice', null)`, [TINY],
+    )),
+    /only 2 questions/,
+    'the error names the real problem (bank size) instead of a generic refusal',
+  );
 });

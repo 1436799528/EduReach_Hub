@@ -2,11 +2,16 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   DEFAULT_CBT_LIMITS,
+  compulsorySubjectKeys,
   describeSession,
+  isStartableBank,
+  normalizeSubject,
   practiceDurationOptions,
   previewPlan,
   questionCountOptions,
+  resolveSetupExam,
   validateSession,
+  type CatalogExam,
 } from '../src/lib/cbt-config';
 
 // CBT-1/CBT-2: the configuration the student sees must match what the server
@@ -95,4 +100,79 @@ test('validation rejects the impossible with a message a student can act on', ()
   // Subject matching ignores the case/spacing differences the bank and the
   // catalogue disagree about.
   assert.equal(validateSession({ ...base, subjects: ['use of  english'] }, availability), null);
+  // Compulsory subjects are validated with the bank's own display name.
+  assert.match(validateSession(base, availability, DEFAULT_CBT_LIMITS, ['english'])!, /Use of English is compulsory/);
+  assert.equal(validateSession({ ...base, subjects: ['English Language', 'Physics'] }, availability, DEFAULT_CBT_LIMITS, ['english']), null);
+});
+
+test('subject names canonicalise across bank, catalogue and course-guide spellings', () => {
+  assert.equal(normalizeSubject('Use of English'), 'english');
+  assert.equal(normalizeSubject('English Language'), 'english');
+  assert.equal(normalizeSubject('ENGLISH'), 'english');
+  assert.equal(normalizeSubject('Literature-in-English'), normalizeSubject('Literature in English'));
+  assert.equal(normalizeSubject('  Physics  '), 'physics');
+  assert.deepEqual(compulsorySubjectKeys('jamb'), ['english']);
+  assert.deepEqual(compulsorySubjectKeys('JAMB'), ['english']);
+  assert.deepEqual(compulsorySubjectKeys('WAEC'), []);
+  assert.deepEqual(compulsorySubjectKeys('NECO'), []);
+  assert.deepEqual(compulsorySubjectKeys('POST-UTME'), [], 'Post-UTME must not inherit the JAMB rule via the UTME substring');
+  assert.deepEqual(compulsorySubjectKeys('post-utme'), []);
+});
+
+test('bank resolution never lets a newer near-empty bank hijack the default route', () => {
+  const bank = (over: Partial<CatalogExam>): CatalogExam => ({
+    id: 'x', title: 'Bank', exam_body: 'JAMB', subject: 'Multiple subjects',
+    description: null, duration_minutes: 120, ...over,
+  });
+  // Mirrors the production defect: the catalogue arrives newest-first, and
+  // the newest JAMB bank holds two test Physics questions and no English.
+  const testBank = bank({
+    id: '33075e1c', title: 'JAMB UTME Practice Bank', question_count: 2, subject_count: 1,
+    subjects: [{ subject: 'Physics', questionCount: 2 }],
+  });
+  const comprehensive = bank({
+    id: 'f56e8e07', title: 'JAMB UTME Comprehensive Practice Bank', question_count: 400, subject_count: 9,
+    subjects: [
+      { subject: 'Use of English', questionCount: 80 },
+      { subject: 'Physics', questionCount: 40 },
+    ],
+  });
+
+  assert.equal(isStartableBank(testBank, 'jamb'), false, 'two questions and no English cannot start a JAMB session');
+  assert.equal(isStartableBank(comprehensive, 'jamb'), true);
+  assert.equal(
+    resolveSetupExam([testBank, comprehensive], 'jamb', null)?.id,
+    'f56e8e07',
+    'the default JAMB route opens the comprehensive bank, not the newest row',
+  );
+  assert.equal(
+    resolveSetupExam([comprehensive, testBank], 'jamb', null)?.id,
+    'f56e8e07',
+    'catalogue order must not change the answer',
+  );
+  assert.equal(
+    resolveSetupExam([testBank, comprehensive], 'jamb', '33075e1c')?.id,
+    '33075e1c',
+    'an explicit ?exam= deep link still wins; the wizard then explains the bank',
+  );
+
+  // An English alias satisfies the JAMB startability rule.
+  const aliasBank = bank({
+    id: 'alias', question_count: 50, subject_count: 2,
+    subjects: [{ subject: 'English Language', questionCount: 30 }, { subject: 'Physics', questionCount: 20 }],
+  });
+  assert.equal(isStartableBank(aliasBank, 'jamb'), true);
+
+  // Without availability counts the bank cannot be judged and stays eligible.
+  const legacy = bank({ id: 'legacy' });
+  assert.equal(isStartableBank(legacy, 'jamb'), true);
+  assert.equal(resolveSetupExam([legacy], 'jamb', null)?.id, 'legacy');
+
+  // Other bodies do not require English to be startable.
+  const waec = bank({
+    id: 'waec1', exam_body: 'WAEC', title: 'WAEC SSCE Bank', question_count: 40, subject_count: 1,
+    subjects: [{ subject: 'Biology', questionCount: 40 }],
+  });
+  assert.equal(isStartableBank(waec, 'waec'), true);
+  assert.equal(resolveSetupExam([waec], 'waec', null)?.id, 'waec1');
 });

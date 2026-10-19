@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, Info, RotateCcw, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, CheckCircle2, Clock3, Info, Lock, RotateCcw, ShieldCheck, TriangleAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -13,14 +13,16 @@ import {
   secondarySubjectTracks,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtBank, fetchCbtExams, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
+import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { userFacingError } from '../lib/errors';
-import { WAEC_SUBJECT_GROUPS, waecSubjectGroup, isWaecEnglishSubject } from '../src/data/waecSubjects';
+import { WAEC_SUBJECT_GROUPS, waecSubjectGroup } from '../src/data/waecSubjects';
 import {
   DEFAULT_CBT_LIMITS,
+  compulsorySubjectKeys,
   describeSession,
+  isEnglishSubject,
   normalizeSubject,
   previewPlan,
   questionCountOptions,
@@ -104,7 +106,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities'>('General');
-  const [pendingPracticeSubject, setPendingPracticeSubject] = useState('');
 
   // Mock configuration — the governed combination for a programme.
   const [department, setDepartment] = useState(jambDepartments[0]);
@@ -138,7 +139,13 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     try {
       const params = new URLSearchParams(window.location.search);
       const requestedId = params.get('exam');
-      const exams = (await fetchCbtExams()) as CatalogExam[];
+      // Availability-aware catalogue (GET /api/cbt/exams): resolution needs
+      // per-bank question/subject counts to deterministically pick a
+      // startable bank instead of trusting row order. Local preview keeps
+      // the direct-query fallback catalogue.
+      const exams = (isSupabaseConfigured
+        ? (await fetchCbtExamsWithAvailability()) as unknown as CatalogExam[]
+        : (await fetchCbtExams()) as CatalogExam[]);
       setCatalog(exams);
       let eligibleExams = exams;
       if (exam === 'post-utme') {
@@ -199,11 +206,15 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         (entry) => normalizeSubject(entry.subject) === normalizeSubject(subject),
       )).map((subject) => availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))?.subject || subject);
       const defaultSubjects = matched.length ? matched : availability.slice(0, Math.min(2, availability.length)).map((entry) => entry.subject);
-      const english = availability.find((entry) => /english/i.test(entry.subject))?.subject;
-      const withCompulsoryEnglish = english
-        ? [english, ...defaultSubjects.filter((subject) => normalizeSubject(subject) !== normalizeSubject(english))]
-        : defaultSubjects;
-      return withCompulsoryEnglish.slice(0, limits.maxSubjects);
+      // Only bodies with a compulsory subject (JAMB: Use of English) have it
+      // pinned into the default selection; other bodies start from the
+      // student's own choice, never from JAMB's rules.
+      const compulsoryEntries = availability.filter((entry) => compulsorySubjectKeys(exam).includes(normalizeSubject(entry.subject)));
+      const withCompulsory = [
+        ...compulsoryEntries.map((entry) => entry.subject),
+        ...defaultSubjects.filter((subject) => !compulsoryEntries.some((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))),
+      ];
+      return withCompulsory.slice(0, limits.maxSubjects);
     });
     setQuestionCount((current) => current ?? Math.min(20, bank?.totalQuestions || 20));
   }, [availability, bank]);
@@ -221,7 +232,20 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     limits.maxMinutes,
     Math.ceil((effectiveCount / Math.max(1, limits.maxQuestions)) * (bank?.exam.defaultDurationMinutes ?? 120)),
   ));
-  const compulsoryEnglish = availability.find((entry) => /english/i.test(entry.subject))?.subject || null;
+  // Server rules win; the exam-key rule is the offline/older-API fallback.
+  // For WAEC/NECO/Post-UTME this is null — English is selectable, never forced.
+  const compulsoryEnglish = bank?.rules?.compulsorySubjects?.[0]
+    ?? (compulsorySubjectKeys(exam).length ? availability.find((entry) => isEnglishSubject(entry.subject))?.subject || null : null);
+  const compulsoryKeys = useMemo(
+    () => (bank?.rules?.compulsorySubjects?.length
+      ? bank.rules.compulsorySubjects.map(normalizeSubject)
+      : compulsorySubjectKeys(exam)),
+    [bank, exam],
+  );
+  const isCompulsorySubject = useCallback(
+    (subject: string) => compulsoryKeys.includes(normalizeSubject(subject)),
+    [compulsoryKeys],
+  );
   const trackSubjectNames = useMemo(() => {
     if (practiceTrack === 'General') return null;
     const secondary = secondarySubjectCatalog[practiceTrack];
@@ -232,7 +256,13 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
     return new Set([...secondary, ...jamb].map(normalizeSubject));
   }, [practiceTrack]);
-  const visiblePracticeAvailability = availability.filter((entry) => !trackSubjectNames || trackSubjectNames.has(normalizeSubject(entry.subject)) || /english/i.test(entry.subject));
+  // The group filter narrows only what the dropdown offers; it never
+  // changes an existing selection. Compulsory subjects always remain
+  // offerable so a required subject can be re-added from any group.
+  const visiblePracticeAvailability = availability.filter((entry) => !trackSubjectNames || trackSubjectNames.has(normalizeSubject(entry.subject)) || isCompulsorySubject(entry.subject));
+  const addableSubjects = visiblePracticeAvailability.filter(
+    (entry) => !practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)),
+  );
   const practicePlan = useMemo(() => previewPlan(selectedAvailability, effectiveCount), [selectedAvailability, effectiveCount]);
 
   // ---- Derived mock combination ---------------------------------------
@@ -275,13 +305,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     setFormError('');
   }
 
-  function togglePracticeSubject(subject: string) {
+  function addPracticeSubject(subject: string) {
     setFormError('');
     setPracticeSubjects((current) => {
-      const exists = current.some((item) => normalizeSubject(item) === normalizeSubject(subject));
-      const english = availability.find((entry) => /english/i.test(entry.subject))?.subject;
-      if (exists && english && normalizeSubject(subject) === normalizeSubject(english)) return current; // English is compulsory.
-      if (exists) return current.filter((item) => normalizeSubject(item) !== normalizeSubject(subject));
+      if (current.some((item) => normalizeSubject(item) === normalizeSubject(subject))) return current;
       if (current.length >= limits.maxSubjects) {
         setFormError(`A session can include at most ${limits.maxSubjects} subjects. Remove one before adding another.`);
         return current;
@@ -290,15 +317,19 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     });
   }
 
+  function removePracticeSubject(subject: string) {
+    setFormError('');
+    // A compulsory subject (JAMB's Use of English) is never removable; every
+    // other subject — including English in WAEC/NECO/Post-UTME — is.
+    if (isCompulsorySubject(subject)) return;
+    setPracticeSubjects((current) => current.filter((item) => normalizeSubject(item) !== normalizeSubject(subject)));
+  }
+
   async function startSession() {
     if (!targetExam) return;
     const subjects = mode === 'practice' ? practiceSubjects : governedCombination.filter(Boolean);
-    if (!compulsoryEnglish) {
-      setFormError('English Language is compulsory, but this question bank has no English questions available. Choose another bank.');
-      return;
-    }
-    if (!subjects.some((subject) => normalizeSubject(subject) === normalizeSubject(compulsoryEnglish))) {
-      setFormError('English Language is compulsory. Keep it selected before starting the test.');
+    if (exam === 'jamb' && (bank?.rules?.compulsoryMissing || !compulsoryEnglish)) {
+      setFormError('Use of English is compulsory for JAMB UTME, but this question bank has no English questions available. Choose another bank.');
       return;
     }
     const config = {
@@ -341,6 +372,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     }
   }
 
+  const activePlan = mode === 'practice' ? practicePlan : previewPlan(coverage, mockCount);
   const summaryLines = describeSession(
     {
       mode,
@@ -348,7 +380,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       questionCount: mode === 'practice' ? effectiveCount : mockCount,
       durationMinutes: mode === 'practice' ? effectiveDuration : (bank?.exam.defaultDurationMinutes ?? 0),
     },
-    mode === 'practice' ? practicePlan : previewPlan(coverage, mockCount),
+    activePlan,
   );
 
   const defaultMinutes = bank?.exam.defaultDurationMinutes ?? null;
@@ -531,77 +563,84 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       <span className="er-setup-label">Subject group</span>
                       <div className="er-setup-duration-options" role="radiogroup" aria-label="Filter subjects by group">
                         {(['General', 'Science', 'Commercial', 'Arts & Humanities'] as const).map((track) => (
-                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); const english = availability.find((entry) => /english/i.test(entry.subject))?.subject; setPracticeSubjects(english ? [english] : []); setFormError(''); }}>
+                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); setFormError(''); }}>
                             {track === 'Arts & Humanities' ? 'Arts' : track}
                           </button>
                         ))}
                       </div>
                     </div>
                     <div className="er-setup-full-width">
-                      <span className="er-setup-label">Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected){compulsoryEnglish ? ' · English compulsory' : ''}</span>
-                      <div className="er-setup-form-grid">
-                        <label className="er-setup-full-width">
-                          <span className="er-setup-label">Add a subject from this question bank</span>
-                          <select
-                            className="admin-select"
-                            value={pendingPracticeSubject}
-                            onChange={(event) => setPendingPracticeSubject(event.target.value)}
-                            aria-label="Choose a subject to add"
-                          >
-                            <option value="">Choose an available subject…</option>
-                            {exam === 'waec'
-                              ? WAEC_SUBJECT_GROUPS.map((group) => {
-                                  const entries = visiblePracticeAvailability.filter((entry) => waecSubjectGroup(entry.subject) === group
-                                    && !practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)));
-                                  return entries.length ? (
-                                    <optgroup key={group} label={group}>
-                                      {entries.map((entry) => <option key={entry.subject} value={entry.subject}>{entry.subject} ({entry.questionCount} questions)</option>)}
-                                    </optgroup>
-                                  ) : null;
-                                })
-                              : visiblePracticeAvailability
-                                  .filter((entry) => !practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)))
-                                  .map((entry) => <option key={entry.subject} value={entry.subject}>{entry.subject} ({entry.questionCount} questions)</option>)}
-                          </select>
-                        </label>
-                        <div className="er-setup-full-width">
-                          <button
-                            type="button"
-                            className="hub-outline-btn"
-                            disabled={!pendingPracticeSubject || practiceSubjects.length >= limits.maxSubjects}
-                            onClick={() => {
-                              if (pendingPracticeSubject) {
-                                togglePracticeSubject(pendingPracticeSubject);
-                                setPendingPracticeSubject('');
-                              }
-                            }}
-                          >Add subject</button>
-                        </div>
-                      </div>
-                      <div className="er-setup-subject-chips" aria-label="Selected subjects">
-                        {practiceSubjects.map((subject) => {
-                          const entry = availability.find((item) => normalizeSubject(item.subject) === normalizeSubject(subject));
-                          if (!entry) return null;
-                          const compulsory = exam === 'waec'
-                            ? isWaecEnglishSubject(entry.subject)
-                            : /english/i.test(entry.subject);
-                          return (
-                            <label key={entry.subject} className="er-setup-subject-chip">
-                              <input
-                                type="checkbox"
-                                checked
-                                onChange={() => togglePracticeSubject(entry.subject)}
-                                disabled={compulsory}
-                                aria-label={compulsory ? `${entry.subject} is compulsory` : `Remove ${entry.subject}`}
-                              />
-                              <span>{entry.subject}{compulsory ? ' · compulsory' : ''}</span>
-                              <b className="er-chip-count">{entry.questionCount}</b>
-                            </label>
-                          );
-                        })}
-                      </div>
-                      <p className="er-setup-field-note">
-                        <Info size={14} /> Only subjects returned by this question bank can be selected. Counts show stored bank availability, not official-source verification. {exam === 'waec' ? 'WAEC subjects are grouped for easier browsing; English is compulsory when the bank provides an English subject.' : 'English remains compulsory when available in this bank.'}
+                      <label className="er-setup-label" htmlFor="cbt-add-subject">
+                        Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected){compulsoryEnglish ? ` · ${compulsoryEnglish} compulsory` : ''}
+                      </label>
+                      <select
+                        id="cbt-add-subject"
+                        className="admin-select er-setup-subject-select"
+                        value=""
+                        disabled={!addableSubjects.length || practiceSubjects.length >= limits.maxSubjects}
+                        aria-describedby="cbt-subject-help"
+                        onChange={(event) => { if (event.target.value) addPracticeSubject(event.target.value); }}
+                      >
+                        <option value="">{practiceSubjects.length >= limits.maxSubjects ? `Subject limit reached (${limits.maxSubjects}) — remove one to add another` : addableSubjects.length ? 'Add a subject…' : 'No more subjects available in this group'}</option>
+                        {exam === 'waec' ? (
+                          // WAEC subjects are grouped for browsing (from main's
+                          // grouped-picker change); grouping is presentation
+                          // only — availability, counts and rules are unchanged.
+                          WAEC_SUBJECT_GROUPS.map((group) => {
+                            const entries = addableSubjects.filter((entry) => waecSubjectGroup(entry.subject) === group);
+                            return entries.length ? (
+                              <optgroup key={group} label={group}>
+                                {entries.map((entry) => (
+                                  <option key={entry.subject} value={entry.subject}>
+                                    {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ) : null;
+                          })
+                        ) : (
+                          addableSubjects.map((entry) => (
+                            <option key={entry.subject} value={entry.subject}>
+                              {entry.subject} — {entry.questionCount} question{entry.questionCount === 1 ? '' : 's'} available{isCompulsorySubject(entry.subject) ? ' · compulsory' : ''}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                      {practiceSubjects.length > 0 ? (
+                        <ul className="er-selected-subjects" aria-label="Selected subjects">
+                          {practiceSubjects.map((subject) => {
+                            const entry = availability.find((item) => normalizeSubject(item.subject) === normalizeSubject(subject));
+                            const planned = activePlan.find((item) => normalizeSubject(item.subject) === normalizeSubject(subject));
+                            const compulsory = isCompulsorySubject(subject);
+                            return (
+                              <li key={subject}>
+                                <span className="er-selected-subject-name">{subject}{compulsory ? ' · compulsory' : ''}</span>
+                                <span className="er-selected-subject-count">
+                                  {entry ? `${entry.questionCount} in bank` : 'not in this bank'}
+                                  {planned && planned.questions > 0 ? ` · ${planned.questions} in your paper (Q${planned.first}–Q${planned.last})` : ''}
+                                </span>
+                                {compulsory ? (
+                                  <span className="er-selected-locked"><Lock size={13} aria-hidden="true" /> Required</span>
+                                ) : (
+                                  <button type="button" className="er-selected-remove" onClick={() => removePracticeSubject(subject)} aria-label={`Remove ${subject}`}>
+                                    <X size={14} aria-hidden="true" /> Remove
+                                  </button>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : (
+                        <p className="er-setup-field-note" role="status">No subjects selected yet — add at least one from the list above.</p>
+                      )}
+                      {availability.length === 0 && (
+                        <InlineNotice tone="warning" title="This question bank has no subjects with questions yet">
+                          There is nothing to practise in this bank right now. <a href="/cbt">Choose another question bank</a>.
+                        </InlineNotice>
+                      )}
+                      <p className="er-setup-field-note" id="cbt-subject-help">
+                        <Info size={14} /> Only subjects with questions in this bank are listed, with how many. The subject group above only filters this list — changing it never removes a subject you have already selected.
+                        {compulsoryEnglish ? ` ${compulsoryEnglish} is compulsory for this examination and cannot be removed.` : ''}
                       </p>
                     </div>
 
@@ -787,7 +826,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </InlineNotice>
                 )}
 
-                {!compulsoryEnglish && <InlineNotice tone="warning" title="English Language is required">This question bank has no English questions available yet. Choose another bank to start a session.</InlineNotice>}
+                {exam === 'jamb' && !compulsoryEnglish && <InlineNotice tone="warning" title="Use of English is required for JAMB">This question bank has no English questions available yet, and a JAMB paper cannot start without them. Choose another bank to start a session.</InlineNotice>}
                 {formError && <div className="hub-form-error" role="alert">{formError}</div>}
 
                 <div className="er-setup-actions">

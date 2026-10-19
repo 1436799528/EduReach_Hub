@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { ErrorState } from '../src/components/AsyncState';
-import { fetchCbtExams } from '../src/lib/api';
+import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../src/lib/api';
+import { isSupabaseConfigured } from '../src/lib/supabase';
 import { resolveSetupExam, type CatalogExam, type SetupExamKey } from '../src/lib/cbt-config';
 
 /**
@@ -41,7 +42,9 @@ export default function CbtPracticeEntryPage() {
     const requestedSubjects = params.get('subjects') || params.get('subject') || '';
     const requestedMode = params.get('mode') === 'mock' ? 'mock' : 'practice';
 
-    void fetchCbtExams()
+    // Availability-aware so legacy links land on a startable bank, exactly
+    // like the setup wizard (see resolveSetupExam).
+    void (isSupabaseConfigured ? fetchCbtExamsWithAvailability() : fetchCbtExams())
       .then((exams) => {
         if (!active) return;
         const typed = exams as CatalogExam[];

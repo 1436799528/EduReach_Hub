@@ -43,8 +43,13 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /effectiveDuration = Math\.max/, 'practice time is derived from the chosen question count');
   assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
   assert.match(setup, /Subject group/, 'students can choose a subject group');
-  assert.match(setup, /English compulsory/, 'English is treated as compulsory when available');
-  assert.match(setup, /English Language is compulsory/, 'the setup cannot start a bank without English questions');
+  assert.match(setup, /cannot be removed/, 'a compulsory subject is locked into the combination');
+  assert.match(setup, /Use of English is compulsory for JAMB UTME/, 'JAMB practice and mock cannot start without English, and the student is told why');
+  assert.match(setup, /Add a subject/, 'subjects are picked from a labelled dropdown');
+  assert.match(setup, /er-selected-subjects/, 'chosen subjects are listed with their question counts');
+  assert.match(setup, /fetchCbtExamsWithAvailability/, 'bank resolution sees question availability, not catalogue order');
+  assert.match(setup, /waecSubjectGroup/, 'WAEC subjects are grouped in the dropdown for browsing');
+  assert.match(setup, /<optgroup/, 'grouping uses native optgroup semantics');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
   assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
   assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');

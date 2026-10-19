@@ -16,6 +16,7 @@ import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
 import { type Capability } from './src/lib/capabilities';
+import { previewPlan } from './src/lib/cbt-config';
 import { userFacingError as normalizeUserFacingError } from './lib/errors';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
@@ -1961,9 +1962,28 @@ app.get('/api/news/:slug', async (req, res) => {
 });
 
 function normalizeSubjectKey(value: unknown): string {
-  const s = String(value || '').trim().toLowerCase();
+  // Canonical subject key — must stay in step with normalizeSubject() in
+  // src/lib/cbt-config.ts and the SQL canonicalisation in plan_cbt_paper.
+  const s = String(value || '').trim().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').toLowerCase();
   if (s === 'use of english' || s === 'english language' || s === 'english') return 'english';
   return s;
+}
+
+/**
+ * PostgREST returns at most 1,000 rows per request. Every "read the whole
+ * bank" query must page explicitly or it silently truncates — that cap is
+ * what made production report 0 questions for a 395-question bank. Pages are
+ * walked in a stable order supplied by the caller-ordered query factory.
+ */
+async function fetchAllRows<T>(buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]> {
+  const pageSize = 1000;
+  const rows: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await buildQuery(from, from + pageSize - 1);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) return rows;
+  }
 }
 
 function cbtSeededRank(seed: string, row: any): number {
@@ -1977,30 +1997,70 @@ function cbtSeededRank(seed: string, row: any): number {
   return hash >>> 0;
 }
 
-function selectCbtPaperQuestions(rows: any[], subjects: string[], seed = '') {
-  const requested = Array.from(new Set((subjects || []).map((value) => String(value).trim()).filter(Boolean)));
+/**
+ * Guest paper assembly, on the same planner as configured attempts.
+ *
+ * Quotas come from previewPlan() — the shared proportional, capacity-aware
+ * allocation that mirrors plan_cbt_paper — capped at the CBT max-questions
+ * limit, with the student's seed ordering questions inside each subject so
+ * display and scoring rebuild the identical paper. A requested subject with
+ * no questions is an error naming the subject; there is deliberately no
+ * fallback to "the first N questions of any subject", which previously
+ * handed a guest a paper for subjects they never chose.
+ */
+function selectCbtPaperQuestions(rows: any[], subjects: string[], seed = '', maxQuestions = 100) {
   const rank = (row: any) => seed ? cbtSeededRank(seed, row) : Number(row.position) || 0;
-  if (!requested.length) {
-    return [...rows].sort((a, b) => rank(a) - rank(b)).map((row, index) => ({ ...row, position: index + 1 }));
+
+  // Distinct requested subjects by canonical key, in the order asked for.
+  // No explicit selection means "the whole bank", in bank subject order.
+  const requested: Array<{ key: string; label: string }> = [];
+  const seen = new Set<string>();
+  const source = (subjects || []).map((value) => String(value).trim()).filter(Boolean);
+  const labels = source.length
+    ? source
+    : rows.map((row) => String(row.subject || '').trim()).filter(Boolean);
+  for (const label of labels) {
+    const key = normalizeSubjectKey(label);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    requested.push({ key, label });
   }
+
+  const pools = requested.map(({ key, label }) => ({
+    key,
+    label,
+    rows: rows.filter((row) => normalizeSubjectKey(row.subject) === key),
+  }));
+  if (source.length) {
+    const missing = pools.filter((pool) => !pool.rows.length).map((pool) => pool.label);
+    if (missing.length) {
+      throw new Error(`No questions are available for: ${missing.join(', ')}. Remove these subjects or choose a different bank.`);
+    }
+  }
+
+  const usable = pools.filter((pool) => pool.rows.length);
+  const target = Math.min(maxQuestions, usable.reduce((sum, pool) => sum + pool.rows.length, 0));
+  const plan = previewPlan(
+    usable.map((pool) => ({ subject: pool.label, questionCount: pool.rows.length })),
+    target,
+  );
+
   const paper: any[] = [];
-  const usedKeys = new Set<string>();
-  for (const subject of requested) {
-    const norm = normalizeSubjectKey(subject);
-    if (usedKeys.has(norm)) continue;
-    usedKeys.add(norm);
-    const limit = norm === 'english' ? 60 : 40;
-    const matches = rows
-      .filter((row) => normalizeSubjectKey(row.subject) === norm)
-      .sort((a, b) => rank(a) - rank(b))
-      .slice(0, limit);
-    paper.push(...matches);
-  }
-  if (!paper.length && rows.length) {
-    return [...rows].sort((a, b) => rank(a) - rank(b)).slice(0, 60)
-      .map((row, index) => ({ ...row, position: index + 1 }));
-  }
+  usable.forEach((pool, index) => {
+    const quota = plan[index]?.questions ?? 0;
+    paper.push(...[...pool.rows].sort((a, b) => rank(a) - rank(b)).slice(0, quota));
+  });
   return paper.map((row, index) => ({ ...row, position: index + 1 }));
+}
+
+/** Whole-bank question reads, paged past the PostgREST 1,000-row cap. */
+async function fetchGuestBankQuestions(supabase: any, examId: string, columns: string) {
+  return fetchAllRows<any>((from, to) => supabase
+    .from('exam_questions')
+    .select(columns)
+    .eq('exam_id', examId)
+    .order('position', { ascending: true })
+    .range(from, to));
 }
 
 app.get('/api/cbt/exams', async (_req, res) => {
@@ -2016,19 +2076,31 @@ app.get('/api/cbt/exams', async (_req, res) => {
 
     // Availability is stated up front, so a student never has to complete a setup
     // wizard to discover that a bank has no questions for a subject they want.
+    // The read is paged: an unpaged select stops at PostgREST's 1,000-row cap
+    // and under-counts every bank after the first thousand rows (production
+    // once reported a 395-question bank as empty). Subjects are aggregated by
+    // canonical key with a display label, mirroring cbt_subject_availability,
+    // so catalogue cards, bank resolution and the setup wizard agree.
     const exams = data || [];
-    const counts = new Map<string, { questions: number; subjects: Set<string> }>();
+    const counts = new Map<string, { questions: number; subjects: Map<string, { subject: string; questionCount: number }> }>();
     if (exams.length) {
-      const { data: questionRows } = await supabase
+      const questionRows = await fetchAllRows<{ exam_id: string; subject?: string }>((from, to) => supabase
         .from('exam_questions')
         .select('exam_id,subject')
-        .in('exam_id', exams.map((exam) => exam.id));
-      for (const row of questionRows || []) {
-        const key = String((row as { exam_id: string }).exam_id);
-        const entry = counts.get(key) || { questions: 0, subjects: new Set<string>() };
+        .in('exam_id', exams.map((exam) => exam.id))
+        .order('id', { ascending: true })
+        .range(from, to));
+      for (const row of questionRows) {
+        const key = String(row.exam_id);
+        const entry = counts.get(key) || { questions: 0, subjects: new Map<string, { subject: string; questionCount: number }>() };
         entry.questions += 1;
-        const subject = String((row as { subject?: string }).subject || '').trim();
-        if (subject) entry.subjects.add(subject.toLowerCase());
+        const subject = String(row.subject || '').trim();
+        if (subject) {
+          const subjectKey = normalizeSubjectKey(subject);
+          const current = entry.subjects.get(subjectKey);
+          if (current) current.questionCount += 1;
+          else entry.subjects.set(subjectKey, { subject, questionCount: 1 });
+        }
         counts.set(key, entry);
       }
     }
@@ -2036,10 +2108,13 @@ app.get('/api/cbt/exams', async (_req, res) => {
     res.json({
       items: exams.map((exam) => {
         const entry = counts.get(exam.id);
+        const subjects = [...(entry?.subjects.values() || [])]
+          .sort((a, b) => a.subject.localeCompare(b.subject));
         return {
           ...exam,
           question_count: entry?.questions ?? 0,
-          subject_count: entry?.subjects.size ?? 0,
+          subject_count: subjects.length,
+          subjects,
         };
       }),
     });
@@ -2101,6 +2176,15 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
     if (limitsError) throw limitsError;
 
     const available = (subjects || []) as Array<{ subject: string; question_count: number }>;
+    // Compulsory-subject rule, stated once here and enforced again in
+    // start_cbt_attempt_configured: Use of English is compulsory for JAMB
+    // (practice and mock). Other bodies carry no EduReach-imposed compulsory
+    // subject. Display names are resolved against this bank's real subjects
+    // so the wizard can pin exactly what the bank calls it.
+    const bodyUpper = String(exam.exam_body || '').trim().toUpperCase();
+    const isJamb = !bodyUpper.includes('POST') && (bodyUpper === 'JAMB' || bodyUpper === 'UTME' || bodyUpper.includes('JAMB'));
+    const englishEntry = available.find((row) => normalizeSubjectKey(row.subject) === 'english');
+    const compulsorySubjects = isJamb && englishEntry ? [englishEntry.subject] : [];
     res.json({
       exam: {
         id: exam.id,
@@ -2117,6 +2201,12 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
       subjects: available.map((row) => ({ subject: row.subject, questionCount: Number(row.question_count) })),
       totalQuestions: available.reduce((sum, row) => sum + Number(row.question_count), 0),
       limits: limits || null,
+      rules: {
+        compulsorySubjects,
+        compulsoryMissing: isJamb && !englishEntry,
+        minSubjects: 1,
+        maxSubjects: Number((limits as any)?.maxSubjects ?? 6),
+      },
     });
   } catch (error) {
     console.error('CBT subject availability error:', error);
@@ -2154,9 +2244,48 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
       return res.status(400).json({ error: 'Choose how long you want to practise for.' });
     }
 
+    // Defence in depth ahead of the (authoritative) RPC: canonical de-dup so
+    // case/alias variants of one subject can never count twice, question
+    // counts inside the server limits, and compulsory Use of English for
+    // JAMB in both modes. A tampered browser request gets the same answer
+    // the wizard would have given.
+    const canonicalSubjects: string[] = [];
+    const seenSubjectKeys = new Set<string>();
+    for (const subject of subjects) {
+      const key = normalizeSubjectKey(subject);
+      if (!key || seenSubjectKeys.has(key)) continue;
+      seenSubjectKeys.add(key);
+      canonicalSubjects.push(subject);
+    }
+    if (!canonicalSubjects.length) {
+      return res.status(422).json({ error: 'Choose at least one subject to practise.' });
+    }
+    const { data: limitData } = await rpcSupabase.rpc('cbt_limits');
+    const minQuestions = Number((limitData as any)?.minQuestions ?? 5);
+    const maxQuestions = Number((limitData as any)?.maxQuestions ?? 100);
+    const maxSubjects = Number((limitData as any)?.maxSubjects ?? 6);
+    if (canonicalSubjects.length > maxSubjects) {
+      return res.status(422).json({ error: `A session can include at most ${maxSubjects} subjects.` });
+    }
+    if (questionCount !== null && (questionCount < minQuestions || questionCount > maxQuestions)) {
+      return res.status(422).json({ error: `Choose between ${minQuestions} and ${maxQuestions} questions.` });
+    }
+    const { data: examRow } = await getServerSupabase()
+      .from('cbt_exams')
+      .select('exam_body,is_active')
+      .eq('id', req.params.examId)
+      .maybeSingle();
+    if (examRow) {
+      const bodyUpper = String(examRow.exam_body || '').trim().toUpperCase();
+      const isJamb = !bodyUpper.includes('POST') && (bodyUpper === 'JAMB' || bodyUpper === 'UTME' || bodyUpper.includes('JAMB'));
+      if (isJamb && !canonicalSubjects.some((subject) => normalizeSubjectKey(subject) === 'english')) {
+        return res.status(422).json({ error: 'Use of English is compulsory for JAMB UTME. Include it in your subject combination.' });
+      }
+    }
+
     const { data, error } = await rpcSupabase.rpc('start_cbt_attempt_configured', {
       p_exam_id: req.params.examId,
-      p_subjects: subjects,
+      p_subjects: canonicalSubjects,
       p_question_count: questionCount,
       p_duration_minutes: durationMinutes,
       p_mode: mode,
@@ -2562,12 +2691,7 @@ app.get('/api/cbt/exams/:examId/guest-questions', async (req, res) => {
     const subjects = typeof req.query.subjects === 'string'
       ? req.query.subjects.split('|').map((value) => value.trim()).filter(Boolean)
       : [];
-    const { data: questions, error: questionsError } = await supabase
-      .from('exam_questions')
-      .select('position,subject,question_text,option_a,option_b,option_c,option_d')
-      .eq('exam_id', exam.id)
-      .order('position', { ascending: true });
-    if (questionsError) throw questionsError;
+    const questions = await fetchGuestBankQuestions(supabase, exam.id, 'position,subject,question_text,option_a,option_b,option_c,option_d');
 
     const paper = selectCbtPaperQuestions(questions || [], subjects, String(req.query.seed || '').slice(0, 128));
     if (!paper.length) return res.status(422).json({ error: 'This CBT exam has no questions for the selected subjects.' });
@@ -2578,6 +2702,10 @@ app.get('/api/cbt/exams/:examId/guest-questions', async (req, res) => {
     });
   } catch (error) {
     console.error('Guest CBT question API error:', error);
+    const message = error instanceof Error ? error.message : '';
+    if (/No questions are available for:/i.test(message)) {
+      return res.status(422).json({ error: publicErrorMessage(message, 'This CBT exam has no questions for the selected subjects.') });
+    }
     res.status(503).json({ error: 'CBT service is temporarily unavailable.' });
   }
 });
@@ -2603,12 +2731,7 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
       .maybeSingle();
     if (examError || !exam) return res.status(404).json({ error: 'CBT exam not found.' });
 
-    const { data: questions, error: questionsError } = await supabase
-      .from('exam_questions')
-      .select('id,position,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation')
-      .eq('exam_id', exam.id)
-      .order('position', { ascending: true });
-    if (questionsError) throw questionsError;
+    const questions = await fetchGuestBankQuestions(supabase, exam.id, 'id,position,subject,question_text,option_a,option_b,option_c,option_d,correct_option,explanation');
 
     const paper = selectCbtPaperQuestions(questions || [], subjects, String(req.body?.paperSeed || '').slice(0, 128));
     if (!paper.length) return res.status(422).json({ error: 'This CBT exam has no questions for the selected subjects.' });
@@ -2678,7 +2801,8 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
   } catch (error) {
     console.error('Guest CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
-    res.status(400).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
+    const status = /No questions are available for:/i.test(message) ? 422 : 400;
+    res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
   }
 });
 
