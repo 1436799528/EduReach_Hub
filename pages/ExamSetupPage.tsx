@@ -214,7 +214,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         ...compulsoryEntries.map((entry) => entry.subject),
         ...defaultSubjects.filter((subject) => !compulsoryEntries.some((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))),
       ];
-      return withCompulsory.slice(0, limits.maxSubjects);
+      return withCompulsory.slice(0, exam === 'jamb' ? Math.min(4, limits.maxSubjects) : limits.maxSubjects);
     });
     setQuestionCount((current) => current ?? Math.min(20, bank?.totalQuestions || 20));
   }, [availability, bank]);
