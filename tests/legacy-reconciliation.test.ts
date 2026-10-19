@@ -74,7 +74,7 @@ test('legacy comprehensive banks are reconciled into Practice Banks with history
     await db.exec(`
       insert into public.exam_questions (exam_id, subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, marks, position, source_type, source_name, source_year, review_status, format_verified, response_type, difficulty)
       values
-        ('${practiceJambId}', 'Biology', '  LEGACY jamb biology q1 - UNIQUE LEGACY TEXT  ', 'X','Y','Z','W','A','existing dest with whitespace/case variant',1, 999, 'original_practice', 'EduReach original', 2026, 'needs_review', false, 'single_choice', 'moderate')
+        ('${practiceJambId}', 'Biology', '  LEGACY jamb biology q1 - UNIQUE LEGACY TEXT  ', 'X','Y','Z','W','A','existing dest with whitespace/case variant',1, 10000, 'original_practice', 'EduReach original', 2026, 'needs_review', false, 'single_choice', 'moderate')
     `);
 
     const legacyQ1Id = (await db.query<{ id: string }>(`select id from public.exam_questions where exam_id='${legacyJambId}' and position=1 limit 1`)).rows[0].id;
