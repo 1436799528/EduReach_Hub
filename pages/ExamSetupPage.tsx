@@ -17,6 +17,7 @@ import { fetchCbtBank, fetchCbtExams, fetchPastQuestionResources, fetchPostUtmeI
 import { useAuth } from '../src/lib/auth';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { userFacingError } from '../lib/errors';
+import { WAEC_SUBJECT_GROUPS, waecSubjectGroup, isWaecEnglishSubject } from '../src/data/waecSubjects';
 import {
   DEFAULT_CBT_LIMITS,
   describeSession,
@@ -103,6 +104,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities'>('General');
+  const [pendingPracticeSubject, setPendingPracticeSubject] = useState('');
 
   // Mock configuration — the governed combination for a programme.
   const [department, setDepartment] = useState(jambDepartments[0]);
@@ -537,20 +539,69 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     </div>
                     <div className="er-setup-full-width">
                       <span className="er-setup-label">Subjects ({practiceSubjects.length} of {limits.maxSubjects} selected){compulsoryEnglish ? ' · English compulsory' : ''}</span>
-                      <div className="er-setup-subject-chips">
-                        {visiblePracticeAvailability.map((entry) => {
-                          const checked = practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject));
+                      <div className="er-setup-form-grid">
+                        <label className="er-setup-full-width">
+                          <span className="er-setup-label">Add a subject from this question bank</span>
+                          <select
+                            className="admin-select"
+                            value={pendingPracticeSubject}
+                            onChange={(event) => setPendingPracticeSubject(event.target.value)}
+                            aria-label="Choose a subject to add"
+                          >
+                            <option value="">Choose an available subject…</option>
+                            {exam === 'waec'
+                              ? WAEC_SUBJECT_GROUPS.map((group) => {
+                                  const entries = visiblePracticeAvailability.filter((entry) => waecSubjectGroup(entry.subject) === group
+                                    && !practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)));
+                                  return entries.length ? (
+                                    <optgroup key={group} label={group}>
+                                      {entries.map((entry) => <option key={entry.subject} value={entry.subject}>{entry.subject} ({entry.questionCount} questions)</option>)}
+                                    </optgroup>
+                                  ) : null;
+                                })
+                              : visiblePracticeAvailability
+                                  .filter((entry) => !practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)))
+                                  .map((entry) => <option key={entry.subject} value={entry.subject}>{entry.subject} ({entry.questionCount} questions)</option>)}
+                          </select>
+                        </label>
+                        <div className="er-setup-full-width">
+                          <button
+                            type="button"
+                            className="hub-outline-btn"
+                            disabled={!pendingPracticeSubject || practiceSubjects.length >= limits.maxSubjects}
+                            onClick={() => {
+                              if (pendingPracticeSubject) {
+                                togglePracticeSubject(pendingPracticeSubject);
+                                setPendingPracticeSubject('');
+                              }
+                            }}
+                          >Add subject</button>
+                        </div>
+                      </div>
+                      <div className="er-setup-subject-chips" aria-label="Selected subjects">
+                        {practiceSubjects.map((subject) => {
+                          const entry = availability.find((item) => normalizeSubject(item.subject) === normalizeSubject(subject));
+                          if (!entry) return null;
+                          const compulsory = exam === 'waec'
+                            ? isWaecEnglishSubject(entry.subject)
+                            : /english/i.test(entry.subject);
                           return (
                             <label key={entry.subject} className="er-setup-subject-chip">
-                              <input type="checkbox" checked={checked} onChange={() => togglePracticeSubject(entry.subject)} />
-                              <span>{entry.subject}{/english/i.test(entry.subject) ? ' · compulsory' : ''}</span>
+                              <input
+                                type="checkbox"
+                                checked
+                                onChange={() => togglePracticeSubject(entry.subject)}
+                                disabled={compulsory}
+                                aria-label={compulsory ? `${entry.subject} is compulsory` : `Remove ${entry.subject}`}
+                              />
+                              <span>{entry.subject}{compulsory ? ' · compulsory' : ''}</span>
                               <b className="er-chip-count">{entry.questionCount}</b>
                             </label>
                           );
                         })}
                       </div>
                       <p className="er-setup-field-note">
-                        <Info size={14} /> Every subject listed has questions in this bank — the number beside it is how many. English is compulsory when available in this bank.
+                        <Info size={14} /> Only subjects returned by this question bank can be selected. Counts show stored bank availability, not official-source verification. {exam === 'waec' ? 'WAEC subjects are grouped for easier browsing; English is compulsory when the bank provides an English subject.' : 'English remains compulsory when available in this bank.'}
                       </p>
                     </div>
 
