@@ -9,6 +9,7 @@ const TERMS: Record<Exclude<WaecSubjectGroup, 'Other'>, string[]> = {
 };
 export function waecSubjectGroup(subject: string): WaecSubjectGroup {
   const value = String(subject || '').trim().toLowerCase();
+  if (value.includes('literature')) return 'Arts & Humanities';
   for (const group of WAEC_SUBJECT_GROUPS) {
     if (group !== 'Other' && TERMS[group].some((term) => value.includes(term))) return group;
   }
