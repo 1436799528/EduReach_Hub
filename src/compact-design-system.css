@@ -110,7 +110,9 @@ input.hub-input,select.hub-input,textarea.hub-input{min-height:34px!important;fo
   .hub-shell{font-size:13px}
   .hub-shell h1,.hub-shell h2,.hub-shell h3{line-height:1.25}
   .hub-home-intro{padding:10px 0 12px!important}
-  .hub-home-intro h1{font-size:19px!important}
+  /* A phone is the primary CBT surface. The hero stays a display heading
+     there; the old 19px override made it smaller than its own paragraph. */
+  .hub-home-intro h1{font-size:clamp(26px,7vw,30px)!important}
   .hub-home-search{height:34px!important}
   .hub-cbt-service-card{height:70px!important;min-height:70px!important}
   .hub-cbt-brand-area{width:70px!important;flex-basis:70px!important}

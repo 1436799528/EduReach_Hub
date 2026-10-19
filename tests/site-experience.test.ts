@@ -119,6 +119,8 @@ test('the home page leads with a display headline and a touch-sized action', () 
     'the compact layer does not flatten the hero to a card label',
   );
   assert.match(density, /\.hub-home-intro p\{[^}]*font-size:15px!important/, 'the hero paragraph is readable body copy');
+  assert.doesNotMatch(density, /\.hub-home-intro h1\{font-size:19px/, 'the phone breakpoint does not shrink the hero below its paragraph');
+  assert.match(density, /\.hub-home-intro h1\{font-size:clamp\(26px,7vw,30px\)!important\}/, 'the phone hero keeps a display size');
   const css = read('src/home-card-first.css');
   assert.match(css, /\.hub-home-actions \.hub-primary-btn[^{]*\{[^}]*min-height:44px/, 'the primary action is a touch target');
 });
