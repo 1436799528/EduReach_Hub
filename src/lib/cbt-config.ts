@@ -11,6 +11,10 @@ export type CatalogExam = {
   description: string | null;
   duration_minutes: number;
   institution_id?: string | null;
+  /** Present when the catalogue came from GET /api/cbt/exams (availability-aware). */
+  question_count?: number;
+  subject_count?: number;
+  subjects?: Array<{ subject: string; questionCount: number }>;
 };
 
 export type SetupExamKey = 'jamb' | 'waec' | 'neco' | 'post-utme';
@@ -19,13 +23,46 @@ export type SetupExamKey = 'jamb' | 'waec' | 'neco' | 'post-utme';
 export const MIN_CHOSEN_MINUTES = 15;
 
 /**
+ * Could a student actually start a session from this bank?
+ *
+ * Only judges what the catalogue payload knows: when availability counts are
+ * present (GET /api/cbt/exams), a startable bank holds at least the minimum
+ * session size across at least one subject, and a JAMB bank must contain the
+ * compulsory English pool. Without counts (legacy/local-preview catalogues)
+ * the bank cannot be judged here and is treated as startable — the bank
+ * payload loaded afterwards remains the final arbiter.
+ */
+export function isStartableBank(exam: CatalogExam, key: SetupExamKey, minQuestions = 5): boolean {
+  if (typeof exam.question_count !== 'number') return true;
+  if (exam.question_count < minQuestions) return false;
+  const subjectEntries = exam.subjects ?? null;
+  const subjectTotal = subjectEntries ? subjectEntries.filter((entry) => entry.questionCount > 0).length : exam.subject_count;
+  if (typeof subjectTotal === 'number' && subjectTotal < 1) return false;
+  if (key === 'jamb' && subjectEntries) {
+    return subjectEntries.some((entry) => entry.questionCount > 0 && normalizeSubject(entry.subject) === 'english');
+  }
+  return true;
+}
+
+/** Deterministic catalogue order: deepest servable bank first, never "newest row wins". */
+function compareCatalogExams(a: CatalogExam, b: CatalogExam): number {
+  const byQuestions = (b.question_count ?? -1) - (a.question_count ?? -1);
+  if (byQuestions !== 0) return byQuestions;
+  const byTitle = String(a.title).localeCompare(String(b.title));
+  if (byTitle !== 0) return byTitle;
+  return String(a.id).localeCompare(String(b.id));
+}
+
+/**
  * Resolve the concrete production exam behind a body-level setup page.
  *
- * Precedence: an explicit `?exam=<id>` deep link (used by the question-bank
- * and past-question cards), then the active exam whose body/title best matches
- * the configured body. For JAMB the compulsory Use of English pool is
- * preferred, so starting JAMB with English selected retrieves the approved
- * English question set instead of an arbitrary JAMB bank.
+ * Precedence: an explicit `?exam=<id>` deep link (the student/card chose that
+ * bank; the setup page explains if it cannot be started), then the startable
+ * bank with the deepest question pool for the body. Resolution must never
+ * depend on catalogue row order: a newly created near-empty bank previously
+ * hijacked the default JAMB route because the catalogue was newest-first and
+ * the old "English pool" heuristic inspected `cbt_exams.subject`, which is
+ * "Multiple subjects" for every multi-subject bank.
  */
 export function resolveSetupExam(exams: CatalogExam[], exam: SetupExamKey, requestedId: string | null): CatalogExam | null {
   if (requestedId) {
@@ -38,11 +75,8 @@ export function resolveSetupExam(exams: CatalogExam[], exam: SetupExamKey, reque
     return value.includes(exam);
   });
   if (!bodyMatches.length) return null;
-  if (exam === 'jamb') {
-    const english = bodyMatches.find((item) => String(item.subject || '').toLowerCase().includes('english'));
-    if (english) return english;
-  }
-  return bodyMatches[0];
+  const ranked = [...bodyMatches].sort(compareCatalogExams);
+  return ranked.find((item) => isStartableBank(item, exam)) ?? ranked[0];
 }
 
 /** Allowed duration choices for a configured exam, always including its default. */
@@ -89,9 +123,40 @@ export type CbtSessionConfig = {
 
 export type CbtPlanEntry = { subject: string; questions: number; first: number; last: number };
 
-/** Subject names differ only by case/whitespace edge cases; compare them canonically. */
+/**
+ * Canonical subject key for every comparison (selection, filters, coverage).
+ *
+ * Banks, static catalogues and course guides spell the same subject three
+ * ways — "Use of English" / "English Language" / "English", and
+ * "Literature-in-English" / "Literature in English". Comparing raw labels
+ * made real bank subjects vanish from filtered lists, so punctuation and the
+ * English aliases collapse to one key. Display names are never rewritten;
+ * only comparisons use this. Mirrors the SQL canonicalisation in
+ * `plan_cbt_paper` / `start_cbt_attempt_configured`.
+ */
 export function normalizeSubject(value: string): string {
-  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const key = String(value || '').trim().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').toLowerCase();
+  if (key === 'use of english' || key === 'english language' || key === 'english') return 'english';
+  return key;
+}
+
+export function isEnglishSubject(value: string): boolean {
+  return normalizeSubject(value) === 'english';
+}
+
+/**
+ * Compulsory subjects, by exam body — product rule, enforced identically by
+ * the wizard and (for JAMB) by `start_cbt_attempt_configured`. Use of
+ * English is compulsory for JAMB UTME in both practice and mock mode. WAEC,
+ * NECO and Post-UTME impose no compulsory subject in EduReach practice/mock
+ * sessions; their official rules are not JAMB's and must not be copied over.
+ * Returns canonical subject keys (see normalizeSubject).
+ */
+export function compulsorySubjectKeys(examBodyOrKey: string): string[] {
+  const body = String(examBodyOrKey || '').trim().toUpperCase();
+  if (body.includes('POST')) return [];
+  if (body === 'JAMB' || body === 'UTME' || body.includes('JAMB')) return ['english'];
+  return [];
 }
 
 /**
@@ -177,9 +242,19 @@ export function validateSession(
   config: CbtSessionConfig,
   availability: Array<{ subject: string; questionCount: number }>,
   limits: CbtLimits = DEFAULT_CBT_LIMITS,
+  compulsoryKeys: string[] = [],
 ): string | null {
   if (!config.subjects.length) return 'Choose at least one subject to practise.';
   if (config.subjects.length > limits.maxSubjects) return `Choose no more than ${limits.maxSubjects} subjects.`;
+  const missingCompulsory = compulsoryKeys.filter(
+    (key) => !config.subjects.some((subject) => normalizeSubject(subject) === key),
+  );
+  if (missingCompulsory.length) {
+    const names = missingCompulsory.map(
+      (key) => availability.find((entry) => normalizeSubject(entry.subject) === key)?.subject ?? 'Use of English',
+    );
+    return `${names.join(', ')} is compulsory for this examination. Add it before starting.`;
+  }
   if (config.mode === 'practice') {
     if (!Number.isFinite(config.questionCount) || config.questionCount < limits.minQuestions) {
       return `Choose at least ${limits.minQuestions} questions.`;

@@ -13,11 +13,12 @@ import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
-import { fetchCbtExams } from '../src/lib/api';
+import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../src/lib/api';
+import { isSupabaseConfigured } from '../src/lib/supabase';
 import { SkeletonRows } from '../src/components/Skeleton';
 import CbtHistoryPanel from '../src/components/CbtHistoryPanel';
 
-type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number };
+type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number; question_count?: number; subject_count?: number };
 
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
@@ -64,7 +65,12 @@ export default function CbtPage() {
     setLoading(true);
     setError('');
     try {
-      setExams((await fetchCbtExams()) as Exam[]);
+      const catalogue = (isSupabaseConfigured
+        ? (await fetchCbtExamsWithAvailability()) as unknown as Exam[]
+        : (await fetchCbtExams()) as Exam[]);
+      // Banks too small to start a session are not listed as sittable tests.
+      setExams(catalogue.filter((exam) => typeof exam.question_count !== 'number'
+        || (exam.question_count >= 5 && (exam.subject_count ?? 1) >= 1)));
     } catch (value) {
       setError(userFacingError(value, 'Unable to load CBT exams.'));
     } finally {
@@ -201,7 +207,7 @@ export default function CbtPage() {
                     <CardIdentityMark value={exam.exam_body} type="service" />
                     <div className="er-bank-copy">
                       <span className="er-bank-eyebrow">
-                        {exam.exam_body} • {exam.subject}
+                        {exam.exam_body} • {exam.subject}{typeof exam.question_count === 'number' ? ` • ${exam.question_count} questions` : ''}
                       </span>
                       <h3>{exam.title}</h3>
                       {exam.description && <span className="er-bank-desc">{exam.description}</span>}

@@ -3,7 +3,8 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { identityClassFor } from './CardIdentityMark';
 import { SkeletonTiles } from './Skeleton';
-import { fetchCbtExams } from '../lib/api';
+import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../lib/api';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export type ExamSimulator = {
   id: string;
@@ -58,10 +59,15 @@ export default function ExamSimulatorGrid({
 
   useEffect(() => {
     let active = true;
-    void fetchCbtExams()
+    void (isSupabaseConfigured ? fetchCbtExamsWithAvailability() : fetchCbtExams())
       .then((items: any[]) => {
         if (!active) return;
-        setExams(items.map((exam) => {
+        // Never advertise a bank a student cannot start (too few questions
+        // for the minimum session, or no subjects at all). Catalogues
+        // without counts (local preview) cannot be judged and pass through.
+        const startable = items.filter((exam) => typeof exam.question_count !== 'number'
+          || (exam.question_count >= 5 && (exam.subject_count ?? 1) >= 1));
+        setExams(startable.map((exam) => {
           const mode = String(exam.exam_body || exam.subject || 'CBT').trim();
           return {
             id: String(exam.id),
@@ -69,7 +75,9 @@ export default function ExamSimulatorGrid({
             mode,
             logo: brandLogo(mode),
             desc: String(exam.description || `Practice ${mode} questions in the EduReach CBT environment.`),
-            meta: `${Number(exam.duration_minutes || 0)} min timed practice`,
+            meta: typeof exam.question_count === 'number'
+              ? `${Number(exam.duration_minutes || 0)} min timed practice · ${exam.question_count} questions`
+              : `${Number(exam.duration_minutes || 0)} min timed practice`,
             guideHref: guideHref(mode),
           };
         }));

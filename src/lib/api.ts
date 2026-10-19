@@ -1600,6 +1600,13 @@ export type CbtBankPayload = {
   subjects: CbtBankSubject[];
   totalQuestions: number;
   limits: { minQuestions: number; maxQuestions: number; minMinutes: number; maxMinutes: number; maxSubjects: number } | null;
+  /** Server-owned session rules (single source with start_cbt_attempt_configured). */
+  rules?: {
+    compulsorySubjects: string[];
+    compulsoryMissing?: boolean;
+    minSubjects: number;
+    maxSubjects: number;
+  };
 };
 
 export type CbtHistoryItem = {
