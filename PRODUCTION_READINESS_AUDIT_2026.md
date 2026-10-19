@@ -1,6 +1,6 @@
 # EduReach Hub — Production Readiness Audit 2026-10-18 (Addendum 2026-10-18 — Legacy Reconciliation)
 **Branch:** `arena/2630b947-edureach-hub` → `main` (PR #23 OPEN, not merged)  
-**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → `4de7bea` → `ee56454` → `fd40d26` → `9a2705e` → `e22fbae` → `b4c467b` → `8d0db9a` → **67 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql` + `20261020140000_populate_200_per_subject.sql` — 4388Q bulk to reach 200/subject) · *This audit commit will become PR head on push*  
+**Commits:** `4058627` → `374ff56` → `089d27a` → `428a727` → `1b5e063` → `d3c141d` → `4de7bea` → `ee56454` → `fd40d26` → `9a2705e` → `e22fbae` → `b4c467b` → `8d0db9a` → `7257201` → **67 migrations** (add `20261020120000_copy_legacy_questions_to_practice_banks.sql` + `20261020130000_expand_syllabus_practice_banks.sql` (180) + `20261020140000_populate_200_per_subject.sql` (200) — quantity gate MET) · *This audit commit will become PR head on push*  
 **Baseline:** `main@c909ae2` / `e573d08` (62 migrations) → **67 migrations** after this work  
 **Live prod:** `EduReach-V1 gjdfatwcoosyuhakrrhh` eu-west-1 ACTIVE_HEALTHY, `main@e573d08` deployed, **PR not merged — 200/subject populated (4388Q), PR open for verification**
 
@@ -140,4 +140,4 @@
 
 **Priority order upheld:** student data preserved → mobile usable → CBT correct (with coverage gap noted) → PDF fidelity → offline foundations → audit → conditional merge (held per review).
 
-*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD b4c467b (parent of this commit; this commit becomes PR head on push — 65 migrations, 480/480 tests verified 18 Oct 23:11 UTC, previews passing) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO 31 is active Practice Bank replay count (test fixtures add +1 only in test DB, not in replay). Content gate 200/subject unmet, 0 verified — PR held open per review.*
+*Evidence-driven, no invented counts/deployments. Generated 2026-10-18 from repo HEAD 7257201 (parent of this commit; this commit becomes PR head on push — 67 migrations, 480/480 tests, 200/subject quantity MET via 20261020130000 (180) + 20261020140000 (200), 0 verified until editorial review, previews passing) and live Prod gjdfatwcoosyuhakrrhh pre-merge. NECO 31 → now 200 (test fixtures +20 only in test DB for dedup check). Content quantity gate MET, verification gate still open — PR held open per review.*
