@@ -57,6 +57,10 @@ NABTEB, NYSC — never substitute a generic icon), `ExamSimulatorGrid`,
 **Exam and tools** — `CbtResultSlip`, `ScientificCalculator`,
 `dashboard/CgpaCalculatorCard`, `dashboard/SchoolFinderCard`.
 
+**Retention** — `ContinuePracticeCard` (the home resume card; it delegates the
+expiry decision to `cbtAttemptState`, so it cannot offer a paper the server has
+expired).
+
 **Admin** — `AdminKit` (`StatusBadge`, `Metric`, `TableSkeleton`,
 `RowSkeleton`, `AdminEmptyState`, `AuditTimeline`, `BarStat`, `SectionLabel`,
 `RequestActions`, `TimeAgo`, `useAdminHealth`), `AdminRichTextEditor`,
