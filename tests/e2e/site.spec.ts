@@ -40,7 +40,7 @@ for (const path of ['/not-a-page', '/news/%E0%A4%A', '/schools/%invalid', '/serv
     await expect(page.getByRole('heading', { name: 'Page Not Found' })).toBeVisible();
   });
 }
-for (const path of ['/dashboard', '/dashboard/services', '/dashboard/cbt', '/dashboard/cbt/results', '/dashboard/tools', '/profile', '/settings', '/services/track', '/admin', '/admin/users', '/admin/cbt', '/admin/content-manager']) {
+for (const path of ['/dashboard', '/dashboard/services', '/dashboard/cbt', '/dashboard/cbt/results', '/dashboard/tools', '/profile', '/settings', '/services/track', '/admin', '/admin/users', '/admin/cbt', '/admin/content-manager', '/admin/question-imports']) {
   test(`anonymous user cannot enter ${path}`, async ({ page }) => {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login(?:\?|$)/);

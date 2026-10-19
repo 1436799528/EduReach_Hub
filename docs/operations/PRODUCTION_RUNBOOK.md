@@ -39,7 +39,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-69 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
+70 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
 CLI against a **scratch project first**:
 
 ```bash

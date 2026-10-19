@@ -69,6 +69,7 @@ All admin paths require a signed-in staff account with the matching capability.
 | `/admin/analytics` | Traffic and usage analytics |
 | `/admin/content-manager` | Bulk content tables |
 | `/admin/pdf-bank` | Past-question documents |
+| `/admin/question-imports` | Upload a past paper, review extracted questions, save approved ones |
 
 ## Placeholders
 

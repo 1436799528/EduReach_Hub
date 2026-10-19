@@ -24,6 +24,7 @@ import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexableP
 import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
+import { registerQuestionImportRoutes } from './src/server/question-import/routes';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -191,8 +192,16 @@ app.get('/api/health/ready', async (_req, res) => {
 // Parse uploads only after authorization, using the endpoint's larger limit.
 const jsonBody = express.json({ limit: '1mb' });
 app.use((req, res, next) => {
-  if (req.method === 'POST' && (req.path === '/api/admin/uploads' || req.path === '/api/admin/pdf-bank/upload')) return next();
+  if (req.method === 'POST' && (req.path === '/api/admin/uploads' || req.path === '/api/admin/pdf-bank/upload' || req.path === '/api/admin/question-imports')) return next();
   return jsonBody(req, res, next);
+});
+
+registerQuestionImportRoutes(app, {
+  requireCapability,
+  rateLimitFor,
+  adminUploadRateLimit: RATE_LIMIT_RULES.adminUpload,
+  adminImportRateLimit: RATE_LIMIT_RULES.adminImport,
+  getSupabase: getServerSupabase,
 });
 
 app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), async (req, res) => {

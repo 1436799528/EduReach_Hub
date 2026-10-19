@@ -1121,6 +1121,196 @@ export async function routeAdminPdf(id: string, values: Record<string, unknown>)
   return body.item;
 }
 
+// --- Past-question imports ------------------------------------------------
+// The admin console reads these through the staff API; the tables and the
+// storage bucket are not reachable with the publishable key.
+
+export type AdminQuestionImport = {
+  id: string;
+  exam_id: string;
+  exam_body: string;
+  subject: string;
+  paper_year: number | null;
+  source_name: string | null;
+  source_url: string | null;
+  source_verified: boolean;
+  original_filename: string;
+  mime_type: string;
+  file_bytes: number;
+  status: 'queued' | 'processing' | 'extracted' | 'failed' | 'completed' | 'archived';
+  attempts: number;
+  extraction_error: string | null;
+  extraction_warnings: string[];
+  item_count: number;
+  approved_count: number;
+  imported_count: number;
+  duplicate_count: number;
+  uploaded_by: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+};
+
+export type AdminQuestionImportItem = {
+  id: string;
+  source_index: number;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  option_e: string | null;
+  correct_option: 'A' | 'B' | 'C' | 'D' | 'E' | null;
+  explanation: string | null;
+  passage: string | null;
+  topic: string | null;
+  raw_text: string | null;
+  review_status: 'pending' | 'approved' | 'rejected' | 'imported';
+  issues: string[];
+  duplicate_of: string | null;
+  question_id: string | null;
+};
+
+export type AdminQuestionImportDetail = {
+  item: AdminQuestionImport;
+  items: AdminQuestionImportItem[];
+  summary: { pending: number; approved: number; rejected: number; imported: number };
+};
+
+export async function fetchAdminQuestionImports(): Promise<AdminQuestionImport[]> {
+  const body = await adminApiFetch<{ items: AdminQuestionImport[] }>('/api/admin/question-imports');
+  return body.items || [];
+}
+
+export async function fetchAdminQuestionImport(id: string): Promise<AdminQuestionImportDetail> {
+  return await adminApiFetch<AdminQuestionImportDetail>(`/api/admin/question-imports/${encodeURIComponent(id)}`);
+}
+
+/**
+ * Corrects the bank/subject/year association of an import. The server refuses
+ * this once any question has been saved, because the bank rows carry the
+ * provenance the change would rewrite.
+ */
+export async function updateAdminQuestionImport(
+  id: string,
+  patch: {
+    examId?: string;
+    subject?: string;
+    paperYear?: number | null;
+    sourceName?: string | null;
+    sourceUrl?: string | null;
+    sourceVerified?: boolean;
+  },
+): Promise<AdminQuestionImport> {
+  const body = await adminApiFetch<{ item: AdminQuestionImport }>(
+    `/api/admin/question-imports/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(patch) },
+  );
+  return body.item;
+}
+
+export const IMPORT_UPLOAD_ACCEPT = [
+  '.pdf', '.txt', '.md', '.markdown', '.csv', '.tsv', '.json', '.docx', '.xlsx', '.zip',
+].join(',');
+
+/**
+ * Uploads with XMLHttpRequest rather than fetch because only XHR reports
+ * upload progress. Extraction runs after the bytes arrive; the review screen
+ * polls for its result, so this promise settles as soon as the file is stored.
+ */
+export async function uploadAdminQuestionImport(
+  input: {
+    dataUrl: string;
+    filename: string;
+    examId: string;
+    subject: string;
+    paperYear: number | string | null;
+    sourceName?: string;
+    sourceUrl?: string;
+    sourceVerified?: boolean;
+  },
+  onProgress?: (fraction: number) => void,
+): Promise<{ item: AdminQuestionImport; duplicate: boolean }> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  return await new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', apiUrl('/api/admin/question-imports'));
+    request.setRequestHeader('Content-Type', 'application/json');
+    request.setRequestHeader('Authorization', headers.Authorization);
+    request.timeout = 120_000;
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total) onProgress?.(event.loaded / event.total);
+    };
+    request.onload = () => {
+      let body: Record<string, unknown> | null = null;
+      try { body = JSON.parse(request.responseText || '{}'); } catch { body = null; }
+      if (request.status >= 200 && request.status < 300 && body?.item) {
+        resolve({ item: body.item as AdminQuestionImport, duplicate: Boolean(body.duplicate) });
+        return;
+      }
+      reject(new Error(userFacingError(body?.error, 'Unable to upload that file.')));
+    };
+    request.onerror = () => reject(new Error('The upload could not reach EduReach. Check your connection.'));
+    request.ontimeout = () => reject(new Error('The upload timed out. Check your connection and try again.'));
+    request.send(JSON.stringify(input));
+  });
+}
+
+export async function retryAdminQuestionImport(id: string): Promise<void> {
+  await adminApiFetch(`/api/admin/question-imports/${encodeURIComponent(id)}/retry`, { method: 'POST' });
+}
+
+export async function updateAdminQuestionImportItem(
+  importId: string,
+  itemId: string,
+  patch: Partial<Pick<AdminQuestionImportItem, 'question_text' | 'option_a' | 'option_b' | 'option_c' | 'option_d' | 'option_e' | 'correct_option' | 'explanation' | 'passage' | 'topic'>>,
+): Promise<{ item: AdminQuestionImportItem; blocking: string[] }> {
+  return await adminApiFetch(`/api/admin/question-imports/${encodeURIComponent(importId)}/items/${encodeURIComponent(itemId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      questionText: patch.question_text,
+      optionA: patch.option_a,
+      optionB: patch.option_b,
+      optionC: patch.option_c,
+      optionD: patch.option_d,
+      optionE: patch.option_e,
+      correctOption: patch.correct_option,
+      explanation: patch.explanation,
+      passage: patch.passage,
+      topic: patch.topic,
+    }),
+  });
+}
+
+export async function reviewAdminQuestionImportItem(
+  importId: string,
+  itemId: string,
+  action: 'approve' | 'reject' | 'reset',
+): Promise<AdminQuestionImportItem> {
+  const body = await adminApiFetch<{ item: AdminQuestionImportItem }>(
+    `/api/admin/question-imports/${encodeURIComponent(importId)}/items/${encodeURIComponent(itemId)}/review`,
+    { method: 'POST', body: JSON.stringify({ action }) },
+  );
+  return body.item;
+}
+
+export async function commitAdminQuestionImport(id: string): Promise<{ inserted: number; duplicates: number; incomplete: number; remaining: number }> {
+  const body = await adminApiFetch<{ result: { inserted: number; duplicates: number; incomplete: number; remaining: number } }>(
+    `/api/admin/question-imports/${encodeURIComponent(id)}/commit`,
+    { method: 'POST' },
+  );
+  return body.result;
+}
+
+export async function deleteAdminQuestionImport(id: string): Promise<void> {
+  await adminApiFetch(`/api/admin/question-imports/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+export async function fetchAdminQuestionImportSource(id: string): Promise<{ url: string; filename: string }> {
+  return await adminApiFetch<{ url: string; filename: string }>(`/api/admin/question-imports/${encodeURIComponent(id)}/source`);
+}
+
 export type PublicPdfDocument = {
   id: string;
   title: string;

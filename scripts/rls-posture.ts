@@ -116,6 +116,14 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Central PDF intake and routing metadata contains private storage paths; all upload, review, signing and routing operations go through authenticated staff APIs.',
   },
   {
+    table: 'question_imports', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Import jobs hold private storage paths and unreviewed answer keys. Upload, progress and retry are exposed only through the staff import API.',
+  },
+  {
+    table: 'question_import_items', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Extracted questions before review. A publishable key must never read a candidate answer key; approval and saving run through commit_question_import().',
+  },
+  {
     table: 'edureach_audit_logs', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
     why: 'Legacy audit trail, server-only.',
   },

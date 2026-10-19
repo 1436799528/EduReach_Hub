@@ -27,6 +27,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | CBT-3 | Guest practice with server scoring | `/api/cbt/guest-submit` | ✅ | Rate-limited |
 | CBT-4 | Results and result slip | `/cbt/results`, `CbtResultSlip` | ✅ | Dashboard Review uses the authenticated result route; practice and mock results offer Keep/Delete with a confirmed, closable dialog; deletion is owner-scoped |
 | CBT-5 | Exam and question-bank admin | `/admin/cbt` | ✅ | Content management only; bank population is operational |
+| IMP-1 | Past-question import with human review | `/admin/question-imports`, `/api/admin/question-imports/*` | ✅ | PDF, DOCX, XLSX, CSV/TSV, JSON, text and ZIP; originals in a private bucket; extracted items stay in staging until approved and saved through `commit_question_import()`; duplicates skipped; no answer key is invented |
 | TOOL-1 | Screening calculator | `/screening-calculator` | ✅ | Client-side, documented formula |
 | TOOL-2 | CGPA calculator with saved terms | `/tools/cgpa-calculator`, `student_cgpa_*` | ✅ | Saved per student |
 | SRCH-1 | Cross-entity search | `/search` | 🟡 | Covers services/updates/etc. from loaded datasets; not yet a server-side index |
