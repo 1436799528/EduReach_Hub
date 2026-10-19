@@ -1,10 +1,7 @@
 import { userFacingError } from '../lib/errors';
 import {
   ArrowRight,
-  BookOpen,
   Calculator,
-  CheckCircle2,
-  Clock3,
   FileQuestion,
   Trophy,
 } from 'lucide-react';
@@ -114,7 +111,7 @@ export default function CbtPage() {
               <span className="hub-eyebrow" style={{ color: '#b14933', fontWeight: 560 }}>QUESTION BANKS</span>
               <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '2px 0 4px' }}>CBT Practice</h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
-                Pick a question bank below. Each test opens a short setup page before the timed CBT simulator and on-screen calculator.
+                Choose a bank, then pick your subjects and the number of questions.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -124,41 +121,6 @@ export default function CbtPage() {
               <a className="hub-primary-btn" href="/dashboard/cbt" style={{ textDecoration: 'none' }}>
                 <Trophy size={14} /> My Results
               </a>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px',
-              padding: '16px 20px',
-              margin: '0 0 22px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Clock3 size={20} style={{ color: '#b14933', flexShrink: 0 }} />
-              <div>
-                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Real-Time Exam Timer</strong>
-                <span style={{ fontSize: '12px', color: '#5e6c82' }}>Countdown, auto-submit and calculator</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CheckCircle2 size={20} style={{ color: '#047857', flexShrink: 0 }} />
-              <div>
-                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Instant Evaluation</strong>
-                <span style={{ fontSize: '12px', color: '#5e6c82' }}>Accurate scoring and percentages</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <BookOpen size={20} style={{ color: '#B45309', flexShrink: 0 }} />
-              <div>
-                <strong style={{ display: 'block', fontSize: '13px', color: '#0f172a' }}>Detailed Corrections</strong>
-                <span style={{ fontSize: '12px', color: '#5e6c82' }}>Explanations for all options</span>
-              </div>
             </div>
           </div>
 
@@ -206,7 +168,7 @@ export default function CbtPage() {
                     <CardIdentityMark value={exam.exam_body} type="service" />
                     <div className="er-bank-copy">
                       <span className="er-bank-eyebrow">
-                        {exam.exam_body} • {exam.subject}{typeof exam.question_count === 'number' ? ` • ${exam.question_count} questions` : ''}
+                        {exam.exam_body} • {exam.subject}
                       </span>
                       <h3>{exam.title}</h3>
                       {exam.description && <span className="er-bank-desc">{exam.description}</span>}
@@ -214,7 +176,7 @@ export default function CbtPage() {
                   </div>
 
                   <span className="hub-primary-btn er-bank-cta er-card-cta">
-                    Set up test <ArrowRight size={14} />
+                    Start practice <ArrowRight size={14} />
                   </span>
                 </a>
               ))}

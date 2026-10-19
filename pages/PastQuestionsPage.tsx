@@ -221,9 +221,9 @@ export default function PastQuestionsPage() {
         <div className="hub-container hub-narrow" style={{ maxWidth: '980px' }}>
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#b14933' }}>QUESTION LIBRARY</span>
+              <span className="hub-eyebrow" style={{ color: '#b14933' }}>Past questions</span>
               <h1>Past questions &amp; study materials</h1>
-              <p>Choose between timed CBT practice and EduReach material requests. Coverage reflects what is actually configured. Unavailable papers are never invented.</p>
+              <p>Practise a timed CBT paper, or request a paper that is not online yet.</p>
             </div>
             <BookOpen size={28} color="#b14933" aria-hidden="true" />
           </div>
@@ -247,15 +247,6 @@ export default function PastQuestionsPage() {
             <FilterPills options={filters} active={filter} onChange={changeFilter} ariaLabel="Past question examination filters" />
           </div>
 
-          <div className="er-library-note" role="note">
-            <strong>{view === 'CBT' ? 'CBT route' : 'Materials route'}</strong>
-            <span>
-              {view === 'CBT'
-                ? 'Choose a configured bank to set your subjects or school before entering the timed hall. The calculator remains inside the CBT experience.'
-                : 'Document materials that are not yet available on EduReach open our own request channel, so you stay inside EduReach and are never redirected to a third-party reading platform.'}
-            </span>
-          </div>
-
           {view === 'CBT' && (
             <div className="er-late-region er-late-region--library">
               {banks === null ? (
@@ -267,8 +258,8 @@ export default function PastQuestionsPage() {
                   <h2>{banks.length ? 'No matching CBT bank' : 'No CBT question banks available yet'}</h2>
                   <p>
                     {banks.length
-                      ? 'Try a different examination body, school or subject. You can also clear the search/filter to see everything.'
-                      : 'CBT question banks appear here as soon as they are published. You can still request past papers through the Papers & materials tab.'}
+                      ? 'Try a different exam body, school or subject.'
+                      : 'CBT banks appear here once they are published. You can still request a paper under Papers & materials.'}
                   </p>
                   {banks.length > 0 && search && (
                     <button type="button" className="hub-outline-btn" onClick={() => changeSearch('')}>Clear search</button>
@@ -302,7 +293,7 @@ export default function PastQuestionsPage() {
                 </div>
                 {library?.coverage?.length ? (
                   <span className="er-type-meta">
-                    {library.coverage.reduce((sum, row) => sum + Number(row.papers), 0)} verified paper(s) across {library.coverage.length} exam body(ies)
+                    {library.coverage.length} exam body{library.coverage.length === 1 ? '' : 'ies'} with published papers
                   </span>
                 ) : null}
               </div>
