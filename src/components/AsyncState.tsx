@@ -1,6 +1,7 @@
 import { AlertTriangle, Inbox, RefreshCw, WifiOff } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { classifyFailure } from '../lib/failures';
+import WaveLoader from './WaveLoader';
 
 /**
  * APP-4 - the shared empty / error / loading states.
@@ -31,6 +32,36 @@ export function EmptyState({
         {detail && <p>{detail}</p>}
       </div>
       {action && <div className="er-state-action">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * A named wait. Skeletons hold the layout while a request is young; once it is
+ * old enough to be worth explaining, this says what is being waited for and
+ * which operation it belongs to.
+ */
+export function LoadingState({
+  label,
+  detail,
+  compact = false,
+  className = '',
+}: {
+  label: string;
+  detail?: string;
+  compact?: boolean;
+  className?: string;
+}) {
+  const classes = ['er-state', 'er-state-loading', compact ? 'is-compact' : '', className]
+    .filter(Boolean)
+    .join(' ');
+  return (
+    <div className={classes} role="status" aria-live="polite">
+      <WaveLoader decorative />
+      <div>
+        <strong>{label}</strong>
+        {detail && <p>{detail}</p>}
+      </div>
     </div>
   );
 }
