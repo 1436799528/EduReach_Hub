@@ -1,12 +1,14 @@
 import {
   AlertTriangle, ArrowLeft, ArrowRight, Calculator, CheckCircle2, Clock3, Eraser,
-  Flag, Grid3X3, Loader2, LogOut, Send, X,
+  Flag, Grid3X3, LogOut, Send, X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ScientificCalculator from '../src/components/ScientificCalculator';
 import ConnectionBanner from '../src/components/ConnectionBanner';
 import { ErrorState } from '../src/components/AsyncState';
+import WaveLoader from '../src/components/WaveLoader';
 import { useAuth } from '../src/lib/auth';
+import { usePendingPhase } from '../src/lib/usePendingPhase';
 import {
   abandonConfiguredCbt, fetchCbtAttemptPaper, saveConfiguredCbtDraft, submitConfiguredCbt, trackEvent,
   type CbtAttemptPayload, type CbtQuestionPayload,
@@ -66,6 +68,9 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const [attempt, setAttempt] = useState<CbtAttemptPayload | null>(null);
   const [questions, setQuestions] = useState<CbtQuestionPayload[]>([]);
   const [loading, setLoading] = useState(true);
+  // UI-2: the paper is one request; if it never answers, the screen says so
+  // and offers the retry rather than spinning for the length of the exam.
+  const loadPhase = usePendingPhase(loading);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [marked, setMarked] = useState<Record<number, boolean>>({});
@@ -325,8 +330,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       <div className="er-exam-shell">
         <ConnectionBanner />
         <div className="er-exam-loading" role="status">
-          <Loader2 className="er-spin" size={22} aria-hidden="true" />
+          <WaveLoader decorative />
           <span>Preparing your paper…</span>
+          {loadPhase === 'stalled' && (
+            <button type="button" className="hub-outline-btn" onClick={() => void load()}>
+              Try again
+            </button>
+          )}
         </div>
       </div>
     );
@@ -482,7 +492,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               )}
             </div>
             <span className="er-exam-save-state" role="status">
-              {saveState === 'saving' && <><Loader2 className="er-spin" size={13} /> saving…</>}
+              {saveState === 'saving' && <><WaveLoader variant="inline" decorative /> saving…</>}
               {saveState === 'saved' && <><CheckCircle2 size={13} /> saved</>}
               {saveState === 'pending' && <><AlertTriangle size={13} /> saved on this device, will sync</>}
               {saveState === 'error' && <><AlertTriangle size={13} /> not saved</>}

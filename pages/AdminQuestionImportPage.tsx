@@ -20,7 +20,9 @@ import {
   type AdminQuestionImportItem,
   type CbtExamSummary,
 } from '../src/lib/api';
+import WaveLoader from '../src/components/WaveLoader';
 import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { usePendingPhase } from '../src/lib/usePendingPhase';
 
 const MAX_BYTES = 20 * 1024 * 1024;
 
@@ -102,6 +104,12 @@ export default function AdminQuestionImportPage() {
   const [busyItem, setBusyItem] = useState('');
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
   const [committing, setCommitting] = useState(false);
+
+  // UI-2: extraction is a server job that can take minutes on a large paper.
+  // The loader names it, and the retry appears only when the job has genuinely
+  // stopped making progress.
+  const extracting = Boolean(detail && ['queued', 'processing'].includes(detail.item.status));
+  const extractionPhase = usePendingPhase(extracting, { slowAfter: 2500, stalledAfter: 120_000 });
 
   const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -541,7 +549,15 @@ export default function AdminQuestionImportPage() {
             </div>
 
             {detail.item.status === 'queued' || detail.item.status === 'processing' ? (
-              <div className="admin-card empty-state" role="status">Reading the file and finding questions…</div>
+              <div className="admin-card empty-state" role="status">
+                <WaveLoader label={detail.item.status === 'queued' ? 'Waiting to start reading the file…' : 'Reading the file and finding questions…'} />
+                {extractionPhase === 'stalled' && (
+                  <>
+                    <p>This is taking longer than usual. The file stays in the queue; you can ask the server to retry it.</p>
+                    <button type="button" className="admin-btn" onClick={() => void retry()}>Retry extraction</button>
+                  </>
+                )}
+              </div>
             ) : !detail.items.length ? (
               <AdminEmptyState title="No questions in this import" hint="The file was read but no numbered multiple-choice questions were found. Open the original file and check the layout." />
             ) : (
@@ -836,7 +852,9 @@ export default function AdminQuestionImportPage() {
           </p>
           {exam && <p className="import-bank-hint">Saving adds questions to <strong>{exam.title}</strong> under {exam.exam_body}. The bank is available to students immediately after saving.</p>}
           <button type="button" className="admin-btn" onClick={() => void uploadAll()} disabled={uploading || !files.length || !examId || !subject.trim()}>
-            <Upload size={15} /> {uploading ? 'Uploading…' : files.length > 1 ? `Upload ${files.length} files` : 'Upload and extract'}
+            <Upload size={15} /> {uploading
+              ? <><WaveLoader variant="inline" decorative /> Uploading…</>
+              : files.length > 1 ? `Upload ${files.length} files` : 'Upload and extract'}
           </button>
 
           {uploads.length > 0 && (
@@ -845,7 +863,7 @@ export default function AdminQuestionImportPage() {
                 <li key={entry.key} className={`import-upload-${entry.status}`}>
                   <span>{entry.name}</span>
                   <progress value={entry.fraction} max={1} aria-label={`Upload progress for ${entry.name}`} />
-                  <small>{entry.message}</small>
+                  <small>{entry.status === 'uploading' ? <><WaveLoader variant="inline" decorative /> {entry.message}</> : entry.message}</small>
                 </li>
               ))}
             </ul>
@@ -859,7 +877,7 @@ export default function AdminQuestionImportPage() {
           <span>{imports.length} file{imports.length === 1 ? '' : 's'}</span>
         </div>
         {loading ? (
-          <div className="empty-state">Loading imports…</div>
+          <div className="empty-state"><WaveLoader label="Loading imports…" /></div>
         ) : !imports.length ? (
           <AdminEmptyState title="No past questions have been imported yet" hint="Upload a paper above. It stays in review until you approve its questions." />
         ) : (

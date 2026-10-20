@@ -2,7 +2,8 @@ import { ArrowRight, BookOpen, Calculator, Clock3, Info, Lock, Plus, RotateCcw, 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
-import { ErrorState, InlineNotice } from '../src/components/AsyncState';
+import { ErrorState, InlineNotice, LoadingState } from '../src/components/AsyncState';
+import WaveLoader from '../src/components/WaveLoader';
 import {
   jambSubjectCatalog,
   secondarySubjectCatalog,
@@ -10,6 +11,7 @@ import {
 } from '../src/data/examPreparation';
 import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
+import { usePendingPhase } from '../src/lib/usePendingPhase';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
@@ -105,6 +107,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // UI-2: the screen only claims to be loading while something is genuinely in
+  // flight, and it stops claiming it when the request settles or fails.
+  const catalogPhase = usePendingPhase(catalogLoading);
+  const bankLoading = Boolean(targetExam) && bank === null && bankError === null;
+  const bankPhase = usePendingPhase(bankLoading);
+  const startPhase = usePendingPhase(submitting);
+  const setupWait = catalogLoading ? catalogPhase : bankPhase;
 
   const limits = bank?.limits || DEFAULT_CBT_LIMITS;
   const availability = bank?.subjects || [];
@@ -556,6 +566,28 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </InlineNotice>
           )}
 
+          {(catalogLoading || bankLoading) && (
+            setupWait === 'stalled' ? (
+              <InlineNotice
+                tone="warning"
+                title="The question bank has not answered yet"
+                onRetry={() => void (catalogLoading ? resolveCatalogAndBank() : targetExam && loadBank(targetExam.id))}
+              >
+                This is taking longer than usual. Check your connection, then try again.
+              </InlineNotice>
+            ) : (
+              <LoadingState
+                className="er-setup-loading"
+                label={catalogLoading ? 'Loading question banks…' : 'Loading subjects…'}
+                detail={setupWait === 'slow'
+                  ? 'Still waiting for the server. This is usually a slow connection.'
+                  : catalogLoading
+                    ? 'Finding the question banks published for this examination.'
+                    : 'Fetching this bank’s subjects and question counts.'}
+              />
+            )
+          )}
+
           {targetExam && bank && (
             <>
               {/* Mode choice: the student decides what kind of session this is. */}
@@ -750,10 +782,20 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     onClick={() => void startSession()}
                     disabled={submitting || catalogLoading || compulsoryMissing || (mode === 'mock' && (uncovered.length > 0 || Boolean(mockBlockReason)))}
                   >
-                    {submitting ? 'Starting…' : mode === 'mock' ? 'Start mock examination' : 'Start practice'} <ArrowRight size={15} />
+                    {submitting ? (
+                      <><WaveLoader variant="inline" decorative /> Starting…</>
+                    ) : (
+                      <>{mode === 'mock' ? 'Start mock examination' : 'Start practice'} <ArrowRight size={15} /></>
+                    )}
                   </button>
                   <a className="hub-outline-btn" href="/past-questions"><BookOpen size={15} /> Browse past questions</a>
                 </div>
+                {startPhase === 'stalled' && (
+                  <p className="er-setup-field-note" role="status">
+                    The server is still preparing this paper. Keep this page open — the countdown only starts once it does.
+                    If nothing happens, <a href="/cbt">go back to the CBT Centre</a> and try again.
+                  </p>
+                )}
               </section>
             </>
           )}
