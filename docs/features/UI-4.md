@@ -145,22 +145,67 @@ below 4.5:1 (text) or 3:1 (a boundary that carries state alone).
 |---|---|
 | `npx tsc --noEmit` | clean |
 | `npm test` | **573/573** (8 new tests in `tests/interaction-states.test.ts`) |
-| `npm run build` | clean, `index-Bn-1R23d.css` 297.21 KB raw |
-| `npm run perf:audit` | 10/10 - entry 96.2/100, CSS **50.2/51**, critical path 206.7/210, all chunks 319.3/330 |
+| `npm run build` | clean, `index-Bl8ZycT-.css` 296.29 KB raw |
+| `npm run perf:audit` | 10/10 - entry 96.1/100, CSS **50.0/51**, critical path 206.5/210, all chunks 319.1/330 |
 | `scripts/a11y-audit.ts` | 0 blocking, 4 informational |
 | `npm run analytics:audit`, `schema:audit` | no blocking findings |
 | Compiled-cascade probe | `.hub-primary-btn:disabled` → `--er-disabled-bg`, `.hub-outline-btn` → `--er-primary`, `.er-mobile-bottom-nav a.active` → `--er-primary` |
 
 **Budget note.** The CSS budget moves 50 → 51 KB. Measured 49.4 KB before this
-change and 50.2 KB after; at 50 KB the gate would have failed on the change that
+change and 50.2 KB after (50.0 KB once the home-local card CSS below was removed);
+at 50 KB the gate would have failed on the change that
 introduced these states. The raise is the measured increase plus the previous
 0.6 KB of headroom, recorded next to the measurement in `perf-audit.ts`, and the
-P3-5 consolidation is still the way back down. The critical path (206.7/210)
-and the entry chunk (96.2/100) are unaffected.
+P3-5 consolidation is still the way back down. The critical path (206.5/210)
+and the entry chunk (96.1/100) are unaffected.
 
-## 7. Remaining inconsistencies
+## 7. Card preservation check
 
-1. **CSS headroom is 0.8 KB** (50.2 of 51). The next visual change should ride
+The brief for this work forbids changing the existing cards, so the PR was
+audited for exactly that.
+
+**`src/myschool-clean.css` is still imported and its card system is intact.**
+`git diff 636c54c -- src/myschool-clean.css` touches only the two button rules
+(the `.hub-primary-btn` fill moved to `brand-actions.css`; the outline button
+takes the secondary palette from the state system). Diff lines mentioning
+`.ms-top-tile`, `.ms-service-card`, `.ms-news-row` or `.er-banner-card`: zero.
+Their surfaces, borders, radii, padding and hover are the ones on `main`.
+
+**One regression was found and fixed.** The simulator-first home rewrite
+(`928923b`) introduced a home-local card for the study tools - `.hub-home-tool`
+with its own 12 px radius, `#eff7ff` icon chip and `#bfdbfe` hover border - and
+dropped the `LinkTile` the home page already used. That was a second card
+design, and it is gone:
+
+- `pages/HubHomePage.tsx` renders the study tools with the existing
+  `LinkTile` (`er-mini-link` + `identityClassFor`) inside the existing
+  `er-test-strip`, using the shared `CardIdentityMark` - the same component the
+  dashboard and search results use.
+- `src/home-card-first.css` no longer declares `.hub-home-tool*`;
+  `src/styles/brand-actions.css` no longer recolours its icon chip.
+- The tile's appearance is read from `edu-portal.css`, not copied: white
+  surface, `1px solid #dfe4ea`, 10 px radius, 36 px identity mark, and the
+  pre-existing identity accent on hover (`.er-identity-card:hover`), which this
+  page does not override.
+- Two tests in `tests/site-experience.test.ts` pin it: the home page must use
+  the shared tile and declare no `hub-home-tool`, and the MySchool tile and
+  service card must keep their own surface, border and radius.
+
+**Not claimed:** pixel-for-pixel equivalence with the old homepage. The layout
+above the cards changed on purpose in the approved Phase 1 (CBT first, news
+below), and no browser is available in this sandbox - the CI Playwright desktop
+and Pixel 7 job is the rendered check. The *card* markup and CSS are now the
+pre-existing ones by construction rather than by eye.
+
+**Content that is still not on the home page:** the services strip
+(`ServiceCard`) and the `.er-banner` study-centre hero, both removed by
+`928923b` with the layout. They remain on `/services` and the style is intact
+in the stylesheet. Restoring either is a one-commit content decision, not part
+of the palette work, so it was left for a separate call.
+
+## 8. Remaining inconsistencies
+
+1. **CSS headroom is 1.0 KB** (50.0 of 51). The next visual change should ride
    the P3-5 stylesheet consolidation.
 2. **Card and exam identity colours are untouched by design.** `--hub-blue`
    still resolves to crimson for cards that read it; blue brand marks survive in

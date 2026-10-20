@@ -55,7 +55,7 @@ border, radius, shadow or size.
 
 | Surface | What turns green |
 |---|---|
-| Home | `Start practising` / `Past questions` (`.hub-home-cta`), the study-tool icons, "View all" |
+| Home | `Start practising` / `Past questions` (`.hub-home-cta`), "View all", and the link tile hover |
 | Simulator setup | the Start button, chosen question count, chosen mode, subject checkboxes |
 | CBT exam | Submit, the selected answer and its letter, the subject tab, the current palette cell, tool hover, the route progress bar |
 | Past questions | filter pills, library tabs, the primary button on each card CTA |
