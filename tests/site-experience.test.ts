@@ -155,6 +155,79 @@ test('both home actions are one control with two destinations', () => {
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)\{[^{]*\.hub-home-actions \.hub-home-cta/, 'motion is reduced, not merely shortened');
 });
 
+test('the home page keeps the portal search bar and it still searches', () => {
+  const home = read('pages/HubHomePage.tsx');
+  assert.match(home, /<form[^>]*className="er-search"/, 'the portal search form is back');
+  assert.match(home, /role="search"/, 'it is announced as a search landmark');
+  assert.match(home, /aria-label="Search services"/, 'the field keeps its accessible name');
+  assert.match(home, /placeholder="Search services: NELFUND, result checking, JAMB slips…"/, 'the prompt is the original one');
+  assert.match(home, /useState\(''\)/, 'the search term is component state');
+  assert.match(home, /navigateInApp\(`\/search\?q=\$\{encodeURIComponent\(search\.trim\(\)\)\}`\)/, 'submitting goes to the shared search page');
+  assert.match(home, /if \(search\.trim\(\)\)/, 'an empty submit does nothing');
+
+  // It sits above every card, which is what "top of the homepage" means once
+  // the simulator hero has the first line.
+  const searchAt = home.indexOf('className="er-search"');
+  assert.ok(searchAt > home.indexOf('hub-home-intro'), 'the hero stays first');
+  assert.ok(searchAt < home.indexOf('className="er-banner"'), 'the card follows the search bar');
+  assert.ok(searchAt < home.indexOf('Choose your exam'), 'search is above the exam cards');
+
+  // The header search disappears under 1040px, so this bar is the only search
+  // a phone gets - that is why it may not be dropped.
+  const portal = read('src/edu-portal.css');
+  assert.match(portal, /@media\(max-width:1040px\)\{\.hub-global-search\{display:none\}\}/, 'the header search is desktop-only');
+  assert.match(portal, /\.er-search\{[^}]*display:flex/, 'the portal bar is a flex row at every width');
+  assert.match(portal, /\.er-search input\{[^}]*min-width:0/, 'the field shrinks instead of overflowing on a phone');
+});
+
+test('the study-centre card is restored as one click, not a menu', () => {
+  const home = read('pages/HubHomePage.tsx');
+  const start = home.indexOf('<a href="/past-questions" className="er-banner">');
+  assert.ok(start > -1, 'the study-centre card is back');
+  const card = home.slice(start, home.indexOf('</a>', start) + 4);
+  assert.match(card, /EDUREACH STUDY CENTRE/, 'it keeps its kicker');
+  assert.match(card, /Past questions &amp; CBT practice/, 'and its title');
+  assert.match(card, /jamb-cbt-banner\.webp/, 'and its artwork');
+  assert.match(card, /loading="lazy"/, 'the thumbnail stays lazy');
+  // One click: the whole card is the link, with nothing nested inside it.
+  assert.doesNotMatch(card, /<button/, 'no start-practice button inside the card');
+  assert.equal((card.match(/<a\b/g) ?? []).length, 1, 'the card is a single anchor, with no second link inside it');
+  assert.doesNotMatch(card, /pdf/i, 'no PDF list inside the card');
+  assert.doesNotMatch(card, /start practi/i, 'no start-practice action inside the card');
+});
+
+test('the portal red is the search submit colour, not green', () => {
+  const theme = read('src/styles/theme.css');
+  const token = (name: string): string => {
+    const match = new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`).exec(theme);
+    assert.ok(match, `${name} is a token`);
+    return match[1].toUpperCase();
+  };
+  assert.equal(token('--er-brand-red'), '#C02220', 'the authored red is centralised');
+  assert.equal(token('--er-brand-red-hover'), '#A81C1B', 'and its hover step');
+
+  const portal = read('src/edu-portal.css');
+  const submit = /\.er-search button\{([^}]*)\}/.exec(portal);
+  assert.ok(submit, 'the submit has a rule');
+  assert.match(submit[1], /background:var\(--er-brand-red\)/, 'the submit is the portal red');
+  assert.doesNotMatch(submit[1], /--er-primary/, 'it is not the green action colour');
+  assert.doesNotMatch(portal, /#c02220/, 'the red is never typed again as a literal');
+
+  // White on that red still clears AA, at rest and on hover.
+  const luminance = (hex: string): number => {
+    const value = hex.replace('#', '');
+    const channels = [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16) / 255)
+      .map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const contrast = (a: string, b: string): number => {
+    const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (high + 0.05) / (low + 0.05);
+  };
+  assert.ok(contrast('#FFFFFF', token('--er-brand-red')) >= 4.5, 'white on the search submit');
+  assert.ok(contrast('#FFFFFF', token('--er-brand-red-hover')) >= 4.5, 'white on its hover');
+});
+
 test('the home page reuses the existing card system, not a home-local one', () => {
   // The simulator-first layout reordered the page. It must not have brought its
   // own card: the study tools are the same link tile the home page already had

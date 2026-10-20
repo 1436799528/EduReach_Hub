@@ -144,9 +144,9 @@ below 4.5:1 (text) or 3:1 (a boundary that carries state alone).
 | Check | Result |
 |---|---|
 | `npx tsc --noEmit` | clean |
-| `npm test` | **573/573** (8 new tests in `tests/interaction-states.test.ts`) |
-| `npm run build` | clean, `index-Bl8ZycT-.css` 296.29 KB raw |
-| `npm run perf:audit` | 10/10 - entry 96.1/100, CSS **50.0/51**, critical path 206.5/210, all chunks 319.1/330 |
+| `npm test` | **581/581** (8 in `tests/interaction-states.test.ts`, 5 for cards and the restored home features, 3 in `tests/home-search.test.ts`) |
+| `npm run build` | clean, `index-DCCRTH5t.css` 296.42 KB raw |
+| `npm run perf:audit` | 10/10 - entry 96.3/100, CSS **50.1/51**, critical path 206.7/210, all chunks 319.3/330 |
 | `scripts/a11y-audit.ts` | 0 blocking, 4 informational |
 | `npm run analytics:audit`, `schema:audit` | no blocking findings |
 | Compiled-cascade probe | `.hub-primary-btn:disabled` → `--er-disabled-bg`, `.hub-outline-btn` → `--er-primary`, `.er-mobile-bottom-nav a.active` → `--er-primary` |
@@ -197,8 +197,15 @@ content rather than to an action or the brand shell, so they keep the colour
 they shipped with: `.er-banner small` and `.er-banner > svg` (the study-centre
 banner's kicker and arrow), `.er-date small` (the month label in the deadline
 row) and `.er-mini-link:hover` (the tile's own hover edge; the identity accent
-already wins there). They are the one place where an off-palette red survives,
-and moving them to `--er-crimson` is a card-scope decision, not a palette one.
+already wins there).
+
+**That red is now a token, not a literal.** `--er-brand-red` `#C02220` and
+`--er-brand-red-hover` `#A81C1B` live in `theme.css`, and the five card rules
+plus the home search submit read them. The rendered colour is identical; the
+difference is that it can now be changed once. It is deliberately *not*
+`--er-primary` and not `--er-crimson`: it is the portal surface red the search
+bar and study-centre card were designed with, and white on it measures 6.02:1
+at rest and 7.38:1 on hover.
 
 **Not claimed:** pixel-for-pixel equivalence with the old homepage. The layout
 above the cards changed on purpose in the approved Phase 1 (CBT first, news
@@ -206,11 +213,26 @@ below), and no browser is available in this sandbox - the CI Playwright desktop
 and Pixel 7 job is the rendered check. The *card* markup and CSS are now the
 pre-existing ones by construction rather than by eye.
 
+**Restored after review:** `928923b` had also removed two established homepage
+features that had nothing to do with the palette. Both are back in their
+original form (`0b7b8c1`):
+
+- **The portal search bar** (`.er-search`) - the same form, the same
+  `aria-label="Search services"`, the same placeholder, the same
+  `/search?q=` destination through `navigateInApp`, the same red submit. It sits
+  directly under the simulator hero and above every card. This matters
+  practically: the header search is `display:none` below 1040px, so the portal
+  bar is the only search a phone has.
+- **The study-centre card** (`.er-banner`) - one anchor to `/past-questions`,
+  with its artwork, kicker and copy. It carries no start-practice button and no
+  PDF list: the card itself is the click, as authored.
+
+Three tests pin the restoration: the form and its destination, the card as a
+single anchor with nothing nested, and the red submit token with its contrast.
+
 **Content that is still not on the home page:** the services strip
-(`ServiceCard`) and the `.er-banner` study-centre hero, both removed by
-`928923b` with the layout. They remain on `/services` and the style is intact
-in the stylesheet. Restoring either is a one-commit content decision, not part
-of the palette work, so it was left for a separate call.
+(`ServiceCard`), removed by `928923b` with the layout. It still ships and is
+used on `/services`. Restoring it is a one-commit content decision.
 
 ## 8. Remaining inconsistencies
 
