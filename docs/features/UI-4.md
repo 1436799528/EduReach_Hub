@@ -191,6 +191,15 @@ design, and it is gone:
   the shared tile and declare no `hub-home-tool`, and the MySchool tile and
   service card must keep their own surface, border and radius.
 
+**Four card properties were deliberately left alone.** The palette migration
+replaces the off-palette `#c02220` with tokens, but these four belong to card
+content rather than to an action or the brand shell, so they keep the colour
+they shipped with: `.er-banner small` and `.er-banner > svg` (the study-centre
+banner's kicker and arrow), `.er-date small` (the month label in the deadline
+row) and `.er-mini-link:hover` (the tile's own hover edge; the identity accent
+already wins there). They are the one place where an off-palette red survives,
+and moving them to `--er-crimson` is a card-scope decision, not a palette one.
+
 **Not claimed:** pixel-for-pixel equivalence with the old homepage. The layout
 above the cards changed on purpose in the approved Phase 1 (CBT first, news
 below), and no browser is available in this sandbox - the CI Playwright desktop
