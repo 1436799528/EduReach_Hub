@@ -866,8 +866,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             <button
               type="submit"
               disabled={busy}
+              aria-busy={busy}
               style={{
-                background: authFormComplete ? '#F97316' : '#c02220',
+                background: 'var(--er-primary)',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -876,7 +877,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 fontWeight: 620,
                 cursor: 'pointer',
                 transition: 'background .2s ease, box-shadow .2s ease',
-                boxShadow: authFormComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
+                boxShadow: authFormComplete ? '0 6px 18px rgba(23, 74, 58, 0.3)' : '0 2px 6px rgba(23, 74, 58, 0.22)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',

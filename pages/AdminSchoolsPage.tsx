@@ -173,7 +173,7 @@ export default function AdminSchoolsPage() {
                 </div>
               </div>
               <div className="admin-news-editor-actions">
-                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save institution'}</button>
+                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : 'Save institution'}</button>
               </div>
             </div>
           </div>

@@ -1045,8 +1045,9 @@ export default function ProfileCompletionPage() {
               <button
                 type="submit"
                 disabled={saving || savedSuccess}
+                  aria-busy={saving}
                 style={{
-                  background: profileComplete ? '#F97316' : '#c02220',
+                  background: 'var(--er-primary)',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '10px',
@@ -1058,7 +1059,7 @@ export default function ProfileCompletionPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: profileComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
+                  boxShadow: profileComplete ? '0 6px 18px rgba(23, 74, 58, 0.3)' : '0 2px 6px rgba(23, 74, 58, 0.22)',
                 }}
               >
                 {saving ? 'Saving Profile…' : editMode ? 'Save Profile Changes' : 'Save & Open Dashboard'} <ChevronRight size={16} />

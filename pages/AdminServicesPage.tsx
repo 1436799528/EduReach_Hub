@@ -161,7 +161,7 @@ export default function AdminServicesPage() {
                 {edit.id && edit.is_form_service && <p className="admin-footnote">This is a built-in application-form service: its form ships with the code release, so its key/route/link are fixed. You can still edit the title, description, category, order and visibility.</p>}
               </div>
               <div className="admin-news-editor-actions">
-                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save service'}</button>
+                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : 'Save service'}</button>
               </div>
             </div>
           </div>

@@ -232,7 +232,7 @@ export default function AdminOpportunitiesPage() {
                 />
               </div>
               <div className="admin-news-editor-actions">
-                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save opportunity'}</button>
+                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : 'Save opportunity'}</button>
               </div>
             </div>
           </div>

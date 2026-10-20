@@ -340,9 +340,9 @@ export default function AdminNewsPage() {
 
             <div className="admin-news-editor-actions">
               <button type="button" className="admin-btn secondary-dark" onClick={openPreview}><Eye size={14} /> Preview</button>
-              <button type="button" className="admin-btn secondary-dark" onClick={() => void save(false)} disabled={saving}>Save draft</button>
+              <button type="button" className="admin-btn secondary-dark" onClick={() => void save(false)} disabled={saving} aria-busy={saving}>Save draft</button>
               <Can capability="news.publish" fallback={<span className="muted" style={{ alignSelf: 'center', fontSize: 12 }}>Publishing needs the news.publish capability.</span>}>
-                <button type="button" className="admin-btn success" onClick={() => void save(true)} disabled={saving}>{saving ? 'Saving…' : editor.published ? 'Save & keep published' : 'Publish'}</button>
+                <button type="button" className="admin-btn success" onClick={() => void save(true)} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : editor.published ? 'Save & keep published' : 'Publish'}</button>
               </Can>
             </div>
           </div>

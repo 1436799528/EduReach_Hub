@@ -121,9 +121,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/"
               style={{
-                color: path === '/' ? '#b14933' : '#334155',
+                color: path === '/' ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path === '/' ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path === '/' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -132,9 +132,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/cbt"
               style={{
-                color: path.startsWith('/cbt') ? '#b14933' : '#334155',
+                color: path.startsWith('/cbt') ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/cbt') ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path.startsWith('/cbt') ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -143,9 +143,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/services"
               style={{
-                color: path === '/services' || path.startsWith('/services/apply') ? '#b14933' : '#334155',
+                color: path === '/services' || path.startsWith('/services/apply') ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -154,9 +154,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/news"
               style={{
-                color: path.startsWith('/news') ? '#b14933' : '#334155',
+                color: path.startsWith('/news') ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/news') ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path.startsWith('/news') ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -165,9 +165,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/jobs"
               style={{
-                color: path === '/jobs' ? '#b14933' : '#334155',
+                color: path === '/jobs' ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path === '/jobs' ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path === '/jobs' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -365,7 +365,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               }}
             >
               <strong id="hub-mobile-menu-title" style={{ fontSize: '18px', color: '#0f172a' }}>
-                EduReach<span style={{ color: '#b14933' }}>.ng</span>
+                EduReach<span style={{ color: 'var(--er-primary)' }}>.ng</span>
               </strong>
               <button
                 ref={mobileCloseRef}
