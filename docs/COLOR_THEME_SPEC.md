@@ -25,24 +25,41 @@ The interface maintains a balance between:
 
 ## 2. Core Color Palette
 
-### Primary — Academic Crimson
-* **HEX:** `#C85841`
-* The primary accent represents action, importance, academic urgency, and brand recognition.
-* **Use selectively for:**
-  - Important actions
-  - Active states
-  - Selected navigation states
-  - Key academic alerts
-  - Brand emphasis
-* Crimson should be noticeable without becoming the dominant color of every section.
-
-### Primary Deep — Crimson Red
-* **HEX:** `#B3331A`
-* A deeper version of the primary crimson.
+### Primary action — Deep Green
+* **HEX:** `#174A3A` (token `--er-primary`)
+* The colour of an action the student takes. It carries the meaning that used to
+  be split between blue and crimson, and it is the only fill for a primary
+  button.
+* **States:** hover `#0F3A2D` (`--er-primary-hover`), pressed `#0A2C22`
+  (`--er-primary-active`), soft surface `#E8F1EC` (`--er-primary-soft`).
+* **Contrast:** white text on the fill measures **10.11:1** at rest, 12.62:1 on
+  hover and 15.04:1 pressed; as text on white it is 10.11:1 and 9.59:1 on the
+  page background. Every state clears AA (4.5:1) with a wide margin.
 * **Use for:**
-  - Strong emphasis
-  - Hover and active states
-  - Contrast against lighter crimson surfaces
+  - Primary buttons: Start practising, Past questions, Continue, Submit, Save
+  - Primary links and the action inside a block
+  - Selected states: filters, tabs, steps, answer options, the current question
+  - Active progress indicators (page progress, the resume bar)
+  - Form focus tint and `accent-color`
+* **Never** for card surfaces, banners, exam identity marks or decorative
+  section backgrounds.
+
+### Brand accent — Crimson
+* **HEX:** `#B14933` (token `--er-crimson`); deep `#B3331A`
+  (`--er-crimson-deep`)
+* The Clickmor brand accent. It is **not** the default button colour.
+* **Use for:**
+  - Brand marks: the wordmark suffix, the app badge, the admin brand mark, the
+    logo fallback
+  - Navigation accents: active nav items and hover on nav links
+  - Explicitly designated highlights and eyebrow/kicker labels
+  - Exam-specific identity colours where they carry meaning
+* **Avoid** spreading it across unrelated cards, sections, headings and icons.
+
+> Superseded in this document: the earlier `#C85841` "Academic Crimson" primary.
+> It measures 4.26:1 on white, below the 4.5:1 AA floor for the 12–14px labels
+> this product uses, so it could never have been the button fill. Crimson stays
+> in the palette as the brand accent, at the accessible `#B14933`.
 
 ### Secondary — Academic Tangerine
 * **HEX:** `#D2732A`
@@ -134,13 +151,15 @@ Hierarchy:
 1. **NAVY (`#0F172A`)** → institutional foundation and trust
 2. **SOFT ACADEMIC BLUE (`#FAF8FF`, `#F2F3FF`, `#EAEDFF`)** → primary interface environment
 3. **WHITE (`#FFFFFF`)** → clean content surfaces
-4. **CRIMSON (`#C85841`)** → important action and brand emphasis
-5. **TANGERINE (`#D2732A`)** → energetic secondary accent
-6. **GREEN (`#16A34A`)** → success and verification
-7. **GOLD (`#CA8A04`)** → trust and recognition
-8. **BURGUNDY (`#54080C`)** → special institutional emphasis
+4. **DEEP GREEN (`#174A3A`)** → primary action
+5. **CRIMSON (`#B14933`)** → Clickmor brand accent (marks, navigation, kickers)
+6. **TANGERINE (`#D2732A`)** → energetic secondary accent
+7. **SUCCESS GREEN (`#047857`)** → success and verification
+8. **GOLD (`#CA8A04`)** → trust and recognition
+9. **BURGUNDY (`#54080C`)** → special institutional emphasis
 
 **Principle:**
-> **Calm surfaces + strong navy foundation + selective warm accents.**
-> Do not create pages where crimson, orange, or burgundy fills most of the screen.
-> Warm colors guide attention, while navy and soft academic surfaces establish the overall environment.
+> **Calm surfaces + strong navy foundation + a green signal for action.**
+> Deep green marks what the student can do; crimson appears only where the brand
+> speaks. Do not create pages where crimson, orange, or burgundy fills most of
+> the screen, and do not paint a card with an action colour.
