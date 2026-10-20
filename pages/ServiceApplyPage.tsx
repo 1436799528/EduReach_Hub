@@ -607,7 +607,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <button
                     type="submit"
                     className="hub-primary-btn"
-                    style={{ background: '#b14933' }}
+                    style={{ background: 'var(--er-primary)' }}
                     disabled={busy}
                   >
                     {busy ? 'Submitting…' : 'Confirm & Submit'} <Check size={16} />
@@ -695,7 +695,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 <a
                   className="hub-primary-btn"
                   href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/login?next=${encodeURIComponent('/dashboard/services')}`}
-                  style={{ textDecoration: 'none', background: '#b14933' }}
+                  style={{ textDecoration: 'none', background: 'var(--er-primary)' }}
                 >
                   <CheckCircle2 size={15} /> {isAuthenticated ? 'View in My Requests' : 'Sign in to view request'}
                 </a>

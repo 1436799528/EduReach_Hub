@@ -403,7 +403,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#b14933',
+                color: 'var(--er-primary)',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -423,7 +423,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#b14933',
+                  background: 'var(--er-primary)',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -568,9 +568,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#b14933' : '#cbd5e1',
-                          background: accountType === type ? '#F9F0EE' : '#ffffff',
-                          color: accountType === type ? '#b14933' : '#475569',
+                          borderColor: accountType === type ? 'var(--er-primary)' : '#cbd5e1',
+                          background: accountType === type ? 'var(--er-primary-soft)' : '#ffffff',
+                          color: accountType === type ? 'var(--er-primary)' : '#475569',
                           fontWeight: 620,
                           fontSize: '12px',
                           textTransform: 'capitalize',
@@ -673,7 +673,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#b14933', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--er-primary)', marginTop: '2px' }}
                   />
                   <span>
                     I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
@@ -724,7 +724,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#b14933', fontSize: '11.5px', fontWeight: 620, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontSize: '11.5px', fontWeight: 620, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -919,7 +919,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Already have an account? Sign in
             </button>
@@ -933,7 +933,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Need an account? Register
             </button>

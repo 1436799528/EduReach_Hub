@@ -211,7 +211,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <a
                 href="/login"
                 style={{
-                  background: '#b14933',
+                  background: 'var(--er-primary)',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '7px',
@@ -219,7 +219,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   fontSize: '12px',
                   fontWeight: 620,
                   textDecoration: 'none',
-                  boxShadow: '0 2px 6px rgba(200, 88, 65, 0.25)',
+                  boxShadow: '0 2px 6px rgba(23, 74, 58, 0.25)',
                 }}
               >
                 Sign In
@@ -237,7 +237,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   aria-label={`Account menu for ${user?.name || 'Student'}`}
                   className="hub-profile-trigger"
                   style={{
-                    background: '#b14933',
+                    background: 'var(--er-primary)',
                     color: '#ffffff',
                     border: 0,
                     borderRadius: '7px',
@@ -425,7 +425,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     type="button"
                     onClick={handleLogout}
                     className="hub-primary-btn"
-                    style={{ textAlign: 'center', background: '#b14933' }}
+                    style={{ textAlign: 'center', background: 'var(--er-primary)' }}
                   >
                     Logout
                   </button>
@@ -435,7 +435,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   <a
                     href="/login"
                     className="hub-primary-btn"
-                    style={{ textAlign: 'center', textDecoration: 'none', background: '#b14933' }}
+                    style={{ textAlign: 'center', textDecoration: 'none', background: 'var(--er-primary)' }}
                   >
                     Student Sign In
                   </a>
