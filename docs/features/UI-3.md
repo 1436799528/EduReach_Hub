@@ -33,8 +33,8 @@ inline, which beats every stylesheet.
 | Token | Value | Use |
 |---|---|---|
 | `--er-primary` | `#174A3A` | every primary action |
-| `--er-primary-hover` | `#0F3A2D` | hover |
-| `--er-primary-active` | `#0A2C22` | pressed |
+| `--er-primary-hover` | `#123A2D` | hover |
+| `--er-primary-active` | `#0E3025` | pressed |
 | `--er-primary-border` | `#0B3126` | outline around the hero pair |
 | `--er-primary-soft` | `#E8F1EC` | selected-state surfaces |
 | `--er-on-primary` | `#FFFFFF` | text on the fill |
@@ -42,7 +42,7 @@ inline, which beats every stylesheet.
 | `--er-crimson-deep` | `#B3331A` | brand accent, deep |
 
 Contrast, measured from the literals: white on `#174A3A` **10.11:1**, hover
-**12.62:1**, pressed **15.04:1**; `#174A3A` as text on white **10.11:1** and on
+**12.58:1**, pressed **14.30:1**; `#174A3A` as text on white **10.11:1** and on
 the page background **9.59:1**. Crimson stays at **5.43:1** where it is used.
 
 ## 3. One owner for action colour — `src/styles/brand-actions.css`
@@ -69,8 +69,8 @@ The hero pair had already been switched from crimson to a literal `#174a3a` in
 and pressed values and broke the gate. This branch keeps the colour and replaces
 the three literals with the tokens, so the test and every other button read the
 same definition. The hover and pressed shades are the token ramp
-(`#0F3A2D` / `#0A2C22`) rather than `#123a2d` / `#0e3025`: a deeper step keeps the
-press visible at the 12.62:1 and 15.04:1 contrasts recorded above.
+(`#0F3A2D` / `#0A2C22`) rather than `#123a2d` / `#0e3025`. UI-4 later adopted the
+lighter `#123A2D` / `#0E3025` steps as the specified palette; see `UI-4.md`.
 
 `.er-exam` already owned an accent variable (`--er-exam-accent`). It now points
 at `var(--er-primary)`, which repaints the exam submit, side submit, mobile bar,
@@ -82,7 +82,8 @@ Crimson remains in exactly these contexts:
 
 - **Brand marks** — the wordmark suffix, the app badge, `admin-brand-mark`, the
   logo fallback, the wallet/avatar marks.
-- **Navigation accents** — active nav items, nav hover.
+- **Navigation accents** — the Clickmor elements in the header and the
+  admin sidebar (the selected route itself became a green surface in UI-4).
 - **Kickers and eyebrows** — the small uppercase label above page titles, which
   is the brand signature across pages.
 - **Exam identity colours** that carry meaning (simulator tiles, service card
@@ -100,10 +101,9 @@ bar. The inline `#b14933` fills in six TSX files now reference
 - **Exam identity colours.** `--er-exam-accent` is the *action* accent inside the
   exam; the per-exam brand tiles and badges keep their own colours.
 - **Typography, layout, navigation, content, functionality.** Untouched.
-- **Focus ring.** Stays `#8f1d18` + white under-ring (8.91:1 on white, 17.06:1
-  for the white ring on navy). It is the audited accessibility mechanism; the
-  brief allows the existing system to stand, and changing it would need its own
-  contrast re-validation on dark surfaces.
+- **Focus ring.** Kept `#8f1d18` + white under-ring at the time (8.91:1 on
+  white). UI-4 moved it to the primary token, `#174A3A`, at 10.11:1; the
+  two-tone system is unchanged.
 - **`--hub-blue`.** Still aliased to crimson in `theme.css` because cards read
   it. Renaming it is a cascade change with no visual benefit; recorded as a
   consolidation follow-up.

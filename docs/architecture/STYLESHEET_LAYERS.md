@@ -2,7 +2,7 @@
 
 **Finding this answers:** P3-5 — 17 CSS files (~46 KB gzip, bundled to 47 KB)
 loaded on every route. The audit's options were "raise the budget deliberately"
-(done: `scripts/perf-audit.ts` `cssGzip` 46 → 50 KB) or "consolidate". This
+(done once: 46 → 50 KB, and again 50 → 51 KB for the UI-4 interaction states) or "consolidate". This
 document is the precondition for consolidating safely: it records what each
 sheet owns and the order they depend on. Consolidation itself is scheduled work,
 not silently dropped — see the plan at the end.
