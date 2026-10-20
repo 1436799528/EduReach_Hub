@@ -222,13 +222,13 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 
 .er-inline-notice strong { font-weight: var(--er-w-label); }
 .er-inline-notice p { margin: 2px 0 0; color: var(--er-text-secondary); }
-.er-inline-notice.is-warning { border-color: #f0d7b0; background: #fff8ec; }
-.er-inline-notice.is-danger { border-color: #f2c9c2; background: #fff5f3; }
-.er-inline-notice.is-success { border-color: #bfe6cf; background: #f2fbf5; }
+.er-inline-notice.is-warning { border-color: var(--er-status-warning-border); background: var(--er-status-warning-bg); color: var(--er-status-warning); }
+.er-inline-notice.is-danger { border-color: var(--er-status-error-border); background: var(--er-status-error-bg); color: var(--er-status-error); }
+.er-inline-notice.is-success { border-color: var(--er-status-success-border); background: var(--er-status-success-bg); color: var(--er-status-success); }
 .er-inline-notice-action {
   border: 0;
   background: transparent;
-  color: var(--er-crimson-deep);
+  color: var(--er-primary);
   display: inline-flex;
   align-items: center;
   gap: 5px;

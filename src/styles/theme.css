@@ -9,18 +9,63 @@
   --er-font-mono: var(--er-font-sans);
 
   /* 1. Primary action - Deep Green (Clickmor)
-     The colour every main action uses: start, continue, submit, save. It is
-     deliberately darker than the crimson so white 12-14px button text clears
-     4.5:1 with room to spare (10.11:1). */
+     The colour every main action uses: start, continue, submit, save. White
+     text clears AA on every step of the ramp (10.11:1 resting, 12.58:1 hover,
+     14.30:1 pressed) and the border steps darken with it. */
   --er-primary: #174A3A;
-  --er-primary-hover: #0F3A2D;
-  --er-primary-active: #0A2C22;
-  --er-primary-soft: #E8F1EC;
-  --er-primary-border: #0B3126;
+  --er-primary-hover: #123A2D;
+  --er-primary-active: #0E3025;
+  --er-primary-border: #123A2D;
+  --er-primary-border-hover: #0F3025;
+  --er-primary-border-active: #0B261E;
+  --er-primary-focus: #174A3A;
+  --er-primary-soft: #EDF5F0;
+  --er-primary-soft-border: #D4E4DA;
   --er-on-primary: #FFFFFF;
+
+  /* 1a. Secondary action - a white control with a green edge, never a second
+     solid green button. */
+  --er-secondary-border: #D4E4DA;
+  --er-secondary-hover-bg: #EDF5F0;
+  --er-secondary-hover-border: #B5CBBF;
+  --er-secondary-active-bg: #DCE9E1;
+  --er-secondary-active-border: #A3BFAF;
+
+  /* 1b. Disabled controls are neutral: no brand colour, no hover, no press. */
+  --er-disabled-bg: #E2E8F0;
+  --er-disabled-text: #64748B;
+  --er-disabled-border: #CBD5E1;
+  --er-disabled-surface: #F8FAFC;
+
+  /* 1c. Navigation states. Hover and selection are surfaces plus green text;
+     the border is a soft edge on top of them, not the only signal. */
+  --er-nav-hover-bg: #F1F5F9;
+  --er-nav-active-bg: #EDF5F0;
+
+  /* 1d. Form fields. */
+  --er-field-border-hover: #94A3B8;
+  --er-field-valid: #15803D;
+  --er-field-invalid: #B91C1C;
+
+  /* 1e. Status colours stay semantic and separate from the brand ramp. */
+  --er-status-success: #166534;
+  --er-status-success-bg: #F0FDF4;
+  --er-status-success-border: #BBF7D0;
+  --er-status-warning: #92400E;
+  --er-status-warning-bg: #FFFBEB;
+  --er-status-warning-border: #FDE68A;
+  --er-status-error: #B91C1C;
+  --er-status-error-bg: #FEF2F2;
+  --er-status-error-border: #FECACA;
+  --er-status-info: #1D4ED8;
+  --er-status-info-bg: #EFF6FF;
+  --er-status-info-border: #BFDBFE;
+
   /* Secondary brand: Clickmor crimson. Brand marks, navigation accents and
      explicitly designated highlights only - never the default button fill. */
-  --er-crimson: #b14933;
+  --er-crimson: #B14933;
+  --er-crimson-hover: #963D2C;
+  --er-crimson-pressed: #803222;
   --er-crimson-deep: #B3331A;
 
   /* 2. Secondary - Academic Tangerine */
@@ -174,10 +219,38 @@ samp,
   border-radius: var(--er-radius-sm) !important;
 }
 
+:where(input, select, textarea):hover:not(:disabled):not(:focus) {
+  border-color: var(--er-field-border-hover) !important;
+}
+
 :where(input, select, textarea):focus {
   border-color: var(--er-primary) !important;
   box-shadow: 0 0 0 3px rgba(23, 74, 58, 0.14) !important;
   outline: 0 !important;
+}
+
+/* An invalid field stays red on focus: the ring and the border agree. The
+   message beside the field - not this colour - is what explains the error. */
+:where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--er-field-invalid) !important;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1) !important;
+}
+
+:where(input, select, textarea):disabled {
+  background-color: var(--er-disabled-surface) !important;
+  border-color: var(--er-disabled-border) !important;
+  color: var(--er-disabled-text) !important;
+  cursor: not-allowed;
+}
+
+/* Native checkboxes and radios keep their platform geometry and keyboard
+   behaviour; only the fill is themed, and the UA paints the tick white. */
+:where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--er-primary);
+}
+
+:where(input[type="checkbox"], input[type="radio"]):disabled {
+  accent-color: var(--er-disabled-text);
 }
 
 :where(.hub-search input, .hub-home-search input, .ms-search-input, .edureach-dash-search input, .student-search input) {
@@ -273,28 +346,15 @@ samp,
   min-height: auto !important;
 }
 
-/* Primary buttons and CTAs */
+/* Primary buttons and CTAs. The fill, hover and press belong to
+   src/styles/brand-actions.css; only the elevation is set here. */
 .hub-primary-btn {
-  background: var(--er-primary) !important;
-  color: var(--er-on-primary) !important;
   border: 0 !important;
   box-shadow: 0 2px 6px rgba(23, 74, 58, 0.25) !important;
 }
 
 .hub-primary-btn:hover {
-  background: var(--er-primary-hover) !important;
   box-shadow: 0 4px 12px rgba(23, 74, 58, 0.3) !important;
-}
-
-.hub-outline-btn {
-  border: 1px solid var(--er-border-strong) !important;
-  background: var(--er-surface) !important;
-  color: var(--er-navy) !important;
-}
-
-.hub-outline-btn:hover {
-  border-color: var(--er-primary) !important;
-  color: var(--er-primary) !important;
 }
 
 /* Active navigation indicators */

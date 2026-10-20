@@ -4,24 +4,24 @@
 .er-portal{background:#f7f9fb;min-height:100%;padding:14px 0 28px;color:#1a1a1a}
 .er-container{width:min(1120px,calc(100% - 28px));margin:0 auto}
 .er-notice{min-height:32px;display:flex;align-items:center;gap:9px;background:#0f5132;color:#ecfdf5;padding:6px 10px;border-radius:6px;margin-bottom:10px;font-size:12px}
-.er-notice>span{background:#c02220;color:#fff;border-radius:3px;padding:3px 6px;font-size:9px;font-weight: 560;letter-spacing:.05em;flex:none}
+.er-notice>span{background:var(--er-crimson);color:#fff;border-radius:3px;padding:3px 6px;font-size:9px;font-weight: 560;letter-spacing:.05em;flex:none}
 .er-notice p{margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .er-notice a{display:inline-flex;align-items:center;gap:3px;color:#fff;text-decoration:none;font-weight: 560;white-space:nowrap}
 .er-search{height:44px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d9dee5;border-radius:10px;padding:4px 6px 4px 12px;margin-bottom:12px}
 .er-search>svg{color:#5e6c82;flex:none}
 .er-search input{border:0;outline:0;min-width:0;flex:1;font:inherit;font-size:14px;color:#1f2937;background:transparent}
-.er-search button{height:34px;border:0;border-radius:7px;background:#c02220;color:#fff;padding:0 14px;font-size:13px;font-weight: 560;cursor:pointer}
+.er-search button{height:34px;border:0;border-radius:7px;background:var(--er-primary);color:#fff;padding:0 14px;font-size:13px;font-weight: 560;cursor:pointer}
 .er-banner{min-height:80px;display:grid;grid-template-columns:48px minmax(0,1fr) 18px;align-items:center;gap:12px;background:linear-gradient(100deg,#fff7e8,#fff);border:1px solid #eadfcb;border-radius:12px;padding:10px 14px;color:#1f2937;text-decoration:none;margin-bottom:14px}
 .er-banner-art{width:44px;height:44px;display:grid;place-items:center;background:#fff0d5;border-radius:8px}
 .er-banner-art img{width:30px;height:30px;object-fit:contain}
-.er-banner small{display:block;color:#c02220;font-size:10.5px;font-weight: 500;letter-spacing:.06em}
+.er-banner small{display:block;color:var(--er-crimson);font-size:10.5px;font-weight: 500;letter-spacing:.06em}
 .er-banner strong{display:block;font-size:16px;line-height:1.2;margin-top:2px}
 .er-banner p{margin:3px 0 0;font-size:13px;line-height:1.35;color:#5e6c82}
-.er-banner>svg{color:#c02220}
+.er-banner>svg{color:var(--er-crimson)}
 .er-section{margin-top:18px}
 .er-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #dfe4ea;padding-bottom:8px;margin-bottom:10px}
 .er-section-head h2{margin:0;font-size:17px;line-height:24px;font-weight: 620;color:#1f2937}
-.er-section-head a{display:inline-flex;align-items:center;gap:4px;color:#c02220;text-decoration:none;font-size:13px;line-height:20px;font-weight: 620;white-space:nowrap}
+.er-section-head a{display:inline-flex;align-items:center;gap:4px;color:var(--er-primary);text-decoration:none;font-size:13px;line-height:20px;font-weight: 620;white-space:nowrap}
 .er-exam-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .er-exam-module{background:#fff;border:1px solid #dfe4ea;border-radius:8px;overflow:hidden}
 .er-exam-head{display:grid;grid-template-columns:40px minmax(0,1fr) 16px;align-items:center;gap:9px;padding:9px 10px;background:#fafafa;text-decoration:none;color:#1f2937}
@@ -34,15 +34,15 @@
 .er-exam-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid #eef1f4}
 .er-exam-links a{padding:7px 9px;border-right:1px solid #eef1f4;border-bottom:1px solid #eef1f4;color:#475569;text-decoration:none;font-size:10px;line-height:1.2}
 .er-exam-links a:nth-child(even){border-right:0}
-.er-exam-links a:hover{color:#c02220;background:#fffafa}
-.er-module-more{display:flex;align-items:center;justify-content:flex-end;gap:3px;padding:6px 9px;color:#c02220;text-decoration:none;font-size:9px;font-weight: 560}
+.er-exam-links a:hover{color:var(--er-primary);background:var(--er-primary-soft)}
+.er-module-more{display:flex;align-items:center;justify-content:flex-end;gap:3px;padding:6px 9px;color:var(--er-primary);text-decoration:none;font-size:9px;font-weight: 560}
 /* Quick-link tiles: a horizontal strip on the home page ("Study Tools") and a
    grid elsewhere. On mobile the strip becomes a swipe row where each tile takes
    ~70% of the viewport so the next tile is always visibly peeking in. */
 .er-test-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .er-test-strip::-webkit-scrollbar{display:none}
 .er-mini-link{flex:0 0 auto;min-width:220px;min-height:54px;display:grid;grid-template-columns:36px minmax(0,1fr) 14px;align-items:center;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:10px;padding:8px 12px;text-decoration:none;color:#1f2937}
-.er-mini-link:hover,.er-link-grid .er-mini-link:hover{border-color:#c02220}
+.er-mini-link:hover,.er-link-grid .er-mini-link:hover{border-color:var(--er-primary)}
 .er-mini-link>.ms-identity-mark{width:36px;height:36px;padding:0;background:transparent!important;border:0!important}
 .er-mini-link>.ms-identity-mark img{height:24px;max-width:30px}
 .er-mini-link>span{font-size:13px;line-height:18px;font-weight: 560;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -59,7 +59,7 @@
 .er-deadline{min-height:66px;display:grid;grid-template-columns:46px minmax(0,1fr);align-items:center;gap:12px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;padding:8px 12px}
 .er-date{width:46px;height:46px;display:grid;place-items:center;align-content:center;background:#f8fafb;border:1px solid #edf0f3;border-radius:8px}
 .er-date strong{font-size:17px;line-height:1}
-.er-date small{font-size:9.5px;color:#c02220;text-transform:uppercase;font-weight: 500}
+.er-date small{font-size:9.5px;color:var(--er-crimson);text-transform:uppercase;font-weight: 500}
 .er-deadline>span{min-width:0}
 .er-deadline>span small{display:block;font-size:11px;line-height:16px;font-weight: 500;color:#b45309;text-transform:uppercase;letter-spacing:.03em}
 .er-deadline>span strong{display:block;font-size:14px;line-height:20px;font-weight: 620;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -95,7 +95,7 @@
 .er-major-heading p{margin:4px 0 0;font-size:13px;line-height:1.45;color:#5e6c82}
 .er-major-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .er-major-link{min-height:54px;display:grid;grid-template-columns:20px minmax(0,1fr) 14px;align-items:center;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:10px;padding:10px 14px;color:#1f2937;text-decoration:none}
-.er-major-link:hover{border-color:#c02220;color:#c02220}
+.er-major-link:hover{border-color:var(--er-primary);color:var(--er-primary)}
 .er-major-link span{font-size:14px;line-height:20px;font-weight: 560}
 .er-major-link svg:first-child{color:#047857}
 .er-major-link svg:last-child{color:#5e6c82}
@@ -108,7 +108,7 @@
 @media(max-width:600px){
   .er-mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:90;height:58px;background:rgba(255,255,255,.98);border-top:1px solid #dfe4ea;box-shadow:0 -3px 12px rgba(15,23,42,.08);padding:5px 8px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
   .er-mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:48px;color:#5e6c82;text-decoration:none;font-size:11px;font-weight: 560}
-  .er-mobile-bottom-nav a.active{color:#c02220}
+  .er-mobile-bottom-nav a.active{color:var(--er-primary)}
   .er-mobile-bottom-nav svg{stroke-width:2}
 }
 
@@ -355,7 +355,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-exam-tool:hover,.er-exam-tool.is-active{background:#334155;border-color:#94a3b8}
 .er-exam-tool:disabled{opacity:.5;cursor:default}
 .er-exam-submit{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 16px;border-radius:8px;border:0;background:var(--er-exam-accent);color:#fff;font:inherit;font-size:13px;font-weight: 560;cursor:pointer}
-.er-exam-submit:hover{background:#b44a35}
+.er-exam-submit:hover{background:var(--er-primary-hover)}
 .er-exam-submit:disabled{opacity:.5;cursor:default}
 .er-exam-body{padding-top:16px}
 .er-exam-alert{display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px}
