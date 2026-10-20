@@ -155,6 +155,44 @@ test('both home actions are one control with two destinations', () => {
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)\{[^{]*\.hub-home-actions \.hub-home-cta/, 'motion is reduced, not merely shortened');
 });
 
+test('the home page reuses the existing card system, not a home-local one', () => {
+  // The simulator-first layout reordered the page. It must not have brought its
+  // own card: the study tools are the same link tile the home page already had
+  // (er-mini-link + the shared identity mark), and no home-local card CSS may
+  // exist to drift from it.
+  const home = read('pages/HubHomePage.tsx');
+  assert.match(home, /className=\{`er-mini-link \$\{identityClassFor\(title, 'service'\)\}`\}/, 'the tile is the shared MySchool-style link tile');
+  assert.match(home, /<CardIdentityMark value=\{title\} type="service" size="sm" \/>/, 'it carries the shared identity mark');
+  assert.match(home, /className="er-test-strip"/, 'it sits in the existing tile strip');
+  assert.doesNotMatch(home, /hub-home-tool/, 'the home page has no bespoke card class');
+
+  const homeCss = read('src/home-card-first.css');
+  assert.doesNotMatch(homeCss, /hub-home-tool/, 'the home sheet defines no card surface of its own');
+
+  // The appearance comes from the shared rule, so a future edit to the tile
+  // reaches the home page too instead of leaving a copy behind.
+  const portal = read('src/edu-portal.css');
+  const tile = /\.er-mini-link\{([^}]*)\}/.exec(portal);
+  assert.ok(tile, 'the shared link tile rule exists');
+  assert.match(tile[1], /border:1px solid #dfe4ea/, 'the tile keeps its existing border');
+  assert.match(tile[1], /border-radius:10px/, 'the tile keeps its existing radius');
+  // The hover accent is the card-identity colour (.er-identity-card:hover), which
+  // is how every existing identity card behaves; this page does not override it.
+  assert.match(portal, /\.er-identity-card:hover\{[^}]*--er-card-accent/, 'the identity accent still owns the card hover');
+});
+
+test('the MySchool card CSS survives in the stylesheet that owns it', () => {
+  const myschool = read('src/myschool-clean.css');
+  const tile = /\.ms-top-tile \{([^}]*)\}/.exec(myschool);
+  assert.ok(tile, 'the MySchool top tile is still defined');
+  assert.match(tile[1], /background: #ffffff/, 'its surface is untouched');
+  assert.match(tile[1], /border: 1px solid #e2e8f0/, 'its border is untouched');
+  assert.match(tile[1], /border-radius: 12px/, 'its radius is untouched');
+  const card = /\.ms-service-card \{([^}]*)\}/.exec(myschool);
+  assert.ok(card, 'the MySchool service card is still defined');
+  assert.match(card[1], /background: #ffffff/, 'its surface is untouched');
+});
+
 test('the shared home action stays readable in every state', () => {
   const luminance = (hex: string): number => {
     const value = hex.replace('#', '');

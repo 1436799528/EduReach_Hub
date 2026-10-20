@@ -122,7 +122,6 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.er-admin-view-banner button',
     '.er-admin-view-banner button:hover',
     '.hub-home-section-title > a',
-    '.hub-home-tool-icon',
     '.hub-mobile-search button, .er-site-search-page-form button',
     '.hub-mobile-search button:hover, .er-site-search-page-form button:hover',
     '.target-track span',

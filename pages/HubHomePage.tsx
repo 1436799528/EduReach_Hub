@@ -1,7 +1,8 @@
 import { userFacingError } from '../lib/errors';
-import { ArrowRight, Calculator, FileText, GraduationCap, RefreshCw } from 'lucide-react';
+import { ArrowRight, RefreshCw } from 'lucide-react';
 import { Suspense, lazy, useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
+import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import { NewsRow } from '../src/components/NewsSections';
@@ -18,11 +19,24 @@ const ContinuePracticeCard = lazy(() => import('../src/components/ContinuePracti
 // sitting, and a way in. News sits below the practice tools and shows three
 // headlines; anything more belongs on /news.
 
-const studyTools = [
-  { title: 'Past questions', description: 'Find papers by exam and subject.', href: '/past-questions', icon: FileText },
-  { title: 'Screening calculator', description: 'Check your aggregate before you apply.', href: '/screening-calculator', icon: Calculator },
-  { title: 'CGPA calculator', description: 'Work out your current standing.', href: '/tools/cgpa-calculator', icon: GraduationCap },
+// The study tools reuse the MySchool link tile that the home page already had
+// (er-mini-link + the shared identity mark): same card, same edge, same hover.
+// The simulator-first layout changed the order of the page, not the card design.
+const toolTiles = [
+  { title: 'Past questions', href: '/past-questions' },
+  { title: 'Screening calculator', href: '/screening-calculator' },
+  { title: 'CGPA calculator', href: '/tools/cgpa-calculator' },
 ];
+
+function LinkTile({ title, href }: { title: string; href: string }) {
+  return (
+    <a className={`er-mini-link ${identityClassFor(title, 'service')}`} href={href}>
+      <CardIdentityMark value={title} type="service" size="sm" />
+      <span>{title}</span>
+      <ArrowRight size={13} />
+    </a>
+  );
+}
 
 export default function HubHomePage() {
   const { isAuthenticated } = useAuth();
@@ -71,17 +85,8 @@ export default function HubHomePage() {
 
           <section className="er-section">
             <SectionHead title="Study tools" />
-            <div className="hub-home-tool-grid">
-              {studyTools.map(({ title, description, href, icon: Icon }) => (
-                <a className="hub-home-tool" href={href} key={title}>
-                  <span className="hub-home-tool-icon"><Icon size={17} /></span>
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{description}</small>
-                  </span>
-                  <ArrowRight size={13} />
-                </a>
-              ))}
+            <div className="er-test-strip">
+              {toolTiles.map((tile) => <LinkTile key={tile.title} title={tile.title} href={tile.href} />)}
             </div>
           </section>
 

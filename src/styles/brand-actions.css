@@ -319,11 +319,6 @@
   color: var(--er-primary);
 }
 
-.hub-home-tool-icon {
-  background: var(--er-primary-soft);
-  color: var(--er-primary);
-}
-
 /* Search submits: the action in a search field. */
 .hub-mobile-search button,
 .er-site-search-page-form button {
