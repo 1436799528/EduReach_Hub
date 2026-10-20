@@ -169,8 +169,8 @@ test('the shared home action stays readable in every state', () => {
   // 4.5:1 is AA for the 14px label. The resting fill is the lightest of the
   // three, so passing it covers hover and pressed as well.
   assert.ok(contrast('#174A3A', '#ffffff') >= 4.5, 'resting button');
-  assert.ok(contrast('#0F3A2D', '#ffffff') >= 4.5, 'hover');
-  assert.ok(contrast('#0A2C22', '#ffffff') >= 4.5, 'pressed');
+  assert.ok(contrast('#123A2D', '#ffffff') >= 4.5, 'hover');
+  assert.ok(contrast('#0E3025', '#ffffff') >= 4.5, 'pressed');
 });
 
 test('the home resume card is lazy, signed-in only and follows the shared expiry rule', () => {

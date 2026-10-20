@@ -42,6 +42,11 @@ test('the palette is defined once, in the token layer', () => {
 
   // Hover and pressed must darken, not lighten: white text has to keep its
   // contrast as the fill changes.
+  assert.equal(token('--er-primary-hover'), '#123A2D', 'hover steps down one shade');
+  assert.equal(token('--er-primary-active'), '#0E3025', 'press steps down again');
+  assert.equal(token('--er-primary-soft'), '#EDF5F0', 'the selected surface is pale green');
+  assert.equal(token('--er-primary-soft-border'), '#D4E4DA', 'the selected edge is pale green');
+
   const hover = token('--er-primary-hover');
   const active = token('--er-primary-active');
   assert.ok(luminance(hover) < luminance('#174A3A'), 'hover is darker than rest');
@@ -51,8 +56,8 @@ test('the palette is defined once, in the token layer', () => {
 test('the action colour clears AA at every state', () => {
   for (const [fill, label] of [
     ['#174A3A', 'resting'],
-    ['#0F3A2D', 'hover'],
-    ['#0A2C22', 'pressed'],
+    ['#123A2D', 'hover'],
+    ['#0E3025', 'pressed'],
   ] as const) {
     assert.ok(contrast('#ffffff', fill) >= 4.5, `white text on the ${label} fill`);
   }
@@ -70,12 +75,18 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.hub-primary-btn',
     '.hub-primary-btn:hover',
     '.hub-primary-btn:active',
+    '.hub-primary-btn:disabled, .admin-btn:disabled, .dash-btn-primary:disabled, .auth-v2-submit:disabled, .er-exam-submit-primary:disabled, .er-exam-next:disabled, .er-exam-end:disabled',
+    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .er-exam-submit-primary)[aria-busy="true"]',
     '.admin-btn',
     '.admin-btn:hover',
     '.dash-btn-primary',
     '.dash-btn-primary:hover:not(:disabled)',
     '.auth-v2-submit',
     '.auth-v2-submit:hover',
+    '.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary',
+    ':is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):hover',
+    ':is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):active',
+    ':is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):disabled',
     '.er-pill:hover',
     '.er-pill.active',
     '.er-library-tabs button:hover',
@@ -87,6 +98,8 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.hub-stepper > div.active span',
     '.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .dash-card-link',
     '.dash-card-link:hover',
+    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a, .er-inline-notice-action):hover',
+    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a):active',
     '.er-route-progress',
     '.home-resume-kicker',
     '.home-resume-bar',
@@ -99,6 +112,7 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.er-exam-option.is-selected .er-exam-option-letter',
     '.er-exam-submit-primary',
     '.er-exam-submit-primary:hover',
+    '.er-exam-submit-primary:active',
     '.er-exam-palette-cell.is-current',
     '.er-exam-ghost:hover',
     '.er-exam-tool:hover',
@@ -109,12 +123,14 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.er-admin-view-banner button:hover',
     '.hub-home-section-title > a',
     '.hub-home-tool-icon',
-    '.er-exam-submit:hover',
-    '.er-inline-notice-action',
     '.hub-mobile-search button, .er-site-search-page-form button',
     '.hub-mobile-search button:hover, .er-site-search-page-form button:hover',
     '.target-track span',
     '.wallet-presets button.selected, .preset-grid button.selected',
+    '.hub-desktop-nav a:hover',
+    '.er-mobile-bottom-nav a:hover',
+    '.er-mobile-bottom-nav a.active',
+    '.er-sim-cta:hover',
   ];
 
   const selectors = [...actions.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{/g)]
