@@ -61,6 +61,13 @@
   --er-status-info-bg: #EFF6FF;
   --er-status-info-border: #BFDBFE;
 
+  /* The portal red. This is the colour the home search submit and the
+     study-centre card shipped with, kept exactly as authored: it is a
+     surface-level brand red, distinct from the Clickmor crimson, and it is not
+     a general action colour. 6.02:1 with white text at rest, 7.38:1 on hover. */
+  --er-brand-red: #C02220;
+  --er-brand-red-hover: #A81C1B;
+
   /* Secondary brand: Clickmor crimson. Brand marks, navigation accents and
      explicitly designated highlights only - never the default button fill. */
   --er-crimson: #B14933;

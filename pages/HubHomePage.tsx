@@ -9,6 +9,7 @@ import { NewsRow } from '../src/components/NewsSections';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { fetchNews, type NewsItem } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
+import { navigateInApp } from '../src/lib/navigation';
 
 // The resume card is for signed-in students with an unfinished paper. Loading
 // it after the shell keeps a convenience out of the first-paint bundle.
@@ -44,6 +45,7 @@ export default function HubHomePage() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState('');
   const [feedVersion, setFeedVersion] = useState(0);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -71,6 +73,40 @@ export default function HubHomePage() {
               </div>
             </div>
           </section>
+
+          {/* The portal search bar, restored exactly as it shipped: same form,
+              same aria-label, same /search?q= destination, same red submit. */}
+          <form
+            className="er-search"
+            role="search"
+            aria-label="Search services"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (search.trim()) navigateInApp(`/search?q=${encodeURIComponent(search.trim())}`);
+            }}
+          >
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search services: NELFUND, result checking, JAMB slips…"
+              aria-label="Search services"
+            />
+            <button type="submit">Search</button>
+          </form>
+
+          {/* The study-centre card is one click to the past-question library.
+              No start-practice button, no PDF list: the card is the link. */}
+          <a href="/past-questions" className="er-banner">
+            <div className="er-banner-art">
+              <img src="/news/photos/jamb-cbt-banner.webp" alt="CBT study centre" width={160} height={80} loading="lazy" decoding="async" />
+            </div>
+            <div>
+              <small>EDUREACH STUDY CENTRE</small>
+              <strong>Past questions &amp; CBT practice</strong>
+              <p>Timed JAMB, WAEC, NECO and Post-UTME practice.</p>
+            </div>
+            <ArrowRight size={18} />
+          </a>
 
           {isAuthenticated && (
             <Suspense fallback={null}>
