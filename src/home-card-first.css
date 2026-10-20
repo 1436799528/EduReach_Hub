@@ -40,7 +40,7 @@
 /* Simulator-first home: one column, no marketing panel competing with the cards. */
 .hub-home-intro{grid-template-columns:minmax(0,780px)!important;padding:22px 0 16px!important}
 .hub-home-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:15px}
-.hub-home-actions a{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.hub-home-actions a{display:inline-flex;align-items:center;gap:7px;text-decoration:none}
 .hub-home-tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .hub-home-tool{display:flex;align-items:center;gap:11px;min-width:0;padding:14px 15px;border:1px solid var(--hub-border);border-radius:12px;background:#fff;color:inherit;text-decoration:none;transition:border-color .2s ease}
 .hub-home-tool:hover{border-color:#bfdbfe}
@@ -55,7 +55,26 @@
 /* The resumed paper is an action, so it sits between the headline and the
    catalogue. It is deliberately one row on desktop and two on a phone: no
    extra navigation, no dashboard detour. */
-.hub-home-actions .hub-primary-btn,.hub-home-actions .hub-ghost-btn{min-height:44px!important;height:44px!important;padding:0 18px!important;font-size:14px!important}
+/* Both entry points are one control with two destinations (UI-2): the same
+   brand fill, border, 44px height and type. Order carries the priority, so the
+   pair does not have to compete by looking different. Colour is the documented
+   accessible crimson — 5.43:1 against white, 6.79:1 on hover, 8.15:1 pressed. */
+.hub-home-actions .hub-home-cta{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  height:44px;min-height:44px;padding:0 18px;border:1px solid #8f3727;border-radius:9px;
+  background:var(--er-crimson);color:#fff;font:560 14px/1 var(--er-font-sans);letter-spacing:.005em;
+  text-decoration:none;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.08);
+  transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .12s ease}
+.hub-home-actions .hub-home-cta svg{flex:none;transition:transform .16s ease}
+.hub-home-actions .hub-home-cta:hover{background:#9c3c28;border-color:#7f2e20;box-shadow:0 4px 12px rgba(143,55,39,.24);transform:translateY(-1px)}
+.hub-home-actions .hub-home-cta:hover svg{transform:translateX(2px)}
+.hub-home-actions .hub-home-cta:active{background:#8a3322;border-color:#72281c;box-shadow:inset 0 2px 5px rgba(0,0,0,.2);transform:translateY(0)}
+/* Keyboard focus keeps the global two-tone ring from src/styles/a11y.css; it is
+   never replaced here, only allowed to sit still when motion is reduced. */
+@media(prefers-reduced-motion:reduce){
+  .hub-home-actions .hub-home-cta,.hub-home-actions .hub-home-cta svg{transition:none}
+  .hub-home-actions .hub-home-cta:hover{transform:none}
+  .hub-home-actions .hub-home-cta:hover svg{transform:none}
+}
 .home-resume{display:flex;align-items:center;gap:18px;margin:0 0 6px;padding:15px 17px;border:1px solid #bfdbfe;border-radius:12px;background:#f8fbff}
 .home-resume-copy{flex:1;min-width:0}
 .home-resume-kicker{display:block;color:#1d4ed8;font-size:11px;font-weight:560;letter-spacing:.08em;text-transform:uppercase}
@@ -67,6 +86,6 @@
 @media(max-width:600px){
   .home-resume{flex-direction:column;align-items:stretch;gap:12px}
   .home-resume>a{width:100%;justify-content:center}
-  .hub-home-actions .hub-primary-btn,.hub-home-actions .hub-ghost-btn{flex:1;justify-content:center}
+  .hub-home-actions .hub-home-cta{flex:1 1 100%;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){.home-resume-bar span{transition:none}}

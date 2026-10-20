@@ -122,7 +122,55 @@ test('the home page leads with a display headline and a touch-sized action', () 
   assert.doesNotMatch(density, /\.hub-home-intro h1\{font-size:19px/, 'the phone breakpoint does not shrink the hero below its paragraph');
   assert.match(density, /\.hub-home-intro h1\{font-size:clamp\(26px,7vw,30px\)!important\}/, 'the phone hero keeps a display size');
   const css = read('src/home-card-first.css');
-  assert.match(css, /\.hub-home-actions \.hub-primary-btn[^{]*\{[^}]*min-height:44px/, 'the primary action is a touch target');
+  assert.match(css, /\.hub-home-actions \.hub-home-cta\{[^}]*min-height:44px/, 'the hero actions are touch targets');
+});
+
+test('both home actions are one control with two destinations', () => {
+  const home = read('pages/HubHomePage.tsx');
+  const start = home.indexOf('hub-home-actions');
+  const actions = home.slice(start, home.indexOf('</div>', start));
+
+  assert.equal((actions.match(/className="hub-home-cta"/g) ?? []).length, 2, 'both anchors carry the shared class');
+  assert.doesNotMatch(actions, /hub-(primary|ghost)-btn/, 'neither anchor keeps a competing button style');
+  assert.match(actions, /Start practising/, 'the simulator keeps the first position');
+  assert.match(actions, /Past questions/);
+
+  const css = read('src/home-card-first.css');
+  const block = /\.hub-home-actions \.hub-home-cta\{([^}]*)\}/.exec(css);
+  assert.ok(block, 'the pair is styled by one rule');
+  for (const declaration of [
+    'background:var(--er-crimson)',
+    'color:#fff',
+    'border:1px solid #8f3727',
+    'height:44px',
+    'min-height:44px',
+    'padding:0 18px',
+    'border-radius:9px',
+    'font:560 14px/1',
+  ]) {
+    assert.ok(block[1].includes(declaration), `the shared rule sets ${declaration}`);
+  }
+  assert.match(css, /\.hub-home-actions \.hub-home-cta:hover\{[^}]*background:#9c3c28/, 'hover is defined once for the pair');
+  assert.match(css, /\.hub-home-actions \.hub-home-cta:active\{[^}]*background:#8a3322/, 'press feedback is defined once for the pair');
+  assert.match(css, /@media\(prefers-reduced-motion:reduce\)\{[^{]*\.hub-home-actions \.hub-home-cta/, 'motion is reduced, not merely shortened');
+});
+
+test('the shared home action stays readable in every state', () => {
+  const luminance = (hex: string): number => {
+    const value = hex.replace('#', '');
+    const channels = [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16) / 255)
+      .map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const contrast = (a: string, b: string): number => {
+    const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (high + 0.05) / (low + 0.05);
+  };
+  // 4.5:1 is AA for the 14px label. The resting fill is the lightest of the
+  // three, so passing it covers hover and pressed as well.
+  assert.ok(contrast('#b14933', '#ffffff') >= 4.5, 'resting button');
+  assert.ok(contrast('#9c3c28', '#ffffff') >= 4.5, 'hover');
+  assert.ok(contrast('#8a3322', '#ffffff') >= 4.5, 'pressed');
 });
 
 test('the home resume card is lazy, signed-in only and follows the shared expiry rule', () => {

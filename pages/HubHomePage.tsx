@@ -52,8 +52,8 @@ export default function HubHomePage() {
               <h1>Practise the exam you are sitting.</h1>
               <p>JAMB, WAEC, NECO and Post-UTME. Choose your subjects, set the number of questions and start a timed paper.</p>
               <div className="hub-home-actions">
-                <a className="hub-primary-btn" href="/cbt">Start practising <ArrowRight size={14} /></a>
-                <a className="hub-ghost-btn" href="/past-questions">Past questions</a>
+                <a className="hub-home-cta" href="/cbt">Start practising <ArrowRight size={14} aria-hidden="true" /></a>
+                <a className="hub-home-cta" href="/past-questions">Past questions <ArrowRight size={14} aria-hidden="true" /></a>
               </div>
             </div>
           </section>
