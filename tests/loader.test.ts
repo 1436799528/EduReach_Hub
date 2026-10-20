@@ -47,6 +47,7 @@ const { act, createElement } = await import('react');
 const { createRoot } = await import('react-dom/client');
 const { usePendingPhase } = await import('../src/lib/usePendingPhase');
 const WaveLoader = (await import('../src/components/WaveLoader')).default;
+const AsyncState = await import('../src/components/AsyncState');
 
 function mount() {
   const container = dom.window.document.createElement('div');
@@ -105,6 +106,49 @@ test('the pending phase follows the request and never invents progress', async (
     reactRoot.render(createElement(PhaseProbe, { pending: true }));
   });
   assert.equal(container.textContent, 'pending');
+
+  act(() => reactRoot.unmount());
+});
+
+test('the wait and failure surfaces are wired where requests actually block', () => {
+  const grid = read('src/components/ExamSimulatorGrid.tsx');
+  assert.match(grid, /usePendingPhase\(/, 'the catalogue uses the shared phase');
+  assert.match(grid, /Connecting to the question banks/, 'a slow catalogue is named');
+  assert.match(grid, /<ErrorState error=\{error\} onRetry=/, 'a failed catalogue offers a retry that re-runs the request');
+
+  const setup = read('pages/ExamSetupPage.tsx');
+  assert.match(setup, /usePendingPhase\(catalogLoading\)/, 'the catalogue wait');
+  assert.match(setup, /usePendingPhase\(bankLoading\)/, 'the subject-bank wait');
+  assert.match(setup, /usePendingPhase\(submitting\)/, 'the start-session wait');
+  assert.match(setup, /Loading subjects…/, 'the bank says what it is loading');
+
+  const session = read('pages/CbtSessionPage.tsx');
+  assert.match(session, /usePendingPhase\(loading\)/, 'the paper load uses the shared phase');
+  assert.match(session, /<WaveLoader variant="inline" decorative \/> saving…/, 'a save in flight is shown without blocking the next answer');
+
+  const imports = read('pages/AdminQuestionImportPage.tsx');
+  assert.match(imports, /usePendingPhase\(extracting/, 'extraction is measured from its real status');
+  assert.match(imports, /Retry extraction/, 'a stalled job offers the retry');
+});
+
+test('a named wait and a failed wait are different surfaces', () => {
+  const { container, root: reactRoot } = mount();
+  const { LoadingState, ErrorState } = AsyncState;
+
+  act(() => {
+    reactRoot.render(createElement(LoadingState, { label: 'Loading subjects…', detail: 'Fetching this bank’s subjects.' }));
+  });
+  const loading = container.querySelector('[role="status"]');
+  assert.ok(loading, 'a wait is announced politely');
+  assert.match(container.textContent ?? '', /Loading subjects…/);
+  assert.equal(container.querySelectorAll('.er-wave-ring').length, 1, 'the wave is the indicator, not a second spinner');
+
+  act(() => {
+    reactRoot.render(createElement(ErrorState, { error: new TypeError('Failed to fetch'), onRetry: () => undefined }));
+  });
+  const failure = container.querySelector('[role="alert"]');
+  assert.ok(failure, 'a failure interrupts politely-waiting announcements');
+  assert.match(container.textContent ?? '', /Try again/, 'a retryable failure always offers the retry');
 
   act(() => reactRoot.unmount());
 });

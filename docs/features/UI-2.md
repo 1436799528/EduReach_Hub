@@ -136,7 +136,7 @@ code exists and is exercised by a test or an audit here.
 | Gate | Result |
 |---|---|
 | `npx tsc --noEmit` | clean |
-| `npm test` | **557/557** (`tests/loader.test.ts` adds 5: action parity, contrast, loader markup, live-region behaviour, phase timings) |
+| `npm test` | **559/559** (`tests/loader.test.ts` adds 5: loader markup, live-region behaviour, phase timings, wiring of the four waits, and the wait-vs-failure surfaces; `tests/site-experience.test.ts` adds the action-parity and contrast rules) |
 | `npm run build` | clean |
 | `npm run perf:audit` | 10/10 |
 | `scripts/a11y-audit.ts` | 0 blocking, 4 informational |
