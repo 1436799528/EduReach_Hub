@@ -29,13 +29,16 @@ not silently dropped — see the plan at the end.
 | 14 | `edu-portal.css` | Feature surfaces layered over the design system |
 | 15 | `data-control.css` | Data-control centre |
 | 16 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
-| 17 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+| 17 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
+| 18 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
 
 Two rules follow from that:
 
 1. **`styles/a11y.css` is the final import.** Later declarations win in CSS; a
    sheet imported after it can silently override the focus ring, and
-   `npm run a11y:audit` would have nothing to check.
+   `npm run a11y:audit` would have nothing to check. `styles/brand-actions.css`
+   is imported immediately before it for the same reason in reverse: it has to
+   follow every component sheet to settle which colour a primary action is.
 2. **`styles/type-system.css` follows every component sheet.** It standardises
    type that the component sheets set; importing it earlier lets them win.
 

@@ -139,9 +139,9 @@ test('both home actions are one control with two destinations', () => {
   const block = /\.hub-home-actions \.hub-home-cta\{([^}]*)\}/.exec(css);
   assert.ok(block, 'the pair is styled by one rule');
   for (const declaration of [
-    'background:var(--er-crimson)',
-    'color:#fff',
-    'border:1px solid #8f3727',
+    'background:var(--er-primary)',
+    'color:var(--er-on-primary)',
+    'border:1px solid var(--er-primary-border)',
     'height:44px',
     'min-height:44px',
     'padding:0 18px',
@@ -150,8 +150,8 @@ test('both home actions are one control with two destinations', () => {
   ]) {
     assert.ok(block[1].includes(declaration), `the shared rule sets ${declaration}`);
   }
-  assert.match(css, /\.hub-home-actions \.hub-home-cta:hover\{[^}]*background:#9c3c28/, 'hover is defined once for the pair');
-  assert.match(css, /\.hub-home-actions \.hub-home-cta:active\{[^}]*background:#8a3322/, 'press feedback is defined once for the pair');
+  assert.match(css, /\.hub-home-actions \.hub-home-cta:hover\{[^}]*background:var\(--er-primary-hover\)/, 'hover is defined once for the pair');
+  assert.match(css, /\.hub-home-actions \.hub-home-cta:active\{[^}]*background:var\(--er-primary-active\)/, 'press feedback is defined once for the pair');
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)\{[^{]*\.hub-home-actions \.hub-home-cta/, 'motion is reduced, not merely shortened');
 });
 
@@ -168,9 +168,9 @@ test('the shared home action stays readable in every state', () => {
   };
   // 4.5:1 is AA for the 14px label. The resting fill is the lightest of the
   // three, so passing it covers hover and pressed as well.
-  assert.ok(contrast('#b14933', '#ffffff') >= 4.5, 'resting button');
-  assert.ok(contrast('#9c3c28', '#ffffff') >= 4.5, 'hover');
-  assert.ok(contrast('#8a3322', '#ffffff') >= 4.5, 'pressed');
+  assert.ok(contrast('#174A3A', '#ffffff') >= 4.5, 'resting button');
+  assert.ok(contrast('#0F3A2D', '#ffffff') >= 4.5, 'hover');
+  assert.ok(contrast('#0A2C22', '#ffffff') >= 4.5, 'pressed');
 });
 
 test('the home resume card is lazy, signed-in only and follows the shared expiry rule', () => {

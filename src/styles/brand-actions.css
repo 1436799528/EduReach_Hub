@@ -1,0 +1,273 @@
+/* ==========================================================================
+   Brand action colours (UI-3)
+
+   One owner for "this is a primary action". Component sheets had grown their
+   own answers to the same question - five sheets set .hub-primary-btn, three
+   set the exam submit - so the answer depended on which sheet was imported
+   last and which one used !important. This sheet is imported after every
+   component sheet and before a11y.css, so it is the last word for these
+   selectors and nothing else.
+
+   Rules of the house:
+   - Deep green (--er-primary) is the fill for an action the student takes.
+   - Crimson (--er-crimson) stays for the brand mark, navigation accents and
+     explicitly designated highlights. It is not a default button colour.
+   - Nothing here sets a card surface, border, radius, shadow or size. Cards,
+     exam identities and layout are untouched by this file.
+   ========================================================================== */
+
+/* --- Primary buttons ----------------------------------------------------- */
+/* component sheets declare these with !important, so matching them is the only
+   way to win without deleting their rules; every one of those rules is kept
+   intact for the case where this sheet is not loaded. */
+
+.hub-primary-btn {
+  background: var(--er-primary) !important;
+  color: var(--er-on-primary) !important;
+}
+
+.hub-primary-btn:hover {
+  background: var(--er-primary-hover) !important;
+}
+
+.hub-primary-btn:active {
+  background: var(--er-primary-active) !important;
+}
+
+/* Admin console. .admin-btn.secondary / .success / .danger are more specific
+   and keep their own fills; only the default primary action changes. */
+.admin-btn {
+  background: var(--er-primary);
+  box-shadow: 0 10px 22px rgba(23, 74, 58, 0.18);
+}
+
+.admin-btn:hover {
+  background: var(--er-primary-hover);
+}
+
+/* Student dashboard and the sign-in form. */
+.dash-btn-primary {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.dash-btn-primary:hover:not(:disabled) {
+  background: var(--er-primary-hover);
+}
+
+.auth-v2-submit {
+  background: var(--er-primary);
+}
+
+.auth-v2-submit:hover {
+  background: var(--er-primary-hover);
+}
+
+/* --- Selected and active states ----------------------------------------- */
+/* A selected filter, tab, step or answer is the same idea everywhere, so it
+   speaks the same colour. Backgrounds stay pale; only the accent moves. */
+
+.er-pill:hover {
+  border-color: var(--er-primary);
+  color: var(--er-primary);
+}
+
+.er-pill.active {
+  background: var(--er-primary);
+  border-color: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-library-tabs button:hover {
+  color: var(--er-primary);
+}
+
+.er-library-tabs button.active {
+  color: var(--er-primary);
+  border-color: #b9d3c7;
+}
+
+.er-setup-duration-option:hover {
+  border-color: var(--er-primary);
+}
+
+.er-setup-duration-option.is-selected {
+  background: var(--er-primary);
+  border-color: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-mode-option.is-selected {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+  box-shadow: inset 0 0 0 1px #b9d3c7;
+}
+
+.hub-stepper > div.active {
+  border-color: #b9d3c7;
+  color: var(--er-primary);
+}
+
+.hub-stepper > div.active span {
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+}
+
+/* --- Primary links ------------------------------------------------------- */
+/* These are "the action in this block", not decoration. */
+
+.hub-card-link,
+.hub-section-heading.compact > a,
+.hub-auth-switch,
+.dash-card-link {
+  color: var(--er-primary);
+}
+
+.dash-card-link:hover {
+  color: var(--er-primary-hover);
+}
+
+/* --- Progress and status indicators ------------------------------------- */
+
+.er-route-progress {
+  background: linear-gradient(90deg, var(--er-primary), #5c9382);
+}
+
+.home-resume-kicker {
+  color: var(--er-primary);
+}
+
+.home-resume-bar {
+  background: var(--er-primary-soft);
+}
+
+.home-resume-bar span {
+  background: var(--er-primary);
+}
+
+/* --- The examination hall ------------------------------------------------ */
+/* cbt-engine.css states these with the crimson token directly, so they are
+   repeated here rather than reached by changing a shared variable: --er-crimson
+   still has to mean crimson for the brand mark and the navigation accents. */
+
+.er-exam-subject-tab.is-current {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--er-primary);
+}
+
+.er-exam-subject-tab.is-current span {
+  color: var(--er-primary);
+}
+
+.er-exam-subject-name {
+  background: var(--er-primary);
+}
+
+.er-exam-option:hover {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+}
+
+.er-exam-option.is-selected {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--er-primary);
+}
+
+.er-exam-option.is-selected .er-exam-option-letter {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-exam-submit-primary {
+  background: var(--er-primary) !important;
+  border-color: var(--er-primary) !important;
+}
+
+.er-exam-submit-primary:hover {
+  background: var(--er-primary-hover) !important;
+}
+
+.er-exam-palette-cell.is-current {
+  outline: 2px solid var(--er-primary);
+}
+
+.er-exam-ghost:hover {
+  border-color: var(--er-primary);
+  color: var(--er-primary);
+}
+
+.er-exam-tool:hover {
+  background: var(--er-primary-hover);
+}
+
+/* --- Form controls and small action affordances -------------------------- */
+
+/* A checkbox, a search field's focus ring and a tool link are all "the thing
+   you act with". They follow the action colour; the surfaces stay untouched. */
+.er-setup-subject-chip input {
+  accent-color: var(--er-primary);
+}
+
+.hub-global-search:focus-within {
+  border-color: var(--er-primary);
+  box-shadow: 0 0 0 3px rgba(23, 74, 58, 0.1);
+}
+
+.edureach-dash-search input:focus {
+  border-color: var(--er-primary);
+}
+
+.er-admin-view-banner button {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-admin-view-banner button:hover {
+  background: var(--er-primary-hover);
+}
+
+.hub-home-section-title > a {
+  color: var(--er-primary);
+}
+
+.hub-home-tool-icon {
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+}
+
+/* The exam bar's Submit is the one place the shared accent token does not
+   reach, because edu-portal.css hard-codes its hover. */
+.er-exam-submit:hover {
+  background: var(--er-primary-hover);
+}
+
+/* "Try again" inside a notice is an action, so it reads like one. */
+.er-inline-notice-action {
+  color: var(--er-primary);
+}
+
+/* Search submits: the action in a search field. */
+.hub-mobile-search button,
+.er-site-search-page-form button {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.hub-mobile-search button:hover,
+.er-site-search-page-form button:hover {
+  background: var(--er-primary-hover);
+}
+
+/* Progress and preset selection on the dashboard. The card they sit in keeps
+   its own surface; only the indicator and the chosen option follow the action
+   colour. */
+.target-track span {
+  background: var(--er-primary);
+}
+
+.wallet-presets button.selected,
+.preset-grid button.selected {
+  background: var(--er-primary);
+}
