@@ -24,7 +24,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function LegalPage({ slug }: { slug: string }) {
-  const { content, source } = useSiteContent();
+  const { content, status } = useSiteContent();
   const page = isPolicySlug(slug) ? content.pages.find((entry) => entry.slug === slug) ?? null : null;
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function LegalPage({ slug }: { slug: string }) {
             <ArrowLeft size={14} aria-hidden="true" /> Back to EduReach
           </a>
 
-          {!page && source === 'live' && (
+          {!page && status === 'live' && (
             <div className="er-legal-missing">
               <h1>This page is not published</h1>
               <p>
@@ -51,10 +51,24 @@ export default function LegalPage({ slug }: { slug: string }) {
             </div>
           )}
 
-          {!page && source !== 'live' && (
+          {!page && status === 'loading' && (
             <div className="er-legal-missing" role="status">
               <h1>Loading this page…</h1>
               <p>If it does not appear, check your connection and reload.</p>
+            </div>
+          )}
+
+          {/* The request finished without a payload. Saying "loading" here would
+              be a spinner that never stops, so the page says what happened and
+              gives a way to reach a person. */}
+          {!page && status === 'error' && (
+            <div className="er-legal-missing" role="alert">
+              <h1>This page could not be loaded</h1>
+              <p>
+                EduReach could not reach the server just now, so the policy text is not available. Nothing you have
+                saved is affected. <button type="button" className="er-legal-retry" onClick={() => window.location.reload()}>Reload the page</button>{' '}
+                or <a href="/contact">contact us</a> and we will send you the policy directly.
+              </p>
             </div>
           )}
 

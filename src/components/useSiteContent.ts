@@ -10,7 +10,7 @@ const fallbackContent: SiteContentPayload = mergeSiteContent(null);
  */
 export function useSiteContent(): LoadedSiteContent {
   const [state, setState] = useState<LoadedSiteContent>(
-    () => peekSiteContent() ?? { content: fallbackContent, source: 'fallback', fetchedAt: null },
+    () => peekSiteContent() ?? { content: fallbackContent, source: 'fallback', fetchedAt: null, status: 'loading' },
   );
 
   useEffect(() => {

@@ -294,3 +294,14 @@ test('the footer renders a complete, honest footer with no dead links', async ()
     assert.ok(html.includes(`>${heading}</h2>`), `the ${heading} column is labelled by a heading`);
   }
 });
+
+test('a policy page never spins forever when the API is unreachable', () => {
+  const page = read('pages/LegalPage.tsx');
+  assert.match(page, /status === 'loading'/, 'loading is its own state');
+  assert.match(page, /status === 'error'/, 'a finished-but-failed request is its own state');
+  assert.match(page, /This page could not be loaded/, 'the failure is stated in words');
+  assert.match(page, /role="alert"/, 'and announced');
+  assert.match(page, /Reload the page/, 'with a way to retry');
+  assert.match(page, /href="\/contact"/, 'and a way to reach a person');
+  assert.doesNotMatch(page, /If it does not appear, check your connection and reload\.<\/p>\s*\)\}/, 'the eternal-loading copy is scoped to loading only');
+});

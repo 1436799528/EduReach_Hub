@@ -16,6 +16,14 @@ export interface LoadedSiteContent {
   content: SiteContentPayload;
   source: SiteContentSource;
   fetchedAt: number | null;
+  /**
+   * 'loading'  no answer yet (first render of the session)
+   * 'live'     the API answered
+   * 'error'    the request finished without a payload - the footer still renders
+   *            the shipped copy, and a page that has no shipped copy must say so
+   *            rather than spin forever
+   */
+  status: 'loading' | 'live' | 'error';
 }
 
 let cache: LoadedSiteContent | null = null;
@@ -40,12 +48,12 @@ export async function loadSiteContent({ force = false }: { force?: boolean } = {
       });
       if (!response.ok) throw new Error(`site content ${response.status}`);
       const body = await response.json();
-      cache = { content: mergeSiteContent(body), source: 'live', fetchedAt: Date.now() };
+      cache = { content: mergeSiteContent(body), source: 'live', fetchedAt: Date.now(), status: 'live' };
     } catch {
       // Degrade to the shipped copy, or keep the last good copy if there is one.
       // The footer must not disappear because the API is having a bad minute - a
       // page without a footer looks abandoned.
-      cache = cache ?? { content: mergeSiteContent(null), source: 'fallback', fetchedAt: Date.now() };
+      cache = cache ?? { content: mergeSiteContent(null), source: 'fallback', fetchedAt: Date.now(), status: 'error' };
     } finally {
       inflight = null;
     }
