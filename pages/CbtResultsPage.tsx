@@ -90,7 +90,27 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     return Array.from(map.values());
   })();
 
-  const score = Number(result?.attempt?.score || 0);
+  const storedScore = Number(result?.attempt?.score || 0);
+  const examBody = String(result?.exam?.exam_body || '').trim().toUpperCase();
+  const isWaecStyle = examBody === 'WAEC' || examBody === 'NECO';
+  const isJambStyle = examBody === 'JAMB' || examBody === 'UTME' || examBody.includes('POST');
+  const isMock = String(result?.attempt?.mode || '').toLowerCase() === 'mock';
+  const subjectMarkTotal = subjectRows.reduce((sum, row) => sum + (row.total > 0 ? (row.correct / row.total) * 100 : 0), 0);
+  const score = isJambStyle && isMock && subjectRows.length
+    ? Math.round(subjectMarkTotal)
+    : storedScore;
+  const waecGrade = (correct: number, total: number) => {
+    const percent = total > 0 ? (correct / total) * 100 : 0;
+    if (percent >= 75) return { grade: 'A1', remark: 'Excellent' };
+    if (percent >= 70) return { grade: 'B2', remark: 'Very Good' };
+    if (percent >= 65) return { grade: 'B3', remark: 'Good' };
+    if (percent >= 60) return { grade: 'C4', remark: 'Credit' };
+    if (percent >= 55) return { grade: 'C5', remark: 'Credit' };
+    if (percent >= 50) return { grade: 'C6', remark: 'Credit' };
+    if (percent >= 45) return { grade: 'D7', remark: 'Pass' };
+    if (percent >= 40) return { grade: 'E8', remark: 'Pass' };
+    return { grade: 'F9', remark: 'Fail' };
+  };
   const correctCount = Number(result?.attempt?.correct_answers || 0);
   const totalCount = Number(result?.attempt?.total_questions || questions.length || 0);
 
@@ -143,8 +163,9 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
             <>
               <section className="er-result-header" aria-labelledby="result-heading">
                 <span className="er-result-kicker">CBT RESULT</span>
-                <h1 id="result-heading">Overall Score</h1>
-                <div className="er-result-score">{score.toFixed(0)}<span>%</span></div>
+                <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle && isMock ? 'Total Mock Mark' : 'Practice Mark'}</h1>
+                <div className="er-result-score">{isWaecStyle ? 'Grades' : isJambStyle && isMock ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{isWaecStyle ? '' : isJambStyle && isMock ? '/400' : '/100'}</span></div>
+                {isWaecStyle && <p className="er-result-grade-note">Grades are estimated from this simulator's objective-question score bands; official results can use subject-specific marking schemes.</p>}
               </section>
 
               <section className="er-result-counts-block" aria-label="Score summary">
