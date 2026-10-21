@@ -310,7 +310,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       .filter((entry) => entry.subject_group === databaseGroup)
       .map((entry) => entry.subject_name);
     return new Set([...secondary, ...jamb, ...vocational, ...databaseNames].map(normalizeSubject));
-  }, [practiceTrack]);
+  }, [practiceTrack, databaseSubjects]);
   // A subject the static catalogues do not know (Post-UTME "General
   // Knowledge", for example) must not disappear because of a group filter:
   // the filter is a convenience, not a way to hide a bank the student can use.
