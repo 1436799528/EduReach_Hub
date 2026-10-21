@@ -397,3 +397,29 @@
   .import-meta-row { grid-template-columns: 1fr; }
   .import-upload-list li { grid-template-columns: 1fr; }
 }
+
+/* Site & policies (Phase 7): tabs, a selectable list and two-column form grid.
+   Same surfaces, radii and type scale as the rest of the console - these are
+   layout primitives, not a new visual language. */
+.admin-tabs { display: flex; gap: 6px; margin: 0 0 18px; border-bottom: 1px solid var(--admin-border); }
+.admin-tab { padding: 9px 14px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--admin-muted); font: 620 12.5px/1 var(--er-font-sans); cursor: pointer; }
+.admin-tab:hover { color: var(--admin-navy); }
+.admin-tab.is-active { color: var(--admin-navy); border-bottom-color: var(--admin-navy); }
+.admin-tab:focus-visible { outline: 2px solid var(--admin-navy); outline-offset: 2px; }
+.admin-grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.admin-list-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 13px; border: 1px solid var(--admin-border); border-radius: 12px; background: #fff; color: var(--admin-navy); text-align: left; }
+.admin-list-item > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.admin-list-item small { color: var(--admin-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-list-item.is-active { border-color: var(--admin-navy); box-shadow: inset 0 0 0 1px var(--admin-navy); }
+button.admin-list-item { cursor: pointer; font: inherit; }
+button.admin-list-item:hover { background: var(--admin-surface-2); }
+.admin-pill { padding: 3px 8px; border-radius: 999px; font: 700 9.5px/1.4 var(--er-font-sans); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.admin-pill.is-ok { background: var(--admin-green-soft); color: #047857; }
+.admin-pill.is-warn { background: #fff7df; color: #8a5a00; }
+.admin-pill.is-muted { background: var(--admin-surface-2); color: var(--admin-muted); }
+.admin-textarea-lg { min-height: 260px; resize: vertical; font: 500 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.admin-alert.is-error { background: #fef2f2; border-color: #fecaca; color: #b42318; }
+.admin-alert.is-error svg { color: #b42318; }
+.admin-alert.is-success { background: var(--admin-green-soft); border-color: #a7f3d0; color: #047857; }
+.admin-alert.is-info { background: #eef3ff; border-color: #ccd7f6; color: #42578b; }
+@media(max-width:900px){ .admin-grid-two { grid-template-columns: 1fr; } }

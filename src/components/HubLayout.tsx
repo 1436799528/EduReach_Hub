@@ -22,6 +22,7 @@ import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
 import { navigateInApp } from '../lib/navigation';
 import { EDUREACH_WHATSAPP } from '../data/hubContent';
+import SiteFooter from './SiteFooter';
 import '../hub-rail.css';
 
 function navigateToSearch(term: string) {
@@ -476,28 +477,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
-      {/* Minimal footer - secondary navigation only; sits naturally at the bottom of content. */}
-      <footer className="er-footer" style={{ background: '#0f172a', color: '#94a3b8', padding: '24px 0', borderTop: '1px solid #1e293b', marginTop: 'auto', fontSize: '12px' }}>
-        <div className="hub-container">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <BrandLogo height={28} radius="50%" />
-              <strong style={{ color: '#ffffff', fontSize: '13px', fontWeight: 620 }}>EduReach Hub</strong>
-            </div>
-            <nav className="er-footer-links" aria-label="Footer" style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px' }}>
-              <a href="/" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Home</a>
-              <a href="/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>CBT</a>
-              <a href="/services" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Services</a>
-              <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>News</a>
-              <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620, textDecoration: 'none' }}>Help</a>
-              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Contact</a>
-              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Privacy</a>
-              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Terms</a>
-            </nav>
-            <div style={{ fontSize: '11px' }}>© {new Date().getFullYear()} EduReach Hub</div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

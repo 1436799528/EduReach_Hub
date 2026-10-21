@@ -529,6 +529,55 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-exam-flag{font-size:12px;padding:0 10px}
 }
 
+/* Footer (Phase 8): identity, learning, navigation, help and policies. The dark
+   slate surface and the small type are the ones the footer already used; what
+   changes is that the columns are structured and driven by admin content. */
+.er-footer{background:#0f172a;color:#94a3b8;border-top:1px solid #1e293b;margin-top:auto;padding:34px 0 22px;font-size:12px}
+.er-footer-grid{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:28px;margin-bottom:26px}
+.er-footer-brand{display:grid;gap:10px;align-content:start}
+.er-footer-brand-link{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:13px;font-weight:620}
+.er-footer-brand-link:hover{text-decoration:underline}
+.er-footer-about{margin:0;max-width:38ch;line-height:1.6;color:#94a3b8}
+.er-footer-social{display:flex;flex-wrap:wrap;gap:12px}
+.er-footer-social a,.er-footer-links a,.er-footer-legal a{color:#cbd5e1;text-decoration:none}
+.er-footer-social a:hover,.er-footer-links a:hover,.er-footer-legal a:hover{color:#fff;text-decoration:underline}
+.er-footer-col{min-width:0}
+.er-footer-note{margin:10px 0 0;font-size:11.5px;line-height:1.55;color:#7d8ca3}
+.er-footer .er-footer-help{color:#86efac;font-weight:620}
+.er-footer-bottom{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:18px;border-top:1px solid #1e293b}
+.er-footer-copy{margin:0;max-width:62ch;font-size:11.5px;line-height:1.6;color:#8fa0b5}
+.er-footer-legal{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px}
+.er-footer a:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:2px}
+@media(max-width:900px){.er-footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.er-footer-brand{grid-column:1/-1}}
+
+/* Policy pages (Phase 9): a readable column, a visible draft banner and links
+   that do not depend on the footer to be discovered. */
+.er-legal-page{padding:26px 0 64px;background:#fff}
+.er-legal-container{max-width:820px}
+.er-legal-back{display:inline-flex;align-items:center;gap:6px;min-height:32px;color:#475569;font-size:12.5px;text-decoration:none}
+.er-legal-back:hover{color:#0f172a;text-decoration:underline}
+.er-legal-draft{display:flex;align-items:flex-start;gap:10px;margin:18px 0 0;padding:13px 15px;border:1px solid #fde68a;border-radius:10px;background:#fffbeb;color:#7a5300}
+.er-legal-draft svg{flex:none;margin-top:1px}
+.er-legal-draft p{margin:0;font-size:12.5px;line-height:1.6}
+.er-legal-head{margin:22px 0 18px;padding-bottom:16px;border-bottom:1px solid #e2e8f0}
+.er-legal-head h1{margin:6px 0 8px;font-size:clamp(24px,3.4vw,32px);line-height:1.15;letter-spacing:-.5px;color:#0f172a}
+.er-legal-summary{margin:0;color:#475569;font-size:14px;line-height:1.6}
+.er-legal-meta{margin:10px 0 0;color:#64748b;font-size:12px}
+.er-legal-body{color:#334155;font-size:15px;line-height:1.72}
+.er-legal-body h2{margin:28px 0 8px;font-size:17px;line-height:1.35;color:#0f172a}
+.er-legal-body p{margin:0 0 13px}
+.er-legal-body ul,.er-legal-body ol{margin:0 0 14px;padding-left:22px}
+.er-legal-body li{margin:0 0 7px}
+.er-legal-body a{color:#9f2f1e;text-underline-offset:2px}
+.er-legal-body a:hover{color:#7f2417}
+.er-legal-foot{margin-top:38px;padding-top:18px;border-top:1px solid #e2e8f0;display:grid;gap:10px;color:#475569;font-size:12.5px}
+.er-legal-foot nav{display:flex;flex-wrap:wrap;gap:14px}
+.er-legal-foot a{color:#334155}
+.er-legal-missing{max-width:620px;margin:26px 0;padding:22px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
+.er-legal-missing h1{margin:0 0 8px;font-size:20px;color:#0f172a}
+.er-legal-missing p{margin:0;color:#475569;line-height:1.6}
+@media(max-width:640px){.er-legal-page{padding:18px 0 46px}.er-legal-body{font-size:14.5px}}
+
 /* Footer: two link columns on phones instead of one very long list */
 .er-footer-links a{display:flex;align-items:center;min-height:28px}
 @media(max-width:640px){

@@ -76,6 +76,12 @@ export const CAPABILITIES = [
   'data.write',
   'data.import',
 
+  // Site-wide content: branding, footer, contact details and policy pages.
+  // This content is public, so it is separate from the news/editorial set: a
+  // policy edit changes what the whole site says about the organisation.
+  'site.read',
+  'site.update',
+
   // Account administration.
   'user.read',
   'user.suspend',
@@ -143,6 +149,12 @@ const CONTENT_EDITOR_CAPABILITIES: readonly Capability[] = [
   'cbt.manage',
   'analytics.read',
   'data.read',
+  // A content editor maintains the site's public copy, including the policy
+  // pages. `site.update` is the same grant for both: the audit log records who
+  // changed what, and `review_state` is what distinguishes a claim of legal
+  // review from a text edit.
+  'site.read',
+  'site.update',
 ];
 
 const SERVICE_ADMIN_CAPABILITIES: readonly Capability[] = [
@@ -240,6 +252,7 @@ export const ADMIN_ROUTE_CAPABILITIES: ReadonlyArray<{ path: string; capability:
   { path: '/admin/content-manager', capability: 'data.read' },
   { path: '/admin/pdf-bank', capability: 'data.read' },
   { path: '/admin/question-imports', capability: 'cbt.manage' },
+  { path: '/admin/site', capability: 'site.read' },
 ];
 
 /**

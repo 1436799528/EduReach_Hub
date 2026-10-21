@@ -56,6 +56,18 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Scholarships and jobs are public content; the policy filters to active rows.',
   },
   {
+    table: 'site_settings', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
+    why: 'The footer renders brand, contact and social settings for every visitor; site_settings_public_read allows select only, and only the API writes.',
+  },
+  {
+    table: 'site_pages', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
+    why: 'Policy pages must be readable without a login, so site_pages_public_read filters to status = published. Drafts are server-only.',
+  },
+  {
+    table: 'site_page_revisions', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Append-only policy history is read and written by the admin API; no client grant exists, so the revision list cannot be enumerated by a visitor.',
+  },
+  {
     table: 'past_question_resources', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
     why: 'PQR-1: the policy is published = true and verified_at is not null, so an unverified paper is never shown as available. Publishing is server-side only.',
   },

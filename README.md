@@ -73,7 +73,7 @@ The full gate is `npm run ci`:
 typecheck -> test -> schema:audit -> build -> perf:audit -> analytics:audit -> test:e2e -> npm audit
 ```
 
-`npm test` includes `tests/migrations.test.ts`, which applies all 70 migrations in
+`npm test` includes `tests/migrations.test.ts`, which applies all 71 migrations in
 order to an in-process PostgreSQL build (PGlite), then asserts the tables,
 functions, columns, RLS state and signup trigger the application depends on. It
 also runs the accessibility and SQL posture checks, so a page or a policy that

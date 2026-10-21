@@ -1728,3 +1728,55 @@ export async function fetchCbtHistory(limit = 25): Promise<CbtHistoryItem[]> {
 
 /** Which course/programme combinations the governed catalogue can produce. */
 export type { JambCourse } from '../data/examPreparation';
+
+// ---- Site content (branding, footer, contact, policy pages) ----------------
+//
+// The public read (`/api/site-content`) goes through the same-origin API rather
+// than PostgREST so the payload is one validated object, and so the footer has
+// one fallback path when the API is down (see src/lib/siteContent.ts).
+
+export type AdminSitePage = {
+  slug: string; title: string; summary: string; body: string;
+  status: 'draft' | 'published'; reviewState: 'pending' | 'approved';
+  revision: number; updatedAt: string | null; publishedAt: string | null;
+};
+
+export type AdminSiteRevision = {
+  id: string; revision: number; title: string; summary: string; body: string;
+  status: 'draft' | 'published'; reviewState: 'pending' | 'approved'; editedAt: string;
+};
+
+export async function fetchAdminSiteContent(): Promise<{ settings: Record<string, unknown>; pages: AdminSitePage[] }> {
+  return await adminApiFetch<{ settings: Record<string, unknown>; pages: AdminSitePage[] }>('/api/admin/site-content');
+}
+
+export async function saveAdminSiteSettings(key: string, value: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const body = await adminApiFetch<{ value: Record<string, unknown> }>(
+    `/api/admin/site-content/settings/${encodeURIComponent(key)}`,
+    { method: 'PUT', body: JSON.stringify(value) },
+  );
+  return body.value;
+}
+
+export async function saveAdminSitePage(slug: string, input: Partial<AdminSitePage>): Promise<AdminSitePage> {
+  const body = await adminApiFetch<{ page: AdminSitePage }>(
+    `/api/admin/site-content/pages/${encodeURIComponent(slug)}`,
+    { method: 'PUT', body: JSON.stringify(input) },
+  );
+  return body.page;
+}
+
+export async function fetchAdminSiteRevisions(slug: string): Promise<AdminSiteRevision[]> {
+  const body = await adminApiFetch<{ items: AdminSiteRevision[] }>(
+    `/api/admin/site-content/pages/${encodeURIComponent(slug)}/revisions`,
+  );
+  return body.items || [];
+}
+
+export async function restoreAdminSiteRevision(slug: string, revision: number): Promise<AdminSitePage> {
+  const body = await adminApiFetch<{ page: AdminSitePage }>(
+    `/api/admin/site-content/pages/${encodeURIComponent(slug)}/restore/${revision}`,
+    { method: 'POST' },
+  );
+  return body.page;
+}

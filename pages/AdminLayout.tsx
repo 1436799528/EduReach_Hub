@@ -111,7 +111,10 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
     // Backend unreachable: fall back to the profile row the account can read
     // under RLS, resolving capabilities through the same vocabulary the server
     // uses. The API still authorizes every call, so this cannot grant anything.
-    const rawRole = profile?.role ?? authSession.user.app_metadata?.role ?? authSession.user.user_metadata?.role;
+    // `app_metadata` is written only by the auth admin API; `user_metadata` is
+    // writable by the account holder and must never be read here. The profile
+    // row is the same source the API uses.
+    const rawRole = profile?.role ?? authSession.user.app_metadata?.role;
     const appRole = resolveAppRole(rawRole);
     if (isStaffRole(appRole)) {
       return {
@@ -164,6 +167,8 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'group', label: 'Analytics' },
   { kind: 'link', href: '/admin/analytics', label: 'Analytics & Reports', icon: <BarChart3 size={15} />, capability: 'analytics.read' },
   { kind: 'link', href: '/admin/content-manager', label: 'Data Control Center', icon: <Database size={15} />, capability: 'data.read' },
+  { kind: 'group', label: 'Site' },
+  { kind: 'link', href: '/admin/site', label: 'Site & Policies', icon: <FileText size={15} />, capability: 'site.read' },
   { kind: 'link', href: '/admin/pdf-bank', label: 'PDF Bank', icon: <FileText size={15} />, capability: 'data.read' },
   { kind: 'link', href: '/', label: 'View Public Site', icon: <Globe size={15} />, capability: null },
 ];

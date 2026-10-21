@@ -52,6 +52,10 @@ const CANONICAL_ALIASES: Record<string, string> = {
   '/dashboard/settings': '/settings',
   '/dashboard/profile': '/profile/complete',
   '/profile': '/profile/complete',
+  '/privacy-policy': '/privacy',
+  '/terms-of-service': '/terms',
+  '/cookie-policy': '/cookies',
+  '/contact-us': '/contact',
 };
 
 const AUTH_PATHS = new Set([
@@ -100,6 +104,35 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
     title: 'Student Services: NELFUND, Results, JAMB Slip & Admission Letters | EduReach Hub',
     description:
       'EduReach service catalogue: what each student service does, the requirements, and how to start a request and track it to completion.',
+  },
+  '/privacy': {
+    title: 'Privacy Notice | EduReach Hub',
+    description:
+      'What EduReach Hub collects, why, where it is stored, how long it is kept and how to exercise your rights under the Nigeria Data Protection Act.',
+  },
+  '/terms': {
+    title: 'Terms of Use | EduReach Hub',
+    description:
+      'The rules for using EduReach Hub: accounts, practice material, service requests, acceptable use and the limits of our responsibility.',
+  },
+  '/cookies': {
+    title: 'Cookies & Browser Storage | EduReach Hub',
+    description:
+      'No advertising cookies and no third-party trackers. What this site stores in your browser, why, and how to clear it.',
+  },
+  '/accessibility': {
+    title: 'Accessibility | EduReach Hub',
+    description:
+      'How EduReach Hub supports keyboard, screen-reader, low-vision and reduced-motion users, and how to report a barrier.',
+  },
+  '/disclaimer': {
+    title: 'Disclaimer | EduReach Hub',
+    description:
+      'EduReach Hub is independent of JAMB, WAEC, NECO and every institution. What our practice material and service assistance can and cannot promise.',
+  },
+  '/contact': {
+    title: 'Contact EduReach | EduReach Hub',
+    description: 'How to reach EduReach Hub, what to include in your message, and how to report a problem with a request or the site.',
   },
   '/cbt': {
     title: 'CBT Practice for JAMB, WAEC, NECO & Post-UTME | EduReach Hub',

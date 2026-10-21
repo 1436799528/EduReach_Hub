@@ -25,6 +25,7 @@ import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUser
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
 import { registerQuestionImportRoutes } from './src/server/question-import/routes';
+import { registerSiteContentRoutes } from './src/server/siteContent';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -203,6 +204,10 @@ registerQuestionImportRoutes(app, {
   adminImportRateLimit: RATE_LIMIT_RULES.adminImport,
   getSupabase: getServerSupabase,
 });
+
+// Site-wide content: footer, brand, contact and the policy pages. Public read is
+// cached for a minute; writes are capability-gated and audited.
+registerSiteContentRoutes(app, { requireCapability, getSupabase: getServerSupabase, recordAudit });
 
 app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), async (req, res) => {
   try {
@@ -1124,7 +1129,6 @@ app.post('/api/admin/institutions', requireCapability('institution.create'), asy
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').insert(check.values).select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified,created_at,updated_at').single();
     if (error) throw error;
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.status(201).json({ item: data });
   } catch (error) {
@@ -1141,7 +1145,6 @@ app.patch('/api/admin/institutions/:institutionId', requireCapability('instituti
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').update(check.values).eq('id', req.params.institutionId).select('id,school_name,acronym,slug,state,institution_type,website_url,admission_portal_url,student_portal_url,is_verified,post_utme_available,post_utme_method,post_utme_source_url,post_utme_verified,created_at,updated_at').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.json({ item: data });
   } catch (error) {
@@ -1156,7 +1159,6 @@ app.delete('/api/admin/institutions/:institutionId', requireCapability('institut
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('institutions').delete().eq('id', req.params.institutionId).select('id,school_name').single();
     if (error || !data) return res.status(404).json({ error: 'Institution not found.' });
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'institution', p_entity_id: data.id, p_metadata: { title: data.school_name } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: 'institution', resourceId: data.id, metadata: { school_name: data.school_name } });
     res.json({ success: true });
   } catch (error) {
@@ -1509,7 +1511,6 @@ app.post('/api/admin/opportunities', requireCapability('opportunity.create'), as
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').insert(check.values).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
     if (error) throw error;
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'create', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'create', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.status(201).json({ item: data });
   } catch (error) {
@@ -1526,7 +1527,6 @@ app.patch('/api/admin/opportunities/:opportunityId', requireCapability('opportun
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').update({ ...check.values, updated_at: new Date().toISOString() }).eq('id', req.params.opportunityId).select('id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at').single();
     if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'update', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.json({ item: data });
   } catch (error) {
@@ -1541,7 +1541,6 @@ app.delete('/api/admin/opportunities/:opportunityId', requireCapability('opportu
     const supabase = getServerSupabase();
     const { data, error } = await supabase.from('opportunities').delete().eq('id', req.params.opportunityId).select('id,title').single();
     if (error || !data) return res.status(404).json({ error: 'Opportunity not found.' });
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'opportunity', p_entity_id: data.id, p_metadata: { title: data.title } });
     await recordAudit(supabase, { actorId: adminUser.id, action: 'delete', resourceType: 'opportunity', resourceId: data.id, metadata: { title: data.title } });
     res.json({ success: true });
   } catch (error) {
