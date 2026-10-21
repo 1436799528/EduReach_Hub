@@ -38,7 +38,8 @@ test('legacy /cbt/practice cannot drop a student straight into a paper', () => {
 
 test('the setup wizard configures from the real bank, never a static subject list', () => {
   const setup = read('pages/ExamSetupPage.tsx');
-  assert.match(setup, /fetchCbtBank/, 'subjects and limits come from the bank');
+  assert.match(setup, /fetchCbtBank/, 'subject availability and limits come from the bank');
+  assert.match(setup, /fetchCbtSubjectCatalog/, 'the grouped subject catalogue is read from the database when available');
   assert.match(setup, /questionCountOptions/, 'practice offers question counts the bank can serve');
   assert.match(setup, /effectiveDuration = Math\.max/, 'practice time is derived from the chosen question count');
   assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
