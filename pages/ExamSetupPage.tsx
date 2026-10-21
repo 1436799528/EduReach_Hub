@@ -10,7 +10,7 @@ import {
   secondarySchoolSubjects,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
+import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchCbtSubjectCatalog, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type CbtSubjectCatalogEntry, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
 import { usePendingPhase } from '../src/lib/usePendingPhase';
 import { isSupabaseConfigured } from '../src/lib/supabase';
@@ -99,6 +99,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const [catalogError, setCatalogError] = useState<unknown>(null);
   const [bank, setBank] = useState<CbtBankPayload | null>(null);
   const [bankError, setBankError] = useState<unknown>(null);
+  const [databaseSubjects, setDatabaseSubjects] = useState<CbtSubjectCatalogEntry[]>([]);
   const [mode, setMode] = useState<CbtMode>(() => (new URLSearchParams(window.location.search).get('mode') === 'mock' ? 'mock' : 'practice'));
 
   // Practice configuration - the student's own session.
@@ -185,6 +186,15 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   }, [exam, loadBank, postUtmeInstitutionId]);
 
   useEffect(() => { void resolveCatalogAndBank(); }, [resolveCatalogAndBank]);
+
+  useEffect(() => {
+    let current = true;
+    const body = exam === 'post-utme' ? 'POST-UTME' : exam.toUpperCase();
+    void fetchCbtSubjectCatalog(body)
+      .then((items) => { if (current) setDatabaseSubjects(items); })
+      .catch(() => { if (current) setDatabaseSubjects([]); });
+    return () => { current = false; };
+  }, [exam]);
 
   useEffect(() => {
     // AN-1: which exam bodies reach the setup wizard - the step before any
@@ -295,7 +305,11 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
           ? []
           : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
     const vocational = practiceTrack === 'Technical / Vocational' ? secondarySubjectCatalog['Technical / Vocational'] : [];
-    return new Set([...secondary, ...jamb, ...vocational].map(normalizeSubject));
+    const databaseGroup = practiceTrack === 'Arts & Humanities' ? 'Arts' : practiceTrack;
+    const databaseNames = databaseSubjects
+      .filter((entry) => entry.subject_group === databaseGroup)
+      .map((entry) => entry.subject_name);
+    return new Set([...secondary, ...jamb, ...vocational, ...databaseNames].map(normalizeSubject));
   }, [practiceTrack]);
   // A subject the static catalogues do not know (Post-UTME "General
   // Knowledge", for example) must not disappear because of a group filter:
@@ -303,7 +317,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const knownSubjectKeys = useMemo(() => new Set([
     ...Object.values(secondarySubjectCatalog).flat(),
     ...Object.values(jambSubjectCatalog).flat(),
-  ].map(normalizeSubject)), []);
+    ...databaseSubjects.map((entry) => entry.subject_name),
+  ].map(normalizeSubject)), [databaseSubjects]);
   // The group filter narrows the available list only; it never changes an
   // existing selection. Compulsory subjects stay visible in every group so a
   // required subject can always be re-added.
@@ -315,8 +330,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       : exam === 'waec' || exam === 'neco'
         ? secondarySchoolSubjects
         : [...secondarySchoolSubjects, ...jambNames, 'General Knowledge', 'General Studies'];
-    return Array.from(new Map([...names, ...bankNames].map((name) => [normalizeSubject(name), name])).values());
-  }, [availability, exam]);
+    const databaseNames = databaseSubjects.map((entry) => entry.subject_name);
+    return Array.from(new Map([...databaseNames, ...names, ...bankNames].map((name) => [normalizeSubject(name), name])).values());
+  }, [availability, databaseSubjects, exam]);
   // The catalogue lists recognised subjects even when this particular bank
   // has no approved questions yet. Such subjects stay visible but cannot be
   // selected until the bank has content. Never expose the bank's question count.
