@@ -111,7 +111,7 @@ export const DEFAULT_CBT_LIMITS: CbtLimits = {
   maxQuestions: 100,
   minMinutes: 5,
   maxMinutes: 240,
-  maxSubjects: 6,
+  maxSubjects: 9,
 };
 
 export type CbtSessionConfig = {
@@ -294,8 +294,8 @@ export function mockDurationMinutes(defaultMinutes?: number | null): number {
 /** How many subjects one session may include for this examination. */
 export function subjectLimitFor(examBodyOrKey: string, limits: CbtLimits = DEFAULT_CBT_LIMITS): number {
   const body = String(examBodyOrKey || '').trim().toUpperCase();
-  if (body === 'JAMB' || body === 'UTME' || body.includes('JAMB')) return Math.min(4, limits.maxSubjects);
-  if (body === 'WAEC' || body === 'NECO' || body.includes('WAEC') || body.includes('NECO')) return Math.min(9, limits.maxSubjects);
+  if (body === 'JAMB' || body === 'UTME' || body.includes('JAMB')) return 4;
+  if (body === 'WAEC' || body === 'NECO' || body.includes('WAEC') || body.includes('NECO')) return 9;
   return limits.maxSubjects;
 }
 
