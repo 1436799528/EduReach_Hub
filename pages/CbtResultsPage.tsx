@@ -164,7 +164,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
               <section className="er-result-header" aria-labelledby="result-heading">
                 <span className="er-result-kicker">CBT RESULT</span>
                 <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle && isMock ? 'Total Mock Mark' : 'Practice Mark'}</h1>
-                <div className="er-result-score">{isWaecStyle ? 'Grades' : isJambStyle && isMock ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{isWaecStyle ? '' : isJambStyle && isMock ? '/400' : '/100'}</span></div>
+                <div className="er-result-score">{isWaecStyle ? 'See grades below' : isJambStyle && isMock ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{isWaecStyle ? '' : isJambStyle && isMock ? '/400' : '/100'}</span></div>
                 {isWaecStyle && <p className="er-result-grade-note">Grades are estimated from this simulator's objective-question score bands; official results can use subject-specific marking schemes.</p>}
               </section>
 
@@ -186,13 +186,14 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                         <th scope="col" className="num">Questions</th>
                         <th scope="col" className="num">Correct</th>
                         <th scope="col" className="num">Wrong</th>
-                        <th scope="col" className="num">Score</th>
+                        <th scope="col" className="num">{isWaecStyle ? 'Grade' : 'Mark'}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {subjectRows.map((row) => {
                         const wrong = row.total - row.correct;
                         const pct = row.total ? Math.round((row.correct / row.total) * 100) : 0;
+                        const grade = waecGrade(row.correct, row.total);
                         return (
                           <tr key={row.subject}>
                             <td>{row.subject}</td>
