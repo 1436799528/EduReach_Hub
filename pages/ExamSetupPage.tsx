@@ -290,7 +290,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       ? [...jambSubjectCatalog.Science, ...jambSubjectCatalog.Engineering, ...jambSubjectCatalog['Medicine & Health'], ...jambSubjectCatalog.Education]
       : practiceTrack === 'Commercial'
         ? [...jambSubjectCatalog.Commercial, ...jambSubjectCatalog['Social Science']]
-        : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
+        : practiceTrack === 'Technical / Vocational'
+          ? []
+          : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
     const vocational = practiceTrack === 'Technical / Vocational' ? secondarySubjectCatalog['Technical / Vocational'] : [];
     return new Set([...secondary, ...jamb, ...vocational].map(normalizeSubject));
   }, [practiceTrack]);
