@@ -4,6 +4,9 @@
 **Branch:** `arena/7365cc64-edureach-hub` at `99b39e6` (PR #26, unmerged)
 **Scope:** read-only audit; no application code, schema, policy, configuration or
 production state was changed to produce this document.
+**Status update (21 Oct 2026):** Stage 1 was approved and implemented the same
+day — see §10. One finding (H-2) is corrected there: the audit read an older
+definition of the submit RPC.
 **Verdict:** **Not yet ready for "thousands of concurrent users".** The Node/HTTP
 layer has measurable headroom; the database, auth and rate-limiting paths do not
 have evidence behind them, and two of them contain defects that would fail a real
@@ -54,7 +57,7 @@ Severity is about the *student-visible consequence*, not code tidiness.
 | ID | Sev | Area | Finding | Evidence | User impact | Proposed fix | Verifying test |
 |---|---|---|---|---|---|---|---|
 | **H-1** | High | C, D | Rate limits are keyed **per IP** and apply to exam start and the whole API. `cbtStart` = 60 per 10 min; `apiGeneral` = 1,200 per min. | `lib/rate-limit.ts` `clientKey()`; `RATE_LIMIT_RULES`; measured: exactly 1,200 × `200` then 352 × `429` from one IP (§5 run G) | A school lab behind one NAT: the 61st student in 10 minutes cannot start an exam; sustained traffic above 20 req/s gets 429s mid-exam while draft saves are pending | Key authenticated routes by **user id** (`cbt-start:${user.id}`), keep IP only as an unauthenticated fallback; raise/scope `apiGeneral` when a valid token is present | unit test for key selection; probe at 100 VU → 0 × 429 |
-| **H-2** | High | C | **Zero grace at expiry.** `submit_cbt_attempt_configured` raises when `expires_at < now()`, and the refusal path marks the attempt `expired`. A submit sent at T−1 s that arrives at T+1 s is discarded and the paper is closed with no score. | SQL `20261002120000` L636–640; `get_cbt_attempt_paper` expires the attempt on read; client auto-submits at `remainingSeconds === 0` | A student loses an entire paper to one second of mobile latency — the exact network profile of the target users | Accept a submit within a bounded grace window (e.g. 120 s) while `status='in_progress'`, record `submitted_at` and a late-margin diagnostic; scoring rules unchanged | SQL regression in PGlite: expiry T−1 s submits and scores; expiry T−1 h refuses |
+| **H-2** | Medium | C | **A short grace at expiry** (corrected — see §10). ** `submit_cbt_attempt_configured` raises when `expires_at < now()`, and the refusal path marks the attempt `expired`. A submit sent at T−1 s that arrives at T+1 s is discarded and the paper is closed with no score. | SQL `20261002120000` L636–640; `get_cbt_attempt_paper` expires the attempt on read; client auto-submits at `remainingSeconds === 0` | A student loses an entire paper to one second of mobile latency — the exact network profile of the target users | Accept a submit within a bounded grace window (e.g. 120 s) while `status='in_progress'`, record `submitted_at` and a late-margin diagnostic; scoring rules unchanged | SQL regression in PGlite: expiry T−1 s submits and scores; expiry T−1 h refuses |
 | **H-3** | High | C, E | A transient database/auth failure during submit is returned as **HTTP 400**. | `server.ts` L2733–2738: unclassified errors fall through to `400` | Monitoring records a client error during an outage; the client's retry classifier sees "unknown", not "server" | Map unclassified server failures to `503` + `Retry-After`; keep 400 for validation only | handler test with a forced RPC error → 503; `failures.ts` classification test |
 | **H-4** | Medium | B, E | A **new Supabase client is constructed on every call**; `requireUser()` builds two per authenticated request. | `server.ts` L113, L127; `lib/auth.ts` L36; `netlify/functions/daily-news-refresh.ts`, `src/server/newsroom/run.ts` | Avoidable allocation/GC and a fresh HTTP agent per request on a warm instance; harder to reason about connection use | Module-level singleton per (url, key, mode) with a shared keep-alive agent; keep the user-scoped client per token | unit test that two calls return the same instance; before/after RSS + p95 |
 | **H-5** | Medium | B, D | Every authenticated request performs **two sequential round trips** (Auth `getUser`, then `profiles` role read), uncached. | `lib/auth.ts` `verifyJWT` | Authenticated p95 is additive on every call; a 250-user dashboard burst ≈ 500 auth/DB calls per second (**estimated**) | Cache role+capabilities by user id for 30–60 s with bounded size; or carry role in a trusted claim | load test before/after; unit test that a revoked role stops working within the TTL |
@@ -110,7 +113,7 @@ Severity is about the *student-visible consequence*, not code tidiness.
 | Submit | Idempotent; per-question upsert; unanswered counted incorrect; guarded status update | verified (code) |
 | Duplicate submit | Returns the stored score, does not create a second attempt | verified (code + SQL) |
 | Failure that is **not** reported as success | Yes — a failed submit never navigates to results | verified (code) |
-| **Submit at the expiry boundary** | Refused with no grace; attempt closed; no score | **H-2 defect** |
+| **Submit at the expiry boundary** | Accepted inside the delivery window (`cbt_submit_grace()`, 30 s at audit time, now 120 s); refused beyond it | verified (code + PGlite test) |
 | **Transient failure during submit** | Returned as 400; client cannot classify it as a server error | **H-3 defect** |
 | **Concurrent submissions from 250 students** | Not measured — no database in this environment | **not tested** |
 
@@ -225,7 +228,7 @@ provider-quota pressure. A level is only started after the previous one passes.
 
 ### Verified fail (defects above)
 
-H-1 rate-limit keying · H-2 expiry grace · H-3 400-for-503 · H-4 per-call
+H-1 rate-limit keying · H-2 short expiry grace · H-3 400-for-503 · H-4 per-call
 clients · H-5 uncached auth round trips · M-1 catalogue full scan · M-2 signed-URL
 N+1 · M-3 no outbound timeout · M-4 uncompressed self-host assets · M-5 spoofable
 forwarded-for · M-6 no process handlers · M-7 unbounded scoring count.
@@ -331,3 +334,47 @@ proposed.
 
 No application file was modified. No request was sent to the live site. No
 database was written to.
+
+---
+
+## 10. Implementation record — Stage 1 (approved 21 Oct 2026)
+
+Implemented on this branch the same day, each with regression tests.
+
+**Correction to H-2.** The audit read `submit_cbt_attempt_configured` from
+`20261002120000`. A later migration (`20261022093000_cbt_deadline_grace.sql`) had
+already introduced `cbt_submit_grace()` = 30 seconds, shared by the paper read
+and submit, with draft saves stopping at the deadline. "Zero grace" was wrong;
+the real finding was narrower: 30 seconds covers the page's own tick, not a
+phone that loses signal at the deadline. The owner's 120-second decision is
+therefore an extension, not a new concept.
+
+| Finding | Change | Verifying test |
+|---|---|---|
+| H-1 | `keyByUser` rate-limit rules: CBT start and the admin upload/import/newsroom routes now count per account (UUID subject of the bearer token, decoded for bucketing only — authorization still verifies the token), falling back to IP. `apiGeneral` remains the per-IP aggregate backstop | `tests/rate-limit.test.ts` (independent buckets behind one IP; anonymous still shares the IP bucket) |
+| H-2 | `20261025120000_cbt_submit_grace_120.sql`: grace 30 s → 120 s; `cbt_attempts.submission_late_ms` records lateness (0 = on time). Drafts still stop at `expires_at` | `tests/cbt-submit-grace.test.ts` ( graded at T+60 s with lateness recorded, idempotent retry, draft refused after deadline, submit refused at T+300 s) |
+| H-3 | `httpStatusForErrorMessage` (lib/errors): unclassified failures on submit, draft and legacy progress-save return 503 + `Retry-After: 10`; domain refusals keep 401/403/404/409/400 | `tests/server-resilience.test.ts` (incl. that the session page classifies 503 as the retryable `server` kind) |
+| H-4, M-3 | `lib/supabase-server.ts`: one shared service-role client per (url, key), used by `server.ts` and `lib/auth.ts`; every outbound Supabase call (service and user-scoped) carries a 10 s abort | `tests/server-resilience.test.ts` (same instance reused; timeout enforced) |
+
+Schema fingerprint after the migration: 72 migrations, 48 tables, 574 columns,
+54 policies, RLS on 48/48 (verified by replay).
+
+Gates after these changes: typecheck clean; **626/626 tests** (611 before,
++15 new/adapted); schema audit no blocking findings; performance budgets pass
+(entry 98.9 KB after restoring lockfile-exact dependencies with `npm ci` — an
+earlier local failure was `node_modules` drift from a temporary tool install,
+not code growth); accessibility 0 blocking. Before/after probe at 100 virtual
+users (local, no database): 47.6 → 46.6 req/s, 0 errors both times — no
+regression signal; the authenticated paths these fixes touch can only be
+measured on staging.
+
+**Not done, deliberately:** H-5, M-1, M-2, M-4–M-8, L-1, L-2 (Stage 2). The
+remaining per-IP ceiling is `apiGeneral` at 1,200/min per IP: for a large lab
+browsing public pages that can still throttle shared NAT traffic, and the right
+value is a staging measurement, not a guess.
+
+**Stage 3 is blocked on staging**, as approved: it needs (1) a staging Supabase
+project (URL, publishable key, service key) with this schema applied, (2) a
+throwaway cohort of student test accounts/tokens, (3) one exam with enough
+approved questions, and (4) a generator host separate from the target. The
+ladder (`scripts/load/`) is ready; nothing has been run against production.
