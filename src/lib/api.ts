@@ -1592,6 +1592,26 @@ export type CbtResultPayload = {
   totalQuestions?: number;
 };
 
+export type CbtSubjectCatalogEntry = {
+  subject_name: string;
+  subject_group: 'Science' | 'Arts' | 'Commercial' | 'Technical & Vocational';
+};
+
+export async function fetchCbtSubjectCatalog(examBody: string): Promise<CbtSubjectCatalogEntry[]> {
+  if (!isSupabaseConfigured) return [];
+  const key = String(examBody || '').trim().toUpperCase().replace(/_/g, '-');
+  const body = key.includes('POST') ? 'POST-UTME' : key;
+  const { data, error } = await supabase
+    .from('cbt_subject_catalog')
+    .select('subject_name, subject_group')
+    .eq('exam_body', body)
+    .eq('active', true)
+    .order('subject_group')
+    .order('subject_name');
+  if (error) throw error;
+  return (data || []) as CbtSubjectCatalogEntry[];
+}
+
 export type CbtConfiguredStart = {
   id: string;
   startedAt: string;
