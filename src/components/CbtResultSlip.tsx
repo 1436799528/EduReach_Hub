@@ -11,6 +11,7 @@ type ResultData = {
   attempt?: {
     id?: string;
     exam_id?: string;
+    mode?: string;
     score?: number | string | null;
     correct_answers?: number | string | null;
     total_questions?: number | string | null;
