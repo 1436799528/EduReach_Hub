@@ -200,7 +200,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                             <td className="num">{row.total}</td>
                             <td className="num">{row.correct}</td>
                             <td className="num">{wrong}</td>
-                            <td className="num"><b>{pct}%</b></td>
+                            <td className="num"><b>{isWaecStyle ? grade.grade : `${pct} / 100`}</b>{isWaecStyle && <small className="er-result-grade-remark"> {grade.remark}</small>}</td>
                           </tr>
                         );
                       })}
