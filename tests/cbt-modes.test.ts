@@ -184,6 +184,21 @@ test('mock duration comes from the exam configuration, never from the client', a
   assert.equal(stored[0].programme, 'Nursing Science', 'the intended programme is recorded with the mock');
 });
 
+test('WAEC mock mode requires at least four subjects while practice stays flexible', async () => {
+  await assert.rejects(
+    () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Biology','Physics','Mathematics'], 5, null, 'mock', null)`,
+      [WAEC],
+    ),
+    /requires at least four subjects/,
+  );
+  const practice = await db.query<any>(
+    `select * from public.start_cbt_attempt_configured($1, array['Biology'], 5, 20, 'practice', null)`,
+    [WAEC],
+  );
+  assert.equal(practice.rows[0].total_questions, 5);
+});
+
 test('a JAMB mock is the governed four-subject combination', async () => {
   await assert.rejects(
     () => db.query(`select * from public.start_cbt_attempt_configured($1, array['Mathematics','Physics'], 10, null, 'mock', null)`, [JAMB]),
