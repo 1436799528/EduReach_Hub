@@ -48,6 +48,10 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Exam setup lists active exams before sign-in; the policy filters on is_active.',
   },
   {
+    table: 'cbt_subject_catalog', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
+    why: 'Public subject names and group metadata only; no question text, answer keys or bank inventory counts are exposed.',
+  },
+  {
     table: 'news_articles', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
     why: 'Published news is public content; the policy hides unpublished rows.',
   },
