@@ -117,18 +117,16 @@ begin
     if v_count > 4 then
       raise exception 'A JAMB session can include at most four subjects.';
     end if;
-    if not coalesce(v_has_english, false) then
-      raise exception 'Use of English is compulsory for JAMB UTME.';
-    end if;
-    if lower(trim(coalesce(new.mode, 'practice'))) = 'mock' and v_count <> 4 then
+    if lower(trim(coalesce(new.mode, 'practice'))) = 'mock'
+       and (v_count <> 4 or not coalesce(v_has_english, false)) then
       raise exception 'A JAMB mock requires exactly four subjects, including Use of English.';
     end if;
   elsif v_body in ('WAEC','NECO') then
     if v_count > 9 then
       raise exception 'A % session can include at most nine subjects.', v_body;
     end if;
-    if lower(trim(coalesce(new.mode, 'practice'))) = 'mock' and v_count <> 9 then
-      raise exception 'A % mock requires exactly nine selected subjects.', v_body;
+    if lower(trim(coalesce(new.mode, 'practice'))) = 'mock' and v_count < 4 then
+      raise exception 'A % mock requires at least four subjects. Use practice mode for a shorter session.', v_body;
     end if;
   elsif lower(trim(coalesce(new.mode, 'practice'))) = 'mock' and v_count < 4 then
     raise exception 'A mock requires at least four subjects. Use practice mode for a shorter session.';
