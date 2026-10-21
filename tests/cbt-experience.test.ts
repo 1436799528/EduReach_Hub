@@ -43,6 +43,8 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /effectiveDuration = Math\.max/, 'practice time is derived from the chosen question count');
   assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
   assert.match(setup, /Subject group/, 'students can choose a subject group');
+  assert.match(setup, /id="er-subject-group"/, 'subject groups use a dropdown');
+  assert.doesNotMatch(setup, /questionCount\} available/, 'student-facing subject choices do not reveal bank inventory counts');
   assert.match(setup, /cannot be removed/, 'a compulsory subject is locked into the combination');
   assert.match(setup, /Use of English is compulsory for JAMB UTME/, 'JAMB practice and mock cannot start without English, and the student is told why');
   assert.match(setup, /aria-label="Available subjects"/, 'available subjects are shown in a labelled picker');
