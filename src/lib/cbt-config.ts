@@ -302,7 +302,7 @@ export function subjectLimitFor(examBodyOrKey: string, limits: CbtLimits = DEFAU
 /**
  * The one rule a mock combination must satisfy before the server will create
  * it. JAMB mocks require exactly four subjects including English; WAEC/NECO
- * mocks require a full nine-subject combination. Practice mode remains flexible.
+ * mocks require at least four subjects and allow up to nine. Practice remains flexible.
  * Returns a message a student can act on, or null when acceptable.
  */
 export function mockCombinationError(subjects: string[], examBodyOrKey: string): string | null {
