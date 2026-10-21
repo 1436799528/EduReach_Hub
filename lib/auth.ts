@@ -1,5 +1,5 @@
-import { getServerSupabaseKey } from './supabase-config';
-import { createClient, type User } from '@supabase/supabase-js';
+import { type User } from '@supabase/supabase-js';
+import { getServerSupabaseClient } from './supabase-server';
 import {
   capabilitiesForRole,
   isStaffRole,
@@ -27,14 +27,6 @@ export interface UserPayload {
   capabilities: Capability[];
 }
 
-type ServerSupabase = ReturnType<typeof createClient> | null;
-
-function getServerSupabase(): ServerSupabase {
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = getServerSupabaseKey();
-  if (!url || !key) return null;
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-}
 
 export function extractBearerToken(authorization?: string | string[]) {
   if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ')) return null;
@@ -43,7 +35,7 @@ export function extractBearerToken(authorization?: string | string[]) {
 }
 
 export async function verifyJWT(token: string): Promise<UserPayload | null> {
-  const supabase = getServerSupabase();
+  const supabase = getServerSupabaseClient();
   if (!supabase) return null;
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;

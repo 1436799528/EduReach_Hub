@@ -16,7 +16,8 @@ import { verifyJWT } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
 import { type Capability } from './src/lib/capabilities';
 import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
-import { userFacingError as normalizeUserFacingError } from './lib/errors';
+import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError } from './lib/errors';
+import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
@@ -105,12 +106,11 @@ function isServerSupabaseConfigured() {
 }
 
 function getServerSupabase() {
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = getServerSupabaseKey();
-  if (!url || !key) {
+  const client = getServerSupabaseClient();
+  if (!client) {
     throw new Error('Supabase server admin key is missing or invalid. Configure SUPABASE_SERVICE_ROLE_KEY (preferred) or SUPABASE_SECRET_KEY with the server secret key, not a publishable/anon key.');
   }
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+  return client;
 }
 
 /**
@@ -126,7 +126,10 @@ function getUserScopedSupabase(accessToken: string) {
   if (!url || !publishableKey) return null;
   return createClient(url, publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    global: {
+      fetch: (input, init) => supabaseFetch(input, init),
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
   });
 }
 
@@ -2730,11 +2733,8 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
     console.error('CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
-    const status = /Authentication|required|session/i.test(message) ? 401
-      : /permission/i.test(message) ? 403
-        : /not found/i.test(message) ? 404
-          : /expired|already/i.test(message) ? 409
-            : 400;
+    const status = httpStatusForErrorMessage(message);
+    if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
   }
 });
@@ -2762,11 +2762,8 @@ app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
     console.error('CBT draft API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to save your progress.';
     if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
-    const status = /Authentication|required|session/i.test(message) ? 401
-      : /permission/i.test(message) ? 403
-        : /not found/i.test(message) ? 404
-          : /expired|already/i.test(message) ? 409
-            : 400;
+    const status = httpStatusForErrorMessage(message);
+    if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save your progress.') });
   }
 });
@@ -3089,11 +3086,8 @@ app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
     if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
-    const status = /Authentication|required|session/i.test(message) ? 401
-      : /permission/i.test(message) ? 403
-        : /not found/i.test(message) ? 404
-          : /expired|already/i.test(message) ? 409
-            : 400;
+    const status = httpStatusForErrorMessage(message);
+    if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save CBT progress.') });
   }
 });
