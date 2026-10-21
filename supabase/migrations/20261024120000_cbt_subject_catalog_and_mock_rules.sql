@@ -14,7 +14,7 @@ insert into public.cbt_subject_catalog (exam_body, subject_name, subject_group)
 select body, subject_name, subject_group
 from (values
   ('Science', 'Biology'), ('Science', 'Chemistry'), ('Science', 'Physics'),
-  ('Science', 'Mathematics'), ('Science', 'Further Mathematics'),
+  ('Science', 'Mathematics'), ('Science', 'English Language'), ('Science', 'Use of English'), ('Science', 'Civic Education'), ('Science', 'Further Mathematics'),
   ('Science', 'Agricultural Science'), ('Science', 'Geography'),
   ('Science', 'Computer Studies'), ('Science', 'Computer Science'),
   ('Science', 'Data Processing'), ('Science', 'Health Education'),
@@ -26,7 +26,7 @@ from (values
   ('Arts', 'Arabic'), ('Arts', 'French'), ('Arts', 'Hausa'), ('Arts', 'Igbo'),
   ('Arts', 'Yoruba'), ('Arts', 'Visual Art'), ('Arts', 'Fine Art'),
   ('Arts', 'Music'), ('Arts', 'Civic Education'),
-  ('Commercial', 'Economics'), ('Commercial', 'Commerce'),
+  ('Commercial', 'English Language'), ('Commercial', 'Use of English'), ('Commercial', 'Mathematics'), ('Commercial', 'Civic Education'), ('Commercial', 'Economics'), ('Commercial', 'Commerce'),
   ('Commercial', 'Financial Accounting'), ('Commercial', 'Principles of Accounts'),
   ('Commercial', 'Marketing'), ('Commercial', 'Bookkeeping'),
   ('Commercial', 'Business Studies'), ('Commercial', 'Insurance'),
