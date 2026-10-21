@@ -11,6 +11,7 @@ import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { itemKey } from '../src/components/dashboard/SchoolFinderCard';
 import { fetchCbtExams, fetchNews, fetchOpportunities, type NewsItem, type Opportunity, trackEvent } from '../src/lib/api';
 import { navigateInApp } from '../src/lib/navigation';
+import { matchesSearch } from '../src/lib/searchMatch';
 
 type SearchResult = {
   id: string;
@@ -83,8 +84,8 @@ function staticResults(exams: CatalogExam[]): SearchResult[] {
 }
 
 function resultMatches(result: SearchResult, query: string) {
-  const value = `${result.title} ${result.description} ${result.category}`.toLowerCase();
-  return value.includes(query.toLowerCase());
+  // Word order and punctuation must not decide whether a student finds a page.
+  return matchesSearch([result.title, result.description, result.category], query);
 }
 
 export default function SearchPage() {
@@ -97,6 +98,10 @@ export default function SearchPage() {
   const [exams, setExams] = useState<CatalogExam[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  // Live sources fail independently. When one does, the catalogue is still
+  // complete but the page must not imply that "nothing matched" covers news and
+  // opportunities it never managed to read.
+  const [partialFailure, setPartialFailure] = useState(false);
 
   useEffect(() => {
     const term = query.trim();
@@ -112,16 +117,22 @@ export default function SearchPage() {
 
   useEffect(() => {
     let active = true;
+    let failed = false;
+    const guard = <T,>(promise: Promise<T[]>): Promise<T[]> => promise.catch(() => {
+      failed = true;
+      return [] as T[];
+    });
     void Promise.all([
-      fetchNews().catch(() => []),
-      fetchCbtExams().catch(() => []),
-      fetchOpportunities().catch(() => []),
+      guard(fetchNews()),
+      guard(fetchCbtExams()),
+      guard(fetchOpportunities()),
     ])
       .then(([newsItems, examItems, opportunityItems]) => {
         if (!active) return;
         setNews(newsItems);
         setExams(examItems);
         setOpportunities(opportunityItems);
+        setPartialFailure(failed);
         setLoadingNews(false);
       });
     return () => { active = false; };
@@ -217,6 +228,12 @@ export default function SearchPage() {
             </div>
           )}
           {loadingNews && query.trim() && !results.length && <div className="hub-panel hub-empty">Checking news updates…</div>}
+          {!loadingNews && partialFailure && (
+            <p className="er-search-help er-search-partial" role="status">
+              Some live results could not be loaded (news, opportunities or CBT banks), so this list may be
+              incomplete. The catalogue results below are current; reload to try the live sources again.
+            </p>
+          )}
 
           <div className="er-search-results" aria-live="polite">
             {results.map((result, index) => (

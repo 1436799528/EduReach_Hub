@@ -362,3 +362,27 @@ export async function recordSecurityEvent(userId: string, eventType: string, eve
   });
   if (error) logOptionalTableError('Unable to record security event', error);
 }
+
+/**
+ * A page of results, clamped to the data that exists.
+ *
+ * Written as a function rather than inline arithmetic because the interesting
+ * case is the edge: deleting the last row of the last page must land the reader
+ * on the new last page, not on an empty one.
+ */
+export function pageSlice<T>(items: readonly T[], page: number, size: number): {
+  items: T[]; page: number; pageCount: number; first: number; last: number;
+} {
+  const perPage = Math.max(1, Math.trunc(size));
+  const pageCount = Math.max(1, Math.ceil(items.length / perPage));
+  const safePage = Math.min(Math.max(0, Math.trunc(page)), pageCount - 1);
+  const start = safePage * perPage;
+  const slice = items.slice(start, start + perPage);
+  return {
+    items: slice,
+    page: safePage,
+    pageCount,
+    first: slice.length ? start + 1 : 0,
+    last: start + slice.length,
+  };
+}

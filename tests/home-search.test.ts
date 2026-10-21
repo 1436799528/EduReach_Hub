@@ -72,3 +72,35 @@ test('the bar survives the widths the header search does not', () => {
   // the row is the touch target and the button fills its height.
   assert.match(portal, /\.er-search button\{[^}]*height:34px/, 'the submit keeps its authored height');
 });
+
+// ---------------------------------------------------------------------------
+// Matching (Phase 10)
+// ---------------------------------------------------------------------------
+
+test('search matches words in any order and ignores punctuation', async () => {
+  const { matchesSearch, normalizeSearchText, searchTokens } = await import('../src/lib/searchMatch');
+
+  const slip = ['JAMB exam slip', 'Print your UTME examination slip from the JAMB portal.', 'Services'];
+  assert.equal(matchesSearch(slip, 'jamb slip'), true, 'two words in a different order still match');
+  assert.equal(matchesSearch(slip, 'JAMB?'), true, 'punctuation does not defeat the match');
+  assert.equal(matchesSearch(slip, '  slip   jamb  '), true, 'whitespace is normalised');
+  assert.equal(matchesSearch(slip, 'JAMB-SLIP'), true, 'a hyphen is a separator, not a character');
+  assert.equal(matchesSearch(slip, 'waec'), false, 'a word that is not there is not a match');
+  assert.equal(matchesSearch(slip, ''), true, 'an empty query matches the catalogue');
+  assert.equal(matchesSearch([null, undefined, ''], 'jamb'), false, 'empty fields are not a false positive');
+  assert.equal(matchesSearch(['Université de Lagos'], 'universite'), true, 'accents are folded');
+  assert.equal(matchesSearch(['Result checking'], 'checking result'), true, 'token order is free');
+
+  assert.equal(normalizeSearchText('  NELFUND — Loan & Grant! '), 'nelfund loan grant');
+  assert.deepEqual(searchTokens('jamb jamb slip'), ['jamb', 'slip'], 'repeated words are one requirement');
+});
+
+test('the search page uses the matcher and admits a partial failure', () => {
+  const page = read('pages/SearchPage.tsx');
+  assert.match(page, /matchesSearch\(\[result\.title, result\.description, result\.category\], query\)/, 'the matcher is used, not includes()');
+  assert.doesNotMatch(page, /value\.includes\(query\.toLowerCase\(\)\)/, 'the old substring comparison is gone');
+  assert.match(page, /const guard = /, 'each live source fails independently');
+  assert.match(page, /setPartialFailure\(failed\)/, 'the failure is recorded');
+  assert.match(page, /Some live results could not be loaded/, 'the page says the list may be incomplete');
+  assert.match(page, /role="status"/, 'and announces it');
+});

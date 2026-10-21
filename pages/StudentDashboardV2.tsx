@@ -26,7 +26,8 @@ import BrandLogo from '../src/components/BrandLogo';
 import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
-import { trackEvent } from '../src/lib/api';
+import { deleteCbtAttempt, trackEvent } from '../src/lib/api';
+import { userFacingError } from '../lib/errors';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
 import SkipLink from '../src/components/a11y/SkipLink';
@@ -45,6 +46,7 @@ import {
   fetchLatestCgpaSnapshot,
   fetchNotifications,
   markNotificationsRead,
+  pageSlice,
   type DashboardNotification,
   fetchSavedItems,
   upsertSavedItem,
@@ -238,6 +240,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
+  // Phase 6: results are reviewable, deletable and paged on this screen. The
+  // confirmation is inline, not a second modal - the dashboard already has one
+  // dialog (security settings) and two overlays competing for focus is a bug.
+  const [attemptPage, setAttemptPage] = useState(0);
+  const [confirmDeleteId, setConfirmDeleteId] = useState('');
+  const [deletingId, setDeletingId] = useState('');
+  const [attemptNotice, setAttemptNotice] = useState('');
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>([]);
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
   const [notificationsBusy, setNotificationsBusy] = useState(false);
@@ -448,9 +457,39 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     savedCount: activeSaved.length,
     attemptCount: attempts.length,
   });
-  const averageScore = completedAttempts.length ? Math.round(completedAttempts.reduce((sum, a) => sum + Number(a.score || 0), 0) / completedAttempts.length) : 0;
-  const bestScore = completedAttempts.length ? Math.max(...completedAttempts.map((a) => Number(a.score || 0))) : 0;
+  // A score only exists once a paper has been sat. With none, the card says so
+  // instead of reporting a 0% average, which reads as a measurement.
+  const hasScores = completedAttempts.length > 0;
+  const averageScore = hasScores ? Math.round(completedAttempts.reduce((sum, a) => sum + Number(a.score || 0), 0) / completedAttempts.length) : 0;
+  const bestScore = hasScores ? Math.max(...completedAttempts.map((a) => Number(a.score || 0))) : 0;
   const questionsAnswered = completedAttempts.reduce((sum, a) => sum + Number(a.total_questions || 0), 0);
+
+  const ATTEMPTS_PER_PAGE = 8;
+  const attemptPageView = pageSlice(attempts, attemptPage, ATTEMPTS_PER_PAGE);
+  const pageCount = attemptPageView.pageCount;
+  const safePage = attemptPageView.page;
+  const visibleAttempts = attemptPageView.items;
+
+  const removeAttempt = async (row: Attempt) => {
+    if (deletingId) return; // one delete at a time: a double click must not send two
+    setDeletingId(row.id);
+    setAttemptNotice('');
+    try {
+      await deleteCbtAttempt(row.id);
+      setAttempts((current) => current.filter((attempt) => attempt.id !== row.id));
+      setConfirmDeleteId('');
+      setAttemptNotice('Result deleted. It is no longer on your account.');
+      // The row that held focus is gone; put focus back on the section heading
+      // so a keyboard user is not dropped at the top of the document.
+      window.requestAnimationFrame(() => document.getElementById('dash-cbt-heading')?.focus());
+    } catch (error) {
+      // The row stays, the confirmation closes, and the reason is announced.
+      setAttemptNotice(userFacingError(error, 'That result could not be deleted. Check your connection and try again.'));
+      setConfirmDeleteId('');
+    } finally {
+      setDeletingId('');
+    }
+  };
 
   /* ---------------- actions ---------------- */
   const logout = async () => {
@@ -488,8 +527,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   };
 
   const removeSaved = async (id: string) => {
-    const item = savedItems.find((entry) => entry.id === id);
-    if (!item) return;
+    const index = savedItems.findIndex((entry) => entry.id === id);
+    if (index < 0) return;
+    const item = savedItems[index];
     const next = savedItems.filter((entry) => entry.id !== id);
     setSavedItems(next);
     if (isLocalMode || !userId || id.startsWith('local-')) {
@@ -499,7 +539,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     try {
       await deleteSavedItem(id);
     } catch {
-      setSavedItems((prev) => [item, ...prev]);
+      // Put it back where it was, not at the top: a failed delete must not look
+      // like a successful re-add.
+      setSavedItems((prev) => {
+        const restored = [...prev];
+        restored.splice(Math.min(index, restored.length), 0, item);
+        return restored;
+      });
       setNotice('Unable to remove saved item. Please check your connection and try again.');
     }
   };
@@ -587,9 +633,30 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <td><strong>{state === 'finished' ? `${Math.round(Number(row.score || 0))}%` : '—'}</strong></td>
               <td>{fmtDate(row.submitted_at || row.created_at)}</td>
               <td>
-                {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
-                {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test</a>}
-                {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review</a>}
+                <span className="dash-row-actions">
+                  {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
+                  {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test</a>}
+                  {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review</a>}
+                  {state !== 'active' && (confirmDeleteId === row.id ? (
+                    <span className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`}>
+                      <span>Delete this result?</span>
+                      <button type="button" className="dash-card-link" onClick={() => setConfirmDeleteId('')} disabled={deletingId === row.id}>Keep</button>
+                      <button
+                        type="button"
+                        className="dash-btn dash-btn-small dash-btn-danger"
+                        onClick={() => void removeAttempt(row)}
+                        disabled={deletingId === row.id}
+                        aria-busy={deletingId === row.id}
+                      >
+                        {deletingId === row.id ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </span>
+                  ) : (
+                    <button type="button" className="dash-card-link dash-delete-link" onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}>
+                      Delete
+                    </button>
+                  ))}
+                </span>
               </td>
             </tr>;
           })}</tbody>
@@ -605,6 +672,17 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume →</a>}
             {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test →</a>}
             {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review →</a>}
+            {state !== 'active' && (confirmDeleteId === row.id ? (
+              <span className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`}>
+                <span>Delete this result?</span>
+                <button type="button" className="dash-card-link" onClick={() => setConfirmDeleteId('')} disabled={deletingId === row.id}>Keep</button>
+                <button type="button" className="dash-card-link dash-delete-link" onClick={() => void removeAttempt(row)} disabled={deletingId === row.id} aria-busy={deletingId === row.id}>
+                  {deletingId === row.id ? 'Deleting…' : 'Delete'}
+                </button>
+              </span>
+            ) : (
+              <button type="button" className="dash-card-link dash-delete-link" onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}>Delete →</button>
+            ))}
           </div>
         </li>;
       })}</ul>
@@ -780,24 +858,67 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   );
 
   const cbtView = (
-    <section className="dash-card">
+    <section className="dash-card" aria-labelledby="dash-cbt-heading">
       <div className="dash-card-header">
         <div>
-          <h1 className="dash-page-title">My CBT</h1>
+          <h1 className="dash-page-title" id="dash-cbt-heading" tabIndex={-1}>My CBT</h1>
           <p className="dash-page-sub">Timed practice attempts across JAMB, WAEC, NECO and Post-UTME.</p>
         </div>
         <a href="/cbt" className="dash-btn dash-btn-primary">Start practice</a>
       </div>
       <div className="dash-metric-strip">
-        <div className="dash-metric-card"><span className="dash-metric-label">Tests taken</span><span className="dash-metric-val">{completedAttempts.length}</span></div>
-        <div className="dash-metric-card"><span className="dash-metric-label">Average score</span><span className="dash-metric-val">{averageScore}%</span></div>
-        <div className="dash-metric-card"><span className="dash-metric-label">Best score</span><span className="dash-metric-val">{bestScore}%</span></div>
-        <div className="dash-metric-card"><span className="dash-metric-label">In progress</span><span className="dash-metric-val">{attempts.filter(isActiveCbtAttempt).length}</span></div>
-        {expiredAttempts.length > 0 && <div className="dash-metric-card"><span className="dash-metric-label">Ran out of time</span><span className="dash-metric-val">{expiredAttempts.length}</span></div>}
-        <div className="dash-metric-card"><span className="dash-metric-label">Questions in tests</span><span className="dash-metric-val">{questionsAnswered}</span></div>
+        <div className="dash-metric-card">
+          <span className="dash-metric-label">Tests taken</span>
+          <span className="dash-metric-val">{completedAttempts.length}</span>
+        </div>
+        <div className="dash-metric-card">
+          <span className="dash-metric-label">Average score</span>
+          <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{hasScores ? `${averageScore}%` : '—'}</span>
+          {!hasScores && <span className="dash-metric-hint">After your first test</span>}
+        </div>
+        <div className="dash-metric-card">
+          <span className="dash-metric-label">Best score</span>
+          <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{hasScores ? `${bestScore}%` : '—'}</span>
+          {!hasScores && <span className="dash-metric-hint">After your first test</span>}
+        </div>
+        <div className="dash-metric-card">
+          <span className="dash-metric-label">In progress</span>
+          <span className="dash-metric-val">{attempts.filter(isActiveCbtAttempt).length}</span>
+        </div>
+        {expiredAttempts.length > 0 && (
+          <div className="dash-metric-card">
+            <span className="dash-metric-label">Ran out of time</span>
+            <span className="dash-metric-val">{expiredAttempts.length}</span>
+          </div>
+        )}
+        <div className="dash-metric-card">
+          <span className="dash-metric-label">Questions answered</span>
+          <span className="dash-metric-val">{questionsAnswered}</span>
+          {questionsAnswered === 0 && <span className="dash-metric-hint">No completed paper yet</span>}
+        </div>
       </div>
+
+      <div className="dash-attempt-notice" role="status" aria-live="polite">{attemptNotice}</div>
+
       {attempts.length
-        ? attemptsTable(attempts)
+        ? (
+          <>
+            {attemptsTable(visibleAttempts)}
+            <div className="dash-attempt-pager">
+              <p className="dash-metric-hint">
+                Showing {attemptPageView.first}–{attemptPageView.last} of {attempts.length}
+                {attempts.length >= 50 ? ' (most recent 50)' : ''}
+              </p>
+              {pageCount > 1 && (
+                <div className="dash-pager-actions">
+                  <button type="button" className="dash-btn dash-btn-small dash-btn-secondary" onClick={() => setAttemptPage(Math.max(0, safePage - 1))} disabled={safePage === 0}>Previous</button>
+                  <span className="dash-metric-hint" aria-live="polite">Page {safePage + 1} of {pageCount}</span>
+                  <button type="button" className="dash-btn dash-btn-small dash-btn-secondary" onClick={() => setAttemptPage(Math.min(pageCount - 1, safePage + 1))} disabled={safePage >= pageCount - 1}>Next</button>
+                </div>
+              )}
+            </div>
+          </>
+        )
         : emptyState('No attempts yet. Your scores, best result and question count will build up here after your first practice test.', '/cbt', 'Start practice')}
     </section>
   );
