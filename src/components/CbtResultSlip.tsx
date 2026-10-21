@@ -102,11 +102,11 @@ export default function CbtResultSlip({ result, studentName, studentId, subjectB
       <section className="er-result-performance" aria-labelledby="er-result-performance-heading">
         <div className="er-result-section-heading">
           <h3 id="er-result-performance-heading">Performance summary</h3>
-          <span>{grade.remark}</span>
+          <span>{isWaecStyle ? 'Subject grades' : grade.remark}</span>
         </div>
         <div className="er-result-subject-table-wrap">
           <table className="er-result-subject-table">
-            <thead><tr><th scope="col">Subject</th><th scope="col">Questions</th><th scope="col">Correct</th><th scope="col">Score</th></tr></thead>
+            <thead><tr><th scope="col">Subject</th><th scope="col">Questions</th><th scope="col">Correct</th><th scope="col">{isWaecStyle ? 'Grade' : 'Mark'}</th></tr></thead>
             <tbody>
               {subjects.map((item) => (
                 <tr key={item.subject}>
@@ -117,8 +117,8 @@ export default function CbtResultSlip({ result, studentName, studentId, subjectB
           </table>
         </div>
         <div className="er-result-total-row">
-          <span>{isWaecStyle ? 'Subject grading' : isJambStyle && isMock ? 'Total mock mark' : 'Practice mark'}</span>
-          <strong>{isWaecStyle ? 'See subject grades' : isJambStyle && isMock ? `${jambMark} / 400` : `${jambMark} / 100`}</strong>
+          <span>{isWaecStyle ? 'Subject grading' : isJambStyle ? 'Total mark' : 'Practice mark'}</span>
+          <strong>{isWaecStyle ? 'See subject grades' : `${jambMark} / ${jambMarkMaximum}`}</strong>
         </div>
         <div className="er-result-counts">
           <span>Total questions <b>{total}</b></span>
