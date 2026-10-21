@@ -104,6 +104,12 @@ declare
   v_count integer;
   v_has_english boolean;
 begin
+  -- Legacy attempts may have no frozen subject selection. Leave those records
+  -- intact; configured starts always provide selected_subjects and are enforced.
+  if coalesce(cardinality(new.selected_subjects), 0) = 0 then
+    return new;
+  end if;
+
   select upper(trim(e.exam_body)) into v_body
   from public.cbt_exams e
   where e.id = new.exam_id;
