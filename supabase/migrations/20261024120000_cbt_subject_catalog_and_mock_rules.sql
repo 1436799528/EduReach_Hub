@@ -57,6 +57,7 @@ from (values
   ('Technical & Vocational', 'Computer Hardware and GSM Repairs')
 ) as catalogue(subject_group, subject_name)
 cross join (values ('JAMB'),('WAEC'),('NECO'),('POST-UTME')) as bodies(body)
+where bodies.body <> 'JAMB' or subject_group <> 'Technical & Vocational'
 on conflict (exam_body, subject_name, subject_group) do update set active = true;
 
 alter table public.cbt_subject_catalog enable row level security;
