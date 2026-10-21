@@ -96,9 +96,10 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const isJambStyle = examBody === 'JAMB' || examBody === 'UTME' || examBody.includes('POST');
   const isMock = String(result?.attempt?.mode || '').toLowerCase() === 'mock';
   const subjectMarkTotal = subjectRows.reduce((sum, row) => sum + (row.total > 0 ? (row.correct / row.total) * 100 : 0), 0);
-  const score = isJambStyle && isMock && subjectRows.length
+  const score = isJambStyle && subjectRows.length
     ? Math.round(subjectMarkTotal)
     : storedScore;
+  const markMaximum = isJambStyle && subjectRows.length ? subjectRows.length * 100 : 100;
   const waecGrade = (correct: number, total: number) => {
     const percent = total > 0 ? (correct / total) * 100 : 0;
     if (percent >= 75) return { grade: 'A1', remark: 'Excellent' };
@@ -163,8 +164,8 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
             <>
               <section className="er-result-header" aria-labelledby="result-heading">
                 <span className="er-result-kicker">CBT RESULT</span>
-                <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle && isMock ? 'Total Mock Mark' : 'Practice Mark'}</h1>
-                <div className="er-result-score">{isWaecStyle ? 'See grades below' : isJambStyle && isMock ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{isWaecStyle ? '' : isJambStyle && isMock ? '/400' : '/100'}</span></div>
+                <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle ? 'Total Mark' : 'Practice Mark'}</h1>
+                <div className="er-result-score">{isWaecStyle ? 'See grades below' : isJambStyle ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{isWaecStyle ? '' : `/${markMaximum}`}</span></div>
                 {isWaecStyle && <p className="er-result-grade-note">Grades are estimated from this simulator's objective-question score bands; official results can use subject-specific marking schemes.</p>}
               </section>
 
