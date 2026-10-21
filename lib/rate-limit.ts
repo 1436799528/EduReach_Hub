@@ -3,9 +3,9 @@
  *
  * Two layers, because EduReach runs on serverless infrastructure:
  *
- *   1. in-process — cheap, always on. It stops request floods against a warm
+ *   1. in-process - cheap, always on. It stops request floods against a warm
  *      instance but cannot see other instances.
- *   2. durable (`check_rate_limit` RPC) — counts across instances in Postgres.
+ *   2. durable (`check_rate_limit` RPC) - counts across instances in Postgres.
  *      Used for the endpoints where abuse is expensive or sensitive: admin
  *      bootstrap, guest CBT scoring, uploads, bulk import and newsroom runs.
  *
@@ -23,6 +23,13 @@ export interface RateLimitRule {
   windowSeconds: number;
   /** Also count in the database so limits hold across instances. */
   durable?: boolean;
+  /**
+   * Count per account instead of per IP when the request carries a bearer
+   * token. A school computer lab is one IP address behind NAT: counting exam
+   * starts per IP locked out the 61st student in ten minutes rather than the
+   * abusive one. Falls back to the client IP when no token subject exists.
+   */
+  keyByUser?: boolean;
 }
 
 export interface RateLimitDependencies {
@@ -88,6 +95,31 @@ export function clientKey(req: Request): string {
   return String(header).trim() || 'unknown';
 }
 
+/**
+ * The subject claim of the caller's bearer token, for bucketing only.
+ *
+ * This is NOT authentication: the token is decoded, never verified, and the
+ * route's own authorization still runs (`requireUser` / `requireCapability`).
+ * A forged token only buys its sender a fresh bucket on a route they still
+ * cannot use, and the per-IP `apiGeneral` ceiling in front of every route is
+ * unaffected. Only a UUID-shaped subject is accepted, so no arbitrary string
+ * can become a durable counter key.
+ */
+const UUID_SUBJECT = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function bearerSubject(req: Request): string | null {
+  const authorization = req.header('authorization');
+  if (!authorization?.startsWith('Bearer ')) return null;
+  const parts = authorization.slice('Bearer '.length).trim().split('.');
+  if (parts.length !== 3) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as { sub?: unknown };
+    return typeof payload.sub === 'string' && UUID_SUBJECT.test(payload.sub) ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export function createRateLimiter(
   dependencies: RateLimitDependencies = {},
 ): (rule: RateLimitRule) => (req: Request, res: Response, next: NextFunction) => void {
@@ -96,7 +128,8 @@ export function createRateLimiter(
 
   return function forRule(rule: RateLimitRule) {
     return function rateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
-      const key = `${rule.name}:${clientKey(req)}`;
+      const subject = rule.keyByUser ? bearerSubject(req) : null;
+      const key = `${rule.name}:${subject ? `user:${subject}` : clientKey(req)}`;
       const local = limiter.hit(key, rule);
       res.setHeader('RateLimit-Limit', String(rule.limit));
       res.setHeader('RateLimit-Remaining', String(local.remaining));
@@ -140,7 +173,7 @@ export function createRateLimiter(
 
 /**
  * Every limited route in one place, so the policy can be reviewed like the
- * editorial policy is. Limits are deliberate but generous: an ordinary student
+ * editorial policy is. Limits are generous: an ordinary student
  * never reaches them; a script does.
  */
 export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {
@@ -148,10 +181,10 @@ export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {
   guestCbtSubmit: { name: 'guest-cbt-submit', limit: 30, windowSeconds: 600, durable: true },
   // CBT-2: creating a configured attempt is a database write with a frozen
   // paper, so it is counted across instances like the other expensive routes.
-  cbtStart: { name: 'cbt-start', limit: 60, windowSeconds: 600, durable: true },
+  cbtStart: { name: 'cbt-start', limit: 60, windowSeconds: 600, durable: true, keyByUser: true },
   analyticsEvent: { name: 'analytics-event', limit: 240, windowSeconds: 60 },
-  adminUpload: { name: 'admin-upload', limit: 20, windowSeconds: 600, durable: true },
-  adminImport: { name: 'admin-import', limit: 10, windowSeconds: 600, durable: true },
-  adminNewsroomRun: { name: 'admin-newsroom-run', limit: 6, windowSeconds: 3600, durable: true },
+  adminUpload: { name: 'admin-upload', limit: 20, windowSeconds: 600, durable: true, keyByUser: true },
+  adminImport: { name: 'admin-import', limit: 10, windowSeconds: 600, durable: true, keyByUser: true },
+  adminNewsroomRun: { name: 'admin-newsroom-run', limit: 6, windowSeconds: 3600, durable: true, keyByUser: true },
   apiGeneral: { name: 'api-general', limit: 1200, windowSeconds: 60 },
 };

@@ -68,7 +68,7 @@ function copyFor(path: string): ComingSoonCopy {
     return {
       eyebrow: definition.category,
       title: `${definition.title} is not live yet`,
-      description: `${definition.description} This service has not launched yet — browse the active services catalogue for a guided service workflow.`,
+      description: `${definition.description} This service has not launched yet. Browse the active services catalogue for a guided service workflow.`,
     };
   }
   return copyByPath.find((entry) => entry.match(path))?.copy || fallbackCopy;
@@ -127,7 +127,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      background: '#b14933',
+                      background: 'var(--er-primary)',
                       color: '#ffffff',
                       borderRadius: '8px',
                       padding: '9px 18px',
@@ -164,7 +164,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: '#b14933',
+                  background: 'var(--er-primary)',
                   color: '#ffffff',
                   borderRadius: '8px',
                   padding: '9px 18px',

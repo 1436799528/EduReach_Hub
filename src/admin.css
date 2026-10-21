@@ -72,6 +72,23 @@
 .admin-btn { min-height: 44px; border: 0; border-radius: 999px; background: var(--admin-orange); color: #fff; padding: 10px 17px; font: 700 12px var(--er-font-sans); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; box-shadow: 0 10px 22px rgba(217,114,18,.18); transition: .2s ease; }
 .admin-btn:hover { transform: translateY(-1px); filter: brightness(.96); }
 .admin-btn.secondary { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.2); box-shadow: none; width: 100%; }
+/* The sidebar footer is dark; the rest of the console is not. A secondary
+   button used in a page header or card needs a visible surface and dark text. */
+.admin-page-header .admin-btn.secondary,
+.admin-card .admin-btn.secondary,
+.admin-inline-form .admin-btn.secondary {
+  width: auto;
+  background: #fff;
+  color: var(--admin-navy);
+  border: 1px solid #d7dee8;
+  box-shadow: none;
+}
+.admin-page-header .admin-btn.secondary:hover,
+.admin-card .admin-btn.secondary:hover,
+.admin-inline-form .admin-btn.secondary:hover {
+  background: #f8fafc;
+  transform: none;
+}
 .admin-btn.success { background: var(--admin-green); box-shadow: 0 10px 22px rgba(5,150,105,.15); }
 .admin-btn.danger { background: var(--admin-danger); box-shadow: 0 10px 22px rgba(186,26,26,.12); }
 .admin-btn.small { min-height: 36px; padding: 8px 12px; font-size: 12px; }
@@ -327,3 +344,82 @@
 @media (max-width: 900px) {
   .admin-focus-body { grid-template-columns: 1fr; }
 }
+
+/* Past-question import console ------------------------------------------------ */
+
+.import-upload-body { padding: 18px 20px 22px; display: grid; gap: 14px; }
+.import-drop { display: grid; justify-items: center; gap: 7px; padding: 26px 18px; border: 1.5px dashed #cfd8e3; border-radius: 18px; background: #fbfcfe; color: #4b5768; text-align: center; cursor: pointer; transition: .2s ease; }
+.import-drop:hover, .import-drop.is-active { border-color: var(--admin-green); background: rgba(5,150,105,.05); }
+.import-drop strong { color: var(--admin-navy); font: 700 14px var(--er-font-sans); }
+.import-drop span { max-width: 520px; font-size: 12px; line-height: 1.55; }
+.import-file-list, .import-upload-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.import-file-list li { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: 1px solid var(--admin-border); border-radius: 12px; font-size: 12px; }
+.import-file-list li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-file-list li small { color: var(--admin-muted); }
+.import-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.import-field { display: grid; gap: 5px; font-size: 11px; font-weight: 620; color: #5e6c82; letter-spacing: .02em; }
+.import-field .admin-input, .import-field .admin-select, .import-field .admin-textarea { width: 100%; min-width: 0; }
+.import-field textarea { resize: vertical; }
+.import-verified { align-self: end; }
+.import-bank-hint { margin: 0; font-size: 12px; color: #4b5768; }
+.import-upload-list li { display: grid; grid-template-columns: minmax(0, 1fr) 140px auto; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: #f6f8fb; font-size: 12px; }
+.import-upload-list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-upload-list li small { color: var(--admin-muted); }
+.import-upload-list progress { width: 100%; height: 6px; accent-color: var(--admin-green); }
+.import-upload-error { background: #fdf3f2 !important; color: var(--admin-danger); }
+.import-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; }
+.import-summary-meta { margin-left: 10px; color: var(--admin-muted); font-size: 12px; }
+.import-summary-counts { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12px; color: #4b5768; }
+.import-summary-counts strong { color: var(--admin-navy); }
+.import-alert { padding: 15px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-left: 3px solid var(--admin-danger); }
+.import-alert p { margin: 0; font-size: 13px; }
+.import-warnings { padding: 15px 20px; }
+.import-warnings h2 { margin: 0 0 7px; font: 700 14px var(--er-font-sans); color: var(--admin-navy); }
+.import-warnings ul { margin: 0; padding-left: 18px; color: #4b5768; font-size: 12px; line-height: 1.6; }
+.import-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 16px; }
+.import-list { display: grid; gap: 14px; }
+.import-item { padding: 16px 18px 14px; display: grid; gap: 12px; }
+.import-item header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.import-item footer { display: flex; flex-wrap: wrap; gap: 9px; padding-top: 4px; }
+.import-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.import-meta-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; }
+.import-five { margin: 0; padding: 9px 12px; border-radius: 10px; background: #fff7e8; color: #8a5a00; font-size: 12px; line-height: 1.5; }
+.import-status { border-radius: 999px; padding: 4px 9px; font: 700 10px var(--er-font-sans); text-transform: uppercase; letter-spacing: .05em; background: #eef2f7; color: #5e6c82; }
+.import-status-approved { background: rgba(5,150,105,.12); color: #047857; }
+.import-status-rejected { background: rgba(186,26,26,.1); color: var(--admin-danger); }
+.import-status-imported { background: rgba(37,99,235,.1); color: #1d4ed8; }
+.import-more summary { cursor: pointer; color: var(--admin-muted); font-size: 12px; font-weight: 620; }
+.import-more[open] { display: grid; gap: 10px; }
+.import-raw { margin: 0; max-height: 220px; overflow: auto; padding: 11px 12px; border-radius: 10px; background: #f6f8fb; color: #4b5768; font: 11px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+.import-issues { margin: 0; padding: 9px 12px 9px 28px; border-radius: 10px; background: #fff7e8; color: #8a5a00; font-size: 12px; line-height: 1.55; }
+.import-item-error { margin: 0; color: var(--admin-danger); font-size: 12px; font-weight: 620; }
+@media (max-width: 720px) {
+  .import-meta-row { grid-template-columns: 1fr; }
+  .import-upload-list li { grid-template-columns: 1fr; }
+}
+
+/* Site & policies (Phase 7): tabs, a selectable list and two-column form grid.
+   Same surfaces, radii and type scale as the rest of the console - these are
+   layout primitives, not a new visual language. */
+.admin-tabs { display: flex; gap: 6px; margin: 0 0 18px; border-bottom: 1px solid var(--admin-border); }
+.admin-tab { padding: 9px 14px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--admin-muted); font: 620 12.5px/1 var(--er-font-sans); cursor: pointer; }
+.admin-tab:hover { color: var(--admin-navy); }
+.admin-tab.is-active { color: var(--admin-navy); border-bottom-color: var(--admin-navy); }
+.admin-tab:focus-visible { outline: 2px solid var(--admin-navy); outline-offset: 2px; }
+.admin-grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.admin-list-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 13px; border: 1px solid var(--admin-border); border-radius: 12px; background: #fff; color: var(--admin-navy); text-align: left; }
+.admin-list-item > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.admin-list-item small { color: var(--admin-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-list-item.is-active { border-color: var(--admin-navy); box-shadow: inset 0 0 0 1px var(--admin-navy); }
+button.admin-list-item { cursor: pointer; font: inherit; }
+button.admin-list-item:hover { background: var(--admin-surface-2); }
+.admin-pill { padding: 3px 8px; border-radius: 999px; font: 700 9.5px/1.4 var(--er-font-sans); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.admin-pill.is-ok { background: var(--admin-green-soft); color: #047857; }
+.admin-pill.is-warn { background: #fff7df; color: #8a5a00; }
+.admin-pill.is-muted { background: var(--admin-surface-2); color: var(--admin-muted); }
+.admin-textarea-lg { min-height: 260px; resize: vertical; font: 500 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.admin-alert.is-error { background: #fef2f2; border-color: #fecaca; color: #b42318; }
+.admin-alert.is-error svg { color: #b42318; }
+.admin-alert.is-success { background: var(--admin-green-soft); border-color: #a7f3d0; color: #047857; }
+.admin-alert.is-info { background: #eef3ff; border-color: #ccd7f6; color: #42578b; }
+@media(max-width:900px){ .admin-grid-two { grid-template-columns: 1fr; } }

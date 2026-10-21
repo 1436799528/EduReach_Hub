@@ -1,9 +1,10 @@
 import { AlertTriangle, Inbox, RefreshCw, WifiOff } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { classifyFailure } from '../lib/failures';
+import WaveLoader from './WaveLoader';
 
 /**
- * APP-4 — the shared empty / error / loading states.
+ * APP-4 - the shared empty / error / loading states.
  *
  * Every list in the product used to answer "there is nothing here" and "the
  * request failed" with the same empty area, so a student could not tell a
@@ -31,6 +32,36 @@ export function EmptyState({
         {detail && <p>{detail}</p>}
       </div>
       {action && <div className="er-state-action">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * A named wait. Skeletons hold the layout while a request is young; once it is
+ * old enough to be worth explaining, this says what is being waited for and
+ * which operation it belongs to.
+ */
+export function LoadingState({
+  label,
+  detail,
+  compact = false,
+  className = '',
+}: {
+  label: string;
+  detail?: string;
+  compact?: boolean;
+  className?: string;
+}) {
+  const classes = ['er-state', 'er-state-loading', compact ? 'is-compact' : '', className]
+    .filter(Boolean)
+    .join(' ');
+  return (
+    <div className={classes} role="status" aria-live="polite">
+      <WaveLoader decorative />
+      <div>
+        <strong>{label}</strong>
+        {detail && <p>{detail}</p>}
+      </div>
     </div>
   );
 }
@@ -72,7 +103,7 @@ export function ErrorState({
 
 /**
  * A non-blocking "this part of the page could not load" note, used when the rest
- * of the screen is still useful. It keeps the failure honest without replacing
+ * of the screen is still useful. It reports the failure without replacing
  * working content with an error page.
  */
 export function InlineNotice({

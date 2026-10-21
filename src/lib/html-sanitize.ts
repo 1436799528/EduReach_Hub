@@ -45,7 +45,7 @@ function safeImgSrc(value: string): string | null {
   const raw = value.trim();
   if (!raw) return null;
   if (raw.startsWith('/') && !/^[/\\]{2}/.test(raw) && !/[\u0000-\u0020\\]/.test(raw)) return raw;
-  if (raw.startsWith('data:image/')) return null; // no inline blobs — images live in Storage
+  if (raw.startsWith('data:image/')) return null; // no inline blobs; images live in Storage
   try {
     const parsed = new URL(raw);
     return parsed.protocol === 'https:' ? parsed.toString() : null;

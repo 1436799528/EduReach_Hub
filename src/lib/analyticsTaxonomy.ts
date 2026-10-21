@@ -1,5 +1,5 @@
 /**
- * AN-1 — the analytics taxonomy.
+ * AN-1 - the analytics taxonomy.
  *
  * This file is the single source of truth for product analytics. Every event the
  * product may record is declared here, with the funnel it belongs to, the reason
@@ -47,7 +47,7 @@ export type AnalyticsMetadataField = {
   /** Strings: maximum length. Numbers: maximum absolute value. */
   max?: number;
   required?: boolean;
-  /** Why this field exists — one line, for the reviewer of the next event. */
+  /** Why this field exists - one line, for the reviewer of the next event. */
   note: string;
 };
 
@@ -68,13 +68,13 @@ export const STRING_MAX_DEFAULT = 120;
 
 /**
  * Keys that would hold something a student typed. The audit fails if a declared
- * field is named like one of these, so the search box cannot quietly become a
+ * field is named like one of these, so the search box cannot become a
  * database column again.
  */
 export const FREE_TEXT_KEY_PATTERN =
   /^(q|query|search|term|term_text|text|input|email|e_mail|phone|phone_number|name|full_?name|first_?name|last_?name|address|message|comment|note|password|token|otp|pin|nuban|account_?number)$/i;
 
-/** What each string field may contain, by name — checked by the audit. */
+/** What each string field may contain, by name - checked by the audit. */
 export const IDENTIFIER_KEY_PATTERN = /(id|slug|mode|status|category|title)$/;
 
 export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> = {
@@ -87,7 +87,7 @@ export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> 
     funnel: 'discovery',
     purpose: 'That a search happened and whether the catalogue answered it.',
     metadata: {
-      query_length: { type: 'number', max: 500, required: true, note: 'Character count of the term — never the term itself.' },
+      query_length: { type: 'number', max: 500, required: true, note: 'Character count of the term, never the term itself.' },
       result_count: { type: 'number', max: 100000, required: true, note: 'How many results were returned; 0 is the actionable signal.' },
     },
   },
@@ -101,7 +101,7 @@ export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> 
   },
   school_view: {
     funnel: 'discovery',
-    purpose: 'Which institutions students look up — evidence for sourcing order (INT-3).',
+    purpose: 'Which institutions students look up, used as evidence for sourcing order.',
     metadata: {
       schoolId: { type: 'string', max: 64, required: true, note: 'Institution identifier.' },
     },
@@ -129,7 +129,7 @@ export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> 
   },
   cbt_start: {
     funnel: 'cbt',
-    purpose: 'Which banks are actually attempted — the top of the CBT funnel.',
+    purpose: 'Which banks are actually attempted, the top of the CBT funnel.',
     metadata: {
       examId: { type: 'string', max: 64, required: true, note: 'Bank identifier.' },
       examTitle: { type: 'string', max: 120, note: 'Published bank title, for the console.' },
@@ -137,7 +137,7 @@ export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> 
   },
   cbt_submit: {
     funnel: 'cbt',
-    purpose: 'Attempt completion — the denominator for cbt_start.',
+    purpose: 'Attempt completion, the denominator for cbt_start.',
     metadata: {
       examId: { type: 'string', max: 64, required: true, note: 'Bank identifier.' },
     },
@@ -150,12 +150,12 @@ export const ANALYTICS_TAXONOMY: Record<AnalyticsEventName, AnalyticsEventSpec> 
     },
   },
   client_error: {
-    // P2-2: the browser had no error signal at all — a broken route was visible
-    // only as a support ticket. This is deliberately *not* an error message:
+    // P2-2: the browser had no error signal at all - a broken route was visible
+    // only as a support ticket. This is not an error message:
     // `source` is a three-value enum and `kind` is a constructor name. An error
     // message can embed anything the page was holding, so it is never sent.
     funnel: 'reliability',
-    purpose: 'That a page failed in the browser, and roughly how — the alert, not the trace.',
+    purpose: 'That a page failed in the browser, and roughly how. The alert, not the trace.',
     metadata: {
       source: { type: 'string', max: 24, required: true, note: 'Where it was caught: boundary, window_error or unhandled_rejection.' },
       kind: { type: 'string', max: 64, note: 'The error constructor name (TypeError, ChunkLoadError…), never the message.' },

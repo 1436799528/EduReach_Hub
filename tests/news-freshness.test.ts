@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { freshnessDate, newsFreshness } from '../src/lib/newsFreshness';
+import { freshnessDate, isArticleCurrent, newsFreshness } from '../src/lib/newsFreshness';
 
 // NEWS-2: a two-month-old notice must not read like one checked this morning.
 
@@ -59,4 +59,13 @@ test('the display date is readable, and empty when absent', () => {
   assert.match(formatted, /2026$/);
   assert.equal(freshnessDate(null), '', 'a missing date is empty, so the caller chooses the fallback');
   assert.equal(freshnessDate('not a date'), '');
+});
+
+test('isArticleCurrent is the same rule the news list and sitemap apply', () => {
+  const later = new Date(NOW + 86_400_000).toISOString();
+  assert.equal(isArticleCurrent({ verification_status: 'verified' }, NOW), true);
+  assert.equal(isArticleCurrent({ verification_status: 'archived' }, NOW), false);
+  assert.equal(isArticleCurrent({ verification_status: 'superseded' }, NOW), false);
+  assert.equal(isArticleCurrent({ expires_at: daysAgo(1) }, NOW), false);
+  assert.equal(isArticleCurrent({ expires_at: later }, NOW), true);
 });

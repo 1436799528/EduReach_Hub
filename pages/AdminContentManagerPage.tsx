@@ -21,12 +21,6 @@ type Resource = {
 
 type Row = Record<string, unknown> & { id?: string };
 
-const RESOURCE_KEYS = [
-  'institutions','faculties','departments','programmes','courses',
-  'cbt_exams','exam_questions','news_articles','opportunities',
-  'service_catalog'
-] as const;
-
 function csvParse(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [], cell = '', quoted = false;
@@ -224,10 +218,10 @@ export default function AdminContentManagerPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
                       <strong>{pendingImport.length} row(s) staged from {fileName}</strong>
                       <div className="admin-action-row">
-                        <button className="admin-btn small success" type="button" onClick={() => void confirmImport()} disabled={saving}>
+                        <button className="admin-btn small success" type="button" onClick={() => void confirmImport()} disabled={saving} aria-busy={saving}>
                           {saving ? 'Importing…' : `Confirm import (${pendingImport.length})`}
                         </button>
-                        <button className="admin-text-btn" type="button" onClick={() => { setPendingImport([]); setFileName(''); setMessage(''); }} disabled={saving}>
+                        <button className="admin-text-btn" type="button" onClick={() => { setPendingImport([]); setFileName(''); setMessage(''); }} disabled={saving} aria-busy={saving}>
                           Cancel
                         </button>
                       </div>
@@ -281,7 +275,7 @@ export default function AdminContentManagerPage() {
                     return <label className="admin-field" key={field.name}><span>{field.label}{field.required ? ' *' : ''}</span><input className="admin-input" style={{ width: '100%' }} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'datetime-local' ? 'datetime-local' : field.type === 'url' ? 'url' : 'text'} value={inputValue} onChange={e => setEditing({ ...editing, [field.name]: e.target.value })} /></label>;
                   })}
                 </div>
-                <div className="admin-news-editor-actions"><button className="admin-btn success" type="button" onClick={() => void saveRow()} disabled={saving}>{saving ? 'Saving…' : 'Save record'}</button></div>
+                <div className="admin-news-editor-actions"><button className="admin-btn success" type="button" onClick={() => void saveRow()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : 'Save record'}</button></div>
               </div>
             </div>
           )}

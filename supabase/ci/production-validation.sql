@@ -130,16 +130,16 @@ select
   'application buckets exist and match their declared read access' as check_name,
   coalesce(string_agg(expected.name || ' (' || coalesce(b.public::text, 'missing') || ')', ', '),
            'all present, admin-content public by design, the rest private') as detail
-from (values ('admin-content', true), ('resource-files', false), ('campus-uploads', false)) as expected(name, should_be_public)
+from (values ('admin-content', true), ('resource-files', false), ('campus-uploads', false), ('past-questions', false)) as expected(name, should_be_public)
 left join storage.buckets b on b.id = expected.name
 where b.id is null or b.public is distinct from expected.should_be_public;
 
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 68 then 'pass' else 'fail' end as result,
+  case when count(*) >= 72 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 68)' as detail
+  count(*)::text || ' migrations recorded (repository holds 72)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -173,9 +173,12 @@ with expected(version, migration) as (
     ,('20261020100000', '20261020100000_safe_verified_question_banks.sql')
     ,('20261020110000', '20261020110000_deduplicate_exact_duplicates.sql')
     ,('20261020120000', '20261020120000_copy_legacy_questions_to_practice_banks.sql')
-    ,('20261020130000', '20261020130000_expand_syllabus_practice_banks.sql')
-    ,('20261020140000', '20261020140000_populate_200_per_subject.sql')
     ,('20261019184519', '20261021120000_cbt_subject_selection_rules.sql')
+    ,('20261022090000', '20261022090000_cbt_question_serving_rules.sql')
+    ,('20261022091500', '20261022091500_cbt_mock_paper_spec.sql')
+    ,('20261022093000', '20261022093000_cbt_deadline_grace.sql')
+    ,('20261023120000', '20261023120000_question_import_pipeline.sql')
+    ,('20261024120000', '20261024120000_site_content_and_legal_pages.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -188,9 +191,25 @@ with expected(version, migration) as (
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'mode')
   union all
+  select 'public.cbt_attempts.submission_late_ms', '20261025120000_cbt_submit_grace_120.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'submission_late_ms')
+  union all
   select 'public.plan_cbt_paper()', '20261002120000_cbt_practice_and_mock_modes.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                     where n.nspname = 'public' and p.proname = 'plan_cbt_paper')
+  union all
+  select 'public.site_pages', '20261024120000_site_content_and_legal_pages.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'site_pages')
+  union all
+  select 'public.site_settings', '20261024120000_site_content_and_legal_pages.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'site_settings')
+  union all
+  select 'public.site_page_revisions', '20261024120000_site_content_and_legal_pages.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'site_page_revisions')
   union all
   select 'public.get_cbt_attempt_history()', '20261002120000_cbt_practice_and_mock_modes.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
@@ -223,6 +242,18 @@ with expected(version, migration) as (
   select 'public.opportunities.eligibility', '20261002150000_opportunity_eligibility.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'opportunities' and column_name = 'eligibility')
+  union all
+  select 'public.question_imports', '20261023120000_question_import_pipeline.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'question_imports')
+  union all
+  select 'public.question_import_items', '20261023120000_question_import_pipeline.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'question_import_items')
+  union all
+  select 'public.commit_question_import()', '20261023120000_question_import_pipeline.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'commit_question_import')
   union all
   select 'public.get_cbt_attempt_paper() VOLATILE', '20261003103000_cbt_paper_expiry_volatility.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace

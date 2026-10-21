@@ -1,8 +1,5 @@
-/* Homepage card-first system — intentionally overrides older compact-home rules. */
+/* Homepage card-first system - intentionally overrides older compact-home rules. */
 .hub-home-container{width:min(1240px,calc(100% - 32px))!important;max-width:none!important}
-.hub-home-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,520px);align-items:center;gap:28px;padding:18px 0 22px}
-.hub-home-intro h1{margin:5px 0 7px;font-size:clamp(25px,3.1vw,38px);line-height:1.08;letter-spacing:-1.2px}
-.hub-home-intro p{margin:0;color:var(--hub-muted);font-size:12px}
 .hub-home-search{height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid var(--hub-border);border-radius:12px;background:#fff;box-shadow:0 4px 16px rgba(15,23,42,.05)}
 .hub-home-search svg{color:#5e6c82;flex:none}
 .hub-home-search input{width:100%;border:0;outline:0;background:transparent;color:var(--hub-text);font:inherit;font-size:12px}
@@ -29,10 +26,28 @@
 }
 @media(max-width:700px){
   .hub-home-container{width:calc(100% - 20px)!important}
-  .hub-home-intro{grid-template-columns:1fr;gap:15px;padding-top:10px}
-  .hub-home-intro h1{font-size:27px}
   .hub-home-search{height:45px}
   .hub-home-card-grid-4{grid-template-columns:1fr}
   .hub-home-card-grid .hub-compact-card{min-height:135px!important}
   .hub-home-footer-callout{align-items:flex-start;flex-direction:column}
 }
+
+.hub-home-updates{display:grid;gap:9px}
+
+/* The resumed paper is an action, so it sits between the headline and the
+   catalogue. It is deliberately one row on desktop and two on a phone: no
+   extra navigation, no dashboard detour. */
+.home-resume{display:flex;align-items:center;gap:18px;margin:0 0 6px;padding:15px 17px;border:1px solid #bfdbfe;border-radius:12px;background:#f8fbff}
+.home-resume-copy{flex:1;min-width:0}
+.home-resume-kicker{display:block;color:#1d4ed8;font-size:11px;font-weight:560;letter-spacing:.08em;text-transform:uppercase}
+.home-resume h2{margin:3px 0 2px;color:#0f172a;font-size:16px;line-height:1.3}
+.home-resume p{margin:0;color:#475569;font-size:12.5px;line-height:1.5}
+.home-resume-bar{height:4px;margin-top:9px;border-radius:999px;background:#dbeafe;overflow:hidden}
+.home-resume-bar span{display:block;height:100%;border-radius:inherit;background:#2563eb;transition:width .2s ease}
+.home-resume>a{flex:none;text-decoration:none}
+@media(max-width:600px){
+  .home-resume{flex-direction:column;align-items:stretch;gap:12px}
+  .home-resume>a{width:100%;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){.home-resume-bar span{transition:none}}
+

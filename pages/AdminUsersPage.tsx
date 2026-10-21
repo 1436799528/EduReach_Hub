@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
 import { fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, updateAdminUserRole, type AdminUser, type AdminUserActivity } from '../src/lib/api';
 import { Can } from '../src/components/admin/Can';
-import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, StatusBadge, TableSkeleton } from '../src/components/admin/AdminKit';
 
 function profileCompletion(p: AdminUser): number {
   const fields = [p.full_name, p.school, p.faculty, p.department, p.level, p.matric_number];
@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
       await setUserSuspended(p.id, suspend);
       // Re-list so the authoritative auth state is reflected.
       await loadList(query);
-      setMessage(suspend ? 'Account suspended — sign-in is blocked until unsuspended.' : 'Account unsuspended.');
+      setMessage(suspend ? 'Account suspended. Sign-in is blocked until unsuspended.' : 'Account unsuspended.');
     } catch (e) {
       setError(userFacingError(e, 'Unable to update the account.'));
     } finally { setBusyId(null); }
@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
           <div className="admin-modal-backdrop" onClick={() => setViewing(null)} role="presentation">
             <div ref={activityDialogRef} tabIndex={-1} className="admin-modal" role="dialog" aria-modal="true" aria-label={`Activity for ${viewing.full_name || 'student'}`} onClick={(e) => e.stopPropagation()}>
               <div className="admin-card-header">
-                <h2>{viewing.full_name || 'Unnamed student'} — activity</h2>
+                <h2>{viewing.full_name || 'Unnamed student'} · Activity</h2>
                 <button type="button" className="admin-text-btn" onClick={() => setViewing(null)}>Close</button>
               </div>
               <div className="admin-modal-body">

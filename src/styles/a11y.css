@@ -1,10 +1,10 @@
 /*
- * A11Y-1 — accessibility primitives that must win over the rest of the cascade.
+ * A11Y-1 - accessibility primitives that must win over the rest of the cascade.
  *
  * This file is imported LAST in src/main.tsx, and deliberately so. There are
  * seventeen stylesheets in src/ and eleven of them reset `outline` on some
  * focusable element; the previous focus indicator lived in the middle of that
- * load order as `rgba(200, 88, 65, 0.24)` — about 1.3:1 against white, which is
+ * load order as `rgba(200, 88, 65, 0.24)` - about 1.3:1 against white, which is
  * not a focus indicator anyone can see. One last-loaded owner makes the ring
  * predictable and lets `tests/a11y.test.ts` assert it stays that way.
  *
@@ -34,11 +34,13 @@
 }
 
 /* Focus indicator (WCAG 2.4.7 / 2.4.11).
-   Two tones: the dark ring reads on the light surfaces that dominate the app,
-   the white ring underneath reads on the dark header and sidebar. `:root` is
-   there to out-specify the `!important` resets in the earlier stylesheets. */
+   Two tones: the green ring reads on the light surfaces that dominate the app
+   (10.11:1 on white, 9.11:1 on the pale green surface), the white ring
+   underneath keeps it separated from a green button and reads on the dark
+   header and sidebar. `:root` is there to out-specify the `!important` resets in
+   the earlier stylesheets. */
 :root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
-  outline: 3px solid #8f1d18 !important;
+  outline: 3px solid var(--er-primary-focus, #174A3A) !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 2px #ffffff !important;
 }
@@ -65,12 +67,28 @@
   }
 }
 
-/* Target size (WCAG 2.5.8, AA). The password reveal buttons measured 16×16 —
-   below the 24×24 minimum — because they are icons positioned inside the
+/* Target size (WCAG 2.5.8, AA). The password reveal buttons measured 16×16 -
+   below the 24×24 minimum - because they are icons positioned inside the
    field. Sizing the button, rather than the icon, fixes the target. */
 :root :where(button[aria-label='Show password'], button[aria-label='Hide password']) {
   min-width: 24px;
   min-height: 24px;
   display: inline-grid;
   place-items: center;
+}
+
+/* Touch targets (the design system asks for 44px; the compact layer sets 32px
+   for density). Coarse pointers get the larger control without changing
+   desktop density or the admin tables, which use their own button class. */
+@media (pointer: coarse) {
+  :root :where(.hub-primary-btn, .hub-ghost-btn, .hub-outline-btn, .hub-icon-btn) {
+    min-height: 44px !important;
+    height: auto !important;
+    padding-block: 10px !important;
+  }
+  :root :where(.hub-nav a, .hub-utility-links a) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
 }

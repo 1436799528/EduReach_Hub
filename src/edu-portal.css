@@ -1,27 +1,28 @@
-/* EduReach portal — MySchool-inspired information architecture.
+/* EduReach portal - MySchool-inspired information architecture.
    The goal is portal density: grouped modules, compact rows, restrained surfaces.
    EduReach branding/assets only. */
 .er-portal{background:#f7f9fb;min-height:100%;padding:14px 0 28px;color:#1a1a1a}
 .er-container{width:min(1120px,calc(100% - 28px));margin:0 auto}
 .er-notice{min-height:32px;display:flex;align-items:center;gap:9px;background:#0f5132;color:#ecfdf5;padding:6px 10px;border-radius:6px;margin-bottom:10px;font-size:12px}
-.er-notice>span{background:#c02220;color:#fff;border-radius:3px;padding:3px 6px;font-size:9px;font-weight: 560;letter-spacing:.05em;flex:none}
+.er-notice>span{background:var(--er-crimson);color:#fff;border-radius:3px;padding:3px 6px;font-size:9px;font-weight: 560;letter-spacing:.05em;flex:none}
 .er-notice p{margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .er-notice a{display:inline-flex;align-items:center;gap:3px;color:#fff;text-decoration:none;font-weight: 560;white-space:nowrap}
 .er-search{height:44px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d9dee5;border-radius:10px;padding:4px 6px 4px 12px;margin-bottom:12px}
 .er-search>svg{color:#5e6c82;flex:none}
 .er-search input{border:0;outline:0;min-width:0;flex:1;font:inherit;font-size:14px;color:#1f2937;background:transparent}
-.er-search button{height:34px;border:0;border-radius:7px;background:#c02220;color:#fff;padding:0 14px;font-size:13px;font-weight: 560;cursor:pointer}
+.er-search button{height:34px;border:0;border-radius:7px;background:var(--er-brand-red);color:#fff;padding:0 14px;font-size:13px;font-weight: 560;cursor:pointer}
+.er-search button:hover{background:var(--er-brand-red-hover)}
 .er-banner{min-height:80px;display:grid;grid-template-columns:48px minmax(0,1fr) 18px;align-items:center;gap:12px;background:linear-gradient(100deg,#fff7e8,#fff);border:1px solid #eadfcb;border-radius:12px;padding:10px 14px;color:#1f2937;text-decoration:none;margin-bottom:14px}
 .er-banner-art{width:44px;height:44px;display:grid;place-items:center;background:#fff0d5;border-radius:8px}
 .er-banner-art img{width:30px;height:30px;object-fit:contain}
-.er-banner small{display:block;color:#c02220;font-size:10.5px;font-weight: 500;letter-spacing:.06em}
+.er-banner small{display:block;color:var(--er-brand-red);font-size:10.5px;font-weight: 500;letter-spacing:.06em}
 .er-banner strong{display:block;font-size:16px;line-height:1.2;margin-top:2px}
 .er-banner p{margin:3px 0 0;font-size:13px;line-height:1.35;color:#5e6c82}
-.er-banner>svg{color:#c02220}
+.er-banner>svg{color:var(--er-brand-red)}
 .er-section{margin-top:18px}
 .er-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #dfe4ea;padding-bottom:8px;margin-bottom:10px}
 .er-section-head h2{margin:0;font-size:17px;line-height:24px;font-weight: 620;color:#1f2937}
-.er-section-head a{display:inline-flex;align-items:center;gap:4px;color:#c02220;text-decoration:none;font-size:13px;line-height:20px;font-weight: 620;white-space:nowrap}
+.er-section-head a{display:inline-flex;align-items:center;gap:4px;color:var(--er-primary);text-decoration:none;font-size:13px;line-height:20px;font-weight: 620;white-space:nowrap}
 .er-exam-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .er-exam-module{background:#fff;border:1px solid #dfe4ea;border-radius:8px;overflow:hidden}
 .er-exam-head{display:grid;grid-template-columns:40px minmax(0,1fr) 16px;align-items:center;gap:9px;padding:9px 10px;background:#fafafa;text-decoration:none;color:#1f2937}
@@ -34,15 +35,15 @@
 .er-exam-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid #eef1f4}
 .er-exam-links a{padding:7px 9px;border-right:1px solid #eef1f4;border-bottom:1px solid #eef1f4;color:#475569;text-decoration:none;font-size:10px;line-height:1.2}
 .er-exam-links a:nth-child(even){border-right:0}
-.er-exam-links a:hover{color:#c02220;background:#fffafa}
-.er-module-more{display:flex;align-items:center;justify-content:flex-end;gap:3px;padding:6px 9px;color:#c02220;text-decoration:none;font-size:9px;font-weight: 560}
+.er-exam-links a:hover{color:var(--er-primary);background:var(--er-primary-soft)}
+.er-module-more{display:flex;align-items:center;justify-content:flex-end;gap:3px;padding:6px 9px;color:var(--er-primary);text-decoration:none;font-size:9px;font-weight: 560}
 /* Quick-link tiles: a horizontal strip on the home page ("Study Tools") and a
    grid elsewhere. On mobile the strip becomes a swipe row where each tile takes
    ~70% of the viewport so the next tile is always visibly peeking in. */
 .er-test-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .er-test-strip::-webkit-scrollbar{display:none}
 .er-mini-link{flex:0 0 auto;min-width:220px;min-height:54px;display:grid;grid-template-columns:36px minmax(0,1fr) 14px;align-items:center;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:10px;padding:8px 12px;text-decoration:none;color:#1f2937}
-.er-mini-link:hover,.er-link-grid .er-mini-link:hover{border-color:#c02220}
+.er-mini-link:hover,.er-link-grid .er-mini-link:hover{border-color:var(--er-brand-red)}
 .er-mini-link>.ms-identity-mark{width:36px;height:36px;padding:0;background:transparent!important;border:0!important}
 .er-mini-link>.ms-identity-mark img{height:24px;max-width:30px}
 .er-mini-link>span{font-size:13px;line-height:18px;font-weight: 560;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -59,7 +60,7 @@
 .er-deadline{min-height:66px;display:grid;grid-template-columns:46px minmax(0,1fr);align-items:center;gap:12px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;padding:8px 12px}
 .er-date{width:46px;height:46px;display:grid;place-items:center;align-content:center;background:#f8fafb;border:1px solid #edf0f3;border-radius:8px}
 .er-date strong{font-size:17px;line-height:1}
-.er-date small{font-size:9.5px;color:#c02220;text-transform:uppercase;font-weight: 500}
+.er-date small{font-size:9.5px;color:var(--er-brand-red);text-transform:uppercase;font-weight: 500}
 .er-deadline>span{min-width:0}
 .er-deadline>span small{display:block;font-size:11px;line-height:16px;font-weight: 500;color:#b45309;text-transform:uppercase;letter-spacing:.03em}
 .er-deadline>span strong{display:block;font-size:14px;line-height:20px;font-weight: 620;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -95,7 +96,7 @@
 .er-major-heading p{margin:4px 0 0;font-size:13px;line-height:1.45;color:#5e6c82}
 .er-major-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .er-major-link{min-height:54px;display:grid;grid-template-columns:20px minmax(0,1fr) 14px;align-items:center;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:10px;padding:10px 14px;color:#1f2937;text-decoration:none}
-.er-major-link:hover{border-color:#c02220;color:#c02220}
+.er-major-link:hover{border-color:var(--er-primary);color:var(--er-primary)}
 .er-major-link span{font-size:14px;line-height:20px;font-weight: 560}
 .er-major-link svg:first-child{color:#047857}
 .er-major-link svg:last-child{color:#5e6c82}
@@ -108,7 +109,7 @@
 @media(max-width:600px){
   .er-mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:90;height:58px;background:rgba(255,255,255,.98);border-top:1px solid #dfe4ea;box-shadow:0 -3px 12px rgba(15,23,42,.08);padding:5px 8px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
   .er-mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:48px;color:#5e6c82;text-decoration:none;font-size:11px;font-weight: 560}
-  .er-mobile-bottom-nav a.active{color:#c02220}
+  .er-mobile-bottom-nav a.active{color:var(--er-primary)}
   .er-mobile-bottom-nav svg{stroke-width:2}
 }
 
@@ -328,7 +329,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* CBT simulator (/cbt/practice) — real-CBT layout: sticky control bar, */
+/* CBT simulator (/cbt/practice) - real-CBT layout: sticky control bar, */
 /* question workspace, palette, on-screen calculator, exam-focus mode.  */
 /* ------------------------------------------------------------------ */
 body.er-exam-mode footer,
@@ -337,7 +338,7 @@ body.er-exam-mode .er-pagebar,
 html.er-exam-mode .er-mobile-bottom-nav{display:none!important}
 body.er-exam-mode{padding-bottom:0!important}
 .er-exam-shell .er-exam-closed-actions a{text-decoration:none;display:inline-flex;align-items:center;gap:5px}
-.er-exam{--er-exam-accent:#b14933;--er-exam-ink:#0f172a;background:#eef2f6;min-height:calc(100vh - var(--er-exam-top,60px));padding-bottom:32px}
+.er-exam{--er-exam-accent:var(--er-primary);--er-exam-ink:#0f172a;background:#eef2f6;min-height:calc(100vh - var(--er-exam-top,60px));padding-bottom:32px}
 .er-exam-bar{position:sticky;top:var(--er-exam-top,60px);z-index:80;background:var(--er-exam-ink);color:#fff;box-shadow:0 4px 14px rgba(15,23,42,.18)}
 .er-exam-bar-inner{display:flex;align-items:center;gap:10px;min-height:64px;padding:8px 0}
 .er-exam-id{display:flex;align-items:center;gap:10px;min-width:0;flex:1;margin-right:auto}
@@ -355,7 +356,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-exam-tool:hover,.er-exam-tool.is-active{background:#334155;border-color:#94a3b8}
 .er-exam-tool:disabled{opacity:.5;cursor:default}
 .er-exam-submit{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 16px;border-radius:8px;border:0;background:var(--er-exam-accent);color:#fff;font:inherit;font-size:13px;font-weight: 560;cursor:pointer}
-.er-exam-submit:hover{background:#b44a35}
+.er-exam-submit:hover{background:var(--er-primary-hover)}
 .er-exam-submit:disabled{opacity:.5;cursor:default}
 .er-exam-body{padding-top:16px}
 .er-exam-alert{display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 14px;border-radius:10px;margin-bottom:14px;font-size:13px}
@@ -442,7 +443,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-skeleton-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px}
 .er-skeleton-row-copy{display:grid;gap:8px}
 .er-skel-thumb{width:56px;height:56px;border-radius:10px}
-/* PERF-1 — regions that fill in after the first paint.
+/* PERF-1 - regions that fill in after the first paint.
    Swapping a placeholder for content changes the height of everything below
    it, and on a phone the footer and the side column sit right there. Measured
    without this: CLS 0.21 on /, 0.18 on /news, 0.31 on /past-questions at 4G
@@ -451,7 +452,7 @@ body.er-exam-mode{padding-bottom:0!important}
    .er-skeleton-row is 82px tall, exactly like the .er-news-row it stands in
    for, and the floors below are the loaded geometry. */
 .er-late-region{min-height:var(--er-late-min,0);display:grid;align-content:start}
-.er-late-region--feed{--er-late-min:542px}       /* 6 news rows: 6x82 + 5x10 gutters */
+.er-late-region--feed{--er-late-min:266px}       /* the 3 news rows the home page shows */
 .er-late-region--feed-page{--er-late-min:450px}  /* the 5 rows its skeleton shows */
 .er-late-region--library{--er-late-min:670px}    /* 6 cards in two columns: 3x214 + 2x14 */
 @media(max-width:700px){
@@ -527,6 +528,55 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-exam-option{font-size:14.5px;min-height:50px;padding:10px 12px}
   .er-exam-flag{font-size:12px;padding:0 10px}
 }
+
+/* Footer (Phase 8): identity, learning, navigation, help and policies. The dark
+   slate surface and the small type are the ones the footer already used; what
+   changes is that the columns are structured and driven by admin content. */
+.er-footer{background:#0f172a;color:#94a3b8;border-top:1px solid #1e293b;margin-top:auto;padding:34px 0 22px;font-size:12px}
+.er-footer-grid{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:28px;margin-bottom:26px}
+.er-footer-brand{display:grid;gap:10px;align-content:start}
+.er-footer-brand-link{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:13px;font-weight:620}
+.er-footer-brand-link:hover{text-decoration:underline}
+.er-footer-about{margin:0;max-width:38ch;line-height:1.6;color:#94a3b8}
+.er-footer-social{display:flex;flex-wrap:wrap;gap:12px}
+.er-footer-social a,.er-footer-links a,.er-footer-legal a{color:#cbd5e1;text-decoration:none}
+.er-footer-social a:hover,.er-footer-links a:hover,.er-footer-legal a:hover{color:#fff;text-decoration:underline}
+.er-footer-col{min-width:0}
+.er-footer-note{margin:10px 0 0;font-size:11.5px;line-height:1.55;color:#7d8ca3}
+.er-footer .er-footer-help{color:#86efac;font-weight:620}
+.er-footer-bottom{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:18px;border-top:1px solid #1e293b}
+.er-footer-copy{margin:0;max-width:62ch;font-size:11.5px;line-height:1.6;color:#8fa0b5}
+.er-footer-legal{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px}
+.er-footer a:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:2px}
+@media(max-width:900px){.er-footer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.er-footer-brand{grid-column:1/-1}}
+
+/* Policy pages (Phase 9): a readable column, a visible draft banner and links
+   that do not depend on the footer to be discovered. */
+.er-legal-page{padding:26px 0 64px;background:#fff}
+.er-legal-container{max-width:820px}
+.er-legal-back{display:inline-flex;align-items:center;gap:6px;min-height:32px;color:#475569;font-size:12.5px;text-decoration:none}
+.er-legal-back:hover{color:#0f172a;text-decoration:underline}
+.er-legal-draft{display:flex;align-items:flex-start;gap:10px;margin:18px 0 0;padding:13px 15px;border:1px solid #fde68a;border-radius:10px;background:#fffbeb;color:#7a5300}
+.er-legal-draft svg{flex:none;margin-top:1px}
+.er-legal-draft p{margin:0;font-size:12.5px;line-height:1.6}
+.er-legal-head{margin:22px 0 18px;padding-bottom:16px;border-bottom:1px solid #e2e8f0}
+.er-legal-head h1{margin:6px 0 8px;font-size:clamp(24px,3.4vw,32px);line-height:1.15;letter-spacing:-.5px;color:#0f172a}
+.er-legal-summary{margin:0;color:#475569;font-size:14px;line-height:1.6}
+.er-legal-meta{margin:10px 0 0;color:#64748b;font-size:12px}
+.er-legal-body{color:#334155;font-size:15px;line-height:1.72}
+.er-legal-body h2{margin:28px 0 8px;font-size:17px;line-height:1.35;color:#0f172a}
+.er-legal-body p{margin:0 0 13px}
+.er-legal-body ul,.er-legal-body ol{margin:0 0 14px;padding-left:22px}
+.er-legal-body li{margin:0 0 7px}
+.er-legal-body a{color:#9f2f1e;text-underline-offset:2px}
+.er-legal-body a:hover{color:#7f2417}
+.er-legal-foot{margin-top:38px;padding-top:18px;border-top:1px solid #e2e8f0;display:grid;gap:10px;color:#475569;font-size:12.5px}
+.er-legal-foot nav{display:flex;flex-wrap:wrap;gap:14px}
+.er-legal-foot a{color:#334155}
+.er-legal-missing{max-width:620px;margin:26px 0;padding:22px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
+.er-legal-missing h1{margin:0 0 8px;font-size:20px;color:#0f172a}
+.er-legal-missing p{margin:0;color:#475569;line-height:1.6}
+@media(max-width:640px){.er-legal-page{padding:18px 0 46px}.er-legal-body{font-size:14.5px}}
 
 /* Footer: two link columns on phones instead of one very long list */
 .er-footer-links a{display:flex;align-items:center;min-height:28px}
@@ -728,7 +778,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-resource-list strong{display:block;font-size:14px}
 .er-resource-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .er-resource-unavailable{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#8a4b12;background:#fff8ec;border:1px solid #f0d7b0;border-radius:9px;padding:7px 10px}
-/* OPP-1 — opportunity status chips and facts. */
+/* OPP-1 - opportunity status chips and facts. */
 .er-opportunity-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11px}
 .er-opp-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569}
 .er-opp-chip.is-category{color:#b14933;border-color:#f0d7c9;background:#fdf4f1}
@@ -742,12 +792,12 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-opp-facts>div{display:flex;gap:8px;font-size:11.5px;line-height:1.4}
 .er-opp-facts dt{display:inline-flex;align-items:center;gap:4px;flex:0 0 92px;color:#5e6c82;font-weight:560}
 .er-opp-facts dd{margin:0;color:#334155;min-width:0}
-/* NEWS-2 — freshness line on rows and cards. */
+/* NEWS-2 - freshness line on rows and cards. */
 .er-news-freshness{display:block;margin-top:3px;font-size:11px;color:#5e6c82}
 .er-news-freshness.is-warning{color:#92400e}
 .er-news-row.is-expired strong{color:#64748b}
 .er-search-clear{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:6px;background:#eef2f7;color:#475569;cursor:pointer}
-/* SERVICE-1 — what happens after Submit. */
+/* SERVICE-1 - what happens after Submit. */
 .er-service-promise{margin:16px 0 0;padding:14px 16px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
 .er-service-promise.is-success{margin:0 0 22px;text-align:left;border-color:#bbe7d3;background:#f0fdf7}
 .er-service-promise>strong{display:block;margin-bottom:8px;font-size:13px;color:#0f172a}
@@ -758,7 +808,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-service-promise p{margin:10px 0 0;font-size:11.5px;line-height:1.5;color:#5e6c82}
 .school-details-no-site{display:grid;gap:8px;max-width:560px}
 .school-details-no-site p{margin:0;font-size:12.5px;line-height:1.5;color:#5e6c82}
-/* MOBILE-1 — the CBT start action stays under the thumb on a phone. The setup
+/* MOBILE-1 - the CBT start action stays under the thumb on a phone. The setup
    page is long (subjects, timing, summary), so the primary action is pinned
    above the mobile nav bar instead of only at the end of the scroll. */
 @media (max-width:640px){
@@ -774,3 +824,5 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-featured-media>.er-news-noimage{width:100%;height:100%;display:grid;place-content:center;gap:8px;text-align:center}
 @media(max-width:640px){.er-featured-media>img{padding:8px}}
 .er-news-feature img.er-news-photo{object-fit:contain;object-position:center;background:#f4f6f8;padding:8px;box-sizing:border-box}
+.er-legal-retry{border:0;background:none;padding:0;color:#9f2f1e;font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.er-legal-retry:hover{color:#7f2417}

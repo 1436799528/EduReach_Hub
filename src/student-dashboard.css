@@ -1,4 +1,4 @@
-/* EduReach Student Dashboard — compact, four-page layout
+/* EduReach Student Dashboard - compact, four-page layout
    (Overview · My Requests · My CBT · Tools & Saved) */
 
 .edureach-dash-container {
@@ -1170,7 +1170,7 @@
 .dash-notification-unread .dash-row-title {
   font-weight: 620;
 }
-/* DASH-1 — what matters now. Ordered, capped, and visually plain: the urgent
+/* DASH-1 - what matters now. Ordered, capped, and visually plain: the urgent
    row is the only one with a filled button. */
 .dash-priority{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px}
 .dash-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -1184,3 +1184,21 @@
 @media (max-width:640px){.dash-priority-item{flex-wrap:wrap}.dash-priority-item .dash-btn{width:100%;justify-content:center}}
 .dash-request-status-meaning{margin:6px 0 0;font-size:11.5px;line-height:1.45;color:#5e6c82}
 .dash-request-status-meaning.is-action{color:#92400e}
+
+/* Phase 6: reliable metrics, inline delete confirmation and paging.
+   These reuse the dashboard's existing type scale and slate palette. */
+.dash-metric-val.is-empty{color:#94a3b8}
+.dash-metric-hint{display:block;margin-top:3px;color:#5e6c82;font-size:10.5px;line-height:1.35}
+.dash-attempt-notice:not(:empty){margin:0 0 10px;padding:9px 12px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:#1e3a8a;font-size:12px;line-height:1.5}
+.dash-attempt-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+.dash-attempt-pager p{margin:0}
+.dash-pager-actions{display:flex;align-items:center;gap:8px}
+.dash-row-actions{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dash-inline-confirm{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;color:#7f1d1d;font-size:11.5px}
+.dash-inline-confirm>span:first-child{font-weight:620}
+.dash-card-link.dash-delete-link{border:0;background:transparent;padding:2px 0;color:#b42318;font:inherit;font-size:11.5px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.dash-card-link.dash-delete-link:hover{color:#7f1d1d}
+.dash-card-link.dash-delete-link:disabled{color:#94a3b8;cursor:not-allowed;text-decoration:none}
+.dash-btn-danger{border-color:#fecaca;background:#fef2f2;color:#b42318}
+.dash-btn-danger:hover:not(:disabled){background:#fee2e2;border-color:#fca5a5}
+.dash-metric-strip .dash-metric-card:focus-within{outline:2px solid #0f172a;outline-offset:2px}

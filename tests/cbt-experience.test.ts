@@ -45,14 +45,24 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /Subject group/, 'students can choose a subject group');
   assert.match(setup, /cannot be removed/, 'a compulsory subject is locked into the combination');
   assert.match(setup, /Use of English is compulsory for JAMB UTME/, 'JAMB practice and mock cannot start without English, and the student is told why');
-  assert.match(setup, /Add a subject/, 'subjects are picked from a labelled dropdown');
+  assert.match(setup, /aria-label="Available subjects"/, 'available subjects are shown in a labelled picker');
+  assert.match(setup, /aria-label=\{`Add \$\{entry\.subject\}`\}/, 'each available subject has an add control named for that subject');
   assert.match(setup, /er-selected-subjects/, 'chosen subjects are listed with their question counts');
   assert.match(setup, /fetchCbtExamsWithAvailability/, 'bank resolution sees question availability, not catalogue order');
-  assert.match(setup, /waecSubjectGroup/, 'WAEC subjects are grouped in the dropdown for browsing');
-  assert.match(setup, /<optgroup/, 'grouping uses native optgroup semantics');
+  assert.match(setup, /practiceTrack/, 'the picker is filtered by the subject group the student chose');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
   assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
   assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
+});
+
+test('a missing compulsory subject, not the absence of one, blocks the start', () => {
+  // WAEC, NECO and Post-UTME have no compulsory subject. Gating the Start
+  // button on "no compulsory English" disabled the whole simulator for them.
+  const setup = read('pages/ExamSetupPage.tsx');
+  assert.match(setup, /const compulsoryMissing = Boolean\(bank\?\.rules\?\.compulsoryMissing\)/);
+  assert.match(setup, /compulsoryKeys\.length > 0 && !compulsoryEnglish/);
+  assert.match(setup, /disabled=\{[^}]*compulsoryMissing/, 'the start gate uses the derived rule');
+  assert.doesNotMatch(setup, /disabled=\{[^}]*!compulsoryEnglish/, 'no body is blocked merely for having no compulsory subject');
 });
 
 test('answers are saved as they change, and a dropped connection is retried', () => {

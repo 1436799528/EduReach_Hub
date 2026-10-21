@@ -19,7 +19,7 @@ const filters = [
 ];
 
 // Legacy deep links (/news?category=admission, /news?category=funding, …) keep
-// resolving to the current slugs through the shared canonicaliser — the same one
+// resolving to the current slugs through the shared canonicaliser - the same one
 // the filter and the database use, so there is no third spelling to maintain.
 function readCategoryFromUrl() {
   if (typeof window === 'undefined') return 'ALL';
@@ -137,7 +137,7 @@ export default function NewsPage() {
                 {query.trim()
                   ? `Nothing matches “${query.trim()}”${activeFilter === 'ALL' ? '' : ' in this category'}. Clear the search or try another category.`
                   : items.length
-                    ? 'No announcements match this category yet. The category is real — nothing has been published under it.'
+                    ? 'No announcements match this category yet. The category exists, but nothing has been published under it.'
                     : 'No news content available yet. Verified education updates are published here as soon as they are ready.'}
               </div>
             )}

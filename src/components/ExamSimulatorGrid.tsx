@@ -1,9 +1,11 @@
-import { userFacingError } from '../../lib/errors';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { identityClassFor } from './CardIdentityMark';
+import { ErrorState } from './AsyncState';
 import { SkeletonTiles } from './Skeleton';
-import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../lib/api';
+import WaveLoader from './WaveLoader';
+import { fetchCbtExams, fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
+import { usePendingPhase } from '../lib/usePendingPhase';
 import { isSupabaseConfigured } from '../lib/supabase';
 
 export type ExamSimulator = {
@@ -50,17 +52,24 @@ export default function ExamSimulatorGrid({
   showGuides?: boolean;
 }) {
   const [exams, setExams] = useState<ExamSimulator[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<unknown>(null);
   // Whether the catalogue has answered at all. Until it has, the section shows
   // placeholders: claiming "no question banks have been published" while the
   // request is still in flight is both wrong and a layout jump when the cards
   // arrive (PERF-1 measured that jump at 262px).
   const [settled, setSettled] = useState(false);
+  // Retrying re-runs the same request. It is the only recovery that makes
+  // sense here, and a failed lookup used to leave a dead sentence with no way
+  // back except a page reload.
+  const [attempt, setAttempt] = useState(0);
+  const phase = usePendingPhase(!settled && error === null);
 
   useEffect(() => {
     let active = true;
+    setError(null);
+    setSettled(false);
     void (isSupabaseConfigured ? fetchCbtExamsWithAvailability() : fetchCbtExams())
-      .then((items: any[]) => {
+      .then((items: CbtExamSummary[]) => {
         if (!active) return;
         // Never advertise a bank a student cannot start (too few questions
         // for the minimum session, or no subjects at all). Catalogues
@@ -74,30 +83,45 @@ export default function ExamSimulatorGrid({
             title: String(exam.title),
             mode,
             logo: brandLogo(mode),
-            desc: String(exam.description || `Practice ${mode} questions in the EduReach CBT environment.`),
-            meta: typeof exam.question_count === 'number'
-              ? `${Number(exam.duration_minutes || 0)} min timed practice · ${exam.question_count} questions`
-              : `${Number(exam.duration_minutes || 0)} min timed practice`,
+            desc: String(exam.description || 'Choose your subjects and start a timed paper.'),
+            // A bank's size and the standard paper time are configuration, not
+            // a promise about every practice session. The setup screen derives
+            // the real time from the subjects and question count.
+            meta: 'Timed practice',
             guideHref: guideHref(mode),
           };
         }));
       })
-      .catch((value) => active && setError(userFacingError(value, 'Unable to load CBT catalog.')))
+      .catch((value) => active && setError(value))
       .finally(() => { if (active) setSettled(true); });
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
-  if (!settled) {
+  if (!settled && error === null) {
     return (
       <div className="er-late-region er-late-region--simulators">
         <SkeletonTiles className="er-sim-grid" tiles={4} label="Loading CBT question banks" />
+        {/* The skeleton keeps the layout; this names the wait once it is long
+            enough to need a name, and replaces itself with a retry if the
+            request never answers. */}
+        {(phase === 'slow' || phase === 'stalled') && (
+          <div className="er-slow-note">
+            <WaveLoader variant="inline" decorative />
+            <span>{phase === 'stalled' ? 'Still waiting for the question banks.' : 'Connecting to the question banks…'}</span>
+            {phase === 'stalled' && (
+              <button type="button" className="hub-outline-btn" onClick={() => setAttempt((value) => value + 1)}>
+                Try again
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   }
-  if (error) {
+  if (error !== null) {
     return (
       <div className="er-late-region er-late-region--simulators">
-        <div className="er-empty" role="alert">{error}</div>
+        <ErrorState error={error} onRetry={() => setAttempt((value) => value + 1)} />
       </div>
     );
   }

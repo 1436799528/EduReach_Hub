@@ -160,7 +160,7 @@ export default function JobsPage() {
                 Student Opportunities &amp; Grants
               </h1>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
-                Every listing states where it came from, when EduReach last checked it, and whether it is still open. A listing EduReach has not checked yet is labelled as such — never presented as verified.
+                Every listing states where it came from, when EduReach last checked it, and whether it is still open. A listing EduReach has not checked yet is labelled as such, never presented as verified.
               </p>
             </div>
             <a className="hub-outline-btn" href="/news" style={{ textDecoration: 'none', fontSize: '12px' }}>
@@ -240,7 +240,7 @@ export default function JobsPage() {
               lineHeight: 1.5,
             }}
           >
-            <strong>Before you apply:</strong> EduReach lists an opportunity only with its source. “Checked by EduReach” means the organiser's page was open and the details matched when we last looked — it is not a guarantee, and no listing is ever a reason to pay a fee. If a filter shows nothing, that is the honest state of the catalogue.
+            <strong>Before you apply:</strong> EduReach lists an opportunity only with its source. “Checked by EduReach” means the organiser's page was open and the details matched when we last looked. It is not a guarantee, and no listing is ever a reason to pay a fee. If a filter shows nothing, the catalogue has nothing that matches.
           </div>
 
           {loadingLive && (
@@ -363,7 +363,7 @@ export default function JobsPage() {
                         <dl className="er-opp-facts">
                           <div>
                             <dt><Users size={12} /> Eligibility</dt>
-                            <dd>{item.eligibility?.trim() ? item.eligibility : 'Not recorded — check the organiser’s page'}</dd>
+                            <dd>{item.eligibility?.trim() ? item.eligibility : 'Not recorded. Check the organiser’s page'}</dd>
                           </div>
                           <div>
                             <dt>Source</dt>

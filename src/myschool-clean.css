@@ -526,12 +526,10 @@
 
 /* Global button styling matching Myschool emerald accents */
 .hub-primary-btn {
-  background: #b14933 !important;
-  color: #ffffff !important;
   border: 0 !important;
   border-radius: 8px !important;
   font-weight: 560;
-  box-shadow: 0 2px 6px rgba(200, 88, 65, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(23, 74, 58, 0.25) !important;
   transition: all 0.15s ease !important;
 }
 
@@ -541,18 +539,9 @@
 }
 
 .hub-outline-btn {
-  border: 1px solid #cbd5e1 !important;
-  background: #ffffff !important;
-  color: #334155 !important;
   border-radius: 8px !important;
   font-weight: 560;
   transition: all 0.15s ease !important;
-}
-
-.hub-outline-btn:hover {
-  border-color: #b14933 !important;
-  color: #b14933 !important;
-  background: #f8fafc !important;
 }
 
 /* Page heading compact styling */

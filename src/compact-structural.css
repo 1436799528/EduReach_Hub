@@ -1,4 +1,4 @@
-/* FINAL COMPACT PORTAL — structural density */
+/* FINAL COMPACT PORTAL - structural density */
 .hub-shell{background:#fff!important}
 .hub-shell>header>div,.hub-shell .hub-container{max-width:1180px!important}
 .hub-shell>header>div{height:54px!important;padding:0!important}
@@ -8,9 +8,6 @@
 .hub-shell header .hub-desktop-nav{gap:14px!important}
 .hub-shell main{width:100%!important}
 .hub-home-container,.hub-container{max-width:1180px!important}
-.hub-home-intro{padding:8px 0 10px!important;gap:8px!important}
-.hub-home-intro h1{font-size:18px!important;margin:0 0 2px!important}
-.hub-home-intro p{font-size:11px!important;margin:0!important}
 .hub-home-search{max-width:520px!important;height:32px!important;margin-top:7px!important}
 .hub-home-card-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
 .hub-home-card-grid>*{min-width:0!important}
@@ -50,8 +47,6 @@
  .hub-home-container,.hub-container{width:calc(100% - 12px)!important}
  .hub-home-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important}
  .hub-home-card-grid .hub-compact-card,.hub-home-card-grid .hub-service-profile-card{height:54px!important;min-height:54px!important}
- .hub-home-intro{padding:7px 0 8px!important}
- .hub-home-intro h1{font-size:16px!important}
  .hub-home-search{height:31px!important}
  .hub-section-heading{margin:9px 0 5px!important}
  .hub-news-row,.hub-news-feed-row,.hub-upcoming-row{height:48px!important;min-height:48px!important}

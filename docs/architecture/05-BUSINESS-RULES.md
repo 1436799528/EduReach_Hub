@@ -67,6 +67,7 @@ exists only in the UI is not a rule.
 | A5 | Bulk import is bounded (2,000 rows/batch), validated per row, and reports per-row errors | `/api/admin/content-manager/import/:resource` |
 | A6 | File uploads are admin-only, size-capped and restricted to the storage bucket policy | `/api/admin/uploads` (5 MB), Supabase Storage |
 | A7 | Privileged actions are recorded in the audit log | `admin_audit_log(...)` |
+| A8 | A past paper is parsed into a review queue; only approved, complete, non-duplicate items enter a bank, and no answer key is inferred | `commit_question_import()`, `/api/admin/question-imports` |
 
 ## 6. Operations and observability
 

@@ -84,6 +84,7 @@ export const EXPECTED_FUNCTIONS = [
  *   resource-files  PRIVATE   entitlement-gated past-question documents; signed
  *                             for 300 s by `GET /api/past-questions/resources`.
  *   campus-uploads  PRIVATE   campus post attachments; nothing client-side reads
+ *   past-questions  PRIVATE   original past-question uploads; staff API only
  *                             them directly.
  *
  * A bucket declared PUBLIC must therefore *be* public (private would break the
@@ -91,7 +92,7 @@ export const EXPECTED_FUNCTIONS = [
  * data-exposure bug no policy can paper over.
  */
 export const PUBLIC_BUCKETS = ['admin-content'];
-export const PRIVATE_BUCKETS = ['resource-files', 'campus-uploads'];
+export const PRIVATE_BUCKETS = ['resource-files', 'campus-uploads', 'past-questions'];
 export const EXPECTED_BUCKETS = [...PUBLIC_BUCKETS, ...PRIVATE_BUCKETS];
 
 /** Tables the browser or the server reads directly. */

@@ -278,7 +278,7 @@ export function runSchemaAudit(root: string): AuditReport {
     // Definitions first: a migration may index, grant on or reference an object
     // it creates in the same file.
     collectDefinitions(staticSql, state);
-    for (const [table, entry] of state.tables) {
+    for (const entry of state.tables.values()) {
       if (!entry.created) entry.created = migration.name;
     }
     collectReferences(staticSql, migration.name, failures, state);

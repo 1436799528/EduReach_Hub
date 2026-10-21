@@ -31,6 +31,7 @@ const EXPECTED = [
   './edu-portal.css',
   './data-control.css',
   './styles/type-system.css',
+  './styles/brand-actions.css',
   './styles/a11y.css',
 ];
 
@@ -56,8 +57,10 @@ test('the type system follows the component sheets it standardises', () => {
   const sheets = importedSheets();
   const typeSystem = sheets.indexOf('./styles/type-system.css');
   assert.ok(typeSystem > 0, 'the type system must be imported, not deleted');
-  // Everything before it is a component sheet; everything after is only a11y.css.
-  assert.deepEqual(sheets.slice(typeSystem + 1), ['./styles/a11y.css']);
+  // Everything before it is a component sheet; everything after it is the two
+  // closing layers - brand actions, then the accessibility sheet - and nothing
+  // else, so a new component sheet cannot slip in after the type scale.
+  assert.deepEqual(sheets.slice(typeSystem + 1), ['./styles/brand-actions.css', './styles/a11y.css']);
 });
 
 test('every sheet named in the architecture note exists on disk', () => {

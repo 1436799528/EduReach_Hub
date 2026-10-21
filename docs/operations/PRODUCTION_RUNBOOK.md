@@ -7,8 +7,7 @@ and what a pass looks like.
 
 Nothing in this document has been executed against a production environment. There is
 no deployed origin and no production credential in this repository's environment;
-every step below is *prepared*, not *verified*. See
-`docs/PRODUCTION_READINESS_AUDIT_2026-10-01.md`.
+every step below is *prepared*, not *verified*.
 
 ---
 
@@ -40,7 +39,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-68 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
+72 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
 CLI against a **scratch project first**:
 
 ```bash

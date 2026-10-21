@@ -20,14 +20,14 @@ import ConnectionBanner from './ConnectionBanner';
 import PageBar from './PageBar';
 import BrandLogo from './BrandLogo';
 import { useAuth } from '../lib/auth';
-import { EDUREACH_WHATSAPP, EDUREACH_WHATSAPP_CHANNEL } from '../data/hubContent';
+import { navigateInApp } from '../lib/navigation';
+import { EDUREACH_WHATSAPP } from '../data/hubContent';
+import SiteFooter from './SiteFooter';
 import '../hub-rail.css';
 
 function navigateToSearch(term: string) {
   const query = term.trim();
-  const path = query ? `/search?q=${encodeURIComponent(query)}` : '/search';
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
+  navigateInApp(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
 }
 
 export default function HubLayout({ children }: { children: ReactNode }) {
@@ -46,12 +46,11 @@ export default function HubLayout({ children }: { children: ReactNode }) {
     await signOut();
     setProfileOpen(false);
     setMobileOpen(false);
-    window.history.pushState({}, '', '/');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateInApp('/');
   };
 
   const firstName = user?.name?.split(/\s+/)[0] || 'Student';
-  // Compact initials for mobile — never force the full name into the header.
+  // Compact initials for mobile - never force the full name into the header.
   const userInitials = useMemo(() => {
     const name = (user?.name || 'Student').trim();
     const parts = name.split(/\s+/).filter(Boolean);
@@ -123,9 +122,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/"
               style={{
-                color: path === '/' ? '#b14933' : '#334155',
+                color: path === '/' ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path === '/' ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path === '/' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -134,9 +133,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/cbt"
               style={{
-                color: path.startsWith('/cbt') ? '#b14933' : '#334155',
+                color: path.startsWith('/cbt') ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/cbt') ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path.startsWith('/cbt') ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -145,9 +144,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/services"
               style={{
-                color: path === '/services' || path.startsWith('/services/apply') ? '#b14933' : '#334155',
+                color: path === '/services' || path.startsWith('/services/apply') ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -156,9 +155,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/news"
               style={{
-                color: path.startsWith('/news') ? '#b14933' : '#334155',
+                color: path.startsWith('/news') ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path.startsWith('/news') ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path.startsWith('/news') ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -167,9 +166,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/jobs"
               style={{
-                color: path === '/jobs' ? '#b14933' : '#334155',
+                color: path === '/jobs' ? 'var(--er-primary)' : '#334155',
                 textDecoration: 'none',
-                borderBottom: path === '/jobs' ? '2px solid #b14933' : '2px solid transparent',
+                borderBottom: path === '/jobs' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
                 padding: '4px 0',
               }}
             >
@@ -213,7 +212,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <a
                 href="/login"
                 style={{
-                  background: '#b14933',
+                  background: 'var(--er-primary)',
                   color: '#ffffff',
                   border: 0,
                   borderRadius: '7px',
@@ -221,7 +220,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   fontSize: '12px',
                   fontWeight: 620,
                   textDecoration: 'none',
-                  boxShadow: '0 2px 6px rgba(200, 88, 65, 0.25)',
+                  boxShadow: '0 2px 6px rgba(23, 74, 58, 0.25)',
                 }}
               >
                 Sign In
@@ -239,7 +238,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   aria-label={`Account menu for ${user?.name || 'Student'}`}
                   className="hub-profile-trigger"
                   style={{
-                    background: '#b14933',
+                    background: 'var(--er-primary)',
                     color: '#ffffff',
                     border: 0,
                     borderRadius: '7px',
@@ -367,7 +366,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               }}
             >
               <strong id="hub-mobile-menu-title" style={{ fontSize: '18px', color: '#0f172a' }}>
-                EduReach<span style={{ color: '#b14933' }}>.ng</span>
+                EduReach<span style={{ color: 'var(--er-primary)' }}>.ng</span>
               </strong>
               <button
                 ref={mobileCloseRef}
@@ -427,7 +426,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     type="button"
                     onClick={handleLogout}
                     className="hub-primary-btn"
-                    style={{ textAlign: 'center', background: '#b14933' }}
+                    style={{ textAlign: 'center', background: 'var(--er-primary)' }}
                   >
                     Logout
                   </button>
@@ -437,7 +436,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   <a
                     href="/login"
                     className="hub-primary-btn"
-                    style={{ textAlign: 'center', textDecoration: 'none', background: '#b14933' }}
+                    style={{ textAlign: 'center', textDecoration: 'none', background: 'var(--er-primary)' }}
                   >
                     Student Sign In
                   </a>
@@ -478,28 +477,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>
 
-      {/* Minimal footer — secondary navigation only; sits naturally at the bottom of content. */}
-      <footer className="er-footer" style={{ background: '#0f172a', color: '#94a3b8', padding: '24px 0', borderTop: '1px solid #1e293b', marginTop: 'auto', fontSize: '12px' }}>
-        <div className="hub-container">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <BrandLogo height={28} radius="50%" />
-              <strong style={{ color: '#ffffff', fontSize: '13px', fontWeight: 620 }}>EduReach Hub</strong>
-            </div>
-            <nav className="er-footer-links" aria-label="Footer" style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px' }}>
-              <a href="/" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Home</a>
-              <a href="/cbt" style={{ color: '#cbd5e1', textDecoration: 'none' }}>CBT</a>
-              <a href="/services" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Services</a>
-              <a href="/news" style={{ color: '#cbd5e1', textDecoration: 'none' }}>News</a>
-              <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#86efac', fontWeight: 620, textDecoration: 'none' }}>Help</a>
-              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Contact</a>
-              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Privacy</a>
-              <a href="#" style={{ color: '#cbd5e1', textDecoration: 'none' }}>Terms</a>
-            </nav>
-            <div style={{ fontSize: '11px' }}>© {new Date().getFullYear()} EduReach Hub</div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

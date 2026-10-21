@@ -28,7 +28,7 @@ otherwise — or the document is updated in the same change.
 Existing documents these extend rather than replace:
 `docs/DESIGN_RULES.md`, `docs/COMPONENT_RULES.md`, `docs/COLOR_THEME_SPEC.md`,
 `docs/PAGE_QUALITY_GATE.md`, `docs/ROUTES.md`,
-`docs/EDUREACH_ROUTE_MATRIX_2026-09-29.md`, `docs/DATABASE.md`,
+`docs/DATABASE.md`,
 `docs/DATA_SOURCES.md`, `docs/NEWSROOM_PIPELINE.md`,
 `docs/SUPABASE_SECURITY_CHECKLIST.md`, `docs/DEPLOYMENT_DECISION.md`.
 

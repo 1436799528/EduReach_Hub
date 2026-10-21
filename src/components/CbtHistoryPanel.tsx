@@ -6,12 +6,12 @@ import { userFacingError } from '../../lib/errors';
 import { useAuth } from '../lib/auth';
 
 /**
- * CBT-5 — the student's own practice record.
+ * CBT-5 - the student's own practice record.
  *
  * Practice and mock are kept visibly distinct here: a practice session can be
  * resumed, restarted or deleted by the student, while a mock is an examination
  * record and offers review only. Deletion is confirmed, and the confirmation
- * says what will actually be removed — the server enforces the same rule.
+ * says what will actually be removed - the server enforces the same rule.
  */
 
 const STATUS_LABEL: Record<CbtHistoryItem['status'], string> = {
@@ -38,7 +38,9 @@ export default function CbtHistoryPanel() {
   const [notice, setNotice] = useState('');
   const [confirming, setConfirming] = useState<CbtHistoryItem | null>(null);
   const [busyId, setBusyId] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const dialog = useRef<HTMLDialogElement | null>(null);
+  const deleteInFlight = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,16 +72,25 @@ export default function CbtHistoryPanel() {
   }, [confirming]);
 
   async function remove(item: CbtHistoryItem) {
+    // The confirmation stays modal in the browser's top layer. Changing React
+    // state does not dismiss it: a dialog opened with showModal() must be closed
+    // explicitly, and onClose is what clears `confirming`.
+    if (deleteInFlight.current) return;
+    deleteInFlight.current = true;
     setBusyId(item.id);
+    setDeleteError('');
     try {
       await deleteCbtAttempt(item.id);
       setItems((current) => current.filter((entry) => entry.id !== item.id));
       setNotice('CBT record deleted.');
+      dialog.current?.close();
     } catch (value) {
-      setNotice(userFacingError(value, 'That practice session could not be deleted.'));
+      // Failure keeps the dialog open with the reason in it, so the student can
+      // retry or cancel without losing what they were doing.
+      setDeleteError(userFacingError(value, 'That practice session could not be deleted. Please try again.'));
     } finally {
+      deleteInFlight.current = false;
       setBusyId('');
-      setConfirming(null);
     }
   }
 
@@ -107,12 +118,12 @@ export default function CbtHistoryPanel() {
 
       {notice && <div className="er-inline-notice is-success" role="status"><div><p>{notice}</p></div></div>}
       {loading && <div className="er-state" role="status"><span className="er-state-icon" aria-hidden="true"><Clock3 size={20} /></span><div><strong>Loading your sessions…</strong></div></div>}
-      {!loading && error && <ErrorState error={error} onRetry={() => void load()} compact />}
+      {!loading && error !== null && <ErrorState error={error} onRetry={() => void load()} compact />}
 
       {!loading && !error && items.length === 0 && (
         <EmptyState
           title="No sessions yet"
-          detail="Start a practice session and it will appear here — with your answers, time and result."
+          detail="Start a practice session and it will appear here, with your answers, time and result."
           action={<a className="hub-primary-btn" href="/cbt">Choose a question bank</a>}
         />
       )}
@@ -147,7 +158,7 @@ export default function CbtHistoryPanel() {
                 {item.status !== 'in_progress' && (
                   <a className="hub-outline-btn" href={`/cbt/setup/jamb?mode=${item.mode}`}><RotateCcw size={14} /> Start a new session</a>
                 )}
-                <button type="button" className="er-danger-btn" onClick={() => setConfirming(item)} disabled={busyId === item.id}>
+                <button type="button" className="er-danger-btn" onClick={() => { setDeleteError(''); setConfirming(item); }} disabled={busyId === item.id}>
                   <Trash2 size={14} /> {busyId === item.id ? 'Deleting…' : 'Delete result'}
                 </button>
               </div>
@@ -173,10 +184,21 @@ export default function CbtHistoryPanel() {
             <strong>{confirming?.examTitle}</strong> from {formatWhen(confirming?.startedAt ?? null)} and every saved answer in it
             will be permanently removed from your account. This cannot be undone.
           </p>
+          {deleteError && (
+            <p className="er-confirm-error" role="alert" style={{ margin: '0 0 4px', color: '#b42318', fontSize: '13px', lineHeight: 1.5 }}>
+              {deleteError}
+            </p>
+          )}
           <div className="er-confirm-actions">
-            <button type="button" className="hub-outline-btn" onClick={() => { setConfirming(null); dialog.current?.close(); }}>Keep it</button>
-            <button type="button" className="er-danger-btn" onClick={() => confirming && void remove(confirming)} disabled={Boolean(busyId)}>
-              <Trash2 size={14} /> Delete result
+            <button type="button" className="hub-outline-btn" onClick={() => { setConfirming(null); dialog.current?.close(); }} disabled={Boolean(busyId)}>Keep it</button>
+            <button
+              type="button"
+              className="er-danger-btn"
+              onClick={() => confirming && void remove(confirming)}
+              disabled={Boolean(busyId)}
+              aria-busy={Boolean(busyId)}
+            >
+              <Trash2 size={14} /> {busyId ? 'Deleting…' : 'Delete result'}
             </button>
           </div>
         </div>

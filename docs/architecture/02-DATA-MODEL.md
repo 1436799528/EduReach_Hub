@@ -121,10 +121,19 @@ Status vocabulary (enforced by `service_requests_status_check`):
 | `exam_questions` | The question bank: `question_text`, four options, `correct_option`, `explanation`, `marks`, `position`, `subject` | Content/admin | Constraints on `correct_option`; answer keys are **never** exposed to the browser (`20260919_admin_cbt_production_hardening.sql` revokes direct access); integrity report counts missing options, invalid answers, duplicate positions |
 | `cbt_attempts` | Attempt header: owner, exam, score, `total_questions`, `selected_subjects`, resume position, timestamps | Student (owner) | Created by server RPC; one in-progress attempt per student per exam |
 | `cbt_answers` | One row per answered question, upserted on `(attempt_id, question_id)` | Student (owner) | Unique constraint prevents duplicate answers for the same question |
+| `question_imports` | One uploaded past paper: bank, body, subject, year, source, checksum, private storage path, processing status and counts. The source file lives in the `past-questions` bucket, never in a row | Server only | Unique `(checksum, bank, lower(subject))` among non-archived rows makes re-uploads idempotent; `claim/finish/fail` RPCs move one job at a time; RLS is on with no client grants |
+| `question_import_items` | Extracted questions awaiting review: text, options A–E, nullable answer key, passage, explanation, issues, duplicate pointer, review status and the resulting `exam_questions.id` | Server only | Unique `(import_id, source_index)`; `commit_question_import()` saves only approved, complete, non-duplicate rows; extraction alone never touches `exam_questions` |
 
 Paper composition rules (in the RPCs, not the client): English papers cap at 60
 questions, other subjects at 40; `position` is the paper position the student
 sees; `use of english`/`english language`/`english` normalise to one subject.
+
+Imported questions are ordinary `exam_questions` rows. `import_id` records the
+paper they came from (`ON DELETE SET NULL`), `source_type` is
+`official_past_question` only when an administrator confirmed the publication
+source, and `review_status` is `approved` only after the item passed validation
+and a human approval. A missing key cannot be approved, and a fifth option is
+flagged for correction because the CBT engine serves four options.
 
 Note: `exam_questions` retains `unique (exam_id, position)` from its original
 creation while subject-aware papers number questions per subject inside the
@@ -192,6 +201,8 @@ used for scoping future calendar items, not live relationships.
 | A past-deadline opportunity cannot be active | `close_expired_opportunities()` + public filter on `is_active` and `closed_at` |
 | An active CBT must have a usable bank | `content_integrity_report()` counters, surfaced in the admin console and CLI |
 | A student cannot have two concurrent attempts for one exam | `start_cbt_attempt_for_subjects` |
+| An import cannot overwrite a review queue or re-extract reviewed items | `finish_question_import()` refuses while any item is not pending |
+| The same file cannot be imported twice into one bank and subject | Unique checksum index + upload dedupe |
 | One answer per question per attempt | `unique (attempt_id, question_id)` (upsert on conflict) |
 | A student's records are theirs | RLS: owner-scoped policies on every student table; service-role only for governance tables |
 | Staff actions are traceable | `admin_audit_log(...)` on privileged mutations |

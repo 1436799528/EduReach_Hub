@@ -1,10 +1,8 @@
 import { useCallback, type ReactNode } from 'react';
+import { navigateInApp } from '../src/lib/navigation';
 
 export function useNavigate() {
-  return useCallback((path: string) => {
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  }, []);
+  return useCallback((path: string) => navigateInApp(path), []);
 }
 
 export function NavLink({ href, icon, children }: { href: string; icon: ReactNode; children: ReactNode }) {

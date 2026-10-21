@@ -191,7 +191,7 @@ test('a region that fills in after the first paint reserves its footprint', () =
   const rows = (count: number, row: number) => count * row + (count - 1) * 10; // 10px gutter
 
   // 82px rows: the height .er-skeleton-row and .er-news-row share.
-  assert.ok(floor('.er-late-region--feed') >= rows(6, 82), 'the home feed reserves its six rows');
+  assert.equal(floor('.er-late-region--feed'), rows(3, 82), 'the home feed reserves exactly the three rows it shows');
   assert.ok(floor('.er-late-region--feed-page') >= rows(5, 82), 'the noticeboard reserves its five rows');
   assert.ok(floor('.er-late-region--library') >= 600, 'the question-bank grid reserves its cards');
 });

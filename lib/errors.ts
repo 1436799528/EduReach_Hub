@@ -50,3 +50,22 @@ export function userFacingError(value: unknown, fallback = 'We could not complet
   }
   return message.length <= 180 && !/[\n\r]/.test(message) ? message : fallback;
 }
+
+/**
+ * HTTP status for an error raised while serving a CBT attempt.
+ *
+ * Domain refusals keep their precise status; anything unrecognised is a
+ * server-side failure (503), never a 400. A 400 told the student's browser —
+ * and any monitor watching 5xx — that the *request* was wrong, so a dropped
+ * database connection at submit time read as a client mistake and the session
+ * page could not classify it as "connection problem, press Submit again"
+ * (src/lib/failures.ts maps 5xx to the retryable `server` kind).
+ */
+export function httpStatusForErrorMessage(message: string): number {
+  if (/authentication|required|session/i.test(message)) return 401;
+  if (/permission/i.test(message)) return 403;
+  if (/not found/i.test(message)) return 404;
+  if (/expired|already/i.test(message)) return 409;
+  if (/invalid answer|must be an object/i.test(message)) return 400;
+  return 503;
+}

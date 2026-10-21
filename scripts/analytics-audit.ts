@@ -163,8 +163,8 @@ export function auditAnalytics(input: AnalyticsAuditInput, taxonomy: TaxonomyLik
 
   const undeclaredKeys = named.flatMap((site) =>
     site.keys
-      .filter((key) => !declared.has(site.event) || false)
-      .map((key) => `${site.file}:${site.line}`),
+      .filter(() => !declared.has(site.event))
+      .map(() => `${site.file}:${site.line}`),
   );
   // Key checking needs the taxonomy's per-event shapes; re-read them from the module export.
   const metadataByEvent = new Map<string, Set<string>>();

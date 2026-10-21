@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react';
  * which tells assistive technology that the rest of the page is inert. That
  * claim was not true: focus stayed behind the overlay, Tab walked into the page
  * underneath, Escape did nothing, and closing the dialog left focus on
- * `<body>`. This hook makes the declaration true — nothing more:
+ * `<body>`. This hook makes the declaration true - nothing more:
  *
  *  1. focus moves into the dialog when it opens (first focusable, else the
  *     container, which needs `tabIndex={-1}`),

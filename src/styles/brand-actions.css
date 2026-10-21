@@ -1,0 +1,371 @@
+/* ==========================================================================
+   Brand action colours and interaction states (UI-3, UI-4)
+
+   One owner for "this is a primary action". Component sheets had grown their
+   own answers to the same question - five sheets set .hub-primary-btn, three
+   set the exam submit - so the answer depended on which sheet was imported
+   last and which one used !important. This sheet is imported after every
+   component sheet and before a11y.css, so it is the last word for these
+   selectors and nothing else.
+
+   Rules of the house:
+   - Deep green (--er-primary) is the fill for an action the student takes.
+   - Every state is a token: hover, press, border, focus, disabled. A hex value
+     in this file would be a second definition of the palette.
+   - Secondary controls are white with a green edge, never a second solid green
+     button.
+   - Crimson (--er-crimson) stays for the brand mark and explicitly designated
+     Clickmor accents. It is not a default button colour, and a selected
+     navigation item is a green surface, not a red one.
+   - Nothing here sets a card surface, radius, shadow or size. Cards, exam
+     identities and layout are untouched by this file.
+   ========================================================================== */
+
+/* --- Primary buttons ----------------------------------------------------- */
+/* component sheets declare these with !important, so matching them is the only
+   way to win without deleting their rules; every one of those rules is kept
+   intact for the case where this sheet is not loaded. */
+
+.hub-primary-btn {
+  background: var(--er-primary) !important;
+  color: var(--er-on-primary) !important;
+}
+
+.hub-primary-btn:hover {
+  background: var(--er-primary-hover) !important;
+}
+
+.hub-primary-btn:active {
+  background: var(--er-primary-active) !important;
+}
+
+/* A disabled action is neutral, flat and unmistakable. It also has to stop
+   looking pressable: the hover shadow and lift are cancelled here. */
+.hub-primary-btn:disabled,
+.admin-btn:disabled,
+.dash-btn-primary:disabled,
+.auth-v2-submit:disabled,
+.er-exam-submit-primary:disabled,
+.er-exam-next:disabled,
+.er-exam-end:disabled {
+  background: var(--er-disabled-bg) !important;
+  color: var(--er-disabled-text) !important;
+  border-color: var(--er-disabled-border) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+/* Busy keeps the action colour: the control is working, not unavailable. The
+   label has already changed ("Saving..."), and aria-busy says the same thing
+   to a screen reader. */
+:is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .er-exam-submit-primary)[aria-busy="true"] {
+  background: var(--er-primary) !important;
+  color: var(--er-on-primary) !important;
+  border-color: var(--er-primary-border) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: progress;
+}
+
+/* Admin console. .admin-btn.secondary / .success / .danger are more specific
+   and keep their own fills; only the default primary action changes. */
+.admin-btn {
+  background: var(--er-primary);
+  box-shadow: 0 10px 22px rgba(23, 74, 58, 0.18);
+}
+
+.admin-btn:hover {
+  background: var(--er-primary-hover);
+}
+
+/* Student dashboard and the sign-in form. */
+.dash-btn-primary {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.dash-btn-primary:hover:not(:disabled) {
+  background: var(--er-primary-hover);
+}
+
+.auth-v2-submit {
+  background: var(--er-primary);
+}
+
+.auth-v2-submit:hover {
+  background: var(--er-primary-hover);
+}
+
+/* --- Secondary controls -------------------------------------------------- */
+/* White with a green edge and a green label. Hover and press step through the
+   light-green ramp instead of inverting into a solid button, so a secondary
+   action never competes with a primary one. */
+
+.hub-outline-btn,
+.dash-btn-secondary,
+.er-exam-ghost,
+.admin-page-header .admin-btn.secondary,
+.admin-card .admin-btn.secondary,
+.admin-inline-form .admin-btn.secondary {
+  background: var(--er-surface) !important;
+  color: var(--er-primary) !important;
+  border-color: var(--er-secondary-border) !important;
+}
+
+:is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):hover {
+  background: var(--er-secondary-hover-bg) !important;
+  border-color: var(--er-secondary-hover-border) !important;
+  color: var(--er-primary) !important;
+}
+
+:is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):active {
+  background: var(--er-secondary-active-bg) !important;
+  border-color: var(--er-secondary-active-border) !important;
+  color: var(--er-primary-hover) !important;
+}
+
+/* After hover and press on purpose: a disabled control must look disabled even
+   while the pointer is over it. */
+:is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):disabled {
+  background: var(--er-disabled-surface) !important;
+  border-color: var(--er-disabled-border) !important;
+  color: var(--er-disabled-text) !important;
+  cursor: not-allowed;
+}
+
+/* --- Selected and active states ----------------------------------------- */
+/* A selected filter, tab, step or answer is the same idea everywhere, so it
+   speaks the same colour. Backgrounds stay pale; only the accent moves. */
+
+.er-pill:hover {
+  border-color: var(--er-primary);
+  color: var(--er-primary);
+}
+
+.er-pill.active {
+  background: var(--er-primary);
+  border-color: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-library-tabs button:hover {
+  color: var(--er-primary);
+}
+
+.er-library-tabs button.active {
+  color: var(--er-primary);
+  border-color: var(--er-primary-soft-border);
+}
+
+.er-setup-duration-option:hover {
+  border-color: var(--er-primary);
+}
+
+.er-setup-duration-option.is-selected {
+  background: var(--er-primary);
+  border-color: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-mode-option.is-selected {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--er-primary-soft-border);
+}
+
+.hub-stepper > div.active {
+  border-color: var(--er-primary-soft-border);
+  color: var(--er-primary);
+}
+
+.hub-stepper > div.active span {
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+}
+
+/* --- Primary links ------------------------------------------------------- */
+/* These are "the action in this block", not decoration. */
+
+.hub-card-link,
+.hub-section-heading.compact > a,
+.hub-auth-switch,
+.dash-card-link {
+  color: var(--er-primary);
+}
+
+.dash-card-link:hover {
+  color: var(--er-primary-hover);
+}
+
+:is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a, .er-inline-notice-action):hover {
+  color: var(--er-primary-hover);
+}
+
+:is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a):active {
+  color: var(--er-primary-active);
+}
+
+/* --- Progress and status indicators ------------------------------------- */
+
+.er-route-progress {
+  background: linear-gradient(90deg, var(--er-primary), #5c9382);
+}
+
+.home-resume-kicker {
+  color: var(--er-primary);
+}
+
+.home-resume-bar {
+  background: var(--er-primary-soft);
+}
+
+.home-resume-bar span {
+  background: var(--er-primary);
+}
+
+/* --- The examination hall ------------------------------------------------ */
+/* cbt-engine.css states these with the crimson token directly, so they are
+   repeated here rather than reached by changing a shared variable: --er-crimson
+   still has to mean crimson for the brand mark and the navigation accents. */
+
+.er-exam-subject-tab.is-current {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--er-primary);
+}
+
+.er-exam-subject-tab.is-current span {
+  color: var(--er-primary);
+}
+
+.er-exam-subject-name {
+  background: var(--er-primary);
+}
+
+.er-exam-option:hover {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+}
+
+.er-exam-option.is-selected {
+  border-color: var(--er-primary);
+  background: var(--er-primary-soft);
+  box-shadow: inset 0 0 0 1px var(--er-primary);
+}
+
+.er-exam-option.is-selected .er-exam-option-letter {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-exam-submit-primary {
+  background: var(--er-primary) !important;
+  border-color: var(--er-primary) !important;
+}
+
+.er-exam-submit-primary:hover {
+  background: var(--er-primary-hover) !important;
+  border-color: var(--er-primary-border-hover) !important;
+}
+
+.er-exam-submit-primary:active {
+  background: var(--er-primary-active) !important;
+  border-color: var(--er-primary-border-active) !important;
+}
+
+.er-exam-palette-cell.is-current {
+  outline: 2px solid var(--er-primary);
+}
+
+.er-exam-ghost:hover {
+  border-color: var(--er-primary);
+  color: var(--er-primary);
+}
+
+.er-exam-tool:hover {
+  background: var(--er-primary-hover);
+}
+
+/* --- Form controls and small action affordances -------------------------- */
+
+/* A checkbox, a search field's focus ring and a tool link are all "the thing
+   you act with". They follow the action colour; the surfaces stay untouched. */
+.er-setup-subject-chip input {
+  accent-color: var(--er-primary);
+}
+
+.hub-global-search:focus-within {
+  border-color: var(--er-primary);
+  box-shadow: 0 0 0 3px rgba(23, 74, 58, 0.1);
+}
+
+.edureach-dash-search input:focus {
+  border-color: var(--er-primary);
+}
+
+.er-admin-view-banner button {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.er-admin-view-banner button:hover {
+  background: var(--er-primary-hover);
+}
+
+.hub-home-section-title > a {
+  color: var(--er-primary);
+}
+
+/* Search submits: the action in a search field. */
+.hub-mobile-search button,
+.er-site-search-page-form button {
+  background: var(--er-primary);
+  color: var(--er-on-primary);
+}
+
+.hub-mobile-search button:hover,
+.er-site-search-page-form button:hover {
+  background: var(--er-primary-hover);
+}
+
+/* Progress and preset selection on the dashboard. The card they sit in keeps
+   its own surface; only the indicator and the chosen option follow the action
+   colour. */
+.target-track span {
+  background: var(--er-primary);
+}
+
+.wallet-presets button.selected,
+.preset-grid button.selected {
+  background: var(--er-primary);
+}
+
+/* --- Navigation ---------------------------------------------------------- */
+/* Selection is a pale green surface with green text, and the desktop header
+   marks the current route with the soft border colour. Structure, active-route
+   logic and the crimson brand mark above the nav are unchanged. */
+
+.hub-desktop-nav a:hover {
+  color: var(--er-primary);
+}
+
+.er-mobile-bottom-nav a:hover {
+  background: var(--er-nav-hover-bg);
+  color: var(--er-primary);
+}
+
+.er-mobile-bottom-nav a.active {
+  background: var(--er-nav-active-bg);
+  color: var(--er-primary);
+}
+
+/* --- Clickmor crimson controls ------------------------------------------- */
+/* Crimson is an accent, so it only appears where a control is deliberately
+   branded. Hover and press darken through the crimson ramp. */
+
+.er-sim-cta:hover {
+  color: var(--er-crimson-hover);
+}

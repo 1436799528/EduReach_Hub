@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Database,
   FileText,
+  FileUp,
   Globe,
   GraduationCap,
   Laptop,
@@ -39,7 +40,7 @@ type AdminSession = { id: string; email: string; fullName: string; role: string;
 // Module-scoped admin session cache.
 //
 // The admin shell mounts once for the whole console (see App.tsx), so a normal
-// page change never re-verifies anything. The cache additionally covers the
+// page change never re-verifies anything. The cache also covers the
 // cases where the shell is remounted (cold load of an /admin deep link, or
 // returning from the public site): a recent verified session renders the
 // console immediately while a silent revalidation runs in the background.
@@ -55,21 +56,31 @@ export function clearAdminSessionCache() {
   sessionCache = null;
 }
 
+type AdminSessionResponse = {
+  user?: {
+    id: string;
+    email?: string | null;
+    fullName?: string | null;
+    role?: string | null;
+    capabilities?: unknown;
+  };
+};
+
 async function verifyAdminSession(): Promise<{ session: AdminSession; backend: string } | null> {
   const { data: { session: authSession } } = await supabase.auth.getSession();
   if (!authSession?.access_token) return null;
 
   let response: Response | null = null;
-  let body: any = null;
+  let body: AdminSessionResponse | null = null;
   try {
     response = await fetch(`${ADMIN_API_BASE}/admin/session`, {
       headers: { Authorization: `Bearer ${authSession.access_token}` },
       // Short timeout: do not block the console for 90s if the backend is slow.
       signal: AbortSignal.timeout(6000),
     });
-    body = await response.json().catch(() => null);
+    body = await response.json().catch(() => null) as AdminSessionResponse | null;
   } catch {
-    // Network error / timeout — fall through to the profile fallback below.
+    // Network error / timeout - fall through to the profile fallback below.
     response = null;
   }
   if (response?.ok && body?.user) {
@@ -100,7 +111,10 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
     // Backend unreachable: fall back to the profile row the account can read
     // under RLS, resolving capabilities through the same vocabulary the server
     // uses. The API still authorizes every call, so this cannot grant anything.
-    const rawRole = profile?.role ?? authSession.user.app_metadata?.role ?? authSession.user.user_metadata?.role;
+    // `app_metadata` is written only by the auth admin API; `user_metadata` is
+    // writable by the account holder and must never be read here. The profile
+    // row is the same source the API uses.
+    const rawRole = profile?.role ?? authSession.user.app_metadata?.role;
     const appRole = resolveAppRole(rawRole);
     if (isStaffRole(appRole)) {
       return {
@@ -115,7 +129,7 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
       };
     }
   } catch {
-    // RLS/profile read failed — do not treat that as admin access; return null
+    // RLS/profile read failed - do not treat that as admin access; return null
     // so the guard shows the sign-in prompt.
   }
   return null;
@@ -147,11 +161,14 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin/schools', label: 'Schools & Institutions', icon: <School size={15} />, capability: 'institution.read' },
   { kind: 'group', label: 'Examinations' },
   { kind: 'link', href: '/admin/cbt', label: 'CBT Manager', icon: <Laptop size={15} />, capability: 'cbt.read' },
+  { kind: 'link', href: '/admin/question-imports', label: 'Import Past Questions', icon: <FileUp size={15} />, capability: 'cbt.manage' },
   { kind: 'group', label: 'Users' },
   { kind: 'link', href: '/admin/users', label: 'Student Accounts', icon: <Users size={15} />, capability: 'user.read' },
   { kind: 'group', label: 'Analytics' },
   { kind: 'link', href: '/admin/analytics', label: 'Analytics & Reports', icon: <BarChart3 size={15} />, capability: 'analytics.read' },
   { kind: 'link', href: '/admin/content-manager', label: 'Data Control Center', icon: <Database size={15} />, capability: 'data.read' },
+  { kind: 'group', label: 'Site' },
+  { kind: 'link', href: '/admin/site', label: 'Site & Policies', icon: <FileText size={15} />, capability: 'site.read' },
   { kind: 'link', href: '/admin/pdf-bank', label: 'PDF Bank', icon: <FileText size={15} />, capability: 'data.read' },
   { kind: 'link', href: '/', label: 'View Public Site', icon: <Globe size={15} />, capability: null },
 ];

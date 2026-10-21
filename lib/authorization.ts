@@ -9,7 +9,7 @@
  *
  * Rules that must not be relaxed (docs/features/ROLE-1.md, §Security):
  *  - the caller is resolved from the bearer token and the trusted profile row;
- *  - a missing capability is 403 with a generic message — never a hint about
+ *  - a missing capability is 403 with a generic message - never a hint about
  *    which role would have been allowed;
  *  - ownership failures are reported as 404 so resource existence is not leaked;
  *  - the service-role database client is only used after authorization.

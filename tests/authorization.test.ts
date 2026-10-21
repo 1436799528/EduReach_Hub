@@ -65,7 +65,7 @@ backend.patch('/rest/v1/profiles', (req, res) => {
   return res.json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/news_articles', (req, res) => {
+backend.get('/rest/v1/news_articles', (_req, res) => {
   recorded.push('GET news_articles');
   return res.json([]);
 });
@@ -77,7 +77,7 @@ backend.post('/rest/v1/news_articles', (req, res) => {
   return res.status(201).json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/service_requests', (req, res) => {
+backend.get('/rest/v1/service_requests', (_req, res) => {
   recorded.push('GET service_requests');
   return res.json([]);
 });
@@ -460,6 +460,21 @@ test('critical routes carry the capability the documentation claims', () => {
   assert.deepEqual(declared('GET', '/api/admin/integrity'), ['data.read']);
   assert.deepEqual(declared('POST', '/api/admin/newsroom/candidates/:candidateId/approve'), ['news.publish']);
   assert.deepEqual(declared('POST', '/api/admin/content-manager/import/:resource'), ['data.import']);
+  assert.deepEqual(declared('POST', '/api/admin/question-imports'), ['cbt.manage', 'data.import']);
+  assert.deepEqual(declared('PATCH', '/api/admin/question-imports/:importId'), ['cbt.manage', 'data.import']);
+  assert.deepEqual(declared('POST', '/api/admin/question-imports/:importId/commit'), ['cbt.manage', 'data.import']);
+});
+
+test('the import console and its API are gated by the same write capability', () => {
+  // The console used to require cbt.read while every API route required
+  // cbt.manage. A staff role with only read access would have opened a page
+  // whose buttons all returned 403.
+  assert.equal(capabilityForAdminPath('/admin/question-imports'), 'cbt.manage');
+  assert.equal(capabilityForAdminPath('/admin/question-imports/abc'), 'cbt.manage');
+
+  for (const role of ['content_editor', 'super_admin'] as const) {
+    assert.equal(hasCapability({ role }, 'cbt.manage'), true, `${role} must be able to review imports`);
+  }
 });
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /* ========================================================================
-   EduReach type system — one deliberate weight scale (APP-1)
+   EduReach type system - one deliberate weight scale (APP-1)
 
    The product had grown a habit: almost every label, badge, caption, meta row
    and button was 800 or 900, so nothing looked emphasised because everything
@@ -81,7 +81,7 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* Very small uppercase text needs weight to stay legible — but 900 was still
+/* Very small uppercase text needs weight to stay legible - but 900 was still
    too heavy next to body copy, so it settles at the label level. */
 [class*="eyebrow"], [class*="kicker"] {
   letter-spacing: .07em;
@@ -131,6 +131,83 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 .er-state-error { border-color: #f2c9c2; background: #fff8f7; }
 .er-state-error .er-state-icon { background: #fde7e2; color: var(--er-error); }
 
+.er-state-loading { border-color: #f0d6cd; background: #fffaf8; }
+.er-state-loading .er-wave { align-self: center; color: var(--er-crimson); }
+
+/* ========================================================================
+   Wave loader (UI-2)
+   A dual-arc ring around a four-bar waveform, in one inline SVG plus CSS.
+   Colour is inherited, so the same control reads on a white card, inside the
+   crimson call to action and on the dark admin sidebar. Nothing here measures
+   a request; `usePendingPhase` decides when it is shown.
+   ======================================================================== */
+
+.er-wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--er-crimson);
+  vertical-align: middle;
+}
+
+.er-wave-ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.er-wave-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.er-wave-ring circle { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.er-wave-track { opacity: .16; }
+.er-wave-arc { stroke-dasharray: 18 40; transform-origin: 50% 50%; animation: er-wave-turn 1.1s linear infinite; }
+.er-wave-arc-2 { stroke-dasharray: 8 50; opacity: .55; animation-duration: 1.7s; animation-direction: reverse; }
+
+.er-wave-bars { display: inline-flex; align-items: center; gap: 1.5px; height: 10px; }
+.er-wave-bars i {
+  width: 1.5px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: er-wave-bar 900ms ease-in-out infinite;
+  animation-delay: calc(var(--er-wave-step, 0) * 90ms);
+}
+
+.er-wave--inline .er-wave-bars { height: 11px; }
+.er-wave--inline .er-wave-bars i { width: 2px; }
+.er-wave-label { font-size: 12.5px; line-height: 1.3; font-weight: var(--er-w-label); }
+
+/* A named wait under content that is already on screen. It never replaces the
+   thing being waited for, so a slow list does not turn into a blank page. */
+.er-slow-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid #f0d6cd;
+  border-radius: 10px;
+  background: #fffaf8;
+  color: var(--er-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.er-slow-note .hub-outline-btn { margin-left: auto; flex: none; }
+
+@keyframes er-wave-turn { to { transform: rotate(360deg); } }
+@keyframes er-wave-bar {
+  0%, 100% { height: 4px; opacity: .55; }
+  50% { height: 10px; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .er-wave-arc, .er-wave-bars i { animation: none; }
+  .er-wave-bars i { height: 6px; opacity: .8; }
+}
+
 .er-inline-notice {
   display: flex;
   gap: 10px;
@@ -145,13 +222,13 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 
 .er-inline-notice strong { font-weight: var(--er-w-label); }
 .er-inline-notice p { margin: 2px 0 0; color: var(--er-text-secondary); }
-.er-inline-notice.is-warning { border-color: #f0d7b0; background: #fff8ec; }
-.er-inline-notice.is-danger { border-color: #f2c9c2; background: #fff5f3; }
-.er-inline-notice.is-success { border-color: #bfe6cf; background: #f2fbf5; }
+.er-inline-notice.is-warning { border-color: var(--er-status-warning-border); background: var(--er-status-warning-bg); color: var(--er-status-warning); }
+.er-inline-notice.is-danger { border-color: var(--er-status-error-border); background: var(--er-status-error-bg); color: var(--er-status-error); }
+.er-inline-notice.is-success { border-color: var(--er-status-success-border); background: var(--er-status-success-bg); color: var(--er-status-success); }
 .er-inline-notice-action {
   border: 0;
   background: transparent;
-  color: var(--er-crimson-deep);
+  color: var(--er-primary);
   display: inline-flex;
   align-items: center;
   gap: 5px;

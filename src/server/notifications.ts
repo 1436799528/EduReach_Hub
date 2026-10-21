@@ -113,8 +113,20 @@ export function notificationForStatus(
   };
 }
 
+interface NotificationQuery extends PromiseLike<{ data: unknown[] | null; error: { message?: string } | null }> {
+  eq(column: string, value: unknown): NotificationQuery;
+  contains(column: string, value: Record<string, unknown>): NotificationQuery;
+  limit(count: number): NotificationQuery;
+}
+
+interface NotificationTable {
+  select(columns: string): NotificationQuery;
+  insert(row: Record<string, unknown>): PromiseLike<{ error: { message?: string } | null }>;
+}
+
+/** Only this module's two operations are required of the client. */
 interface MinimalClient {
-  from(table: string): any;
+  from(table: string): unknown;
 }
 
 /**
@@ -134,8 +146,8 @@ export async function notifyServiceRequestStatus(
   if (!notification) return { sent: false, reason: 'no-op or unknown status' };
 
   try {
-    const existing = await supabase
-      .from('student_notifications')
+    const table = supabase.from('student_notifications') as NotificationTable;
+    const existing = await table
       .select('id')
       .eq('user_id', request.user_id)
       .eq('notification_type', notification.notification_type)
@@ -147,7 +159,7 @@ export async function notifyServiceRequestStatus(
       return { sent: false, reason: 'already notified' };
     }
 
-    const { error } = await supabase.from('student_notifications').insert({
+    const { error } = await table.insert({
       user_id: request.user_id,
       title: notification.title,
       body: notification.body,

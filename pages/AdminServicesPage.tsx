@@ -67,11 +67,11 @@ export default function AdminServicesPage() {
       if (edit.id) {
         const updated = await updateAdminService(edit.id, values);
         setServices((current) => current.map((service) => service.id === updated.id ? { ...updated, is_form_service: service.is_form_service } : service));
-        setMessage('Service updated — the live catalogue reflects it on the next load.');
+        setMessage('Service updated. The live catalogue reflects it on the next load.');
       } else {
         const created = await createAdminService({ ...values, service_key: edit.service_key.trim() || undefined });
         setServices((current) => [...current, { ...created, is_form_service: false }].sort((a, b) => (a.sort_order ?? 100) - (b.sort_order ?? 100)));
-        setMessage('Service created — it is live on /services right away.');
+        setMessage('Service created. It is live on /services right away.');
       }
       setEdit(null);
     } catch (e) {
@@ -106,7 +106,7 @@ export default function AdminServicesPage() {
         <div className="admin-page-header">
           <div>
             <h1>Service Catalogue</h1>
-            <p>Everything students see on /services: application forms, in-app routes and external links — ordered, described and switched here.</p>
+            <p>Everything students see on /services: application forms, in-app routes and external links, ordered, described and switched here.</p>
           </div>
           <div className="admin-header-actions">
             <button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading} aria-label="Refresh services"><RefreshCw size={14} /></button>
@@ -161,7 +161,7 @@ export default function AdminServicesPage() {
                 {edit.id && edit.is_form_service && <p className="admin-footnote">This is a built-in application-form service: its form ships with the code release, so its key/route/link are fixed. You can still edit the title, description, category, order and visibility.</p>}
               </div>
               <div className="admin-news-editor-actions">
-                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save service'}</button>
+                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : 'Save service'}</button>
               </div>
             </div>
           </div>
@@ -209,14 +209,14 @@ export default function AdminServicesPage() {
                 ))}
                 {!loading && !services.length && (
                   <tr><td colSpan={6} className="empty-state">
-                    <AdminEmptyState title="Catalogue is empty" hint="Create the first service — it appears on the live /services page immediately." />
+                    <AdminEmptyState title="Catalogue is empty" hint="Create the first service. It appears on the live /services page immediately." />
                   </td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
-        <p className="admin-footnote">Built-in form services (NELFUND loan, Results, JAMB slip, Admission letters) are protected: they can be edited, reordered, hidden or shown, but not deleted — their application forms are part of the code release.</p>
+        <p className="admin-footnote">Built-in form services (NELFUND loan, Results, JAMB slip, Admission letters) are protected: they can be edited, reordered, hidden or shown, but not deleted: their application forms are part of the code release.</p>
       </div>
   );
 }

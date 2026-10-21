@@ -1,17 +1,13 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CbtResultSlip from '../src/components/CbtResultSlip';
-import { deleteCbtAttempt, fetchCbtResult } from '../src/lib/api';
+import { deleteCbtAttempt, fetchCbtResult, type CbtResultPayload, type CbtResultQuestion, type CbtResultAnswer } from '../src/lib/api';
 import { localStorageKey } from '../src/lib/localPreview';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
-
-function navigateInApp(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
+import { navigateInApp } from '../src/lib/navigation';
 
 const slipDownloadCss = `
 *{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#172033;font-family:Arial,Helvetica,sans-serif}.er-result-slip{max-width:820px;margin:24px auto;background:#fff;border:1px solid #d8dee8;padding:34px;color:#172033}.er-result-slip-header{display:flex;justify-content:space-between;gap:24px;align-items:center}.er-result-brand{display:flex;align-items:center;gap:12px}.er-result-brand strong{display:block;font-size:24px}.er-result-brand span,.er-result-title-block span,.er-result-student-grid span,.er-result-signature-box span,.er-result-verification-box span{display:block;color:#667085;font-size:11px}.er-result-title-block{text-align:right}.er-result-title-block h2{margin:4px 0 0;font-size:20px}.er-result-rule{height:3px;background:#b14933;margin:24px 0}.er-result-student-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;border-bottom:1px solid #e4e7ec;padding-bottom:20px}.er-result-student-grid strong{display:block;margin-top:4px;font-size:13px}.er-result-performance{margin-top:22px}.er-result-section-heading{display:flex;justify-content:space-between;align-items:baseline}.er-result-section-heading h3{margin:0;font-size:16px}.er-result-section-heading span{font-size:12px;color:#047857}.er-result-subject-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.er-result-subject-table th,.er-result-subject-table td{text-align:left;padding:10px;border-bottom:1px solid #e4e7ec}.er-result-subject-table th:not(:first-child),.er-result-subject-table td:not(:first-child){text-align:right}.er-result-total-row{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid #e4e7ec;font-size:17px}.er-result-total-row strong{color:#047857}.er-result-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;font-size:11px;color:#667085}.er-result-counts b{display:block;color:#172033;font-size:12px;margin-top:3px}.er-result-slip-footer{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px}.er-result-signature-box,.er-result-verification-box{border-top:1px solid #98a2b3;padding-top:9px}.er-result-signature-line{height:34px}.er-result-verification-box strong{display:block;margin-top:8px;letter-spacing:.08em;font-size:14px}.er-result-disclaimer{margin:26px 0 0;color:#667085;font-size:10px;line-height:1.5}@media(max-width:640px){.er-result-slip{margin:0;padding:22px}.er-result-slip-header{display:block}.er-result-title-block{text-align:left;margin-top:20px}.er-result-student-grid{grid-template-columns:repeat(2,1fr)}.er-result-counts{grid-template-columns:repeat(2,1fr)}}
@@ -21,7 +17,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<CbtResultPayload | null>(null);
   const [studentName, setStudentName] = useState('Guest student');
   const [studentId, setStudentId] = useState('');
   const [showReview, setShowReview] = useState(false);
@@ -76,26 +72,35 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     });
   }, [user]);
 
+  const questions: CbtResultQuestion[] = result?.questions ?? [];
+  const answers: CbtResultAnswer[] = result?.answers ?? [];
+
   const subjectRows = (() => {
-    const questions: any[] = result?.questions || [];
-    if (!questions.some((question) => question?.subject)) return [] as Array<{ subject: string; correct: number; total: number }>;
-    const answers: any[] = result?.answers || [];
+    if (!questions.some((question) => question.subject) || !answers.length) {
+      return [] as Array<{ subject: string; correct: number; total: number }>;
+    }
     const map = new Map<string, { subject: string; correct: number; total: number }>();
-    questions.forEach((question) => {
+    for (const question of questions) {
       const key = String(question.subject || 'General');
       const entry = map.get(key) || { subject: key, correct: 0, total: 0 };
       entry.total += 1;
       if (answers.find((answer) => answer.question_id === question.id)?.is_correct) entry.correct += 1;
       map.set(key, entry);
-    });
+    }
     return Array.from(map.values());
   })();
 
   const score = Number(result?.attempt?.score || 0);
-  const isPass = score >= 60;
   const correctCount = Number(result?.attempt?.correct_answers || 0);
-  const totalCount = Number(result?.attempt?.total_questions || result?.questions?.length || 0);
-  const missedCount = Math.max(0, totalCount - correctCount);
+  const totalCount = Number(result?.attempt?.total_questions || questions.length || 0);
+
+  // Unanswered questions are not wrong answers. Count what the paper actually
+  // recorded; when the attempt carries no answer detail (a saved score only),
+  // show "-" rather than inventing a split.
+  const answeredCount = answers.filter((answer) => answer.selected_option !== null && answer.selected_option !== undefined).length;
+  const hasAnswerDetail = answers.length > 0;
+  const wrongCount = hasAnswerDetail ? Math.max(0, answeredCount - correctCount) : null;
+  const unansweredCount = hasAnswerDetail ? Math.max(0, totalCount - answeredCount) : null;
 
   const printResult = () => window.print();
   const downloadResult = () => {
@@ -110,8 +115,6 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     URL.revokeObjectURL(url);
   };
 
-  const unansweredCount = Math.max(0, totalCount - correctCount - (Number(result?.attempt?.wrong_answers) || missedCount - (Number(result?.attempt?.correct_answers) || correctCount)));
-  const wrongCount = totalCount - correctCount;
   const timeUsed = result?.attempt?.duration_minutes
     ? `${result.attempt.duration_minutes} minutes`
     : (result?.attempt?.started_at && result?.attempt?.submitted_at
@@ -147,8 +150,8 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
               <section className="er-result-counts-block" aria-label="Score summary">
                 <div><span>Questions</span><strong>{totalCount}</strong></div>
                 <div><span>Correct</span><strong className="is-correct">{correctCount}</strong></div>
-                <div><span>Wrong</span><strong className="is-wrong">{wrongCount}</strong></div>
-                <div><span>Unanswered</span><strong>{Math.max(0, totalCount - correctCount - wrongCount)}</strong></div>
+                <div><span>Wrong</span><strong className="is-wrong">{wrongCount ?? '—'}</strong></div>
+                <div><span>Unanswered</span><strong>{unansweredCount ?? '—'}</strong></div>
                 <div><span>Time used</span><strong>{timeUsed}</strong></div>
               </section>
 
@@ -188,12 +191,22 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 aria-hidden="true"
                 style={{ position: 'fixed', top: 0, left: '-10000px', width: 820, pointerEvents: 'none' }}
               >
-                <CbtResultSlip result={result} studentName={studentName} studentId={studentId} />
+                <CbtResultSlip
+                  result={result}
+                  studentName={studentName}
+                  studentId={studentId}
+                  subjectBreakdown={subjectRows.map((row) => ({
+                    subject: row.subject,
+                    questions: row.total,
+                    correct: row.correct,
+                    score: row.total ? (row.correct / row.total) * 100 : 0,
+                  }))}
+                />
               </div>
 
               <p className="er-result-review-intro">Your result is saved in CBT history. Leave it here to keep it, or choose Delete result to remove it.</p>
               <div className="er-result-actions" aria-label="Result actions">
-                {result.questions?.length > 0 ? (
+                {(result.questions?.length ?? 0) > 0 ? (
                   <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
                     {showReview ? 'Hide Answers' : 'Review Answers'}
                   </button>
@@ -212,12 +225,12 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                   <h2 id="review-heading">Review answers</h2>
                   <p className="er-result-review-intro">Use the corrections below to prepare for your next test.</p>
                   <div className="er-result-review-list">
-                    {(result.questions || []).map((question: any) => {
-                      const answer = (result.answers || []).find((item: any) => item.question_id === question.id);
+                    {questions.map((question) => {
+                      const answer = answers.find((item) => item.question_id === question.id);
                       const selectedIndex = answer?.selected_option ? String(answer.selected_option).charCodeAt(0) - 65 : null;
-                      // The key is released only for questions the student attempted
-                      // (audit P0-3), so `correct_option` can legitimately be null. A
-                      // null must render as "not attempted" — falling back to 'A'
+                      // The key is released only for questions the student attempted,
+                      // so `correct_option` can legitimately be null. A
+                      // null must render as "not attempted" - falling back to 'A'
                       // would point at the wrong option.
                       const keyReleased = Boolean(question.correct_option);
                       const correctIndex = keyReleased ? String(question.correct_option).charCodeAt(0) - 65 : -1;
@@ -227,7 +240,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                           <div className="er-result-review-head"><strong>Question {question.position}{question.subject ? ` · ${question.subject}` : ''}</strong><span>{keyReleased ? (answer?.is_correct ? 'Correct' : 'Review this answer') : 'Not attempted'}</span></div>
                           <h3>{question.question_text}</h3>
                           <div className="er-result-review-options">
-                            {options.map((option: string, index: number) => <div className={`${index === correctIndex ? 'is-answer' : ''} ${index === selectedIndex && index !== correctIndex ? 'is-selected-wrong' : ''}`} key={index}><b>{String.fromCharCode(65 + index)}.</b> {option}</div>)}
+                            {options.map((option, index) => <div className={`${index === correctIndex ? 'is-answer' : ''} ${index === selectedIndex && index !== correctIndex ? 'is-selected-wrong' : ''}`} key={index}><b>{String.fromCharCode(65 + index)}.</b> {option ?? ''}</div>)}
                           </div>
                           {question.explanation && <p><strong>Explanation:</strong> {question.explanation}</p>}
                           {!keyReleased && <p>You did not attempt this question, so its answer is not shown.</p>}

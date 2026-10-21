@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { applyMigrations } from './replay';
@@ -55,6 +54,18 @@ export const RLS_POSTURE: TablePosture[] = [
   {
     table: 'opportunities', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
     why: 'Scholarships and jobs are public content; the policy filters to active rows.',
+  },
+  {
+    table: 'site_settings', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
+    why: 'The footer renders brand, contact and social settings for every visitor; site_settings_public_read allows select only, and only the API writes.',
+  },
+  {
+    table: 'site_pages', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
+    why: 'Policy pages must be readable without a login, so site_pages_public_read filters to status = published. Drafts are server-only.',
+  },
+  {
+    table: 'site_page_revisions', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Append-only policy history is read and written by the admin API; no client grant exists, so the revision list cannot be enumerated by a visitor.',
   },
   {
     table: 'past_question_resources', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
@@ -115,6 +126,14 @@ export const RLS_POSTURE: TablePosture[] = [
   {
     table: 'document_bank', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
     why: 'Central PDF intake and routing metadata contains private storage paths; all upload, review, signing and routing operations go through authenticated staff APIs.',
+  },
+  {
+    table: 'question_imports', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Import jobs hold private storage paths and unreviewed answer keys. Upload, progress and retry are exposed only through the staff import API.',
+  },
+  {
+    table: 'question_import_items', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Extracted questions before review. A publishable key must never read a candidate answer key; approval and saving run through commit_question_import().',
   },
   {
     table: 'edureach_audit_logs', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,

@@ -120,7 +120,17 @@ export async function fetchSavedItems(userId: string): Promise<DashboardSavedIte
     return [];
   }
 
-  return (data || []).map((row: any) => ({
+  return (data || []).map((row: {
+    id: string;
+    item_key?: string | null;
+    item_type?: string | null;
+    title?: string | null;
+    subtitle?: string | null;
+    detail?: string | null;
+    location?: string | null;
+    href?: string | null;
+    created_at?: string | null;
+  }) => ({
     id: String(row.id),
     key: String(row.item_key || row.id),
     type: row.item_type as SavedItemType,
@@ -188,7 +198,16 @@ export async function fetchNotifications(userId: string): Promise<DashboardNotif
     return [];
   }
 
-  return (data || []).map((row: any) => ({
+  return (data || []).map((row: {
+    id: string;
+    title?: string | null;
+    body?: string | null;
+    read_at?: string | null;
+    created_at?: string | null;
+    notification_type?: string | null;
+    metadata?: { to?: unknown } | null;
+    href?: string | null;
+  }) => ({
     id: String(row.id),
     title: String(row.title),
     body: row.body || undefined,
@@ -277,7 +296,7 @@ export async function fetchLatestCgpaSnapshot(userId: string): Promise<CgpaSnaps
     totalUnits: Number(term.total_units || 0),
     classification: String(term.classification || ''),
     createdAt: String(term.created_at),
-    courses: (courses || []).map((course: any) => ({
+    courses: (courses || []).map((course: { course_code?: string | null; units?: number | null; grade?: string | null }) => ({
       code: String(course.course_code),
       units: Number(course.units || 0),
       grade: String(course.grade || 'A'),
@@ -342,4 +361,28 @@ export async function recordSecurityEvent(userId: string, eventType: string, eve
     metadata,
   });
   if (error) logOptionalTableError('Unable to record security event', error);
+}
+
+/**
+ * A page of results, clamped to the data that exists.
+ *
+ * Written as a function rather than inline arithmetic because the interesting
+ * case is the edge: deleting the last row of the last page must land the reader
+ * on the new last page, not on an empty one.
+ */
+export function pageSlice<T>(items: readonly T[], page: number, size: number): {
+  items: T[]; page: number; pageCount: number; first: number; last: number;
+} {
+  const perPage = Math.max(1, Math.trunc(size));
+  const pageCount = Math.max(1, Math.ceil(items.length / perPage));
+  const safePage = Math.min(Math.max(0, Math.trunc(page)), pageCount - 1);
+  const start = safePage * perPage;
+  const slice = items.slice(start, start + perPage);
+  return {
+    items: slice,
+    page: safePage,
+    pageCount,
+    first: slice.length ? start + 1 : 0,
+    last: start + slice.length,
+  };
 }

@@ -67,6 +67,19 @@ const routeTitles: Record<string, string> = {
   '/admin/schools': 'Admin Schools',
   '/admin/services': 'Admin Services Catalogue',
   '/admin/content-manager': 'Admin Data Control Center',
+  '/admin/pdf-bank': 'Admin PDF Bank',
+  '/admin/question-imports': 'Admin Question Import',
+  '/admin/site': 'Admin Site & Policies',
+  '/privacy': 'Privacy Notice',
+  '/privacy-policy': 'Privacy Notice',
+  '/terms': 'Terms of Use',
+  '/terms-of-service': 'Terms of Use',
+  '/cookies': 'Cookies & Browser Storage',
+  '/cookie-policy': 'Cookies & Browser Storage',
+  '/accessibility': 'Accessibility',
+  '/disclaimer': 'Disclaimer',
+  '/contact': 'Contact EduReach',
+  '/contact-us': 'Contact EduReach',
 };
 
 export function pageTitleFor(pathname: string): string {

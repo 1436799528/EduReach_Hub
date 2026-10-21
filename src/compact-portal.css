@@ -405,7 +405,7 @@
 }
 
 
-/* Compact full-width service-card system — reference layout */
+/* Compact full-width service-card system - reference layout */
 .hub-compact-site .hub-container{
   width:calc(100% - 48px);
   max-width:none;
@@ -582,7 +582,7 @@
 }
 
 
-/* Real examination-body identities — kept small so the logo never becomes the card itself. */
+/* Real examination-body identities - kept small so the logo never becomes the card itself. */
 .hub-card-identity--images{
   display:flex;
   align-items:center;

@@ -1,12 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '../lib/auth';
 import BrandLogo from '../components/BrandLogo';
-
-function navigateInApp(path: string, replace = false) {
-  if (replace) window.history.replaceState({}, '', path);
-  else window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
+import { navigateInApp } from '../lib/navigation';
 
 function LoadingPortal() {
   return (
@@ -37,7 +32,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     // the protected area, this stale guard must not bounce the user to /login.
     if (!isProtectedPath(window.location.pathname)) return;
     const next = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    navigateInApp(`/login?next=${encodeURIComponent(next)}`, true);
+    navigateInApp(`/login?next=${encodeURIComponent(next)}`, { replace: true });
   }, [isAuthenticated, isLoading]);
 
   if (isLoading) return <LoadingPortal />;

@@ -14,6 +14,7 @@ import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
 import { apiUrl } from '../src/lib/apiBase';
+import { navigateInApp } from '../src/lib/navigation';
 import BrandLogo from '../src/components/BrandLogo';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -21,11 +22,6 @@ type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
 function getSafeNextPath() {
   const next = new URLSearchParams(window.location.search).get('next');
   return next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
-}
-
-function navigateInApp(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
@@ -44,7 +40,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [password, setPassword] = useState('');
   // 6. Confirm Password
   const [confirmPassword, setConfirmPassword] = useState('');
-  // 7. Account Type — Student / Parent / Teacher
+  // 7. Account Type - Student / Parent / Teacher
   const [accountType, setAccountType] = useState<'student' | 'parent' | 'teacher'>('student');
   // 8. Terms & Privacy agreement
   const [termsAgreed, setTermsAgreed] = useState(false);
@@ -79,7 +75,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       return;
     }
     if (!isSupabaseConfigured) {
-      setMessage('Email service is not configured yet — your verification link will send once it is.');
+      setMessage('Email service is not configured yet. Your verification link will send once it is.');
       return;
     }
     try {
@@ -241,7 +237,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 headers: { Authorization: `Bearer ${signedInSession.access_token}` },
               });
               isAdmin = adminCheck.ok;
-            } catch { /* backend unreachable — continue as a regular student session */ }
+            } catch { /* backend unreachable; continue as a regular student session */ }
             window.sessionStorage.removeItem('edureach-admin-student-view');
             notifyAuthChanged();
             navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
@@ -272,7 +268,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       : 'Reset Your Password';
 
   // A form is "complete" when every required field for the active mode is
-  // validly filled — the submit button brightens to signal it is ready.
+  // validly filled - the submit button brightens to signal it is ready.
   const authPhoneDigits = phone.replace(/\D/g, '');
   const authFormComplete = currentMode === 'signup'
     ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && authPhoneDigits.length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
@@ -407,7 +403,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 height: '52px',
                 borderRadius: '50%',
                 background: '#ecfdf5',
-                color: '#b14933',
+                color: 'var(--er-primary)',
                 display: 'grid',
                 placeItems: 'center',
                 margin: '0 auto 16px',
@@ -427,7 +423,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 className="hub-primary-btn"
                 style={{
                   textDecoration: 'none',
-                  background: '#b14933',
+                  background: 'var(--er-primary)',
                   textAlign: 'center',
                   padding: '12px',
                   borderRadius: '9px',
@@ -557,7 +553,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   </div>
                 </div>
 
-                {/* 7. ACCOUNT TYPE — Student / Parent / Teacher */}
+                {/* 7. ACCOUNT TYPE - Student / Parent / Teacher */}
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
                     Account Type *
@@ -572,9 +568,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                           padding: '8px',
                           borderRadius: '8px',
                           border: '1px solid',
-                          borderColor: accountType === type ? '#b14933' : '#cbd5e1',
-                          background: accountType === type ? '#F9F0EE' : '#ffffff',
-                          color: accountType === type ? '#b14933' : '#475569',
+                          borderColor: accountType === type ? 'var(--er-primary)' : '#cbd5e1',
+                          background: accountType === type ? 'var(--er-primary-soft)' : '#ffffff',
+                          color: accountType === type ? 'var(--er-primary)' : '#475569',
                           fontWeight: 620,
                           fontSize: '12px',
                           textTransform: 'capitalize',
@@ -677,7 +673,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     checked={termsAgreed}
                     onChange={(e) => setTermsAgreed(e.target.checked)}
                     required
-                    style={{ width: '16px', height: '16px', accentColor: '#b14933', marginTop: '2px' }}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--er-primary)', marginTop: '2px' }}
                   />
                   <span>
                     I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
@@ -728,7 +724,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         setMessage('');
                         setError('');
                       }}
-                      style={{ background: 'none', border: 0, color: '#b14933', fontSize: '11.5px', fontWeight: 620, cursor: 'pointer' }}
+                      style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontSize: '11.5px', fontWeight: 620, cursor: 'pointer' }}
                     >
                       Forgot password?
                     </button>
@@ -866,12 +862,13 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               </>
             )}
 
-            {/* SUBMIT BUTTON — matches the site search button; turns bright orange the moment every required detail is validly filled. */}
+            {/* SUBMIT BUTTON - matches the site search button; turns bright orange the moment every required detail is validly filled. */}
             <button
               type="submit"
               disabled={busy}
+              aria-busy={busy}
               style={{
-                background: authFormComplete ? '#F97316' : '#c02220',
+                background: 'var(--er-primary)',
                 color: '#ffffff',
                 border: 0,
                 borderRadius: '9px',
@@ -880,7 +877,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 fontWeight: 620,
                 cursor: 'pointer',
                 transition: 'background .2s ease, box-shadow .2s ease',
-                boxShadow: authFormComplete ? '0 6px 18px rgba(249, 115, 22, 0.35)' : '0 2px 8px rgba(192, 34, 32, 0.25)',
+                boxShadow: authFormComplete ? '0 6px 18px rgba(23, 74, 58, 0.3)' : '0 2px 6px rgba(23, 74, 58, 0.22)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -923,7 +920,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Already have an account? Sign in
             </button>
@@ -937,7 +934,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 setMessage('');
                 setError('');
               }}
-              style={{ background: 'none', border: 0, color: '#b14933', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
+              style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
             >
               Need an account? Register
             </button>

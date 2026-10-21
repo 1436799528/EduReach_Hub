@@ -580,7 +580,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     ))}
                     <li>
                       <span>Waiting on you</span>
-                      Only if we need something. The request pauses and you get a notification — nothing is lost while you gather it.
+                      Only if we need something. The request pauses and you get a notification. Nothing is lost while you gather it.
                     </li>
                   </ol>
                   <p>You will get a reference code immediately. EduReach does not promise a number of days: requests are handled in the order they arrive, and you can see the current state at any time.</p>
@@ -607,7 +607,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   <button
                     type="submit"
                     className="hub-primary-btn"
-                    style={{ background: '#b14933' }}
+                    style={{ background: 'var(--er-primary)' }}
                     disabled={busy}
                   >
                     {busy ? 'Submitting…' : 'Confirm & Submit'} <Check size={16} />
@@ -684,7 +684,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   {serviceTimeline().map((stage, index) => (
                     <li key={stage.status} className={index === 0 ? 'is-current' : ''}>
                       <span>{stage.label}</span>
-                      {index === 0 ? 'Reached — your request is queued in the order it arrived.' : stage.meaning}
+                      {index === 0 ? 'Reached. Your request is queued in the order it arrived.' : stage.meaning}
                     </li>
                   ))}
                 </ol>
@@ -695,7 +695,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                 <a
                   className="hub-primary-btn"
                   href={isAuthenticated ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : `/login?next=${encodeURIComponent('/dashboard/services')}`}
-                  style={{ textDecoration: 'none', background: '#b14933' }}
+                  style={{ textDecoration: 'none', background: 'var(--er-primary)' }}
                 >
                   <CheckCircle2 size={15} /> {isAuthenticated ? 'View in My Requests' : 'Sign in to view request'}
                 </a>

@@ -69,7 +69,7 @@ export default function AdminSchoolsPage() {
         return [...rest, saved].sort((a, b) => a.school_name.localeCompare(b.school_name));
       });
       setForm(null);
-      setMessage(form.id ? 'Institution updated — the school finder reflects it immediately.' : 'Institution created — it is searchable on /schools right away.');
+      setMessage(form.id ? 'Institution updated. The school finder reflects it immediately.' : 'Institution created. It is searchable on /schools right away.');
     } catch (e) {
       setError(userFacingError(e, 'Unable to save the institution.'));
     } finally { setSaving(false); }
@@ -173,7 +173,7 @@ export default function AdminSchoolsPage() {
                 </div>
               </div>
               <div className="admin-news-editor-actions">
-                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving}>{saving ? 'Saving…' : 'Save institution'}</button>
+                <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : 'Save institution'}</button>
               </div>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function AdminSchoolsPage() {
                 ))}
                 {!loading && !institutions.length && (
                   <tr><td colSpan={5} className="empty-state">
-                    <AdminEmptyState title="No institutions found" hint={query ? 'Try a different search.' : 'Add the first institution — it becomes searchable on the school finder immediately.'} />
+                    <AdminEmptyState title="No institutions found" hint={query ? 'Try a different search.' : 'Add the first institution. It becomes searchable on the school finder immediately.'} />
                   </td></tr>
                 )}
               </tbody>

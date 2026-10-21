@@ -3,7 +3,7 @@
  *
  * This is a UX layer, not a boundary: the server re-checks every capability
  * (see lib/authorization.ts). Its job is to not show a control the signed-in
- * account cannot use — and to explain the refusal when a deep link is opened.
+ * account cannot use - and to explain the refusal when a deep link is opened.
  */
 
 import { createContext, useContext, type ReactNode } from 'react';

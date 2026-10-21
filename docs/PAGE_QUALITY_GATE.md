@@ -46,7 +46,7 @@ Every route must look like **EduReach**. The page can have a different function,
 
 ### Must Inherit:
 * EduReach typography (Inter / system fonts, standard hierarchy)
-* EduReach colors (Primary Academic Crimson `#C85841`, Deep Crimson `#B3331A`, Institutional Navy `#0F172A`, Secondary Tangerine `#D2732A`, Borders `#e2e8f0`) — see `docs/COLOR_THEME_SPEC.md` as the single source of truth. Success Green `#16A34A` and Trust Gold `#CA8A04` are reserved for status/verification only, never as primary brand color.
+* EduReach colors (Primary action Deep Green `#174A3A`, hover `#123A2D`, pressed `#0E3025`; Brand accent Crimson `#B14933`, hover `#963D2C`, pressed `#803222`; Institutional Navy `#0F172A`; Secondary Tangerine `#D2732A`; Borders `#e2e8f0`) — see `docs/COLOR_THEME_SPEC.md` as the single source of truth. Every interaction state (hover, press, disabled, busy, focus, field, navigation) is a token in `src/styles/theme.css`; no component types its own hex. Success Green `#047857` and Trust Gold `#CA8A04` are reserved for status/verification only, never as the action colour.
 * EduReach spacing and density
 * EduReach border radius (Standard 6px–10px, Pill 999px)
 * EduReach shadows (Subtle `0 1px 3px rgba(15, 23, 42, 0.04)`)
@@ -119,7 +119,7 @@ Every route must answer clearly:
 * `/jobs` → Search student scholarships, grants, and opportunities
 * `/login` & `/register` → Streamlined, privacy-focused student authentication
 * `/profile/complete` → Complete academic institution, department, and preferences
-* `/dashboard` → Comprehensive student workspace (applications, tests, saved, tools)
+* `/dashboard` → Student workspace for applications, tests, saved items and tools
 
 If a page starts becoming an incoherent collection of unrelated features, split it.
 

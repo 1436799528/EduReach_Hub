@@ -88,7 +88,7 @@ export default async () => {
         const report = await runNewsroomRefresh({ env, triggeredBy: 'schedule' });
         console.log(`EduReach daily newsroom refresh [${report.runId ?? 'dry-run'}]: ${summarizeRun(report)}`);
         for (const source of report.perSource.filter((entry) => entry.status === 'failed')) {
-          console.warn(`EduReach source failed: ${source.sourceKey} — ${source.error}`);
+          console.warn(`EduReach source failed: ${source.sourceKey}: ${source.error}`);
         }
       } catch (error) {
         console.error('EduReach daily newsroom refresh failed:', error);

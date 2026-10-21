@@ -6,17 +6,13 @@ import type { Institution } from '../src/components/dashboard/SchoolFinderCard';
 import { itemKey } from '../src/components/dashboard/SchoolFinderCard';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { navigateInApp } from '../src/lib/navigation';
 
 function starterInstitutions(): Institution[] {
   return commonInstitutions.filter((name) => !name.startsWith('Other')).map((name, index) => {
     const match = name.match(/^(.*?)(?:\s+\(([^)]+)\))?$/);
     return { id: `starter-school-${index + 1}`, school_name: match?.[1] || name, acronym: match?.[2] || null, state: null, institution_type: 'University', website_url: null, course_context: institutionCourseContexts[match?.[2] || ''] || null };
   });
-}
-
-function navigateTo(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
 export default function SchoolFinderPage() {
@@ -107,8 +103,8 @@ export default function SchoolFinderPage() {
             {filtered.map((school) => {
               const slug = itemKey(school.school_name);
               const detailPath = `/schools/${encodeURIComponent(slug)}?name=${encodeURIComponent(school.school_name)}&acronym=${encodeURIComponent(school.acronym || '')}&state=${encodeURIComponent(school.state || '')}&type=${encodeURIComponent(school.institution_type || '')}&website=${encodeURIComponent(school.website_url || '')}&course=${encodeURIComponent(school.course_context || '')}&return=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`;
-              // Whole card is the link — no tiny nested button.
-              return <a className="school-finder-result-card school-finder-result-card-link" key={school.id} href={detailPath} onClick={(event) => { if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); navigateTo(detailPath); }}><div className="school-finder-result-icon"><School size={20} /></div><div className="school-finder-result-copy"><h2>{school.school_name}</h2><p>{school.acronym && <b>{school.acronym} · </b>}{school.institution_type || 'Institution'} <span>·</span> <MapPin size={13} /> {school.state ? `${school.state} State` : 'Nigeria'}</p>{school.course_context && <small className="school-finder-course-tags">Course tags: {school.course_context.split(' ').slice(0, 6).join(', ')}{school.course_context.split(' ').length > 6 ? '…' : ''}</small>}</div><span className="hub-outline-btn er-card-cta">View school <ArrowRight size={14} /></span></a>;
+              // Whole card is the link - no tiny nested button.
+              return <a className="school-finder-result-card school-finder-result-card-link" key={school.id} href={detailPath} onClick={(event) => { if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); navigateInApp(detailPath); }}><div className="school-finder-result-icon"><School size={20} /></div><div className="school-finder-result-copy"><h2>{school.school_name}</h2><p>{school.acronym && <b>{school.acronym} · </b>}{school.institution_type || 'Institution'} <span>·</span> <MapPin size={13} /> {school.state ? `${school.state} State` : 'Nigeria'}</p>{school.course_context && <small className="school-finder-course-tags">Course tags: {school.course_context.split(' ').slice(0, 6).join(', ')}{school.course_context.split(' ').length > 6 ? '…' : ''}</small>}</div><span className="hub-outline-btn er-card-cta">View school <ArrowRight size={14} /></span></a>;
             })}
           </div>
         </div>

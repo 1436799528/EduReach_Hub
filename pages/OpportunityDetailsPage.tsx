@@ -6,15 +6,8 @@ import { fetchOpportunity, type Opportunity } from '../src/lib/api';
 import { opportunityStatus } from '../src/lib/opportunityStatus';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
 import { isSupabaseConfigured } from '../src/lib/supabase';
+import { formatLongDate } from '../src/lib/dates';
 import PublicPdfList from '../src/components/PublicPdfList';
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Not specified';
-  const date = new Date(value);
-  return Number.isFinite(date.getTime())
-    ? date.toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
-    : 'Not specified';
-}
 
 export default function OpportunityDetailsPage({ opportunityId }: { opportunityId: string }) {
   const [item, setItem] = useState<Opportunity | null>(null);
@@ -73,14 +66,13 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
 
   const status = opportunityStatus(item);
   const description = plainTextFromHtml(item.description || '');
-  const applyHref = item.link_url || '/jobs';
   const verified = status.verification === 'verified';
 
   return (
     <HubLayout>
       {/* A plain div, not <main>: HubLayout already renders the page's single
           <main id="main-content"> landmark, and a second one makes landmark
-          navigation ambiguous (audit P1-2 / the A11Y-1 nested-main check). */}
+          navigation ambiguous. */}
       <div className="hub-page" style={{ padding: '24px 0 70px' }}>
         <div className="hub-container hub-narrow">
           <a href="/jobs" className="hub-outline-btn" style={{ textDecoration: 'none', marginBottom: '16px' }}>
@@ -103,7 +95,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                   </div>
                   <h1 style={{ margin: '8px 0 5px', fontSize: '26px', lineHeight: 1.2, color: '#0f172a' }}>{item.title}</h1>
                   {/* 500 is the 'meta' role on the shared type scale; 600 was not
-                      a step on it (audit P1-3, tests/type-system.test.ts). */}
+                      a step on it. */}
                   {item.organisation && <p style={{ margin: 0, color: '#5e6c82', fontSize: '14px', fontWeight: 500 }}>{item.organisation}</p>}
                 </div>
               </div>
@@ -111,7 +103,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
                 {item.locations && <span className="er-opp-chip"><MapPin size={12} /> {item.locations}</span>}
                 {item.work_mode && item.work_mode !== 'not-specified' && <span className="er-opp-chip">{item.work_mode === 'onsite' ? 'On-site' : item.work_mode === 'remote' ? 'Remote' : 'Hybrid'}</span>}
-                {item.deadline && <span className="er-opp-chip"><CalendarClock size={12} /> Deadline: {formatDate(item.deadline)}</span>}
+                {item.deadline && <span className="er-opp-chip"><CalendarClock size={12} /> Deadline: {formatLongDate(item.deadline, 'Not specified')}</span>}
               </div>
             </header>
 
@@ -158,9 +150,9 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
 
                   <dl className="er-opp-facts" style={{ marginTop: '15px' }}>
                     <div><dt>Status</dt><dd>{status.stateLabel}</dd></div>
-                    <div><dt>Deadline</dt><dd>{formatDate(item.deadline)}</dd></div>
+                    <div><dt>Deadline</dt><dd>{formatLongDate(item.deadline)}</dd></div>
                     <div><dt>Source</dt><dd>{item.source_name?.trim() || (item.link_url ? 'Organiser’s own page' : 'No source recorded')}</dd></div>
-                    <div><dt>Last checked</dt><dd>{status.verifiedOn ? formatDate(status.verifiedOn) : 'Not yet checked by EduReach'}</dd></div>
+                    <div><dt>Last checked</dt><dd>{status.verifiedOn ? formatLongDate(status.verifiedOn) : 'Not yet checked by EduReach'}</dd></div>
                   </dl>
                 </div>
 
@@ -169,7 +161,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                 </div>
 
                 <div style={{ marginTop: '14px', padding: '12px 14px', borderRadius: '10px', background: '#f8fafc', color: '#475569', fontSize: '12px', lineHeight: 1.55 }}>
-                  {verified ? <><CheckCircle2 size={14} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} /> EduReach checked the source on {formatDate(status.verifiedOn)}.</> : 'This listing has not yet been checked by EduReach.'}
+                  {verified ? <><CheckCircle2 size={14} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} /> EduReach checked the source on {formatLongDate(status.verifiedOn)}.</> : 'This listing has not yet been checked by EduReach.'}
                 </div>
               </aside>
             </div>

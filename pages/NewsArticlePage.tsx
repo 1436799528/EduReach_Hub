@@ -72,7 +72,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
   useEffect(() => {
     if (!item) return;
     // Article-level metadata: headline, summary, image, publication dates and
-    // the source citation. An expired article is deliberately left uncanonical
+    // the source citation. An expired article is left uncanonical
     // and noindex so stale deadlines do not keep ranking.
     applySeo(seoForArticle({
       slug: item.slug,

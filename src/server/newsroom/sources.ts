@@ -8,13 +8,13 @@
  * deployment.
  *
  * Publication policy (see docs/NEWSROOM_PIPELINE.md):
- *   tier 1 — primary official source. May publish automatically when the
+ *   tier 1 - primary official source. May publish automatically when the
  *            quality gate and the relevance threshold both pass.
- *   tier 2 — established reporting. Discovered and summarised, but always
+ *   tier 2 - established reporting. Discovered and summarised, but always
  *            queued for human review.
- *   tier 3 — secondary/aggregator. Discovery only; never the sole basis for a
+ *   tier 3 - secondary/aggregator. Discovery only; never the sole basis for a
  *            high-impact claim.
- *   tier 4 — social accounts. Discovery only, never auto-published, disabled
+ *   tier 4 - social accounts. Discovery only, never auto-published, disabled
  *            until an operator verifies the handle.
  *
  * Feed URLs are a convenience, not an assumption: every source is probed by
@@ -35,7 +35,7 @@ export interface SourceDefinition {
   categoryHint?: string | null;
   trustScore: number;
   isActive?: boolean;
-  /** Headline must contain one of these terms — precision filter for general outlets. */
+  /** Headline must contain one of these terms - precision filter for general outlets. */
   requiresAnyTitleTerm?: string[];
   /** Skip links whose path does not match this pattern (case-insensitive). */
   pathInclude?: string;

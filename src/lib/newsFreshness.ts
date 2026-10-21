@@ -1,5 +1,5 @@
 /**
- * NEWS-2 — how old is this story, and was it checked?
+ * NEWS-2 - how old is this story, and was it checked?
  *
  * The newsroom pipeline already stores `verification_status`, `last_verified_at`
  * and `expires_at`, and the article page uses them. The list rows did not, so a
@@ -9,8 +9,8 @@
  * Four states, because three of them need different words:
  *
  *   fresh       checked recently, nothing says it has passed
- *   stale       checked, but not recently — still shown, with the date
- *   expired     superseded or past its own expiry — shown last, clearly marked
+ *   stale       checked, but not recently - still shown, with the date
+ *   expired     superseded or past its own expiry - shown last, clearly marked
  *   unverified  no record of a check ever being made
  */
 
@@ -37,6 +37,13 @@ export type NewsFreshness = {
 const STALE_AFTER_DAYS = 60;
 
 const NOT_CURRENT_STATUSES = new Set(['expired', 'archived', 'superseded']);
+
+export function isArticleCurrent(
+  item: Pick<NewsFreshnessInput, 'verification_status' | 'expires_at'>,
+  now: number = Date.now(),
+): boolean {
+  return newsFreshness(item, now).current;
+}
 
 export function newsFreshness(item: NewsFreshnessInput, now: number = Date.now()): NewsFreshness {
   const status = String(item.verification_status || '').toLowerCase();

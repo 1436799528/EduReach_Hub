@@ -156,6 +156,7 @@ test('a private bucket that is public fails, a missing bucket fails', () => {
     { name: 'admin-content', public: true },
     { name: 'resource-files', public: false },
     { name: 'campus-uploads', public: false },
+    { name: 'past-questions', public: false },
   ]);
   assert.deepEqual(good.map((check) => check.state), ['pass', 'pass', 'pass']);
 
@@ -168,6 +169,7 @@ test('a private bucket that is public fails, a missing bucket fails', () => {
     { name: 'admin-content', public: true },
     { name: 'resource-files', public: true },
     { name: 'campus-uploads', public: false },
+    { name: 'past-questions', public: false },
   ]);
   assert.equal(leaked[1].state, 'fail');
   assert.match(leaked[1].detail || '', /must not be/);
@@ -178,6 +180,7 @@ test('a private bucket that is public fails, a missing bucket fails', () => {
     { name: 'admin-content', public: false },
     { name: 'resource-files', public: false },
     { name: 'campus-uploads', public: false },
+    { name: 'past-questions', public: false },
   ]);
   assert.equal(broken[2].state, 'fail');
   assert.match(broken[2].detail || '', /must be public/);
@@ -187,6 +190,7 @@ test('a private bucket that is public fails, a missing bucket fails', () => {
     { name: 'admin-content', public: true },
     { name: 'resource-files', public: false },
     { name: 'campus-uploads', public: false },
+    { name: 'past-questions', public: false },
     { name: 'avatars', public: true },
   ]);
   assert.deepEqual(unrelated.map((check) => check.state), ['pass', 'pass', 'pass']);

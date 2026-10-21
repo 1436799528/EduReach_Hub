@@ -50,8 +50,8 @@ export function RouteFallback() {
 
 /**
  * Card placeholders for a grid that fills in after the first paint. The box
- * mirrors the cards it stands in for — same padding, same radius, same
- * two-column grid (see .er-library-grid) — so the region is the same height
+ * mirrors the cards it stands in for - same padding, same radius, same
+ * two-column grid (see .er-library-grid) - so the region is the same height
  * before and after the data lands and nothing below it moves. PERF-1 measured
  * the alternative: CLS 0.31 on /past-questions with a throttled phone.
  */
