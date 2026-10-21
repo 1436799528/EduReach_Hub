@@ -76,7 +76,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const answers: CbtResultAnswer[] = result?.answers ?? [];
 
   const subjectRows = (() => {
-    if (!questions.some((question) => question.subject) || !answers.length) {
+    if (!questions.some((question) => question.subject)) {
       return [] as Array<{ subject: string; correct: number; total: number }>;
     }
     const map = new Map<string, { subject: string; correct: number; total: number }>();
