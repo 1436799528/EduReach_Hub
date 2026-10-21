@@ -164,8 +164,9 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
               <section className="er-result-header" aria-labelledby="result-heading">
                 <span className="er-result-kicker">CBT RESULT</span>
                 <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle ? 'Total Mark' : 'Practice Mark'}</h1>
-                <div className="er-result-score">{isWaecStyle ? 'See grades below' : isJambStyle ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{isWaecStyle ? '' : `/${markMaximum}`}</span></div>
-                {isWaecStyle && <p className="er-result-grade-note">Grades are estimated from this simulator's objective-question score bands; official results can use subject-specific marking schemes.</p>}
+                {!isWaecStyle && <div className="er-result-score">{isJambStyle ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{`/${markMaximum}`}</span></div>}
+                {isWaecStyle && <p className="er-result-grade-note">Subject grades use estimated A1–F9 bands from this simulator's objective questions; official results may use subject-specific marking schemes.</p>}
+                {isJambStyle && <p className="er-result-grade-note">Marks are estimated from subject-level correct-answer rates; official JAMB or institution scoring may differ.</p>}
               </section>
 
               <section className="er-result-counts-block" aria-label="Score summary">
