@@ -24,7 +24,7 @@ with expected(table_name) as (
     ('campus_post_likes'),('edureach_notifications'),('student_notifications'),
     ('student_saved_items'),('student_cgpa_terms'),('student_cgpa_courses'),
     ('student_wallets'),('student_wallet_transactions'),('student_security_events'),
-    ('student_profiles'),('profiles'),('cbt_exams'),('exam_questions'),
+    ('student_profiles'),('profiles'),('cbt_exams'),('cbt_subject_catalog'),('exam_questions'),
     ('cbt_attempts'),('cbt_answers'),('news_articles'),('news_sources'),
     ('news_ingest_runs'),('news_ingest_candidates'),('opportunities'),
     ('admin_audit_logs'),('site_analytics_events'),('rate_limit_hits'),
