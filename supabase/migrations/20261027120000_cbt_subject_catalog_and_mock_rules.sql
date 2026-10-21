@@ -77,8 +77,8 @@ create policy "CBT subject catalogue is readable"
 grant select on public.cbt_subject_catalog to anon, authenticated;
 
 -- WAEC/NECO allow up to nine selected subjects in a practice setup. The mock
--- must use a full nine-subject combination. JAMB remains four subjects exactly
--- for a mock, with Use of English included. Practice sessions remain flexible.
+-- can select up to nine, and a mock needs at least four. JAMB remains exactly
+-- four subjects for a mock, with Use of English included. Practice stays flexible.
 create or replace function public.cbt_limits()
 returns jsonb
 language sql
