@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 73 then 'pass' else 'fail' end as result,
+  case when count(*) >= 74 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 73)' as detail
+  count(*)::text || ' migrations recorded (repository holds 74)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -181,6 +181,7 @@ with expected(version, migration) as (
     ,('20261024120000', '20261024120000_site_content_and_legal_pages.sql')
     ,('20261025120000', '20261025120000_cbt_submit_grace_120.sql')
     ,('20261026120000', '20261026120000_service_guides.sql')
+    ,('20261027120000', '20261027120000_cbt_subject_catalog_and_mock_rules.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -204,6 +205,10 @@ with expected(version, migration) as (
   select 'public.service_guides', '20261026120000_service_guides.sql'
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'service_guides')
+  union all
+  select 'public.cbt_subject_catalog', '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'cbt_subject_catalog')
   union all
   select 'public.site_pages', '20261024120000_site_content_and_legal_pages.sql'
   where not exists (select 1 from information_schema.tables
