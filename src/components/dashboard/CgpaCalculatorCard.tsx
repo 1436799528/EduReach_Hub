@@ -1,7 +1,7 @@
 import { userFacingError } from '../../../lib/errors';
 import { useMemo, useState } from 'react';
 import { Calculator, Trash2 } from 'lucide-react';
-import { calculateCgpa, saveCgpaSnapshot, type CgpaCourseInput, type CgpaSnapshot } from '../../lib/studentDashboard';
+import { calculateCgpa, gradesForScale, gradePointsByScale, saveCgpaSnapshot, type CgpaCourseInput, type CgpaScale, type CgpaSnapshot } from '../../lib/studentDashboard';
 import { localStorageKey } from '../../lib/localPreview';
 
 const localCoursesKey = () => localStorageKey('cgpa-courses');
@@ -16,7 +16,9 @@ function readLocalCourses(): CgpaCourseInput[] {
   }
 }
 
-/** Nigerian 5-point CGPA calculator, rendered inline on the dashboard Tools page. */
+/** Nigerian CGPA calculator (4.0 or 5.0 scale), rendered inline on the dashboard Tools page.
+ * 4.0 snapshots are kept on this device only: student_cgpa_terms has no scale
+ * column, so writing a 4.0 result there would silently corrupt a 5.0 record. */
 export default function CgpaCalculatorCard({
   userId,
   isLocalMode,
@@ -37,7 +39,23 @@ export default function CgpaCalculatorCard({
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const result = useMemo(() => calculateCgpa(courses), [courses]);
+  const [scale, setScale] = useState<CgpaScale>(() => {
+    try { return localStorage.getItem(localStorageKey('cgpa-scale')) === '4' ? 4 : 5; } catch { return 5; }
+  });
+  const result = useMemo(() => calculateCgpa(courses, scale), [courses, scale]);
+
+  const changeScale = (next: CgpaScale) => {
+    setScale(next);
+    // The 4.0 table has no E grade; remap those rows rather than dropping them.
+    if (next === 4) setCourses((rows) => rows.map((c) => (c.grade === 'E' ? { ...c, grade: 'F' } : c)));
+    try { localStorage.setItem(localStorageKey('cgpa-scale'), String(next)); } catch { /* session-only */ }
+  };
+
+  const clearAll = () => {
+    const blank = [{ code: '', units: 2, grade: 'A' }];
+    setCourses(blank); setMessage('');
+    try { localStorage.setItem(localCoursesKey(), JSON.stringify(blank)); } catch { /* session-only */ }
+  };
 
   const update = (index: number, patch: Partial<CgpaCourseInput>) => {
     const next = courses.map((course, i) => (i === index ? { ...course, ...patch } : course));
@@ -53,7 +71,7 @@ export default function CgpaCalculatorCard({
     setSaving(true);
     setMessage('');
     try {
-      if (isLocalMode || !userId) {
+      if (isLocalMode || !userId || scale === 4) {
         onSnapshotSaved({
           id: `local-cgpa-${Date.now()}`,
           termLabel: 'Current Semester',
@@ -62,8 +80,11 @@ export default function CgpaCalculatorCard({
           classification: result.classification,
           createdAt: new Date().toISOString(),
           courses,
+          scale,
         });
-        setMessage('Saved on this device. Sign in with a connected account to keep it on your student record.');
+        setMessage(scale === 4
+          ? 'Saved on this device. 4.0 snapshots are local estimates and are not written to your student record.'
+          : 'Saved on this device. Sign in with a connected account to keep it on your student record.');
         return;
       }
       const snapshot = await saveCgpaSnapshot(userId, courses);
@@ -80,12 +101,18 @@ export default function CgpaCalculatorCard({
     <section className="dash-card" id="cgpa">
       <div className="dash-card-header">
         <h2 className="dash-card-title"><Calculator size={14} className="dash-card-title-icon" /> CGPA Calculator</h2>
-        <span className="dash-card-meta">5.0 scale</span>
+        <label className="dash-card-meta">Scale{' '}
+          <select value={scale} onChange={(e) => changeScale(Number(e.target.value) as CgpaScale)} aria-label="Grading scale" style={fieldStyle}>
+            <option value={5}>5.0 scale</option>
+            <option value={4}>4.0 scale</option>
+          </select>
+        </label>
       </div>
+      <p className="dash-note">Estimate only — not an official transcript. Bands vary by institution ({scale === 5 ? 'A=5, B=4, C=3, D=2, E=1, F=0' : 'A=4, B=3, C=2, D=1, F=0'}).</p>
 
       <div className="dash-cgpa-result">
         <span className="dash-metric-label">Estimated GPA</span>
-        <div className="dash-cgpa-value">{result.gpaText} <small>/ 5.00</small></div>
+        <div className="dash-cgpa-value">{result.gpaText} <small>/ {scale.toFixed(2)}</small></div>
         <span className="dash-cgpa-class">{result.totalUnits ? result.classification : 'Add your courses and grades below'}</span>
       </div>
 
@@ -98,12 +125,7 @@ export default function CgpaCalculatorCard({
             <input type="text" value={course.code} onChange={(e) => update(index, { code: e.target.value })} placeholder={`Course ${index + 1}`} aria-label={`Course ${index + 1} code`} style={fieldStyle} />
             <input type="number" min={1} max={6} value={course.units} onChange={(e) => update(index, { units: Number(e.target.value) || 1 })} aria-label={`Course ${index + 1} units`} style={fieldStyle} />
             <select value={course.grade} onChange={(e) => update(index, { grade: e.target.value })} aria-label={`Course ${index + 1} grade`} style={fieldStyle}>
-              <option value="A">A (5)</option>
-              <option value="B">B (4)</option>
-              <option value="C">C (3)</option>
-              <option value="D">D (2)</option>
-              <option value="E">E (1)</option>
-              <option value="F">F (0)</option>
+              {gradesForScale(scale).map((g) => <option key={g} value={g}>{g} ({gradePointsByScale[scale][g]})</option>)}
             </select>
             <button
               type="button"
@@ -127,7 +149,7 @@ export default function CgpaCalculatorCard({
       </div>
 
       {latestSnapshot && (
-        <div className="dash-note">Last saved: {latestSnapshot.gpa}/5.00 • {latestSnapshot.totalUnits} units • {latestSnapshot.classification}</div>
+        <div className="dash-note">Last saved: {latestSnapshot.gpa}/{(latestSnapshot.scale ?? 5).toFixed(2)} • {latestSnapshot.totalUnits} units • {latestSnapshot.classification}</div>
       )}
       {message && <div className={`dash-note ${message.toLowerCase().includes('unable') ? 'is-error' : 'is-success'}`}>{message}</div>}
 
@@ -147,6 +169,7 @@ export default function CgpaCalculatorCard({
         >
           + Add Course
         </button>
+        <button type="button" className="dash-btn dash-btn-secondary" onClick={clearAll}>Clear</button>
         <button type="button" className="dash-btn dash-btn-primary" onClick={save} disabled={saving || !result.totalUnits}>{saving ? 'Saving…' : 'Save Snapshot'}</button>
       </div>
     </section>

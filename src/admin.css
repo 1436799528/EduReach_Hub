@@ -45,9 +45,9 @@
 .admin-nav { padding: 4px 14px 20px; }
 .admin-nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 5px 0; border: 1px solid transparent; border-radius: 14px; color: #cbd3e1; text-decoration: none; font: 600 13px var(--er-font-sans); transition: .2s ease; }
 .admin-nav-link:hover { background: rgba(255,255,255,.06); color: #fff; }
-.admin-nav-link.active { background: rgba(217,114,18,.14); color: #fff; border-color: rgba(217,114,18,.28); box-shadow: inset 3px 0 0 var(--admin-orange); }
+.admin-nav-link.active { background: #174A3A; color: #fff; border-color: #2F7D5F; box-shadow: inset 3px 0 0 #8FD0B2; }
 .admin-nav-icon { width: 22px; color: #97a4b9; text-align: center; }
-.admin-nav-link.active .admin-nav-icon { color: var(--admin-orange); }
+.admin-nav-link.active .admin-nav-icon { color: #8FD0B2; }
 
 .admin-sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.08); }
 .admin-health-card { margin-bottom: 12px; padding: 12px 13px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; }
@@ -160,8 +160,10 @@
   .admin-sidebar-footer .admin-health-card{display:none}
   .admin-sidebar-footer .admin-user-email{grid-column:1/-1;margin:0;min-width:0}
   .admin-sidebar-footer .admin-btn.secondary,.admin-sidebar-footer .admin-logout{width:auto}
-  .admin-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding-bottom:10px}
-  .admin-nav-link{font-size:12px;padding:10px 12px;margin:3px 0}
+  /* Compact mobile nav: one scrollable row (audit). */
+  .admin-nav{display:flex;gap:6px;overflow-x:auto;padding:4px 14px 12px;scrollbar-width:thin}
+  .admin-nav-group{display:none}
+  .admin-nav-link{flex:0 0 auto;font-size:12px;padding:10px 12px;margin:0;min-height:44px;white-space:nowrap}
   .admin-topbar{position:static;min-height:58px;padding:0 16px}
   .admin-main{padding:18px 14px}
   .admin-page-header{align-items:flex-start;flex-direction:column}

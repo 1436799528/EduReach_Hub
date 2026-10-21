@@ -1290,6 +1290,139 @@ app.delete('/api/admin/services/:serviceId', requireCapability('service.delete')
   }
 });
 
+// --- Service guides (admin-managed step-by-step instructions) --------------
+// A guide row overrides the built-in guide in src/data/serviceGuides.ts for
+// one service. Public reads only ever see published rows; drafts, edits and
+// resets require the service.read / service.update capabilities checked here
+// on the server.
+
+const GUIDE_IMAGE_KINDS = new Set(['screenshot', 'official-document', 'illustration', 'photo', 'placeholder']);
+
+type GuideStepPayload = { title: string; body: string; image: string; imageAlt: string; imageKind: string; imageSource: string; section?: string };
+
+/** Returns the normalized guide or an error message. Steps are edited and published as one unit. */
+function normalizeGuidePayload(body: any): { guide: { eyebrow: string; summary: string; safetyNote: string; status: string; steps: GuideStepPayload[] } } | { error: string } {
+  const rawSteps = body?.steps;
+  if (!Array.isArray(rawSteps) || rawSteps.length < 1 || rawSteps.length > 24) return { error: 'A guide needs between 1 and 24 steps.' };
+  const steps: GuideStepPayload[] = [];
+  for (const [index, raw] of rawSteps.entries()) {
+    const title = String(raw?.title || '').trim().slice(0, 120);
+    const stepBody = String(raw?.body || '').trim().slice(0, 1000);
+    const image = safeContentUrl(raw?.image);
+    const imageKind = String(raw?.imageKind || '');
+    if (!title || !stepBody) return { error: `Step ${index + 1} needs a title and instructions.` };
+    if (!image) return { error: `Step ${index + 1} needs an image uploaded here, a site path or an HTTPS image link.` };
+    if (!GUIDE_IMAGE_KINDS.has(imageKind)) return { error: `Step ${index + 1} has an unrecognised image type.` };
+    const step: GuideStepPayload = {
+      title,
+      body: stepBody,
+      image,
+      imageAlt: String(raw?.imageAlt || '').trim().slice(0, 300) || title,
+      imageKind,
+      imageSource: String(raw?.imageSource || '').trim().slice(0, 300) || 'Admin-provided image',
+    };
+    const section = String(raw?.section || '').trim().slice(0, 80);
+    if (section) step.section = section;
+    steps.push(step);
+  }
+  const status = body?.status === 'published' ? 'published' : 'draft';
+  return {
+    guide: {
+      eyebrow: String(body?.eyebrow || '').trim().slice(0, 80),
+      summary: String(body?.summary || '').trim().slice(0, 600),
+      safetyNote: String(body?.safetyNote || '').trim().slice(0, 600),
+      status,
+      steps,
+    },
+  };
+}
+
+function guideRowToApi(row: any) {
+  return {
+    slug: row.service_key,
+    eyebrow: row.eyebrow || '',
+    summary: row.summary || '',
+    safetyNote: row.safety_note || '',
+    status: row.status,
+    steps: Array.isArray(row.steps) ? row.steps : [],
+    updatedAt: row.updated_at,
+  };
+}
+
+app.get('/api/services/:slug/guide', async (req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ guide: null });
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('service_guides')
+      .select('service_key,eyebrow,summary,safety_note,steps,status,updated_at')
+      .eq('service_key', req.params.slug.trim().toLowerCase())
+      .eq('status', 'published')
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ guide: data ? guideRowToApi(data) : null });
+  } catch (error) {
+    console.error('Service guide error:', error);
+    res.json({ guide: null });
+  }
+});
+
+app.get('/api/admin/services/:serviceId/guide', requireCapability('service.read'), async (req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key').eq('id', req.params.serviceId).single();
+    if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
+    const { data, error } = await supabase.from('service_guides').select('service_key,eyebrow,summary,safety_note,steps,status,updated_at').eq('service_key', service.service_key).maybeSingle();
+    if (error) throw error;
+    res.json({ guide: data ? guideRowToApi(data) : null, serviceKey: service.service_key });
+  } catch (error) {
+    console.error('Admin service guide load error:', error);
+    res.status(500).json({ error: 'Unable to load the service guide.' });
+  }
+});
+
+app.put('/api/admin/services/:serviceId/guide', requireCapability('service.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = normalizeGuidePayload(req.body);
+    if ('error' in parsed) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key').eq('id', req.params.serviceId).single();
+    if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
+    const { data, error } = await supabase.from('service_guides').upsert({
+      service_key: service.service_key,
+      eyebrow: parsed.guide.eyebrow,
+      summary: parsed.guide.summary,
+      safety_note: parsed.guide.safetyNote,
+      steps: parsed.guide.steps,
+      status: parsed.guide.status,
+      updated_by: adminUser.id,
+    }, { onConflict: 'service_key' }).select('service_key,eyebrow,summary,safety_note,steps,status,updated_at').single();
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'update', p_entity_type: 'service_guide', p_entity_id: null, p_metadata: { key: service.service_key, status: parsed.guide.status, steps: parsed.guide.steps.length } });
+    res.json({ guide: guideRowToApi(data) });
+  } catch (error) {
+    console.error('Admin service guide save error:', error);
+    res.status(500).json({ error: 'Unable to save the service guide.' });
+  }
+});
+
+app.delete('/api/admin/services/:serviceId/guide', requireCapability('service.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data: service, error: serviceError } = await supabase.from('service_catalog').select('id,service_key').eq('id', req.params.serviceId).single();
+    if (serviceError || !service) return res.status(404).json({ error: 'Service not found.' });
+    const { error } = await supabase.from('service_guides').delete().eq('service_key', service.service_key);
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'delete', p_entity_type: 'service_guide', p_entity_id: null, p_metadata: { key: service.service_key } });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin service guide reset error:', error);
+    res.status(500).json({ error: 'Unable to reset the service guide.' });
+  }
+});
+
 // --- Opportunities (scholarships / grants / jobs) ---------------------------
 
 const OPPORTUNITY_CATEGORIES = ['scholarship', 'grant', 'job', 'fellowship', 'competition'];
@@ -1788,7 +1921,7 @@ app.patch('/api/admin/pdf-bank/:documentId/route', requireCapability('data.write
 
 const UPLOAD_MIME_BY_EXT: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
 
-app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('news.create', 'opportunity.create', 'institution.update', 'calendar.update'), express.json({ limit: '5mb' }), async (req, res) => {
+app.post('/api/admin/uploads', rateLimitFor(RATE_LIMIT_RULES.adminUpload), requireCapability('news.create', 'opportunity.create', 'institution.update', 'calendar.update', 'service.update'), express.json({ limit: '5mb' }), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const dataUrl = String(req.body?.dataUrl || '');

@@ -754,7 +754,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </a>
       </div>
 
-      <section className="dash-card">
+      <section className="dash-card" id="dashboard-notifications">
         <div className="dash-card-header">
           <h2 className="dash-card-title"><Bell size={14} className="dash-card-title-icon" /> Notifications</h2>
           {unreadNotifications > 0 && (
@@ -991,6 +991,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           </form>
 
           <div className="edureach-dash-actions">
+            <button type="button" className="dash-icon-btn" style={{ position: 'relative' }} aria-label={unreadNotifications ? `Notifications, ${unreadNotifications} unread` : 'Notifications'}
+              onClick={() => { openTab('dashboard'); window.setTimeout(() => document.getElementById('dashboard-notifications')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}>
+              <Bell size={17} />
+              {unreadNotifications > 0 && <span aria-hidden="true" style={{ position: 'absolute', top: '-4px', right: '-4px', minWidth: '17px', height: '17px', borderRadius: '999px', background: '#B14933', color: '#fff', fontSize: '10px', fontWeight: 680, display: 'grid', placeItems: 'center', padding: '0 4px' }}>{unreadNotifications}</span>}
+            </button>
             <a href="/" className="dash-btn dash-btn-secondary dash-hide-mobile">Student site</a>
             <div style={{ position: 'relative' }}>
               <button type="button" className="edureach-dash-profile-btn" onClick={() => setProfileMenuOpen((open) => !open)} aria-haspopup="menu" aria-expanded={profileMenuOpen}>

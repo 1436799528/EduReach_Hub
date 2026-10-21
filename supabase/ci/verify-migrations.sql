@@ -19,7 +19,7 @@ declare
   signup_triggers integer;
 begin
   foreach item in array array[
-    'profiles', 'service_catalog', 'service_requests', 'student_wallets', 'courses',
+    'profiles', 'service_catalog', 'service_guides', 'service_requests', 'student_wallets', 'courses',
     'resources', 'past_questions', 'campus_posts', 'campus_post_comments',
     'campus_post_likes', 'edureach_notifications', 'student_notifications',
     'student_saved_items', 'student_cgpa_terms', 'student_cgpa_courses',

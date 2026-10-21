@@ -215,11 +215,13 @@
   .er-exam-bar{flex-wrap:wrap;gap:8px;padding:8px 10px}
   .er-exam-bar-left{flex-basis:100%}
   .er-exam-candidate-meta strong{max-width:140px}
-  .er-exam-bar-controls{width:100%;margin-left:0;justify-content:space-between;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-  .er-exam-bar-controls::-webkit-scrollbar{display:none}
+  .er-exam-bar-controls{width:100%;margin-left:0;justify-content:flex-start;flex-wrap:wrap}
   .er-exam-timer{flex:0 0 auto}
   .er-exam-tool-label{display:none}
-  .er-exam-tool,.er-exam-end{padding:7px 9px;min-height:36px}
+  /* End Test stays labelled + 44px (audit L-02). */
+  .er-exam-end,.er-exam-tool{min-height:44px}
+  .er-exam-end{margin-left:auto}
+  .er-exam-end .er-exam-tool-label{display:inline}
   .er-exam-question{padding:18px 16px}
   .er-exam-question h1{font-size:17px;line-height:1.55}
   .er-exam-main{padding:12px 12px 72px}

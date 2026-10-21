@@ -64,6 +64,10 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Policy pages must be readable without a login, so site_pages_public_read filters to status = published. Drafts are server-only.',
   },
   {
+    table: 'service_guides', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Guide drafts must never reach students; published guides are served by the public API after a capability-checked server read. No client grant exists.',
+  },
+  {
     table: 'site_page_revisions', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
     why: 'Append-only policy history is read and written by the admin API; no client grant exists, so the revision list cannot be enumerated by a visitor.',
   },
