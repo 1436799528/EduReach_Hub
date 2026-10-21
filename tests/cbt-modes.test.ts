@@ -54,6 +54,7 @@ before(async () => {
   // (correctly) refuses any combination without Use of English.
   await db.exec(insertQuestions(WAEC, 'Physics', 8, 600));
   await db.exec(insertQuestions(WAEC, 'Mathematics', 25, 700));
+  await db.exec(insertQuestions(WAEC, 'Chemistry', 5, 800));
   // The signed-in student for the whole suite; individual tests switch to
   // another account with asUser() to prove the ownership boundary.
   await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [STUDENT]);
@@ -166,7 +167,7 @@ test('practice limits are validated server-side', async () => {
 
 test('mock duration comes from the exam configuration, never from the client', async () => {
   const { rows } = await db.query<any>(
-    `select * from public.start_cbt_attempt_configured($1, array['Biology'], 5, 999, 'mock', 'Nursing Science')`,
+    `select * from public.start_cbt_attempt_configured($1, array['Biology','Physics','Mathematics','Chemistry'], 5, 999, 'mock', 'Nursing Science')`,
     [WAEC],
   );
   const attempt = rows[0];
@@ -174,7 +175,7 @@ test('mock duration comes from the exam configuration, never from the client', a
   assert.equal(attempt.mode, 'mock');
   // A bank with no fixed paper sits every usable question from the chosen
   // subjects at the exam's duration; the student does not choose the mock size.
-  assert.equal(attempt.total_questions, 12, 'the whole usable Biology pool is the mock paper');
+  assert.equal(attempt.total_questions, 50, 'the mock includes all usable questions from the four selected subjects');
 
   const { rows: stored } = await db.query<{ programme: string }>(
     `select programme from public.cbt_attempts where id = $1`,
@@ -283,7 +284,7 @@ test('a student can delete practice data but never a mock record', async () => {
   assert.equal(gone[0].n, 0, 'practice data is really deleted, not hidden');
 
   const mockId = await asUser(STUDENT, async () => (await db.query<any>(
-    `select * from public.start_cbt_attempt_configured($1, array['Biology'], 5, null, 'mock', null)`,
+    `select * from public.start_cbt_attempt_configured($1, array['Biology','Physics','Mathematics','Chemistry'], 5, null, 'mock', null)`,
     [WAEC],
   )).rows[0].attempt_id);
   await assert.rejects(
