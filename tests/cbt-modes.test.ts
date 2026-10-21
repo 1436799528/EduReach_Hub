@@ -333,7 +333,10 @@ test('expired attempts cannot accept drafts or submissions', async () => {
     `select * from public.start_cbt_attempt_configured($1, array['Physics'], 5, 30, 'practice', null)`,
     [WAEC],
   )).rows[0].attempt_id);
-  await db.exec(`update public.cbt_attempts set expires_at = now() - interval '1 minute' where id = '${id}'`);
+  // Past the 120-second submission delivery window (cbt_submit_grace): inside
+  // it a submission is still graded, which tests/cbt-submit-grace.test.ts
+  // covers; beyond it the attempt refuses all work.
+  await db.exec(`update public.cbt_attempts set expires_at = now() - interval '5 minutes' where id = '${id}'`);
 
   await assert.rejects(
     () => asUser(STUDENT, async () => db.query(`select public.save_cbt_attempt_draft($1, '{"1":0}'::jsonb, 0)`, [id])),

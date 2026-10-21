@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 71 then 'pass' else 'fail' end as result,
+  case when count(*) >= 72 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 71)' as detail
+  count(*)::text || ' migrations recorded (repository holds 72)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -190,6 +190,10 @@ with expected(version, migration) as (
   select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'mode')
+  union all
+  select 'public.cbt_attempts.submission_late_ms', '20261025120000_cbt_submit_grace_120.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'submission_late_ms')
   union all
   select 'public.plan_cbt_paper()', '20261002120000_cbt_practice_and_mock_modes.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
