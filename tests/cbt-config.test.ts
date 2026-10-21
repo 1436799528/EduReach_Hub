@@ -224,8 +224,10 @@ test('a JAMB mock is a four-subject paper and says what is missing', () => {
     /Add 2 more subjects/,
   );
   assert.equal(mockCombinationError(['Use of English', 'Mathematics', 'Physics', 'Chemistry'], 'jamb'), null);
-  assert.match(String(mockCombinationError(['Mathematics'], 'waec')), /requires nine selected subjects/i);
-  assert.equal(mockCombinationError(['English', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Government', 'Economics', 'Geography', 'Literature in English'], 'waec'), null);
+  assert.match(String(mockCombinationError(['Mathematics'], 'waec')), /requires at least four subjects/i);
+  assert.match(String(mockCombinationError(['Mathematics', 'Biology', 'Chemistry'], 'waec')), /requires at least four subjects/i);
+  assert.equal(mockCombinationError(['English', 'Mathematics', 'Biology', 'Chemistry'], 'waec'), null);
+  assert.equal(mockCombinationError(['English', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Government', 'Economics', 'Geography', 'Literature in English'], 'waec'), null, 'WAEC can use up to nine subjects');
   assert.match(String(mockCombinationError(['English', 'Mathematics', 'Biology'], 'post-utme')), /at least four subjects/i);
   assert.equal(
     mockCombinationError(['Use of English', 'Mathematics', 'Physics', 'Use of English'], 'jamb'),
