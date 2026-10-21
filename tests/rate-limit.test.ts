@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import { once } from 'node:events';
 
-import { MemoryRateLimiter, clientKey, createRateLimiter, type RateLimitRule } from '../lib/rate-limit';
+import { MemoryRateLimiter, bearerSubject, clientKey, createRateLimiter, type RateLimitRule } from '../lib/rate-limit';
 
 // Explicitly test the unconfigured, fail-closed environment. No live writes.
 Object.assign(process.env, {
@@ -154,4 +154,45 @@ test('sensitive endpoints are rate limited end to end', async () => {
     body: '{}',
   });
   assert.notEqual(other.status, 429);
+});
+
+function bearerFor(sub: string): string {
+  const segment = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  return `Bearer ${segment({ alg: 'none', typ: 'JWT' })}.${segment({ sub })}.signature`;
+}
+
+test('bearerSubject reads only a UUID-shaped subject claim', () => {
+  const id = '33333333-3333-3333-3333-333333333333';
+  assert.equal(bearerSubject(mockRequest({ authorization: bearerFor(id) })), id);
+  assert.equal(bearerSubject(mockRequest({ authorization: bearerFor('not-a-uuid') })), null);
+  assert.equal(bearerSubject(mockRequest({ authorization: 'Bearer not-a-jwt' })), null);
+  assert.equal(bearerSubject(mockRequest()), null);
+});
+
+test('keyByUser counts per account behind one shared IP, falling back to the IP', async () => {
+  const perUserRule: RateLimitRule = { name: 'per-user', limit: 2, windowSeconds: 60, keyByUser: true };
+  const middleware = createRateLimiter({})(perUserRule);
+  const studentA = mockRequest({ authorization: bearerFor('33333333-3333-3333-3333-333333333333') });
+  const studentB = mockRequest({ authorization: bearerFor('44444444-4444-4444-4444-444444444444') });
+
+  // Both students share mockRequest's 10.0.0.1 address (a lab behind NAT).
+  const resA = mockResponse();
+  await runMiddleware(middleware, studentA, resA);
+  await runMiddleware(middleware, studentA, resA);
+  assert.equal(resA.statusCode, 200);
+  await runMiddleware(middleware, studentA, resA);
+  assert.equal(resA.statusCode, 429, 'the third request from the same account is blocked');
+
+  const resB = mockResponse();
+  const runB = await runMiddleware(middleware, studentB, resB);
+  assert.equal(runB.nextCalled, true, 'a different student on the same IP is not blocked by the first');
+  assert.equal(resB.statusCode, 200);
+
+  // No token (or a malformed one) shares the per-IP bucket.
+  const resAnon = mockResponse();
+  await runMiddleware(middleware, mockRequest(), resAnon);
+  await runMiddleware(middleware, mockRequest({ authorization: 'Bearer not-a-jwt' }), resAnon);
+  assert.equal(resAnon.statusCode, 200);
+  await runMiddleware(middleware, mockRequest(), resAnon);
+  assert.equal(resAnon.statusCode, 429, 'anonymous requests still share the IP bucket');
 });
