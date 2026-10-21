@@ -317,7 +317,7 @@ export function mockCombinationError(subjects: string[], examBodyOrKey: string):
     return null;
   }
   if (body.includes('WAEC') || body.includes('NECO')) {
-    if (unique.size !== 9) return `A ${body.includes('WAEC') ? 'WAEC' : 'NECO'} mock requires nine selected subjects. Select ${Math.max(0, 9 - unique.size)} more subject(s) before starting.`;
+    if (unique.size < 4) return `A ${body.includes('WAEC') ? 'WAEC' : 'NECO'} mock requires at least four subjects. Select ${4 - unique.size} more subject(s), or use practice mode.`;
   }
   if (body.includes('POST') && unique.size < 4) {
     return 'A Post-UTME mock requires at least four subjects. Use practice mode for a shorter session.';
