@@ -58,7 +58,7 @@ from (values
 ) as catalogue(subject_group, subject_name)
 cross join (values ('JAMB'),('WAEC'),('NECO'),('POST-UTME')) as bodies(body)
 where bodies.body <> 'JAMB'
-   or subject_name in (
+   or (subject_group <> 'Technical & Vocational' and subject_name in (
      'Biology','Chemistry','Physics','Mathematics','Further Mathematics',
      'Agricultural Science','Geography','Computer Studies','Computer Science',
      'Data Processing','English Language','Use of English','Civic Education',
@@ -67,7 +67,7 @@ where bodies.body <> 'JAMB'
      'French','Hausa','Igbo','Yoruba','Visual Art','Fine Art','Music','General Knowledge in Art','Cultural and Creative Arts',
      'Economics','Commerce','Financial Accounting','Principles of Accounts',
      'Marketing','Business Studies','Store Keeping'
-   )
+   ))
 on conflict (exam_body, subject_name, subject_group) do update set active = true;
 
 alter table public.cbt_subject_catalog enable row level security;
