@@ -211,7 +211,7 @@ test('practice time is proportional to the examination pace, within limits', () 
 test('the subject cap follows the examination, not the bank default', () => {
   assert.equal(subjectLimitFor('jamb'), 4, 'JAMB UTME is Use of English plus three');
   assert.equal(subjectLimitFor('JAMB UTME'), 4);
-  assert.equal(subjectLimitFor('jamb', { ...DEFAULT_CBT_LIMITS, maxSubjects: 3 }), 4, 'JAMB's four-subject standard is not reduced by a generic limit');
+  assert.equal(subjectLimitFor('jamb', { ...DEFAULT_CBT_LIMITS, maxSubjects: 3 }), 4, "JAMB's four-subject standard is not reduced by a generic limit");
   assert.equal(subjectLimitFor('waec'), 9);
   assert.equal(subjectLimitFor('neco'), 9);
   assert.equal(subjectLimitFor('post-utme'), 9);
