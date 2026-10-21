@@ -94,7 +94,6 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const examBody = String(result?.exam?.exam_body || '').trim().toUpperCase();
   const isWaecStyle = examBody === 'WAEC' || examBody === 'NECO';
   const isJambStyle = examBody === 'JAMB' || examBody === 'UTME' || examBody.includes('POST');
-  const isMock = String(result?.attempt?.mode || '').toLowerCase() === 'mock';
   const subjectMarkTotal = subjectRows.reduce((sum, row) => sum + (row.total > 0 ? (row.correct / row.total) * 100 : 0), 0);
   const score = isJambStyle && subjectRows.length
     ? Math.round(subjectMarkTotal)
