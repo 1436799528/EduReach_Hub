@@ -103,7 +103,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // Practice configuration - the student's own session.
   const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
-  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities'>('General');
+  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities' | 'Technical / Vocational'>('General');
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -285,13 +285,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     || (compulsoryKeys.length > 0 && !compulsoryEnglish);
   const trackSubjectNames = useMemo(() => {
     if (practiceTrack === 'General') return null;
-    const secondary = secondarySubjectCatalog[practiceTrack];
+    const secondary = secondarySubjectCatalog[practiceTrack as keyof typeof secondarySubjectCatalog] || [];
     const jamb = practiceTrack === 'Science'
       ? [...jambSubjectCatalog.Science, ...jambSubjectCatalog.Engineering, ...jambSubjectCatalog['Medicine & Health'], ...jambSubjectCatalog.Education]
       : practiceTrack === 'Commercial'
         ? [...jambSubjectCatalog.Commercial, ...jambSubjectCatalog['Social Science']]
         : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
-    return new Set([...secondary, ...jamb].map(normalizeSubject));
+    const vocational = practiceTrack === 'Technical / Vocational' ? secondarySubjectCatalog['Technical / Vocational'] : [];
+    return new Set([...secondary, ...jamb, ...vocational].map(normalizeSubject));
   }, [practiceTrack]);
   // A subject the static catalogues do not know (Post-UTME "General
   // Knowledge", for example) must not disappear because of a group filter:
@@ -347,7 +348,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       if (current.some((item) => normalizeSubject(item) === normalizeSubject(subject))) return current;
       const subjectLimit = subjectLimitFor(examBody, limits);
       if (current.length >= subjectLimit) {
-        setFormError(`A session can include at most ${subjectLimit} subjects${exam === 'jamb' ? ' for JAMB UTME' : ''}. Remove one before adding another.`);
+        setFormError(`You have reached the ${subjectLimit}-subject limit for this exam. Remove a subject before adding another.`);
         return current;
       }
       return [...current, subject];
@@ -637,14 +638,21 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 {(mode === 'practice' || mode === 'mock') && (
                   <div className="er-setup-form-grid">
                     <div className="er-setup-full-width">
-                      <span className="er-setup-label">Subject group</span>
-                      <div className="er-setup-duration-options" role="radiogroup" aria-label="Filter subjects by group">
-                        {(['General', 'Science', 'Commercial', 'Arts & Humanities'] as const).map((track) => (
-                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); setFormError(''); }}>
-                            {track === 'Arts & Humanities' ? 'Arts' : track}
-                          </button>
-                        ))}
-                      </div>
+                      <label className="er-setup-label" htmlFor="er-subject-group">Subject group</label>
+                      <select
+                        id="er-subject-group"
+                        className="er-setup-group-select"
+                        aria-label="Choose subject group"
+                        value={practiceTrack}
+                        onChange={(event) => { setPracticeTrack(event.target.value as typeof practiceTrack); setFormError(''); }}
+                        style={{ width: '100%', minHeight: 44, padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5d1', background: '#fff', color: '#174A3A', font: 'inherit' }}
+                      >
+                        <option value="General">All subjects</option>
+                        <option value="Science">Science</option>
+                        <option value="Arts & Humanities">Arts</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Technical / Vocational">Technical &amp; Vocational</option>
+                      </select>
                     </div>
                     <div className="er-setup-full-width">
                       <div className="er-setup-label">
