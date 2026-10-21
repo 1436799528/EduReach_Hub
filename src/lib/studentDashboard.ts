@@ -51,9 +51,25 @@ export type CgpaSnapshot = {
   classification: string;
   createdAt: string;
   courses: CgpaCourseInput[];
+  /** Absent on pre-scale snapshots, which are always 5.0 records. */
+  scale?: CgpaScale;
 };
 
-const gradePoints: Record<string, number> = { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 };
+export type CgpaScale = 4 | 5;
+
+/**
+ * Grade-point tables. The 5.0 table is the long-standing Nigerian scale and
+ * must never be reused for a 4.0 calculation. The 4.0 table has no E grade.
+ * Classification bands differ between institutions; these are estimates,
+ * never an official transcript result.
+ */
+export const gradePointsByScale: Record<CgpaScale, Record<string, number>> = {
+  5: { A: 5, B: 4, C: 3, D: 2, E: 1, F: 0 },
+  4: { A: 4, B: 3, C: 2, D: 1, F: 0 },
+};
+export const gradesForScale = (scale: CgpaScale): string[] => Object.keys(gradePointsByScale[scale]);
+
+const gradePoints: Record<string, number> = gradePointsByScale[5];
 
 function logOptionalTableError(scope: string, error: unknown) {
   // The dashboard must remain usable if a Supabase project has not run the
@@ -77,11 +93,31 @@ function timeAgo(value: string) {
   return new Intl.DateTimeFormat('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
 }
 
-export function calculateCgpa(courses: CgpaCourseInput[]) {
+function classificationFor(scale: CgpaScale, gpa: number): string {
+  if (scale === 4) {
+    return gpa >= 3.5 ? 'First Class Honours'
+      : gpa >= 3.0 ? 'Second Class Upper (2:1)'
+      : gpa >= 2.0 ? 'Second Class Lower (2:2)'
+      : gpa >= 1.0 ? 'Third Class'
+      : 'Probation / Review Required';
+  }
+  return gpa >= 4.5
+    ? 'First Class Honours'
+    : gpa >= 3.5
+    ? 'Second Class Upper (2:1)'
+    : gpa >= 2.4
+    ? 'Second Class Lower (2:2)'
+    : gpa >= 1.5
+    ? 'Third Class'
+    : 'Probation / Review Required';
+}
+
+export function calculateCgpa(courses: CgpaCourseInput[], scale: CgpaScale = 5) {
+  const table = gradePointsByScale[scale];
   const totals = courses.reduce(
     (acc, course) => {
       const units = Number(course.units) || 0;
-      const points = gradePoints[course.grade] ?? 0;
+      const points = table[course.grade] ?? 0;
       acc.units += units;
       acc.points += units * points;
       return acc;
@@ -89,22 +125,13 @@ export function calculateCgpa(courses: CgpaCourseInput[]) {
     { units: 0, points: 0 }
   );
   const gpa = totals.units > 0 ? totals.points / totals.units : 0;
-  const classification =
-    gpa >= 4.5
-      ? 'First Class Honours'
-      : gpa >= 3.5
-      ? 'Second Class Upper (2:1)'
-      : gpa >= 2.4
-      ? 'Second Class Lower (2:2)'
-      : gpa >= 1.5
-      ? 'Third Class'
-      : 'Probation / Review Required';
 
   return {
     gpa,
     gpaText: gpa.toFixed(2),
     totalUnits: totals.units,
-    classification,
+    classification: classificationFor(scale, gpa),
+    scale,
   };
 }
 

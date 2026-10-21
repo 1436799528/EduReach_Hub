@@ -368,10 +368,13 @@ export default function ProfileCompletionPage() {
     const savedSchool = school.includes('Other') ? customSchool : school;
     const savedCourse = courseProgramme || customCourseProgramme;
     const savedDepartment = department || customDepartment;
-    const savedRows = [
+    // Personal identity/contact stays visibly separate from academic record.
+    const personalRows = [
       ['Name', userName],
       ['Email', userEmail],
       ['Phone', phone || 'Not added yet'],
+    ];
+    const academicRows = [
       ['Institution', savedSchool],
       ['Level', level],
       ['Course / programme', savedCourse],
@@ -394,8 +397,13 @@ export default function ProfileCompletionPage() {
                 <div className="profile-summary-avatar" style={{ background: avatarTone }}>{displayAvatar ? <img src={displayAvatar} alt="" decoding="async" /> : avatarInitials}</div>
                 <div><h2>{userName || 'Student'}</h2><p>{userEmail || 'Your account email'}</p></div>
               </div>
+              <h3 style={{ margin: "18px 0 8px", fontSize: 12, fontWeight: 680, letterSpacing: ".08em", textTransform: "uppercase", color: "#174A3A" }}>Personal profile</h3>
               <div className="profile-summary-grid">
-                {savedRows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value || 'Not added yet'}</strong></div>)}
+                {personalRows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value || 'Not added yet'}</strong></div>)}
+              </div>
+              <h3 style={{ margin: "18px 0 8px", fontSize: 12, fontWeight: 680, letterSpacing: ".08em", textTransform: "uppercase", color: "#174A3A" }}>Academic profile</h3>
+              <div className="profile-summary-grid">
+                {academicRows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value || 'Not added yet'}</strong></div>)}
               </div>
             </section>
             <p className="profile-summary-note">Need to change your information? Select Edit Profile. Your updates will be used for your dashboard and service requests.</p>

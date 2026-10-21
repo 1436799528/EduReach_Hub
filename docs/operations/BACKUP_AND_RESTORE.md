@@ -154,7 +154,7 @@ restoring but the code is intact:
 npm run backup:rehearsal     # proves the migrations still build a working database
 ```
 
-Current committed migration set: **72 migrations** in `supabase/migrations/`; the migration replay test verifies the complete set applies from an empty schema. The dated rehearsal figures below are historical snapshots. Current CI schema fingerprint: **72 migrations, 48 tables, 574 columns, 54 policies, 48 tables with RLS**.
+Current committed migration set: **73 migrations** in `supabase/migrations/`; the migration replay test verifies the complete set applies from an empty schema. The dated rehearsal figures below are historical snapshots. Current CI schema fingerprint: **73 migrations, 49 tables, 583 columns, 54 policies, 49 tables with RLS**.
 
 Applying migrations is the riskiest routine operation in
 `docs/operations/PRODUCTION_RUNBOOK.md` §3; §3a there is the sync check that

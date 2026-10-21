@@ -682,7 +682,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                               <li key={subject}>
                                 <span className="er-selected-subject-name">{subject}{compulsory ? ' · compulsory' : ''}</span>
                                 <span className="er-selected-subject-count">
-                                  {entry ? `${entry.questionCount} in bank` : 'not in this bank'}
+                                  {entry ? 'Available' : 'Not in this bank'}
                                   {planned && planned.questions > 0 ? ` · ${planned.questions} in your paper (Q${planned.first}–Q${planned.last})` : ''}
                                 </span>
                                 {compulsory ? (

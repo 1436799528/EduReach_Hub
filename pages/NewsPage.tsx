@@ -1,11 +1,11 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { FeaturedNews, NewsRow } from '../src/components/NewsSections';
 import { fetchNews, type NewsItem } from '../src/lib/api';
-import { newsCategories, newsCategoryMatches, newsCategorySlug } from '../src/data/newsCategories';
+import { newsCategories, newsCategoryLabel, newsCategoryMatches, newsCategorySlug } from '../src/data/newsCategories';
+import { matchesSearch } from '../src/lib/searchMatch';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { newsFreshness } from '../src/lib/newsFreshness';
 import { Search, X } from 'lucide-react';
@@ -62,13 +62,13 @@ export default function NewsPage() {
 
   const filteredItems = useMemo(() => {
     const byCategory = activeFilter === 'ALL' ? items : items.filter((item) => newsCategoryMatches(item.category, activeFilter));
-    const needle = query.trim().toLowerCase();
-    if (!needle) return byCategory;
-    return byCategory.filter((item) => [item.title, item.summary, item.source_name, item.category, ...(item.tags || [])]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-      .includes(needle));
+    if (!query.trim()) return byCategory;
+    // Tokenised matching (same helper as site search): word order and
+    // punctuation do not matter, every word must appear somewhere.
+    return byCategory.filter((item) => matchesSearch(
+      [item.title, item.summary, item.source_name, item.category, newsCategoryLabel(item.category), ...(item.tags || [])],
+      query,
+    ));
   }, [items, activeFilter, query]);
 
   // Expired or superseded stories are listed after current ones rather than
@@ -104,7 +104,12 @@ export default function NewsPage() {
           </div>
 
           <div style={{ marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-            <FilterPills options={filters} active={activeFilter} onChange={changeFilter} ariaLabel="News categories" />
+            <label className="er-library-search" style={{ maxWidth: '260px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 560 }}>Category</span>
+              <select value={activeFilter} onChange={(event) => changeFilter(event.target.value)} aria-label="News category">
+                {filters.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+              </select>
+            </label>
             {/* A control group, not a <label>: the clear button must not be
                 nested inside the label element that annotates the input. */}
             <div className="er-library-search" role="search" aria-label="Search news" style={{ marginTop: '12px', maxWidth: '420px', width: '100%' }}>

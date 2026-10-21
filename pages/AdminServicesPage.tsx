@@ -1,13 +1,23 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
-import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, BookOpen, Eye, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import {
+  adminApiFetch,
   createAdminService,
   deleteAdminService,
   fetchAdminServices,
   updateAdminService,
+  uploadAdminImage,
   type AdminService,
 } from '../src/lib/api';
+import type { ServiceGuide, ServiceGuideStep } from '../src/data/serviceGuides';
+
+// Admin guide API (kept in this lazy admin chunk so the shared API module —
+// and therefore the student first-load bundle — does not grow).
+type AdminServiceGuide = ServiceGuide & { status: 'draft' | 'published'; updatedAt?: string };
+const fetchAdminServiceGuide = (serviceId: string) => adminApiFetch<{ guide: AdminServiceGuide | null; serviceKey: string }>(`/api/admin/services/${encodeURIComponent(serviceId)}/guide`);
+const saveAdminServiceGuide = async (serviceId: string, guide: AdminServiceGuide): Promise<AdminServiceGuide> => (await adminApiFetch<{ guide: AdminServiceGuide }>(`/api/admin/services/${encodeURIComponent(serviceId)}/guide`, { method: 'PUT', body: JSON.stringify(guide) })).guide;
+const resetAdminServiceGuide = (serviceId: string) => adminApiFetch(`/api/admin/services/${encodeURIComponent(serviceId)}/guide`, { method: 'DELETE' });
 import { AdminEmptyState, StatusBadge } from '../src/components/admin/AdminKit';
 
 // Service Catalogue manager: full CRUD over the service_catalog rows the
@@ -30,12 +40,175 @@ type EditState = {
 
 const emptyEdit: EditState = { id: null, service_key: '', title: '', description: '', application_url: '', route: '', category: 'Services', sort_order: '100', active: true, is_form_service: false };
 
+
+// Step-by-step guide editor for one catalogue service. Guides saved here are
+// stored server-side and override the built-in guide from
+// src/data/serviceGuides.ts once published; drafts never reach students.
+// Resetting deletes the saved guide and restores the built-in default —
+// catalogue routes and WhatsApp destinations are never touched by guide edits.
+const GUIDE_KIND_OPTIONS: Array<{ value: ServiceGuideStep['imageKind']; label: string }> = [
+  { value: 'screenshot', label: 'Portal screenshot' },
+  { value: 'official-document', label: 'Official document / notice' },
+  { value: 'illustration', label: 'Illustration' },
+  { value: 'photo', label: 'Photo' },
+  { value: 'placeholder', label: 'Placeholder — screenshot pending' },
+];
+const blankStep = (): ServiceGuideStep => ({ title: '', body: '', image: '', imageAlt: '', imageKind: 'placeholder', imageSource: 'Placeholder — official screenshot pending verification' });
+const builtinGuide = async (key: string): Promise<AdminServiceGuide> => {
+  const { guideForService } = await import('../src/data/serviceGuides');
+  const builtin = guideForService(key);
+  return builtin ? { ...builtin, status: 'draft', steps: builtin.steps.map((step) => ({ ...step })) } : { slug: key, eyebrow: '', summary: '', safetyNote: '', status: 'draft', steps: [blankStep()] };
+};
+
+function GuideEditor({ service, onClose, onNotice }: { service: AdminService; onClose: () => void; onNotice: (text: string) => void }) {
+  const [guide, setGuide] = useState<AdminServiceGuide | null>(null);
+  const [isCustom, setIsCustom] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [uploadingStep, setUploadingStep] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const { guide: stored } = await fetchAdminServiceGuide(service.id);
+        if (!active) return;
+        if (stored) { setGuide(stored); setIsCustom(true); } else setGuide(await builtinGuide(service.service_key));
+      } catch (e) { if (active) setError(userFacingError(e, 'Unable to load the guide editor.')); }
+      finally { if (active) setLoading(false); }
+    })();
+    return () => { active = false; };
+  }, [service.id, service.service_key]);
+
+  const patchStep = (index: number, patch: Partial<ServiceGuideStep>) => setGuide((c) => c ? { ...c, steps: c.steps.map((step, i) => i === index ? { ...step, ...patch } : step) } : c);
+  const moveStep = (index: number, direction: -1 | 1) => setGuide((c) => {
+    if (!c) return c;
+    const target = index + direction;
+    if (target < 0 || target >= c.steps.length) return c;
+    const steps = [...c.steps];
+    [steps[index], steps[target]] = [steps[target], steps[index]];
+    return { ...c, steps };
+  });
+  async function uploadStepImage(index: number, file: File) {
+    if (file.size > 2 * 1024 * 1024) { setError('Images must be 2 MB or smaller.'); return; }
+    setUploadingStep(index); setError('');
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Could not read the image file.'));
+        reader.readAsDataURL(file);
+      });
+      patchStep(index, { image: (await uploadAdminImage(dataUrl)).url });
+    } catch (e) { setError(userFacingError(e, 'Image upload failed.')); }
+    finally { setUploadingStep(null); }
+  }
+  async function save() {
+    if (!guide) return;
+    setSaving(true); setError('');
+    try {
+      const saved = await saveAdminServiceGuide(service.id, guide);
+      setGuide(saved); setIsCustom(true);
+      onNotice(saved.status === 'published' ? `Guide for “${service.title}” is published.` : `Guide for “${service.title}” saved as a draft.`);
+    } catch (e) { setError(userFacingError(e, 'Unable to save the guide.')); }
+    finally { setSaving(false); }
+  }
+  async function resetToBuiltin() {
+    if (!window.confirm('Remove the saved guide and restore the built-in default?')) return;
+    setSaving(true); setError('');
+    try {
+      await resetAdminServiceGuide(service.id);
+      setGuide(await builtinGuide(service.service_key)); setIsCustom(false);
+      onNotice(`Guide for “${service.title}” reset to the built-in default.`);
+    } catch (e) { setError(userFacingError(e, 'Unable to reset the guide.')); }
+    finally { setSaving(false); }
+  }
+
+  const field = (label: string, control: React.ReactNode) => (
+    <label className="admin-field"><span>{label}</span>{control}</label>
+  );
+  return (
+    <div className="admin-card">
+      <div className="admin-card-header"><h2>Guide steps — {service.title}</h2><button type="button" className="admin-text-btn" onClick={onClose}>Close</button></div>
+      <div className="admin-news-editor-body">
+        {loading && <p className="muted">Loading guide…</p>}
+        {error && <div role="alert"><span>{error}</span></div>}
+        {!loading && guide && (<>
+          <p className="admin-footnote">{isCustom ? 'Saved guide in use. Publishing replaces what students see; routes and WhatsApp links are unaffected.' : 'Showing the built-in guide. Saving creates an editable copy; publishing makes it live.'} Mark an image “Portal screenshot” only when it really shows the portal.</p>
+          <div className="admin-news-form-grid">
+            <div className="admin-field-row">
+              {field('Eyebrow', <input aria-label="Eyebrow" className="admin-input" value={guide.eyebrow} onChange={(e) => setGuide({ ...guide, eyebrow: e.target.value })} placeholder="e.g. Result-checking guide" />)}
+              {field('Publication state', <select aria-label="Publication state" className="admin-input" value={guide.status} onChange={(e) => setGuide({ ...guide, status: e.target.value as AdminServiceGuide['status'] })}><option value="draft">Draft — hidden from students</option><option value="published">Published — live for students</option></select>)}
+            </div>
+            {field('Summary', <textarea aria-label="Summary" className="admin-textarea" style={{ minHeight: 56 }} value={guide.summary} onChange={(e) => setGuide({ ...guide, summary: e.target.value })} />)}
+            {field('Safety note', <textarea aria-label="Safety note" className="admin-textarea" style={{ minHeight: 48 }} value={guide.safetyNote} onChange={(e) => setGuide({ ...guide, safetyNote: e.target.value })} />)}
+          </div>
+          {guide.steps.map((step, index) => (
+            <div key={index} className="admin-card" style={{ padding: '14px 16px' }}>
+              <div className="admin-card-header">
+                <h3 style={{ margin: 0, fontSize: 14 }}>Step {index + 1}</h3>
+                <div className="admin-action-row">
+                  <button type="button" className="admin-btn small" aria-label={`Move step ${index + 1} up`} disabled={index === 0} onClick={() => moveStep(index, -1)}><ArrowUp size={12} /></button>
+                  <button type="button" className="admin-btn small" aria-label={`Move step ${index + 1} down`} disabled={index === guide.steps.length - 1} onClick={() => moveStep(index, 1)}><ArrowDown size={12} /></button>
+                  <button type="button" className="admin-text-btn danger-text" aria-label={`Delete step ${index + 1}`} disabled={guide.steps.length <= 1} onClick={() => setGuide({ ...guide, steps: guide.steps.filter((_, i) => i !== index) })}><Trash2 size={12} /></button>
+                </div>
+              </div>
+              <div className="admin-news-form-grid">
+                <div className="admin-field-row">
+                  {field('Section (optional)', <input aria-label="Section (optional)" className="admin-input" value={step.section || ''} onChange={(e) => patchStep(index, { section: e.target.value })} placeholder="e.g. NECO — results.neco.gov.ng" />)}
+                  {field('Step title *', <input aria-label="Step title *" className="admin-input" value={step.title} onChange={(e) => patchStep(index, { title: e.target.value })} />)}
+                </div>
+                {field('Instructions *', <textarea aria-label="Instructions *" className="admin-textarea" style={{ minHeight: 64 }} value={step.body} onChange={(e) => patchStep(index, { body: e.target.value })} />)}
+                <div className="admin-field-row">
+                  {field('Image (site path or HTTPS link)', <input aria-label="Image (site path or HTTPS link)" className="admin-input" value={step.image} onChange={(e) => patchStep(index, { image: e.target.value })} placeholder="/images/service-guides/… or https://…" />)}
+                  {field('Upload screenshot', <><input className="admin-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label={`Upload image for step ${index + 1}`} onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadStepImage(index, file); e.target.value = ''; }} />{uploadingStep === index && <span className="muted">Uploading…</span>}</>)}
+                </div>
+                {step.image && <img src={step.image} alt="" loading="lazy" decoding="async" style={{ maxWidth: 320, width: '100%', borderRadius: 8, border: '1px solid #e2e8f0' }} />}
+                <div className="admin-field-row">
+                  {field('Image type', <select aria-label="Image type" className="admin-input" value={step.imageKind} onChange={(e) => patchStep(index, { imageKind: e.target.value as ServiceGuideStep['imageKind'] })}>{GUIDE_KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select>)}
+                  {field('Image source / credit', <input aria-label="Image source / credit" className="admin-input" value={step.imageSource} onChange={(e) => patchStep(index, { imageSource: e.target.value })} placeholder="e.g. Portal screenshot via myschool.ng (verified 2026-10-21)" />)}
+                </div>
+                {field('Alt text (describe the screen)', <input aria-label="Alt text (describe the screen)" className="admin-input" value={step.imageAlt} onChange={(e) => patchStep(index, { imageAlt: e.target.value })} />)}
+              </div>
+            </div>
+          ))}
+          <div className="admin-action-row">
+            <button type="button" className="admin-btn" onClick={() => setGuide({ ...guide, steps: [...guide.steps, blankStep()] })} disabled={guide.steps.length >= 24}><Plus size={14} /> Add step</button>
+            <button type="button" className="admin-btn" onClick={() => setShowPreview((v) => !v)}><Eye size={14} /> {showPreview ? 'Hide preview' : 'Preview'}</button>
+            <a className="admin-btn" href={service.service_key === 'nelfund-loan' ? '/nelfund' : `/services/${service.service_key}`} target="_blank" rel="noopener noreferrer">Open live page</a>
+          </div>
+          {showPreview && (
+            <div className="admin-card" style={{ padding: '14px 16px' }}>
+              <h3 style={{ marginTop: 0, fontSize: 14 }}>Preview — {guide.status === 'published' ? 'as students see it' : 'draft (not visible to students)'}</h3>
+              <p className="muted">{guide.summary}</p>
+              {guide.steps.map((step, index) => (
+                <div key={index} style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 12, padding: '10px 0', borderTop: '1px solid #eef2f5' }}>
+                  {step.image ? <img src={step.image} alt={step.imageAlt} loading="lazy" decoding="async" style={{ width: 120, borderRadius: 8 }} /> : <span className="muted">No image</span>}
+                  <div>{step.section && <div className="muted" style={{ fontSize: 11, fontWeight: 680 }}>{step.section}</div>}<b>{String(index + 1).padStart(2, '0')} {step.title}</b><p className="muted" style={{ margin: '4px 0' }}>{step.body}</p><span className="muted" style={{ fontSize: 11 }}>{step.imageKind} · {step.imageSource}</span></div>
+                </div>
+              ))}
+              <p className="muted">{guide.safetyNote}</p>
+            </div>
+          )}
+          <div className="admin-news-editor-actions">
+            <button type="button" className="admin-btn success" onClick={() => void save()} disabled={saving} aria-busy={saving}>{saving ? 'Saving…' : guide.status === 'published' ? 'Save & publish' : 'Save draft'}</button>
+            {isCustom && <button type="button" className="admin-text-btn danger-text" onClick={() => void resetToBuiltin()} disabled={saving}>Reset to built-in guide</button>}
+          </div>
+        </>)}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminServicesPage() {
   const [services, setServices] = useState<AdminService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [edit, setEdit] = useState<EditState | null>(null);
+  const [guideService, setGuideService] = useState<AdminService | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -200,6 +373,7 @@ export default function AdminServicesPage() {
                           is_form_service: Boolean(service.is_form_service),
                         })}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-btn small" onClick={() => void toggleActive(service)}>{service.active ? 'Hide' : 'Show'}</button>
+                        <button type="button" className="admin-btn small" onClick={() => setGuideService(service)}><BookOpen size={12} /> Guide</button>
                         {!service.is_form_service && (
                           <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${service.title || service.category || 'this service'}`} onClick={() => void remove(service)}><Trash2 size={12} /></button>
                         )}
@@ -216,6 +390,7 @@ export default function AdminServicesPage() {
             </table>
           </div>
         </div>
+        {guideService && <GuideEditor service={guideService} onClose={() => setGuideService(null)} onNotice={setMessage} />}
         <p className="admin-footnote">Built-in form services (NELFUND loan, Results, JAMB slip, Admission letters) are protected: they can be edited, reordered, hidden or shown, but not deleted: their application forms are part of the code release.</p>
       </div>
   );

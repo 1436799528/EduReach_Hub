@@ -61,7 +61,10 @@ export const BUDGETS = {
   // on any addition at all — the same no-headroom accident the CSS budget
   // comment below warns about. Raised deliberately; the first-load critical
   // path (203.6 KB ≤ 210) is unaffected, and route chunks stay lazy.
-  totalJsGzip: 330 * 1024,
+  // Raised 330 -> 334 KB for the admin service-guide editor: a lazy,
+  // admin-only route chunk (+3.3 KB measured) that students never download.
+  // The first-load critical path above is unchanged and still enforced.
+  totalJsGzip: 334 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

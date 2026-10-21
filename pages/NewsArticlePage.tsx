@@ -110,7 +110,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
   return (
     <HubLayout>
       <div className="hub-page">
-        <div className="hub-container hub-narrow">
+        <div className="hub-container">
           <a className="hub-text-btn" href="/news" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
             <ArrowLeft size={14} /> Back to News
           </a>
@@ -125,6 +125,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
           )}
 
           {!loading && !error && item && (
+           <div className="er-article-layout">
             <article className="hub-article">
               <div className="hub-news-meta">
                 <span>{newsCategoryLabel(item.category)}</span>
@@ -212,15 +213,16 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                 {copyError && <small className="hub-muted-label" role="status">{copyError}</small>}
               </div>
 
-              {related.length > 0 && (
-                <section className="er-section" style={{ marginTop: '26px' }}>
-                  <h2 style={{ fontSize: 16, fontWeight: 620, margin: '0 0 10px' }}>Related updates</h2>
-                  <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
-                    {related.map((relatedItem) => <NewsRow key={relatedItem.id} item={relatedItem} />)}
-                  </div>
-                </section>
-              )}
             </article>
+            {related.length > 0 && (
+              <aside className="er-article-aside" aria-label="Related updates">
+                <h2 style={{ fontSize: 16, fontWeight: 620, margin: "0 0 10px", color: "#0f172a" }}>Related updates</h2>
+                <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
+                  {related.map((relatedItem) => <NewsRow key={relatedItem.id} item={relatedItem} />)}
+                </div>
+              </aside>
+            )}
+           </div>
           )}
         </div>
       </div>

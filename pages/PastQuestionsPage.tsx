@@ -1,70 +1,36 @@
-import { userFacingError } from '../lib/errors';
-import { ArrowRight, BookOpen, Download, ExternalLink, FileText, Laptop, Link2Off, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
+import { BookOpen, Download, ExternalLink, FileText, Laptop, Link2Off, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { SkeletonTiles } from '../src/components/Skeleton';
 import HubLayout from '../src/components/HubLayout';
+import { SkeletonTiles } from '../src/components/Skeleton';
 import { ErrorState, InlineNotice } from '../src/components/AsyncState';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import {
-  pastQuestionLibrary,
   studyMaterialLibrary,
   type StudyMaterialRecord,
 } from '../src/data/examPreparation';
-import { fetchCbtExams, fetchPastQuestionResources, type PastQuestionLibrary } from '../src/lib/api';
-import { isSupabaseConfigured } from '../src/lib/supabase';
+import { fetchPastQuestionResources, type PastQuestionLibrary } from '../src/lib/api';
 
 type Filter = 'ALL' | 'JAMB' | 'WAEC' | 'NECO' | 'Post-UTME';
-type LibraryView = 'CBT' | 'MATERIALS';
 
 const filters = [
-  { id: 'ALL', label: 'All banks' },
+  { id: 'ALL', label: 'All exams' },
   { id: 'JAMB', label: 'JAMB' },
   { id: 'WAEC', label: 'WAEC' },
   { id: 'NECO', label: 'NECO' },
   { id: 'Post-UTME', label: 'Post-UTME' },
 ];
 
-type BankGroup = 'JAMB' | 'WAEC' | 'NECO' | 'Post-UTME';
-
-type CbtBankRecord = {
-  id: string;
-  title: string;
-  exam: BankGroup;
-  school: string;
-  year: string;
-  subjects: string;
-  description: string;
-  href: string;
-};
-
 function readQuery() {
   const params = new URLSearchParams(window.location.search);
-  const requestedView = params.get('view')?.toUpperCase();
   const requestedFilter = params.get('exam');
+  // Legacy ?view=cbt links are accepted and ignored: interactive practice
+  // lives in the CBT simulators (/cbt/setup/*), not in this document library.
   return {
     search: params.get('q') || '',
-    view: requestedView === 'MATERIALS' ? 'MATERIALS' as LibraryView : 'CBT' as LibraryView,
     filter: filters.some((item) => item.id === requestedFilter) ? requestedFilter as Filter : 'ALL' as Filter,
   };
-}
-
-function setupKeyForExamBody(value: string): 'jamb' | 'waec' | 'neco' | 'post-utme' | null {
-  const normalized = value.toLowerCase();
-  if (normalized.includes('post-utme') || normalized.includes('postutme')) return 'post-utme';
-  if (normalized.includes('waec')) return 'waec';
-  if (normalized.includes('neco')) return 'neco';
-  if (normalized.includes('jamb') || normalized.includes('utme')) return 'jamb';
-  return null;
-}
-
-function bankGroupForExamBody(value: string): Exclude<Filter, 'ALL'> {
-  const key = setupKeyForExamBody(value);
-  if (key === 'post-utme') return 'Post-UTME';
-  if (key === 'waec') return 'WAEC';
-  if (key === 'neco') return 'NECO';
-  return 'JAMB';
 }
 
 function materialRequestHref(material: StudyMaterialRecord) {
@@ -80,20 +46,14 @@ function materialRequestHref(material: StudyMaterialRecord) {
 
 export default function PastQuestionsPage() {
   const initial = readQuery();
-  const [view, setView] = useState<LibraryView>(initial.view);
   const [filter, setFilter] = useState<Filter>(initial.filter);
   const [search, setSearch] = useState(initial.search);
-  const [banks, setBanks] = useState<CbtBankRecord[] | null>(null);
-  const [banksError, setBanksError] = useState('');
   // PQR-1: the document library comes from the server and starts empty. Nothing
   // is claimed here until a verified paper exists.
   const [library, setLibrary] = useState<PastQuestionLibrary | null>(null);
   const [libraryError, setLibraryError] = useState<unknown>(null);
   const [libraryLoading, setLibraryLoading] = useState(true);
 
-  // The CBT tab is database-driven in production: every card maps to a real
-  // `cbt_exams` row managed in the Admin CBT console. The static library only
-  // renders in an unconfigured local preview (documented dev fallback).
   useEffect(() => {
     let active = true;
     setLibraryLoading(true);
@@ -104,48 +64,6 @@ export default function PastQuestionsPage() {
     return () => { active = false; };
   }, []);
 
-  useEffect(() => {
-    let active = true;
-    if (!isSupabaseConfigured) {
-      setBanks(pastQuestionLibrary.map((record) => ({ ...record })));
-      return;
-    }
-    fetchCbtExams()
-      .then((exams) => {
-        if (!active) return;
-        setBanks(exams.map((exam) => {
-          const setupKey = setupKeyForExamBody(`${exam.exam_body} ${exam.title}`);
-          return {
-            id: exam.id,
-            title: exam.title,
-            exam: bankGroupForExamBody(`${exam.exam_body} ${exam.title}`),
-            school: exam.exam_body,
-            year: 'Practice set',
-            subjects: exam.subject,
-            description: exam.description || `${exam.exam_body} ${exam.subject} practice bank.`,
-            href: setupKey
-              ? `/cbt/setup/${setupKey}?exam=${encodeURIComponent(exam.id)}`
-              : `/cbt/practice?exam=${encodeURIComponent(exam.id)}`,
-          };
-        }));
-      })
-      .catch((value) => {
-        if (!active) return;
-        setBanks([]);
-        setBanksError(userFacingError(value, 'Unable to load the CBT catalogue.'));
-      });
-    return () => { active = false; };
-  }, []);
-
-  const records = useMemo(() => {
-    const list = banks || [];
-    const query = search.trim().toLowerCase();
-    return list.filter((record) => {
-      const matchesFilter = filter === 'ALL' || record.exam === filter;
-      const searchable = `${record.title} ${record.school} ${record.year} ${record.subjects}`.toLowerCase();
-      return matchesFilter && (!query || searchable.includes(query));
-    });
-  }, [banks, filter, search]);
 
   const visibleResources = useMemo(() => {
     const list = library?.items || [];
@@ -169,20 +87,19 @@ export default function PastQuestionsPage() {
 
   useEffect(() => {
     if (!search.trim()) return;
-    const firstId = view === 'CBT' ? records[0]?.id : materials[0]?.id;
+    const firstId = materials[0]?.id;
     if (!firstId) return;
     window.requestAnimationFrame(() => {
-      const target = document.getElementById(`${view.toLowerCase()}-${firstId}`);
+      const target = document.getElementById(`materials-${firstId}`);
       target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       target?.classList.add('is-search-focus');
       window.setTimeout(() => target?.classList.remove('is-search-focus'), 1800);
     });
-  }, [materials, records, search, view]);
+  }, [materials, search]);
 
   useEffect(() => {
     const syncFromUrl = () => {
       const next = readQuery();
-      setView(next.view);
       setFilter(next.filter);
       setSearch(next.search);
     };
@@ -190,29 +107,23 @@ export default function PastQuestionsPage() {
     return () => window.removeEventListener('popstate', syncFromUrl);
   }, []);
 
-  function updateUrl(nextView: LibraryView, nextFilter: Filter, nextSearch: string) {
+  function updateUrl(nextFilter: Filter, nextSearch: string) {
     const params = new URLSearchParams();
-    if (nextView !== 'CBT') params.set('view', nextView.toLowerCase());
     if (nextFilter !== 'ALL') params.set('exam', nextFilter);
     if (nextSearch.trim()) params.set('q', nextSearch.trim());
     const query = params.toString();
     window.history.replaceState({}, '', query ? `/past-questions?${query}` : '/past-questions');
   }
 
-  function changeView(nextView: LibraryView) {
-    setView(nextView);
-    updateUrl(nextView, filter, search);
-  }
-
   function changeFilter(value: string) {
     const nextFilter = value as Filter;
     setFilter(nextFilter);
-    updateUrl(view, nextFilter, search);
+    updateUrl(nextFilter, search);
   }
 
   function changeSearch(value: string) {
     setSearch(value);
-    updateUrl(view, filter, value);
+    updateUrl(filter, value);
   }
 
   return (
@@ -223,18 +134,9 @@ export default function PastQuestionsPage() {
             <div>
               <span className="hub-eyebrow" style={{ color: '#b14933' }}>Past questions</span>
               <h1>Past questions &amp; study materials</h1>
-              <p>Practise a timed CBT paper, or request a paper that is not online yet.</p>
+              <p>Download or open a published paper, or request one that is not online yet. For timed interactive practice, use the <a href="/cbt">CBT simulators</a>.</p>
             </div>
             <BookOpen size={28} color="#b14933" aria-hidden="true" />
-          </div>
-
-          <div className="er-library-tabs" role="tablist" aria-label="Past question formats">
-            <button type="button" role="tab" aria-selected={view === 'CBT'} className={view === 'CBT' ? 'active' : ''} onClick={() => changeView('CBT')}>
-              <Laptop size={16} /> CBT practice
-            </button>
-            <button type="button" role="tab" aria-selected={view === 'MATERIALS'} className={view === 'MATERIALS' ? 'active' : ''} onClick={() => changeView('MATERIALS')}>
-              <FileText size={16} /> Papers &amp; materials
-            </button>
           </div>
 
           <div className="er-library-toolbar">
@@ -247,45 +149,8 @@ export default function PastQuestionsPage() {
             <FilterPills options={filters} active={filter} onChange={changeFilter} ariaLabel="Past question examination filters" />
           </div>
 
-          {view === 'CBT' && (
-            <div className="er-late-region er-late-region--library">
-              {banks === null ? (
-                <SkeletonTiles tiles={6} label="Loading question banks" />
-              ) : banksError ? (
-                <div className="hub-form-error" role="alert">{banksError}</div>
-              ) : !records.length ? (
-                <div className="hub-panel hub-empty">
-                  <h2>{banks.length ? 'No matching CBT bank' : 'No CBT question banks available yet'}</h2>
-                  <p>
-                    {banks.length
-                      ? 'Try a different exam body, school or subject.'
-                      : 'CBT banks appear here once they are published. You can still request a paper under Papers & materials.'}
-                  </p>
-                  {banks.length > 0 && search && (
-                    <button type="button" className="hub-outline-btn" onClick={() => changeSearch('')}>Clear search</button>
-                  )}
-                </div>
-              ) : (
-                <div className="er-library-grid">
-                  {records.map((record) => (
-                    <a className={`er-library-card er-library-card-link ${identityClassFor(record.exam, 'service')}`} id={`cbt-${record.id}`} key={record.id} href={record.href}>
-                      <div className="er-library-card-top">
-                        <CardIdentityMark value={record.exam} type="service" size="sm" />
-                        <span>{record.year}</span>
-                      </div>
-                      <h2>{record.title}</h2>
-                      <p className="er-library-school">{record.school}</p>
-                      <p>{record.description}</p>
-                      <div className="er-library-subjects"><strong>Subjects</strong><span>{record.subjects}</span></div>
-                      <span className="hub-primary-btn er-card-cta">Set up CBT <ArrowRight size={14} /></span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          {view === 'MATERIALS' && (
-            <div className="er-resource-block">
+          <div className="er-late-region er-late-region--library">
+          <div className="er-resource-block">
               <div className="er-resource-head">
                 <div>
                   <span className="hub-eyebrow">Published papers</span>
@@ -298,7 +163,7 @@ export default function PastQuestionsPage() {
                 ) : null}
               </div>
 
-              {libraryLoading && <div className="er-state" role="status"><span className="er-state-icon" aria-hidden="true"><FileText size={20} /></span><div><strong>Checking the library…</strong></div></div>}
+              {libraryLoading && <SkeletonTiles tiles={6} label="Loading published papers" />}
 
               {!libraryLoading && libraryError !== null && (
                 <ErrorState
@@ -348,14 +213,13 @@ export default function PastQuestionsPage() {
 
               {!libraryLoading && libraryError === null && visibleResources.length === 0 && (
                 <InlineNotice tone="info" title={library?.configured === false ? 'The document library is not connected yet' : 'No document papers for this selection yet'}>
-                  We don't have a past-question paper for this selection yet. This is not a missing file on your side. You can practise with the timed CBT bank above, or ask EduReach to source a paper. Requests are tracked and you will be told when a verified copy is available.
+                  We don't have a past-question paper for this selection yet. This is not a missing file on your side. You can practise with the timed CBT simulators, or ask EduReach to source a paper. Requests are tracked and you will be told when a verified copy is available.
                 </InlineNotice>
               )}
-            </div>
-          )}
+          </div>
+          </div>
 
-          {view === 'MATERIALS' && (
-            !materials.length ? (
+          {!materials.length ? (
               <div className="hub-panel hub-empty">
                 <h2>We don't have study materials for this selection yet</h2>
                 <p>Try another examination body or school. EduReach will not claim a document that is not configured. Reach out on WhatsApp if you need help sourcing a paper, and we will tell you when a verified copy is available.</p>
@@ -387,8 +251,7 @@ export default function PastQuestionsPage() {
                   </a>
                 ))}
               </div>
-            )
-          )}
+            )}
         </div>
       </div>
     </HubLayout>

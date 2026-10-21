@@ -1,5 +1,5 @@
 import { userFacingError } from '../lib/errors';
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Check,
   CheckCircle2,
@@ -12,6 +12,8 @@ import {
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
 import { fetchService, submitServiceRequest, trackEvent, type ServiceItem } from '../src/lib/api';
+import { apiUrl } from '../src/lib/apiBase';
+import type { ServiceGuide } from '../src/data/serviceGuides';
 import { serviceTimeline } from '../src/lib/serviceLifecycle';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
@@ -78,6 +80,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const { isAuthenticated, user: authUser } = useAuth();
   const [draft] = useState(() => readServiceDraft(slug));
   const [service, setService] = useState<ServiceItem | null>(null);
+  const [remoteGuide, setRemoteGuide] = useState<ServiceGuide | null>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState('');
   const [step, setStep] = useState(() => Math.max(1, Math.min(3, Number(draft.step) || 1)));
@@ -109,6 +112,10 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
 
   useEffect(() => {
     let active = true;
+    void fetch(apiUrl(`/api/services/${encodeURIComponent(slug)}/guide`))
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => { if (active && body?.guide && Array.isArray(body.guide.steps) && body.guide.steps.length) setRemoteGuide(body.guide as ServiceGuide); })
+      .catch(() => { /* offline or unconfigured: the built-in guide below still renders */ });
     void fetchService(slug)
       .then((item) => {
         if (active) setService(item);
@@ -192,7 +199,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     );
 
   const variant = fieldsFor(service.service_key);
-  const guide = guideForService(service.service_key);
+  const guide = remoteGuide ?? guideForService(service.service_key);
   const institutionSelection = institutionOtherSelected
     ? '__other__'
     : institutionOptions.some((institution) => institution === form.institution)
@@ -329,14 +336,24 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   </div>
                   <div className="er-service-guide-steps">
                     {guide.steps.map((guideStep, index) => (
+                     <Fragment key={guideStep.title}>
+                      {guideStep.section && guideStep.section !== guide.steps[index - 1]?.section && (
+                        <h3 style={{ margin: "10px 0 0", fontSize: 13, fontWeight: 680, color: "#174A3A" }}>{guideStep.section}</h3>
+                      )}
                       <article className="er-service-guide-step" key={guideStep.title}>
-                        <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" decoding="async" />
+                        <figure className={`er-service-guide-media is-${guideStep.imageKind}`} style={{ margin: 0, position: "relative" }}>
+                          <img src={guideStep.image} alt={guideStep.imageAlt} loading="lazy" decoding="async"
+                            onError={(event) => { const img = event.currentTarget; img.style.display = 'none'; img.insertAdjacentHTML('afterend', '<span style="display:grid;place-items:center;height:112px;border-radius:8px;background:#eef2f5;color:#5e6c82;font-size:11px">Image unavailable</span>'); }} />
+                          <span style={{ position: "absolute", top: 6, left: 6, padding: "3px 7px", borderRadius: 999, background: "rgba(15,23,42,.82)", color: "#fff", fontSize: 9, fontWeight: 680, letterSpacing: ".04em", textTransform: "uppercase" }}>{guideStep.imageKind === 'official-document' ? 'Official document' : guideStep.imageKind === 'screenshot' ? 'Portal screenshot' : guideStep.imageKind === 'illustration' ? 'Illustration' : guideStep.imageKind === 'placeholder' ? 'Placeholder' : 'Photo'}</span>
+                          <figcaption style={{ marginTop: 5, fontSize: 10, lineHeight: 1.4, color: "#5e6c82" }}>{guideStep.imageSource}</figcaption>
+                        </figure>
                         <div>
                           <span className="er-service-guide-number">{String(index + 1).padStart(2, '0')}</span>
                           <h3>{guideStep.title}</h3>
                           <p>{guideStep.body}</p>
                         </div>
                       </article>
+                     </Fragment>
                     ))}
                   </div>
                   <div className="er-service-guide-footer">
