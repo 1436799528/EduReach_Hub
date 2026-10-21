@@ -62,17 +62,10 @@ export default function HubHomePage() {
     <HubLayout>
       <div className="er-portal">
         <div className="er-container hub-home-container">
-          <section className="hub-home-intro">
-            <div>
-              <span className="hub-eyebrow">CBT practice</span>
-              <h1>Practise the exam you are sitting.</h1>
-              <p>JAMB, WAEC, NECO and Post-UTME. Choose your subjects, set the number of questions and start a timed paper.</p>
-              <div className="hub-home-actions">
-                <a className="hub-home-cta" href="/cbt">Start practising <ArrowRight size={14} aria-hidden="true" /></a>
-                <a className="hub-home-cta" href="/past-questions">Past questions <ArrowRight size={14} aria-hidden="true" /></a>
-              </div>
-            </div>
-          </section>
+          {/* The page keeps one heading for structure and screen readers, as the
+              homepage did before the simulator rewrite. The visible title is the
+              page bar and the sections below it; there is no promotional hero. */}
+          <h1 className="er-visually-hidden">EduReach Hub CBT practice, past questions and student services</h1>
 
           {/* The portal search bar, restored exactly as it shipped: same form,
               same aria-label, same /search?q= destination, same red submit. */}
