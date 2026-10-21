@@ -305,7 +305,11 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
           ? []
           : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
     const vocational = practiceTrack === 'Technical / Vocational' ? secondarySubjectCatalog['Technical / Vocational'] : [];
-    const databaseGroup = practiceTrack === 'Arts & Humanities' ? 'Arts' : practiceTrack;
+    const databaseGroup = practiceTrack === 'Arts & Humanities'
+      ? 'Arts'
+      : practiceTrack === 'Technical / Vocational'
+        ? 'Technical & Vocational'
+        : practiceTrack;
     const databaseNames = databaseSubjects
       .filter((entry) => entry.subject_group === databaseGroup)
       .map((entry) => entry.subject_name);
