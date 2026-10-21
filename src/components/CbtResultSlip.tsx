@@ -50,7 +50,6 @@ export default function CbtResultSlip({ result, studentName, studentId, subjectB
   const examBody = String(result.exam?.exam_body || '').toUpperCase();
   const isWaecStyle = examBody === 'WAEC' || examBody === 'NECO';
   const isJambStyle = examBody === 'JAMB' || examBody === 'UTME' || examBody.includes('POST');
-  const isMock = String(attempt.mode || '').toLowerCase() === 'mock';
   const gradeForSubject = (item: SubjectBreakdown) => {
     const percent = item.questions > 0 ? (item.correct / item.questions) * 100 : 0;
     if (percent >= 75) return 'A1';
