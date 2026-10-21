@@ -7,6 +7,7 @@ import WaveLoader from '../src/components/WaveLoader';
 import {
   jambSubjectCatalog,
   secondarySubjectCatalog,
+  secondarySchoolSubjects,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
 import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
@@ -306,7 +307,24 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // The group filter narrows the available list only; it never changes an
   // existing selection. Compulsory subjects stay visible in every group so a
   // required subject can always be re-added.
-  const visiblePracticeAvailability = availability.filter((entry) => {
+  const catalogueNames = useMemo(() => {
+    const bankNames = availability.map((entry) => entry.subject);
+    const jambNames = Object.values(jambSubjectCatalog).flat();
+    const names = exam === 'jamb'
+      ? jambNames
+      : exam === 'waec' || exam === 'neco'
+        ? secondarySchoolSubjects
+        : [...secondarySchoolSubjects, ...jambNames, 'General Knowledge', 'General Studies'];
+    return Array.from(new Map([...names, ...bankNames].map((name) => [normalizeSubject(name), name])).values());
+  }, [availability, exam]);
+  // The catalogue lists recognised subjects even when this particular bank
+  // has no approved questions yet. Such subjects stay visible but cannot be
+  // selected until the bank has content. Never expose the bank's question count.
+  const subjectPickerAvailability = useMemo(() => catalogueNames.map((subject) => {
+    const available = availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject));
+    return { subject: available?.subject || subject, questionCount: available?.questionCount || 0 };
+  }), [availability, catalogueNames]);
+  const visiblePracticeAvailability = subjectPickerAvailability.filter((entry) => {
     const key = normalizeSubject(entry.subject);
     return !trackSubjectNames
       || trackSubjectNames.has(key)
@@ -668,14 +686,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                               key={entry.subject}
                               type="button"
                               className="er-setup-duration-option"
-                              disabled={lockedAtLimit}
+                              disabled={lockedAtLimit || entry.questionCount < 1}
                               onClick={() => addPracticeSubject(entry.subject)}
                               aria-label={`Add ${entry.subject}`}
-                              title={lockedAtLimit ? 'Required subject combination is complete' : `Add ${entry.subject}`}
+                              title={lockedAtLimit ? 'Subject limit reached' : entry.questionCount < 1 ? 'Questions have not been added to this subject bank yet' : `Add ${entry.subject}`}
                             >
                               <Plus size={15} aria-hidden="true" />
                               <span>{entry.subject}</span>
-                              <small>{entry.questionCount} available</small>
+                              <small>{entry.questionCount > 0 ? 'Ready to practise' : 'Question bank being prepared'}</small>
                             </button>
                           );
                         }) : (
