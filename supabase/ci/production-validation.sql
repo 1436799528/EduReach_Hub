@@ -188,6 +188,8 @@ with expected(version, migration) as (
   where not exists (
     select 1 from supabase_migrations.schema_migrations applied
     where applied.version = e.version
+       or (e.migration = '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
+           and applied.name = 'cbt_subject_catalog_and_mock_rules')
   )
 ), missing_objects as (
   select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration
