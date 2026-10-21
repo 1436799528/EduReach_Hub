@@ -79,45 +79,9 @@ export const secondarySubjectCatalog: Record<SecondarySubjectTrack, string[]> = 
   'Technical / Vocational': ['Use of English', 'Mathematics', 'Civic Education', 'Technical Drawing', 'Basic Electricity', 'Basic Electronics', 'Electrical Installation and Maintenance', 'Solar Photovoltaic Installation and Maintenance', 'Building Construction', 'Blocklaying and Concrete Work', 'Auto Mechanics', 'Automobile Technology', 'Plumbing and Pipe Fitting', 'Welding and Fabrication', 'Carpentry and Joinery', 'Furniture Making', 'Metal Work', 'Radio, Television and Electrical Work', 'Dyeing and Bleaching', 'Leather Goods Manufacturing', 'Clothing and Textiles', 'Garment Making', 'Fashion Design', 'Cosmetology', 'Catering Craft Practice', 'Animal Husbandry', 'Fisheries', 'Horticulture and Crop Production', 'Photography', 'Printing Craft Practice', 'Computer Studies', 'Computer Hardware and GSM Repairs', 'Data Processing'],
 };
 
-export const secondarySchoolSubjects = [
-  'Use of English',
-  'Mathematics',
-  'Civic Education',
-  'Biology',
-  'Chemistry',
-  'Physics',
-  'Agricultural Science',
-  'Further Mathematics',
-  'Economics',
-  'Government',
-  'Commerce',
-  'Financial Accounting',
-  'Marketing',
-  'Literature in English',
-  'History',
-  'Geography',
-  'Christian Religious Studies',
-  'Islamic Religious Studies',
-  'Computer Studies',
-  'Data Processing',
-  'Technical Drawing',
-  'Food and Nutrition',
-  'Home Management',
-  'Visual Art',
-  'Music',
-  'French',
-  'Arabic',
-  'Hausa',
-  'Igbo',
-  'Yoruba',
-  'Business Studies',
-  'Basic Electricity',
-  'Building Construction',
-  'Auto Mechanics',
-  'Dyeing and Bleaching',
-  'Leather Goods Manufacturing',
-  'Clothing and Textiles',
-];
+export const secondarySchoolSubjects = Array.from(
+  new Set(Object.values(secondarySubjectCatalog).flat()),
+);
 
 export type PostUtmeSchool = {
   id: string;
