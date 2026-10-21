@@ -104,8 +104,11 @@ declare
   v_count integer;
   v_has_english boolean;
 begin
-  -- Legacy attempts may have no frozen subject selection. Leave those records
-  -- intact; configured starts always provide selected_subjects and are enforced.
+  -- Only validate an active configured start. Legacy imported/submitted records
+  -- can carry historical defaults that do not describe the original paper.
+  if coalesce(new.status, '') <> 'in_progress' then
+    return new;
+  end if;
   if coalesce(cardinality(new.selected_subjects), 0) = 0 then
     return new;
   end if;
