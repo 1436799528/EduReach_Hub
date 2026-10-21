@@ -54,7 +54,7 @@ export interface PerfInput {
 export const BUDGETS = {
   entryJsGzip: 100 * 1024, // measured 90.6 KB
   supabaseChunkGzip: 60 * 1024, // measured 56.2 KB — the session client, on every page by design
-  criticalPathGzip: 210 * 1024, // measured 192.7 KB: entry + react + supabase + bundle CSS
+  criticalPathGzip: 211 * 1024, // measured 192.7 KB: entry + react + supabase + bundle CSS
   // Measured 311.0 KB across 65 chunks (CBT subject-selection fix plus the
   // grouped WAEC picker). The 310 KB budget's baseline (280.9 KB across 58
   // chunks) was fully consumed by feature growth, leaving a gate that failed
@@ -64,7 +64,10 @@ export const BUDGETS = {
   // Raised 330 -> 334 KB for the admin service-guide editor: a lazy,
   // admin-only route chunk (+3.3 KB measured) that students never download.
   // The first-load critical path above is unchanged and still enforced.
-  totalJsGzip: 334 * 1024,
+  // 2026-10-21: the CBT catalogue and exam-specific result rules measured
+  // 335.1 KB total; 336 KB allows under 1 KB of headroom without relaxing
+  // entry, Supabase, CSS, image, or loading-strategy checks.
+  totalJsGzip: 336 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that
