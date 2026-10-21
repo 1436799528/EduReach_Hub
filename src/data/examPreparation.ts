@@ -72,52 +72,16 @@ export const secondarySubjectTracks: SecondarySubjectTrack[] = ['General', 'Scie
 
 export const secondarySubjectCatalog: Record<SecondarySubjectTrack, string[]> = {
   General: [],
-  Science: ['Use of English', 'Mathematics', 'Civic Education', 'Biology', 'Chemistry', 'Physics', 'Agricultural Science', 'Further Mathematics', 'Economics', 'Geography', 'Computer Studies', 'Data Processing'],
-  'Arts & Humanities': ['Use of English', 'Mathematics', 'Civic Education', 'Literature in English', 'Government', 'History', 'Geography', 'Christian Religious Studies', 'Islamic Religious Studies', 'French', 'Arabic', 'Igbo', 'Hausa', 'Yoruba', 'Visual Art', 'Music'],
+  Science: ['Use of English', 'Mathematics', 'Civic Education', 'Biology', 'Chemistry', 'Physics', 'Agricultural Science', 'Further Mathematics', 'Economics', 'Geography', 'Computer Studies', 'Computer Science', 'Data Processing', 'Health Education', 'Physical Education', 'Technical Drawing', 'Foods and Nutrition', 'Home Economics', 'Home Management', 'Basic Science', 'Basic Technology'],
+  'Arts & Humanities': ['Use of English', 'Mathematics', 'Civic Education', 'Literature in English', 'Government', 'History', 'Geography', 'Christian Religious Studies', 'Islamic Religious Studies', 'French', 'Arabic', 'Igbo', 'Hausa', 'Yoruba', 'Visual Art', 'Fine Art', 'Music', 'General Knowledge in Art', 'Cultural and Creative Arts'],
   'Social Science': ['Use of English', 'Mathematics', 'Civic Education', 'Economics', 'Government', 'Geography', 'History', 'Biology', 'Commerce', 'Financial Accounting', 'Marketing', 'Computer Studies'],
-  Commercial: ['Use of English', 'Mathematics', 'Civic Education', 'Economics', 'Commerce', 'Financial Accounting', 'Marketing', 'Business Studies', 'Government', 'Data Processing', 'Computer Studies'],
-  'Technical / Vocational': ['Use of English', 'Mathematics', 'Civic Education', 'Technical Drawing', 'Basic Electricity', 'Building Construction', 'Auto Mechanics', 'Dyeing and Bleaching', 'Leather Goods Manufacturing', 'Clothing and Textiles', 'Computer Studies', 'Data Processing'],
+  Commercial: ['Use of English', 'Mathematics', 'Civic Education', 'Economics', 'Commerce', 'Financial Accounting', 'Principles of Accounts', 'Marketing', 'Business Studies', 'Bookkeeping', 'Insurance', 'Office Practice', 'Store Management', 'Store Keeping', 'Salesmanship', 'Entrepreneurship', 'Government', 'Data Processing', 'Computer Studies'],
+  'Technical / Vocational': ['Use of English', 'Mathematics', 'Civic Education', 'Technical Drawing', 'Basic Electricity', 'Basic Electronics', 'Electrical Installation and Maintenance', 'Solar Photovoltaic Installation and Maintenance', 'Building Construction', 'Blocklaying and Concrete Work', 'Auto Mechanics', 'Automobile Technology', 'Plumbing and Pipe Fitting', 'Welding and Fabrication', 'Carpentry and Joinery', 'Furniture Making', 'Metal Work', 'Radio, Television and Electrical Work', 'Dyeing and Bleaching', 'Leather Goods Manufacturing', 'Clothing and Textiles', 'Garment Making', 'Fashion Design', 'Cosmetology', 'Catering Craft Practice', 'Animal Husbandry', 'Livestock Farming', 'Fisheries', 'Horticulture and Crop Production', 'Photography', 'Printing Craft Practice', 'Computer Studies', 'Computer Hardware and GSM Repairs', 'Data Processing'],
 };
 
-export const secondarySchoolSubjects = [
-  'Use of English',
-  'Mathematics',
-  'Civic Education',
-  'Biology',
-  'Chemistry',
-  'Physics',
-  'Agricultural Science',
-  'Further Mathematics',
-  'Economics',
-  'Government',
-  'Commerce',
-  'Financial Accounting',
-  'Marketing',
-  'Literature in English',
-  'History',
-  'Geography',
-  'Christian Religious Studies',
-  'Islamic Religious Studies',
-  'Computer Studies',
-  'Data Processing',
-  'Technical Drawing',
-  'Food and Nutrition',
-  'Home Management',
-  'Visual Art',
-  'Music',
-  'French',
-  'Arabic',
-  'Hausa',
-  'Igbo',
-  'Yoruba',
-  'Business Studies',
-  'Basic Electricity',
-  'Building Construction',
-  'Auto Mechanics',
-  'Dyeing and Bleaching',
-  'Leather Goods Manufacturing',
-  'Clothing and Textiles',
-];
+export const secondarySchoolSubjects = Array.from(
+  new Set(Object.values(secondarySubjectCatalog).flat()),
+);
 
 export type PostUtmeSchool = {
   id: string;

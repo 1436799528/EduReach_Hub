@@ -76,7 +76,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const answers: CbtResultAnswer[] = result?.answers ?? [];
 
   const subjectRows = (() => {
-    if (!questions.some((question) => question.subject) || !answers.length) {
+    if (!questions.some((question) => question.subject)) {
       return [] as Array<{ subject: string; correct: number; total: number }>;
     }
     const map = new Map<string, { subject: string; correct: number; total: number }>();
@@ -90,7 +90,27 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     return Array.from(map.values());
   })();
 
-  const score = Number(result?.attempt?.score || 0);
+  const storedScore = Number(result?.attempt?.score || 0);
+  const examBody = String(result?.exam?.exam_body || '').trim().toUpperCase();
+  const isWaecStyle = examBody === 'WAEC' || examBody === 'NECO';
+  const isJambStyle = examBody === 'JAMB' || examBody === 'UTME' || examBody.includes('POST');
+  const subjectMarkTotal = subjectRows.reduce((sum, row) => sum + (row.total > 0 ? (row.correct / row.total) * 100 : 0), 0);
+  const score = isJambStyle && subjectRows.length
+    ? Math.round(subjectMarkTotal)
+    : storedScore;
+  const markMaximum = isJambStyle && subjectRows.length ? subjectRows.length * 100 : 100;
+  const waecGrade = (correct: number, total: number) => {
+    const percent = total > 0 ? (correct / total) * 100 : 0;
+    if (percent >= 75) return { grade: 'A1', remark: 'Excellent' };
+    if (percent >= 70) return { grade: 'B2', remark: 'Very Good' };
+    if (percent >= 65) return { grade: 'B3', remark: 'Good' };
+    if (percent >= 60) return { grade: 'C4', remark: 'Credit' };
+    if (percent >= 55) return { grade: 'C5', remark: 'Credit' };
+    if (percent >= 50) return { grade: 'C6', remark: 'Credit' };
+    if (percent >= 45) return { grade: 'D7', remark: 'Pass' };
+    if (percent >= 40) return { grade: 'E8', remark: 'Pass' };
+    return { grade: 'F9', remark: 'Fail' };
+  };
   const correctCount = Number(result?.attempt?.correct_answers || 0);
   const totalCount = Number(result?.attempt?.total_questions || questions.length || 0);
 
@@ -143,8 +163,10 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
             <>
               <section className="er-result-header" aria-labelledby="result-heading">
                 <span className="er-result-kicker">CBT RESULT</span>
-                <h1 id="result-heading">Overall Score</h1>
-                <div className="er-result-score">{score.toFixed(0)}<span>%</span></div>
+                <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle ? 'Total Mark' : 'Practice Mark'}</h1>
+                {!isWaecStyle && <div className="er-result-score">{isJambStyle ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{`/${markMaximum}`}</span></div>}
+                {isWaecStyle && <p className="er-result-grade-note">Subject grades use estimated A1–F9 bands from this simulator's objective questions; official results may use subject-specific marking schemes.</p>}
+                {isJambStyle && <p className="er-result-grade-note">Marks are estimated from subject-level correct-answer rates; official JAMB or institution scoring may differ.</p>}
               </section>
 
               <section className="er-result-counts-block" aria-label="Score summary">
@@ -165,20 +187,21 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                         <th scope="col" className="num">Questions</th>
                         <th scope="col" className="num">Correct</th>
                         <th scope="col" className="num">Wrong</th>
-                        <th scope="col" className="num">Score</th>
+                        <th scope="col" className="num">{isWaecStyle ? 'Grade' : 'Mark'}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {subjectRows.map((row) => {
                         const wrong = row.total - row.correct;
                         const pct = row.total ? Math.round((row.correct / row.total) * 100) : 0;
+                        const grade = waecGrade(row.correct, row.total);
                         return (
                           <tr key={row.subject}>
                             <td>{row.subject}</td>
                             <td className="num">{row.total}</td>
                             <td className="num">{row.correct}</td>
                             <td className="num">{wrong}</td>
-                            <td className="num"><b>{pct}%</b></td>
+                            <td className="num"><b>{isWaecStyle ? grade.grade : `${pct} / 100`}</b>{isWaecStyle && <small className="er-result-grade-remark"> {grade.remark}</small>}</td>
                           </tr>
                         );
                       })}

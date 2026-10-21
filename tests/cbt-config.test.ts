@@ -211,10 +211,10 @@ test('practice time is proportional to the examination pace, within limits', () 
 test('the subject cap follows the examination, not the bank default', () => {
   assert.equal(subjectLimitFor('jamb'), 4, 'JAMB UTME is Use of English plus three');
   assert.equal(subjectLimitFor('JAMB UTME'), 4);
-  assert.equal(subjectLimitFor('jamb', { ...DEFAULT_CBT_LIMITS, maxSubjects: 3 }), 3, 'the server limit still wins when lower');
-  assert.equal(subjectLimitFor('waec'), DEFAULT_CBT_LIMITS.maxSubjects);
-  assert.equal(subjectLimitFor('neco'), DEFAULT_CBT_LIMITS.maxSubjects);
-  assert.equal(subjectLimitFor('post-utme'), DEFAULT_CBT_LIMITS.maxSubjects);
+  assert.equal(subjectLimitFor('jamb', { ...DEFAULT_CBT_LIMITS, maxSubjects: 3 }), 4, "JAMB's four-subject standard is not reduced by a generic limit");
+  assert.equal(subjectLimitFor('waec'), 9);
+  assert.equal(subjectLimitFor('neco'), 9);
+  assert.equal(subjectLimitFor('post-utme'), 9);
 });
 
 test('a JAMB mock is a four-subject paper and says what is missing', () => {
@@ -224,10 +224,14 @@ test('a JAMB mock is a four-subject paper and says what is missing', () => {
     /Add 2 more subjects/,
   );
   assert.equal(mockCombinationError(['Use of English', 'Mathematics', 'Physics', 'Chemistry'], 'jamb'), null);
-  assert.equal(mockCombinationError(['Mathematics'], 'waec'), null, 'only JAMB governs the combination');
+  assert.match(String(mockCombinationError(['Mathematics'], 'waec')), /requires at least four subjects/i);
+  assert.match(String(mockCombinationError(['Mathematics', 'Biology', 'Chemistry'], 'waec')), /requires at least four subjects/i);
+  assert.equal(mockCombinationError(['English', 'Mathematics', 'Biology', 'Chemistry'], 'waec'), null);
+  assert.equal(mockCombinationError(['English', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Government', 'Economics', 'Geography', 'Literature in English'], 'waec'), null, 'WAEC can use up to nine subjects');
+  assert.match(String(mockCombinationError(['English', 'Mathematics', 'Biology'], 'post-utme')), /at least four subjects/i);
   assert.equal(
     mockCombinationError(['Use of English', 'Mathematics', 'Physics', 'Use of English'], 'jamb'),
-    'A JAMB mock is Use of English plus three other subjects. Add 1 more subject.',
+    'A JAMB mock requires exactly four subjects: Use of English plus three others. Add 1 more subject.',
     'a duplicate spelling is one subject, not two',
   );
 });

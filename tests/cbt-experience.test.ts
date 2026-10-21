@@ -38,11 +38,14 @@ test('legacy /cbt/practice cannot drop a student straight into a paper', () => {
 
 test('the setup wizard configures from the real bank, never a static subject list', () => {
   const setup = read('pages/ExamSetupPage.tsx');
-  assert.match(setup, /fetchCbtBank/, 'subjects and limits come from the bank');
+  assert.match(setup, /fetchCbtBank/, 'subject availability and limits come from the bank');
+  assert.match(setup, /fetchCbtSubjectCatalog/, 'the grouped subject catalogue is read from the database when available');
   assert.match(setup, /questionCountOptions/, 'practice offers question counts the bank can serve');
   assert.match(setup, /effectiveDuration = Math\.max/, 'practice time is derived from the chosen question count');
   assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
   assert.match(setup, /Subject group/, 'students can choose a subject group');
+  assert.match(setup, /id="er-subject-group"/, 'subject groups use a dropdown');
+  assert.doesNotMatch(setup, /questionCount\} available/, 'student-facing subject choices do not reveal bank inventory counts');
   assert.match(setup, /cannot be removed/, 'a compulsory subject is locked into the combination');
   assert.match(setup, /Use of English is compulsory for JAMB UTME/, 'JAMB practice and mock cannot start without English, and the student is told why');
   assert.match(setup, /aria-label="Available subjects"/, 'available subjects are shown in a labelled picker');

@@ -7,9 +7,10 @@ import WaveLoader from '../src/components/WaveLoader';
 import {
   jambSubjectCatalog,
   secondarySubjectCatalog,
+  secondarySchoolSubjects,
   type ExamSetupKey,
 } from '../src/data/examPreparation';
-import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
+import { fetchCbtBank, fetchCbtExams, fetchCbtExamsWithAvailability, fetchCbtSubjectCatalog, fetchPastQuestionResources, fetchPostUtmeInstitutions, startConfiguredCbt, trackEvent, type CbtBankPayload, type CbtSubjectCatalogEntry, type PastQuestionResource, type PostUtmeInstitution } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
 import { usePendingPhase } from '../src/lib/usePendingPhase';
 import { isSupabaseConfigured } from '../src/lib/supabase';
@@ -98,12 +99,13 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const [catalogError, setCatalogError] = useState<unknown>(null);
   const [bank, setBank] = useState<CbtBankPayload | null>(null);
   const [bankError, setBankError] = useState<unknown>(null);
+  const [databaseSubjects, setDatabaseSubjects] = useState<CbtSubjectCatalogEntry[]>([]);
   const [mode, setMode] = useState<CbtMode>(() => (new URLSearchParams(window.location.search).get('mode') === 'mock' ? 'mock' : 'practice'));
 
   // Practice configuration - the student's own session.
   const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
-  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities'>('General');
+  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities' | 'Technical / Vocational'>('General');
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -184,6 +186,15 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   }, [exam, loadBank, postUtmeInstitutionId]);
 
   useEffect(() => { void resolveCatalogAndBank(); }, [resolveCatalogAndBank]);
+
+  useEffect(() => {
+    let current = true;
+    const body = exam === 'post-utme' ? 'POST-UTME' : exam.toUpperCase();
+    void fetchCbtSubjectCatalog(body)
+      .then((items) => { if (current) setDatabaseSubjects(items); })
+      .catch(() => { if (current) setDatabaseSubjects([]); });
+    return () => { current = false; };
+  }, [exam]);
 
   useEffect(() => {
     // AN-1: which exam bodies reach the setup wizard - the step before any
@@ -285,25 +296,55 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     || (compulsoryKeys.length > 0 && !compulsoryEnglish);
   const trackSubjectNames = useMemo(() => {
     if (practiceTrack === 'General') return null;
-    const secondary = secondarySubjectCatalog[practiceTrack];
+    const secondary = secondarySubjectCatalog[practiceTrack as keyof typeof secondarySubjectCatalog] || [];
     const jamb = practiceTrack === 'Science'
       ? [...jambSubjectCatalog.Science, ...jambSubjectCatalog.Engineering, ...jambSubjectCatalog['Medicine & Health'], ...jambSubjectCatalog.Education]
       : practiceTrack === 'Commercial'
         ? [...jambSubjectCatalog.Commercial, ...jambSubjectCatalog['Social Science']]
-        : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
-    return new Set([...secondary, ...jamb].map(normalizeSubject));
-  }, [practiceTrack]);
+        : practiceTrack === 'Technical / Vocational'
+          ? []
+          : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
+    const vocational = practiceTrack === 'Technical / Vocational' ? secondarySubjectCatalog['Technical / Vocational'] : [];
+    const databaseGroup = practiceTrack === 'Arts & Humanities'
+      ? 'Arts'
+      : practiceTrack === 'Technical / Vocational'
+        ? 'Technical & Vocational'
+        : practiceTrack;
+    const databaseNames = databaseSubjects
+      .filter((entry) => entry.subject_group === databaseGroup)
+      .map((entry) => entry.subject_name);
+    return new Set([...secondary, ...jamb, ...vocational, ...databaseNames].map(normalizeSubject));
+  }, [practiceTrack, databaseSubjects]);
   // A subject the static catalogues do not know (Post-UTME "General
   // Knowledge", for example) must not disappear because of a group filter:
   // the filter is a convenience, not a way to hide a bank the student can use.
   const knownSubjectKeys = useMemo(() => new Set([
     ...Object.values(secondarySubjectCatalog).flat(),
     ...Object.values(jambSubjectCatalog).flat(),
-  ].map(normalizeSubject)), []);
+    ...databaseSubjects.map((entry) => entry.subject_name),
+  ].map(normalizeSubject)), [databaseSubjects]);
   // The group filter narrows the available list only; it never changes an
   // existing selection. Compulsory subjects stay visible in every group so a
   // required subject can always be re-added.
-  const visiblePracticeAvailability = availability.filter((entry) => {
+  const catalogueNames = useMemo(() => {
+    const bankNames = availability.map((entry) => entry.subject);
+    const jambNames = Object.values(jambSubjectCatalog).flat();
+    const names = exam === 'jamb'
+      ? jambNames
+      : exam === 'waec' || exam === 'neco'
+        ? secondarySchoolSubjects
+        : [...secondarySchoolSubjects, ...jambNames, 'General Knowledge', 'General Studies'];
+    const databaseNames = databaseSubjects.map((entry) => entry.subject_name);
+    return Array.from(new Map([...databaseNames, ...names, ...bankNames].map((name) => [normalizeSubject(name), name])).values());
+  }, [availability, databaseSubjects, exam]);
+  // The catalogue lists recognised subjects even when this particular bank
+  // has no approved questions yet. Such subjects stay visible but cannot be
+  // selected until the bank has content. Never expose the bank's question count.
+  const subjectPickerAvailability = useMemo(() => catalogueNames.map((subject) => {
+    const available = availability.find((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject));
+    return { subject: available?.subject || subject, questionCount: available?.questionCount || 0 };
+  }), [availability, catalogueNames]);
+  const visiblePracticeAvailability = subjectPickerAvailability.filter((entry) => {
     const key = normalizeSubject(entry.subject);
     return !trackSubjectNames
       || trackSubjectNames.has(key)
@@ -347,7 +388,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       if (current.some((item) => normalizeSubject(item) === normalizeSubject(subject))) return current;
       const subjectLimit = subjectLimitFor(examBody, limits);
       if (current.length >= subjectLimit) {
-        setFormError(`A session can include at most ${subjectLimit} subjects${exam === 'jamb' ? ' for JAMB UTME' : ''}. Remove one before adding another.`);
+        setFormError(`You have reached the ${subjectLimit}-subject limit for this exam. Remove a subject before adding another.`);
         return current;
       }
       return [...current, subject];
@@ -637,14 +678,21 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 {(mode === 'practice' || mode === 'mock') && (
                   <div className="er-setup-form-grid">
                     <div className="er-setup-full-width">
-                      <span className="er-setup-label">Subject group</span>
-                      <div className="er-setup-duration-options" role="radiogroup" aria-label="Filter subjects by group">
-                        {(['General', 'Science', 'Commercial', 'Arts & Humanities'] as const).map((track) => (
-                          <button key={track} type="button" role="radio" aria-checked={practiceTrack === track} className={`er-setup-duration-option${practiceTrack === track ? ' is-selected' : ''}`} onClick={() => { setPracticeTrack(track); setFormError(''); }}>
-                            {track === 'Arts & Humanities' ? 'Arts' : track}
-                          </button>
-                        ))}
-                      </div>
+                      <label className="er-setup-label" htmlFor="er-subject-group">Subject group</label>
+                      <select
+                        id="er-subject-group"
+                        className="er-setup-group-select"
+                        aria-label="Choose subject group"
+                        value={practiceTrack}
+                        onChange={(event) => { setPracticeTrack(event.target.value as typeof practiceTrack); setFormError(''); }}
+                        style={{ width: '100%', minHeight: 44, padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5d1', background: '#fff', color: '#174A3A', font: 'inherit' }}
+                      >
+                        <option value="General">All subjects</option>
+                        <option value="Science">Science</option>
+                        <option value="Arts & Humanities">Arts</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Technical / Vocational">Technical &amp; Vocational</option>
+                      </select>
                     </div>
                     <div className="er-setup-full-width">
                       <div className="er-setup-label">
@@ -658,14 +706,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                               key={entry.subject}
                               type="button"
                               className="er-setup-duration-option"
-                              disabled={lockedAtLimit}
+                              disabled={lockedAtLimit || entry.questionCount < 1}
                               onClick={() => addPracticeSubject(entry.subject)}
                               aria-label={`Add ${entry.subject}`}
-                              title={lockedAtLimit ? 'Required subject combination is complete' : `Add ${entry.subject}`}
+                              title={lockedAtLimit ? 'Subject limit reached' : entry.questionCount < 1 ? 'Questions have not been added to this subject bank yet' : `Add ${entry.subject}`}
                             >
                               <Plus size={15} aria-hidden="true" />
                               <span>{entry.subject}</span>
-                              <small>{entry.questionCount} available</small>
+                              <small>{entry.questionCount > 0 ? 'Ready to practise' : 'Question bank being prepared'}</small>
                             </button>
                           );
                         }) : (

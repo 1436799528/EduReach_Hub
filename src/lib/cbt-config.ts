@@ -111,7 +111,7 @@ export const DEFAULT_CBT_LIMITS: CbtLimits = {
   maxQuestions: 100,
   minMinutes: 5,
   maxMinutes: 240,
-  maxSubjects: 6,
+  maxSubjects: 9,
 };
 
 export type CbtSessionConfig = {
@@ -293,26 +293,34 @@ export function mockDurationMinutes(defaultMinutes?: number | null): number {
 
 /** How many subjects one session may include for this examination. */
 export function subjectLimitFor(examBodyOrKey: string, limits: CbtLimits = DEFAULT_CBT_LIMITS): number {
-  // JAMB UTME combines Use of English with three others; no other body has an
-  // EduReach-imposed combination.
-  return compulsorySubjectKeys(examBodyOrKey).includes('english')
-    ? Math.min(4, limits.maxSubjects)
-    : limits.maxSubjects;
+  const body = String(examBodyOrKey || '').trim().toUpperCase();
+  if (body === 'JAMB' || body === 'UTME' || body.includes('JAMB')) return 4;
+  if (body === 'WAEC' || body === 'NECO' || body.includes('WAEC') || body.includes('NECO')) return 9;
+  return limits.maxSubjects;
 }
 
 /**
  * The one rule a mock combination must satisfy before the server will create
- * it. Mirrors `start_cbt_attempt_configured`: a JAMB mock is exactly four
- * subjects including Use of English. Returns a message a student can act on,
- * or null when the combination is acceptable.
+ * it. JAMB mocks require exactly four subjects including English; WAEC/NECO
+ * mocks require at least four subjects and allow up to nine. Practice remains flexible.
+ * Returns a message a student can act on, or null when acceptable.
  */
 export function mockCombinationError(subjects: string[], examBodyOrKey: string): string | null {
-  if (!compulsorySubjectKeys(examBodyOrKey).includes('english')) return null;
+  const body = String(examBodyOrKey || '').trim().toUpperCase();
   const unique = new Set(subjects.map(normalizeSubject));
-  if (!unique.has('english')) return 'Use of English is compulsory for a JAMB mock. Add it before starting.';
-  if (unique.size !== 4) {
-    const missing = 4 - unique.size;
-    return `A JAMB mock is Use of English plus three other subjects. Add ${missing} more subject${missing === 1 ? '' : 's'}.`;
+  if (body === 'JAMB' || body === 'UTME' || body.includes('JAMB')) {
+    if (!unique.has('english')) return 'Use of English is compulsory for a JAMB mock. Add it before starting.';
+    if (unique.size !== 4) {
+      const missing = 4 - unique.size;
+      return `A JAMB mock requires exactly four subjects: Use of English plus three others. Add ${missing} more subject${missing === 1 ? '' : 's'}.`;
+    }
+    return null;
+  }
+  if (body.includes('WAEC') || body.includes('NECO')) {
+    if (unique.size < 4) return `A ${body.includes('WAEC') ? 'WAEC' : 'NECO'} mock requires at least four subjects. Select ${4 - unique.size} more subject(s), or use practice mode.`;
+  }
+  if (body.includes('POST') && unique.size < 4) {
+    return 'A Post-UTME mock requires at least four subjects. Use practice mode for a shorter session.';
   }
   return null;
 }

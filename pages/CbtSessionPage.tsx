@@ -444,7 +444,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <button type="button" className="er-exam-tool" onClick={() => setPaletteOpen((current) => !current)} aria-expanded={paletteOpen} aria-controls="er-exam-question-navigator" aria-label="Toggle question navigator">
             <Grid3X3 size={15} /> <span className="er-exam-tool-label">Questions</span>
           </button>
-          <button type="button" className="er-exam-end" onClick={() => setConfirmKind('end')} aria-label="End test">
+          <button type="button" className="er-exam-end" style={{ backgroundColor: '#B14933', color: '#ffffff', border: '2px solid #8f3727', boxShadow: '0 2px 8px rgba(0,0,0,0.22)', minHeight: 40, padding: '8px 14px', borderRadius: 8 }} onClick={() => setConfirmKind('end')} aria-label="End test">
             <LogOut size={15} /> <span className="er-exam-tool-label">End Test</span>
           </button>
         </div>

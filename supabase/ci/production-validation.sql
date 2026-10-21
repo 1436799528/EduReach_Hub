@@ -24,7 +24,7 @@ with expected(table_name) as (
     ('campus_post_likes'),('edureach_notifications'),('student_notifications'),
     ('student_saved_items'),('student_cgpa_terms'),('student_cgpa_courses'),
     ('student_wallets'),('student_wallet_transactions'),('student_security_events'),
-    ('student_profiles'),('profiles'),('cbt_exams'),('exam_questions'),
+    ('student_profiles'),('profiles'),('cbt_exams'),('cbt_subject_catalog'),('exam_questions'),
     ('cbt_attempts'),('cbt_answers'),('news_articles'),('news_sources'),
     ('news_ingest_runs'),('news_ingest_candidates'),('opportunities'),
     ('admin_audit_logs'),('site_analytics_events'),('rate_limit_hits'),
@@ -137,9 +137,9 @@ where b.id is null or b.public is distinct from expected.should_be_public;
 -- 8. The migration history is fully applied ----------------------------------
 -- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
 select
-  case when count(*) >= 73 then 'pass' else 'fail' end as result,
+  case when count(*) >= 74 then 'pass' else 'fail' end as result,
   'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 73)' as detail
+  count(*)::text || ' migrations recorded (repository holds 74)' as detail
 from supabase_migrations.schema_migrations;
 
 -- 9. The objects this release introduces are present -------------------------
@@ -181,12 +181,15 @@ with expected(version, migration) as (
     ,('20261024120000', '20261024120000_site_content_and_legal_pages.sql')
     ,('20261025120000', '20261025120000_cbt_submit_grace_120.sql')
     ,('20261026120000', '20261026120000_service_guides.sql')
+    ,('20261027120000', '20261027120000_cbt_subject_catalog_and_mock_rules.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
   where not exists (
     select 1 from supabase_migrations.schema_migrations applied
     where applied.version = e.version
+       or (e.migration = '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
+           and applied.name = 'cbt_subject_catalog_and_mock_rules')
   )
 ), missing_objects as (
   select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration
@@ -204,6 +207,10 @@ with expected(version, migration) as (
   select 'public.service_guides', '20261026120000_service_guides.sql'
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'service_guides')
+  union all
+  select 'public.cbt_subject_catalog', '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
+  where not exists (select 1 from information_schema.tables
+                    where table_schema = 'public' and table_name = 'cbt_subject_catalog')
   union all
   select 'public.site_pages', '20261024120000_site_content_and_legal_pages.sql'
   where not exists (select 1 from information_schema.tables

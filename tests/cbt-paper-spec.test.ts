@@ -61,6 +61,9 @@ before(async () => {
   await db.exec(insertQuestions(JAMB_REJECTED, 'Use of English', 4, 900, 'rejected'));
   await db.exec(insertQuestions(JAMB_REJECTED, 'Mathematics', 6, 300));
   await db.exec(insertQuestions(WAEC, 'Biology', 12, 100));
+  await db.exec(insertQuestions(WAEC, 'Physics', 8, 200));
+  await db.exec(insertQuestions(WAEC, 'Mathematics', 10, 300));
+  await db.exec(insertQuestions(WAEC, 'Chemistry', 6, 400));
   await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [STUDENT]);
 });
 
@@ -124,8 +127,8 @@ test('practice keeps the student\'s count; a mock keeps the examination\'s', asy
   assert.equal(practice.rows[0].total_questions, 8, 'a practice session is the size the student asked for');
   assert.equal(practice.rows[0].duration_minutes, 8, 'and is timed at the paper pace for those 8 questions');
 
-  const mock = await startMock(WAEC, ['Biology'], 5);
-  assert.equal(mock.total_questions, 12, 'a mock uses the bank paper at the exam duration');
+  const mock = await startMock(WAEC, ['Biology', 'Physics', 'Mathematics', 'Chemistry'], 5);
+  assert.equal(mock.total_questions, 36, 'a mock uses all usable questions in the selected subjects at the exam duration');
   assert.equal(mock.duration_minutes, 90);
 });
 

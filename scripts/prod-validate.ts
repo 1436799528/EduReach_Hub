@@ -101,6 +101,7 @@ export const PROBED_TABLES = [
   'service_catalog',
   'service_requests',
   'cbt_exams',
+  'cbt_subject_catalog',
   'exam_questions',
   'news_articles',
   'opportunities',

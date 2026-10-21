@@ -145,7 +145,7 @@ export default function CbtHistoryPanel() {
                 <span>{item.totalQuestions} questions</span>
                 {item.durationMinutes && <span>{item.durationMinutes} minutes</span>}
                 {item.subjects.length > 0 && <span>{item.subjects.slice(0, 4).join(' · ')}{item.subjects.length > 4 ? ` +${item.subjects.length - 4}` : ''}</span>}
-                {item.status === 'submitted' && item.score !== null && <span><strong>{Math.round(item.score)}%</strong> · {item.correctAnswers}/{item.totalQuestions}</span>}
+                {item.status === 'submitted' && item.score !== null && <span>Result ready</span>}
                 {item.status === 'in_progress' && <span>{item.answered} answered</span>}
               </div>
               <div className="er-history-actions">
