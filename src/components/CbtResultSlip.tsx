@@ -66,9 +66,10 @@ export default function CbtResultSlip({ result, studentName, studentId, subjectB
   const subjects: SubjectBreakdown[] = subjectBreakdown?.length
     ? subjectBreakdown
     : [{ subject: result.exam?.subject || result.exam?.title || 'CBT Practice', questions: total, correct, score }];
-  const jambMark = isJambStyle && isMock
+  const jambMark = isJambStyle
     ? Math.round(subjects.reduce((sum, item) => sum + (item.questions > 0 ? (item.correct / item.questions) * 100 : 0), 0))
     : Math.round((correct / Math.max(1, total)) * 100);
+  const jambMarkMaximum = isJambStyle ? subjects.length * 100 : 100;
   const grade = gradeFor(score);
   const reference = attempt.id ? `ER-CBT-${attempt.id.replace(/[^a-zA-Z0-9]/g, '').slice(-12).toUpperCase()}` : 'ER-CBT-PENDING';
 
