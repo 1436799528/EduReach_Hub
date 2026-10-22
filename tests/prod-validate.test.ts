@@ -61,6 +61,27 @@ test('anything the browser reads carries the VITE_ prefix', () => {
   }
 });
 
+test('no secret is declared with a VITE_ prefix', () => {
+  // The rule the contract states in its header, now asserted. Vite inlines every
+  // VITE_ variable into the browser bundle, so a secret carrying that prefix is a
+  // secret handed to every visitor. `src/lib/supabaseKey.ts` refuses a privileged
+  // key at runtime as a second line of defence; this keeps the declaration
+  // itself honest, and covers aliases too (that is how the mistake would be made:
+  // a "legacy name" added for convenience).
+  for (const spec of ENV_CONTRACT) {
+    if (spec.secret) {
+      assert.doesNotMatch(spec.name, /^VITE_/, `${spec.name} is secret but VITE_ prefixed`);
+      assert.equal(spec.visibility, 'server', `${spec.name} is secret but declared client-visible`);
+    }
+    for (const alias of spec.aliases) {
+      if (spec.secret) {
+        assert.doesNotMatch(alias.name, /^VITE_/, `${spec.name} alias ${alias.name} is secret but VITE_ prefixed`);
+        assert.equal(alias.visibility, 'server', `${spec.name} alias ${alias.name} is secret but declared client-visible`);
+      }
+    }
+  }
+});
+
 test('a server-side fallback for a client variable is labelled as one', () => {
   // The trap this guards: SUPABASE_URL satisfies the server's read of the Supabase
   // origin but is not inlined into the bundle, so an operator who sets only that

@@ -15,7 +15,7 @@
     "test:e2e": "playwright test --project=desktop-chromium --project=mobile-chromium",
     "e2e:perf": "playwright test --project=mobile-perf --workers=1",
     "check": "npm run ci",
-    "ci": "npm run typecheck && npm test && npm run schema:audit && npm run migrations:checklist && npm run build && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run e2e:perf && npm run audit:ci",
+    "ci": "npm run typecheck && npm test && npm run schema:audit && npm run migrations:checklist && npm run build && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run e2e:perf && npm run rls:audit && npm run a11y:audit && npm run audit:ci",
     "newsroom:run": "tsx scripts/newsroom.ts",
     "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",

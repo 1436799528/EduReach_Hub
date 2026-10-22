@@ -355,3 +355,69 @@ so there was nothing to "fix" there. Production data findings from Session 10
 (376 duplicate question groups, 16/16 news articles with an unrecognised
 category, 328/329 institutions without a website, one opportunity with no
 deadline) are content decisions, not code defects, and remain open.
+
+## Session 13 — PR #30 review, item by item (2026-10-22)
+
+Branch `arena/069ae800-edureach-hub` @ `76f9d8f` at the start (tree clean, matches
+the remote). No deployment was attempted: **Netlify deployment credits have
+expired**, so the deploy-preview status is `BLOCKED`, not "passing" and not
+"failing". No Supabase credentials exist here and `*.supabase.co` is unreachable,
+so every live check stays `BLOCKED`. No migration, production write, deploy or
+secret handling occurred.
+
+### What was re-verified rather than assumed
+
+| Area | How | Result |
+|---|---|---|
+| `.env` for local builds | temporary `.env` only → guard prints `ok`; `CONTEXT=production` → exit 0 | passes (was the AUD-1 defect) |
+| explicit env wins over `.env` | shell variable + stale `.env` → shell value used; dotenv never overwrites | passes |
+| production build fails when unconfigured | empty `.env` + `CONTEXT=production` → exit 1, names both variables | passes |
+| route discovery is not vacuous | mutation: force the layer list to `[]` → the suite fails with `route discovery missed GET /api/admin/session` | passes |
+| CSP origins | mutation: concatenate `https://*.supabase.co` + `wss://…` into one token → tests 4 and 9 fail; mutation: delete `wss://` → both fail | passes |
+| capabilities | mutation: delete `'site.update'` from the vocabulary, then from the editor grant list → test 15 fails both times | passes |
+| analytics retention | dry run issues one `head: true` count and **no** RPC (`tests/analytics-retention.test.ts` asserts `calls.rpc` is empty); only `--apply` reaches `prune_site_analytics_events` and `recordJobRun` | passes |
+| migration checklist | 74/74; per-file comparison plus duplicate/malformed/missing-entry detection; SQL artifact contains no mutating statement (keyword scan after stripping comments and literals) | passes |
+| compression | live server: `/` brotli with `Vary: Accept-Encoding`; `/api/health` (36 B) uncompressed with `Content-Length` intact; hashed asset `immutable` + brotli; range request returns 206 **uncompressed**; 404 keeps `no-store` | passes |
+
+### Findings this session
+
+| ID | Pri | Finding | Evidence | Disposition |
+|---|---|---|---|---|
+| AUD-6 | **P2** | The browser's defence-in-depth key screen (`src/lib/supabase.ts`) only decoded a JWT payload looking for `"role":"service_role"`. Supabase's current secret keys (`sb_secret_…`) are not JWTs, so that check silently returned false: pasting one into `VITE_SUPABASE_PUBLISHABLE_KEY` would have inlined a full RLS-bypassing key into the public bundle, while `lib/supabase-config.ts` on the server already treated the same prefix as a secret. | the screen was one JWT-only expression; no test covered it | **Fixed**: predicate extracted to `src/lib/supabaseKey.ts`, refuses `sb_secret_` and service-role JWTs, passes `sb_publishable_`/anon, never throws; `tests/supabase-key.test.ts` (5 tests), mutation-checked |
+| AUD-7 | P3 | The env contract states "a secret must never be a `VITE_` variable" but nothing asserted it, for a primary name or an alias. | `src/lib/envContract.ts` header vs `tests/prod-validate.test.ts` (it checked only that client vars carry the prefix) | **Fixed**: new invariant test; mutation (renaming the service-role key to `VITE_…`) turns it red |
+| AUD-8 | P3 | `npm run ci` — the authoritative gate — ran `schema:audit` but not `rls:audit` or `a11y:audit`, two deterministic offline audits the repository ships (3 s and 2 s). `docs/architecture/STYLESHEET_LAYERS.md` already described `a11y:audit` as "in the gate". | `package.json` `ci` string; `tests/ci.test.ts` stage list | **Fixed**: both stages added to `ci` (before the network-dependent `audit:ci`) and to the required-stage list |
+| AUD-9 | P3 (risk) | `extractZip` decompresses each entry (`entry.async('uint8array')`) and only then checks the 20 MB per-file / 80 MB total caps, so a crafted archive can allocate far more memory than the caps imply before being rejected. | `src/server/question-import/extract.ts:326-335` | **Not changed**: the path needs the `data.import` capability and is rate-limited; a pre-decompression size check relies on JSZip internals. Recorded for a reviewed follow-up rather than fixed blind |
+| AUD-10 | P3 (limitation) | In check 8 of `supabase/ci/production-validation.sql`, six legacy migrations share the 8-digit version `20260903`. A single ledger row with that version satisfies the version arm of the match for all six, so up to five unrecorded files could read as recorded. | `production-validation.sql:151-238`; the six files | **Reported, not changed**: tightening it could turn a currently-correct production report into a false `fail`, and the live ledger cannot be inspected from here (see the reconciliation document's rule 2). Recommended once a staging ledger is available |
+
+### Production-content findings — rechecked, still owner decisions
+
+- **376 duplicate question groups** — the last live run of `duplicate:audit`
+  (this script is read-only and reports `BLOCKED` without credentials). The
+  repository's exact-duplicate migration removed only rows that were identical in
+  text, options and key *and* unreferenced (12 rows, applied 2026-10-18), and
+  deliberately does not act on near-duplicates. So the count is consistent with
+  the code, and deleting more is a **content decision**.
+- **16/16 published news articles with an unrecognised category** — **partly
+  superseded**. `20261002130000_news_category_contract.sql` derives an indexed
+  `category_slug` for every article, so filtering no longer depends on the stored
+  label matching a slug. What remains is editorial: labels such as `NABTEB` map to
+  a slug with no filter chip. This is **content/vocabulary**, not a code defect.
+- **328/329 institutions without a website** — unchanged; filling them is a
+  **data-entry decision** (`institutions.website_url` is optional by design).
+- **One active opportunity without a deadline** — unchanged; whether a deadline
+  is mandatory is a **product decision**, and the opportunity itself is published
+  and visible.
+
+None of the four was edited. Each needs an approved decision and, where a rule is
+wanted rather than a cleanup, a forward-only migration.
+
+### Verification (this branch, after the fixes)
+
+`npm run ci` — the whole gate, with the two new stages — exited **0**:
+`typecheck` 0 · `npm test` **689 pass / 0 fail / 0 skipped** · `schema:audit` 0 ·
+`migrations:checklist` 74/74 · `build` 0 · `perf:audit` 10/10 ·
+`analytics:audit` 0 · `test:e2e` 158 passed / 2 skipped · `e2e:perf` 1 passed
+(LCP 1 700 / 1 696 / 1 972 ms) · `rls:audit` 50/50 · `a11y:audit` 0 blocking /
+5 informational · `audit:ci` 0 vulnerabilities. Run separately: `env:check` 0
+("not configured" — correct here), `prod:validate` **1** (four required variables
+unset; live checks reported `skipped`, never `pass`).
