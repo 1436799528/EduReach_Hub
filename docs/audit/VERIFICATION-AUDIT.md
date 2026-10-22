@@ -206,3 +206,39 @@ All read-only findings; none is a release blocker.
 `npm test` **667/667** (660 before this session + 6 retention + 1 CRLF) · `schema:audit` no blocking findings with LF **and** with CRLF ·
 `perf:audit` 10/10 (also with CRLF `_headers`) · `npm start` serves
 `/api/health` 200 and the SPA shell 200.
+
+## Session 10 — the verification ran against production (2026-10-22, continued)
+
+`npm run env:check` (added this session) reports the owner's `.env` project
+reference as `gjdfatwcoosyuhakrrhh` — the production project named in this
+repository's own audit documents. That reframes session 9's evidence:
+
+- **Safe, and now confirmed against production:** `prod:validate` (21 passed,
+  1 failed only because `NODE_ENV` was not exported), storage bucket visibility,
+  table reachability, CBT/news/opportunity data integrity, `newsroom:integrity`,
+  `duplicate:audit`, `schema:audit` after the CRLF fix, `perf:audit` 10/10.
+- **Never run against production:** account creation, password reset, CBT
+  attempts answer-saving, uploads, admin edits, `analytics:retention --apply`.
+  None was run. The manual walkthrough in the staging plan must not be run until
+  `.env` points at a staging project.
+- **One command did write-capable work by mistake:** `analytics:retention`
+  without `--apply` called `prune_site_analytics_events()` against production on
+  2026-10-22 at 10:50 and at 09:31. Both runs reported `0 row(s)` deleted, and
+  the window (90 days; cutoff 2026-07-24) is older than every row in
+  `site_analytics_events` (593 rows, all recent). No data was lost. The defect is
+  fixed in `41e3c7e` and pinned by `tests/analytics-retention.test.ts`.
+- **`NODE_ENV` must not be added to `.env`:** the dev server reads the same file,
+  so a production value there would make `npm run dev` serve the stale build.
+  Provide it per command; `npm start` sets it itself.
+
+New in this session: `npm run env:check` (`scripts/env-check.ts`,
+`tests/env-check.test.ts`, 6 tests) classifies the configured project and states
+what is safe against it, and `npm start` now explains a missing dependency
+(`npm ci`) instead of printing a bare `MODULE_NOT_FOUND` stack trace.
+
+Production data findings from the read-only run, none changed: 376 exact
+duplicate question groups (two exam rows share ten General questions; ten
+vocabulary items repeat across three Use of English banks) · 16 of 16 published
+news articles use an unrecognised category · 328 of 329 institutions have no
+website · 1 active opportunity has no deadline · 1 610 exam questions,
+7 CBT exams, 24 news rows, 329 institutions, 593 analytics events.

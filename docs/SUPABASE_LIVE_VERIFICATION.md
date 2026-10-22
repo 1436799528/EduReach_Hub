@@ -99,6 +99,49 @@ migration or a documented reconciliation, never an edit to
 
 ---
 
+## 3b. Which project is this checkout pointed at?
+
+Two jobs share one `.env`, and their safety rules are opposite:
+
+| Job | Commands | Safe against production? |
+|---|---|---|
+| Read-only verification | `prod:validate`, `duplicate:audit`, `analytics:retention` (no `--apply`), `newsroom:integrity`, the SQL artifact | **Yes** — every statement is a `SELECT` |
+| Manual walkthrough | sign-up, password reset, practising a paper, uploads, admin edits | **No** — it creates accounts, attempts, uploads and emails |
+
+`npm run env:check` prints the project reference and says which case you are in.
+It prints no key and no part of the connection string beyond the reference, which
+is already public in the deployed site's own requests.
+
+**Recorded 2026-10-22:** the owner's `.env` pointed at `gjdfatwcoosyuhakrrhh`,
+which is the production project named in this repository's audit documents.
+Every command run against it that day was read-only, so nothing was written — but
+the next step in the plan (the walkthrough) would have. To do the walkthrough,
+point `.env` at a staging project first, or create one.
+
+Recommended arrangement for one machine:
+
+1. `cp .env .env.production-live` — keeps the production values in a file the app
+   does not read (`.env*` is git-ignored, so neither file is ever committed).
+2. Edit `.env` to hold the staging project's three values.
+3. Run `npm run env:check` after any edit; it must say `staging or another project`
+   before the walkthrough.
+4. To go back to read-only production checks, swap the two files over and run
+   `npm run env:check` again.
+
+### NODE_ENV, and why it does not belong in `.env`
+
+`prod:validate` reports `NODE_ENV` as required. Do **not** add
+`NODE_ENV=production` to `.env`: the dev server reads the same file, and a
+"production" value there makes `npm run dev` serve the built `dist/` folder
+instead of the live development server. Provide it per command instead:
+
+```
+NODE_ENV=production npm run prod:validate      # Git Bash, macOS, Linux
+$env:NODE_ENV="production"; npm run prod:validate   # PowerShell
+```
+
+`npm start` sets it itself, so serving the production build needs no variable.
+
 ## 4. Running it from Windows (PowerShell)
 
 - `npm run prod:validate`, `npm run duplicate:audit`, `npm run analytics:retention`
@@ -112,6 +155,10 @@ migration or a documented reconciliation, never an edit to
   checkout (Git for Windows' default `core.autocrlf=true`) gives the same answers
   as Linux. Before the fix the schema audit reported 138 blocking findings on
   Windows and none on Linux.
+- After pulling a commit that adds a dependency, run `npm ci` before anything
+  else. Skipping it produces `Cannot find module 'compression'` (the module that
+  compresses responses); `npm start` now says so in one sentence instead of a
+  stack trace.
 - `npm start` runs `node scripts/start.mjs`, which sets `NODE_ENV=production` in
   Node before loading the server. It works in PowerShell, Git Bash and cmd.exe.
   (It used to be the POSIX prefix `NODE_ENV=production node build/server.cjs`,

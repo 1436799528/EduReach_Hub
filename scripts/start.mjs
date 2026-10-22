@@ -14,4 +14,31 @@ process.env.NODE_ENV ??= 'production';
 
 import { createRequire } from 'node:module';
 
-createRequire(import.meta.url)('../build/server.cjs');
+const require = createRequire(import.meta.url);
+
+try {
+  require('../build/server.cjs');
+} catch (error) {
+  // The most common first-run failure, and the least readable: the build was
+  // made after a dependency was added, but `node_modules` still predates it, so
+  // Node reports a bare MODULE_NOT_FOUND with a stack trace. Say what to do.
+  if (error?.code === 'MODULE_NOT_FOUND') {
+    const missing = /Cannot find module '([^']+)'/.exec(error.message)?.[1] ?? 'a dependency';
+    console.error(
+      [
+        '',
+        `EduReach cannot start: the module "${missing}" is not installed.`,
+        '',
+        'This usually means package.json changed (a new dependency was added) but',
+        'node_modules was not refreshed. In the project folder, run:',
+        '',
+        '    npm ci',
+        '',
+        'then start again. If it still fails, run `npm run build` first.',
+        '',
+      ].join('\n'),
+    );
+    process.exit(1);
+  }
+  throw error;
+}

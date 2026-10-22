@@ -21,6 +21,7 @@
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
     "schema:audit": "tsx scripts/schema-audit.ts",
     "migrations:checklist": "tsx scripts/migration-checklist.ts",
+    "env:check": "tsx scripts/env-check.ts",
     "perf:audit": "tsx scripts/perf-audit.ts",
     "audit:ci": "npm audit --audit-level=low",
     "analytics:audit": "tsx scripts/analytics-audit.ts",
