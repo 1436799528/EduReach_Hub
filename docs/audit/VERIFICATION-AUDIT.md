@@ -421,3 +421,105 @@ wanted rather than a cleanup, a forward-only migration.
 5 informational · `audit:ci` 0 vulnerabilities. Run separately: `env:check` 0
 ("not configured" — correct here), `prod:validate` **1** (four required variables
 unset; live checks reported `skipped`, never `pass`).
+
+## Session 14 — AUD-9 and AUD-10 closed (2026-10-22, continued)
+
+Branch `arena/069ae800-edureach-hub` @ `fe957bb` at the start (tree clean, matches
+the remote). No deployment: **Netlify credits expired**, recorded `BLOCKED` and
+not retried. No live Supabase access (network blocked, no credentials), so live
+reconciliation stays `BLOCKED`. No migration was applied, no production data was
+touched, no secret was read or printed.
+
+### AUD-9 — ZIP decompression memory safety: FIXED
+
+**What was wrong.** `extractZip` read every entry with `entry.async('uint8array')`
+and compared its length afterwards. Deflate allows ~1032:1, so a 24 KiB upload
+could allocate 24 MiB (or far more) before being rejected. The same pattern was in
+`extractDocx` and `extractXlsx`, which are ZIP containers too — the limit was not
+applied consistently to direct uploads.
+
+**What replaced it** (`src/server/question-import/extract.ts`):
+
+| Path | Mechanism |
+|---|---|
+| DEFLATE entry (primary) | `zlib.inflateRawSync(compressed, { maxOutputLength })` — zlib aborts mid-inflate with `ERR_BUFFER_TOO_LARGE` when the output would pass the budget. The allocation never exceeds the limit. |
+| STORE entry | Its length is checked before it is accepted (an uncompressed entry allocates nothing new). |
+| Unknown container internals (fallback) | JSZip's chunked stream, counting bytes and pausing the decompressor the moment the budget is passed. Bounded overshoot: one 16 KiB input block (~17 MB at the maximum ratio), not the size of the entry. |
+| `.docx` / `.xlsx` parts | The same bounded reader, so an office document cannot be the way around the archive limits. |
+
+Both ceilings are enforced *as the entry is read*: each read's budget is
+`min(perFile, maxTotal - alreadyRead)`, so 60 files of 19 MB cannot total 1.1 GB.
+Limits are unchanged (20 MB per file, 80 MB per archive, 60 entries), and the
+operator-facing message is the original one.
+
+**Measured**, not assumed: a 40 MiB expansion inside a 40 KiB archive is refused in
+16 ms with a ~5 MiB RSS increase (the old path allocated the full 40 MiB).
+
+**Verified by mutation.** Removing `maxOutputLength` → 3 tests fail; restoring the
+post-hoc measurement → the bomb and lying-header tests fail; breaking the
+aggregate budget → 2 fail; removing the streaming cap → 1 fails. A mistake made
+while writing the fix is now a test of its own: JSZip records a compression method
+as a two-byte magic string (`"\x08\x00"`), not the number 8. Comparing against a
+number silently sent every entry down the coarse fallback, and
+`the exact zlib-bounded path is the one actually used` now fails if that returns.
+
+### AUD-10 — migration ledger reconciliation: FIXED (live reconciliation still BLOCKED)
+
+**The defect, reproduced first.** With every migration recorded except the six
+`20260903` files, plus **one** ledger row whose version is `20260903`, check 8
+returned `pass` with `0 of 74 repository migrations are not recorded` — one row
+vouching for six files.
+
+**Evidence used.** `docs/operations/MIGRATION_HISTORY_MAP_2026-10-16.csv` records a
+disposition per file, not a guess: five of the six are recorded in the live ledger
+under their own later timestamps (`20260903191649`, `20260903191619`,
+`20260903192620`, `20260903191723`, `20260903192713`) with matching names; the sixth
+(`20260903_production_security_hardening.sql`) is classed `legacy-filename-unmapped`
+— the similarly named ledger entry `20260903191133 /
+production_security_contract_hardening` is a different file.
+
+**What the checklist now carries.** Every generated row has a fourth column, `kind`:
+
+| Kind | Count | Rule in the SQL |
+|---|---|---|
+| `unique` | 60 | Version match **or** name match (the documented renumbering). |
+| `shared` | 13 | **Name only.** A version match is never evidence, so one row cannot satisfy the group. |
+| `unresolved` | 1 | Reported `unresolved` until a ledger row for that file exists; `pass` only once it does. |
+
+`npm run migrations:checklist` now also fails when a file's `kind` disagrees with
+its evidence, when a row is not a four-column entry, or when a documented-unresolved
+file no longer exists. The block is generated once and used by one statement that
+returns three verdict rows — pasting it into several places, which is how the first
+attempt managed to desync, is now rejected by a test.
+
+**Verified by mutation:** restoring version matching for shared rows → the "one row
+cannot vouch for six" test fails; reporting unresolved as `fail` → 2 tests fail;
+skipping the kind check → the stale-kind test fails.
+
+**Still open, deliberately:** whether `20260903_production_security_hardening.sql`
+was ever applied cannot be established without the live ledger. It reads
+`unresolved`, which the runbook now states is "not verified", and the reconciliation
+document says what evidence settles it.
+
+### Related operational checks (item 4)
+
+| Question | Answer |
+|---|---|
+| Timeouts on decompression/parsing | **None.** Bounded structurally (entry count, byte budgets, `MAX_PDF_PAGES` 300) but no wall-clock cap. Recorded as a residual risk, not changed here. |
+| Concurrency limits | `adminImport` 10 per 10 min and `adminUpload` 20 per 10 min, both durable and keyed per account; `sweepStale` marks imports stuck in `processing` as failed after 15 min. |
+| Authorised before expensive parsing | Yes — `requireCapability(...)` and the rate limiter run before `express.json({limit:'30mb'})`. Covered by `uploads authorize before parsing a larger payload`. |
+| Temp resources cleaned up | Nothing is written to disk; entries are read into memory under a budget, and the streaming fallback pauses its worker on abort. A size violation aborts the whole read, so there is no partial import. |
+| Verdict vocabulary | `pass` / `fail` / `unresolved` now printed, and the runbook and `prod:validate`'s closing message both say that anything other than `pass` is not verified. |
+| Actionable CI failures | Every failure names the migration file, the count, and the command that regenerates the checklist. |
+
+### Verification (this session)
+
+`npm run ci` (typecheck, 714 tests, schema:audit, migrations 74/74, build,
+perf 10/10, analytics, e2e 158 passed, e2e:perf, rls 50/50, a11y 0 blocking,
+audit:ci 0 vulnerabilities) → **exit 0**. Run separately: `env:check` **0**
+("not configured" — correct here), `prod:validate` **1** (four required variables
+unset; live checks `skipped`, never `pass`). One earlier `npm run ci` run failed at
+the browser stage because the sandbox had lost the Chromium binary — an environment
+failure, fixed by re-provisioning, and not a code failure.
+
+**Netlify deploy preview:** `BLOCKED — credits expired`. **Live Supabase:** `BLOCKED`.

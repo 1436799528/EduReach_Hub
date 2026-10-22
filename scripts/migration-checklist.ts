@@ -19,7 +19,22 @@
  *   - `npm run migrations:checklist` fails when a file has no entry (a new,
  *     unchecked migration), when an entry has no file (a deleted or renamed
  *     migration), when two files claim the same version, or when an entry
- *     disagrees with its file's name.
+ *     disagrees with its file's name or its reconciliation kind.
+ *
+ * Every row carries a `kind`, because "is this migration recorded?" cannot be
+ * answered the same way for every file:
+ *
+ *   - `unique`  — one file owns this version, so a ledger row with that version
+ *                 is evidence for this file (the live ledger recorded many of
+ *                 these under a later timestamp; see the reconciliation doc);
+ *   - `shared`  — several files share a legacy 8-digit version (six share
+ *                 `20260903`). A version match is NOT evidence for any of them:
+ *                 one ledger row would make all six look applied. These are
+ *                 matched individually, by their own name, and nothing else;
+ *   - `unresolved` — the archive holds no ledger evidence that distinguishes
+ *                 this file at all (documented in the reconciliation CSV). It is
+ *                 reported as `unresolved`, never as `pass` and never as a
+ *                 confident `fail`.
  *
  * Nothing here contacts a database, and nothing marks a migration as applied.
  * The comparison against the live ledger happens in the SQL script itself,
@@ -34,6 +49,9 @@ export const CHECKLIST_END = '-- END GENERATED MIGRATION CHECKLIST';
 export const VALIDATION_SQL = 'supabase/ci/production-validation.sql';
 export const MIGRATIONS_DIR = 'supabase/migrations';
 
+/** How a migration's ledger record can be established. See the header. */
+export type MigrationKind = 'unique' | 'shared' | 'unresolved';
+
 export interface RepoMigration {
   /** The numeric prefix: 8 digits on the legacy files, 14 on newer ones. */
   version: string;
@@ -41,10 +59,42 @@ export interface RepoMigration {
   name: string;
   /** Filename as committed. */
   file: string;
+  /** Defaults to `unique` when the file is neither shared nor documented as unresolved. */
+  kind?: MigrationKind;
 }
 
+/**
+ * Migrations the archive has no ledger evidence for, with the evidence that
+ * would settle each one.
+ *
+ * Source: `docs/operations/MIGRATION_HISTORY_MAP_2026-10-16.csv`, the row-by-row
+ * comparison of every local file against the 173-entry live ledger. A file belongs
+ * here only with a classification from that document saying no ledger record
+ * matched it — not because it "looks odd".
+ */
+export interface UnresolvedMigration {
+  file: string;
+  /** What the reconciliation document recorded, quoted so it can be checked. */
+  evidence: string;
+  /** What would move this file out of this list. */
+  needed: string;
+}
+
+export const UNRESOLVED_MIGRATIONS: readonly UnresolvedMigration[] = [
+  {
+    file: '20260903_production_security_hardening.sql',
+    evidence:
+      'MIGRATION_HISTORY_MAP_2026-10-16.csv records classification "legacy-filename-unmapped": no same-name live ledger entry was found. (The ledger does hold a similarly named 20260903191133 production_security_contract_hardening, which is NOT the same file.)',
+    needed:
+      'Compare the file against the baseline and the 20260903191133 entry on a disposable Supabase branch; if the SQL is equivalent, map it here with that version, otherwise treat it as still pending.',
+  },
+];
+
+/** The unresolved files, keyed by filename. */
+const UNRESOLVED_BY_FILE = new Map(UNRESOLVED_MIGRATIONS.map((entry) => [entry.file, entry]));
+
 export interface ChecklistProblem {
-  kind: 'missing-from-checklist' | 'checklist-entry-without-file' | 'duplicate-version' | 'name-mismatch' | 'malformed-filename' | 'missing-block' | 'duplicate-checklist-entry';
+  kind: 'missing-from-checklist' | 'checklist-entry-without-file' | 'duplicate-version' | 'name-mismatch' | 'malformed-filename' | 'missing-block' | 'duplicate-checklist-entry' | 'kind-mismatch' | 'unresolved-entry-without-evidence' | 'stale-unresolved-entry';
   detail: string;
   file?: string;
 }
@@ -74,7 +124,28 @@ export function repoMigrations(root: string): { migrations: RepoMigration[]; mal
     if (parsed) migrations.push(parsed);
     else malformed.push(file);
   }
-  return { migrations, malformed };
+  return { migrations: classifyMigrations(migrations), malformed };
+}
+
+/**
+ * Decide how each migration's ledger record can be established.
+ *
+ * A version shared by several files can never identify one of them, so those
+ * files are `shared` no matter how the ledger looks. A file the reconciliation
+ * document could not match to any ledger row is `unresolved`, which takes
+ * precedence: it cannot be evidence for anything.
+ */
+export function classifyMigrations(migrations: RepoMigration[]): RepoMigration[] {
+  const perVersion = new Map<string, number>();
+  for (const migration of migrations) perVersion.set(migration.version, (perVersion.get(migration.version) ?? 0) + 1);
+  return migrations.map((migration) => {
+    const kind: MigrationKind = UNRESOLVED_BY_FILE.has(migration.file)
+      ? 'unresolved'
+      : (perVersion.get(migration.version) ?? 0) > 1
+        ? 'shared'
+        : 'unique';
+    return { ...migration, kind };
+  });
 }
 
 /** The generated block, without its markers. */
@@ -91,16 +162,35 @@ export function parseChecklist(sql: string): RepoMigration[] | null {
   const block = checklistBlock(sql);
   if (block === null) return null;
   const entries: RepoMigration[] = [];
-  for (const match of block.matchAll(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)/g)) {
-    entries.push({ version: match[1], name: match[2], file: match[3] });
+  for (const match of block.matchAll(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'(unique|shared|unresolved)'\s*\)/g)) {
+    entries.push({ version: match[1], name: match[2], file: match[3], kind: match[4] as MigrationKind });
   }
   return entries;
 }
 
-/** The `values` rows for the SQL block, formatted for the SQL editor. */
+/** The rows in the block that did not parse as a four-column entry. */
+export function malformedChecklistRows(sql: string): string[] {
+  const block = checklistBlock(sql);
+  if (block === null) return [];
+  const wellFormed = new Set<string>();
+  for (const match of block.matchAll(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'(?:unique|shared|unresolved)'\s*\)/g)) {
+    wellFormed.add(match[0]);
+  }
+  return [...block.matchAll(/\(\s*'[^']*'\s*,\s*'[^']*'\s*,\s*'[^']*'(?:\s*,\s*'[^']*')?\s*\)/g)]
+    .map((match) => match[0])
+    .filter((row) => !wellFormed.has(row));
+}
+
+/**
+ * The `values` rows for the SQL block, formatted for the SQL editor.
+ *
+ * The fourth column is the reconciliation kind, so the SQL can apply a different
+ * rule to each group rather than one loose rule to all of them.
+ */
 export function renderChecklistRows(migrations: RepoMigration[]): string {
-  return migrations
-    .map((migration) => `    ('${migration.version}', '${migration.name}', '${migration.file}')`)
+  const classified = classifyMigrations(migrations);
+  return classified
+    .map((migration) => `    ('${migration.version}', '${migration.name}', '${migration.file}', '${migration.kind}')`)
     .join(',\n');
 }
 
@@ -116,7 +206,12 @@ export function withChecklist(sql: string, migrations: RepoMigration[]): string 
  * The audit. Pure: it judges the files and the checklist it is given, so a test
  * can hand it a deliberately incomplete pair and see it fail.
  */
-export function auditChecklist(files: string[], checklist: RepoMigration[] | null): ChecklistProblem[] {
+export function auditChecklist(
+  files: string[],
+  checklist: RepoMigration[] | null,
+  /** The documented evidence list. Empty when auditing a synthetic file list. */
+  evidence: readonly UnresolvedMigration[] = UNRESOLVED_MIGRATIONS,
+): ChecklistProblem[] {
   const problems: ChecklistProblem[] = [];
 
   if (checklist === null) {
@@ -194,6 +289,46 @@ export function auditChecklist(files: string[], checklist: RepoMigration[] | nul
     seen.add(entry.file);
   }
 
+  // The reconciliation kind is what the SQL uses to choose its matching rule, so
+  // a stale kind is not cosmetic: `unique` on a file that shares a legacy
+  // version would let one ledger row vouch for several files. Recompute the kind
+  // from the repository and the documented evidence, and require the generated
+  // block to agree.
+  const expectedKinds = new Map(classifyMigrations(
+    repo.map(({ version, name, file }) => ({ version, name, file })),
+  ).map((migration) => [migration.file, migration.kind]));
+
+  for (const entry of checklist) {
+    const expected = expectedKinds.get(entry.file);
+    if (!expected) continue;
+    if (entry.kind !== expected) {
+      problems.push({
+        kind: 'kind-mismatch',
+        detail: `${entry.file} is listed as "${entry.kind}" but its ledger evidence is "${expected}" — run \`npm run migrations:checklist -- --write\``,
+        file: entry.file,
+      });
+    }
+    if (entry.kind === 'unresolved' && !evidence.some((item) => item.file === entry.file)) {
+      problems.push({
+        kind: 'unresolved-entry-without-evidence',
+        detail: `${entry.file} is marked unresolved, which needs an entry in UNRESOLVED_MIGRATIONS recording why the ledger cannot establish it`,
+        file: entry.file,
+      });
+    }
+  }
+
+  // A documented-unresolved file that is no longer in the repository means the
+  // evidence list has gone stale and should stop exempting anything.
+  for (const unresolved of evidence) {
+    if (!byRepoFile.has(unresolved.file)) {
+      problems.push({
+        kind: 'stale-unresolved-entry',
+        detail: `${unresolved.file} is recorded as unresolved but is not in ${MIGRATIONS_DIR}; remove its entry from UNRESOLVED_MIGRATIONS`,
+        file: unresolved.file,
+      });
+    }
+  }
+
   return problems;
 }
 
@@ -217,6 +352,9 @@ function main(): void {
   }
 
   const problems = auditChecklist(migrationFilesInRepo(root), parseChecklist(sql));
+  for (const row of malformedChecklistRows(sql)) {
+    problems.push({ kind: 'missing-from-checklist', detail: `the checklist row ${row} is not a four-column (version, name, file, kind) entry — run \`npm run migrations:checklist -- --write\`` });
+  }
   const checked = migrations.length;
   if (problems.length) {
     console.error(`MIGRATIONS: the checklist does not match the repository (${checked} migration file(s) checked)`);

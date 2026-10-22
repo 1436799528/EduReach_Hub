@@ -209,14 +209,20 @@ Now:
   `-- BEGIN GENERATED MIGRATION CHECKLIST` and `-- END GENERATED MIGRATION CHECKLIST`.
 - `npm run migrations:checklist` fails when a file is missing from that list, when
   the list names a file that no longer exists, when a 14-digit version is claimed
-  twice, or when an entry disagrees with its file. It is a stage of `npm run ci`.
+  twice, or when an entry disagrees with its file or with its reconciliation kind.
+  It is a stage of `npm run ci`.
 - `npm run migrations:checklist -- --write` regenerates the list. Regenerating is
   a source change reviewed like any other; it does not touch a database.
-- The SQL comparison matches by version and then by name with the 8/14-digit
-  prefix removed, because the live ledger recorded many of these files under a
-  different timestamp. `tests/migration-checklist.test.ts` runs that SQL against a
-  real PostgreSQL with a synthetic ledger and proves it fails when one migration
-  is missing and passes when all are present.
+- Each row carries a `kind`, and the SQL applies a different rule to each:
+  `unique` files match by version or by name (the live ledger recorded many under
+  a different timestamp); `shared` files — the ones that share a legacy 8-digit
+  version — match by **name only**, because a version match cannot distinguish
+  six files on `20260903`; `unresolved` files are reported as `unresolved` until a
+  ledger row for the file itself exists.
+- `tests/migration-checklist.test.ts` runs that SQL against a real PostgreSQL with
+  a synthetic ledger and proves the cases that matter: one `20260903` row does not
+  satisfy the six files, a missing migration is named, a documented renumbering
+  still matches, and a file with no evidence is never reported as applied.
 
 Regenerating after adding a migration:
 
@@ -228,7 +234,9 @@ npm run migrations:checklist
 `docs/operations/SUPABASE_MIGRATION_HISTORY_RECONCILIATION.md` remains the record
 of the deeper local-vs-remote history question. This checklist does not resolve
 that history; it stops the repository from quietly forgetting a migration while
-the question is open.
+the question is open, and it refuses to report the remaining unresolved file as
+applied. Live reconciliation stays **blocked** until it is run against a
+disposable project.
 
 ---
 

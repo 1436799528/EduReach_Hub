@@ -409,10 +409,31 @@ test('the migration checklist in the artifact matches the repository, and the ru
     [],
     `the checklist no longer matches supabase/migrations — run \`npm run migrations:checklist -- --write\``,
   );
+  // Check 8 must compare the whole generated checklist against the ledger, and it
+  // must do so under three rules rather than one loose one: a version match is
+  // evidence for a file only when that version is unique (AUD-10).
   assert.match(
     sql,
-    /'every migration in the repository is recorded in the migration ledger'/,
+    /'every uniquely versioned migration is recorded in the migration ledger'/,
     'check 8 must compare the whole checklist against the ledger, not a hand-picked subset',
+  );
+  assert.match(
+    sql,
+    /'every migration sharing a legacy version is individually recorded in the migration ledger'/,
+    'shared legacy versions need their own per-file check',
+  );
+  assert.match(
+    sql,
+    /'migrations with no ledger evidence are never reported as applied'/,
+    'unresolved migrations need a verdict of their own',
+  );
+  assert.match(sql, /else 'unresolved' end as result/, 'an unresolved migration must not be reported as pass or fail');
+  // The generated block must belong to that one statement, not be pasted into
+  // several places that can drift apart.
+  assert.equal(
+    sql.split('-- BEGIN GENERATED MIGRATION CHECKLIST').length - 1,
+    1,
+    'the checklist block must appear exactly once',
   );
   assert.match(runbook, new RegExp(`${count} migrations in `), `the runbook does not say ${count} migrations`);
 });

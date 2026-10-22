@@ -79,8 +79,23 @@ apply 20261002140000_past_question_resources.sql
 apply 20261002150000_opportunity_eligibility.sql
 ```
 
-**Pass:** check 9 prints `pass` and confirms all release migrations are recorded;
-check 8 reports at least 60 recorded migrations.
+**Pass:** check 9 prints `pass` and confirms all release migrations are recorded,
+**and** all three verdicts of check 8 are `pass`.
+
+Check 8 answers "is every migration in this repository recorded in the ledger?"
+with three rows, because one rule cannot answer it for every file:
+
+| Row | Meaning |
+|---|---|
+| `every uniquely versioned migration is recorded` | A ledger row with this version — or with a matching name — is evidence for the file. Some are recorded under a later timestamp; the reconciliation table lists them file by file. |
+| `every migration sharing a legacy version is individually recorded` | Six files share the version `20260903`. A version match is **not** evidence for any of them, so each must have its own ledger row. One row can no longer make six files look applied. |
+| `migrations with no ledger evidence are never reported as applied` | A file the reconciliation table could not match to any ledger row. It reads `unresolved` — not `pass`, and not `fail`, because "missing" has not been established either. |
+
+**Anything that is not `pass` is not verified.** `unresolved` is a real answer
+that needs a human: compare the file against the baseline and the similarly named
+historical entry on a disposable branch, then either record the version that holds
+it or treat the migration as still pending. See
+`docs/operations/SUPABASE_MIGRATION_HISTORY_RECONCILIATION.md`.
 
 ### 3b. What “not applied” looked like from outside, on 2026-10-03
 
@@ -116,10 +131,11 @@ Run the read-only validation SQL in the Supabase SQL editor:
 supabase/ci/production-validation.sql
 ```
 
-It prints `pass` / `fail` per check and mutates nothing. Check 9 is the migration
-sync check described in §3a — run it first if you suspect production is behind.
+It prints `pass` / `fail` / `unresolved` per check and mutates nothing. Check 9 is
+the migration sync check described in §3a — run it first if you suspect production
+is behind.
 
-**Pass:** no row prints `fail`. It covers expected tables, RLS enablement on every
+**Pass:** no row prints `fail` **and** no row prints `unresolved`. It covers expected tables, RLS enablement on every
 public table, every function the application calls, function grants to `anon` /
 `authenticated` (there must be none), server-only tables exposing no client policy,
 storage buckets, and migration count.

@@ -11,6 +11,7 @@
  * than invent an answer key or drop a question silently.
  */
 
+import { inflateRawSync } from 'node:zlib';
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 // Import the library entry point directly: pdf-parse's index.js runs a debug
@@ -73,8 +74,24 @@ export const UNSUPPORTED_EXTENSIONS: Record<string, string> = {
 };
 
 const MAX_ZIP_ENTRIES = 60;
+const MAX_ZIP_ENTRY_BYTES = 20 * 1024 * 1024;
 const MAX_ZIP_UNCOMPRESSED_BYTES = 80 * 1024 * 1024;
 const MAX_PDF_PAGES = 300;
+
+/** The archive limits, exported so a test asserts the shipped numbers. */
+export const ZIP_LIMITS = {
+  maxEntries: MAX_ZIP_ENTRIES,
+  maxEntryBytes: MAX_ZIP_ENTRY_BYTES,
+  maxTotalBytes: MAX_ZIP_UNCOMPRESSED_BYTES,
+} as const;
+
+/**
+ * One message for every way an archive can expand past the limits, because the
+ * operator's next action is the same in all of them: split the upload.
+ */
+export const ZIP_TOO_LARGE_MESSAGE =
+  'The archive expands beyond the 20 MB file / 80 MB total limit. Split it into smaller uploads.';
+
 
 export function extensionOf(filename: string): string {
   const match = /(\.[^.\\/]+)$/.exec(filename.trim());
@@ -188,7 +205,7 @@ async function extractDocx(buffer: Buffer): Promise<Extraction> {
   if (!main) {
     throw new ExtractionError('corrupt', 'This file is not a Word document: word/document.xml is missing.');
   }
-  const documentXml = await main.async('string');
+  const documentXml = await readEntryText(main, 'document body');
 
   // Images in a DOCX live beside the text, not inside it. They are counted so
   // the reviewer knows to consult the original file for diagrams.
@@ -228,10 +245,13 @@ async function extractXlsx(buffer: Buffer): Promise<Extraction> {
     throw new ExtractionError('corrupt', 'This file is not an Excel workbook: no worksheets were found.');
   }
 
+  // Every worksheet is read under the archive-wide ceiling as well as the
+  // per-file one, exactly like the entries of a .zip upload.
+  const sheetReads = await readArchiveEntries(sheets.map((name) => zip.file(name)!));
   const items: ExtractedItem[] = [];
-  for (const sheet of sheets) {
-    const sheetXml = await zip.file(sheet)!.async('string');
-    const rows = readSheetRows(sheetXml, sharedStrings);
+  for (const sheetRead of sheetReads) {
+    if (!sheetRead.ok) continue;
+    const rows = readSheetRows(sheetRead.bytes.toString('utf8'), sharedStrings);
     const parsed = parseTableRows(rows);
     if (!parsed.length) continue;
     for (const row of parsed) {
@@ -249,7 +269,7 @@ function sheetNumber(name: string): number {
 export async function readSharedStrings(zip: JSZip): Promise<string[]> {
   const file = zip.file('xl/sharedStrings.xml');
   if (!file) return [];
-  const parsed = xml.parse(await file.async('string')) as Record<string, any>;
+  const parsed = xml.parse(await readEntryText(file, 'shared strings table')) as Record<string, any>;
   const list = parsed?.sst?.si;
   if (!list) return [];
   return (Array.isArray(list) ? list : [list]).map((entry: any) => {
@@ -305,6 +325,216 @@ async function loadZip(buffer: Buffer, label: string): Promise<JSZip> {
 }
 
 // ---------------------------------------------------------------------------
+// Bounded entry reads
+//
+// A ZIP is a claim, not a fact. An entry can declare 200 bytes and expand to
+// gigabytes (the deflate format allows ~1032:1), so the declared size in the
+// central directory is only ever used as a cheap early signal — never as the
+// limit itself. Reading an entry with `entry.async()` and then measuring the
+// result enforces the limit *after* the allocation has already happened, which
+// is the wrong side of the check.
+//
+// Two mechanisms enforce it during decompression instead:
+//
+//   1. the primary path decompresses with `zlib.inflateRawSync(...,
+//      { maxOutputLength })`, which aborts inside zlib the moment the output
+//      would pass the budget (ERR_BUFFER_TOO_LARGE) — the allocation never
+//      exceeds the limit by more than zlib's internal buffer;
+//   2. the fallback path (used if a future JSZip changes its internals) reads
+//      through JSZip's own chunked stream and pauses the decompressor as soon as
+//      the running count passes the budget. That overshoots by at most one
+//      16 KiB input block (~17 MB at the format's maximum ratio) rather than by
+//      the size of the entry, and it is bounded rather than unbounded.
+//
+// Both paths are driven by a byte budget computed by the caller: the smaller of
+// the per-file limit and whatever is left of the archive-wide total, so the
+// aggregate limit is enforced entry by entry rather than after the fact.
+// ---------------------------------------------------------------------------
+
+/** The parts of JSZip's internal compressed-entry record this file relies on. */
+interface ZipEntryData {
+  compression?: { magic?: string };
+  compressedContent?: Promise<unknown>;
+  compressedSize?: number;
+  uncompressedSize?: number;
+}
+
+// JSZip identifies a compression method by the two-byte magic string it writes
+// into the archive, not by the numeric method id. Reading it as a number silently
+// never matches, which would send every entry down the coarser fallback path -
+// so these literals are exercised by tests/zip-bounds.test.ts.
+const ZIP_MAGIC_STORE = '\x00\x00';
+const ZIP_MAGIC_DEFLATE = '\x08\x00';
+
+/** The stream helper surface used by the fallback reader. */
+interface ZipStreamHelper {
+  on: (event: 'data' | 'end' | 'error', handler: (chunk?: Uint8Array) => void) => ZipStreamHelper;
+  resume: () => ZipStreamHelper;
+  pause: () => ZipStreamHelper;
+}
+
+function tooLarge(): ExtractionError {
+  return new ExtractionError('too_large', ZIP_TOO_LARGE_MESSAGE);
+}
+
+function unreadableEntry(): ExtractionError {
+  return new ExtractionError('corrupt', 'This file could not be decompressed. It may be damaged or encrypted.');
+}
+
+/** Inflate raw deflate output, refusing to allocate more than `limit` bytes. */
+function inflateBounded(compressed: Buffer, limit: number): Buffer {
+  try {
+    return inflateRawSync(compressed, { maxOutputLength: limit });
+  } catch (error) {
+    // zlib refuses to grow the output buffer past the ceiling it was given. Any
+    // other failure means the stream itself is not valid deflate.
+    if ((error as NodeJS.ErrnoException)?.code === 'ERR_BUFFER_TOO_LARGE') throw tooLarge();
+    throw unreadableEntry();
+  }
+}
+
+/**
+ * Read one entry through JSZip's chunked stream, pausing the decompressor the
+ * moment the byte count passes the budget. Used only when the primary path
+ * cannot see the compressed bytes.
+ */
+function streamEntryBounded(entry: JSZip.JSZipObject, limit: number): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const helper = (entry as unknown as { internalStream: (type: string) => ZipStreamHelper })
+      .internalStream('uint8array');
+    const chunks: Buffer[] = [];
+    let total = 0;
+    let settled = false;
+
+    const settle = (finish: () => void) => {
+      if (settled) return;
+      settled = true;
+      // Stop the worker chain rather than letting it run on for a reader that
+      // has already given up. `pause` propagates to the source worker, so no
+      // further input is fed to the inflater.
+      try { helper.pause(); } catch { /* already stopped */ }
+      finish();
+    };
+
+    helper
+      .on('data', (chunk?: Uint8Array) => {
+        if (settled || !chunk) return;
+        total += chunk.length;
+        if (total > limit) {
+          settle(() => reject(tooLarge()));
+          return;
+        }
+        chunks.push(Buffer.from(chunk));
+      })
+      .on('error', () => settle(() => reject(unreadableEntry())))
+      .on('end', () => settle(() => resolve(Buffer.concat(chunks))));
+
+    helper.resume();
+  });
+}
+
+/**
+ * Read one entry, holding at most `limit` decompressed bytes.
+ *
+ * Throws `too_large` when the entry expands past the budget and `corrupt` when
+ * the entry cannot be decompressed at all. Callers treat the first as fatal for
+ * the whole archive and the second as a per-file warning.
+ */
+export async function readZipEntryBounded(entry: JSZip.JSZipObject, limit: number): Promise<Buffer> {
+  if (!Number.isFinite(limit) || limit <= 0) throw tooLarge();
+
+  const data = (entry as unknown as { _data?: ZipEntryData })._data;
+  const method = data?.compression?.magic;
+
+  if (data?.compressedContent && (method === ZIP_MAGIC_STORE || method === ZIP_MAGIC_DEFLATE)) {
+    // The compressed bytes are a slice of the upload, which the route already
+    // capped at 20 MB, so materialising them allocates nothing new. What must be
+    // bounded is the expansion, and that is where the limit is applied.
+    const stored = await data.compressedContent;
+    const compressed = Buffer.isBuffer(stored) ? stored : Buffer.from(stored as Uint8Array);
+    if (method === ZIP_MAGIC_STORE) {
+      if (compressed.length > limit) throw tooLarge();
+      return compressed;
+    }
+    return inflateBounded(compressed, limit);
+  }
+
+  // Unknown container internals: still bounded, by the streaming counter.
+  return streamEntryBounded(entry, limit);
+}
+
+/**
+ * Read one entry as text, bounded by the same per-file ceiling as a ZIP entry.
+ *
+ * A .docx and a .xlsx are ZIP containers too, so the expansion limit cannot stop
+ * at `.zip` uploads: an upload that is 20 MB on the wire (the route's cap) can
+ * hold a `word/document.xml` that inflates to gigabytes. These parts go through
+ * the same bounded reader as archive entries.
+ */
+async function readEntryText(entry: JSZip.JSZipObject, what: string): Promise<string> {
+  try {
+    const bytes = await readZipEntryBounded(entry, MAX_ZIP_ENTRY_BYTES);
+    return bytes.toString('utf8');
+  } catch (error) {
+    if (error instanceof ExtractionError && error.code === 'too_large') throw error;
+    throw new ExtractionError('corrupt', `The ${what} could not be read. It may be damaged or encrypted.`);
+  }
+}
+
+/** One entry's outcome, so a caller can warn about a single bad file. */
+export type ArchiveEntryRead =
+  | { name: string; ok: true; bytes: Buffer }
+  | { name: string; ok: false; reason: string };
+
+export interface ArchiveLimits {
+  /** Ceiling for one decompressed entry. */
+  maxEntryBytes: number;
+  /** Ceiling for the decompressed entries of one archive, summed as they are read. */
+  maxTotalBytes: number;
+}
+
+/**
+ * Read every entry under a per-entry ceiling *and* an archive-wide ceiling.
+ *
+ * The aggregate budget is handed to each read as its own ceiling (the per-entry
+ * limit or whatever remains of the total, whichever is smaller), so the total
+ * cannot be exceeded even by an archive whose files are each individually legal.
+ * Exceeding either limit throws `too_large` and stops the whole read — there is
+ * no partial result for the caller to import by mistake.
+ */
+export async function readArchiveEntries(
+  entries: JSZip.JSZipObject[],
+  limits: ArchiveLimits = { maxEntryBytes: MAX_ZIP_ENTRY_BYTES, maxTotalBytes: MAX_ZIP_UNCOMPRESSED_BYTES },
+): Promise<ArchiveEntryRead[]> {
+  const results: ArchiveEntryRead[] = [];
+  let total = 0;
+  for (const entry of entries) {
+    const remaining = limits.maxTotalBytes - total;
+    const budget = Math.min(limits.maxEntryBytes, remaining);
+    if (budget <= 0) throw tooLarge();
+    let bytes: Buffer;
+    try {
+      bytes = await readZipEntryBounded(entry, budget);
+    } catch (error) {
+      // A size violation is about the archive, so it is fatal; an unreadable
+      // file is about that file, so the rest of the archive is still read.
+      if (error instanceof ExtractionError && error.code === 'too_large') throw error;
+      results.push({
+        name: entry.name,
+        ok: false,
+        reason: error instanceof ExtractionError ? error.message : 'could not be read.',
+      });
+      continue;
+    }
+    // The read was capped at `budget`, so `total` can never pass the ceiling;
+    // the accounting here only advances the running total.
+    total += bytes.byteLength;
+    results.push({ name: entry.name, ok: true, bytes });
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
 // ZIP archives
 // ---------------------------------------------------------------------------
 
@@ -321,36 +551,41 @@ async function extractZip(buffer: Buffer): Promise<Extraction> {
     throw new ExtractionError('unsupported', 'The archive contains no supported files. Add PDF, Word, Excel, CSV, JSON or text files.');
   }
 
-  let totalBytes = 0;
   const items: ExtractedItem[] = [];
   const warnings: string[] = [];
   const skipped = entries.filter((file) => !isSupportedUpload(file.name)).map((file) => file.name);
   if (skipped.length) {
     warnings.push(`Skipped ${skipped.length} unsupported file${skipped.length === 1 ? '' : 's'}: ${skipped.slice(0, 5).join(', ')}${skipped.length > 5 ? '…' : ''}`);
   }
-  for (const entry of supported) {
-    const bytes = await entry.async('uint8array');
-    totalBytes += bytes.byteLength;
-    if (bytes.byteLength > 20 * 1024 * 1024 || totalBytes > MAX_ZIP_UNCOMPRESSED_BYTES) {
-      throw new ExtractionError('too_large', 'The archive expands beyond the 20 MB file / 80 MB total limit. Split it into smaller uploads.');
-    }
-    if (extensionOf(entry.name) === '.zip') {
-      throw new ExtractionError('unsupported', 'Nested ZIP archives are not supported. Upload the inner files directly.');
+  // Nested archives are refused before any decompression is spent on them.
+  if (supported.some((entry) => extensionOf(entry.name) === '.zip')) {
+    throw new ExtractionError('unsupported', 'Nested ZIP archives are not supported. Upload the inner files directly.');
+  }
+
+  // Every entry is read under both ceilings: the per-file one and what is left
+  // of the archive-wide one. A size violation throws out of here (nothing is
+  // imported); an unreadable file becomes a warning so the rest of the archive
+  // is still reviewed.
+  const reads = await readArchiveEntries(supported);
+  for (const read of reads) {
+    if (read.ok === false) {
+      warnings.push(`${read.name}: ${read.reason}`);
+      continue;
     }
     let nested: Extraction;
     try {
-      nested = await extractQuestions(Buffer.from(bytes), entry.name);
+      nested = await extractQuestions(read.bytes, read.name);
     } catch (error) {
       // One unreadable file must not discard the rest of the archive. The
       // reason is kept per entry so the reviewer knows what was skipped.
-      warnings.push(`${entry.name}: ${error instanceof ExtractionError ? error.message : 'could not be read.'}`);
+      warnings.push(`${read.name}: ${error instanceof ExtractionError ? error.message : 'could not be read.'}`);
       continue;
     }
     if (!nested.items.length) {
-      warnings.push(`${entry.name}: no questions were recognised.`);
+      warnings.push(`${read.name}: no questions were recognised.`);
       continue;
     }
-    warnings.push(`${entry.name}: ${nested.items.length} question${nested.items.length === 1 ? '' : 's'}.`);
+    warnings.push(`${read.name}: ${nested.items.length} question${nested.items.length === 1 ? '' : 's'}.`);
     for (const item of nested.items) items.push({ ...item, sourceIndex: items.length + 1 });
   }
   if (!items.length) {

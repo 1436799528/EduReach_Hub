@@ -309,7 +309,8 @@ async function main(): Promise<void> {
         `information_schema). Run this read-only script in the Supabase SQL editor:\n\n` +
         `  ${SQL_ARTIFACT}\n\n` +
         `It covers RLS enablement, policy counts, function grants to client roles and\n` +
-        `the migration history, and prints pass/fail per check.`,
+        `the migration history, and prints pass/fail/unresolved per check. A row that\n` +
+        `says "unresolved" means the ledger cannot settle it: not verified, not failed.`,
     );
   } else {
     console.log(JSON.stringify({ checks, sqlArtifact: SQL_ARTIFACT }, null, 2));
