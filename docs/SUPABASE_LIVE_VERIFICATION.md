@@ -99,6 +99,27 @@ migration or a documented reconciliation, never an edit to
 
 ---
 
+## 4. Running it from Windows (PowerShell)
+
+- `npm run prod:validate`, `npm run duplicate:audit`, `npm run analytics:retention`
+  and `npm run smoke` now load `.env` themselves, so a value written there is used
+  by the command that checks it. Before this, they read only the shell
+  environment and reported a `.env`-configured project as "NOT SET".
+- `npm start` is `NODE_ENV=production node build/server.cjs`, which is a POSIX
+  shell prefix and does **not** work in PowerShell. Use:
+
+  ```powershell
+  $env:NODE_ENV = 'production'
+  node build/server.cjs
+  ```
+
+  (`npm run dev` works unchanged and is fine for browsing, but it is the Vite
+  development server; staging checks should use the production build above.)
+- Put secrets in `.env` with `notepad .env`, never as a command argument — text
+  typed into a command line is saved in the PowerShell history file.
+- `git status` must stay clean after `.env` exists. `.env*` is git-ignored; if
+  `.env` ever appears as untracked, stop and fix `.gitignore` before continuing.
+
 ## 4. The safe order of operations
 
 Do these in order, on **staging first**. Production is step 8 and needs your

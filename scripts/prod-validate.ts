@@ -26,6 +26,10 @@
  * passing** — a check that could not run is `skipped`, with the reason, and the exit
  * code distinguishes "failed" from "not yet verified".
  */
+// `.env` is loaded here as well as in the server: an operator who follows
+// `.env.production.example` and writes the values into `.env` must see them
+// used by the validator, not a misleading "NOT SET". No value is ever printed.
+import 'dotenv/config';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getServerSupabaseKey } from '../lib/supabase-config';
 import { describeEnv, evaluateEnv } from '../src/lib/envContract';

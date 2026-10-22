@@ -16,6 +16,11 @@
  * it cannot tell is not a smoke check.
  */
 
+// `.env` is loaded here as well as in the server: an operator who follows
+// `.env.production.example` and writes the values into `.env` must see them
+// used by the validator, not a misleading "NOT SET". No value is ever printed.
+import 'dotenv/config';
+
 export interface ReadyVerdict {
   ok: boolean;
   detail: string;

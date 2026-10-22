@@ -13,6 +13,10 @@
  * it, rows older than the window remain in the table, and
  * `docs/features/AN-1.md` says so rather than implying otherwise.
  */
+// `.env` is loaded here as well as in the server: an operator who follows
+// `.env.production.example` and writes the values into `.env` must see them
+// used by the validator, not a misleading "NOT SET". No value is ever printed.
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { getServerSupabaseKey } from '../lib/supabase-config';
 import { RETENTION_DAYS } from '../src/lib/analyticsTaxonomy';
