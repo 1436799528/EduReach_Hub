@@ -72,11 +72,61 @@ export function classifyProject(reference: string | null): ProjectVerdict {
   };
 }
 
+/**
+ * The endpoint a network probe should hit: the project's PostgREST root.
+ *
+ * No key is attached. Supabase answers an unauthenticated request with 401,
+ * which is exactly the evidence wanted — the host is reachable and speaking
+ * PostgREST. A blocked network produces no response at all, and the two must not
+ * be confused: "401" means the path works, "no response" means this machine
+ * cannot reach Supabase.
+ */
+export function probeUrl(env: NodeJS.ProcessEnv = process.env): string | null {
+  const reference = projectReference(env.VITE_SUPABASE_URL || env.SUPABASE_URL);
+  return reference ? `https://${reference}.supabase.co/rest/v1/` : null;
+}
+
+export interface ProbeVerdict {
+  reachable: boolean;
+  httpStatus: number | null;
+  /** One line a non-programmer can act on. */
+  summary: string;
+}
+
+/**
+ * Pure: turn a probe result into a verdict.
+ *
+ * `status === null` means the request never completed — DNS failure, refused
+ * connection or an egress block. Any HTTP status (401 included) proves the
+ * network path exists.
+ */
+export function interpretProbe(status: number | null, errorMessage?: string): ProbeVerdict {
+  if (status === null) {
+    return {
+      reachable: false,
+      httpStatus: null,
+      summary: `No HTTP response${errorMessage ? ` (${errorMessage})` : ''}. This machine cannot reach Supabase, so no live check can run here.`,
+    };
+  }
+  if (status === 401 || status === 403) {
+    return {
+      reachable: true,
+      httpStatus: status,
+      summary: `Reachable and answering (HTTP ${status} without a key is the expected answer). Live checks can run here if the keys are configured.`,
+    };
+  }
+  return {
+    reachable: true,
+    httpStatus: status,
+    summary: `Reachable (HTTP ${status}).`,
+  };
+}
+
 export function describeProject(env: NodeJS.ProcessEnv = process.env): ProjectVerdict {
   return classifyProject(projectReference(env.VITE_SUPABASE_URL || env.SUPABASE_URL));
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const verdict = describeProject();
   const label = verdict.kind === 'production'
     ? 'PRODUCTION'
@@ -88,11 +138,31 @@ function main(): void {
   console.log(`  keys present:      url ${process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL ? 'yes' : 'no'},`
     + ` publishable ${process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY ? 'yes' : 'no'},`
     + ` service-role ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY ? 'yes' : 'no'}`);
+
+  if (process.argv.includes('--probe')) {
+    const url = probeUrl();
+    console.log('\nNetwork probe (no key attached, nothing is written):');
+    if (!url) {
+      console.log('  skipped — no project URL is configured, so there is nothing to reach.');
+    } else {
+      let status: number | null = null;
+      let message: string | undefined;
+      try {
+        const response = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(8000) });
+        status = response.status;
+      } catch (error) {
+        message = error instanceof Error ? error.message.split('\n')[0] : String(error);
+      }
+      const probe = interpretProbe(status, message);
+      console.log(`  ${probe.summary}`);
+    }
+  }
+
   console.log('\nWhat that means:');
   for (const line of verdict.guidance) console.log(`  - ${line}`);
   console.log('');
 }
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
-  main();
+  void main();
 }

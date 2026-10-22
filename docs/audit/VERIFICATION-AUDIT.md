@@ -242,3 +242,40 @@ vocabulary items repeat across three Use of English banks) · 16 of 16 published
 news articles use an unrecognised category · 328 of 329 institutions have no
 website · 1 active opportunity has no deadline · 1 610 exam questions,
 7 CBT exams, 24 news rows, 329 institutions, 593 analytics events.
+
+## Session 11 — Can the Arena environment test Supabase? No (2026-10-22)
+
+The owner reported adding the Vite Supabase URL to the branch. It is not visible
+to any process in this environment: the shell (17 variables, none matching
+SUPA/VITE/SB_/ARENA), a live-preview process, a `.env` file on disk, the tracked
+tree on this branch, and the usual secret mounts all show nothing. Separately —
+and independently decisive — this sandbox cannot reach Supabase at all: github
+and npm answer 200, `*.supabase.co` and `supabase.com` answer **000** (DNS
+resolves, the connection is refused).
+
+So every live capability is **blocked**, not failed: URL/key configuration,
+client and server connectivity, database reads, sign-up/sign-in, CBT question
+loading, answer saving, uploads and role permissions. Test accounts do not exist
+and cannot be created here. The full matrix is
+`docs/SUPABASE_ENVIRONMENT_CAPABILITY.md`.
+
+What did run, and passed: `npm test` 677 (676 pass, 1 skip — the perf self-check
+that needs `dist/`, which is built later in the gate) · `schema:audit` no blocking
+findings · `migrations:checklist` 74/74 · `rls:audit` 50/50 · `a11y:audit`
+0 blocking, 5 informational · `build` · `perf:audit` 10/10 · Playwright 158
+passed / 2 skipped · `e2e:perf` passed (LCP 1 796 / 1 672 / 2 088 ms,
+221–236 KB) · `prod:validate` correctly reports `skipped` rather than `pass`.
+
+Two small honesty improvements this session:
+
+- `npm run env:check -- --probe` now also reports **network** reachability, with
+  no key attached (a 401 is the proof; no response is reported as "cannot reach
+  Supabase"). Ten tests, including one that an unreachable host is never reported
+  as configured.
+- `prod:validate` used to say "no service-role key in this environment" even when
+  a key was set but was not a service-role key. It now names the actual problem:
+  `missing: a usable server secret key (one is set but it is not a
+  service-role/secret key)`.
+
+Nothing was written to any database; no migration, deployment, email, upload or
+security setting was touched.

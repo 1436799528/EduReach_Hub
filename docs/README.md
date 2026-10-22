@@ -8,6 +8,7 @@
 | [DATABASE.md](DATABASE.md) | Tables, migrations and row-level security |
 | [SUPABASE_SECURITY_CHECKLIST.md](SUPABASE_SECURITY_CHECKLIST.md) | Settings to verify on the database side before a release |
 | [SUPABASE_LIVE_VERIFICATION.md](SUPABASE_LIVE_VERIFICATION.md) | Which Supabase checks are done locally, which need project access, and the safe order to run them |
+| [SUPABASE_ENVIRONMENT_CAPABILITY.md](SUPABASE_ENVIRONMENT_CAPABILITY.md) | Can this environment test Supabase? Test-by-test verdict: passed, failed or blocked, with the blockers named |
 | [PAGE_QUALITY_GATE.md](PAGE_QUALITY_GATE.md) | Definition of done for a page |
 | [functional-qa-gate.md](functional-qa-gate.md) | Manual pass before a deploy |
 | [COMPONENT_RULES.md](COMPONENT_RULES.md) | Component conventions |

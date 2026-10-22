@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { classifyProject, describeProject, projectReference, PRODUCTION_PROJECT_REF } from '../scripts/env-check';
+import { classifyProject, describeProject, interpretProbe, probeUrl, projectReference, PRODUCTION_PROJECT_REF } from '../scripts/env-check';
 
 // The project classifier exists because one `.env` is used for two jobs with
 // opposite safety rules: read-only verification (safe anywhere) and a manual
@@ -55,4 +55,34 @@ test('the environment is read without ever returning a key', () => {
   });
   assert.equal(verdict.reference, 'abcdefghijklmnop');
   assert.doesNotMatch(JSON.stringify(verdict), /should_not_appear/);
+});
+
+// The network probe distinguishes two states that must never be confused: the
+// host is reachable but refuses the unauthenticated key (401 — everything works),
+// and no response at all (this machine cannot reach Supabase). A test that treats
+// those as the same thing would report "configured" when nothing can connect.
+test('the probe target is the project API root, and carries no key', () => {
+  assert.equal(probeUrl({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co' }), 'https://abcdefghijklmnop.supabase.co/rest/v1/');
+  assert.equal(probeUrl({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co/' }), 'https://abcdefghijklmnop.supabase.co/rest/v1/');
+  assert.equal(probeUrl({}), null);
+  assert.equal(probeUrl({ VITE_SUPABASE_URL: 'https://example.com' }), null);
+});
+
+test('401 or 403 proves the network path works', () => {
+  const verdict = interpretProbe(401);
+  assert.equal(verdict.reachable, true);
+  assert.match(verdict.summary, /Reachable and answering/);
+  assert.equal(interpretProbe(403).reachable, true);
+});
+
+test('no response is reported as unreachable, never as "configured"', () => {
+  const verdict = interpretProbe(null, 'fetch failed');
+  assert.equal(verdict.reachable, false);
+  assert.match(verdict.summary, /cannot reach Supabase/);
+  assert.match(verdict.summary, /fetch failed/);
+});
+
+test('any other HTTP status is still reachable', () => {
+  assert.equal(interpretProbe(200).reachable, true);
+  assert.equal(interpretProbe(503).reachable, true);
 });
