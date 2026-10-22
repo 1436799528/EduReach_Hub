@@ -224,13 +224,13 @@ the merge, which is the mechanism TEST-1 established rather than a second one.
 |---|---|---|
 | Unit (node:test) | `tests/perf.test.ts` — the audit's budget arithmetic and its failure paths: a synthetic oversized asset fails, a missing `dist/` fails with instructions, a missing cache header fails, and the repository as committed passes. It also holds the layout stability: a placeholder row must be exactly as tall as the row it stands in for, the card placeholder must use the same grid and padding as the cards, the reserved floors must be at least as tall as the placeholders, and the pages the measurement named must keep using them | `npm test`, locally and in CI |
 | Tooling | `npm run perf:audit` — the budget table for a human | after `npm run build`, in the gate |
-| Browser (Playwright) | `tests/e2e/perf.spec.ts` — throttled Chromium (1.6 Mbps, 150 ms, 4× CPU), LCP/CLS/long tasks/TTFB/transfer bytes/requests, coarse budgets, annotated failures that carry the shift timeline and the page anatomy | `npm run test:e2e` (CI: browsers cannot be downloaded in this environment) |
+| Browser (Playwright) | `tests/e2e/perf.spec.ts` — throttled Chromium (1.6 Mbps, 150 ms, 4× CPU), LCP/CLS/long tasks/TTFB/transfer bytes/requests, coarse budgets, annotated failures that carry the shift timeline and the page anatomy. Runs as its own project (`mobile-perf`) with one worker, because measuring it next to the functional suite measured the runner instead of the page | `npm run e2e:perf` (part of `npm run ci`; browsers are installed in CI, not in this sandbox) |
 | Field (production) | Not executable here. The runbook: PageSpeed Insights API (`psi` v5) against the deployed origin **three times**, CrUX history for the origin once it has traffic, and Search Console → Core Web Vitals for the URL groups. Record p75 LCP/INP/CLS per group, the date, and the deployment SHA next to them — a number without a SHA is not evidence. | manual, after deployment |
 
 The gate is extended, not duplicated: `perf:audit` joins `npm run ci` after
-`build`, and the browser pass rides in the Playwright run that already exists.
-`tests/ci.test.ts` is updated in the same commit so the gate's shape stays
-asserted rather than assumed.
+`build`, and the browser pass is its own stage (`npm run e2e:perf`) after the
+functional browser suite. `tests/ci.test.ts` is updated in the same commit so the
+gate's shape stays asserted rather than assumed.
 
 ## Evidence
 
@@ -250,7 +250,7 @@ bytes from the built artefact, mobile geometry from the route table):
 | Public raster payload | 291.9 KB over 14 files | unchanged (the re-encodes replaced bytes, they did not add files) |
 
 **The browser measurement, which is what found the real problem.** Budgets are
-ceilings (`LCP 8s`, `CLS 0.1`, `TBT 3s`, `1.2 MB`, `90 requests`) and every run
+ceilings (`LCP 3s`, `CLS 0.1`, `TBT 3s`, `400 KB`, `90 requests`) and every run
 prints its numbers. The first three runs failed on CLS alone:
 
 | Route | First measurement | After the layout-stability work |
@@ -344,3 +344,80 @@ schema:audit` 0 blocking, `npm run build` clean, `npm run perf:audit` 10/10,
 9. **The caching header is host-specific.** `public/_headers` is Netlify syntax.
    If the deployment host changes (D5), the rule must be re-expressed in the new
    host's format — recorded here so the optimisation is not silently lost.
+
+## Mobile LCP investigation (2026-10-22)
+
+The audit that followed this work reported two mobile Largest Contentful Paint
+failures. Its own traces were not in the repository, so this section records a
+reproduction rather than a re-reading: the built app was served by `npm start`
+and measured with `tests/e2e/perf.spec.ts` on the Pixel 7 profile (1.6 Mbps,
+150 ms RTT, 4× CPU), first as committed and then after each change.
+
+### What the measurement showed
+
+Every route's LCP was dominated by two things, in this order:
+
+| First-load request | Bytes on the wire (before) | Time to finish |
+|---|---|---|
+| `/assets/index-*.js` (entry) | 337 KB | 4.36 s |
+| `/assets/index-*.css` (render-blocking) | 292 KB | 4.14 s |
+| `/assets/supabase-*.js` (AuthProvider, preloaded) | 216 KB | 3.40 s |
+
+863 KB was transferred on `/` and every asset arrived at its raw size: the
+Express server sets cache and security headers but never compressed anything.
+Netlify compresses `dist/` for the hosted site, so this was invisible in
+production while being paid for in full by the self-hosted path (Dockerfile →
+`npm start`) — and by the measurement that gates this repository.
+
+The LCP element itself was small (the environment banner's first line, then the
+status line on `/past-questions`): the paint waited for React to mount, not for
+an image. There was no oversized hero, no layout collapse and no third-party
+script in the way; the cost was bytes on a throttled connection plus the CPU to
+parse them.
+
+### What changed
+
+1. **`server.ts`**: `app.use(compression({ threshold: 1024 }))`. Brotli when the
+   browser offers it, gzip otherwise, `Vary: Accept-Encoding` set by the
+   middleware, small JSON bodies left alone. This is the whole fix for the bytes.
+2. **`tests/e2e/perf.spec.ts`**:
+   - the three routes are measured **one after another in one test**, in a
+     dedicated `mobile-perf` Playwright project that `npm run e2e:perf` runs with
+     one worker; `npm run test:e2e` (the functional suite) excludes it. As three
+     parallel tests, and again beside the functional suite, the runner's own
+     contention was part of the number: the same page measured 1.7 s alone and
+     3.5 s while other throttled pages competed for the cores. Every route is
+     still measured before any assertion runs, so one slow route cannot hide the
+     other two;
+   - the LCP ceiling moved from 8 000 ms to 3 000 ms. The old number was taken
+     from the first measurement and passed at 4.7–6.5 s, so it documented the
+     regression instead of catching it;
+   - the transfer ceiling moved from 1.2 MB to 400 KB;
+   - the test now asserts that the hashed entry script and stylesheet arrive with
+     a `Content-Encoding`, so the compression cannot be removed silently.
+
+### Before and after (same machine, same profile, one run each)
+
+| Route | LCP before | LCP after | CLS | TBT | Transfer before | Transfer after |
+|---|---|---|---|---|---|---|
+| `/` | 5 384 ms | **1 732 ms** | 0.035 | 11 ms | 866 KB | 221 KB |
+| `/news` | 5 260 ms | **1 712 ms** | 0.001 | 0 ms | 881 KB | 233 KB |
+| `/past-questions` | 6 496 ms | **2 064 ms** | 0 | 0 ms | 896 KB | 236 KB |
+
+All three now land inside the 2.5 s "good" boundary of Core Web Vitals on this
+profile, and the gate fails if any of them moves back past 3 s.
+
+### What this does not claim
+
+- No production measurement. PageSpeed Insights, CrUX and Search Console need the
+  deployed origin and network egress this environment does not have.
+- No change to the JavaScript the browser must still parse: the entry (99 KB
+  gzip) and the Supabase client (56 KB gzip) are unchanged, and the static
+  budgets in `scripts/perf-audit.ts` still pass at the same sizes. Deferring the
+  Supabase client would remove a further ~0.3 s, but it sits in the entry graph
+  because `AuthProvider` resolves the session in the shell; that is a behavioural
+  change to authentication, not a performance tweak, and it is not part of this
+  fix.
+- The browser numbers are a lab measurement. A shared CI runner carries its own
+  noise; that is why the ceiling keeps roughly 45 % headroom over the measured
+  values instead of being pinned to them.

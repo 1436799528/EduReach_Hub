@@ -1,0 +1,177 @@
+# Supabase live verification — what this machine can check, and what it cannot
+
+**Date:** 22 October 2026
+**Question it answers:** "Which Supabase checks are genuinely done, which need
+authenticated access to the project, and what exactly is blocking the rest?"
+
+Status: **local checks complete and passing; no live check has been performed.**
+This document does not contain, and must never contain, a key, a password or a
+connection string. Only the *names* of environment variables appear here.
+
+---
+
+## 1. The blocker, stated precisely
+
+The repository is designed to read its Supabase configuration from the
+environment at runtime. In this working environment:
+
+```
+$ npm run prod:validate
+  VITE_SUPABASE_URL                  NOT SET    (required, client, non-secret)
+  VITE_SUPABASE_PUBLISHABLE_KEY      NOT SET    (required, client, non-secret)
+  SUPABASE_SERVICE_ROLE_KEY          NOT SET    (required, server, secret)
+  NODE_ENV                           NOT SET    (required, server, non-secret)
+  skip [connectivity] live validation against the Supabase project — no
+       SUPABASE_URL/VITE_SUPABASE_URL and no service-role key in this environment
+  0 passed, 1 failed, 2 skipped
+```
+
+Three things follow, and they are different in kind:
+
+1. **No credentials exist here.** Only `.env.example` and
+   `.env.production.example` are tracked, and both hold placeholders. Nothing can
+   connect to the project until real values are supplied in the environment.
+2. **Production access is an owner decision, not a technical default.** Even with
+   a key, running anything against project `gjdfatwcoosyuhakrrhh` is a production
+   action, and the instruction for this work is explicit: no production writes,
+   no migrations, no settings changes without approval. The read-only checks below
+   still wait for that approval.
+3. **Secrets must not travel through chat.** A service-role key bypasses row-level
+   security and is equivalent to the database itself. The safe routes are: put
+   the values in a local `.env` (git-ignored) and run the commands yourself, or
+   attach a staging project to an authorised environment. Never paste them into a
+   conversation, a screenshot or an issue.
+
+There is a second, unrelated network fact: this sandbox can reach GitHub, npm
+and PyPI only. `https://edureachhub.netlify.app` is unreachable from here, so the
+deployed-site checks (§4) cannot be run from this machine at all.
+
+---
+
+## 2. What was verified locally (safe, read-only, no project contacted)
+
+| Check | Command | Result on 22 Oct 2026 |
+|---|---|---|
+| Types | `npm run typecheck` | pass, exit 0 |
+| Unit/integration suite | `npm test` | see the run recorded in the final report |
+| Every migration applies to a real PostgreSQL | `npm test` → `tests/migrations.test.ts` (PGlite 18) | pass, 74/74 migrations |
+| Migration checklist covers every committed migration | `npm run migrations:checklist` | pass, 74/74 listed |
+| Static schema audit (references, ordering, object creation) | `npm run schema:audit` | no blocking findings |
+| RLS posture of every public table | `npm run rls:audit` | 50/50 tables classified, 0 findings |
+| Accessibility rules | `npm run a11y:audit` | 0 blocking, 5 informational |
+| Performance budgets on the built artefact | `npm run perf:audit` | 10/10 |
+| Production build | `npm run build` | exit 0 |
+| Browser suite (desktop + mobile) | `npm run test:e2e` | see the final report |
+| Environment contract | `npm run prod:validate` | 1 failed (missing variables), 2 skipped (live groups) |
+| Duplicate-question analysis | `npm run duplicate:audit` | BLOCKED — reports missing credentials, exits 0 without claiming a result |
+| Backup/restore rehearsal | `npm run backup:rehearsal` | proves a **local** PGlite dump/restore only; it is not a Supabase backup proof |
+
+What this proves: the schema the repository describes is internally consistent
+and replayable, the policies it classifies are the policies it applies, and the
+build ships within its budgets. What it does **not** prove: that the hosted
+project is in that state. That is the whole of §3.
+
+---
+
+## 3. The live checks, and how each one is performed (all read-only)
+
+| # | Check | Why it needs project access | How to run it | Pass looks like |
+|---|---|---|---|---|
+| 1 | Server key is a real service-role key and the project answers | PostgREST call under the secret key | `npm run prod:validate` | `pass [connectivity]`, `0 skipped` |
+| 2 | Storage buckets exist with the intended read access (`admin-content` public by design; `resource-files`, `campus-uploads`, `past-questions` private) | `storage.buckets` read | `npm run prod:validate` | `pass [storage] …` |
+| 3 | Data integrity report (question banks, thin subjects, orphaned content) | `content_integrity_report()` as service role | `npm run prod:validate` | `pass [data] …`, or the report's own warnings listed |
+| 4 | RLS is enabled on every public table | `pg_class` needs SQL, not PostgREST | `supabase/ci/production-validation.sql` #2 | `pass` |
+| 5 | No application function is executable by `anon`/`authenticated`; no SECURITY DEFINER with a mutable `search_path` | `pg_proc`, `pg_roles` | SQL script #3, plus `docs/SUPABASE_SECURITY_CHECKLIST.md` | `pass` |
+| 6 | Server-only tables expose no client policy or grant | `pg_policies`, ACLs | SQL script #5, #6 | `pass` |
+| 7 | Every migration in the repository is recorded in the live ledger | `supabase_migrations.schema_migrations` | **SQL script #8** (new: the generated full checklist, §5) | `pass`; otherwise a `fail` naming each unrecorded file |
+| 8 | Key release objects exist (tables, functions, constraints, policies from the 2026-10 releases) | catalogue | SQL script #9 | `pass` |
+| 9 | Auth settings: leaked-password protection, Site URL, redirect allow-list, email templates | dashboard only | `docs/SUPABASE_SECURITY_CHECKLIST.md` §"Auth dashboard" | human sign-off |
+| 10 | Deployed site is actually ready | network call to the deployment | `npm run smoke -- https://<host>` | `status=ready, http 200` |
+| 11 | Real backup/PITR restore | Supabase dashboard / support | `docs/operations/BACKUP_AND_RESTORE.md` | a restore rehearsal recorded with a date |
+
+Checks 1–8 are read-only and safe to run against staging at any time. Checks
+1–3 and 10 touch the network; 4–8 are SQL you paste into the SQL editor. **None
+of them writes.** Nothing in this repository should be used to "fix" a ledger
+row: if #7 reports a missing migration, the answer is a reviewed forward-only
+migration or a documented reconciliation, never an edit to
+`supabase_migrations.schema_migrations` (see
+`docs/operations/SUPABASE_MIGRATION_HISTORY_RECONCILIATION.md`).
+
+---
+
+## 4. The safe order of operations
+
+Do these in order, on **staging first**. Production is step 8 and needs your
+explicit approval plus a backup checkpoint.
+
+1. Create (or confirm) a staging Supabase project. Never rehearse on production.
+2. Put its three values into `.env` on your own machine
+   (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`). Do not commit it; `.env*` is git-ignored.
+3. `npm run build && npm run prod:validate` → expect `0 failed, 0 skipped`.
+   A failure here names the group that failed and cannot be mistaken for a pass.
+4. Open the staging project's SQL editor, paste
+   `supabase/ci/production-validation.sql`, run it. Every row should read `pass`;
+   record any `fail` row verbatim.
+5. `npm run test:e2e` with the staging values present — this is the only way the
+   sign-in, upload, CBT submit and dashboard flows are exercised against a real
+   database.
+6. `npm run duplicate:audit` — read-only; it prints duplicate groups for review
+   and deletes nothing.
+7. Complete the dashboard items in `docs/SUPABASE_SECURITY_CHECKLIST.md`
+   (password protection, Site URL, redirect URLs).
+8. Only after 1–7 pass: repeat 3–4 against production with your approval, take a
+   backup checkpoint first, and record the date, the deployment SHA and the
+   results in `docs/operations/PRODUCTION_RUNBOOK.md`.
+
+---
+
+## 5. What changed in this session to make #7 enforceable
+
+Before: check 8 of `production-validation.sql` was
+`select count(*) from supabase_migrations.schema_migrations` compared to a
+hand-written `74`, and check 9 named a hand-picked list of release versions.
+Neither could notice a migration file that had just been added.
+
+Now:
+
+- `supabase/ci/production-validation.sql` carries a generated list of **every**
+  file in `supabase/migrations/`, between
+  `-- BEGIN GENERATED MIGRATION CHECKLIST` and `-- END GENERATED MIGRATION CHECKLIST`.
+- `npm run migrations:checklist` fails when a file is missing from that list, when
+  the list names a file that no longer exists, when a 14-digit version is claimed
+  twice, or when an entry disagrees with its file. It is a stage of `npm run ci`.
+- `npm run migrations:checklist -- --write` regenerates the list. Regenerating is
+  a source change reviewed like any other; it does not touch a database.
+- The SQL comparison matches by version and then by name with the 8/14-digit
+  prefix removed, because the live ledger recorded many of these files under a
+  different timestamp. `tests/migration-checklist.test.ts` runs that SQL against a
+  real PostgreSQL with a synthetic ledger and proves it fails when one migration
+  is missing and passes when all are present.
+
+Regenerating after adding a migration:
+
+```
+npm run migrations:checklist -- --write
+npm run migrations:checklist
+```
+
+`docs/operations/SUPABASE_MIGRATION_HISTORY_RECONCILIATION.md` remains the record
+of the deeper local-vs-remote history question. This checklist does not resolve
+that history; it stops the repository from quietly forgetting a migration while
+the question is open.
+
+---
+
+## 6. Still unverified, and why that is being said plainly
+
+- Whether the hosted project matches the repository schema, policies and grants.
+- Whether `content_integrity_report()` is green against real data.
+- Whether storage buckets exist with the intended visibility.
+- Whether every repository migration is recorded in the live ledger.
+- Auth dashboard settings (leaked-password protection, Site URL, redirects).
+- The deployed site's readiness and performance.
+- That a Supabase backup actually restores.
+
+Each of these has a command or SQL statement in §3. None has been run, and none
+is reported as passing anywhere in this repository.

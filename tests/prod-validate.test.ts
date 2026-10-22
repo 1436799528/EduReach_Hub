@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { auditChecklist, parseChecklist } from '../scripts/migration-checklist';
 
 // D5 — the environment contract and the production validator.
 //
@@ -367,16 +368,30 @@ test('the release-sync query names the migrations production is missing, and pas
   }
 });
 
-test('the migration counts in the artifact, the runbook and the repository cannot drift apart', async () => {
-  // The checked-in count drifts whenever a migration is appended unless the
-  // artifact and operator runbook are reconciled in the same change. The
-  // repository directory is the source of truth for this assertion.
+test('the migration checklist in the artifact matches the repository, and the runbook agrees', async () => {
+  // The artifact used to compare `count(*)` to a number typed into the file, so
+  // it could only notice that *some* 74 migrations were recorded — never that a
+  // particular file was missing. The list is generated now
+  // (`npm run migrations:checklist -- --write`); this asserts it was regenerated
+  // when the repository changed, which is the drift this test exists to catch.
   const { readdirSync } = await import('node:fs');
-  const count = readdirSync(join(ROOT, 'supabase/migrations')).filter((name) => name.endsWith('.sql')).length;
+  const files = readdirSync(join(ROOT, 'supabase/migrations')).filter((name) => name.endsWith('.sql'));
+  const count = files.length;
   const sql = readFileSync(join(ROOT, SQL_ARTIFACT), 'utf8');
   const runbook = readFileSync(join(ROOT, 'docs/operations/PRODUCTION_RUNBOOK.md'), 'utf8');
 
-  assert.match(sql, new RegExp(`count\\(\\*\\) >= ${count}\\b`), `the artifact's threshold is not ${count}`);
-  assert.match(sql, new RegExp(`repository holds ${count}\\)`), `the artifact's detail does not say ${count}`);
+  const checklist = parseChecklist(sql);
+  assert.ok(checklist, 'the artifact must carry the generated migration checklist block');
+  assert.equal(checklist.length, count, `the checklist lists ${checklist.length} migrations, the repository holds ${count}`);
+  assert.deepEqual(
+    auditChecklist(files, checklist),
+    [],
+    `the checklist no longer matches supabase/migrations — run \`npm run migrations:checklist -- --write\``,
+  );
+  assert.match(
+    sql,
+    /'every migration in the repository is recorded in the migration ledger'/,
+    'check 8 must compare the whole checklist against the ledger, not a hand-picked subset',
+  );
   assert.match(runbook, new RegExp(`${count} migrations in `), `the runbook does not say ${count} migrations`);
 });

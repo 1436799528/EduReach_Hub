@@ -134,20 +134,130 @@ from (values ('admin-content', true), ('resource-files', false), ('campus-upload
 left join storage.buckets b on b.id = expected.name
 where b.id is null or b.public is distinct from expected.should_be_public;
 
--- 8. The migration history is fully applied ----------------------------------
--- Keep the number in step with `ls supabase/migrations/*.sql | wc -l`.
+-- 8. Every migration in the repository is recorded in the live ledger --------
+-- The list between the markers is generated from `supabase/migrations/*.sql` by
+-- `npm run migrations:checklist -- --write`. `npm run migrations:checklist` (a
+-- stage of `npm run ci`) fails when a migration file is added, renamed or
+-- deleted without regenerating it, so this script cannot silently check a
+-- hand-picked subset — which is what the old `count(*) >= 74` and its short
+-- version list did.
+--
+-- The comparison is by version, and then by name with the 8- or 14-digit prefix
+-- stripped, because the live ledger recorded many of these migrations under a
+-- different timestamp (docs/operations/SUPABASE_MIGRATION_HISTORY_RECONCILIATION.md).
+-- A migration that is genuinely not recorded shows up here as `fail` with its
+-- filename. That is information for the operator, not an instruction to edit
+-- `supabase_migrations.schema_migrations`: nothing in this script writes.
+with repo_migrations(version, name, filename) as (
+  values
+-- BEGIN GENERATED MIGRATION CHECKLIST
+    ('20260830000000', 'baseline_core_schema', '20260830000000_baseline_core_schema.sql'),
+    ('20260831', 'add_production_query_indexes', '20260831_add_production_query_indexes.sql'),
+    ('20260902', 'create_material_notes', '20260902_create_material_notes.sql'),
+    ('20260903', 'enable_staff_service_request_moderation', '20260903_enable_staff_service_request_moderation.sql'),
+    ('20260903', 'harden_profile_and_submission_rls', '20260903_harden_profile_and_submission_rls.sql'),
+    ('20260903', 'production_security_hardening', '20260903_production_security_hardening.sql'),
+    ('20260903', 'restrict_notification_creation_to_staff', '20260903_restrict_notification_creation_to_staff.sql'),
+    ('20260903', 'restrict_profile_client_columns', '20260903_restrict_profile_client_columns.sql'),
+    ('20260903', 'scope_past_questions_to_student_programme', '20260903_scope_past_questions_to_student_programme.sql'),
+    ('20260915', 'cbt_news_tables', '20260915_cbt_news_tables.sql'),
+    ('20260916000000', 'application_integration_seed', '20260916000000_application_integration_seed.sql'),
+    ('20260916010000', 'cbt_news_rls', '20260916010000_cbt_news_rls.sql'),
+    ('20260919', 'admin_cbt_production_hardening', '20260919_admin_cbt_production_hardening.sql'),
+    ('20260919', 'auth_cbt_consistency_hardening', '20260919_auth_cbt_consistency_hardening.sql'),
+    ('20260919', 'payment_idempotency', '20260919_payment_idempotency.sql'),
+    ('20260919', 'production_hardening', '20260919_production_hardening.sql'),
+    ('20260919', 'remove_redundant_auth_trigger', '20260919_remove_redundant_auth_trigger.sql'),
+    ('20260920', 'auth_and_profile_completion', '20260920_auth_and_profile_completion.sql'),
+    ('20260920', 'production_student_workflows', '20260920_production_student_workflows.sql'),
+    ('20260920', 'student_portal_data_backbone', '20260920_student_portal_data_backbone.sql'),
+    ('20260924', 'retire_legacy_scratch_service', '20260924_retire_legacy_scratch_service.sql'),
+    ('20260925210000', 'restrict_unused_public_security_definer', '20260925210000_restrict_unused_public_security_definer.sql'),
+    ('20260925213000', 'cbt_attempt_question_position', '20260925213000_cbt_attempt_question_position.sql'),
+    ('20260925214000', 'service_request_statuses', '20260925214000_service_request_statuses.sql'),
+    ('20260925', 'public_release_security_hardening', '20260925_public_release_security_hardening.sql'),
+    ('20260926000000', 'backfill_missing_server_dependencies', '20260926000000_backfill_missing_server_dependencies.sql'),
+    ('20260926200000', 'admin_control_centre_backend', '20260926200000_admin_control_centre_backend.sql'),
+    ('20260926220000', 'admin_full_catalogue_opportunities', '20260926220000_admin_full_catalogue_opportunities.sql'),
+    ('20260926230000', 'fix_cbt_result_ambiguity', '20260926230000_fix_cbt_result_ambiguity.sql'),
+    ('20260926231000', 'cbt_concurrency_hardening', '20260926231000_cbt_concurrency_hardening.sql'),
+    ('20260927000000', 'postmerge_data_control', '20260927000000_postmerge_data_control.sql'),
+    ('20260928190000', 'cbt_subject_aware_papers', '20260928190000_cbt_subject_aware_papers.sql'),
+    ('20260929222000', 'reconcile_cbt_subject_backend_state', '20260929222000_reconcile_cbt_subject_backend_state.sql'),
+    ('20260929223000', 'normalize_cbt_english_subject_aliases', '20260929223000_normalize_cbt_english_subject_aliases.sql'),
+    ('20260930120000', 'newsroom_ingestion_pipeline', '20260930120000_newsroom_ingestion_pipeline.sql'),
+    ('20260930140000', 'capability_role_alignment', '20260930140000_capability_role_alignment.sql'),
+    ('20260930150000', 'auth_signup_trigger_repair', '20260930150000_auth_signup_trigger_repair.sql'),
+    ('20260930160000', 'institutions_column_repair', '20260930160000_institutions_column_repair.sql'),
+    ('20260930200000', 'rls_posture', '20260930200000_rls_posture.sql'),
+    ('20261001120000', 'analytics_retention', '20261001120000_analytics_retention.sql'),
+    ('20261001140000', 'cbt_bank_readiness', '20261001140000_cbt_bank_readiness.sql'),
+    ('20261001160000', 'scheduled_job_observability', '20261001160000_scheduled_job_observability.sql'),
+    ('20261002120000', 'cbt_practice_and_mock_modes', '20261002120000_cbt_practice_and_mock_modes.sql'),
+    ('20261002130000', 'news_category_contract', '20261002130000_news_category_contract.sql'),
+    ('20261002140000', 'past_question_resources', '20261002140000_past_question_resources.sql'),
+    ('20261002150000', 'opportunity_eligibility', '20261002150000_opportunity_eligibility.sql'),
+    ('20261003080000', 'backend_security_hardening', '20261003080000_backend_security_hardening.sql'),
+    ('20261003090000', 'verify_opportunity_data', '20261003090000_verify_opportunity_data.sql'),
+    ('20261003100000', 'cbt_server_authority_alignment', '20261003100000_cbt_server_authority_alignment.sql'),
+    ('20261003101000', 'expire_stale_cbt_attempts', '20261003101000_expire_stale_cbt_attempts.sql'),
+    ('20261003102000', 'normalize_published_news_category_labels', '20261003102000_normalize_published_news_category_labels.sql'),
+    ('20261003103000', 'cbt_paper_expiry_volatility', '20261003103000_cbt_paper_expiry_volatility.sql'),
+    ('20261003170000', 'create_academic_catalogue_and_daily_quiz', '20261003170000_create_academic_catalogue_and_daily_quiz.sql'),
+    ('20261003175703', 'backfill_verified_academic_catalogue_and_daily_quiz_v2', '20261003175703_backfill_verified_academic_catalogue_and_daily_quiz_v2.sql'),
+    ('20261003190000', 'opportunity_discovery_engine', '20261003190000_opportunity_discovery_engine.sql'),
+    ('20261016160000', 'reconcile_live_catalogue_and_service_request_contract', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'),
+    ('20261017123909', 'cbt_result_retention', '20261017123909_cbt_result_retention.sql'),
+    ('20261018120000', 'exam_specific_question_provenance', '20261018120000_exam_specific_question_provenance.sql'),
+    ('20261018172307', 'post_utme_school_modes_and_pdf_bank', '20261018172307_post_utme_school_modes_and_pdf_bank.sql'),
+    ('20261018172404', 'post_utme_pdf_bank_registry_replay', '20261018172404_post_utme_pdf_bank_registry_replay.sql'),
+    ('20261018172823', 'pdf_bank_explicit_source_verification', '20261018172823_pdf_bank_explicit_source_verification.sql'),
+    ('20261018174207', 'pdf_bank_destination_links', '20261018174207_pdf_bank_destination_links.sql'),
+    ('20261020100000', 'safe_verified_question_banks', '20261020100000_safe_verified_question_banks.sql'),
+    ('20261020110000', 'deduplicate_exact_duplicates', '20261020110000_deduplicate_exact_duplicates.sql'),
+    ('20261020120000', 'copy_legacy_questions_to_practice_banks', '20261020120000_copy_legacy_questions_to_practice_banks.sql'),
+    ('20261021120000', 'cbt_subject_selection_rules', '20261021120000_cbt_subject_selection_rules.sql'),
+    ('20261022090000', 'cbt_question_serving_rules', '20261022090000_cbt_question_serving_rules.sql'),
+    ('20261022091500', 'cbt_mock_paper_spec', '20261022091500_cbt_mock_paper_spec.sql'),
+    ('20261022093000', 'cbt_deadline_grace', '20261022093000_cbt_deadline_grace.sql'),
+    ('20261023120000', 'question_import_pipeline', '20261023120000_question_import_pipeline.sql'),
+    ('20261024120000', 'site_content_and_legal_pages', '20261024120000_site_content_and_legal_pages.sql'),
+    ('20261025120000', 'cbt_submit_grace_120', '20261025120000_cbt_submit_grace_120.sql'),
+    ('20261026120000', 'service_guides', '20261026120000_service_guides.sql'),
+    ('20261027120000', 'cbt_subject_catalog_and_mock_rules', '20261027120000_cbt_subject_catalog_and_mock_rules.sql')
+-- END GENERATED MIGRATION CHECKLIST
+),
+normalized as (
+  select version, name, filename, regexp_replace(name, '^[0-9]{8,14}_', '') as base_name
+  from repo_migrations
+),
+recorded as (
+  select version, coalesce(name, '') as name from supabase_migrations.schema_migrations
+),
+missing as (
+  select n.filename, n.version
+  from normalized n
+  where not exists (select 1 from recorded r where r.version = n.version)
+    and not exists (
+      select 1 from recorded r
+      where regexp_replace(r.name, '^[0-9]{8,14}_', '') = n.base_name
+    )
+)
 select
-  case when count(*) >= 74 then 'pass' else 'fail' end as result,
-  'the migration history is applied' as check_name,
-  count(*)::text || ' migrations recorded (repository holds 74)' as detail
-from supabase_migrations.schema_migrations;
+  case when count(*) = 0 then 'pass' else 'fail' end as result,
+  'every migration in the repository is recorded in the migration ledger' as check_name,
+  count(*)::text || ' of ' || (select count(*) from repo_migrations)::text
+    || ' repository migrations are not recorded in supabase_migrations.schema_migrations'
+    || coalesce(': ' || string_agg(filename, ', ' order by filename), '') as detail
+from missing;
 
 -- 9. The objects this release introduces are present -------------------------
--- Check 8 counts rows, which answers "how many?" but not "which?". Compare the
--- exact release versions so data-only migrations are covered, then inspect the
--- important objects/security properties as well. Output every missing version or
--- object with the migration file an operator should apply. Read-only and safe to
--- run at any time.
+-- Check 8 answers "is every migration in this repository recorded?"; it cannot
+-- answer "did this release's objects actually get created?" — a ledger row proves
+-- a file ran, not that the objects survived a later edit. So this check compares
+-- the release's exact versions and then inspects the important objects and
+-- security properties. Output every missing version or object with the migration
+-- file an operator should apply. Read-only and safe to run at any time.
 with expected(version, migration) as (
   values
     ('20261003070830', '20261002120000_cbt_practice_and_mock_modes.sql'),

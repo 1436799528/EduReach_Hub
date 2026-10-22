@@ -104,3 +104,74 @@ Owner decision: guides must be manageable from the Admin Dashboard instead of co
 
 ## Session 7 — Merge, Supabase sync and security tightening (2026-10-21)
 Secret-exposure sweep before merging: no JWTs, service-role keys or hardcoded credentials in source, `public/`, the built bundle or tracked env files (only `.env.example`/`.env.production.example` placeholders are tracked; `.env*` is gitignored). The server already validates that its key is a real service-role key (`lib/supabase-config.ts`) and the browser only ever receives publishable/anon keys. Added defence in depth: the browser client (`src/lib/supabase.ts`) now inspects the JWT role claim and refuses a service-role key outright, falling through to the unconfigured state — the key is never logged. Removed verifiably dead `.pin-vault`/`.pin-code` CSS (no TSX references) to keep the perf gate green without raising the critical-path budget.
+
+## Session 8 — Remaining release issues (2026-10-22)
+
+Branch `arena/069ae800-edureach-hub` @ `f8ec28f`, working tree clean at start. No
+production access, no migration applied, no deployment. Each item below states
+what was verified and what was not.
+
+### 1. Mobile LCP
+
+Reproduced instead of re-read: a Chromium build was made usable in this
+environment (the sandbox has no browser download CDN, so a local Chromium binary
+was paired with its own shared libraries and pointed at via the
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` the config already supported), the app was
+built and served with `npm start`, and `tests/e2e/perf.spec.ts` measured the Pixel
+7 profile. All three routes were over, not just two: `/` 5 384 ms, `/news`
+5 260 ms, `/past-questions` 6 496 ms, 863–896 KB transferred.
+
+Cause: the Express server applied cache and security headers but **no
+compression**, so the entry chunk (337 KB), the render-blocking stylesheet
+(292 KB) and the Supabase chunk (216 KB) arrived at full size on a 1.6 Mbps
+link. Netlify compresses the hosted build, which is why the production site did
+not show it; self-hosted (`Dockerfile` → `npm start`) and the measurement both
+paid it in full. Fix: `app.use(compression({ threshold: 1024 }))` in
+`server.ts` (brotli/gzip, `Vary: Accept-Encoding`, small JSON untouched).
+Result: LCP 1 704 / 1 660 / 2 076 ms and 221–236 KB on the same profile.
+The gate now enforces LCP ≤ 3 s and transfer ≤ 400 KB (was 8 s / 1.2 MB), asserts
+the entry script and stylesheet are compressed, and measures the three routes
+serially in a dedicated `mobile-perf` project (`npm run e2e:perf`) because
+running beside the functional suite measured the runner (3.5 s) rather than the
+page. Details: `docs/features/PERF-1.md`, "Mobile LCP investigation".
+
+### 2. Migration checklist
+
+`supabase/ci/production-validation.sql` check 8 was `count(*) >= 74` against a
+number typed into the file, and check 9 named a hand-picked list of release
+versions; a newly added migration was in neither. Check 8 now carries a generated
+list of every file in `supabase/migrations/` (74), compared to
+`supabase_migrations.schema_migrations` by version and then by prefix-stripped
+name. `npm run migrations:checklist` is a new CI stage that fails when a file is
+unlisted, when an entry has no file, when a 14-digit version is claimed twice, or
+when an entry disagrees with its file; `--write` regenerates the list. Ten tests
+in `tests/migration-checklist.test.ts` cover both directions, including running
+the SQL against a real PostgreSQL (PGlite) with a synthetic ledger: it fails when
+one migration is omitted and passes when all are present. Nothing was applied to
+any database and no ledger row was edited.
+
+### 3. Supabase live verification
+
+`npm run prod:validate` reports `VITE_SUPABASE_URL`,
+`VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and `NODE_ENV` unset,
+skips the connectivity group, and names the SQL artefact for the checks PostgREST
+cannot run. No credentials exist here and none were requested. The full split of
+local vs. authenticated checks, the safety rules and the ordered procedure are in
+`docs/SUPABASE_LIVE_VERIFICATION.md`. No live result is claimed anywhere.
+
+### Verification run in this session
+
+`npx tsc --noEmit` 0 · `npm test` 660/660 · `npm run schema:audit` no blocking
+findings · `npm run migrations:checklist` 74/74 · `npm run rls:audit` 50/50 tables
+0 findings · `npm run a11y:audit` 0 blocking / 5 informational ·
+`npm run analytics:audit` all agree · `npm run build` 0 · `npm run perf:audit`
+10/10 · Playwright functional suite 158 passed / 2 skipped (both are the
+documented "no exam available without live content" a11y case) ·
+`npm run e2e:perf` passed on all three routes.
+
+Not run: anything against the hosted Supabase project, anything against the
+deployed site (this sandbox cannot reach either), and `npm run audit:ci` is
+network-dependent and belongs to CI. Playwright needed
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `LD_LIBRARY_PATH` locally because the
+browser download CDN is unreachable; CI installs its own browser and needs
+neither.
