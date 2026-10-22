@@ -105,16 +105,17 @@ migration or a documented reconciliation, never an edit to
   and `npm run smoke` now load `.env` themselves, so a value written there is used
   by the command that checks it. Before this, they read only the shell
   environment and reported a `.env`-configured project as "NOT SET".
-- `npm start` is `NODE_ENV=production node build/server.cjs`, which is a POSIX
-  shell prefix and does **not** work in PowerShell. Use:
-
-  ```powershell
-  $env:NODE_ENV = 'production'
-  node build/server.cjs
-  ```
-
-  (`npm run dev` works unchanged and is fine for browsing, but it is the Vite
-  development server; staging checks should use the production build above.)
+- `npm run analytics:retention` without `--apply` is a **read-only count**. It
+  used to call the deleting function and print its answer as a plan; that was
+  fixed on 2026-10-22 after being caught on a real project with a count of 0.
+- `npm run schema:audit` and `npm run perf:audit` normalise CRLF, so a Windows
+  checkout (Git for Windows' default `core.autocrlf=true`) gives the same answers
+  as Linux. Before the fix the schema audit reported 138 blocking findings on
+  Windows and none on Linux.
+- `npm start` runs `node scripts/start.mjs`, which sets `NODE_ENV=production` in
+  Node before loading the server. It works in PowerShell, Git Bash and cmd.exe.
+  (It used to be the POSIX prefix `NODE_ENV=production node build/server.cjs`,
+  which fails on Windows and also broke the Playwright `webServer`.)
 - Put secrets in `.env` with `notepad .env`, never as a command argument — text
   typed into a command line is saved in the PowerShell history file.
 - `git status` must stay clean after `.env` exists. `.env*` is git-ignored; if

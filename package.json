@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "tsx scripts/client-env-check.ts && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs",
-    "start": "NODE_ENV=production node build/server.cjs",
+    "start": "node scripts/start.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist build server.js",
     "lint": "tsc --noEmit",

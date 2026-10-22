@@ -122,12 +122,14 @@ export function readPerfInput(root: string): PerfInput {
   });
   for (const dir of ['src', 'pages']) {
     walk(join(root, dir), (full, repoPath) => {
-      if (repoPath.endsWith('.tsx')) sources.set(repoPath, readFileSync(full, 'utf8'));
+      if (repoPath.endsWith('.tsx')) sources.set(repoPath, readFileSync(full, 'utf8').replace(/\r\n?/g, '\n'));
     });
   }
 
-  const indexHtml = readFileSync(join(root, 'dist/index.html'), 'utf8');
-  const headers = readFileSync(join(root, 'public/_headers'), 'utf8');
+  // Normalised like scripts/schema-audit.ts: a Windows checkout writes these with
+  // CRLF, and the header rules below anchor on `\n`.
+  const indexHtml = readFileSync(join(root, 'dist/index.html'), 'utf8').replace(/\r\n?/g, '\n');
+  const headers = readFileSync(join(root, 'public/_headers'), 'utf8').replace(/\r\n?/g, '\n');
   return { assets, images, indexHtml, headers, sources };
 }
 

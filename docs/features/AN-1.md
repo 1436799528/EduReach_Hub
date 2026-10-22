@@ -89,7 +89,7 @@ None added. The event names are not routes and get no URL.
 | `pages/StudentDashboardV2.tsx` | `notification_open` when a notification is opened |
 | `src/lib/errorTelemetry.ts` (**P2-2**) | `client_error` from the route ErrorBoundary and the global `error` / `unhandledrejection` listeners — constructor name and source only, never the message |
 | `supabase/migrations/20261001120000_analytics_retention.sql` (**new**) | `created_at` index, `prune_site_analytics_events(p_days)`, and the replacement `admin_activity_breakdown` that no longer returns query text |
-| `scripts/analytics-retention.ts` (**new**) | `npm run analytics:retention` — prints what would be pruned; `--apply` deletes. Refuses to run without service-role credentials |
+| `scripts/analytics-retention.ts` | `npm run analytics:retention` — counts what is older than the window with one read-only `count` query and deletes nothing; `--apply` calls `prune_site_analytics_events()`. Refuses to apply without service-role credentials · **fixed 2026-10-22:** the dry run used to call the deleting RPC and print its answer as a plan. Caught on a real project where the count was 0, so no rows were lost. `tests/analytics-retention.test.ts` fails if a dry run ever reaches the RPC again |
 | `scripts/analytics-audit.ts` (**new**) | The static gate: taxonomy ↔ emit sites ↔ server ↔ this document |
 | `pages/AdminAnalyticsPage.tsx` | The search panel described above |
 | `docs/architecture/02-DATA-MODEL.md` | The table's row loses "no retention policy yet" and gains the real posture |
@@ -205,7 +205,7 @@ whose search data is counts instead of terms.
 | Value over its cap | Strings truncated to the cap; numbers that are not finite dropped |
 | Supabase not configured | Endpoint returns 204 and stores nothing (unchanged local-preview behaviour) |
 | Insert fails | 204, error logged server-side (unchanged: analytics never surfaces to the user) |
-| Prune script without credentials | Refuses to run, explains which variable is missing, exits non-zero — and `--dry-run` needs no credentials at all |
+| Prune script without credentials | Refuses to apply, explains which variable is missing, exits non-zero — and a dry run without credentials still prints the window and cutoff |
 
 ## Edge Cases
 
@@ -247,7 +247,7 @@ user-facing message changes.
 | Unit (node:test) | `tests/analytics.test.ts` — the validator (declared keys kept, undeclared dropped, caps enforced, non-finite numbers dropped, nested objects refused, payload cap, unknown event refused), the retention planner, the taxonomy's own invariants (unique names, non-empty purposes, no free-text keys), and the audit's failure paths run against synthetic trees | `npm test`, locally and in CI |
 | Static gate | `npm run analytics:audit` — taxonomy ↔ emit sites ↔ server ↔ this document; fails with the offending file and event named | inside `npm run ci`, straight after `perf:audit`; `tests/ci.test.ts` asserts the stage in the same commit |
 | Schema | `tests/schema.test.ts` / `tests/migrations.test.ts` (existing) — the new migration applies in the PostgreSQL replay and the objects it creates exist | `npm test`, in the replay |
-| Operational | `npm run analytics:retention -- --dry-run` prints the window and the cutoff; `--apply` requires credentials. Execution is a post-deploy runbook item, because a scheduler is OBS-1's job, not this feature's | manual, after deployment |
+| Operational | `npm run analytics:retention` prints the window, the cutoff, and — when credentials are present — how many rows a prune would remove; `--apply` requires credentials and is the only path that deletes. Execution is a post-deploy runbook item, because a scheduler is OBS-1's job, not this feature's | manual, after deployment |
 | Browser | Not applicable — no user-visible behaviour is added; the existing Playwright suite still asserts that no route throws, which covers `trackEvent` never breaking a page | `npm run test:e2e` |
 
 ## Evidence

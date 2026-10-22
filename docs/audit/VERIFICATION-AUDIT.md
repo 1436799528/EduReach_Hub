@@ -175,3 +175,34 @@ network-dependent and belongs to CI. Playwright needed
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `LD_LIBRARY_PATH` locally because the
 browser download CDN is unreachable; CI installs its own browser and needs
 neither.
+
+## Session 9 — Windows verification run: three platform defects fixed (2026-10-22)
+
+The owner ran the staging checks on Windows 11 (Git Bash / MSYS2) against the
+live project. Four things failed; three were defects in this repository, not in
+the environment, and are fixed in this session. No production writes, no
+migration, no deployment.
+
+| # | Symptom | Cause | Fix |
+|---|---|---|---|
+| 1 | `npm run schema:audit` → **138 blocking findings** on Windows, `no blocking findings` on Linux | The audit's patterns anchor on `\n`; Git for Windows writes CRLF (`core.autocrlf=true`). Reproduced exactly by converting the 74 migration files to CRLF: 138 findings; restored immediately. | `scripts/schema-audit.ts` reads SQL and code through a normalising reader; `scripts/perf-audit.ts` normalises `index.html` and `public/_headers` too. `collectCodeUsage` also tolerates a missing `server.ts`. Regression test in `tests/schema.test.ts` runs a CRLF and an LF migration history through the audit and requires identical answers. |
+| 2 | `npm start` → `'NODE_ENV' is not recognized…`, and both Playwright suites failed to start their web server | `start` was the POSIX prefix `NODE_ENV=production node build/server.cjs`. | `scripts/start.mjs` sets `NODE_ENV` in Node before requiring `build/server.cjs`; works in PowerShell, cmd and bash. Docker (already `ENV NODE_ENV=production`) unchanged. |
+| 3 | `npm run analytics:retention` (no `--apply`) **called the deleting RPC** | `executeRetention` was only added later; the script called `prune_site_analytics_events()` on both paths and printed its answer as a plan. | A dry run now issues one read-only `count` query (`head: true`) and cannot reach a mutating RPC. Six tests in `tests/analytics-retention.test.ts`; the first asserts the fake client's `rpc` was never called. |
+| 4 | `npm error Missing script: "e2e:perf"` | The owner was on `main`; the script exists only on this branch. | Not a defect — switching to the branch is the fix. |
+
+**Data finding, not fixed (needs owner approval — it is a production data decision):**
+`npm run duplicate:audit` examined 1 000 questions and reported **376 exact
+duplicate groups**. Two exam rows (`d37a0c7c…` and `edef5d4f…`) hold the same ten
+"General" questions, and ten vocabulary questions repeat across three "Use of
+English" banks. The script deletes nothing; deduplicating is an editorial
+decision with a reviewed migration, not a script run.
+
+**Smaller data observations from the same report:** `news.unknown_categories: 16`
+(none of the 16 published articles uses a category label the code recognises),
+`institutions.missing_website: 328` of 329, `opportunities.active_without_deadline: 1`.
+All read-only findings; none is a release blocker.
+
+**Verified after the fixes (Linux, this sandbox):** `npx tsc --noEmit` clean ·
+`npm test` **667/667** (660 before this session + 6 retention + 1 CRLF) · `schema:audit` no blocking findings with LF **and** with CRLF ·
+`perf:audit` 10/10 (also with CRLF `_headers`) · `npm start` serves
+`/api/health` 200 and the SPA shell 200.
