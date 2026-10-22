@@ -25,11 +25,29 @@ test('health is healthy with security headers and no framework disclosure', asyn
   assert.match(response.headers.get('content-security-policy')!, /frame-ancestors 'self'/);
 });
 // Exercise every registered admin route, including newly added CMS endpoints.
-const adminRoutes = app._router.stack.flatMap((layer: any) => {
+//
+// `app._router` is Express 4's internal stack: on Express 5 it is `app.router`,
+// and a rename would make this list empty - which, without the guard below,
+// would silently turn the whole unauthenticated-401 sweep into zero tests that
+// still report green. Read either shape and then prove the enumeration actually
+// found the routes: a discovery failure must be red, not green.
+// Express 4 exposes `_router` and a deprecated `router` getter that logs (and
+// here, throws) when touched - so read `_router` first and only fall back to the
+// Express 5 name when it is absent.
+const router = (app as unknown as { _router?: { stack: any[] } })._router
+  ?? (app as unknown as { router?: { stack: any[] } }).router;
+const stack: any[] = router?.stack ?? [];
+const adminRoutes = stack.flatMap((layer: any) => {
   const route = layer.route;
   if (!route || !route.path.startsWith('/api/admin/') || route.path.endsWith('/bootstrap')) return [];
   return Object.keys(route.methods).map(method => ({ method: method.toUpperCase(), path: route.path.replace(/:[^/]+/g, 'test-id') }));
 });
+const discovered = new Set(adminRoutes.map(route => `${route.method} ${route.path}`));
+for (const required of ['GET /api/admin/session', 'POST /api/admin/uploads', 'PUT /api/admin/site-content/settings/:key']) {
+  const [method, ...rest] = required.split(' ');
+  const expected = `${method} ${rest.join(' ').replace(/:[^/]+/g, 'test-id')}`;
+  assert.ok(discovered.has(expected), `route discovery missed ${required}: the admin sweep would be empty`);
+}
 for (const { method, path } of adminRoutes) {
   test(`${method} ${path} rejects unauthenticated access`, async () => {
     const response = await fetch(base + path, { method });

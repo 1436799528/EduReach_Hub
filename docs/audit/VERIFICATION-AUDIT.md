@@ -279,3 +279,79 @@ Two small honesty improvements this session:
 
 Nothing was written to any database; no migration, deployment, email, upload or
 security setting was touched.
+
+## Session 12 — Independent audit: the two failing tests, and what they hid (2026-10-22)
+
+Baseline `1ba3a73` (matches `origin/arena/069ae800-edureach-hub`), tree clean,
+`npm ci --ignore-scripts` exit 0. No deploy, no merge, no migration, no production
+write; no secret was read or printed.
+
+### The reported failures were line endings, and only line endings
+
+An informal reading of the two failures was "the asset-cache rule and the
+capability assertion are broken". They are not. Every file in the repository (398
+of them, excluding `node_modules`/`dist`/build output) was converted to CRLF and
+the whole suite was run: **677 tests, 674 pass, 2 fail** — `tests/headers.test.ts`
+#8 and `tests/site-content.test.ts` #15, and nothing else. Both assertions were
+anchored on a literal `\n`:
+
+- `tests/headers.test.ts:115` — `/assets/*\n((?:\s{2}[^\n]+\n)+)` matched nothing on
+  a CRLF checkout, so the extracted block was `''` and the cache rule was never
+  examined.
+- `tests/site-content.test.ts:248` — `/'site\.read',\n\s+'site\.update',/`.
+
+Both tests now normalise line endings at their single read point
+(`readFileSync(...).replace(/\r\n?/g, '\n')`) and keep the same demands. Verified
+by converting the twelve files those tests read to CRLF again: **138/138 pass**.
+
+### Confirmed defects fixed
+
+| ID | Pri | Finding | Evidence | Fix |
+|---|---|---|---|---|
+| AUD-1 | P2 | `scripts/client-env-check.ts` loaded **no** `.env`, so it disagreed with the bundler it guards: a correct `.env` still printed `WARN … Missing: VITE_SUPABASE_URL, …`, and `CONTEXT=production` refused a correctly configured build (`exit 1`). Netlify was unaffected (env in the build environment); local and self-hosted production builds were. | script had zero `dotenv` references; reproduced with a temporary `.env`: `WARN … Missing` exit 0, and `CONTEXT=production` exit 1 | `import 'dotenv/config'`, like the six other operator scripts. A variable already in the environment still wins. |
+| AUD-2 | P3 | `pages/StudentDashboardV2.tsx:336` resolved a role through `app_metadata?.role \|\| user_metadata?.role`. `user_metadata` is writable by the account holder. The value only drives the dashboard's own "Admin Console" link and role label, and every admin call is authorised server-side, so this was not an authorisation bypass — but it was the one client surface still reading a self-granted role, and `pages/AdminLayout.tsx` already documents why that must not happen. | grep over `src`/`pages`/`components`/`lib` | The `app_metadata`-only fallback, matching the console shell; the profile row (`profiles.role`) still wins. |
+| AUD-3 | P3 | `tests/api.test.ts` enumerated `app._router.stack` (Express-4 internal). On Express 5 the list is empty and the entire unauthenticated-401 sweep becomes zero tests that still report green. | the enumeration had no assertion that it found anything | Reads `_router` then `router` (the Express-4 `router` getter throws, so it must stay second) and asserts three known admin routes were discovered. |
+| AUD-4 | P3 | The CSP's `connect-src` was never asserted: `https://*.supabase.co` and `wss://*.supabase.co` are two separate sources, and folding them together or dropping `wss:` would silently break Realtime with no test to notice. | `tests/headers.test.ts` checked `script-src`/`object-src`/`frame-ancestors` only | New test compares the `connect-src` source list in `server.ts` and `public/_headers`, requires both origins, and rejects any token that looks like two merged origins. |
+| AUD-5 | P3 | `tests/site-content.test.ts` #15 proved the two capability literals existed *somewhere* in `capabilities.ts`. Deleting `'site.update'` from the vocabulary still passed, because the content editor's grant list contains the same adjacent pair. | mutation: deleting the vocabulary entry left the suite green | The two regions (vocabulary, content-editor grant list) are now asserted separately. |
+
+### Verification (this branch, after the fixes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **683 tests, 683 pass, 0 fail** (677 before; +6 regression tests, and the `dist/`-dependent perf self-check now runs because `build` ran first) |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 |
+| `npm run build` | 0 | 344.80 kB / 101.51 kB gzip |
+| `npm run perf:audit` | 0 | 10/10 budgets |
+| `npm run analytics:audit` | 0 | taxonomy, call sites, server and document agree |
+| `npm run rls:audit` | 0 | 50 tables, 50 classified, 0 findings |
+| `npm run a11y:audit` | 0 | 0 blocking, 5 informational |
+| `npm run audit:ci` | 0 | 0 vulnerabilities (also `npm audit` full tree) |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | LCP 1 700 / 1 696 / 1 972 ms, 221–236 KB |
+| `npm run env:check` | 0 | "not configured" — correct for this sandbox |
+| `npm run prod:validate` | 1 | **environment, not code**: four required variables unset; the live checks are reported `skipped`, never `pass` |
+| Supabase live checks | — | **BLOCKED** — `*.supabase.co` is unreachable from this sandbox (000), no credentials are present |
+
+### Audit sweeps that found nothing new
+
+Every `/api/admin/*` route (including `src/server/siteContent.ts` and
+`src/server/question-import/routes.ts`) is capability-guarded; `verifyJWT` uses
+`auth.getUser` plus the trusted `profiles` row and fails closed; `get_cbt_result`
+still scopes on `auth.uid()`; 72 `SECURITY DEFINER` functions pin `search_path`;
+the CBT draft/submit RPCs all select the attempt by `user_id = auth.uid()`; no
+`eval`/`new Function`; `dangerouslySetInnerHTML` only through `sanitizeRichHtml`;
+uploads sniff bytes rather than trusting the declared MIME type; a build with a
+marker service-role key in the environment leaves no trace in `dist/`, while the
+publishable key is inlined as intended; `.env` is git-ignored and no secret is
+tracked.
+
+### Not changed, and why
+
+The two `StudentDashboardV2` display values, the CSP itself and the header files
+are untouched — the CSP was verified byte-identical in both places and correct,
+so there was nothing to "fix" there. Production data findings from Session 10
+(376 duplicate question groups, 16/16 news articles with an unrecognised
+category, 328/329 institutions without a website, one opportunity with no
+deadline) are content decisions, not code defects, and remain open.

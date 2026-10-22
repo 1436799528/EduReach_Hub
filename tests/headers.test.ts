@@ -12,8 +12,31 @@ import { test } from 'node:test';
 // and the CSP is the one where drift is most dangerous.
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
-const serverSource = readFileSync(join(ROOT, 'server.ts'), 'utf8');
-const headersFile = readFileSync(join(ROOT, 'public/_headers'), 'utf8');
+
+/**
+ * These assertions are about the *content* of the header files, not about how
+ * the checkout happens to store line endings. A Windows clone with
+ * `core.autocrlf=true` hands us CRLF, and two of the rules below are anchored on
+ * `\n`, so the same, correct file failed on Windows and passed on Linux. Normalise
+ * at the single point where the files are read: the checks then hold for either
+ * checkout style without loosening what they demand.
+ */
+const readNormalized = (path: string): string =>
+  readFileSync(join(ROOT, path), 'utf8').replace(/\r\n?/g, '\n');
+
+const serverSource = readNormalized('server.ts');
+const headersFile = readNormalized('public/_headers');
+
+/** The production CSP string from server.ts, as sent at runtime. */
+function expressCsp(): string {
+  return /'Content-Security-Policy',\s*\n?\s*"([^"]+)"/.exec(serverSource)?.[1] ?? '';
+}
+
+/** One directive of a CSP as its list of sources. */
+function cspSources(csp: string, directive: string): string[] {
+  const values = new RegExp(`(?:^|;)\\s*${directive}\\s+([^;]+)`).exec(csp)?.[1] ?? '';
+  return values.trim().split(/\s+/).filter(Boolean);
+}
 
 /** Header names the Express middleware sets. */
 function expressHeaders(): Set<string> {
@@ -112,8 +135,49 @@ test('HSTS is bounded and does not bind subdomains', () => {
 });
 
 test('content-hashed assets are immutable and the shell is never cached', () => {
-  const assets = /\/assets\/\*\n((?:\s{2}[^\n]+\n)+)/.exec(headersFile)?.[1] ?? '';
+  /** The header block Netlify applies to one path pattern. */
+  const blockFor = (pattern: string): string => {
+    const start = headersFile.indexOf(`\n${pattern}\n`);
+    assert.ok(start >= 0, `public/_headers has no rule for ${pattern}`);
+    const rest = headersFile.slice(start + pattern.length + 2);
+    const end = rest.search(/\n(?:\/[^ \n]|#)/);
+    return end >= 0 ? rest.slice(0, end) : rest;
+  };
+
+  const assets = blockFor('/assets/*');
   assert.match(assets, /Cache-Control: public, max-age=31536000, immutable/);
-  const shell = /\/index\.html\n((?:\s{2}[^\n]+\n?)+)/.exec(headersFile)?.[1] ?? '';
+  assert.match(assets, /immutable/, 'a hashed file whose name changes with its bytes can be cached forever');
+
+  const shell = blockFor('/index.html');
   assert.match(shell, /no-store/, 'a stale index.html would serve references to chunks that no longer exist');
+  assert.ok(!/immutable|max-age=31536000/.test(shell), 'the shell must not be cached');
+
+  const serviceWorker = blockFor('/sw.js');
+  assert.match(serviceWorker, /no-store/, 'a cached service worker would pin an old app shell');
 });
+
+test('the CSP keeps separate https and wss origins for Supabase', () => {
+  // connect-src is what lets the browser reach Supabase over REST and Realtime.
+  // The two origins are distinct sources: `https://*.supabase.co` does not cover
+  // `wss:`, so Realtime would silently drop if one were folded into the other.
+  // This asserts the split in both copies of the CSP, because an operator editing
+  // the line by hand is exactly the moment it gets merged or truncated.
+  const sources = [
+    ['server.ts', cspSources(expressCsp(), 'connect-src')],
+    ['public/_headers', cspSources(netlifyWildcardBlock(), 'connect-src')],
+  ] as const;
+
+  for (const [label, list] of sources) {
+    assert.ok(list.includes("'self'"), `${label}: connect-src lost 'self'`);
+    assert.ok(list.includes('https://*.supabase.co'), `${label}: connect-src lost the https Supabase origin`);
+    assert.ok(list.includes('wss://*.supabase.co'), `${label}: connect-src lost the wss Supabase origin`);
+    for (const source of list) {
+      assert.ok(
+        !/^https?:.*wss?:|^wss?:.*https?:/.test(source),
+        `${label}: "${source}" looks like two origins merged into one source`,
+      );
+    }
+  }
+  assert.deepEqual(sources[1][1], sources[0][1], 'the two connect-src lists have drifted apart');
+});
+

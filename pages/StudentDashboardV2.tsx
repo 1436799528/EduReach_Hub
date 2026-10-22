@@ -333,7 +333,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       } catch {
         adminSession = false;
       }
-      const metadataRole = String(user.app_metadata?.role || user.user_metadata?.role || '').toLowerCase();
+      // `user_metadata` is writable by the account holder, so it must never be
+      // read for a role - not even for this label. `app_metadata` is written only
+      // by the auth admin API and the console shell (pages/AdminLayout.tsx)
+      // already limits its fallback to that; the profile row is the source the
+      // API itself authorizes from, so it wins. Nothing is granted here: every
+      // admin call is authorized server-side.
+      const metadataRole = String(user.app_metadata?.role || '').toLowerCase();
       const profileRole = String(profileResult.data?.role || metadataRole || '').toLowerCase();
       if (!active) return;
 
@@ -345,7 +351,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         setProfile(profileResult.data as Profile);
         setMfaEnabled(Boolean(profileResult.data.mfa_enabled));
       } else {
-        setProfile({ full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student', role: metadataRole || 'student' });
+        // A display name may come from user_metadata; the role may not.
+        setProfile({ full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student', role: profileRole || 'student' });
       }
       if (profileResult.error) setError('We could not load your profile. Please refresh or update your academic profile.');
       setServices((serviceResult.data || []) as ServiceRow[]);
