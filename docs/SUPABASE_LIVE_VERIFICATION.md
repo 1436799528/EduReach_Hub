@@ -73,6 +73,12 @@ project is in that state. That is the whole of §3.
 
 ---
 
+**To run these against a disposable project, use
+[`operations/STAGING_VERIFICATION_RUNBOOK.md`](operations/STAGING_VERIFICATION_RUNBOOK.md)** —
+it starts with a fail-closed target check (`npm run env:check -- --require-staging`)
+and carries the CBT, upload and authorization walkthroughs that this page
+deliberately leaves out because they write.
+
 ## 3. The live checks, and how each one is performed (all read-only)
 
 | # | Check | Why it needs project access | How to run it | Pass looks like |

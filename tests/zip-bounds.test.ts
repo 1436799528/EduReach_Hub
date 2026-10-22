@@ -458,3 +458,115 @@ test('yielding does not change any size verdict', async () => {
     (error: unknown) => tooLarge(error),
   );
 });
+
+// --- Nested containers --------------------------------------------------------
+//
+// A .docx or .xlsx entry inside a .zip is itself a compressed container. Its
+// outer bytes are measured by readArchiveEntries, but the text inside it expands
+// *afterwards*, so that expansion has to draw from the same archive-wide budget.
+// Without this, a 4 KB archive of tiny Word files expanded ~90 MB of text with no
+// `too_large` (measured before the fix; RSS +159 MB). These fixtures are small:
+// the budget is passed in rather than needing to reach 80 MB.
+
+/** A .docx whose word/document.xml inflates to `size` bytes of question text. */
+async function docxOfSize(size: number): Promise<Buffer> {
+  // One <w:p> per line: the reader turns each paragraph into a line, and the
+  // prose parser needs numbered questions with labelled options. `size` is the
+  // size of the XML part that gets decompressed — the number the budget is
+  // charged for — not of the text inside it.
+  const paragraphs: string[] = [];
+  let written = 0;
+  let number = 1;
+  while (written < size) {
+    for (const line of [
+      `${number}. Which city is the capital of Nigeria?`,
+      'A. Lagos', 'B. Abuja', 'C. Kano', 'D. Ibadan', 'Answer: B', '',
+    ]) {
+      const paragraph = `<w:p><w:r><w:t>${line}</w:t></w:r></w:p>`;
+      paragraphs.push(paragraph);
+      written += paragraph.length;
+      if (written >= size) break;
+    }
+    // A repeated number would be read as a restatement of the same question.
+    number = number >= 99 ? 1 : number + 1;
+  }
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', '<?xml version="1.0"?><Types/>');
+  zip.file('word/document.xml', `<w:document><w:body>${paragraphs.join('')}</w:body></w:document>`);
+  return Buffer.from(await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } }));
+}
+
+test('text expanded inside nested Word files draws from the archive budget', async () => {
+  // Three documents of ~40 KB each: 120 KB of inner text under a 100 KB budget.
+  const parts = [await docxOfSize(40 * 1024), await docxOfSize(40 * 1024), await docxOfSize(40 * 1024)];
+  const zip = await archive({ 'a.docx': parts[0], 'b.docx': parts[1], 'c.docx': parts[2] });
+  await assert.rejects(
+    () => extractQuestions(zip, 'papers.zip', { maxEntryBytes: 200 * 1024, maxTotalBytes: 100 * 1024 }),
+    (error: unknown) => tooLarge(error),
+    'nested Word expansion must not start a fresh budget of its own',
+  );
+});
+
+test('nested Word files that fit the archive budget still extract', async () => {
+  const zip = await archive({
+    'a.docx': await docxOfSize(40 * 1024),
+    'b.docx': await docxOfSize(40 * 1024),
+  });
+  const result = await extractQuestions(zip, 'papers.zip', { maxEntryBytes: 200 * 1024, maxTotalBytes: 200 * 1024 });
+  assert.ok(result.items.length > 0, 'a valid archive of Word files must still be read');
+  assert.ok(result.expandedBytes === undefined || result.expandedBytes > 0);
+});
+
+test('a nested size violation fails the archive instead of being warned past', async () => {
+  // The oversized document sits beside a good one. A per-file problem in a plain
+  // entry is a warning; a budget violation is about the archive, so it stops the
+  // import — otherwise the caller would import a partial paper believing it whole.
+  const zip = await archive({
+    'good.docx': await docxOfSize(1024),
+    'bomb.docx': await docxOfSize(64 * 1024),
+  });
+  await assert.rejects(
+    () => extractQuestions(zip, 'mixed.zip', { maxEntryBytes: 200 * 1024, maxTotalBytes: 8 * 1024 }),
+    (error: unknown) => tooLarge(error),
+  );
+});
+
+/** A minimal .xlsx whose sheet and shared-string parts both inflate to `size`. */
+async function xlsxOfSize(size: number): Promise<Buffer> {
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', '<?xml version="1.0"?><Types/>');
+  // Inline strings keep the sheet itself large without needing a header row.
+  const rows: string[] = ['<row r="1"><c r="A1" t="inlineStr"><is><t>Question</t></is></c></row>'];
+  let written = 0;
+  let row = 2;
+  while (written < size) {
+    const body = `<row r="${row}"><c r="A${row}" t="inlineStr"><is><t>Question ${row}?</t></is></c></row>`;
+    rows.push(body);
+    written += body.length;
+    row += 1;
+  }
+  zip.file('xl/worksheets/sheet1.xml', `<worksheet><sheetData>${rows.join('')}</sheetData></worksheet>`);
+  // A shared-string table of its own, large enough to matter for the budget.
+  const strings: string[] = [];
+  let shared = 0;
+  let index = 0;
+  while (shared < size) {
+    const entry = `<si><t>Option ${index}</t></si>`;
+    strings.push(entry);
+    shared += entry.length;
+    index += 1;
+  }
+  zip.file('xl/sharedStrings.xml', `<sst>${strings.join('')}</sst>`);
+  return Buffer.from(await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } }));
+}
+
+test('a workbook charges its shared-string table against the same budget as its sheets', async () => {
+  // Sheet ~20 KB and shared strings ~20 KB: 40 KB of parts under a 30 KB budget.
+  const workbook = await xlsxOfSize(20 * 1024);
+  const zip = await archive({ 'book.xlsx': workbook });
+  await assert.rejects(
+    () => extractQuestions(zip, 'books.zip', { maxEntryBytes: 60 * 1024, maxTotalBytes: 30 * 1024 }),
+    (error: unknown) => tooLarge(error),
+    'the shared-string table is decompressed work and must be charged',
+  );
+});

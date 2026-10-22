@@ -39,6 +39,17 @@ export type ExtractedItem = {
 export type Extraction = {
   items: ExtractedItem[];
   warnings: string[];
+  /**
+   * Decompressed bytes this extraction spent on container parts (a `.docx`'s
+   * `word/document.xml`, an `.xlsx`'s sheets and shared-string table).
+   *
+   * This is the number the archive-wide ceiling has to debit. A .docx inside a
+   * .zip is itself compressed, so its inner parts expand *after* the outer
+   * entry was measured — counting only the container's bytes let a 4 KB upload
+   * expand ~90 MB of nested text (see tests/zip-bounds.test.ts). Formats that do
+   * not decompress anything leave it undefined.
+   */
+  expandedBytes?: number;
 };
 
 export type ExtractionErrorCode = 'unsupported' | 'ocr_required' | 'empty' | 'corrupt' | 'too_large';
@@ -102,7 +113,18 @@ export function isSupportedUpload(filename: string): boolean {
   return (SUPPORTED_EXTENSIONS as readonly string[]).includes(extensionOf(filename));
 }
 
-export async function extractQuestions(buffer: Buffer, filename: string): Promise<Extraction> {
+/**
+ * Extract questions from one uploaded file.
+ *
+ * `limits` is supplied when this file arrived *inside* a `.zip`: the caller has
+ * already spent part of the archive-wide budget, so the container parts this
+ * file expands must fit in what is left rather than starting a fresh 80 MB.
+ */
+export async function extractQuestions(
+  buffer: Buffer,
+  filename: string,
+  limits?: Partial<ArchiveLimits>,
+): Promise<Extraction> {
   if (!buffer.length) throw new ExtractionError('empty', 'The uploaded file is empty.');
   const extension = extensionOf(filename);
   if (!extension) {
@@ -122,11 +144,11 @@ export async function extractQuestions(buffer: Buffer, filename: string): Promis
     case '.json':
       return extractJson(buffer.toString('utf8'));
     case '.docx':
-      return extractDocx(buffer);
+      return extractDocx(buffer, limits);
     case '.xlsx':
-      return extractXlsx(buffer);
+      return extractXlsx(buffer, limits);
     case '.zip':
-      return extractZip(buffer);
+      return extractZip(buffer, limits);
     default: {
       const message = UNSUPPORTED_EXTENSIONS[extension]
         || `Files ending in ${extension} are not supported. Upload a PDF, Word (.docx), Excel (.xlsx), CSV, TSV, JSON, text or ZIP file.`;
@@ -199,13 +221,14 @@ function textFromXml(fragment: string): string {
   return result;
 }
 
-async function extractDocx(buffer: Buffer): Promise<Extraction> {
+async function extractDocx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Promise<Extraction> {
   const zip = await loadZip(buffer, 'Word document');
   const main = zip.file('word/document.xml');
   if (!main) {
     throw new ExtractionError('corrupt', 'This file is not a Word document: word/document.xml is missing.');
   }
-  const documentXml = await readEntryText(main, 'document body');
+  const partLimit = Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES);
+  const documentXml = await readEntryText(main, 'document body', partLimit);
 
   // Images in a DOCX live beside the text, not inside it. They are counted so
   // the reviewer knows to consult the original file for diagrams.
@@ -230,13 +253,21 @@ async function extractDocx(buffer: Buffer): Promise<Extraction> {
   if (imageCount > 0) {
     warnings.push(`${imageCount} image${imageCount === 1 ? '' : 's'} found in the document. Diagrams are not attached to individual questions automatically; keep the source file open while reviewing.`);
   }
-  return { items: parseProse(lines.join('\n')), warnings };
+  return { items: parseProse(lines.join('\n')), warnings, expandedBytes: Buffer.byteLength(documentXml, 'utf8') };
 }
 
-async function extractXlsx(buffer: Buffer): Promise<Extraction> {
+async function extractXlsx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Promise<Extraction> {
   const zip = await loadZip(buffer, 'Excel workbook');
   const warnings: string[] = [];
-  const sharedStrings = await readSharedStrings(zip);
+  // One budget covers the whole workbook: the shared-string table first, then
+  // whatever is left is shared by the worksheets. A workbook's parts are read
+  // one after another, so the ceiling has to span them.
+  const totalBudget = limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES;
+  const partLimit = Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, totalBudget);
+  const sharedStringsRead = await readSharedStringsWithSize(zip, partLimit);
+  const sharedStrings = sharedStringsRead.values;
+  const sheetBudget = totalBudget - sharedStringsRead.bytes;
+  if (sheetBudget <= 0 && zip.file('xl/worksheets/sheet1.xml')) throw tooLarge();
 
   const sheets = Object.keys(zip.files)
     .filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name))
@@ -247,7 +278,10 @@ async function extractXlsx(buffer: Buffer): Promise<Extraction> {
 
   // Every worksheet is read under the archive-wide ceiling as well as the
   // per-file one, exactly like the entries of a .zip upload.
-  const sheetReads = await readArchiveEntries(sheets.map((name) => zip.file(name)!));
+  const sheetReads = await readArchiveEntries(
+    sheets.map((name) => zip.file(name)!),
+    { maxEntryBytes: Math.min(partLimit, sheetBudget), maxTotalBytes: sheetBudget },
+  );
   const items: ExtractedItem[] = [];
   for (const sheetRead of sheetReads) {
     if (!sheetRead.ok) continue;
@@ -259,20 +293,28 @@ async function extractXlsx(buffer: Buffer): Promise<Extraction> {
     }
   }
   if (sheets.length > 1) warnings.push(`Read ${sheets.length} worksheets. Check that every sheet belonged to this paper.`);
-  return { items: applyAnswerKeys(items), warnings };
+  const expandedBytes = sharedStringsRead.bytes
+    + sheetReads.reduce((total, read) => total + (read.ok ? read.bytes.length : 0), 0);
+  return { items: applyAnswerKeys(items), warnings, expandedBytes };
 }
 
 function sheetNumber(name: string): number {
   return Number(/sheet(\d+)\.xml$/.exec(name)?.[1] || 0);
 }
 
-export async function readSharedStrings(zip: JSZip): Promise<string[]> {
+/** The shared-string table, with the bytes it cost, so a caller can charge them. */
+async function readSharedStringsWithSize(zip: JSZip, limit: number): Promise<{ values: string[]; bytes: number }> {
   const file = zip.file('xl/sharedStrings.xml');
-  if (!file) return [];
-  const parsed = xml.parse(await readEntryText(file, 'shared strings table')) as Record<string, any>;
+  if (!file) return { values: [], bytes: 0 };
+  const bytes = await readZipEntryBounded(file, limit).catch((error: unknown) => {
+    if (error instanceof ExtractionError && error.code === 'too_large') throw error;
+    throw new ExtractionError('corrupt', 'The shared strings table could not be read. It may be damaged or encrypted.');
+  });
+  const text = bytes.toString('utf8');
+  const parsed = xml.parse(text) as Record<string, any>;
   const list = parsed?.sst?.si;
-  if (!list) return [];
-  return (Array.isArray(list) ? list : [list]).map((entry: any) => {
+  if (!list) return { values: [], bytes: bytes.length };
+  const values = (Array.isArray(list) ? list : [list]).map((entry: any) => {
     const text = entry?.t;
     if (typeof text === 'string') return decodeXml(text);
     // fast-xml-parser turns <t>3</t> into the number 3.
@@ -284,6 +326,11 @@ export async function readSharedStrings(zip: JSZip): Promise<string[]> {
     }
     return '';
   });
+  return { values, bytes: bytes.length };
+}
+
+export async function readSharedStrings(zip: JSZip, limit: number = MAX_ZIP_ENTRY_BYTES): Promise<string[]> {
+  return (await readSharedStringsWithSize(zip, limit)).values;
 }
 
 function columnIndex(reference: string): number {
@@ -471,9 +518,9 @@ export async function readZipEntryBounded(entry: JSZip.JSZipObject, limit: numbe
  * hold a `word/document.xml` that inflates to gigabytes. These parts go through
  * the same bounded reader as archive entries.
  */
-async function readEntryText(entry: JSZip.JSZipObject, what: string): Promise<string> {
+async function readEntryText(entry: JSZip.JSZipObject, what: string, limit: number = MAX_ZIP_ENTRY_BYTES): Promise<string> {
   try {
-    const bytes = await readZipEntryBounded(entry, MAX_ZIP_ENTRY_BYTES);
+    const bytes = await readZipEntryBounded(entry, limit);
     return bytes.toString('utf8');
   } catch (error) {
     if (error instanceof ExtractionError && error.code === 'too_large') throw error;
@@ -558,7 +605,11 @@ export async function readArchiveEntries(
 // ZIP archives
 // ---------------------------------------------------------------------------
 
-async function extractZip(buffer: Buffer): Promise<Extraction> {
+async function extractZip(buffer: Buffer, limits?: Partial<ArchiveLimits>): Promise<Extraction> {
+  const archive: ArchiveLimits = {
+    maxEntryBytes: Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, MAX_ZIP_ENTRY_BYTES),
+    maxTotalBytes: Math.min(limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES, MAX_ZIP_UNCOMPRESSED_BYTES),
+  };
   const zip = await loadZip(buffer, 'ZIP archive');
   const entries = Object.values(zip.files).filter((file) => !file.dir && !file.name.startsWith('__MACOSX/'));
   if (entries.length > MAX_ZIP_ENTRIES) {
@@ -586,7 +637,15 @@ async function extractZip(buffer: Buffer): Promise<Extraction> {
   // of the archive-wide one. A size violation throws out of here (nothing is
   // imported); an unreadable file becomes a warning so the rest of the archive
   // is still reviewed.
-  const reads = await readArchiveEntries(supported);
+  const reads = await readArchiveEntries(supported, archive);
+
+  // The entries above were measured in their *compressed form*. A .docx or
+  // .xlsx entry is itself a compressed container, so parsing it expands more
+  // bytes that the archive-wide ceiling must also cover — otherwise a 4 KB
+  // archive of tiny Word files can expand without limit. `remaining` is what is
+  // left of the archive budget, and each nested extraction draws from it.
+  let remaining = archive.maxTotalBytes - reads.reduce((total, read) => total + (read.ok ? read.bytes.length : 0), 0);
+
   for (const read of reads) {
     if (read.ok === false) {
       warnings.push(`${read.name}: ${read.reason}`);
@@ -594,13 +653,23 @@ async function extractZip(buffer: Buffer): Promise<Extraction> {
     }
     let nested: Extraction;
     try {
-      nested = await extractQuestions(read.bytes, read.name);
+      if (remaining <= 0) throw tooLarge();
+      nested = await extractQuestions(read.bytes, read.name, {
+        maxEntryBytes: Math.min(archive.maxEntryBytes, remaining),
+        maxTotalBytes: remaining,
+      });
     } catch (error) {
-      // One unreadable file must not discard the rest of the archive. The
-      // reason is kept per entry so the reviewer knows what was skipped.
+      // A size violation is about the archive as a whole, exactly as it is for
+      // the outer entries: it stops the import rather than being skipped. Any
+      // other failure is about one file, so the rest of the archive is kept.
+      if (error instanceof ExtractionError && error.code === 'too_large') throw tooLarge();
       warnings.push(`${read.name}: ${error instanceof ExtractionError ? error.message : 'could not be read.'}`);
       continue;
     }
+    remaining -= nested.expandedBytes ?? 0;
+    // A nested container that could not fit its parts in `remaining` would have
+    // thrown; this is the belt-and-braces check that the sum stays honest.
+    if (remaining < 0) throw tooLarge();
     if (!nested.items.length) {
       warnings.push(`${read.name}: no questions were recognised.`);
       continue;

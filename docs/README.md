@@ -8,6 +8,7 @@
 | [DATABASE.md](DATABASE.md) | Tables, migrations and row-level security |
 | [SUPABASE_SECURITY_CHECKLIST.md](SUPABASE_SECURITY_CHECKLIST.md) | Settings to verify on the database side before a release |
 | [SUPABASE_LIVE_VERIFICATION.md](SUPABASE_LIVE_VERIFICATION.md) | Which Supabase checks are done locally, which need project access, and the safe order to run them |
+| [operations/STAGING_VERIFICATION_RUNBOOK.md](operations/STAGING_VERIFICATION_RUNBOOK.md) | The ordered, fail-closed procedure for running the outstanding live checks against a disposable project |
 | [SUPABASE_ENVIRONMENT_CAPABILITY.md](SUPABASE_ENVIRONMENT_CAPABILITY.md) | Can this environment test Supabase? Test-by-test verdict: passed, failed or blocked, with the blockers named |
 | [PAGE_QUALITY_GATE.md](PAGE_QUALITY_GATE.md) | Definition of done for a page |
 | [functional-qa-gate.md](functional-qa-gate.md) | Manual pass before a deploy |
@@ -28,7 +29,8 @@
   journeys, business rules and design system that the implementation follows.
 - [features/](features/) holds one contract per cross-cutting feature (analytics,
   accessibility, performance, notifications, search, SEO and so on).
-- [operations/](operations/) holds the production runbook, backup and restore
-  procedure, observability notes and the dependency upgrade plan.
+- [operations/](operations/) holds the production runbook, the staging
+  verification runbook, backup and restore procedure, migration reconciliation,
+  observability notes and the dependency upgrade plan.
 
 If a document stops matching the code, update it or delete it in the same change.

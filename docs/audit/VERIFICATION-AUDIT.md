@@ -642,3 +642,166 @@ re-inspected and found sound.
 
 **Netlify:** `BLOCKED — credits expired`, not retried. **Live/staging Supabase
 ledger reconciliation:** `BLOCKED` — no credentials here and none requested.
+
+## Session 16 — Independent re-review: one real limit bypass found and fixed, staging runbook added (2026-10-22, continued)
+
+State verified before touching anything: HEAD `7bc932a`, equal to the remote tip
+and to PR #30's `headRefOid`; worktree clean; PR open, draft, mergeable.
+
+### F4 (Medium) — the archive-wide ZIP budget did not cover nested containers — FIXED
+
+**Where:** `src/server/question-import/extract.ts`, `extractZip()` and
+`extractDocx()`/`extractXlsx()`.
+
+**The defect.** `readArchiveEntries()` measured each entry in its *compressed*
+form and summed that against the 80 MB ceiling. A `.docx` or `.xlsx` entry is
+itself a compressed container: its text expands only when the entry is parsed, and
+that expansion was charged to a **fresh** budget (`readEntryText(...)` used the
+20 MB per-part ceiling; `extractXlsx` called `readArchiveEntries()` with default
+limits, i.e. another 80 MB). So "80 MB total" held for container bytes and not for
+the text they produce.
+
+**Reproduction, before the fix** (measured, not theorised): a 4,480-byte `.zip`
+holding six `.docx` files whose `word/document.xml` each inflate to 15 MB —
+90 MB of text, past the 80 MB ceiling — returned normally. The only message was
+"no questions were recognised"; there was no `too_large`, and RSS grew 159 MB.
+The fix's own re-run rejects the same upload:
+`TOO_LARGE: The archive expands beyond the 20 MB file / 80 MB total limit.`
+
+**Why it matters.** With `cbt.manage` (a staff capability, not a public one) an
+operator could hand the server an upload whose expanded output far exceeds the
+documented ceiling. Peak memory was measured at ~7× the budget while parsing
+(80 MB of XML → ~576 MB RSS), which is a denial-of-service risk on a
+memory-limited function, not a data-disclosure one.
+
+**The fix, in the existing design rather than beside it.**
+
+* `Extraction` now reports `expandedBytes` — the bytes an extraction spent
+  decompressing container parts.
+* `extractQuestions(buffer, filename, limits?)` passes an `ArchiveLimits` down;
+  `extractDocx`/`extractXlsx`/`readSharedStrings`/`readEntryText` take the budget
+  instead of a hard-coded ceiling.
+* `extractZip()` computes `remaining = archive budget − entry bytes already read`
+  and gives each nested extraction `{ maxEntryBytes: min(per-file, remaining),
+  maxTotalBytes: remaining }`, then debits `expandedBytes`. Nested inner text now
+  draws from the *same* 80 MB.
+* A nested `too_large` is **fatal for the archive**, matching the rule the file
+  already documented for outer entries ("exceeding either limit… stops the whole
+  read"). Previously such a violation was downgraded to a per-file warning, which
+  would have let a partial paper be imported while looking whole.
+* Defaults are unchanged for a direct upload: a standalone `.docx`'s
+  `word/document.xml` is still bounded by 20 MB, a standalone `.xlsx`'s parts by
+  the same per-file and 80 MB archive ceilings as before.
+
+**The Excel case.** `extractXlsx` decompresses two kinds of part — the
+shared-string table and the worksheets — so one budget now spans both: the table
+is read first under the per-part ceiling, and the worksheets share whatever is
+left (`sheetBudget`). A workbook therefore cannot fit 20 MB of strings plus 80 MB
+of sheets by being charged for the sheets alone. Both mechanisms also feed the
+archive-level debit, and a belt-and-braces `remaining < 0` check after each nested
+extraction keeps the total honest.
+
+**Tests added** (`tests/zip-bounds.test.ts`, now 29, all generated fixtures, no
+large allocations):
+
+1. `text expanded inside nested Word files draws from the archive budget` — three
+   ~40 KB inner documents under a 100 KB budget must be refused.
+2. `nested Word files that fit the archive budget still extract` — the same shape
+   under a 200 KB budget must still produce questions, so the fix cannot pass by
+   refusing everything.
+3. `a nested size violation fails the archive instead of being warned past` — the
+   oversized document sits beside a good one and no partial import survives.
+4. `a workbook charges its shared-string table against the same budget as its
+   sheets` — a ~40 KB workbook of parts under a 30 KB budget must be refused.
+
+**Mutation checks, reported as they actually behaved.**
+
+| Mutation | Result |
+|---|---|
+| nested extraction starts a fresh budget (old code) | **red** — test 1 |
+| nested `too_large` downgraded back to a warning | **red** — tests 1 and 3 |
+| sheet budget ignores the shared-string table | green — the other mechanism (the post-debit guard) still catches it |
+| post-debit `remaining < 0` guard removed | green — the sheet budget still prevents the overage |
+| **both** Excel mechanisms removed | **red** — test 4 |
+
+The overlap is deliberate defence in depth, and it is stated here rather than
+implied: for the Excel case either mechanism alone is sufficient, so only removing
+both turns the test red. All mutations were restored and the suite re-run green.
+
+### Fail-closed staging gate — `npm run env:check -- --require-staging`
+
+`env:check` described the target but always exited 0, so nothing in the tooling
+could *prevent* the walkthrough from running against production — the exact
+accident recorded on 2026-10-22 in `docs/SUPABASE_LIVE_VERIFICATION.md` §3b.
+`stagingGuard()` now refuses (exit 1) when the project is unconfigured, is the
+documented production project, was not named by the operator, or does not match
+`STAGING_PROJECT_REF`. It exits 0 only when the operator states the reference and
+the configuration agrees. Verified by CLI: unconfigured → 1, production → 1,
+unnamed non-production → 1, named and matching → 0. Five tests in
+`tests/env-check.test.ts` (15 total). The limitation is documented rather than
+hidden: the tool knows one production reference and cannot prove an unknown
+project is disposable, which is why the operator must name it.
+
+### Staging procedure
+
+`docs/operations/STAGING_VERIFICATION_RUNBOOK.md` — target identity and the
+fail-closed gate, disposable-environment requirements, migration baseline,
+read-only reconciliation with all three verdicts and how to investigate
+`20260903_production_security_hardening.sql` without editing the ledger, variable
+names (never values), application validation, the CBT matrix (ownership, replay,
+deadline, guest answer-key release), the upload matrix (including the nested
+budget case above and "no partial import"), the authorization matrix for student/
+staff/admin, and the evidence record to keep. Linked from `docs/README.md` and
+`docs/SUPABASE_LIVE_VERIFICATION.md`.
+
+### Re-verified, unchanged
+
+* AUD-9 primary path: `inflateRawSync(..., { maxOutputLength })`, inclusive-exact
+  at the boundary, no pre-allocation of the ceiling; STORE entries measured
+  before acceptance; unsupported methods fail cleanly; nested archives refused
+  before decompression.
+* AUD-10: `missing_shared` matches by name only, so one `20260903` row cannot
+  vouch for six; `missing_unresolved` yields `unresolved`, never `pass`; the SQL
+  contains no `insert`/`update`/`delete`/`truncate`/DDL (only `\set
+  ON_ERROR_STOP`); the generated block and `migrations:checklist` agree at 74/74.
+* SEO: `crawlerCacheHeaders()` returns the original public headers only when
+  `EDUREACH_SITE_URL` is pinned; otherwise `no-store` + `Vary: Host`. Both
+  branches and the live endpoint are tested.
+* Authorization: all 59 `/api/admin/*` registrations carry `requireStaff`/
+  `requireCapability` except `/api/admin/bootstrap`, which verifies the bearer
+  token, pins the configured email and is rate-limited. The general API limiter
+  is mounted before the routes; upload routes run authorization and their limiter
+  before `express.json({ limit: '30mb' })`.
+* No UI, card, colour or layout file was touched in this session.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **734 tests, 734 pass, 0 fail, 0 skipped** |
+| `tests/zip-bounds.test.ts` (targeted) | 0 | 29/29 |
+| `tests/env-check.test.ts` (targeted) | 0 | 15/15 |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 listed |
+| `npm run build` | 0 | ok |
+| `npm run perf:audit` | 0 | every budget passes |
+| `npm run analytics:audit` | 0 | ok |
+| `npm run rls:audit` | 0 | 50/50 classified, 0 findings |
+| `npm run a11y:audit` | 0 | 0 blocking, 5 informational |
+| `npm run audit:ci` | 0 | 0 vulnerabilities |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | 1 passed |
+| `npm run prod:validate` | **1** | 0 passed, 1 failed, 2 skipped — required variables unset (environment) |
+| `npm run env:check` | 0 | "not configured" — correct here |
+
+### Still blocked
+
+* **Live/staging ledger reconciliation of `20260903_production_security_hardening.sql`** — `BLOCKED`; no credentials here. Procedure: runbook §4.
+* **Netlify deployment / preview** — `BLOCKED — credits expired`; not retried.
+* **Authenticated walkthrough, CBT and upload checks against staging** — `NOT RUN`; they need a disposable project. Procedure: runbook §2, §6–§8.
+* **Residual risk, stated not hidden:** synchronous inflate cannot be interrupted
+  mid-entry; the reader yields between entries (worst contiguous stall ≈ 23 ms at
+  the 20 MB per-entry ceiling) and nested parsing can hold ~7× the byte budget in
+  parsed text at peak. Worker isolation is the principled fix and is a larger
+  change than this PR's evidence justifies.

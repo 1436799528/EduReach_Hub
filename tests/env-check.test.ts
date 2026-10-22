@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { classifyProject, describeProject, interpretProbe, probeUrl, projectReference, PRODUCTION_PROJECT_REF } from '../scripts/env-check';
+import { classifyProject, describeProject, interpretProbe, probeUrl, projectReference, stagingGuard, PRODUCTION_PROJECT_REF } from '../scripts/env-check';
 
 // The project classifier exists because one `.env` is used for two jobs with
 // opposite safety rules: read-only verification (safe anywhere) and a manual
@@ -85,4 +85,47 @@ test('no response is reported as unreachable, never as "configured"', () => {
 test('any other HTTP status is still reachable', () => {
   assert.equal(interpretProbe(200).reachable, true);
   assert.equal(interpretProbe(503).reachable, true);
+});
+
+// --- The staging gate ---------------------------------------------------------
+//
+// `env:check` only describes the target. The walkthrough creates accounts,
+// attempts and uploads, so it needs a check that *refuses* to run rather than a
+// sentence that warns. These cases are the whole contract.
+
+test('the staging gate blocks production, whatever the operator expected', () => {
+  const production = classifyProject(PRODUCTION_PROJECT_REF);
+  assert.equal(stagingGuard(production, PRODUCTION_PROJECT_REF).ok, false);
+  assert.equal(stagingGuard(production, 'someotherref').ok, false);
+  assert.match(stagingGuard(production, PRODUCTION_PROJECT_REF).reason, /PRODUCTION/);
+});
+
+test('the staging gate blocks an unconfigured environment', () => {
+  const none = classifyProject(null);
+  const verdict = stagingGuard(none, null);
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.reason, /no verified target|No Supabase project/i);
+});
+
+test('a non-production project is still blocked until the operator names it', () => {
+  // "Not the documented production project" is not proof of disposable.
+  const other = classifyProject('abcdefghijklmnopqrst');
+  assert.equal(stagingGuard(other, null).ok, false);
+  assert.match(stagingGuard(other, null).reason, /cannot be confirmed as disposable/i);
+});
+
+test('a mismatch between the configured project and the named one is refused', () => {
+  const other = classifyProject('abcdefghijklmnopqrst');
+  const verdict = stagingGuard(other, 'zyxwvutsrqponmlkjihg');
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.reason, /Refusing to guess/i);
+});
+
+test('only a configured, non-production, explicitly named project passes', () => {
+  const staging = classifyProject('abcdefghijklmnopqrst');
+  const verdict = stagingGuard(staging, 'abcdefghijklmnopqrst');
+  assert.equal(verdict.ok, true);
+  assert.match(verdict.reason, /confirmed/i);
+  // Case and surrounding spaces are the operator's typing, not a different project.
+  assert.equal(stagingGuard(staging, '  ABCDEFGHIJKLMNOPQRST ').ok, true);
 });

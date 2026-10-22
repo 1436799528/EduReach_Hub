@@ -122,6 +122,48 @@ export function interpretProbe(status: number | null, errorMessage?: string): Pr
   };
 }
 
+/**
+ * Should a write-heavy staging step be allowed to run?
+ *
+ * `classifyProject` only *describes* the target; it exits 0 whatever it finds,
+ * which is right for a read-only report and wrong as a gate. The walkthrough
+ * creates accounts, CBT attempts and uploads, and the owner's `.env` has already
+ * once been pointed at production while a plan called it "staging". This is the
+ * gate: it fails closed unless the project is configured, is not the documented
+ * production project, and — when the operator names the project they expect —
+ * matches that reference exactly.
+ *
+ * A project that is merely "not the documented production project" is *not*
+ * proof that it is disposable. That is why the expected reference is required:
+ * the human states the target, and the check proves the configuration agrees.
+ */
+export interface StagingGuardVerdict {
+  ok: boolean;
+  reason: string;
+}
+
+export function stagingGuard(verdict: ProjectVerdict, expectedReference: string | null): StagingGuardVerdict {
+  if (verdict.kind === 'unconfigured' || !verdict.reference) {
+    return { ok: false, reason: 'No Supabase project is configured, so there is no verified target. Set VITE_SUPABASE_URL and try again.' };
+  }
+  if (verdict.kind === 'production') {
+    return { ok: false, reason: `${verdict.reference} is the documented PRODUCTION project. Staging steps must never run against it.` };
+  }
+  if (!expectedReference) {
+    return {
+      ok: false,
+      reason: `The target ${verdict.reference} cannot be confirmed as disposable on its own. Re-run with STAGING_PROJECT_REF=${verdict.reference} after checking it is your staging project.`,
+    };
+  }
+  if (expectedReference.trim().toLowerCase() !== verdict.reference.toLowerCase()) {
+    return {
+      ok: false,
+      reason: `The configured project is ${verdict.reference} but STAGING_PROJECT_REF says ${expectedReference.trim()}. Refusing to guess which one is intended.`,
+    };
+  }
+  return { ok: true, reason: `Target ${verdict.reference} confirmed: configured, not production, and named explicitly.` };
+}
+
 export function describeProject(env: NodeJS.ProcessEnv = process.env): ProjectVerdict {
   return classifyProject(projectReference(env.VITE_SUPABASE_URL || env.SUPABASE_URL));
 }
@@ -161,6 +203,14 @@ async function main(): Promise<void> {
   console.log('\nWhat that means:');
   for (const line of verdict.guidance) console.log(`  - ${line}`);
   console.log('');
+
+  if (process.argv.includes('--require-staging')) {
+    const guard = stagingGuard(verdict, process.env.STAGING_PROJECT_REF || null);
+    console.log(guard.ok ? `GATE: ${guard.reason}` : `GATE: BLOCKED — ${guard.reason}`);
+    console.log('');
+    // Fail closed: no target, production, an unnamed target, or a mismatch.
+    if (!guard.ok) process.exitCode = 1;
+  }
 }
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
