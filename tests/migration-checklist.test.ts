@@ -11,6 +11,7 @@ import {
   parseChecklist,
   parseMigrationFile,
   repoMigrations,
+  UNRESOLVED_MIGRATIONS,
   VALIDATION_SQL,
   withChecklist,
 } from '../scripts/migration-checklist';
@@ -293,4 +294,56 @@ test('the validation SQL contains no data-mutating statement', () => {
     assert.ok(!pattern.test(stripped), `production-validation.sql contains "${keyword}" outside a comment`);
   }
   assert.match(validationSql, /from supabase_migrations\.schema_migrations/, 'it must read the ledger');
+});
+
+// --- Stale classification metadata -------------------------------------------
+//
+// The `kind` column decides which matching rule the SQL applies, and the
+// `unresolved` kind is the one that can suppress a `fail`. Both are driven by
+// metadata outside the migration files, so both can go stale. Neither path had a
+// test: the audit could have stopped flagging them and nothing would have said so.
+
+test('an unresolved row with no documented evidence is rejected', () => {
+  // Someone marks a migration `unresolved` (which stops it ever failing) without
+  // recording why the ledger cannot establish it.
+  const files = ['20260903_production_security_hardening.sql'];
+  const problems = auditChecklist(
+    files,
+    [{ version: '20260903', name: 'production_security_hardening', file: files[0], kind: 'unresolved' }],
+    [], // no documented evidence
+  );
+  assert.ok(
+    problems.some((problem) => problem.kind === 'unresolved-entry-without-evidence'),
+    `expected the exemption to be rejected, got ${JSON.stringify(problems)}`,
+  );
+});
+
+test('documented evidence for a file that no longer exists is rejected as stale', () => {
+  // The evidence list outliving the file it exempts. Silence here would mean a
+  // future migration with the same name is quietly exempted.
+  const problems = auditChecklist(
+    ['20260903_restrict_profile_client_columns.sql'],
+    [{ version: '20260903', name: 'restrict_profile_client_columns', file: '20260903_restrict_profile_client_columns.sql', kind: 'shared' }],
+    [{ file: '20260903_production_security_hardening.sql', evidence: 'legacy-filename-unmapped', needed: 'compare on a branch' }],
+  );
+  assert.ok(
+    problems.some((problem) => problem.kind === 'stale-unresolved-entry'),
+    `expected the stale evidence entry to be reported, got ${JSON.stringify(problems)}`,
+  );
+});
+
+test('the shipped evidence list matches the shipped checklist exactly', () => {
+  // Guards the real repository, not a synthetic pair: every documented-unresolved
+  // file must be in the repository and marked `unresolved` in the generated block,
+  // and nothing else may be marked `unresolved`.
+  assert.ok(checklist, 'checklist block is required');
+  const marked = checklist.filter((entry) => entry.kind === 'unresolved').map((entry) => entry.file).sort();
+  const documented = UNRESOLVED_MIGRATIONS.map((entry) => entry.file).sort();
+  assert.deepEqual(marked, documented, 'the `unresolved` rows and the documented evidence must be the same set');
+  const files = migrationFilesInRepo(root);
+  for (const entry of UNRESOLVED_MIGRATIONS) {
+    assert.ok(files.includes(entry.file), `${entry.file} is documented as unresolved but is not in the repository`);
+    assert.ok(entry.evidence.trim().length > 20, `${entry.file} must record the evidence, not just the label`);
+    assert.ok(entry.needed.trim().length > 20, `${entry.file} must record what would settle it`);
+  }
 });

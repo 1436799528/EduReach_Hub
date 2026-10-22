@@ -345,3 +345,116 @@ test('ordinary Word and Excel documents still read', async () => {
   const excel = await extractQuestions(xlsxBytes, 'paper.xlsx');
   assert.ok(excel.items.length >= 1, 'a normal xlsx must still yield questions');
 });
+
+// --- Boundary semantics -------------------------------------------------------
+//
+// The ceiling is inclusive: an entry of exactly the limit is accepted, one byte
+// more is refused. That mirrors the product rule ("20 MB or smaller") and it is
+// the behaviour zlib's `maxOutputLength` already has — verified directly against
+// node:zlib before these tests were written. Pinning it stops a future refactor
+// from silently becoming off-by-one in either direction.
+
+test('an entry of exactly the limit is accepted', async () => {
+  const exact = Buffer.alloc(LIMITS.maxEntryBytes, 0x41);
+  const zip = await JSZip.loadAsync(await archive({ 'exact.txt': exact }));
+  const bytes = await readZipEntryBounded(zip.file('exact.txt')!, LIMITS.maxEntryBytes);
+  assert.equal(bytes.byteLength, LIMITS.maxEntryBytes);
+});
+
+test('an entry one byte over the limit is refused', async () => {
+  const over = Buffer.alloc(LIMITS.maxEntryBytes + 1, 0x41);
+  const zip = await JSZip.loadAsync(await archive({ 'over.txt': over }));
+  await assert.rejects(() => readZipEntryBounded(zip.file('over.txt')!, LIMITS.maxEntryBytes), (error: unknown) => tooLarge(error));
+});
+
+test('a stored entry at and one byte over the limit', async () => {
+  // The STORE branch measures length itself, so it has its own boundary.
+  const build = async (size: number): Promise<JSZip.JSZipObject> => {
+    const zip = new JSZip();
+    zip.file('s.txt', Buffer.alloc(size, 0x42), { compression: 'STORE' });
+    const loaded = await JSZip.loadAsync(Buffer.from(await zip.generateAsync({ type: 'nodebuffer' })));
+    return loaded.file('s.txt')!;
+  };
+  const at = await readZipEntryBounded(await build(LIMITS.maxEntryBytes), LIMITS.maxEntryBytes);
+  assert.equal(at.byteLength, LIMITS.maxEntryBytes);
+  await assert.rejects(() => build(LIMITS.maxEntryBytes + 1).then((entry) => readZipEntryBounded(entry, LIMITS.maxEntryBytes)), (error: unknown) => tooLarge(error));
+});
+
+test('an archive whose entries exactly fill the total budget is accepted; one more byte is not', async () => {
+  // Four files of 3 KiB against a 12 KiB archive ceiling.
+  const files: Record<string, Buffer> = {};
+  for (let index = 0; index < 4; index += 1) files[`f${index}.txt`] = Buffer.alloc(3 * 1024, 0x43);
+  const entries = Object.values((await JSZip.loadAsync(await archive(files))).files)
+    .filter((entry) => !entry.dir)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const exact = await readArchiveEntries(entries, { maxEntryBytes: 4 * 1024, maxTotalBytes: 12 * 1024 });
+  assert.equal(exact.length, 4);
+  assert.ok(exact.every((entry) => entry.ok));
+
+  // One byte less of total budget and the last file no longer fits.
+  await assert.rejects(
+    () => readArchiveEntries(entries, { maxEntryBytes: 4 * 1024, maxTotalBytes: 12 * 1024 - 1 }),
+    (error: unknown) => tooLarge(error),
+  );
+});
+
+test('an unsupported compression method fails safely rather than crashing', async () => {
+  // Method 12 is bzip2: valid in the format, unsupported here. The archive must
+  // not crash the request, and must not be reported as a successful import.
+  const zip = new JSZip();
+  zip.file('a.txt', '1. What is 2 + 2?\nA. 2\nB. 4\nC. 6\nD. 8\nAnswer: B\n');
+  const buf = Buffer.from(await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
+  const local = buf.indexOf(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  const central = buf.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]));
+  buf.writeUInt16LE(12, local + 8);
+  buf.writeUInt16LE(12, central + 10);
+  await assert.rejects(
+    () => extractQuestions(buf, 'paper.zip'),
+    (error: unknown) => error instanceof ExtractionError && ['corrupt', 'unsupported', 'empty'].includes(error.code),
+    'an unsupported method must be a clean ExtractionError',
+  );
+});
+
+// --- Event-loop fairness ------------------------------------------------------
+//
+// Reading an archive is synchronous CPU work. The ceiling on that work is the
+// 80 MB budget (~61 ms measured for the worst archive the limits allow), and it
+// used to be spent in ONE uninterrupted turn, because `await` on a resolved
+// promise only drains the microtask queue. The reader now yields a macrotask
+// between entries, so a concurrent request gets a turn.
+//
+// This test discriminates on ordering, not timing: microtasks run to completion
+// before the next macrotask, so if the reader never yielded, the whole read would
+// finish before the observer's `setImmediate` callback ran.
+
+test('reading a multi-entry archive yields to the event loop between entries', async () => {
+  const files: Record<string, Buffer> = {};
+  for (let index = 0; index < 20; index += 1) files[`f${index}.txt`] = Buffer.alloc(1024, 0x44);
+  const zip = await JSZip.loadAsync(await archive(files));
+  const entries = Object.values(zip.files).filter((entry) => !entry.dir).sort((a, b) => a.name.localeCompare(b.name));
+
+  let readCompleted = false;
+  const read = readArchiveEntries(entries, { maxEntryBytes: 4096, maxTotalBytes: 64 * 1024 })
+    .then((read) => { readCompleted = true; return read; });
+
+  // One macrotask turn. With no yield the read would already be complete here.
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(readCompleted, false, 'the whole archive was read without yielding to the event loop');
+
+  const completed = await read;
+  assert.equal(completed.length, 20, 'yielding must not lose entries');
+  assert.ok(completed.every((entry) => entry.ok));
+});
+
+test('yielding does not change any size verdict', async () => {
+  // The fairness change must not soften the limits it sits beside.
+  const files: Record<string, Buffer> = {};
+  for (let index = 0; index < 6; index += 1) files[`f${index}.txt`] = Buffer.alloc(2048, 0x45);
+  const zip = await JSZip.loadAsync(await archive(files));
+  const entries = Object.values(zip.files).filter((entry) => !entry.dir);
+  await assert.rejects(
+    () => readArchiveEntries(entries, { maxEntryBytes: 4096, maxTotalBytes: 10 * 1024 }),
+    (error: unknown) => tooLarge(error),
+  );
+});

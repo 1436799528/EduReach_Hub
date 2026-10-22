@@ -22,7 +22,7 @@ import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
-import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
+import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, crawlerCacheHeaders, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
 import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
@@ -3683,7 +3683,10 @@ app.get('/api/admin/integrity', requireCapability('data.read'), async (_req, res
 
 async function serveRobotsTxt(req: express.Request, res: express.Response) {
   const origin = resolveSiteOrigin(req);
-  res.type('text/plain').setHeader('Cache-Control', 'public, max-age=86400');
+  res.type('text/plain');
+  // The body follows the request's Host header unless the origin is pinned, so
+  // only a pinned origin may be served as publicly cacheable.
+  for (const [name, value] of Object.entries(crawlerCacheHeaders('robots'))) res.setHeader(name, value);
   res.send(buildRobotsTxt(origin));
 }
 
@@ -3693,7 +3696,8 @@ async function serveSitemapXml(req: express.Request, res: express.Response) {
   const entries = await collectSitemapEntries(client, origin, (source, error) => {
     console.error(`Sitemap: ${source} entries unavailable:`, error instanceof Error ? error.message : error);
   });
-  res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('application/xml');
+  for (const [name, value] of Object.entries(crawlerCacheHeaders('sitemap'))) res.setHeader(name, value);
   res.send(buildSitemapXml(entries));
 }
 

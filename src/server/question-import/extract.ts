@@ -494,6 +494,24 @@ export interface ArchiveLimits {
 }
 
 /**
+ * Hand the event loop a turn.
+ *
+ * Everything in this file except the property reads is synchronous CPU: zlib's
+ * inflate cannot be interrupted. `await` on an already-resolved promise only
+ * drains the microtask queue, which does *not* let pending I/O run - so without
+ * this, reading a 60-entry archive holds the loop for the whole expansion
+ * (~61 ms measured for the 76 MB the limits allow). Yielding between entries
+ * bounds the contiguous stall to one entry's inflation (20 MB is ~23 ms
+ * measured) and lets health checks and other users' requests through in between.
+ *
+ * This does not make a single entry non-blocking: interrupting it needs a worker
+ * thread. See docs/audit/VERIFICATION-AUDIT.md, session 15, for that trade-off.
+ */
+function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+/**
  * Read every entry under a per-entry ceiling *and* an archive-wide ceiling.
  *
  * The aggregate budget is handed to each read as its own ceiling (the per-entry
@@ -530,6 +548,8 @@ export async function readArchiveEntries(
     // the accounting here only advances the running total.
     total += bytes.byteLength;
     results.push({ name: entry.name, ok: true, bytes });
+    // Give the event loop a turn before inflating the next entry.
+    await yieldToEventLoop();
   }
   return results;
 }

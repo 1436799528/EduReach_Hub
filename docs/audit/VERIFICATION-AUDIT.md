@@ -523,3 +523,122 @@ the browser stage because the sandbox had lost the Chromium binary — an enviro
 failure, fixed by re-provisioning, and not a code failure.
 
 **Netlify deploy preview:** `BLOCKED — credits expired`. **Live Supabase:** `BLOCKED`.
+
+## Session 15 — Re-verifying PR #30 from a clean checkout, plus one fairness fix and one cache fix (2026-10-22, continued)
+
+This session did not trust session 14's summary. It re-derived every claim from
+the code, the tests and direct probes, then added the two changes below.
+
+### AUD-9 re-verified from scratch
+
+`readZipEntryBounded()` never calls `entry.async('uint8array')` with an unbounded
+budget. The path is: parse only the central directory, then inflate the raw
+stream with `zlib.inflateRawSync(data, { maxOutputLength: budget })`, checking
+the stored-vs-deflate identity by the two-byte header. Direct probes:
+
+| Probe | Result |
+|---|---|
+| `inflateRawSync` with `maxOutputLength: 9999` on 10000 output bytes | throws `ERR_BUFFER_TOO_LARGE` |
+| same with `maxOutputLength: 10000` | succeeds — the limit is **inclusive-exact**, not off by one |
+| same with `10001` | succeeds |
+| heap growth inflating 1 KB under an 80 MB ceiling | +13 KiB — zlib does **not** pre-allocate the ceiling |
+| 1 / 5 / 20 MB inflate | 1.4 / 5.8 / 22.7 ms |
+| 60 entries summing 76.3 MB (the archive-wide ceiling nearly reached) | 61 ms |
+| entry with compression method 12 (bzip2) | clean `corrupt` `ExtractionError`, no crash |
+
+Declared sizes are used only as an early `too_large` signal; the real defence is
+the `maxOutputLength` ceiling applied at the decompressor, so a lying local header
+cannot cause unbounded expansion. The aggregate limit is enforced by lowering each
+entry's budget to `min(maxEntryBytes, maxTotal - total)`, so the sum is structurally
+bounded rather than checked after the fact.
+
+**Change made:** the read loop is synchronous CPU. `await` on a resolved promise
+only drains microtasks, so a 60-entry archive held the event loop for the whole
+61 ms. `readArchiveEntries()` now awaits `yieldToEventLoop()` (a `setImmediate`)
+between entries. This bounds the contiguous stall to one entry (~23 ms at the 20 MB
+per-entry ceiling) and lets other requests and health checks run in between. It is
+**not** a per-entry timeout: zlib's synchronous inflate cannot be interrupted
+without a worker thread, and adding a `Promise.race` timer would have been a fake
+fix. That limitation is recorded here rather than claimed away.
+
+Tests added to `tests/zip-bounds.test.ts` (now 25):
+
+1. `reading a multi-entry archive yields to the event loop between entries` — a
+   `setImmediate` observer must see the read still unfinished. Removing the yield
+   fails this test (verified by mutation M10).
+2. `yielding does not change any size verdict` — the aggregate limit still rejects
+   after the change.
+
+Also added this session (boundary coverage that was missing): exact-limit acceptance,
+one-byte-over rejection, STORE-mode boundary, archive-sum boundary, unsupported
+compression method.
+
+### AUD-10 re-verified from scratch
+
+74 migrations = 60 unique-version + 13 shared-version + 1 unresolved
+(`20260903_production_security_hardening.sql`). `auditChecklist()` compares
+version **and** normalised filename for unique versions, and for a shared version
+demands a separate evidence entry; a ledger row carrying `20260903` alone satisfies
+exactly one migration and leaves the other five `unresolved`. Unresolved entries
+never yield `pass`. Two mechanisms turned out to be implemented but untested —
+`unresolved-entry-without-evidence` and `stale-unresolved-entry` — so three tests
+were added (`tests/migration-checklist.test.ts`, now 20), including one that pins
+the shipped evidence list to the migrations it claims to cover. Mutations:
+disabling the evidence check and emptying the evidence list each fail the new tests
+(M8, M9).
+
+**Live reconciliation remains `BLOCKED`** — no ledger access from this environment.
+
+### F1 (Low) — crawler bodies were publicly cacheable while Host-derived
+
+`resolveSiteOrigin()` prefers `EDUREACH_SITE_URL` but falls back to the request's
+`Host` / `X-Forwarded-Host`, and `/robots.txt` and `/sitemap.xml` were served with
+`Cache-Control: public` unconditionally. When the variable is unset the body is
+caller-influenced, so a cache that keys on the path alone could serve one caller's
+origin to everyone (cache poisoning / deindexing). XML is escaped, so this was never
+an injection issue.
+
+**Fixed narrowly:** `crawlerCacheHeaders(asset, originConfigured)` returns the
+existing public headers when the origin is pinned — byte-identical production
+behaviour in the documented configuration — and `Cache-Control: no-store` plus
+`Vary: Host` when it is not. `serveRobotsTxt`/`serveSitemapXml` apply it. No UI,
+route or body change. Tests: both branches unit-tested, plus the integration test
+now asserts `no-store` in the unpinned environment it runs in. Mutation M11
+(always public) turns both tests red.
+
+Two related observations were **not** changed, deliberately:
+
+* **F2 (Low)** `server.ts:3112` — `isCorrect: selectedOption === correct_option`
+  in the guest result breakdown reveals correctness for unanswered questions. The
+  option key itself is not released. The breakdown shape is the UI contract, so
+  changing it is a product decision, not an audit fix.
+* **F3 (Info)** Guest answer-key release on submit is intentional and documented at
+  `server.ts:3086`.
+
+CBT submit (`for update` row lock, idempotent replay, `auth.uid()` ownership),
+RBAC ordering and error scrubbing (`lib/errors.ts` → `publicErrorMessage`) were
+re-inspected and found sound.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npx tsc --noEmit` | 0 | clean |
+| `node --import tsx --test tests/zip-bounds.test.ts` | 0 | 25/25 |
+| `tests/migration-checklist.test.ts` | 0 | 20/20 |
+| `tests/seo.test.ts` + `tests/headers.test.ts` | 0 | 24/24 |
+| mutations M8–M11 | red | each new test fails when its fix is reverted, then restored green |
+| `npm test` | 0 | 725 tests, 724 pass, 0 fail, 1 skipped |
+| `schema:audit` | 0 | no blocking findings |
+| `migrations:checklist` | 0 | 74/74 listed |
+| `build` | 0 | ok |
+| `perf:audit` | 0 | every budget passes |
+| `analytics:audit` | 0 | ok |
+| `rls:audit` | 0 | 50/50 classified, 0 findings |
+| `a11y:audit` | 0 | 0 blocking, 5 informational |
+| `audit:ci` | 0 | 0 vulnerabilities |
+| `test:e2e` | 0 | 158 passed, 2 skipped |
+| `e2e:perf` | 0 | 1 passed |
+
+**Netlify:** `BLOCKED — credits expired`, not retried. **Live/staging Supabase
+ledger reconciliation:** `BLOCKED` — no credentials here and none requested.
