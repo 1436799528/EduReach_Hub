@@ -951,3 +951,124 @@ restored green.
 * **Residual risk:** synchronous inflate still cannot be interrupted mid-entry, and a
   nested container's parts are fully decompressed before parsing (bounded by the same
   budget). Worst measured contiguous CPU for one legal upload is ~5 s.
+
+## Session 18 — release-candidate audit: malformed Office XML ran in quadratic time (2026-10-23, continued)
+
+State verified first: HEAD `840f17a` = remote tip = PR #30 `headRefOid`; worktree
+clean; PR open, draft, mergeable. (The sandbox rolled the checkout back to
+`f8ec28f` again; all 46 touched files were hash-compared against the remote before
+the branch pointer was restored.)
+
+### F5 (Medium) — Office XML parsing was quadratic on malformed input — FIXED
+
+**Where:** `src/server/question-import/extract.ts` — `parseSharedStringsXml`,
+`readSheetRows`, `textFromXml`, `extractDocx`.
+
+**The defect.** The XML scanners used lazy regexes (`[\s\S]*?<\/row>`). On
+well-formed input each match finds its closing tag immediately and the cost is
+linear. On *malformed* input — an opening tag whose close never arrives — every
+scan runs to the end of the part, and the next candidate starts just after it. The
+cost therefore grows with the square of the part's size, while the byte budget only
+bounds the size. Measured on the code at `840f17a`:
+
+| Input (malformed) | Size | Time |
+|---|---|---|
+| `<si>` repeated, shared strings | 0.32 MB | 4.3 s |
+| same | 0.64 MB | 17.2 s |
+| `<r>` repeated inside one `<si>` | 0.24 MB | 5.9 s |
+| `<row>` repeated, worksheet | 0.40 MB | 5.1 s |
+| `<w:p>` repeated, word/document.xml | 0.20 MB | 1.3 s |
+| `<w:tbl>` repeated | 0.28 MB | 1.7 s |
+
+One entry may hold 20 MB, so the extrapolation is hours of held event loop. The
+minimal reproduction is a small `.docx`/`.xlsx` whose part is a long run of opening
+tags: it passes the size checks, passes decompression, and then hangs the process.
+Rate limiting does not mitigate it — one request is enough — and extraction runs on
+the same event loop as every other request (also from `void processImport`, which
+is deliberately not awaited). Reachability requires a staff capability
+(`cbt.manage`/`data.import`), so this is an insider/crafted-upload availability
+defect, not an anonymous one.
+
+**The fix.** One consuming scanner (`findOpenTag` / `nextElement` /
+`elementInners`) walks the text monotonically: once an element is read, or found to
+be unterminated, scanning resumes after it and the earlier text is never revisited.
+An unterminated element ends the scan instead of restarting it, so cost is linear
+whatever the input looks like. All four scanners now use it.
+
+Behaviour on well-formed documents is unchanged. Verified two ways: the full test
+suite (including the 18-shape parity oracle against the old `fast-xml-parser`), and
+a differential run over generated fixtures — a Word document with a questions table,
+a Word document with paragraphs and entities, a workbook using shared strings,
+inline strings and numeric cells, and a ZIP mixing `.txt` and `.docx` — comparing
+`extractQuestions` output before and after the change: **byte-identical**.
+
+After the fix the same malformed inputs finish in **0–2 ms** each, a well-formed
+11 MB shared-string table (400,000 entries) reads in 413 ms, and the 20 MB-scale
+fixtures are unchanged in time and memory.
+
+**Tests added** (`tests/question-extract.test.ts`, now 25): linear-time guards for
+the shared-string, worksheet and Word paths (1.6 MB of unterminated tags each, with
+a deliberately generous 3 s ceiling — the pre-fix code needed 9 minutes for the
+suite, so the margin is enormous in both directions); an unterminated tail after
+valid questions must still yield those questions; and content preservation for
+escaped markup, non-ASCII text and preserved whitespace.
+
+**Mutation check:** restoring the pre-fix scanners at `840f17a` turns all three
+linear-time tests red (and makes the suite take 9 minutes); restored green after.
+
+### Re-checked, unchanged
+
+* **Resource accounting.** Nested containers still share one budget; a nested
+  `too_large` still aborts the archive; shared strings and worksheets still draw on
+  the same budget. `tests/zip-bounds.test.ts` 29/29.
+* **Peak memory.** Re-measured by heap bisection after the rewrite: 19 MB `.docx`,
+  19 MB `.xlsx` (38 MB of parts) and a `.zip` of six 13 MB `.docx` all read inside a
+  **128 MB** heap, the same as before the scanner change — the fix did not trade
+  memory for time.
+* **CPU cost of a legal upload.** Worst case measured is the archive of six 13 MB
+  Word files: ~4.5–5 s of contiguous CPU, i.e. one 13 MB document (~1.2 s) between
+  yields. Concurrency and rate limits bound how often that can be triggered
+  (`adminUpload` 20 per 10 minutes per account, `adminImport` 10 per 10 minutes,
+  20 MB per upload, 60 entries, 80 MB expanded). That is a real residual risk on a
+  single-process deployment; worker isolation is the principled fix and remains
+  recommended follow-up, not something to approximate with a timeout.
+* **Staging gate.** Re-verified end to end on the command line: unconfigured → 1,
+  production → 1, ambiguous → 1, unnamed → 1, `STAGING_PROJECT_REF` mismatch → 1,
+  named non-production → 0. A secret passed in the environment does not appear in
+  the output.
+* **Runbook.** Sections are labelled INSPECT/MUTATE, §3 separates inspecting from
+  mutating, `--project-ref` is mandatory and the CLI's linked project is called out
+  as a separate target, and the psql `\set` line is flagged as invalid in the SQL
+  editor.
+* **Migration reconciliation.** `production-validation.sql` still contains no
+  `insert`/`update`/`delete`/`truncate`/DDL at statement level; the checklist is
+  74/74; `20260903_production_security_hardening.sql` is still classified
+  `unresolved` in both the generator's evidence list and the generated SQL.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **748 tests, 747 pass, 0 fail, 1 skipped** |
+| `tests/question-extract.test.ts` | 0 | 25/25 |
+| `tests/zip-bounds.test.ts` | 0 | 29/29 |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 |
+| `npm run build` | 0 | ok |
+| `perf:audit` / `analytics:audit` / `rls:audit` / `a11y:audit` | 0 | pass (50/50 RLS, 0 blocking a11y) |
+| `npm run audit:ci` | 0 | 0 vulnerabilities |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | 1 passed |
+| `npm run prod:validate` | **1** | 0 passed, 1 failed, 2 skipped — variables unset (environment) |
+| `npm run env:check` | 0 | "not configured" — correct here |
+
+### Still blocked
+
+Live/staging ledger reconciliation of `20260903_production_security_hardening.sql`
+(`BLOCKED` — runbook §4); authenticated CBT, upload and authorization checks
+(`NOT RUN` — runbook §6–§8); Netlify deployment (`BLOCKED — credits expired`, not
+retried).
+
+Offline auditing has reached its limit: everything reachable without credentials has
+now been exercised. The next step is a human running the staging runbook.

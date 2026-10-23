@@ -14,6 +14,7 @@ import {
   isSupportedUpload,
   parseSharedStringsXml,
   readSharedStrings,
+  readSheetRows,
 } from '../src/server/question-import/extract';
 import { validateItem } from '../src/server/question-import/validate';
 
@@ -369,4 +370,89 @@ test('a large shared-string table is read without building an object tree', () =
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Malformed XML must not cost quadratic time
+// ---------------------------------------------------------------------------
+//
+// The XML scanners used lazy regexes, which restart just after each unmatched
+// opening tag. On a part full of unterminated tags every scan runs to the end of
+// the document, so cost grows with the square of its size: 0.28 MB of unclosed
+// `<w:p>` took 1.7 s, and one entry may hold 20 MB. Extraction runs on the
+// request's event loop, so that is a self-inflicted denial of service that rate
+// limiting cannot mitigate — one request is enough.
+//
+// These guards are deliberately coarse (a generous wall-clock ceiling against a
+// ~1000x margin), because a tight timing assertion would be flaky on a loaded CI
+// machine. They exist to stop the regex scanners coming back, not to benchmark.
+
+const MALFORMED_BUDGET_MS = 3000;
+
+test('a shared-string table full of unterminated tags is read in linear time', async () => {
+  // ~1.6 MB of `<si>` with no closing tag. Quadratic code needs minutes here.
+  const xml = `<sst>${'<si>'.repeat(400_000)}</sst>`;
+  const started = Date.now();
+  const values = parseSharedStringsXml(xml);
+  const elapsed = Date.now() - started;
+  assert.deepEqual(values, [], 'nothing is well-formed, so nothing is read');
+  assert.ok(elapsed < MALFORMED_BUDGET_MS, `parsing 1.6 MB of unterminated tags took ${elapsed} ms — the scanner is super-linear again`);
+});
+
+test('a worksheet full of unterminated rows is read in linear time', async () => {
+  const sheetXml = `<worksheet><sheetData>${'<row>'.repeat(400_000)}</sheetData></worksheet>`;
+  const started = Date.now();
+  const rows = readSheetRows(sheetXml, []);
+  const elapsed = Date.now() - started;
+  assert.deepEqual(rows, []);
+  assert.ok(elapsed < MALFORMED_BUDGET_MS, `reading 1.6 MB of unterminated rows took ${elapsed} ms`);
+});
+
+test('a Word document full of unterminated paragraphs is read in linear time', async () => {
+  const zip = new JSZip();
+  zip.file('word/document.xml', `<w:document><w:body>${'<w:p>'.repeat(400_000)}</w:body></w:document>`);
+  const buffer = Buffer.from(await zip.generateAsync({ type: 'nodebuffer' }));
+  const started = Date.now();
+  // The document holds no questions, so the extractor returns nothing and the
+  // route reports `empty`; what matters here is that it finishes at all, promptly.
+  const result = await extractQuestions(buffer, 'broken.docx');
+  const elapsed = Date.now() - started;
+  assert.deepEqual(result.items, []);
+  assert.ok(elapsed < MALFORMED_BUDGET_MS, `reading 1.6 MB of unterminated paragraphs took ${elapsed} ms`);
+});
+
+test('an unterminated ordinary table still reads normally', async () => {
+  // The linear scanner must not turn a good document into a loss: ordinary
+  // questions before a malformed tail have to survive.
+  const zip = new JSZip();
+  zip.file('word/document.xml', [
+    '<w:document><w:body>',
+    '<w:p><w:r><w:t>1. What is 2 + 2?</w:t></w:r></w:p>',
+    '<w:p><w:r><w:t>A. 3</w:t></w:r></w:p>',
+    '<w:p><w:r><w:t>B. 4</w:t></w:r></w:p>',
+    '<w:p><w:r><w:t>C. 5</w:t></w:r></w:p>',
+    '<w:p><w:r><w:t>D. 6</w:t></w:r></w:p>',
+    '<w:p><w:r><w:t>Answer: B</w:t></w:r></w:p>',
+    '<w:p><w:r><w:t>trailing text with no closing tags',
+    '</w:body></w:document>',
+  ].join(''));
+  const result = await extractQuestions(Buffer.from(await zip.generateAsync({ type: 'nodebuffer' })), 'tail.docx');
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].correctOption, 'B');
+});
+
+test('text that looks like markup and non-ASCII text survive intact', () => {
+  assert.deepEqual(
+    parseSharedStringsXml('<sst><si><t>&lt;script&gt;alert(1)&lt;/script&gt;</t></si></sst>'),
+    ['<script>alert(1)</script>'],
+    'escaped markup is text and must not be stripped',
+  );
+  assert.deepEqual(
+    parseSharedStringsXml('<sst><si><t>Ọmọ Nàìjíríà — ₦500 ✓</t></si></sst>'),
+    ['Ọmọ Nàìjíríà — ₦500 ✓'],
+  );
+  assert.deepEqual(
+    parseSharedStringsXml('<sst><si><t xml:space="preserve">  keep  spacing  </t></si></sst>'),
+    ['  keep  spacing  '],
+  );
 });

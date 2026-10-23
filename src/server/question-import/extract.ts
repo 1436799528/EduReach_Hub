@@ -195,6 +195,90 @@ async function extractPdf(buffer: Buffer): Promise<Extraction> {
 // DOCX and XLSX
 // ---------------------------------------------------------------------------
 
+/**
+ * One left-to-right scanner for the XML in Office containers.
+ *
+ * The previous code used lazy regexes (`[\s\S]*?<\/row>`) to find each element.
+ * On well-formed input that is linear, but on *malformed* input — an opening tag
+ * with no matching close — every scan runs to the end of the document and the
+ * next candidate starts just after it, so the cost is quadratic in the part's
+ * size. Measured: 0.28 MB of unterminated `<w:p>` took 1.7 s, which extrapolates
+ * to hours for the 20 MB a single entry may hold, and extraction runs on the
+ * request's event loop.
+ *
+ * These helpers consume the text monotonically: once an element is read (or
+ * found to be unterminated), scanning resumes after it and the earlier text is
+ * never revisited. Cost is therefore linear in the part size regardless of how
+ * malformed it is, and an unterminated element simply ends the scan.
+ */
+
+/** Is `index` a legal end for a tag name? Stops `<si` matching `<simple`. */
+function atTagBoundary(text: string, index: number): boolean {
+  const next = text[index];
+  return next === undefined || next === '>' || next === '/' || next === ' '
+    || next === '\n' || next === '\t' || next === '\r';
+}
+
+/** Index of the next `<name` opening tag at or after `from`, or -1. */
+function findOpenTag(text: string, from: number, name: string): number {
+  const needle = `<${name}`;
+  let at = from;
+  for (;;) {
+    const index = text.indexOf(needle, at);
+    if (index === -1) return -1;
+    if (atTagBoundary(text, index + needle.length)) return index;
+    at = index + needle.length;
+  }
+}
+
+interface ElementSpan {
+  /** Index of the opening `<`. */
+  open: number;
+  innerStart: number;
+  innerEnd: number;
+  /** Index just past the closing tag (or past `/>` for a self-closing element). */
+  end: number;
+}
+
+/**
+ * The next `<name …>…</name>` element at or after `from`, or null.
+ *
+ * Null means "no more elements to read" — either there is no opening tag, or the
+ * opening tag has no closing tag, in which case the rest of the document is not
+ * scanned again. That is what keeps a malformed part linear.
+ */
+function nextElement(text: string, from: number, name: string, requireSpace = false): ElementSpan | null {
+  const open = findOpenTag(text, from, name);
+  if (open === -1) return null;
+  if (requireSpace && !/\s/.test(text[open + name.length + 1] ?? '')) {
+    // `<c>` without attributes never matched the old cells pattern; skip it.
+    return nextElement(text, open + name.length + 1, name, requireSpace);
+  }
+  const gt = text.indexOf('>', open);
+  if (gt === -1) return null;
+  if (text[gt - 1] === '/') return { open, innerStart: gt + 1, innerEnd: gt + 1, end: gt + 1 };
+  const close = text.indexOf(`</${name}>`, gt);
+  if (close === -1) return null;
+  return { open, innerStart: gt + 1, innerEnd: close, end: close + name.length + 3 };
+}
+
+/** Remove leftover markup from a malformed fragment before it is decoded. */
+function withoutMarkup(value: string): string {
+  return value.includes('<') ? value.replace(/<[^>]*>/g, '') : value;
+}
+
+/** The inner text of every `<name …>…</name>` element, read once, left to right. */
+function elementInners(text: string, name: string): string[] {
+  const inners: string[] = [];
+  let cursor = 0;
+  for (;;) {
+    const span = nextElement(text, cursor, name);
+    if (!span) return inners;
+    inners.push(text.slice(span.innerStart, span.innerEnd));
+    cursor = span.end;
+  }
+}
+
 function decodeXml(value: string): string {
   return value
     .replace(/&lt;/g, '<')
@@ -207,8 +291,8 @@ function decodeXml(value: string): string {
 function textFromXml(fragment: string): string {
   const withBreaks = fragment.replace(/<w:tab\s*\/>/g, '\t').replace(/<w:br\s*\/>/g, '\n');
   let result = '';
-  for (const match of withBreaks.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)) {
-    result += decodeXml(match[1]);
+  for (const inner of elementInners(withBreaks, 'w:t')) {
+    result += decodeXml(withoutMarkup(inner));
   }
   return result;
 }
@@ -226,20 +310,28 @@ async function extractDocx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Pro
   // the reviewer knows to consult the original file for diagrams.
   const imageCount = (documentXml.match(/<w:drawing[\s>]/g) || []).length;
 
-  const withTables = documentXml.replace(/<w:tbl[\s\S]*?<\/w:tbl>/g, (tableXml) => {
+  // Tables become tab-separated lines, so their cells reach the prose parser.
+  // Read once, from left to right, instead of one regex pass per table.
+  const withTablesParts: string[] = [];
+  let tableCursor = 0;
+  for (;;) {
+    const table = nextElement(documentXml, tableCursor, 'w:tbl');
+    if (!table) {
+      withTablesParts.push(documentXml.slice(tableCursor));
+      break;
+    }
+    withTablesParts.push(documentXml.slice(tableCursor, table.open));
     const rows: string[] = [];
-    for (const row of tableXml.matchAll(/<w:tr[\s\S]*?<\/w:tr>/g)) {
-      const cells = [...row[0].matchAll(/<w:tc[\s\S]*?<\/w:tc>/g)]
-        .map((cell) => textFromXml(cell[0]).replace(/\s+/g, ' ').trim());
+    for (const rowInner of elementInners(documentXml.slice(table.innerStart, table.innerEnd), 'w:tr')) {
+      const cells = elementInners(rowInner, 'w:tc').map((cell) => textFromXml(cell).replace(/\s+/g, ' ').trim());
       if (cells.some(Boolean)) rows.push(cells.join('\t'));
     }
-    return `\n${rows.join('\n')}\n`;
-  });
-
-  const lines: string[] = [];
-  for (const paragraph of withTables.matchAll(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g)) {
-    lines.push(textFromXml(paragraph[0]));
+    withTablesParts.push(`\n${rows.join('\n')}\n`);
+    tableCursor = table.end;
   }
+  const withTables = withTablesParts.join('');
+
+  const lines: string[] = elementInners(withTables, 'w:p').map((paragraph) => textFromXml(paragraph));
 
   const warnings: string[] = [];
   if (imageCount > 0) {
@@ -319,7 +411,9 @@ function decodeEntitiesOnce(value: string): string {
 /** One `<t>` element's text, decoded the way the previous reader decoded it. */
 function textOfTag(body: string): string {
   const inner = body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
-  return decodeXml(decodeEntitiesOnce(inner));
+  // Markup is stripped before entities are decoded, so text that legitimately
+  // reads `<b>` (written `&lt;b&gt;`) survives.
+  return decodeXml(decodeEntitiesOnce(withoutMarkup(inner)));
 }
 
 /**
@@ -347,35 +441,58 @@ function textOfTag(body: string): string {
  */
 export function parseSharedStringsXml(text: string): string[] {
   const values: string[] = [];
-  // `<si>` with or without attributes, or self-closing (which keeps its index: a
-  // self-closing entry in the middle of a table must still occupy a slot, or
-  // every later cell reference would point at the wrong string).
-  for (const match of text.matchAll(/<si(?:\s[^>]*)?(?:\/>|>([\s\S]*?)<\/si>)/g)) {
+  let cursor = 0;
+  for (;;) {
+    const span = nextElement(text, cursor, 'si');
+    if (!span) return values;
     // A self-closing entry still occupies its index: dropping it would shift
     // every later cell reference onto the wrong string.
-    const body = match[1];
-    if (body === undefined) {
-      values.push('');
-      continue;
-    }
-    // Phonetic runs and rich-text runs are separate children. A direct `<t>`
-    // wins when both are present, which is what the tree reader did.
-    const withoutChildren = body
-      .replace(/<rPh[\s\S]*?<\/rPh>/g, '')
-      .replace(/<r(?:\s[^>]*)?>[\s\S]*?<\/r>/g, '');
-    const direct = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/.exec(withoutChildren);
-    if (direct) {
-      values.push(textOfTag(direct[1]));
-      continue;
-    }
-    let joined = '';
-    for (const run of body.matchAll(/<r(?:\s[^>]*)?>([\s\S]*?)<\/r>/g)) {
-      const part = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/.exec(run[1]);
-      if (part) joined += textOfTag(part[1]);
-    }
-    values.push(joined);
+    values.push(span.innerStart === span.innerEnd && text[span.open + 3] === '/'
+      ? ''
+      : entryText(text.slice(span.innerStart, span.innerEnd)));
+    cursor = span.end;
   }
-  return values;
+}
+
+/**
+ * The text of one `<si>` entry.
+ *
+ * A direct `<t>` wins over rich-text runs (what the tree reader did); phonetic
+ * runs (`rPh`) are pronunciation hints and are ignored. Scanned once, so a
+ * malformed entry cannot make the scan restart.
+ */
+function entryText(body: string): string {
+  let direct: string | null = null;
+  const runs: string[] = [];
+  let cursor = 0;
+  while (cursor < body.length) {
+    const tagStart = body.indexOf('<', cursor);
+    if (tagStart === -1) break;
+    const name = body.startsWith('<rPh', tagStart) && atTagBoundary(body, tagStart + 4) ? 'rPh'
+      : body.startsWith('<r', tagStart) && atTagBoundary(body, tagStart + 2) ? 'r'
+        : body.startsWith('<t', tagStart) && atTagBoundary(body, tagStart + 2) ? 't'
+          : '';
+    if (!name) {
+      const gt = body.indexOf('>', tagStart);
+      cursor = gt === -1 ? body.length : gt + 1;
+      continue;
+    }
+    const span = nextElement(body, tagStart, name);
+    if (!span) break;
+    if (name === 'rPh') {
+      cursor = span.end;
+      continue;
+    }
+    if (name === 'r') {
+      const [first] = elementInners(body.slice(span.innerStart, span.innerEnd), 't');
+      if (first !== undefined) runs.push(textOfTag(first));
+      cursor = span.end;
+      continue;
+    }
+    if (direct === null) direct = textOfTag(body.slice(span.innerStart, span.innerEnd));
+    cursor = span.end;
+  }
+  return direct ?? runs.join('');
 }
 
 /** The shared-string table, with the bytes it cost, so a caller can charge them. */
@@ -402,14 +519,19 @@ function columnIndex(reference: string): number {
 
 export function readSheetRows(sheetXml: string, sharedStrings: string[]): string[][] {
   const rows: string[][] = [];
-  for (const row of sheetXml.matchAll(/<row(?:\s[^>]*)?>([\s\S]*?)<\/row>/g)) {
+  for (const rowInner of elementInners(sheetXml, 'row')) {
     const cells: string[] = [];
-    for (const cell of row[1].matchAll(/<c\s+([^>]*)>([\s\S]*?)<\/c>/g)) {
-      const attrs = cell[1];
+    let cellCursor = 0;
+    for (;;) {
+      const cell = nextElement(rowInner, cellCursor, 'c', true);
+      if (!cell) break;
+      cellCursor = cell.end;
+      const attrs = rowInner.slice(cell.open + 2, rowInner.indexOf('>', cell.open));
+      const cellInner = rowInner.slice(cell.innerStart, cell.innerEnd);
       const reference = /r="([A-Z]+\d+)"/.exec(attrs)?.[1] || 'A1';
       const type = /t="([^"]+)"/.exec(attrs)?.[1] || '';
-      const raw = /<v>([\s\S]*?)<\/v>/.exec(cell[2])?.[1]
-        ?? /<is>[\s\S]*?<t(?:\s[^>]*)?>([\s\S]*?)<\/t>[\s\S]*?<\/is>/.exec(cell[2])?.[1]
+      const raw = /<v>([\s\S]*?)<\/v>/.exec(cellInner)?.[1]
+        ?? /<is>[\s\S]*?<t(?:\s[^>]*)?>([\s\S]*?)<\/t>[\s\S]*?<\/is>/.exec(cellInner)?.[1]
         ?? '';
       let value = decodeXml(raw);
       if (type === 's') value = sharedStrings[Number(raw)] ?? '';
