@@ -805,3 +805,149 @@ staff/admin, and the evidence record to keep. Linked from `docs/README.md` and
   the 20 MB per-entry ceiling) and nested parsing can hold ~7× the byte budget in
   parsed text at peak. Worker isolation is the principled fix and is a larger
   change than this PR's evidence justifies.
+
+## Session 17 — nested budgets proved, the Excel memory driver removed, and the staging gate tightened (2026-10-23)
+
+State verified first: HEAD `6b0eac9` — equal to the remote tip and to PR #30's
+`headRefOid`; worktree clean; PR open, draft, mergeable. (The sandbox had again
+rolled the checkout back to `f8ec28f`; all 44 touched files were hash-compared
+against the remote before the branch pointer was restored — nothing was lost.)
+
+### The nested budget, proved rather than asserted
+
+| Claim | Where it is enforced | Test |
+|---|---|---|
+| All nested expansions draw on one archive-wide budget | `extractZip` computes `remaining = archive.maxTotalBytes − entry bytes` and passes `remaining` down as both nested ceilings | `text expanded inside nested Word files draws from the archive budget` |
+| A container cannot reset the budget | `extractQuestions(buffer, name, limits)` threads `limits` into `extractDocx`/`extractXlsx`; neither has a default that starts fresh when limits are supplied | same test (mutation: restoring the fresh-budget call turns it red) |
+| Excel shared strings and sheets are charged together | `extractXlsx` reads the table first, then `sheetBudget = totalBudget − sharedStrings.bytes` for the sheets | `a workbook charges its shared-string table against the same budget as its sheets` |
+| Exhaustion aborts the whole import | nested `too_large` is re-thrown as fatal; `remaining < 0` is fatal | `a nested size violation fails the archive instead of being warned past` |
+| Nothing partial reaches the bank | extraction writes only staging rows, and only through the single `finish_question_import` transaction; failure calls `fail_question_import` | new: `an extraction that fails on size leaves no staged rows and no bank rows` |
+| Valid archives at the limits still work | boundary tests unchanged (exact limit accepted, one byte over refused) | 29 tests in `tests/zip-bounds.test.ts` |
+
+Nested `.zip` is still refused before any decompression, so the nesting depth is
+exactly two (zip → docx/xlsx) and the budget cannot recurse.
+
+### Peak memory: the measured driver, and the fix
+
+Measured with `--max-old-space-size` bisection in a separate process (minimum heap
+at which the file can be extracted at all), which is far less noisy than RSS:
+
+| Upload | Parts decompressed | Before | After |
+|---|---|---|---|
+| 19 MB `.xlsx` (19 MB sheet + 19 MB shared strings) | 38 MB | **512 MB heap**, 5.6 s | **128 MB heap**, 1.4 s |
+| 19 MB `.docx` | 19 MB XML | 128 MB | 128 MB |
+| `.zip` of six 13 MB `.docx` | 78 MB XML | 128 MB | 128 MB |
+
+The driver was `fast-xml-parser`: a shared-string table is a flat list of tags, but
+the parser built one object per string, so a 19 MB table became a **544 MB heap**
+tree (measured directly; 96 MB for the same strings extracted directly). The
+worksheets were never the problem — a 19 MB sheet parsed into rows cost +34 MB.
+
+**Fix:** `parseSharedStringsXml()` reads the table directly and releases the XML as
+soon as the strings exist. The XML tree is gone from this path entirely; the
+dependency remains in `package.json` because the parity test uses it as an oracle.
+
+The output is pinned to the old reader by a parity test over 18 table shapes
+(plain, numeric, spaced, entities, double-encoded, numeric references, rich runs,
+phonetic runs, CDATA, self-closing and empty entries, attributes, newlines). Four
+deliberate differences, all cases where the old reader corrupted text:
+
+| Input | Before | After |
+|---|---|---|
+| `<t>007</t>` | `7` | `007` |
+| `<t>true</t>` | *(dropped)* | `true` |
+| malformed `<t>a<t>b</t>c</t>` | `ac` | `abc` |
+| a table of exactly one `<si/>` | `[]` | `['']` — the sheet reader maps both to `''` |
+
+A regression test runs the 12 MB shape in a subprocess capped at a **192 MB heap**;
+restoring the tree parser fails it (mutation M17).
+
+**Rejected as unproven:** skipping the whole-document `.replace()` in `extractDocx`
+when a Word file has no tables. It removes a copy by inspection, but the minimum
+heap was 104 MB with and without it, so it was reverted rather than reported as a
+memory improvement.
+
+**Worker threads:** still not justified. With the tree gone, every upload the limits
+allow now extracts inside a 128 MB heap. The remaining synchronous cost is CPU time
+(worst case ~5 s of contiguous work for the largest archive), and the reader already
+yields between entries. A worker would buy cancellation, not memory, and that is a
+larger change than the evidence here warrants — recorded as follow-up, not done.
+
+### Staging gate: three gaps found and closed
+
+1. **Ambiguous configuration was silently resolved.** With `VITE_SUPABASE_URL` and
+   `SUPABASE_URL` naming different projects, `env:check` reported the client one and
+   passed the gate — while the application would use the client one and a server
+   script using `SUPABASE_URL` would use the other. It now reports `ambiguous` and
+   exits 1, naming both references.
+2. **"Not configured" conflated two states** — no URL at all, and a URL that is not a
+   recognisable Supabase project URL (custom domain, typo). Both still block, but the
+   message now says which, so an operator can fix it.
+3. **The pass message overstated what it proved.** It read as a confirmation that the
+   project is disposable. It now states exactly what was checked (configured,
+   unambiguous, not the documented production project, named by the operator) and says
+   that disposability is the operator's assertion — the script can see a reference,
+   not the data inside a project.
+
+Verified on the command line: unconfigured → 1, production → 1, ambiguous → 1,
+non-production unnamed → 1, named and matching → 0. 19 tests in
+`tests/env-check.test.ts`. Secrets: the output still prints only the reference and
+"present / not present" per variable.
+
+### Runbook corrections
+
+`docs/operations/STAGING_VERIFICATION_RUNBOOK.md` is now split by intent, because the
+previous version mixed a mutating command into a read-only section:
+
+* every section is labelled **INSPECT** (§1, §4, §5) or **MUTATE** (§2, §6, §7, §8),
+  with a table at the top stating which is safe against production;
+* §3 is split into 3a (inspect the repository), 3b (**mutate** the staging schema) and
+  3c (inspect the result);
+* **a second target surface is now documented:** the Supabase CLI acts on the project
+  it is *linked* to, which is independent of `.env`. A machine can pass the gate and
+  still push to production. The runbook now requires `--project-ref` explicitly, says
+  to check `supabase projects list` first, and bans `db reset` / `migration repair`
+  outright (a repair rewrites the ledger, which §4 forbids);
+* **a practical error:** `supabase/ci/production-validation.sql` line 17 is
+  `\set ON_ERROR_STOP on`, a `psql` command, not SQL. The Supabase SQL editor rejects
+  it. The runbook now says to omit that line when pasting, and to run check 8 as a
+  block rather than "the whole file";
+* the gate is described as proving *identity*, not safety.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **743 tests, 742 pass, 0 fail, 1 skipped** |
+| `tests/zip-bounds.test.ts` | 0 | 29/29 |
+| `tests/question-extract.test.ts` | 0 | 20/20 |
+| `tests/env-check.test.ts` | 0 | 19/19 |
+| `tests/question-import.test.ts` | 0 | 9/9 |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 |
+| `npm run build` | 0 | ok |
+| `npm run perf:audit` / `analytics:audit` | 0 / 0 | pass |
+| `npm run rls:audit` | 0 | 50/50, 0 findings |
+| `npm run a11y:audit` | 0 | 0 blocking, 5 informational |
+| `npm run audit:ci` | 0 | 0 vulnerabilities |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | 1 passed |
+| `npm run prod:validate` | **1** | 0 passed, 1 failed, 2 skipped — variables unset (environment) |
+| `npm run env:check` | 0 | "not configured" — correct here |
+| `env:check -- --require-staging` | **1** | correct: no target configured, so the gate fails closed |
+
+Mutations this session: M17 (tree parser restored) → the heap test and the parity
+tests fail; M18 (failure-path assertion inverted) → the new import test fails. Both
+restored green.
+
+### Still blocked
+
+* **Live/staging ledger reconciliation** of `20260903_production_security_hardening.sql`
+  — `BLOCKED`; procedure is runbook §4.
+* **Authenticated CBT, upload and authorization checks** — `NOT RUN`; they need a
+  disposable project (runbook §6–§8).
+* **Netlify deployment / preview** — `BLOCKED — credits expired`; not retried.
+* **Residual risk:** synchronous inflate still cannot be interrupted mid-entry, and a
+  nested container's parts are fully decompressed before parsing (bounded by the same
+  budget). Worst measured contiguous CPU for one legal upload is ~5 s.

@@ -21,10 +21,18 @@ Everything below is written for **Git Bash / MSYS2** on Windows (prompt
 A read-only check is safe against any project. A **write** is only safe against a
 project that has been proved disposable. The split:
 
-| Job | Commands | Safe against production? |
-|---|---|---|
-| Read-only verification | `env:check`, `prod:validate`, `rls:audit`, `schema:audit`, the SQL artifact | **Yes** — `SELECT` only |
-| Manual walkthrough | sign-up, password reset, CBT attempt, uploads, admin edits | **No** — creates accounts, attempts, files, emails |
+| Class | Where | Commands | Safe against production? |
+|---|---|---|---|
+| **INSPECT** | §1, §3, §4, §5 | `env:check`, `prod:validate`, `rls:audit`, `schema:audit`, `migrations:checklist`, the SQL artifact | **Yes** — reads configuration, runs `SELECT` |
+| **MUTATE** | §2, §6, §7, §8 | creating the staging project, applying migrations, sign-up, CBT attempts, uploads, admin edits | **No** — creates accounts, rows, files, emails |
+
+Every MUTATE step is gated on §1 passing *immediately beforehand*, in the same
+shell session. Nothing in INSPECT writes. If a command is not in the INSPECT row,
+treat it as MUTATE.
+
+There are **two separate targets** on one machine, and passing one gate does not
+check the other: the environment variables the app reads (§1), and the project the
+Supabase CLI is *linked* to (§3b). Confirm both before any MUTATE step.
 
 If any step below would create or change data and the target has not been
 confirmed disposable, **stop**. That is not a formality: on 2026-10-22 the
@@ -33,7 +41,7 @@ staging (recorded in `docs/SUPABASE_LIVE_VERIFICATION.md` §3b).
 
 ---
 
-## 1. Target-project identity (fail closed)
+## 1. INSPECT — target-project identity (fail closed)
 
 Run this first, before any other command, and again after every `.env` edit:
 
@@ -50,9 +58,13 @@ applies the gate. It exits **1** — blocking the runbook — when:
 | The project is the documented production project | Writes are never allowed there |
 | The project is not production but was not named by the operator | "Not production" is not proof of disposable |
 | `STAGING_PROJECT_REF` does not match the configured project | Two different projects are in play; refuse to guess |
+| `VITE_SUPABASE_URL` and `SUPABASE_URL` name **different** projects | The target is ambiguous; the app would quietly prefer one of them |
 
 It exits **0** only when the project is configured, is not the documented
-production project, **and** the operator names it explicitly:
+production project, **and** the operator names it explicitly. Even then it prints
+that disposability is *your* assertion: the script can see a project reference, not
+whether a project holds real data. Exit 0 means "the target is what you said it
+is", not "this is safe to write to":
 
 ```bash
 STAGING_PROJECT_REF=<your-staging-ref> npm run env:check -- --require-staging
@@ -66,7 +78,7 @@ the reference the tool just printed, the gate stays closed by design.
 
 ---
 
-## 2. A disposable environment
+## 2. MUTATE — creating the disposable environment
 
 Requirements for the target project:
 
@@ -103,27 +115,64 @@ The repository holds **74** migration files in `supabase/migrations/` and a
 generated checklist of all 74 inside `supabase/ci/production-validation.sql`
 (`npm run migrations:checklist` fails if the two drift apart).
 
-Establish the staging baseline **read-only**:
+### 3a. INSPECT — what the repository says (no project contacted)
 
 ```bash
-npm test                                    # includes PGlite applying all 74 migrations
-npm run schema:audit                        # static: references, ordering, objects
-npm run migrations:checklist                # 74/74 listed in the artifact
+npm test                        # PGlite applies all 74 migrations to a scratch database
+npm run schema:audit            # static: references, ordering, object creation
+npm run migrations:checklist    # 74/74 listed in the artifact
 ```
 
-Then compare against the staging ledger with the SQL in §4 — it is a `SELECT`.
-The repository does **not** apply migrations to staging from this runbook: if the
-staging project is empty, create it, and apply the migrations with your normal
-`supabase db push` procedure **only after** §1 passes and you have confirmed the
-target. Record which method was used.
+These three are safe anywhere: they read files and a throwaway in-memory database.
 
----
+### 3b. MUTATE — bringing the staging schema up to the repository
 
-## 4. Read-only reconciliation (the three verdicts)
+Only after §1 has passed. **A staging project starts empty**, so this is expected
+to run once per disposable project:
 
-Open `supabase/ci/production-validation.sql` in the staging project's SQL editor
-and run **check 8 only** (the block between `-- 8.` and `-- 9.`), or run the whole
-file — every statement is a `SELECT`. It prints three rows:
+```bash
+supabase db push --project-ref "$STAGING_PROJECT_REF"
+```
+
+**The link is a separate trap from `.env`.** The Supabase CLI acts on the project
+it is *linked* to, which has nothing to do with the variables the app reads. A
+machine can pass `env:check` and still push migrations to production if the CLI is
+linked there.
+
+Before any `db push` / `db reset` / `migration repair`:
+
+```bash
+supabase projects list        # confirms which project this login can see
+supabase status               # if a local stack is running
+```
+
+1. Always pass `--project-ref` explicitly; never rely on the linked project.
+2. If `supabase config.toml` or `.supabase/` names a different project, stop.
+3. `supabase db reset` and `supabase migration repair` are **never** part of this
+   runbook. A repair rewrites the ledger, which is the one thing §4 says never to
+   do.
+4. Record which method was used to build the schema (`db push`, SQL editor, or a
+   restored backup) in the evidence record.
+
+### 3c. INSPECT — does the staging ledger match?
+
+Proceed to §4. That step reads the ledger and never writes to it.
+
+## 4. INSPECT — read-only reconciliation (the three verdicts)
+
+Open `supabase/ci/production-validation.sql` and run **check 8 only** — the block
+between `-- 8.` and `-- 9.`. Every statement is a `SELECT`.
+
+Two practical notes, both learned the hard way:
+
+* **Line 17 is `\set ON_ERROR_STOP on`.** That is a `psql` client command, not SQL.
+  `psql` needs it; the Supabase **SQL editor rejects it** with a syntax error. If you
+  paste into the SQL editor, leave that line out. It is the only non-SQL line in the
+  file, and `tests/prod-validate.test.ts` asserts nothing in the file mutates data.
+* The checks are independent statements, so running one at a time and copying each
+  result is fine. Do not "fix" a result by editing it.
+
+Check 8 prints three rows:
 
 | Verdict | Meaning | What to do |
 |---|---|---|
@@ -163,7 +212,7 @@ How the matching works, so the result can be read correctly:
 
 ---
 
-## 5. Application validation against staging (read-only, network)
+## 5. INSPECT — application validation against staging (read-only, network)
 
 ```bash
 npm run env:check -- --require-staging        # must print GATE: ... confirmed
@@ -181,7 +230,7 @@ If `prod:validate` cannot reach the network from your machine, that is a
 
 ---
 
-## 6. CBT verification (writes — staging only)
+## 6. MUTATE — CBT verification (writes; §1 must have just passed)
 
 Run after §1 passes. Use two student accounts, one staff account and one admin
 account created in staging, never real accounts.
@@ -204,7 +253,7 @@ before continuing; do not "work around" it in the walkthrough.
 
 ---
 
-## 7. Upload verification (writes — staging only)
+## 7. MUTATE — upload verification (writes; §1 must have just passed)
 
 | # | Step | Expected |
 |---|---|---|
@@ -231,7 +280,7 @@ committed and reviewed.
 
 ---
 
-## 8. Authorization boundaries (staging accounts)
+## 8. MUTATE — authorization boundaries (creates accounts; §1 must have just passed)
 
 | Account | Try | Expected |
 |---|---|---|

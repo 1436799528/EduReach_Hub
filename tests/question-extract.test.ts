@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import JSZip from 'jszip';
+import { XMLParser } from 'fast-xml-parser';
 import {
   ExtractionError,
   extractQuestions,
   extensionOf,
   isSupportedUpload,
+  parseSharedStringsXml,
+  readSharedStrings,
 } from '../src/server/question-import/extract';
 import { validateItem } from '../src/server/question-import/validate';
 
@@ -237,4 +243,130 @@ test('validation blocks missing answers, missing options and a fifth option', ()
   assert.match(validateItem({ ...base, optionE: '7' }).blocking.join(' '), /five options/i);
   assert.match(validateItem({ ...base, optionC: '4' }).blocking.join(' '), /same text/i);
   assert.match(validateItem({ ...base, questionText: 'Hi' }).blocking.join(' '), /too short/i);
+});
+
+// ---------------------------------------------------------------------------
+// The shared-string table
+// ---------------------------------------------------------------------------
+//
+// A workbook's shared-string table used to be read with `fast-xml-parser`, which
+// builds one object per string: a 19 MB table became a 544 MB heap tree, and the
+// minimum heap at which a 19 MB workbook could be read at all was 512 MB. The
+// table is now read directly (parseSharedStringsXml).
+//
+// Two things are pinned here. First, the output must still be what the previous
+// reader produced — `fast-xml-parser` is kept in the test as the oracle, so a
+// future rewrite has to match on every shape below. Second, reading a large
+// table must stay cheap: the heap-capped subprocess test fails if a tree parser
+// is reintroduced.
+
+/** The previous implementation, kept verbatim as the oracle. */
+function referenceSharedStrings(text: string): string[] {
+  const decode = (value: string) => value
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  const parser = new XMLParser({ ignoreAttributes: true, preserveOrder: false, processEntities: true, trimValues: false });
+  const parsed = parser.parse(text) as Record<string, any>;
+  const list = parsed?.sst?.si;
+  if (!list) return [];
+  return (Array.isArray(list) ? list : [list]).map((entry: any) => {
+    const value = entry?.t;
+    if (typeof value === 'string') return decode(value);
+    if (typeof value === 'number') return String(value);
+    if (value && typeof value === 'object' && '#text' in value) return decode(String(value['#text']));
+    if (entry?.r) {
+      const runs = Array.isArray(entry.r) ? entry.r : [entry.r];
+      return runs.map((run: any) => decode(String(run?.t?.['#text'] ?? run?.t ?? ''))).join('');
+    }
+    return '';
+  });
+}
+
+const SHARED_STRING_SHAPES: Record<string, string> = {
+  plain: '<si><t>Hello</t></si>',
+  numeric: '<si><t>3</t></si>',
+  spaced: '<si><t>  spaced  </t></si>',
+  entity: '<si><t>a &amp; b</t></si>',
+  doubleEncoded: '<si><t>a &amp;amp; b</t></si>',
+  numericEntity: '<si><t>&#65;&#x42;</t></si>',
+  richRuns: '<si><r><t>a</t></r><r><t>b</t></r></si>',
+  richNumeric: '<si><r><t>3</t></r></si>',
+  emptyElement: '<si><t/></si>',
+  attrOnT: '<si><t xml:space="preserve"> keep </t></si>',
+  phonetic: '<si><rPh sb="0" eb="1"><t>phon</t></rPh><t>real</t></si>',
+  runWithProps: '<si><r><rPr><b/></rPr><t>Bold</t></r></si>',
+  newline: '<si><t>line1\nline2</t></si>',
+  cdata: '<si><t><![CDATA[raw & text]]></t></si>',
+  selfClosingMiddle: '<si><t>a</t></si><si/><si><t>b</t></si>',
+  emptyPairMiddle: '<si><t>a</t></si><si></si><si><t>b</t></si>',
+  attrsOnSi: '<si foo="bar"><t>x</t></si>',
+  multiRuns: '<si><r><t>A</t></r><r><t>B</t></r><r><t>C</t></r></si>',
+};
+
+test('the shared-string reader matches the parser it replaced', () => {
+  for (const [name, body] of Object.entries(SHARED_STRING_SHAPES)) {
+    const document = `<sst>${body}</sst>`;
+    assert.deepEqual(
+      parseSharedStringsXml(document),
+      referenceSharedStrings(document),
+      `shared-string shape "${name}" changed meaning`,
+    );
+  }
+  // A table with no strings at all.
+  assert.deepEqual(parseSharedStringsXml('<sst/>'), referenceSharedStrings('<sst/>'));
+});
+
+test('number-like and boolean-like strings keep their text', () => {
+  // Deliberate differences from the old reader, which turned "007" into "7" and
+  // dropped "true" entirely. Both are text in a question bank and must survive.
+  assert.deepEqual(parseSharedStringsXml('<sst><si><t>007</t></si></sst>'), ['007']);
+  assert.deepEqual(parseSharedStringsXml('<sst><si><t>true</t></si></sst>'), ['true']);
+  // Values that were already correct stay correct.
+  assert.deepEqual(parseSharedStringsXml('<sst><si><t>3</t></si></sst>'), ['3']);
+  assert.deepEqual(parseSharedStringsXml('<sst><si><t>1.5</t></si></sst>'), ['1.5']);
+});
+
+test('a workbook still reads through its shared strings end to end', async () => {
+  // The published path, not just the parser: file → strings → cells.
+  const zip = new JSZip();
+  zip.file('xl/sharedStrings.xml', '<sst><si><t>What is 9 - 4?</t></si><si><t>5</t></si><si><t>6</t></si><si><t>7</t></si></sst>');
+  zip.file('xl/worksheets/sheet1.xml', [
+    '<worksheet><sheetData>',
+    '<row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c></row>',
+    '</sheetData></worksheet>',
+  ].join(''));
+  const values = await readSharedStrings(zip);
+  assert.deepEqual(values, ['What is 9 - 4?', '5', '6', '7']);
+});
+
+test('a large shared-string table is read without building an object tree', () => {
+  // 12 MB of strings — the shape a staff upload can reach within the 20 MB
+  // per-part ceiling. With the tree parser this needs ~350 MB of heap; the
+  // reader must fit in a 192 MB heap, which is what makes the difference real
+  // rather than stylistic.
+  const directory = mkdtempSync(join(tmpdir(), 'edureach-ss-'));
+  try {
+    const script = join(directory, 'read.mjs');
+    writeFileSync(script, [
+      `import { parseSharedStringsXml } from ${JSON.stringify(join(import.meta.dirname, '..', 'src', 'server', 'question-import', 'extract.ts'))};`,
+      'const parts = [];',
+      "let size = 0, index = 0;",
+      'while (size < 12 * 1024 * 1024) { const entry = `<si><t>Option ${index}</t></si>`; parts.push(entry); size += entry.length; index += 1; }',
+      "const values = parseSharedStringsXml(`<sst>${parts.join('')}</sst>`);",
+      'console.log(`read ${values.length} strings`);',
+    ].join('\n'));
+    const result = spawnSync(
+      process.execPath,
+      ['--max-old-space-size=192', '--import', 'tsx', script],
+      { cwd: join(import.meta.dirname, '..'), encoding: 'utf8', timeout: 120_000 },
+    );
+    assert.equal(
+      result.status,
+      0,
+      `reading a 12 MB shared-string table must fit a 192 MB heap, or a staff upload can exhaust the function:\n${result.stderr}`,
+    );
+    assert.match(result.stdout, /read \d{5,} strings/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

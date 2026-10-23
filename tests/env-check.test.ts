@@ -44,7 +44,9 @@ test('an unconfigured environment says so instead of guessing', () => {
   const verdict = describeProject({});
   assert.equal(verdict.kind, 'unconfigured');
   assert.equal(verdict.reference, null);
-  assert.match(verdict.guidance.join(' '), /nothing can reach a database/);
+  // Fails closed and names the state accurately: a URL that is missing *or* not
+  // a recognisable Supabase project URL both mean no project can be identified.
+  assert.match(verdict.guidance.join(' '), /no project can be identified/);
 });
 
 test('the environment is read without ever returning a key', () => {
@@ -125,7 +127,45 @@ test('only a configured, non-production, explicitly named project passes', () =>
   const staging = classifyProject('abcdefghijklmnopqrst');
   const verdict = stagingGuard(staging, 'abcdefghijklmnopqrst');
   assert.equal(verdict.ok, true);
-  assert.match(verdict.reason, /confirmed/i);
+  assert.match(verdict.reason, /named explicitly/i);
   // Case and surrounding spaces are the operator's typing, not a different project.
   assert.equal(stagingGuard(staging, '  ABCDEFGHIJKLMNOPQRST ').ok, true);
+});
+
+test('two different configured projects are ambiguous, never silently resolved', () => {
+  // The app reads the client variable first, so picking it would bless a setup
+  // where the server talks to a different database than the one being verified.
+  const verdict = describeProject({
+    VITE_SUPABASE_URL: 'https://aaaaaaaaaaaaaaaaaaaa.supabase.co',
+    SUPABASE_URL: 'https://bbbbbbbbbbbbbbbbbbbb.supabase.co',
+  } as NodeJS.ProcessEnv);
+  assert.equal(verdict.kind, 'ambiguous');
+  assert.equal(verdict.reference, null);
+  assert.deepEqual(verdict.conflict, ['aaaaaaaaaaaaaaaaaaaa', 'bbbbbbbbbbbbbbbbbbbb']);
+  const blocked = stagingGuard(verdict, 'aaaaaaaaaaaaaaaaaaaa');
+  assert.equal(blocked.ok, false, 'an ambiguous target must never pass, even with a matching expectation');
+  assert.match(blocked.reason, /Remove one/);
+});
+
+test('the same project configured twice is not ambiguous', () => {
+  const verdict = describeProject({
+    VITE_SUPABASE_URL: 'https://cccccccccccccccccccc.supabase.co',
+    SUPABASE_URL: 'https://cccccccccccccccccccc.supabase.co',
+  } as NodeJS.ProcessEnv);
+  assert.notEqual(verdict.kind, 'ambiguous');
+  assert.equal(verdict.reference, 'cccccccccccccccccccc');
+});
+
+test('a URL that is not a recognisable project URL fails closed and says why', () => {
+  const verdict = describeProject({ VITE_SUPABASE_URL: 'https://db.example.com' } as NodeJS.ProcessEnv);
+  assert.equal(verdict.kind, 'unconfigured');
+  assert.match(verdict.guidance.join(' '), /not a recognisable Supabase project URL/);
+  assert.equal(stagingGuard(verdict, 'anything').ok, false);
+});
+
+test('a passing gate claims only what it checked', () => {
+  const staging = classifyProject('abcdefghijklmnopqrst');
+  const reason = stagingGuard(staging, 'abcdefghijklmnopqrst').reason;
+  assert.match(reason, /not the documented production project/);
+  assert.match(reason, /your assertion/, 'the gate must not imply it can prove a project is disposable');
 });

@@ -20,7 +20,7 @@ import 'dotenv/config';
 /** The project named as production in docs/audit and docs/operations. */
 export const PRODUCTION_PROJECT_REF = 'gjdfatwcoosyuhakrrhh';
 
-export type ProjectKind = 'production' | 'staging-or-other' | 'unconfigured';
+export type ProjectKind = 'production' | 'staging-or-other' | 'unconfigured' | 'ambiguous';
 
 export interface ProjectVerdict {
   kind: ProjectKind;
@@ -28,6 +28,8 @@ export interface ProjectVerdict {
   reference: string | null;
   /** What a person may safely do against this project. */
   guidance: string[];
+  /** When `kind` is `ambiguous`, the two references that disagree. */
+  conflict?: [string, string];
 }
 
 /** Pull the project reference out of a Supabase URL without keeping the rest. */
@@ -44,8 +46,9 @@ export function classifyProject(reference: string | null): ProjectVerdict {
       kind: 'unconfigured',
       reference: null,
       guidance: [
-        'No Supabase project URL is configured, so nothing can reach a database.',
+        'No Supabase project URL is configured, or the URL is not a recognisable Supabase project URL, so no project can be identified.',
         'That is the correct state for building and for the browser test suite.',
+        'A staging run needs VITE_SUPABASE_URL of the form https://<reference>.supabase.co.',
       ],
     };
   }
@@ -143,6 +146,10 @@ export interface StagingGuardVerdict {
 }
 
 export function stagingGuard(verdict: ProjectVerdict, expectedReference: string | null): StagingGuardVerdict {
+  if (verdict.kind === 'ambiguous') {
+    const [client, server] = verdict.conflict ?? ['(unknown)', '(unknown)'];
+    return { ok: false, reason: `Two different projects are configured (${client} and ${server}). Remove one so the target is unambiguous.` };
+  }
   if (verdict.kind === 'unconfigured' || !verdict.reference) {
     return { ok: false, reason: 'No Supabase project is configured, so there is no verified target. Set VITE_SUPABASE_URL and try again.' };
   }
@@ -161,18 +168,47 @@ export function stagingGuard(verdict: ProjectVerdict, expectedReference: string 
       reason: `The configured project is ${verdict.reference} but STAGING_PROJECT_REF says ${expectedReference.trim()}. Refusing to guess which one is intended.`,
     };
   }
-  return { ok: true, reason: `Target ${verdict.reference} confirmed: configured, not production, and named explicitly.` };
+  // Deliberately claims only what was checked: the identity is unambiguous, the
+  // project is not the documented production one, and the operator named it.
+  // Whether the project is disposable is the operator's assertion, not something
+  // this script can see — and saying otherwise would make the gate feel stronger
+  // than it is.
+  return {
+    ok: true,
+    reason: `Target ${verdict.reference} is configured, unambiguous, not the documented production project, and was named explicitly. `
+      + 'That the project is disposable is your assertion: this script cannot verify it.',
+  };
 }
 
 export function describeProject(env: NodeJS.ProcessEnv = process.env): ProjectVerdict {
-  return classifyProject(projectReference(env.VITE_SUPABASE_URL || env.SUPABASE_URL));
+  const clientReference = projectReference(env.VITE_SUPABASE_URL);
+  const serverReference = projectReference(env.SUPABASE_URL);
+  // Two variables that name different projects is exactly the situation a gate
+  // must not resolve by picking one. The application reads the client variable
+  // first, so choosing it here would silently bless a configuration where the
+  // server talks to a different database than the one being verified.
+  if (clientReference && serverReference && clientReference !== serverReference) {
+    return {
+      kind: 'ambiguous',
+      reference: null,
+      conflict: [clientReference, serverReference],
+      guidance: [
+        `VITE_SUPABASE_URL names ${clientReference} and SUPABASE_URL names ${serverReference}.`,
+        'Nothing can be verified until one of them is removed, because it is not knowable which project is intended.',
+        'Keep the one that belongs to the disposable project and delete the other from .env.',
+      ],
+    };
+  }
+  return classifyProject(clientReference || serverReference);
 }
 
 async function main(): Promise<void> {
   const verdict = describeProject();
   const label = verdict.kind === 'production'
     ? 'PRODUCTION'
-    : verdict.kind === 'staging-or-other' ? 'staging or another project' : 'not configured';
+    : verdict.kind === 'staging-or-other' ? 'staging or another project'
+      : verdict.kind === 'ambiguous' ? `AMBIGUOUS (${verdict.conflict?.[0]} vs ${verdict.conflict?.[1]})`
+        : 'not configured';
 
   console.log('EduReach project check\n');
   console.log(`  project reference: ${verdict.reference ?? '(none configured)'}`);

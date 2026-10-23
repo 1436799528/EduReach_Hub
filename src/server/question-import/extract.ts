@@ -13,7 +13,6 @@
 
 import { inflateRawSync } from 'node:zlib';
 import JSZip from 'jszip';
-import { XMLParser } from 'fast-xml-parser';
 // Import the library entry point directly: pdf-parse's index.js runs a debug
 // block when it is loaded as an ES module and tries to read a fixture that
 // ships only in its own repository.
@@ -196,13 +195,6 @@ async function extractPdf(buffer: Buffer): Promise<Extraction> {
 // DOCX and XLSX
 // ---------------------------------------------------------------------------
 
-const xml = new XMLParser({
-  ignoreAttributes: true,
-  preserveOrder: false,
-  processEntities: true,
-  trimValues: false,
-});
-
 function decodeXml(value: string): string {
   return value
     .replace(/&lt;/g, '<')
@@ -302,6 +294,90 @@ function sheetNumber(name: string): number {
   return Number(/sheet(\d+)\.xml$/.exec(name)?.[1] || 0);
 }
 
+/**
+ * Decode the XML entities fast-xml-parser would have decoded, in one pass.
+ *
+ * Single pass matters: `&amp;lt;` must become `&lt;`, not `<`. Only this file's
+ * `decodeXml` (five named entities, no numeric references) ran afterwards, so
+ * both steps are reproduced here and the result matches what the previous
+ * tree-based reader produced.
+ */
+function decodeEntitiesOnce(value: string): string {
+  // Only the five named entities: `fast-xml-parser` left numeric references
+  // (`&#65;`) alone, and pinning that keeps the output identical.
+  return value.replace(/&(lt|gt|quot|apos|amp);/g, (_whole, name: string) => {
+    switch (name) {
+      case 'lt': return '<';
+      case 'gt': return '>';
+      case 'quot': return '"';
+      case 'apos': return "'";
+      default: return '&';
+    }
+  });
+}
+
+/** One `<t>` element's text, decoded the way the previous reader decoded it. */
+function textOfTag(body: string): string {
+  const inner = body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+  return decodeXml(decodeEntitiesOnce(inner));
+}
+
+/**
+ * Read a shared-string table without building an object tree.
+ *
+ * `fast-xml-parser` produced one object per string: a 19 MB table became a
+ * **544 MB** heap tree (measured, see docs/audit/VERIFICATION-AUDIT.md session
+ * 17), which is what drove the ~1 GB peak for an Excel upload. The table is
+ * simple — a list of `<si>` entries, each either a direct `<t>` or a set of
+ * `<r>` runs — so it is read directly and the expanded XML text is released as
+ * soon as the strings have been extracted.
+ *
+ * The output is pinned to the old behaviour by a parity test in
+ * tests/question-extract.test.ts that parses the same fixtures with
+ * `fast-xml-parser`. Four deliberate differences, all of them cases where the
+ * old reader lost or altered text, none of which can change a well-formed
+ * question:
+ *
+ *   - a number-like string keeps its digits: "007" stays "007" (it became "7");
+ *   - "true"/"false"/"null" are kept as text (they were dropped entirely, because
+ *     the parser turned them into booleans and the old code had no branch for one);
+ *   - a malformed nested `<t>a<t>b</t>c</t>` reads "abc" (it read "ac");
+ *   - a table that consists of a single self-closing `<si/>` yields one empty
+ *     string rather than none — the sheet reader maps both to the same ''.
+ */
+export function parseSharedStringsXml(text: string): string[] {
+  const values: string[] = [];
+  // `<si>` with or without attributes, or self-closing (which keeps its index: a
+  // self-closing entry in the middle of a table must still occupy a slot, or
+  // every later cell reference would point at the wrong string).
+  for (const match of text.matchAll(/<si(?:\s[^>]*)?(?:\/>|>([\s\S]*?)<\/si>)/g)) {
+    // A self-closing entry still occupies its index: dropping it would shift
+    // every later cell reference onto the wrong string.
+    const body = match[1];
+    if (body === undefined) {
+      values.push('');
+      continue;
+    }
+    // Phonetic runs and rich-text runs are separate children. A direct `<t>`
+    // wins when both are present, which is what the tree reader did.
+    const withoutChildren = body
+      .replace(/<rPh[\s\S]*?<\/rPh>/g, '')
+      .replace(/<r(?:\s[^>]*)?>[\s\S]*?<\/r>/g, '');
+    const direct = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/.exec(withoutChildren);
+    if (direct) {
+      values.push(textOfTag(direct[1]));
+      continue;
+    }
+    let joined = '';
+    for (const run of body.matchAll(/<r(?:\s[^>]*)?>([\s\S]*?)<\/r>/g)) {
+      const part = /<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/.exec(run[1]);
+      if (part) joined += textOfTag(part[1]);
+    }
+    values.push(joined);
+  }
+  return values;
+}
+
 /** The shared-string table, with the bytes it cost, so a caller can charge them. */
 async function readSharedStringsWithSize(zip: JSZip, limit: number): Promise<{ values: string[]; bytes: number }> {
   const file = zip.file('xl/sharedStrings.xml');
@@ -310,23 +386,7 @@ async function readSharedStringsWithSize(zip: JSZip, limit: number): Promise<{ v
     if (error instanceof ExtractionError && error.code === 'too_large') throw error;
     throw new ExtractionError('corrupt', 'The shared strings table could not be read. It may be damaged or encrypted.');
   });
-  const text = bytes.toString('utf8');
-  const parsed = xml.parse(text) as Record<string, any>;
-  const list = parsed?.sst?.si;
-  if (!list) return { values: [], bytes: bytes.length };
-  const values = (Array.isArray(list) ? list : [list]).map((entry: any) => {
-    const text = entry?.t;
-    if (typeof text === 'string') return decodeXml(text);
-    // fast-xml-parser turns <t>3</t> into the number 3.
-    if (typeof text === 'number') return String(text);
-    if (text && typeof text === 'object' && '#text' in text) return decodeXml(String(text['#text']));
-    if (entry?.r) {
-      const runs = Array.isArray(entry.r) ? entry.r : [entry.r];
-      return runs.map((run: any) => decodeXml(String(run?.t?.['#text'] ?? run?.t ?? ''))).join('');
-    }
-    return '';
-  });
-  return { values, bytes: bytes.length };
+  return { values: parseSharedStringsXml(bytes.toString('utf8')), bytes: bytes.length };
 }
 
 export async function readSharedStrings(zip: JSZip, limit: number = MAX_ZIP_ENTRY_BYTES): Promise<string[]> {
