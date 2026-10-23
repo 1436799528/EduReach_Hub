@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+import { auditChecklist, parseChecklist } from '../scripts/migration-checklist';
 
 // D5 — the environment contract and the production validator.
 //
@@ -55,6 +56,27 @@ test('anything the browser reads carries the VITE_ prefix', () => {
     for (const alias of spec.aliases) {
       if (alias.visibility === 'client') {
         assert.match(alias.name, /^VITE_/, `${alias.name} is client-visible but not VITE_ prefixed`);
+      }
+    }
+  }
+});
+
+test('no secret is declared with a VITE_ prefix', () => {
+  // The rule the contract states in its header, now asserted. Vite inlines every
+  // VITE_ variable into the browser bundle, so a secret carrying that prefix is a
+  // secret handed to every visitor. `src/lib/supabaseKey.ts` refuses a privileged
+  // key at runtime as a second line of defence; this keeps the declaration
+  // itself honest, and covers aliases too (that is how the mistake would be made:
+  // a "legacy name" added for convenience).
+  for (const spec of ENV_CONTRACT) {
+    if (spec.secret) {
+      assert.doesNotMatch(spec.name, /^VITE_/, `${spec.name} is secret but VITE_ prefixed`);
+      assert.equal(spec.visibility, 'server', `${spec.name} is secret but declared client-visible`);
+    }
+    for (const alias of spec.aliases) {
+      if (spec.secret) {
+        assert.doesNotMatch(alias.name, /^VITE_/, `${spec.name} alias ${alias.name} is secret but VITE_ prefixed`);
+        assert.equal(alias.visibility, 'server', `${spec.name} alias ${alias.name} is secret but declared client-visible`);
       }
     }
   }
@@ -367,16 +389,51 @@ test('the release-sync query names the migrations production is missing, and pas
   }
 });
 
-test('the migration counts in the artifact, the runbook and the repository cannot drift apart', async () => {
-  // The checked-in count drifts whenever a migration is appended unless the
-  // artifact and operator runbook are reconciled in the same change. The
-  // repository directory is the source of truth for this assertion.
+test('the migration checklist in the artifact matches the repository, and the runbook agrees', async () => {
+  // The artifact used to compare `count(*)` to a number typed into the file, so
+  // it could only notice that *some* 74 migrations were recorded — never that a
+  // particular file was missing. The list is generated now
+  // (`npm run migrations:checklist -- --write`); this asserts it was regenerated
+  // when the repository changed, which is the drift this test exists to catch.
   const { readdirSync } = await import('node:fs');
-  const count = readdirSync(join(ROOT, 'supabase/migrations')).filter((name) => name.endsWith('.sql')).length;
+  const files = readdirSync(join(ROOT, 'supabase/migrations')).filter((name) => name.endsWith('.sql'));
+  const count = files.length;
   const sql = readFileSync(join(ROOT, SQL_ARTIFACT), 'utf8');
   const runbook = readFileSync(join(ROOT, 'docs/operations/PRODUCTION_RUNBOOK.md'), 'utf8');
 
-  assert.match(sql, new RegExp(`count\\(\\*\\) >= ${count}\\b`), `the artifact's threshold is not ${count}`);
-  assert.match(sql, new RegExp(`repository holds ${count}\\)`), `the artifact's detail does not say ${count}`);
+  const checklist = parseChecklist(sql);
+  assert.ok(checklist, 'the artifact must carry the generated migration checklist block');
+  assert.equal(checklist.length, count, `the checklist lists ${checklist.length} migrations, the repository holds ${count}`);
+  assert.deepEqual(
+    auditChecklist(files, checklist),
+    [],
+    `the checklist no longer matches supabase/migrations — run \`npm run migrations:checklist -- --write\``,
+  );
+  // Check 8 must compare the whole generated checklist against the ledger, and it
+  // must do so under three rules rather than one loose one: a version match is
+  // evidence for a file only when that version is unique (AUD-10).
+  assert.match(
+    sql,
+    /'every uniquely versioned migration is recorded in the migration ledger'/,
+    'check 8 must compare the whole checklist against the ledger, not a hand-picked subset',
+  );
+  assert.match(
+    sql,
+    /'every migration sharing a legacy version is individually recorded in the migration ledger'/,
+    'shared legacy versions need their own per-file check',
+  );
+  assert.match(
+    sql,
+    /'migrations with no ledger evidence are never reported as applied'/,
+    'unresolved migrations need a verdict of their own',
+  );
+  assert.match(sql, /else 'unresolved' end as result/, 'an unresolved migration must not be reported as pass or fail');
+  // The generated block must belong to that one statement, not be pasted into
+  // several places that can drift apart.
+  assert.equal(
+    sql.split('-- BEGIN GENERATED MIGRATION CHECKLIST').length - 1,
+    1,
+    'the checklist block must appear exactly once',
+  );
   assert.match(runbook, new RegExp(`${count} migrations in `), `the runbook does not say ${count} migrations`);
 });

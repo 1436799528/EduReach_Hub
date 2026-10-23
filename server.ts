@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import compression from 'compression';
 import express from 'express';
 import path from 'path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -21,7 +22,7 @@ import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
-import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
+import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, crawlerCacheHeaders, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
 import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
@@ -90,6 +91,22 @@ app.use((_req, res, next) => {
 
 // Broad per-IP ceiling for the whole API surface, then per-route limits below.
 app.use('/api', rateLimitFor(RATE_LIMIT_RULES.apiGeneral));
+
+/**
+ * Compress text responses on the wire.
+ *
+ * Netlify compresses `dist/` itself, so the hosted site always shipped gzip.
+ * The self-hosted path (Dockerfile → `npm start` → Express) did not: it served
+ * the entry chunk, the stylesheet and the Supabase chunk at their raw sizes
+ * (863 KB on the landing route), which is exactly what a throttled phone pays
+ * for before it can paint. Measured on the mobile profile in
+ * `tests/e2e/perf.spec.ts`, the same three files are 215 KB compressed.
+ *
+ * `threshold` leaves small JSON bodies alone (the framing overhead would exceed
+ * the saving) and `compression` sets `Vary: Accept-Encoding`, so caches never
+ * mix the two encodings.
+ */
+app.use(compression({ threshold: 1024 }));
 
 /**
  * Paths that must never be indexed: student, admin, auth, tracker and
@@ -3666,7 +3683,10 @@ app.get('/api/admin/integrity', requireCapability('data.read'), async (_req, res
 
 async function serveRobotsTxt(req: express.Request, res: express.Response) {
   const origin = resolveSiteOrigin(req);
-  res.type('text/plain').setHeader('Cache-Control', 'public, max-age=86400');
+  res.type('text/plain');
+  // The body follows the request's Host header unless the origin is pinned, so
+  // only a pinned origin may be served as publicly cacheable.
+  for (const [name, value] of Object.entries(crawlerCacheHeaders('robots'))) res.setHeader(name, value);
   res.send(buildRobotsTxt(origin));
 }
 
@@ -3676,7 +3696,8 @@ async function serveSitemapXml(req: express.Request, res: express.Response) {
   const entries = await collectSitemapEntries(client, origin, (source, error) => {
     console.error(`Sitemap: ${source} entries unavailable:`, error instanceof Error ? error.message : error);
   });
-  res.type('application/xml').setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('application/xml');
+  for (const [name, value] of Object.entries(crawlerCacheHeaders('sitemap'))) res.setHeader(name, value);
   res.send(buildSitemapXml(entries));
 }
 

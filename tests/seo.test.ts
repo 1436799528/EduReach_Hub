@@ -18,8 +18,10 @@ import {
   buildRobotsTxt,
   buildSitemapXml,
   collectSitemapEntries,
+  crawlerCacheHeaders,
   escapeXml,
   resolveSiteOrigin,
+  siteOriginIsConfigured,
   schoolSlug,
   staticSitemapEntries,
 } from '../src/server/seo';
@@ -344,6 +346,31 @@ test('site origin prefers configuration and otherwise uses the request host', ()
 // endpoints
 // ---------------------------------------------------------------------------
 
+test('crawler responses are only publicly cacheable when the origin is pinned', () => {
+  // The bodies embed the origin. With EDUREACH_SITE_URL set that origin is a
+  // constant; without it, it comes from the request's Host header, so a shared
+  // cache keyed on the path alone must not be allowed to store the response.
+  assert.deepEqual(crawlerCacheHeaders('robots', true), { 'Cache-Control': 'public, max-age=86400' });
+  assert.deepEqual(crawlerCacheHeaders('sitemap', true), { 'Cache-Control': 'public, max-age=3600' });
+  for (const asset of ['robots', 'sitemap'] as const) {
+    const unpinned = crawlerCacheHeaders(asset, false);
+    assert.equal(unpinned['Cache-Control'], 'no-store', `${asset} must not be publicly cached from a Host-derived body`);
+    assert.equal(unpinned.Vary, 'Host');
+  }
+
+  // The default is decided by the same environment variable resolveSiteOrigin reads.
+  const previous = process.env.EDUREACH_SITE_URL;
+  process.env.EDUREACH_SITE_URL = ' https://edureach.example ';
+  assert.equal(siteOriginIsConfigured(), true);
+  assert.equal(crawlerCacheHeaders('sitemap')['Cache-Control'], 'public, max-age=3600');
+  process.env.EDUREACH_SITE_URL = '   ';
+  assert.equal(siteOriginIsConfigured(), false);
+  assert.equal(crawlerCacheHeaders('sitemap')['Cache-Control'], 'no-store');
+  delete process.env.EDUREACH_SITE_URL;
+  assert.equal(crawlerCacheHeaders('robots')['Cache-Control'], 'no-store');
+  if (previous !== undefined) process.env.EDUREACH_SITE_URL = previous;
+});
+
 test('crawler endpoints are served with the right content types and headers', async () => {
   Object.assign(process.env, {
     NETLIFY: 'true', NODE_ENV: 'production', VITE_SUPABASE_URL: '',
@@ -360,7 +387,10 @@ test('crawler endpoints are served with the right content types and headers', as
   const robots = await fetch(`${base}/robots.txt`);
   assert.equal(robots.status, 200);
   assert.match(robots.headers.get('content-type') || '', /text\/plain/);
-  assert.match(robots.headers.get('cache-control') || '', /max-age=86400/);
+  // No EDUREACH_SITE_URL in this environment, so the body follows the Host
+  // header and must not be marked publicly cacheable (see crawlerCacheHeaders).
+  assert.equal(robots.headers.get('cache-control'), 'no-store');
+  assert.match(robots.headers.get('vary') || '', /Host/i);
   const robotsBody = await robots.text();
   assert.match(robotsBody, /Sitemap: http:\/\/127\.0\.0\.1:\d+\/sitemap\.xml/);
   assert.match(robotsBody, /Disallow: \/admin/);

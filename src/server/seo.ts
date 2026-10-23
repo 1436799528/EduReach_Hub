@@ -139,6 +139,33 @@ export function resolveSiteOrigin(request: {
   return `${protocol || 'https'}://${host}`.replace(/\/+$/, '');
 }
 
+/**
+ * Is the site origin pinned by configuration, or derived from the request?
+ *
+ * `resolveSiteOrigin` falls back to the `Host`/`X-Forwarded-Host` header when
+ * `EDUREACH_SITE_URL` is unset. That makes the robots and sitemap bodies depend
+ * on a header the caller controls, so those responses must not be marked as
+ * publicly cacheable while the fallback is in play: a shared cache that keys on
+ * the path alone could otherwise serve one caller's Host back to everyone. When
+ * the origin is configured the body is request-independent and may be cached.
+ */
+export function siteOriginIsConfigured(): boolean {
+  return Boolean(String(process.env.EDUREACH_SITE_URL || '').trim());
+}
+
+/** The content-dependent HTTP headers for `/robots.txt` and `/sitemap.xml`. */
+export function crawlerCacheHeaders(
+  asset: 'robots' | 'sitemap',
+  originConfigured: boolean = siteOriginIsConfigured(),
+): Record<string, string> {
+  if (originConfigured) {
+    return { 'Cache-Control': asset === 'robots' ? 'public, max-age=86400' : 'public, max-age=3600' };
+  }
+  // Vary documents the dependency for well-behaved caches; no-store is what
+  // actually stops a path-keyed cache from sharing one Host's body with another.
+  return { 'Cache-Control': 'no-store', Vary: 'Host' };
+}
+
 export function escapeXml(value: string): string {
   return String(value || '')
     .replace(/&/g, '&amp;')

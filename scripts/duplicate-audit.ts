@@ -19,6 +19,10 @@
  *   npx tsx scripts/duplicate-audit.ts
  */
 
+// `.env` is loaded here as well as in the server: an operator who follows
+// `.env.production.example` and writes the values into `.env` must see them
+// used by the validator, not a misleading "NOT SET". No value is ever printed.
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;

@@ -24,8 +24,22 @@
  * `supabase db reset` on a scratch project — see docs/features/BASE-1.md.
  */
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+
+/**
+ * Read a text file with one line-ending convention.
+ *
+ * A Windows checkout (`core.autocrlf=true`, which is Git for Windows' default)
+ * writes these files with CRLF. Every pattern below anchors on `\n`, so CRLF
+ * silently broke them: the same clean repository reported **138 blocking
+ * findings** on Windows and none on Linux, which is worse than either answer
+ * because it trains a reviewer to ignore the gate. Normalising here makes the
+ * audit judge the SQL, not the checkout.
+ */
+function readTextFile(file: string): string {
+  return readFileSync(file, 'utf8').replace(/\r\n?/g, '\n');
+}
 
 export interface MigrationFile {
   name: string;
@@ -61,6 +75,7 @@ const CODE_DIRS = ['server.ts', 'src', 'lib', 'pages', 'netlify', 'scripts'];
 
 function stripComments(sql: string): string {
   return sql
+    .replace(/\r\n?/g, '\n')
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .split('\n')
     .map((line) => line.replace(/--.*$/, ''))
@@ -220,15 +235,19 @@ export function collectCodeUsage(root: string): { tables: Set<string>; functions
   for (const relative of CODE_DIRS) {
     const full = join(root, relative);
     try {
-      if (relative.endsWith('.ts')) files.push(full);
-      else walk(full, files);
+      // `server.ts` is a file, not a directory, and may be absent in a partial
+      // checkout (a fixture, or a scrub). Skipping it keeps the audit's answer
+      // about the migrations from depending on unrelated files being present.
+      if (relative.endsWith('.ts')) {
+        if (existsSync(full)) files.push(full);
+      } else walk(full, files);
     } catch {
       // Directory absent in this checkout: nothing to scan.
     }
   }
 
   for (const file of files) {
-    const source = readFileSync(file, 'utf8');
+    const source = readTextFile(file);
     for (const match of source.matchAll(/(\w+)\.from\(\s*'([a-z_]+)'\s*\)(\s*\.\s*select\(\s*'([^']*)'\s*\))?/g)) {
       const [, receiver, table, , selectList] = match;
       if (receiver === 'storage') {
@@ -258,7 +277,7 @@ export function loadMigrations(root: string): MigrationFile[] {
   return readdirSync(directory)
     .filter((name) => name.endsWith('.sql'))
     .sort()
-    .map((name) => ({ name, sql: readFileSync(join(directory, name), 'utf8') }));
+    .map((name) => ({ name, sql: readTextFile(join(directory, name)) }));
 }
 
 export function runSchemaAudit(root: string): AuditReport {

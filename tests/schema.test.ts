@@ -135,3 +135,42 @@ test('migration count and table inventory are stable enough to notice an acciden
     assert.ok(report.tablesCreated.has(table), `${table} is not created by any migration`);
   }
 });
+
+// A Windows checkout writes these files with CRLF (Git for Windows defaults to
+// `core.autocrlf=true`), and the audit's patterns anchor on `\n`. Before the fix
+// the same clean repository reported 138 blocking findings on Windows and none
+// on Linux — a gate that is wrong on half the machines is a gate nobody trusts.
+// This builds a two-file migration history in both conventions and requires the
+// same answer from both.
+test('the audit reads CRLF migrations exactly as it reads LF migrations', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const scratch = mkdtempSync(join(tmpdir(), 'edureach-crlf-'));
+
+  const sql = [
+    'create table public.crlf_probe (',
+    '  id uuid primary key,',
+    '  created_at timestamptz not null default now()',
+    ');',
+    '',
+    'alter table public.crlf_probe enable row level security;',
+    'create index if not exists crlf_probe_created_idx on public.crlf_probe (created_at);',
+    '',
+  ].join('\n');
+
+  try {
+    const dir = join(scratch, 'supabase', 'migrations');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, '20260101000000_crlf_lf.sql'), sql);
+    writeFileSync(join(dir, '20260101000001_crlf_crlf.sql'), sql.replace(/\n/g, '\r\n'));
+
+    const report = runSchemaAudit(scratch);
+    assert.deepEqual(report.hardFailures, [], 'CRLF must not create phantom blocking findings');
+    assert.ok(report.tablesCreated.has('crlf_probe'), 'the table must be found in both files');
+    assert.deepEqual([...report.functionsCreated], [], 'no function is declared');
+    const loaded = loadMigrations(scratch);
+    assert.ok(loaded.every((migration) => !migration.sql.includes('\r')), 'migrations are normalised to LF when read');
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+});

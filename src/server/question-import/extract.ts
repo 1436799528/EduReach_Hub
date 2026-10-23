@@ -11,8 +11,8 @@
  * than invent an answer key or drop a question silently.
  */
 
+import { inflateRawSync } from 'node:zlib';
 import JSZip from 'jszip';
-import { XMLParser } from 'fast-xml-parser';
 // Import the library entry point directly: pdf-parse's index.js runs a debug
 // block when it is loaded as an ES module and tries to read a fixture that
 // ships only in its own repository.
@@ -38,6 +38,17 @@ export type ExtractedItem = {
 export type Extraction = {
   items: ExtractedItem[];
   warnings: string[];
+  /**
+   * Decompressed bytes this extraction spent on container parts (a `.docx`'s
+   * `word/document.xml`, an `.xlsx`'s sheets and shared-string table).
+   *
+   * This is the number the archive-wide ceiling has to debit. A .docx inside a
+   * .zip is itself compressed, so its inner parts expand *after* the outer
+   * entry was measured — counting only the container's bytes let a 4 KB upload
+   * expand ~90 MB of nested text (see tests/zip-bounds.test.ts). Formats that do
+   * not decompress anything leave it undefined.
+   */
+  expandedBytes?: number;
 };
 
 export type ExtractionErrorCode = 'unsupported' | 'ocr_required' | 'empty' | 'corrupt' | 'too_large';
@@ -73,8 +84,24 @@ export const UNSUPPORTED_EXTENSIONS: Record<string, string> = {
 };
 
 const MAX_ZIP_ENTRIES = 60;
+const MAX_ZIP_ENTRY_BYTES = 20 * 1024 * 1024;
 const MAX_ZIP_UNCOMPRESSED_BYTES = 80 * 1024 * 1024;
 const MAX_PDF_PAGES = 300;
+
+/** The archive limits, exported so a test asserts the shipped numbers. */
+export const ZIP_LIMITS = {
+  maxEntries: MAX_ZIP_ENTRIES,
+  maxEntryBytes: MAX_ZIP_ENTRY_BYTES,
+  maxTotalBytes: MAX_ZIP_UNCOMPRESSED_BYTES,
+} as const;
+
+/**
+ * One message for every way an archive can expand past the limits, because the
+ * operator's next action is the same in all of them: split the upload.
+ */
+export const ZIP_TOO_LARGE_MESSAGE =
+  'The archive expands beyond the 20 MB file / 80 MB total limit. Split it into smaller uploads.';
+
 
 export function extensionOf(filename: string): string {
   const match = /(\.[^.\\/]+)$/.exec(filename.trim());
@@ -85,7 +112,18 @@ export function isSupportedUpload(filename: string): boolean {
   return (SUPPORTED_EXTENSIONS as readonly string[]).includes(extensionOf(filename));
 }
 
-export async function extractQuestions(buffer: Buffer, filename: string): Promise<Extraction> {
+/**
+ * Extract questions from one uploaded file.
+ *
+ * `limits` is supplied when this file arrived *inside* a `.zip`: the caller has
+ * already spent part of the archive-wide budget, so the container parts this
+ * file expands must fit in what is left rather than starting a fresh 80 MB.
+ */
+export async function extractQuestions(
+  buffer: Buffer,
+  filename: string,
+  limits?: Partial<ArchiveLimits>,
+): Promise<Extraction> {
   if (!buffer.length) throw new ExtractionError('empty', 'The uploaded file is empty.');
   const extension = extensionOf(filename);
   if (!extension) {
@@ -105,11 +143,11 @@ export async function extractQuestions(buffer: Buffer, filename: string): Promis
     case '.json':
       return extractJson(buffer.toString('utf8'));
     case '.docx':
-      return extractDocx(buffer);
+      return extractDocx(buffer, limits);
     case '.xlsx':
-      return extractXlsx(buffer);
+      return extractXlsx(buffer, limits);
     case '.zip':
-      return extractZip(buffer);
+      return extractZip(buffer, limits);
     default: {
       const message = UNSUPPORTED_EXTENSIONS[extension]
         || `Files ending in ${extension} are not supported. Upload a PDF, Word (.docx), Excel (.xlsx), CSV, TSV, JSON, text or ZIP file.`;
@@ -157,12 +195,95 @@ async function extractPdf(buffer: Buffer): Promise<Extraction> {
 // DOCX and XLSX
 // ---------------------------------------------------------------------------
 
-const xml = new XMLParser({
-  ignoreAttributes: true,
-  preserveOrder: false,
-  processEntities: true,
-  trimValues: false,
-});
+/**
+ * One left-to-right scanner for the XML in Office containers.
+ *
+ * The previous code used lazy regexes (`[\s\S]*?<\/row>`) to find each element.
+ * On well-formed input that is linear, but on *malformed* input — an opening tag
+ * with no matching close — every scan runs to the end of the document and the
+ * next candidate starts just after it, so the cost is quadratic in the part's
+ * size. Measured: 0.28 MB of unterminated `<w:p>` took 1.7 s, which extrapolates
+ * to hours for the 20 MB a single entry may hold, and extraction runs on the
+ * request's event loop.
+ *
+ * These helpers consume the text monotonically: once an element is read (or
+ * found to be unterminated), scanning resumes after it and the earlier text is
+ * never revisited. Cost is therefore linear in the part size regardless of how
+ * malformed it is, and an unterminated element simply ends the scan.
+ */
+
+/** Is `index` a legal end for a tag name? Stops `<si` matching `<simple`. */
+function atTagBoundary(text: string, index: number): boolean {
+  const next = text[index];
+  return next === undefined || next === '>' || next === '/' || next === ' '
+    || next === '\n' || next === '\t' || next === '\r';
+}
+
+/** Index of the next `<name` opening tag at or after `from`, or -1. */
+function findOpenTag(text: string, from: number, name: string): number {
+  const needle = `<${name}`;
+  let at = from;
+  for (;;) {
+    const index = text.indexOf(needle, at);
+    if (index === -1) return -1;
+    if (atTagBoundary(text, index + needle.length)) return index;
+    at = index + needle.length;
+  }
+}
+
+interface ElementSpan {
+  /** Index of the opening `<`. */
+  open: number;
+  innerStart: number;
+  innerEnd: number;
+  /** Index just past the closing tag (or past `/>` for a self-closing element). */
+  end: number;
+}
+
+/**
+ * The next `<name …>…</name>` element at or after `from`, or null.
+ *
+ * Null means "no more elements to read" — either there is no opening tag, or the
+ * opening tag has no closing tag, in which case the rest of the document is not
+ * scanned again. That is what keeps a malformed part linear.
+ */
+function nextElement(text: string, from: number, name: string, requireSpace = false): ElementSpan | null {
+  let open = findOpenTag(text, from, name);
+  if (open === -1) return null;
+  // `<c>` with no attributes never matched the old cells pattern, so it is
+  // skipped. A loop, not recursion: a part made of nothing but `<c>` would
+  // otherwise recurse once per candidate and overflow the stack (measured:
+  // RangeError at ~10,000), turning malformed input into a crash instead of a
+  // clean "no cells here".
+  while (requireSpace && !/\s/.test(text[open + name.length + 1] ?? '')) {
+    const next = findOpenTag(text, open + name.length + 1, name);
+    if (next === -1) return null;
+    open = next;
+  }
+  const gt = text.indexOf('>', open);
+  if (gt === -1) return null;
+  if (text[gt - 1] === '/') return { open, innerStart: gt + 1, innerEnd: gt + 1, end: gt + 1 };
+  const close = text.indexOf(`</${name}>`, gt);
+  if (close === -1) return null;
+  return { open, innerStart: gt + 1, innerEnd: close, end: close + name.length + 3 };
+}
+
+/** Remove leftover markup from a malformed fragment before it is decoded. */
+function withoutMarkup(value: string): string {
+  return value.includes('<') ? value.replace(/<[^>]*>/g, '') : value;
+}
+
+/** The inner text of every `<name …>…</name>` element, read once, left to right. */
+function elementInners(text: string, name: string): string[] {
+  const inners: string[] = [];
+  let cursor = 0;
+  for (;;) {
+    const span = nextElement(text, cursor, name);
+    if (!span) return inners;
+    inners.push(text.slice(span.innerStart, span.innerEnd));
+    cursor = span.end;
+  }
+}
 
 function decodeXml(value: string): string {
   return value
@@ -176,50 +297,67 @@ function decodeXml(value: string): string {
 function textFromXml(fragment: string): string {
   const withBreaks = fragment.replace(/<w:tab\s*\/>/g, '\t').replace(/<w:br\s*\/>/g, '\n');
   let result = '';
-  for (const match of withBreaks.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)) {
-    result += decodeXml(match[1]);
+  for (const inner of elementInners(withBreaks, 'w:t')) {
+    result += decodeXml(withoutMarkup(inner));
   }
   return result;
 }
 
-async function extractDocx(buffer: Buffer): Promise<Extraction> {
+async function extractDocx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Promise<Extraction> {
   const zip = await loadZip(buffer, 'Word document');
   const main = zip.file('word/document.xml');
   if (!main) {
     throw new ExtractionError('corrupt', 'This file is not a Word document: word/document.xml is missing.');
   }
-  const documentXml = await main.async('string');
+  const partLimit = Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES);
+  const documentXml = await readEntryText(main, 'document body', partLimit);
 
   // Images in a DOCX live beside the text, not inside it. They are counted so
   // the reviewer knows to consult the original file for diagrams.
   const imageCount = (documentXml.match(/<w:drawing[\s>]/g) || []).length;
 
-  const withTables = documentXml.replace(/<w:tbl[\s\S]*?<\/w:tbl>/g, (tableXml) => {
+  // Tables become tab-separated lines, so their cells reach the prose parser.
+  // Read once, from left to right, instead of one regex pass per table.
+  const withTablesParts: string[] = [];
+  let tableCursor = 0;
+  for (;;) {
+    const table = nextElement(documentXml, tableCursor, 'w:tbl');
+    if (!table) {
+      withTablesParts.push(documentXml.slice(tableCursor));
+      break;
+    }
+    withTablesParts.push(documentXml.slice(tableCursor, table.open));
     const rows: string[] = [];
-    for (const row of tableXml.matchAll(/<w:tr[\s\S]*?<\/w:tr>/g)) {
-      const cells = [...row[0].matchAll(/<w:tc[\s\S]*?<\/w:tc>/g)]
-        .map((cell) => textFromXml(cell[0]).replace(/\s+/g, ' ').trim());
+    for (const rowInner of elementInners(documentXml.slice(table.innerStart, table.innerEnd), 'w:tr')) {
+      const cells = elementInners(rowInner, 'w:tc').map((cell) => textFromXml(cell).replace(/\s+/g, ' ').trim());
       if (cells.some(Boolean)) rows.push(cells.join('\t'));
     }
-    return `\n${rows.join('\n')}\n`;
-  });
-
-  const lines: string[] = [];
-  for (const paragraph of withTables.matchAll(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g)) {
-    lines.push(textFromXml(paragraph[0]));
+    withTablesParts.push(`\n${rows.join('\n')}\n`);
+    tableCursor = table.end;
   }
+  const withTables = withTablesParts.join('');
+
+  const lines: string[] = elementInners(withTables, 'w:p').map((paragraph) => textFromXml(paragraph));
 
   const warnings: string[] = [];
   if (imageCount > 0) {
     warnings.push(`${imageCount} image${imageCount === 1 ? '' : 's'} found in the document. Diagrams are not attached to individual questions automatically; keep the source file open while reviewing.`);
   }
-  return { items: parseProse(lines.join('\n')), warnings };
+  return { items: parseProse(lines.join('\n')), warnings, expandedBytes: Buffer.byteLength(documentXml, 'utf8') };
 }
 
-async function extractXlsx(buffer: Buffer): Promise<Extraction> {
+async function extractXlsx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Promise<Extraction> {
   const zip = await loadZip(buffer, 'Excel workbook');
   const warnings: string[] = [];
-  const sharedStrings = await readSharedStrings(zip);
+  // One budget covers the whole workbook: the shared-string table first, then
+  // whatever is left is shared by the worksheets. A workbook's parts are read
+  // one after another, so the ceiling has to span them.
+  const totalBudget = limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES;
+  const partLimit = Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, totalBudget);
+  const sharedStringsRead = await readSharedStringsWithSize(zip, partLimit);
+  const sharedStrings = sharedStringsRead.values;
+  const sheetBudget = totalBudget - sharedStringsRead.bytes;
+  if (sheetBudget <= 0 && zip.file('xl/worksheets/sheet1.xml')) throw tooLarge();
 
   const sheets = Object.keys(zip.files)
     .filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name))
@@ -228,10 +366,16 @@ async function extractXlsx(buffer: Buffer): Promise<Extraction> {
     throw new ExtractionError('corrupt', 'This file is not an Excel workbook: no worksheets were found.');
   }
 
+  // Every worksheet is read under the archive-wide ceiling as well as the
+  // per-file one, exactly like the entries of a .zip upload.
+  const sheetReads = await readArchiveEntries(
+    sheets.map((name) => zip.file(name)!),
+    { maxEntryBytes: Math.min(partLimit, sheetBudget), maxTotalBytes: sheetBudget },
+  );
   const items: ExtractedItem[] = [];
-  for (const sheet of sheets) {
-    const sheetXml = await zip.file(sheet)!.async('string');
-    const rows = readSheetRows(sheetXml, sharedStrings);
+  for (const sheetRead of sheetReads) {
+    if (!sheetRead.ok) continue;
+    const rows = readSheetRows(sheetRead.bytes.toString('utf8'), sharedStrings);
     const parsed = parseTableRows(rows);
     if (!parsed.length) continue;
     for (const row of parsed) {
@@ -239,31 +383,137 @@ async function extractXlsx(buffer: Buffer): Promise<Extraction> {
     }
   }
   if (sheets.length > 1) warnings.push(`Read ${sheets.length} worksheets. Check that every sheet belonged to this paper.`);
-  return { items: applyAnswerKeys(items), warnings };
+  const expandedBytes = sharedStringsRead.bytes
+    + sheetReads.reduce((total, read) => total + (read.ok ? read.bytes.length : 0), 0);
+  return { items: applyAnswerKeys(items), warnings, expandedBytes };
 }
 
 function sheetNumber(name: string): number {
   return Number(/sheet(\d+)\.xml$/.exec(name)?.[1] || 0);
 }
 
-export async function readSharedStrings(zip: JSZip): Promise<string[]> {
-  const file = zip.file('xl/sharedStrings.xml');
-  if (!file) return [];
-  const parsed = xml.parse(await file.async('string')) as Record<string, any>;
-  const list = parsed?.sst?.si;
-  if (!list) return [];
-  return (Array.isArray(list) ? list : [list]).map((entry: any) => {
-    const text = entry?.t;
-    if (typeof text === 'string') return decodeXml(text);
-    // fast-xml-parser turns <t>3</t> into the number 3.
-    if (typeof text === 'number') return String(text);
-    if (text && typeof text === 'object' && '#text' in text) return decodeXml(String(text['#text']));
-    if (entry?.r) {
-      const runs = Array.isArray(entry.r) ? entry.r : [entry.r];
-      return runs.map((run: any) => decodeXml(String(run?.t?.['#text'] ?? run?.t ?? ''))).join('');
+/**
+ * Decode the XML entities fast-xml-parser would have decoded, in one pass.
+ *
+ * Single pass matters: `&amp;lt;` must become `&lt;`, not `<`. Only this file's
+ * `decodeXml` (five named entities, no numeric references) ran afterwards, so
+ * both steps are reproduced here and the result matches what the previous
+ * tree-based reader produced.
+ */
+function decodeEntitiesOnce(value: string): string {
+  // Only the five named entities: `fast-xml-parser` left numeric references
+  // (`&#65;`) alone, and pinning that keeps the output identical.
+  return value.replace(/&(lt|gt|quot|apos|amp);/g, (_whole, name: string) => {
+    switch (name) {
+      case 'lt': return '<';
+      case 'gt': return '>';
+      case 'quot': return '"';
+      case 'apos': return "'";
+      default: return '&';
     }
-    return '';
   });
+}
+
+/** One `<t>` element's text, decoded the way the previous reader decoded it. */
+function textOfTag(body: string): string {
+  const inner = body.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+  // Markup is stripped before entities are decoded, so text that legitimately
+  // reads `<b>` (written `&lt;b&gt;`) survives.
+  return decodeXml(decodeEntitiesOnce(withoutMarkup(inner)));
+}
+
+/**
+ * Read a shared-string table without building an object tree.
+ *
+ * `fast-xml-parser` produced one object per string: a 19 MB table became a
+ * **544 MB** heap tree (measured, see docs/audit/VERIFICATION-AUDIT.md session
+ * 17), which is what drove the ~1 GB peak for an Excel upload. The table is
+ * simple — a list of `<si>` entries, each either a direct `<t>` or a set of
+ * `<r>` runs — so it is read directly and the expanded XML text is released as
+ * soon as the strings have been extracted.
+ *
+ * The output is pinned to the old behaviour by a parity test in
+ * tests/question-extract.test.ts that parses the same fixtures with
+ * `fast-xml-parser`. Four deliberate differences, all of them cases where the
+ * old reader lost or altered text, none of which can change a well-formed
+ * question:
+ *
+ *   - a number-like string keeps its digits: "007" stays "007" (it became "7");
+ *   - "true"/"false"/"null" are kept as text (they were dropped entirely, because
+ *     the parser turned them into booleans and the old code had no branch for one);
+ *   - a malformed nested `<t>a<t>b</t>c</t>` reads "abc" (it read "ac");
+ *   - a table that consists of a single self-closing `<si/>` yields one empty
+ *     string rather than none — the sheet reader maps both to the same ''.
+ */
+export function parseSharedStringsXml(text: string): string[] {
+  const values: string[] = [];
+  let cursor = 0;
+  for (;;) {
+    const span = nextElement(text, cursor, 'si');
+    if (!span) return values;
+    // A self-closing entry still occupies its index: dropping it would shift
+    // every later cell reference onto the wrong string.
+    values.push(span.innerStart === span.innerEnd && text[span.open + 3] === '/'
+      ? ''
+      : entryText(text.slice(span.innerStart, span.innerEnd)));
+    cursor = span.end;
+  }
+}
+
+/**
+ * The text of one `<si>` entry.
+ *
+ * A direct `<t>` wins over rich-text runs (what the tree reader did); phonetic
+ * runs (`rPh`) are pronunciation hints and are ignored. Scanned once, so a
+ * malformed entry cannot make the scan restart.
+ */
+function entryText(body: string): string {
+  let direct: string | null = null;
+  const runs: string[] = [];
+  let cursor = 0;
+  while (cursor < body.length) {
+    const tagStart = body.indexOf('<', cursor);
+    if (tagStart === -1) break;
+    const name = body.startsWith('<rPh', tagStart) && atTagBoundary(body, tagStart + 4) ? 'rPh'
+      : body.startsWith('<r', tagStart) && atTagBoundary(body, tagStart + 2) ? 'r'
+        : body.startsWith('<t', tagStart) && atTagBoundary(body, tagStart + 2) ? 't'
+          : '';
+    if (!name) {
+      const gt = body.indexOf('>', tagStart);
+      cursor = gt === -1 ? body.length : gt + 1;
+      continue;
+    }
+    const span = nextElement(body, tagStart, name);
+    if (!span) break;
+    if (name === 'rPh') {
+      cursor = span.end;
+      continue;
+    }
+    if (name === 'r') {
+      const [first] = elementInners(body.slice(span.innerStart, span.innerEnd), 't');
+      if (first !== undefined) runs.push(textOfTag(first));
+      cursor = span.end;
+      continue;
+    }
+    if (direct === null) direct = textOfTag(body.slice(span.innerStart, span.innerEnd));
+    cursor = span.end;
+  }
+  return direct ?? runs.join('');
+}
+
+/** The shared-string table, with the bytes it cost, so a caller can charge them. */
+async function readSharedStringsWithSize(zip: JSZip, limit: number): Promise<{ values: string[]; bytes: number }> {
+  const file = zip.file('xl/sharedStrings.xml');
+  if (!file) return { values: [], bytes: 0 };
+  const bytes = await readZipEntryBounded(file, limit).catch((error: unknown) => {
+    if (error instanceof ExtractionError && error.code === 'too_large') throw error;
+    throw new ExtractionError('corrupt', 'The shared strings table could not be read. It may be damaged or encrypted.');
+  });
+  return { values: parseSharedStringsXml(bytes.toString('utf8')), bytes: bytes.length };
+}
+
+export async function readSharedStrings(zip: JSZip, limit: number = MAX_ZIP_ENTRY_BYTES): Promise<string[]> {
+  return (await readSharedStringsWithSize(zip, limit)).values;
 }
 
 function columnIndex(reference: string): number {
@@ -275,14 +525,19 @@ function columnIndex(reference: string): number {
 
 export function readSheetRows(sheetXml: string, sharedStrings: string[]): string[][] {
   const rows: string[][] = [];
-  for (const row of sheetXml.matchAll(/<row(?:\s[^>]*)?>([\s\S]*?)<\/row>/g)) {
+  for (const rowInner of elementInners(sheetXml, 'row')) {
     const cells: string[] = [];
-    for (const cell of row[1].matchAll(/<c\s+([^>]*)>([\s\S]*?)<\/c>/g)) {
-      const attrs = cell[1];
+    let cellCursor = 0;
+    for (;;) {
+      const cell = nextElement(rowInner, cellCursor, 'c', true);
+      if (!cell) break;
+      cellCursor = cell.end;
+      const attrs = rowInner.slice(cell.open + 2, rowInner.indexOf('>', cell.open));
+      const cellInner = rowInner.slice(cell.innerStart, cell.innerEnd);
       const reference = /r="([A-Z]+\d+)"/.exec(attrs)?.[1] || 'A1';
       const type = /t="([^"]+)"/.exec(attrs)?.[1] || '';
-      const raw = /<v>([\s\S]*?)<\/v>/.exec(cell[2])?.[1]
-        ?? /<is>[\s\S]*?<t(?:\s[^>]*)?>([\s\S]*?)<\/t>[\s\S]*?<\/is>/.exec(cell[2])?.[1]
+      const raw = /<v>([\s\S]*?)<\/v>/.exec(cellInner)?.[1]
+        ?? /<is>[\s\S]*?<t(?:\s[^>]*)?>([\s\S]*?)<\/t>[\s\S]*?<\/is>/.exec(cellInner)?.[1]
         ?? '';
       let value = decodeXml(raw);
       if (type === 's') value = sharedStrings[Number(raw)] ?? '';
@@ -305,10 +560,244 @@ async function loadZip(buffer: Buffer, label: string): Promise<JSZip> {
 }
 
 // ---------------------------------------------------------------------------
+// Bounded entry reads
+//
+// A ZIP is a claim, not a fact. An entry can declare 200 bytes and expand to
+// gigabytes (the deflate format allows ~1032:1), so the declared size in the
+// central directory is only ever used as a cheap early signal — never as the
+// limit itself. Reading an entry with `entry.async()` and then measuring the
+// result enforces the limit *after* the allocation has already happened, which
+// is the wrong side of the check.
+//
+// Two mechanisms enforce it during decompression instead:
+//
+//   1. the primary path decompresses with `zlib.inflateRawSync(...,
+//      { maxOutputLength })`, which aborts inside zlib the moment the output
+//      would pass the budget (ERR_BUFFER_TOO_LARGE) — the allocation never
+//      exceeds the limit by more than zlib's internal buffer;
+//   2. the fallback path (used if a future JSZip changes its internals) reads
+//      through JSZip's own chunked stream and pauses the decompressor as soon as
+//      the running count passes the budget. That overshoots by at most one
+//      16 KiB input block (~17 MB at the format's maximum ratio) rather than by
+//      the size of the entry, and it is bounded rather than unbounded.
+//
+// Both paths are driven by a byte budget computed by the caller: the smaller of
+// the per-file limit and whatever is left of the archive-wide total, so the
+// aggregate limit is enforced entry by entry rather than after the fact.
+// ---------------------------------------------------------------------------
+
+/** The parts of JSZip's internal compressed-entry record this file relies on. */
+interface ZipEntryData {
+  compression?: { magic?: string };
+  compressedContent?: Promise<unknown>;
+  compressedSize?: number;
+  uncompressedSize?: number;
+}
+
+// JSZip identifies a compression method by the two-byte magic string it writes
+// into the archive, not by the numeric method id. Reading it as a number silently
+// never matches, which would send every entry down the coarser fallback path -
+// so these literals are exercised by tests/zip-bounds.test.ts.
+const ZIP_MAGIC_STORE = '\x00\x00';
+const ZIP_MAGIC_DEFLATE = '\x08\x00';
+
+/** The stream helper surface used by the fallback reader. */
+interface ZipStreamHelper {
+  on: (event: 'data' | 'end' | 'error', handler: (chunk?: Uint8Array) => void) => ZipStreamHelper;
+  resume: () => ZipStreamHelper;
+  pause: () => ZipStreamHelper;
+}
+
+function tooLarge(): ExtractionError {
+  return new ExtractionError('too_large', ZIP_TOO_LARGE_MESSAGE);
+}
+
+function unreadableEntry(): ExtractionError {
+  return new ExtractionError('corrupt', 'This file could not be decompressed. It may be damaged or encrypted.');
+}
+
+/** Inflate raw deflate output, refusing to allocate more than `limit` bytes. */
+function inflateBounded(compressed: Buffer, limit: number): Buffer {
+  try {
+    return inflateRawSync(compressed, { maxOutputLength: limit });
+  } catch (error) {
+    // zlib refuses to grow the output buffer past the ceiling it was given. Any
+    // other failure means the stream itself is not valid deflate.
+    if ((error as NodeJS.ErrnoException)?.code === 'ERR_BUFFER_TOO_LARGE') throw tooLarge();
+    throw unreadableEntry();
+  }
+}
+
+/**
+ * Read one entry through JSZip's chunked stream, pausing the decompressor the
+ * moment the byte count passes the budget. Used only when the primary path
+ * cannot see the compressed bytes.
+ */
+function streamEntryBounded(entry: JSZip.JSZipObject, limit: number): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const helper = (entry as unknown as { internalStream: (type: string) => ZipStreamHelper })
+      .internalStream('uint8array');
+    const chunks: Buffer[] = [];
+    let total = 0;
+    let settled = false;
+
+    const settle = (finish: () => void) => {
+      if (settled) return;
+      settled = true;
+      // Stop the worker chain rather than letting it run on for a reader that
+      // has already given up. `pause` propagates to the source worker, so no
+      // further input is fed to the inflater.
+      try { helper.pause(); } catch { /* already stopped */ }
+      finish();
+    };
+
+    helper
+      .on('data', (chunk?: Uint8Array) => {
+        if (settled || !chunk) return;
+        total += chunk.length;
+        if (total > limit) {
+          settle(() => reject(tooLarge()));
+          return;
+        }
+        chunks.push(Buffer.from(chunk));
+      })
+      .on('error', () => settle(() => reject(unreadableEntry())))
+      .on('end', () => settle(() => resolve(Buffer.concat(chunks))));
+
+    helper.resume();
+  });
+}
+
+/**
+ * Read one entry, holding at most `limit` decompressed bytes.
+ *
+ * Throws `too_large` when the entry expands past the budget and `corrupt` when
+ * the entry cannot be decompressed at all. Callers treat the first as fatal for
+ * the whole archive and the second as a per-file warning.
+ */
+export async function readZipEntryBounded(entry: JSZip.JSZipObject, limit: number): Promise<Buffer> {
+  if (!Number.isFinite(limit) || limit <= 0) throw tooLarge();
+
+  const data = (entry as unknown as { _data?: ZipEntryData })._data;
+  const method = data?.compression?.magic;
+
+  if (data?.compressedContent && (method === ZIP_MAGIC_STORE || method === ZIP_MAGIC_DEFLATE)) {
+    // The compressed bytes are a slice of the upload, which the route already
+    // capped at 20 MB, so materialising them allocates nothing new. What must be
+    // bounded is the expansion, and that is where the limit is applied.
+    const stored = await data.compressedContent;
+    const compressed = Buffer.isBuffer(stored) ? stored : Buffer.from(stored as Uint8Array);
+    if (method === ZIP_MAGIC_STORE) {
+      if (compressed.length > limit) throw tooLarge();
+      return compressed;
+    }
+    return inflateBounded(compressed, limit);
+  }
+
+  // Unknown container internals: still bounded, by the streaming counter.
+  return streamEntryBounded(entry, limit);
+}
+
+/**
+ * Read one entry as text, bounded by the same per-file ceiling as a ZIP entry.
+ *
+ * A .docx and a .xlsx are ZIP containers too, so the expansion limit cannot stop
+ * at `.zip` uploads: an upload that is 20 MB on the wire (the route's cap) can
+ * hold a `word/document.xml` that inflates to gigabytes. These parts go through
+ * the same bounded reader as archive entries.
+ */
+async function readEntryText(entry: JSZip.JSZipObject, what: string, limit: number = MAX_ZIP_ENTRY_BYTES): Promise<string> {
+  try {
+    const bytes = await readZipEntryBounded(entry, limit);
+    return bytes.toString('utf8');
+  } catch (error) {
+    if (error instanceof ExtractionError && error.code === 'too_large') throw error;
+    throw new ExtractionError('corrupt', `The ${what} could not be read. It may be damaged or encrypted.`);
+  }
+}
+
+/** One entry's outcome, so a caller can warn about a single bad file. */
+export type ArchiveEntryRead =
+  | { name: string; ok: true; bytes: Buffer }
+  | { name: string; ok: false; reason: string };
+
+export interface ArchiveLimits {
+  /** Ceiling for one decompressed entry. */
+  maxEntryBytes: number;
+  /** Ceiling for the decompressed entries of one archive, summed as they are read. */
+  maxTotalBytes: number;
+}
+
+/**
+ * Hand the event loop a turn.
+ *
+ * Everything in this file except the property reads is synchronous CPU: zlib's
+ * inflate cannot be interrupted. `await` on an already-resolved promise only
+ * drains the microtask queue, which does *not* let pending I/O run - so without
+ * this, reading a 60-entry archive holds the loop for the whole expansion
+ * (~61 ms measured for the 76 MB the limits allow). Yielding between entries
+ * bounds the contiguous stall to one entry's inflation (20 MB is ~23 ms
+ * measured) and lets health checks and other users' requests through in between.
+ *
+ * This does not make a single entry non-blocking: interrupting it needs a worker
+ * thread. See docs/audit/VERIFICATION-AUDIT.md, session 15, for that trade-off.
+ */
+function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+/**
+ * Read every entry under a per-entry ceiling *and* an archive-wide ceiling.
+ *
+ * The aggregate budget is handed to each read as its own ceiling (the per-entry
+ * limit or whatever remains of the total, whichever is smaller), so the total
+ * cannot be exceeded even by an archive whose files are each individually legal.
+ * Exceeding either limit throws `too_large` and stops the whole read — there is
+ * no partial result for the caller to import by mistake.
+ */
+export async function readArchiveEntries(
+  entries: JSZip.JSZipObject[],
+  limits: ArchiveLimits = { maxEntryBytes: MAX_ZIP_ENTRY_BYTES, maxTotalBytes: MAX_ZIP_UNCOMPRESSED_BYTES },
+): Promise<ArchiveEntryRead[]> {
+  const results: ArchiveEntryRead[] = [];
+  let total = 0;
+  for (const entry of entries) {
+    const remaining = limits.maxTotalBytes - total;
+    const budget = Math.min(limits.maxEntryBytes, remaining);
+    if (budget <= 0) throw tooLarge();
+    let bytes: Buffer;
+    try {
+      bytes = await readZipEntryBounded(entry, budget);
+    } catch (error) {
+      // A size violation is about the archive, so it is fatal; an unreadable
+      // file is about that file, so the rest of the archive is still read.
+      if (error instanceof ExtractionError && error.code === 'too_large') throw error;
+      results.push({
+        name: entry.name,
+        ok: false,
+        reason: error instanceof ExtractionError ? error.message : 'could not be read.',
+      });
+      continue;
+    }
+    // The read was capped at `budget`, so `total` can never pass the ceiling;
+    // the accounting here only advances the running total.
+    total += bytes.byteLength;
+    results.push({ name: entry.name, ok: true, bytes });
+    // Give the event loop a turn before inflating the next entry.
+    await yieldToEventLoop();
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
 // ZIP archives
 // ---------------------------------------------------------------------------
 
-async function extractZip(buffer: Buffer): Promise<Extraction> {
+async function extractZip(buffer: Buffer, limits?: Partial<ArchiveLimits>): Promise<Extraction> {
+  const archive: ArchiveLimits = {
+    maxEntryBytes: Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, MAX_ZIP_ENTRY_BYTES),
+    maxTotalBytes: Math.min(limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES, MAX_ZIP_UNCOMPRESSED_BYTES),
+  };
   const zip = await loadZip(buffer, 'ZIP archive');
   const entries = Object.values(zip.files).filter((file) => !file.dir && !file.name.startsWith('__MACOSX/'));
   if (entries.length > MAX_ZIP_ENTRIES) {
@@ -321,36 +810,59 @@ async function extractZip(buffer: Buffer): Promise<Extraction> {
     throw new ExtractionError('unsupported', 'The archive contains no supported files. Add PDF, Word, Excel, CSV, JSON or text files.');
   }
 
-  let totalBytes = 0;
   const items: ExtractedItem[] = [];
   const warnings: string[] = [];
   const skipped = entries.filter((file) => !isSupportedUpload(file.name)).map((file) => file.name);
   if (skipped.length) {
     warnings.push(`Skipped ${skipped.length} unsupported file${skipped.length === 1 ? '' : 's'}: ${skipped.slice(0, 5).join(', ')}${skipped.length > 5 ? '…' : ''}`);
   }
-  for (const entry of supported) {
-    const bytes = await entry.async('uint8array');
-    totalBytes += bytes.byteLength;
-    if (bytes.byteLength > 20 * 1024 * 1024 || totalBytes > MAX_ZIP_UNCOMPRESSED_BYTES) {
-      throw new ExtractionError('too_large', 'The archive expands beyond the 20 MB file / 80 MB total limit. Split it into smaller uploads.');
-    }
-    if (extensionOf(entry.name) === '.zip') {
-      throw new ExtractionError('unsupported', 'Nested ZIP archives are not supported. Upload the inner files directly.');
+  // Nested archives are refused before any decompression is spent on them.
+  if (supported.some((entry) => extensionOf(entry.name) === '.zip')) {
+    throw new ExtractionError('unsupported', 'Nested ZIP archives are not supported. Upload the inner files directly.');
+  }
+
+  // Every entry is read under both ceilings: the per-file one and what is left
+  // of the archive-wide one. A size violation throws out of here (nothing is
+  // imported); an unreadable file becomes a warning so the rest of the archive
+  // is still reviewed.
+  const reads = await readArchiveEntries(supported, archive);
+
+  // The entries above were measured in their *compressed form*. A .docx or
+  // .xlsx entry is itself a compressed container, so parsing it expands more
+  // bytes that the archive-wide ceiling must also cover — otherwise a 4 KB
+  // archive of tiny Word files can expand without limit. `remaining` is what is
+  // left of the archive budget, and each nested extraction draws from it.
+  let remaining = archive.maxTotalBytes - reads.reduce((total, read) => total + (read.ok ? read.bytes.length : 0), 0);
+
+  for (const read of reads) {
+    if (read.ok === false) {
+      warnings.push(`${read.name}: ${read.reason}`);
+      continue;
     }
     let nested: Extraction;
     try {
-      nested = await extractQuestions(Buffer.from(bytes), entry.name);
+      if (remaining <= 0) throw tooLarge();
+      nested = await extractQuestions(read.bytes, read.name, {
+        maxEntryBytes: Math.min(archive.maxEntryBytes, remaining),
+        maxTotalBytes: remaining,
+      });
     } catch (error) {
-      // One unreadable file must not discard the rest of the archive. The
-      // reason is kept per entry so the reviewer knows what was skipped.
-      warnings.push(`${entry.name}: ${error instanceof ExtractionError ? error.message : 'could not be read.'}`);
+      // A size violation is about the archive as a whole, exactly as it is for
+      // the outer entries: it stops the import rather than being skipped. Any
+      // other failure is about one file, so the rest of the archive is kept.
+      if (error instanceof ExtractionError && error.code === 'too_large') throw tooLarge();
+      warnings.push(`${read.name}: ${error instanceof ExtractionError ? error.message : 'could not be read.'}`);
       continue;
     }
+    remaining -= nested.expandedBytes ?? 0;
+    // A nested container that could not fit its parts in `remaining` would have
+    // thrown; this is the belt-and-braces check that the sum stays honest.
+    if (remaining < 0) throw tooLarge();
     if (!nested.items.length) {
-      warnings.push(`${entry.name}: no questions were recognised.`);
+      warnings.push(`${read.name}: no questions were recognised.`);
       continue;
     }
-    warnings.push(`${entry.name}: ${nested.items.length} question${nested.items.length === 1 ? '' : 's'}.`);
+    warnings.push(`${read.name}: ${nested.items.length} question${nested.items.length === 1 ? '' : 's'}.`);
     for (const item of nested.items) items.push({ ...item, sourceIndex: items.length + 1 });
   }
   if (!items.length) {

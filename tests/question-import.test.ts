@@ -299,7 +299,9 @@ test('only the failure path is retryable, and it keeps the same import row', asy
 });
 
 test('the attempt cap stops automatic retries from looping forever', async () => {
-  const importId = await createImport({ checksum: hash('9') });
+  // A checksum that cannot collide with the other cases in this file.
+  const uniqueChecksum = Array.from({ length: 64 }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
+  const importId = await createImport({ checksum: uniqueChecksum });
   for (let attempt = 1; attempt <= 5; attempt += 1) {
     assert.equal((await claim(importId))?.attempts, attempt);
     await db.query('select public.fail_question_import($1, $2)', [importId, 'Extraction failed.']);
@@ -317,4 +319,41 @@ test('the audit trail ties saved questions to the imported paper', async () => {
   );
   assert.equal(rows[0].exam_title, examTitle);
   assert.equal(rows[0].n, 4);
+});
+
+test('an extraction that fails on size leaves no staged rows and no bank rows', async () => {
+  // The archive budget aborts the whole extraction (see tests/zip-bounds.test.ts:
+  // a nested `too_large` is fatal, not a per-file warning). This is the database
+  // half of that promise: the import must end up failed with nothing staged, and
+  // the student-facing bank must be exactly as it was. A partial paper that looks
+  // complete is the failure mode being ruled out.
+  const before = await db.query<{ n: number }>(
+    'select count(*)::int as n from public.exam_questions where exam_id = $1',
+    [examId],
+  );
+  const importId = await createImport({ checksum: hash('9') });
+  await claim(importId);
+  await db.query('select public.fail_question_import($1, $2)', [
+    importId,
+    'The archive expands beyond the 20 MB file / 80 MB total limit. Split it into smaller uploads.',
+  ]);
+
+  const { rows: importRow } = await db.query<{ status: string; item_count: number }>(
+    'select status, item_count from public.question_imports where id = $1',
+    [importId],
+  );
+  assert.equal(importRow[0].status, 'failed');
+  assert.equal(importRow[0].item_count, 0);
+
+  const { rows: staged } = await db.query<{ n: number }>(
+    'select count(*)::int as n from public.question_import_items where import_id = $1',
+    [importId],
+  );
+  assert.equal(staged[0].n, 0, 'a failed extraction must stage nothing');
+
+  const after = await db.query<{ n: number }>(
+    'select count(*)::int as n from public.exam_questions where exam_id = $1',
+    [examId],
+  );
+  assert.equal(after.rows[0].n, before.rows[0].n, 'a failed extraction must not add or remove bank questions');
 });

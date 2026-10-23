@@ -20,6 +20,33 @@
 
 The remote ledger records the creation migration and the opportunity migration under later version numbers than the timestamps in their local filenames. It also records `remove_legacy_client_policies_from_academic_catalogue` at `20261004202746`, but no file with that exact version exists in the repository snapshot inspected.
 
+## Enforced in the validation script (2026-10-22)
+
+The comparison is no longer uniform, because a shared legacy version cannot
+identify a single file. Check 8 of `supabase/ci/production-validation.sql` now
+returns three verdicts, and the generated checklist carries a `kind` column that
+selects the rule (`scripts/migration-checklist.ts`):
+
+| Kind | Files | Rule |
+|---|---|---|
+| `unique` | 60 | Ledger row with this version, or with a matching name (the ledger recorded several under a later timestamp). |
+| `shared` | 13 — five of the six `20260903` files, five on `20260919`, three on `20260920` | **Name only.** A version match is never evidence: one ledger row would otherwise vouch for every file on that date. |
+| `unresolved` | 1 — `20260903_production_security_hardening.sql` | Reported `unresolved` until a ledger row for that file exists. Never `pass`; never a confident `fail`. |
+
+The five `20260903` files with a documented remote version
+(`20260903191649`, `20260903191619`, `20260903192620`, `20260903191723`,
+`20260903192713`) are matched by name, exactly as the CSV records them.
+
+`20260903_production_security_hardening.sql` remains **unresolved**: the CSV
+classifies it `legacy-filename-unmapped`, and the similarly named ledger entry
+`20260903191133 / production_security_contract_hardening` is not the same file.
+Settling it needs the comparison described in rule 3 of this document, on a
+disposable branch — not a guess made here. Until then the validation script says
+so out loud instead of reporting a pass.
+
+Editing the ledger is still forbidden (rule 1). These verdicts read the ledger;
+they never write to it.
+
 ## Rules
 
 1. **Do not directly edit** `supabase_migrations.schema_migrations`, delete ledger rows, reset production, or run `supabase migration repair` as a shortcut.

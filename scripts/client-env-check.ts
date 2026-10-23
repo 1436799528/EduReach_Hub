@@ -14,7 +14,15 @@
  * build, a test run and a Netlify deploy preview all warn loudly and continue —
  * they legitimately build without production credentials, and a guard that
  * breaks them would be removed within a week.
+ *
+ * The check reads `.env` (like the other operator scripts, and like `vite build`
+ * itself, which loads it from the project root). Reading only `process.env` made
+ * the guard disagree with the bundler it guards: on a machine with a complete
+ * `.env`, `npm run build` printed "Missing: VITE_SUPABASE_URL, …" and, under
+ * `CONTEXT=production`, refused to build a correctly configured checkout. A
+ * real variable already in the environment still wins - dotenv never overwrites.
  */
+import 'dotenv/config';
 
 /** Vite inlines only `VITE_`-prefixed variables into the browser bundle. */
 export const CLIENT_VARS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'] as const;

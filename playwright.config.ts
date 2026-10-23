@@ -17,8 +17,13 @@ export default defineConfig({
     } : {},
   },
   projects: [
-    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+    { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /perf\.spec\.ts/ },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] }, testIgnore: /perf\.spec\.ts/ },
+    // The throttled performance profile is measured on its own (`npm run e2e:perf`,
+    // which pins one worker). Running it beside the functional suite measured the
+    // runner rather than the page: the same landing route reported 1.7 s alone and
+    // 3.5 s while other 4×-throttled pages competed for the cores.
+    { name: 'mobile-perf', use: { ...devices['Pixel 7'] }, testMatch: /perf\.spec\.ts/ },
   ],
   webServer: {
     command: 'npm start',

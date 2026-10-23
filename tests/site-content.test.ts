@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
@@ -23,7 +23,12 @@ import { containsUnsafeMarkup, validatePageInput, validateSettings } from '../sr
 //      boundary, and a failed API leaves the footer rendered.
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (path: string): string => readFileSync(join(root, path), 'utf8');
+// Source-scanning assertions are anchored on `\n` in a few places (the capability
+// list, for one). Normalise line endings here, at the single read point, so the
+// checks describe the code rather than the checkout: a Windows clone with
+// `core.autocrlf=true` used to fail test 15 while the code was correct.
+const read = (path: string): string =>
+  readFileSync(join(root, path), 'utf8').replace(/\r\n?/g, '\n');
 
 let db: PGlite;
 
@@ -245,7 +250,21 @@ test('the site content API is public for reading and capability-gated for writin
   assert.match(server, /status\(503\)/, 'a database outage is a 503, not a reassuring 200');
 
   const caps = read('src/lib/capabilities.ts');
-  assert.match(caps, /'site\.read',\n\s+'site\.update',/, 'the capabilities are declared');
+  // Both capabilities must still be declared, in two places that mean different
+  // things: the vocabulary (the type the API is typed against) and the content
+  // editor's grant list (without it the CMS is unreachable for the role meant to
+  // use it). Checking the whole file would pass on the editor grant alone, so
+  // each region is searched on its own. Line breaks and one explanatory comment
+  // between the entries are tolerated; a missing entry is not.
+  const vocabulary = caps.slice(0, caps.indexOf('] as const'));
+  assert.match(
+    vocabulary,
+    /'site\.read',\s*(?:\/\/[^\n]*\n\s*)?'site\.update',/,
+    'the capabilities are declared in the vocabulary',
+  );
+  const editorGrants = caps.slice(caps.indexOf('CONTENT_EDITOR'), caps.indexOf('SERVICE_ADMIN_CAPABILITIES'));
+  assert.match(editorGrants, /'site\.read'/, 'a content editor can read the site copy');
+  assert.match(editorGrants, /'site\.update'/, 'a content editor can maintain the site copy');
   assert.match(caps, /\{ path: '\/admin\/site', capability: 'site\.read' \}/, 'the console route is mapped');
 });
 
@@ -304,4 +323,34 @@ test('a policy page never spins forever when the API is unreachable', () => {
   assert.match(page, /Reload the page/, 'with a way to retry');
   assert.match(page, /href="\/contact"/, 'and a way to reach a person');
   assert.doesNotMatch(page, /If it does not appear, check your connection and reload\.<\/p>\s*\)\}/, 'the eternal-loading copy is scoped to loading only');
+});
+
+test('no client surface derives a role from user_metadata', () => {
+  // ROLE-1, generalised. `user_metadata` is writable by the account holder
+  // through the public auth API, so a role read from it is a role the user
+  // granted themselves. The console shell and the server were already clean; the
+  // student dashboard still fell back to it for its own Admin Console link and
+  // role label. Scan every shipped client file rather than listing the two that
+  // were known, so a new surface cannot reintroduce the pattern.
+  const roots = ['src', 'pages', 'components', 'lib'];
+  const walk = (dir: string): string[] => {
+    const entries = readdirSync(join(root, dir), { withFileTypes: true });
+    return entries.flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return walk(path);
+      return /\.(ts|tsx)$/.test(entry.name) ? [path] : [];
+    });
+  };
+
+  const offenders = roots
+    .filter((dir) => existsSync(join(root, dir)))
+    .flatMap(walk)
+    .filter((path) => /user_metadata\s*(\?\.|\.)\s*role/.test(read(path)));
+
+  assert.deepEqual(offenders, [], 'a role must come from profiles.role, never from user-writable metadata');
+
+  // The positive half: the dashboard still labels staff from the profile row.
+  const dashboard = read('pages/StudentDashboardV2.tsx');
+  assert.match(dashboard, /profileResult\.data\?\.role/, 'the dashboard reads the profile role');
+  assert.match(dashboard, /app_metadata\?\.role/, 'the admin-only app_metadata fallback is kept');
 });

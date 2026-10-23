@@ -26,6 +26,10 @@
  * passing** — a check that could not run is `skipped`, with the reason, and the exit
  * code distinguishes "failed" from "not yet verified".
  */
+// `.env` is loaded here as well as in the server: an operator who follows
+// `.env.production.example` and writes the values into `.env` must see them
+// used by the validator, not a misleading "NOT SET". No value is ever printed.
+import 'dotenv/config';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getServerSupabaseKey } from '../lib/supabase-config';
 import { describeEnv, evaluateEnv } from '../src/lib/envContract';
@@ -235,11 +239,21 @@ async function main(): Promise<void> {
   const key = getServerSupabaseKey();
 
   if (!url || !key) {
+    // Say which of the two is actually missing. A key that is present but not a
+    // usable server secret reaches this branch too (getServerSupabaseKey rejects
+    // publishable/anon keys), and reporting that as "no key" sends an operator to
+    // look for the wrong problem.
+    const missing: string[] = [];
+    if (!url) missing.push('VITE_SUPABASE_URL');
+    if (!key) {
+      const present = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY);
+      missing.push(present ? 'a usable server secret key (one is set but it is not a service-role/secret key)' : 'SUPABASE_SERVICE_ROLE_KEY');
+    }
     checks.push({
       group: 'connectivity',
       name: 'live validation against the Supabase project',
       state: 'skipped',
-      detail: 'no SUPABASE_URL/VITE_SUPABASE_URL and no service-role key in this environment',
+      detail: `not run — missing: ${missing.join(', ')}`,
     });
   } else {
     const supabase: SupabaseClient = createClient(url, key, { auth: { persistSession: false } });
@@ -295,7 +309,8 @@ async function main(): Promise<void> {
         `information_schema). Run this read-only script in the Supabase SQL editor:\n\n` +
         `  ${SQL_ARTIFACT}\n\n` +
         `It covers RLS enablement, policy counts, function grants to client roles and\n` +
-        `the migration history, and prints pass/fail per check.`,
+        `the migration history, and prints pass/fail/unresolved per check. A row that\n` +
+        `says "unresolved" means the ledger cannot settle it: not verified, not failed.`,
     );
   } else {
     console.log(JSON.stringify({ checks, sqlArtifact: SQL_ARTIFACT }, null, 2));

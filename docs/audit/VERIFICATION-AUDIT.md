@@ -104,3 +104,1026 @@ Owner decision: guides must be manageable from the Admin Dashboard instead of co
 
 ## Session 7 — Merge, Supabase sync and security tightening (2026-10-21)
 Secret-exposure sweep before merging: no JWTs, service-role keys or hardcoded credentials in source, `public/`, the built bundle or tracked env files (only `.env.example`/`.env.production.example` placeholders are tracked; `.env*` is gitignored). The server already validates that its key is a real service-role key (`lib/supabase-config.ts`) and the browser only ever receives publishable/anon keys. Added defence in depth: the browser client (`src/lib/supabase.ts`) now inspects the JWT role claim and refuses a service-role key outright, falling through to the unconfigured state — the key is never logged. Removed verifiably dead `.pin-vault`/`.pin-code` CSS (no TSX references) to keep the perf gate green without raising the critical-path budget.
+
+## Session 8 — Remaining release issues (2026-10-22)
+
+Branch `arena/069ae800-edureach-hub` @ `f8ec28f`, working tree clean at start. No
+production access, no migration applied, no deployment. Each item below states
+what was verified and what was not.
+
+### 1. Mobile LCP
+
+Reproduced instead of re-read: a Chromium build was made usable in this
+environment (the sandbox has no browser download CDN, so a local Chromium binary
+was paired with its own shared libraries and pointed at via the
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` the config already supported), the app was
+built and served with `npm start`, and `tests/e2e/perf.spec.ts` measured the Pixel
+7 profile. All three routes were over, not just two: `/` 5 384 ms, `/news`
+5 260 ms, `/past-questions` 6 496 ms, 863–896 KB transferred.
+
+Cause: the Express server applied cache and security headers but **no
+compression**, so the entry chunk (337 KB), the render-blocking stylesheet
+(292 KB) and the Supabase chunk (216 KB) arrived at full size on a 1.6 Mbps
+link. Netlify compresses the hosted build, which is why the production site did
+not show it; self-hosted (`Dockerfile` → `npm start`) and the measurement both
+paid it in full. Fix: `app.use(compression({ threshold: 1024 }))` in
+`server.ts` (brotli/gzip, `Vary: Accept-Encoding`, small JSON untouched).
+Result: LCP 1 704 / 1 660 / 2 076 ms and 221–236 KB on the same profile.
+The gate now enforces LCP ≤ 3 s and transfer ≤ 400 KB (was 8 s / 1.2 MB), asserts
+the entry script and stylesheet are compressed, and measures the three routes
+serially in a dedicated `mobile-perf` project (`npm run e2e:perf`) because
+running beside the functional suite measured the runner (3.5 s) rather than the
+page. Details: `docs/features/PERF-1.md`, "Mobile LCP investigation".
+
+### 2. Migration checklist
+
+`supabase/ci/production-validation.sql` check 8 was `count(*) >= 74` against a
+number typed into the file, and check 9 named a hand-picked list of release
+versions; a newly added migration was in neither. Check 8 now carries a generated
+list of every file in `supabase/migrations/` (74), compared to
+`supabase_migrations.schema_migrations` by version and then by prefix-stripped
+name. `npm run migrations:checklist` is a new CI stage that fails when a file is
+unlisted, when an entry has no file, when a 14-digit version is claimed twice, or
+when an entry disagrees with its file; `--write` regenerates the list. Ten tests
+in `tests/migration-checklist.test.ts` cover both directions, including running
+the SQL against a real PostgreSQL (PGlite) with a synthetic ledger: it fails when
+one migration is omitted and passes when all are present. Nothing was applied to
+any database and no ledger row was edited.
+
+### 3. Supabase live verification
+
+`npm run prod:validate` reports `VITE_SUPABASE_URL`,
+`VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` and `NODE_ENV` unset,
+skips the connectivity group, and names the SQL artefact for the checks PostgREST
+cannot run. No credentials exist here and none were requested. The full split of
+local vs. authenticated checks, the safety rules and the ordered procedure are in
+`docs/SUPABASE_LIVE_VERIFICATION.md`. No live result is claimed anywhere.
+
+### Verification run in this session
+
+`npx tsc --noEmit` 0 · `npm test` 660/660 · `npm run schema:audit` no blocking
+findings · `npm run migrations:checklist` 74/74 · `npm run rls:audit` 50/50 tables
+0 findings · `npm run a11y:audit` 0 blocking / 5 informational ·
+`npm run analytics:audit` all agree · `npm run build` 0 · `npm run perf:audit`
+10/10 · Playwright functional suite 158 passed / 2 skipped (both are the
+documented "no exam available without live content" a11y case) ·
+`npm run e2e:perf` passed on all three routes.
+
+Not run: anything against the hosted Supabase project, anything against the
+deployed site (this sandbox cannot reach either), and `npm run audit:ci` is
+network-dependent and belongs to CI. Playwright needed
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `LD_LIBRARY_PATH` locally because the
+browser download CDN is unreachable; CI installs its own browser and needs
+neither.
+
+## Session 9 — Windows verification run: three platform defects fixed (2026-10-22)
+
+The owner ran the staging checks on Windows 11 (Git Bash / MSYS2) against the
+live project. Four things failed; three were defects in this repository, not in
+the environment, and are fixed in this session. No production writes, no
+migration, no deployment.
+
+| # | Symptom | Cause | Fix |
+|---|---|---|---|
+| 1 | `npm run schema:audit` → **138 blocking findings** on Windows, `no blocking findings` on Linux | The audit's patterns anchor on `\n`; Git for Windows writes CRLF (`core.autocrlf=true`). Reproduced exactly by converting the 74 migration files to CRLF: 138 findings; restored immediately. | `scripts/schema-audit.ts` reads SQL and code through a normalising reader; `scripts/perf-audit.ts` normalises `index.html` and `public/_headers` too. `collectCodeUsage` also tolerates a missing `server.ts`. Regression test in `tests/schema.test.ts` runs a CRLF and an LF migration history through the audit and requires identical answers. |
+| 2 | `npm start` → `'NODE_ENV' is not recognized…`, and both Playwright suites failed to start their web server | `start` was the POSIX prefix `NODE_ENV=production node build/server.cjs`. | `scripts/start.mjs` sets `NODE_ENV` in Node before requiring `build/server.cjs`; works in PowerShell, cmd and bash. Docker (already `ENV NODE_ENV=production`) unchanged. |
+| 3 | `npm run analytics:retention` (no `--apply`) **called the deleting RPC** | `executeRetention` was only added later; the script called `prune_site_analytics_events()` on both paths and printed its answer as a plan. | A dry run now issues one read-only `count` query (`head: true`) and cannot reach a mutating RPC. Six tests in `tests/analytics-retention.test.ts`; the first asserts the fake client's `rpc` was never called. |
+| 4 | `npm error Missing script: "e2e:perf"` | The owner was on `main`; the script exists only on this branch. | Not a defect — switching to the branch is the fix. |
+
+**Data finding, not fixed (needs owner approval — it is a production data decision):**
+`npm run duplicate:audit` examined 1 000 questions and reported **376 exact
+duplicate groups**. Two exam rows (`d37a0c7c…` and `edef5d4f…`) hold the same ten
+"General" questions, and ten vocabulary questions repeat across three "Use of
+English" banks. The script deletes nothing; deduplicating is an editorial
+decision with a reviewed migration, not a script run.
+
+**Smaller data observations from the same report:** `news.unknown_categories: 16`
+(none of the 16 published articles uses a category label the code recognises),
+`institutions.missing_website: 328` of 329, `opportunities.active_without_deadline: 1`.
+All read-only findings; none is a release blocker.
+
+**Verified after the fixes (Linux, this sandbox):** `npx tsc --noEmit` clean ·
+`npm test` **667/667** (660 before this session + 6 retention + 1 CRLF) · `schema:audit` no blocking findings with LF **and** with CRLF ·
+`perf:audit` 10/10 (also with CRLF `_headers`) · `npm start` serves
+`/api/health` 200 and the SPA shell 200.
+
+## Session 10 — the verification ran against production (2026-10-22, continued)
+
+`npm run env:check` (added this session) reports the owner's `.env` project
+reference as `gjdfatwcoosyuhakrrhh` — the production project named in this
+repository's own audit documents. That reframes session 9's evidence:
+
+- **Safe, and now confirmed against production:** `prod:validate` (21 passed,
+  1 failed only because `NODE_ENV` was not exported), storage bucket visibility,
+  table reachability, CBT/news/opportunity data integrity, `newsroom:integrity`,
+  `duplicate:audit`, `schema:audit` after the CRLF fix, `perf:audit` 10/10.
+- **Never run against production:** account creation, password reset, CBT
+  attempts answer-saving, uploads, admin edits, `analytics:retention --apply`.
+  None was run. The manual walkthrough in the staging plan must not be run until
+  `.env` points at a staging project.
+- **One command did write-capable work by mistake:** `analytics:retention`
+  without `--apply` called `prune_site_analytics_events()` against production on
+  2026-10-22 at 10:50 and at 09:31. Both runs reported `0 row(s)` deleted, and
+  the window (90 days; cutoff 2026-07-24) is older than every row in
+  `site_analytics_events` (593 rows, all recent). No data was lost. The defect is
+  fixed in `41e3c7e` and pinned by `tests/analytics-retention.test.ts`.
+- **`NODE_ENV` must not be added to `.env`:** the dev server reads the same file,
+  so a production value there would make `npm run dev` serve the stale build.
+  Provide it per command; `npm start` sets it itself.
+
+New in this session: `npm run env:check` (`scripts/env-check.ts`,
+`tests/env-check.test.ts`, 6 tests) classifies the configured project and states
+what is safe against it, and `npm start` now explains a missing dependency
+(`npm ci`) instead of printing a bare `MODULE_NOT_FOUND` stack trace.
+
+Production data findings from the read-only run, none changed: 376 exact
+duplicate question groups (two exam rows share ten General questions; ten
+vocabulary items repeat across three Use of English banks) · 16 of 16 published
+news articles use an unrecognised category · 328 of 329 institutions have no
+website · 1 active opportunity has no deadline · 1 610 exam questions,
+7 CBT exams, 24 news rows, 329 institutions, 593 analytics events.
+
+## Session 11 — Can the Arena environment test Supabase? No (2026-10-22)
+
+The owner reported adding the Vite Supabase URL to the branch. It is not visible
+to any process in this environment: the shell (17 variables, none matching
+SUPA/VITE/SB_/ARENA), a live-preview process, a `.env` file on disk, the tracked
+tree on this branch, and the usual secret mounts all show nothing. Separately —
+and independently decisive — this sandbox cannot reach Supabase at all: github
+and npm answer 200, `*.supabase.co` and `supabase.com` answer **000** (DNS
+resolves, the connection is refused).
+
+So every live capability is **blocked**, not failed: URL/key configuration,
+client and server connectivity, database reads, sign-up/sign-in, CBT question
+loading, answer saving, uploads and role permissions. Test accounts do not exist
+and cannot be created here. The full matrix is
+`docs/SUPABASE_ENVIRONMENT_CAPABILITY.md`.
+
+What did run, and passed: `npm test` 677 (676 pass, 1 skip — the perf self-check
+that needs `dist/`, which is built later in the gate) · `schema:audit` no blocking
+findings · `migrations:checklist` 74/74 · `rls:audit` 50/50 · `a11y:audit`
+0 blocking, 5 informational · `build` · `perf:audit` 10/10 · Playwright 158
+passed / 2 skipped · `e2e:perf` passed (LCP 1 796 / 1 672 / 2 088 ms,
+221–236 KB) · `prod:validate` correctly reports `skipped` rather than `pass`.
+
+Two small honesty improvements this session:
+
+- `npm run env:check -- --probe` now also reports **network** reachability, with
+  no key attached (a 401 is the proof; no response is reported as "cannot reach
+  Supabase"). Ten tests, including one that an unreachable host is never reported
+  as configured.
+- `prod:validate` used to say "no service-role key in this environment" even when
+  a key was set but was not a service-role key. It now names the actual problem:
+  `missing: a usable server secret key (one is set but it is not a
+  service-role/secret key)`.
+
+Nothing was written to any database; no migration, deployment, email, upload or
+security setting was touched.
+
+## Session 12 — Independent audit: the two failing tests, and what they hid (2026-10-22)
+
+Baseline `1ba3a73` (matches `origin/arena/069ae800-edureach-hub`), tree clean,
+`npm ci --ignore-scripts` exit 0. No deploy, no merge, no migration, no production
+write; no secret was read or printed.
+
+### The reported failures were line endings, and only line endings
+
+An informal reading of the two failures was "the asset-cache rule and the
+capability assertion are broken". They are not. Every file in the repository (398
+of them, excluding `node_modules`/`dist`/build output) was converted to CRLF and
+the whole suite was run: **677 tests, 674 pass, 2 fail** — `tests/headers.test.ts`
+#8 and `tests/site-content.test.ts` #15, and nothing else. Both assertions were
+anchored on a literal `\n`:
+
+- `tests/headers.test.ts:115` — `/assets/*\n((?:\s{2}[^\n]+\n)+)` matched nothing on
+  a CRLF checkout, so the extracted block was `''` and the cache rule was never
+  examined.
+- `tests/site-content.test.ts:248` — `/'site\.read',\n\s+'site\.update',/`.
+
+Both tests now normalise line endings at their single read point
+(`readFileSync(...).replace(/\r\n?/g, '\n')`) and keep the same demands. Verified
+by converting the twelve files those tests read to CRLF again: **138/138 pass**.
+
+### Confirmed defects fixed
+
+| ID | Pri | Finding | Evidence | Fix |
+|---|---|---|---|---|
+| AUD-1 | P2 | `scripts/client-env-check.ts` loaded **no** `.env`, so it disagreed with the bundler it guards: a correct `.env` still printed `WARN … Missing: VITE_SUPABASE_URL, …`, and `CONTEXT=production` refused a correctly configured build (`exit 1`). Netlify was unaffected (env in the build environment); local and self-hosted production builds were. | script had zero `dotenv` references; reproduced with a temporary `.env`: `WARN … Missing` exit 0, and `CONTEXT=production` exit 1 | `import 'dotenv/config'`, like the six other operator scripts. A variable already in the environment still wins. |
+| AUD-2 | P3 | `pages/StudentDashboardV2.tsx:336` resolved a role through `app_metadata?.role \|\| user_metadata?.role`. `user_metadata` is writable by the account holder. The value only drives the dashboard's own "Admin Console" link and role label, and every admin call is authorised server-side, so this was not an authorisation bypass — but it was the one client surface still reading a self-granted role, and `pages/AdminLayout.tsx` already documents why that must not happen. | grep over `src`/`pages`/`components`/`lib` | The `app_metadata`-only fallback, matching the console shell; the profile row (`profiles.role`) still wins. |
+| AUD-3 | P3 | `tests/api.test.ts` enumerated `app._router.stack` (Express-4 internal). On Express 5 the list is empty and the entire unauthenticated-401 sweep becomes zero tests that still report green. | the enumeration had no assertion that it found anything | Reads `_router` then `router` (the Express-4 `router` getter throws, so it must stay second) and asserts three known admin routes were discovered. |
+| AUD-4 | P3 | The CSP's `connect-src` was never asserted: `https://*.supabase.co` and `wss://*.supabase.co` are two separate sources, and folding them together or dropping `wss:` would silently break Realtime with no test to notice. | `tests/headers.test.ts` checked `script-src`/`object-src`/`frame-ancestors` only | New test compares the `connect-src` source list in `server.ts` and `public/_headers`, requires both origins, and rejects any token that looks like two merged origins. |
+| AUD-5 | P3 | `tests/site-content.test.ts` #15 proved the two capability literals existed *somewhere* in `capabilities.ts`. Deleting `'site.update'` from the vocabulary still passed, because the content editor's grant list contains the same adjacent pair. | mutation: deleting the vocabulary entry left the suite green | The two regions (vocabulary, content-editor grant list) are now asserted separately. |
+
+### Verification (this branch, after the fixes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **683 tests, 683 pass, 0 fail** (677 before; +6 regression tests, and the `dist/`-dependent perf self-check now runs because `build` ran first) |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 |
+| `npm run build` | 0 | 344.80 kB / 101.51 kB gzip |
+| `npm run perf:audit` | 0 | 10/10 budgets |
+| `npm run analytics:audit` | 0 | taxonomy, call sites, server and document agree |
+| `npm run rls:audit` | 0 | 50 tables, 50 classified, 0 findings |
+| `npm run a11y:audit` | 0 | 0 blocking, 5 informational |
+| `npm run audit:ci` | 0 | 0 vulnerabilities (also `npm audit` full tree) |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | LCP 1 700 / 1 696 / 1 972 ms, 221–236 KB |
+| `npm run env:check` | 0 | "not configured" — correct for this sandbox |
+| `npm run prod:validate` | 1 | **environment, not code**: four required variables unset; the live checks are reported `skipped`, never `pass` |
+| Supabase live checks | — | **BLOCKED** — `*.supabase.co` is unreachable from this sandbox (000), no credentials are present |
+
+### Audit sweeps that found nothing new
+
+Every `/api/admin/*` route (including `src/server/siteContent.ts` and
+`src/server/question-import/routes.ts`) is capability-guarded; `verifyJWT` uses
+`auth.getUser` plus the trusted `profiles` row and fails closed; `get_cbt_result`
+still scopes on `auth.uid()`; 72 `SECURITY DEFINER` functions pin `search_path`;
+the CBT draft/submit RPCs all select the attempt by `user_id = auth.uid()`; no
+`eval`/`new Function`; `dangerouslySetInnerHTML` only through `sanitizeRichHtml`;
+uploads sniff bytes rather than trusting the declared MIME type; a build with a
+marker service-role key in the environment leaves no trace in `dist/`, while the
+publishable key is inlined as intended; `.env` is git-ignored and no secret is
+tracked.
+
+### Not changed, and why
+
+The two `StudentDashboardV2` display values, the CSP itself and the header files
+are untouched — the CSP was verified byte-identical in both places and correct,
+so there was nothing to "fix" there. Production data findings from Session 10
+(376 duplicate question groups, 16/16 news articles with an unrecognised
+category, 328/329 institutions without a website, one opportunity with no
+deadline) are content decisions, not code defects, and remain open.
+
+## Session 13 — PR #30 review, item by item (2026-10-22)
+
+Branch `arena/069ae800-edureach-hub` @ `76f9d8f` at the start (tree clean, matches
+the remote). No deployment was attempted: **Netlify deployment credits have
+expired**, so the deploy-preview status is `BLOCKED`, not "passing" and not
+"failing". No Supabase credentials exist here and `*.supabase.co` is unreachable,
+so every live check stays `BLOCKED`. No migration, production write, deploy or
+secret handling occurred.
+
+### What was re-verified rather than assumed
+
+| Area | How | Result |
+|---|---|---|
+| `.env` for local builds | temporary `.env` only → guard prints `ok`; `CONTEXT=production` → exit 0 | passes (was the AUD-1 defect) |
+| explicit env wins over `.env` | shell variable + stale `.env` → shell value used; dotenv never overwrites | passes |
+| production build fails when unconfigured | empty `.env` + `CONTEXT=production` → exit 1, names both variables | passes |
+| route discovery is not vacuous | mutation: force the layer list to `[]` → the suite fails with `route discovery missed GET /api/admin/session` | passes |
+| CSP origins | mutation: concatenate `https://*.supabase.co` + `wss://…` into one token → tests 4 and 9 fail; mutation: delete `wss://` → both fail | passes |
+| capabilities | mutation: delete `'site.update'` from the vocabulary, then from the editor grant list → test 15 fails both times | passes |
+| analytics retention | dry run issues one `head: true` count and **no** RPC (`tests/analytics-retention.test.ts` asserts `calls.rpc` is empty); only `--apply` reaches `prune_site_analytics_events` and `recordJobRun` | passes |
+| migration checklist | 74/74; per-file comparison plus duplicate/malformed/missing-entry detection; SQL artifact contains no mutating statement (keyword scan after stripping comments and literals) | passes |
+| compression | live server: `/` brotli with `Vary: Accept-Encoding`; `/api/health` (36 B) uncompressed with `Content-Length` intact; hashed asset `immutable` + brotli; range request returns 206 **uncompressed**; 404 keeps `no-store` | passes |
+
+### Findings this session
+
+| ID | Pri | Finding | Evidence | Disposition |
+|---|---|---|---|---|
+| AUD-6 | **P2** | The browser's defence-in-depth key screen (`src/lib/supabase.ts`) only decoded a JWT payload looking for `"role":"service_role"`. Supabase's current secret keys (`sb_secret_…`) are not JWTs, so that check silently returned false: pasting one into `VITE_SUPABASE_PUBLISHABLE_KEY` would have inlined a full RLS-bypassing key into the public bundle, while `lib/supabase-config.ts` on the server already treated the same prefix as a secret. | the screen was one JWT-only expression; no test covered it | **Fixed**: predicate extracted to `src/lib/supabaseKey.ts`, refuses `sb_secret_` and service-role JWTs, passes `sb_publishable_`/anon, never throws; `tests/supabase-key.test.ts` (5 tests), mutation-checked |
+| AUD-7 | P3 | The env contract states "a secret must never be a `VITE_` variable" but nothing asserted it, for a primary name or an alias. | `src/lib/envContract.ts` header vs `tests/prod-validate.test.ts` (it checked only that client vars carry the prefix) | **Fixed**: new invariant test; mutation (renaming the service-role key to `VITE_…`) turns it red |
+| AUD-8 | P3 | `npm run ci` — the authoritative gate — ran `schema:audit` but not `rls:audit` or `a11y:audit`, two deterministic offline audits the repository ships (3 s and 2 s). `docs/architecture/STYLESHEET_LAYERS.md` already described `a11y:audit` as "in the gate". | `package.json` `ci` string; `tests/ci.test.ts` stage list | **Fixed**: both stages added to `ci` (before the network-dependent `audit:ci`) and to the required-stage list |
+| AUD-9 | P3 (risk) | `extractZip` decompresses each entry (`entry.async('uint8array')`) and only then checks the 20 MB per-file / 80 MB total caps, so a crafted archive can allocate far more memory than the caps imply before being rejected. | `src/server/question-import/extract.ts:326-335` | **Not changed**: the path needs the `data.import` capability and is rate-limited; a pre-decompression size check relies on JSZip internals. Recorded for a reviewed follow-up rather than fixed blind |
+| AUD-10 | P3 (limitation) | In check 8 of `supabase/ci/production-validation.sql`, six legacy migrations share the 8-digit version `20260903`. A single ledger row with that version satisfies the version arm of the match for all six, so up to five unrecorded files could read as recorded. | `production-validation.sql:151-238`; the six files | **Reported, not changed**: tightening it could turn a currently-correct production report into a false `fail`, and the live ledger cannot be inspected from here (see the reconciliation document's rule 2). Recommended once a staging ledger is available |
+
+### Production-content findings — rechecked, still owner decisions
+
+- **376 duplicate question groups** — the last live run of `duplicate:audit`
+  (this script is read-only and reports `BLOCKED` without credentials). The
+  repository's exact-duplicate migration removed only rows that were identical in
+  text, options and key *and* unreferenced (12 rows, applied 2026-10-18), and
+  deliberately does not act on near-duplicates. So the count is consistent with
+  the code, and deleting more is a **content decision**.
+- **16/16 published news articles with an unrecognised category** — **partly
+  superseded**. `20261002130000_news_category_contract.sql` derives an indexed
+  `category_slug` for every article, so filtering no longer depends on the stored
+  label matching a slug. What remains is editorial: labels such as `NABTEB` map to
+  a slug with no filter chip. This is **content/vocabulary**, not a code defect.
+- **328/329 institutions without a website** — unchanged; filling them is a
+  **data-entry decision** (`institutions.website_url` is optional by design).
+- **One active opportunity without a deadline** — unchanged; whether a deadline
+  is mandatory is a **product decision**, and the opportunity itself is published
+  and visible.
+
+None of the four was edited. Each needs an approved decision and, where a rule is
+wanted rather than a cleanup, a forward-only migration.
+
+### Verification (this branch, after the fixes)
+
+`npm run ci` — the whole gate, with the two new stages — exited **0**:
+`typecheck` 0 · `npm test` **689 pass / 0 fail / 0 skipped** · `schema:audit` 0 ·
+`migrations:checklist` 74/74 · `build` 0 · `perf:audit` 10/10 ·
+`analytics:audit` 0 · `test:e2e` 158 passed / 2 skipped · `e2e:perf` 1 passed
+(LCP 1 700 / 1 696 / 1 972 ms) · `rls:audit` 50/50 · `a11y:audit` 0 blocking /
+5 informational · `audit:ci` 0 vulnerabilities. Run separately: `env:check` 0
+("not configured" — correct here), `prod:validate` **1** (four required variables
+unset; live checks reported `skipped`, never `pass`).
+
+## Session 14 — AUD-9 and AUD-10 closed (2026-10-22, continued)
+
+Branch `arena/069ae800-edureach-hub` @ `fe957bb` at the start (tree clean, matches
+the remote). No deployment: **Netlify credits expired**, recorded `BLOCKED` and
+not retried. No live Supabase access (network blocked, no credentials), so live
+reconciliation stays `BLOCKED`. No migration was applied, no production data was
+touched, no secret was read or printed.
+
+### AUD-9 — ZIP decompression memory safety: FIXED
+
+**What was wrong.** `extractZip` read every entry with `entry.async('uint8array')`
+and compared its length afterwards. Deflate allows ~1032:1, so a 24 KiB upload
+could allocate 24 MiB (or far more) before being rejected. The same pattern was in
+`extractDocx` and `extractXlsx`, which are ZIP containers too — the limit was not
+applied consistently to direct uploads.
+
+**What replaced it** (`src/server/question-import/extract.ts`):
+
+| Path | Mechanism |
+|---|---|
+| DEFLATE entry (primary) | `zlib.inflateRawSync(compressed, { maxOutputLength })` — zlib aborts mid-inflate with `ERR_BUFFER_TOO_LARGE` when the output would pass the budget. The allocation never exceeds the limit. |
+| STORE entry | Its length is checked before it is accepted (an uncompressed entry allocates nothing new). |
+| Unknown container internals (fallback) | JSZip's chunked stream, counting bytes and pausing the decompressor the moment the budget is passed. Bounded overshoot: one 16 KiB input block (~17 MB at the maximum ratio), not the size of the entry. |
+| `.docx` / `.xlsx` parts | The same bounded reader, so an office document cannot be the way around the archive limits. |
+
+Both ceilings are enforced *as the entry is read*: each read's budget is
+`min(perFile, maxTotal - alreadyRead)`, so 60 files of 19 MB cannot total 1.1 GB.
+Limits are unchanged (20 MB per file, 80 MB per archive, 60 entries), and the
+operator-facing message is the original one.
+
+**Measured**, not assumed: a 40 MiB expansion inside a 40 KiB archive is refused in
+16 ms with a ~5 MiB RSS increase (the old path allocated the full 40 MiB).
+
+**Verified by mutation.** Removing `maxOutputLength` → 3 tests fail; restoring the
+post-hoc measurement → the bomb and lying-header tests fail; breaking the
+aggregate budget → 2 fail; removing the streaming cap → 1 fails. A mistake made
+while writing the fix is now a test of its own: JSZip records a compression method
+as a two-byte magic string (`"\x08\x00"`), not the number 8. Comparing against a
+number silently sent every entry down the coarse fallback, and
+`the exact zlib-bounded path is the one actually used` now fails if that returns.
+
+### AUD-10 — migration ledger reconciliation: FIXED (live reconciliation still BLOCKED)
+
+**The defect, reproduced first.** With every migration recorded except the six
+`20260903` files, plus **one** ledger row whose version is `20260903`, check 8
+returned `pass` with `0 of 74 repository migrations are not recorded` — one row
+vouching for six files.
+
+**Evidence used.** `docs/operations/MIGRATION_HISTORY_MAP_2026-10-16.csv` records a
+disposition per file, not a guess: five of the six are recorded in the live ledger
+under their own later timestamps (`20260903191649`, `20260903191619`,
+`20260903192620`, `20260903191723`, `20260903192713`) with matching names; the sixth
+(`20260903_production_security_hardening.sql`) is classed `legacy-filename-unmapped`
+— the similarly named ledger entry `20260903191133 /
+production_security_contract_hardening` is a different file.
+
+**What the checklist now carries.** Every generated row has a fourth column, `kind`:
+
+| Kind | Count | Rule in the SQL |
+|---|---|---|
+| `unique` | 60 | Version match **or** name match (the documented renumbering). |
+| `shared` | 13 | **Name only.** A version match is never evidence, so one row cannot satisfy the group. |
+| `unresolved` | 1 | Reported `unresolved` until a ledger row for that file exists; `pass` only once it does. |
+
+`npm run migrations:checklist` now also fails when a file's `kind` disagrees with
+its evidence, when a row is not a four-column entry, or when a documented-unresolved
+file no longer exists. The block is generated once and used by one statement that
+returns three verdict rows — pasting it into several places, which is how the first
+attempt managed to desync, is now rejected by a test.
+
+**Verified by mutation:** restoring version matching for shared rows → the "one row
+cannot vouch for six" test fails; reporting unresolved as `fail` → 2 tests fail;
+skipping the kind check → the stale-kind test fails.
+
+**Still open, deliberately:** whether `20260903_production_security_hardening.sql`
+was ever applied cannot be established without the live ledger. It reads
+`unresolved`, which the runbook now states is "not verified", and the reconciliation
+document says what evidence settles it.
+
+### Related operational checks (item 4)
+
+| Question | Answer |
+|---|---|
+| Timeouts on decompression/parsing | **None.** Bounded structurally (entry count, byte budgets, `MAX_PDF_PAGES` 300) but no wall-clock cap. Recorded as a residual risk, not changed here. |
+| Concurrency limits | `adminImport` 10 per 10 min and `adminUpload` 20 per 10 min, both durable and keyed per account; `sweepStale` marks imports stuck in `processing` as failed after 15 min. |
+| Authorised before expensive parsing | Yes — `requireCapability(...)` and the rate limiter run before `express.json({limit:'30mb'})`. Covered by `uploads authorize before parsing a larger payload`. |
+| Temp resources cleaned up | Nothing is written to disk; entries are read into memory under a budget, and the streaming fallback pauses its worker on abort. A size violation aborts the whole read, so there is no partial import. |
+| Verdict vocabulary | `pass` / `fail` / `unresolved` now printed, and the runbook and `prod:validate`'s closing message both say that anything other than `pass` is not verified. |
+| Actionable CI failures | Every failure names the migration file, the count, and the command that regenerates the checklist. |
+
+### Verification (this session)
+
+`npm run ci` (typecheck, 714 tests, schema:audit, migrations 74/74, build,
+perf 10/10, analytics, e2e 158 passed, e2e:perf, rls 50/50, a11y 0 blocking,
+audit:ci 0 vulnerabilities) → **exit 0**. Run separately: `env:check` **0**
+("not configured" — correct here), `prod:validate` **1** (four required variables
+unset; live checks `skipped`, never `pass`). One earlier `npm run ci` run failed at
+the browser stage because the sandbox had lost the Chromium binary — an environment
+failure, fixed by re-provisioning, and not a code failure.
+
+**Netlify deploy preview:** `BLOCKED — credits expired`. **Live Supabase:** `BLOCKED`.
+
+## Session 15 — Re-verifying PR #30 from a clean checkout, plus one fairness fix and one cache fix (2026-10-22, continued)
+
+This session did not trust session 14's summary. It re-derived every claim from
+the code, the tests and direct probes, then added the two changes below.
+
+### AUD-9 re-verified from scratch
+
+`readZipEntryBounded()` never calls `entry.async('uint8array')` with an unbounded
+budget. The path is: parse only the central directory, then inflate the raw
+stream with `zlib.inflateRawSync(data, { maxOutputLength: budget })`, checking
+the stored-vs-deflate identity by the two-byte header. Direct probes:
+
+| Probe | Result |
+|---|---|
+| `inflateRawSync` with `maxOutputLength: 9999` on 10000 output bytes | throws `ERR_BUFFER_TOO_LARGE` |
+| same with `maxOutputLength: 10000` | succeeds — the limit is **inclusive-exact**, not off by one |
+| same with `10001` | succeeds |
+| heap growth inflating 1 KB under an 80 MB ceiling | +13 KiB — zlib does **not** pre-allocate the ceiling |
+| 1 / 5 / 20 MB inflate | 1.4 / 5.8 / 22.7 ms |
+| 60 entries summing 76.3 MB (the archive-wide ceiling nearly reached) | 61 ms |
+| entry with compression method 12 (bzip2) | clean `corrupt` `ExtractionError`, no crash |
+
+Declared sizes are used only as an early `too_large` signal; the real defence is
+the `maxOutputLength` ceiling applied at the decompressor, so a lying local header
+cannot cause unbounded expansion. The aggregate limit is enforced by lowering each
+entry's budget to `min(maxEntryBytes, maxTotal - total)`, so the sum is structurally
+bounded rather than checked after the fact.
+
+**Change made:** the read loop is synchronous CPU. `await` on a resolved promise
+only drains microtasks, so a 60-entry archive held the event loop for the whole
+61 ms. `readArchiveEntries()` now awaits `yieldToEventLoop()` (a `setImmediate`)
+between entries. This bounds the contiguous stall to one entry (~23 ms at the 20 MB
+per-entry ceiling) and lets other requests and health checks run in between. It is
+**not** a per-entry timeout: zlib's synchronous inflate cannot be interrupted
+without a worker thread, and adding a `Promise.race` timer would have been a fake
+fix. That limitation is recorded here rather than claimed away.
+
+Tests added to `tests/zip-bounds.test.ts` (now 25):
+
+1. `reading a multi-entry archive yields to the event loop between entries` — a
+   `setImmediate` observer must see the read still unfinished. Removing the yield
+   fails this test (verified by mutation M10).
+2. `yielding does not change any size verdict` — the aggregate limit still rejects
+   after the change.
+
+Also added this session (boundary coverage that was missing): exact-limit acceptance,
+one-byte-over rejection, STORE-mode boundary, archive-sum boundary, unsupported
+compression method.
+
+### AUD-10 re-verified from scratch
+
+74 migrations = 60 unique-version + 13 shared-version + 1 unresolved
+(`20260903_production_security_hardening.sql`). `auditChecklist()` compares
+version **and** normalised filename for unique versions, and for a shared version
+demands a separate evidence entry; a ledger row carrying `20260903` alone satisfies
+exactly one migration and leaves the other five `unresolved`. Unresolved entries
+never yield `pass`. Two mechanisms turned out to be implemented but untested —
+`unresolved-entry-without-evidence` and `stale-unresolved-entry` — so three tests
+were added (`tests/migration-checklist.test.ts`, now 20), including one that pins
+the shipped evidence list to the migrations it claims to cover. Mutations:
+disabling the evidence check and emptying the evidence list each fail the new tests
+(M8, M9).
+
+**Live reconciliation remains `BLOCKED`** — no ledger access from this environment.
+
+### F1 (Low) — crawler bodies were publicly cacheable while Host-derived
+
+`resolveSiteOrigin()` prefers `EDUREACH_SITE_URL` but falls back to the request's
+`Host` / `X-Forwarded-Host`, and `/robots.txt` and `/sitemap.xml` were served with
+`Cache-Control: public` unconditionally. When the variable is unset the body is
+caller-influenced, so a cache that keys on the path alone could serve one caller's
+origin to everyone (cache poisoning / deindexing). XML is escaped, so this was never
+an injection issue.
+
+**Fixed narrowly:** `crawlerCacheHeaders(asset, originConfigured)` returns the
+existing public headers when the origin is pinned — byte-identical production
+behaviour in the documented configuration — and `Cache-Control: no-store` plus
+`Vary: Host` when it is not. `serveRobotsTxt`/`serveSitemapXml` apply it. No UI,
+route or body change. Tests: both branches unit-tested, plus the integration test
+now asserts `no-store` in the unpinned environment it runs in. Mutation M11
+(always public) turns both tests red.
+
+Two related observations were **not** changed, deliberately:
+
+* **F2 (Low)** `server.ts:3112` — `isCorrect: selectedOption === correct_option`
+  in the guest result breakdown reveals correctness for unanswered questions. The
+  option key itself is not released. The breakdown shape is the UI contract, so
+  changing it is a product decision, not an audit fix.
+* **F3 (Info)** Guest answer-key release on submit is intentional and documented at
+  `server.ts:3086`.
+
+CBT submit (`for update` row lock, idempotent replay, `auth.uid()` ownership),
+RBAC ordering and error scrubbing (`lib/errors.ts` → `publicErrorMessage`) were
+re-inspected and found sound.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npx tsc --noEmit` | 0 | clean |
+| `node --import tsx --test tests/zip-bounds.test.ts` | 0 | 25/25 |
+| `tests/migration-checklist.test.ts` | 0 | 20/20 |
+| `tests/seo.test.ts` + `tests/headers.test.ts` | 0 | 24/24 |
+| mutations M8–M11 | red | each new test fails when its fix is reverted, then restored green |
+| `npm test` | 0 | 725 tests, 724 pass, 0 fail, 1 skipped |
+| `schema:audit` | 0 | no blocking findings |
+| `migrations:checklist` | 0 | 74/74 listed |
+| `build` | 0 | ok |
+| `perf:audit` | 0 | every budget passes |
+| `analytics:audit` | 0 | ok |
+| `rls:audit` | 0 | 50/50 classified, 0 findings |
+| `a11y:audit` | 0 | 0 blocking, 5 informational |
+| `audit:ci` | 0 | 0 vulnerabilities |
+| `test:e2e` | 0 | 158 passed, 2 skipped |
+| `e2e:perf` | 0 | 1 passed |
+
+**Netlify:** `BLOCKED — credits expired`, not retried. **Live/staging Supabase
+ledger reconciliation:** `BLOCKED` — no credentials here and none requested.
+
+## Session 16 — Independent re-review: one real limit bypass found and fixed, staging runbook added (2026-10-22, continued)
+
+State verified before touching anything: HEAD `7bc932a`, equal to the remote tip
+and to PR #30's `headRefOid`; worktree clean; PR open, draft, mergeable.
+
+### F4 (Medium) — the archive-wide ZIP budget did not cover nested containers — FIXED
+
+**Where:** `src/server/question-import/extract.ts`, `extractZip()` and
+`extractDocx()`/`extractXlsx()`.
+
+**The defect.** `readArchiveEntries()` measured each entry in its *compressed*
+form and summed that against the 80 MB ceiling. A `.docx` or `.xlsx` entry is
+itself a compressed container: its text expands only when the entry is parsed, and
+that expansion was charged to a **fresh** budget (`readEntryText(...)` used the
+20 MB per-part ceiling; `extractXlsx` called `readArchiveEntries()` with default
+limits, i.e. another 80 MB). So "80 MB total" held for container bytes and not for
+the text they produce.
+
+**Reproduction, before the fix** (measured, not theorised): a 4,480-byte `.zip`
+holding six `.docx` files whose `word/document.xml` each inflate to 15 MB —
+90 MB of text, past the 80 MB ceiling — returned normally. The only message was
+"no questions were recognised"; there was no `too_large`, and RSS grew 159 MB.
+The fix's own re-run rejects the same upload:
+`TOO_LARGE: The archive expands beyond the 20 MB file / 80 MB total limit.`
+
+**Why it matters.** With `cbt.manage` (a staff capability, not a public one) an
+operator could hand the server an upload whose expanded output far exceeds the
+documented ceiling. Peak memory was measured at ~7× the budget while parsing
+(80 MB of XML → ~576 MB RSS), which is a denial-of-service risk on a
+memory-limited function, not a data-disclosure one.
+
+**The fix, in the existing design rather than beside it.**
+
+* `Extraction` now reports `expandedBytes` — the bytes an extraction spent
+  decompressing container parts.
+* `extractQuestions(buffer, filename, limits?)` passes an `ArchiveLimits` down;
+  `extractDocx`/`extractXlsx`/`readSharedStrings`/`readEntryText` take the budget
+  instead of a hard-coded ceiling.
+* `extractZip()` computes `remaining = archive budget − entry bytes already read`
+  and gives each nested extraction `{ maxEntryBytes: min(per-file, remaining),
+  maxTotalBytes: remaining }`, then debits `expandedBytes`. Nested inner text now
+  draws from the *same* 80 MB.
+* A nested `too_large` is **fatal for the archive**, matching the rule the file
+  already documented for outer entries ("exceeding either limit… stops the whole
+  read"). Previously such a violation was downgraded to a per-file warning, which
+  would have let a partial paper be imported while looking whole.
+* Defaults are unchanged for a direct upload: a standalone `.docx`'s
+  `word/document.xml` is still bounded by 20 MB, a standalone `.xlsx`'s parts by
+  the same per-file and 80 MB archive ceilings as before.
+
+**The Excel case.** `extractXlsx` decompresses two kinds of part — the
+shared-string table and the worksheets — so one budget now spans both: the table
+is read first under the per-part ceiling, and the worksheets share whatever is
+left (`sheetBudget`). A workbook therefore cannot fit 20 MB of strings plus 80 MB
+of sheets by being charged for the sheets alone. Both mechanisms also feed the
+archive-level debit, and a belt-and-braces `remaining < 0` check after each nested
+extraction keeps the total honest.
+
+**Tests added** (`tests/zip-bounds.test.ts`, now 29, all generated fixtures, no
+large allocations):
+
+1. `text expanded inside nested Word files draws from the archive budget` — three
+   ~40 KB inner documents under a 100 KB budget must be refused.
+2. `nested Word files that fit the archive budget still extract` — the same shape
+   under a 200 KB budget must still produce questions, so the fix cannot pass by
+   refusing everything.
+3. `a nested size violation fails the archive instead of being warned past` — the
+   oversized document sits beside a good one and no partial import survives.
+4. `a workbook charges its shared-string table against the same budget as its
+   sheets` — a ~40 KB workbook of parts under a 30 KB budget must be refused.
+
+**Mutation checks, reported as they actually behaved.**
+
+| Mutation | Result |
+|---|---|
+| nested extraction starts a fresh budget (old code) | **red** — test 1 |
+| nested `too_large` downgraded back to a warning | **red** — tests 1 and 3 |
+| sheet budget ignores the shared-string table | green — the other mechanism (the post-debit guard) still catches it |
+| post-debit `remaining < 0` guard removed | green — the sheet budget still prevents the overage |
+| **both** Excel mechanisms removed | **red** — test 4 |
+
+The overlap is deliberate defence in depth, and it is stated here rather than
+implied: for the Excel case either mechanism alone is sufficient, so only removing
+both turns the test red. All mutations were restored and the suite re-run green.
+
+### Fail-closed staging gate — `npm run env:check -- --require-staging`
+
+`env:check` described the target but always exited 0, so nothing in the tooling
+could *prevent* the walkthrough from running against production — the exact
+accident recorded on 2026-10-22 in `docs/SUPABASE_LIVE_VERIFICATION.md` §3b.
+`stagingGuard()` now refuses (exit 1) when the project is unconfigured, is the
+documented production project, was not named by the operator, or does not match
+`STAGING_PROJECT_REF`. It exits 0 only when the operator states the reference and
+the configuration agrees. Verified by CLI: unconfigured → 1, production → 1,
+unnamed non-production → 1, named and matching → 0. Five tests in
+`tests/env-check.test.ts` (15 total). The limitation is documented rather than
+hidden: the tool knows one production reference and cannot prove an unknown
+project is disposable, which is why the operator must name it.
+
+### Staging procedure
+
+`docs/operations/STAGING_VERIFICATION_RUNBOOK.md` — target identity and the
+fail-closed gate, disposable-environment requirements, migration baseline,
+read-only reconciliation with all three verdicts and how to investigate
+`20260903_production_security_hardening.sql` without editing the ledger, variable
+names (never values), application validation, the CBT matrix (ownership, replay,
+deadline, guest answer-key release), the upload matrix (including the nested
+budget case above and "no partial import"), the authorization matrix for student/
+staff/admin, and the evidence record to keep. Linked from `docs/README.md` and
+`docs/SUPABASE_LIVE_VERIFICATION.md`.
+
+### Re-verified, unchanged
+
+* AUD-9 primary path: `inflateRawSync(..., { maxOutputLength })`, inclusive-exact
+  at the boundary, no pre-allocation of the ceiling; STORE entries measured
+  before acceptance; unsupported methods fail cleanly; nested archives refused
+  before decompression.
+* AUD-10: `missing_shared` matches by name only, so one `20260903` row cannot
+  vouch for six; `missing_unresolved` yields `unresolved`, never `pass`; the SQL
+  contains no `insert`/`update`/`delete`/`truncate`/DDL (only `\set
+  ON_ERROR_STOP`); the generated block and `migrations:checklist` agree at 74/74.
+* SEO: `crawlerCacheHeaders()` returns the original public headers only when
+  `EDUREACH_SITE_URL` is pinned; otherwise `no-store` + `Vary: Host`. Both
+  branches and the live endpoint are tested.
+* Authorization: all 59 `/api/admin/*` registrations carry `requireStaff`/
+  `requireCapability` except `/api/admin/bootstrap`, which verifies the bearer
+  token, pins the configured email and is rate-limited. The general API limiter
+  is mounted before the routes; upload routes run authorization and their limiter
+  before `express.json({ limit: '30mb' })`.
+* No UI, card, colour or layout file was touched in this session.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **734 tests, 734 pass, 0 fail, 0 skipped** |
+| `tests/zip-bounds.test.ts` (targeted) | 0 | 29/29 |
+| `tests/env-check.test.ts` (targeted) | 0 | 15/15 |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 listed |
+| `npm run build` | 0 | ok |
+| `npm run perf:audit` | 0 | every budget passes |
+| `npm run analytics:audit` | 0 | ok |
+| `npm run rls:audit` | 0 | 50/50 classified, 0 findings |
+| `npm run a11y:audit` | 0 | 0 blocking, 5 informational |
+| `npm run audit:ci` | 0 | 0 vulnerabilities |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | 1 passed |
+| `npm run prod:validate` | **1** | 0 passed, 1 failed, 2 skipped — required variables unset (environment) |
+| `npm run env:check` | 0 | "not configured" — correct here |
+
+### Still blocked
+
+* **Live/staging ledger reconciliation of `20260903_production_security_hardening.sql`** — `BLOCKED`; no credentials here. Procedure: runbook §4.
+* **Netlify deployment / preview** — `BLOCKED — credits expired`; not retried.
+* **Authenticated walkthrough, CBT and upload checks against staging** — `NOT RUN`; they need a disposable project. Procedure: runbook §2, §6–§8.
+* **Residual risk, stated not hidden:** synchronous inflate cannot be interrupted
+  mid-entry; the reader yields between entries (worst contiguous stall ≈ 23 ms at
+  the 20 MB per-entry ceiling) and nested parsing can hold ~7× the byte budget in
+  parsed text at peak. Worker isolation is the principled fix and is a larger
+  change than this PR's evidence justifies.
+
+## Session 17 — nested budgets proved, the Excel memory driver removed, and the staging gate tightened (2026-10-23)
+
+State verified first: HEAD `6b0eac9` — equal to the remote tip and to PR #30's
+`headRefOid`; worktree clean; PR open, draft, mergeable. (The sandbox had again
+rolled the checkout back to `f8ec28f`; all 44 touched files were hash-compared
+against the remote before the branch pointer was restored — nothing was lost.)
+
+### The nested budget, proved rather than asserted
+
+| Claim | Where it is enforced | Test |
+|---|---|---|
+| All nested expansions draw on one archive-wide budget | `extractZip` computes `remaining = archive.maxTotalBytes − entry bytes` and passes `remaining` down as both nested ceilings | `text expanded inside nested Word files draws from the archive budget` |
+| A container cannot reset the budget | `extractQuestions(buffer, name, limits)` threads `limits` into `extractDocx`/`extractXlsx`; neither has a default that starts fresh when limits are supplied | same test (mutation: restoring the fresh-budget call turns it red) |
+| Excel shared strings and sheets are charged together | `extractXlsx` reads the table first, then `sheetBudget = totalBudget − sharedStrings.bytes` for the sheets | `a workbook charges its shared-string table against the same budget as its sheets` |
+| Exhaustion aborts the whole import | nested `too_large` is re-thrown as fatal; `remaining < 0` is fatal | `a nested size violation fails the archive instead of being warned past` |
+| Nothing partial reaches the bank | extraction writes only staging rows, and only through the single `finish_question_import` transaction; failure calls `fail_question_import` | new: `an extraction that fails on size leaves no staged rows and no bank rows` |
+| Valid archives at the limits still work | boundary tests unchanged (exact limit accepted, one byte over refused) | 29 tests in `tests/zip-bounds.test.ts` |
+
+Nested `.zip` is still refused before any decompression, so the nesting depth is
+exactly two (zip → docx/xlsx) and the budget cannot recurse.
+
+### Peak memory: the measured driver, and the fix
+
+Measured with `--max-old-space-size` bisection in a separate process (minimum heap
+at which the file can be extracted at all), which is far less noisy than RSS:
+
+| Upload | Parts decompressed | Before | After |
+|---|---|---|---|
+| 19 MB `.xlsx` (19 MB sheet + 19 MB shared strings) | 38 MB | **512 MB heap**, 5.6 s | **128 MB heap**, 1.4 s |
+| 19 MB `.docx` | 19 MB XML | 128 MB | 128 MB |
+| `.zip` of six 13 MB `.docx` | 78 MB XML | 128 MB | 128 MB |
+
+The driver was `fast-xml-parser`: a shared-string table is a flat list of tags, but
+the parser built one object per string, so a 19 MB table became a **544 MB heap**
+tree (measured directly; 96 MB for the same strings extracted directly). The
+worksheets were never the problem — a 19 MB sheet parsed into rows cost +34 MB.
+
+**Fix:** `parseSharedStringsXml()` reads the table directly and releases the XML as
+soon as the strings exist. The XML tree is gone from this path entirely; the
+dependency remains in `package.json` because the parity test uses it as an oracle.
+
+The output is pinned to the old reader by a parity test over 18 table shapes
+(plain, numeric, spaced, entities, double-encoded, numeric references, rich runs,
+phonetic runs, CDATA, self-closing and empty entries, attributes, newlines). Four
+deliberate differences, all cases where the old reader corrupted text:
+
+| Input | Before | After |
+|---|---|---|
+| `<t>007</t>` | `7` | `007` |
+| `<t>true</t>` | *(dropped)* | `true` |
+| malformed `<t>a<t>b</t>c</t>` | `ac` | `abc` |
+| a table of exactly one `<si/>` | `[]` | `['']` — the sheet reader maps both to `''` |
+
+A regression test runs the 12 MB shape in a subprocess capped at a **192 MB heap**;
+restoring the tree parser fails it (mutation M17).
+
+**Rejected as unproven:** skipping the whole-document `.replace()` in `extractDocx`
+when a Word file has no tables. It removes a copy by inspection, but the minimum
+heap was 104 MB with and without it, so it was reverted rather than reported as a
+memory improvement.
+
+**Worker threads:** still not justified. With the tree gone, every upload the limits
+allow now extracts inside a 128 MB heap. The remaining synchronous cost is CPU time
+(worst case ~5 s of contiguous work for the largest archive), and the reader already
+yields between entries. A worker would buy cancellation, not memory, and that is a
+larger change than the evidence here warrants — recorded as follow-up, not done.
+
+### Staging gate: three gaps found and closed
+
+1. **Ambiguous configuration was silently resolved.** With `VITE_SUPABASE_URL` and
+   `SUPABASE_URL` naming different projects, `env:check` reported the client one and
+   passed the gate — while the application would use the client one and a server
+   script using `SUPABASE_URL` would use the other. It now reports `ambiguous` and
+   exits 1, naming both references.
+2. **"Not configured" conflated two states** — no URL at all, and a URL that is not a
+   recognisable Supabase project URL (custom domain, typo). Both still block, but the
+   message now says which, so an operator can fix it.
+3. **The pass message overstated what it proved.** It read as a confirmation that the
+   project is disposable. It now states exactly what was checked (configured,
+   unambiguous, not the documented production project, named by the operator) and says
+   that disposability is the operator's assertion — the script can see a reference,
+   not the data inside a project.
+
+Verified on the command line: unconfigured → 1, production → 1, ambiguous → 1,
+non-production unnamed → 1, named and matching → 0. 19 tests in
+`tests/env-check.test.ts`. Secrets: the output still prints only the reference and
+"present / not present" per variable.
+
+### Runbook corrections
+
+`docs/operations/STAGING_VERIFICATION_RUNBOOK.md` is now split by intent, because the
+previous version mixed a mutating command into a read-only section:
+
+* every section is labelled **INSPECT** (§1, §4, §5) or **MUTATE** (§2, §6, §7, §8),
+  with a table at the top stating which is safe against production;
+* §3 is split into 3a (inspect the repository), 3b (**mutate** the staging schema) and
+  3c (inspect the result);
+* **a second target surface is now documented:** the Supabase CLI acts on the project
+  it is *linked* to, which is independent of `.env`. A machine can pass the gate and
+  still push to production. The runbook now requires `--project-ref` explicitly, says
+  to check `supabase projects list` first, and bans `db reset` / `migration repair`
+  outright (a repair rewrites the ledger, which §4 forbids);
+* **a practical error:** `supabase/ci/production-validation.sql` line 17 is
+  `\set ON_ERROR_STOP on`, a `psql` command, not SQL. The Supabase SQL editor rejects
+  it. The runbook now says to omit that line when pasting, and to run check 8 as a
+  block rather than "the whole file";
+* the gate is described as proving *identity*, not safety.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **743 tests, 742 pass, 0 fail, 1 skipped** |
+| `tests/zip-bounds.test.ts` | 0 | 29/29 |
+| `tests/question-extract.test.ts` | 0 | 20/20 |
+| `tests/env-check.test.ts` | 0 | 19/19 |
+| `tests/question-import.test.ts` | 0 | 9/9 |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 |
+| `npm run build` | 0 | ok |
+| `npm run perf:audit` / `analytics:audit` | 0 / 0 | pass |
+| `npm run rls:audit` | 0 | 50/50, 0 findings |
+| `npm run a11y:audit` | 0 | 0 blocking, 5 informational |
+| `npm run audit:ci` | 0 | 0 vulnerabilities |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | 1 passed |
+| `npm run prod:validate` | **1** | 0 passed, 1 failed, 2 skipped — variables unset (environment) |
+| `npm run env:check` | 0 | "not configured" — correct here |
+| `env:check -- --require-staging` | **1** | correct: no target configured, so the gate fails closed |
+
+Mutations this session: M17 (tree parser restored) → the heap test and the parity
+tests fail; M18 (failure-path assertion inverted) → the new import test fails. Both
+restored green.
+
+### Still blocked
+
+* **Live/staging ledger reconciliation** of `20260903_production_security_hardening.sql`
+  — `BLOCKED`; procedure is runbook §4.
+* **Authenticated CBT, upload and authorization checks** — `NOT RUN`; they need a
+  disposable project (runbook §6–§8).
+* **Netlify deployment / preview** — `BLOCKED — credits expired`; not retried.
+* **Residual risk:** synchronous inflate still cannot be interrupted mid-entry, and a
+  nested container's parts are fully decompressed before parsing (bounded by the same
+  budget). Worst measured contiguous CPU for one legal upload is ~5 s.
+
+## Session 18 — release-candidate audit: malformed Office XML ran in quadratic time (2026-10-23, continued)
+
+State verified first: HEAD `840f17a` = remote tip = PR #30 `headRefOid`; worktree
+clean; PR open, draft, mergeable. (The sandbox rolled the checkout back to
+`f8ec28f` again; all 46 touched files were hash-compared against the remote before
+the branch pointer was restored.)
+
+### F5 (Medium) — Office XML parsing was quadratic on malformed input — FIXED
+
+**Where:** `src/server/question-import/extract.ts` — `parseSharedStringsXml`,
+`readSheetRows`, `textFromXml`, `extractDocx`.
+
+**The defect.** The XML scanners used lazy regexes (`[\s\S]*?<\/row>`). On
+well-formed input each match finds its closing tag immediately and the cost is
+linear. On *malformed* input — an opening tag whose close never arrives — every
+scan runs to the end of the part, and the next candidate starts just after it. The
+cost therefore grows with the square of the part's size, while the byte budget only
+bounds the size. Measured on the code at `840f17a`:
+
+| Input (malformed) | Size | Time |
+|---|---|---|
+| `<si>` repeated, shared strings | 0.32 MB | 4.3 s |
+| same | 0.64 MB | 17.2 s |
+| `<r>` repeated inside one `<si>` | 0.24 MB | 5.9 s |
+| `<row>` repeated, worksheet | 0.40 MB | 5.1 s |
+| `<w:p>` repeated, word/document.xml | 0.20 MB | 1.3 s |
+| `<w:tbl>` repeated | 0.28 MB | 1.7 s |
+
+One entry may hold 20 MB, so the extrapolation is hours of held event loop. The
+minimal reproduction is a small `.docx`/`.xlsx` whose part is a long run of opening
+tags: it passes the size checks, passes decompression, and then hangs the process.
+Rate limiting does not mitigate it — one request is enough — and extraction runs on
+the same event loop as every other request (also from `void processImport`, which
+is deliberately not awaited). Reachability requires a staff capability
+(`cbt.manage`/`data.import`), so this is an insider/crafted-upload availability
+defect, not an anonymous one.
+
+**The fix.** One consuming scanner (`findOpenTag` / `nextElement` /
+`elementInners`) walks the text monotonically: once an element is read, or found to
+be unterminated, scanning resumes after it and the earlier text is never revisited.
+An unterminated element ends the scan instead of restarting it, so cost is linear
+whatever the input looks like. All four scanners now use it.
+
+Behaviour on well-formed documents is unchanged. Verified two ways: the full test
+suite (including the 18-shape parity oracle against the old `fast-xml-parser`), and
+a differential run over generated fixtures — a Word document with a questions table,
+a Word document with paragraphs and entities, a workbook using shared strings,
+inline strings and numeric cells, and a ZIP mixing `.txt` and `.docx` — comparing
+`extractQuestions` output before and after the change: **byte-identical**.
+
+After the fix the same malformed inputs finish in **0–2 ms** each, a well-formed
+11 MB shared-string table (400,000 entries) reads in 413 ms, and the 20 MB-scale
+fixtures are unchanged in time and memory.
+
+**Tests added** (`tests/question-extract.test.ts`, now 25): linear-time guards for
+the shared-string, worksheet and Word paths (1.6 MB of unterminated tags each, with
+a deliberately generous 3 s ceiling — the pre-fix code needed 9 minutes for the
+suite, so the margin is enormous in both directions); an unterminated tail after
+valid questions must still yield those questions; and content preservation for
+escaped markup, non-ASCII text and preserved whitespace.
+
+**Mutation check:** restoring the pre-fix scanners at `840f17a` turns all three
+linear-time tests red (and makes the suite take 9 minutes); restored green after.
+
+### Re-checked, unchanged
+
+* **Resource accounting.** Nested containers still share one budget; a nested
+  `too_large` still aborts the archive; shared strings and worksheets still draw on
+  the same budget. `tests/zip-bounds.test.ts` 29/29.
+* **Peak memory.** Re-measured by heap bisection after the rewrite: 19 MB `.docx`,
+  19 MB `.xlsx` (38 MB of parts) and a `.zip` of six 13 MB `.docx` all read inside a
+  **128 MB** heap, the same as before the scanner change — the fix did not trade
+  memory for time.
+* **CPU cost of a legal upload.** Worst case measured is the archive of six 13 MB
+  Word files: ~4.5–5 s of contiguous CPU, i.e. one 13 MB document (~1.2 s) between
+  yields. Concurrency and rate limits bound how often that can be triggered
+  (`adminUpload` 20 per 10 minutes per account, `adminImport` 10 per 10 minutes,
+  20 MB per upload, 60 entries, 80 MB expanded). That is a real residual risk on a
+  single-process deployment; worker isolation is the principled fix and remains
+  recommended follow-up, not something to approximate with a timeout.
+* **Staging gate.** Re-verified end to end on the command line: unconfigured → 1,
+  production → 1, ambiguous → 1, unnamed → 1, `STAGING_PROJECT_REF` mismatch → 1,
+  named non-production → 0. A secret passed in the environment does not appear in
+  the output.
+* **Runbook.** Sections are labelled INSPECT/MUTATE, §3 separates inspecting from
+  mutating, `--project-ref` is mandatory and the CLI's linked project is called out
+  as a separate target, and the psql `\set` line is flagged as invalid in the SQL
+  editor.
+* **Migration reconciliation.** `production-validation.sql` still contains no
+  `insert`/`update`/`delete`/`truncate`/DDL at statement level; the checklist is
+  74/74; `20260903_production_security_hardening.sql` is still classified
+  `unresolved` in both the generator's evidence list and the generated SQL.
+
+### Verification (this session, real exit codes)
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm run typecheck` | 0 | clean |
+| `npm test` | 0 | **748 tests, 747 pass, 0 fail, 1 skipped** |
+| `tests/question-extract.test.ts` | 0 | 25/25 |
+| `tests/zip-bounds.test.ts` | 0 | 29/29 |
+| `npm run schema:audit` | 0 | no blocking findings |
+| `npm run migrations:checklist` | 0 | 74/74 |
+| `npm run build` | 0 | ok |
+| `perf:audit` / `analytics:audit` / `rls:audit` / `a11y:audit` | 0 | pass (50/50 RLS, 0 blocking a11y) |
+| `npm run audit:ci` | 0 | 0 vulnerabilities |
+| `npm run test:e2e` | 0 | 158 passed, 2 skipped |
+| `npm run e2e:perf` | 0 | 1 passed |
+| `npm run prod:validate` | **1** | 0 passed, 1 failed, 2 skipped — variables unset (environment) |
+| `npm run env:check` | 0 | "not configured" — correct here |
+
+### Still blocked
+
+Live/staging ledger reconciliation of `20260903_production_security_hardening.sql`
+(`BLOCKED` — runbook §4); authenticated CBT, upload and authorization checks
+(`NOT RUN` — runbook §6–§8); Netlify deployment (`BLOCKED — credits expired`, not
+retried).
+
+Offline auditing has reached its limit: everything reachable without credentials has
+now been exercised. The next step is a human running the staging runbook.
+
+## Session 19 — offline audit closed; one self-inflicted scanner defect fixed (2026-10-23, continued)
+
+State verified first: HEAD `e7c96af` = remote tip = PR #30 `headRefOid`;
+worktree clean; PR open, draft, mergeable. No rollback this time, so no
+recovery was needed.
+
+### F6 (Low) — attribute-less cells could overflow the stack — FIXED
+
+Introduced by the session-18 scanner, and found while checking that scanner
+consumes rather than rescanning.
+
+**Where:** `nextElement()` in `src/server/question-import/extract.ts`.
+
+**The defect.** Cells are only matched when the tag has attributes, so `<c>`
+with none is skipped. That skip was written as a recursive call. A part made of
+nothing but `<c>` therefore recursed once per candidate: `readSheetRows` threw
+`RangeError: Maximum call stack size exceeded` at roughly 10,000 candidates
+(measured: 0.03 MB in 6 ms). It failed fast rather than hanging, and the import
+route's catch turned it into a failed import — but a malformed worksheet should
+read as "no cells here", not as a crash, and a `RangeError` escaping a parser is
+one unreviewed call site away from an unhandled rejection.
+
+**The fix.** The skip is a loop, not a recursion. Same input now returns
+`[]` in 2 ms; 1.2 MB of `<c>` returns `[]` in 25 ms.
+
+**Test:** `a worksheet of attribute-less cells is skipped without recursing to a
+crash` (300,000 candidates). Restoring the recursive form turns it red.
+
+### Narrow sanity checks (no further source changes)
+
+* **Consuming scanner:** every Office XML path goes through
+  `findOpenTag`/`nextElement`/`elementInners`; no lazy-scan regex remains over
+  `<row>`, `<si>`, `<w:p>`, `<w:t>`, `<w:tbl>` or `<r>`.
+* **Session-18 regression tests:** the five linear-time and content-preservation
+  tests are present and pass (25 in the file, 26 with F6's).
+* **ZIP budgets:** `tests/zip-bounds.test.ts` 29/29 — per-file and archive-wide
+  ceilings, nested budget sharing, fatal nested `too_large`, nested-ZIP refusal.
+* **Unresolved migration:** `20260903_production_security_hardening.sql` is still
+  `unresolved` in the generator's evidence list and in the generated SQL.
+* **Runbook:** all eleven human steps are present and ordered, INSPECT and MUTATE
+  are separated, and §10 now states the five acceptance groups explicitly.
+
+### Verification (this session, real exit codes)
+
+`npm run typecheck` 0 · `npm test` 0 (**749 tests, 748 pass, 0 fail, 1 skipped**) ·
+`tests/question-extract.test.ts` 26/26 · `tests/zip-bounds.test.ts` 29/29 ·
+`schema:audit` 0 · `migrations:checklist` 0 (74/74) · `build` 0 · `perf:audit` 0 ·
+`analytics:audit` 0 · `rls:audit` 0 (50/50) · `a11y:audit` 0 · `audit:ci` 0 ·
+`test:e2e` 0 (158 passed, 2 skipped) · `e2e:perf` 0 · `prod:validate` **1**
+(variables unset — environment) · `env:check` 0.
+
+Offline auditing is closed. Every check that can be run without credentials has
+been run; the remaining work requires a human operating a disposable Supabase
+project, and is listed in `docs/operations/STAGING_VERIFICATION_RUNBOOK.md`.

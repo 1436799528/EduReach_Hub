@@ -56,9 +56,18 @@ test('public page prefers a published admin guide and falls back to the built-in
   assert.match(adminPage, /saveAdminServiceGuide/);
 });
 
-test('the browser Supabase client refuses service-role keys', () => {
+test('the browser Supabase client refuses privileged keys', () => {
   const client = read('src/lib/supabase.ts');
-  assert.match(client, /isServiceRoleKey/);
-  assert.match(client, /\.role === 'service_role'/);
+  // The predicate moved to its own module so it can be tested behaviourally
+  // (tests/supabase-key.test.ts); the client must still screen the key before
+  // it can reach createClient.
+  assert.match(client, /isPrivilegedKey\(supabaseKey\)/, 'the browser client screens the key before using it');
+  assert.ok(
+    client.indexOf('isPrivilegedKey(supabaseKey)') < client.indexOf('createClient(effectiveUrl'),
+    'the screen must run before the client is created',
+  );
+  const guard = read('src/lib/supabaseKey.ts');
+  assert.match(guard, /role === 'service_role'/);
+  assert.match(guard, /sb_secret_/, 'the current secret-key format is refused too');
   assert.ok(!/console\.(log|error|warn)\([^)]*supabaseKey/.test(client.replace("console.error('Supabase browser key refused", '')), 'never log the key itself');
 });
