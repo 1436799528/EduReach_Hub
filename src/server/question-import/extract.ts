@@ -248,11 +248,17 @@ interface ElementSpan {
  * scanned again. That is what keeps a malformed part linear.
  */
 function nextElement(text: string, from: number, name: string, requireSpace = false): ElementSpan | null {
-  const open = findOpenTag(text, from, name);
+  let open = findOpenTag(text, from, name);
   if (open === -1) return null;
-  if (requireSpace && !/\s/.test(text[open + name.length + 1] ?? '')) {
-    // `<c>` without attributes never matched the old cells pattern; skip it.
-    return nextElement(text, open + name.length + 1, name, requireSpace);
+  // `<c>` with no attributes never matched the old cells pattern, so it is
+  // skipped. A loop, not recursion: a part made of nothing but `<c>` would
+  // otherwise recurse once per candidate and overflow the stack (measured:
+  // RangeError at ~10,000), turning malformed input into a crash instead of a
+  // clean "no cells here".
+  while (requireSpace && !/\s/.test(text[open + name.length + 1] ?? '')) {
+    const next = findOpenTag(text, open + name.length + 1, name);
+    if (next === -1) return null;
+    open = next;
   }
   const gt = text.indexOf('>', open);
   if (gt === -1) return null;

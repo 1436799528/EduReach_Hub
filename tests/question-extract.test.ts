@@ -456,3 +456,12 @@ test('text that looks like markup and non-ASCII text survive intact', () => {
     ['  keep  spacing  '],
   );
 });
+
+test('a worksheet of attribute-less cells is skipped without recursing to a crash', () => {
+  // `<c>` with no attributes never matched the cells pattern, so each one is
+  // skipped. Skipping by recursion overflowed the stack at roughly 10,000
+  // candidates, so a malformed sheet crashed instead of reporting no cells.
+  // 300,000 keeps this near the click of a fast test while being far past that.
+  const sheetXml = `<worksheet><sheetData><row>${'<c>'.repeat(300_000)}</row></sheetData></worksheet>`;
+  assert.deepEqual(readSheetRows(sheetXml, []), []);
+});

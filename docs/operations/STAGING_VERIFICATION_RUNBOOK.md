@@ -328,7 +328,38 @@ in front of you.
 
 ---
 
-## 10. What is still outstanding after this runbook
+## 10. Acceptance criteria for the staging report
+
+The report that comes back from a staging run must put every check in exactly one
+of these five groups. They are not interchangeable, and the report is not accepted
+until each line that was attempted is in one of them.
+
+| Group | Means | Evidence required |
+|---|---|---|
+| **PASSED** | the check ran and did what the runbook says it should | the command, its exit code, and the output line that shows the expected result |
+| **FAILED** | the check ran and did not do what was expected | the command, exit code, and the sanitized failure text |
+| **SKIPPED** | the tool chose not to run the check (e.g. `prod:validate` says `skip` because a variable is missing) | which check, and the reason the tool gave |
+| **NOT RUN** | nobody ran it yet | the step number, and who still needs to |
+| **UNRESOLVED** | the check ran but the evidence cannot settle it — specifically migration rows with no distinguishing ledger entry | the verdict row verbatim, plus what evidence is still needed |
+
+Rules for writing the report:
+
+* `skipped` is **not** a pass, and neither is `unresolved`. Only `pass` is a pass.
+* Every migration row is listed individually; "the reconciliation check passed" is
+  not an acceptable summary of a check that returned three rows.
+* `20260903_production_security_hardening.sql` stays **UNRESOLVED** unless the
+  ledger, the baseline and the object comparison all agree on its state. If they
+  do not, say so and stop; do not soften the wording to "likely applied".
+* Offline results are reported separately from staging results. A green
+  `npm run ci` on a laptop says nothing about the staging database.
+* **Offline tests passing does not make the release production-ready.** Two things
+  are still required before that claim can be made: evidence-based reconciliation
+  of the unresolved migration, and the authenticated flows (CBT, uploads,
+  student/staff/admin boundaries) actually exercised in staging.
+
+---
+
+## 11. What is still outstanding after this runbook
 
 These cannot be closed by running the steps above:
 

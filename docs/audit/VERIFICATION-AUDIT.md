@@ -1072,3 +1072,58 @@ retried).
 
 Offline auditing has reached its limit: everything reachable without credentials has
 now been exercised. The next step is a human running the staging runbook.
+
+## Session 19 — offline audit closed; one self-inflicted scanner defect fixed (2026-10-23, continued)
+
+State verified first: HEAD `e7c96af` = remote tip = PR #30 `headRefOid`;
+worktree clean; PR open, draft, mergeable. No rollback this time, so no
+recovery was needed.
+
+### F6 (Low) — attribute-less cells could overflow the stack — FIXED
+
+Introduced by the session-18 scanner, and found while checking that scanner
+consumes rather than rescanning.
+
+**Where:** `nextElement()` in `src/server/question-import/extract.ts`.
+
+**The defect.** Cells are only matched when the tag has attributes, so `<c>`
+with none is skipped. That skip was written as a recursive call. A part made of
+nothing but `<c>` therefore recursed once per candidate: `readSheetRows` threw
+`RangeError: Maximum call stack size exceeded` at roughly 10,000 candidates
+(measured: 0.03 MB in 6 ms). It failed fast rather than hanging, and the import
+route's catch turned it into a failed import — but a malformed worksheet should
+read as "no cells here", not as a crash, and a `RangeError` escaping a parser is
+one unreviewed call site away from an unhandled rejection.
+
+**The fix.** The skip is a loop, not a recursion. Same input now returns
+`[]` in 2 ms; 1.2 MB of `<c>` returns `[]` in 25 ms.
+
+**Test:** `a worksheet of attribute-less cells is skipped without recursing to a
+crash` (300,000 candidates). Restoring the recursive form turns it red.
+
+### Narrow sanity checks (no further source changes)
+
+* **Consuming scanner:** every Office XML path goes through
+  `findOpenTag`/`nextElement`/`elementInners`; no lazy-scan regex remains over
+  `<row>`, `<si>`, `<w:p>`, `<w:t>`, `<w:tbl>` or `<r>`.
+* **Session-18 regression tests:** the five linear-time and content-preservation
+  tests are present and pass (25 in the file, 26 with F6's).
+* **ZIP budgets:** `tests/zip-bounds.test.ts` 29/29 — per-file and archive-wide
+  ceilings, nested budget sharing, fatal nested `too_large`, nested-ZIP refusal.
+* **Unresolved migration:** `20260903_production_security_hardening.sql` is still
+  `unresolved` in the generator's evidence list and in the generated SQL.
+* **Runbook:** all eleven human steps are present and ordered, INSPECT and MUTATE
+  are separated, and §10 now states the five acceptance groups explicitly.
+
+### Verification (this session, real exit codes)
+
+`npm run typecheck` 0 · `npm test` 0 (**749 tests, 748 pass, 0 fail, 1 skipped**) ·
+`tests/question-extract.test.ts` 26/26 · `tests/zip-bounds.test.ts` 29/29 ·
+`schema:audit` 0 · `migrations:checklist` 0 (74/74) · `build` 0 · `perf:audit` 0 ·
+`analytics:audit` 0 · `rls:audit` 0 (50/50) · `a11y:audit` 0 · `audit:ci` 0 ·
+`test:e2e` 0 (158 passed, 2 skipped) · `e2e:perf` 0 · `prod:validate` **1**
+(variables unset — environment) · `env:check` 0.
+
+Offline auditing is closed. Every check that can be run without credentials has
+been run; the remaining work requires a human operating a disposable Supabase
+project, and is listed in `docs/operations/STAGING_VERIFICATION_RUNBOOK.md`.
