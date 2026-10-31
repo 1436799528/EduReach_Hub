@@ -466,10 +466,11 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     if (!wantsStatus && !wantsNote) return res.status(400).json({ error: 'Nothing to update.' });
 
     // A version from the UI detects edits made since the row was displayed.
-    // It remains optional for already-open older clients during deployment.
+    // Older clients must refresh rather than submit an unverifiable stale decision.
     const expectedVersion = req.body?.expected_updated_at;
-    if (expectedVersion !== undefined && (typeof expectedVersion !== 'string' || expectedVersion.length > 64 || !Number.isFinite(Date.parse(expectedVersion)))) return res.status(400).json({ error: 'Invalid request version.' });
-    if (expectedVersion !== undefined && expectedVersion !== request.updated_at) return res.status(409).json({ error: 'This request changed. Refresh the queue before trying again.' });
+    if (expectedVersion === undefined) return res.status(409).json({ error: 'Refresh the queue before updating this request.' });
+    if (typeof expectedVersion !== 'string' || expectedVersion.length > 64 || !Number.isFinite(Date.parse(expectedVersion))) return res.status(400).json({ error: 'Invalid request version.' });
+    if (expectedVersion !== request.updated_at) return res.status(409).json({ error: 'This request changed. Refresh the queue before trying again.' });
     const previousTime = Date.parse(String(request.updated_at || ''));
     if (!Number.isFinite(previousTime)) return res.status(503).json({ error: 'Unable to verify this request version.' });
     // Ensure that consecutive writes from this API do not share a millisecond.

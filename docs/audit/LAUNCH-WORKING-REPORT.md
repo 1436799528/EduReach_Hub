@@ -9,8 +9,12 @@ read-only production inventory, news migration details and recovery plan.
 
 - The session continues on `arena/258c802c-edureach-hub`, based on main
   `b2e0a6c`; `8dad4fd` contains the news work. No PR, merge or deployment has
-  been made for this branch. GitHub Actions is configured for pushes to main and
-  PRs, not ordinary branch pushes; there is no CI run for this branch.
+  been made for this branch. The existing GitHub Actions gate runs on pushes to
+  main or PRs, not this branch. A temporary branch-only push trigger was tried
+  but GitHub rejected the push because the connected GitHub App lacks workflow
+  permission; that trigger and its test change were removed. Authoritative
+  branch CI remains blocked until connection permissions or an approved PR route
+  are available. An approved PR may trigger a Netlify preview.
 - Open PR #31 changes Supabase key precedence and #32 contains privacy and legal
   work. Both were reported as having failing quality gates and Netlify previews.
   GitHub run metadata is available, but download of the detailed job logs failed
@@ -32,10 +36,10 @@ are not claimed to have passed.
 
 | Area | Existing implementation and work so far | Remaining issue / classification |
 | --- | --- | --- |
-| Release / CI | Existing GitHub quality gate and Netlify configuration inspected. The unconfigured preview build succeeds. | **P0:** current total-JS budget fails; current branch has no CI/preview verification. Production build with real, safely configured variables, actual Netlify capacity and deployment not verified. |
-| Privacy / analytics | Existing first-party `trackEvent` now checks the shared versioned preference; local tests exercise opt-in, rejection, no replay, malformed data, storage failure and visible save failure. Existing analytics taxonomy audit passes. | **P0/P1:** reconcile PR #32, audit all third-party/network transmissions and test real browser, multiple tabs and reloads. If storage both rejects writes and cannot delete an old allow, this tab fails closed but durable cross-reload/cross-tab revocation cannot be guaranteed. Resolve and verify before launch. Server endpoint accepts direct requests; client gate is not a server-side consent attestation. |
-| Service requests | Existing server endpoint, admin queue/dashboard, transition rules and notification writer reused. Updates use read-version/status compare-and-set; UI supplies its displayed version, and the note editor retains its opening version. Mock race tests reject a stale update before audit/notification. | **P0:** live insertion policy differs from checked-in active-service policy; hosted ownership, validation, duplicate prevention and persistence unverified. Real multi-session CAS and notification behavior unverified. Older clients omit the displayed version, and privileged writers that do not update `updated_at` can bypass version freshness; audit and notifications are still separate best-effort operations. |
-| News | Existing branch adds marked unpublished drafts, dedicated confirmation, generic manager restrictions, paginated Newsroom, collision-safe optional seed and FK-aware deletion guard. PGlite and mock tests were run. | **P0/P1:** hosted Auth/PostgREST/RLS, browser workflows, migration compatibility and deletion/link concurrency are unverified. Offset pagination is not a snapshot; the existing PDF selector remains limited to its first 200 results. Seed and migration require separate approvals. |
+| Release / CI | Existing GitHub quality gate and Netlify configuration inspected. The unconfigured preview build succeeds. | **P0/P1:** branch GitHub CI and Netlify preview need verification. Production build with real, safely configured variables, actual Netlify capacity and deployment not verified. |
+| Privacy / analytics | Existing first-party `trackEvent` now checks the shared versioned preference; local tests exercise opt-in, rejection, no replay, malformed data, storage failure and visible save failure. Existing analytics taxonomy audit passes. | **P0/P1:** reconcile PR #32, audit all third-party/network transmissions. Local Chromium covers normal cross-tab/reload and intercepted analytics traffic, but not every transmission or storage failure across documents. If storage both rejects writes and cannot delete an old allow, this tab fails closed but durable cross-reload/cross-tab revocation cannot be guaranteed. Resolve and verify before launch. Server endpoint accepts direct requests; client gate is not a server-side consent attestation. |
+| Service requests | Existing server endpoint, admin queue/dashboard, transition rules and notification writer reused. Updates use read-version/status compare-and-set; UI supplies its displayed version, and the note editor retains its opening version. Mock race tests reject a stale update before audit/notification. | **P0:** live insertion policy differs from checked-in active-service policy; hosted ownership, validation, duplicate prevention and persistence unverified. Real multi-session CAS and notification behavior unverified. Older clients now fail closed until refreshed. The authenticated staff UPDATE policy and table grant permit writes outside server capability/CAS checks, including roles without `service_request.process`; privileged writers that do not advance `updated_at` also bypass version freshness. Audit effective grants and all definer/privileged writers before a staged database repair; audit and notifications are still separate best-effort operations. |
+| News | Existing branch adds marked unpublished drafts, dedicated confirmation, generic manager restrictions, paginated Newsroom, collision-safe optional seed and FK-aware deletion guard. PGlite and mock tests were run. | **P0/P1:** hosted Auth/PostgREST/RLS, browser workflows and migration compatibility remain unverified. A real PostgreSQL 17 concurrency test of the actual trigger on a minimal isolated schema passed; it is not a full migration replay or hosted Supabase test. Offset pagination is not a snapshot; the existing PDF selector remains limited to its first 200 results. Seed and migration require separate approvals. |
 | Authentication / accounts | Existing Supabase auth, server capability checks and tests; no new auth system. | **P0:** hosted registration, verification, resets, sessions, ownership and role separation not verified. Inspect #31 and actual configuration without extracting or rotating secrets. |
 | CBT | Existing subject rules, question bank, importer and local tests; no second engine created. | **P0:** full authenticated and guest journeys, JAMB exact rules, resume, expiry, retries, grading and hosted persistence remain to be verified end to end. Do not assert the local tests prove hosted operation. |
 | Student dashboard / notifications | Existing dashboard, database helpers and notification writer inspected in part. | **P0/P1:** production metadata previously lacked several repo-expected student tables. Reconcile equivalents and migration history; verify ownership, persistence, status, error and delivery behavior. |
@@ -54,7 +58,8 @@ are not claimed to have passed.
   `src/components/admin/AdminKit.tsx`, `src/lib/api.ts`: compare request status
   and `updated_at` at write time; send displayed versions from both admin views;
   preserve a note editor's opening version; return conflict without audit or
-  notification when a competing update wins. Legacy clients can omit the version.
+  notification when a competing update wins. Requests omitting a version are
+  rejected with a refresh-required conflict; this can interrupt older open tabs.
 - `src/lib/privacyPreferences.ts`, `src/components/CookieConsent.tsx` and CSS,
   `src/main.tsx`, `src/lib/api.ts`: adapt PR #32's existing first-party consent
   approach. Optional tracking is denied by default, and failed storage returns
@@ -62,39 +67,52 @@ are not claimed to have passed.
 - `scripts/perf-audit.ts`, `tests/perf.test.ts`: identify the actual HTML entry
   and include transitive static JS dependencies in the critical-path budget;
   tests cover multiple index chunks and missing/extra dependencies.
-  An icon-grouping experiment was discarded because it pulled 4.6 KB into the
-  entry dependency set; the previous audit would not have counted it. No budget
-  was raised and no Vite configuration change retained.
+  Icon-grouping experiments were discarded because they increased the entry
+  dependency set. Vite now uses Terser as a build-only dependency for client
+  minification; budgets and server bundling were not changed.
 - `tests/authorization.test.ts`, `tests/notifications.test.ts`,
   `tests/privacy-preferences.test.ts`: focused race, consent, transport and
   storage failure coverage. `tests/stylesheet-layers.test.ts` and
   `docs/architecture/STYLESHEET_LAYERS.md` record the new stylesheet in the
   required cascade order; focus and type closing-layer rules remain intact.
-- No new migration, external API, direct dependency or design system was added in
-  this working slice. The previously prepared news migration and optional seed
+- No new migration, external API or design system was added in this working
+  slice; Terser is a direct development dependency. The previously prepared news migration and optional seed
   are described in the baseline report, and have not been applied to a host.
 
 ## Latest executed local gates
 
-- `npm run lint` / TypeScript: passed after the consent test fix.
-- Last full `npm test`: **762 passed, 1 failed** out of 763; the remaining
-  failure is the real built-artifact total-JS budget, measured at 336.6 KB vs
-  336 KB.
-- `npm run build`: passed with missing client Supabase configuration as a
-  **preview/unconfigured build**, not a production configuration test.
-- `npm run perf:audit`: 9/10 on the final ungrouped build; total JS is
-  336.6 KB against the unchanged 336 KB limit. Entry and critical-path
-  measurements are close to their limits. Both grouping experiments were
-  reverted, not used to bypass this result.
-- After the last full run, 54 focused service, consent and stylesheet/type tests
-  passed, as did two focused performance-audit regression tests and lint.
-- Migration checklist, schema audit, analytics taxonomy audit, offline RLS audit,
-  static a11y audit and npm audit ran and passed; a11y had 5 informational items.
-- `npm run backup:rehearsal`: passed for 75 migrations on isolated PGlite. It is
-  not a production backup or proof of recoverability of hosted Auth/Storage.
-- `npm run test:e2e`: 160 failed at launch because Playwright Chromium is not
-  installed; no browser journey was executed. `npm run e2e:perf` likewise failed
-  to launch Chromium. GitHub CI is a separate, unverified gate for this branch.
+- TypeScript passed; 66 focused authorization, notification, analytics and
+  privacy tests passed. A local full suite passed **763/763** with a temporary
+  branch CI trigger and corresponding narrowly scoped assertion. The attempted
+  push of that trigger was rejected for missing GitHub App workflow permission;
+  both were reverted. The restored CI assertion needs its targeted rerun.
+- The unconfigured build passes; this is not a production environment build.
+  `npm run perf:audit` passes **10/10**: total JS **331.5 KB / 336 KB**,
+  critical path **207.4 KB / 211 KB**, entry **98.1 KB / 100 KB**. No budget
+  was increased. Terser minification is a build-only dependency; npm audit found
+  zero advisories after installation.
+- A clean Chromium run before the minifier change had **158 passed, 2 skipped**
+  (answer-option keyboard tests had no available exam). The invalid earlier run
+  was discarded because assets were rebuilt while it was running. Four new
+  consent tests passed on the Terser build (desktop and mobile): initial denial,
+  no replay, shared consent and rejection across tabs/reloads, plus a storage
+  error in the same tab. Hosted or authenticated flows were not tested.
+- PostgreSQL 17.11, local and disposable: the actual news safety migration was
+  applied to a minimal `news_articles`/`document_bank` schema with an
+  `ON DELETE SET NULL` FK. In a three-connection test, an uncommitted reference
+  insert blocked deletion; after insert commit, READ COMMITTED returned the
+  trigger's `23503` and retained the link. REPEATABLE READ returned `40001` and
+  retained it. If deletion committed first, a concurrent insert failed FK check
+  (`23503`). This does not cover all hosted relations, roles, migrations,
+  isolation levels, or platform behavior. No hosted data was touched.
+- Migration checklist, schema and analytics audits, offline RLS audit and static
+  a11y audit passed; a11y had 5 informational findings. The RLS audit's broad
+  classification does **not** establish that staff direct updates are safe.
+- The earlier backup rehearsal passed for 75 migrations on isolated PGlite. It
+  is not a production backup or proof of hosted Auth/Storage recoverability.
+- Authoritative GitHub CI and the complete browser suite on the new minifier
+  build remain pending until their actual results are recorded. No Netlify
+  preview or configured hosted staging journey has run on this branch.
 
 ## Deployment preparation checklist — do not execute without approval
 

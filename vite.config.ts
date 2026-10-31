@@ -10,6 +10,8 @@ export default defineConfig(() => ({
     },
   },
   build: {
+    // Build-only minification reduces shipped bytes without changing the budgets.
+    minify: 'terser' as const,
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {

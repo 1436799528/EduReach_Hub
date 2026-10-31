@@ -413,6 +413,11 @@ test('service-request updates reject stale versions and concurrent writes before
   serviceRequest = { id: 'request-1', user_id: 'student-1', status: 'submitted', admin_note: null, reference_code: 'TEST-1', updated_at: version, service_catalog: { title: 'Service' } };
   recorded.length = 0;
   assert.equal((await patch({ status: 'reviewing', expected_updated_at: version }, 'student')).status, 403);
+  const legacy = await patch({ status: 'reviewing', admin_note: 'An old client' });
+  assert.equal(legacy.status, 409);
+  assert.match(legacy.body.error, /refresh/i);
+  assert.equal((await patch({ admin_note: 'Old client note' })).status, 409);
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: null })).status, 400);
   assert.equal((await patch({ status: 'reviewing', expected_updated_at: 'invalid' })).status, 400);
   assert.equal((await patch({ status: 'reviewing', expected_updated_at: '2024-01-01T00:00:00Z' })).status, 409);
   assert.equal((await patch({ status: 'completed', expected_updated_at: version })).status, 409);
