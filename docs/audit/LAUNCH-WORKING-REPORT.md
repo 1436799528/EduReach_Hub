@@ -82,10 +82,10 @@ are not claimed to have passed.
 ## Latest executed local gates
 
 - TypeScript passed; 66 focused authorization, notification, analytics and
-  privacy tests passed. A local full suite passed **763/763** with a temporary
-  branch CI trigger and corresponding narrowly scoped assertion. The attempted
-  push of that trigger was rejected for missing GitHub App workflow permission;
-  both were reverted. The restored CI assertion needs its targeted rerun.
+  privacy tests passed. After reverting the rejected temporary CI trigger and
+  its test change, the unchanged full local `npm run ci` passed: **763/763**
+  unit/integration tests, all subsequent gates, and the browser suites below.
+  The restored CI assertion also passed its targeted 9-test rerun.
 - The unconfigured build passes; this is not a production environment build.
   `npm run perf:audit` passes **10/10**: total JS **331.5 KB / 336 KB**,
   critical path **207.4 KB / 211 KB**, entry **98.1 KB / 100 KB**. No budget
@@ -96,7 +96,10 @@ are not claimed to have passed.
   was discarded because assets were rebuilt while it was running. Four new
   consent tests passed on the Terser build (desktop and mobile): initial denial,
   no replay, shared consent and rejection across tabs/reloads, plus a storage
-  error in the same tab. Hosted or authenticated flows were not tested.
+  error in the same tab. The complete Terser-build Chromium suite passed
+  **162**, with **2 skipped** for missing CBT answer options. The separate
+  throttled mobile performance test passed for `/`, `/news`, `/past-questions`.
+  Hosted or authenticated flows were not tested.
 - PostgreSQL 17.11, local and disposable: the actual news safety migration was
   applied to a minimal `news_articles`/`document_bank` schema with an
   `ON DELETE SET NULL` FK. In a three-connection test, an uncommitted reference
@@ -110,9 +113,10 @@ are not claimed to have passed.
   classification does **not** establish that staff direct updates are safe.
 - The earlier backup rehearsal passed for 75 migrations on isolated PGlite. It
   is not a production backup or proof of hosted Auth/Storage recoverability.
-- Authoritative GitHub CI and the complete browser suite on the new minifier
-  build remain pending until their actual results are recorded. No Netlify
-  preview or configured hosted staging journey has run on this branch.
+- The local `npm run ci` pass is not authoritative GitHub CI. No branch GitHub
+  run exists, and no Netlify preview or configured hosted staging journey has
+  run on this branch. Reconnect the GitHub app with workflow permission to use
+  the branch-trigger approach, or separately authorize a PR/preview route.
 
 ## Deployment preparation checklist — do not execute without approval
 
