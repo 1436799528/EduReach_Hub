@@ -120,6 +120,10 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
     description:
       'No advertising cookies and no third-party trackers. What this site stores in your browser, why, and how to clear it.',
   },
+  '/refunds': {
+    title: 'Refund Policy | EduReach Hub',
+    description: 'Current free-platform status and the refund, cancellation and billing disclosures that will apply before paid services launch.',
+  },
   '/accessibility': {
     title: 'Accessibility | EduReach Hub',
     description:
