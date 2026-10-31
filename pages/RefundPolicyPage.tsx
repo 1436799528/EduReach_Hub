@@ -4,7 +4,7 @@ import { ArrowLeft, ShieldAlert } from 'lucide-react';
 export default function RefundPolicyPage() {
   return (
     <HubLayout>
-      <main className="er-legal-page">
+      <div className="er-legal-page">
         <div className="hub-container er-legal-container">
           <a className="er-legal-back" href="/"><ArrowLeft size={14} aria-hidden="true" /> Back to EduReach</a>
           <article className="er-legal-article" aria-labelledby="refund-title">
@@ -33,7 +33,7 @@ export default function RefundPolicyPage() {
           </article>
           <footer className="er-legal-foot"><nav aria-label="Other policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/accessibility">Accessibility</a></nav></footer>
         </div>
-      </main>
+      </div>
     </HubLayout>
   );
 }
