@@ -763,6 +763,8 @@ export type AdminNewsArticle = {
   published_at: string | null;
   featured?: boolean;
   tags?: string | null;
+  is_placeholder: boolean;
+  placeholder_note: string | null;
   updated_at: string;
 };
 
@@ -779,13 +781,18 @@ export type AdminNewsInput = {
   published_at?: string | null;
   featured?: boolean;
   tags?: string | null;
+  is_placeholder?: boolean;
+  placeholder_note?: string | null;
+  confirm_placeholder_replacement?: boolean;
 };
 
-export async function fetchAdminNews(): Promise<AdminNewsArticle[]> {
+export type AdminNewsListOptions = { page?: number; pageSize?: number; state?: 'all' | 'draft' | 'published' | 'placeholder'; search?: string };
+export async function fetchAdminNews(options: AdminNewsListOptions = {}): Promise<{ items: AdminNewsArticle[]; page: number; hasMore: boolean }> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
-  const body = await jsonFetch<{ items: AdminNewsArticle[] }>('/api/admin/news', { headers });
-  return body.items || [];
+  const params = new URLSearchParams({ page: String(options.page ?? 1), pageSize: String(options.pageSize ?? 200), state: options.state ?? 'all' });
+  if (options.search?.trim()) params.set('search', options.search.trim());
+  return jsonFetch<{ items: AdminNewsArticle[]; page: number; hasMore: boolean }>(`/api/admin/news?${params}`, { headers });
 }
 
 export async function createAdminNews(input: AdminNewsInput): Promise<AdminNewsArticle> {

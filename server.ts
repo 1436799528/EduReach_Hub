@@ -802,7 +802,7 @@ async function uniqueNewsSlug(supabase: SupabaseClient, base: string, excludeId?
   return `${base}-${Date.now().toString(36)}`;
 }
 
-const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,featured,tags,updated_at';
+const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,featured,tags,is_placeholder,placeholder_note,updated_at';
 
 // Comma-separated tag list → trimmed, de-duplicated, capped. Empty → null.
 function normalizeTags(value: unknown): string | null {
@@ -812,12 +812,33 @@ function normalizeTags(value: unknown): string | null {
   return cleaned.length ? cleaned.join(', ') : null;
 }
 
-app.get('/api/admin/news', requireCapability('news.read'), async (_req, res) => {
+app.get('/api/admin/news', requireCapability('news.read'), async (req, res) => {
   try {
+    for (const key of ['state', 'page', 'pageSize', 'search']) {
+      if (req.query[key] !== undefined && typeof req.query[key] !== 'string') return res.status(400).json({ error: 'Invalid news list parameter.' });
+    }
+    const state = typeof req.query.state === 'string' ? req.query.state : 'all';
+    if (!['all', 'draft', 'published', 'placeholder'].includes(state)) return res.status(400).json({ error: 'Invalid article state.' });
+    const pageText = typeof req.query.page === 'string' ? req.query.page : '1';
+    const sizeText = typeof req.query.pageSize === 'string' ? req.query.pageSize : '200';
+    if (!/^\d+$/.test(pageText) || !/^\d+$/.test(sizeText)) return res.status(400).json({ error: 'Invalid pagination.' });
+    const page = Number(pageText);
+    const pageSize = Number(sizeText);
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 200 || !Number.isSafeInteger(page * pageSize)) return res.status(400).json({ error: 'Invalid pagination.' });
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (search.length > 120) return res.status(400).json({ error: 'Search is too long.' });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('news_articles').select(newsRowSelect).order('updated_at', { ascending: false }).limit(200);
+    let query = supabase.from('news_articles').select(newsRowSelect);
+    if (state === 'draft') query = query.eq('published', false);
+    if (state === 'published') query = query.eq('published', true);
+    if (state === 'placeholder') query = query.eq('is_placeholder', true);
+    // Treat LIKE metacharacters as literal user input rather than broadening a search.
+    if (search) query = query.ilike('title', `%${search.replace(/[\\%_*]/g, '\\$&')}%`);
+    const offset = (page - 1) * pageSize;
+    const { data, error } = await query.order('updated_at', { ascending: false }).order('id', { ascending: false }).range(offset, offset + pageSize);
     if (error) throw error;
-    res.json({ items: data || [] });
+    const rows = data || [];
+    res.json({ items: rows.slice(0, pageSize), page, pageSize, hasMore: rows.length > pageSize });
   } catch (error) {
     console.error('Admin news list error:', error);
     res.status(503).json({ error: 'Unable to load newsroom articles.' });
@@ -838,7 +859,12 @@ app.post('/api/admin/news', requireCapability('news.create'), async (req, res) =
     if ((req.body?.image_url && !imageUrl) || (req.body?.source_url && !sourceUrl)) {
       return res.status(400).json({ error: 'Image and source links must use HTTPS or a site-relative path.' });
     }
+    if (req.body?.is_placeholder !== undefined && typeof req.body.is_placeholder !== 'boolean') return res.status(400).json({ error: 'Placeholder status must be true or false.' });
+    const isPlaceholder = req.body?.is_placeholder === true;
+    const placeholderNote = typeof req.body?.placeholder_note === 'string' ? req.body.placeholder_note.trim().slice(0, 1000) : '';
     const published = req.body?.published === true;
+    if (isPlaceholder && !placeholderNote) return res.status(400).json({ error: 'Describe what information is needed for this placeholder.' });
+    if (isPlaceholder && published) return res.status(400).json({ error: 'Placeholder articles must remain unpublished.' });
     // `news.create` may save drafts; putting a story in front of students is a
     // separate capability, checked from the payload rather than the route.
     if (published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
@@ -868,6 +894,8 @@ app.post('/api/admin/news', requireCapability('news.create'), async (req, res) =
       published_at: publishedAt,
       featured: req.body?.featured === true,
       tags: normalizeTags(req.body?.tags),
+      is_placeholder: isPlaceholder,
+      placeholder_note: isPlaceholder ? placeholderNote : null,
     };
     const { data, error } = await supabase.from('news_articles').insert(row).select(newsRowSelect).single();
     if (error) throw error;
@@ -883,9 +911,21 @@ app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async 
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at').eq('id', req.params.articleId).single();
+    const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at,is_placeholder,placeholder_note').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
+    if (req.body?.is_placeholder !== undefined && typeof req.body.is_placeholder !== 'boolean') return res.status(400).json({ error: 'Placeholder status must be true or false.' });
+    const nextPlaceholder = req.body?.is_placeholder === undefined ? existing.is_placeholder === true : req.body.is_placeholder;
+    const nextNote = req.body?.placeholder_note === undefined
+      ? String(existing.placeholder_note || '').trim()
+      : typeof req.body.placeholder_note === 'string' ? req.body.placeholder_note.trim().slice(0, 1000) : '';
+    const nextPublished = req.body?.published === undefined ? existing.published === true : req.body.published === true;
+    if (nextPlaceholder && !nextNote) return res.status(400).json({ error: 'Describe what information is needed for this placeholder.' });
+    if (nextPlaceholder && nextPublished) return res.status(400).json({ error: 'Placeholder articles must remain unpublished.' });
+    if (existing.is_placeholder === true && !nextPlaceholder && req.body?.confirm_placeholder_replacement !== true) return res.status(400).json({ error: 'Confirm that this placeholder has been replaced with genuine content.' });
+    if (existing.is_placeholder === true && !nextPlaceholder && nextPublished) return res.status(400).json({ error: 'Save the replacement as a draft before publishing it.' });
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (req.body?.is_placeholder !== undefined) patch.is_placeholder = nextPlaceholder;
+    if (req.body?.placeholder_note !== undefined || (req.body?.is_placeholder !== undefined && !nextPlaceholder)) patch.placeholder_note = nextPlaceholder ? nextNote : null;
     if (req.body?.title !== undefined) {
       const title = String(req.body.title).trim();
       if (!title) return res.status(400).json({ error: 'Article title cannot be empty.' });
@@ -933,9 +973,10 @@ app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async 
         patch.published_at = null;
       }
     }
-    const { data, error } = await supabase.from('news_articles').update(patch).eq('id', existing.id).select(newsRowSelect).single();
+    const { data, error } = await supabase.from('news_articles').update(patch).eq('id', existing.id).eq('is_placeholder', existing.is_placeholder === true).select(newsRowSelect).maybeSingle();
     if (error) throw error;
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_update', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: data.slug } });
+    if (!data) return res.status(409).json({ error: 'This article changed while you were editing it. Reload it and try again.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_update', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: data.slug, placeholder_replaced: existing.is_placeholder === true && !nextPlaceholder } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin news update error:', error);
@@ -950,6 +991,7 @@ app.delete('/api/admin/news/:articleId', requireCapability('news.delete'), async
     const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
     const { error } = await supabase.from('news_articles').delete().eq('id', existing.id);
+    if (error?.code === '23503') return res.status(409).json({ error: 'This article is linked to other records. Review those links before deleting it.' });
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_delete', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: existing.slug } });
     res.json({ deleted: true });
@@ -3429,7 +3471,7 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireCapability('d
     const { data, error } = await supabase.from(resource.table).delete().eq('id', req.params.id).select('id').single();
     if (error) {
       const message = String(error.message || '');
-      if (/foreign key|violates|constraint/i.test(message)) return res.status(409).json({ error: 'This record is still referenced by other data. Archive/deactivate it instead of deleting it.' });
+      if (error.code === '23503' || /foreign key|violates|constraint/i.test(message)) return res.status(409).json({ error: 'This record is still referenced by other data. Archive/deactivate it instead of deleting it.' });
       throw error;
     }
     if (!data) return res.status(404).json({ error: 'Record not found.' });

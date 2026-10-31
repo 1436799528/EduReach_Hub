@@ -240,7 +240,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261024120000', 'site_content_and_legal_pages', '20261024120000_site_content_and_legal_pages.sql', 'unique'),
     ('20261025120000', 'cbt_submit_grace_120', '20261025120000_cbt_submit_grace_120.sql', 'unique'),
     ('20261026120000', 'service_guides', '20261026120000_service_guides.sql', 'unique'),
-    ('20261027120000', 'cbt_subject_catalog_and_mock_rules', '20261027120000_cbt_subject_catalog_and_mock_rules.sql', 'unique')
+    ('20261027120000', 'cbt_subject_catalog_and_mock_rules', '20261027120000_cbt_subject_catalog_and_mock_rules.sql', 'unique'),
+    ('20261031120000', 'news_placeholder_safety', '20261031120000_news_placeholder_safety.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -340,6 +341,7 @@ with expected(version, migration) as (
     ,('20261025120000', '20261025120000_cbt_submit_grace_120.sql')
     ,('20261026120000', '20261026120000_service_guides.sql')
     ,('20261027120000', '20261027120000_cbt_subject_catalog_and_mock_rules.sql')
+    ,('20261031120000', '20261031120000_news_placeholder_safety.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -393,6 +395,29 @@ with expected(version, migration) as (
   select 'public.news_articles.category_slug', '20261002130000_news_category_contract.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'news_articles' and column_name = 'category_slug')
+  union all
+  select 'public.news_articles.is_placeholder', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'news_articles' and column_name = 'is_placeholder')
+  union all
+  select 'public.news_articles.placeholder_note', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'news_articles' and column_name = 'placeholder_note')
+  union all
+  select 'public.news_articles.news_placeholder_draft_check', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from pg_constraint c join pg_class t on t.oid = c.conrelid
+                    join pg_namespace n on n.oid = t.relnamespace
+                    where n.nspname = 'public' and t.relname = 'news_articles' and c.conname = 'news_placeholder_draft_check')
+  union all
+  select 'public.news_articles.guard_referenced_news_placeholder_delete', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from pg_trigger t join pg_class c on c.oid = t.tgrelid
+                    join pg_namespace n on n.oid = c.relnamespace
+                    where n.nspname = 'public' and c.relname = 'news_articles'
+                      and t.tgname = 'guard_referenced_news_placeholder_delete' and not t.tgisinternal and t.tgenabled <> 'D')
+  union all
+  select 'public.guard_referenced_news_placeholder_delete()', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'guard_referenced_news_placeholder_delete')
   union all
   select 'public.past_question_resources', '20261002140000_past_question_resources.sql'
   where not exists (select 1 from information_schema.tables

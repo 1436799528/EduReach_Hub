@@ -65,13 +65,38 @@ backend.patch('/rest/v1/profiles', (req, res) => {
   return res.json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/news_articles', (_req, res) => {
+let newsFixtureEnabled = false;
+const newsFixture = Array.from({ length: 235 }, (_, index) => ({
+  id: String(index).padStart(3, '0'), title: `Article ${String(index).padStart(3, '0')}${index === 12 ? ' 100%_verified' : ''}`,
+  updated_at: '2025-01-01T00:00:00Z', published: index % 3 === 0, is_placeholder: index % 3 === 1,
+}));
+backend.get('/rest/v1/news_articles', (req, res) => {
   recorded.push('GET news_articles');
-  return res.json([]);
+  if (req.query.id === 'eq.article-placeholder') {
+    return res.json({ id: 'article-placeholder', slug: 'placeholder', published: false, published_at: null, is_placeholder: true, placeholder_note: 'Verified source required' });
+  }
+  if (!newsFixtureEnabled) return res.json([]);
+  recorded.push(`LIST news ${JSON.stringify(req.query)}`);
+  let rows = [...newsFixture].sort((a, b) => b.id.localeCompare(a.id));
+  if (req.query.published === 'eq.true') rows = rows.filter((row) => row.published);
+  if (req.query.published === 'eq.false') rows = rows.filter((row) => !row.published);
+  if (req.query.is_placeholder === 'eq.true') rows = rows.filter((row) => row.is_placeholder);
+  if (typeof req.query.title === 'string') {
+    const term = req.query.title.replace(/^ilike\.%/, '').replace(/%$/, '').replace(/\\([\\%_])/g, '$1').toLowerCase();
+    rows = rows.filter((row) => row.title.toLowerCase().includes(term));
+  }
+  const offset = Number(req.query.offset || 0);
+  const limit = Number(req.query.limit || rows.length);
+  return res.json(rows.slice(offset, offset + limit));
+});
+backend.patch('/rest/v1/news_articles', (req, res) => {
+  recorded.push(`PATCH news_articles query=${JSON.stringify(req.query)} body=${JSON.stringify(req.body)}`);
+  return res.json([{ id: 'article-placeholder', slug: 'placeholder', ...req.body }]);
 });
 
 backend.post('/rest/v1/news_articles', (req, res) => {
   recorded.push('POST news_articles');
+  recorded.push(`POST news_articles body=${JSON.stringify(req.body)}`);
   const row = { id: 'article-new', slug: 'draft-notice', title: req.body?.title, published: req.body?.published === true, updated_at: new Date().toISOString() };
   const wantsObject = String(req.header('accept') || '').includes('vnd.pgrst.object');
   return res.status(201).json(wantsObject ? row : [row]);
@@ -334,6 +359,85 @@ test('a draft write is authorized while publishing is refused for a service role
     body: JSON.stringify({ title: 'Notice', body: 'Body text', published: true }),
   });
   assert.equal(publishAttempt.status, 403);
+});
+
+test('news placeholders cannot be published or converted and published in one request', async () => {
+  const json = { 'Content-Type': 'application/json' };
+  const placeholder = { title: 'Placeholder', body: 'Replace this draft.', is_placeholder: true, placeholder_note: 'Verified source required' };
+  const unauthorized = await call('/api/admin/news', 'student', { method: 'POST', headers: json, body: JSON.stringify(placeholder) });
+  assert.equal(unauthorized.status, 403);
+  recorded.length = 0;
+  const draft = await call('/api/admin/news', 'content_editor', { method: 'POST', headers: json, body: JSON.stringify(placeholder) });
+  assert.equal(draft.status, 201);
+  const write = recorded.find((entry) => entry.startsWith('POST news_articles body='));
+  assert.ok(write);
+  const written = JSON.parse(write.slice('POST news_articles body='.length));
+  assert.equal(written.is_placeholder, true);
+  assert.equal(written.placeholder_note, placeholder.placeholder_note);
+  assert.equal(written.published, false);
+  const missingNote = await call('/api/admin/news', 'content_editor', { method: 'POST', headers: json, body: JSON.stringify({ ...placeholder, placeholder_note: '' }) });
+  assert.equal(missingNote.status, 400);
+  const publish = await call('/api/admin/news', 'content_editor', { method: 'POST', headers: json, body: JSON.stringify({ ...placeholder, published: true }) });
+  assert.equal(publish.status, 400);
+  const patch = async (body: object) => call('/api/admin/news/article-placeholder', 'content_editor', { method: 'PATCH', headers: json, body: JSON.stringify(body) });
+  assert.equal((await patch({ published: true })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, published: true })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, confirm_placeholder_replacement: true, published: true })).status, 400);
+  assert.equal((await patch({ is_placeholder: false })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, confirm_placeholder_replacement: 'true' })).status, 400);
+  assert.equal((await patch({ placeholder_note: '' })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, confirm_placeholder_replacement: true, title: 'Genuine replacement', published: false })).status, 200);
+  const update = recorded.find((entry) => entry.startsWith('PATCH news_articles query='));
+  assert.ok(update);
+  assert.match(update, /is_placeholder.*eq.true/);
+  assert.ok(!update.includes('confirm_placeholder_replacement'));
+  assert.ok(recorded.some((entry) => entry.includes('placeholder_replaced')));
+});
+
+test('generic news patch and import cannot change placeholder metadata', async () => {
+  const json = { 'Content-Type': 'application/json' };
+  const row = { id: 'article-placeholder', slug: 'placeholder', title: 'Replacement', body: 'Body', category: 'general', is_placeholder: false, placeholder_note: null, published: true };
+  recorded.length = 0;
+  const patch = await call('/api/admin/content-manager/data/news_articles/article-placeholder', 'super_admin', { method: 'PATCH', headers: json, body: JSON.stringify(row) });
+  assert.equal(patch.status, 400);
+  const imported = await call('/api/admin/content-manager/import/news_articles', 'super_admin', { method: 'POST', headers: json, body: JSON.stringify({ rows: [row] }) });
+  assert.equal(imported.status, 200);
+  assert.equal(imported.body.inserted, 0);
+  assert.equal(imported.body.updated, 0);
+  assert.equal(imported.body.errors.length, 1);
+  assert.ok(!recorded.some((entry) => entry.startsWith('PATCH news_articles') || entry.startsWith('POST news_articles')));
+});
+
+test('admin news lists every page and applies filters and title search on the server', async () => {
+  newsFixtureEnabled = true;
+  try {
+    for (const state of ['all', 'draft', 'published', 'placeholder']) {
+      const expected = newsFixture.filter((row) => state === 'all' || (state === 'draft' ? !row.published : state === 'published' ? row.published : row.is_placeholder)).map((row) => row.id).sort().reverse();
+      const seen: string[] = [];
+      for (let page = 1; ; page++) {
+        const response = await call(`/api/admin/news?state=${state}&page=${page}&pageSize=37`, 'content_editor');
+        assert.equal(response.status, 200);
+        seen.push(...response.body.items.map((row: { id: string }) => row.id));
+        if (!response.body.hasMore) break;
+        assert.ok(page < 10);
+      }
+      assert.deepEqual(seen, expected);
+    }
+    const search = await call('/api/admin/news?state=all&search=100%25_veRiFiEd', 'content_editor');
+    assert.equal(search.status, 200);
+    assert.deepEqual(search.body.items.map((row: {id: string}) => row.id), ['012']);
+    const list = recorded.filter((entry) => entry.startsWith('LIST news ')).at(-1);
+    assert.ok(list?.includes('100\\\\%\\\\_veRiFiEd'));
+    assert.ok(list?.includes('updated_at.desc,id.desc'));
+    const empty = await call('/api/admin/news?page=999&pageSize=50', 'content_editor');
+    assert.equal(empty.status, 200);
+    assert.deepEqual(empty.body.items, []);
+    assert.equal(empty.body.hasMore, false);
+    for (const query of ['page=0', 'page=-1', 'page=1.5', 'pageSize=0', 'pageSize=201', 'state=unknown', 'page=9007199254740992', `search=${'a'.repeat(121)}`]) {
+      assert.equal((await call(`/api/admin/news?${query}`, 'content_editor')).status, 400, query);
+    }
+    assert.equal((await call('/api/admin/news?state=placeholder', 'student')).status, 403);
+  } finally { newsFixtureEnabled = false; }
 });
 
 test('the session endpoint reports the resolved role and capabilities', async () => {
