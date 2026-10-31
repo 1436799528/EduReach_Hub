@@ -102,10 +102,22 @@ backend.post('/rest/v1/news_articles', (req, res) => {
   return res.status(201).json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/service_requests', (_req, res) => {
+let serviceRequest = { id: 'request-1', user_id: 'student-1', status: 'submitted', admin_note: null as string | null, reference_code: 'TEST-1', updated_at: '2025-01-01T00:00:00.000Z', service_catalog: { title: 'Service' } };
+let raceServiceUpdate: Partial<typeof serviceRequest> | null = null;
+backend.get('/rest/v1/service_requests', (req, res) => {
   recorded.push('GET service_requests');
+  if (req.query.id === 'eq.request-1') return res.json({ ...serviceRequest });
   return res.json([]);
 });
+backend.patch('/rest/v1/service_requests', (req, res) => {
+  recorded.push(`PATCH service_requests query=${JSON.stringify(req.query)}`);
+  if (raceServiceUpdate) { serviceRequest = { ...serviceRequest, ...raceServiceUpdate }; raceServiceUpdate = null; }
+  if (req.query.id !== `eq.${serviceRequest.id}` || req.query.status !== `eq.${serviceRequest.status}` || req.query.updated_at !== `eq.${serviceRequest.updated_at}`) return res.json([]);
+  serviceRequest = { ...serviceRequest, ...req.body };
+  return res.json([{ ...serviceRequest }]);
+});
+backend.get('/rest/v1/student_notifications', (_req, res) => { recorded.push('GET student_notifications'); return res.json([]); });
+backend.post('/rest/v1/student_notifications', (_req, res) => { recorded.push('POST student_notifications'); return res.status(201).json(null); });
 
 backend.get('/rest/v1/cbt_attempts', (req, res) => {
   recorded.push(`GET cbt_attempts id=${String(req.query.id || '')} user_id=${String(req.query.user_id || '')}`);
@@ -392,6 +404,37 @@ test('news placeholders cannot be published or converted and published in one re
   assert.match(update, /is_placeholder.*eq.true/);
   assert.ok(!update.includes('confirm_placeholder_replacement'));
   assert.ok(recorded.some((entry) => entry.includes('placeholder_replaced')));
+});
+
+test('service-request updates reject stale versions and concurrent writes before audit or notification', async () => {
+  const json = { 'Content-Type': 'application/json' };
+  const patch = (body: object, account = 'service_admin') => call('/api/admin/service-requests/request-1', account, { method: 'PATCH', headers: json, body: JSON.stringify(body) });
+  const version = '2025-01-01T00:00:00.000Z';
+  serviceRequest = { id: 'request-1', user_id: 'student-1', status: 'submitted', admin_note: null, reference_code: 'TEST-1', updated_at: version, service_catalog: { title: 'Service' } };
+  recorded.length = 0;
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: version }, 'student')).status, 403);
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: 'invalid' })).status, 400);
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: '2024-01-01T00:00:00Z' })).status, 409);
+  assert.equal((await patch({ status: 'completed', expected_updated_at: version })).status, 409);
+  assert.ok(!recorded.some((line) => line.startsWith('PATCH service_requests') || line.startsWith('RPC admin_audit_log') || line.startsWith('POST student_notifications')));
+  // Another officer's status and note change occurs between the read and write.
+  raceServiceUpdate = { status: 'processing', admin_note: 'New note', updated_at: '2025-01-02T00:00:00.000Z' };
+  assert.equal((await patch({ status: 'reviewing', admin_note: 'Old note', expected_updated_at: version })).status, 409);
+  assert.equal(serviceRequest.status, 'processing');
+  assert.equal(serviceRequest.admin_note, 'New note');
+  assert.ok(!recorded.some((line) => line.startsWith('RPC admin_audit_log') || line.startsWith('POST student_notifications')));
+  // A fresh, valid transition commits once and only then emits audit/notification.
+  const success = await patch({ status: 'completed', expected_updated_at: serviceRequest.updated_at });
+  assert.equal(success.status, 200);
+  assert.equal(serviceRequest.status, 'completed');
+  assert.equal(recorded.filter((line) => line.startsWith('RPC admin_audit_log')).length, 1);
+  assert.equal(recorded.filter((line) => line === 'POST student_notifications').length, 1);
+  const previous = serviceRequest.updated_at;
+  const note = await patch({ admin_note: 'Updated note', expected_updated_at: previous });
+  assert.equal(note.status, 200);
+  assert.equal(serviceRequest.admin_note, 'Updated note');
+  assert.ok(Date.parse(serviceRequest.updated_at) > Date.parse(previous));
+  assert.equal(recorded.filter((line) => line === 'POST student_notifications').length, 1);
 });
 
 test('generic news patch and import cannot change placeholder metadata', async () => {

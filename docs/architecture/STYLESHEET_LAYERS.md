@@ -28,9 +28,10 @@ not silently dropped — see the plan at the end.
 | 13 | `compact-structural.css` | Compact structural pass |
 | 14 | `edu-portal.css` | Feature surfaces layered over the design system |
 | 15 | `data-control.css` | Data-control centre |
-| 16 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
-| 17 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
-| 18 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+| 16 | `components/CookieConsent.css` | Scoped privacy-choice panel, before the shared closing layers |
+| 17 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
+| 18 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
+| 19 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
 
 Two rules follow from that:
 

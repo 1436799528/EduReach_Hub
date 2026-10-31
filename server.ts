@@ -456,7 +456,7 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     const supabase = getServerSupabase();
     const { data: request, error: requestError } = await supabase
       .from('service_requests')
-      .select('id,status,admin_note,user_id,reference_code,service_catalog(title)')
+      .select('id,status,admin_note,user_id,reference_code,service_catalog(title),updated_at')
       .eq('id', req.params.requestId)
       .single();
     if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
@@ -465,7 +465,15 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     const wantsNote = req.body?.admin_note !== undefined;
     if (!wantsStatus && !wantsNote) return res.status(400).json({ error: 'Nothing to update.' });
 
-    const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    // A version from the UI detects edits made since the row was displayed.
+    // It remains optional for already-open older clients during deployment.
+    const expectedVersion = req.body?.expected_updated_at;
+    if (expectedVersion !== undefined && (typeof expectedVersion !== 'string' || expectedVersion.length > 64 || !Number.isFinite(Date.parse(expectedVersion)))) return res.status(400).json({ error: 'Invalid request version.' });
+    if (expectedVersion !== undefined && expectedVersion !== request.updated_at) return res.status(409).json({ error: 'This request changed. Refresh the queue before trying again.' });
+    const previousTime = Date.parse(String(request.updated_at || ''));
+    if (!Number.isFinite(previousTime)) return res.status(503).json({ error: 'Unable to verify this request version.' });
+    // Ensure that consecutive writes from this API do not share a millisecond.
+    const update: Record<string, unknown> = { updated_at: new Date(Math.max(Date.now(), previousTime + 1)).toISOString() };
 
     if (wantsNote) {
       const note = String(req.body?.admin_note || '').trim().slice(0, 2000);
@@ -491,8 +499,11 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
       update.status = nextStatus;
     }
 
-    const { data, error } = await supabase.from('service_requests').update(update).eq('id', request.id).select('id,status,admin_note,updated_at').single();
+    const { data, error } = await supabase.from('service_requests').update(update)
+      .eq('id', request.id).eq('status', request.status).eq('updated_at', request.updated_at)
+      .select('id,status,admin_note,updated_at').maybeSingle();
     if (error) throw error;
+    if (!data) return res.status(409).json({ error: 'This request changed. Refresh the queue before trying again.' });
     if (nextStatus) {
       await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
       // The student is told about the same transition the audit trail recorded.

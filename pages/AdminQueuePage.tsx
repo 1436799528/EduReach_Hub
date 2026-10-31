@@ -28,12 +28,13 @@ export default function AdminQueuePage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [noteVersion, setNoteVersion] = useState('');
 
   async function saveNote(row: AdminServiceRequest) {
     setBusyId(row.id);
     try {
-      await updateAdminServiceRequest(row.id, { admin_note: noteText });
-      setRows((current) => current.map((item) => item.id === row.id ? { ...item, admin_note: noteText || null } : item));
+      const result = await updateAdminServiceRequest(row.id, { admin_note: noteText, expected_updated_at: noteVersion });
+      setRows((current) => current.map((item) => item.id === row.id ? { ...item, ...result.item } : item));
       setNoteId(null);
       setNoteText('');
     } catch (e) {
@@ -54,10 +55,10 @@ export default function AdminQueuePage() {
 
   useEffect(() => { void load(filter); }, [filter, load]);
 
-  async function act(requestId: string, nextStatus: string) {
+  async function act(requestId: string, nextStatus: string, expectedUpdatedAt: string) {
     setBusyId(requestId);
     try {
-      await updateAdminServiceRequest(requestId, nextStatus);
+      await updateAdminServiceRequest(requestId, { status: nextStatus, expected_updated_at: expectedUpdatedAt });
       await load(filter);
     } catch (e) {
       setError(userFacingError(e, 'Unable to update request.'));
@@ -98,7 +99,7 @@ export default function AdminQueuePage() {
                     <td>
                       {String(row.form_data?.message || row.form_data?.requestDetails || '—')}
                       {row.admin_note && <div className="muted" style={{ marginTop: 4 }}><b>Note:</b> {row.admin_note}</div>}
-                      <button type="button" className="admin-text-btn" style={{ marginTop: 4 }} onClick={() => { setNoteId(noteId === row.id ? null : row.id); setNoteText(row.admin_note || ''); }}>
+                      <button type="button" className="admin-text-btn" style={{ marginTop: 4 }} onClick={() => { setNoteId(noteId === row.id ? null : row.id); setNoteText(row.admin_note || ''); setNoteVersion(row.updated_at); }}>
                         {row.admin_note ? 'Edit note' : 'Add note'}
                       </button>
                       {noteId === row.id && (

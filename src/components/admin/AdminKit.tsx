@@ -143,9 +143,9 @@ export function requestStudentName(row: { form_data?: Record<string, unknown>; u
 }
 
 export function RequestActions({ row, disabled, onAction }: {
-  row: { id: string; status: string };
+  row: { id: string; status: string; updated_at: string };
   disabled?: boolean;
-  onAction: (requestId: string, nextStatus: string) => Promise<void> | void;
+  onAction: (requestId: string, nextStatus: string, expectedUpdatedAt: string) => Promise<void> | void;
 }) {
   const [busy, setBusy] = useState(false);
   const transitions = TRANSITIONS[row.status] || [];
@@ -154,7 +154,7 @@ export function RequestActions({ row, disabled, onAction }: {
     if (disabled || busy) return;
     if (next === 'rejected' && !window.confirm('Reject this request? The student will see it as rejected in their dashboard.')) return;
     setBusy(true);
-    try { await onAction(row.id, next); } finally { setBusy(false); }
+    try { await onAction(row.id, next, row.updated_at); } finally { setBusy(false); }
   }
 
   if (!transitions.length) return <span className="muted">No action</span>;

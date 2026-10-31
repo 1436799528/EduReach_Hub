@@ -1,0 +1,6 @@
+.privacy-settings { position: fixed; right: 16px; bottom: 16px; z-index: 900; background: white; }
+.privacy-panel { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 1000; max-width: 760px; max-height: 70vh; overflow-y: auto; margin: auto; padding: 20px; background: white; color: #172033; border: 1px solid #cbd5e1; border-radius: 14px; box-shadow: 0 12px 36px rgba(15,23,42,.2); }
+.privacy-panel h2 { margin: 0 0 8px; font-size: 17px; }
+.privacy-panel p { font-size: 13px; line-height: 1.6; }
+.privacy-panel a { color: #174a3a; text-decoration: underline; }
+.privacy-actions { display: flex; flex-wrap: wrap; gap: 9px; }

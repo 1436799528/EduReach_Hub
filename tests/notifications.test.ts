@@ -145,7 +145,7 @@ test('a no-op transition never touches the store', async () => {
 test('the service-request status handler notifies the owner after the audit write', () => {
   const source = readFileSync(new URL('../server.ts', import.meta.url), 'utf8');
   assert.match(source, /import \{ notifyServiceRequestStatus \} from '\.\/src\/server\/notifications';/);
-  assert.match(source, /select\('id,status,admin_note,user_id,reference_code,service_catalog\(title\)'\)/);
+  assert.match(source, /select\('id,status,admin_note,user_id,reference_code,service_catalog\(title\),updated_at'\)/);
   const auditIndex = source.indexOf("p_action: 'status_change', p_entity_type: 'service_request'");
   const notifyIndex = source.indexOf('await notifyServiceRequestStatus(supabase, {');
   assert.ok(auditIndex > 0, 'status change must stay audited');

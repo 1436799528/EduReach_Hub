@@ -6,6 +6,7 @@ import { newsCategorySlug } from '../data/newsCategories';
 import { userFacingError } from '../../lib/errors';
 import { isArticleCurrent } from './newsFreshness';
 import { apiUrl } from './apiBase';
+import { hasAnalyticsConsent } from './privacyPreferences';
 import {
   isAnalyticsEvent,
   sanitizeAnalyticsPath,
@@ -738,7 +739,7 @@ export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminSe
   return body.items || [];
 }
 
-export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null }) {
+export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null; expected_updated_at?: string }) {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
   const body = typeof patch === 'string' ? { status: patch } : patch;
@@ -966,7 +967,7 @@ export function analyticsSessionId(): string {
 
 export function trackEvent(eventName: AnalyticsEventName, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
   try {
-    if (!isAnalyticsEvent(eventName)) return;
+    if (!isAnalyticsEvent(eventName) || !hasAnalyticsConsent()) return;
     const validation = validateAnalyticsMetadata(eventName, payload.metadata || {});
     // `=== false`, not `!`: this project compiles without strictNullChecks, where
     // a negated boolean discriminant does not narrow the union.

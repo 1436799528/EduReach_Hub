@@ -71,10 +71,10 @@ export default function AdminDashboardPage() {
     return () => { mounted.current = false; window.clearInterval(timer); };
   }, [load]);
 
-  async function act(requestId: string, nextStatus: string) {
+  async function act(requestId: string, nextStatus: string, expectedUpdatedAt: string) {
     setBusyId(requestId);
     try {
-      await updateAdminServiceRequest(requestId, nextStatus);
+      await updateAdminServiceRequest(requestId, { status: nextStatus, expected_updated_at: expectedUpdatedAt });
       await load(true);
     } catch (e) {
       setError(userFacingError(e, 'Unable to update request.'));
