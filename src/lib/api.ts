@@ -6,6 +6,7 @@ import { newsCategorySlug } from '../data/newsCategories';
 import { userFacingError } from '../../lib/errors';
 import { isArticleCurrent } from './newsFreshness';
 import { apiUrl } from './apiBase';
+import { hasAnalyticsConsent } from './privacyPreferences';
 import {
   isAnalyticsEvent,
   sanitizeAnalyticsPath,
@@ -959,7 +960,7 @@ export function analyticsSessionId(): string {
 
 export function trackEvent(eventName: AnalyticsEventName, payload: { path?: string; metadata?: Record<string, unknown> } = {}) {
   try {
-    if (!isAnalyticsEvent(eventName)) return;
+    if (!isAnalyticsEvent(eventName) || !hasAnalyticsConsent()) return;
     const validation = validateAnalyticsMetadata(eventName, payload.metadata || {});
     // `=== false`, not `!`: this project compiles without strictNullChecks, where
     // a negated boolean discriminant does not narrow the union.
