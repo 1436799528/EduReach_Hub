@@ -48,7 +48,7 @@ export default function CookieConsent() {
             position: 'fixed', right: 16, bottom: 16, zIndex: 900,
             border: '1px solid #174a3a', borderRadius: 999, padding: '9px 14px',
             background: '#ffffff', color: '#174a3a', fontSize: 12,
-            fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 12px rgba(15,23,42,.12)',
+            fontWeight: 620, cursor: 'pointer', boxShadow: '0 2px 12px rgba(15,23,42,.12)',
           }}
         >
           Cookie settings
@@ -103,5 +103,5 @@ export default function CookieConsent() {
 
 const buttonStyle: React.CSSProperties = {
   minHeight: 40, padding: '9px 14px', borderRadius: 8, border: '1px solid #64748b',
-  background: '#ffffff', color: '#172033', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  background: '#ffffff', color: '#172033', fontSize: 13, fontWeight: 620, cursor: 'pointer',
 };
