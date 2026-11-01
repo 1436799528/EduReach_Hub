@@ -39,6 +39,7 @@ const LEGAL: FooterLink[] = [
   { href: '/terms', label: 'Terms' },
   { href: '/cookies', label: 'Cookies' },
   { href: '/accessibility', label: 'Accessibility' },
+  { href: '/refunds', label: 'Refunds' },
   { href: '/disclaimer', label: 'Disclaimer' },
 ];
 
