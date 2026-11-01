@@ -19,7 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Resolve patched dependency versions
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+        run: npm audit fix --package-lock-only --ignore-scripts --no-fund
       - name: Commit updated lockfile
         run: |
           git config user.name "github-actions[bot]"
