@@ -9,7 +9,7 @@ test('server key configuration accepts both supported server key formats', () =>
   assert.equal(getServerSupabaseKey({ SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_example' }), 'sb_secret_example');
   assert.equal(getServerSupabaseKey({ SUPABASE_SERVICE_ROLE_KEY: jwt('service_role') }), jwt('service_role'));
   assert.equal(getServerSupabaseKey({ SUPABASE_SECRET_KEY: 'sb_secret_alias' }), 'sb_secret_alias');
-  assert.equal(getServerSupabaseKey({ SUPABASE_SECRET_KEY: 'sb_secret_alias', SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_preferred' }), 'sb_secret_preferred');
+  assert.equal(getServerSupabaseKey({ SUPABASE_SECRET_KEY: 'sb_secret_alias', SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_preferred' }), 'sb_secret_alias');
 });
 for (const key of ['', 'sb_publishable_example', jwt('anon'), jwt('authenticated'), 'eyJ.invalid.invalid', 'not-a-key']) {
   test(`server key rejects ${key || 'missing key'}`, () => assert.equal(getServerSupabaseKey({ SUPABASE_SERVICE_ROLE_KEY: key }), ''));

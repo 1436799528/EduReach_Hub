@@ -1,8 +1,10 @@
 /** Accept modern secret keys and legacy service-role JWTs, never browser keys.
+ * Prefer the modern secret key so an exposed legacy service-role key cannot
+ * shadow it when both environment variables are configured.
  * JWT decoding here identifies configuration only; Supabase verifies the key.
  */
 export function getServerSupabaseKey(env: NodeJS.ProcessEnv = process.env): string {
-  const key = (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY || '').trim();
+  const key = (env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
   if (key.startsWith('sb_secret_')) return key;
   const parts = key.split('.');
   if (parts.length !== 3) return '';
