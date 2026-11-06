@@ -144,3 +144,11 @@ test('the tightened posture still provisions new accounts', async () => {
     assert.equal(wallet.rows.length, 1, 'the signup trigger must create the wallet row');
   }
 });
+
+test('column-level drift is visible to the posture audit', async () => {
+  await db.exec('grant select (admin_note) on public.service_requests to authenticated');
+  try {
+    const findings = comparePosture(await readActualPosture(db));
+    assert.ok(findings.some((finding) => finding.table === 'service_requests' && finding.problem.includes('select columns')));
+  } finally { await db.exec('revoke select (admin_note) on public.service_requests from authenticated'); }
+});

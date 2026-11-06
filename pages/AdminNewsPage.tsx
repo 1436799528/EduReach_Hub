@@ -1,6 +1,6 @@
 import { userFacingError } from '../lib/errors';
 import { useModalDialog } from '../src/lib/useModalDialog';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Eye, Pencil, Plus, RefreshCw, Star, Trash2, Upload } from 'lucide-react';
 import {
   createAdminNews,
@@ -31,12 +31,15 @@ type EditorState = {
   featured: boolean;
   tags: string;
   body: string;
+  isPlaceholder: boolean;
+  placeholderNote: string;
+  confirmReplacement: boolean;
 };
 
 const emptyEditor: EditorState = {
   id: null, title: '', slug: '', excerpt: '', category: 'general',
   imageUrl: '', sourceName: '', sourceUrl: '', published: false,
-  publishedAt: '', featured: false, tags: '', body: '',
+  publishedAt: '', featured: false, tags: '', body: '', isPlaceholder: false, placeholderNote: '', confirmReplacement: false,
 };
 
 /** datetime-local value ↔ ISO helpers (local timezone in, UTC stored). */
@@ -53,8 +56,13 @@ export default function AdminNewsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [filter, setFilter] = useState<'all' | 'draft' | 'published'>('all');
+  const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'placeholder'>('all');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const requestNumber = useRef(0);
+  const listOptions = useRef({ page, state: filter, search: query });
+  listOptions.current = { page, state: filter, search: query };
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
@@ -65,25 +73,25 @@ export default function AdminNewsPage() {
   const imageFileRef = useRef<HTMLInputElement | null>(null);
 
   async function load() {
-    setLoading(true);
+    const request = ++requestNumber.current;
+    setLoading(true); setError('');
     try {
-      setError('');
-      setArticles(await fetchAdminNews());
+      const result = await fetchAdminNews({ ...listOptions.current, pageSize: 50 });
+      if (request === requestNumber.current) { setArticles(result.items); setHasMore(result.hasMore); }
     } catch (e) {
-      setArticles([]);
-      setError(userFacingError(e, 'Unable to load newsroom articles.'));
-    } finally { setLoading(false); }
+      if (request === requestNumber.current) { setArticles([]); setHasMore(false); setError(userFacingError(e, 'Unable to load newsroom articles.')); }
+    } finally { if (request === requestNumber.current) setLoading(false); }
   }
   // A11Y-1: focus enters the preview, Tab stays inside it, Escape closes it.
   const previewDialogRef = useModalDialog<HTMLDivElement>(showPreview, () => setShowPreview(false));
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    setLoading(true); setArticles([]); setHasMore(false);
+    const timer = window.setTimeout(() => { void load(); }, 200);
+    return () => { window.clearTimeout(timer); requestNumber.current++; };
+  }, [page, filter, query]);
 
-  const visible = useMemo(() => articles
-    .filter((a) => (filter === 'all' ? true : filter === 'published' ? a.published : !a.published))
-    .filter((a) => !query.trim() || a.title.toLowerCase().includes(query.trim().toLowerCase()))
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-  [articles, filter, query]);
+  const visible = articles;
 
   function openCreate() { setEditor({ ...emptyEditor }); setMessage(''); setGateError(''); }
   function openEdit(article: AdminNewsArticle) {
@@ -93,6 +101,7 @@ export default function AdminNewsPage() {
       sourceName: article.source_name || '', sourceUrl: article.source_url || '',
       published: article.published, publishedAt: toLocalInputValue(article.published_at),
       featured: article.featured === true, tags: article.tags || '', body: article.body || '',
+      isPlaceholder: article.is_placeholder === true, placeholderNote: article.placeholder_note || '', confirmReplacement: false,
     });
     bodyHtmlRef.current = article.body || '';
     setMessage(''); setGateError('');
@@ -127,6 +136,9 @@ export default function AdminNewsPage() {
     const wantsPublish = publish === undefined ? editor.published : publish;
     if (!editor.title.trim()) { setError('An article title is required.'); return; }
     if (!body.trim()) { setError('The article body cannot be empty.'); return; }
+    if (editor.isPlaceholder && !editor.placeholderNote.trim()) { setError('Describe what information is needed for this placeholder.'); return; }
+    if (wantsPublish && editor.isPlaceholder) { setGateError('Replace the placeholder and save it as a draft before publishing.'); return; }
+    if (wantsPublish && articles.some((article) => article.id === editor.id && article.is_placeholder)) { setGateError('Save the replacement as a draft before publishing it.'); return; }
     if (wantsPublish) {
       const gate = validateForPublish(editor, body);
       if (gate) { setGateError(gate); return; }
@@ -148,6 +160,9 @@ export default function AdminNewsPage() {
         published_at: wantsPublish ? publishedAtIso : null,
         featured: editor.featured,
         tags: editor.tags.trim() || null,
+        is_placeholder: editor.isPlaceholder,
+        placeholder_note: editor.isPlaceholder ? editor.placeholderNote.trim() : null,
+        confirm_placeholder_replacement: editor.confirmReplacement,
       };
       const saved = editor.id ? await updateAdminNews(editor.id, payload) : await createAdminNews(payload);
       setArticles((items) => {
@@ -161,9 +176,11 @@ export default function AdminNewsPage() {
         sourceUrl: saved.source_url || '', published: saved.published,
         publishedAt: toLocalInputValue(saved.published_at), featured: saved.featured === true,
         tags: saved.tags || '', body: saved.body || '',
+        isPlaceholder: saved.is_placeholder === true, placeholderNote: saved.placeholder_note || '', confirmReplacement: false,
       });
       bodyHtmlRef.current = saved.body || '';
       setMessage(saved.published ? 'Article published. It is live on the news page.' : 'Draft saved.');
+      void load();
     } catch (e) {
       setError(userFacingError(e, 'Unable to save the article.'));
     } finally { setSaving(false); }
@@ -174,6 +191,7 @@ export default function AdminNewsPage() {
       const updated = await updateAdminNews(article.id, { published: !article.published });
       setArticles((items) => items.map((item) => item.id === updated.id ? updated : item));
       setMessage(updated.published ? `“${updated.title}” is now published.` : `“${updated.title}” is now an unpublished draft.`);
+      void load();
     } catch (e) {
       setError(userFacingError(e, 'Unable to update the article.'));
     }
@@ -184,6 +202,7 @@ export default function AdminNewsPage() {
       const updated = await updateAdminNews(article.id, { featured: !(article.featured === true) });
       setArticles((items) => items.map((item) => item.id === updated.id ? updated : item));
       setMessage(updated.featured ? `“${updated.title}” now leads the Featured section.` : `“${updated.title}” removed from Featured.`);
+      void load();
     } catch (e) {
       setError(userFacingError(e, 'Unable to update the article.'));
     }
@@ -197,6 +216,7 @@ export default function AdminNewsPage() {
       setArticles((items) => items.filter((item) => item.id !== article.id));
       if (editor?.id === article.id) setEditor(null);
       setMessage('Article permanently deleted.');
+      void load();
     } catch (e) {
       setError(userFacingError(e, 'Unable to delete the article.'));
     }
@@ -267,6 +287,15 @@ export default function AdminNewsPage() {
               <label className="admin-field"><span>Title *</span>
                 <input className="admin-input" style={{ width: '100%' }} value={editor.title} onChange={(e) => setEditor({ ...editor, title: e.target.value })} placeholder="e.g. JAMB announces 2027 UTME registration dates" />
               </label>
+              <label className="admin-field">
+                <span><input type="checkbox" checked={editor.isPlaceholder} onChange={(e) => {
+                  if (!e.target.checked && editor.isPlaceholder && !window.confirm('Have you replaced the placeholder with genuine, verified information? Save it as a draft before publishing.')) return;
+                  setEditor({ ...editor, isPlaceholder: e.target.checked, published: e.target.checked ? false : editor.published, confirmReplacement: !e.target.checked });
+                }} /> PLACEHOLDER — not publishable until replaced</span>
+              </label>
+              {editor.isPlaceholder && <label className="admin-field"><span>Information needed *</span>
+                <textarea className="admin-textarea" maxLength={1000} value={editor.placeholderNote} onChange={(e) => setEditor({ ...editor, placeholderNote: e.target.value })} />
+              </label>}
               <div className="admin-field-row">
                 <label className="admin-field"><span>Slug (optional)</span>
                   <input className="admin-input" value={editor.slug} onChange={(e) => setEditor({ ...editor, slug: e.target.value })} placeholder="auto-generated from title" />
@@ -350,17 +379,20 @@ export default function AdminNewsPage() {
       )}
 
       <div className="admin-filter-card">
-        <select className="admin-select" aria-label="Filter articles by state" value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
+        <select className="admin-select" aria-label="Filter articles by state" value={filter} onChange={(e) => { setPage(1); setFilter(e.target.value as typeof filter); }}>
           <option value="all">All articles</option>
           <option value="published">Published</option>
           <option value="draft">Drafts</option>
+          <option value="placeholder">Placeholders</option>
         </select>
-        <input className="admin-input admin-search" aria-label="Search articles" placeholder="Search by title" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <span className="admin-filter-count">{visible.length} of {articles.length}</span>
+        <input className="admin-input admin-search" aria-label="Search articles" placeholder="Search by title" maxLength={120} value={query} onChange={(e) => { setPage(1); setQuery(e.target.value); }} />
+        <span className="admin-filter-count">Page {page} · {visible.length} articles</span>
+        <button type="button" className="admin-btn small" disabled={loading || page === 1} onClick={() => setPage((current) => current - 1)}>Previous</button>
+        <button type="button" className="admin-btn small" disabled={loading || !hasMore} onClick={() => setPage((current) => current + 1)}>Next</button>
       </div>
 
       <div className="admin-card">
-        <div className="admin-table-wrap">
+        <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
           <table className="admin-table">
             <thead><tr><th scope="col">Title</th><th scope="col">Category</th><th scope="col">State</th><th scope="col">Published</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
             <tbody>
@@ -368,8 +400,9 @@ export default function AdminNewsPage() {
               {!loading && visible.map((article) => (
                 <tr key={article.id}>
                   <td>
-                    <b>{article.title}</b>
+                    <b>{article.title}</b>{article.is_placeholder && <strong> · PLACEHOLDER</strong>}
                     <div className="muted">/{article.slug}{article.featured ? ' · ★ featured' : ''}</div>
+                    {article.is_placeholder && article.placeholder_note && <div className="muted">{article.placeholder_note}</div>}
                   </td>
                   <td>{newsCategoryLabel(article.category)}</td>
                   <td><StatusBadge status={article.published ? 'published' : 'draft'} /></td>
@@ -381,7 +414,7 @@ export default function AdminNewsPage() {
                         <button type="button" className="admin-btn small" onClick={() => openEdit(article)}><Pencil size={12} /> Edit</button>
                       </Can>
                       <Can capability="news.publish">
-                        <button type="button" className="admin-btn small" onClick={() => void togglePublished(article)}>{article.published ? 'Unpublish' : 'Publish'}</button>
+                        <button type="button" className="admin-btn small" onClick={() => void togglePublished(article)} disabled={article.is_placeholder} title={article.is_placeholder ? 'Replace and save this placeholder as a draft first' : undefined}>{article.published ? 'Unpublish' : 'Publish'}</button>
                       </Can>
                       <button type="button" className="admin-btn small" onClick={() => void toggleFeatured(article)} title={article.featured ? 'Remove from featured' : 'Feature this article'}>
                         <Star size={12} /> {article.featured ? 'Unfeature' : 'Feature'}
@@ -393,10 +426,10 @@ export default function AdminNewsPage() {
                   </td>
                 </tr>
               ))}
-              {!loading && !visible.length && (
+              {!loading && !error && !visible.length && (
                 <tr><td colSpan={6} className="empty-state">
-                  {articles.length
-                    ? 'No articles match this filter.'
+                  {filter !== 'all' || query.trim() || page > 1
+                    ? 'No articles match this filter or page.'
                     : <AdminEmptyState title="No news articles yet" hint="Create the first article. It goes straight to the live news page when published. The public site shows an empty state until then." action={<button type="button" className="admin-btn small" onClick={openCreate}><Plus size={13} /> New article</button>} />}
                 </td></tr>
               )}

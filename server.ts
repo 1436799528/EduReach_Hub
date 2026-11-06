@@ -15,6 +15,7 @@ import { matchesDeclaredImageType } from './lib/image-signature';
 import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
+import { SERVICE_REQUEST_TRANSITIONS } from './src/lib/serviceRequestTransitions';
 import { type Capability } from './src/lib/capabilities';
 import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
 import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError } from './lib/errors';
@@ -24,6 +25,7 @@ import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
 import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, crawlerCacheHeaders, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
 import { isAnalyticsEvent, sanitizeAnalyticsPath, sanitizeReferrer, sanitizeUserAgent, validateAnalyticsMetadata } from './src/lib/analyticsTaxonomy';
+import { OPTIONAL_ANALYTICS_ENABLED } from './src/lib/analyticsAvailability';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
 import { registerQuestionImportRoutes } from './src/server/question-import/routes';
@@ -331,6 +333,9 @@ app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req,
 });
 
 app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), async (req, res) => {
+  // Also reject old clients: their local consent state cannot authorize collection
+  // while durable withdrawal is unresolved. This does not erase historical data.
+  if (!OPTIONAL_ANALYTICS_ENABLED) return res.status(503).json({ error: 'Optional analytics are temporarily unavailable.' });
   if (!isServerSupabaseConfigured()) return res.status(204).end();
   try {
     // AN-1: the taxonomy in src/lib/analyticsTaxonomy.ts is the allowlist - the
@@ -451,21 +456,32 @@ app.get('/api/admin/service-requests', requireCapability('service_request.read')
 });
 
 app.patch('/api/admin/service-requests/:requestId', requireCapability('service_request.process'), async (req, res) => {
+  let updateAttempted = false;
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
     const { data: request, error: requestError } = await supabase
       .from('service_requests')
-      .select('id,status,admin_note,user_id,reference_code,service_catalog(title)')
+      .select('id,status,admin_note,user_id,reference_code,service_catalog(title),updated_at')
       .eq('id', req.params.requestId)
-      .single();
-    if (requestError || !request) return res.status(404).json({ error: 'Service request not found.' });
+      .maybeSingle();
+    if (requestError) throw requestError;
+    if (!request) return res.status(404).json({ error: 'Service request not found.' });
 
     const wantsStatus = req.body?.status !== undefined;
     const wantsNote = req.body?.admin_note !== undefined;
     if (!wantsStatus && !wantsNote) return res.status(400).json({ error: 'Nothing to update.' });
 
-    const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    // A version from the UI detects edits made since the row was displayed.
+    // Older clients must refresh rather than submit an unverifiable stale decision.
+    const expectedVersion = req.body?.expected_updated_at;
+    if (expectedVersion === undefined) return res.status(409).json({ error: 'Refresh the queue before updating this request.' });
+    if (typeof expectedVersion !== 'string' || expectedVersion.length > 64 || !Number.isFinite(Date.parse(expectedVersion))) return res.status(400).json({ error: 'Invalid request version.' });
+    if (expectedVersion !== request.updated_at) return res.status(409).json({ error: 'This request changed. Refresh the queue before trying again.' });
+    const previousTime = Date.parse(String(request.updated_at || ''));
+    if (!Number.isFinite(previousTime)) return res.status(503).json({ error: 'Unable to verify this request version.' });
+    // Ensure that consecutive writes from this API do not share a millisecond.
+    const update: Record<string, unknown> = { updated_at: new Date(Math.max(Date.now(), previousTime + 1)).toISOString() };
 
     if (wantsNote) {
       const note = String(req.body?.admin_note || '').trim().slice(0, 2000);
@@ -475,24 +491,17 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     let nextStatus: string | null = null;
     if (wantsStatus) {
       nextStatus = String(req.body?.status || '');
-      const allowed = ['submitted','reviewing','processing','awaiting_information','completed','closed','rejected','cancelled'];
-      if (!allowed.includes(nextStatus)) return res.status(400).json({ error: 'Invalid service status.' });
-      const transitions: Record<string, string[]> = {
-        submitted: ['reviewing','processing','awaiting_information','rejected','cancelled'],
-        reviewing: ['processing','awaiting_information','completed','rejected','cancelled'],
-        processing: ['awaiting_information','completed','rejected','cancelled'],
-        awaiting_information: ['reviewing','processing','completed','cancelled'],
-        completed: ['closed'],
-        closed: [],
-        rejected: [],
-        cancelled: [],
-      };
-      if (!transitions[request.status]?.includes(nextStatus)) return res.status(409).json({ error: `Cannot change status from ${request.status} to ${nextStatus}.` });
+      if (!Object.hasOwn(SERVICE_REQUEST_TRANSITIONS, nextStatus)) return res.status(400).json({ error: 'Invalid service status.' });
+      if (!SERVICE_REQUEST_TRANSITIONS[request.status]?.includes(nextStatus)) return res.status(409).json({ error: `Cannot change status from ${request.status} to ${nextStatus}.` });
       update.status = nextStatus;
     }
 
-    const { data, error } = await supabase.from('service_requests').update(update).eq('id', request.id).select('id,status,admin_note,updated_at').single();
+    updateAttempted = true;
+    const { data, error } = await supabase.from('service_requests').update(update)
+      .eq('id', request.id).eq('status', request.status).eq('updated_at', request.updated_at)
+      .select('id,status,admin_note,updated_at').maybeSingle();
     if (error) throw error;
+    if (!data) return res.status(409).json({ error: 'This request changed. Refresh the queue before trying again.' });
     if (nextStatus) {
       await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'status_change', p_entity_type: 'service_request', p_entity_id: request.id, p_metadata: { from: request.status, to: nextStatus } });
       // The student is told about the same transition the audit trail recorded.
@@ -508,7 +517,9 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     res.json({ item: data });
   } catch (error) {
     console.error('Admin service status error:', error);
-    res.status(500).json({ error: 'Unable to update service request.' });
+    res.status(503).json({ error: updateAttempted
+      ? 'Unable to confirm the update. Refresh the queue before retrying.'
+      : 'Unable to load the service request. No update was attempted.' });
   }
 });
 
@@ -802,7 +813,7 @@ async function uniqueNewsSlug(supabase: SupabaseClient, base: string, excludeId?
   return `${base}-${Date.now().toString(36)}`;
 }
 
-const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,featured,tags,updated_at';
+const newsRowSelect = 'id,slug,title,excerpt,body,category,image_url,source_name,source_url,published,published_at,featured,tags,is_placeholder,placeholder_note,updated_at';
 
 // Comma-separated tag list → trimmed, de-duplicated, capped. Empty → null.
 function normalizeTags(value: unknown): string | null {
@@ -812,12 +823,33 @@ function normalizeTags(value: unknown): string | null {
   return cleaned.length ? cleaned.join(', ') : null;
 }
 
-app.get('/api/admin/news', requireCapability('news.read'), async (_req, res) => {
+app.get('/api/admin/news', requireCapability('news.read'), async (req, res) => {
   try {
+    for (const key of ['state', 'page', 'pageSize', 'search']) {
+      if (req.query[key] !== undefined && typeof req.query[key] !== 'string') return res.status(400).json({ error: 'Invalid news list parameter.' });
+    }
+    const state = typeof req.query.state === 'string' ? req.query.state : 'all';
+    if (!['all', 'draft', 'published', 'placeholder'].includes(state)) return res.status(400).json({ error: 'Invalid article state.' });
+    const pageText = typeof req.query.page === 'string' ? req.query.page : '1';
+    const sizeText = typeof req.query.pageSize === 'string' ? req.query.pageSize : '200';
+    if (!/^\d+$/.test(pageText) || !/^\d+$/.test(sizeText)) return res.status(400).json({ error: 'Invalid pagination.' });
+    const page = Number(pageText);
+    const pageSize = Number(sizeText);
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 200 || !Number.isSafeInteger(page * pageSize)) return res.status(400).json({ error: 'Invalid pagination.' });
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (search.length > 120) return res.status(400).json({ error: 'Search is too long.' });
     const supabase = getServerSupabase();
-    const { data, error } = await supabase.from('news_articles').select(newsRowSelect).order('updated_at', { ascending: false }).limit(200);
+    let query = supabase.from('news_articles').select(newsRowSelect);
+    if (state === 'draft') query = query.eq('published', false);
+    if (state === 'published') query = query.eq('published', true);
+    if (state === 'placeholder') query = query.eq('is_placeholder', true);
+    // Treat LIKE metacharacters as literal user input rather than broadening a search.
+    if (search) query = query.ilike('title', `%${search.replace(/[\\%_*]/g, '\\$&')}%`);
+    const offset = (page - 1) * pageSize;
+    const { data, error } = await query.order('updated_at', { ascending: false }).order('id', { ascending: false }).range(offset, offset + pageSize);
     if (error) throw error;
-    res.json({ items: data || [] });
+    const rows = data || [];
+    res.json({ items: rows.slice(0, pageSize), page, pageSize, hasMore: rows.length > pageSize });
   } catch (error) {
     console.error('Admin news list error:', error);
     res.status(503).json({ error: 'Unable to load newsroom articles.' });
@@ -838,7 +870,12 @@ app.post('/api/admin/news', requireCapability('news.create'), async (req, res) =
     if ((req.body?.image_url && !imageUrl) || (req.body?.source_url && !sourceUrl)) {
       return res.status(400).json({ error: 'Image and source links must use HTTPS or a site-relative path.' });
     }
+    if (req.body?.is_placeholder !== undefined && typeof req.body.is_placeholder !== 'boolean') return res.status(400).json({ error: 'Placeholder status must be true or false.' });
+    const isPlaceholder = req.body?.is_placeholder === true;
+    const placeholderNote = typeof req.body?.placeholder_note === 'string' ? req.body.placeholder_note.trim().slice(0, 1000) : '';
     const published = req.body?.published === true;
+    if (isPlaceholder && !placeholderNote) return res.status(400).json({ error: 'Describe what information is needed for this placeholder.' });
+    if (isPlaceholder && published) return res.status(400).json({ error: 'Placeholder articles must remain unpublished.' });
     // `news.create` may save drafts; putting a story in front of students is a
     // separate capability, checked from the payload rather than the route.
     if (published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
@@ -868,6 +905,8 @@ app.post('/api/admin/news', requireCapability('news.create'), async (req, res) =
       published_at: publishedAt,
       featured: req.body?.featured === true,
       tags: normalizeTags(req.body?.tags),
+      is_placeholder: isPlaceholder,
+      placeholder_note: isPlaceholder ? placeholderNote : null,
     };
     const { data, error } = await supabase.from('news_articles').insert(row).select(newsRowSelect).single();
     if (error) throw error;
@@ -883,9 +922,21 @@ app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async 
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const supabase = getServerSupabase();
-    const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at').eq('id', req.params.articleId).single();
+    const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug,published,published_at,is_placeholder,placeholder_note').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
+    if (req.body?.is_placeholder !== undefined && typeof req.body.is_placeholder !== 'boolean') return res.status(400).json({ error: 'Placeholder status must be true or false.' });
+    const nextPlaceholder = req.body?.is_placeholder === undefined ? existing.is_placeholder === true : req.body.is_placeholder;
+    const nextNote = req.body?.placeholder_note === undefined
+      ? String(existing.placeholder_note || '').trim()
+      : typeof req.body.placeholder_note === 'string' ? req.body.placeholder_note.trim().slice(0, 1000) : '';
+    const nextPublished = req.body?.published === undefined ? existing.published === true : req.body.published === true;
+    if (nextPlaceholder && !nextNote) return res.status(400).json({ error: 'Describe what information is needed for this placeholder.' });
+    if (nextPlaceholder && nextPublished) return res.status(400).json({ error: 'Placeholder articles must remain unpublished.' });
+    if (existing.is_placeholder === true && !nextPlaceholder && req.body?.confirm_placeholder_replacement !== true) return res.status(400).json({ error: 'Confirm that this placeholder has been replaced with genuine content.' });
+    if (existing.is_placeholder === true && !nextPlaceholder && nextPublished) return res.status(400).json({ error: 'Save the replacement as a draft before publishing it.' });
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (req.body?.is_placeholder !== undefined) patch.is_placeholder = nextPlaceholder;
+    if (req.body?.placeholder_note !== undefined || (req.body?.is_placeholder !== undefined && !nextPlaceholder)) patch.placeholder_note = nextPlaceholder ? nextNote : null;
     if (req.body?.title !== undefined) {
       const title = String(req.body.title).trim();
       if (!title) return res.status(400).json({ error: 'Article title cannot be empty.' });
@@ -933,9 +984,10 @@ app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async 
         patch.published_at = null;
       }
     }
-    const { data, error } = await supabase.from('news_articles').update(patch).eq('id', existing.id).select(newsRowSelect).single();
+    const { data, error } = await supabase.from('news_articles').update(patch).eq('id', existing.id).eq('is_placeholder', existing.is_placeholder === true).select(newsRowSelect).maybeSingle();
     if (error) throw error;
-    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_update', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: data.slug } });
+    if (!data) return res.status(409).json({ error: 'This article changed while you were editing it. Reload it and try again.' });
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_update', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: data.slug, placeholder_replaced: existing.is_placeholder === true && !nextPlaceholder } });
     res.json({ item: data });
   } catch (error) {
     console.error('Admin news update error:', error);
@@ -950,6 +1002,7 @@ app.delete('/api/admin/news/:articleId', requireCapability('news.delete'), async
     const { data: existing, error: existingError } = await supabase.from('news_articles').select('id,slug').eq('id', req.params.articleId).single();
     if (existingError || !existing) return res.status(404).json({ error: 'News article not found.' });
     const { error } = await supabase.from('news_articles').delete().eq('id', existing.id);
+    if (error?.code === '23503') return res.status(409).json({ error: 'This article is linked to other records. Review those links before deleting it.' });
     if (error) throw error;
     await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_delete', p_entity_type: 'news_article', p_entity_id: existing.id, p_metadata: { slug: existing.slug } });
     res.json({ deleted: true });
@@ -2430,26 +2483,23 @@ app.get('/api/cbt/exams', async (_req, res) => {
   }
 });
 
+/** Only the exact database domain refusal may trigger an expiry check. */
+function isCbtExpiredError(error: { code?: string; message?: string } | null): boolean {
+  return error?.code === 'P0001' && error.message === 'This CBT attempt has expired.';
+}
+
 /**
- * Mark an attempt expired after the database refused it for being out of time.
- *
- * The RPCs raise on expiry (a raise rolls back every write in the same call, so
- * they cannot persist the status themselves). By the time this runs the RPC has
- * already proved the attempt belongs to the caller, and the update is filtered by
- * `user_id` as well, so it can never touch another student's row.
+ * A narrow owner-scoped RPC checks the deadline and grace *after* locking the
+ * attempt. It cannot alter answers or reopen a result. If the additive RPC is
+ * not installed or fails, do not fall back to a privileged table update.
+ * Deployment must be migration-first; legacy clients remain compatible.
  */
-async function expireCbtAttempt(attemptId: string, userId: string): Promise<void> {
-  if (!attemptId || !userId) return;
+async function expireCbtAttempt(rpcSupabase: SupabaseClient, attemptId: string): Promise<void> {
   try {
-    const supabase = getServerSupabase();
-    await supabase
-      .from('cbt_attempts')
-      .update({ status: 'expired', updated_at: new Date().toISOString() })
-      .eq('id', attemptId)
-      .eq('user_id', userId)
-      .eq('status', 'in_progress');
-  } catch (error) {
-    console.warn('CBT expiry marking failed:', error);
+    const { error } = await rpcSupabase.rpc('cbt_expire_owned_attempt', { p_attempt_id: attemptId });
+    if (error) console.warn('CBT expiry marking unavailable.');
+  } catch {
+    console.warn('CBT expiry marking unavailable.');
   }
 }
 
@@ -2794,6 +2844,88 @@ app.get('/api/past-questions/resources', async (req, res) => {
   }
 });
 
+// NOT a rollout switch. The Phase 4 candidate deliberately disables old RPCs
+// in its disposable database. Never expose it in production or Netlify.
+function cbtV2LocalRehearsalEnabled(): boolean {
+  if (process.env.CBT_V2_LOCAL_REHEARSAL !== '1' || process.env.NODE_ENV === 'production' || process.env.NETLIFY) return false;
+  try {
+    const url = new URL(process.env.VITE_SUPABASE_URL || '');
+    return url.protocol === 'http:' && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
+  } catch { return false; }
+}
+const CBT_V2_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Local rehearsal of the owner-scoped versioned protocol; not deployable. */
+app.get('/api/cbt/v2/attempts/:attemptId/state', async (req, res) => {
+  if (!cbtV2LocalRehearsalEnabled()) return res.status(503).json({ error: 'CBT versioned rehearsal is unavailable.' });
+  try {
+    const { supabase, user } = await requireUser(req, 'cbt.attempt');
+    if (!CBT_V2_UUID.test(req.params.attemptId)) return res.status(400).json({ error: 'Invalid attempt.' });
+    const { data, error } = await supabase.from('cbt_attempts')
+      .select('id,user_id,status,answers_draft,candidate_answer_revision,question_ids')
+      .eq('id', req.params.attemptId).eq('user_id', user.id).maybeSingle();
+    if (error) return res.status(503).json({ error: 'Unable to synchronize this attempt.' });
+    if (!data) return res.status(404).json({ error: 'CBT attempt not found.' });
+    const revision = Number(data.candidate_answer_revision);
+    const paper = data.question_ids;
+    const draft = data.answers_draft;
+    if (!Number.isSafeInteger(revision) || revision < 0 || !Array.isArray(paper) || paper.length === 0 ||
+        paper.some(id => typeof id !== 'string' || !CBT_V2_UUID.test(id)) || new Set(paper.map(id => String(id).toLowerCase())).size !== paper.length ||
+        !draft || typeof draft !== 'object' || Array.isArray(draft) ||
+        Object.entries(draft).some(([position, value]) => !/^[1-9]\d*$/.test(position) || !Number.isSafeInteger(Number(position)) ||
+          Number(position) > paper.length || !Number.isInteger(value) || Number(value) < 0 || Number(value) > 3)) {
+      return res.status(409).json({ error: 'This attempt requires review.' });
+    }
+    // The client must be able to verify the frozen ID-to-position mapping
+    // before replaying any persisted question operation.
+    return res.json({ protocol: 2, revision, answers: draft, status: data.status, questionIds: paper });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (/Authentication required|Invalid or expired session/i.test(message)) return res.status(401).json({ error: 'Please sign in again.' });
+    if (/permission/i.test(message)) return res.status(403).json({ error: 'Permission denied.' });
+    return res.status(503).json({ error: 'Unable to synchronize this attempt.' });
+  }
+});
+
+async function cbtV2LocalWrite(req: express.Request, res: express.Response, kind: 'answer' | 'finalize') {
+  if (!cbtV2LocalRehearsalEnabled()) return res.status(503).json({ error: 'CBT versioned rehearsal is unavailable.' });
+  try {
+    const { user } = await requireUser(req, 'cbt.attempt');
+    const token = req.header('authorization')?.slice('Bearer '.length).trim() || '';
+    // Never fall back to service role: candidate authorization uses auth.uid().
+    const callerDb = getUserScopedSupabase(token);
+    if (!callerDb) return res.status(503).json({ error: 'CBT authorization is unavailable.' });
+    const { protocol, expectedRevision, operationKey, questionId, selected } = req.body || {};
+    if (protocol !== 2 || !CBT_V2_UUID.test(req.params.attemptId) || !CBT_V2_UUID.test(String(operationKey || '')) ||
+        !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 ||
+        (kind === 'answer' && (!CBT_V2_UUID.test(String(questionId || '')) ||
+          !(selected === null || (Number.isInteger(selected) && selected >= 0 && selected <= 3))))) {
+      return res.status(400).json({ error: 'Invalid versioned CBT operation.' });
+    }
+    const params = { p_attempt: req.params.attemptId, p_expected_revision: expectedRevision, p_operation_key: operationKey, p_expected_user: user.id };
+    const { data, error } = kind === 'answer'
+      ? await callerDb.rpc('cbt_candidate_answer', { ...params, p_question: questionId, p_selected: selected })
+      : await callerDb.rpc('cbt_candidate_finalize', params);
+    if (error) {
+      if (error.code === 'P0001' && error.message === 'CBT attempt not found.') return res.status(404).json({ error: 'CBT attempt not found.' });
+      if (error.code === 'P0001' && error.message === 'This CBT attempt has expired.') return res.status(409).json({ protocol: 2, outcome: 'expired' });
+      if (error.code === 'P0001' && /requires review|Operation key used for different input|Question is not in this paper/.test(error.message)) return res.status(409).json({ error: 'The operation requires review.' });
+      return res.status(503).json({ error: 'Unable to confirm this CBT operation.' });
+    }
+    if (!data || typeof data !== 'object' || !['accepted', 'replayed', 'conflict', 'expired', 'closed', 'submitted', 'already_submitted'].includes(data.outcome)) {
+      return res.status(503).json({ error: 'Unable to confirm this CBT operation.' });
+    }
+    return res.status(['conflict', 'expired', 'closed'].includes(data.outcome) ? 409 : 200).json({ protocol: 2, ...data });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (/Authentication required|Invalid or expired session/i.test(message)) return res.status(401).json({ error: 'Please sign in again.' });
+    if (/permission/i.test(message)) return res.status(403).json({ error: 'Permission denied.' });
+    return res.status(503).json({ error: 'Unable to confirm this CBT operation.' });
+  }
+}
+app.patch('/api/cbt/v2/attempts/:attemptId/answer', (req, res) => cbtV2LocalWrite(req, res, 'answer'));
+app.post('/api/cbt/v2/attempts/:attemptId/finalize', (req, res) => cbtV2LocalWrite(req, res, 'finalize'));
+
 /** The frozen paper for one attempt, plus the student's saved draft. Owner only. */
 app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
   try {
@@ -2804,18 +2936,30 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
       .eq('id', req.params.attemptId)
       .eq('user_id', user.id)
       .maybeSingle();
-    if (attemptError || !attemptRow) return res.status(404).json({ error: 'CBT attempt not found.' });
+    if (attemptError) return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
+    if (!attemptRow) return res.status(404).json({ error: 'CBT attempt not found.' });
 
     const { data: paper, error: paperError } = await rpcSupabase.rpc('get_cbt_attempt_paper', {
       p_attempt_id: req.params.attemptId,
     });
-    if (paperError) throw paperError;
+    if (paperError) {
+      // Recognize only the RPC's exact domain refusals; an infrastructure
+      // error mentioning a missing function is not a missing student attempt.
+      if (paperError.code === 'P0001' && paperError.message === 'CBT attempt not found.') return res.status(404).json({ error: 'CBT attempt not found.' });
+      if (paperError.code === 'P0001' && paperError.message === 'This CBT attempt has expired.') return res.status(409).json({ error: 'This CBT attempt has expired.' });
+      return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
+    }
+    if (!Array.isArray(paper)) return res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
 
     const examMeta = (attemptRow.cbt_exams || {}) as { title?: string | null; exam_body?: string | null; subject?: string | null };
     res.json({
       // The server clock, so a device with the wrong time still shows the true
       // remaining time instead of extending or shortening the examination.
       serverTime: new Date().toISOString(),
+      // Capability is selected by the server, never by a browser flag. V2
+      // remains a disposable-loopback rehearsal and must fail closed if its
+      // subsequent owner-scoped state lookup or operations are unavailable.
+      protocol: cbtV2LocalRehearsalEnabled() ? { version: 2, scope: 'local-rehearsal' } : { version: 1 },
       attempt: {
         id: attemptRow.id,
         examId: attemptRow.exam_id,
@@ -2847,18 +2991,17 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
     });
   } catch (error) {
     console.error('CBT paper API error:', error);
-    const message = error instanceof Error ? error.message : 'Unable to load this CBT attempt.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 404;
-    res.status(status).json({ error: publicErrorMessage(message, 'Unable to load this CBT attempt.') });
+    const message = error instanceof Error ? error.message : '';
+    if (message === 'Authentication required.' || message === 'Invalid or expired session.') return res.status(401).json({ error: publicErrorMessage(message) });
+    if (message === 'You do not have permission to perform this action.') return res.status(403).json({ error: publicErrorMessage(message) });
+    res.status(503).json({ error: 'Unable to load this CBT attempt. Please try again.' });
   }
 });
 
 /** Submit against the frozen paper. A retried submit returns the stored result. */
 app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
-  let callerId = '';
   try {
-    const { rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
-    callerId = user.id;
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const answers = req.body?.answers;
     if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
       return res.status(400).json({ error: 'Submit your answers with the attempt.' });
@@ -2868,6 +3011,10 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
       p_attempt_id: req.params.attemptId,
       p_answers: answers,
     });
+    if (isCbtExpiredError(error)) {
+      await expireCbtAttempt(rpcSupabase, req.params.attemptId);
+      return res.status(409).json({ error: 'This CBT attempt has expired.' });
+    }
     if (error) throw error;
 
     const row = (Array.isArray(data) ? data[0] : data) as CbtSubmitResultRow | null;
@@ -2882,7 +3029,6 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
   } catch (error) {
     console.error('CBT submit API error:', error);
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
-    if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
@@ -2891,10 +3037,8 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
 
 /** Save in-progress answers and the current question so nothing is lost. */
 app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
-  let callerId = '';
   try {
-    const { rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
-    callerId = user.id;
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const answers = req.body?.answers;
     if (answers !== undefined && (answers === null || typeof answers !== 'object' || Array.isArray(answers))) {
       return res.status(400).json({ error: 'Answers must be an object.' });
@@ -2906,12 +3050,15 @@ app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
       p_answers: answers || {},
       p_question_index: questionIndex,
     });
+    if (isCbtExpiredError(error)) {
+      await expireCbtAttempt(rpcSupabase, req.params.attemptId);
+      return res.status(409).json({ error: 'This CBT attempt has expired.' });
+    }
     if (error) throw error;
     res.json({ saved: true, ...(data as Record<string, unknown>) });
   } catch (error) {
     console.error('CBT draft API error:', error);
     const message = error instanceof Error ? error.message : 'Unable to save your progress.';
-    if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save your progress.') });
@@ -3202,7 +3349,8 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
       .eq('id', req.params.attemptId)
       .eq('user_id', user.id)
       .maybeSingle();
-    if (error || !attempt) return res.status(404).json({ error: 'CBT attempt not found.' });
+    if (error) return res.status(503).json({ error: 'Unable to load CBT progress. Please try again.' });
+    if (!attempt) return res.status(404).json({ error: 'CBT attempt not found.' });
     res.json({
       answers: attempt.answers_draft || {},
       questionIndex: Number.isInteger(attempt.current_question) ? attempt.current_question : 0,
@@ -3210,17 +3358,16 @@ app.get('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
       status: attempt.status,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to load CBT progress.';
-    const status = /Authentication|required|session/i.test(message) ? 401 : /permission/i.test(message) ? 403 : 400;
-    res.status(status).json({ error: publicErrorMessage(message, 'Unable to load CBT progress.') });
+    const message = error instanceof Error ? error.message : '';
+    if (message === 'Authentication required.' || message === 'Invalid or expired session.') return res.status(401).json({ error: publicErrorMessage(message) });
+    if (message === 'You do not have permission to perform this action.') return res.status(403).json({ error: publicErrorMessage(message) });
+    res.status(503).json({ error: 'Unable to load CBT progress. Please try again.' });
   }
 });
 
 app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
-  let callerId = '';
   try {
-    const { rpcSupabase, user } = await requireUser(req, 'cbt.attempt');
-    callerId = user.id;
+    const { rpcSupabase } = await requireUser(req, 'cbt.attempt');
     const answers = req.body?.answers && typeof req.body.answers === 'object' && !Array.isArray(req.body.answers)
       ? req.body.answers
       : {};
@@ -3231,11 +3378,14 @@ app.patch('/api/cbt/attempts/:attemptId/progress', async (req, res) => {
       p_answers: answers,
       p_question_index: questionIndex,
     });
+    if (isCbtExpiredError(error)) {
+      await expireCbtAttempt(rpcSupabase, req.params.attemptId);
+      return res.status(409).json({ error: 'This CBT attempt has expired.' });
+    }
     if (error) throw error;
     res.json({ ok: true, saved: data || null });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to save CBT progress.';
-    if (/expired/i.test(message)) await expireCbtAttempt(req.params.attemptId, callerId);
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to save CBT progress.') });
@@ -3429,7 +3579,7 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireCapability('d
     const { data, error } = await supabase.from(resource.table).delete().eq('id', req.params.id).select('id').single();
     if (error) {
       const message = String(error.message || '');
-      if (/foreign key|violates|constraint/i.test(message)) return res.status(409).json({ error: 'This record is still referenced by other data. Archive/deactivate it instead of deleting it.' });
+      if (error.code === '23503' || /foreign key|violates|constraint/i.test(message)) return res.status(409).json({ error: 'This record is still referenced by other data. Archive/deactivate it instead of deleting it.' });
       throw error;
     }
     if (!data) return res.status(404).json({ error: 'Record not found.' });
@@ -3761,7 +3911,10 @@ async function startServer() {
   app.listen(PORT, '0.0.0.0', () => console.log(`EduReach server running on port ${PORT}`));
 }
 
-if (!process.env.NETLIFY) {
+// The disposable PostgreSQL/HTTP rehearsal imports the real Express app and
+// binds its own ephemeral listener. Never suppress startup outside test mode.
+const cbtLocalTestImport = process.env.NODE_ENV === 'test' && process.env.CBT_V2_LOCAL_REHEARSAL === '1' && process.env.CBT_V2_TEST_IMPORT === '1';
+if (!process.env.NETLIFY && !cbtLocalTestImport) {
   startServer().catch((error) => {
     console.error('Unable to start EduReach:', error);
     process.exitCode = 1;

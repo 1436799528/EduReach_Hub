@@ -3,6 +3,12 @@
 What the system can tell you when something breaks, what it cannot, and what to do
 about the gap. Written against the code as it is, not as it should eventually be.
 
+**Local release candidate:** optional analytics are suspended, including the
+consent-gated `client_error` transport. The health and existing server-side
+operational paths are not intentionally disabled, but they do not replace browser
+error monitoring. Classify and approve a privacy-safe essential monitoring design
+before launch; do not treat this note as proof of a working alert service.
+
 ---
 
 ## The two questions, kept separate

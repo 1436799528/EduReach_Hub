@@ -881,7 +881,7 @@ export default function AdminQuestionImportPage() {
         ) : !imports.length ? (
           <AdminEmptyState title="No past questions have been imported yet" hint="Upload a paper above. It stays in review until you approve its questions." />
         ) : (
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead>
                 <tr>

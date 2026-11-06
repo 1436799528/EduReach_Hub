@@ -239,6 +239,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
+  const [requestsUnavailable, setRequestsUnavailable] = useState(false);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   // Phase 6: results are reviewable, deletable and paged on this screen. The
   // confirmation is inline, not a second modal - the dashboard already has one
@@ -273,7 +274,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         error: authError,
       } = await supabase.auth.getSession();
 
-      if (authError || !session?.user) {
+      if (!isSupabaseConfigured || authError || !session?.user) {
         if (isSupabaseConfigured && !authUser?.isLocal) {
           const next = `${window.location.pathname}${window.location.search}`;
           window.history.replaceState({}, '', `/login?next=${encodeURIComponent(next)}`);
@@ -306,6 +307,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         setServices([]);
         setInstitutions(localStarterInstitutions());
         setRequests(readLocalServiceRequests());
+        setRequestsUnavailable(false);
         setAttempts(readLocalCbtAttempts());
         setSavedItems(readLocalSavedItems());
         setNotifications([]);
@@ -357,7 +359,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       if (profileResult.error) setError('We could not load your profile. Please refresh or update your academic profile.');
       setServices((serviceResult.data || []) as ServiceRow[]);
       setInstitutions((institutionResult.data || []) as Institution[]);
-      setRequests((requestResult.data || []) as RequestRow[]);
+      setRequests((Array.isArray(requestResult.data) && !requestResult.error ? requestResult.data : []) as RequestRow[]);
+      setRequestsUnavailable(Boolean(requestResult.error) || !Array.isArray(requestResult.data));
       setAttempts((attemptsResult.data || []) as Attempt[]);
       setSavedItems(savedResult);
       setLatestCgpaSnapshot(cgpaSnapshot);
@@ -594,6 +597,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     </div>
   );
 
+  const requestLoadFailure = (
+    <div className="dash-empty" role="alert">
+      <p>We could not load your requests. Refresh this page to check their status before submitting again.</p>
+      <button type="button" className="dash-btn dash-btn-primary" onClick={() => window.location.reload()}>Refresh page</button>
+    </div>
+  );
+
   const requestsTable = (rows: RequestRow[]) => (
     <>
       <div className="dash-table-wrap dash-desktop-only">
@@ -802,7 +812,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <h2 className="dash-card-title"><ClipboardList size={14} className="dash-card-title-icon" /> Latest requests</h2>
           {requests.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('services')}>View all ({requests.length})</button>}
         </div>
-        {requests.length
+        {isLocalMode && requests.length > 0 && <p>These local preview records were not submitted to EduReach; they exist only on this device.</p>}
+        {requestsUnavailable ? requestLoadFailure : requests.length
           ? requestsTable(requests.slice(0, 3))
           : emptyState('No service requests yet. When you request NELFUND help, result checking, a JAMB slip or admission support, its live status appears here.', '/services', 'Browse services')}
       </section>
@@ -854,11 +865,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       <div className="dash-card-header">
         <div>
           <h1 className="dash-page-title">My Requests</h1>
-          <p className="dash-page-sub">{requests.length ? `${requests.length} request${requests.length === 1 ? '' : 's'} • ${openRequests} in progress` : 'Every service request you submit is tracked here.'}</p>
+          <p className="dash-page-sub">{requestsUnavailable ? 'Request status is unavailable.' : requests.length ? `${requests.length} request${requests.length === 1 ? '' : 's'} • ${openRequests} in progress` : 'Every service request you submit is tracked here.'}</p>
         </div>
         <a href="/services" className="dash-btn dash-btn-primary">New request</a>
       </div>
-      {requests.length
+      {isLocalMode && requests.length > 0 && <p>These local preview records were not submitted to EduReach; they exist only on this device.</p>}
+      {requestsUnavailable ? requestLoadFailure : requests.length
         ? requestsTable(requests)
         : emptyState('No service requests yet. Choose a service to get started: NELFUND loan support, WAEC/NECO result checking, JAMB slips or admission letters.', '/services', 'Browse services')}
     </section>

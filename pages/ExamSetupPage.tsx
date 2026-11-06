@@ -801,13 +801,13 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       ? (mockPaper
                         ? `The mock reproduces the examination paper: ${mockPaper.questions} questions in ${mockDurationMinutes(bank?.exam.defaultDurationMinutes)} minutes, timed from the moment you press Start mock.`
                         : 'The paper is filled from your chosen subjects, up to the session limit, and runs for the examination\'s configured time. The timer starts the moment you press Start mock.')
-                      : 'You can leave and come back: your answers are saved and the remaining time is preserved.'}
+                      : 'Your test timer continues after you leave. If you return before it expires, check which answers were saved.'}
                   </p>
                 </div>
 
                 {!user && (
                   <InlineNotice tone="info" title="You need an account to sit a paper">
-                    Practice and mock sessions are saved to your account, so answers, time and results survive a lost connection. <a href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in</a> or register, then come back. Your setup stays as you left it.
+                    Practice and mock sessions require an account. A connection interruption can affect saving, so check your answers if you return. <a href={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in</a> or register, then return to set up your test.
                   </InlineNotice>
                 )}
 

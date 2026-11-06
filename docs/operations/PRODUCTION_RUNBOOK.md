@@ -39,8 +39,7 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-74 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
-CLI against a **scratch project first**:
+The local release candidate contains 79 migrations in `supabase/migrations/`, including two uncommitted service-request boundary migrations, one idempotency candidate and the additive CBT owner-expiry function. The full CBT concurrency protocol is **not** integrated. Reconcile the hosted ledger and review every pending migration and its data effects before applying anything; do not blindly replay historical migrations against a populated project. Use the Supabase CLI against a **scratch project first**, only after approval:
 
 ```bash
 supabase link --project-ref <scratch>

@@ -65,27 +65,107 @@ backend.patch('/rest/v1/profiles', (req, res) => {
   return res.json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/news_articles', (_req, res) => {
+let newsFixtureEnabled = false;
+const newsFixture = Array.from({ length: 235 }, (_, index) => ({
+  id: String(index).padStart(3, '0'), title: `Article ${String(index).padStart(3, '0')}${index === 12 ? ' 100%_verified' : ''}`,
+  updated_at: '2025-01-01T00:00:00Z', published: index % 3 === 0, is_placeholder: index % 3 === 1,
+}));
+backend.get('/rest/v1/news_articles', (req, res) => {
   recorded.push('GET news_articles');
-  return res.json([]);
+  if (req.query.id === 'eq.article-placeholder') {
+    return res.json({ id: 'article-placeholder', slug: 'placeholder', published: false, published_at: null, is_placeholder: true, placeholder_note: 'Verified source required' });
+  }
+  if (!newsFixtureEnabled) return res.json([]);
+  recorded.push(`LIST news ${JSON.stringify(req.query)}`);
+  let rows = [...newsFixture].sort((a, b) => b.id.localeCompare(a.id));
+  if (req.query.published === 'eq.true') rows = rows.filter((row) => row.published);
+  if (req.query.published === 'eq.false') rows = rows.filter((row) => !row.published);
+  if (req.query.is_placeholder === 'eq.true') rows = rows.filter((row) => row.is_placeholder);
+  if (typeof req.query.title === 'string') {
+    const term = req.query.title.replace(/^ilike\.%/, '').replace(/%$/, '').replace(/\\([\\%_])/g, '$1').toLowerCase();
+    rows = rows.filter((row) => row.title.toLowerCase().includes(term));
+  }
+  const offset = Number(req.query.offset || 0);
+  const limit = Number(req.query.limit || rows.length);
+  return res.json(rows.slice(offset, offset + limit));
+});
+backend.patch('/rest/v1/news_articles', (req, res) => {
+  recorded.push(`PATCH news_articles query=${JSON.stringify(req.query)} body=${JSON.stringify(req.body)}`);
+  return res.json([{ id: 'article-placeholder', slug: 'placeholder', ...req.body }]);
 });
 
 backend.post('/rest/v1/news_articles', (req, res) => {
   recorded.push('POST news_articles');
+  recorded.push(`POST news_articles body=${JSON.stringify(req.body)}`);
   const row = { id: 'article-new', slug: 'draft-notice', title: req.body?.title, published: req.body?.published === true, updated_at: new Date().toISOString() };
   const wantsObject = String(req.header('accept') || '').includes('vnd.pgrst.object');
   return res.status(201).json(wantsObject ? row : [row]);
 });
 
-backend.get('/rest/v1/service_requests', (_req, res) => {
+let serviceRequest = { id: 'request-1', user_id: 'student-1', status: 'submitted', admin_note: null as string | null, reference_code: 'TEST-1', updated_at: '2025-01-01T00:00:00.000Z', service_catalog: { title: 'Service' } };
+let raceServiceUpdate: Partial<typeof serviceRequest> | null = null;
+let failServiceRead = false;
+let failServiceWrite = false;
+backend.get('/rest/v1/service_requests', (req, res) => {
   recorded.push('GET service_requests');
+  if (failServiceRead) return res.status(503).json({ code: 'DB_DOWN', message: 'database unavailable' });
+  const wantsObject = String(req.header('accept') || '').includes('vnd.pgrst.object');
+  if (req.query.id === 'eq.request-1') return res.json(wantsObject ? { ...serviceRequest } : [{ ...serviceRequest }]);
+  if (wantsObject) return res.status(406).json({ code: 'PGRST116', message: 'No rows' });
   return res.json([]);
 });
+backend.patch('/rest/v1/service_requests', (req, res) => {
+  recorded.push(`PATCH service_requests query=${JSON.stringify(req.query)}`);
+  if (failServiceWrite) return res.status(503).json({ code: 'DB_DOWN', message: 'database unavailable' });
+  if (raceServiceUpdate) { serviceRequest = { ...serviceRequest, ...raceServiceUpdate }; raceServiceUpdate = null; }
+  if (req.query.id !== `eq.${serviceRequest.id}` || req.query.status !== `eq.${serviceRequest.status}` || req.query.updated_at !== `eq.${serviceRequest.updated_at}`) return res.json([]);
+  serviceRequest = { ...serviceRequest, ...req.body };
+  return res.json([{ ...serviceRequest }]);
+});
+backend.post('/rest/v1/site_analytics_events', (_req, res) => { recorded.push('POST site_analytics_events'); return res.status(201).json(null); });
+backend.get('/rest/v1/student_notifications', (_req, res) => { recorded.push('GET student_notifications'); return res.json([]); });
+backend.post('/rest/v1/student_notifications', (_req, res) => { recorded.push('POST student_notifications'); return res.status(201).json(null); });
 
+let cbtPaperFixture: 'missing' | 'read-error' | 'rpc-error' | 'rpc-not-found' | 'rpc-expired' | 'ok' = 'missing';
 backend.get('/rest/v1/cbt_attempts', (req, res) => {
   recorded.push(`GET cbt_attempts id=${String(req.query.id || '')} user_id=${String(req.query.user_id || '')}`);
   const wantsObject = String(req.header('accept') || '').includes('vnd.pgrst.object');
+  if (cbtPaperFixture === 'read-error') return res.status(503).json({ code: 'DB_DOWN', message: 'synthetic internal database error' });
+  if (cbtPaperFixture !== 'missing') {
+    const row = { id: 'test-attempt', exam_id: 'test-exam', status: 'in_progress', current_question: 0, answers_draft: {}, question_ids: [], cbt_exams: {} };
+    return res.json(wantsObject ? row : [row]);
+  }
   return res.json(wantsObject ? null : []);
+});
+let cbtWriteFixture: 'expired' | 'unexpected' = 'expired';
+backend.patch('/rest/v1/cbt_attempts', (_req, res) => { recorded.push('PATCH cbt_attempts direct'); return res.json([]); });
+for (const rpc of ['save_cbt_attempt_draft', 'submit_cbt_attempt_configured']) {
+  backend.post(`/rest/v1/rpc/${rpc}`, (_req, res) => {
+    recorded.push(`RPC ${rpc}`);
+    return cbtWriteFixture === 'expired'
+      ? res.status(400).json({ code: 'P0001', message: 'This CBT attempt has expired.' })
+      : res.status(503).json({ code: 'DB_DOWN', message: 'synthetic expired infrastructure failure' });
+  });
+}
+let cbtExpiryUnavailable = false;
+backend.post('/rest/v1/rpc/cbt_expire_owned_attempt', (req, res) => {
+  recorded.push(`RPC cbt_expire_owned_attempt auth=${String(req.header('authorization'))}`);
+  if (cbtExpiryUnavailable) return res.status(503).json({ code: 'DB_DOWN', message: 'synthetic database failure' });
+  return res.json('in_progress');
+});
+let cbtV2Outcome = 'accepted';
+for (const rpc of ['cbt_candidate_answer', 'cbt_candidate_finalize']) {
+  backend.post(`/rest/v1/rpc/${rpc}`, (req, res) => {
+    recorded.push(`RPC ${rpc} auth=${String(req.header('authorization'))} body=${JSON.stringify(req.body)}`);
+    return res.json({ outcome: cbtV2Outcome, revision: 2, answers: { '1': 0 }, status: 'in_progress' });
+  });
+}
+backend.post('/rest/v1/rpc/get_cbt_attempt_paper', (_req, res) => {
+  recorded.push('RPC get_cbt_attempt_paper');
+  if (cbtPaperFixture === 'rpc-error') return res.status(503).json({ code: 'DB_DOWN', message: 'synthetic internal database error' });
+  if (cbtPaperFixture === 'rpc-not-found') return res.status(400).json({ code: 'P0001', message: 'CBT attempt not found.' });
+  if (cbtPaperFixture === 'rpc-expired') return res.status(400).json({ code: 'P0001', message: 'This CBT attempt has expired.' });
+  return res.json([]);
 });
 
 for (const rpc of ['admin_audit_log', 'admin_dashboard_metrics', 'admin_activity_breakdown']) {
@@ -336,6 +416,145 @@ test('a draft write is authorized while publishing is refused for a service role
   assert.equal(publishAttempt.status, 403);
 });
 
+test('news placeholders cannot be published or converted and published in one request', async () => {
+  const json = { 'Content-Type': 'application/json' };
+  const placeholder = { title: 'Placeholder', body: 'Replace this draft.', is_placeholder: true, placeholder_note: 'Verified source required' };
+  const unauthorized = await call('/api/admin/news', 'student', { method: 'POST', headers: json, body: JSON.stringify(placeholder) });
+  assert.equal(unauthorized.status, 403);
+  recorded.length = 0;
+  const draft = await call('/api/admin/news', 'content_editor', { method: 'POST', headers: json, body: JSON.stringify(placeholder) });
+  assert.equal(draft.status, 201);
+  const write = recorded.find((entry) => entry.startsWith('POST news_articles body='));
+  assert.ok(write);
+  const written = JSON.parse(write.slice('POST news_articles body='.length));
+  assert.equal(written.is_placeholder, true);
+  assert.equal(written.placeholder_note, placeholder.placeholder_note);
+  assert.equal(written.published, false);
+  const missingNote = await call('/api/admin/news', 'content_editor', { method: 'POST', headers: json, body: JSON.stringify({ ...placeholder, placeholder_note: '' }) });
+  assert.equal(missingNote.status, 400);
+  const publish = await call('/api/admin/news', 'content_editor', { method: 'POST', headers: json, body: JSON.stringify({ ...placeholder, published: true }) });
+  assert.equal(publish.status, 400);
+  const patch = async (body: object) => call('/api/admin/news/article-placeholder', 'content_editor', { method: 'PATCH', headers: json, body: JSON.stringify(body) });
+  assert.equal((await patch({ published: true })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, published: true })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, confirm_placeholder_replacement: true, published: true })).status, 400);
+  assert.equal((await patch({ is_placeholder: false })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, confirm_placeholder_replacement: 'true' })).status, 400);
+  assert.equal((await patch({ placeholder_note: '' })).status, 400);
+  assert.equal((await patch({ is_placeholder: false, confirm_placeholder_replacement: true, title: 'Genuine replacement', published: false })).status, 200);
+  const update = recorded.find((entry) => entry.startsWith('PATCH news_articles query='));
+  assert.ok(update);
+  assert.match(update, /is_placeholder.*eq.true/);
+  assert.ok(!update.includes('confirm_placeholder_replacement'));
+  assert.ok(recorded.some((entry) => entry.includes('placeholder_replaced')));
+});
+
+test('service-request updates reject stale versions and concurrent writes before audit or notification', async () => {
+  const json = { 'Content-Type': 'application/json' };
+  const patch = (body: object, account = 'service_admin') => call('/api/admin/service-requests/request-1', account, { method: 'PATCH', headers: json, body: JSON.stringify(body) });
+  // Preserve PostgreSQL microseconds exactly in the read/compare/write filter.
+  const version = '2025-01-01T00:00:00.123456Z';
+  serviceRequest = { id: 'request-1', user_id: 'student-1', status: 'submitted', admin_note: null, reference_code: 'TEST-1', updated_at: version, service_catalog: { title: 'Service' } };
+  recorded.length = 0;
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: version }, 'student')).status, 403);
+  const legacy = await patch({ status: 'reviewing', admin_note: 'An old client' });
+  assert.equal(legacy.status, 409);
+  assert.match(legacy.body.error, /refresh/i);
+  assert.equal((await patch({ admin_note: 'Old client note' })).status, 409);
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: null })).status, 400);
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: 'invalid' })).status, 400);
+  assert.equal((await patch({ status: 'reviewing', expected_updated_at: '2024-01-01T00:00:00Z' })).status, 409);
+  assert.equal((await patch({ status: 'completed', expected_updated_at: version })).status, 409);
+  assert.ok(!recorded.some((line) => line.startsWith('PATCH service_requests') || line.startsWith('RPC admin_audit_log') || line.startsWith('POST student_notifications')));
+  // Another officer's status and note change occurs between the read and write.
+  raceServiceUpdate = { status: 'processing', admin_note: 'New note', updated_at: '2025-01-02T00:00:00.000Z' };
+  assert.equal((await patch({ status: 'reviewing', admin_note: 'Old note', expected_updated_at: version })).status, 409);
+  assert.equal(serviceRequest.status, 'processing');
+  assert.equal(serviceRequest.admin_note, 'New note');
+  assert.ok(!recorded.some((line) => line.startsWith('RPC admin_audit_log') || line.startsWith('POST student_notifications')));
+  // A fresh, valid transition commits once and only then emits audit/notification.
+  const success = await patch({ status: 'completed', expected_updated_at: serviceRequest.updated_at });
+  assert.equal(success.status, 200);
+  assert.equal(serviceRequest.status, 'completed');
+  assert.equal(recorded.filter((line) => line.startsWith('RPC admin_audit_log')).length, 1);
+  assert.equal(recorded.filter((line) => line === 'POST student_notifications').length, 1);
+  const previous = serviceRequest.updated_at;
+  const note = await patch({ admin_note: 'Updated note', expected_updated_at: previous });
+  assert.equal(note.status, 200);
+  assert.equal(serviceRequest.admin_note, 'Updated note');
+  assert.ok(Date.parse(serviceRequest.updated_at) > Date.parse(previous));
+  assert.equal(recorded.filter((line) => line === 'POST student_notifications').length, 1);
+});
+
+test('service-request read errors and ambiguous write errors are not reported as missing or safely failed', async () => {
+  serviceRequest = { ...serviceRequest, status: 'submitted', admin_note: null };
+  const init = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'reviewing', expected_updated_at: serviceRequest.updated_at }) };
+  const path = '/api/admin/service-requests/request-1';
+  recorded.length = 0;
+  const missing = await call('/api/admin/service-requests/missing', 'service_admin', init);
+  assert.equal(missing.status, 404);
+  failServiceRead = true;
+  try {
+    const read = await call(path, 'service_admin', init);
+    assert.equal(read.status, 503);
+    assert.match(read.body.error, /no update was attempted/i);
+    assert.ok(!recorded.some((entry) => entry.startsWith('PATCH service_requests')));
+  } finally { failServiceRead = false; }
+  failServiceWrite = true;
+  try {
+    const write = await call(path, 'service_admin', init);
+    assert.equal(write.status, 503);
+    assert.match(write.body.error, /confirm.*refresh/i);
+    assert.ok(!recorded.some((entry) => entry.startsWith('RPC admin_audit_log') || entry.startsWith('POST student_notifications')));
+  } finally { failServiceWrite = false; }
+});
+
+test('generic news patch and import cannot change placeholder metadata', async () => {
+  const json = { 'Content-Type': 'application/json' };
+  const row = { id: 'article-placeholder', slug: 'placeholder', title: 'Replacement', body: 'Body', category: 'general', is_placeholder: false, placeholder_note: null, published: true };
+  recorded.length = 0;
+  const patch = await call('/api/admin/content-manager/data/news_articles/article-placeholder', 'super_admin', { method: 'PATCH', headers: json, body: JSON.stringify(row) });
+  assert.equal(patch.status, 400);
+  const imported = await call('/api/admin/content-manager/import/news_articles', 'super_admin', { method: 'POST', headers: json, body: JSON.stringify({ rows: [row] }) });
+  assert.equal(imported.status, 200);
+  assert.equal(imported.body.inserted, 0);
+  assert.equal(imported.body.updated, 0);
+  assert.equal(imported.body.errors.length, 1);
+  assert.ok(!recorded.some((entry) => entry.startsWith('PATCH news_articles') || entry.startsWith('POST news_articles')));
+});
+
+test('admin news lists every page and applies filters and title search on the server', async () => {
+  newsFixtureEnabled = true;
+  try {
+    for (const state of ['all', 'draft', 'published', 'placeholder']) {
+      const expected = newsFixture.filter((row) => state === 'all' || (state === 'draft' ? !row.published : state === 'published' ? row.published : row.is_placeholder)).map((row) => row.id).sort().reverse();
+      const seen: string[] = [];
+      for (let page = 1; ; page++) {
+        const response = await call(`/api/admin/news?state=${state}&page=${page}&pageSize=37`, 'content_editor');
+        assert.equal(response.status, 200);
+        seen.push(...response.body.items.map((row: { id: string }) => row.id));
+        if (!response.body.hasMore) break;
+        assert.ok(page < 10);
+      }
+      assert.deepEqual(seen, expected);
+    }
+    const search = await call('/api/admin/news?state=all&search=100%25_veRiFiEd', 'content_editor');
+    assert.equal(search.status, 200);
+    assert.deepEqual(search.body.items.map((row: {id: string}) => row.id), ['012']);
+    const list = recorded.filter((entry) => entry.startsWith('LIST news ')).at(-1);
+    assert.ok(list?.includes('100\\\\%\\\\_veRiFiEd'));
+    assert.ok(list?.includes('updated_at.desc,id.desc'));
+    const empty = await call('/api/admin/news?page=999&pageSize=50', 'content_editor');
+    assert.equal(empty.status, 200);
+    assert.deepEqual(empty.body.items, []);
+    assert.equal(empty.body.hasMore, false);
+    for (const query of ['page=0', 'page=-1', 'page=1.5', 'pageSize=0', 'pageSize=201', 'state=unknown', 'page=9007199254740992', `search=${'a'.repeat(121)}`]) {
+      assert.equal((await call(`/api/admin/news?${query}`, 'content_editor')).status, 400, query);
+    }
+    assert.equal((await call('/api/admin/news?state=placeholder', 'student')).status, 403);
+  } finally { newsFixtureEnabled = false; }
+});
+
 test('the session endpoint reports the resolved role and capabilities', async () => {
   const response = await call('/api/admin/session', 'service_admin');
   assert.equal(response.status, 200);
@@ -395,6 +614,143 @@ test('owner-scoped student endpoints filter by the caller, not by a client id', 
   const query = recorded.find((entry) => entry.startsWith('GET cbt_attempts'));
   assert.ok(query, 'the attempt lookup must reach the database');
   assert.match(query!, /user_id=eq\.user-student/, 'the query must be scoped to the authenticated caller');
+});
+
+test('analytics ingestion remains unavailable even for an old client', async () => {
+  recorded.length = 0;
+  const response = await call('/api/analytics/event', 'student', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_name: 'page_view', session_id: 'synthetic-session', path: '/', metadata: {} }),
+  });
+  assert.equal(response.status, 503);
+  assert.ok(!recorded.includes('POST site_analytics_events'), 'disabled analytics must never write');
+});
+
+test('CBT paper distinguishes a missing attempt from database and RPC outages', async () => {
+  try {
+    for (const [mode, expected] of [['missing', 404], ['read-error', 503], ['rpc-error', 503], ['rpc-not-found', 404], ['rpc-expired', 409], ['ok', 200]] as const) {
+      cbtPaperFixture = mode;
+      recorded.length = 0;
+      const response = await call('/api/cbt/attempts/test-attempt/paper', 'student');
+      assert.equal(response.status, expected, mode);
+      if (mode === 'ok') assert.deepEqual(response.body.protocol, { version: 1 });
+      assert.ok(recorded.some(entry => entry.includes('user_id=eq.user-student')), `${mode} must retain owner filtering`);
+      if (expected === 503) assert.doesNotMatch(JSON.stringify(response.body), /synthetic internal database error|DB_DOWN/i);
+      if (mode === 'read-error' || mode === 'missing') assert.ok(!recorded.includes('RPC get_cbt_attempt_paper'));
+    }
+    for (const [mode, expected] of [['missing', 404], ['read-error', 503], ['ok', 200]] as const) {
+      cbtPaperFixture = mode;
+      recorded.length = 0;
+      const response = await call('/api/cbt/attempts/test-attempt/progress', 'student');
+      assert.equal(response.status, expected, `progress ${mode}`);
+      assert.ok(recorded.some(entry => entry.includes('user_id=eq.user-student')));
+      if (expected === 503) assert.doesNotMatch(JSON.stringify(response.body), /synthetic internal database error|DB_DOWN/i);
+    }
+    for (const path of ['paper', 'progress']) {
+      const unauthenticated = await fetch(`${base}/api/cbt/attempts/test-attempt/${path}`);
+      assert.equal(unauthenticated.status, 401);
+    }
+  } finally { cbtPaperFixture = 'missing'; }
+});
+
+test('CBT expiry marking uses an owner-scoped RPC, never a privileged table update', async () => {
+  const originalKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'synthetic-publishable-key';
+  try {
+    const routes = [
+      ['/api/cbt/attempts/test-attempt/draft', 'PATCH'],
+      ['/api/cbt/attempts/test-attempt/progress', 'PATCH'],
+      ['/api/cbt/attempts/test-attempt/submit', 'POST'],
+    ] as const;
+    for (const [path, method] of routes) {
+      recorded.length = 0;
+      cbtWriteFixture = 'expired';
+      const response = await call(path, 'student', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: {} }) });
+      assert.equal(response.status, 409, path);
+      assert.ok(recorded.includes('RPC cbt_expire_owned_attempt auth=Bearer token-student'), `${path}: owner token is propagated`);
+      assert.ok(!recorded.includes('PATCH cbt_attempts direct'), `${path}: no privileged direct update`);
+    }
+    recorded.length = 0;
+    cbtExpiryUnavailable = true;
+    const unavailable = await call('/api/cbt/attempts/test-attempt/draft', 'student', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: {} }) });
+    assert.equal(unavailable.status, 409);
+    assert.ok(!recorded.includes('PATCH cbt_attempts direct'), 'missing expiry RPC never falls back to direct write');
+    cbtExpiryUnavailable = false;
+    recorded.length = 0;
+    cbtWriteFixture = 'unexpected';
+    await call('/api/cbt/attempts/test-attempt/draft', 'student', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: {} }) });
+    assert.ok(!recorded.some(entry => entry.startsWith('RPC cbt_expire_owned_attempt')), 'infrastructure errors mentioning expired do not trigger expiry');
+    recorded.length = 0;
+    await call('/api/cbt/attempts/test-attempt/draft', undefined, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: {} }) });
+    assert.ok(!recorded.some(entry => entry.startsWith('RPC cbt_expire_owned_attempt')), 'unauthenticated requests cannot invoke expiry');
+  } finally {
+    cbtWriteFixture = 'expired';
+    cbtExpiryUnavailable = false;
+    if (originalKey === undefined) delete process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    else process.env.VITE_SUPABASE_PUBLISHABLE_KEY = originalKey;
+  }
+});
+
+test('local CBT v2 HTTP rejects bad protocol and forwards caller-bound operations without service fallback', async () => {
+  const previous = { node: process.env.NODE_ENV, netlify: process.env.NETLIFY, flag: process.env.CBT_V2_LOCAL_REHEARSAL, key: process.env.VITE_SUPABASE_PUBLISHABLE_KEY, url: process.env.VITE_SUPABASE_URL };
+  const id = 'a1111111-1111-4111-8111-111111111111';
+  const question = 'b1111111-1111-4111-8111-111111111111';
+  const key = 'c1111111-1111-4111-8111-111111111111';
+  const endpoint = `/api/cbt/v2/attempts/${id}/answer`;
+  const body = { protocol: 2, expectedRevision: 1, operationKey: key, questionId: question, selected: 0 };
+  const patch = (value: unknown) => ({ method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
+  try {
+    cbtPaperFixture = 'ok';
+    const paperProtocol = async () => (await call('/api/cbt/attempts/test-attempt/paper', 'student')).body.protocol;
+    process.env.CBT_V2_LOCAL_REHEARSAL = '1';
+    process.env.NODE_ENV = 'production';
+    assert.equal((await call(endpoint, 'student', patch(body))).status, 503, 'production cannot enable rehearsal');
+    assert.deepEqual(await paperProtocol(), { version: 1 });
+    process.env.NODE_ENV = 'test';
+    process.env.NETLIFY = 'true';
+    assert.equal((await call(endpoint, 'student', patch(body))).status, 503, 'Netlify cannot enable rehearsal');
+    assert.deepEqual(await paperProtocol(), { version: 1 });
+    process.env.NETLIFY = '';
+    const originalUrl = process.env.VITE_SUPABASE_URL;
+    process.env.VITE_SUPABASE_URL = 'https://example.invalid';
+    assert.equal((await call(endpoint, 'student', patch(body))).status, 503, 'hosted targets cannot enable rehearsal');
+    // The paper lookup itself would now be pointed away from the synthetic DB.
+    process.env.VITE_SUPABASE_URL = originalUrl;
+    assert.deepEqual(await paperProtocol(), { version: 2, scope: 'local-rehearsal' });
+    delete process.env.CBT_V2_LOCAL_REHEARSAL;
+    assert.deepEqual(await paperProtocol(), { version: 1 });
+    process.env.CBT_V2_LOCAL_REHEARSAL = '1';
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'synthetic-publishable-key';
+    recorded.length = 0;
+    assert.equal((await call(endpoint, undefined, patch(body))).status, 401);
+    assert.equal((await call(endpoint, 'student', patch({ ...body, protocol: 1 }))).status, 400);
+    assert.equal((await call(endpoint, 'student', patch({ ...body, selected: 8 }))).status, 400);
+    assert.equal((await call(endpoint, 'student', patch({ ...body, expectedRevision: -1 }))).status, 400);
+    assert.ok(!recorded.some(entry => entry.startsWith('RPC cbt_candidate_answer')));
+    cbtV2Outcome = 'accepted';
+    const accepted = await call(endpoint, 'student', patch({ ...body, userId: 'hostile-other-user' }));
+    assert.equal(accepted.status, 200);
+    assert.equal(accepted.body.outcome, 'accepted');
+    const rpc = recorded.find(entry => entry.startsWith('RPC cbt_candidate_answer')) || '';
+    assert.match(rpc, /auth=Bearer token-student/);
+    assert.match(rpc, /"p_expected_user":"user-student"/);
+    assert.doesNotMatch(rpc, /hostile-other-user/);
+    cbtV2Outcome = 'conflict';
+    const conflict = await call(endpoint, 'student', patch(body));
+    assert.equal(conflict.status, 409);
+    assert.equal(conflict.body.outcome, 'conflict');
+    assert.deepEqual(conflict.body.answers, { '1': 0 });
+    delete process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    recorded.length = 0;
+    assert.equal((await call(endpoint, 'student', patch(body))).status, 503);
+    assert.ok(!recorded.some(entry => entry.startsWith('RPC cbt_candidate_answer')), 'no fallback to privileged role');
+  } finally {
+    cbtV2Outcome = 'accepted';
+    cbtPaperFixture = 'missing';
+    for (const [name, value] of Object.entries({ NODE_ENV: previous.node, NETLIFY: previous.netlify, CBT_V2_LOCAL_REHEARSAL: previous.flag, VITE_SUPABASE_PUBLISHABLE_KEY: previous.key, VITE_SUPABASE_URL: previous.url })) {
+      if (value === undefined) delete process.env[name]; else process.env[name] = value;
+    }
+  }
 });
 
 test('a student token cannot publish, delete or import through any admin route', async () => {

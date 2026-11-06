@@ -22,6 +22,8 @@ export interface TablePosture {
   /** anon is the publishable key: never privileged, only ever public data. */
   anon: Privilege[];
   authenticated: Privilege[];
+  /** If specified, the exact effective client column privileges for this table. */
+  authenticatedColumns?: Partial<Record<Privilege, string[]>>;
   /** Minimum number of policies expected on the table. */
   policies: number;
   /** True when the browser Supabase client reads or writes the table. */
@@ -86,8 +88,12 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Auth, dashboard and profile screens read and update the signed-in user; no delete verb is granted because no policy allows it.',
   },
   {
-    table: 'service_requests', access: 'owner', anon: NONE, authenticated: ['select', 'insert', 'update'], policies: 1, browser: true,
-    why: 'Students submit and track their own requests; staff read/update is policy-gated, deletes are server-side.',
+    table: 'service_requests', access: 'owner', anon: NONE, authenticated: ['select', 'insert'], policies: 1, browser: true,
+    authenticatedColumns: {
+      select: ['id', 'user_id', 'service_id', 'status', 'form_data', 'reference_code', 'created_at'],
+      insert: ['user_id', 'service_id', 'status', 'form_data'],
+    },
+    why: 'Students submit and track their own requests through restricted columns; workflow updates and staff reads use the capability-checked server API.',
   },
   {
     table: 'student_notifications', access: 'owner', anon: NONE, authenticated: OWN_FULL, policies: 1, browser: true,
@@ -251,6 +257,7 @@ export interface ActualPosture {
   policies: number;
   anon: Privilege[];
   authenticated: Privilege[];
+  authenticatedColumns: Partial<Record<Privilege, string[]>>;
 }
 
 const POSTURE_QUERY = `
@@ -258,21 +265,24 @@ const POSTURE_QUERY = `
     c.relname as "table",
     c.relrowsecurity as rls,
     (select count(*)::int from pg_policies p where p.schemaname = 'public' and p.tablename = c.relname) as policies,
-    has_table_privilege('anon', c.oid, 'select')          as anon_select,
-    has_table_privilege('anon', c.oid, 'insert')          as anon_insert,
-    has_table_privilege('anon', c.oid, 'update')          as anon_update,
-    has_table_privilege('anon', c.oid, 'delete')          as anon_delete,
-    has_table_privilege('authenticated', c.oid, 'select') as auth_select,
-    has_table_privilege('authenticated', c.oid, 'insert') as auth_insert,
-    has_table_privilege('authenticated', c.oid, 'update') as auth_update,
-    has_table_privilege('authenticated', c.oid, 'delete') as auth_delete
+    has_any_column_privilege('anon', c.oid, 'select')          as anon_select,
+    has_any_column_privilege('anon', c.oid, 'insert')          as anon_insert,
+    has_any_column_privilege('anon', c.oid, 'update')          as anon_update,
+    has_table_privilege('anon', c.oid, 'delete')              as anon_delete,
+    has_any_column_privilege('authenticated', c.oid, 'select') as auth_select,
+    has_any_column_privilege('authenticated', c.oid, 'insert') as auth_insert,
+    has_any_column_privilege('authenticated', c.oid, 'update') as auth_update,
+    has_table_privilege('authenticated', c.oid, 'delete') as auth_delete,
+    array(select a.attname::text from pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped and has_column_privilege('authenticated',c.oid,a.attname,'select') order by a.attname) as auth_select_columns,
+    array(select a.attname::text from pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped and has_column_privilege('authenticated',c.oid,a.attname,'insert') order by a.attname) as auth_insert_columns,
+    array(select a.attname::text from pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped and has_column_privilege('authenticated',c.oid,a.attname,'update') order by a.attname) as auth_update_columns
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public' and c.relkind = 'r'
   order by c.relname`;
 
 export async function readActualPosture(db: PGlite): Promise<ActualPosture[]> {
-  const { rows } = await db.query<Record<string, boolean | number | string>>(POSTURE_QUERY);
+  const { rows } = await db.query<Record<string, boolean | number | string | string[]>>(POSTURE_QUERY);
   return rows.map((row) => {
     const collect = (prefix: 'anon' | 'auth'): Privilege[] =>
       PRIVILEGES.filter((privilege) => Boolean(row[`${prefix}_${privilege}`]));
@@ -282,6 +292,11 @@ export async function readActualPosture(db: PGlite): Promise<ActualPosture[]> {
       policies: row.policies as number,
       anon: collect('anon'),
       authenticated: collect('auth'),
+      authenticatedColumns: {
+        select: row.auth_select_columns as string[],
+        insert: row.auth_insert_columns as string[],
+        update: row.auth_update_columns as string[],
+      },
     };
   });
 }
@@ -318,6 +333,14 @@ export function comparePosture(actual: ActualPosture[]): Finding[] {
     }
     if (!samePrivileges(row.authenticated, expected.authenticated)) {
       findings.push({ table: expected.table, problem: `authenticated privileges are ${row.authenticated.join(',') || 'none'}, expected ${expected.authenticated.join(',') || 'none'}` });
+    }
+    if (expected.authenticatedColumns) {
+      for (const [privilege, columns] of Object.entries(expected.authenticatedColumns) as Array<[Privilege, string[]]>) {
+        const actualColumns = row.authenticatedColumns[privilege] ?? [];
+        if ([...actualColumns].sort().join(',') !== [...columns].sort().join(',')) {
+          findings.push({ table: expected.table, problem: `authenticated ${privilege} columns are ${actualColumns.join(',') || 'none'}, expected ${columns.join(',') || 'none'}` });
+        }
+      }
     }
     if (expected.policies > 0 && row.policies < expected.policies) {
       findings.push({ table: expected.table, problem: `has ${row.policies} policies, expected at least ${expected.policies}` });

@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
+import { validCbtV2Draft, validCbtV2QuestionIds, validCbtV2Revision } from './cbtProtocolValidation';
 import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 import { EduReachError, isOffline } from './failures';
@@ -31,7 +32,7 @@ export type CbtSubmitResponse = {
   }>;
   result?: Record<string, unknown>;
 };
-export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown> };
+export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown>; expectedUserId?: string; submissionKey?: string; recoveryOnly?: boolean };
 export type ServiceItem = {
   id: string;
   service_key: string;
@@ -110,7 +111,7 @@ async function authHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
-async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit, acceptConflict?: (body: unknown) => boolean): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   // A caller-supplied signal is respected as well, so unmounting a screen can
@@ -135,7 +136,7 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
   }
 
   const body = await response.json().catch(() => null);
-  if (!response.ok) {
+  if (!response.ok && !(response.status === 409 && acceptConflict?.(body))) {
     throw new EduReachError(
       userFacingError(body?.error ?? body, 'We could not complete that request. Please try again.'),
       failureKindForStatus(response.status),
@@ -152,7 +153,8 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function failureKindForStatus(status: number) {
-  if (status === 401 || status === 403) return 'auth' as const;
+  if (status === 401) return 'auth' as const;
+  if (status === 403) return 'forbidden' as const;
   if (status === 404) return 'not-found' as const;
   if (status === 422) return 'validation' as const;
   if (status === 429) return 'rate-limited' as const;
@@ -425,56 +427,42 @@ export async function fetchCbtResult(attemptId: string): Promise<CbtResultPayloa
 }
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
-  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
   const normalizedSlug = payload.serviceSlug.trim().toLowerCase();
-  if (!isSupabaseConfigured && !supportedSlugs.has(normalizedSlug)) {
-    throw new Error('This service is not available. Browse the services catalogue for active student services.');
+  if (!isSupabaseConfigured) {
+    throw new Error('Service requests are unavailable right now. Your request has not been submitted.');
   }
 
-  if (isSupabaseConfigured) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Please sign in before submitting a service request.');
-
-    const { data: service, error: serviceError } = await supabase
-      .from('service_catalog')
-      .select('id, service_key, title')
-      .eq('service_key', normalizedSlug)
-      .eq('active', true)
-      .maybeSingle();
-    if (serviceError) throw new Error(userFacingError(serviceError));
-    if (!service) throw new Error('This service is no longer accepting requests. Browse the services catalogue for active services.');
-
-    const { data, error } = await supabase
-      .from('service_requests')
-      .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
-      .select('id, reference_code, created_at, status')
-      .single();
-    if (error) throw new Error(userFacingError(error));
-    if (!data) throw new Error('The service request could not be created.');
-    return data;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Please sign in before submitting a service request.');
+  if (!payload.expectedUserId || user.id !== payload.expectedUserId) {
+    throw new Error('Your account changed. Please review your details before submitting.');
   }
 
-  // Local request persistence for unconfigured/offline sessions. This records only what the student actually submitted.
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const localRef = `ER-${new Date().getFullYear()}-${randomSuffix}`;
-  const localRecord = {
-    id: `req-${Date.now()}`,
-    reference_code: localRef,
-    created_at: new Date().toISOString(),
-    status: 'submitted',
-    form_data: payload.details,
-    service_catalog: { title: payload.details.serviceTitle as string || 'EduReach Service' },
-  };
+  if (!payload.submissionKey || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payload.submissionKey)) {
+    throw new Error('Your request draft is unavailable in this browser. No new submission was sent.');
+  }
 
+  // No direct-insert fallback: an unmigrated database must fail closed.
+  // A transport error or malformed response may follow a committed request.
   try {
-    const existing = JSON.parse(localStorage.getItem(localStorageKey('service-requests')) || '[]');
-    existing.unshift(localRecord);
-    localStorage.setItem(localStorageKey('service-requests'), JSON.stringify(existing));
+    const { data, error } = await supabase.rpc('submit_service_request_idempotent', {
+      p_service_key: normalizedSlug,
+      p_form_data: payload.details,
+      p_submission_key: payload.submissionKey,
+      p_expected_user_id: payload.expectedUserId,
+      p_recovery_only: payload.recoveryOnly === true,
+    }).single();
+    const row = data as { id?: unknown; reference_code?: unknown; status?: unknown; created_at?: unknown } | null;
+    if (!error && row && typeof row.id === 'string' && row.id
+      && typeof row.reference_code === 'string' && row.reference_code.trim()
+      && typeof row.status === 'string' && row.status
+      && typeof row.created_at === 'string' && Number.isFinite(Date.parse(row.created_at))) {
+      return { id: row.id, reference_code: row.reference_code, status: row.status, created_at: row.created_at };
+    }
   } catch {
-    // localStorage may be disabled
+    // The server may have accepted the request before the connection failed.
   }
-
-  return localRecord;
+  throw new Error('We could not confirm whether your request was submitted. Check My Requests and review the previous submission before retrying.');
 }
 
 const NEWS_COLUMNS_LEGACY =
@@ -739,7 +727,7 @@ export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminSe
   return body.items || [];
 }
 
-export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null }) {
+export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null; expected_updated_at?: string }) {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
   const body = typeof patch === 'string' ? { status: patch } : patch;
@@ -764,6 +752,8 @@ export type AdminNewsArticle = {
   published_at: string | null;
   featured?: boolean;
   tags?: string | null;
+  is_placeholder: boolean;
+  placeholder_note: string | null;
   updated_at: string;
 };
 
@@ -780,13 +770,18 @@ export type AdminNewsInput = {
   published_at?: string | null;
   featured?: boolean;
   tags?: string | null;
+  is_placeholder?: boolean;
+  placeholder_note?: string | null;
+  confirm_placeholder_replacement?: boolean;
 };
 
-export async function fetchAdminNews(): Promise<AdminNewsArticle[]> {
+export type AdminNewsListOptions = { page?: number; pageSize?: number; state?: 'all' | 'draft' | 'published' | 'placeholder'; search?: string };
+export async function fetchAdminNews(options: AdminNewsListOptions = {}): Promise<{ items: AdminNewsArticle[]; page: number; hasMore: boolean }> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
-  const body = await jsonFetch<{ items: AdminNewsArticle[] }>('/api/admin/news', { headers });
-  return body.items || [];
+  const params = new URLSearchParams({ page: String(options.page ?? 1), pageSize: String(options.pageSize ?? 200), state: options.state ?? 'all' });
+  if (options.search?.trim()) params.set('search', options.search.trim());
+  return jsonFetch<{ items: AdminNewsArticle[]; page: number; hasMore: boolean }>(`/api/admin/news?${params}`, { headers });
 }
 
 export async function createAdminNews(input: AdminNewsInput): Promise<AdminNewsArticle> {
@@ -1658,19 +1653,74 @@ export async function startConfiguredCbt(payload: {
   return body.attempt;
 }
 
-export async function fetchCbtAttemptPaper(attemptId: string): Promise<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime: string }> {
+export type CbtSessionProtocol = { version: 1 } | { version: 2; scope: 'local-rehearsal' };
+export class CbtProtocolUnavailableError extends EduReachError {
+  constructor() { super('The CBT protocol is unavailable. Please retry.', 'server'); }
+}
+export async function fetchCbtAttemptPaper(attemptId: string): Promise<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime: string; protocol: CbtSessionProtocol }> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Please sign in to continue this session.');
-  const body = await jsonFetch<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime?: string }>(
+  const body = await jsonFetch<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime?: string; protocol?: unknown }>(
     `/api/cbt/attempts/${encodeURIComponent(attemptId)}/paper`,
     { headers },
   );
-  return { ...body, serverTime: body.serverTime || new Date().toISOString() };
+  const protocol = body.protocol;
+  if (!protocol || typeof protocol !== 'object' || Array.isArray(protocol)) throw new CbtProtocolUnavailableError();
+  const value = protocol as Record<string, unknown>;
+  if (!((value.version === 1 && Object.keys(value).length === 1) ||
+        (value.version === 2 && value.scope === 'local-rehearsal' && Object.keys(value).length === 2))) {
+    throw new CbtProtocolUnavailableError();
+  }
+  return { ...body, protocol: value as CbtSessionProtocol, serverTime: body.serverTime || new Date().toISOString() };
+}
+
+/** Local-rehearsal transport only. The session uses state for blocked preflight; writes remain unwired. */
+export type CbtV2Snapshot = { protocol: 2; revision: number; answers: Record<string, number>; status: string; questionIds: string[] };
+export type CbtV2Outcome = { protocol: 2; outcome: 'accepted' | 'replayed' | 'conflict' | 'expired' | 'closed' | 'submitted' | 'already_submitted'; revision?: number; acceptedRevision?: number; answers?: Record<string, number>; status?: string; result?: Record<string, unknown> };
+
+function validCbtV2Outcome(value: unknown, kind: 'answer' | 'finalize'): value is CbtV2Outcome {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  if (row.protocol !== 2 || typeof row.outcome !== 'string') return false;
+  if (row.outcome === 'expired' || row.outcome === 'closed') return true;
+  if (row.outcome === 'conflict') return validCbtV2Revision(row.revision) && validCbtV2Draft(row.answers) && row.status === 'in_progress';
+  if (kind === 'answer' && (row.outcome === 'accepted' || row.outcome === 'replayed')) {
+    return validCbtV2Revision(row.revision) && validCbtV2Revision(row.acceptedRevision) && validCbtV2Draft(row.answers) && typeof row.status === 'string';
+  }
+  if (kind === 'finalize' && ['submitted', 'replayed', 'already_submitted'].includes(row.outcome)) {
+    return validCbtV2Revision(row.revision) && !!row.result && typeof row.result === 'object' && !Array.isArray(row.result);
+  }
+  return false;
+}
+async function cbtV2Headers(): Promise<Record<string, string>> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new EduReachError('Please sign in to continue this session.', 'auth', 401);
+  return headers;
+}
+export async function fetchCbtV2State(attemptId: string): Promise<CbtV2Snapshot> {
+  const data = await jsonFetch<unknown>(`/api/cbt/v2/attempts/${encodeURIComponent(attemptId)}/state`, { headers: await cbtV2Headers() });
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new EduReachError('The server returned an invalid CBT state.', 'server');
+  const row = data as Record<string, unknown>;
+  const paper = row.questionIds;
+  if (row.protocol !== 2 || !validCbtV2Revision(row.revision) || !validCbtV2Draft(row.answers) || typeof row.status !== 'string' ||
+      !validCbtV2QuestionIds(paper) || Object.keys(row.answers).some(position => Number(position) > paper.length)) {
+    throw new EduReachError('The server returned an invalid CBT state.', 'server');
+  }
+  return row as CbtV2Snapshot;
+}
+export async function sendCbtV2Operation(attemptId: string, kind: 'answer' | 'finalize', operation: { expectedRevision: number; operationKey: string; questionId?: string; selected?: number | null }): Promise<CbtV2Outcome> {
+  const data = await jsonFetch<unknown>(`/api/cbt/v2/attempts/${encodeURIComponent(attemptId)}/${kind}`, {
+    method: kind === 'answer' ? 'PATCH' : 'POST',
+    headers: { 'Content-Type': 'application/json', ...await cbtV2Headers() },
+    body: JSON.stringify({ protocol: 2, ...operation }),
+  }, body => validCbtV2Outcome(body, kind) && ['conflict', 'expired', 'closed'].includes((body as CbtV2Outcome).outcome));
+  if (!validCbtV2Outcome(data, kind)) throw new EduReachError('The server returned an invalid CBT response.', 'server');
+  return data;
 }
 
 export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<void> {
   const headers = await authHeaders();
-  if (!headers.Authorization) return;
+  if (!headers.Authorization) throw new EduReachError('Please sign in to save this session.', 'auth', 401);
   await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...headers },

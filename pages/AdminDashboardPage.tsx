@@ -1,4 +1,5 @@
 import { userFacingError } from '../lib/errors';
+import { serviceRequestUpdateFailure } from '../src/lib/serviceRequestErrors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Activity,
@@ -71,13 +72,13 @@ export default function AdminDashboardPage() {
     return () => { mounted.current = false; window.clearInterval(timer); };
   }, [load]);
 
-  async function act(requestId: string, nextStatus: string) {
+  async function act(requestId: string, nextStatus: string, expectedUpdatedAt: string) {
     setBusyId(requestId);
     try {
-      await updateAdminServiceRequest(requestId, nextStatus);
+      await updateAdminServiceRequest(requestId, { status: nextStatus, expected_updated_at: expectedUpdatedAt });
       await load(true);
     } catch (e) {
-      setError(userFacingError(e, 'Unable to update request.'));
+      setError(serviceRequestUpdateFailure(e, 'Unable to update request.').message);
     } finally { setBusyId(null); }
   }
 
@@ -114,7 +115,7 @@ export default function AdminDashboardPage() {
 
         {loading ? (
           <KpiSkeleton count={6} />
-        ) : (
+        ) : !error && analytics ? (
           <div className="admin-kpi-grid three">
             <Metric label="Active Queue" value={num('pending_requests')} detail={`${num('service_requests')} requests all-time`} icon={<ListChecks size={16} />} tone="orange" />
             <Metric label="Students" value={num('users')} detail={`${num('admins')} staff accounts`} icon={<Users size={16} />} tone="blue" />
@@ -123,7 +124,7 @@ export default function AdminDashboardPage() {
             <Metric label="CBT Attempts" value={num('cbt_attempts')} detail={`${num('cbt_submitted')} submitted · avg ${num('average_cbt_score')}%`} icon={<Laptop size={16} />} tone="purple" />
             <Metric label="Published News" value={num('published_news')} detail={`${num('institutions')} institutions · ${num('active_services')} active services`} icon={<Newspaper size={16} />} tone="orange" />
           </div>
-        )}
+        ) : null}
 
         {!loading && (
           <>
@@ -138,6 +139,7 @@ export default function AdminDashboardPage() {
               <a className="admin-quick-tile" href="/admin/content-manager"><i className="admin-kpi-icon green"><Upload size={16} /></i><div><b>Bulk Content Manager</b><small>Import, edit and maintain site data in bulk</small></div></a>
             </div>
 
+            {!error && analytics && <>
             {num('pending_requests') > 0 && (
               <div className="admin-alert" role="status">
                 <ListChecks size={15} />
@@ -152,7 +154,7 @@ export default function AdminDashboardPage() {
                   <h2>Needs Attention <SectionLabel live /></h2>
                   <span>{attention.length ? `${attention.length} active` : 'Queue clear'}</span>
                 </div>
-                <div className="admin-table-wrap">
+                <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
                   <table className="admin-table">
                     <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
                     <tbody>
@@ -212,6 +214,7 @@ export default function AdminDashboardPage() {
             {queue.length > attention.length && (
               <p className="admin-footnote">Showing the {attention.length} most recent active requests. <a href="/admin/queue">Open the full queue</a> for completed history and filters.</p>
             )}
+            </>}
           </>
         )}
       </div>
