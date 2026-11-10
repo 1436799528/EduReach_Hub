@@ -32,3 +32,39 @@ The three SQL files in `supabase/candidates/` are local experiments, not deploya
 4. Only after complete local role/API tests, staging Auth/PostgREST tests, operator approval and a documented deployment plan should a reviewed migration be prepared. Preserve questions, attempts and answers; do not silently reclassify existing records.
 
 No hosted service was contacted, no production data or policy changed, and no candidate was put in the deployable migrations directory.
+
+## Hosted connection check (read-only, 2026-10-31)
+
+A Vercel **preview** deployment of this branch is now connected to the hosted
+Supabase project `EduReach-V1` (`gjdfatwcoosyuhakrrhh`) through preview-scoped
+environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` and `EDUREACH_SITE_URL`. Production variables and
+the production deployment on `main` were left unchanged.
+
+Read-only inspection of the hosted database shows why the preview is not a
+working preview of this feature set:
+
+| Check | Hosted value |
+| --- | --- |
+| Public tables | 86 |
+| Applied migrations in ledger | 195, newest version `20261023155533` |
+| Repository migrations | 84 files, newest `20261108120000` |
+| `cbt_bank_security` / `cbt_bank_candidates` | absent |
+| `cbt_writing_sessions`, `cbt_v2_operations`, `cbt_attempt_answers`, `exam_question_imports` | absent |
+| `exam_questions`, `cbt_exams`, `cbt_attempts`, `cbt_exams` | present |
+
+Consequences, none of which are fixed by deploying code:
+
+1. The bank policy schema does not exist, so the server's fail-closed guard
+   refuses guest question/submit paths. Public practice in the preview is
+   expected to return 404/503 until the reviewed policy schema is applied.
+2. The single-writing-session, v2 operation and atomic import objects do not
+   exist, so CBT writing and question import cannot function against this
+   database.
+3. The hosted ledger (195 rows) and the repository migration set (84 files)
+   are different lineages. The repository migrations were never applied as a
+   set to this project, so a blind `db push` or replay is unsafe and must not
+   be attempted against production data.
+
+Nothing was applied, migrated or reclassified. This section records inspection
+results only; the blockers above still stand.
