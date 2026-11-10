@@ -5,8 +5,9 @@
  * secret never goes into a `VITE_*` variable at all (Vite inlines those into the
  * bundle, so anyone who loads the site can read it). This predicate exists for
  * the day that rule is broken by mistake: if a privileged key is pasted into
- * `VITE_SUPABASE_PUBLISHABLE_KEY`, the browser client must refuse to start with
- * it rather than ship a key that bypasses every RLS policy to every visitor.
+ * `VITE_SUPABASE_PUBLISHABLE_KEY`, the browser client refuses to use it. This
+ * runtime check alone cannot prevent the key being shipped in a bundle; Vite's
+ * build/dev guard must reject it before client code is emitted or served.
  *
  * Two key formats have to be recognised, and only one of them was:
  *

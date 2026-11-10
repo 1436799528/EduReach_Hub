@@ -104,6 +104,8 @@ export default function AdminQuestionImportPage() {
   const [busyItem, setBusyItem] = useState('');
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
   const [committing, setCommitting] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   // UI-2: extraction is a server job that can take minutes on a large paper.
   // The loader names it, and the retry appears only when the job has genuinely
@@ -168,6 +170,7 @@ export default function AdminQuestionImportPage() {
     setItemErrors({});
     setMetaOpen(false);
     setMetaError('');
+    setSelectedItems([]);
     try {
       const result = await fetchAdminQuestionImport(id);
       setDetail(result);
@@ -287,7 +290,7 @@ export default function AdminQuestionImportPage() {
         explanation: draft.explanation,
         passage: draft.passage,
         topic: draft.topic,
-      });
+      }, item.updated_at);
       setDetail((current) => current ? {
         ...current,
         items: current.items.map((entry) => entry.id === result.item.id ? result.item : entry),
@@ -309,12 +312,15 @@ export default function AdminQuestionImportPage() {
     setBusyItem(item.id);
     setItemErrors((current) => ({ ...current, [item.id]: '' }));
     try {
+      let currentItem = item;
       if (action === 'approve' && dirty[item.id]) {
         const saved = await saveItem(item, true);
         if (!saved) return;
+        currentItem = saved;
       }
       if (!detail) return;
-      const updated = await reviewAdminQuestionImportItem(detail.item.id, item.id, action);
+      const updated = await reviewAdminQuestionImportItem(detail.item.id, item.id, action, currentItem.updated_at);
+      setSelectedItems(current => current.filter(id => id !== item.id));
       setDetail((current) => current ? {
         ...current,
         items: current.items.map((entry) => entry.id === updated.id ? { ...entry, ...updated } : entry),
@@ -326,6 +332,39 @@ export default function AdminQuestionImportPage() {
     } finally {
       setBusyItem('');
     }
+  }
+
+  async function approveSelected() {
+    if (!detail || !selectedItems.length) return;
+    const selected = detail.items.filter(item => selectedItems.includes(item.id) && item.review_status === 'pending');
+    if (selected.some(item => dirty[item.id])) {
+      setError('Save changes to selected questions before bulk approval.');
+      return;
+    }
+    setBulkBusy(true);
+    setError('');
+    setNotice('');
+    let approved = 0;
+    const failed: string[] = [];
+    const importId = detail.item.id;
+    try {
+      for (const item of selected) {
+        try {
+          const updated = await reviewAdminQuestionImportItem(importId, item.id, 'approve', item.updated_at);
+          approved += 1;
+          setDetail(current => {
+            if (!current || current.item.id !== importId) return current;
+            const items = current.items.map(entry => entry.id === updated.id ? { ...entry, ...updated } : entry);
+            return { ...current, items, summary: summarize(items) };
+          });
+        } catch (value) {
+          failed.push(item.id);
+          setItemErrors(current => ({ ...current, [item.id]: userFacingError(value, 'Unable to approve this question.') }));
+        }
+      }
+      setSelectedItems(failed);
+      setNotice(`${approved} approved; ${failed.length} could not be approved. Review failures before saving.`);
+    } finally { setBulkBusy(false); }
   }
 
   async function retry() {
@@ -538,11 +577,14 @@ export default function AdminQuestionImportPage() {
                   </button>
                 ))}
               </div>
+              <button type="button" className="admin-btn secondary" onClick={() => void approveSelected()} disabled={bulkBusy || committing || !selectedItems.length}>
+                {bulkBusy ? 'Approving…' : `Approve selected (${selectedItems.length})`}
+              </button>
               <button
                 type="button"
                 className="admin-btn"
                 onClick={() => void commit()}
-                disabled={committing || detail.summary.approved === 0}
+                disabled={bulkBusy || committing || detail.summary.approved === 0}
               >
                 <CheckCircle2 size={15} /> {committing ? 'Saving…' : `Save approved (${detail.summary.approved})`}
               </button>
@@ -566,10 +608,11 @@ export default function AdminQuestionImportPage() {
                   .filter((item) => reviewFilter === 'all' || item.review_status === reviewFilter)
                   .map((item) => {
                     const draft = drafts[item.id] || draftFor(item);
-                    const busy = busyItem === item.id;
+                    const busy = bulkBusy || busyItem === item.id;
                     return (
                       <article className="admin-card import-item" key={item.id}>
                         <header>
+                          {item.review_status === 'pending' && <label><input type="checkbox" aria-label={`Select question ${item.source_index} for approval`} disabled={bulkBusy} checked={selectedItems.includes(item.id)} onChange={event => setSelectedItems(current => event.target.checked ? [...current, item.id] : current.filter(id => id !== item.id))} /> Select</label>}
                           <span className="question-tag">Question {item.source_index}</span>
                           <span className={`import-status import-status-${item.review_status}`}>{item.review_status}</span>
                         </header>
@@ -602,9 +645,15 @@ export default function AdminQuestionImportPage() {
                             </label>
                           ))}
                         </div>
-                        {draft.option_e && (
-                          <p className="import-five">A fifth option was found: <strong>{draft.option_e}</strong>. The CBT bank stores four options, so remove one before approving.</p>
-                        )}
+                        {item.option_e !== null || draft.option_e ? (
+                          <label className="import-field import-five">
+                            <span>Extra option (the CBT bank stores four; resolve and clear this field before approving)</span>
+                            <input className="admin-input" value={draft.option_e} disabled={item.review_status === 'imported'} onChange={(event) => {
+                              setDrafts((current) => ({ ...current, [item.id]: { ...draft, option_e: event.target.value } }));
+                              setDirty((current) => ({ ...current, [item.id]: true }));
+                            }} />
+                          </label>
+                        ) : null}
                         <div className="import-meta-row">
                           <label className="import-field">
                             <span>Correct answer</span>
@@ -663,6 +712,12 @@ export default function AdminQuestionImportPage() {
                             />
                           </label>
                           {item.raw_text && <pre className="import-raw">{item.raw_text}</pre>}
+                        </details>
+                        <details className="import-more">
+                          <summary>Preview question</summary>
+                          <p style={{ whiteSpace: 'pre-wrap' }}>{draft.question_text || 'Question text is missing.'}</p>
+                          <ol type="A">{(['a', 'b', 'c', 'd'] as const).map(letter => <li key={letter}>{draft[`option_${letter}`] || 'Option missing'}</li>)}</ol>
+                          {draft.passage && <p>Passage not included in the bank preview. Add required context to the question text and clear the separate passage before approving.</p>}
                         </details>
                         {item.issues.length > 0 && (
                           <ul className="import-issues" role="status">
@@ -881,7 +936,7 @@ export default function AdminQuestionImportPage() {
         ) : !imports.length ? (
           <AdminEmptyState title="No past questions have been imported yet" hint="Upload a paper above. It stays in review until you approve its questions." />
         ) : (
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead>
                 <tr>
@@ -891,7 +946,6 @@ export default function AdminQuestionImportPage() {
                   <th scope="col">Questions</th>
                   <th scope="col">Saved</th>
                   <th scope="col">Added</th>
-                  <th scope="col"><span className="er-visually-hidden">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -900,15 +954,13 @@ export default function AdminQuestionImportPage() {
                     <td>
                       <strong>{entry.original_filename}</strong>
                       <br /><small>{entry.paper_year || 'Undated'} · <TimeAgo value={entry.created_at} /></small>
+                      <br /><button type="button" className="admin-text-btn" onClick={() => void openImport(entry.id)}>Review</button>
                     </td>
                     <td>{entry.exam_body} · {entry.subject}</td>
                     <td><StatusBadge status={STATUS_LABEL[entry.status]} /></td>
                     <td>{entry.item_count}</td>
                     <td>{entry.imported_count}</td>
                     <td>{entry.duplicate_count}</td>
-                    <td className="right">
-                      <button type="button" className="admin-text-btn" onClick={() => void openImport(entry.id)}>Review</button>
-                    </td>
                   </tr>
                 ))}
               </tbody>

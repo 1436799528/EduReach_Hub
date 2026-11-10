@@ -1,5 +1,7 @@
 # Staging verification runbook
 
+> **Current CBT staging gate:** This older runbook contains historical migration details; its former generic push example is not an authorized migration procedure. The checkout now has 83 migration files with duplicate version prefixes; file-level reconciliation, a separately authorized disposable target, tested backup, and an approved migration/rollback plan are required before any mutation. See `CBT_STAGING_VALIDATION_PREPARATION.md` and `CBT_REAL_SUPABASE_CHECKLIST.md`. The v2 page/API remain restricted to loopback rehearsal and cannot currently run against hosted staging without a separately reviewed, explicitly authorized staging-only path.
+
 **What this is:** the ordered procedure for running the checks that could not be run
 in the development environment, against a **disposable** Supabase project.
 **What this is not:** a production deployment, a production migration run, or a
@@ -111,28 +113,21 @@ project reference from the URL.
 
 ## 3. Migration baseline
 
-The repository holds **74** migration files in `supabase/migrations/` and a
-generated checklist of all 74 inside `supabase/ci/production-validation.sql`
-(`npm run migrations:checklist` fails if the two drift apart).
+The current checkout holds **83** migration files in `supabase/migrations/` and a generated checklist in `supabase/ci/production-validation.sql` (`npm run migrations:checklist` fails if the two drift apart). Duplicate version prefixes require file-level reconciliation; the count does not establish any target's history.
 
 ### 3a. INSPECT — what the repository says (no project contacted)
 
 ```bash
-npm test                        # PGlite applies all 74 migrations to a scratch database
+npm test                        # PGlite applies repository migrations to a scratch database
 npm run schema:audit            # static: references, ordering, object creation
-npm run migrations:checklist    # 74/74 listed in the artifact
+npm run migrations:checklist    # verify all files are listed in the artifact
 ```
 
 These three are safe anywhere: they read files and a throwaway in-memory database.
 
 ### 3b. MUTATE — bringing the staging schema up to the repository
 
-Only after §1 has passed. **A staging project starts empty**, so this is expected
-to run once per disposable project:
-
-```bash
-supabase db push --project-ref "$STAGING_PROJECT_REF"
-```
+Do not assume a staging project is empty, isolated or authorized merely from its name. The previous generic `supabase db push` example is unsafe for this history and is not an approved procedure. Stop until the target, backup, individual migration files, duplicate versions, role graph and a target-specific migration/rollback method have been independently reviewed and explicitly authorized; see `CBT_STAGING_VALIDATION_PREPARATION.md`.
 
 **The link is a separate trap from `.env`.** The Supabase CLI acts on the project
 it is *linked* to, which has nothing to do with the variables the app reads. A

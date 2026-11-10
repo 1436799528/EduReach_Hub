@@ -46,7 +46,7 @@ export default function AdminAnalyticsPage() {
               <Metric label="Completed" value={completed} detail={`${rejected} rejected/cancelled`} />
               <Metric label="Traffic Events" value={events24} detail={`${num('sessions_24h')} sessions in 24h`} />
               <Metric label="CBT Attempts" value={num('cbt_attempts')} detail={`${num('cbt_submitted')} submitted`} />
-              <Metric label="Average CBT Score" value={`${num('average_cbt_score')}%`} detail={`${num('institutions')} institutions · ${num('published_news')} news items`} />
+              <Metric label="Public CBT average" value={m.average_cbt_score == null ? 'Unavailable' : `${num('average_cbt_score')}%`} detail={`${num('institutions')} institutions · ${num('published_news')} news items`} />
             </div>
 
             <div className="admin-two-col">
@@ -105,7 +105,7 @@ export default function AdminAnalyticsPage() {
 
               <div className="admin-card">
                 <div className="admin-card-header"><h2>Recent Service Activity</h2><span>Latest 10</span></div>
-                <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Created</th></tr></thead><tbody>
+                <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}><table className="admin-table"><thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Created</th></tr></thead><tbody>
                   {(data?.recentRequests || []).map((r) => <tr key={String(r.id)}><td className="mono accent">{String(r.reference_code || String(r.id).slice(0, 8))}</td><td>{r.service_catalog?.title || 'Service'}</td><td><StatusBadge status={String(r.status)} /></td><td><TimeAgo value={r.created_at} /></td></tr>)}
                   {!data?.recentRequests?.length && <tr><td colSpan={4} className="empty-state">No service activity yet.</td></tr>}
                 </tbody></table></div>
@@ -114,7 +114,7 @@ export default function AdminAnalyticsPage() {
 
             <div className="admin-card">
               <div className="admin-card-header"><h2>Recent Accounts</h2><span>Latest 10</span></div>
-              <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Joined</th></tr></thead><tbody>
+              <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}><table className="admin-table"><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Joined</th></tr></thead><tbody>
                 {(data?.recentUsers || []).map((u) => <tr key={String(u.id)}><td>{String(u.full_name || 'Unnamed user')}</td><td><StatusBadge status={String(u.role || 'student')} /></td><td><TimeAgo value={u.created_at} /></td></tr>)}
                 {!data?.recentUsers?.length && <tr><td colSpan={3} className="empty-state">No accounts yet.</td></tr>}
               </tbody></table></div>

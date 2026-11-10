@@ -15,3 +15,6 @@ test-results/
 *.dump
 *.dump.gz
 *.list.txt
+
+# Supabase CLI local cache (machine-specific).
+supabase/.temp/

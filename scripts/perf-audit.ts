@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { join, posix, relative, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -52,13 +52,11 @@ export interface PerfInput {
  * baseline is decoration: this comment is what makes the slack reviewable.
  */
 export const BUDGETS = {
-  // 2026-11-01: the global privacy-consent UI is part of the app shell. Its measured
-  // addition moves the entry to 100.1 KB; 101 KB preserves a sub-1 KB allowance.
-  entryJsGzip: 101 * 1024,
+  // Restore the pre-privacy limits: the combined build must reduce actual bytes,
+  // not make the consent feature pass by raising its performance budgets.
+  entryJsGzip: 100 * 1024,
   supabaseChunkGzip: 60 * 1024, // measured 56.2 KB — the session client, on every page by design
-  // The same global consent UI moves the measured first-load path to 211.3 KB.
-  // 212 KB permits <1 KB headroom while retaining a strict first-load ceiling.
-  criticalPathGzip: 212 * 1024,
+  criticalPathGzip: 211 * 1024,
   // Measured 311.0 KB across 65 chunks (CBT subject-selection fix plus the
   // grouped WAEC picker). The 310 KB budget's baseline (280.9 KB across 58
   // chunks) was fully consumed by feature growth, leaving a gate that failed
@@ -68,11 +66,9 @@ export const BUDGETS = {
   // Raised 330 -> 334 KB for the admin service-guide editor: a lazy,
   // admin-only route chunk (+3.3 KB measured) that students never download.
   // The first-load critical path above is unchanged and still enforced.
-  // 2026-10-21: CBT catalogue/result rules measured 335.1 KB.
-  // 2026-11-01: privacy consent, preference handling and refund/legal routes
-  // bring all chunks to 337.6 KB. 339 KB allows ~1.4 KB headroom for this
-  // shipped compliance work; Supabase, CSS, image and loading checks stay fixed.
-  totalJsGzip: 339 * 1024,
+  // 2026-10-21: CBT catalogue/result rules measured 335.1 KB; retain the
+  // original 336 KB gate while reconciling privacy and refund work.
+  totalJsGzip: 336 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that
@@ -181,7 +177,12 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
     [...input.assets.values()].find((file) => pattern.test(file.path.split('/').pop() ?? ''));
   const sumGzip = (files: DistFile[]): number => files.reduce((total, file) => total + file.gzip, 0);
 
-  const entry = byName(/^index-.*\.js$/);
+  // Resolve the actual HTML module entry. Rollup may produce several index-*
+  // chunks, and filesystem order must never decide which one gets budgeted.
+  const entrySource = input.indexHtml.match(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i)?.[1];
+  const entryName = entrySource?.split('/').pop()?.split(/[?#]/)[0];
+  const indexFiles = [...input.assets.values()].filter((file) => /^index-.*\.js$/.test(file.path.split('/').pop() ?? ''));
+  const entry = entryName ? input.assets.get(entryName) : indexFiles.length === 1 ? indexFiles[0] : undefined;
   const supabase = byName(/^supabase-.*\.js$/);
   const react = byName(/^react-.*\.js$/);
   const css = byName(/^index-.*\.css$/);
@@ -228,14 +229,36 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
     ok: css.gzip <= BUDGETS.cssGzip,
   });
 
-  const critical = sumGzip([entry, react, supabase, css].filter((file): file is DistFile => Boolean(file)));
+  // Follow static JS imports/re-exports, not dynamic route imports. An extra
+  // vendor chunk is still first-load work even when it is not named react or
+  // supabase. Parse the built JS so strings and dynamic imports do not count.
+  const byPath = new Map([...input.assets.values()].map((file) => [file.path, file]));
+  const criticalFiles = new Map<string, DistFile>();
+  const missingImports = new Set<string>();
+  function addStatic(file: DistFile) {
+    if (criticalFiles.has(file.path)) return;
+    criticalFiles.set(file.path, file);
+    if (!file.path.endsWith('.js')) return;
+    const source = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    for (const statement of source.statements) {
+      if ((!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) || !statement.moduleSpecifier || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+      const specifier = statement.moduleSpecifier.text;
+      if (!specifier.startsWith('.')) continue;
+      const target = posix.normalize(posix.join(posix.dirname(file.path), specifier));
+      const dependency = byPath.get(target);
+      if (dependency) addStatic(dependency);
+      else missingImports.add(target);
+    }
+  }
+  for (const file of [entry, react, supabase, css]) if (file) addStatic(file);
+  const critical = sumGzip([...criticalFiles.values()]);
   checks.push({
     id: 'critical-path',
     label: 'critical path (gzip)',
     measured: KB(critical),
     budget: `≤ ${KB(BUDGETS.criticalPathGzip)}`,
-    ok: critical <= BUDGETS.criticalPathGzip,
-    detail: 'entry + react + supabase + css: what the landing page must download before it is interactive',
+    ok: critical <= BUDGETS.criticalPathGzip && missingImports.size === 0,
+    detail: missingImports.size ? `missing static chunks: ${[...missingImports].join(', ')}` : `${criticalFiles.size} entry, vendor, CSS and transitive static chunks; excludes dynamic routes`,
   });
 
   const totalJs = sumGzip(allJs);

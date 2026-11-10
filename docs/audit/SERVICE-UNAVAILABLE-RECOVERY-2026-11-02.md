@@ -1,0 +1,27 @@
+# Service unavailable: check-only recovery — local candidate
+
+**Readiness: 3 — NOT READY.** This is uncommitted, local work. No hosted migration, deployment, merge or production-record change was made. Synthetic browsers and local PostgreSQL do not establish real Supabase Auth/PostgREST behavior.
+
+## Audit before the change
+
+| Existing implementation and duplicate check | Current behavior / gap | Minimal change and impact | Verification |
+| --- | --- | --- | --- |
+| Active-only `fetchService` and catalogue RLS; no separate inactive-service public catalogue | If a service becomes unavailable after an uncertain submission, the page exits before showing the pending account-scoped draft. | Keep catalogue and RLS active-only. Show a separate check only when an authenticated account has a valid pending draft. No new-service form is opened. | Intercepted desktop/mobile browser tests for unavailable service, account switch, no result and network failure. |
+| Existing idempotent submission RPC candidate and account-scoped pending key; no duplicate RPC | A normal retry inserts if no matching row exists and the service remains active. Calling it a check would be misleading. | Extend the existing local candidate with a required boolean recovery-only parameter. The true path only looks up the current authenticated owner's key and checks the immutable payload fingerprint; it returns no row rather than inserting. Null mode is rejected. Update the client, grants and local release validation. | PGlite tests cover no insert, account mismatch, payload mismatch, other-account isolation and recovery after deactivation. A disposable multi-connection PostgreSQL test checks an uncommitted row remains unconfirmed until commit. |
+| Existing draft/confirmation and cleanup warning | Empty results and connection errors cannot prove that an earlier request failed, and failed cleanup can leave sensitive data on the device. | Use the original exact stored key and details; retain them on uncertainty. Display a reference only after validated confirmation; warn if cleanup fails or the draft changed while waiting. | Intercepted desktop/mobile cases verify recovery, preserved draft, no insert-capable RPC, and failed cleanup. |
+| Existing build/performance gate | The addition initially exceeded the 336 KB total-JS budget. | A second Terser compression pass, without increasing any budget; no public visual redesign. | Both configured and unconfigured builds and strict performance audit passed; browser regressions exercise the resulting build. |
+
+## Evidence
+
+- **791/791** local unit/integration tests; typecheck, schema audit, 78-migration checklist, offline RLS, analytics, static accessibility (0 blocking, 5 informational) and dependency audit (0 vulnerabilities) passed. Synthetic backup rehearsal replayed 78 migrations and restored 50 tables / 593 columns / 53 policies / 50 RLS tables. This is not a hosted backup.
+- Intercepted configured-client Chromium: **16/16** service retry and draft-isolation tests passed across desktop/mobile. These use synthetic identities and intercepted calls, not hosted Supabase.
+- Unconfigured Chromium: **188 passed, 20 skipped**. Sixteen skips are the configured recovery/isolation cases above, two are the separately run configured request-list cases, and two CBT cases lack fixtures. Mobile performance: **1 passed**. Configured and unconfigured builds passed existing strict budgets; configured all-chunks gzip is 335.8/336 KB, with little headroom.
+- Local PostgreSQL multi-session rehearsal passed three insert/retry races and a check-only in-flight/commit scenario, after applying 78 migrations to a disposable synthetic database. PGlite tests also cover account and fingerprint checks.
+
+## Rollout and unresolved limitations
+
+- The candidate migration has been edited locally from its earlier four-argument shape to a required five-argument shape. It is not asserted to exist on any hosted project. Before any rollout, inspect the real migration ledger and function signatures; an environment where an earlier candidate was applied would need a separately reviewed forward-compatible migration, not a silent rewrite of applied history. Migration-first deployment and rollback compatibility must be reviewed and authorized.
+- An empty check means **not yet confirmed**, not proof of failure: an earlier transaction can still commit later. RPC/network failures and inaccessible/corrupt storage also preserve uncertainty. My Requests can miss a delayed commit.
+- Session keys are not durable across tabs, devices, tab closure, cleared storage or legacy clients. Independent submissions can duplicate. Sensitive details remain in session storage until cleanup succeeds; browser storage is not an authorization boundary. Privacy, retention and operator recovery procedures need review.
+- Privileged/legacy direct writers do not gain idempotency, and privileged operations can bypass other boundaries. Actual staging must verify authenticated roles, PostgREST result/error shapes, network loss, timing, concurrent writers, migration ledger, rollback and legacy client compatibility. Do not replay historical seed/cleanup migrations blindly against genuine data.
+- Durable consent withdrawal, CBT cross-tab/timeout ordering, safe account deletion and retention, service reply/outcome operations, current-branch authoritative CI/preview, legal review and formal lifecycle approvals remain open. No production change is authorized.

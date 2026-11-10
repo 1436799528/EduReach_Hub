@@ -1,6 +1,7 @@
 import { API_BASE_PATH } from '../../lib/apiBase';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Can } from './Can';
+import { serviceRequestActions } from '../../lib/serviceRequestTransitions';
 
 // Shared admin toolkit: small presentational building blocks and hooks reused
 // across the admin console (dashboard, analytics, queue). Any pattern that
@@ -110,31 +111,6 @@ export function Metric({ label, value, detail, icon, tone }: { label: string; va
 // Service request status actions (single source of truth for Dashboard + Queue)
 // ---------------------------------------------------------------------------
 
-const TRANSITIONS: Record<string, Array<{ label: string; next: string; kind?: 'success' | 'danger' }>> = {
-  submitted: [
-    { label: 'Review', next: 'reviewing' },
-    { label: 'Process', next: 'processing' },
-    { label: 'Complete', next: 'completed', kind: 'success' },
-    { label: 'Reject', next: 'rejected', kind: 'danger' },
-  ],
-  reviewing: [
-    { label: 'Process', next: 'processing' },
-    { label: 'Need info', next: 'awaiting_information' },
-    { label: 'Complete', next: 'completed', kind: 'success' },
-    { label: 'Reject', next: 'rejected', kind: 'danger' },
-  ],
-  processing: [
-    { label: 'Need info', next: 'awaiting_information' },
-    { label: 'Complete', next: 'completed', kind: 'success' },
-    { label: 'Reject', next: 'rejected', kind: 'danger' },
-  ],
-  awaiting_information: [
-    { label: 'Complete', next: 'completed', kind: 'success' },
-    { label: 'Reject', next: 'rejected', kind: 'danger' },
-  ],
-  completed: [{ label: 'Close', next: 'closed' }],
-};
-
 export const ACTIVE_REQUEST_STATUSES = ['submitted', 'reviewing', 'processing', 'awaiting_information'];
 
 export function requestStudentName(row: { form_data?: Record<string, unknown>; user_id: string }): string {
@@ -143,18 +119,18 @@ export function requestStudentName(row: { form_data?: Record<string, unknown>; u
 }
 
 export function RequestActions({ row, disabled, onAction }: {
-  row: { id: string; status: string };
+  row: { id: string; status: string; updated_at: string };
   disabled?: boolean;
-  onAction: (requestId: string, nextStatus: string) => Promise<void> | void;
+  onAction: (requestId: string, nextStatus: string, expectedUpdatedAt: string) => Promise<void> | void;
 }) {
   const [busy, setBusy] = useState(false);
-  const transitions = TRANSITIONS[row.status] || [];
+  const transitions = serviceRequestActions(row.status);
 
   async function run(next: string) {
     if (disabled || busy) return;
     if (next === 'rejected' && !window.confirm('Reject this request? The student will see it as rejected in their dashboard.')) return;
     setBusy(true);
-    try { await onAction(row.id, next); } finally { setBusy(false); }
+    try { await onAction(row.id, next, row.updated_at); } finally { setBusy(false); }
   }
 
   if (!transitions.length) return <span className="muted">No action</span>;

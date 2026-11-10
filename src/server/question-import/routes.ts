@@ -140,6 +140,11 @@ function looksLikeFormat(buffer: Buffer, extension: string): boolean {
   return !buffer.subarray(0, 4096).includes(0);
 }
 
+function nextItemTimestamp(previous: string): string {
+  const previousMs = Date.parse(previous);
+  return new Date(Math.max(Date.now(), Number.isFinite(previousMs) ? previousMs + 1 : 0)).toISOString();
+}
+
 function formatError(error: unknown, fallback: string): string {
   if (error instanceof ExtractionError) return error.message;
   return userFacingError(error, fallback);
@@ -170,6 +175,7 @@ async function loadBankTexts(supabase: Db, examId: string): Promise<Map<string, 
 function payloadFor(item: ExtractedItem, duplicateOf: string | null) {
   const validation = validateItem(item, { duplicateOf });
   const issues = [...validation.blocking, ...validation.notes];
+  if (item.passage?.trim()) issues.push('This passage is not stored separately in the CBT bank. Include the required context in the question text and clear the passage before approval.');
   return {
     sourceIndex: item.sourceIndex,
     questionText: item.questionText,
@@ -266,7 +272,9 @@ async function sweepStale(supabase: Db) {
 }
 
 export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): void {
-  const guard = deps.requireCapability('cbt.manage', 'data.import');
+  // requireCapability uses OR semantics. Every question-import action must
+  // require CBT management, not merely the general bulk-data capability.
+  const guard = deps.requireCapability('cbt.manage');
   const largeJson = express.json({ limit: '30mb' });
 
   app.get('/api/admin/question-imports/formats', guard, (_req, res) => {
@@ -434,7 +442,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
 
       const { data: rows, error: itemsError } = await supabase
         .from('question_import_items')
-        .select('id,source_index,question_text,option_a,option_b,option_c,option_d,option_e,correct_option,explanation,passage,topic,raw_text,review_status,issues,duplicate_of,question_id')
+        .select('id,source_index,question_text,option_a,option_b,option_c,option_d,option_e,correct_option,explanation,passage,topic,raw_text,review_status,issues,duplicate_of,question_id,updated_at')
         .eq('import_id', item.id)
         .order('source_index', { ascending: true })
         .limit(2000);
@@ -499,6 +507,8 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       if (error) throw error;
       if (!row) return res.status(404).json({ error: 'Question not found in this import.' });
       if (row.review_status === 'imported') return res.status(409).json({ error: 'This question has already been saved to the bank.' });
+      if (typeof req.body?.expectedUpdatedAt !== 'string') return res.status(400).json({ error: 'Reload the question before editing or reviewing it.' });
+      if (req.body.expectedUpdatedAt !== row.updated_at) return res.status(409).json({ error: 'This question changed. Reload it before continuing.' });
 
       const input = normaliseItem({
         questionText: req.body?.questionText ?? row.question_text,
@@ -507,9 +517,14 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
         optionC: req.body?.optionC ?? row.option_c,
         optionD: req.body?.optionD ?? row.option_d,
         optionE: req.body?.optionE ?? row.option_e,
-        correctOption: req.body?.correctOption ?? row.correct_option,
+        correctOption: req.body?.correctOption === undefined ? row.correct_option : req.body.correctOption,
       });
       const validation = validateItem(input, { duplicateOf: row.duplicate_of });
+      const passage = trimmed(req.body?.passage ?? row.passage, 4000) || null;
+      if (passage) validation.blocking.push('Include the required passage in the question text and clear the separate passage before approval.');
+      if (input.correctOption && !/^[A-E]$/.test(input.correctOption)) {
+        return res.status(422).json({ error: 'The answer must be a single option letter, or left blank for review.' });
+      }
       const { data: updated, error: updateError } = await supabase
         .from('question_import_items')
         .update({
@@ -521,17 +536,20 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
           option_e: input.optionE,
           correct_option: input.correctOption,
           explanation: trimmed(req.body?.explanation ?? row.explanation, 4000) || null,
-          passage: trimmed(req.body?.passage ?? row.passage, 4000) || null,
+          passage,
           topic: trimmed(req.body?.topic ?? row.topic, 160) || null,
           issues: [...validation.blocking, ...validation.notes],
           review_status: 'pending',
-          updated_at: new Date().toISOString(),
+          updated_at: nextItemTimestamp(row.updated_at),
         })
         .eq('id', row.id)
         .eq('import_id', row.import_id)
-        .select('id,source_index,question_text,option_a,option_b,option_c,option_d,option_e,correct_option,explanation,passage,topic,raw_text,review_status,issues,duplicate_of,question_id')
-        .single();
+        .eq('review_status', row.review_status)
+        .eq('updated_at', row.updated_at)
+        .select('id,source_index,question_text,option_a,option_b,option_c,option_d,option_e,correct_option,explanation,passage,topic,raw_text,review_status,issues,duplicate_of,question_id,updated_at')
+        .maybeSingle();
       if (updateError) throw updateError;
+      if (!updated) return res.status(409).json({ error: 'This question changed during editing. Reload it before saving again.' });
       res.json({ item: updated, blocking: validation.blocking });
     } catch (error) {
       console.error('Question import item update failed:', error instanceof Error ? error.message : 'unknown');
@@ -553,6 +571,8 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       if (error) throw error;
       if (!row) return res.status(404).json({ error: 'Question not found in this import.' });
       if (row.review_status === 'imported') return res.status(409).json({ error: 'This question has already been saved to the bank.' });
+      if (typeof req.body?.expectedUpdatedAt !== 'string') return res.status(400).json({ error: 'Reload the question before editing or reviewing it.' });
+      if (req.body.expectedUpdatedAt !== row.updated_at) return res.status(409).json({ error: 'This question changed. Reload it before continuing.' });
 
       let status: 'approved' | 'rejected' | 'pending' = 'pending';
       let issues: string[] = Array.isArray(row.issues) ? row.issues : [];
@@ -566,6 +586,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
           optionE: row.option_e,
           correctOption: row.correct_option,
         }, { duplicateOf: row.duplicate_of });
+        if (String(row.passage || '').trim()) validation.blocking.push('Include the required passage in the question text and clear the separate passage before approval.');
         if (validation.blocking.length) {
           return res.status(422).json({ error: validation.blocking[0], blocking: validation.blocking });
         }
@@ -577,12 +598,17 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
 
       const { data: updated, error: updateError } = await supabase
         .from('question_import_items')
-        .update({ review_status: status, issues, updated_at: new Date().toISOString() })
+        .update({ review_status: status, issues, updated_at: nextItemTimestamp(row.updated_at) })
         .eq('id', row.id)
         .eq('import_id', row.import_id)
-        .select('id,review_status,issues')
-        .single();
+        .eq('review_status', row.review_status)
+        .eq('updated_at', row.updated_at)
+        .select('id,review_status,issues,updated_at')
+        .maybeSingle();
       if (updateError) throw updateError;
+      if (!updated) return res.status(409).json({ error: 'This question changed during review. Reload it before trying again.' });
+      const actorId = (req as unknown as { adminUser?: { id?: string } }).adminUser?.id || '';
+      await recordAudit(supabase, { actorId, action: `question_import_${action}`, resourceType: 'question_import_item', resourceId: row.id, metadata: { import_id: row.import_id } });
       res.json({ item: updated });
     } catch (error) {
       console.error('Question import review failed:', error instanceof Error ? error.message : 'unknown');
@@ -603,6 +629,10 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       if (!['extracted', 'completed'].includes(item.status)) {
         return res.status(409).json({ error: 'Extract and review this file before saving it.' });
       }
+      // Never fall back to the earlier partial-publication function when this
+      // application's atomic import migration has not been applied.
+      const { data: ready, error: readinessError } = await supabase.rpc('question_import_atomic_ready');
+      if (readinessError || ready !== true) return res.status(503).json({ error: 'Question publication is unavailable until the import database update is applied.' });
       const { data: result, error: commitError } = await supabase.rpc('commit_question_import', { p_import_id: item.id });
       if (commitError) throw commitError;
       const actorId = (req as unknown as { adminUser?: { id?: string } }).adminUser?.id || '';
@@ -615,7 +645,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       });
       res.json({ result });
     } catch (error) {
-      const message = error instanceof Error && /not ready|not being processed|not found/i.test(error.message)
+      const message = error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' && /not ready|not being processed|not found|invalid or incomplete/i.test(error.message)
         ? error.message
         : 'Unable to save the approved questions.';
       console.error('Question import commit failed:', error instanceof Error ? error.message : 'unknown');

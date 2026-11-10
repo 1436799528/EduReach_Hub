@@ -185,7 +185,7 @@ export default function AdminSchoolsPage() {
         </div>
 
         <div className="admin-card">
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead><tr><th scope="col">Institution</th><th scope="col">State</th><th scope="col">Type</th><th scope="col">Website</th><th scope="col">Post-UTME</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>

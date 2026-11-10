@@ -25,8 +25,9 @@ test('mobile exam bar: End Test is labelled, keeps text and 44px target, wraps i
   assert.match(cbtCss, /\.er-exam-end\{margin-left:auto\}/); assert.match(cbtCss, /min-height:44px/);
   assert.doesNotMatch(cbtCss, /\.er-exam-bar-controls\{[^}]*overflow-x:auto/, 'controls no longer scroll off-screen');
 });
-test('admin selected nav is the green surface; mobile nav is one scrollable row', () => {
-  assert.match(adminCss, /\.admin-nav-link\.active \{ background: #174A3A;/);
-  assert.match(adminCss, /@media\(max-width:780px\)[\s\S]*?\.admin-nav\{display:flex;[^}]*overflow-x:auto/);
-  assert.match(adminCss, /\.admin-nav-link\{flex:0 0 auto;[^}]*min-height:44px/);
+test('admin selected nav uses the green brand; mobile navigation has 44px targets and collapses', () => {
+  assert.match(adminCss, /\.admin-shell \.admin-nav-link\.active \{ background: #e9f2ed; color: #174a3a;/);
+  assert.match(adminCss, /@media\(max-width:780px\)[\s\S]*?\.admin-mobile-menu\{[^}]*width:44px;height:44px/);
+  assert.match(adminCss, /\.admin-sidebar\[data-menu-open="false"\] \.admin-nav[^}]*display:none/);
+  assert.match(adminCss, /\.admin-nav-link\{min-height:44px/);
 });

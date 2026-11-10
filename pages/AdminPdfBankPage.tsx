@@ -89,7 +89,7 @@ export default function AdminPdfBankPage() {
       const [newsResult, opportunitiesResult] = await Promise.allSettled([fetchAdminNews(), fetchAdminOpportunities()]);
       setItems(documents);
       setInstitutions(schools);
-      setNewsArticles(newsResult.status === 'fulfilled' ? newsResult.value : []);
+      setNewsArticles(newsResult.status === 'fulfilled' ? newsResult.value.items : []);
       setOpportunities(opportunitiesResult.status === 'fulfilled' ? opportunitiesResult.value : []);
       setDrafts(Object.fromEntries(documents.map((item) => [item.id, draftFor(item)])));
     } catch (e) {

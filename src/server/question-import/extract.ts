@@ -552,11 +552,23 @@ export function readSheetRows(sheetXml: string, sharedStrings: string[]): string
 }
 
 async function loadZip(buffer: Buffer, label: string): Promise<JSZip> {
+  let zip: JSZip;
   try {
-    return await JSZip.loadAsync(buffer);
+    zip = await JSZip.loadAsync(buffer);
   } catch {
     throw new ExtractionError('corrupt', `This ${label} could not be opened. It may be damaged or encrypted.`);
   }
+  // JSZip normalizes paths; check its original names too. No entries are ever
+  // written to disk, but refusing suspicious paths also avoids misleading
+  // source names in a review. Apply this to DOCX/XLSX containers as well.
+  for (const entry of Object.values(zip.files)) {
+    const original = (entry as JSZip.JSZipObject & { unsafeOriginalName?: string }).unsafeOriginalName ?? entry.name;
+    if (original.includes('\\') || original.startsWith('/') || /^[A-Za-z]:/.test(original)
+        || original.split('/').some((part) => part === '..' || part === '.')) {
+      throw new ExtractionError('corrupt', `This ${label} contains an unsafe archive path.`);
+    }
+  }
+  return zip;
 }
 
 // ---------------------------------------------------------------------------
@@ -926,6 +938,18 @@ type ColumnMap = {
 
 function columnMapFor(row: string[]): ColumnMap | null {
   const headers = row.map(normaliseHeader);
+  // The staging schema can retain only one extra option. Refuse wider tables
+  // rather than silently dropping further distractors and publishing altered
+  // content; the operator can split or correct the source for review.
+  const namedExtraOption = headers.some(header => /^(?:option|opt)(?:[f-z]|(?:[6-9]|1\d|2[0-6]))$/.test(header));
+  // Bare A..E are also supported headers. In that format, a bare F (or
+  // later letter) must not be silently discarded as an unrelated column.
+  const bareOptions = headers.filter(header => /^[a-e]$/.test(header)).length;
+  const hasQuestionHeader = headers.some(header => ['question', 'questiontext', 'questionstem', 'text', 'q', 'item'].includes(header));
+  const bareExtraOption = hasQuestionHeader && bareOptions >= 2 && headers.some(header => header !== 'q' && /^[f-z]$/.test(header));
+  if (namedExtraOption || bareExtraOption) {
+    throw new ExtractionError('unsupported', 'This table has more than five option columns. Correct it manually before importing.');
+  }
   const find = (...names: string[]) => {
     for (const name of names) {
       const index = headers.indexOf(name);
@@ -1036,15 +1060,25 @@ function cleanOptional(value: string | null | undefined): string | null {
   return cleaned || null;
 }
 
-/** Accepts "B", "(b)", "B. 12" or the exact option text. Returns null otherwise. */
+/** Resolve only an explicit letter, or text that uniquely matches an option. */
 function answerLetter(value: string, options: string[]): ChoiceKey | null {
   const text = value.trim();
   if (!text) return null;
-  const letter = /^\(?([A-Ea-e])\)?(?:[.)\-:\s]|$)/.exec(text)?.[1];
-  if (letter) return letter.toUpperCase() as ChoiceKey;
-  const target = text.toLowerCase().replace(/\s+/g, ' ');
-  const matched = options.findIndex((option) => option.toLowerCase().replace(/\s+/g, ' ') === target);
-  if (matched >= 0) return String.fromCharCode(65 + matched) as ChoiceKey;
+  const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+  const matches = options.map((option, index) => normalize(option) === normalize(text) && normalize(option) ? index : -1).filter(index => index >= 0);
+  if (matches.length > 1) return null;
+  const single = /^\(?([A-Ea-e])\)?[.)]?\s*$/.exec(text);
+  if (single) {
+    const letter = single[1].toUpperCase() as ChoiceKey;
+    if (matches.length === 1 && matches[0] !== letter.charCodeAt(0) - 65) return null;
+    return letter;
+  }
+  if (matches.length === 1) return String.fromCharCode(65 + matches[0]) as ChoiceKey;
+  const labelled = /^\(?([A-Ea-e])\)?[.)\-:]\s+(.+)$/.exec(text);
+  if (labelled) {
+    const index = labelled[1].toUpperCase().charCodeAt(0) - 65;
+    if (normalize(options[index] || '') && normalize(options[index]) === normalize(labelled[2])) return labelled[1].toUpperCase() as ChoiceKey;
+  }
   return null;
 }
 
@@ -1103,6 +1137,11 @@ function jsonQuestion(entry: Record<string, unknown>): ExtractedItem | null {
     ];
   }
   while (options.length && !String(options[options.length - 1] || '').trim()) options.pop();
+  const extraObjectOption = rawOptions && !Array.isArray(rawOptions) && typeof rawOptions === 'object'
+    && Object.keys(rawOptions).some(key => /^[f-z]$/i.test(key) && String((rawOptions as Record<string, unknown>)[key] ?? '').trim());
+  if (options.length > 5 || extraObjectOption || ['optionF', 'option_f'].some(key => read(key))) {
+    throw new ExtractionError('unsupported', 'This question has more than five options. Correct it manually before importing.');
+  }
   const answer = entry.correctOption ?? entry.correct_option ?? entry.answer ?? entry.correctAnswer ?? entry.key;
   return fromParts({
     questionText,
@@ -1169,6 +1208,17 @@ function parseProse(input: string): ExtractedItem[] {
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
+    let inlineCount = 0;
+    let inlineExtra = false;
+    for (const match of line.matchAll(/(?:^|\s)\(?([A-Z])\)?\s*[.)]\s+/g)) {
+      inlineCount += 1;
+      if (match[1] >= 'F') inlineExtra = true;
+      if (inlineCount >= 5 && inlineExtra) break;
+    }
+    if ((current && current.options.size >= 4 && /^\(?[F-Z]\)?\s*[.)\]:-]\s+/.test(line))
+        || (inlineCount >= 5 && inlineExtra)) {
+      throw new ExtractionError('unsupported', 'This question has more than five options. Correct it manually before importing.');
+    }
     if (/^(?:page\s*)?\d{1,3}(?:\s*(?:of|\/)\s*\d{1,3})?$/i.test(line)) continue;
 
     const section = SECTION_LINE.exec(line);

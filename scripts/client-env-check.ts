@@ -23,6 +23,7 @@
  * real variable already in the environment still wins - dotenv never overwrites.
  */
 import 'dotenv/config';
+import { hasPrivilegedClientValue } from './client-secret-guard';
 
 /** Vite inlines only `VITE_`-prefixed variables into the browser bundle. */
 export const CLIENT_VARS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'] as const;
@@ -36,6 +37,8 @@ export interface ClientEnvVerdict {
   enforced: boolean;
   /** Where the enforcement decision came from, for the log line. */
   reason: string;
+  /** A known privileged Supabase key must never enter any client variable. */
+  privilegedClientValue: boolean;
 }
 
 export function evaluateClientEnv(env: Record<string, string | undefined>): ClientEnvVerdict {
@@ -49,20 +52,26 @@ export function evaluateClientEnv(env: Record<string, string | undefined>): Clie
 
   const productionContext = env.CONTEXT === 'production' || env.NETLIFY_CONTEXT === 'production';
   const explicit = env.EDUREACH_REQUIRE_CLIENT_ENV === '1';
-  const enforced = productionContext || explicit;
+  const privilegedClientValue = hasPrivilegedClientValue(env);
+  const enforced = productionContext || explicit || privilegedClientValue;
   const reason = explicit
     ? 'EDUREACH_REQUIRE_CLIENT_ENV=1'
     : productionContext
-      ? `CONTEXT=${env.CONTEXT ?? env.NETLIFY_CONTEXT}`
+      ? (env.CONTEXT === 'production' ? 'CONTEXT=production' : 'NETLIFY_CONTEXT=production')
       : 'not a production build';
 
-  return { ok: missing.length === 0, missing, enforced, reason };
+  return { ok: missing.length === 0 && !privilegedClientValue, missing, enforced, reason, privilegedClientValue };
 }
 
 function main(): void {
   const verdict = evaluateClientEnv(process.env);
   const configured = CLIENT_VARS.join(' + ') + ' (or VITE_SUPABASE_ANON_KEY)';
 
+  if (verdict.privilegedClientValue) {
+    console.error('FAIL privileged Supabase key in client-exposed configuration. Remove it from VITE_ variables before building.');
+    process.exitCode = 1;
+    return;
+  }
   if (verdict.ok) {
     console.log(`ok   client Supabase contract is satisfied (${configured})`);
     return;

@@ -17,7 +17,7 @@ test('a score is only shown when a paper has been sat', () => {
   assert.match(dashboard, /const hasScores = completedAttempts\.length > 0/, 'the condition has a name');
   assert.match(cbtView, /\{hasScores \? `\$\{averageScore\}%` : '—'\}/, 'no average is reported without completed tests');
   assert.match(cbtView, /\{hasScores \? `\$\{bestScore\}%` : '—'\}/, 'no best score is reported without completed tests');
-  assert.match(cbtView, /After your first test/, 'the empty value explains itself');
+  assert.match(cbtView, /When a scored result is available/, 'an unscored submission is not promised a score');
   assert.doesNotMatch(cbtView, /\{averageScore\}%<\/span>/, 'the old unconditional percentage is gone');
   assert.doesNotMatch(dashboard, /streak|rank(ing)?|hours studied|percentile/i, 'no metric is invented');
 });

@@ -80,7 +80,8 @@ test('netlify functions prefix normalizes to /api under standalone server', asyn
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ eventName: 'pageview', path: '/' }),
   });
-  assert.equal(eventRes.status, 204);
+  assert.equal(eventRes.status, 503);
+  assert.deepEqual(await eventRes.json(), { error: 'Optional analytics are temporarily unavailable.' });
 });
 for (const [method, path] of [
   ['POST', '/api/cbt/exams/test/start'],

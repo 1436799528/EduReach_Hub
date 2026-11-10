@@ -22,6 +22,17 @@ test('every table and RPC the application uses is created by a migration', () =>
   assert.deepEqual(report.missingColumns, []);
 });
 
+test('server code only lacks objects that the non-deployable candidate provides', () => {
+  // The restricted-bank boundary is not deployable yet. This list must fail
+  // closed: a new undeclared table/RPC, or a candidate becoming a migration,
+  // changes it and requires review rather than passing silently.
+  assert.deepEqual([...report.candidateDependencies].sort(), [
+    'cbt_bank_security',
+    'rpc:cbt_bank_candidate_access',
+    'rpc:cbt_public_score_average',
+  ]);
+});
+
 test('no column is referenced before the migration that creates it', () => {
   assert.deepEqual(report.orderFailures.map((failure) => `${failure.migration} → ${failure.reference}`), []);
 });
@@ -107,13 +118,15 @@ test('the known deferred (runtime-resolved) references have not grown', () => {
   // time in a fresh environment. `get_cbt_attempt_paper` was added by CBT-2 —
   // it is defined in the same migration before the function that calls it, and
   // tests/cbt-modes.test.ts exercises the call for real, so the entry records a
-  // scanner limitation rather than a production risk.
+  // scanner limitation rather than a production risk. The protocol fence's
+  // configured-start references are exercised by the actual-migration
+  // disposable PostgreSQL rehearsal, including both legacy and v2 calls.
   const tables = report.deferredWarnings
     .map((warning) => /public\.([a-z_]+)/.exec(warning)![1])
     .sort();
   assert.deepEqual(
     [...new Set(tables)],
-    ['get_cbt_attempt_paper', 'get_cbt_questions_for_subjects', 'institutions', 'site_analytics_events'],
+    ['cbt_start_configured_internal', 'get_cbt_attempt_paper', 'get_cbt_questions_for_subjects', 'institutions', 'site_analytics_events', 'start_cbt_attempt_configured'],
   );
 });
 

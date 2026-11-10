@@ -30,6 +30,7 @@ const EXPECTED = [
   './compact-structural.css',
   './edu-portal.css',
   './data-control.css',
+  './components/CookieConsent.css',
   './styles/type-system.css',
   './styles/brand-actions.css',
   './styles/a11y.css',

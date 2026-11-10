@@ -300,14 +300,6 @@ samp,
   font-family: var(--er-font-sans) !important;
 }
 
-.admin-brand-mark {
-  background: linear-gradient(135deg, var(--er-crimson) 0%, var(--er-crimson-deep) 100%) !important;
-}
-
-.admin-nav-link.active {
-  box-shadow: inset 3px 0 0 var(--er-crimson) !important;
-}
-
 /* Legacy student portal stylesheet normalization */
 .student-brand > span:first-child,
 .wallet-modal-brand > span {
