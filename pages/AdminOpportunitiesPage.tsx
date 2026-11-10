@@ -248,7 +248,7 @@ export default function AdminOpportunitiesPage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>Opportunities</h2><span>{loading ? 'Loading…' : `${items.length} total`}</span></div>
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead><tr><th scope="col">Opportunity</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">State</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>

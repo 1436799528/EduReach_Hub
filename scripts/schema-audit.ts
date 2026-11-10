@@ -61,6 +61,8 @@ export interface AuditReport {
   codeFunctions: Set<string>;
   hardFailures: HardFailure[];
   missingTables: string[];
+  /** Server references satisfied only by the non-deployable candidate SQL. */
+  candidateDependencies: string[];
   missingColumns: string[];
   orderFailures: HardFailure[];
   guardedNotes: string[];
@@ -72,6 +74,27 @@ export interface AuditReport {
 const PLATFORM_TABLES = new Set(['auth.users', 'storage.objects', 'storage.buckets']);
 
 const CODE_DIRS = ['server.ts', 'src', 'lib', 'pages', 'netlify', 'scripts'];
+
+/**
+ * The restricted-bank candidates in `supabase/candidates/` are deliberately not
+ * deployable migrations. Server code that calls these objects therefore cannot
+ * work until a reviewed migration lands. They are reported separately so a
+ * target that ships only migrations fails loudly instead of silently dropping
+ * the bank check. Removing an entry here forces the corresponding server call to
+ * be removed or the reviewed migration to be added.
+ */
+export const CANDIDATE_ONLY_OBJECTS = new Set([
+  'cbt_bank_security',
+  'rpc:cbt_bank_admin_assign',
+  'rpc:cbt_bank_admin_candidates',
+  'rpc:cbt_bank_admin_history',
+  'rpc:cbt_bank_admin_inventory',
+  'rpc:cbt_bank_candidate_access',
+  'rpc:cbt_bank_classify',
+  'rpc:cbt_bank_set_release',
+  'rpc:cbt_public_score_average',
+  'rpc:question_import_bank_guard_ready',
+]);
 
 function stripComments(sql: string): string {
   return sql
@@ -102,12 +125,12 @@ function collectDefinitions(sql: string, state: {
   tables: Map<string, TableState>;
   functions: Set<string>;
 }) {
-  for (const match of sql.matchAll(/create table (?:if not exists )?public\.([a-z_]+)\s*\(([\s\S]*?)\n\)\s*;/gi)) {
+  for (const match of sql.matchAll(/create table (?:if not exists )?public\.([a-z_][a-z0-9_]*)\s*\(([\s\S]*?)\n\)\s*;/gi)) {
     const [, table, body] = match;
     if (state.tables.has(table)) continue;
     const columns = new Map<string, string>();
     for (const line of body.split('\n')) {
-      const column = /^\s*([a-z_]+)\s+[a-z]/i.exec(line);
+      const column = /^\s*([a-z_][a-z0-9_]*)\s+[a-z]/i.exec(line);
       if (column && !['constraint', 'primary', 'foreign', 'unique', 'check'].includes(column[1].toLowerCase())) {
         columns.set(column[1], 'create');
       }
@@ -116,16 +139,16 @@ function collectDefinitions(sql: string, state: {
   }
 
   for (const statement of sql.split(';')) {
-    const alter = /alter table (?:if exists )?public\.([a-z_]+)/i.exec(statement);
+    const alter = /alter table (?:if exists )?public\.([a-z_][a-z0-9_]*)/i.exec(statement);
     if (!alter) continue;
     const table = state.tables.get(alter[1]);
     if (!table) continue;
-    for (const column of statement.matchAll(/add column if not exists ([a-z_]+)/gi)) {
+    for (const column of statement.matchAll(/add column (?:if not exists )?([a-z_][a-z0-9_]*)/gi)) {
       if (!table.columns.has(column[1])) table.columns.set(column[1], 'alter');
     }
   }
 
-  for (const match of sql.matchAll(/create (?:or replace )?function public\.([a-z_]+)\s*\(([^)]*)\)/gi)) {
+  for (const match of sql.matchAll(/create (?:or replace )?function public\.([a-z_][a-z0-9_]*)\s*\(([^)]*)\)/gi)) {
     state.functions.add(`${match[1]}(${match[2].split(',').length === 1 && match[2].trim() === '' ? 0 : match[2].split(',').length})`);
   }
 }
@@ -145,19 +168,19 @@ function collectReferences(sql: string, file: string, failures: { hard: HardFail
   };
 
   const patterns: Array<[RegExp, string]> = [
-    [/create index if not exists \S+ on public\.([a-z_]+)/gi, 'index'],
-    [/create policy \S+ on public\.([a-z_]+)/gi, 'policy'],
-    [/drop policy if exists \S+ on public\.([a-z_]+)/gi, 'policy'],
-    [/alter table (?:if exists )?public\.([a-z_]+)/gi, 'alter table'],
-    [/create trigger \S+[\s\S]{0,120}?(?:before|after|instead of)\s+[\s\S]{0,60}?\son public\.([a-z_]+)/gi, 'trigger'],
-    [/insert into public\.([a-z_]+)/gi, 'insert'],
-    [/update public\.([a-z_]+)/gi, 'update'],
-    [/delete from public\.([a-z_]+)/gi, 'delete'],
-    [/(?:revoke|grant)[^;]*?on table public\.([a-z_]+)/gi, 'grant/revoke'],
-    [/references public\.([a-z_]+)\s*\(/gi, 'foreign key'],
-    [/join public\.([a-z_]+)/gi, 'join'],
-    [/from public\.([a-z_]+)/gi, 'from'],
-    [/, public\.([a-z_]+)/gi, 'reference'],
+    [/create index if not exists \S+ on public\.([a-z_][a-z0-9_]*)/gi, 'index'],
+    [/create policy \S+ on public\.([a-z_][a-z0-9_]*)/gi, 'policy'],
+    [/drop policy if exists \S+ on public\.([a-z_][a-z0-9_]*)/gi, 'policy'],
+    [/alter table (?:if exists )?public\.([a-z_][a-z0-9_]*)/gi, 'alter table'],
+    [/create trigger \S+[\s\S]{0,120}?(?:before|after|instead of)\s+[\s\S]{0,60}?\son public\.([a-z_][a-z0-9_]*)/gi, 'trigger'],
+    [/insert into public\.([a-z_][a-z0-9_]*)/gi, 'insert'],
+    [/update public\.([a-z_][a-z0-9_]*)/gi, 'update'],
+    [/delete from public\.([a-z_][a-z0-9_]*)/gi, 'delete'],
+    [/(?:revoke|grant)[^;]*?on table public\.([a-z_][a-z0-9_]*)/gi, 'grant/revoke'],
+    [/references public\.([a-z_][a-z0-9_]*)\s*\(/gi, 'foreign key'],
+    [/join public\.([a-z_][a-z0-9_]*)/gi, 'join'],
+    [/from public\.([a-z_][a-z0-9_]*)/gi, 'from'],
+    [/, public\.([a-z_][a-z0-9_]*)/gi, 'reference'],
   ];
 
   for (const [pattern, kind] of patterns) {
@@ -168,7 +191,7 @@ function collectReferences(sql: string, file: string, failures: { hard: HardFail
   }
 
   // Static function calls in DDL: revoke/grant statements check the signature.
-  for (const match of sql.matchAll(/(?:revoke|grant)[^;]*?on function public\.([a-z_]+)\s*\(([^)]*)\)/gi)) {
+  for (const match of sql.matchAll(/(?:revoke|grant)[^;]*?on function public\.([a-z_][a-z0-9_]*)\s*\(([^)]*)\)/gi)) {
     const args = match[2].trim();
     const arity = args === '' ? 0 : args.split(',').length;
     if (!state.functions.has(`${match[1]}(${arity})`)) {
@@ -182,32 +205,32 @@ function collectReferences(sql: string, file: string, failures: { hard: HardFail
   }
 
   // Columns named explicitly by the history: index definitions and column grants.
-  for (const match of sql.matchAll(/create index if not exists \S+ on public\.([a-z_]+)\s*\(([^)]*)\)/gi)) {
+  for (const match of sql.matchAll(/create index if not exists \S+ on public\.([a-z_][a-z0-9_]*)\s*\(([^)]*)\)/gi)) {
     const table = state.tables.get(match[1]);
     if (!table) continue;
     for (const raw of match[2].split(',')) {
       const column = raw.trim().split(/\s+/)[0].replace(/[()]/g, '');
-      if (!/^[a-z_]+$/.test(column)) continue;
+      if (!/^[a-z_][a-z0-9_]*$/.test(column)) continue;
       if (!table.columns.has(column)) {
         failures.order.push({ migration: file, reference: `public.${match[1]}.${column}`, kind: 'index column', detail: 'column is not created by any earlier migration' });
       }
     }
   }
-  for (const match of sql.matchAll(/(?:revoke|grant) (?:update|insert|select)\s*\(([^)]*)\)\s*on table public\.([a-z_]+)/gi)) {
+  for (const match of sql.matchAll(/(?:revoke|grant) (?:update|insert|select)\s*\(([^)]*)\)\s*on table public\.([a-z_][a-z0-9_]*)/gi)) {
     const table = state.tables.get(match[2]);
     if (!table) continue;
     for (const column of match[1].split(',').map((value) => value.trim())) {
-      if (!/^[a-z_]+$/.test(column)) continue;
+      if (!/^[a-z_][a-z0-9_]*$/.test(column)) continue;
       if (!table.columns.has(column)) {
         failures.order.push({ migration: file, reference: `public.${match[2]}.${column}`, kind: 'column grant', detail: 'column is not created by any earlier migration' });
       }
     }
   }
-  for (const match of sql.matchAll(/insert into public\.([a-z_]+)\s*\(([^)]*)\)/gi)) {
+  for (const match of sql.matchAll(/insert into public\.([a-z_][a-z0-9_]*)\s*\(([^)]*)\)/gi)) {
     const table = state.tables.get(match[1]);
     if (!table) continue;
     for (const column of match[2].split(',').map((value) => value.trim())) {
-      if (!/^[a-z_]+$/.test(column)) continue;
+      if (!/^[a-z_][a-z0-9_]*$/.test(column)) continue;
       if (!table.columns.has(column)) {
         failures.order.push({ migration: file, reference: `public.${match[1]}.${column}`, kind: 'insert column', detail: 'column is not created by any earlier migration' });
       }
@@ -248,7 +271,7 @@ export function collectCodeUsage(root: string): { tables: Set<string>; functions
 
   for (const file of files) {
     const source = readTextFile(file);
-    for (const match of source.matchAll(/(\w+)\.from\(\s*'([a-z_]+)'\s*\)(\s*\.\s*select\(\s*'([^']*)'\s*\))?/g)) {
+    for (const match of source.matchAll(/(\w+)\.from\(\s*'([a-z_][a-z0-9_]*)'\s*\)(\s*\.\s*select\(\s*'([^']*)'\s*\))?/g)) {
       const [, receiver, table, , selectList] = match;
       if (receiver === 'storage') {
         buckets.add(table);
@@ -260,13 +283,13 @@ export function collectCodeUsage(root: string): { tables: Set<string>; functions
         for (const raw of selectList.split(',')) {
           const entry = raw.trim().split(':').pop()!.trim();
           // `service_catalog(title)` is an embedded resource, not a column.
-          if (entry.includes('(') || !/^[a-z_]+$/.test(entry)) continue;
+          if (entry.includes('(') || !/^[a-z_][a-z0-9_]*$/.test(entry)) continue;
           set.add(entry);
         }
         columns.set(table, set);
       }
     }
-    for (const match of source.matchAll(/\.rpc\(\s*'([a-z_]+)'/g)) functions.add(match[1]);
+    for (const match of source.matchAll(/\.rpc\(\s*'([a-z_][a-z0-9_]*)'/g)) functions.add(match[1]);
   }
 
   return { tables, functions, columns, buckets };
@@ -296,7 +319,26 @@ export function runSchemaAudit(root: string): AuditReport {
 
     // Definitions first: a migration may index, grant on or reference an object
     // it creates in the same file.
+    const priorFunctions = new Set(state.functions);
     collectDefinitions(staticSql, state);
+    // ALTER FUNCTION RENAME preserves the actual PostgreSQL function and its
+    // arity. Check the source exists before the rename; do not invent a new
+    // signature when the renamed function is missing.
+    const creates = [...staticSql.matchAll(/create (?:or replace )?function public\.([a-z_][a-z0-9_]*)\s*\(([^)]*)\)/gi)];
+    const arityOf = (args: string) => args.trim() ? args.split(',').length : 0;
+    for (const rename of staticSql.matchAll(/alter function public\.([a-z_][a-z0-9_]*)\s*\(([^)]*)\)\s+rename to\s+([a-z_][a-z0-9_]*)/gi)) {
+      const source = `${rename[1]}(${arityOf(rename[2])})`;
+      const destination = `${rename[3]}(${arityOf(rename[2])})`;
+      const createdBefore = creates.some(c => (c.index ?? 0) < (rename.index ?? 0) && `${c[1]}(${arityOf(c[2])})` === source);
+      if (!priorFunctions.has(source) && !createdBefore) {
+        failures.hard.push({ migration: migration.name, reference: `public.${source}`, kind: 'rename function', detail: 'source function signature does not exist before the rename' });
+        continue;
+      }
+      priorFunctions.delete(source);
+      priorFunctions.add(destination);
+      state.functions.add(destination);
+      if (!creates.some(c => (c.index ?? 0) > (rename.index ?? 0) && `${c[1]}(${arityOf(c[2])})` === source)) state.functions.delete(source);
+    }
     for (const entry of state.tables.values()) {
       if (!entry.created) entry.created = migration.name;
     }
@@ -317,7 +359,7 @@ export function runSchemaAudit(root: string): AuditReport {
       const body = block[2];
       if (!/\b(from|into|update|join|delete from)\s+public\./i.test(body)) continue;
       const isSql = /language sql/i.test(migration.sql.slice(Math.max(0, block.index - 500), block.index));
-      const references = [...body.matchAll(/(?:from|into|update|join|delete from)\s+public\.([a-z_]+)/gi)]
+      const references = [...body.matchAll(/(?:from|into|update|join|delete from)\s+public\.([a-z_][a-z0-9_]*)/gi)]
         .map((match) => match[1])
         .filter((table) => !state.tables.has(table));
       for (const table of new Set(references)) {
@@ -356,7 +398,10 @@ export function runSchemaAudit(root: string): AuditReport {
     codeTables: usage.tables,
     codeFunctions: usage.functions,
     hardFailures: failures.hard,
-    missingTables: [...missingTables, ...missingFunctions.map((fn) => `rpc:${fn}`)],
+    missingTables: [...missingTables, ...missingFunctions.map((fn) => `rpc:${fn}`)]
+      .filter((object) => !CANDIDATE_ONLY_OBJECTS.has(object)),
+    candidateDependencies: [...missingTables, ...missingFunctions.map((fn) => `rpc:${fn}`)]
+      .filter((object) => CANDIDATE_ONLY_OBJECTS.has(object)),
     missingColumns,
     orderFailures: failures.order,
     guardedNotes,
@@ -377,6 +422,7 @@ export function formatReport(report: AuditReport): string {
   };
   section('hard failures (a fresh apply stops here)', report.hardFailures.map((failure) => `${failure.migration} → ${failure.kind} ${failure.reference} (${failure.detail})`));
   section('missing objects required by the application', [...report.missingTables, ...report.missingColumns]);
+  section('candidate-only objects (require the reviewed restricted-bank migration)', report.candidateDependencies);
   section('ordering failures (referenced before creation)', report.orderFailures.map((failure) => `${failure.migration} → ${failure.kind} ${failure.reference}`));
   section('deferred (runtime) references', report.deferredWarnings);
   section('guarded dynamic SQL, not checked', report.guardedNotes);

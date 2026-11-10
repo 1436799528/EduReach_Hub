@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase';
+import { CBT_UUID, validCbtV2Draft, validCbtV2QuestionIds, validCbtV2Revision } from './cbtProtocolValidation';
 import { hubServices } from '../data/hubContent';
 import { localStorageKey } from './localPreview';
 import { EduReachError, isOffline } from './failures';
@@ -19,7 +20,7 @@ export { userFacingError } from '../../lib/errors';
 
 export type CbtSubmitResponse = {
   attemptId: string;
-  score: number;
+  score: number | null;
   breakdown: Array<{
     question: number;
     subject?: string;
@@ -31,7 +32,7 @@ export type CbtSubmitResponse = {
   }>;
   result?: Record<string, unknown>;
 };
-export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown> };
+export type ServiceSubmitPayload = { serviceSlug: string; details: Record<string, unknown>; expectedUserId?: string; submissionKey?: string; recoveryOnly?: boolean };
 export type ServiceItem = {
   id: string;
   service_key: string;
@@ -110,7 +111,7 @@ async function authHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
-async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit, acceptConflict?: (body: unknown) => boolean): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   // A caller-supplied signal is respected as well, so unmounting a screen can
@@ -135,7 +136,7 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
   }
 
   const body = await response.json().catch(() => null);
-  if (!response.ok) {
+  if (!response.ok && !(response.status === 409 && acceptConflict?.(body))) {
     throw new EduReachError(
       userFacingError(body?.error ?? body, 'We could not complete that request. Please try again.'),
       failureKindForStatus(response.status),
@@ -152,7 +153,8 @@ async function jsonFetch<T>(input: RequestInfo | URL, init?: RequestInit): Promi
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function failureKindForStatus(status: number) {
-  if (status === 401 || status === 403) return 'auth' as const;
+  if (status === 401) return 'auth' as const;
+  if (status === 403) return 'forbidden' as const;
   if (status === 404) return 'not-found' as const;
   if (status === 422) return 'validation' as const;
   if (status === 429) return 'rate-limited' as const;
@@ -425,56 +427,42 @@ export async function fetchCbtResult(attemptId: string): Promise<CbtResultPayloa
 }
 
 export async function submitServiceRequest(payload: ServiceSubmitPayload) {
-  const supportedSlugs = new Set(hubServices.map((service) => service.slug));
   const normalizedSlug = payload.serviceSlug.trim().toLowerCase();
-  if (!isSupabaseConfigured && !supportedSlugs.has(normalizedSlug)) {
-    throw new Error('This service is not available. Browse the services catalogue for active student services.');
+  if (!isSupabaseConfigured) {
+    throw new Error('Service requests are unavailable right now. Your request has not been submitted.');
   }
 
-  if (isSupabaseConfigured) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Please sign in before submitting a service request.');
-
-    const { data: service, error: serviceError } = await supabase
-      .from('service_catalog')
-      .select('id, service_key, title')
-      .eq('service_key', normalizedSlug)
-      .eq('active', true)
-      .maybeSingle();
-    if (serviceError) throw new Error(userFacingError(serviceError));
-    if (!service) throw new Error('This service is no longer accepting requests. Browse the services catalogue for active services.');
-
-    const { data, error } = await supabase
-      .from('service_requests')
-      .insert({ user_id: user.id, service_id: service.id, status: 'submitted', form_data: payload.details })
-      .select('id, reference_code, created_at, status')
-      .single();
-    if (error) throw new Error(userFacingError(error));
-    if (!data) throw new Error('The service request could not be created.');
-    return data;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Please sign in before submitting a service request.');
+  if (!payload.expectedUserId || user.id !== payload.expectedUserId) {
+    throw new Error('Your account changed. Please review your details before submitting.');
   }
 
-  // Local request persistence for unconfigured/offline sessions. This records only what the student actually submitted.
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const localRef = `ER-${new Date().getFullYear()}-${randomSuffix}`;
-  const localRecord = {
-    id: `req-${Date.now()}`,
-    reference_code: localRef,
-    created_at: new Date().toISOString(),
-    status: 'submitted',
-    form_data: payload.details,
-    service_catalog: { title: payload.details.serviceTitle as string || 'EduReach Service' },
-  };
+  if (!payload.submissionKey || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payload.submissionKey)) {
+    throw new Error('Your request draft is unavailable in this browser. No new submission was sent.');
+  }
 
+  // No direct-insert fallback: an unmigrated database must fail closed.
+  // A transport error or malformed response may follow a committed request.
   try {
-    const existing = JSON.parse(localStorage.getItem(localStorageKey('service-requests')) || '[]');
-    existing.unshift(localRecord);
-    localStorage.setItem(localStorageKey('service-requests'), JSON.stringify(existing));
+    const { data, error } = await supabase.rpc('submit_service_request_idempotent', {
+      p_service_key: normalizedSlug,
+      p_form_data: payload.details,
+      p_submission_key: payload.submissionKey,
+      p_expected_user_id: payload.expectedUserId,
+      p_recovery_only: payload.recoveryOnly === true,
+    }).single();
+    const row = data as { id?: unknown; reference_code?: unknown; status?: unknown; created_at?: unknown } | null;
+    if (!error && row && typeof row.id === 'string' && row.id
+      && typeof row.reference_code === 'string' && row.reference_code.trim()
+      && typeof row.status === 'string' && row.status
+      && typeof row.created_at === 'string' && Number.isFinite(Date.parse(row.created_at))) {
+      return { id: row.id, reference_code: row.reference_code, status: row.status, created_at: row.created_at };
+    }
   } catch {
-    // localStorage may be disabled
+    // The server may have accepted the request before the connection failed.
   }
-
-  return localRecord;
+  throw new Error('We could not confirm whether your request was submitted. Check My Requests and review the previous submission before retrying.');
 }
 
 const NEWS_COLUMNS_LEGACY =
@@ -739,7 +727,7 @@ export async function fetchAdminServiceRequests(status = 'all'): Promise<AdminSe
   return body.items || [];
 }
 
-export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null }) {
+export async function updateAdminServiceRequest(requestId: string, patch: string | { status?: string; admin_note?: string | null; expected_updated_at?: string }) {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
   const body = typeof patch === 'string' ? { status: patch } : patch;
@@ -764,6 +752,8 @@ export type AdminNewsArticle = {
   published_at: string | null;
   featured?: boolean;
   tags?: string | null;
+  is_placeholder: boolean;
+  placeholder_note: string | null;
   updated_at: string;
 };
 
@@ -780,13 +770,18 @@ export type AdminNewsInput = {
   published_at?: string | null;
   featured?: boolean;
   tags?: string | null;
+  is_placeholder?: boolean;
+  placeholder_note?: string | null;
+  confirm_placeholder_replacement?: boolean;
 };
 
-export async function fetchAdminNews(): Promise<AdminNewsArticle[]> {
+export type AdminNewsListOptions = { page?: number; pageSize?: number; state?: 'all' | 'draft' | 'published' | 'placeholder'; search?: string };
+export async function fetchAdminNews(options: AdminNewsListOptions = {}): Promise<{ items: AdminNewsArticle[]; page: number; hasMore: boolean }> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');
-  const body = await jsonFetch<{ items: AdminNewsArticle[] }>('/api/admin/news', { headers });
-  return body.items || [];
+  const params = new URLSearchParams({ page: String(options.page ?? 1), pageSize: String(options.pageSize ?? 200), state: options.state ?? 'all' });
+  if (options.search?.trim()) params.set('search', options.search.trim());
+  return jsonFetch<{ items: AdminNewsArticle[]; page: number; hasMore: boolean }>(`/api/admin/news?${params}`, { headers });
 }
 
 export async function createAdminNews(input: AdminNewsInput): Promise<AdminNewsArticle> {
@@ -1170,6 +1165,7 @@ export type AdminQuestionImportItem = {
   issues: string[];
   duplicate_of: string | null;
   question_id: string | null;
+  updated_at: string;
 };
 
 export type AdminQuestionImportDetail = {
@@ -1266,10 +1262,12 @@ export async function updateAdminQuestionImportItem(
   importId: string,
   itemId: string,
   patch: Partial<Pick<AdminQuestionImportItem, 'question_text' | 'option_a' | 'option_b' | 'option_c' | 'option_d' | 'option_e' | 'correct_option' | 'explanation' | 'passage' | 'topic'>>,
+  expectedUpdatedAt: string,
 ): Promise<{ item: AdminQuestionImportItem; blocking: string[] }> {
   return await adminApiFetch(`/api/admin/question-imports/${encodeURIComponent(importId)}/items/${encodeURIComponent(itemId)}`, {
     method: 'PATCH',
     body: JSON.stringify({
+      expectedUpdatedAt,
       questionText: patch.question_text,
       optionA: patch.option_a,
       optionB: patch.option_b,
@@ -1288,10 +1286,11 @@ export async function reviewAdminQuestionImportItem(
   importId: string,
   itemId: string,
   action: 'approve' | 'reject' | 'reset',
+  expectedUpdatedAt: string,
 ): Promise<AdminQuestionImportItem> {
   const body = await adminApiFetch<{ item: AdminQuestionImportItem }>(
     `/api/admin/question-imports/${encodeURIComponent(importId)}/items/${encodeURIComponent(itemId)}/review`,
-    { method: 'POST', body: JSON.stringify({ action }) },
+    { method: 'POST', body: JSON.stringify({ action, expectedUpdatedAt }) },
   );
   return body.item;
 }
@@ -1532,14 +1531,14 @@ export type CbtHistoryItem = {
   programme: string | null;
   status: 'in_progress' | 'submitted' | 'expired' | 'cancelled';
   score: number | null;
-  correctAnswers: number;
+  correctAnswers: number | null;
   totalQuestions: number;
   durationMinutes: number | null;
   subjects: string[];
   startedAt: string;
   expiresAt: string | null;
   submittedAt: string | null;
-  answered: number;
+  answered: number | null;
   resumable: boolean;
 };
 
@@ -1626,7 +1625,9 @@ export type CbtConfiguredStart = {
 };
 
 export async function fetchCbtBank(examId: string): Promise<CbtBankPayload> {
-  return jsonFetch<CbtBankPayload>(`/api/cbt/exams/${encodeURIComponent(examId)}/subjects`);
+  // Anonymous callers still get public banks. A signed-in candidate supplies
+  // their session so the server can check any restricted assignment in SQL.
+  return jsonFetch<CbtBankPayload>(`/api/cbt/exams/${encodeURIComponent(examId)}/subjects`, { headers: await authHeaders() });
 }
 
 export async function fetchCbtExamsWithAvailability(): Promise<CbtExamSummary[]> {
@@ -1658,19 +1659,101 @@ export async function startConfiguredCbt(payload: {
   return body.attempt;
 }
 
-export async function fetchCbtAttemptPaper(attemptId: string): Promise<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime: string }> {
+export type CbtSessionProtocol = { version: 1 } | { version: 2; scope: 'local-rehearsal' };
+export class CbtProtocolUnavailableError extends EduReachError {
+  constructor() { super('The CBT protocol is unavailable. Please retry.', 'server'); }
+}
+export async function fetchCbtAttemptPaper(attemptId: string): Promise<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime: string; protocol: CbtSessionProtocol }> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Please sign in to continue this session.');
-  const body = await jsonFetch<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime?: string }>(
+  const body = await jsonFetch<{ attempt: CbtAttemptPayload; questions: CbtQuestionPayload[]; serverTime?: string; protocol?: unknown }>(
     `/api/cbt/attempts/${encodeURIComponent(attemptId)}/paper`,
     { headers },
   );
-  return { ...body, serverTime: body.serverTime || new Date().toISOString() };
+  const protocol = body.protocol;
+  if (!protocol || typeof protocol !== 'object' || Array.isArray(protocol)) throw new CbtProtocolUnavailableError();
+  const value = protocol as Record<string, unknown>;
+  if (!((value.version === 1 && Object.keys(value).length === 1) ||
+        (value.version === 2 && value.scope === 'local-rehearsal' && Object.keys(value).length === 2))) {
+    throw new CbtProtocolUnavailableError();
+  }
+  return { ...body, protocol: value as CbtSessionProtocol, serverTime: body.serverTime || new Date().toISOString() };
+}
+
+/** Local-rehearsal transport only. Public finalization remains unavailable. */
+export type CbtV2Snapshot = { protocol: 2; revision: number; answers: Record<string, number>; status: string; questionIds: string[] };
+export type CbtV2Outcome = { protocol: 2; outcome: 'accepted' | 'replayed' | 'conflict' | 'expired' | 'closed' | 'session_revoked' | 'submitted' | 'already_submitted'; revision?: number; acceptedRevision?: number; answers?: Record<string, number>; status?: string; result?: Record<string, unknown> };
+
+function validCbtV2Outcome(value: unknown, kind: 'answer' | 'finalize'): value is CbtV2Outcome {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  if (row.protocol !== 2 || typeof row.outcome !== 'string') return false;
+  if (row.outcome === 'session_revoked') return kind === 'answer' && row.code === 'CBT_SESSION_REVOKED';
+  if (row.outcome === 'expired' || row.outcome === 'closed') return true;
+  if (row.outcome === 'conflict') return validCbtV2Revision(row.revision) && validCbtV2Draft(row.answers) && row.status === 'in_progress';
+  if (kind === 'answer' && (row.outcome === 'accepted' || row.outcome === 'replayed')) {
+    return validCbtV2Revision(row.revision) && validCbtV2Revision(row.acceptedRevision) && validCbtV2Draft(row.answers) && typeof row.status === 'string';
+  }
+  if (kind === 'finalize' && ['submitted', 'replayed', 'already_submitted'].includes(row.outcome)) {
+    return validCbtV2Revision(row.revision) && !!row.result && typeof row.result === 'object' && !Array.isArray(row.result);
+  }
+  return false;
+}
+async function cbtV2Headers(): Promise<Record<string, string>> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new EduReachError('Please sign in to continue this session.', 'auth', 401);
+  return headers;
+}
+export async function fetchCbtV2State(attemptId: string): Promise<CbtV2Snapshot> {
+  const data = await jsonFetch<unknown>(`/api/cbt/v2/attempts/${encodeURIComponent(attemptId)}/state`, { headers: await cbtV2Headers() });
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new EduReachError('The server returned an invalid CBT state.', 'server');
+  const row = data as Record<string, unknown>;
+  const paper = row.questionIds;
+  if (row.protocol !== 2 || !validCbtV2Revision(row.revision) || !validCbtV2Draft(row.answers) || typeof row.status !== 'string' ||
+      !validCbtV2QuestionIds(paper) || Object.keys(row.answers).some(position => Number(position) > paper.length)) {
+    throw new EduReachError('The server returned an invalid CBT state.', 'server');
+  }
+  return row as CbtV2Snapshot;
+}
+export type CbtV2WritingSession = {
+  protocol: 2;
+  outcome: 'created' | 'taken_over' | 'resumed' | 'takeover_required' | 'revoked' | 'expired';
+  sessionId?: string;
+  generation?: number;
+  revision: number;
+  answers: Record<string, number>;
+  status: 'in_progress';
+};
+function validCbtV2WritingSession(value: unknown): value is CbtV2WritingSession {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  if (row.protocol !== 2 || typeof row.outcome !== 'string' || !['created', 'taken_over', 'resumed', 'takeover_required', 'revoked', 'expired'].includes(row.outcome) ||
+      !validCbtV2Revision(row.revision) || !validCbtV2Draft(row.answers) || row.status !== 'in_progress') return false;
+  return !['created', 'taken_over', 'resumed', 'revoked'].includes(row.outcome) ||
+    (typeof row.sessionId === 'string' && CBT_UUID.test(row.sessionId) && validCbtV2Revision(row.generation) && row.generation > 0);
+}
+/** Request keys must be stored before sending and reused after uncertain responses. */
+export async function openCbtV2WritingSession(attemptId: string, requestKey: string, takeover: boolean): Promise<CbtV2WritingSession> {
+  const data = await jsonFetch<unknown>(`/api/cbt/v2/attempts/${encodeURIComponent(attemptId)}/session`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...await cbtV2Headers() },
+    body: JSON.stringify({ protocol: 2, requestKey, takeover }),
+  }, body => validCbtV2WritingSession(body) && ['takeover_required', 'revoked', 'expired'].includes(body.outcome));
+  if (!validCbtV2WritingSession(data)) throw new EduReachError('The server returned an invalid CBT writing session.', 'server');
+  return data;
+}
+export async function sendCbtV2Operation(attemptId: string, kind: 'answer' | 'finalize', operation: { expectedRevision: number; operationKey: string; questionId?: string; selected?: number | null; sessionId: string; sessionGeneration: number }): Promise<CbtV2Outcome> {
+  const data = await jsonFetch<unknown>(`/api/cbt/v2/attempts/${encodeURIComponent(attemptId)}/${kind}`, {
+    method: kind === 'answer' ? 'PATCH' : 'POST',
+    headers: { 'Content-Type': 'application/json', ...await cbtV2Headers() },
+    body: JSON.stringify({ protocol: 2, ...operation }),
+  }, body => validCbtV2Outcome(body, kind) && ['conflict', 'expired', 'closed', 'session_revoked'].includes((body as CbtV2Outcome).outcome));
+  if (!validCbtV2Outcome(data, kind)) throw new EduReachError('The server returned an invalid CBT response.', 'server');
+  return data;
 }
 
 export async function saveConfiguredCbtDraft(attemptId: string, answers: Record<number, number>, questionIndex?: number): Promise<void> {
   const headers = await authHeaders();
-  if (!headers.Authorization) return;
+  if (!headers.Authorization) throw new EduReachError('Please sign in to save this session.', 'auth', 401);
   await jsonFetch(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/draft`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...headers },
@@ -1683,8 +1766,8 @@ export async function submitConfiguredCbt(attemptId: string, answers: Record<num
   if (!headers.Authorization) throw new Error('Please sign in to submit this session.');
   const body = await jsonFetch<{
     attemptId: string;
-    score: number;
-    correctAnswers: number;
+    score: number | null;
+    correctAnswers: number | null;
     totalQuestions: number;
     breakdown: Array<{ question: number; subject?: string; selected: number | null; correct: number; explanation?: string }>;
   }>(`/api/cbt/attempts/${encodeURIComponent(attemptId)}/submit`, {
@@ -1800,4 +1883,99 @@ export async function restoreAdminSiteRevision(slug: string, revision: number): 
     { method: 'POST' },
   );
   return body.page;
+}
+
+// --- Restricted bank administration ---------------------------------------
+// The server re-authorizes every call with the caller's own token, and the
+// database re-checks bank-management authority. These helpers never decide
+// access; they only shape requests.
+
+export type AdminBank = {
+  exam_id: string;
+  title: string;
+  exam_body: string;
+  subject: string;
+  is_active: boolean;
+  visibility: 'public' | 'restricted' | null;
+  correction_release_at: string | null;
+  released: boolean;
+  classified_at: string | null;
+  classified_by: string | null;
+  question_count: number;
+  approved_question_count: number;
+  attempt_count: number;
+  assigned_count: number;
+  revoked_count: number;
+};
+
+export type AdminBankSummary = {
+  total: number;
+  unclassified: number;
+  public: number;
+  restricted: number;
+  embargoed: number;
+};
+
+export type AdminBankCandidate = {
+  user_id: string;
+  full_name: string | null;
+  status: 'active' | 'revoked';
+  assigned_at: string;
+  revoked_at: string | null;
+  assigned_by: string | null;
+  revoked_by: string | null;
+};
+
+export type AdminBankHistoryEntry = {
+  id: string;
+  action: string;
+  actor: string | null;
+  created_at: string;
+  metadata: Record<string, unknown> | null;
+};
+
+export type AdminBankCandidateLookup = { id: string; full_name: string; matric_number: string | null; school: string };
+
+export async function fetchAdminBanks(): Promise<{ items: AdminBank[]; summary: AdminBankSummary }> {
+  return adminApiFetch<{ items: AdminBank[]; summary: AdminBankSummary }>('/api/admin/cbt/banks');
+}
+
+export async function fetchAdminBankCandidates(examId: string): Promise<AdminBankCandidate[]> {
+  const body = await adminApiFetch<{ items: AdminBankCandidate[] }>(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/candidates`);
+  return body.items || [];
+}
+
+export async function fetchAdminBankHistory(examId: string): Promise<AdminBankHistoryEntry[]> {
+  const body = await adminApiFetch<{ items: AdminBankHistoryEntry[] }>(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/history`);
+  return body.items || [];
+}
+
+export async function searchAdminBankCandidates(search: string): Promise<AdminBankCandidateLookup[]> {
+  const body = await adminApiFetch<{ items: AdminBankCandidateLookup[] }>(`/api/admin/cbt/bank-candidates?search=${encodeURIComponent(search.trim())}`);
+  return body.items || [];
+}
+
+export async function classifyAdminBank(examId: string, visibility: 'public' | 'restricted', releaseAt: string | null): Promise<void> {
+  await adminApiFetch(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/classification`, {
+    method: 'PATCH',
+    body: JSON.stringify({ visibility, releaseAt }),
+  });
+}
+
+export async function setAdminBankRelease(examId: string, releaseAt: string): Promise<void> {
+  await adminApiFetch(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/release`, {
+    method: 'PATCH',
+    body: JSON.stringify({ releaseAt }),
+  });
+}
+
+export async function assignAdminBankCandidate(examId: string, candidateId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/candidates`, {
+    method: 'POST',
+    body: JSON.stringify({ candidateId }),
+  });
+}
+
+export async function revokeAdminBankCandidate(examId: string, candidateId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/candidates/${encodeURIComponent(candidateId)}`, { method: 'DELETE' });
 }

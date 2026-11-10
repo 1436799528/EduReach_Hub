@@ -10,6 +10,8 @@ import {
   serviceStatusMeaning,
   serviceTimeline,
 } from '../src/lib/serviceLifecycle';
+import { SERVICE_REQUEST_TRANSITIONS, serviceRequestActions } from '../src/lib/serviceRequestTransitions';
+import { STATUS_NOTIFICATION_COPY } from '../src/server/notifications';
 
 // SERVICE-1: every status the database can store must have an explanation, and
 // the one that blocks on the student must be identifiable as such. The coverage
@@ -81,5 +83,27 @@ test('the statuses leave no gap that would leave a student without an answer', (
   const covered = new Set(SERVICE_STAGES.map((stage) => stage.status));
   for (const status of ['submitted', 'reviewing', 'processing', 'awaiting_information', 'completed', 'closed', 'rejected', 'cancelled']) {
     assert.ok(covered.has(status), `${status} is described`);
+  }
+});
+
+test('operator actions are valid server transitions and waiting requests can resume', () => {
+  assert.deepEqual(Object.keys(SERVICE_REQUEST_TRANSITIONS).sort(), statusesInConstraint().sort());
+  for (const status of Object.keys(SERVICE_REQUEST_TRANSITIONS)) {
+    const actions = serviceRequestActions(status);
+    assert.equal(new Set(actions.map((action) => action.next)).size, actions.length);
+    for (const action of actions) assert.ok(SERVICE_REQUEST_TRANSITIONS[status].includes(action.next), `${status} must permit ${action.next}`);
+  }
+  assert.ok(!serviceRequestActions('submitted').some((action) => action.next === 'completed'));
+  assert.ok(!serviceRequestActions('awaiting_information').some((action) => action.next === 'rejected'));
+  assert.deepEqual(serviceRequestActions('awaiting_information').map((action) => action.next), ['reviewing', 'processing', 'completed']);
+  assert.deepEqual(serviceRequestActions('__proto__'), []);
+});
+
+test('student status copy does not promise unverified reply, reason, ordering or outcome features', () => {
+  for (const stage of SERVICE_STAGES) {
+    assert.doesNotMatch(stage.meaning, /queued in the order|reply|reason is on|see the (reason|outcome)|you cancelled/i);
+  }
+  for (const copy of Object.values(STATUS_NOTIFICATION_COPY)) {
+    assert.doesNotMatch(copy.body, /reply|see what is missing|see the outcome/i);
   }
 });

@@ -38,6 +38,8 @@ const stub = createServer((req, res) => {
   const url = new URL(req.url || '/', 'http://127.0.0.1');
   res.setHeader('Content-Type', 'application/json');
   if (url.pathname.startsWith('/rest/v1/cbt_exams')) return res.end(JSON.stringify(EXAM));
+  // This fixture explicitly represents an administrator-classified public bank.
+  if (url.pathname.startsWith('/rest/v1/cbt_bank_security')) return res.end(JSON.stringify([{ visibility: 'public' }]));
   if (url.pathname.startsWith('/rest/v1/exam_questions')) return res.end(JSON.stringify(QUESTIONS));
   // The durable rate limiter treats anything but `false` as "allowed".
   if (url.pathname.startsWith('/rest/v1/rpc/')) return res.end('true');

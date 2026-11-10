@@ -1,0 +1,706 @@
+-- Destructive schema rollback, AFTER disabling creation and preserving/draining
+-- every v2 attempt. This file is deliberately outside the migration replay.
+-- Never run on a hosted database without separate owner approval and backup.
+-- Refuse to silently convert/delete v2 records or remove a role with members.
+begin;
+lock table public.cbt_attempts in access exclusive mode;
+do $check$
+begin
+  if exists (select 1 from public.cbt_attempts where protocol='v2') then
+    raise exception 'Rollback refused: v2 attempts still exist.';
+  end if;
+  if exists (select 1 from pg_catalog.pg_auth_members m join pg_catalog.pg_roles r on r.oid=m.roleid
+    where r.rolname in ('cbt_v2_executor','cbt_v2_client')) then
+    raise exception 'Rollback refused: protocol roles still have members.';
+  end if;
+end $check$;
+
+-- Restore the exact pre-fence legacy definitions. CREATE OR REPLACE preserves
+-- existing function ownership and execute grants.
+create or replace function public.start_cbt_attempt_configured(
+  p_exam_id uuid,
+  p_subjects text[],
+  p_question_count integer default null::integer,
+  p_duration_minutes integer default null::integer,
+  p_mode text default 'practice'::text,
+  p_programme text default null::text
+)
+returns table(
+  attempt_id uuid,
+  started_at timestamp with time zone,
+  expires_at timestamp with time zone,
+  total_questions integer,
+  mode text,
+  duration_minutes integer,
+  selected_subjects text[],
+  subject_plan jsonb,
+  resumed boolean
+)
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_user uuid := auth.uid();
+  v_exam public.cbt_exams%rowtype;
+  v_existing public.cbt_attempts%rowtype;
+  v_attempt public.cbt_attempts%rowtype;
+  v_mode text := lower(trim(coalesce(p_mode, 'practice')));
+  v_subjects text[];
+  v_missing text[];
+  v_short text[];
+  v_ids uuid[];
+  v_total integer;
+  v_minutes integer;
+  v_target integer;
+  v_available integer;
+  v_required integer;
+  v_subject text;
+  v_now timestamptz := now();
+  v_limits jsonb := public.cbt_limits();
+  v_is_jamb boolean;
+  v_quota jsonb := '{}'::jsonb;
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  if v_mode not in ('practice', 'mock') then raise exception 'Unknown CBT mode.'; end if;
+
+  select * into v_exam from public.cbt_exams where id = p_exam_id and is_active = true;
+  if not found then raise exception 'CBT exam not found.'; end if;
+  v_is_jamb := upper(trim(v_exam.exam_body)) = 'JAMB';
+
+  v_subjects := array(
+    select subject from (
+      select (array_agg(trim(pool.value) order by pool.ordinality))[1] as subject,
+             min(pool.ordinality) as first_order
+      from unnest(coalesce(p_subjects, '{}'::text[])) with ordinality as pool(value, ordinality)
+      where trim(pool.value) <> ''
+      group by public.cbt_subject_key(pool.value)
+    ) ordered order by first_order
+  );
+
+  if coalesce(array_length(v_subjects, 1), 0) = 0 then
+    raise exception 'Choose at least one subject to practise.';
+  end if;
+  if array_length(v_subjects, 1) > (v_limits ->> 'maxSubjects')::int then
+    raise exception 'A session can include at most % subjects.', v_limits ->> 'maxSubjects';
+  end if;
+  -- The JAMB combination is Use of English plus three others, in practice as
+  -- well as in a mock. The setup wizard caps the picker, but a request built
+  -- outside the wizard must meet the same rule.
+  if v_is_jamb and array_length(v_subjects, 1) > 4 then
+    raise exception 'A JAMB session can include Use of English plus three other subjects.';
+  end if;
+
+  select array_agg(s) into v_missing
+  from unnest(v_subjects) as s
+  where not exists (
+    select 1 from public.exam_questions q
+    where q.exam_id = p_exam_id
+      and public.cbt_subject_key(q.subject) = public.cbt_subject_key(s)
+      and q.review_status <> 'rejected'
+  );
+  if v_missing is not null then
+    raise exception 'No questions are available for: %. Remove these subjects or choose a different bank.',
+      array_to_string(v_missing, ', ');
+  end if;
+
+  if v_mode = 'practice' then
+    if p_question_count is not null
+       and (p_question_count < (v_limits ->> 'minQuestions')::int
+            or p_question_count > (v_limits ->> 'maxQuestions')::int) then
+      raise exception 'Choose between % and % questions.',
+        v_limits ->> 'minQuestions', v_limits ->> 'maxQuestions';
+    end if;
+    if v_is_jamb and not exists (
+      select 1 from unnest(v_subjects) as s where public.cbt_subject_key(s) = 'english'
+    ) then
+      raise exception 'Use of English is compulsory for JAMB UTME. Include it in your subject combination.';
+    end if;
+    v_target := coalesce(p_question_count, (v_limits ->> 'maxQuestions')::int);
+  else
+    -- A mock is the examination's paper, not a student-sized practice run.
+    if v_is_jamb and (
+      array_length(v_subjects, 1) <> 4
+      or not exists (
+        select 1 from unnest(v_subjects) as s where public.cbt_subject_key(s) = 'english'
+      )
+    ) then
+      raise exception 'A JAMB mock paper is Use of English plus three other subjects.';
+    end if;
+    v_minutes := greatest(coalesce(v_exam.duration_minutes, 120), 1);
+    v_quota := coalesce(v_exam.mock_subject_quota, '{}'::jsonb);
+
+    if v_exam.mock_question_count is not null then
+      v_target := v_exam.mock_question_count;
+    else
+      select count(*)::int into v_available
+      from public.exam_questions q
+      where q.exam_id = p_exam_id
+        and public.cbt_subject_key(q.subject) in (select public.cbt_subject_key(s) from unnest(v_subjects) as s)
+        and q.review_status <> 'rejected';
+      v_target := least(v_available, (v_limits ->> 'maxQuestions')::int);
+    end if;
+
+    -- Name the subjects that cannot meet the standard before planning, so the
+    -- student is told what the bank lacks instead of receiving a short paper
+    -- that silently is not a mock.
+    select array_agg(format('%s needs %s questions but this bank has %s', s.subject, s.required, s.available))
+      into v_short
+    from (
+      select s.subject,
+             coalesce(
+               nullif(v_quota ->> public.cbt_subject_key(s.subject), '')::int,
+               nullif(v_quota ->> 'other', '')::int
+             ) as required,
+             count(q.id)::int as available
+      from unnest(v_subjects) as s(subject)
+      left join public.exam_questions q
+        on q.exam_id = p_exam_id
+       and public.cbt_subject_key(q.subject) = public.cbt_subject_key(s.subject)
+       and q.review_status <> 'rejected'
+      group by s.subject
+    ) s
+    where s.required is not null and s.available < s.required;
+    if v_short is not null then
+      raise exception 'This bank cannot fill the %-question mock paper: %.',
+        v_target, array_to_string(v_short, '; ');
+    end if;
+  end if;
+
+  v_ids := public.plan_cbt_paper(p_exam_id, v_subjects, v_target, v_quota);
+  v_total := coalesce(array_length(v_ids, 1), 0);
+
+  -- Practice time is derived from the paper the student actually receives, at
+  -- the bank's own pace, rather than taken from the request. p_duration_minutes
+  -- is still accepted for older clients but cannot shorten or extend the clock:
+  -- 20 questions of a 180-in-120 paper are 14 minutes whoever asks.
+  if v_mode = 'practice' then
+    v_minutes := ceil(
+      v_total::numeric * coalesce(v_exam.duration_minutes, 30)
+      / greatest(coalesce(v_exam.mock_question_count, (v_limits ->> 'maxQuestions')::int), 1)
+    )::int;
+    v_minutes := least(
+      (v_limits ->> 'maxMinutes')::int,
+      greatest((v_limits ->> 'minMinutes')::int, v_minutes)
+    );
+  end if;
+
+  if v_total = 0 then
+    raise exception 'No questions are available for the selected subjects.';
+  end if;
+  if v_total < (v_limits ->> 'minQuestions')::int then
+    raise exception 'This bank has only % questions for the selected subjects; at least % are needed to start a session. Choose different subjects or another bank.',
+      v_total, v_limits ->> 'minQuestions';
+  end if;
+  if v_mode = 'mock' and v_exam.mock_question_count is not null and v_total < v_target then
+    raise exception 'This bank can only supply % of the % questions a mock paper requires. Choose a practice session instead.',
+      v_total, v_target;
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(v_user::text || ':' || p_exam_id::text || ':' || v_mode, 0)
+  );
+
+  select a.* into v_existing
+  from public.cbt_attempts a
+  where a.user_id = v_user
+    and a.exam_id = p_exam_id
+    and a.mode = v_mode
+    and a.status = 'in_progress'
+  order by a.started_at desc
+  limit 1
+  for update;
+
+  if found
+     and (v_existing.expires_at is null or v_existing.expires_at > v_now)
+     and v_existing.selected_subjects = v_subjects
+     and coalesce(v_existing.duration_minutes, v_minutes) = v_minutes
+     and coalesce(array_length(v_existing.question_ids, 1), 0) = v_total then
+    return query select
+      v_existing.id, v_existing.started_at, v_existing.expires_at,
+      coalesce(array_length(v_existing.question_ids, 1), v_existing.total_questions),
+      v_existing.mode, coalesce(v_existing.duration_minutes, v_minutes),
+      v_existing.selected_subjects, v_existing.subject_plan, true;
+    return;
+  end if;
+
+  update public.cbt_attempts a
+  set status = 'cancelled', updated_at = v_now
+  where a.user_id = v_user
+    and a.exam_id = p_exam_id
+    and a.status = 'in_progress';
+
+  insert into public.cbt_attempts(
+    user_id, exam_id, status, started_at, expires_at, total_questions,
+    selected_subjects, mode, programme, duration_minutes, requested_questions,
+    question_ids, subject_plan, answers_draft
+  )
+  values (
+    v_user, p_exam_id, 'in_progress', v_now,
+    v_now + (v_minutes || ' minutes')::interval, v_total,
+    v_subjects, v_mode, nullif(trim(coalesce(p_programme, '')), ''), v_minutes,
+    v_total, v_ids, public.cbt_plan_summary(v_ids), '{}'::jsonb
+  )
+  returning * into v_attempt;
+
+  return query select
+    v_attempt.id, v_attempt.started_at, v_attempt.expires_at, v_total,
+    v_attempt.mode, v_attempt.duration_minutes, v_attempt.selected_subjects,
+    v_attempt.subject_plan, false;
+end;
+$function$;
+
+create or replace function public.start_cbt_attempt(p_exam_id uuid)
+returns table(attempt_id uuid, started_at timestamptz, expires_at timestamptz, total_questions integer)
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_exam public.cbt_exams%rowtype;
+  v_count integer;
+  v_existing public.cbt_attempts%rowtype;
+  v_attempt public.cbt_attempts%rowtype;
+  v_now timestamptz := now();
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_user::text || ':' || p_exam_id::text, 0));
+  select * into v_exam from public.cbt_exams where id=p_exam_id and is_active=true;
+  if not found then raise exception 'CBT exam not found.'; end if;
+  select count(*) into v_count from public.exam_questions where exam_id=p_exam_id;
+  if v_count=0 then raise exception 'This CBT exam has no questions yet.'; end if;
+  select * into v_existing from public.cbt_attempts
+    where user_id=v_user and exam_id=p_exam_id and status='in_progress'
+    order by started_at desc limit 1 for update;
+  if found and (v_existing.expires_at is null or v_existing.expires_at>v_now) then
+    return query select v_existing.id,v_existing.started_at,v_existing.expires_at,v_existing.total_questions; return;
+  end if;
+  if found then update public.cbt_attempts set status='expired',updated_at=v_now where id=v_existing.id and status='in_progress'; end if;
+  insert into public.cbt_attempts(user_id,exam_id,status,started_at,expires_at,total_questions)
+    values(v_user,p_exam_id,'in_progress',v_now,v_now+(v_exam.duration_minutes||' minutes')::interval,v_count)
+    returning * into v_attempt;
+  return query select v_attempt.id,v_attempt.started_at,v_attempt.expires_at,v_attempt.total_questions;
+end;
+$$;
+
+create or replace function public.start_cbt_attempt_for_subjects(
+  p_exam_id uuid,
+  p_subjects text[]
+)
+returns table(attempt_id uuid,started_at timestamptz,expires_at timestamptz,total_questions integer)
+language plpgsql
+security definer
+set search_path=''
+as $function$
+declare
+  v_user uuid:=auth.uid();
+  v_exam public.cbt_exams%rowtype;
+  v_existing public.cbt_attempts%rowtype;
+  v_attempt public.cbt_attempts%rowtype;
+  v_total integer;
+  v_now timestamptz:=now();
+  v_subjects text[];
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  select * into v_exam from public.cbt_exams where id=p_exam_id and is_active=true;
+  if not found then raise exception 'CBT exam not found.'; end if;
+
+  v_subjects:=array(
+    select subject from (
+      select trim(u.value) as subject,min(u.ordinality) as first_order
+      from unnest(coalesce(p_subjects,'{}'::text[])) with ordinality as u(value,ordinality)
+      where trim(u.value)<>'' group by trim(u.value)
+    ) ordered order by first_order
+  );
+
+  if coalesce(array_length(v_subjects,1),0)=0 then
+    raise exception 'At least one subject is required.';
+  end if;
+
+  if upper(v_exam.exam_body)='JAMB' then
+    if array_length(v_subjects,1)<>4
+       or lower(trim(v_subjects[1])) not in ('use of english','english language','english') then
+      raise exception 'JAMB practice requires Use of English plus three other subjects.';
+    end if;
+  end if;
+
+  select count(*) into v_total
+  from public.get_cbt_questions_for_subjects(p_exam_id,v_subjects);
+  if v_total=0 then raise exception 'No questions are available for the selected subjects.'; end if;
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(v_user::text||':'||p_exam_id::text||':'||array_to_string(v_subjects,'|'),0)
+  );
+
+  select * into v_existing
+  from public.cbt_attempts
+  where user_id=v_user and exam_id=p_exam_id and status='in_progress'
+    and selected_subjects=v_subjects
+  order by started_at desc limit 1 for update;
+
+  if found and (v_existing.expires_at is null or v_existing.expires_at>v_now) then
+    return query select v_existing.id,v_existing.started_at,v_existing.expires_at,v_existing.total_questions;
+    return;
+  end if;
+
+  if found then
+    update public.cbt_attempts set status='expired',updated_at=v_now
+    where id=v_existing.id and status='in_progress';
+  end if;
+
+  insert into public.cbt_attempts(user_id,exam_id,status,started_at,expires_at,total_questions,selected_subjects)
+  values(v_user,p_exam_id,'in_progress',v_now,
+         v_now+(v_exam.duration_minutes||' minutes')::interval,v_total,v_subjects)
+  returning * into v_attempt;
+
+  return query select v_attempt.id,v_attempt.started_at,v_attempt.expires_at,v_attempt.total_questions;
+end;
+$function$;
+
+create or replace function public.get_cbt_attempt_paper(p_attempt_id uuid)
+returns table("position" integer, subject text, question_id uuid, question_text text, option_a text, option_b text, option_c text, option_d text)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user uuid:=auth.uid();
+  v_attempt public.cbt_attempts%rowtype;
+  v_now timestamptz:=now();
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  select * into v_attempt from public.cbt_attempts where id=p_attempt_id and user_id=v_user for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+  if v_attempt.status='in_progress'
+     and v_attempt.expires_at is not null
+     and v_attempt.expires_at + public.cbt_submit_grace() <= v_now then
+    update public.cbt_attempts set status='expired',updated_at=v_now where id=v_attempt.id and status='in_progress';
+    raise exception 'This CBT attempt has expired.';
+  end if;
+  if coalesce(array_length(v_attempt.question_ids,1),0)>0 then
+    return query select u.ordinality::int,trim(q.subject),q.id,q.question_text,q.option_a,q.option_b,q.option_c,q.option_d
+    from unnest(v_attempt.question_ids) with ordinality u(value,ordinality)
+    join public.exam_questions q on q.id=u.value order by u.ordinality;
+    return;
+  end if;
+  return query select p."position",p.subject,p.question_id,p.question_text,p.option_a,p.option_b,p.option_c,p.option_d
+  from public.get_cbt_questions_for_subjects(v_attempt.exam_id,v_attempt.selected_subjects) p order by p."position";
+end;
+$function$;
+
+create or replace function public.save_cbt_attempt_draft(p_attempt_id uuid, p_answers jsonb, p_question_index integer default null)
+returns jsonb
+language plpgsql security definer set search_path = ''
+as $function$
+declare
+  v_user uuid := auth.uid(); v_attempt public.cbt_attempts%rowtype;
+  v_clean jsonb := '{}'::jsonb; v_total integer; v_key text; v_value jsonb;
+  v_index integer; v_int integer; v_now timestamptz := now();
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  if p_answers is null or jsonb_typeof(p_answers) <> 'object' then raise exception 'Answers must be an object.'; end if;
+  select * into v_attempt from public.cbt_attempts where id=p_attempt_id and user_id=v_user for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+  if v_attempt.status <> 'in_progress' then raise exception 'This CBT attempt has already been submitted.'; end if;
+  -- Strict deadline: answers cannot be added after the examination ends. The
+  -- submit window below exists for delivery only.
+  if v_attempt.expires_at is not null and v_attempt.expires_at <= v_now then
+    raise exception 'This CBT attempt has expired.';
+  end if;
+  v_total := coalesce(array_length(v_attempt.question_ids,1),v_attempt.total_questions);
+  for v_key,v_value in select entry.key,entry.value from jsonb_each(p_answers) entry(key,value) loop
+    begin v_index:=v_key::integer; exception when others then continue; end;
+    if v_index<1 or v_index>greatest(v_total,1) then continue; end if;
+    if jsonb_typeof(v_value)<>'number' or v_value::text !~ '^[0-9]+$' then continue; end if;
+    v_int:=(v_value::text)::integer;
+    if v_int<0 or v_int>3 then continue; end if;
+    v_clean:=v_clean||jsonb_build_object(v_key,v_int);
+    if (select count(*) from jsonb_object_keys(v_clean))>=500 then exit; end if;
+  end loop;
+  update public.cbt_attempts set answers_draft=v_clean,
+    current_question=case when p_question_index is not null and p_question_index>=0
+      and p_question_index<greatest(v_total,1) then p_question_index else current_question end,
+    updated_at=v_now where id=v_attempt.id;
+  return jsonb_build_object('answers',v_clean,'questionIndex',coalesce(p_question_index,v_attempt.current_question,0),'expiresAt',v_attempt.expires_at);
+end;
+$function$;
+
+create or replace function public.submit_cbt_attempt_configured(p_attempt_id uuid,p_answers jsonb)
+returns table(attempt_id uuid,score numeric,correct_answers integer,total_questions integer,breakdown jsonb)
+language plpgsql security definer set search_path = ''
+as $function$
+declare
+  v_user uuid:=auth.uid(); v_attempt public.cbt_attempts%rowtype; v_row record;
+  v_selected integer; v_correct integer; v_total integer:=0; v_score numeric;
+  v_breakdown jsonb:='[]'::jsonb; v_now timestamptz:=now(); v_answers jsonb:=coalesce(p_answers,'{}'::jsonb);
+  v_explanation text; v_late_ms integer:=0;
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  if jsonb_typeof(v_answers)<>'object' then raise exception 'Answers must be an object.'; end if;
+  select * into v_attempt from public.cbt_attempts where id=p_attempt_id and user_id=v_user for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+  if v_attempt.status='submitted' then
+    return query select v_attempt.id,v_attempt.score,v_attempt.correct_answers,v_attempt.total_questions,coalesce(stored.breakdown,'[]'::jsonb)
+    from (
+      select jsonb_agg(jsonb_build_object('question',slot.ordinality,'subject',trim(q.subject),
+        'selected',case when ans.selected_option is null then null else ascii(ans.selected_option)-ascii('A') end,
+        'correct',ascii(q.correct_option)-ascii('A'),'explanation',q.explanation) order by slot.ordinality) breakdown
+      from unnest(v_attempt.question_ids) with ordinality slot(value,ordinality)
+      join public.exam_questions q on q.id=slot.value
+      left join public.cbt_answers ans on ans.attempt_id=v_attempt.id and ans.question_id=q.id
+    ) stored;
+    return;
+  end if;
+  if v_attempt.status<>'in_progress' then raise exception 'This CBT attempt has already been closed.'; end if;
+  -- Arriving a moment after the countdown reaches zero is normal; arriving a
+  -- window later means the paper really is over.
+  if v_attempt.expires_at is not null and v_attempt.expires_at + public.cbt_submit_grace() <= v_now then
+    update public.cbt_attempts set status='expired',updated_at=v_now where id=v_attempt.id and status='in_progress';
+    raise exception 'This CBT attempt has expired.';
+  end if;
+  -- How late this accepted submission arrived (0 = on time), so the window
+  -- can later be tightened from evidence instead of opinion.
+  if v_attempt.expires_at is not null and v_now>v_attempt.expires_at then
+    v_late_ms:=floor(extract(epoch from (v_now-v_attempt.expires_at))*1000)::integer;
+  end if;
+  for v_row in select * from public.get_cbt_attempt_paper(v_attempt.id) loop
+    v_total:=v_total+1; v_selected:=null;
+    if v_answers ? v_row."position"::text then
+      begin v_selected:=(v_answers->>v_row."position"::text)::integer;
+      exception when others then raise exception 'Invalid answer for question %.',v_row."position"; end;
+      if v_selected<0 or v_selected>3 then raise exception 'Invalid answer for question %.',v_row."position"; end if;
+    end if;
+    select ascii(q.correct_option)-ascii('A'),q.explanation into v_correct,v_explanation from public.exam_questions q where q.id=v_row.question_id;
+    v_breakdown:=v_breakdown||jsonb_build_array(jsonb_build_object('question',v_row."position",'subject',v_row.subject,'selected',v_selected,'correct',v_correct,'explanation',v_explanation));
+    insert into public.cbt_answers as target_answers(attempt_id,question_id,selected_option,is_correct,answered_at)
+    values(v_attempt.id,v_row.question_id,case when v_selected is null then null else chr(ascii('A')+v_selected) end,
+      case when v_selected is null then false else v_selected=v_correct end,v_now)
+    on conflict on constraint cbt_answers_attempt_id_question_id_key do update set selected_option=excluded.selected_option,is_correct=excluded.is_correct,answered_at=now();
+  end loop;
+  if v_total=0 then raise exception 'This CBT attempt has no questions.'; end if;
+  select count(*) into v_correct from public.cbt_answers where cbt_answers.attempt_id=v_attempt.id and cbt_answers.is_correct=true;
+  v_score:=round((v_correct::numeric/v_total::numeric)*100,2);
+  update public.cbt_attempts set status='submitted',submitted_at=v_now,score=v_score,correct_answers=v_correct,total_questions=v_total,answers_draft='{}'::jsonb,submission_late_ms=v_late_ms,updated_at=v_now where id=v_attempt.id and status='in_progress';
+  return query select v_attempt.id,v_score,v_correct,v_total,v_breakdown;
+end;
+$function$;
+
+create or replace function public.submit_cbt_attempt(p_attempt_id uuid,p_exam_id uuid,p_answers jsonb)
+returns table(attempt_id uuid,score numeric,breakdown jsonb)
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_user uuid:=auth.uid(); v_attempt public.cbt_attempts%rowtype; v_question public.exam_questions%rowtype;
+  v_selected integer; v_correct integer; v_total integer:=0; v_score numeric; v_breakdown jsonb:='[]'::jsonb; v_now timestamptz:=now();
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  select * into v_attempt from public.cbt_attempts where id=p_attempt_id and exam_id=p_exam_id and user_id=v_user for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+  if v_attempt.status<>'in_progress' then raise exception 'This CBT attempt has already been submitted.'; end if;
+  if v_attempt.expires_at is not null and v_attempt.expires_at<v_now then update public.cbt_attempts set status='expired',updated_at=v_now where id=v_attempt.id; raise exception 'This CBT attempt has expired.'; end if;
+  for v_question in select * from public.exam_questions where exam_id=p_exam_id order by position loop
+    v_total:=v_total+1; v_selected:=null;
+    if p_answers ? v_question.position::text then
+      begin v_selected:=(p_answers->>v_question.position::text)::integer; exception when others then raise exception 'Invalid answer for question %.',v_question.position; end;
+      if v_selected<0 or v_selected>3 then raise exception 'Invalid answer for question %.',v_question.position; end if;
+    end if;
+    v_correct:=ascii(v_question.correct_option)-ascii('A');
+    v_breakdown:=v_breakdown||jsonb_build_array(jsonb_build_object('question',v_question.position,'selected',v_selected,'correct',v_correct,'explanation',v_question.explanation));
+    insert into public.cbt_answers(attempt_id,question_id,selected_option,is_correct)
+      values(v_attempt.id,v_question.id,case when v_selected is null then null else chr(ascii('A')+v_selected) end,case when v_selected is null then false else v_selected=v_correct end)
+      on conflict (attempt_id,question_id) do update set selected_option=excluded.selected_option,is_correct=excluded.is_correct,answered_at=now();
+  end loop;
+  select count(*) into v_correct from public.cbt_answers where attempt_id=v_attempt.id and is_correct=true;
+  if v_total=0 then raise exception 'This CBT exam has no questions yet.'; end if;
+  v_score:=round((v_correct::numeric/v_total::numeric)*100,2);
+  update public.cbt_attempts set status='submitted',submitted_at=v_now,score=v_score,correct_answers=v_correct,total_questions=v_total,updated_at=v_now where id=v_attempt.id and status='in_progress';
+  return query select v_attempt.id,v_score,v_breakdown;
+end;
+$$;
+
+create or replace function public.submit_cbt_attempt_for_subjects(p_attempt_id uuid,p_exam_id uuid,p_answers jsonb)
+returns table(attempt_id uuid,score numeric,breakdown jsonb)
+language plpgsql security definer set search_path = ''
+as $function$
+declare
+  v_user uuid:=auth.uid(); v_attempt public.cbt_attempts%rowtype; v_row record;
+  v_selected integer; v_correct integer; v_total integer:=0; v_score numeric;
+  v_breakdown jsonb:='[]'::jsonb; v_now timestamptz:=now();
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  select * into v_attempt from public.cbt_attempts where id=p_attempt_id and exam_id=p_exam_id and user_id=v_user for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+  if v_attempt.status<>'in_progress' then raise exception 'This CBT attempt has already been submitted.'; end if;
+  if v_attempt.expires_at is not null and v_attempt.expires_at<=v_now then
+    update public.cbt_attempts set status='expired',updated_at=v_now where id=v_attempt.id and status='in_progress';
+    raise exception 'This CBT attempt has expired.';
+  end if;
+  for v_row in select * from public.get_cbt_attempt_paper(v_attempt.id) order by "position" loop
+    v_total:=v_total+1; v_selected:=null;
+    if p_answers ? v_row."position"::text then
+      begin v_selected:=(p_answers->>v_row."position"::text)::integer;
+      exception when others then raise exception 'Invalid answer for question %.',v_row."position"; end;
+      if v_selected<0 or v_selected>3 then raise exception 'Invalid answer for question %.',v_row."position"; end if;
+    end if;
+    select ascii(q.correct_option)-ascii('A') into v_correct from public.exam_questions q where q.id=v_row.question_id;
+    v_breakdown:=v_breakdown||jsonb_build_array(jsonb_build_object('question',v_row."position",'subject',v_row.subject,'selected',v_selected,'correct',v_correct));
+    insert into public.cbt_answers(attempt_id,question_id,selected_option,is_correct,answered_at)
+    values(v_attempt.id,v_row.question_id,case when v_selected is null then null else chr(ascii('A')+v_selected) end,case when v_selected is null then false else v_selected=v_correct end,v_now)
+    on conflict on constraint cbt_answers_attempt_id_question_id_key do update set selected_option=excluded.selected_option,is_correct=excluded.is_correct,answered_at=now();
+  end loop;
+  if v_total=0 then raise exception 'This CBT exam has no questions for the selected subjects.'; end if;
+  select count(*) into v_correct from public.cbt_answers where public.cbt_answers.attempt_id=v_attempt.id and public.cbt_answers.is_correct=true;
+  v_score:=round((v_correct::numeric/v_total::numeric)*100,2);
+  update public.cbt_attempts set status='submitted',submitted_at=v_now,score=v_score,correct_answers=v_correct,total_questions=v_total,answers_draft='{}'::jsonb,updated_at=v_now where id=v_attempt.id and status='in_progress';
+  return query select v_attempt.id,v_score,v_breakdown;
+end;
+$function$;
+
+create or replace function public.delete_cbt_practice_attempt(p_attempt_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  v_user uuid := auth.uid();
+  v_attempt public.cbt_attempts%rowtype;
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+
+  select * into v_attempt
+  from public.cbt_attempts
+  where id = p_attempt_id and user_id = v_user
+  for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+
+  -- Practice data belongs to the student. An official-style mock result is a
+  -- record of an examination and is not deletable from the client at all.
+  if v_attempt.mode <> 'practice' then
+    raise exception 'Only practice attempts can be deleted. Mock results are kept as examination records.';
+  end if;
+
+  delete from public.cbt_attempts where id = v_attempt.id;
+  return true;
+end;
+$fn$;
+
+create or replace function public.abandon_cbt_attempt(p_attempt_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  v_user uuid := auth.uid();
+  v_attempt public.cbt_attempts%rowtype;
+  v_now timestamptz := now();
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+
+  select * into v_attempt
+  from public.cbt_attempts
+  where id = p_attempt_id and user_id = v_user
+  for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+  if v_attempt.status <> 'in_progress' then
+    raise exception 'This CBT attempt is no longer in progress.';
+  end if;
+
+  update public.cbt_attempts
+  set status = 'cancelled', updated_at = v_now
+  where id = v_attempt.id;
+  return true;
+end;
+$fn$;
+
+create or replace function public.delete_cbt_attempt(p_attempt_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  v_user uuid := auth.uid();
+  v_attempt public.cbt_attempts%rowtype;
+begin
+  if v_user is null then
+    raise exception 'Authentication required.';
+  end if;
+
+  select * into v_attempt
+  from public.cbt_attempts
+  where id = p_attempt_id and user_id = v_user
+  for update;
+
+  if not found then
+    raise exception 'CBT attempt not found.';
+  end if;
+
+  delete from public.cbt_attempts where id = v_attempt.id;
+  return true;
+end;
+$fn$;
+
+create or replace function public.cbt_expire_owned_attempt(p_attempt_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  v_user uuid := auth.uid();
+  v_attempt public.cbt_attempts%rowtype;
+  v_now timestamptz;
+begin
+  if v_user is null then raise exception 'Authentication required.'; end if;
+  select * into v_attempt from public.cbt_attempts
+    where id=p_attempt_id and user_id=v_user for update;
+  if not found then raise exception 'CBT attempt not found.'; end if;
+
+  -- Obtain actual time after acquiring the lock. Grace is for delivery of a
+  -- submission only; this function neither extends answering time nor accepts
+  -- answers. Existing non-active attempts remain unchanged.
+  v_now := clock_timestamp();
+  if v_attempt.status = 'in_progress' and v_attempt.expires_at is not null
+     and v_attempt.expires_at + public.cbt_submit_grace() <= v_now then
+    update public.cbt_attempts set status='expired',updated_at=v_now
+      where id=v_attempt.id and status='in_progress';
+    return 'expired';
+  end if;
+  return v_attempt.status;
+end;
+$fn$;
+
+-- Remove fence objects only once no v2 data or role members remain.
+drop trigger cbt_protocol_attempt_guard on public.cbt_attempts;
+drop trigger cbt_protocol_answer_guard on public.cbt_answers;
+drop trigger cbt_protocol_question_guard on public.exam_questions;
+drop trigger cbt_protocol_truncate_guard on public.cbt_attempts;
+drop trigger cbt_protocol_truncate_guard on public.cbt_answers;
+drop trigger cbt_protocol_truncate_guard on public.exam_questions;
+drop trigger cbt_protocol_truncate_guard on public.cbt_exams;
+drop function public.cbt_protocol_attempt_guard();
+drop function public.cbt_protocol_answer_guard();
+drop function public.cbt_protocol_question_guard();
+drop function public.cbt_protocol_truncate_guard();
+drop function public.cbt_protocol_for_answer(uuid);
+drop policy cbt_v2_executor_attempts on public.cbt_attempts;
+drop policy cbt_v2_executor_answers on public.cbt_answers;
+drop policy cbt_v2_executor_exams on public.cbt_exams;
+drop policy cbt_v2_executor_questions on public.exam_questions;
+drop function public.cbt_start_attempt_legacy(uuid,text[],integer,integer,text,text);
+drop function public.cbt_start_attempt_v2(uuid,text[],integer,integer,text,text);
+drop function public.cbt_v2_transition(uuid,text);
+drop function public.cbt_start_configured_internal(uuid,text[],integer,integer,text,text,text);
+revoke execute on function auth.uid(), public.cbt_subject_key(text), public.cbt_limits(),
+  public.plan_cbt_paper(uuid,text[],integer,jsonb), public.cbt_plan_summary(uuid[]),
+  public.cbt_submit_grace() from cbt_v2_executor;
+revoke select on public.cbt_exams, public.exam_questions from cbt_v2_executor;
+revoke select, insert, update, delete on public.cbt_attempts, public.cbt_answers from cbt_v2_executor;
+revoke usage on schema public, auth from cbt_v2_client, cbt_v2_executor;
+-- Any unforeseen ownership or grants cause DROP ROLE to fail rather than
+-- deleting unrelated objects with DROP OWNED.
+drop role cbt_v2_client, cbt_v2_executor;
+alter table public.cbt_attempts drop column protocol;
+commit;

@@ -15,6 +15,7 @@ import { fetchService, submitServiceRequest, trackEvent, type ServiceItem } from
 import { apiUrl } from '../src/lib/apiBase';
 import type { ServiceGuide } from '../src/data/serviceGuides';
 import { serviceTimeline } from '../src/lib/serviceLifecycle';
+import { draftKeyForAccount, prepareServiceSubmission, readPendingSubmission, saveServiceDraft } from '../src/lib/serviceSubmissionRecovery';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
@@ -59,9 +60,10 @@ const emptyForm: FormState = {
   notes: '',
 };
 
-function readServiceDraft(slug: string): { form?: Partial<FormState>; step?: number } {
+function readServiceDraft(key: string | null): { form?: Partial<FormState>; step?: number } {
+  if (!key) return {};
   try {
-    const raw = sessionStorage.getItem(`edureach-service-draft-${slug}`);
+    const raw = sessionStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) as { form?: Partial<FormState>; step?: number } : {};
     return parsed && typeof parsed === 'object' ? parsed : {};
   } catch {
@@ -77,15 +79,39 @@ function fieldsFor(serviceKey: string) {
 }
 
 export default function ServiceApplyPage({ slug }: { slug: string }) {
+  const { user, isLoading } = useAuth();
+  if (isSupabaseConfigured && isLoading) {
+    return <HubLayout><div className="hub-page"><div className="hub-container hub-narrow"><div className="hub-panel hub-empty">Loading your session…</div></div></div></HubLayout>;
+  }
+  // Configured drafts are scoped to the account. A signed-out user must not
+  // inherit the previous student's form; preview keeps its legacy local draft.
+  const draftKey = isSupabaseConfigured
+    ? user ? draftKeyForAccount(user.id, slug) : null
+    : `edureach-service-draft-${slug}`;
+  return <ServiceApplyForm key={`${slug}:${isSupabaseConfigured ? user?.id || 'signed-out' : 'preview'}`} slug={slug} draftKey={draftKey} />;
+}
+
+function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string | null }) {
   const { isAuthenticated, user: authUser } = useAuth();
-  const [draft] = useState(() => readServiceDraft(slug));
+  const [draft] = useState(() => readServiceDraft(draftKey));
+  const [legacyDraftPresent] = useState(() => {
+    if (!isSupabaseConfigured) return false;
+    try { return sessionStorage.getItem(`edureach-service-draft-${slug}`) !== null; } catch { return false; }
+  });
   const [service, setService] = useState<ServiceItem | null>(null);
   const [remoteGuide, setRemoteGuide] = useState<ServiceGuide | null>(null);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState('');
   const [step, setStep] = useState(() => Math.max(1, Math.min(3, Number(draft.step) || 1)));
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
+  const [pendingAvailable, setPendingAvailable] = useState(() => {
+    if (!isSupabaseConfigured || !draftKey) return false;
+    try { return Boolean(readPendingSubmission(draftKey)); } catch { return false; }
+  });
+  const [retryDetails, setRetryDetails] = useState<Record<string, unknown> | null>(null);
   const [reference, setReference] = useState('');
+  const [cleanupWarning, setCleanupWarning] = useState(false);
   const [message, setMessage] = useState('');
   // A11Y-1: which control the message belongs to, so the failure is announced
   // and the field is marked invalid rather than only shown in red text.
@@ -95,13 +121,13 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const [form, setForm] = useState<FormState>(() => ({ ...emptyForm, ...(draft.form || {}) }));
 
   useEffect(() => {
-    if (reference) return;
+    if (reference || busy || submitting.current || !draftKey) return;
     try {
-      sessionStorage.setItem(`edureach-service-draft-${slug}`, JSON.stringify({ form, step }));
+      saveServiceDraft(draftKey, form, step);
     } catch {
       // Session storage may be unavailable; the form remains usable in memory.
     }
-  }, [form, reference, slug, step]);
+  }, [busy, draftKey, form, reference, step]);
 
   const viewTrackedRef = useRef(false);
   useEffect(() => {
@@ -172,6 +198,45 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     [form, step],
   );
 
+  function clearConfirmedDraft(pending?: { key: string; details: Record<string, unknown> }) {
+    try {
+      if (!draftKey) return;
+      if (pending) {
+        const current = readPendingSubmission(draftKey);
+        if (!current || current.key !== pending.key || JSON.stringify(current.details) !== JSON.stringify(pending.details)) throw new Error('Pending draft changed');
+      }
+      sessionStorage.removeItem(draftKey);
+      if (sessionStorage.getItem(draftKey) !== null) throw new Error('Draft still present');
+    } catch { setCleanupWarning(true); }
+  }
+
+  async function checkPreviousSubmission() {
+    if (submitting.current || !draftKey || !authUser?.id || !isAuthenticated) return;
+    submitting.current = true;
+    setBusy(true);
+    setMessage('');
+    try {
+      const pending = readPendingSubmission(draftKey);
+      if (!pending) throw new Error('Pending submission unavailable');
+      const result = await submitServiceRequest({
+        serviceSlug: slug,
+        expectedUserId: authUser.id,
+        submissionKey: pending.key,
+        details: pending.details,
+        recoveryOnly: true,
+      });
+      clearConfirmedDraft(pending);
+      setReference(result.reference_code);
+      setPendingAvailable(false);
+    } catch {
+      // No row can also mean a previous request is still in flight. Keep the draft.
+      setMessage('Your previous submission is not yet confirmed. It may still have been received; check again later or review My Requests. No new request was sent by this check.');
+    } finally {
+      submitting.current = false;
+      setBusy(false);
+    }
+  }
+
   if (serviceLoading)
     return (
       <HubLayout>
@@ -191,6 +256,19 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
             <div className="hub-panel hub-empty">
               <h1 style={{ fontSize: '20px', margin: '0 0 8px' }}>Service unavailable</h1>
               <p style={{ margin: '0 0 14px' }}>{serviceError || 'Service not found.'}</p>
+              {reference ? (
+                <div>
+                  <p>Previous request confirmed. Reference: <strong>{reference}</strong></p>
+                  {cleanupWarning && <p role="alert">The local draft could not be cleared. Your request is confirmed, but its details may still be stored in this browser.</p>}
+                  <p><a href={`/dashboard/services?ref=${encodeURIComponent(reference)}`}>View My Requests</a></p>
+                </div>
+              ) : isSupabaseConfigured && isAuthenticated && authUser?.id && pendingAvailable ? (
+                <div>
+                  <p>A previous submission from this account is awaiting confirmation. This check will not send a new request.</p>
+                  {message && <p role="alert">{message}</p>}
+                  <p><button type="button" className="hub-outline-btn" disabled={busy} onClick={() => void checkPreviousSubmission()}>{busy ? 'Checking…' : 'Check previous submission'}</button></p>
+                </div>
+              ) : null}
               <a className="hub-primary-btn" href="/services">Browse active services</a>
             </div>
           </div>
@@ -209,7 +287,25 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
         : '';
 
   function update(name: keyof FormState, value: string) {
+    setRetryDetails(null);
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function reviewPreviousSubmission() {
+    if (!draftKey) return;
+    try {
+      const pending = readPendingSubmission(draftKey);
+      if (!pending) { setPendingAvailable(false); return; }
+      const restored = { ...emptyForm };
+      for (const field of Object.keys(emptyForm) as Array<keyof FormState>) {
+        if (typeof pending.details[field] === 'string') restored[field] = pending.details[field] as string;
+      }
+      setForm(restored);
+      setInstitutionOtherSelected(Boolean(restored.institution && !institutionOptions.some((institution) => institution === restored.institution)));
+      setRetryDetails(pending.details);
+      setStep(3);
+      setMessage('Review these previous details. Retrying uses the same submission key; the earlier request may already have been received.');
+    } catch (error) { setMessage(userFacingError(error)); }
   }
 
   function next(event: FormEvent) {
@@ -249,20 +345,35 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   }
 
   async function handleSubmit() {
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setMessage('');
     try {
+      if (retryDetails && (Object.keys(emptyForm) as Array<keyof FormState>).some((field) => form[field] !== (retryDetails[field] || ''))) {
+        throw new Error('Review the previous submission details before retrying. They may already have been received.');
+      }
+      const details = retryDetails || { ...form, serviceTitle: service!.title, requestCategory: service!.title, requestDescription: form.notes || form.requestType || `Guided support for ${service!.title}.` };
+      // Unconfigured previews still reach the existing unavailable response.
+      const pending = isSupabaseConfigured && draftKey ? prepareServiceSubmission(draftKey, details) : null;
+      if (pending) setPendingAvailable(true);
       const result = await submitServiceRequest({
         serviceSlug: service!.service_key,
-        details: { ...form, serviceTitle: service!.title, requestCategory: service!.title, requestDescription: form.notes || form.requestType || `Guided support for ${service!.title}.` },
+        expectedUserId: authUser?.id,
+        submissionKey: pending?.key,
+        details: pending?.details || details,
       });
       trackEvent('service_submit', { metadata: { slug } });
-      try { sessionStorage.removeItem(`edureach-service-draft-${slug}`); } catch { /* optional */ }
+      clearConfirmedDraft(pending || undefined);
       setReference(result.reference_code);
       setMessage('');
     } catch (error) {
+      if (isSupabaseConfigured && draftKey) {
+        try { setPendingAvailable(Boolean(readPendingSubmission(draftKey))); } catch { /* preserve an unreadable draft */ }
+      }
       setMessage(userFacingError(error, 'Unable to submit request.'));
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -284,6 +395,10 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               </a>
             )}
           </div>
+
+          {legacyDraftPresent && !reference && (
+            <p role="note">An older draft remains in this browser, but it cannot be loaded automatically because its owner cannot be verified.</p>
+          )}
 
           {/* SESSION BANNER */}
           {signedIn === false && !reference && (
@@ -597,19 +712,25 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                     ))}
                     <li>
                       <span>Waiting on you</span>
-                      Only if we need something. The request pauses and you get a notification. Nothing is lost while you gather it.
+                      This status means more information is needed before the request can continue.
                     </li>
                   </ol>
-                  <p>You will get a reference code immediately. EduReach does not promise a number of days: requests are handled in the order they arrive, and you can see the current state at any time.</p>
+                  <p>If submission succeeds, you will receive a reference code. EduReach does not promise a number of days. You can check the request status in your dashboard.</p>
                 </div>
               )}
 
               {message && <div className="hub-form-error" id="service-apply-error" role="alert" style={{ marginTop: '14px' }}>{message}</div>}
+              {pendingAvailable && (
+                <div role="note" style={{ marginTop: '14px' }}>
+                  <p>A previous submission may already have been received. Review its saved details before retrying in this tab.</p>
+                  <button type="button" className="hub-outline-btn" disabled={busy} onClick={reviewPreviousSubmission}>Review previous submission</button>
+                </div>
+              )}
 
               {/* BUTTON ACTIONS */}
               <div className="hub-wizard-actions" style={{ marginTop: '24px' }}>
                 {step > 1 ? (
-                  <button type="button" className="hub-outline-btn" onClick={() => setStep((value) => value - 1)}>
+                  <button type="button" className="hub-outline-btn" disabled={busy} onClick={() => setStep((value) => value - 1)}>
                     <ChevronLeft size={16} /> Previous
                   </button>
                 ) : (
@@ -676,6 +797,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
               <p style={{ fontSize: '14px', color: '#475569', margin: '0 0 20px', maxWidth: '500px', marginInline: 'auto' }}>
                 Your request is registered in the EduReach academic queue. Save your reference code. Signed-in students can follow every step below from My Requests in the dashboard.
               </p>
+              {cleanupWarning && <p role="alert">Your request is confirmed, but the local draft could not be cleared and may remain in this browser tab.</p>}
 
               <div
                 style={{
@@ -701,11 +823,11 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
                   {serviceTimeline().map((stage, index) => (
                     <li key={stage.status} className={index === 0 ? 'is-current' : ''}>
                       <span>{stage.label}</span>
-                      {index === 0 ? 'Reached. Your request is queued in the order it arrived.' : stage.meaning}
+                      {index === 0 ? 'Reached. Your request has been submitted.' : stage.meaning}
                     </li>
                   ))}
                 </ol>
-                <p>If we need anything from you, the request shows “Waiting on you” and you are notified. Nothing moves silently.</p>
+                <p>The dashboard shows the current status of your request when it is available.</p>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>

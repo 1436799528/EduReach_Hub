@@ -122,6 +122,14 @@ after(async () => {
   await db.close();
 });
 
+test('atomic publication readiness marker is service-role only', async () => {
+  const { rows } = await db.query<{ ready: boolean; anon: boolean; authenticated: boolean; service: boolean }>(`select public.question_import_atomic_ready() as ready,
+    has_function_privilege('anon', 'public.question_import_atomic_ready()', 'execute') as anon,
+    has_function_privilege('authenticated', 'public.question_import_atomic_ready()', 'execute') as authenticated,
+    has_function_privilege('service_role', 'public.question_import_atomic_ready()', 'execute') as service`);
+  assert.deepEqual(rows[0], { ready: true, anon: false, authenticated: false, service: true });
+});
+
 test('a queued file is claimed once, extracted into staging, and saved only after approval', async () => {
   const importId = await createImport();
   const first = await claim(importId);
@@ -149,14 +157,13 @@ test('a queued file is claimed once, extracted into staging, and saved only afte
   );
   assert.equal(beforeCommit[0].n, 0);
 
-  // Approving a question with no answer key is not enough to save it.
+  // Even a privileged caller cannot partially publish a malformed approved batch.
   await db.query("update public.question_import_items set review_status = 'approved' where import_id = $1", [importId]);
-  const partial = await commit(importId);
-  assert.equal(partial.inserted, 1);
-  assert.equal(partial.incomplete, 2);
+  await assert.rejects(() => commit(importId), /invalid or incomplete/i);
+  const { rows: afterFailure } = await db.query<{ n: number }>('select count(*)::int as n from public.exam_questions where exam_id = $1', [examId]);
+  assert.equal(afterFailure[0].n, 0, 'the failed transaction must publish nothing');
 
-  // Correct the two incomplete rows and save again: the first question is not
-  // inserted twice, the other two are added in the order they were reviewed.
+  // Correct both incomplete rows and save all approved rows together.
   await db.query(
     `update public.question_import_items
      set correct_option = 'B', option_e = null
@@ -164,7 +171,7 @@ test('a queued file is claimed once, extracted into staging, and saved only afte
     [importId],
   );
   const rest = await commit(importId);
-  assert.equal(rest.inserted, 2);
+  assert.equal(rest.inserted, 3);
   assert.equal(rest.duplicates, 0);
   assert.equal(rest.remaining, 0);
 
@@ -208,6 +215,16 @@ test('a queued file is claimed once, extracted into staging, and saved only afte
   );
   assert.equal(paper.length, 3);
   assert.ok(paper.every((row) => row.question_text.startsWith('Question number')));
+});
+
+test('malformed approved options fail the whole publication transaction', async () => {
+  const importId = await createImport({ checksum: hash('e') });
+  await claim(importId);
+  await finish(importId, [item(1, { questionText: 'Distinct valid question for atomic batch?' }), item(2, { questionText: 'Question with repeated choices?', optionB: 'ONE' })]);
+  await db.query("update public.question_import_items set review_status = 'approved' where import_id = $1", [importId]);
+  await assert.rejects(() => commit(importId), /invalid or incomplete/i);
+  const { rows } = await db.query<{ n: number }>('select count(*)::int as n from public.exam_questions where import_id = $1', [importId]);
+  assert.equal(rows[0].n, 0);
 });
 
 test('an exact duplicate of a bank question is skipped and marked, not added again', async () => {

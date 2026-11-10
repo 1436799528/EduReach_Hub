@@ -247,6 +247,7 @@ export const ADMIN_ROUTE_CAPABILITIES: ReadonlyArray<{ path: string; capability:
   { path: '/admin/queue', capability: 'service_request.read' },
   { path: '/admin/schools', capability: 'institution.read' },
   { path: '/admin/cbt', capability: 'cbt.read' },
+  { path: '/admin/banks', capability: 'cbt.read' },
   { path: '/admin/users', capability: 'user.read' },
   { path: '/admin/analytics', capability: 'analytics.read' },
   { path: '/admin/content-manager', capability: 'data.read' },

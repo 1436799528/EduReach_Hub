@@ -7,6 +7,7 @@ import {
 } from '../src/lib/api';
 import { RequestActions, StatusBadge, TimeAgo, requestStudentName, TableSkeleton } from '../src/components/admin/AdminKit';
 import { Can } from '../src/components/admin/Can';
+import { serviceRequestUpdateFailure } from '../src/lib/serviceRequestErrors';
 
 const FILTERS: Array<{ value: string; label: string }> = [
   { value: 'all', label: 'All statuses' },
@@ -25,19 +26,28 @@ export default function AdminQueuePage() {
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [noteVersion, setNoteVersion] = useState('');
+
+  function showUpdateError(error: unknown, fallback: string) {
+    const failure = serviceRequestUpdateFailure(error, fallback);
+    if (failure.needsRefresh) setNeedsRefresh(true);
+    setError(failure.message);
+  }
 
   async function saveNote(row: AdminServiceRequest) {
     setBusyId(row.id);
     try {
-      await updateAdminServiceRequest(row.id, { admin_note: noteText });
-      setRows((current) => current.map((item) => item.id === row.id ? { ...item, admin_note: noteText || null } : item));
+      const result = await updateAdminServiceRequest(row.id, { admin_note: noteText, expected_updated_at: noteVersion });
+      setRows((current) => current.map((item) => item.id === row.id ? { ...item, ...result.item } : item));
       setNoteId(null);
       setNoteText('');
     } catch (e) {
-      setError(userFacingError(e, 'Unable to save the note.'));
+      showUpdateError(e, 'Unable to save the note.');
     } finally { setBusyId(null); }
   }
 
@@ -46,21 +56,25 @@ export default function AdminQueuePage() {
     try {
       setError('');
       setRows(await fetchAdminServiceRequests(status));
+      setLoadFailed(false);
+      setNeedsRefresh(false);
     } catch (e) {
       setRows([]);
+      setLoadFailed(true);
+      setNeedsRefresh(true);
       setError(userFacingError(e, 'Unable to load queue.'));
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { void load(filter); }, [filter, load]);
 
-  async function act(requestId: string, nextStatus: string) {
+  async function act(requestId: string, nextStatus: string, expectedUpdatedAt: string) {
     setBusyId(requestId);
     try {
-      await updateAdminServiceRequest(requestId, nextStatus);
+      await updateAdminServiceRequest(requestId, { status: nextStatus, expected_updated_at: expectedUpdatedAt });
       await load(filter);
     } catch (e) {
-      setError(userFacingError(e, 'Unable to update request.'));
+      showUpdateError(e, 'Unable to update request.');
     } finally { setBusyId(null); }
   }
 
@@ -84,8 +98,8 @@ export default function AdminQueuePage() {
         )}
 
         <div className="admin-card">
-          <div className="admin-card-header"><h2>{FILTERS.find((f) => f.value === filter)?.label || 'Queue'}</h2><span>{loading ? 'Loading…' : `${rows.length} request${rows.length === 1 ? '' : 's'}`}</span></div>
-          <div className="admin-table-wrap">
+          <div className="admin-card-header"><h2>{FILTERS.find((f) => f.value === filter)?.label || 'Queue'}</h2><span>{loading ? 'Loading…' : loadFailed ? 'Unavailable' : `${rows.length} request${rows.length === 1 ? '' : 's'}`}</span></div>
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Reference</th><th scope="col">Details</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
               <tbody>
@@ -98,7 +112,7 @@ export default function AdminQueuePage() {
                     <td>
                       {String(row.form_data?.message || row.form_data?.requestDetails || '—')}
                       {row.admin_note && <div className="muted" style={{ marginTop: 4 }}><b>Note:</b> {row.admin_note}</div>}
-                      <button type="button" className="admin-text-btn" style={{ marginTop: 4 }} onClick={() => { setNoteId(noteId === row.id ? null : row.id); setNoteText(row.admin_note || ''); }}>
+                      <button type="button" className="admin-text-btn" style={{ marginTop: 4 }} onClick={() => { setNoteId(noteId === row.id ? null : row.id); setNoteText(row.admin_note || ''); setNoteVersion(row.updated_at); }}>
                         {row.admin_note ? 'Edit note' : 'Add note'}
                       </button>
                       {noteId === row.id && (
@@ -113,7 +127,7 @@ export default function AdminQueuePage() {
                           />
                           <div className="admin-action-row">
                             <Can capability="service_request.process">
-                              <button type="button" className="admin-btn small success" disabled={busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
+                              <button type="button" className="admin-btn small success" disabled={needsRefresh || busyId === row.id} onClick={() => void saveNote(row)}>Save note</button>
                             </Can>
                             <button type="button" className="admin-text-btn" onClick={() => setNoteId(null)}>Cancel</button>
                           </div>
@@ -122,10 +136,10 @@ export default function AdminQueuePage() {
                     </td>
                     <td><StatusBadge status={row.status} /></td>
                     <td><TimeAgo value={row.created_at} /></td>
-                    <td className="right"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
+                    <td className="right"><RequestActions row={row} disabled={needsRefresh || busyId === row.id} onAction={act} /></td>
                   </tr>
                 ))}
-                {!loading && !rows.length && <tr><td colSpan={7} className="empty-state">No matching service requests.</td></tr>}
+                {!loading && !loadFailed && !rows.length && <tr><td colSpan={7} className="empty-state">No matching service requests.</td></tr>}
               </tbody>
             </table>
           </div>

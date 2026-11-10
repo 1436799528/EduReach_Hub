@@ -226,7 +226,7 @@ export default function AdminContentManagerPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="admin-table-wrap">
+                    <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
                       <table className="admin-table">
                         <thead>
                           <tr>
@@ -250,7 +250,7 @@ export default function AdminContentManagerPage() {
             </div>
             <div className="admin-card">
               <div className="admin-card-header"><h2>Database fields</h2><span>{resource.table}</span></div>
-              <div className="admin-table-wrap">
+              <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
                 <table className="admin-table"><thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Required</th><th scope="col">Mode</th></tr></thead><tbody>
                   {resource.fields.map(field => <tr key={field.name}><td><b>{field.label}</b><div className="muted">{field.name}</div></td><td>{field.type}</td><td>{field.required ? 'Yes' : 'No'}</td><td>{field.readonly ? 'Read-only' : 'Editable'}</td></tr>)}
                 </tbody></table>
@@ -295,7 +295,7 @@ export default function AdminContentManagerPage() {
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-            <div className="admin-table-wrap">
+            <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
               <table className="admin-table"><thead><tr>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <th scope="col" key={f.name}>{f.label}</th>)}<th scope="col" className="right">Actions</th></tr></thead>
                 <tbody>
                   {!loading && rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" aria-label="Delete this row" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}

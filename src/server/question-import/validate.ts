@@ -72,14 +72,18 @@ export function validateExtracted(item: ExtractedItem): Validation {
 }
 
 export function normaliseItem(item: ItemInput) {
+  // Preserve paragraph breaks when a reviewer edits the stem; use `clean` only
+  // for comparisons and validation, not for the content stored in the bank.
+  const preserveText = (value: string | null | undefined) => String(value || '').replace(/\r\n?/g, '\n').trim();
   return {
-    questionText: clean(item.questionText),
-    optionA: clean(item.optionA),
-    optionB: clean(item.optionB),
-    optionC: clean(item.optionC),
-    optionD: clean(item.optionD),
-    optionE: clean(item.optionE) || null,
-    correctOption: clean(item.correctOption).toUpperCase().slice(0, 1) || null,
+    questionText: preserveText(item.questionText),
+    optionA: preserveText(item.optionA),
+    optionB: preserveText(item.optionB),
+    optionC: preserveText(item.optionC),
+    optionD: preserveText(item.optionD),
+    optionE: preserveText(item.optionE) || null,
+    // Never turn arbitrary client input such as "Banana" into answer B.
+    correctOption: clean(item.correctOption).toUpperCase() || null,
   };
 }
 
