@@ -31,7 +31,7 @@ test('a result can be reviewed and deleted from the dashboard, with confirmation
   assert.match(dashboard, /aria-busy=\{deletingId === row\.id\}/, 'the button reports pending work');
   assert.match(dashboard, /disabled=\{deletingId === row\.id\}/, 'a double click cannot delete twice');
   assert.match(dashboard, /setAttempts\(\(current\) => current\.filter\(\(attempt\) => attempt\.id !== row\.id\)\)/, 'only the deleted row leaves the list');
-  assert.match(dashboard, /setAttemptNotice\('Result deleted/, 'success is stated, not implied');
+  assert.match(dashboard, /setAttemptNotice\('Deleted this CBT result attempt/, 'success is stated, not implied');
   assert.match(dashboard, /userFacingError\(error, 'That result could not be deleted/, 'a failure is explained');
   assert.match(cbtView, /role="status" aria-live="polite"/, 'the outcome is announced');
   assert.match(dashboard, /getElementById\('dash-cbt-heading'\)\?\.focus\(\)/, 'focus is not dropped when the button disappears');

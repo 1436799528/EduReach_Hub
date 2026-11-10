@@ -137,7 +137,10 @@ test('answer options on the live session page are operable from the keyboard', (
 });
 
 test('failure messages that used to be silent are announced', () => {
-  assert.match(read('pages/AuthPageV2.tsx'), /<div\s+role="alert"/, 'the sign-in/sign-up failure banner must be announced');
+  // The sign-in/sign-up failure banner uses the shared InlineNotice
+  // component with tone="danger", which renders role="alert" and is
+  // announced to assistive technology (see src/components/AsyncState.tsx).
+  assert.match(read('pages/AuthPageV2.tsx'), /<InlineNotice[\s\S]*?tone="danger"/, 'the sign-in/sign-up failure banner is announced via InlineNotice (role="alert")');
   assert.match(read('pages/ServiceApplyPage.tsx'), /id="service-apply-error" role="alert"/);
 });
 

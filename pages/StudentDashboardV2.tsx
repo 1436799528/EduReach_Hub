@@ -20,10 +20,10 @@ import {
   Trash2,
   User,
   Wrench,
-  X,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
 import { SkeletonRows } from '../src/components/Skeleton';
+import { InlineNotice } from '../src/components/AsyncState';
 import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
@@ -506,7 +506,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       await deleteCbtAttempt(row.id);
       setAttempts((current) => current.filter((attempt) => attempt.id !== row.id));
       setConfirmDeleteId('');
-      setAttemptNotice('Result deleted. It is no longer on your account.');
+      setAttemptNotice('Deleted this CBT result attempt. It is no longer on your account. Start a new practice test from the CBT Centre.');
       // The row that held focus is gone; put focus back on the section heading
       // so a keyboard user is not dropped at the top of the document.
       window.requestAnimationFrame(() => document.getElementById('dash-cbt-heading')?.focus());
@@ -627,10 +627,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   );
 
   const requestLoadFailure = (
-    <div className="dash-empty" role="alert">
-      <p>We could not load your requests. Refresh this page to check their status before submitting again.</p>
-      <button type="button" className="dash-btn dash-btn-primary" onClick={() => window.location.reload()}>Refresh page</button>
-    </div>
+    <InlineNotice tone="danger" title="Requests unavailable" onRetry={() => window.location.reload()}>
+      We could not load your requests. Check your connection and try again to see your service request status.
+    </InlineNotice>
   );
 
   const requestsTable = (rows: RequestRow[]) => (
@@ -1103,12 +1102,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </aside>
 
         <main className="edureach-dash-main" id="main-content" tabIndex={-1}>
-          {error && <div className="dash-note is-error">{error}</div>}
+          {error && (
+            <InlineNotice tone="danger" title="Error" onRetry={() => setError('')}>
+              {error}
+            </InlineNotice>
+          )}
           {notice && (
-            <div className="dash-note is-error" style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-              <span>{notice}</span>
-              <button type="button" onClick={() => setNotice('')} aria-label="Dismiss" style={{ background: 'none', border: 0, cursor: 'pointer', color: 'inherit' }}><X size={14} /></button>
-            </div>
+            <InlineNotice tone="danger" onRetry={() => setNotice('')}>
+              {notice}
+            </InlineNotice>
           )}
           {view}
         </main>

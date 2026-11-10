@@ -2,14 +2,14 @@ import { userFacingError } from '../lib/errors';
 import { FormEvent, useEffect, useState } from 'react';
 import {
   ArrowRight,
-  CheckCircle2,
   Lock,
   Mail,
   Phone,
   Eye,
   EyeOff,
-  AlertCircle,
 } from 'lucide-react';
+import { InlineNotice } from '../src/components/AsyncState';
+import WaveLoader from '../src/components/WaveLoader';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { bootstrapAdmin } from '../src/lib/api';
@@ -51,6 +51,19 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [verifyEmailSent, setVerifyEmailSent] = useState('');
+
+  // A form is "complete" when every required field for the active mode is
+  // validly filled - the submit button brightens to signal it is ready.
+  const authPhoneDigits = phone.replace(/\D/g, '');
+  const authFormComplete = currentMode === 'signup'
+    ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && authPhoneDigits.length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
+    : currentMode === 'signin'
+      ? Boolean(email.includes('@') && password)
+      : currentMode === 'reset'
+        ? Boolean(password.length >= 8 && confirmPassword === password)
+        : currentMode === 'forgot'
+          ? email.includes('@')
+          : false;
 
   const modePaths: Record<Mode, string> = {
     signin: '/login',
@@ -244,13 +257,23 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             return;
           }
         } catch (signInErr) {
+          const message = String((signInErr as Error)?.message || '').toLowerCase();
+          if (/invalid login|invalid email|wrong password|incorrect password/i.test(message)) {
+            throw new Error('Check your email address and password, then try again.');
+          }
           throw signInErr;
         }
 
         throw new Error('Unable to confirm your EduReach session. Please try signing in again.');
       }
     } catch (err) {
-      setError(userFacingError(err, 'An error occurred during authentication.'));
+      const message = userFacingError(err, 'An error occurred during authentication.');
+      const isConnectionFailure = /check your internet connection|took too long|unavailable/i.test(message);
+      if (isConnectionFailure && currentMode === 'signin') {
+        setError(`${message} Try again when your connection is stable.`);
+      } else {
+        setError(message);
+      }
     } finally {
       setBusy(false);
     }
@@ -267,18 +290,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       ? 'Set New Password'
       : 'Reset Your Password';
 
-  // A form is "complete" when every required field for the active mode is
-  // validly filled - the submit button brightens to signal it is ready.
-  const authPhoneDigits = phone.replace(/\D/g, '');
-  const authFormComplete = currentMode === 'signup'
-    ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && authPhoneDigits.length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
-    : currentMode === 'signin'
-      ? Boolean(email.includes('@') && password)
-      : currentMode === 'reset'
-        ? Boolean(password.length >= 8 && confirmPassword === password)
-        : currentMode === 'forgot'
-          ? email.includes('@')
-          : false;
+
+
 
   return (
     <div
@@ -354,44 +367,29 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         </div>
 
         {error && (
-          <div
-            role="alert"
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#b91c1c',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              fontSize: '12.5px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
+          <InlineNotice
+            tone="danger"
+            title="Authentication error"
+            onRetry={() => {
+              setError('');
+              void submit(new Event('submit') as unknown as FormEvent);
             }}
+            action={
+              currentMode === 'signin' && /check your internet connection/i.test(error)
+                ? null
+                : currentMode === 'signin'
+                ? <a className="hub-auth-switch" href="/" style={{ marginLeft: 'auto' }}>← Back to portal</a>
+                : null
+            }
           >
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
-          </div>
+            {error}
+          </InlineNotice>
         )}
 
         {message && (
-          <div
-            style={{
-              background: '#ecfdf5',
-              border: '1px solid #a7f3d0',
-              color: '#047857',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              fontSize: '12.5px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-            <span>{message}</span>
-          </div>
+          <InlineNotice tone="success" title="Done">
+            {message}
+          </InlineNotice>
         )}
 
         {/* MODE: EMAIL VERIFICATION */}
@@ -865,36 +863,39 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
             {/* SUBMIT BUTTON - matches the site search button; turns bright orange the moment every required detail is validly filled. */}
             <button
               type="submit"
-              disabled={busy}
+              className="hub-primary-btn"
+              disabled={busy || !authFormComplete}
               aria-busy={busy}
               style={{
-                background: 'var(--er-primary)',
-                color: '#ffffff',
-                border: 0,
                 borderRadius: '9px',
                 padding: '12px',
                 fontSize: '13.5px',
                 fontWeight: 620,
-                cursor: 'pointer',
-                transition: 'background .2s ease, box-shadow .2s ease',
-                boxShadow: authFormComplete ? '0 6px 18px rgba(23, 74, 58, 0.3)' : '0 2px 6px rgba(23, 74, 58, 0.22)',
+                cursor: (busy || !authFormComplete) ? 'not-allowed' : 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 marginTop: '6px',
+                minHeight: 44,
+                boxShadow: authFormComplete && !busy
+                  ? '0 6px 18px rgba(23, 74, 58, 0.3)'
+                  : '0 2px 6px rgba(23, 74, 58, 0.22)',
               }}
             >
-              {busy
-                ? 'Processing…'
-                : currentMode === 'signup'
-                ? 'Register & Continue'
-                : currentMode === 'forgot'
-                ? 'Send Reset Link'
-                : currentMode === 'reset'
-                ? 'Save New Password'
-                : 'Sign In to Portal'}
-              <ArrowRight size={16} />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {busy ? <WaveLoader variant="inline" decorative label="Processing…" /> : null}
+                {busy
+                  ? 'Processing…'
+                  : currentMode === 'signup'
+                  ? 'Register & Continue'
+                  : currentMode === 'forgot'
+                  ? 'Send Reset Link'
+                  : currentMode === 'reset'
+                  ? 'Save New Password'
+                  : 'Sign In to Portal'}
+              </span>
+              {!busy && <ArrowRight size={16} />}
             </button>
           </form>
         )}
