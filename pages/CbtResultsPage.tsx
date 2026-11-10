@@ -4,6 +4,7 @@ import { ArrowLeft, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react
 import HubLayout from '../src/components/HubLayout';
 import CbtResultSlip from '../src/components/CbtResultSlip';
 import { deleteCbtAttempt, fetchCbtResult, type CbtResultPayload, type CbtResultQuestion, type CbtResultAnswer } from '../src/lib/api';
+import { LoadingState, ErrorState, InlineNotice } from '../src/components/AsyncState';
 import { localStorageKey } from '../src/lib/localPreview';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/lib/auth';
@@ -24,20 +25,26 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [deleteSuccess, setDeleteSuccess] = useState('');
   const deleteDialog = useRef<HTMLDialogElement | null>(null);
 
-  useEffect(() => {
+  const loadResult = () => {
     const attemptId = routeAttemptId || new URLSearchParams(window.location.search).get('attempt') || localStorage.getItem(localStorageKey('last-cbt-attempt')) || '';
     if (!attemptId) {
       setError('No CBT attempt was selected. Complete a practice test to generate a result.');
       setLoading(false);
       return;
     }
-
+    setError('');
+    setLoading(true);
     void fetchCbtResult(attemptId)
       .then(setResult)
       .catch((value) => setError(userFacingError(value, 'Unable to load the CBT result.')))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadResult();
   }, [routeAttemptId]);
 
   useEffect(() => {
@@ -49,11 +56,12 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     if (!attemptId) return;
     setDeleteBusy(true);
     setDeleteError('');
+    setDeleteSuccess('');
     try {
       await deleteCbtAttempt(attemptId);
       setConfirmDelete(false);
       deleteDialog.current?.close();
-      navigateInApp(user ? '/dashboard/cbt' : '/cbt');
+      setDeleteSuccess('Deleted this CBT result. It is no longer on your account. Start a new practice test from the CBT Centre.');
     } catch (value) {
       setDeleteError(userFacingError(value, 'This result could not be deleted.'));
     } finally {
@@ -149,17 +157,29 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     <HubLayout>
       <div className="hub-page er-results-page">
         <div className="hub-container er-results-container">
-          {loading && <div className="hub-panel hub-empty"><p>Loading your CBT result…</p></div>}
-
-          {!loading && error && (
-            <div className="hub-panel hub-empty">
-              <h1>CBT result unavailable</h1>
-              <p>{error}</p>
-              <a className="hub-primary-btn" href="/cbt">Back to CBT</a>
-            </div>
+          {loading && (
+            <LoadingState
+              label="Loading your CBT result"
+              detail="Fetching your saved attempt and answers."
+              compact
+            />
           )}
 
-          {!loading && result && (
+          {!loading && error && (
+            <ErrorState
+              error={error}
+              onRetry={loadResult}
+              action={<a className="hub-primary-btn" href="/cbt">Back to CBT</a>}
+            />
+          )}
+
+          {deleteSuccess && (
+            <InlineNotice tone="success" title="Result deleted">
+              {deleteSuccess}
+            </InlineNotice>
+          )}
+
+          {!loading && result && !deleteSuccess && (
             <>
               <section className="er-result-header" aria-labelledby="result-heading">
                 <span className="er-result-kicker">CBT RESULT</span>
