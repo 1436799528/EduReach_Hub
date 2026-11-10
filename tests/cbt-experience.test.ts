@@ -114,12 +114,15 @@ test('the timer is server-authoritative and cannot be reset by a refresh', () =>
 
   const migration = read('supabase/migrations/20261002120000_cbt_practice_and_mock_modes.sql');
   assert.match(migration, /v_minutes := greatest\(coalesce\(v_exam\.duration_minutes, 120\), 1\)/, 'a mock duration comes from the exam configuration');
-  // Expiry is refused inside the RPC (a raise rolls back, so the status change is
-  // the server's job) and the server performs it with an owner-scoped update.
+  // A raise rolls back the RPC's status change. The server requests an
+  // owner-scoped, database-timed expiry check after the exact domain refusal.
   assert.match(migration, /raise exception 'This CBT attempt has expired\.'/, 'a late save or submit is refused');
   const server = read('server.ts');
-  assert.match(server, /async function expireCbtAttempt/, 'the server owns the expired transition');
-  assert.match(server, /if \(\/expired\/i\.test\(message\)\) await expireCbtAttempt/, 'and applies it when the RPC refuses');
+  assert.match(server, /async function expireCbtAttempt/, 'the server requests the expired transition');
+  assert.match(server, /if \(isCbtExpiredError\(error\)\)\s*\{\s*await expireCbtAttempt\(rpcSupabase, req\.params\.attemptId\)/, 'the exact RPC refusal invokes the user-scoped check');
+  const expiry = read('supabase/migrations/20261104120000_cbt_owner_expiry.sql');
+  assert.match(expiry, /expires_at \+ public\.cbt_submit_grace\(\) <= v_now/, 'expiry must preserve the submission grace');
+  assert.match(expiry, /v_now := clock_timestamp\(\)/, 'the deadline check uses time after the lock');
 });
 
 test('question positions and subjects are stated per question', () => {

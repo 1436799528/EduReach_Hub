@@ -109,8 +109,7 @@
 .mini-service-grid .card,
 .results-grid .card,
 .social-community-card,
-.quick-action,
-.admin-kpi {
+.quick-action {
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -126,8 +125,7 @@
 .mini-service-grid .card,
 .results-grid .card,
 .social-community-card,
-.quick-action,
-.admin-kpi {
+.quick-action {
   color: #fff !important;
   border: 0 !important;
   box-shadow: var(--er-banner-shadow) !important;
@@ -143,8 +141,7 @@
 .mini-service-grid .card::before,
 .results-grid .card::before,
 .social-community-card::before,
-.quick-action::before,
-.admin-kpi::before {
+.quick-action::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -164,8 +161,7 @@
 .mini-service-grid .card::after,
 .results-grid .card::after,
 .social-community-card::after,
-.quick-action::after,
-.admin-kpi::after {
+.quick-action::after {
   content: '';
   position: absolute;
   width: 190px;
@@ -188,8 +184,7 @@
 .mini-service-grid .card > *,
 .results-grid .card > *,
 .social-community-card > *,
-.quick-action > *,
-.admin-kpi > * {
+.quick-action > * {
   position: relative;
   z-index: 1;
 }
@@ -203,8 +198,7 @@
 .mini-service-grid .card:nth-child(8n + 1),
 .results-grid .card:nth-child(8n + 1),
 .social-community-card:nth-child(8n + 1),
-.quick-action:nth-child(8n + 1),
-.admin-kpi:nth-child(8n + 1) { background: linear-gradient(135deg,#1688e8,#1556c5 55%,#0c367f) !important; }
+.quick-action:nth-child(8n + 1) { background: linear-gradient(135deg,#1688e8,#1556c5 55%,#0c367f) !important; }
 
 .hub-compact-card:nth-child(8n + 2),
 .hub-service-profile-card:nth-child(8n + 2),
@@ -215,8 +209,7 @@
 .mini-service-grid .card:nth-child(8n + 2),
 .results-grid .card:nth-child(8n + 2),
 .social-community-card:nth-child(8n + 2),
-.quick-action:nth-child(8n + 2),
-.admin-kpi:nth-child(8n + 2) { background: linear-gradient(135deg,#109c87,#08796e 55%,#07564f) !important; }
+.quick-action:nth-child(8n + 2) { background: linear-gradient(135deg,#109c87,#08796e 55%,#07564f) !important; }
 
 .hub-compact-card:nth-child(8n + 3),
 .hub-service-profile-card:nth-child(8n + 3),
@@ -227,8 +220,7 @@
 .mini-service-grid .card:nth-child(8n + 3),
 .results-grid .card:nth-child(8n + 3),
 .social-community-card:nth-child(8n + 3),
-.quick-action:nth-child(8n + 3),
-.admin-kpi:nth-child(8n + 3) { background: linear-gradient(135deg,#6656e8,#4a38c8 55%,#35248e) !important; }
+.quick-action:nth-child(8n + 3) { background: linear-gradient(135deg,#6656e8,#4a38c8 55%,#35248e) !important; }
 
 .hub-compact-card:nth-child(8n + 4),
 .hub-service-profile-card:nth-child(8n + 4),
@@ -239,8 +231,7 @@
 .mini-service-grid .card:nth-child(8n + 4),
 .results-grid .card:nth-child(8n + 4),
 .social-community-card:nth-child(8n + 4),
-.quick-action:nth-child(8n + 4),
-.admin-kpi:nth-child(8n + 4) { background: linear-gradient(135deg,#ff7a21,#ef5c12 55%,#c73c08) !important; }
+.quick-action:nth-child(8n + 4) { background: linear-gradient(135deg,#ff7a21,#ef5c12 55%,#c73c08) !important; }
 
 .hub-compact-card:nth-child(8n + 5),
 .hub-service-profile-card:nth-child(8n + 5),
@@ -251,8 +242,7 @@
 .mini-service-grid .card:nth-child(8n + 5),
 .results-grid .card:nth-child(8n + 5),
 .social-community-card:nth-child(8n + 5),
-.quick-action:nth-child(8n + 5),
-.admin-kpi:nth-child(8n + 5) { background: linear-gradient(135deg,#19b5b0,#0b8e8a 55%,#08706d) !important; }
+.quick-action:nth-child(8n + 5) { background: linear-gradient(135deg,#19b5b0,#0b8e8a 55%,#08706d) !important; }
 
 .hub-compact-card:nth-child(8n + 6),
 .hub-service-profile-card:nth-child(8n + 6),
@@ -263,8 +253,7 @@
 .mini-service-grid .card:nth-child(8n + 6),
 .results-grid .card:nth-child(8n + 6),
 .social-community-card:nth-child(8n + 6),
-.quick-action:nth-child(8n + 6),
-.admin-kpi:nth-child(8n + 6) { background: linear-gradient(135deg,#ec4b83,#d72e68 55%,#aa164d) !important; }
+.quick-action:nth-child(8n + 6) { background: linear-gradient(135deg,#ec4b83,#d72e68 55%,#aa164d) !important; }
 
 .hub-compact-card:nth-child(8n + 7),
 .hub-service-profile-card:nth-child(8n + 7),
@@ -275,8 +264,7 @@
 .mini-service-grid .card:nth-child(8n + 7),
 .results-grid .card:nth-child(8n + 7),
 .social-community-card:nth-child(8n + 7),
-.quick-action:nth-child(8n + 7),
-.admin-kpi:nth-child(8n + 7) { background: linear-gradient(135deg,#3475e8,#2459c8 55%,#173d91) !important; }
+.quick-action:nth-child(8n + 7) { background: linear-gradient(135deg,#3475e8,#2459c8 55%,#173d91) !important; }
 
 .hub-compact-card:nth-child(8n + 8),
 .hub-service-profile-card:nth-child(8n + 8),
@@ -287,8 +275,7 @@
 .mini-service-grid .card:nth-child(8n + 8),
 .results-grid .card:nth-child(8n + 8),
 .social-community-card:nth-child(8n + 8),
-.quick-action:nth-child(8n + 8),
-.admin-kpi:nth-child(8n + 8) { background: linear-gradient(135deg,#7a61e9,#6246c5 55%,#473295) !important; }
+.quick-action:nth-child(8n + 8) { background: linear-gradient(135deg,#7a61e9,#6246c5 55%,#473295) !important; }
 
 /* Rework compact home cards from icon-boxes into the reference's banner-card proportions. */
 .hub-compact-card {
@@ -379,8 +366,7 @@
   .mini-service-grid .card,
   .results-grid .card,
   .social-community-card,
-  .quick-action,
-  .admin-kpi {
+  .quick-action {
     transition: none !important;
   }
 }

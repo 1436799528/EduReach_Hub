@@ -10,12 +10,15 @@ import WaveLoader from '../src/components/WaveLoader';
 import { useAuth } from '../src/lib/auth';
 import { usePendingPhase } from '../src/lib/usePendingPhase';
 import {
-  abandonConfiguredCbt, fetchCbtAttemptPaper, saveConfiguredCbtDraft, submitConfiguredCbt, trackEvent,
+  abandonConfiguredCbt, CbtProtocolUnavailableError, fetchCbtAttemptPaper, fetchCbtV2State, saveConfiguredCbtDraft, submitConfiguredCbt, trackEvent,
   type CbtAttemptPayload, type CbtQuestionPayload,
 } from '../src/lib/api';
 import { userFacingError } from '../lib/errors';
 import { classifyFailure } from '../src/lib/failures';
 import { navigateInApp } from '../src/lib/navigation';
+import { useCbtPageWriter } from '../src/lib/useCbtPageWriter';
+import { inspectCbtAnswerJournal, validateCbtJournalPaper } from '../src/lib/cbtAnswerQueue';
+import { CBT_UUID } from '../src/lib/cbtProtocolValidation';
 
 /**
  * CBT-3 - the examination hall.
@@ -52,6 +55,18 @@ function writePending(attemptId: string, answers: Record<number, number> | null)
   }
 }
 
+/** Best-effort compare before removal; localStorage does not provide an atomic CAS. */
+function clearAcknowledgedPending(attemptId: string, snapshot: Record<number, number>): boolean {
+  try {
+    const key = `${PENDING_PREFIX}${attemptId}`;
+    const stored = localStorage.getItem(key);
+    if (stored === null) return true;
+    if (stored !== JSON.stringify(snapshot)) return false;
+    localStorage.removeItem(key);
+    return localStorage.getItem(key) === null;
+  } catch { return false; }
+}
+
 function formatClock(totalSeconds: number) {
   const safe = Math.max(0, Math.floor(totalSeconds));
   const hours = Math.floor(safe / 3600);
@@ -62,6 +77,7 @@ function formatClock(totalSeconds: number) {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'pending' | 'error';
+class CbtJournalStorageError extends CbtProtocolUnavailableError {}
 
 export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const { user } = useAuth();
@@ -73,11 +89,16 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const loadPhase = usePendingPhase(loading);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [v2Paper, setV2Paper] = useState<CbtQuestionPayload[] | null>(null);
+  const [v2Owner, setV2Owner] = useState<string | null>(null);
+  const writer = useCbtPageWriter(user?.id?.toLowerCase() === v2Owner ? user.id : undefined, attemptId, v2Paper);
+  const visibleAnswers = v2Paper ? writer.answers : answers;
   const [marked, setMarked] = useState<Record<number, boolean>>({});
   const [index, setIndex] = useState(0);
   const [clockOffsetMs, setClockOffsetMs] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [recoveryNotice, setRecoveryNotice] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [closed, setClosed] = useState<'expired' | 'submitted' | 'cancelled' | null>(null);
@@ -89,30 +110,74 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const endDialog = useRef<HTMLDialogElement | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingAnswers = useRef<Record<number, number> | null>(null);
+  const pendingIndex = useRef(0);
+  const pendingVersion = useRef(0);
+  const saveInFlight = useRef(false);
   const autoSubmitStarted = useRef(false);
+  const legacyProtocol = useRef(false);
+  const currentAccount = useRef(user?.id);
+  currentAccount.current = user?.id;
+  const loadGeneration = useRef(0);
 
   const load = useCallback(async () => {
+    // Concurrent paper retries must not allow an older response to re-enable
+    // legacy writes after a later response failed protocol negotiation.
+    const generation = ++loadGeneration.current;
+    legacyProtocol.current = false;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
     setLoading(true);
     setLoadError(null);
+    setV2Paper(null);
+    setV2Owner(null);
     try {
       const payload = await fetchCbtAttemptPaper(attemptId);
+      if (generation !== loadGeneration.current) return;
+      if (payload.protocol.version === 2) {
+        const accountId = currentAccount.current;
+        if (!accountId || !CBT_UUID.test(accountId) || !CBT_UUID.test(attemptId) || typeof payload.attempt?.id !== 'string' || payload.attempt.id.toLowerCase() !== attemptId.toLowerCase()) throw new CbtProtocolUnavailableError();
+        const state = await fetchCbtV2State(attemptId);
+        const operations = await inspectCbtAnswerJournal({ accountId, attemptId }).catch(() => { throw new CbtJournalStorageError(); });
+        if (generation !== loadGeneration.current) return;
+        if (accountId !== currentAccount.current) throw new CbtProtocolUnavailableError();
+        try {
+          validateCbtJournalPaper(state, payload.questions, operations);
+          if (payload.attempt.status !== state.status || !Number.isFinite(Date.parse(payload.serverTime)) ||
+              (payload.attempt.expiresAt && !Number.isFinite(Date.parse(payload.attempt.expiresAt)))) throw new Error('Invalid CBT timing or status.');
+        } catch { throw new CbtProtocolUnavailableError(); }
+        setV2Owner(accountId.toLowerCase());
+        setAttempt(payload.attempt);
+        setQuestions(payload.questions);
+        setClockOffsetMs(Date.parse(payload.serverTime) - Date.now());
+        setIndex(Math.max(0, Math.min(payload.attempt.questionIndex || 0, Math.max(0, payload.questions.length - 1))));
+        setV2Paper(payload.questions);
+        return;
+      }
+      legacyProtocol.current = true;
       setAttempt(payload.attempt);
       setQuestions(payload.questions);
       setClockOffsetMs(Date.parse(payload.serverTime) - Date.now());
-      // The server's saved draft wins only where the student has not typed
-      // something newer; the local pending draft is always the newest.
-      const pending = readPending(attemptId) || {};
-      setAnswers({ ...(payload.attempt.savedAnswers || {}), ...Object.fromEntries(Object.entries(pending).map(([key, value]) => [Number(key), value])) });
+      // A pending draft is a whole snapshot, not a patch: merging would
+      // resurrect answers the student deliberately cleared. Its age relative
+      // to another tab/device or an in-flight request cannot be established.
+      const pending = readPending(attemptId);
+      setAnswers(pending ?? payload.attempt.savedAnswers ?? {});
+      if (pending) {
+        setSaveState('pending');
+        setRecoveryNotice('A browser copy was restored but is not confirmed saved. It may be older than work in another tab or device. Review your answers before submitting.');
+      }
       setIndex(Math.max(0, Math.min(payload.attempt.questionIndex || 0, Math.max(0, payload.questions.length - 1))));
       if (payload.attempt.status !== 'in_progress') setClosed(payload.attempt.status);
     } catch (error) {
-      setLoadError(error);
+      if (generation === loadGeneration.current) setLoadError(error);
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) setLoading(false);
     }
   }, [attemptId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    return () => { loadGeneration.current++; legacyProtocol.current = false; };
+  }, [load]);
 
   useEffect(() => {
     document.body.classList.add('er-exam-mode');
@@ -150,56 +215,85 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     setClockNotice((current) => (current === next ? current : next));
   }, [remainingSeconds, expiresAt]);
 
-  /** Save the current answers, retrying once the connection returns. */
-  const flush = useCallback(async (nextAnswers: Record<number, number>, nextIndex: number) => {
-    pendingAnswers.current = nextAnswers;
-    writePending(attemptId, nextAnswers);
+  /** Serialize successful writes within this tab; only the newest acknowledgement clears its draft. */
+  const flush = useCallback(async function drain() {
+    if (!legacyProtocol.current || saveInFlight.current || !pendingAnswers.current) return;
+    const generation = loadGeneration.current;
+    const snapshot = pendingAnswers.current;
+    const snapshotIndex = pendingIndex.current;
+    const version = pendingVersion.current;
+    saveInFlight.current = true;
     setSaveState('saving');
+    let succeeded = false;
     try {
-      await saveConfiguredCbtDraft(attemptId, nextAnswers, nextIndex);
-      pendingAnswers.current = null;
-      writePending(attemptId, null);
-      setSaveState('saved');
+      await saveConfiguredCbtDraft(attemptId, snapshot, snapshotIndex);
+      succeeded = true;
+      // An old response is not permission to clear pending work after a new
+      // paper load or an unmount changed the active protocol.
+      if (legacyProtocol.current && generation === loadGeneration.current && version === pendingVersion.current) {
+        pendingAnswers.current = null;
+        if (clearAcknowledgedPending(attemptId, snapshot)) {
+          setSaveState('saved');
+          setRecoveryNotice('');
+        } else {
+          setSaveState('pending');
+          setRecoveryNotice('A different browser copy may still be present. Further changes in this tab can overwrite it; check your other tab before continuing.');
+        }
+      }
     } catch (error) {
       const failure = classifyFailure(error);
       if (failure.kind === 'offline' || failure.kind === 'timeout' || failure.kind === 'server') {
-        // Keep the work locally; the online event below retries it.
+        // Storage may be unavailable; keep the latest in-memory draft and report it as pending.
         setSaveState('pending');
       } else if (failure.kind === 'auth') {
         setSaveState('error');
-        setActionError('Your session ended. Sign in again in this tab to keep saving. Your answers are still on this device.');
+        setActionError('Your session ended. Sign in again in this tab to keep saving. Your answers may be lost if you leave this page.');
+      } else if (failure.kind === 'forbidden') {
+        setSaveState('error');
+        setActionError('Your account cannot save this attempt. Keep this page open and contact EduReach if you think this is a mistake.');
       } else {
         setSaveState('error');
       }
+    } finally {
+      saveInFlight.current = false;
+      // Never spin on an error or assume a timed-out request did not commit.
+      if (succeeded && pendingAnswers.current && version !== pendingVersion.current) void drain();
     }
   }, [attemptId]);
 
-  const scheduleSave = useCallback((nextAnswers: Record<number, number>, nextIndex: number) => {
+  const queueSave = useCallback((nextAnswers: Record<number, number>, nextIndex: number, immediate = false) => {
+    if (!legacyProtocol.current) return;
+    pendingAnswers.current = nextAnswers;
+    pendingIndex.current = nextIndex;
+    pendingVersion.current += 1;
+    writePending(attemptId, nextAnswers);
+    setSaveState('pending');
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => { void flush(nextAnswers, nextIndex); }, 900);
-  }, [flush]);
+    if (immediate) void flush();
+    else saveTimer.current = setTimeout(() => { void flush(); }, 900);
+  }, [attemptId, flush]);
 
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
   useEffect(() => {
-    const retry = () => { if (pendingAnswers.current) void flush(pendingAnswers.current, index); };
+    const retry = () => { if (pendingAnswers.current) void flush(); };
     window.addEventListener('online', retry);
     return () => window.removeEventListener('online', retry);
-  }, [flush, index]);
+  }, [flush]);
 
   useEffect(() => {
-    const onHide = () => { if (pendingAnswers.current) void flush(pendingAnswers.current, index); };
+    const onHide = () => { if (pendingAnswers.current) void flush(); };
     document.addEventListener('visibilitychange', onHide);
     return () => document.removeEventListener('visibilitychange', onHide);
-  }, [flush, index]);
+  }, [flush]);
 
   const subjectPlan = attempt?.plan || [];
   // Count only questions on this paper so stale local draft keys cannot inflate progress.
-  const answeredCount = questions.filter((item) => answers[item.position] !== undefined).length;
+  const answeredCount = questions.filter((item) => visibleAnswers[item.position] !== undefined).length;
   const markedCount = questions.filter((item) => Boolean(marked[item.position])).length;
 
   const submit = useCallback(async (reason: 'manual' | 'timer') => {
-    if (submitting || !attempt || closed === 'submitted') return;
+    if (!legacyProtocol.current || submitting || !attempt || closed === 'submitted') return;
     setSubmitting(true);
     setActionError('');
     try {
@@ -218,7 +312,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           ? 'Time is up. The examination was closed and nothing was submitted.'
           : 'This attempt had already expired, so nothing was submitted.');
       } else if (failure.kind === 'offline' || failure.kind === 'timeout' || failure.kind === 'server') {
-        setActionError('Your submission did not reach EduReach. Your answers are saved on this device. Check your connection and press Submit again.');
+        setActionError('Your submission could not be confirmed. Keep this page open, check your connection and your results before trying again.');
       } else {
         setActionError(userFacingError(error, 'Your paper could not be submitted. Please try again.'));
       }
@@ -237,6 +331,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   }, [attempt, closed, expiresAt, loading, remainingSeconds, submit]);
 
   const endTest = useCallback(async () => {
+    if (!legacyProtocol.current) return;
     setSubmitting(true);
     setActionError('');
     try {
@@ -253,33 +348,36 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
 
   const choose = useCallback((optionIndex: number) => {
     if (closed) return;
+    if (v2Paper) { if ((expiresAt === null || remainingSeconds > 0) && questions[index]) void writer.choose(questions[index], optionIndex); return; }
+    if (!legacyProtocol.current) return;
     setAnswers((current) => {
       const next = { ...current, [questions[index].position]: optionIndex };
-      scheduleSave(next, index);
+      queueSave(next, index);
       return next;
     });
-  }, [closed, index, questions, scheduleSave]);
+  }, [closed, expiresAt, index, questions, queueSave, remainingSeconds, v2Paper, writer]);
 
   const clearAnswer = useCallback(() => {
     if (closed) return;
+    if (v2Paper) { if ((expiresAt === null || remainingSeconds > 0) && questions[index]) void writer.choose(questions[index], null); return; }
+    if (!legacyProtocol.current) return;
     setAnswers((current) => {
       const next = { ...current };
       delete next[questions[index].position];
-      scheduleSave(next, index);
+      queueSave(next, index);
       return next;
     });
-  }, [closed, index, questions, scheduleSave]);
+  }, [closed, expiresAt, index, questions, queueSave, remainingSeconds, v2Paper, writer]);
 
   const goTo = useCallback((nextIndex: number) => {
     if (nextIndex < 0 || nextIndex >= questions.length) return;
     setIndex(nextIndex);
-    if (pendingAnswers.current) void flush(pendingAnswers.current, nextIndex);
-    else if (attempt) void saveConfiguredCbtDraft(attemptId, answers, nextIndex).catch(() => undefined);
-  }, [answers, attempt, attemptId, flush, questions.length]);
+    if (attempt) queueSave(pendingAnswers.current || answers, nextIndex, true);
+  }, [answers, attempt, queueSave, questions.length]);
 
   // Keyboard: 1–4 / A–D choose, arrows move, M marks. Never while a dialog is open.
   useEffect(() => {
-    if (confirmKind) return;
+    if (confirmKind || loading || loadError || !attempt || !questions[index]) return;
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
@@ -291,7 +389,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [choose, confirmKind, goTo, index, questions]);
+  }, [attempt, choose, confirmKind, goTo, index, loadError, loading, questions]);
 
   const unansweredDialog = useRef<HTMLDialogElement | null>(null);
 
@@ -342,16 +440,23 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     );
   }
 
+  if (v2Paper && user?.id?.toLowerCase() !== v2Owner) {
+    return <div className="er-exam-shell"><div className="er-exam-centred" role="alert">The signed-in account changed. Reopen the attempt with the original account; local work is preserved.</div></div>;
+  }
+
   if (loadError || !attempt) {
     return (
       <div className="er-exam-shell">
         <ConnectionBanner />
         <div className="er-exam-centred">
-          <ErrorState
-            error={loadError}
-            onRetry={() => void load()}
-            action={<a className="hub-outline-btn" href="/cbt">Back to the CBT Centre</a>}
-          />
+          {loadError instanceof CbtProtocolUnavailableError ? (
+            <div className="er-state er-state-error" role="alert">
+              <div><strong>This CBT session cannot be opened safely</strong><p>{loadError instanceof CbtJournalStorageError ? 'Browser storage is unavailable or requires review.' : 'The session protocol is unavailable.'} Keep local work and contact EduReach.</p></div>
+              <a className="hub-outline-btn" href="/cbt">Back to the CBT Centre</a>
+            </div>
+          ) : (
+            <ErrorState error={loadError} onRetry={() => void load()} action={<a className="hub-outline-btn" href="/cbt">Back to the CBT Centre</a>} />
+          )}
         </div>
       </div>
     );
@@ -387,12 +492,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   }
 
   const question = questions[index];
-  const selected = answers[question?.position];
+  const selected = visibleAnswers[question?.position];
   const isMarked = Boolean(marked[question?.position]);
   const timeAlmostUp = remainingSeconds <= 300;
   const progressPercent = totalSeconds ? Math.min(100, Math.round(((totalSeconds - remainingSeconds) / totalSeconds) * 100)) : 0;
   const isLastQuestion = index === questions.length - 1;
   const unansweredCount = questions.length - answeredCount;
+  const v2Blocked = Boolean(v2Paper && (writer.phase !== 'active' || writer.busy || (expiresAt !== null && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
   const currentSubjectEntry = subjectPlan.length > 1
     ? subjectPlan.find((plan) => question?.position >= plan.first && question?.position <= plan.last)
     : null;
@@ -444,19 +550,44 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <button type="button" className="er-exam-tool" onClick={() => setPaletteOpen((current) => !current)} aria-expanded={paletteOpen} aria-controls="er-exam-question-navigator" aria-label="Toggle question navigator">
             <Grid3X3 size={15} /> <span className="er-exam-tool-label">Questions</span>
           </button>
-          <button type="button" className="er-exam-end" style={{ backgroundColor: '#B14933', color: '#ffffff', border: '2px solid #8f3727', boxShadow: '0 2px 8px rgba(0,0,0,0.22)', minHeight: 40, padding: '8px 14px', borderRadius: 8 }} onClick={() => setConfirmKind('end')} aria-label="End test">
+          <button type="button" className="er-exam-end" style={{ backgroundColor: '#B14933', color: '#ffffff', border: '2px solid #8f3727', boxShadow: '0 2px 8px rgba(0,0,0,0.22)', minHeight: 40, padding: '8px 14px', borderRadius: 8 }} onClick={() => setConfirmKind('end')} disabled={Boolean(v2Paper)} aria-label="End test">
             <LogOut size={15} /> <span className="er-exam-tool-label">End Test</span>
           </button>
         </div>
       </header>
 
       <main className="er-exam-main">
+        {recoveryNotice && !v2Paper && <p className="hub-form-error" role="note">{recoveryNotice}</p>}
+        {v2Paper && <section aria-label="Writing session and recovery" className="hub-form-error">
+          <p role="status">{writer.phase === 'loading' ? 'Confirming writing session…' : writer.phase === 'active' ? 'Writing session confirmed by the server.' : 'Writing is paused.'} {writer.message}</p>
+          <p>Submission and ending this v2 attempt are unavailable. Work on another disconnected device cannot be discovered here.</p>
+          {writer.phase !== 'active' && writer.hasSnapshot && <section aria-label="Read-only recovery preview">
+            <h2>Read-only recovery preview</h2>
+            <p>These are the last confirmed server answers, not confirmation that pending local work is saved. Review unsaved answers separately below.</p>
+            <ol>{questions.map(item => <li key={item.id}>{item.text}: {visibleAnswers[item.position] === undefined ? 'No answer' : item.options[visibleAnswers[item.position]]}</li>)}</ol>
+          </section>}
+          {expiresAt !== null && remainingSeconds <= 0 && <p>Time has expired; no further answers can be entered. Pending work remains in this browser.</p>}
+          {writer.phase !== 'expired' && <button type="button" className="hub-outline-btn" disabled={writer.busy || writer.phase === 'loading'} onClick={() => { if (window.confirm('Take over writing on this tab? Any other active writer will be revoked. Unsaved work on other devices must be reviewed separately.')) void writer.takeover(); }}>Take over writing</button>}
+          {(writer.phase === 'error' || (writer.phase === 'active' && writer.rows.some(row => row.status === 'pending'))) && <button type="button" className="hub-outline-btn" disabled={writer.busy} onClick={() => writer.phase === 'error' ? void load() : void writer.retry()}>Retry connection</button>}
+          {writer.rows.filter(row => row.status === 'pending' || row.status === 'conflicted' || row.status === 'closed').map(row => {
+            const item = questions[row.position - 1];
+            const label = (value: number | null) => value === null ? 'No answer' : item?.options[value] ?? 'Unavailable';
+            return <div key={row.operationKey}>
+              <p>Question {row.position}: local answer {label(row.selected)} — {row.status === 'pending' ? 'not confirmed saved; review required if the session changed' : row.status === 'closed' ? 'attempt closed; not saved' : `server answer ${label(row.lastServerAnswer)} (revision ${row.lastServerRevision})`}.</p>
+              {row.status === 'pending' && writer.phase === 'active' && <button type="button" className="hub-outline-btn" disabled={writer.busy} onClick={() => void writer.review(row.operationKey)}>Review this pending answer</button>}
+              {row.status === 'conflicted' && writer.phase === 'active' && <>
+                <button type="button" className="hub-outline-btn" disabled={writer.busy} onClick={() => void writer.resolve(row, 'server')}>Keep server answer</button>
+                <button type="button" className="hub-outline-btn" disabled={writer.busy} onClick={() => void writer.resolve(row, 'local')}>Apply my local answer</button>
+              </>}
+            </div>;
+          })}
+        </section>}
 
         {subjectPlan.length > 1 && (
           <div className="er-exam-subject-tabs" role="tablist" aria-label="Exam subjects">
             {subjectPlan.map((entry) => {
               const answeredInBlock = questions.filter((item) =>
-                item.position >= entry.first && item.position <= entry.last && answers[item.position] !== undefined
+                item.position >= entry.first && item.position <= entry.last && visibleAnswers[item.position] !== undefined
               ).length;
               const current = Boolean(question && question.position >= entry.first && question.position <= entry.last);
               return (
@@ -492,10 +623,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               )}
             </div>
             <span className="er-exam-save-state" role="status">
-              {saveState === 'saving' && <><WaveLoader variant="inline" decorative /> saving…</>}
-              {saveState === 'saved' && <><CheckCircle2 size={13} /> saved</>}
-              {saveState === 'pending' && <><AlertTriangle size={13} /> saved on this device, will sync</>}
-              {saveState === 'error' && <><AlertTriangle size={13} /> not saved</>}
+              {v2Paper ? (writer.busy ? 'saving…' : writer.rows.some(row => row.status === 'conflicted') ? 'review required' : writer.rows.some(row => row.status === 'pending' || row.status === 'closed') ? 'not yet saved' : writer.phase === 'active' ? 'saved' : 'writing paused') : <>
+                {saveState === 'saving' && <><WaveLoader variant="inline" decorative /> saving…</>}
+                {saveState === 'saved' && <><CheckCircle2 size={13} /> saved</>}
+                {saveState === 'pending' && <><AlertTriangle size={13} /> not yet saved; keep this page open</>}
+                {saveState === 'error' && <><AlertTriangle size={13} /> not saved</>}
+              </>}
             </span>
           </div>
 
@@ -511,6 +644,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                     type="button"
                     role="radio"
                     aria-checked={isSelected}
+                    disabled={v2Blocked}
                     className={isSelected ? 'er-exam-option is-selected' : 'er-exam-option'}
                     onClick={() => choose(optionIndex)}
                   >
@@ -535,12 +669,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               <Flag size={15} /> {isMarked ? 'Marked for review' : 'Mark for review'}
             </button>
             {selected !== undefined && (
-              <button type="button" className="er-exam-ghost" onClick={clearAnswer}>
+              <button type="button" className="er-exam-ghost" onClick={clearAnswer} disabled={v2Blocked}>
                 <Eraser size={15} /> Clear answer
               </button>
             )}
             {isLastQuestion ? (
-              <button type="button" className="er-exam-next er-exam-submit-primary" onClick={handlePrimaryAction}>
+              <button type="button" className="er-exam-next er-exam-submit-primary" disabled={Boolean(v2Paper)} onClick={handlePrimaryAction}>
                 Submit Examination <Send size={15} />
               </button>
             ) : (
@@ -568,7 +702,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                 <div className="er-exam-palette-grid">
                   {list.map((item) => {
                     const position = item.position;
-                    const isAnswered = answers[position] !== undefined;
+                    const isAnswered = visibleAnswers[position] !== undefined;
                     const isMarkedItem = Boolean(marked[position]);
                     const isCurrent = item.position === question?.position;
                     const classes = ['er-exam-palette-cell'];
@@ -592,7 +726,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                 </div>
               </div>
             ))}
-            <button type="button" className="hub-primary-btn er-exam-palette-submit" onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
+            <button type="button" className="hub-primary-btn er-exam-palette-submit" disabled={Boolean(v2Paper)} onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
               <Send size={15} /> Submit paper
             </button>
           </aside>
@@ -671,7 +805,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <h2 id="er-end-title">End this test now?</h2>
           <p>
             Ending leaves the examination without scoring it. {answeredCount > 0
-              ? `${answeredCount} saved answer${answeredCount === 1 ? '' : 's'} stay with the session.`
+              ? `${answeredCount} question${answeredCount === 1 ? '' : 's'} answered. Changes that have not been saved may be lost.`
               : 'Nothing has been answered yet.'}
           </p>
           <p>

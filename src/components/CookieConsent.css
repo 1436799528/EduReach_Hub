@@ -1,0 +1,3 @@
+/* Extends the existing er-cookie styles in hub.css without duplicating them. */
+.er-cookie-consent { max-height: 70vh; overflow-y: auto; }
+.er-cookie-consent [role="alert"] { color: #a3291f; font-weight: 600; }

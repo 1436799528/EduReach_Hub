@@ -239,6 +239,12 @@ export default function SecurityModal({
           </button>
         </div>
 
+        <div style={{ marginBottom: '20px', fontSize: '13px' }}>
+          <h4 style={{ margin: '0 0 6px' }}>Privacy and account data</h4>
+          <p style={{ margin: '0 0 6px' }}>You can update your profile and remove individual saved items and CBT results. Account deletion and data export are not available in these settings.</p>
+          <a href="/privacy">Privacy notice</a>{' · '}<a href="/terms">Terms of use</a>{' · '}<a href="/cookies">Browser storage</a>
+        </div>
+
         <form onSubmit={handlePasswordChange} style={{ marginBottom: '22px', paddingBottom: '20px', borderBottom: '1px solid #f1f5f9' }}>
           <h4 style={{ margin: '0 0 4px', fontSize: '13.5px', fontWeight: 620, color: '#0f172a' }}>Change Password</h4>
           <p style={{ margin: '0 0 10px', fontSize: '12px', color: '#5e6c82' }}>Your active signed-in session is used to authorize this change.</p>

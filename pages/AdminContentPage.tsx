@@ -184,7 +184,7 @@ export default function AdminContentPage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>{type === 'exam' ? 'Exam dates' : 'Deadlines'}</h2><span>{loading ? 'Loading…' : `${items.length} item${items.length === 1 ? '' : 's'}`}</span></div>
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead><tr><th scope="col">Title</th><th scope="col">{type === 'exam' ? 'Starts' : 'Due'}</th><th scope="col">Priority</th><th scope="col">Visibility</th><th scope="col">Created</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>

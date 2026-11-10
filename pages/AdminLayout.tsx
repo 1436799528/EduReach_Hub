@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
   Briefcase,
@@ -12,9 +12,12 @@ import {
   Laptop,
   LayoutDashboard,
   ListChecks,
+  Menu,
   Newspaper,
   School,
+  ShieldCheck,
   Users,
+  X,
 } from 'lucide-react';
 import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
@@ -161,6 +164,7 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin/schools', label: 'Schools & Institutions', icon: <School size={15} />, capability: 'institution.read' },
   { kind: 'group', label: 'Examinations' },
   { kind: 'link', href: '/admin/cbt', label: 'CBT Manager', icon: <Laptop size={15} />, capability: 'cbt.read' },
+  { kind: 'link', href: '/admin/banks', label: 'Bank Security', icon: <ShieldCheck size={15} />, capability: 'cbt.read' },
   { kind: 'link', href: '/admin/question-imports', label: 'Import Past Questions', icon: <FileUp size={15} />, capability: 'cbt.manage' },
   { kind: 'group', label: 'Users' },
   { kind: 'link', href: '/admin/users', label: 'Student Accounts', icon: <Users size={15} />, capability: 'user.read' },
@@ -211,6 +215,18 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(!cached);
   const [session, setSession] = useState<AdminSession | null>(cached?.session || null);
   const [backend, setBackend] = useState(cached?.backend || 'Checking…');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMenuOpen(false); menuButton.current?.focus(); }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
 
   useEffect(() => {
     let active = true;
@@ -289,13 +305,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   const navItems = ADMIN_CONSOLE_NAV.filter((item) => item.kind === 'group' || item.capability === null || hasCapability(session, item.capability));
+  const currentSection = navItems.find((item) => item.kind === 'link' && item.href === pathname);
 
   return <div className="admin-shell">
     <SkipLink />
-    <aside className="admin-sidebar">
+    <aside className="admin-sidebar" data-menu-open={menuOpen}>
       <div>
-        <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
-        <nav className="admin-nav">
+        <div className="admin-brand">
+          <BrandLogo variant="mark" height={38} radius={8} />
+          <div className="admin-brand-text"><strong>EduReach Hub</strong><span>Management console</span></div>
+          <button ref={menuButton} type="button" className="admin-mobile-menu" aria-controls="admin-navigation" aria-expanded={menuOpen} aria-label={menuOpen ? 'Close admin menu' : 'Open admin menu'} onClick={() => setMenuOpen((open) => !open)}>
+            {menuOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} aria-hidden="true" />}
+          </button>
+        </div>
+        <nav id="admin-navigation" className="admin-nav" aria-label="Administration" onClick={(event) => { if ((event.target as Element).closest('a')) setMenuOpen(false); }}>
           {navItems.map((item, index) => (
             item.kind === 'group'
               ? <div className="admin-nav-group" key={`group-${index}`}>{item.label}</div>
@@ -315,10 +338,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     </aside>
     <div className="admin-workspace">
       <header className="admin-topbar">
-        <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {session.fullName || session.email}</span>
+        <div className="admin-topbar-context"><span>Workspace</span><strong>{currentSection?.kind === 'link' ? currentSection.label : 'Administration'}</strong></div>
+        <div className="admin-topbar-meta"><span className="admin-topbar-user">{session.fullName || session.email}</span>
         <span className={`admin-health-pill ${health.state}`}>
           <i /> {health.state === 'ok' ? `API Online${health.latencyMs !== null ? ` · ${health.latencyMs}ms` : ''}` : health.state === 'down' ? 'API Unreachable' : 'Checking API…'}
-        </span>
+        </span></div>
       </header>
       <main className="admin-main" id="main-content" tabIndex={-1}>
         <AdminCapabilityProvider value={session}>{children}</AdminCapabilityProvider>

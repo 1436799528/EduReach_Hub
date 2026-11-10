@@ -342,7 +342,7 @@ export default function AdminServicesPage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>Catalogue</h2><span>{loading ? 'Loading…' : `${services.length} services`}</span></div>
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead><tr><th scope="col">Service</th><th scope="col">Key</th><th scope="col">Destination</th><th scope="col">Order</th><th scope="col">State</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
