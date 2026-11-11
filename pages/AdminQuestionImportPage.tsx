@@ -77,16 +77,6 @@ function draftFor(item: AdminQuestionImportItem): Draft {
   };
 }
 
-function readAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('The selected file could not be read.'));
-    reader.onload = () => typeof reader.result === 'string'
-      ? resolve(reader.result)
-      : reject(new Error('The selected file could not be read.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function AdminQuestionImportPage() {
   const [imports, setImports] = useState<AdminQuestionImport[]>([]);
@@ -242,9 +232,8 @@ export default function AdminQuestionImportPage() {
     let lastId = '';
     for (const [index, file] of queue.entries()) {
       try {
-        const dataUrl = await readAsDataUrl(file);
         const result = await uploadAdminQuestionImport({
-          dataUrl,
+          file,
           filename: file.name,
           examId,
           subject: subject.trim(),

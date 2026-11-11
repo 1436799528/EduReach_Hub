@@ -56,14 +56,6 @@ function draftFor(item: AdminPdfDocument): Draft {
     opportunity_id: item.opportunity_id || '',
   };
 }
-function fileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read the selected PDF.'));
-    reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('The selected file could not be read.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function AdminPdfBankPage() {
   const [items, setItems] = useState<AdminPdfDocument[]>([]);
@@ -109,8 +101,7 @@ export default function AdminPdfBankPage() {
     if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) { setError('Choose a PDF file.'); return; }
     setUploading(true); setError(''); setMessage('');
     try {
-      const dataUrl = await fileAsDataUrl(file);
-      const item = await uploadAdminPdf({ dataUrl, filename: file.name, title: title.trim() || file.name.replace(/\.pdf$/i, ''), description: description.trim() });
+      const item = await uploadAdminPdf({ file, filename: file.name, title: title.trim() || file.name.replace(/\.pdf$/i, ''), description: description.trim() });
       setItems((current) => [item, ...current]);
       setDrafts((current) => ({ ...current, [item.id]: draftFor(item) }));
       setFile(null); setTitle(''); setDescription('');

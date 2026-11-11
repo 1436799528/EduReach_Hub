@@ -1096,10 +1096,16 @@ export type AdminPdfDocument = {
   created_at: string;
 };
 
-export async function uploadAdminPdf(input: { dataUrl: string; filename: string; title: string; description?: string }): Promise<AdminPdfDocument> {
-  const body = await adminApiFetch<{ item: AdminPdfDocument }>('/api/admin/pdf-bank/upload', {
+export async function uploadAdminPdf(input: { file: File; filename: string; title: string; description?: string }): Promise<AdminPdfDocument> {
+  const sign = await adminApiFetch<{ bucket: string; path: string; token: string; maxBytes: number }>('/api/admin/direct-uploads/pdf/sign', {
+    method: 'POST', body: JSON.stringify({ filename: input.filename }),
+  });
+  if (input.file.size > sign.maxBytes) throw new Error('PDF files must be 10 MB or smaller.');
+  const { error: uploadError } = await supabase.storage.from(sign.bucket).uploadToSignedUrl(sign.path, sign.token, input.file);
+  if (uploadError) throw new Error(userFacingError(uploadError, 'Unable to upload this PDF.'));
+  const body = await adminApiFetch<{ item: AdminPdfDocument }>('/api/admin/direct-uploads/pdf/finalize', {
     method: 'POST',
-    body: JSON.stringify(input),
+    body: JSON.stringify({ path: sign.path, filename: input.filename, title: input.title, description: input.description }),
   });
   return body.item;
 }
@@ -1216,42 +1222,27 @@ export const IMPORT_UPLOAD_ACCEPT = [
  * polls for its result, so this promise settles as soon as the file is stored.
  */
 export async function uploadAdminQuestionImport(
-  input: {
-    dataUrl: string;
-    filename: string;
-    examId: string;
-    subject: string;
-    paperYear: number | string | null;
-    sourceName?: string;
-    sourceUrl?: string;
-    sourceVerified?: boolean;
-  },
+  input: { file: File; filename: string; examId: string; subject: string; paperYear: number | string | null; sourceName?: string; sourceUrl?: string; sourceVerified?: boolean },
   onProgress?: (fraction: number) => void,
 ): Promise<{ item: AdminQuestionImport; duplicate: boolean }> {
-  const headers = await authHeaders();
-  if (!headers.Authorization) throw new Error('Administrator session required.');
-  return await new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('POST', apiUrl('/api/admin/question-imports'));
-    request.setRequestHeader('Content-Type', 'application/json');
-    request.setRequestHeader('Authorization', headers.Authorization);
-    request.timeout = 120_000;
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total) onProgress?.(event.loaded / event.total);
-    };
-    request.onload = () => {
-      let body: Record<string, unknown> | null = null;
-      try { body = JSON.parse(request.responseText || '{}'); } catch { body = null; }
-      if (request.status >= 200 && request.status < 300 && body?.item) {
-        resolve({ item: body.item as AdminQuestionImport, duplicate: Boolean(body.duplicate) });
-        return;
-      }
-      reject(new Error(userFacingError(body?.error, 'Unable to upload that file.')));
-    };
-    request.onerror = () => reject(new Error('The upload could not reach EduReach. Check your connection.'));
-    request.ontimeout = () => reject(new Error('The upload timed out. Check your connection and try again.'));
-    request.send(JSON.stringify(input));
+  const sign = await adminApiFetch<{ bucket: string; path: string; token: string; maxBytes: number }>('/api/admin/direct-uploads/question-import/sign', {
+    method: 'POST',
+    body: JSON.stringify({ filename: input.filename, examId: input.examId, subject: input.subject, paperYear: input.paperYear }),
   });
+  if (input.file.size > sign.maxBytes) throw new Error('Question files must be 20 MB or smaller.');
+  onProgress?.(0.05);
+  const { error: uploadError } = await supabase.storage.from(sign.bucket).uploadToSignedUrl(sign.path, sign.token, input.file);
+  if (uploadError) throw new Error(userFacingError(uploadError, 'Unable to upload that file.'));
+  onProgress?.(0.9);
+  const result = await adminApiFetch<{ item: AdminQuestionImport; duplicate: boolean }>('/api/admin/direct-uploads/question-import/finalize', {
+    method: 'POST',
+    body: JSON.stringify({
+      path: sign.path, filename: input.filename, examId: input.examId, subject: input.subject,
+      paperYear: input.paperYear, sourceName: input.sourceName, sourceUrl: input.sourceUrl, sourceVerified: input.sourceVerified,
+    }),
+  });
+  onProgress?.(1);
+  return result;
 }
 
 export async function retryAdminQuestionImport(id: string): Promise<void> {
