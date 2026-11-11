@@ -56,14 +56,6 @@ function draftFor(item: AdminPdfDocument): Draft {
     opportunity_id: item.opportunity_id || '',
   };
 }
-function fileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read the selected PDF.'));
-    reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('The selected file could not be read.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function AdminPdfBankPage() {
   const [items, setItems] = useState<AdminPdfDocument[]>([]);
