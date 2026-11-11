@@ -27,8 +27,8 @@ test('client environment guard rejects privileged values even in preview and unu
     assert.equal(evaluateClientEnv({ VITE_SUPABASE_URL: 'https://example.test', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test', [name]: 'unrecognized-synthetic-value' }).ok, false, name);
   }
   assert.equal(evaluateClientEnv({ VITE_SUPABASE_URL: 'https://example.test', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test', VITE_SUPABASE_SECRET_KEY: '' }).ok, true);
-  assert.equal(evaluateClientEnv({ CONTEXT: opaque, VERCEL_ENV: 'production' }).reason, 'VERCEL_ENV=production');
-  assert.equal(evaluateClientEnv({ CONTEXT: 'production' }).reason, 'CONTEXT=production');
+  assert.equal(evaluateClientEnv({ CONTEXT: opaque, VERCEL_ENV: 'production' }).reason, 'Vercel production build');
+  assert.equal(evaluateClientEnv({ CONTEXT: 'production' }).reason, 'Vercel production build');
 });
 
 test('direct Vite build and dev refuse privileged process and mode-file values before emitting client assets', () => {
