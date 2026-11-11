@@ -5,10 +5,10 @@
 const configuredApiOrigin = import.meta.env.VITE_EDUREACH_API_URL?.trim().replace(/\/+$/, '');
 
 export const API_BASE_PATH = configuredApiOrigin
-  ? \`\${configuredApiOrigin}/api\`
+  ? configuredApiOrigin + '/api'
   : '/api';
 
 export function apiUrl(path: string): string {
   if (!path.startsWith('/api/')) return path;
-  return \`\${API_BASE_PATH}\${path.slice('/api'.length)}\`;
+  return API_BASE_PATH + path.slice('/api'.length);
 }
