@@ -166,11 +166,17 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
           )}
 
           {!loading && error && (
-            <ErrorState
-              error={error}
-              onRetry={loadResult}
-              action={<a className="hub-primary-btn" href="/cbt">Back to CBT</a>}
-            />
+            <>
+              {/* Direct routes must always render a heading: this page previously
+                  lost its h1 to the shared ErrorState, and the e2e contract
+                  (every public route renders an h1) caught it on main. */}
+              <h1>CBT result unavailable</h1>
+              <ErrorState
+                error={error}
+                onRetry={loadResult}
+                action={<a className="hub-primary-btn" href="/cbt">Back to CBT</a>}
+              />
+            </>
           )}
 
           {deleteSuccess && (
