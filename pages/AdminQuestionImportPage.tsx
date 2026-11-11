@@ -242,9 +242,8 @@ export default function AdminQuestionImportPage() {
     let lastId = '';
     for (const [index, file] of queue.entries()) {
       try {
-        const dataUrl = await readAsDataUrl(file);
         const result = await uploadAdminQuestionImport({
-          dataUrl,
+          file,
           filename: file.name,
           examId,
           subject: subject.trim(),
