@@ -1,10 +1,12 @@
 /**
  * Environment-bound entry point for the newsroom pipeline.
  *
- * Used by three callers so they always behave identically:
- *   - netlify/functions/daily-news-refresh.ts (scheduled @daily)
+ * Used by the callers so they always behave identically:
  *   - POST /api/admin/newsroom/ingest (manual run from the admin console)
  *   - scripts/newsroom.ts (local CLI, including --dry-run and --check-sources)
+ *   - A scheduler in the deployment environment (the Netlify scheduled function
+ *     was removed with the rest of the Netlify adapter; wire the schedule to the
+ *     backend's cron trigger or POST /api/admin/newsroom/ingest)
  */
 
 import { createClient } from '@supabase/supabase-js';

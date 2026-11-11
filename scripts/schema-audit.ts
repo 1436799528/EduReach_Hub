@@ -73,7 +73,7 @@ export interface AuditReport {
 /** Objects Supabase provides before any migration runs. */
 const PLATFORM_TABLES = new Set(['auth.users', 'storage.objects', 'storage.buckets']);
 
-const CODE_DIRS = ['server.ts', 'src', 'lib', 'pages', 'netlify', 'scripts'];
+const CODE_DIRS = ['server.ts', 'src', 'lib', 'pages', 'scripts'];
 
 /**
  * The restricted-bank candidates in `supabase/candidates/` are deliberately not

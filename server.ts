@@ -55,6 +55,8 @@ const rateLimitFor = createRateLimiter({
   log: (message, meta) => console.warn(`[rate-limit] ${message}`, meta ? JSON.stringify(meta) : ''),
 });
 
+// Legacy path normalisation: bookmarked or hard-coded `/.netlify/functions/api`
+// URLs from the Netlify deployment keep working by collapsing to `/api`.
 app.use((_req, res, next) => {
   if (
     _req.url === '/.netlify/functions/api' ||
@@ -2983,9 +2985,9 @@ app.get('/api/past-questions/resources', async (req, res) => {
 });
 
 // NOT a rollout switch. The Phase 4 candidate deliberately disables old RPCs
-// in its disposable database. Never expose it in production or Netlify.
+// in its disposable database. Never expose it in production or on a hosted platform.
 function cbtV2LocalRehearsalEnabled(): boolean {
-  if (process.env.CBT_V2_LOCAL_REHEARSAL !== '1' || process.env.NODE_ENV === 'production' || process.env.NETLIFY) return false;
+  if (process.env.CBT_V2_LOCAL_REHEARSAL !== '1' || process.env.NODE_ENV === 'production' || process.env.NETLIFY || process.env.VERCEL) return false;
   try {
     const url = new URL(process.env.VITE_SUPABASE_URL || '');
     return url.protocol === 'http:' && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
@@ -4097,8 +4099,9 @@ app.get('/api/admin/integrity', requireCapability('data.read'), async (_req, res
 
 // ---------------------------------------------------------------------------
 // Crawler surfaces. Registered for both the bare path (self-hosted Express and
-// Docker) and the /api path, because Netlify rewrites /robots.txt and
-// /sitemap.xml through the API function (see netlify.toml).
+// Docker) and the /api path, for deployments that route /robots.txt and
+// /sitemap.xml through the API (the Netlify redirect did; on Vercel the frontend
+// must rewrite those two paths to the backend origin).
 // ---------------------------------------------------------------------------
 
 async function serveRobotsTxt(req: express.Request, res: express.Response) {
@@ -4155,12 +4158,13 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    // Cache policy, kept in step with public/_headers (the Netlify deployment).
-    // Express used to serve index.html as `public, max-age=0` while Netlify sent
+    // Cache policy, kept in step with public/_headers and the Vercel headers
+    // in vercel.json. Express used to serve index.html as `public, max-age=0`
+    // while Netlify sent
     // `no-store`, so a self-hosted deployment and a Netlify one disagreed about
     // the shell - and a cached shell references chunk filenames that a deploy
     // has already replaced. Content-hashed assets are immutable on
-    // both platforms.
+    // every platform.
     app.use(express.static(distPath, {
       setHeaders: (res, filePath) => {
         if (filePath.endsWith('index.html')) {
@@ -4184,7 +4188,9 @@ async function startServer() {
 // The disposable PostgreSQL/HTTP rehearsal imports the real Express app and
 // binds its own ephemeral listener. Never suppress startup outside test mode.
 const cbtLocalTestImport = process.env.NODE_ENV === 'test' && process.env.CBT_V2_LOCAL_REHEARSAL === '1' && process.env.CBT_V2_TEST_IMPORT === '1';
-if (!process.env.NETLIFY && !cbtLocalTestImport) {
+// Never start the listener on a hosted function platform; only self-hosted
+// Express binds a port.
+if (!process.env.NETLIFY && !process.env.VERCEL && !cbtLocalTestImport) {
   startServer().catch((error) => {
     console.error('Unable to start EduReach:', error);
     process.exitCode = 1;

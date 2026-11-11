@@ -4,7 +4,7 @@
 // /api path so the Vite proxy or local server can handle it.
 const configuredApiOrigin = (import.meta.env?.VITE_EDUREACH_API_URL as string | undefined)
   ?.trim()
-  .replace(/\\/+$/, '');
+  .replace(/\/+$/, '');
 
 export const API_BASE_PATH = configuredApiOrigin
   ? `${configuredApiOrigin}/api`

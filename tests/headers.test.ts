@@ -4,11 +4,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-// Security headers are declared twice on purpose: `server.ts` sets them on the
-// API function's responses, and `public/_headers` sets them on everything Netlify
-// serves statically (which is most of the site). The source comment says "keep in
+// Security headers are declared three times on purpose: `server.ts` sets them on
+// the API function's responses, `public/_headers` sets them on everything a
+// Netlify-style static host serves (which is most of the site), and `vercel.json`
+// repeats them for the Vercel production deployment (Vercel does not read
+// `public/_headers`). The source comment says "keep in
 // sync" — this is what makes that a check rather than an intention. A header that
-// exists in one place and not the other is silently absent for part of the site,
+// exists in one place and not the others is silently absent for part of the site,
 // and the CSP is the one where drift is most dangerous.
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -26,6 +28,9 @@ const readNormalized = (path: string): string =>
 
 const serverSource = readNormalized('server.ts');
 const headersFile = readNormalized('public/_headers');
+const vercelConfig = JSON.parse(readNormalized('vercel.json')) as {
+  headers?: Array<{ source: string; headers: Array<{ key: string; value: string }> }>;
+};
 
 /** The production CSP string from server.ts, as sent at runtime. */
 function expressCsp(): string {
@@ -60,6 +65,21 @@ function netlifyHeaders(): Set<string> {
   );
 }
 
+/** The `/(.*)` block of vercel.json — what Vercel applies to every response. */
+function vercelWildcardBlock(): Array<{ key: string; value: string }> {
+  const block = vercelConfig.headers?.find((entry) => entry.source === '/(.*)');
+  assert.ok(block, 'vercel.json has no /(.*) header block');
+  return block.headers;
+}
+
+function vercelHeaders(): Set<string> {
+  return new Set(vercelWildcardBlock().map((header) => header.key.toLowerCase()));
+}
+
+function vercelHeaderValue(name: string): string | undefined {
+  return vercelWildcardBlock().find((header) => header.key.toLowerCase() === name)?.value;
+}
+
 /** The security headers that must be present on every response, from both sources. */
 const REQUIRED = [
   'x-content-type-options',
@@ -84,22 +104,34 @@ test('every required security header is set for Netlify static responses', () =>
   }
 });
 
-test('the two header sources declare the same security header set', () => {
+test('every required security header is set for Vercel static responses', () => {
+  const present = vercelHeaders();
+  for (const header of REQUIRED) {
+    assert.ok(present.has(header), `vercel.json does not set ${header}`);
+  }
+});
+
+test('the header sources declare the same security header set', () => {
   const express = expressHeaders();
   const netlify = netlifyHeaders();
+  const vercel = vercelHeaders();
   // Express additionally sets response-specific headers (Cache-Control on /api,
   // X-Robots-Tag on private paths, Retry-After on a 503); those are not part of
   // the shared baseline.
   const expressBaseline = new Set([...express].filter((name) => !['cache-control', 'retry-after', 'x-robots-tag'].includes(name)));
-  assert.deepEqual([...expressBaseline].sort(), [...netlify].sort(), 'the two sources have drifted apart');
+  assert.deepEqual([...expressBaseline].sort(), [...netlify].sort(), 'server.ts and public/_headers have drifted apart');
+  assert.deepEqual([...expressBaseline].sort(), [...vercel].sort(), 'server.ts and vercel.json have drifted apart');
 });
 
-test('the production CSP is identical in both sources', () => {
+test('the production CSP is identical in all three sources', () => {
   const expressCsp = /'Content-Security-Policy',\s*\n?\s*"([^"]+)"/.exec(serverSource)?.[1];
   assert.ok(expressCsp, 'no production CSP found in server.ts');
   const netlifyCsp = /^\s{2}Content-Security-Policy:\s*(.+)$/m.exec(netlifyWildcardBlock())?.[1].trim();
   assert.ok(netlifyCsp, 'no CSP found in public/_headers');
   assert.equal(netlifyCsp, expressCsp, 'the CSP differs between server.ts and public/_headers');
+  const vercelCsp = vercelHeaderValue('content-security-policy')?.trim();
+  assert.ok(vercelCsp, 'no CSP found in vercel.json');
+  assert.equal(vercelCsp, expressCsp, 'the CSP differs between server.ts and vercel.json');
 });
 
 test('the production CSP keeps its load-bearing directives', () => {
@@ -144,16 +176,26 @@ test('content-hashed assets are immutable and the shell is never cached', () => 
     return end >= 0 ? rest.slice(0, end) : rest;
   };
 
+  /** The Cache-Control vercel.json declares for one source pattern, if any. */
+  const vercelCacheControl = (source: string): string | undefined =>
+    vercelConfig.headers
+      ?.find((entry) => entry.source === source)
+      ?.headers.find((header) => header.key.toLowerCase() === 'cache-control')
+      ?.value;
+
   const assets = blockFor('/assets/*');
   assert.match(assets, /Cache-Control: public, max-age=31536000, immutable/);
   assert.match(assets, /immutable/, 'a hashed file whose name changes with its bytes can be cached forever');
+  assert.equal(vercelCacheControl('/assets/(.*)'), 'public, max-age=31536000, immutable', 'vercel.json must cache hashed assets immutably');
 
   const shell = blockFor('/index.html');
   assert.match(shell, /no-store/, 'a stale index.html would serve references to chunks that no longer exist');
   assert.ok(!/immutable|max-age=31536000/.test(shell), 'the shell must not be cached');
+  assert.equal(vercelCacheControl('/index.html'), 'no-cache, no-store, must-revalidate', 'vercel.json must never cache the shell');
 
   const serviceWorker = blockFor('/sw.js');
   assert.match(serviceWorker, /no-store/, 'a cached service worker would pin an old app shell');
+  assert.equal(vercelCacheControl('/sw.js'), 'no-cache, no-store, must-revalidate', 'vercel.json must never cache the service worker');
 });
 
 test('the CSP keeps separate https and wss origins for Supabase', () => {
@@ -165,6 +207,7 @@ test('the CSP keeps separate https and wss origins for Supabase', () => {
   const sources = [
     ['server.ts', cspSources(expressCsp(), 'connect-src')],
     ['public/_headers', cspSources(netlifyWildcardBlock(), 'connect-src')],
+    ['vercel.json', cspSources(vercelHeaderValue('content-security-policy') ?? '', 'connect-src')],
   ] as const;
 
   for (const [label, list] of sources) {
@@ -178,6 +221,7 @@ test('the CSP keeps separate https and wss origins for Supabase', () => {
       );
     }
   }
-  assert.deepEqual(sources[1][1], sources[0][1], 'the two connect-src lists have drifted apart');
+  assert.deepEqual(sources[1][1], sources[0][1], 'the connect-src lists in server.ts and public/_headers have drifted apart');
+  assert.deepEqual(sources[2][1], sources[0][1], 'the connect-src lists in server.ts and vercel.json have drifted apart');
 });
 

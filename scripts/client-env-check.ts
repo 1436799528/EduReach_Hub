@@ -52,21 +52,21 @@ function main(): void {
   }
   if (verdict.enforced) {
     console.error(
-      `\\nFAIL client Supabase contract is unmet (${verdict.reason}).\\n` +
-        `     Missing: ${verdict.missing.join(', ')}\\n` +
-        '     A production build without these deploys a site that looks complete but\\n' +
-        '     persists nothing: applications and exam attempts are kept only in the\\n' +
-        '     visitor\\'s browser. Set them in the Vercel build environment, then build again.\\n',
+      `\nFAIL client Supabase contract is unmet (${verdict.reason}).\n` +
+        `     Missing: ${verdict.missing.join(', ')}\n` +
+        '     A production build without these deploys a site that looks complete but\n' +
+        '     persists nothing: applications and exam attempts are kept only in the\n' +
+        "     visitor's browser. Set them in the Vercel build environment, then build again.\n",
     );
     process.exitCode = 1;
     return;
   }
   console.warn(
-    `\\nWARN client Supabase contract is unmet (${verdict.reason}); continuing.\\n` +
-      `     Missing: ${verdict.missing.join(', ')}\\n` +
-      '     This is a local/non-production build: the app uses local fallbacks and\\n' +
-      '     nothing a visitor submits is persisted. A production Vercel build will\\n' +
-      '     refuse to build in this state.\\n',
+    `\nWARN client Supabase contract is unmet (${verdict.reason}); continuing.\n` +
+      `     Missing: ${verdict.missing.join(', ')}\n` +
+      '     This is a local/non-production build: the app uses local fallbacks and\n' +
+      '     nothing a visitor submits is persisted. A production Vercel build will\n' +
+      '     refuse to build in this state.\n',
   );
 }
 

@@ -27,7 +27,8 @@ test('client environment guard rejects privileged values even in preview and unu
     assert.equal(evaluateClientEnv({ VITE_SUPABASE_URL: 'https://example.test', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test', [name]: 'unrecognized-synthetic-value' }).ok, false, name);
   }
   assert.equal(evaluateClientEnv({ VITE_SUPABASE_URL: 'https://example.test', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test', VITE_SUPABASE_SECRET_KEY: '' }).ok, true);
-  assert.equal(evaluateClientEnv({ CONTEXT: opaque, NETLIFY_CONTEXT: 'production' }).reason, 'NETLIFY_CONTEXT=production');
+  assert.equal(evaluateClientEnv({ CONTEXT: opaque, VERCEL_ENV: 'production' }).reason, 'VERCEL_ENV=production');
+  assert.equal(evaluateClientEnv({ CONTEXT: 'production' }).reason, 'CONTEXT=production');
 });
 
 test('direct Vite build and dev refuse privileged process and mode-file values before emitting client assets', () => {
@@ -103,7 +104,7 @@ test('the pre-build script refuses a synthetic secret without printing it', () =
   assert.match(`${result.stdout}${result.stderr}`, /privileged Supabase key/i);
   assert.ok(!`${result.stdout}${result.stderr}`.includes(opaque));
   const missing = spawnSync(process.execPath, ['--import', loader, join(root, 'scripts', 'client-env-check.ts')], {
-    cwd: root, env: { PATH: process.env.PATH, HOME: process.env.HOME, CONTEXT: opaque, NETLIFY_CONTEXT: 'production' }, encoding: 'utf8',
+    cwd: root, env: { PATH: process.env.PATH, HOME: process.env.HOME, CONTEXT: opaque, VERCEL_ENV: 'production' }, encoding: 'utf8',
   });
   assert.equal(missing.status, 1);
   assert.ok(!`${missing.stdout}${missing.stderr}`.includes(opaque));
