@@ -1,63 +1,37 @@
 /**
- * P2-1 — the client contract, enforced at build time.
- *
- * `src/lib/supabase.ts` never throws: with `VITE_SUPABASE_URL` and a
- * publishable key missing at build time, the deployed site still renders a
- * complete-looking product, and a student can "apply" for a service or "sit" an
- * exam that is never persisted. The server knows the truth
- * (`/api/health/ready` → 503 degraded); nothing at the client end did.
- *
- * This check runs first in `npm run build`. It fails the build only when the
- * build is a production deployment (`CONTEXT=production`, which Netlify sets for
- * the production context) or when a caller opts in explicitly
- * (`EDUREACH_REQUIRE_CLIENT_ENV=1`, for a self-hosted release pipeline). A local
- * build, a test run and a Netlify deploy preview all warn loudly and continue —
- * they legitimately build without production credentials, and a guard that
- * breaks them would be removed within a week.
- *
- * The check reads `.env` (like the other operator scripts, and like `vite build`
- * itself, which loads it from the project root). Reading only `process.env` made
- * the guard disagree with the bundler it guards: on a machine with a complete
- * `.env`, `npm run build` printed "Missing: VITE_SUPABASE_URL, …" and, under
- * `CONTEXT=production`, refused to build a correctly configured checkout. A
- * real variable already in the environment still wins - dotenv never overwrites.
+ * Enforce the browser Supabase configuration before a production build.
+ * The guard prevents a deployed site from looking functional while silently
+ * keeping student submissions only in the visitor's browser.
  */
 import 'dotenv/config';
 import { hasPrivilegedClientValue } from './client-secret-guard';
 
-/** Vite inlines only `VITE_`-prefixed variables into the browser bundle. */
+/** Vite inlines only VITE_-prefixed variables into the browser bundle. */
 export const CLIENT_VARS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'] as const;
 
 export interface ClientEnvVerdict {
-  /** True when nothing required is missing. */
   ok: boolean;
-  /** Required variables with no value. */
   missing: string[];
-  /** True when a missing variable must fail the build rather than warn. */
   enforced: boolean;
-  /** Where the enforcement decision came from, for the log line. */
   reason: string;
-  /** A known privileged Supabase key must never enter any client variable. */
   privilegedClientValue: boolean;
 }
 
 export function evaluateClientEnv(env: Record<string, string | undefined>): ClientEnvVerdict {
   const missing: string[] = [];
   if (!env.VITE_SUPABASE_URL) missing.push('VITE_SUPABASE_URL');
-  // Either name satisfies the client: supabase.ts accepts the publishable key
-  // or the legacy anon key.
   if (!env.VITE_SUPABASE_PUBLISHABLE_KEY && !env.VITE_SUPABASE_ANON_KEY) {
     missing.push('VITE_SUPABASE_PUBLISHABLE_KEY');
   }
 
-  const productionContext = env.CONTEXT === 'production' || env.NETLIFY_CONTEXT === 'production';
+  const productionContext = env.VERCEL_ENV === 'production' || env.CONTEXT === 'production';
   const explicit = env.EDUREACH_REQUIRE_CLIENT_ENV === '1';
   const privilegedClientValue = hasPrivilegedClientValue(env);
   const enforced = productionContext || explicit || privilegedClientValue;
   const reason = explicit
     ? 'EDUREACH_REQUIRE_CLIENT_ENV=1'
     : productionContext
-      ? (env.CONTEXT === 'production' ? 'CONTEXT=production' : 'NETLIFY_CONTEXT=production')
+      ? (env.VERCEL_ENV === 'production' ? 'VERCEL_ENV=production' : 'CONTEXT=production')
       : 'not a production build';
 
   return { ok: missing.length === 0 && !privilegedClientValue, missing, enforced, reason, privilegedClientValue };
@@ -78,21 +52,21 @@ function main(): void {
   }
   if (verdict.enforced) {
     console.error(
-      `\nFAIL client Supabase contract is unmet (${verdict.reason}).\n` +
-        `     Missing: ${verdict.missing.join(', ')}\n` +
-        '     A production build without these deploys a site that looks complete but\n' +
-        '     persists nothing: applications and exam attempts are kept only in the\n' +
-        '     visitor\'s browser. Set them in the build environment, then build again.\n',
+      `\\nFAIL client Supabase contract is unmet (${verdict.reason}).\\n` +
+        `     Missing: ${verdict.missing.join(', ')}\\n` +
+        '     A production build without these deploys a site that looks complete but\\n' +
+        '     persists nothing: applications and exam attempts are kept only in the\\n' +
+        '     visitor\\'s browser. Set them in the Vercel build environment, then build again.\\n',
     );
     process.exitCode = 1;
     return;
   }
   console.warn(
-    `\nWARN client Supabase contract is unmet (${verdict.reason}); continuing.\n` +
-      `     Missing: ${verdict.missing.join(', ')}\n` +
-      '     This build is a dev/preview artifact: the app runs on local fallbacks and\n' +
-      '     nothing a visitor submits is persisted. A production deploy (CONTEXT=production)\n' +
-      '     will refuse to build in this state.\n',
+    `\\nWARN client Supabase contract is unmet (${verdict.reason}); continuing.\\n` +
+      `     Missing: ${verdict.missing.join(', ')}\\n` +
+      '     This is a local/non-production build: the app uses local fallbacks and\\n' +
+      '     nothing a visitor submits is persisted. A production Vercel build will\\n' +
+      '     refuse to build in this state.\\n',
   );
 }
 
