@@ -8,7 +8,7 @@
  * Rules encoded here:
  *  - `VITE_*` variables are inlined into the browser bundle at build time. They are
  *    not secrets and must never hold one.
- *  - Server-only variables are read at runtime by Express or a Netlify function.
+ *  - Server-only variables are read at runtime by the Express server.
  *    Anything classified `secret` is never printed, logged, or returned by an
  *    endpoint - `describeEnv` reports presence, never value.
  *  - `aliases` exist because the repository accepts both the modern Supabase key
@@ -89,7 +89,7 @@ export const ENV_CONTRACT: EnvSpec[] = [
     requirement: 'required',
     visibility: 'server',
     secret: true,
-    consumedBy: ['lib/supabase-config.ts', 'server.ts', 'netlify/functions/*'],
+    consumedBy: ['lib/supabase-config.ts', 'server.ts'],
   },
   {
     name: 'NODE_ENV',
@@ -117,7 +117,7 @@ export const ENV_CONTRACT: EnvSpec[] = [
     requirement: 'recommended',
     visibility: 'server',
     secret: false,
-    consumedBy: ['src/server/newsroom/run.ts', 'netlify/functions/daily-news-refresh.ts'],
+    consumedBy: ['src/server/newsroom/run.ts'],
   },
   {
     name: 'EDUREACH_ADMIN_BOOTSTRAP_EMAIL',
@@ -136,7 +136,7 @@ export const ENV_CONTRACT: EnvSpec[] = [
   {
     name: 'PORT',
     aliases: [],
-    purpose: 'Listen port for the standalone Express server. Netlify sets its own; only used when self-hosting.',
+    purpose: 'Listen port for the standalone Express server. Only used when self-hosting; the Vercel backend sets its own port.',
     requirement: 'optional',
     visibility: 'server',
     secret: false,

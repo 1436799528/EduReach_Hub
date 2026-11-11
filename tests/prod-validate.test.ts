@@ -109,7 +109,6 @@ test('every alias satisfies only through the code that actually reads it', () =>
     'src/lib/supabase.ts',
     'src/server/seo.ts',
     'src/server/newsroom/run.ts',
-    'netlify/functions/daily-news-refresh.ts',
   ]
     .map((path) => readFileSync(join(ROOT, path), 'utf8'))
     .join('\n');
