@@ -1134,3 +1134,9 @@
 .dash-btn-danger{border-color:#fecaca;background:#fef2f2;color:#b42318}
 .dash-btn-danger:hover:not(:disabled){background:#fee2e2;border-color:#fca5a5}
 .dash-metric-strip .dash-metric-card:focus-within{outline:2px solid #0f172a;outline-offset:2px}
+
+/* Subject results reuse dashboard rows; allow long recorded subject names to wrap. */
+.dash-learning-progress { margin: 20px 0 16px; }
+.dash-learning-progress .dash-card-title { margin: 14px 0 8px; }
+.dash-learning-progress .dash-row-title, .dash-learning-progress .dash-row-meta { overflow-wrap: anywhere; }
+.dash-learning-progress .dash-row-meta { display: block; }

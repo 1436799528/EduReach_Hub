@@ -19,6 +19,7 @@ import { apiUrl } from '../src/lib/apiBase';
 import { notifyAuthChanged } from '../src/lib/auth';
 import { navigateInApp } from '../src/lib/navigation';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { InlineNotice } from '../src/components/AsyncState';
 import BrandLogo from '../src/components/BrandLogo';
 import '../src/auth-page.css';
 
@@ -324,7 +325,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               </p>
             </header>
 
-            {error && <div role="alert" className="auth-alert auth-alert--error"><span aria-hidden="true">!</span>{error}</div>}
+            {error && <InlineNotice tone="danger">{error}</InlineNotice>}
             {message && <div className="auth-alert auth-alert--success" role="status"><CheckCircle2 size={17} />{message}</div>}
 
             {currentMode === 'verify' ? (

@@ -78,8 +78,7 @@ export default function LegalPage({ slug }: { slug: string }) {
                 <div className="er-legal-draft" role="note">
                   <ShieldAlert size={18} aria-hidden="true" />
                   <p>
-                    <strong>Draft pending legal review.</strong> This page describes how EduReach Hub works today, but
-                    it has not yet been reviewed by a lawyer. If you need to rely on it for a decision, contact us.
+                    <strong>Draft pending legal review.</strong> This content may contain unverified claims and has not yet been reviewed by a lawyer.
                   </p>
                 </div>
               )}
@@ -93,6 +92,12 @@ export default function LegalPage({ slug }: { slug: string }) {
                   {page.revision > 1 ? ` · version ${page.revision}` : ''}
                 </p>
               </header>
+
+              {slug === 'privacy' && (
+                <aside className="er-legal-draft" role="note" aria-label="Privacy information requiring review">
+                  <p>Account-wide self-service deletion and data export are not currently available in settings. Retention and age claims in this notice require operator verification and legal review.</p>
+                </aside>
+              )}
 
               <div
                 className="er-legal-body"

@@ -85,7 +85,7 @@ test('the banner is production-only and keyed to the client contract', () => {
 function runGuard(cwd: string, extraEnv: Record<string, string>): { code: number | null; output: string } {
   const env: Record<string, string | undefined> = { ...process.env, ...extraEnv };
   // The sandbox may itself export these; the test is about the .env file.
-  for (const name of ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_SUPABASE_ANON_KEY', 'CONTEXT', 'NETLIFY_CONTEXT', 'EDUREACH_REQUIRE_CLIENT_ENV']) {
+  for (const name of ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'VITE_SUPABASE_ANON_KEY', 'CONTEXT', 'NETLIFY_CONTEXT', 'VERCEL_ENV', 'EDUREACH_REQUIRE_CLIENT_ENV']) {
     if (!(name in extraEnv)) delete env[name];
   }
   // Resolve the loader by path: the child runs with `cwd` set to the throwaway

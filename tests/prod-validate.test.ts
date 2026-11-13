@@ -109,7 +109,6 @@ test('every alias satisfies only through the code that actually reads it', () =>
     'src/lib/supabase.ts',
     'src/server/seo.ts',
     'src/server/newsroom/run.ts',
-    'netlify/functions/daily-news-refresh.ts',
   ]
     .map((path) => readFileSync(join(ROOT, path), 'utf8'))
     .join('\n');
@@ -361,6 +360,26 @@ test('the release-sync query names the migrations production is missing, and pas
     const rows = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
     assert.equal(rows.length, 1, 'the sync check must return exactly one verdict row');
     assert.equal(rows[0].result, 'pass', `fully migrated schema reported: ${rows[0].detail}`);
+    await full.exec(`grant update (admin_note), select (admin_note) on public.service_requests to authenticated;
+      alter table public.service_requests disable trigger service_requests_advance_version;
+      create policy unexpected_staff_read on public.service_requests for select to authenticated using (true);
+      grant execute on function public.submit_service_request_idempotent(text,jsonb,uuid,uuid,boolean) to anon`);
+    const drift = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
+    assert.equal(drift[0].result, 'fail');
+    assert.match(String(drift[0].detail), /service_requests client write privileges/);
+    assert.match(String(drift[0].detail), /service_requests enabled version trigger/);
+    assert.match(String(drift[0].detail), /service_requests student field privileges/);
+    assert.match(String(drift[0].detail), /service_requests student policy boundary/);
+    assert.match(String(drift[0].detail), /service request idempotency candidate/);
+    await full.exec('revoke execute on function public.submit_service_request_idempotent(text,jsonb,uuid,uuid,boolean) from anon; alter table public.service_requests disable trigger service_requests_protect_submission_identity');
+    const disabledIdentityTrigger = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
+    assert.match(String(disabledIdentityTrigger[0].detail), /service request idempotency candidate/);
+    await full.exec('alter table public.service_requests enable trigger service_requests_protect_submission_identity; alter table public.service_requests drop constraint service_requests_submission_identity_check');
+    const missingIdentityConstraint = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
+    assert.match(String(missingIdentityConstraint[0].detail), /service request idempotency candidate/);
+    await full.exec('grant execute on function public.cbt_expire_owned_attempt(uuid) to anon');
+    const expiryPrivilegeDrift = (await full.exec(syncQuery)).at(-1)?.rows ?? [];
+    assert.match(String(expiryPrivilegeDrift[0].detail), /owner-scoped CBT expiry function/);
   } finally {
     await full.close();
   }

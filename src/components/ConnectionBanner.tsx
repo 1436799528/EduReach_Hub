@@ -36,7 +36,7 @@ export default function ConnectionBanner() {
     <div className="er-connection-strip" role="status" aria-live="polite">
       <WifiOff size={15} aria-hidden="true" />
       <span>
-        <strong>You are offline.</strong> You can keep reading and working. Anything you save is kept on this device and sent when you reconnect.
+        <strong>You are offline.</strong> Some actions may not be saved or submitted. Check your connection and retry; keep this page open until you confirm the action succeeded.
       </span>
     </div>
   );

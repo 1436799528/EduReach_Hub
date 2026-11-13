@@ -39,6 +39,7 @@ const AdminDashboardPage = lazy(() => import('../../pages/AdminDashboardPage'));
 const AdminAnalyticsPage = lazy(() => import('../../pages/AdminAnalyticsPage'));
 const AdminQueuePage = lazy(() => import('../../pages/AdminQueuePage'));
 const AdminCbtPage = lazy(() => import('../../pages/AdminCbtPage'));
+const AdminBankSecurityPage = lazy(() => import('../../pages/AdminBankSecurityPage'));
 const AdminUsersPage = lazy(() => import('../../pages/AdminUsersPage'));
 const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 const AdminContentPage = lazy(() => import('../../pages/AdminContentPage'));
@@ -50,6 +51,7 @@ const AdminPdfBankPage = lazy(() => import('../../pages/AdminPdfBankPage'));
 const AdminQuestionImportPage = lazy(() => import('../../pages/AdminQuestionImportPage'));
 const AdminSitePage = lazy(() => import('../../pages/AdminSitePage'));
 const LegalPage = lazy(() => import('../../pages/LegalPage'));
+const RefundPolicyPage = lazy(() => import('../../pages/RefundPolicyPage'));
 
 // Slugs with a live application workflow live in src/data/liveServices.ts,
 // shared with the sitemap so the two can never disagree. Every other
@@ -120,6 +122,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/analytics') return <AdminAnalyticsPage />;
   if (path === '/admin/queue') return <AdminQueuePage />;
   if (path === '/admin/cbt') return <AdminCbtPage />;
+  if (path === '/admin/banks') return <AdminBankSecurityPage />;
   if (path === '/admin/news') return <AdminNewsPage />;
   if (path === '/admin/users') return <AdminUsersPage />;
   if (path === '/admin/content') return <AdminContentPage />;
@@ -179,6 +182,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/privacy' || path === '/privacy-policy') return <LegalPage slug="privacy" />;
   if (path === '/terms' || path === '/terms-of-service') return <LegalPage slug="terms" />;
   if (path === '/cookies' || path === '/cookie-policy') return <LegalPage slug="cookies" />;
+  if (path === '/refunds' || path === '/refund-policy') return <RefundPolicyPage />;
   if (path === '/accessibility') return <LegalPage slug="accessibility" />;
   if (path === '/disclaimer') return <LegalPage slug="disclaimer" />;
   if (path === '/contact' || path === '/contact-us') return <LegalPage slug="contact" />;

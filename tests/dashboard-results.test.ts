@@ -38,7 +38,7 @@ test('a result can be reviewed and deleted from the dashboard, with confirmation
   assert.match(cbtView, /role="status" aria-live="polite"/, 'the outcome is announced');
   assert.match(dashboard, /getElementById\('dash-cbt-heading'\)\?\.focus\(\)/, 'focus is not dropped when the button disappears');
   assert.match(dashboard, /state !== 'active' && \(confirmDeleteId === row\.id/, 'an in-progress paper is resumed, not deleted');
-  assert.match(dashboard, /row\.score !== null && Number\.isFinite\(row\.score\)/, 'a missing result is not shown as a zero score');
+  assert.match(dashboard, /isScoredSubmission\(row\)/, 'only a valid scored submission can display a score');
 });
 
 test('the delete handler cannot run twice for one click', () => {

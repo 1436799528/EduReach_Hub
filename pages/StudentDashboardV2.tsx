@@ -14,9 +14,10 @@ import {
   Trash2,
   User,
   Wrench,
-  X,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
+import { SkeletonRows } from '../src/components/Skeleton';
+import { InlineNotice } from '../src/components/AsyncState';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
 import { deleteCbtAttempt, trackEvent } from '../src/lib/api';
@@ -35,6 +36,7 @@ import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import SiteSearch from '../src/components/LazySiteSearch';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import { cbtAttemptState, dashboardPriorities, summarizeCbtAttempts } from '../src/lib/dashboardPriority';
+import { cbtModeLabel, isScoredSubmission, practiceSuggestion, singleSubjectProgress, submittedSubjectCounts } from '../src/lib/dashboardCbtStats';
 import {
   deleteSavedItem,
   fetchLatestCgpaSnapshot,
@@ -78,7 +80,7 @@ type Profile = {
 
 type ServiceRow = { id: string; service_key: string; title: string };
 type RequestRow = { id: string; status: string; form_data: Record<string, unknown>; created_at: string; reference_code: string; service_id: string };
-type Attempt = { id: string; score: number | null; correct_answers: number; total_questions: number; submitted_at: string | null; created_at: string; subject?: string; exam_id?: string; status?: string; expires_at?: string | null; current_question?: number };
+type Attempt = { id: string; score: number | null; correct_answers: number; total_questions: number; submitted_at: string | null; created_at: string; subject?: string; exam_id?: string; status?: string; mode?: string | null; selected_subjects?: string[] | null; subject_plan?: unknown; expires_at?: string | null; current_question?: number };
 
 const TAB_ROUTES: Record<DashboardTab, string> = {
   dashboard: '/dashboard',
@@ -148,7 +150,7 @@ function readLocalCbtAttempts(): Attempt[] {
       if (!stored?.attempt) continue;
       attempts.push({
         id: String(stored.attempt.id || key.replace(localStorageKey('cbt-result-'), '')),
-        score: Number(stored.attempt.score || 0),
+        score: typeof stored.attempt.score === 'number' ? stored.attempt.score : null,
         correct_answers: Number(stored.attempt.correct_answers || 0),
         total_questions: Number(stored.attempt.total_questions || stored.questions?.length || 0),
         submitted_at: stored.attempt.submitted_at || null,
@@ -156,9 +158,10 @@ function readLocalCbtAttempts(): Attempt[] {
         subject: stored.exam?.title || stored.exam?.subject || stored.attempt.exam_id || 'CBT Practice',
         exam_id: stored.attempt.exam_id || undefined,
         status: 'submitted',
+        mode: stored.attempt.mode || null,
       });
     }
-    return attempts.sort((a, b) => new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime());
+    return attempts.sort((a, b) => new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime()).slice(0, 50);
   } catch {
     return [];
   }
@@ -220,6 +223,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [loading, setLoading] = useState(true);
+  const [loadFailure, setLoadFailure] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -233,6 +237,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
+  const [requestsUnavailable, setRequestsUnavailable] = useState(false);
+  const [attemptsUnavailable, setAttemptsUnavailable] = useState(false);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   // Phase 6: results are reviewable, deletable and paged on this screen. The
   // confirmation is inline, not a second modal - the dashboard already has one
@@ -260,13 +266,14 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     let active = true;
     async function load() {
       setLoading(true);
+      setLoadFailure(false);
       setError('');
       const {
         data: { session },
         error: authError,
       } = await supabase.auth.getSession();
 
-      if (authError || !session?.user) {
+      if (!isSupabaseConfigured || authError || !session?.user) {
         if (isSupabaseConfigured && !authUser?.isLocal) {
           const next = `${window.location.pathname}${window.location.search}`;
           window.history.replaceState({}, '', `/login?next=${encodeURIComponent(next)}`);
@@ -299,6 +306,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         setServices([]);
         setInstitutions(localStarterInstitutions());
         setRequests(readLocalServiceRequests());
+        setRequestsUnavailable(false);
         setAttempts(readLocalCbtAttempts());
         setSavedItems(readLocalSavedItems());
         setNotifications([]);
@@ -312,7 +320,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
         supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url').order('school_name').limit(400),
         supabase.from('service_requests').select('id,status,form_data,created_at,reference_code,service_id').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
-        supabase.from('cbt_attempts').select('id,exam_id,status,score,correct_answers,total_questions,submitted_at,created_at,expires_at,current_question').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
+        supabase.from('cbt_attempts').select('id,exam_id,status,mode,selected_subjects,subject_plan,score,correct_answers,total_questions,submitted_at,created_at,expires_at,current_question').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
         fetchSavedItems(user.id),
         fetchLatestCgpaSnapshot(user.id),
         fetchNotifications(user.id),
@@ -350,7 +358,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       if (profileResult.error) setError('We could not load your profile. Please refresh or update your academic profile.');
       setServices((serviceResult.data || []) as ServiceRow[]);
       setInstitutions((institutionResult.data || []) as Institution[]);
-      setRequests((requestResult.data || []) as RequestRow[]);
+      setRequests((Array.isArray(requestResult.data) && !requestResult.error ? requestResult.data : []) as RequestRow[]);
+      setRequestsUnavailable(Boolean(requestResult.error) || !Array.isArray(requestResult.data));
+      setAttemptsUnavailable(Boolean(attemptsResult.error) || !Array.isArray(attemptsResult.data));
       setAttempts((attemptsResult.data || []) as Attempt[]);
       setSavedItems(savedResult);
       setLatestCgpaSnapshot(cgpaSnapshot);
@@ -358,7 +368,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       if (cgpaSnapshot?.courses?.length) setCgpaCourses(cgpaSnapshot.courses);
       setLoading(false);
     }
-    void load();
+    void load().catch(() => {
+      if (!active) return;
+      setLoadFailure(true);
+      setLoading(false);
+    });
     return () => {
       active = false;
     };
@@ -437,7 +451,10 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   // reads the same rule, so it never offers "Resume" for a test the server will
   // refuse - and never counts an expired attempt as one still in progress.
   const isActiveCbtAttempt = (attempt: Attempt) => cbtAttemptState(attempt) === 'active';
-  const { completedAttempts, expiredAttempts, averageScore, bestScore, questionsInCompletedTests } = summarizeCbtAttempts(attempts);
+  const attemptSummary = summarizeCbtAttempts(attempts);
+  const submittedAttempts = attempts.filter((attempt) => attempt.status === 'submitted');
+  const completedAttempts = attempts.filter(isScoredSubmission);
+  const expiredAttempts = attemptSummary.expiredAttempts;
   const profileMissing = [
     ['Institution', profile?.school],
     ['Course / programme', profile?.course_programme],
@@ -453,11 +470,21 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     requests,
     unreadNotifications,
     savedCount: activeSaved.length,
-    attemptCount: attempts.length,
+    attemptCount: attemptsUnavailable ? 1 : attempts.length,
   });
   // A score only exists once a paper has been sat. With none, the card says so
   // instead of reporting a 0% average, which reads as a measurement.
+  const scoreSummary = summarizeCbtAttempts(completedAttempts);
+  const averageScore = scoreSummary.averageScore;
+  const bestScore = scoreSummary.bestScore;
   const hasScores = averageScore !== null;
+  const questionsInCompletedTests = attemptSummary.questionsInCompletedTests;
+  const latestScores = [...completedAttempts].sort((a, b) => new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime()).slice(0, 2);
+  const scoreChange = latestScores.length === 2 ? Math.round(Number(latestScores[0].score) - Number(latestScores[1].score)) : null;
+  const subjectCounts = submittedSubjectCounts(attempts);
+  const subjectProgress = singleSubjectProgress(attempts);
+  const suggestedSubject = practiceSuggestion(subjectProgress);
+  const attemptTitle = (row: Attempt) => row.subject || (row.selected_subjects?.length ? row.selected_subjects.join(', ') : 'CBT');
 
   const ATTEMPTS_PER_PAGE = 8;
   const attemptPageView = pageSlice(attempts, attemptPage, ATTEMPTS_PER_PAGE);
@@ -473,7 +500,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       await deleteCbtAttempt(row.id);
       setAttempts((current) => current.filter((attempt) => attempt.id !== row.id));
       setConfirmDeleteId('');
-      setAttemptNotice('Result deleted. It is no longer on your account.');
+      setAttemptNotice('Result deleted. It is no longer on your account. Start a new practice test from the CBT Centre.');
       // The row that held focus is gone; put focus back on the section heading
       // so a keyboard user is not dropped at the top of the document.
       window.requestAnimationFrame(() => document.getElementById('dash-cbt-heading')?.focus());
@@ -552,10 +579,21 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '24px', textAlign: 'center', maxWidth: '420px' }}>
           <div style={{ margin: '0 auto 12px', display: 'flex', justifyContent: 'center' }}><BrandLogo height={48} radius="50%" /></div>
           <h1 style={{ margin: '0 0 6px', fontSize: '18px', color: '#0f172a' }}>Loading your dashboard…</h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Checking your session and syncing your records.</p>
+          <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#5e6c82' }}>Checking your session and syncing your records.</p>
+          <SkeletonRows rows={3} label="Loading dashboard records" />
         </div>
       </div>
     );
+  }
+
+  if (loadFailure) {
+    return <main id="main-content" className="edureach-dash-container" style={{ display: 'grid', placeItems: 'center', padding: '24px' }}>
+      <div className="dash-card" role="alert">
+        <h1 className="dash-page-title">Dashboard unavailable</h1>
+        <p>We could not load your dashboard. Please check your connection and try again.</p>
+        <button type="button" className="dash-btn dash-btn-primary" onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    </main>;
   }
 
   const adminStudentView =
@@ -580,6 +618,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       <p>{text}</p>
       <a href={href} className="dash-btn dash-btn-primary">{cta}</a>
     </div>
+  );
+
+  const requestLoadFailure = (
+    <InlineNotice tone="danger" title="Requests unavailable" onRetry={() => window.location.reload()}>
+      We could not load your requests. Check your connection and try again to see your service request status.
+    </InlineNotice>
   );
 
   const requestsTable = (rows: RequestRow[]) => (
@@ -621,17 +665,17 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <thead><tr><th scope="col">Test</th><th scope="col">Status</th><th scope="col">Score</th><th scope="col">Date</th><th scope="col" /></tr></thead>
           <tbody>{rows.map((row) => {
             const state = cbtAttemptState(row);
-            const label = state === 'active' ? 'In progress' : state === 'expired' ? 'Time ran out' : 'Completed';
+            const label = state === 'active' ? 'In progress' : state === 'expired' ? 'Time ran out' : row.status === 'submitted' ? isScoredSubmission(row) ? 'Submitted' : 'Submitted · score unavailable' : row.status === 'cancelled' ? 'Cancelled' : 'Unavailable';
             return <tr key={row.id}>
-              <td>{row.subject || 'CBT Practice'}{state === 'active' && <small className="dash-table-description">Unfinished attempt</small>}</td>
-              <td><span className={`dash-status-pill ${state === 'active' ? 'dash-status-processing' : state === 'expired' ? 'dash-status-rejected' : 'dash-status-completed'}`}>{label}</span></td>
-              <td><strong>{state === 'finished' ? row.score !== null && Number.isFinite(row.score) ? `${Math.round(row.score)}%` : 'Result unavailable' : '—'}</strong></td>
+              <td>{attemptTitle(row)} <small className="dash-table-description">{cbtModeLabel(row.mode)}{state === 'active' ? ' · Unfinished attempt' : ''}</small></td>
+              <td><span className={`dash-status-pill ${state === 'active' ? 'dash-status-processing' : row.status === 'submitted' ? 'dash-status-completed' : 'dash-status-rejected'}`}>{label}</span></td>
+              <td><strong>{isScoredSubmission(row) ? `${Math.round(Number(row.score))}%` : row.status === 'submitted' ? 'Result unavailable' : '—'}</strong></td>
               <td>{fmtDate(row.submitted_at || row.created_at)}</td>
               <td>
                 <span className="dash-row-actions">
                   {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
                   {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test</a>}
-                  {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review</a>}
+                  {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review</a>}
                   {state !== 'active' && (confirmDeleteId === row.id ? (
                     <span className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`}>
                       <span>Delete this result?</span>
@@ -659,18 +703,14 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </div>
       <ul className="dash-rows dash-mobile-only">{rows.map((row) => {
         const state = cbtAttemptState(row);
-        const label = state === 'active'
-          ? 'In progress'
-          : state === 'expired'
-            ? 'Time ran out'
-            : row.score !== null && Number.isFinite(row.score) ? `${Math.round(row.score)}%` : 'Result unavailable';
+        const label = state === 'active' ? 'In progress' : state === 'expired' ? 'Time ran out' : isScoredSubmission(row) ? `${Math.round(Number(row.score))}%` : row.status === 'submitted' ? 'Submitted · score unavailable' : row.status === 'cancelled' ? 'Cancelled' : 'Unavailable';
         return <li key={row.id} className={`dash-row${state === 'active' ? ' dash-cbt-active-row' : ''}`}>
-          <div className="dash-row-top"><strong className="dash-row-title">{row.subject || 'CBT Practice'}</strong><span className="dash-row-score">{label}</span></div>
+          <div className="dash-row-top"><strong className="dash-row-title">{attemptTitle(row)} · {cbtModeLabel(row.mode)}</strong><span className="dash-row-score">{label}</span></div>
           <div className="dash-row-meta">
-            <span>{state === 'finished' ? `${row.correct_answers}/${row.total_questions} correct` : state === 'expired' ? 'Answers were submitted automatically' : 'Unfinished attempt'} • {fmtDate(row.submitted_at || row.created_at)}</span>
+            <span>{isScoredSubmission(row) ? `${row.correct_answers}/${row.total_questions} correct` : state === 'expired' ? 'Time ran out' : state === 'active' ? 'Unfinished attempt' : label} • {fmtDate(row.submitted_at || row.created_at)}</span>
             {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume →</a>}
             {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test →</a>}
-            {state === 'finished' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review →</a>}
+            {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review →</a>}
             {state !== 'active' && (confirmDeleteId === row.id ? (
               <span className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`}>
                 <span>Delete this result?</span>
@@ -766,12 +806,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="dash-card-header">
           <h2 className="dash-card-title" id="dash-recent-activity-heading">Recent activity</h2>
         </div>
+        {isLocalMode && requests.length > 0 && <p>These local preview records were not submitted to EduReach; they exist only on this device.</p>}
         <div className="dash-recent-activity-group">
           <div className="dash-recent-activity-heading">
             <h3>Service requests</h3>
             {requests.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('services')}>View all ({requests.length})</button>}
           </div>
-          {requests.length
+          {requestsUnavailable
+            ? requestLoadFailure
+            : requests.length
             ? requestsTable(requests.slice(0, 3))
             : emptyState('No service requests yet. When you request NELFUND help, result checking, a JAMB slip or admission support, its live status appears here.', '/services', 'Browse services')}
         </div>
@@ -780,7 +823,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <h3>CBT results</h3>
             {attempts.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>View all ({attempts.length})</button>}
           </div>
-          {attempts.length
+          {attemptsUnavailable
+            ? <p role="status">CBT history could not be loaded. Please refresh to try again.</p>
+            : attempts.length
             ? attemptsTable(attempts.slice(0, 3))
             : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start practice')}
         </div>
@@ -798,11 +843,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       <div className="dash-card-header">
         <div>
           <h1 className="dash-page-title">My Requests</h1>
-          <p className="dash-page-sub">{requests.length ? `${requests.length} request${requests.length === 1 ? '' : 's'} • ${openRequests} in progress` : 'Every service request you submit is tracked here.'}</p>
+          <p className="dash-page-sub">{requestsUnavailable ? 'Request status is unavailable.' : requests.length ? `${requests.length} request${requests.length === 1 ? '' : 's'} • ${openRequests} in progress` : 'Every service request you submit is tracked here.'}</p>
         </div>
         <a href="/services" className="dash-btn dash-btn-primary">New request</a>
       </div>
-      {requests.length
+      {isLocalMode && requests.length > 0 && <p>These local preview records were not submitted to EduReach; they exist only on this device.</p>}
+      {requestsUnavailable ? requestLoadFailure : requests.length
         ? requestsTable(requests)
         : emptyState('No service requests yet. Choose a service to get started: NELFUND loan support, WAEC/NECO result checking, JAMB slips or admission letters.', '/services', 'Browse services')}
     </section>
@@ -817,9 +863,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
         <a href="/cbt" className="dash-btn dash-btn-primary">Start practice</a>
       </div>
+      {attemptsUnavailable ? <p role="status">CBT history could not be loaded. Please refresh to try again.</p> : <>
+      <p className="dash-metric-hint">Statistics below cover the most recent {attempts.length} attempt{attempts.length === 1 ? '' : 's'} loaded (up to 50), not all-time totals.</p>
       <div className="dash-metric-strip">
         <div className="dash-metric-card">
-          <span className="dash-metric-label">Tests taken</span>
+          <span className="dash-metric-label">Scored tests</span>
           <span className="dash-metric-val">{completedAttempts.length}</span>
         </div>
         <div className="dash-metric-card">
@@ -836,6 +884,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-metric-label">In progress</span>
           <span className="dash-metric-val">{attempts.filter(isActiveCbtAttempt).length}</span>
         </div>
+        {submittedAttempts.length > completedAttempts.length && (
+          <div className="dash-metric-card">
+            <span className="dash-metric-label">Submitted, score unavailable</span>
+            <span className="dash-metric-val">{submittedAttempts.length - completedAttempts.length}</span>
+          </div>
+        )}
         {expiredAttempts.length > 0 && (
           <div className="dash-metric-card">
             <span className="dash-metric-label">Ran out of time</span>
@@ -849,6 +903,22 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
       </div>
 
+      {subjectCounts.length > 0 && <div aria-labelledby="dash-subject-summary">
+        <h2 id="dash-subject-summary" className="dash-card-title">Subjects selected in completed tests</h2>
+        <p className="dash-metric-hint">Counts use loaded submissions with recorded subjects, including unscored submissions. A paper with multiple subjects counts once for each subject; these are not subject scores.</p>
+        <ul>{subjectCounts.map(({ subject, count }) => <li key={subject}>{subject}: {count} submitted {count === 1 ? 'test' : 'tests'}</li>)}</ul>
+      </div>}
+      <div className="dash-learning-progress" aria-labelledby="dash-subject-progress">
+        <h2 id="dash-subject-progress" className="dash-card-title">Subject progress</h2>
+        <p className="dash-metric-hint">From scored papers whose saved question plan contains only one subject. Multi-subject papers and missing or inconsistent plans are excluded. Percentages use correct answers across the included questions, not subject selections.</p>
+        {subjectProgress.length ? <ul className="dash-rows">{subjectProgress.map(row => <li className="dash-row" key={row.subject}>
+          <div className="dash-row-top"><strong className="dash-row-title">{row.subject}</strong><span className="dash-row-score">{row.average}%</span></div>
+          <div className="dash-row-meta">{row.correct} of {row.questions} questions correct across {row.attempts} scored {row.attempts === 1 ? 'paper' : 'papers'}{row.latest !== null ? ` · Latest ${row.latest}%` : ''}{row.previous !== null ? ` · Previous ${row.previous}%` : ''}</div>
+        </li>)}</ul> : <p className="dash-metric-hint">No single-subject scored papers with a complete saved question plan in this sample yet.</p>}
+        <h3 className="dash-card-title">Practice suggestion</h3>
+        {suggestedSubject ? <p className="dash-metric-hint">Consider another {suggestedSubject.subject} practice paper. It has the lowest score among subjects with at least two scored single-subject papers and 20 questions in this sample; this is not a weak-topic diagnosis. <a className="dash-card-link" href="/cbt">Choose practice</a></p> : <p className="dash-metric-hint">A comparison needs at least two subjects with two scored single-subject papers and 20 questions each, with different scores. Review a result or choose a practice paper in the meantime.</p>}
+      </div>
+      <p className="dash-metric-hint">{scoreChange === null ? 'Complete two scored tests to compare your latest results.' : `Latest score compared with your previous scored test: ${scoreChange > 0 ? '+' : ''}${scoreChange} percentage points. Different papers may not be directly comparable.`} Review completed results to decide what to practise next; subject-level weaknesses are not inferred from overall scores.</p>
       <div className="dash-attempt-notice" role="status" aria-live="polite">{attemptNotice}</div>
 
       {attempts.length
@@ -871,6 +941,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           </>
         )
         : emptyState('No attempts yet. Your scores, best result and question count will build up here after your first practice test.', '/cbt', 'Start practice')}
+      </>}
     </section>
   );
 
@@ -969,12 +1040,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </aside>
 
         <main className="edureach-dash-main" id="main-content" tabIndex={-1}>
-          {error && <div className="dash-note is-error">{error}</div>}
+          {error && (
+            <InlineNotice tone="danger" title="Error" onRetry={() => setError('')}>
+              {error}
+            </InlineNotice>
+          )}
           {notice && (
-            <div className="dash-note is-error" style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-              <span>{notice}</span>
-              <button type="button" onClick={() => setNotice('')} aria-label="Dismiss" style={{ background: 'none', border: 0, cursor: 'pointer', color: 'inherit' }}><X size={14} /></button>
-            </div>
+            <InlineNotice tone="danger" onRetry={() => setNotice('')}>
+              {notice}
+            </InlineNotice>
           )}
           {view}
         </main>

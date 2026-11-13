@@ -35,7 +35,7 @@ export default function ContinuePracticeCard() {
     return () => { active = false; };
   }, [isLoading, userId]);
 
-  if (!attempt) return null;
+  if (!attempt || attempt.answered === null) return null;
 
   const total = Math.max(0, attempt.totalQuestions);
   const answered = Math.min(Math.max(0, attempt.answered), total);

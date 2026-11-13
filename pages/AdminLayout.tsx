@@ -16,6 +16,7 @@ import {
   Menu,
   Newspaper,
   School,
+  ShieldCheck,
   Users,
   X,
 } from 'lucide-react';
@@ -165,6 +166,7 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin/schools', label: 'Schools & Institutions', icon: <School size={15} />, capability: 'institution.read' },
   { kind: 'group', label: 'Examinations' },
   { kind: 'link', href: '/admin/cbt', label: 'CBT Manager', icon: <Laptop size={15} />, capability: 'cbt.read' },
+  { kind: 'link', href: '/admin/banks', label: 'Bank Security', icon: <ShieldCheck size={15} />, capability: 'cbt.read' },
   { kind: 'link', href: '/admin/question-imports', label: 'Import Past Questions', icon: <FileUp size={15} />, capability: 'cbt.manage' },
   { kind: 'group', label: 'Users' },
   { kind: 'link', href: '/admin/users', label: 'Student Accounts', icon: <Users size={15} />, capability: 'user.read' },
@@ -216,6 +218,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(!cached);
   const [session, setSession] = useState<AdminSession | null>(cached?.session || null);
   const [backend, setBackend] = useState(cached?.backend || 'Checking…');
+
+  useEffect(() => { setMobileNavOpen(false); }, [pathname]);
 
   useEffect(() => {
     let active = true;
@@ -312,8 +316,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       aria-label={mobileNavOpen ? 'Admin navigation' : undefined}
     >
       <div>
-        <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
-        <nav className="admin-nav">
+        <div className="admin-brand">
+          <BrandLogo variant="mark" height={38} radius={8} />
+          <div className="admin-brand-text"><strong>EduReach Hub</strong><span>Management console</span></div>
+        </div>
+        <nav id="admin-navigation" className="admin-nav" aria-label="Administration">
           {navItems.map((item, index) => (
             item.kind === 'group'
               ? <div className="admin-nav-group" key={`group-${index}`}>{item.label}</div>
@@ -338,7 +345,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           className="admin-menu-toggle"
           aria-controls="admin-navigation"
           aria-expanded={mobileNavOpen}
-          aria-label={mobileNavOpen ? 'Close admin navigation' : 'Open admin navigation'}
+          aria-label={mobileNavOpen ? 'Close admin menu' : 'Open admin menu'}
           onClick={() => setMobileNavOpen((open) => !open)}
         >
           {mobileNavOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}

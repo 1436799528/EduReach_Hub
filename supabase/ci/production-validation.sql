@@ -241,7 +241,17 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261025120000', 'cbt_submit_grace_120', '20261025120000_cbt_submit_grace_120.sql', 'unique'),
     ('20261026120000', 'service_guides', '20261026120000_service_guides.sql', 'unique'),
     ('20261027120000', 'cbt_subject_catalog_and_mock_rules', '20261027120000_cbt_subject_catalog_and_mock_rules.sql', 'unique'),
-    ('20261027130000', 'enforce_jamb_mock_duration', '20261027130000_enforce_jamb_mock_duration.sql', 'unique')
+    ('20261027130000', 'enforce_jamb_mock_duration', '20261027130000_enforce_jamb_mock_duration.sql', 'unique'),
+    ('20261031120000', 'news_placeholder_safety', '20261031120000_news_placeholder_safety.sql', 'unique'),
+    ('20261102190000', 'service_request_write_boundary', '20261102190000_service_request_write_boundary.sql', 'unique'),
+    ('20261102200000', 'service_request_student_field_boundary', '20261102200000_service_request_student_field_boundary.sql', 'unique'),
+    ('20261102210000', 'service_request_idempotency_candidate', '20261102210000_service_request_idempotency_candidate.sql', 'unique'),
+    ('20261104120000', 'cbt_owner_expiry', '20261104120000_cbt_owner_expiry.sql', 'unique'),
+    ('20261107120000', 'cbt_attempt_protocol_fence', '20261107120000_cbt_attempt_protocol_fence.sql', 'unique'),
+    ('20261107130000', 'cbt_v2_server_lifecycle', '20261107130000_cbt_v2_server_lifecycle.sql', 'unique'),
+    ('20261107140000', 'cbt_v2_answer_gateway', '20261107140000_cbt_v2_answer_gateway.sql', 'unique'),
+    ('20261107150000', 'cbt_single_writing_session', '20261107150000_cbt_single_writing_session.sql', 'unique'),
+    ('20261108120000', 'question_import_atomic_publication', '20261108120000_question_import_atomic_publication.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -341,7 +351,17 @@ with expected(version, migration) as (
     ,('20261025120000', '20261025120000_cbt_submit_grace_120.sql')
     ,('20261026120000', '20261026120000_service_guides.sql')
     ,('20261027120000', '20261027120000_cbt_subject_catalog_and_mock_rules.sql')
-   ,('20261027130000', '20261027130000_enforce_jamb_mock_duration.sql')
+    ,('20261027130000', '20261027130000_enforce_jamb_mock_duration.sql')
+    ,('20261031120000', '20261031120000_news_placeholder_safety.sql')
+    ,('20261102190000', '20261102190000_service_request_write_boundary.sql')
+    ,('20261102200000', '20261102200000_service_request_student_field_boundary.sql')
+    ,('20261102210000', '20261102210000_service_request_idempotency_candidate.sql')
+    ,('20261104120000', '20261104120000_cbt_owner_expiry.sql')
+    ,('20261107120000', '20261107120000_cbt_attempt_protocol_fence.sql')
+    ,('20261107130000', '20261107130000_cbt_v2_server_lifecycle.sql')
+    ,('20261107140000', '20261107140000_cbt_v2_answer_gateway.sql')
+    ,('20261107150000', '20261107150000_cbt_single_writing_session.sql')
+    ,('20261108120000', '20261108120000_question_import_atomic_publication.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -401,6 +421,29 @@ with expected(version, migration) as (
   select 'public.news_articles.category_slug', '20261002130000_news_category_contract.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'news_articles' and column_name = 'category_slug')
+  union all
+  select 'public.news_articles.is_placeholder', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'news_articles' and column_name = 'is_placeholder')
+  union all
+  select 'public.news_articles.placeholder_note', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'news_articles' and column_name = 'placeholder_note')
+  union all
+  select 'public.news_articles.news_placeholder_draft_check', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from pg_constraint c join pg_class t on t.oid = c.conrelid
+                    join pg_namespace n on n.oid = t.relnamespace
+                    where n.nspname = 'public' and t.relname = 'news_articles' and c.conname = 'news_placeholder_draft_check')
+  union all
+  select 'public.news_articles.guard_referenced_news_placeholder_delete', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from pg_trigger t join pg_class c on c.oid = t.tgrelid
+                    join pg_namespace n on n.oid = c.relnamespace
+                    where n.nspname = 'public' and c.relname = 'news_articles'
+                      and t.tgname = 'guard_referenced_news_placeholder_delete' and not t.tgisinternal and t.tgenabled <> 'D')
+  union all
+  select 'public.guard_referenced_news_placeholder_delete()', '20261031120000_news_placeholder_safety.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'guard_referenced_news_placeholder_delete')
   union all
   select 'public.past_question_resources', '20261002140000_past_question_resources.sql'
   where not exists (select 1 from information_schema.tables
@@ -544,6 +587,70 @@ with expected(version, migration) as (
                       and with_check like '%service_catalog%'
                       and with_check like '%active%')
   union all
+  select 'service_requests client write privileges', '20261102190000_service_request_write_boundary.sql'
+  where exists (
+    select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    cross join (values ('anon'),('authenticated')) as roles(role_name)
+    where n.nspname='public' and c.relname='service_requests'
+      and (has_table_privilege(roles.role_name,c.oid,'UP' || 'DATE')
+        or exists (select 1 from pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+                   and has_column_privilege(roles.role_name,c.oid,a.attname,'UP' || 'DATE')))
+  )
+  union all
+  select 'service_requests enabled version trigger', '20261102190000_service_request_write_boundary.sql'
+  where not exists (select 1 from pg_trigger t join pg_class c on c.oid=t.tgrelid
+                    join pg_namespace n on n.oid=c.relnamespace
+                    join pg_proc p on p.oid=t.tgfoid
+                    where n.nspname='public' and c.relname='service_requests'
+                      and t.tgname='service_requests_advance_version' and not t.tgisinternal and t.tgenabled in ('O','A')
+                      and t.tgtype=19 and t.tgqual is null
+                      and p.oid=to_regprocedure('public.advance_service_request_version()'))
+  union all
+  select 'service_requests student field privileges', '20261102200000_service_request_student_field_boundary.sql'
+  where exists (
+    select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relname='service_requests' and (
+      has_table_privilege('authenticated',c.oid,'SELECT') or has_table_privilege('authenticated',c.oid,'IN' || 'SERT')
+      or has_any_column_privilege('anon',c.oid,'SELECT') or has_any_column_privilege('anon',c.oid,'IN' || 'SERT')
+      or exists (
+        select 1 from pg_attribute a where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+          and (has_column_privilege('authenticated',c.oid,a.attname,'SELECT') <>
+               (a.attname = any(array['id','user_id','service_id','status','form_data','reference_code','created_at']))
+            or has_column_privilege('authenticated',c.oid,a.attname,'IN' || 'SERT') <>
+               (a.attname = any(array['user_id','service_id','status','form_data'])))
+      )
+    )
+  )
+  union all
+  select 'service_requests student policy boundary', '20261102200000_service_request_student_field_boundary.sql'
+  where not exists (select 1 from pg_policies where schemaname='public' and tablename='service_requests'
+                    and policyname='service_requests_read_own' and qual like '%user_id%' and qual like '%auth.uid%')
+     or exists (select 1 from pg_policy p where p.polrelid=to_regclass('public.service_requests')
+                and p.polcmd in ('r','a','*') and p.polname not in ('service_requests_read_own','service_requests_insert_own')
+                and exists (select 1 from unnest(p.polroles) as role_ids(role_id)
+                            where case when role_id=0::oid then true
+                              else pg_has_role('anon',role_id,'MEMBER') or pg_has_role('authenticated',role_id,'MEMBER') end))
+  union all
+  select 'service request idempotency candidate', '20261102210000_service_request_idempotency_candidate.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public'
+                    and table_name='service_requests' and column_name='submission_key' and data_type='uuid')
+     or not exists (select 1 from information_schema.columns where table_schema='public'
+                    and table_name='service_requests' and column_name='submission_fingerprint' and data_type='bytea')
+     or not exists (select 1 from pg_constraint c where c.conrelid=to_regclass('public.service_requests')
+                    and c.conname='service_requests_submission_identity_check' and c.contype='c' and c.convalidated)
+     or not exists (select 1 from pg_trigger t where t.tgrelid=to_regclass('public.service_requests')
+                    and t.tgname='service_requests_protect_submission_identity' and not t.tgisinternal
+                    and t.tgenabled in ('O','A') and t.tgtype=19 and t.tgqual is null
+                    and t.tgfoid=to_regprocedure('public.protect_service_submission_identity()'))
+     or not exists (select 1 from pg_indexes x join pg_index i on i.indexrelid=to_regclass('public.service_requests_user_submission_key_uidx')
+                    where x.schemaname='public' and x.tablename='service_requests'
+                    and x.indexname='service_requests_user_submission_key_uidx' and i.indisunique and i.indisvalid
+                    and x.indexdef like '%(user_id, submission_key)%'
+                    and x.indexdef like '%submission_key IS NOT NULL%')
+     or not exists (select 1 from pg_proc p where p.oid=to_regprocedure('public.submit_service_request_idempotent(text,jsonb,uuid,uuid,boolean)')
+                    and p.prosecdef and has_function_privilege('authenticated',p.oid,'EXECUTE')
+                    and not has_function_privilege('anon',p.oid,'EXECUTE'))
+  union all
   select 'ccmas_programmes discipline_id index', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from pg_indexes
                     where schemaname = 'public' and tablename = 'ccmas_programmes'
@@ -599,6 +706,75 @@ with expected(version, migration) as (
      or not has_table_privilege('authenticated',to_regclass('public.student_cgpa_terms'),'SELECT')
      or not has_table_privilege('authenticated',to_regclass('public.student_cgpa_courses'),'SELECT')
      or not has_table_privilege('authenticated',to_regclass('public.student_security_events'),'SELECT')
+  union all
+  select 'owner-scoped CBT expiry function', '20261104120000_cbt_owner_expiry.sql'
+  where not exists (select 1 from pg_proc p where p.oid=to_regprocedure('public.cbt_expire_owned_attempt(uuid)')
+                    and p.prosecdef and p.proconfig @> array['search_path=""'])
+     or not has_function_privilege('authenticated',to_regprocedure('public.cbt_expire_owned_attempt(uuid)'),'EXECUTE')
+     or has_function_privilege('anon',to_regprocedure('public.cbt_expire_owned_attempt(uuid)'),'EXECUTE')
+     or has_function_privilege('service_role',to_regprocedure('public.cbt_expire_owned_attempt(uuid)'),'EXECUTE')
+  union all
+  select 'CBT protocol fence discriminator and restricted v2 start', '20261107120000_cbt_attempt_protocol_fence.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema='public' and table_name='cbt_attempts' and column_name='protocol'
+                      and is_nullable='NO' and column_default like '%legacy%')
+     or not exists (select 1 from pg_trigger t where t.tgrelid=to_regclass('public.cbt_attempts')
+                    and t.tgname='cbt_protocol_attempt_guard' and not t.tgisinternal and t.tgenabled='O')
+     or not exists (select 1 from pg_trigger t where t.tgrelid=to_regclass('public.cbt_answers')
+                    and t.tgname='cbt_protocol_answer_guard' and not t.tgisinternal and t.tgenabled='O')
+     or not exists (select 1 from pg_proc p join pg_roles r on r.oid=p.proowner
+                    where p.oid=to_regprocedure('public.cbt_start_attempt_v2(uuid,text[],integer,integer,text,text)')
+                      and p.prosecdef and r.rolname='cbt_v2_executor' and p.proconfig @> array['search_path=""'])
+     or coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_start_attempt_v2(uuid,text[],integer,integer,text,text)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('service_role',to_regprocedure('public.cbt_start_attempt_v2(uuid,text[],integer,integer,text,text)'),'EXECUTE'),false)
+  union all
+  select 'CBT v2 lifecycle functions and operation ledger', '20261107130000_cbt_v2_server_lifecycle.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='cbt_v2_operations' and c.relrowsecurity)
+     or not exists (select 1 from pg_proc p join pg_roles r on r.oid=p.proowner
+                    where p.oid=to_regprocedure('public.cbt_candidate_answer(uuid,uuid,integer,bigint,uuid,uuid)')
+                      and p.prosecdef and r.rolname='cbt_v2_executor' and p.proconfig @> array['search_path=""'])
+     or not exists (select 1 from pg_proc p join pg_roles r on r.oid=p.proowner
+                    where p.oid=to_regprocedure('public.cbt_candidate_finalize(uuid,bigint,uuid,uuid)')
+                      and p.prosecdef and r.rolname='cbt_v2_executor' and p.proconfig @> array['search_path=""'])
+     or coalesce(has_function_privilege('anon',to_regprocedure('public.cbt_candidate_answer(uuid,uuid,integer,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('anon',to_regprocedure('public.cbt_candidate_finalize(uuid,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_candidate_answer(uuid,uuid,integer,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_candidate_finalize(uuid,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('service_role',to_regprocedure('public.cbt_candidate_answer(uuid,uuid,integer,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('service_role',to_regprocedure('public.cbt_candidate_finalize(uuid,bigint,uuid,uuid)'),'EXECUTE'),false)
+  union all
+  select 'CBT v2 answer-only gateway', '20261107140000_cbt_v2_answer_gateway.sql'
+  where not exists (select 1 from pg_roles where rolname='cbt_v2_answer_gateway' and not rolcanlogin and not rolinherit)
+     or not exists (select 1 from pg_proc p join pg_roles r on r.oid=p.proowner
+                    where p.oid=to_regprocedure('public.cbt_v2_answer_gateway(uuid,uuid,integer,bigint,uuid,uuid,bigint)')
+                      and p.prosecdef and r.rolname='cbt_v2_answer_gateway' and p.proconfig @> array['search_path=""'])
+     or not coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_v2_answer_gateway(uuid,uuid,integer,bigint,uuid,uuid,bigint)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('anon',to_regprocedure('public.cbt_v2_answer_gateway(uuid,uuid,integer,bigint,uuid,uuid,bigint)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('service_role',to_regprocedure('public.cbt_v2_answer_gateway(uuid,uuid,integer,bigint,uuid,uuid,bigint)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege(to_regrole('cbt_v2_answer_gateway'),to_regprocedure('public.cbt_candidate_finalize(uuid,bigint,uuid,uuid)'),'EXECUTE'),false)
+  union all
+  select 'CBT v2 writing-session boundary', '20261107150000_cbt_single_writing_session.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='cbt_v2_writing_sessions' and c.relrowsecurity)
+     or not exists (select 1 from pg_index i where i.indexrelid=to_regclass('public.cbt_v2_one_active_writing_session') and i.indisunique and i.indpred is not null)
+     or not exists (select 1 from pg_proc p join pg_roles r on r.oid=p.proowner
+                    where p.oid=to_regprocedure('public.cbt_v2_session_gateway(uuid,uuid,boolean)')
+                      and p.prosecdef and r.rolname='cbt_v2_executor' and p.proconfig @> array['search_path=""'])
+     or not coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_v2_session_gateway(uuid,uuid,boolean)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('anon',to_regprocedure('public.cbt_v2_session_gateway(uuid,uuid,boolean)'),'EXECUTE'),false)
+     or to_regprocedure('public.cbt_candidate_answer_core(uuid,uuid,integer,bigint,uuid,uuid)') is null
+     or to_regprocedure('public.cbt_candidate_finalize_core(uuid,bigint,uuid,uuid)') is null
+     or coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_candidate_answer_core(uuid,uuid,integer,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege(to_regrole('cbt_v2_client'),to_regprocedure('public.cbt_candidate_answer_core(uuid,uuid,integer,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('service_role',to_regprocedure('public.cbt_candidate_finalize_core(uuid,bigint,uuid,uuid)'),'EXECUTE'),false)
+     or to_regprocedure('public.cbt_candidate_finalize_leased(uuid,bigint,uuid,uuid,bigint,uuid)') is null
+     or coalesce(has_function_privilege('authenticated',to_regprocedure('public.cbt_candidate_finalize_leased(uuid,bigint,uuid,uuid,bigint,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege('service_role',to_regprocedure('public.cbt_candidate_finalize_leased(uuid,bigint,uuid,uuid,bigint,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege(to_regrole('cbt_v2_client'),to_regprocedure('public.cbt_candidate_finalize_leased(uuid,bigint,uuid,uuid,bigint,uuid)'),'EXECUTE'),false)
+     or coalesce(has_function_privilege(to_regrole('cbt_v2_answer_gateway'),to_regprocedure('public.cbt_candidate_finalize_leased(uuid,bigint,uuid,uuid,bigint,uuid)'),'EXECUTE'),false)
+     or to_regprocedure('public.cbt_v2_answer_gateway(uuid,uuid,integer,bigint,uuid)') is not null
+     or coalesce(has_table_privilege('authenticated',to_regclass('public.cbt_v2_writing_sessions'),'SELECT,IN' || 'SERT,UP' || 'DATE,DE' || 'LETE'),false)
   union all
   select 'CBT answer-key table permissions', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where has_table_privilege('anon',to_regclass('public.exam_questions'),'SELECT')

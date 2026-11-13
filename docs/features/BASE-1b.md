@@ -52,10 +52,7 @@ N/A.
 
 ## Data
 
-Every table in `public` after all migrations (35 tables), with the intended
-posture. "Client" means the `anon` and `authenticated` roles that reach the
-database through PostgREST with the publishable key; `service_role` is the
-server and always bypasses RLS.
+This table records the historical BASE-1b baseline (35 tables), not the current deployed posture. Later local migrations and classifications supersede it; consult `scripts/rls-posture.ts` and the service-request audit for the current release candidate, and verify the actual hosted schema separately. "Client" means the `anon` and `authenticated` roles that reach the database through PostgREST with the publishable key; `service_role` is the server and bypasses RLS.
 
 | Table | RLS | Policies | Client privileges (intended) | Access model / decision |
 |---|---|---|---|---|

@@ -126,6 +126,8 @@ test('mobile forms and navigation meet touch-size and input-size targets', async
 });
 test('unconfigured login fails closed and cannot create a local session', async ({ page }) => {
   await page.goto('/login');
+  const consent = page.getByRole('button', { name: 'Reject optional' });
+  if (await consent.isVisible()) await consent.click();
   await page.locator('input[type="email"]').fill('student@example.test');
   await page.locator('input[type="password"]').fill('test-password-123');
   await page.locator('button[type="submit"]').click();

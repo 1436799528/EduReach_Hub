@@ -39,17 +39,11 @@ site will not start correctly; do not continue.
 
 ## 3. Apply the migrations
 
-75 migrations in `supabase/migrations/`, applied in filename order. Use the Supabase
-CLI against a **scratch project first**:
+For this CBT release, follow the target-specific hard prerequisite and detailed catalog/ledger, backup, deployment and rollback checks in [CBT migration-first release procedure](CBT_MIGRATION_FIRST_RELEASE.md). The application cannot load legacy papers safely on a pre-protocol database, and neither Netlify nor the readiness endpoint enforces migration order. Resolve merge-triggered deployment before merge.
 
-```bash
-supabase link --project-ref <scratch>
-supabase db reset          # applies every migration from empty
-```
+The local release candidate contains 85 migrations in `supabase/migrations/`, including two service-request boundary migrations, one idempotency migration, the CBT owner-expiry function, protocol fence, restricted v2 lifecycle, answer-only gateway, single-writing-session boundary and atomic question-import publication. The CBT page writer and recovery are integrated **only for the local rehearsal**; the hosted staging path is not enabled or verified, and public finalization is not integrated. Reconcile the hosted ledger and review every pending migration and its data effects before applying anything; do not blindly replay historical migrations against a populated project. The gateway grants authenticated owners a directly callable leased answer-only RPC; review hosted role membership and PostgREST/JWT behavior before any rollout. Finalization remains blocked pending the client recovery barrier and separate authorization boundary. If an approved rollback is ever required, quiesce traffic first; roll back the writing-session migration before the gateway, lifecycle and protocol fence, and observe its refusal while session history or v2 attempts exist. In-flight destructive rollback safety is not proven. Duplicate migration version prefixes make a blind push unsafe. First reconcile every file and obtain an independently reviewed, approved staging migration procedure as described in `CBT_STAGING_VALIDATION_PREPARATION.md`.
 
-Compare the scratch project's `information_schema.columns` against production
-before applying there; the baseline restores structure, and any column production
-has that the repository has never seen is drift requiring a reviewed migration.
+Do not use a generic CLI reset or push for this migration set. Obtain separate authorization for a verified disposable target, reconcile every migration file and duplicate version, then rehearse the approved target-specific procedure. Compare the resulting schema and role fingerprints against the intended target; an extra column or other drift requires review.
 
 > **Take a backup first.** Causing a migration incident without one is the single
 > most expensive mistake available in this document. See
@@ -57,8 +51,7 @@ has that the repository has never seen is drift requiring a reviewed migration.
 > path if the plan's backup status is unknown) and record it in that document's
 > evidence log.
 
-**Pass:** `supabase db reset` completes with no error on the scratch project, then
-the same history applies to production.
+**Pass:** independently verified backup, file-level migration history, schema/role checks and legacy compatibility meet the approved release procedure. A scratch replay alone does not authorize or prove a production migration.
 
 ### 3a. The production sync check (run this when code is live but migrations are not)
 
@@ -68,9 +61,7 @@ APIs answered `200`, and the *only* symptom was silently reduced data and two
 endpoints returning `503`. Counting rows in the migration history is not enough —
 it says how many migrations ran, not which. Check 9 of
 `supabase/ci/production-validation.sql` now compares the exact release versions
-and names every missing migration, including data-only migrations. Run it, then
-apply every file named in its `detail` column. The four files reported during that
-original incident were:
+and names potentially missing migrations, including data-only migrations. Treat its output as an investigation aid, not permission to apply files: duplicate versions and target drift require file-level reconciliation and a separately approved plan. The four files reported during that original incident were:
 
 ```
 apply 20261002120000_cbt_practice_and_mock_modes.sql

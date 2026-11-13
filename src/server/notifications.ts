@@ -51,11 +51,11 @@ export const STATUS_NOTIFICATION_COPY: Record<string, StatusCopy> = {
   },
   awaiting_information: {
     title: 'We need more information',
-    body: 'Open your request to see what is missing and reply so we can continue.',
+    body: 'More information is needed before your request can continue. Check its status in your dashboard.',
   },
   completed: {
     title: 'Your request is complete',
-    body: 'The work on your request is finished. Open it to see the outcome.',
+    body: 'Your request has been marked complete. You can check its status in your dashboard.',
   },
   closed: {
     title: 'Your request is closed',

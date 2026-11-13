@@ -1,4 +1,5 @@
 import { userFacingError } from '../lib/errors';
+import { serviceRequestUpdateFailure } from '../src/lib/serviceRequestErrors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ListChecks,
@@ -68,13 +69,13 @@ export default function AdminDashboardPage() {
     return () => { mounted.current = false; window.clearInterval(timer); };
   }, [load]);
 
-  async function act(requestId: string, nextStatus: string) {
+  async function act(requestId: string, nextStatus: string, expectedUpdatedAt: string) {
     setBusyId(requestId);
     try {
-      await updateAdminServiceRequest(requestId, nextStatus);
+      await updateAdminServiceRequest(requestId, { status: nextStatus, expected_updated_at: expectedUpdatedAt });
       await load(true);
     } catch (e) {
-      setError(userFacingError(e, 'Unable to update request.'));
+      setError(serviceRequestUpdateFailure(e, 'Unable to update request.').message);
     } finally { setBusyId(null); }
   }
 
@@ -163,7 +164,7 @@ export default function AdminDashboardPage() {
                   <h2>Needs Attention</h2>
                   <span>{pendingCount === null ? 'Status unavailable' : pendingCount === 0 ? 'Queue clear' : `Showing ${attention.length} of ${pendingCount.toLocaleString()} open`}</span>
                 </div>
-                <div className="admin-table-wrap">
+                <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
                   <table className="admin-table">
                     <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
                     <tbody>

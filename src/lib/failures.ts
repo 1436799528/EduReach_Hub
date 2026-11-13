@@ -16,6 +16,7 @@ export type FailureKind =
   | 'timeout'
   | 'server'
   | 'auth'
+  | 'forbidden'
   | 'validation'
   | 'not-found'
   | 'rate-limited'
@@ -36,7 +37,7 @@ export type Failure = {
 const MESSAGES: Record<FailureKind, Omit<Failure, 'kind'>> = {
   offline: {
     title: 'You are offline',
-    detail: 'Your device has no connection. Your work is kept on this device and will sync when you reconnect.',
+    detail: 'Your device has no connection. This action may not have been saved or submitted. Reconnect and try again, then check that it succeeded.',
     retryable: true,
     preserveInput: true,
   },
@@ -55,6 +56,12 @@ const MESSAGES: Record<FailureKind, Omit<Failure, 'kind'>> = {
   auth: {
     title: 'Your session has ended',
     detail: 'Sign in again to continue. Nothing you have already saved is lost.',
+    retryable: false,
+    preserveInput: true,
+  },
+  forbidden: {
+    title: 'You do not have access',
+    detail: 'Your account does not have permission for this action. Contact EduReach if you think this is a mistake.',
     retryable: false,
     preserveInput: true,
   },
@@ -110,7 +117,8 @@ export function failureKindOf(error: unknown): FailureKind | null {
   if (typeof code === 'string' && PG_CODE_KINDS[code]) return PG_CODE_KINDS[code];
 
   const status = statusOf(error);
-  if (status === 401 || status === 403) return 'auth';
+  if (status === 401) return 'auth';
+  if (status === 403) return 'forbidden';
   if (status === 404) return 'not-found';
   if (status === 408 || status === 504) return 'timeout';
   if (status === 429) return 'rate-limited';
@@ -125,7 +133,7 @@ export function failureKindOf(error: unknown): FailureKind | null {
   }
   if (/timeout|timed out|aborted/i.test(message)) return 'timeout';
   if (/invalid or expired session|authentication required|sign in|unauthor/i.test(message)) return 'auth';
-  if (/permission|not allowed|not authorised|not authorized/i.test(message)) return 'auth';
+  if (/permission|forbidden|access denied|not allowed|not authorised|not authorized/i.test(message)) return 'forbidden';
   if (/not found|no longer available|removed/i.test(message)) return 'not-found';
   if (/too many|rate limit/i.test(message)) return 'rate-limited';
   if (/no questions are available|must|required|invalid|choose|select|enter a valid/i.test(message)) return 'validation';
@@ -134,18 +142,18 @@ export function failureKindOf(error: unknown): FailureKind | null {
 
 /**
  * PostgreSQL/Supabase error codes that carry a student-facing meaning.
- * `relation does not exist` is not something to show a student; "not available"
- * is, and it tells the UI not to offer a pointless retry.
+ * Missing tables or functions are backend failures, not evidence that a
+ * student's specific record was removed or their attempt expired.
  */
 const PG_CODE_KINDS: Record<string, FailureKind> = {
-  '42P01': 'not-found',   // undefined_table
-  '42883': 'not-found',   // undefined_function
-  'PGRST202': 'not-found',
-  'PGRST205': 'not-found',
+  '42P01': 'server',      // undefined_table
+  '42883': 'server',      // undefined_function
+  'PGRST202': 'server',
+  'PGRST205': 'server',
   '23505': 'validation',  // unique_violation
   '23503': 'validation',  // foreign_key_violation
   '23514': 'validation',  // check_violation
-  '42501': 'auth',        // insufficient_privilege
+  '42501': 'forbidden',   // insufficient_privilege
   'PGRST301': 'auth',     // JWT/claim failure
   'PGRST302': 'auth',
   '53300': 'server',      // too_many_connections

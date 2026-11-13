@@ -27,9 +27,10 @@ not silently dropped — see the plan at the end.
 | 12 | `compact-structural.css` | Compact structural pass |
 | 13 | `edu-portal.css` | Feature surfaces layered over the design system |
 | 14 | `data-control.css` | Data-control centre |
-| 15 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
-| 16 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
-| 17 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+| 15 | `components/CookieConsent.css` | Scoped privacy-choice panel, before the shared closing layers |
+| 16 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
+| 17 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
+| 18 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
 
 ## Lazy route sheet
 
@@ -52,6 +53,9 @@ Two rules follow from that:
 `tests/stylesheet-layers.test.ts` pins the exact global list, the lazy admin
 sheet, and both ordering rules, so adding or moving a sheet requires editing
 this table and that test deliberately — the crowd of sheets cannot grow by accident.
+The 2026-11-02 admin refresh removes only `.admin-kpi` from the shared public
+image-card treatment in layer 8; public card selectors remain unchanged, while
+admin metrics are owned by `admin.css`.
 
 ## Consolidation plan (the actual P3-5 work)
 

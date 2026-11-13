@@ -138,10 +138,11 @@ The project is unavailable while this runs. Afterwards, complete §5.4.
 pg_restore "$TARGET_DB_URL" --no-owner --no-privileges --clean --if-exists \
   --dbname="$TARGET_DB_URL" edureach-YYYYMMDDTHHMMSSZ.dump
 
-# Then re-apply the repository migrations, so the schema is exactly the version the
-# code expects — a dump taken before a migration would otherwise restore an old
-# shape into new code.
-npx supabase db push        # or the SQL editor, in filename order
+# Do not blindly replay migrations after restore. Reconcile the restored ledger,
+# actual schema, roles and all individual migration files first. Duplicate
+# version prefixes make a normal version-only CLI push unsafe. Use only the
+# separately approved, target-specific recovery procedure in
+# CBT_MIGRATION_FIRST_RELEASE.md and SUPABASE_MIGRATION_HISTORY_RECONCILIATION.md.
 ```
 
 ### 5.3 Schema-only rebuild (always available, no dependencies)
@@ -154,15 +155,16 @@ restoring but the code is intact:
 npm run backup:rehearsal     # proves the migrations still build a working database
 ```
 
-Current committed migration set: **75 migrations** in `supabase/migrations/`; the migration replay test verifies the complete set applies from an empty schema. The dated rehearsal figures below are historical snapshots. Current CI schema fingerprint: **75 migrations, 50 tables, 589 columns, 55 policies, 50 tables with RLS**.
+Current local migration set: **85 migrations** in `supabase/migrations/`, including the CBT protocol fence, restricted v2 server lifecycle, answer-only gateway, single-writing-session boundary, and atomic question-import publication. The 85-migration set passed the local synthetic backup/restore test; hosted restore remains untested. The prior local synthetic backup/restore rehearsal covered **83 migrations, 52 tables, 610 columns, 59 policies, 52 tables with RLS**. The prior local synthetic backup/restore rehearsal covered **82 migrations, 51 tables, 601 columns, 58 policies, 51 tables with RLS**; the preceding rehearsal covered 81 migrations with the same table/column/policy counts. Earlier rehearsals covered 80 migrations, 50 tables, 594 columns and 57 policies, and 79 migrations, 50 tables, 593 columns and 53 policies. The dated figures below are historical snapshots. None is a hosted Supabase backup or restore.
 
 Applying migrations is the riskiest routine operation in
 `docs/operations/PRODUCTION_RUNBOOK.md` §3; §3a there is the sync check that
 confirms which of them production has actually seen.
 
-Then reapply them to the target project in filename order. **This rebuilds structure,
-not data and not student identity** — it is the path for a fresh start, not for
-recovering a loss.
+A schema-only rebuild is not an approved target procedure: reconcile duplicate
+versions and target history, then use only an independently reviewed migration
+method. **This rebuilds structure, not data and not student identity** — it is the
+path for a fresh start, not for recovering a loss.
 
 ### 5.4 After any restore — verify before declaring success
 

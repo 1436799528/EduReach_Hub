@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
         )}
 
         <div className="admin-card">
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
             <table className="admin-table">
               <thead>
                 <tr>
@@ -227,7 +227,7 @@ export default function AdminUsersPage() {
                 {viewingActivity && (
                   <>
                     <h3 style={{ margin: '0 0 8px', color: 'var(--admin-navy)', fontSize: 14 }}>Service requests</h3>
-                    <div className="admin-table-wrap" style={{ marginBottom: 18 }}>
+                    <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0} style={{ marginBottom: 18 }}>
                       <table className="admin-table">
                         <thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Date</th></tr></thead>
                         <tbody>
@@ -244,7 +244,7 @@ export default function AdminUsersPage() {
                       </table>
                     </div>
                     <h3 style={{ margin: '0 0 8px', color: 'var(--admin-navy)', fontSize: 14 }}>CBT attempts</h3>
-                    <div className="admin-table-wrap">
+                    <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
                       <table className="admin-table">
                         <thead><tr><th scope="col">Exam</th><th scope="col">Status</th><th scope="col">Score</th><th scope="col">Started</th></tr></thead>
                         <tbody>

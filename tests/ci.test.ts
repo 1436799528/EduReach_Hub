@@ -20,7 +20,6 @@ const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 };
 const workflow = readFileSync(join(root, '.github/workflows/production-checks.yml'), 'utf8');
 const nvmrc = readFileSync(join(root, '.nvmrc'), 'utf8').trim();
-const netlify = readFileSync(join(root, 'netlify.toml'), 'utf8');
 
 /** Every check the authoritative gate must perform, in order. */
 const REQUIRED_STAGES: Array<[stage: string, command: string]> = [
@@ -135,9 +134,10 @@ test('Node requirements agree across the repository', () => {
   const workflowMajor = major(nvmrc);
   assert.ok(workflowMajor, '.nvmrc must contain a version');
   assert.equal(major(packageJson.engines?.node ?? ''), workflowMajor, 'package.json engines must match .nvmrc');
-  const netlifyNode = /NODE_VERSION\s*=\s*"([^"]+)"/.exec(netlify)?.[1];
-  assert.equal(major(netlifyNode ?? ''), workflowMajor, 'netlify.toml NODE_VERSION must match .nvmrc');
-  // Either the workflow reads .nvmrc (preferred) or pins the same major.
+  // Vercel takes its Node version from the project settings, which cannot be
+  // asserted from the repository; .nvmrc, package.json engines and the workflow
+  // pin keep each other honest. Either the workflow reads .nvmrc (preferred) or
+  // pins the same major.
   const inline = /node-version:\s*['"]?([\d.]+x?)/.exec(workflow)?.[1];
   if (!workflow.includes('node-version-file: .nvmrc')) {
     assert.equal(major(inline ?? ''), workflowMajor, `the workflow pins ${inline}, which must match .nvmrc`);

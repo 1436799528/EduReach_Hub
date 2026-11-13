@@ -1,0 +1,705 @@
+/**
+ * V2 answer-operation journal for the local rehearsal page writer.
+ * Browser persistence is a recovery aid, not authoritative exam state.
+ * Public finalization and global v2 creation remain separately gated.
+ */
+import type { CbtQuestionPayload, CbtV2Outcome, CbtV2Snapshot } from './api';
+import { CBT_UUID as UUID, validCbtV2Answer, validCbtV2Draft, validCbtV2QuestionIds, validCbtV2Revision as validRevision } from './cbtProtocolValidation';
+
+export class CbtWritingSessionRevokedError extends Error {
+  constructor() {
+    super('This device is no longer authorized to write. Pending answers remain on this device. Review them before explicitly taking over; newer server answers will not be silently overwritten.');
+    this.name = 'CbtWritingSessionRevokedError';
+  }
+}
+export type QueueAnswer = number | null;
+export type QueueStatus = 'pending' | 'acknowledged' | 'conflicted' | 'resolved-server' | 'superseded' | 'closed';
+export type AnswerOperation = {
+  accountId: string;
+  attemptId: string;
+  questionId: string;
+  position: number;
+  selected: QueueAnswer;
+  baseAnswer: QueueAnswer;
+  expectedRevision: number;
+  operationKey: string;
+  /** Monotonic browser-journal insertion order, not server authority. */
+  sequence: number;
+  createdAt: number;
+  updatedAt: number;
+  status: QueueStatus;
+  lastServerAnswer: QueueAnswer;
+  lastServerRevision: number;
+  acceptedRevision: number | null;
+  /** Lease used for this operation; absent only on historical pre-lease rows. */
+  sessionId?: string;
+  sessionGeneration?: number;
+  /** Present only on a superseded conflict; links to the atomically inserted replacement. */
+  supersededBy?: string;
+};
+export type QueueScope = { accountId: string; attemptId: string };
+export type QueueTransport = {
+  state: (attemptId: string) => Promise<CbtV2Snapshot>;
+  answer: (attemptId: string, body: { expectedRevision: number; operationKey: string; questionId: string; selected: QueueAnswer; sessionId?: string; sessionGeneration?: number }) => Promise<CbtV2Outcome>;
+};
+export type QueueLock = <T>(name: string, action: () => Promise<T>) => Promise<T>;
+
+const validAnswer = (v: unknown): v is QueueAnswer => v === null || validCbtV2Answer(v);
+const answerAt = (answers: Record<string, number>, position: number): QueueAnswer => answers[String(position)] ?? null;
+
+/** Match a state already validated by fetchCbtV2State to the paper and journal. */
+export function validateCbtJournalPaper(state: CbtV2Snapshot, paper: CbtQuestionPayload[], operations: AnswerOperation[]): void {
+  const ids = state.questionIds;
+  if (state.status !== 'in_progress' || !validCbtV2QuestionIds(ids) || !Array.isArray(paper) || paper.length !== ids.length ||
+      paper.some((question, index) => !question || question.position !== index + 1 || typeof question.id !== 'string' ||
+        question.id.toLowerCase() !== ids[index].toLowerCase() || typeof question.text !== 'string' || !question.text.trim() || typeof question.subject !== 'string' ||
+        !Array.isArray(question.options) || !question.options.length || Array.from(question.options).some(option => typeof option !== 'string' || !option.trim()))) {
+    throw new Error('CBT paper requires review.');
+  }
+  for (const op of operations) {
+    const question = paper[op.position - 1];
+    if (!question || question.id.toLowerCase() !== op.questionId.toLowerCase() ||
+        [op.selected, op.baseAnswer, op.lastServerAnswer].some(value => value !== null && (value < 0 || value >= question.options.length))) {
+      throw new Error('CBT journal requires review.');
+    }
+  }
+  for (const [position, answer] of Object.entries(state.answers)) {
+    const question = paper[Number(position) - 1];
+    if (!question || answer >= question.options.length) throw new Error('CBT paper requires review.');
+  }
+}
+
+function validateScope(scope: QueueScope) {
+  if (!scope || typeof scope.accountId !== 'string' || typeof scope.attemptId !== 'string' || !UUID.test(scope.accountId) || !UUID.test(scope.attemptId)) throw new Error('Invalid CBT queue scope.');
+}
+function canonicalId(id: string): string {
+  if (typeof id !== 'string' || !UUID.test(id)) throw new Error('Invalid CBT operation identity.');
+  return id.toLowerCase();
+}
+function canonicalScope(scope: QueueScope): QueueScope {
+  validateScope(scope);
+  return { accountId: scope.accountId.toLowerCase(), attemptId: scope.attemptId.toLowerCase() };
+}
+function canonicalOperation(op: AnswerOperation): AnswerOperation {
+  validateOperation(op, op);
+  return { ...op, accountId: op.accountId.toLowerCase(), attemptId: op.attemptId.toLowerCase(), questionId: op.questionId.toLowerCase(), operationKey: op.operationKey.toLowerCase(), ...(op.sessionId === undefined ? {} : { sessionId: op.sessionId.toLowerCase() }), ...(op.supersededBy === undefined ? {} : { supersededBy: op.supersededBy.toLowerCase() }) };
+}
+function validateOperation(op: AnswerOperation, scope: QueueScope) {
+  validateScope(scope);
+  if (!op || op.accountId !== scope.accountId || op.attemptId !== scope.attemptId || typeof op.questionId !== 'string' || !UUID.test(op.questionId) ||
+      typeof op.operationKey !== 'string' || !UUID.test(op.operationKey) || !Number.isSafeInteger(op.position) || op.position < 1 ||
+      !validAnswer(op.selected) || !validAnswer(op.baseAnswer) || !validAnswer(op.lastServerAnswer) ||
+      !validRevision(op.expectedRevision) || !validRevision(op.lastServerRevision) || !validRevision(op.sequence) ||
+      !(op.acceptedRevision === null || validRevision(op.acceptedRevision)) ||
+      !Number.isSafeInteger(op.createdAt) || !Number.isSafeInteger(op.updatedAt) ||
+      ((op.sessionId === undefined) !== (op.sessionGeneration === undefined)) ||
+      (op.sessionId !== undefined && (typeof op.sessionId !== 'string' || !UUID.test(op.sessionId) || !validRevision(op.sessionGeneration) || op.sessionGeneration < 1)) ||
+      (op.supersededBy !== undefined && (op.status !== 'superseded' || typeof op.supersededBy !== 'string' || !UUID.test(op.supersededBy) || op.supersededBy.toLowerCase() === op.operationKey.toLowerCase())) ||
+      !['pending', 'acknowledged', 'conflicted', 'resolved-server', 'superseded', 'closed'].includes(op.status)) {
+    throw new Error('CBT queue requires review.');
+  }
+}
+function validateSnapshot(snapshot: Omit<CbtV2Snapshot, 'questionIds'>) {
+  if (snapshot.protocol !== 2 || !validRevision(snapshot.revision) || snapshot.status !== 'in_progress' || !validCbtV2Draft(snapshot.answers)) {
+    throw new Error('CBT server state requires review.');
+  }
+}
+
+/** Read-only projection. Unknown or conflicting histories require review, never inference. */
+export function projectCbtJournal(scope: QueueScope, state: CbtV2Snapshot, paper: CbtQuestionPayload[], operations: AnswerOperation[]): Record<number, number> {
+  scope = canonicalScope(scope);
+  validateSnapshot(state);
+  const rows = operations.map(canonicalOperation);
+  validateCbtJournalPaper(state, paper, rows);
+  const projected: Record<number, number> = { ...state.answers };
+  const keys = new Set<string>();
+  let sequence = 0;
+  for (const op of rows) {
+    validateOperation(op, scope);
+    if (op.sequence <= sequence || keys.has(op.operationKey)) throw new Error('CBT journal requires review.');
+    sequence = op.sequence; keys.add(op.operationKey);
+    const server = answerAt(state.answers, op.position);
+    if (op.status === 'conflicted' || op.status === 'closed') throw new Error('CBT journal requires review.');
+    if (op.status === 'pending') {
+      // A stale/unknown request may have committed or been superseded remotely.
+      if (op.acceptedRevision !== null || op.expectedRevision !== state.revision || op.lastServerRevision !== op.expectedRevision ||
+          op.baseAnswer !== server || op.lastServerAnswer !== op.baseAnswer) throw new Error('CBT journal requires review.');
+      if (op.selected === null) delete projected[op.position]; else projected[op.position] = op.selected;
+    } else if (op.status === 'acknowledged') {
+      if (op.acceptedRevision !== op.expectedRevision + 1 || op.lastServerRevision < op.acceptedRevision ||
+          op.lastServerRevision > state.revision || op.lastServerAnswer !== op.selected ||
+          (op.lastServerRevision === state.revision && server !== op.selected)) throw new Error('CBT journal requires review.');
+      // The current server snapshot wins over historical acknowledgements.
+    } else if (op.lastServerRevision > state.revision) throw new Error('CBT journal requires review.');
+  }
+  return projected;
+}
+
+/** Atomic persistence interface; implementations must commit before resolving. */
+export interface AnswerJournal {
+  add(op: AnswerOperation): Promise<AnswerOperation>;
+  list(scope: QueueScope): Promise<AnswerOperation[]>;
+  transition(scope: QueueScope, key: string, expected: QueueStatus, next: AnswerOperation): Promise<boolean>;
+  replaceConflict(scope: QueueScope, key: string, next: AnswerOperation, replacement: AnswerOperation): Promise<AnswerOperation | null>;
+}
+
+/** A durable local seal is not proof that any other device has drained. */
+export type CbtWritingSessionRequest = QueueScope & { requestKey: string; takeover: boolean; sessionId?: string; sessionGeneration?: number };
+export type CbtSubmissionSeal = { accountId: string; attemptId: string; operationKey: string; expectedRevision: number };
+export interface CbtSubmissionJournal extends AnswerJournal {
+  readSubmission(scope: QueueScope): Promise<CbtSubmissionSeal | null>;
+  sealSubmission(scope: QueueScope, operationKey: string, expectedRevision: number): Promise<CbtSubmissionSeal>;
+}
+function submissionKey(scope: QueueScope): string { return `submission:${scope.accountId}:${scope.attemptId}`; }
+function writingSessionKey(scope: QueueScope, tabId?: string): string { return `writing-session:${scope.accountId}:${scope.attemptId}${tabId === undefined ? '' : `:${canonicalId(tabId)}`}`; }
+function validateSessionRequest(value: unknown, scope: QueueScope): CbtWritingSessionRequest {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('CBT writing session requires review.');
+  const item = value as Partial<CbtWritingSessionRequest>;
+  if (item.accountId !== scope.accountId || item.attemptId !== scope.attemptId || typeof item.requestKey !== 'string' ||
+      canonicalId(item.requestKey) !== item.requestKey || typeof item.takeover !== 'boolean' ||
+      ((item.sessionId === undefined) !== (item.sessionGeneration === undefined)) ||
+      (item.sessionId !== undefined && (canonicalId(item.sessionId) !== item.sessionId || !validRevision(item.sessionGeneration) || item.sessionGeneration < 1))) {
+    throw new Error('CBT writing session requires review.');
+  }
+  return item as CbtWritingSessionRequest;
+}
+function validateSubmissionSeal(value: unknown, scope: QueueScope): CbtSubmissionSeal {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('CBT submission requires review.');
+  const item = value as Partial<CbtSubmissionSeal>;
+  if (item.accountId !== scope.accountId || item.attemptId !== scope.attemptId || typeof item.operationKey !== 'string' ||
+      canonicalId(item.operationKey) !== item.operationKey || !validRevision(item.expectedRevision)) throw new Error('CBT submission requires review.');
+  return item as CbtSubmissionSeal;
+}
+
+/**
+ * Separate journal rows prevent snapshot clobbering between tabs. IDB write
+ * transactions atomically replace a conflict with its new logical operation.
+ * This class deliberately never deletes or compacts rows.
+ */
+const JOURNAL_NAME = 'edureach-cbt-v2-operations';
+function openJournal(factory: IDBFactory, name: string): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    let blocked = false;
+    const request = factory.open(name, 2);
+    request.onupgradeneeded = event => {
+      if (blocked) { request.transaction!.abort(); return; }
+      const db = request.result;
+      if (event.oldVersion === 0) {
+        const store = db.createObjectStore('operations', { keyPath: 'operationKey' });
+        store.createIndex('scope', ['accountId', 'attemptId']);
+        db.createObjectStore('metadata');
+        return;
+      }
+      // Versionchange is one atomic transaction. Abort rather than guess if
+      // two case variants differ, the counter is corrupt, or any row is bad.
+      const tx = request.transaction!;
+      const store = tx.objectStore('operations');
+      const all = store.getAll();
+      all.onsuccess = () => {
+        try {
+          const unique = new Map<string, AnswerOperation>();
+          const sequences = new Set<number>();
+          let maxSequence = 0;
+          for (const raw of all.result as AnswerOperation[]) {
+            const op = canonicalOperation(raw);
+            if (op.sequence < 1) throw new Error('Invalid sequence');
+            const previous = unique.get(op.operationKey);
+            if (previous) {
+              const a = previous as unknown as Record<string, unknown>, b = op as unknown as Record<string, unknown>;
+              const keys = Object.keys(a);
+              if (keys.length !== Object.keys(b).length || keys.some(key =>
+                !Object.hasOwn(b, key) || (a[key] !== null && typeof a[key] === 'object') || !Object.is(a[key], b[key]))) throw new Error('Operation identity collision');
+              continue;
+            }
+            if (sequences.has(op.sequence)) throw new Error('Sequence collision');
+            sequences.add(op.sequence); maxSequence = Math.max(maxSequence, op.sequence); unique.set(op.operationKey, op);
+          }
+          const counter = tx.objectStore('metadata').get('sequence');
+          counter.onsuccess = () => {
+            if (unique.size && (!Number.isSafeInteger(counter.result) || counter.result < maxSequence)) { tx.abort(); return; }
+            store.clear();
+            unique.forEach(op => store.add(op));
+          };
+        } catch { tx.abort(); }
+      };
+    };
+    request.onerror = () => reject(request.error ?? new Error('CBT storage unavailable.'));
+    request.onblocked = () => { blocked = true; reject(new Error('CBT storage unavailable.')); };
+    request.onsuccess = () => {
+      if (blocked) { request.result.close(); return; }
+      request.result.onversionchange = () => request.result.close(); resolve(request.result);
+    };
+  });
+}
+
+async function listJournal(db: IDBDatabase, scope: QueueScope): Promise<AnswerOperation[]> {
+  scope = canonicalScope(scope);
+  const rows = await new Promise<AnswerOperation[]>((resolve, reject) => {
+    const tx = db.transaction('operations', 'readonly');
+    const request = tx.objectStore('operations').index('scope').getAll([scope.accountId, scope.attemptId]);
+    request.onsuccess = () => resolve(request.result as AnswerOperation[]);
+    request.onerror = () => reject(request.error ?? new Error('CBT storage unavailable.'));
+    tx.onabort = () => reject(tx.error ?? new Error('CBT storage unavailable.'));
+  });
+  rows.forEach(row => { validateOperation(row, scope); if (row.sequence < 1) throw new Error('CBT queue requires review.'); });
+  return rows.sort((a, b) => a.sequence - b.sequence);
+}
+
+/** Read-only preflight using the exact same opener and validation as the queue. */
+export async function inspectCbtAnswerJournal(scope: QueueScope): Promise<AnswerOperation[]> {
+  const db = await openJournal(indexedDB, JOURNAL_NAME);
+  try { return await listJournal(db, scope); } finally { db.close(); }
+}
+
+export class IndexedDbAnswerJournal implements CbtSubmissionJournal {
+  private db: Promise<IDBDatabase>;
+  constructor(factory: IDBFactory = indexedDB, name = JOURNAL_NAME) {
+    this.db = openJournal(factory, name);
+  }
+  /** Persist the request identity before contacting Auth/PostgREST. Tabs share it. */
+  async beginWritingSession(scope: QueueScope, proposedKey: string, tabId?: string): Promise<CbtWritingSessionRequest> {
+    scope = canonicalScope(scope); if (tabId !== undefined) tabId = canonicalId(tabId);
+    const proposed: CbtWritingSessionRequest = { ...scope, requestKey: canonicalId(proposedKey), takeover: false };
+    const db = await this.db;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('metadata', 'readwrite'), meta = tx.objectStore('metadata');
+      let value = proposed, failure: unknown;
+      const seal = meta.get(submissionKey(scope));
+      seal.onsuccess = () => {
+        if (seal.result !== undefined) { failure = new Error('CBT submission has already started.'); tx.abort(); return; }
+        const request = meta.get(writingSessionKey(scope, tabId));
+        request.onsuccess = () => {
+          try {
+            if (request.result === undefined) meta.add(proposed, writingSessionKey(scope, tabId));
+            else value = validateSessionRequest(request.result, scope);
+          } catch (error) { failure = error; tx.abort(); }
+        };
+      };
+      tx.oncomplete = () => resolve(value);
+      tx.onabort = tx.onerror = () => reject(failure ?? tx.error ?? new Error('CBT storage unavailable.'));
+    });
+  }
+  /** Called only after explicit takeover confirmation; never touches answer rows. */
+  async requestWritingTakeover(scope: QueueScope, expectedKey: string, newKey: string, tabId?: string): Promise<CbtWritingSessionRequest> {
+    scope = canonicalScope(scope); expectedKey = canonicalId(expectedKey); newKey = canonicalId(newKey); if (tabId !== undefined) tabId = canonicalId(tabId);
+    if (newKey === expectedKey) throw new Error('CBT takeover needs a new request identity.');
+    const db = await this.db;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('metadata', 'readwrite'), meta = tx.objectStore('metadata');
+      let failure: unknown; const value: CbtWritingSessionRequest = { ...scope, requestKey: newKey, takeover: true };
+      const seal = meta.get(submissionKey(scope));
+      seal.onsuccess = () => {
+        if (seal.result !== undefined) { failure = new Error('CBT submission has already started.'); tx.abort(); return; }
+        const request = meta.get(writingSessionKey(scope, tabId));
+        request.onsuccess = () => {
+          try {
+            if (validateSessionRequest(request.result, scope).requestKey !== expectedKey) throw new Error('CBT session changed in another tab.');
+            meta.put(value, writingSessionKey(scope, tabId));
+          } catch (error) { failure = error; tx.abort(); }
+        };
+      };
+      tx.oncomplete = () => resolve(value);
+      tx.onabort = tx.onerror = () => reject(failure ?? tx.error ?? new Error('CBT storage unavailable.'));
+    });
+  }
+  /** Store only a server response to the same durable request; a stale tab cannot overwrite a takeover. */
+  async rememberWritingSession(scope: QueueScope, requestKey: string, sessionId: string, sessionGeneration: number, tabId?: string): Promise<CbtWritingSessionRequest> {
+    scope = canonicalScope(scope); requestKey = canonicalId(requestKey); sessionId = canonicalId(sessionId); if (tabId !== undefined) tabId = canonicalId(tabId);
+    if (!validRevision(sessionGeneration) || sessionGeneration < 1) throw new Error('Invalid CBT writing session.');
+    const db = await this.db;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('metadata', 'readwrite'), meta = tx.objectStore('metadata');
+      let value: CbtWritingSessionRequest, failure: unknown;
+      const request = meta.get(writingSessionKey(scope, tabId));
+      request.onsuccess = () => {
+        try {
+          const prior = validateSessionRequest(request.result, scope);
+          if (prior.requestKey !== requestKey || (prior.sessionId !== undefined && (prior.sessionId !== sessionId || prior.sessionGeneration !== sessionGeneration))) throw new Error('CBT session changed in another tab.');
+          value = { ...prior, sessionId, sessionGeneration };
+          meta.put(value, writingSessionKey(scope, tabId));
+        } catch (error) { failure = error; tx.abort(); }
+      };
+      tx.oncomplete = () => resolve(value!);
+      tx.onabort = tx.onerror = () => reject(failure ?? tx.error ?? new Error('CBT storage unavailable.'));
+    });
+  }
+  async readSubmission(scope: QueueScope): Promise<CbtSubmissionSeal | null> {
+    scope = canonicalScope(scope);
+    const db = await this.db;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('metadata', 'readonly');
+      const request = tx.objectStore('metadata').get(submissionKey(scope));
+      let value: CbtSubmissionSeal | null = null;
+      let failure: unknown;
+      request.onsuccess = () => {
+        try { value = request.result === undefined ? null : validateSubmissionSeal(request.result, scope); }
+        catch (error) { failure = error; }
+      };
+      tx.oncomplete = () => failure ? reject(failure) : resolve(value);
+      tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('CBT storage unavailable.'));
+    });
+  }
+  async sealSubmission(scope: QueueScope, operationKey: string, expectedRevision: number): Promise<CbtSubmissionSeal> {
+    scope = canonicalScope(scope);
+    const proposed = validateSubmissionSeal({ ...scope, operationKey: canonicalId(operationKey), expectedRevision }, scope);
+    const db = await this.db;
+    return new Promise((resolve, reject) => {
+      // add(), conflict replacement and this check all write the same stores, so
+      // IndexedDB serializes them across tabs independently of Web Locks.
+      const tx = db.transaction(['operations', 'metadata'], 'readwrite');
+      const meta = tx.objectStore('metadata');
+      const request = meta.get(submissionKey(scope));
+      let saved = proposed;
+      let failure: unknown;
+      const abort = (error: unknown) => { failure = error; tx.abort(); };
+      request.onsuccess = () => {
+        try {
+          if (request.result !== undefined) { saved = validateSubmissionSeal(request.result, scope); return; }
+          const rows = tx.objectStore('operations').index('scope').getAll([scope.accountId, scope.attemptId]);
+          rows.onsuccess = () => {
+            try {
+              const all = rows.result as AnswerOperation[];
+              const byKey = new Map<string, AnswerOperation>();
+              const incoming = new Set<string>();
+              for (const row of all) {
+                validateOperation(row, scope);
+                if (row.sequence < 1 || row.operationKey !== row.operationKey.toLowerCase() || byKey.has(row.operationKey)) throw new Error('CBT journal requires review.');
+                byKey.set(row.operationKey, row);
+              }
+              for (const row of all) {
+                if (row.status === 'superseded') {
+                  // Old rows without an explicit atomic link remain blocked.
+                  const replacement = row.supersededBy && byKey.get(row.supersededBy);
+                  if (!replacement || incoming.has(replacement.operationKey) || replacement.sequence <= row.sequence ||
+                      replacement.questionId !== row.questionId || replacement.position !== row.position || replacement.selected !== row.selected ||
+                      replacement.expectedRevision < row.lastServerRevision) throw new Error('Pending or unresolved CBT operations require review before submission.');
+                  incoming.add(replacement.operationKey);
+                } else if (row.status === 'acknowledged') {
+                  if (row.acceptedRevision !== row.expectedRevision + 1 || row.lastServerRevision < row.acceptedRevision ||
+                      row.lastServerRevision > expectedRevision || row.lastServerAnswer !== row.selected) throw new Error('CBT acknowledgement requires review before submission.');
+                } else if (row.status === 'resolved-server') {
+                  if (row.lastServerRevision > expectedRevision) throw new Error('CBT resolution requires review before submission.');
+                } else {
+                  throw new Error('Pending or unresolved CBT operations require review before submission.');
+                }
+              }
+              meta.add(proposed, submissionKey(scope));
+            } catch (error) { abort(error); }
+          };
+        } catch (error) { abort(error); }
+      };
+      tx.oncomplete = () => resolve(saved);
+      tx.onabort = tx.onerror = () => reject(failure ?? tx.error ?? new Error('CBT storage unavailable.'));
+    });
+  }
+  async add(op: AnswerOperation): Promise<AnswerOperation> {
+    op = canonicalOperation(op);
+    const db = await this.db;
+    return new Promise<AnswerOperation>((resolve, reject) => {
+      const tx = db.transaction(['operations', 'metadata'], 'readwrite');
+      const meta = tx.objectStore('metadata');
+      const seal = meta.get(submissionKey(op));
+      let saved = op;
+      let sealed = false;
+      seal.onsuccess = () => {
+        if (seal.result !== undefined) { sealed = true; tx.abort(); return; }
+        const counter = meta.get('sequence');
+        counter.onsuccess = () => {
+          const sequence = (counter.result ?? 0) + 1;
+          if (!Number.isSafeInteger(sequence)) { tx.abort(); return; }
+          saved = { ...op, sequence };
+          meta.put(sequence, 'sequence');
+          tx.objectStore('operations').add(saved);
+        };
+      };
+      tx.oncomplete = () => resolve(saved);
+      tx.onabort = tx.onerror = () => reject(sealed ? new Error('CBT submission has already started.') : (tx.error ?? new Error('CBT storage unavailable.')));
+    });
+  }
+  async list(scope: QueueScope): Promise<AnswerOperation[]> {
+    return listJournal(await this.db, scope);
+  }
+  async transition(scope: QueueScope, key: string, expected: QueueStatus, next: AnswerOperation): Promise<boolean> {
+    return (await this.mutate(scope, key, expected, next)) !== null;
+  }
+  async replaceConflict(scope: QueueScope, key: string, next: AnswerOperation, replacement: AnswerOperation): Promise<AnswerOperation | null> {
+    scope = canonicalScope(scope); key = canonicalId(key);
+    next = canonicalOperation(next); replacement = canonicalOperation(replacement);
+    validateOperation(replacement, scope);
+    if (next.status !== 'superseded' || replacement.status !== 'pending' || replacement.operationKey === key || next.supersededBy !== replacement.operationKey ||
+        replacement.questionId !== next.questionId || replacement.position !== next.position || replacement.selected !== next.selected) {
+      throw new Error('Invalid CBT conflict resolution.');
+    }
+    return this.mutate(scope, key, 'conflicted', next, replacement);
+  }
+  private async mutate(scope: QueueScope, key: string, expected: QueueStatus, next: AnswerOperation, replacement?: AnswerOperation): Promise<AnswerOperation | null> {
+    scope = canonicalScope(scope); key = canonicalId(key); next = canonicalOperation(next);
+    validateOperation(next, scope);
+    if (next.operationKey !== key) throw new Error('Invalid CBT operation identity.');
+    if (next.status === 'superseded' && !replacement) throw new Error('CBT replacement must be persisted atomically.');
+    const db = await this.db;
+    return new Promise<AnswerOperation | null>((resolve, reject) => {
+      let saved: AnswerOperation | null = null;
+      const tx = db.transaction(['operations', 'metadata'], 'readwrite');
+      const store = tx.objectStore('operations');
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const current = request.result as AnswerOperation | undefined;
+        if (!current || current.accountId !== scope.accountId || current.attemptId !== scope.attemptId || current.status !== expected || current.status === 'superseded') return;
+        // Frozen request fields can never be modified under the same key.
+        if (current.questionId !== next.questionId || current.position !== next.position || current.selected !== next.selected ||
+            current.baseAnswer !== next.baseAnswer || current.expectedRevision !== next.expectedRevision ||
+            current.sessionId !== next.sessionId || current.sessionGeneration !== next.sessionGeneration ||
+            current.createdAt !== next.createdAt || current.sequence !== next.sequence) {
+          tx.abort(); return;
+        }
+        const meta = tx.objectStore('metadata');
+        const seal = meta.get(submissionKey(scope));
+        seal.onsuccess = () => {
+          if (seal.result !== undefined) { tx.abort(); return; }
+          store.put(next);
+          if (!replacement) { saved = next; return; }
+          const counter = meta.get('sequence');
+          counter.onsuccess = () => {
+            const sequence = (counter.result ?? 0) + 1;
+            if (!Number.isSafeInteger(sequence)) { tx.abort(); return; }
+            saved = { ...replacement, sequence };
+            meta.put(sequence, 'sequence');
+            store.add(saved);
+          };
+        };
+      };
+      tx.oncomplete = () => resolve(saved);
+      tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('CBT storage transaction failed.'));
+    });
+  }
+  async close(): Promise<void> { (await this.db).close(); }
+}
+
+/** A missing Web Locks implementation must disable sending, not race a lease. */
+export const browserQueueLock: QueueLock = async (name, action) => {
+  if (typeof navigator === 'undefined' || !navigator.locks) throw new Error('CBT cross-tab coordination is unavailable.');
+  return navigator.locks.request(name, { mode: 'exclusive' }, action);
+};
+
+export class CbtAnswerQueue {
+  constructor(
+    private readonly scope: QueueScope,
+    private readonly journal: AnswerJournal,
+    private readonly transport: QueueTransport,
+    private readonly lock: QueueLock = browserQueueLock,
+    private readonly makeId: () => string = () => crypto.randomUUID(),
+    private readonly now: () => number = () => Date.now(),
+  ) { this.scope = canonicalScope(scope); }
+
+  list(): Promise<AnswerOperation[]> { return this.journal.list(this.scope); }
+
+  /** Persist a new immutable logical mutation before it can be transmitted. */
+  async enqueue(questionId: string, position: number, selected: QueueAnswer, baseAnswer: QueueAnswer, revision: number, lease?: { sessionId: string; sessionGeneration: number }): Promise<AnswerOperation> {
+    const now = this.now();
+    const op: AnswerOperation = canonicalOperation({ ...this.scope, questionId, position, selected, baseAnswer, expectedRevision: revision,
+      operationKey: this.makeId(), sequence: 0, createdAt: now, updatedAt: now, status: 'pending', lastServerAnswer: baseAnswer,
+      lastServerRevision: revision, acceptedRevision: null, ...(lease || {}) });
+    validateOperation(op, this.scope);
+    return this.journal.add(op);
+  }
+
+  /** Retrying an uncertain response resends the exact persisted request. */
+  async retry(key: string): Promise<AnswerOperation> {
+    key = canonicalId(key);
+    return this.lock(`edureach-cbt:${this.scope.accountId}:${this.scope.attemptId}`, async () => {
+      const operations = await this.list();
+      const op = operations.find(row => row.operationKey === key);
+      if (!op) throw new Error('CBT operation not found.');
+      if (op.status !== 'pending') return op;
+      // A later local choice must not leapfrog an earlier uncertain write or
+      // an unresolved conflict on the same question. Other questions remain
+      // independent; the server's attempt revision is still authoritative.
+      const earlier = operations.find(row => row.sequence < op.sequence && row.questionId.toLowerCase() === op.questionId.toLowerCase() &&
+        (row.status === 'pending' || row.status === 'conflicted'));
+      if (earlier) throw new Error(`An earlier CBT ${earlier.status === 'conflicted' ? 'conflict' : 'pending operation'} requires attention.`);
+      const response = await this.transport.answer(op.attemptId, {
+        expectedRevision: op.expectedRevision, operationKey: op.operationKey, questionId: op.questionId, selected: op.selected,
+        ...(op.sessionId === undefined ? {} : { sessionId: op.sessionId, sessionGeneration: op.sessionGeneration }),
+      });
+      // Revocation is not a failed answer and must not consume or discard the
+      // pending operation. Recovery requires an explicit student decision.
+      if (response.outcome === 'session_revoked') throw new CbtWritingSessionRevokedError();
+      let next: AnswerOperation;
+      if (response.outcome === 'accepted' || response.outcome === 'replayed') {
+        if (!validRevision(response.revision) || response.acceptedRevision !== op.expectedRevision + 1 ||
+            response.revision < response.acceptedRevision || !response.answers || response.status !== 'in_progress') {
+          throw new Error('CBT acknowledgement requires review.');
+        }
+        const snapshot = { protocol: 2 as const, revision: response.revision, answers: response.answers, status: response.status };
+        validateSnapshot(snapshot);
+        const serverAnswer = answerAt(snapshot.answers, op.position);
+        next = { ...op, status: serverAnswer === op.selected ? 'acknowledged' : 'conflicted', updatedAt: this.now(),
+          lastServerAnswer: serverAnswer, lastServerRevision: snapshot.revision, acceptedRevision: response.acceptedRevision };
+      } else if (response.outcome === 'conflict') {
+        if (!validRevision(response.revision) || !response.answers || response.status !== 'in_progress') throw new Error('CBT conflict requires review.');
+        const reported = { protocol: 2 as const, revision: response.revision, answers: response.answers, status: response.status };
+        validateSnapshot(reported);
+        // Persist the conflict before fetching: a lost state response must not
+        // turn a consumed conflict key back into an apparently new operation.
+        next = { ...op, status: 'conflicted', updatedAt: this.now(), lastServerAnswer: answerAt(reported.answers, op.position), lastServerRevision: reported.revision };
+        if (!await this.journal.transition(this.scope, key, 'pending', next)) throw new Error('CBT operation changed in another tab.');
+        const current = await this.transport.state(op.attemptId);
+        validateSnapshot(current);
+        if (current.revision < next.lastServerRevision) throw new Error('CBT server revision went backwards.');
+        const refreshed = { ...next, lastServerAnswer: answerAt(current.answers, op.position), lastServerRevision: current.revision, updatedAt: this.now() };
+        if (!await this.journal.transition(this.scope, key, 'conflicted', refreshed)) throw new Error('CBT operation changed in another tab.');
+        return refreshed;
+      } else if (response.outcome === 'expired' || response.outcome === 'closed') {
+        next = { ...op, status: 'closed', updatedAt: this.now() };
+      } else throw new Error('Unexpected CBT answer response.');
+      if (!await this.journal.transition(this.scope, key, 'pending', next)) throw new Error('CBT operation changed in another tab.');
+      return next;
+    });
+  }
+
+  /** Preserve an uncertain old-session intent for explicit comparison, never resend it automatically under a new lease. */
+  async reviewPending(key: string): Promise<AnswerOperation> {
+    key = canonicalId(key);
+    return this.lock(`edureach-cbt:${this.scope.accountId}:${this.scope.attemptId}`, async () => {
+      const op = (await this.list()).find(row => row.operationKey === key);
+      if (!op || op.status !== 'pending') throw new Error('CBT pending operation no longer available.');
+      const state = await this.transport.state(op.attemptId);
+      validateSnapshot(state);
+      if (state.revision < op.expectedRevision) throw new Error('CBT server revision went backwards.');
+      const reviewed: AnswerOperation = { ...op, status: 'conflicted', lastServerAnswer: answerAt(state.answers, op.position), lastServerRevision: state.revision, updatedAt: this.now() };
+      if (!await this.journal.transition(this.scope, key, 'pending', reviewed)) throw new Error('CBT operation changed in another tab.');
+      return reviewed;
+    });
+  }
+
+  /** The caller must present the same server version/answer the student saw. */
+  async resolve(key: string, choice: 'server' | 'local', reviewedRevision: number, reviewedServerAnswer: QueueAnswer, lease?: { sessionId: string; sessionGeneration: number }): Promise<AnswerOperation> {
+    key = canonicalId(key);
+    return this.lock(`edureach-cbt:${this.scope.accountId}:${this.scope.attemptId}`, async () => {
+      const op = (await this.list()).find(row => row.operationKey === key);
+      if (!op || op.status !== 'conflicted') throw new Error('CBT conflict no longer available.');
+      const state = await this.transport.state(op.attemptId);
+      validateSnapshot(state);
+      if (state.revision < op.lastServerRevision) throw new Error('CBT server revision went backwards.');
+      const serverAnswer = answerAt(state.answers, op.position);
+      if (reviewedRevision !== op.lastServerRevision || reviewedServerAnswer !== op.lastServerAnswer ||
+          state.revision !== reviewedRevision || serverAnswer !== reviewedServerAnswer) {
+        const updated = { ...op, lastServerAnswer: serverAnswer, lastServerRevision: state.revision, updatedAt: this.now() };
+        if (!await this.journal.transition(this.scope, key, 'conflicted', updated)) throw new Error('CBT conflict changed in another tab.');
+        throw new Error('CBT server state changed; review the conflict again.');
+      }
+      if (choice === 'server') {
+        const resolved: AnswerOperation = { ...op, status: 'resolved-server', updatedAt: this.now() };
+        if (!await this.journal.transition(this.scope, key, 'conflicted', resolved)) throw new Error('CBT conflict changed in another tab.');
+        return resolved;
+      }
+      if (choice !== 'local') throw new Error('Invalid CBT conflict choice.');
+      const now = this.now();
+      const replacement: AnswerOperation = { ...this.scope, questionId: op.questionId, position: op.position, selected: op.selected,
+        baseAnswer: serverAnswer, expectedRevision: state.revision, operationKey: this.makeId(), sequence: 0, createdAt: now, updatedAt: now,
+        status: 'pending', lastServerAnswer: serverAnswer, lastServerRevision: state.revision, acceptedRevision: null,
+        ...(lease || (op.sessionId === undefined ? {} : { sessionId: op.sessionId, sessionGeneration: op.sessionGeneration })) };
+      const superseded: AnswerOperation = { ...op, status: 'superseded', supersededBy: replacement.operationKey, updatedAt: now };
+      const saved = await this.journal.replaceConflict(this.scope, key, superseded, replacement);
+      if (!saved) throw new Error('CBT conflict changed in another tab.');
+      return saved;
+    });
+  }
+}
+
+/**
+ * Isolated recovery coordinator. It retries existing identities only; callers
+ * must explicitly supply a scope, a frozen paper and an identity guard.
+ * Not wired to the CBT page or any hosted environment.
+ */
+export async function recoverCbtJournal({ scope, paper, journal, transport, lock = browserQueueLock, assertCurrent }: {
+  scope: QueueScope;
+  paper: CbtQuestionPayload[];
+  journal: AnswerJournal;
+  transport: QueueTransport;
+  lock?: QueueLock;
+  assertCurrent: () => void;
+}): Promise<{ state: CbtV2Snapshot; operations: AnswerOperation[]; answers: Record<number, number> }> {
+  scope = canonicalScope(scope);
+  return lock(`edureach-cbt-recovery:${scope.accountId}:${scope.attemptId}`, async () => {
+    assertCurrent();
+    const initial = await transport.state(scope.attemptId);
+    assertCurrent();
+    validateSnapshot(initial);
+    validateCbtJournalPaper(initial, paper, []);
+    const originalIds = initial.questionIds;
+    const checkedTransport: QueueTransport = {
+      state: async attempt => {
+        assertCurrent(); const state = await transport.state(attempt); assertCurrent();
+        validateSnapshot(state); validateCbtJournalPaper(state, paper, []); return state;
+      },
+      answer: async (attempt, body) => {
+        assertCurrent(); const response = await transport.answer(attempt, body); assertCurrent();
+        if (response.outcome === 'accepted' || response.outcome === 'replayed' || response.outcome === 'conflict') {
+          const snapshot = { protocol: 2 as const, revision: response.revision, answers: response.answers, status: response.status, questionIds: originalIds };
+          if (typeof snapshot.revision !== 'number' || !snapshot.answers || typeof snapshot.status !== 'string') throw new Error('CBT server state requires review.');
+          const checked = snapshot as CbtV2Snapshot;
+          validateSnapshot(checked); validateCbtJournalPaper(checked, paper, []);
+        }
+        return response;
+      },
+    };
+    const queue = new CbtAnswerQueue(scope, journal, checkedTransport, lock);
+    const rows = await queue.list(); assertCurrent();
+    validateCbtJournalPaper(initial, paper, rows);
+    // Validate all rows and ordering before *any* write; stale pending rows
+    // may be retries of already-committed operations, so do not project yet.
+    const seen = new Set<string>(); let sequence = 0;
+    for (const row of rows) {
+      const op = canonicalOperation(row); validateOperation(op, scope);
+      if (op.sequence <= sequence || seen.has(op.operationKey)) throw new Error('CBT journal requires review.');
+      sequence = op.sequence; seen.add(op.operationKey);
+      if (op.status === 'conflicted' || op.status === 'closed') throw new Error('CBT conflict or closed operation requires review.');
+      if (op.status === 'pending' && (op.expectedRevision > initial.revision || op.acceptedRevision !== null ||
+          op.lastServerRevision !== op.expectedRevision || op.lastServerAnswer !== op.baseAnswer ||
+          (op.expectedRevision === initial.revision && answerAt(initial.answers, op.position) !== op.baseAnswer))) {
+        throw new Error('CBT pending operation requires review.');
+      }
+    }
+    projectCbtJournal(scope, initial, paper, rows.filter(row => row.status !== 'pending'));
+    for (const row of rows) if (row.status === 'pending') {
+      assertCurrent(); const result = await queue.retry(row.operationKey); assertCurrent();
+      if (result.status !== 'acknowledged') throw new Error(`CBT ${result.status} operation requires review.`);
+    }
+    const state = await checkedTransport.state(scope.attemptId); assertCurrent();
+    if (state.revision < initial.revision) throw new Error('CBT server revision went backwards.');
+    const operations = await queue.list(); assertCurrent();
+    if (operations.some(op => op.status === 'pending')) throw new Error('CBT pending operation requires review.');
+    const answers = projectCbtJournal(scope, state, paper, operations);
+    return { state, operations, answers };
+  });
+}
+
+/**
+ * Reconcile and seal only this browser's journal; this does NOT authorize
+ * submission. The active server lease and a separate reviewed finalization
+ * boundary are still required. Unsent work on a revoked device is invisible
+ * to the server. No finalization request is sent by this helper.
+ */
+export async function prepareCbtLocalSubmission({ scope, paper, journal, transport, lock, assertCurrent }: {
+  scope: QueueScope;
+  paper: CbtQuestionPayload[];
+  journal: CbtSubmissionJournal;
+  transport: QueueTransport;
+  lock?: QueueLock;
+  assertCurrent: () => void;
+}): Promise<CbtSubmissionSeal> {
+  scope = canonicalScope(scope);
+  assertCurrent();
+  const existing = await journal.readSubmission(scope);
+  assertCurrent();
+  if (existing) return existing;
+  const recovered = await recoverCbtJournal({ scope, paper, journal, transport, lock, assertCurrent });
+  assertCurrent();
+  // If another tab enqueued after the last recovery read, the atomic seal
+  // transaction sees its pending row and aborts. If sealing wins, add aborts.
+  const sealed = await journal.sealSubmission(scope, crypto.randomUUID(), recovered.state.revision);
+  assertCurrent();
+  return sealed;
+}

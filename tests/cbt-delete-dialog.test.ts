@@ -81,16 +81,15 @@ test('the confirm dialog follows the showModal/close lifecycle it depends on', (
   dom.window.close();
 });
 
-test('the results page keeps the same close-then-navigate order', () => {
+test('the results page dismisses the dialog and does not auto-navigate after delete', () => {
   const page = read('pages/CbtResultsPage.tsx');
   const start = page.indexOf('async function removeResult(');
   assert.ok(start > -1, 'removeResult exists');
   const rest = page.slice(start);
   const fn = rest.slice(0, rest.indexOf('useEffect('));
-  assert.ok(
-    fn.indexOf('deleteDialog.current?.close()') < fn.indexOf('navigateInApp('),
-    'the dialog is dismissed before the route changes, or the backdrop survives the navigation',
-  );
+  assert.match(fn, /deleteDialog\.current\?\.close\(/, 'the dialog is dismissed after deletion');
+  assert.ok(!fn.includes('setTimeout'), 'no artificial delay before navigation');
+  assert.ok(!fn.includes('navigateInApp('), 'navigation is user-controlled via the Back to CBT link, not automatic');
   assert.match(fn, /setDeleteError\(/, 'a failure is surfaced instead of a false success');
   assert.match(fn, /setDeleteBusy\(true\)/, 'the button reports pending work');
 });

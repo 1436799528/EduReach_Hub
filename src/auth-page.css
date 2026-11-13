@@ -61,6 +61,7 @@
 .auth-card-kicker{color:var(--auth-green);font-size:10px;font-weight:730;letter-spacing:.1em}
 .auth-card-heading h1{margin:7px 0 6px;color:var(--auth-ink);font-size:28px;line-height:1.2;letter-spacing:-.04em}
 .auth-card-heading p{margin:0;color:var(--auth-muted);font-size:13px;line-height:1.55}
+.auth-card>.er-inline-notice{margin:0 0 16px}
 .auth-alert{display:flex;align-items:flex-start;gap:9px;margin:0 0 16px;padding:12px 13px;border:1px solid;border-radius:9px;font-size:12.5px;line-height:1.5}
 .auth-alert--error{color:#9e2f28;border-color:#f0cbc6;background:#fff5f3}
 .auth-alert--error>span{display:grid;place-items:center;flex:none;width:17px;height:17px;border-radius:50%;color:#fff;background:#b63d32;font-weight:730}

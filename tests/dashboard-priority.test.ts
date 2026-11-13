@@ -102,6 +102,14 @@ test('an expired attempt is never offered as resumable', () => {
   assert.equal(items[0].tone, 'next');
 });
 
+test('resume guidance does not guarantee every answer was saved', () => {
+  const items = dashboardPriorities({ now: NOW, profileComplete: true, attempts: [{ id: 'attempt', status: 'in_progress', expires_at: new Date(NOW + 60_000).toISOString() }] });
+  const resume = items.find((item) => item.id === 'resume-attempt');
+  assert.ok(resume);
+  assert.match(resume.detail, /check which answers were saved/i);
+  assert.doesNotMatch(resume.detail, /answers are saved/i);
+});
+
 test('a request that cannot move without the student outranks profile filing', () => {
   const items = dashboardPriorities({
     now: NOW,
@@ -111,6 +119,8 @@ test('a request that cannot move without the student outranks profile filing', (
   });
   assert.deepEqual(items.map((item) => item.id), ['request-needs-info', 'profile-incomplete']);
   assert.match(items[0].detail, /ER-2001/, 'the reference is quoted so it can be found');
+  assert.equal(items[0].cta, 'View status');
+  assert.doesNotMatch(items[0].detail, /answer the question/i, 'no unimplemented reply flow is promised');
 });
 
 test('the profile prompt names exactly what is missing', () => {

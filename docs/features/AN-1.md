@@ -1,5 +1,7 @@
 # Feature: AN-1 — Analytics taxonomy, payloads and retention
 
+**Local release safeguard (2026-11-04):** optional analytics are temporarily suspended in both browser and ingestion server pending a durable withdrawal design. Earlier delivery descriptions below are historical, not a claim of active collection. Legacy opt-ins are ignored; they must not be automatically revived. This also suspends consent-gated `client_error` transport. This change is not deployed, does not delete historical data and must not be reversed merely by toggling a flag. See `docs/audit/CBT-RECOVERY-AND-PRIVACY-BULK-2026-11-04.md` and the later launch work record.
+
 Status: **delivered** (2026-10-01). This specification was written before the
 code, per `docs/architecture/08-FEATURE-TEMPLATE.md`. Evidence is at the end.
 

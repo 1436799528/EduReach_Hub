@@ -77,6 +77,33 @@ test('an entry chunk over budget fails, and names the measured value', () => {
   assert.equal(check(input, 'css')?.ok, true, 'only the chunk that grew should fail');
 });
 
+test('the entry budget follows the HTML script when several index chunks exist', () => {
+  const input = healthyInput();
+  input.indexHtml += '<script type="module" src="/assets/index-real.js"></script>';
+  input.assets.set('index-real.js', asset('index-real.js', 140, "import './index-aaa.js';"));
+  assert.equal(check(input, 'entry-js')?.ok, false);
+  assert.equal(check(input, 'entry-js')?.measured, '140.0 KB');
+  assert.equal(check(input, 'critical-path')?.ok, false);
+  input.assets.delete('index-real.js');
+  assert.equal(auditPerf(input)[0].id, 'artefacts');
+  assert.equal(auditPerf(input)[0].ok, false);
+});
+
+test('critical path counts additional transitive static chunks but not dynamic routes', () => {
+  const input = healthyInput();
+  input.assets.set('index-aaa.js', asset('index-aaa.js', 90, "import './extra.js'; import('./lazy.js');"));
+  input.assets.set('extra.js', asset('extra.js', 15, "export { value } from './nested.js';"));
+  input.assets.set('nested.js', asset('nested.js', 10, "import './react-aaa.js';"));
+  input.assets.set('lazy.js', asset('lazy.js', 30));
+  const critical = check(input, 'critical-path');
+  assert.equal(critical?.ok, false);
+  assert.equal(critical?.measured, '216.0 KB', 'deduplicate React and exclude the dynamic route');
+  input.assets.delete('nested.js');
+  const missing = check(input, 'critical-path');
+  assert.equal(missing?.ok, false);
+  assert.match(missing?.detail ?? '', /missing static chunks.*nested\.js/);
+});
+
 test('a render-blocking font import fails the chain check', () => {
   const input = healthyInput();
   input.assets.set('index-aaa.css', asset('index-aaa.css', 41, "@import url('https://fonts.googleapis.com/css2?family=Inter');"));

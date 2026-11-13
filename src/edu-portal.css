@@ -574,6 +574,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-legal-foot{margin-top:38px;padding-top:18px;border-top:1px solid #e2e8f0;display:grid;gap:10px;color:#475569;font-size:12.5px}
 .er-legal-foot nav{display:flex;flex-wrap:wrap;gap:14px}
 .er-legal-foot a{color:#334155}
+.er-legal-foot p a,.er-legal-missing p a{text-decoration:underline;text-underline-offset:2px}
 .er-legal-missing{max-width:620px;margin:26px 0;padding:22px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
 .er-legal-missing h1{margin:0 0 8px;font-size:20px;color:#0f172a}
 .er-legal-missing p{margin:0;color:#475569;line-height:1.6}

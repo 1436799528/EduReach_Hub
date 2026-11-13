@@ -146,8 +146,8 @@ export function dashboardPriorities(input: DashboardPriorityInput): PriorityItem
       tone: 'urgent',
       title: resumable.length > 1 ? `Finish your ${attempt.subject || 'practice test'} (${resumable.length - 1} more open)` : `Finish your ${attempt.subject || 'practice test'}`,
       detail: left
-        ? `${left}. Your answers are saved, so you can pick up exactly where you stopped.`
-        : 'Your answers are saved, so you can pick up exactly where you stopped.',
+        ? `${left}. Resume the test and check which answers were saved.`
+        : 'Resume the test and check which answers were saved.',
       href: `/cbt/session/${encodeURIComponent(attempt.id)}`,
       cta: 'Resume test',
     });
@@ -163,9 +163,9 @@ export function dashboardPriorities(input: DashboardPriorityInput): PriorityItem
       id: 'request-needs-info',
       tone: 'attention',
       title: blocked.length > 1 ? `${blocked.length} requests need your information` : 'A request needs more information',
-      detail: `EduReach cannot continue ${request.reference_code ? `request ${request.reference_code}` : 'your request'} until you answer the question on it.`,
+      detail: `More information is needed before ${request.reference_code ? `request ${request.reference_code}` : 'your request'} can continue.`,
       href: request.reference_code ? `/dashboard/services?ref=${encodeURIComponent(request.reference_code)}` : '/dashboard/services',
-      cta: 'Answer now',
+      cta: 'View status',
     });
   }
 

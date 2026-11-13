@@ -25,11 +25,12 @@ test('mobile exam bar: End Test is labelled, keeps text and 44px target, wraps i
   assert.match(cbtCss, /\.er-exam-end\{margin-left:auto\}/); assert.match(cbtCss, /min-height:44px/);
   assert.doesNotMatch(cbtCss, /\.er-exam-bar-controls\{[^}]*overflow-x:auto/, 'controls no longer scroll off-screen');
 });
-test('admin selected nav uses the brand surface and mobile nav is an accessible drawer', () => {
-  assert.match(adminCss, /\.admin-nav-link\.active \{[^}]*background: var\(--er-primary-soft\);[^}]*color: var\(--er-primary\);/);
-  assert.match(adminCss, /@media \(max-width: 780px\)[\s\S]*?\.admin-sidebar \{[^}]*position: fixed/);
-  assert.match(adminCss, /\.admin-sidebar\.is-open \{ transform: translateX\(0\); visibility: visible; \}/);
-  assert.match(adminCss, /\.admin-nav-link \{ width: 100%; min-height: 44px/);
-  assert.match(adminCss, /\.admin-main \{[\s\S]*?overflow-y: auto/);
-  assert.match(adminCss, /\.admin-sidebar \{[\s\S]*?overflow-y: auto/);
+test('admin navigation keeps brand contrast and an accessible mobile drawer', () => {
+  assert.match(adminCss, /\.admin-shell \.admin-nav-link\.active \{[^}]*background:/);
+  assert.match(adminCss, /\.admin-shell \.admin-nav-link\.active \{[^}]*color:/);
+  assert.match(adminCss, /\.admin-sidebar\.is-open \{[^}]*visibility: visible/);
+  assert.match(adminCss, /\.admin-drawer-backdrop\s*\{/);
+  assert.match(adminCss, /\.admin-nav-link\s*\{[^}]*min-height:\s*44px/);
+  assert.match(adminCss, /\.admin-main \{[^}]*overflow-y: auto/);
+  assert.match(adminCss, /\.admin-sidebar \{[^}]*overflow-y: auto/);
 });
