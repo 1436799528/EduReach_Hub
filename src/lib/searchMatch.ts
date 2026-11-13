@@ -38,3 +38,25 @@ export function matchesSearch(fields: Array<string | null | undefined>, query: s
   if (!haystack) return false;
   return tokens.every((token) => haystack.includes(token));
 }
+
+export function filterSearchItems<T extends { title: string; description: string; category: string }>(
+  items: T[],
+  query: string,
+  limit = 40,
+): T[] {
+  const normalized = normalizeSearchText(query);
+  if (!normalized) return items.slice(0, limit);
+  const matches = items.filter((item) => matchesSearch([item.title, item.description, item.category], query));
+  return matches
+    .map((item, index) => ({
+      item,
+      index,
+      rank: normalizeSearchText(item.title) === normalized ? 0
+        : normalizeSearchText(item.title).startsWith(normalized) ? 1
+        : normalizeSearchText(item.category).startsWith(normalized) ? 2
+        : 3,
+    }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .slice(0, limit)
+    .map(({ item }) => item);
+}

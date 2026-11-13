@@ -297,15 +297,6 @@
   accent-color: var(--er-primary);
 }
 
-.hub-global-search:focus-within {
-  border-color: var(--er-primary);
-  box-shadow: 0 0 0 3px rgba(23, 74, 58, 0.1);
-}
-
-.edureach-dash-search input:focus {
-  border-color: var(--er-primary);
-}
-
 .er-admin-view-banner button {
   background: var(--er-primary);
   color: var(--er-on-primary);
@@ -317,18 +308,6 @@
 
 .hub-home-section-title > a {
   color: var(--er-primary);
-}
-
-/* Search submits: the action in a search field. */
-.hub-mobile-search button,
-.er-site-search-page-form button {
-  background: var(--er-primary);
-  color: var(--er-on-primary);
-}
-
-.hub-mobile-search button:hover,
-.er-site-search-page-form button:hover {
-  background: var(--er-primary-hover);
 }
 
 /* Progress and preset selection on the dashboard. The card they sit in keeps

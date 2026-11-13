@@ -152,21 +152,70 @@ test('JAMB practice refuses a fifth subject, not just the mock', async () => {
   );
 });
 
+test('JAMB practice and mock RPCs both require Use of English', async () => {
+  await assert.rejects(
+    () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Mathematics'], 10, null, 'practice', null)`,
+      [JAMB_FULL],
+    ),
+    /Use of English is compulsory for JAMB UTME/,
+  );
+  await assert.rejects(
+    () => db.query(
+      `select * from public.start_cbt_attempt_configured($1, array['Mathematics','Physics','Chemistry'], null, null, 'mock', null)`,
+      [JAMB_FULL],
+    ),
+    /A JAMB mock paper is Use of English plus three other subjects/,
+  );
+});
+
+test('duplicate subject aliases cannot consume multiple JAMB subject slots', async () => {
+  const { rows } = await db.query<any>(
+    `select * from public.start_cbt_attempt_configured(
+      $1, array['Use of English','English Language','Mathematics','Physics','Chemistry'],
+      null, null, 'mock', null
+    )`,
+    [JAMB_FULL],
+  );
+  assert.equal(rows[0].total_questions, 180);
+  assert.deepEqual(rows[0].selected_subjects, ['Use of English', 'Mathematics', 'Physics', 'Chemistry']);
+});
+
 test('a JAMB bank created later still carries the mock standard', async () => {
   await db.exec(`
     insert into public.cbt_exams (id,title,exam_body,subject,description,duration_minutes,is_active) values
       ('aaaaaaaa-0000-0000-0000-000000000009','New JAMB bank','JAMB','Multiple subjects','bank',120,true),
       ('bbbbbbbb-0000-0000-0000-000000000009','New WAEC bank','WAEC','Multiple subjects','bank',90,true);
   `);
-  const { rows } = await db.query<{ id: string; mock_question_count: number | null; mock_subject_quota: Record<string, number> }>(
-    `select id, mock_question_count, mock_subject_quota from public.cbt_exams
+  const { rows } = await db.query<{ id: string; duration_minutes: number; mock_question_count: number | null; mock_subject_quota: Record<string, number> }>(
+    `select id, duration_minutes, mock_question_count, mock_subject_quota from public.cbt_exams
       where id in ('aaaaaaaa-0000-0000-0000-000000000009','bbbbbbbb-0000-0000-0000-000000000009')
       order by id`,
   );
   const jamb = rows.find((row) => row.id.startsWith('aaaaaaaa'))!;
   const waec = rows.find((row) => row.id.startsWith('bbbbbbbb'))!;
+  assert.equal(jamb.duration_minutes, 120);
   assert.equal(jamb.mock_question_count, 180);
   assert.deepEqual(jamb.mock_subject_quota, { english: 60, other: 40 });
   assert.equal(waec.mock_question_count, null, 'no other body is given JAMB rules');
   assert.deepEqual(waec.mock_subject_quota, {});
+});
+
+test('JAMB mock settings cannot be shortened by changing the exam row', async () => {
+  await db.exec(`
+    update public.cbt_exams
+    set duration_minutes = 75,
+        mock_question_count = 100,
+        mock_subject_quota = '{"english": 20, "other": 20}'::jsonb
+    where id = '${JAMB_REJECTED}';
+  `);
+  const { rows } = await db.query<any>(
+    `select duration_minutes, mock_question_count, mock_subject_quota
+      from public.cbt_exams where id = $1`,
+    [JAMB_REJECTED],
+  );
+
+  assert.equal(rows[0].duration_minutes, 120);
+  assert.equal(rows[0].mock_question_count, 180);
+  assert.deepEqual(rows[0].mock_subject_quota, { english: 60, other: 40 });
 });

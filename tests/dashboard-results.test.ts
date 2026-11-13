@@ -14,11 +14,13 @@ const dashboard = read('pages/StudentDashboardV2.tsx');
 const cbtView = dashboard.slice(dashboard.indexOf('const cbtView ='), dashboard.indexOf('const toolsView ='));
 
 test('a score is only shown when a paper has been sat', () => {
-  assert.match(dashboard, /const hasScores = completedAttempts\.length > 0/, 'the condition has a name');
-  assert.match(cbtView, /\{hasScores \? `\$\{averageScore\}%` : '—'\}/, 'no average is reported without completed tests');
-  assert.match(cbtView, /\{hasScores \? `\$\{bestScore\}%` : '—'\}/, 'no best score is reported without completed tests');
+  assert.match(dashboard, /summarizeCbtAttempts\(attempts\)/, 'all result metrics share the guarded calculation');
+  assert.match(dashboard, /const hasScores = averageScore !== null/, 'the condition distinguishes missing scores from zero');
+  assert.match(cbtView, /\{averageScore !== null \? `\$\{averageScore\}%` : '—'\}/, 'no average is reported without scored tests');
+  assert.match(cbtView, /\{bestScore !== null \? `\$\{bestScore\}%` : '—'\}/, 'no best score is reported without scored tests');
   assert.match(cbtView, /After your first test/, 'the empty value explains itself');
   assert.doesNotMatch(cbtView, /\{averageScore\}%<\/span>/, 'the old unconditional percentage is gone');
+  assert.match(cbtView, /Questions in completed tests/, 'a question total is not mislabeled as questions answered');
   assert.doesNotMatch(dashboard, /streak|rank(ing)?|hours studied|percentile/i, 'no metric is invented');
 });
 
@@ -36,6 +38,7 @@ test('a result can be reviewed and deleted from the dashboard, with confirmation
   assert.match(cbtView, /role="status" aria-live="polite"/, 'the outcome is announced');
   assert.match(dashboard, /getElementById\('dash-cbt-heading'\)\?\.focus\(\)/, 'focus is not dropped when the button disappears');
   assert.match(dashboard, /state !== 'active' && \(confirmDeleteId === row\.id/, 'an in-progress paper is resumed, not deleted');
+  assert.match(dashboard, /row\.score !== null && Number\.isFinite\(row\.score\)/, 'a missing result is not shown as a zero score');
 });
 
 test('the delete handler cannot run twice for one click', () => {

@@ -21,7 +21,7 @@ import {
   type CbtExamSummary,
 } from '../src/lib/api';
 import WaveLoader from '../src/components/WaveLoader';
-import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminSummary, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
 import { usePendingPhase } from '../src/lib/usePendingPhase';
 
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -764,6 +764,22 @@ export default function AdminQuestionImportPage() {
 
       {error && <div className="admin-card empty-state" role="alert">{error}</div>}
       {notice && <div className="admin-card empty-state" role="status">{notice}</div>}
+
+      {!loading && !error && (
+        <>
+          <AdminSummary
+            label="Latest question import activity"
+            items={[
+              { label: 'Import records', value: imports.length.toLocaleString(), detail: 'Latest records returned by the API' },
+              { label: 'Extracted for review', value: imports.filter((entry) => entry.status === 'extracted').length.toLocaleString(), detail: 'Waiting for editorial review or save' },
+              { label: 'Failed imports', value: imports.filter((entry) => entry.status === 'failed').length.toLocaleString(), detail: 'Extraction failures in these records' },
+              { label: 'Still processing', value: imports.filter((entry) => entry.status === 'queued' || entry.status === 'processing').length.toLocaleString(), detail: 'Queued or extracting' },
+              { label: 'Questions saved', value: imports.reduce((sum, entry) => sum + entry.imported_count, 0).toLocaleString(), detail: 'Across these import records' },
+            ]}
+          />
+          <p className="admin-data-note">Import history is capped at the latest 200 records; these summaries are not lifetime totals.</p>
+        </>
+      )}
 
       <section className="admin-card">
         <div className="admin-card-header">

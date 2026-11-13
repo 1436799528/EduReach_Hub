@@ -117,8 +117,66 @@
   --er-radius: 10px;
   --er-radius-lg: 16px;
   --er-radius-pill: 999px;
+  --er-radius-card: 12px;
   --er-shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.04);
   --er-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+
+  /* Semantic API for new and shared UI. The older --er-* names remain the
+     source of truth so existing pages keep their established appearance. */
+  --color-bg-primary: var(--er-bg);
+  --color-bg-surface: var(--er-surface);
+  --color-bg-elevated: var(--er-surface);
+  --color-bg-muted: var(--er-surface-soft);
+  --color-bg-disabled: var(--er-disabled-surface);
+  --color-border-default: var(--er-border);
+  --color-border-subtle: var(--er-primary-soft-border);
+  --color-border-strong: var(--er-border-strong);
+  --color-text-primary: var(--er-text-primary);
+  --color-text-secondary: var(--er-text-secondary);
+  --color-text-muted: var(--er-text-muted);
+  --color-text-inverse: var(--er-text-inverse);
+  --color-text-disabled: var(--er-disabled-text);
+  --color-brand-primary: var(--er-primary);
+  --color-brand-primary-hover: var(--er-primary-hover);
+  --color-brand-accent: var(--er-crimson);
+  --color-success: var(--er-status-success);
+  --color-success-bg: var(--er-status-success-bg);
+  --color-warning: var(--er-status-warning);
+  --color-warning-bg: var(--er-status-warning-bg);
+  --color-error: var(--er-status-error);
+  --color-error-bg: var(--er-status-error-bg);
+  --color-info: var(--er-status-info);
+  --color-info-bg: var(--er-status-info-bg);
+  --color-focus: var(--er-primary-focus);
+
+  /* 4px spacing scale and a modular type scale. Compact legacy roles below
+     intentionally keep their existing sizes where the product calls for it. */
+  --er-space-1: 4px;
+  --er-space-2: 8px;
+  --er-space-3: 12px;
+  --er-space-4: 16px;
+  --er-space-5: 24px;
+  --er-space-6: 32px;
+  --er-space-7: 48px;
+  --er-space-8: 64px;
+  --er-type-size-meta: 11px;
+  --er-type-size-small: 13px;
+  --er-type-size-body: 15px;
+  --er-type-size-large: 18px;
+  --er-type-size-subheading: 22px;
+  --er-type-size-section: 28px;
+  --er-type-size-heading: 36px;
+  --er-type-size-display: 48px;
+  --er-type-size-compact-display: clamp(24px, 4vw, 34px);
+  --er-type-size-compact-title: 20px;
+  --er-type-size-compact-subhead: 15px;
+  --er-type-size-compact-body: 14px;
+  --er-type-size-compact-label: 12px;
+  --er-type-size-compact-meta: 12px;
+  --er-type-size-stat: 26px;
+  --er-line-height-heading: 1.2;
+  --er-line-height-body: 1.6;
+  --er-line-height-ui: 1.15;
 
   /* Legacy variable mapping to preserve system compatibility */
   --hub-bg: var(--er-bg);
@@ -162,7 +220,7 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--er-bg);
+  background: var(--color-bg-primary);
 }
 
 *,
@@ -175,8 +233,8 @@ body,
 #root {
   min-height: 100vh;
   margin: 0;
-  background-color: var(--er-bg);
-  color: var(--er-text-primary);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
   font-family: var(--er-font-sans) !important;
 }
 
@@ -220,9 +278,9 @@ samp,
 }
 
 :where(input, select, textarea) {
-  color: var(--er-text-primary) !important;
-  background-color: var(--er-surface) !important;
-  border-color: var(--er-border-strong) !important;
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-bg-surface) !important;
+  border-color: var(--color-border-strong) !important;
   border-radius: var(--er-radius-sm) !important;
 }
 
@@ -231,7 +289,7 @@ samp,
 }
 
 :where(input, select, textarea):focus {
-  border-color: var(--er-primary) !important;
+  border-color: var(--color-brand-primary) !important;
   box-shadow: 0 0 0 3px rgba(23, 74, 58, 0.14) !important;
   outline: 0 !important;
 }
@@ -239,21 +297,21 @@ samp,
 /* An invalid field stays red on focus: the ring and the border agree. The
    message beside the field - not this colour - is what explains the error. */
 :where(input, select, textarea)[aria-invalid="true"] {
-  border-color: var(--er-field-invalid) !important;
+  border-color: var(--color-error) !important;
   box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1) !important;
 }
 
 :where(input, select, textarea):disabled {
-  background-color: var(--er-disabled-surface) !important;
+  background-color: var(--color-bg-disabled) !important;
   border-color: var(--er-disabled-border) !important;
-  color: var(--er-disabled-text) !important;
+  color: var(--color-text-disabled) !important;
   cursor: not-allowed;
 }
 
 /* Native checkboxes and radios keep their platform geometry and keyboard
    behaviour; only the fill is themed, and the UA paints the tick white. */
 :where(input[type="checkbox"], input[type="radio"]) {
-  accent-color: var(--er-primary);
+  accent-color: var(--color-brand-primary);
 }
 
 :where(input[type="checkbox"], input[type="radio"]):disabled {
@@ -272,7 +330,7 @@ samp,
 }
 
 :where(button, a, input, select, textarea):focus-visible {
-  outline: 3px solid rgba(200, 88, 65, 0.24) !important;
+  outline: 3px solid var(--color-focus) !important;
   outline-offset: 2px;
 }
 

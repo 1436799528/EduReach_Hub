@@ -13,15 +13,20 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string): string => readFileSync(join(root, path), 'utf8');
 
-test('the dashboard opens with what matters now, not with static profile details', () => {
+test('the dashboard leads with priorities, removes redundant action cards and groups recent activity', () => {
   const page = read('pages/StudentDashboardV2.tsx');
   assert.match(page, /dashboardPriorities\(/, 'the strip is derived from the shared rule');
   const priorityIndex = page.indexOf('dash-priority');
-  const profileIndex = page.indexOf('Saved profile details');
-  const requestsIndex = page.indexOf('Latest requests');
-  assert.ok(priorityIndex > -1 && profileIndex > -1 && requestsIndex > -1);
-  assert.ok(priorityIndex < requestsIndex, 'the priority strip comes before the working sets');
-  assert.ok(requestsIndex < profileIndex, 'static reference details sit below the things that need action');
+  const notificationsIndex = page.indexOf('id="dashboard-notifications"');
+  const recentIndex = page.indexOf('Recent activity');
+  assert.ok(priorityIndex > -1 && notificationsIndex > -1 && recentIndex > -1);
+  assert.ok(priorityIndex < notificationsIndex && notificationsIndex < recentIndex, 'priorities and notifications precede recent activity');
+  assert.match(page, /Service requests/);
+  assert.match(page, /CBT results/);
+  assert.doesNotMatch(page, /dash-quick-card|Saved profile details|dash-profile-detail-grid/, 'large shortcuts and duplicated profile fields are removed');
+  assert.doesNotMatch(page, /Verified student/, 'an authenticated account is not mislabeled as verified');
+  const welcome = page.slice(page.indexOf('const overview ='), page.indexOf('dash-priority'));
+  assert.doesNotMatch(welcome, /jamb_reg_no|matric_number|authUser\?\.email/, 'sensitive profile identifiers are not repeated on the overview');
 });
 
 test('an expired attempt is never offered as resumable anywhere', () => {
@@ -139,29 +144,26 @@ test('the home page has no promotional hero, only the working page', () => {
   }
 });
 
-test('the home page keeps the portal search bar and it still searches', () => {
+test('the home page keeps the shared search bar and it still searches', () => {
   const home = read('pages/HubHomePage.tsx');
-  assert.match(home, /<form[^>]*className="er-search"/, 'the portal search form is back');
-  assert.match(home, /role="search"/, 'it is announced as a search landmark');
-  assert.match(home, /aria-label="Search services"/, 'the field keeps its accessible name');
-  assert.match(home, /placeholder="Search services: NELFUND, result checking, JAMB slips…"/, 'the prompt is the original one');
-  assert.match(home, /useState\(''\)/, 'the search term is component state');
-  assert.match(home, /navigateInApp\(`\/search\?q=\$\{encodeURIComponent\(search\.trim\(\)\)\}`\)/, 'submitting goes to the shared search page');
-  assert.match(home, /if \(search\.trim\(\)\)/, 'an empty submit does nothing');
+  assert.match(home, /<SiteSearch\s+variant="home"/, 'the shared search component is present');
+  const search = read('src/components/SiteSearch.tsx');
+  assert.match(search, /role="search"/, 'it is announced as a search landmark');
+  assert.match(search, /aria-label=\{label\}/, 'the field keeps its accessible name');
+  assert.match(home, /placeholder="Search services, subjects, exams or news"/, 'the prompt describes searchable content');
+  assert.match(search, /navigateInApp\(normalized \? `\/search\?q=\$\{encodeURIComponent\(normalized\)\}` : '\/search'\)/, 'submitting goes to the shared search page');
 
   // It sits above every card, which is what "top of the homepage" means once
   // the simulator hero has the first line.
-  const searchAt = home.indexOf('className="er-search"');
+  const searchAt = home.indexOf('<SiteSearch');
   assert.ok(searchAt > home.indexOf('<h1'), 'the heading stays first for structure');
   assert.ok(searchAt < home.indexOf('className="er-banner"'), 'the card follows the search bar');
   assert.ok(searchAt < home.indexOf('Choose your exam'), 'search is above the exam cards');
 
-  // The header search disappears under 1040px, so this bar is the only search
-  // a phone gets - that is why it may not be dropped.
-  const portal = read('src/edu-portal.css');
-  assert.match(portal, /@media\(max-width:1040px\)\{\.hub-global-search\{display:none\}\}/, 'the header search is desktop-only');
-  assert.match(portal, /\.er-search\{[^}]*display:flex/, 'the portal bar is a flex row at every width');
-  assert.match(portal, /\.er-search input\{[^}]*min-width:0/, 'the field shrinks instead of overflowing on a phone');
+  const styles = read('src/site-search.css');
+  assert.match(styles, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/, 'the header search is desktop-only');
+  assert.match(styles, /\.site-search--home \{[^}]*min-height: 48px/, 'the portal bar remains visible with a touch-friendly height');
+  assert.match(styles, /\.site-search input \{[^}]*min-width: 0/, 'the field shrinks instead of overflowing on a phone');
 });
 
 test('the study-centre card is restored as one click, not a menu', () => {
@@ -180,36 +182,13 @@ test('the study-centre card is restored as one click, not a menu', () => {
   assert.doesNotMatch(card, /start practi/i, 'no start-practice action inside the card');
 });
 
-test('the portal red is the search submit colour, not green', () => {
-  const theme = read('src/styles/theme.css');
-  const token = (name: string): string => {
-    const match = new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`).exec(theme);
-    assert.ok(match, `${name} is a token`);
-    return match[1].toUpperCase();
-  };
-  assert.equal(token('--er-brand-red'), '#C02220', 'the authored red is centralised');
-  assert.equal(token('--er-brand-red-hover'), '#A81C1B', 'and its hover step');
-
-  const portal = read('src/edu-portal.css');
-  const submit = /\.er-search button\{([^}]*)\}/.exec(portal);
-  assert.ok(submit, 'the submit has a rule');
-  assert.match(submit[1], /background:var\(--er-brand-red\)/, 'the submit is the portal red');
-  assert.doesNotMatch(submit[1], /--er-primary/, 'it is not the green action colour');
-  assert.doesNotMatch(portal, /#c02220/, 'the red is never typed again as a literal');
-
-  // White on that red still clears AA, at rest and on hover.
-  const luminance = (hex: string): number => {
-    const value = hex.replace('#', '');
-    const channels = [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16) / 255)
-      .map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-  };
-  const contrast = (a: string, b: string): number => {
-    const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-    return (high + 0.05) / (low + 0.05);
-  };
-  assert.ok(contrast('#FFFFFF', token('--er-brand-red')) >= 4.5, 'white on the search submit');
-  assert.ok(contrast('#FFFFFF', token('--er-brand-red-hover')) >= 4.5, 'white on its hover');
+test('the portal search submit keeps a neutral non-primary treatment', () => {
+  const styles = read('src/site-search.css');
+  const submit = /\.site-search > button\[type="submit"\] \{([^}]*)\}/.exec(styles);
+  assert.ok(submit, 'the shared search submit has a rule');
+  assert.match(submit[1], /background: #f1f5f9/, 'the submit uses a quiet neutral surface');
+  assert.match(submit[1], /color: #334155/, 'the submit text stays readable');
+  assert.doesNotMatch(submit[1], /var\(--er-primary\)|#b14933/i, 'search is not styled like a primary action');
 });
 
 test('the home page reuses the existing card system, not a home-local one', () => {

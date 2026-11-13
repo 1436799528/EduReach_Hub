@@ -1,91 +1,15 @@
-import { ArrowRight, Search as SearchIcon } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
-import { pastQuestionLibrary, studyMaterialLibrary } from '../src/data/examPreparation';
-import { simulatorStartHref } from '../src/components/ExamSimulatorGrid';
-import type { CatalogExam } from '../src/lib/cbt-config';
-import { services } from '../src/data/services';
-import { commonInstitutions } from '../src/data/studentOptions';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
-import { itemKey } from '../src/components/dashboard/SchoolFinderCard';
-import { fetchCbtExams, fetchNews, fetchOpportunities, type NewsItem, type Opportunity, trackEvent } from '../src/lib/api';
-import { navigateInApp } from '../src/lib/navigation';
-import { matchesSearch } from '../src/lib/searchMatch';
-
-type SearchResult = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  href: string;
-  identity: string;
-};
+import { trackEvent } from '../src/lib/api';
+import { filterSearchItems } from '../src/lib/searchMatch';
+import { loadSiteSearchCatalog, type SiteSearchCatalog } from '../src/lib/siteSearch';
+import SiteSearch from '../src/components/LazySiteSearch';
 
 function readQuery() {
   return new URLSearchParams(window.location.search).get('q')?.trim() || '';
-}
-
-function staticResults(exams: CatalogExam[]): SearchResult[] {
-  const serviceResults = services.map((service) => ({
-    id: `service-${service.key}`,
-    title: service.title,
-    description: service.description,
-    category: service.category,
-    href: service.route,
-    identity: service.key,
-  }));
-  const examResults = exams.map((exam) => ({
-    id: `exam-${exam.id}`,
-    title: exam.title,
-    description: exam.description || `Practice ${exam.subject || exam.exam_body} questions.`,
-    category: 'CBT Practice',
-    href: simulatorStartHref(exam.exam_body, exam.id),
-    identity: exam.exam_body,
-  }));
-    const materialResults = studyMaterialLibrary.map((material) => ({
-      id: `material-${material.id}`,
-      title: material.title,
-      description: `${material.school} · ${material.availability === 'on-request' ? 'document on request' : 'timed practice available'} through EduReach.`,
-      category: 'Past questions & materials',
-    href: `/past-questions?view=materials&exam=${encodeURIComponent(material.exam)}&q=${encodeURIComponent(material.school)}`,
-    identity: material.exam,
-  }));
-  const cbtResults = pastQuestionLibrary.map((record) => ({
-    id: `bank-${record.id}`,
-    title: record.title,
-    description: `${record.school} · ${record.subjects}`,
-    category: 'CBT Question Bank',
-    href: record.href,
-    identity: record.exam,
-  }));
-  const schoolResults = commonInstitutions
-    .filter((name) => !name.startsWith('Other'))
-    .map((raw, index) => {
-      const match = raw.match(/^(.*?)(?:\s+\(([^)]+)\))?$/);
-      const schoolName = match?.[1] || raw;
-      const acronym = match?.[2] || '';
-      const slug = itemKey(schoolName);
-      return {
-        id: `school-${index + 1}`,
-        title: raw,
-        description: `${acronym ? `${acronym} · ` : ''}View institution profile in the EduReach School Finder.`,
-        category: 'School Finder',
-        href: `/schools/${encodeURIComponent(slug)}?name=${encodeURIComponent(schoolName)}&acronym=${encodeURIComponent(acronym)}`,
-        identity: acronym || schoolName,
-      };
-    });
-  return [...serviceResults, ...examResults, ...materialResults, ...cbtResults, ...schoolResults,
-    { id: 'screening-calculator', title: 'Screening Calculator', description: 'Plan an admission aggregate with an institution-specific reminder.', category: 'Student Tool', href: '/screening-calculator', identity: 'calculator' },
-    { id: 'cgpa-calculator-tool', title: 'CGPA Calculator', description: 'Calculate your Nigerian 5.0-scale GPA and degree classification.', category: 'Student Tool', href: '/tools/cgpa-calculator', identity: 'calculator' },
-    { id: 'opportunities', title: 'Student Opportunities & Grants', description: 'Browse the configured opportunities catalogue and its unavailable states.', category: 'Opportunities', href: '/jobs', identity: 'opportunities' },
-    { id: 'news', title: 'News & Updates', description: 'Read verified and clearly labelled student updates.', category: 'Noticeboard', href: '/news', identity: 'news' },
-  ];
-}
-
-function resultMatches(result: SearchResult, query: string) {
-  // Word order and punctuation must not decide whether a student finds a page.
-  return matchesSearch([result.title, result.description, result.category], query);
 }
 
 export default function SearchPage() {
@@ -94,14 +18,8 @@ export default function SearchPage() {
   // state, so the timeout effect does not re-run on every result update.
   const resultCountRef = useRef(0);
   const [query, setQuery] = useState(readQuery);
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [exams, setExams] = useState<CatalogExam[]>([]);
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loadingNews, setLoadingNews] = useState(true);
-  // Live sources fail independently. When one does, the catalogue is still
-  // complete but the page must not imply that "nothing matched" covers news and
-  // opportunities it never managed to read.
-  const [partialFailure, setPartialFailure] = useState(false);
+  const [catalog, setCatalog] = useState<SiteSearchCatalog | null>(null);
+  const [catalogError, setCatalogError] = useState(false);
 
   useEffect(() => {
     const term = query.trim();
@@ -117,79 +35,25 @@ export default function SearchPage() {
 
   useEffect(() => {
     let active = true;
-    let failed = false;
-    const guard = <T,>(promise: Promise<T[]>): Promise<T[]> => promise.catch(() => {
-      failed = true;
-      return [] as T[];
-    });
-    void Promise.all([
-      guard(fetchNews()),
-      guard(fetchCbtExams()),
-      guard(fetchOpportunities()),
-    ])
-      .then(([newsItems, examItems, opportunityItems]) => {
-        if (!active) return;
-        setNews(newsItems);
-        setExams(examItems);
-        setOpportunities(opportunityItems);
-        setPartialFailure(failed);
-        setLoadingNews(false);
-      });
+    void loadSiteSearchCatalog()
+      .then((result) => { if (active) setCatalog(result); })
+      .catch(() => { if (active) setCatalogError(true); });
     return () => { active = false; };
   }, []);
 
-  const allResults = useMemo<SearchResult[]>(() => [
-    ...staticResults(exams),
-    ...opportunities.map((item) => ({
-      id: `opportunity-${item.id}`,
-      title: item.title,
-      description: `${item.organisation ? `${item.organisation} · ` : ''}${item.category}${item.deadline ? ` · Deadline ${item.deadline}` : ''}`,
-      category: 'Opportunities & Grants',
-      href: `/jobs?category=${encodeURIComponent(item.category)}`,
-      identity: item.category,
-    })),
-    ...news.map((item) => ({
-      id: `news-${item.id}`,
-      title: item.title,
-      description: item.summary || item.body.slice(0, 140),
-      category: 'News & Updates',
-      href: `/news/${encodeURIComponent(item.slug)}`,
-      identity: item.category,
-    })),
-  ], [news, exams, opportunities]);
-
   const results = useMemo(() => {
-    const normalized = query.trim();
-    if (!normalized) return allResults.slice(0, 12);
-    return allResults.filter((result) => resultMatches(result, normalized)).slice(0, 40);
-  }, [allResults, query]);
+    return filterSearchItems(catalog?.items || [], query, query.trim() ? 40 : 12);
+  }, [catalog, query]);
 
   useEffect(() => {
     resultCountRef.current = results.length;
   }, [results]);
 
   useEffect(() => {
-    if (!query.trim() || !results.length) return;
-    window.requestAnimationFrame(() => {
-      const target = document.getElementById('search-result-0');
-      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      target?.classList.add('is-search-focus');
-      window.setTimeout(() => target?.classList.remove('is-search-focus'), 1800);
-    });
-  }, [query, results]);
-
-  useEffect(() => {
     const syncFromUrl = () => setQuery(readQuery());
     window.addEventListener('popstate', syncFromUrl);
     return () => window.removeEventListener('popstate', syncFromUrl);
   }, []);
-
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    const normalized = query.trim();
-    const path = normalized ? `/search?q=${encodeURIComponent(normalized)}` : '/search';
-    navigateInApp(path);
-  }
 
   return (
     <HubLayout>
@@ -203,14 +67,18 @@ export default function SearchPage() {
             </div>
           </div>
 
-          <form className="er-site-search-page-form" role="search" onSubmit={submit}>
-            <SearchIcon size={18} aria-hidden="true" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search services, exams, schools, news or materials" aria-label="Search EduReach" autoFocus />
-            <button type="submit">Search</button>
-          </form>
+          <SiteSearch
+            variant="page"
+            initialQuery={query}
+            items={catalog?.items || []}
+            suggestionsLoading={!catalog && !catalogError}
+            suggestionsError={catalogError || Boolean(catalog?.partialFailure)}
+            onQueryChange={setQuery}
+            autoFocus
+          />
 
           {!query.trim() && <p className="er-search-help">Start typing to search the configured catalogue. Results are direct links; no extra intermediary page is inserted.</p>}
-          {!results.length && !loadingNews && (
+          {!results.length && catalog && (
             <div className="hub-panel hub-empty">
               <h2>Nothing on EduReach matches “{query.trim()}”</h2>
               <p>
@@ -227,8 +95,13 @@ export default function SearchPage() {
               </a>
             </div>
           )}
-          {loadingNews && query.trim() && !results.length && <div className="hub-panel hub-empty">Checking news updates…</div>}
-          {!loadingNews && partialFailure && (
+          {!catalog && query.trim() && !catalogError && !results.length && <div className="hub-panel hub-empty" role="status">Checking searchable content…</div>}
+          {catalogError && (
+            <div className="er-search-help er-search-partial" role="alert">
+              Searchable content could not be loaded. Please try again or use the site navigation.
+            </div>
+          )}
+          {catalog?.partialFailure && (
             <p className="er-search-help er-search-partial" role="status">
               Some live results could not be loaded (news, opportunities or CBT banks), so this list may be
               incomplete. The catalogue results below are current; reload to try the live sources again.
@@ -236,8 +109,8 @@ export default function SearchPage() {
           )}
 
           <div className="er-search-results" aria-live="polite">
-            {results.map((result, index) => (
-              <a id={`search-result-${index}`} className={`er-search-result ${identityClassFor(result.identity, 'content')}`} href={result.href} key={result.id}>
+            {results.map((result) => (
+              <a className={`er-search-result ${identityClassFor(result.identity, 'content')}`} href={result.href} key={result.id}>
                 <CardIdentityMark value={result.identity} type="content" size="sm" />
                 <span className="er-search-result-copy">
                   <small>{result.category}</small>

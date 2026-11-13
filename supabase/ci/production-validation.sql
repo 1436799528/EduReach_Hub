@@ -240,7 +240,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261024120000', 'site_content_and_legal_pages', '20261024120000_site_content_and_legal_pages.sql', 'unique'),
     ('20261025120000', 'cbt_submit_grace_120', '20261025120000_cbt_submit_grace_120.sql', 'unique'),
     ('20261026120000', 'service_guides', '20261026120000_service_guides.sql', 'unique'),
-    ('20261027120000', 'cbt_subject_catalog_and_mock_rules', '20261027120000_cbt_subject_catalog_and_mock_rules.sql', 'unique')
+    ('20261027120000', 'cbt_subject_catalog_and_mock_rules', '20261027120000_cbt_subject_catalog_and_mock_rules.sql', 'unique'),
+    ('20261027130000', 'enforce_jamb_mock_duration', '20261027130000_enforce_jamb_mock_duration.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -340,6 +341,7 @@ with expected(version, migration) as (
     ,('20261025120000', '20261025120000_cbt_submit_grace_120.sql')
     ,('20261026120000', '20261026120000_service_guides.sql')
     ,('20261027120000', '20261027120000_cbt_subject_catalog_and_mock_rules.sql')
+   ,('20261027130000', '20261027130000_enforce_jamb_mock_duration.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -369,6 +371,12 @@ with expected(version, migration) as (
   select 'public.cbt_subject_catalog', '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'cbt_subject_catalog')
+  union all
+  select 'public.cbt_exams.cbt_exams_apply_mock_spec trigger', '20261027130000_enforce_jamb_mock_duration.sql'
+  where not exists (select 1 from information_schema.triggers
+                    where event_object_schema = 'public'
+                      and event_object_table = 'cbt_exams'
+                      and trigger_name = 'cbt_exams_apply_mock_spec')
   union all
   select 'public.site_pages', '20261024120000_site_content_and_legal_pages.sql'
   where not exists (select 1 from information_schema.tables

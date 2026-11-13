@@ -20,8 +20,8 @@
   z-index: 3000;
   padding: 10px 16px;
   border-radius: 10px;
-  background: #0f172a;
-  color: #ffffff;
+  background: var(--er-navy);
+  color: var(--color-text-inverse);
   font: 800 13px/1.2 var(--er-font-sans, system-ui, sans-serif);
   text-decoration: none;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
@@ -40,7 +40,7 @@
    header and sidebar. `:root` is there to out-specify the `!important` resets in
    the earlier stylesheets. */
 :root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
-  outline: 3px solid var(--er-primary-focus, #174A3A) !important;
+  outline: 3px solid var(--color-focus, #174A3A) !important;
   outline-offset: 2px;
   box-shadow: 0 0 0 2px #ffffff !important;
 }
@@ -81,14 +81,27 @@
    for density). Coarse pointers get the larger control without changing
    desktop density or the admin tables, which use their own button class. */
 @media (pointer: coarse) {
-  :root :where(.hub-primary-btn, .hub-ghost-btn, .hub-outline-btn, .hub-icon-btn) {
+  button,
+  select,
+  summary,
+  a[class*="btn"],
+  .er-pagebar-home,
+  .hub-desktop-nav a {
     min-height: 44px !important;
-    height: auto !important;
-    padding-block: 10px !important;
+    min-width: 44px !important;
   }
-  :root :where(.hub-nav a, .hub-utility-links a) {
+  .hub-desktop-nav a {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+  }
+}
+
+/* Keep mobile form text at the platform's no-zoom threshold, even where an
+   older compact component supplies a smaller inline font size. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }

@@ -89,13 +89,13 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 
 /* ---- Role classes for new and migrated surfaces ----------------------- */
 
-.er-type-display { font-size: clamp(24px, 4vw, 34px); font-weight: var(--er-w-title); line-height: 1.15; letter-spacing: -.02em; }
-.er-type-title { font-size: 20px; font-weight: var(--er-w-section); line-height: 1.25; }
-.er-type-subhead { font-size: 15px; font-weight: var(--er-w-subhead); line-height: 1.35; }
-.er-type-body { font-size: 14px; font-weight: var(--er-w-body); line-height: 1.65; }
-.er-type-label { font-size: 12px; font-weight: var(--er-w-label); }
-.er-type-meta { font-size: 12px; font-weight: var(--er-w-meta); color: var(--er-text-muted); }
-.er-type-stat { font-size: 26px; font-weight: var(--er-w-numeric); letter-spacing: -.01em; }
+.er-type-display { font-size: var(--er-type-size-compact-display); font-weight: var(--er-w-title); line-height: 1.15; letter-spacing: -.02em; }
+.er-type-title { font-size: var(--er-type-size-compact-title); font-weight: var(--er-w-section); line-height: 1.25; }
+.er-type-subhead { font-size: var(--er-type-size-compact-subhead); font-weight: var(--er-w-subhead); line-height: 1.35; }
+.er-type-body { font-size: var(--er-type-size-compact-body); font-weight: var(--er-w-body); line-height: 1.65; }
+.er-type-label { font-size: var(--er-type-size-compact-label); font-weight: var(--er-w-label); }
+.er-type-meta { font-size: var(--er-type-size-compact-meta); font-weight: var(--er-w-meta); color: var(--color-text-muted); }
+.er-type-stat { font-size: var(--er-type-size-stat); font-weight: var(--er-w-numeric); letter-spacing: -.01em; }
 
 /* ========================================================================
    Shared student-state surfaces (APP-4)
@@ -103,15 +103,15 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 
 .er-state {
   display: flex;
-  gap: 12px;
+  gap: var(--er-space-3);
   align-items: flex-start;
-  padding: 16px;
-  border: 1px solid var(--er-border);
+  padding: var(--er-space-4);
+  border: 1px solid var(--color-border-default);
   border-radius: 12px;
   background: var(--er-surface);
 }
 
-.er-state.is-compact { padding: 12px; }
+.er-state.is-compact { padding: var(--er-space-3); }
 
 .er-state-icon {
   display: grid;
@@ -128,8 +128,8 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 .er-state p { margin: 4px 0 0; font-size: 13px; color: var(--er-text-muted); }
 .er-state-action { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
-.er-state-error { border-color: #f2c9c2; background: #fff8f7; }
-.er-state-error .er-state-icon { background: #fde7e2; color: var(--er-error); }
+.er-state-error { border-color: var(--er-status-error-border); background: var(--color-error-bg); }
+.er-state-error .er-state-icon { background: var(--er-status-error-bg); color: var(--color-error); }
 
 .er-state-loading { border-color: #f0d6cd; background: #fffaf8; }
 .er-state-loading .er-wave { align-self: center; color: var(--er-crimson); }

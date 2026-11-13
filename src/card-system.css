@@ -1,10 +1,10 @@
 /* Shared EduReach card language: compact, image-led and consistent. */
 :root {
-  --er-card-bg: #fff;
-  --er-card-border: #e2e8f0;
+  --er-card-bg: var(--color-bg-surface);
+  --er-card-border: var(--color-border-default);
   --er-card-shadow: 0 4px 16px rgba(15, 23, 42, .045);
   --er-card-shadow-hover: 0 12px 28px rgba(15, 23, 42, .09);
-  --er-card-radius: 12px;
+  --er-card-radius: var(--er-radius-card);
 }
 
 .hub-feature-card,

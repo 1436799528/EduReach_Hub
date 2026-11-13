@@ -93,6 +93,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [institutionOtherSelected, setInstitutionOtherSelected] = useState(false);
   const [form, setForm] = useState<FormState>(() => ({ ...emptyForm, ...(draft.form || {}) }));
+  const submissionInFlight = useRef(false);
 
   useEffect(() => {
     if (reference) return;
@@ -249,6 +250,8 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
   }
 
   async function handleSubmit() {
+    if (submissionInFlight.current) return;
+    submissionInFlight.current = true;
     setBusy(true);
     setMessage('');
     try {
@@ -263,6 +266,7 @@ export default function ServiceApplyPage({ slug }: { slug: string }) {
     } catch (error) {
       setMessage(userFacingError(error, 'Unable to submit request.'));
     } finally {
+      submissionInFlight.current = false;
       setBusy(false);
     }
   }

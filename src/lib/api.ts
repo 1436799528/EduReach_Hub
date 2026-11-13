@@ -624,6 +624,24 @@ export type AdminAnalytics = {
   recentUsers: Array<Record<string, any>>;
 };
 
+export type AdminScheduledJobStatus = {
+  sinceHours: number;
+  jobs: Array<{
+    job_name: string;
+    runs: number;
+    last_success_at: string | null;
+    last_failure_at: string | null;
+    failures: number;
+    last_error: string | null;
+    fresh: boolean;
+  }>;
+  health: { ok: boolean; missing: string[]; stale: string[]; failing: string[] };
+};
+
+export async function fetchAdminScheduledJobStatus(): Promise<AdminScheduledJobStatus> {
+  return await adminApiFetch<AdminScheduledJobStatus>('/api/admin/jobs');
+}
+
 export type AdminService = {
   id: string; service_key: string; title: string; description: string | null;
   application_url: string | null; route: string | null; category: string | null;

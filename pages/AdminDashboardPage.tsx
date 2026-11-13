@@ -1,15 +1,11 @@
 import { userFacingError } from '../lib/errors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Activity,
-  BadgeCheck,
-  Laptop,
   ListChecks,
-  Newspaper,
+  BarChart3,
+  FileUp,
   RefreshCw,
   ShieldCheck,
-  Users,
-  Upload,
 } from 'lucide-react';
 import {
   fetchAdminAnalytics,
@@ -20,11 +16,12 @@ import {
 } from '../src/lib/api';
 import {
   ACTIVE_REQUEST_STATUSES,
+  AdminCountBadge,
   AdminEmptyState,
+  AdminStatusDot,
+  AdminSummary,
   AuditTimeline,
   BarStat,
-  KpiSkeleton,
-  Metric,
   RequestActions,
   SectionLabel,
   StatusBadge,
@@ -83,19 +80,27 @@ export default function AdminDashboardPage() {
 
   const activity = analytics?.activity || null;
   const m = analytics?.metrics || {};
+  const metric = (key: string): number | null => {
+    const value = m[key];
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+  };
+  const metricText = (key: string): string => {
+    const value = metric(key);
+    return value === null ? 'Unavailable' : value.toLocaleString();
+  };
+  const pendingCount = metric('pending_requests');
   const attention = queue
     .filter((row) => ACTIVE_REQUEST_STATUSES.includes(row.status))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
   const recentUsers = (analytics?.recentUsers || []).slice(0, 5);
-  const num = (key: string) => Number(m[key] ?? 0);
 
   return (
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
             <h1>Operations Control</h1>
-            <p>Live production overview: queue, students, traffic, CBT and content in one place.</p>
+            <p>Operational snapshots from service requests, student accounts, traffic and CBT activity.</p>
           </div>
           <div className="admin-header-actions">
             {updatedAt && <span className="admin-updated">Updated <TimeAgo value={updatedAt.toISOString()} /></span>}
@@ -113,35 +118,41 @@ export default function AdminDashboardPage() {
         )}
 
         {loading ? (
-          <KpiSkeleton count={6} />
-        ) : (
-          <div className="admin-kpi-grid three">
-            <Metric label="Active Queue" value={num('pending_requests')} detail={`${num('service_requests')} requests all-time`} icon={<ListChecks size={16} />} tone="orange" />
-            <Metric label="Students" value={num('users')} detail={`${num('admins')} staff accounts`} icon={<Users size={16} />} tone="blue" />
-            <Metric label="Traffic (24h)" value={num('events_24h')} detail={`${num('sessions_24h')} sessions · ${num('events_7d')} events in 7d`} icon={<Activity size={16} />} tone="green" />
-            <Metric label="Completed" value={num('completed_requests')} detail={`${num('rejected_requests')} rejected / cancelled`} icon={<BadgeCheck size={16} />} tone="green" />
-            <Metric label="CBT Attempts" value={num('cbt_attempts')} detail={`${num('cbt_submitted')} submitted · avg ${num('average_cbt_score')}%`} icon={<Laptop size={16} />} tone="purple" />
-            <Metric label="Published News" value={num('published_news')} detail={`${num('institutions')} institutions · ${num('active_services')} active services`} icon={<Newspaper size={16} />} tone="orange" />
+          <div className="admin-summary admin-summary-loading" aria-label="Loading operational summary">
+            {Array.from({ length: 6 }, (_, index) => <span className="admin-skel admin-skel-line" key={index} aria-hidden="true" />)}
           </div>
+        ) : (
+          <AdminSummary
+            label="Operational summary"
+            items={[
+              { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Staff accounts unavailable' : `${metricText('admins')} staff accounts` },
+              { label: 'Open requests', value: metricText('pending_requests'), detail: metric('service_requests') === null ? 'All-time request count unavailable' : `${metricText('service_requests')} requests all-time` },
+              { label: 'Completed requests', value: metricText('completed_requests'), detail: metric('rejected_requests') === null ? 'Rejected/cancelled count unavailable' : `${metricText('rejected_requests')} rejected or cancelled` },
+              { label: 'Site events · 24h', value: metricText('events_24h'), detail: metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions` },
+              { label: 'CBT attempts', value: metricText('cbt_attempts'), detail: metric('cbt_submitted') === null ? 'Submission count unavailable' : `${metricText('cbt_submitted')} submitted` },
+              {
+                label: 'Average submitted score',
+                value: metric('cbt_submitted') === 0 ? 'Unavailable' : metric('average_cbt_score') === null ? 'Unavailable' : `${metricText('average_cbt_score')}%`,
+                detail: metric('cbt_submitted') === 0 ? 'No submitted attempts' : 'Across submitted attempts',
+              },
+            ]}
+          />
         )}
 
         {!loading && (
           <>
             <div className="admin-quick-grid">
-              <a className="admin-quick-tile" href="/admin/queue"><i className="admin-kpi-icon orange"><ListChecks size={16} /></i><div><b>Process Queue</b><small>Review, complete or reject requests</small></div></a>
-              <a className="admin-quick-tile" href="/admin/cbt"><i className="admin-kpi-icon purple"><Laptop size={16} /></i><div><b>CBT Question Bank</b><small>Add exams and timed questions</small></div></a>
-              <a className="admin-quick-tile" href="/admin/news"><i className="admin-kpi-icon orange"><Newspaper size={16} /></i><div><b>Newsroom CMS</b><small>Create, edit, publish or remove news</small></div></a>
-              <a className="admin-quick-tile" href="/admin/opportunities"><i className="admin-kpi-icon green"><BadgeCheck size={16} /></i><div><b>Opportunities</b><small>Manage scholarships, grants and jobs</small></div></a>
-              <a className="admin-quick-tile" href="/admin/services"><i className="admin-kpi-icon orange"><ListChecks size={16} /></i><div><b>Service Catalogue</b><small>Edit, show, hide or add student services</small></div></a>
-              <a className="admin-quick-tile" href="/admin/content"><i className="admin-kpi-icon blue"><Newspaper size={16} /></i><div><b>Events &amp; Dates</b><small>Manage deadlines and exam dates</small></div></a>
-              <a className="admin-quick-tile" href="/admin/users"><i className="admin-kpi-icon blue"><Users size={16} /></i><div><b>Student Accounts</b><small>Search profiles and roles</small></div></a>
-              <a className="admin-quick-tile" href="/admin/content-manager"><i className="admin-kpi-icon green"><Upload size={16} /></i><div><b>Bulk Content Manager</b><small>Import, edit and maintain site data in bulk</small></div></a>
+              <a className="admin-quick-tile" href="/admin/queue"><i className="admin-kpi-icon"><ListChecks size={16} /></i><div><b>Process Queue <AdminCountBadge count={pendingCount ?? 0} label="open service requests" /></b><small>Review, complete or reject requests</small></div></a>
+              <a className="admin-quick-tile" href="/admin/cbt"><i className="admin-kpi-icon"><BarChart3 size={16} /></i><div><b>CBT Question Bank</b><small>Manage exams, questions and review status</small></div></a>
+              <a className="admin-quick-tile" href="/admin/question-imports"><i className="admin-kpi-icon"><FileUp size={16} /></i><div><b>Question Imports</b><small>Review extraction and import outcomes</small></div></a>
+              <a className="admin-quick-tile" href="/admin/analytics"><i className="admin-kpi-icon"><BarChart3 size={16} /></i><div><b>Analytics &amp; Reports</b><small>Explore recorded activity and system status</small></div></a>
             </div>
 
-            {num('pending_requests') > 0 && (
+            {pendingCount !== null && pendingCount > 0 && (
               <div className="admin-alert" role="status">
                 <ListChecks size={15} />
-                <span><b>{num('pending_requests')} service request{num('pending_requests') === 1 ? '' : 's'} need attention.</b> Students are waiting on these.</span>
+                <AdminStatusDot status="attention" label={`${pendingCount} open service requests require attention`} />
+                <span><b>{pendingCount.toLocaleString()} service request{pendingCount === 1 ? '' : 's'} need attention.</b> Students are waiting on these.</span>
                 <a className="admin-btn small" href="/admin/queue">Open queue</a>
               </div>
             )}
@@ -149,8 +160,8 @@ export default function AdminDashboardPage() {
             <div className="admin-two-col">
               <div className="admin-card">
                 <div className="admin-card-header">
-                  <h2>Needs Attention <SectionLabel live /></h2>
-                  <span>{attention.length ? `${attention.length} active` : 'Queue clear'}</span>
+                  <h2>Needs Attention</h2>
+                  <span>{pendingCount === null ? 'Status unavailable' : pendingCount === 0 ? 'Queue clear' : `Showing ${attention.length} of ${pendingCount.toLocaleString()} open`}</span>
                 </div>
                 <div className="admin-table-wrap">
                   <table className="admin-table">
@@ -165,7 +176,7 @@ export default function AdminDashboardPage() {
                           <td className="right"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
                         </tr>
                       ))}
-                      {!attention.length && <tr><td colSpan={5} className="empty-state">Queue is clear. No active service requests.</td></tr>}
+                      {!attention.length && <tr><td colSpan={5} className="empty-state">{pendingCount === null ? 'Queue status could not be determined.' : pendingCount === 0 ? 'Queue is clear. No active service requests.' : 'Open requests are reported, but no recent request rows were returned. Open the full queue to investigate.'}</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -186,10 +197,15 @@ export default function AdminDashboardPage() {
                         <FocusGroup title="Most-started CBT exams" rows={activity.cbtStarts.map((row) => ({ label: row.exam, value: row.count }))} />
                         <FocusGroup title="Most-completed services" rows={activity.serviceSubmits.map((row) => ({ label: row.path, value: row.count }))} />
                       </>
+                    ) : activity ? (
+                      <AdminEmptyState
+                        title="No usage recorded in the 14-day window"
+                        hint="The activity query succeeded and returned no events for this period."
+                      />
                     ) : (
                       <AdminEmptyState
-                        title="No usage telemetry yet"
-                        hint="Page views, searches, service and CBT activity are recorded from real traffic. This fills in as students use the live site. Nothing is simulated."
+                        title="Activity breakdown unavailable"
+                        hint="The server did not return this activity aggregation."
                       />
                     )}
                   </div>
@@ -203,13 +219,13 @@ export default function AdminDashboardPage() {
                         <div className="admin-account-side"><StatusBadge status={String(u.role || 'student')} /><TimeAgo value={u.created_at} /></div>
                       </div>
                     ))}
-                    {!recentUsers.length && <p className="empty-state" style={{ margin: 0 }}>No accounts have registered yet.</p>}
+                    {!recentUsers.length && <p className="empty-state" style={{ margin: 0 }}>{metric('users') === 0 ? 'No accounts have registered yet.' : metric('users') === null ? 'Account totals are unavailable.' : 'No recent account rows were returned.'}</p>}
                   </div>
                 </div>
               </div>
             </div>
 
-            {queue.length > attention.length && (
+            {pendingCount !== null && pendingCount > attention.length && (
               <p className="admin-footnote">Showing the {attention.length} most recent active requests. <a href="/admin/queue">Open the full queue</a> for completed history and filters.</p>
             )}
           </>

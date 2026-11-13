@@ -6,7 +6,9 @@ import {
   compulsorySubjectKeys,
   describeSession,
   durationForQuestionCount,
+  isEnglishSubject,
   isStartableBank,
+  jambSubjectsForGroup,
   mockCombinationError,
   mockDurationMinutes,
   mockPaperError,
@@ -111,6 +113,16 @@ test('validation rejects the impossible with a message a student can act on', ()
   // Compulsory subjects are validated with the bank's own display name.
   assert.match(validateSession(base, availability, DEFAULT_CBT_LIMITS, ['english'])!, /Use of English is compulsory/);
   assert.equal(validateSession({ ...base, subjects: ['English Language', 'Physics'] }, availability, DEFAULT_CBT_LIMITS, ['english']), null);
+  assert.match(
+    validateSession(
+      { ...base, subjects: ['Use of English', 'Physics', 'Biology', 'Chemistry', 'Mathematics'] },
+      [...availability, { subject: 'Biology', questionCount: 20 }, { subject: 'Chemistry', questionCount: 20 }, { subject: 'Mathematics', questionCount: 20 }],
+      { ...DEFAULT_CBT_LIMITS, maxSubjects: 4 },
+      ['english'],
+    )!,
+    /no more than 4 subjects/i,
+    'the four-subject cap counts English',
+  );
 });
 
 test('subject names canonicalise across bank, catalogue and course-guide spellings', () => {
@@ -125,6 +137,28 @@ test('subject names canonicalise across bank, catalogue and course-guide spellin
   assert.deepEqual(compulsorySubjectKeys('NECO'), []);
   assert.deepEqual(compulsorySubjectKeys('POST-UTME'), [], 'Post-UTME must not inherit the JAMB rule via the UTME substring');
   assert.deepEqual(compulsorySubjectKeys('post-utme'), []);
+});
+
+test('JAMB subject groups are limited to Science, Commercial and Arts without duplicates', () => {
+  const science = jambSubjectsForGroup('Science', [
+    { subject_name: 'Physics', subject_group: 'Science' },
+    { subject_name: 'Financial Accounting', subject_group: 'Commercial' },
+  ]);
+  const commercial = jambSubjectsForGroup('Commercial');
+  const arts = jambSubjectsForGroup('Arts', [
+    { subject_name: 'Visual Art', subject_group: 'Arts' },
+    { subject_name: 'Further Mathematics', subject_group: 'Science' },
+  ]);
+
+  assert.ok(science.includes('Physics'));
+  assert.ok(!science.includes('Financial Accounting'));
+  assert.ok(commercial.includes('Financial Accounting'));
+  assert.ok(arts.includes('Visual Art'));
+  assert.ok(!arts.includes('Further Mathematics'));
+  assert.ok(!science.some(isEnglishSubject), 'English is compulsory and is not an optional dropdown value');
+  for (const subjects of [science, commercial, arts]) {
+    assert.equal(new Set(subjects.map(normalizeSubject)).size, subjects.length, 'aliases do not create duplicate options');
+  }
 });
 
 test('bank resolution never lets a newer near-empty bank hijack the default route', () => {
@@ -236,16 +270,18 @@ test('a JAMB mock is a four-subject paper and says what is missing', () => {
   );
 });
 
-test('mock duration is the examination duration, never zero or negative', () => {
+test('JAMB mock duration is fixed while other mocks use their configured duration', () => {
   assert.equal(mockDurationMinutes(120), 120);
   assert.equal(mockDurationMinutes(90), 90);
+  assert.equal(mockDurationMinutes(90, 'jamb'), 120);
+  assert.equal(mockDurationMinutes(90, 'waec'), 90);
   assert.equal(mockDurationMinutes(null), 120);
   assert.equal(mockDurationMinutes(undefined), 120);
   assert.equal(mockDurationMinutes(0), 120);
   assert.equal(mockDurationMinutes(-30), 120);
 });
 
-test('the mock paper comes from the bank, with the JAMB standard as fallback', () => {
+test('JAMB mock format stays fixed regardless of bank metadata', () => {
   assert.deepEqual(mockPaperFor('jamb'), { questions: 180, subjectQuota: { english: 60, other: 40 } });
   assert.deepEqual(
     mockPaperFor('jamb', { questionCount: 180, subjectQuota: { english: 60, other: 40 } }),
@@ -254,14 +290,14 @@ test('the mock paper comes from the bank, with the JAMB standard as fallback', (
   );
   assert.deepEqual(
     mockPaperFor('jamb', { questionCount: 120, subjectQuota: null }),
-    { questions: 120, subjectQuota: null },
-    'a bank can change the paper without a release',
+    { questions: 180, subjectQuota: { english: 60, other: 40 } },
+    'bank metadata cannot reduce or alter the standard JAMB paper',
   );
   assert.equal(mockPaperFor('waec'), null, 'WAEC has no fixed cross-subject paper');
-  assert.equal(
+  assert.deepEqual(
     mockPaperFor('jamb', { questionCount: null, subjectQuota: null }),
-    null,
-    'a bank that reports no fixed paper is not overridden by the JAMB default',
+    { questions: 180, subjectQuota: { english: 60, other: 40 } },
+    'JAMB still uses its standard if the bank omits the paper metadata',
   );
   assert.deepEqual(mockPaperFor('waec', { questionCount: 90, subjectQuota: null }), { questions: 90, subjectQuota: null });
 });

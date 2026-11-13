@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Ban, RefreshCw } from 'lucide-react';
 import { fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, updateAdminUserRole, type AdminUser, type AdminUserActivity } from '../src/lib/api';
 import { Can } from '../src/components/admin/Can';
-import { AdminEmptyState, StatusBadge, TableSkeleton } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminSummary, StatusBadge, TableSkeleton } from '../src/components/admin/AdminKit';
 
 function profileCompletion(p: AdminUser): number {
   const fields = [p.full_name, p.school, p.faculty, p.department, p.level, p.matric_number];
@@ -85,6 +85,16 @@ export default function AdminUsersPage() {
 
   // A11Y-1: focus enters the activity panel, Tab stays inside it, Escape closes it.
   const activityDialogRef = useModalDialog<HTMLDivElement>(Boolean(viewing), () => setViewing(null));
+  const accountSummary = [
+    { label: 'Accounts in this view', value: profiles.length.toLocaleString(), detail: 'Latest matching records returned' },
+    { label: 'Staff in this view', value: profiles.filter((profile) => profile.role !== 'student').length.toLocaleString(), detail: 'Non-student roles in these results' },
+    { label: 'Suspended accounts', value: profiles.filter((profile) => profile.suspended).length.toLocaleString(), detail: 'Among the records shown' },
+    {
+      label: 'Average profile completion',
+      value: profiles.length ? `${Math.round(profiles.reduce((sum, profile) => sum + profileCompletion(profile), 0) / profiles.length)}%` : 'Unavailable',
+      detail: profiles.length ? 'Across the records shown' : 'No records to calculate',
+    },
+  ];
 
   useEffect(() => {
     const timer = window.setTimeout(() => load(query), 250);
@@ -112,6 +122,12 @@ export default function AdminUsersPage() {
 
         {error && <div className="admin-card" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}><span>{error}</span><button type="button" className="admin-btn small" onClick={() => void load(query)} disabled={loading}>Try again</button></div>}
         {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}
+        {!loading && !error && (
+          <>
+            <AdminSummary label="Current account results" items={accountSummary} />
+            <p className="admin-data-note">These summaries describe the current search results only. The API returns at most 200 profiles and does not provide registration or active-user trends.</p>
+          </>
+        )}
 
         <div className="admin-card">
           <div className="admin-table-wrap">

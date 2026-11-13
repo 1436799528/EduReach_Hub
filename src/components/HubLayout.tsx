@@ -11,7 +11,6 @@ import {
   Laptop,
   Newspaper,
   Briefcase,
-  Search as SearchIcon,
   MessageCircle,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
@@ -23,18 +22,13 @@ import { useAuth } from '../lib/auth';
 import { navigateInApp } from '../lib/navigation';
 import { EDUREACH_WHATSAPP } from '../data/hubContent';
 import SiteFooter from './SiteFooter';
+import SiteSearch from './LazySiteSearch';
 import '../hub-rail.css';
-
-function navigateToSearch(term: string) {
-  const query = term.trim();
-  navigateInApp(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
-}
 
 export default function HubLayout({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [siteSearch, setSiteSearch] = useState('');
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
   const path = window.location.pathname.replace(/\/$/, '') || '/';
@@ -179,10 +173,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </nav>
 
-          <form className="hub-global-search" role="search" aria-label="Site search" onSubmit={(event) => { event.preventDefault(); navigateToSearch(siteSearch); }}>
-            <SearchIcon size={15} aria-hidden="true" />
-            <input value={siteSearch} onChange={(event) => setSiteSearch(event.target.value)} placeholder="Search" aria-label="Search EduReach" />
-          </form>
+          <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" submitLabel="Go" />
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -379,11 +370,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               </button>
             </div>
 
-            <form className="hub-mobile-search" role="search" aria-label="Site search (mobile)" onSubmit={(event) => { event.preventDefault(); setMobileOpen(false); navigateToSearch(siteSearch); }}>
-              <SearchIcon size={16} aria-hidden="true" />
-              <input value={siteSearch} onChange={(event) => setSiteSearch(event.target.value)} placeholder="Search EduReach" aria-label="Search EduReach" />
-              <button type="submit">Go</button>
-            </form>
+            <SiteSearch variant="drawer" label="Site search (mobile)" onNavigate={() => setMobileOpen(false)} />
 
             <nav style={{ display: 'grid', gap: '12px', fontSize: '14px', fontWeight: 560 }}>
               <a href="/" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>

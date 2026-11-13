@@ -9,7 +9,7 @@ import { NewsRow } from '../src/components/NewsSections';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { fetchNews, type NewsItem } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
-import { navigateInApp } from '../src/lib/navigation';
+import SiteSearch from '../src/components/LazySiteSearch';
 
 // The resume card is for signed-in students with an unfinished paper. Loading
 // it after the shell keeps a convenience out of the first-paint bundle.
@@ -45,7 +45,6 @@ export default function HubHomePage() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState('');
   const [feedVersion, setFeedVersion] = useState(0);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -67,25 +66,11 @@ export default function HubHomePage() {
               page bar and the sections below it; there is no promotional hero. */}
           <h1 className="er-visually-hidden">EduReach Hub CBT practice, past questions and student services</h1>
 
-          {/* The portal search bar, restored exactly as it shipped: same form,
-              same aria-label, same /search?q= destination, same red submit. */}
-          <form
-            className="er-search"
-            role="search"
-            aria-label="Search services"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (search.trim()) navigateInApp(`/search?q=${encodeURIComponent(search.trim())}`);
-            }}
-          >
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search services: NELFUND, result checking, JAMB slips…"
-              aria-label="Search services"
-            />
-            <button type="submit">Search</button>
-          </form>
+          <SiteSearch
+            variant="home"
+            label="Search services and study resources"
+            placeholder="Search services, subjects, exams or news"
+          />
 
           {/* The study-centre card is one click to the past-question library.
               No start-practice button, no PDF list: the card is the link. */}

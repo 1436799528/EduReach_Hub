@@ -45,11 +45,14 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.doesNotMatch(setup, /practiceDurationOptions/, 'students do not choose a separate practice timer');
   assert.match(setup, /Subject group/, 'students can choose a subject group');
   assert.match(setup, /id="er-subject-group"/, 'subject groups use a dropdown');
+  assert.match(setup, /jambSubjectsForGroup/, 'JAMB optional subjects are filtered by one of its three groups');
+  assert.match(setup, /id=\{exam === 'jamb' \? 'er-jamb-subject' : 'er-optional-subject'\}/, 'every exam uses a single-subject dropdown');
   assert.doesNotMatch(setup, /questionCount\} available/, 'student-facing subject choices do not reveal bank inventory counts');
   assert.match(setup, /cannot be removed/, 'a compulsory subject is locked into the combination');
   assert.match(setup, /Use of English is compulsory for JAMB UTME/, 'JAMB practice and mock cannot start without English, and the student is told why');
-  assert.match(setup, /aria-label="Available subjects"/, 'available subjects are shown in a labelled picker');
-  assert.match(setup, /aria-label=\{`Add \$\{entry\.subject\}`\}/, 'each available subject has an add control named for that subject');
+  assert.match(setup, /role="group" aria-label="Available subjects"/, 'available subjects are shown in a labelled picker');
+  assert.match(setup, /className="er-setup-subject-select"/, 'subjects are added one at a time from a dropdown');
+  assert.match(setup, /addableSubjects\.map\(\(entry\) => \(/, 'selected subjects are excluded from the dropdown options');
   assert.match(setup, /er-selected-subjects/, 'chosen subjects are listed with their question counts');
   assert.match(setup, /fetchCbtExamsWithAvailability/, 'bank resolution sees question availability, not catalogue order');
   assert.match(setup, /practiceTrack/, 'the picker is filtered by the subject group the student chose');
@@ -58,14 +61,16 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
 });
 
-test('a missing compulsory subject, not the absence of one, blocks the start', () => {
+test('compulsory English is always selected and a missing bank pool blocks the start', () => {
   // WAEC, NECO and Post-UTME have no compulsory subject. Gating the Start
   // button on "no compulsory English" disabled the whole simulator for them.
   const setup = read('pages/ExamSetupPage.tsx');
   assert.match(setup, /const compulsoryMissing = Boolean\(bank\?\.rules\?\.compulsoryMissing\)/);
-  assert.match(setup, /compulsoryKeys\.length > 0 && !compulsoryEnglish/);
+  assert.match(setup, /compulsoryKeys\.length > 0 && \(/);
+  assert.match(setup, /!availability\.some\(\(entry\) => isEnglishSubject/);
+  assert.match(setup, /compulsoryEntries\.push\(\{ subject: 'Use of English', questionCount: 0 \}\)/);
   assert.match(setup, /disabled=\{[^}]*compulsoryMissing/, 'the start gate uses the derived rule');
-  assert.doesNotMatch(setup, /disabled=\{[^}]*!compulsoryEnglish/, 'no body is blocked merely for having no compulsory subject');
+  assert.doesNotMatch(setup, /disabled=\{[^}]*!compulsoryEnglish/, 'other bodies are not blocked merely for having no compulsory subject');
 });
 
 test('answers are saved as they change, and a dropped connection is retried', () => {
@@ -74,6 +79,30 @@ test('answers are saved as they change, and a dropped connection is retried', ()
   assert.match(shell, /addEventListener\('online'/, 'a pending save is retried when the connection returns');
   assert.match(shell, /edureach-cbt-pending:/, 'pending answers survive a closed tab');
   assert.match(shell, /visibilitychange/, 'and are flushed when the tab is hidden');
+});
+
+test('authentication, service requests and CBT actions guard duplicate submissions synchronously', () => {
+  const auth = read('pages/AuthPageV2.tsx');
+  assert.match(auth, /const requestInFlight = useRef\(false\)/);
+  assert.match(auth, /if \(requestInFlight\.current\) return;/, 'auth actions are locked before React can rerender');
+
+  const service = read('pages/ServiceApplyPage.tsx');
+  assert.match(service, /const submissionInFlight = useRef\(false\)/);
+  assert.match(service, /if \(submissionInFlight\.current\) return;/, 'a repeated confirmation cannot create another request');
+
+  const cbt = read('pages/CbtSessionPage.tsx');
+  assert.match(cbt, /const sessionActionInFlight = useRef\(false\)/);
+  assert.match(cbt, /if \(sessionActionInFlight\.current \|\| !attempt \|\| closed === 'submitted'\) return;/);
+  assert.match(cbt, /if \(sessionActionInFlight\.current\) return;/, 'submit and end-test actions share one in-flight lock');
+});
+
+test('CBT subject results have a mobile card layout rather than a wide table', () => {
+  const results = read('pages/CbtResultsPage.tsx');
+  assert.match(results, /er-result-visible-subject-table/);
+  assert.match(results, /er-result-mobile-subjects/);
+  assert.match(results, /<dt>Questions<\/dt>/);
+  assert.match(results, /<dt>Correct<\/dt>/);
+  assert.match(read('pages/CbtResultsPage.css'), /\.er-result-visible-subject-table\s*>\s*table\s*\{\s*display:\s*none/);
 });
 
 test('destructive actions are confirmed and the server enforces them', () => {

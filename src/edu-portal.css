@@ -10,8 +10,10 @@
 .er-search{height:44px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d9dee5;border-radius:10px;padding:4px 6px 4px 12px;margin-bottom:12px}
 .er-search>svg{color:#5e6c82;flex:none}
 .er-search input{border:0;outline:0;min-width:0;flex:1;font:inherit;font-size:14px;color:#1f2937;background:transparent}
-.er-search button{height:34px;border:0;border-radius:7px;background:var(--er-brand-red);color:#fff;padding:0 14px;font-size:13px;font-weight: 560;cursor:pointer}
-.er-search button:hover{background:var(--er-brand-red-hover)}
+.er-search button{height:34px;border:0;border-radius:7px;background:var(--color-brand-primary);color:#fff;padding:0 14px;font-size:13px;font-weight: 560;cursor:pointer}
+.er-search button:hover:not(:disabled){background:var(--color-brand-primary-hover)}
+.er-search button:active:not(:disabled){background:var(--er-primary-active)}
+.er-search button:disabled{background:var(--er-disabled-bg);color:var(--er-disabled-text);cursor:not-allowed}
 .er-banner{min-height:80px;display:grid;grid-template-columns:48px minmax(0,1fr) 18px;align-items:center;gap:12px;background:linear-gradient(100deg,#fff7e8,#fff);border:1px solid #eadfcb;border-radius:12px;padding:10px 14px;color:#1f2937;text-decoration:none;margin-bottom:14px}
 .er-banner-art{width:44px;height:44px;display:grid;place-items:center;background:#fff0d5;border-radius:8px}
 .er-banner-art img{width:30px;height:30px;object-fit:contain}
@@ -70,7 +72,7 @@
 @media(max-width:900px){.er-exam-grid{grid-template-columns:1fr}.er-link-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.er-two-col{grid-template-columns:1fr}}
 @media(max-width:640px){
   .er-portal{padding:10px 0 84px}
-  .er-container{--er-gutter:16px;width:calc(100% - 2*var(--er-gutter))}
+  .er-container{--er-gutter:16px;width:calc(100% - 32px)}
   .er-notice{font-size:11.5px}
   .er-notice a{display:none}
   .er-banner{min-height:76px;grid-template-columns:44px minmax(0,1fr) 16px;gap:10px;padding:10px 12px}
@@ -107,7 +109,8 @@
 
 .er-mobile-bottom-nav{display:none}
 @media(max-width:600px){
-  .er-mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:90;height:58px;background:rgba(255,255,255,.98);border-top:1px solid #dfe4ea;box-shadow:0 -3px 12px rgba(15,23,42,.08);padding:5px 8px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
+  body:not(.er-exam-mode) .hub-shell{padding-bottom:calc(62px + env(safe-area-inset-bottom))}
+  .er-mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:90;height:calc(58px + env(safe-area-inset-bottom));background:rgba(255,255,255,.98);border-top:1px solid #dfe4ea;box-shadow:0 -3px 12px rgba(15,23,42,.08);padding:5px 8px calc(5px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
   .er-mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:48px;color:#5e6c82;text-decoration:none;font-size:11px;font-weight: 560}
   .er-mobile-bottom-nav a.active{color:var(--er-primary)}
   .er-mobile-bottom-nav svg{stroke-width:2}
@@ -124,10 +127,8 @@
 /* ---- Utility strip (Myschool-style top bar, EduReach navy) ---- */
 
 /* ---- Exam simulator grid (shared: home + CBT hall) ----
-   Sized like Myschool's "Take a test" simulators: 14px/600 title, 12px/500
-   copy, 12px radius, pastel identity per exam. Desktop = 4-up vertical cards;
-   mobile = horizontal cards in a 2-row, column-flow strip that swipes sideways
-   (each column is 85% wide so the next column always peeks in). */
+   Desktop uses four vertical cards; mobile keeps them in a single swipe row
+   so card content never competes for two cramped grid tracks. */
 .er-sim-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .er-sim-card{display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;padding:14px;text-decoration:none;color:#1f2937;min-height:156px;transition:border-color .15s,box-shadow .15s}
 .er-sim-card:hover{border-color:#b14933;box-shadow:0 4px 14px rgba(200,88,65,.1)}
@@ -149,9 +150,9 @@
 .er-guide-strip a:hover{color:#b14933;border-color:#b14933}
 @media(max-width:900px){.er-sim-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){
-  .er-sim-grid{grid-template-columns:none;grid-auto-flow:column;grid-template-rows:auto auto;grid-auto-columns:85%;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:var(--er-gutter,0px);-webkit-overflow-scrolling:touch;margin:0 calc(-1*var(--er-gutter,0px));padding:2px var(--er-gutter,0px) 6px;scrollbar-width:none}
+  .er-sim-grid{grid-template-columns:none;grid-auto-flow:column;grid-template-rows:auto;grid-auto-columns:85%;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:var(--er-gutter,0px);-webkit-overflow-scrolling:touch;margin:0 calc(-1*var(--er-gutter,0px));padding:2px var(--er-gutter,0px) 6px;scrollbar-width:none}
   .er-sim-grid::-webkit-scrollbar{display:none}
-  .er-sim-card{flex-direction:row;align-items:center;gap:14px;min-height:98px;padding:14px 16px;scroll-snap-align:start}
+  .er-sim-card{min-width:0;flex-direction:row;align-items:center;gap:14px;min-height:98px;padding:14px 16px;scroll-snap-align:start}
   .er-sim-top{flex:none}
   .er-sim-top img{width:48px;height:48px}
   .er-sim-badge{display:none}
@@ -461,7 +462,7 @@ body.er-exam-mode{padding-bottom:0!important}
 }
 .er-skeleton-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 /* The CBT simulator cards are 98px tall in the mobile swipe layout and around
-   150px on a wide grid; the placeholder uses the real .er-sim-grid so it wraps
+   150px on a wide grid; the placeholder uses the real .er-sim-grid so it flows
    and scrolls exactly like the cards, and the floor covers the guide strip the
    placeholder does not draw. Measured cause: the section grew 262px at 4.7s
    and pushed the rest of the page down (CLS 0.21 on /). */

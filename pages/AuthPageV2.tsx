@@ -1,23 +1,35 @@
-import { userFacingError } from '../lib/errors';
-import { FormEvent, useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   ArrowRight,
+  BookOpenCheck,
   CheckCircle2,
-  Lock,
-  Mail,
-  Phone,
   Eye,
   EyeOff,
-  AlertCircle,
+  GraduationCap,
+  LockKeyhole,
+  Mail,
+  Phone,
+  ShieldCheck,
+  UserRound,
 } from 'lucide-react';
-import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
-import { notifyAuthChanged } from '../src/lib/auth';
+import { userFacingError } from '../lib/errors';
+import { commonInstitutions, courseProgrammes, levels } from '../src/data/studentOptions';
 import { bootstrapAdmin } from '../src/lib/api';
 import { apiUrl } from '../src/lib/apiBase';
+import { notifyAuthChanged } from '../src/lib/auth';
 import { navigateInApp } from '../src/lib/navigation';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
+import '../src/auth-page.css';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
+type AccountType = 'student' | 'parent' | 'teacher';
+
+const accountTypes: Array<{ value: AccountType; label: string; detail: string }> = [
+  { value: 'student', label: 'Student', detail: 'I am studying or preparing for an exam' },
+  { value: 'parent', label: 'Parent or guardian', detail: 'I support a student' },
+  { value: 'teacher', label: 'Teacher or educator', detail: 'I support learners' },
+];
 
 function getSafeNextPath() {
   const next = new URLSearchParams(window.location.search).get('next');
@@ -26,31 +38,23 @@ function getSafeNextPath() {
 
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [currentMode, setCurrentMode] = useState<Mode>(mode);
-
-  // Registration session fields (Only what user specified!)
-  // 1. First Name
   const [firstName, setFirstName] = useState('');
-  // 2. Last Name
   const [lastName, setLastName] = useState('');
-  // 3. Email Address
   const [email, setEmail] = useState('');
-  // 4. Phone Number
   const [phone, setPhone] = useState('');
-  // 5. Password
   const [password, setPassword] = useState('');
-  // 6. Confirm Password
   const [confirmPassword, setConfirmPassword] = useState('');
-  // 7. Account Type - Student / Parent / Teacher
-  const [accountType, setAccountType] = useState<'student' | 'parent' | 'teacher'>('student');
-  // 8. Terms & Privacy agreement
+  const [accountType, setAccountType] = useState<AccountType>('student');
+  const [school, setSchool] = useState('');
+  const [courseProgramme, setCourseProgramme] = useState('');
+  const [level, setLevel] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
-
-  // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [verifyEmailSent, setVerifyEmailSent] = useState('');
+  const requestInFlight = useRef(false);
 
   const modePaths: Record<Mode, string> = {
     signin: '/login',
@@ -60,37 +64,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     verify: '/verify-email',
   };
 
-  // Keep the address bar on the canonical route for the visible mode,
-  // preserving query/hash tokens (password recovery links) and ?next=.
   useEffect(() => {
     const canonical = modePaths[currentMode] + window.location.search + window.location.hash;
     const current = window.location.pathname + window.location.search + window.location.hash;
     if (current !== canonical) window.history.replaceState({}, '', canonical);
   }, [currentMode]);
-
-  async function resendVerification() {
-    const target = (verifyEmailSent || email).trim();
-    if (!target) {
-      setError('Enter your email address first.');
-      return;
-    }
-    if (!isSupabaseConfigured) {
-      setMessage('Email service is not configured yet. Your verification link will send once it is.');
-      return;
-    }
-    try {
-      setBusy(true);
-      setError('');
-      setMessage('');
-      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: target });
-      if (resendError) throw resendError;
-      setMessage('A new verification email has been sent.');
-    } catch (e) {
-      setError(userFacingError(e, 'Unable to resend the verification email.'));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   useEffect(() => {
     const {
@@ -104,74 +82,104 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  async function submit(event: FormEvent) {
+  function changeMode(next: Mode) {
+    setCurrentMode(next);
+    setMessage('');
+    setError('');
+  }
+
+  async function resendVerification() {
+    if (requestInFlight.current) return;
+    const target = (verifyEmailSent || email).trim();
+    if (!target) {
+      setError('Enter your email address first.');
+      return;
+    }
+    if (!isSupabaseConfigured) {
+      setMessage('Email service is not configured yet. Your verification link will send once it is.');
+      return;
+    }
+
+    requestInFlight.current = true;
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: target });
+      if (resendError) throw resendError;
+      setMessage('A new verification email has been sent.');
+    } catch (value) {
+      setError(userFacingError(value, 'Unable to resend the verification email.'));
+    } finally {
+      requestInFlight.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     setBusy(true);
     setMessage('');
     setError('');
 
     try {
-      // 1. FORGOT PASSWORD
       if (currentMode === 'forgot') {
-        if (!email.trim() || !email.includes('@')) {
-          throw new Error('Please enter a valid email address.');
-        }
+        const target = email.trim();
+        if (!target || !target.includes('@')) throw new Error('Please enter a valid email address.');
         if (!isSupabaseConfigured) {
           setMessage('Password reset email is unavailable in local preview mode. Connect an EduReach account to reset a password.');
-          setBusy(false);
           return;
         }
         try {
-          await supabase.auth.resetPasswordForEmail(email.trim(), {
+          const { error: resetError } = await supabase.auth.resetPasswordForEmail(target, {
             redirectTo: `${window.location.origin}/reset-password`,
           });
+          if (resetError) throw resetError;
         } catch {
           // Keep the response generic so account existence is not disclosed.
         }
         setMessage('If an account exists for this email, you will receive password reset instructions.');
-        setBusy(false);
         return;
       }
 
-      // 2. RESET PASSWORD
       if (currentMode === 'reset') {
-        if (password.length < 8) {
-          throw new Error('Password must be at least 8 characters.');
-        }
-        if (password !== confirmPassword) {
-          throw new Error('Passwords do not match.');
-        }
+        if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+        if (password !== confirmPassword) throw new Error('Passwords do not match.');
         if (!isSupabaseConfigured) {
-          setError('Password reset is unavailable in local preview mode. Connect an EduReach account to update a password.');
-          setBusy(false);
-          return;
+          throw new Error('Password reset is unavailable in local preview mode. Connect an EduReach account to update a password.');
         }
-        const { error: resetErr } = await supabase.auth.updateUser({ password });
-        if (resetErr) throw resetErr;
+        const { error: resetError } = await supabase.auth.updateUser({ password });
+        if (resetError) throw resetError;
         setMessage('Password updated successfully. You can now sign in.');
         setCurrentMode('signin');
         setPassword('');
         setConfirmPassword('');
-        setBusy(false);
         return;
       }
 
-      // 3. REGISTRATION (SIGNUP)
       if (currentMode === 'signup') {
-        if (!firstName.trim()) throw new Error('First Name is required.');
-        if (!lastName.trim()) throw new Error('Last Name is required.');
-        if (!email.trim() || !email.includes('@')) throw new Error('A valid Email Address is required.');
-        if (phone.replace(/\D/g, '').length < 10) throw new Error('A valid Nigerian phone number is required.');
+        if (!firstName.trim()) throw new Error('First name is required.');
+        if (!lastName.trim()) throw new Error('Last name is required.');
+        if (!email.trim() || !email.includes('@')) throw new Error('A valid email address is required.');
+        const phoneDigits = phone.replace(/\D/g, '');
+        if (phoneDigits.length < 10 || phoneDigits.length > 15) throw new Error('Enter a valid phone number.');
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
         if (password !== confirmPassword) throw new Error('Passwords do not match.');
-        if (!termsAgreed) throw new Error('You must agree to the Terms of Service and Privacy Policy.');
-
-        const fullName = `${firstName.trim()} ${lastName.trim()}`;
-
+        if (!termsAgreed) throw new Error('Please agree to the Terms of Service and Privacy Policy.');
         if (!isSupabaseConfigured) {
           throw new Error('EduReach account registration is not available until the live account service is configured.');
         }
 
+        const fullName = `${firstName.trim()} ${lastName.trim()}`;
+        const studentDetails = accountType === 'student'
+          ? {
+            school: school.trim(),
+            course_programme: courseProgramme.trim(),
+            level,
+          }
+          : {};
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -183,771 +191,295 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               phone: phone.trim(),
               account_type: accountType,
               terms_agreed: true,
+              ...studentDetails,
             },
           },
         });
         if (signUpError) throw signUpError;
 
         if (signUpData.session?.user) {
-          const { error: profileError } = await supabase.from('profiles').upsert({
-            id: signUpData.session.user.id,
-            full_name: fullName,
-            phone: phone.trim(),
-            role: 'student',
-          }, { onConflict: 'id' });
-          if (profileError) throw profileError;
-
           notifyAuthChanged();
           navigateInApp(getSafeNextPath());
           return;
         }
         setVerifyEmailSent(email.trim());
         setCurrentMode('verify');
-        setBusy(false);
+        setMessage('Your account is ready for verification. Check your inbox to activate it.');
         return;
       }
 
-      // 4. SIGN IN (LOGIN)
       if (currentMode === 'signin') {
-        if (!email.trim() || !password) {
-          throw new Error('Email address and password are required.');
-        }
-
+        if (!email.trim() || !password) throw new Error('Email address and password are required.');
         if (!isSupabaseConfigured) {
           throw new Error('EduReach account sign-in is not available until the live account service is configured.');
         }
 
-        try {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-          });
-          if (signInError) throw signInError;
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (signInError) throw signInError;
 
-          const {
-            data: { session: signedInSession },
-          } = await supabase.auth.getSession();
-
-          if (signedInSession?.access_token) {
-            // The configured bootstrap account can become the first super administrator.
-            try { await bootstrapAdmin(); } catch { /* already bootstrapped or not the designated account */ }
-            let isAdmin = false;
-            try {
-              const adminCheck = await fetch(apiUrl('/api/admin/session'), {
-                headers: { Authorization: `Bearer ${signedInSession.access_token}` },
-              });
-              isAdmin = adminCheck.ok;
-            } catch { /* backend unreachable; continue as a regular student session */ }
-            window.sessionStorage.removeItem('edureach-admin-student-view');
-            notifyAuthChanged();
-            navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
-            return;
-          }
-        } catch (signInErr) {
-          throw signInErr;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          throw new Error('Unable to confirm your EduReach session. Please try signing in again.');
         }
 
-        throw new Error('Unable to confirm your EduReach session. Please try signing in again.');
+        try {
+          await bootstrapAdmin();
+        } catch {
+          // The account may already be bootstrapped or may not be the designated admin.
+        }
+        let isAdmin = false;
+        try {
+          const response = await fetch(apiUrl('/api/admin/session'), {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          });
+          isAdmin = response.ok;
+        } catch {
+          // A backend outage must not block a regular student from signing in.
+        }
+        window.sessionStorage.removeItem('edureach-admin-student-view');
+        notifyAuthChanged();
+        navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
       }
-    } catch (err) {
-      setError(userFacingError(err, 'An error occurred during authentication.'));
+    } catch (value) {
+      setError(userFacingError(value, 'An error occurred during authentication.'));
     } finally {
+      requestInFlight.current = false;
       setBusy(false);
     }
   }
 
-  const pageTitle =
-    currentMode === 'signin'
-      ? 'Sign in to EduReach'
-      : currentMode === 'signup'
-      ? 'Create Your EduReach Account'
-      : currentMode === 'verify'
-      ? 'Verify Your Email'
-      : currentMode === 'reset'
-      ? 'Set New Password'
-      : 'Reset Your Password';
+  async function handleResendVerification() {
+    await resendVerification();
+  }
 
-  // A form is "complete" when every required field for the active mode is
-  // validly filled - the submit button brightens to signal it is ready.
-  const authPhoneDigits = phone.replace(/\D/g, '');
+  const pageTitle = currentMode === 'signin'
+    ? 'Welcome back'
+    : currentMode === 'signup'
+      ? 'Create your account'
+      : currentMode === 'verify'
+        ? 'Check your email'
+        : currentMode === 'reset'
+          ? 'Choose a new password'
+          : 'Reset your password';
+  const allowModeSwitch = currentMode === 'signin' || currentMode === 'signup';
   const authFormComplete = currentMode === 'signup'
-    ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && authPhoneDigits.length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
+    ? Boolean(firstName.trim() && lastName.trim() && email.includes('@') && phone.replace(/\D/g, '').length >= 10 && password.length >= 8 && password === confirmPassword && termsAgreed)
     : currentMode === 'signin'
       ? Boolean(email.includes('@') && password)
       : currentMode === 'reset'
-        ? Boolean(password.length >= 8 && confirmPassword === password)
+        ? Boolean(password.length >= 8 && password === confirmPassword)
         : currentMode === 'forgot'
           ? email.includes('@')
           : false;
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#f8fafc',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '24px 16px',
-        color: '#0f172a',
-      }}
-    >
-      {/* BRAND LOGO BAR */}
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <a
-          href="/"
-          aria-label="EduReach Hub home"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            textDecoration: 'none',
-            color: '#0f172a',
-            fontSize: '22px',
-            fontWeight: 680,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          <BrandLogo height={44} radius="50%" />
+    <main className="auth-page">
+      <div className="auth-frame">
+        <a className="auth-brand" href="/" aria-label="EduReach Hub home">
+          <BrandLogo height={42} radius="50%" />
+          <span><strong>EduReach</strong><small>Student support, all in one place</small></span>
         </a>
-      </div>
 
-      {/* AUTH CARD */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: currentMode === 'signup' ? '540px' : '440px',
-          margin: '0 auto',
-          background: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '16px',
-          padding: '30px',
-          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.06)',
-        }}
-      >
-        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 620,
-              color: '#b14933',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}
-          >
-            {currentMode === 'signup'
-              ? 'NEW REGISTRATION'
-              : currentMode === 'verify'
-              ? 'EMAIL VERIFICATION'
-              : 'ACADEMIC PORTAL ACCESS'}
-          </span>
-          <h1 style={{ fontSize: '22px', fontWeight: 680, color: '#0f172a', margin: '4px 0 6px' }}>
-            {pageTitle}
-          </h1>
-          <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
-            {currentMode === 'signup'
-              ? 'Quick registration for students, parents, and teachers.'
-              : currentMode === 'verify'
-              ? 'Check your inbox to confirm your email ownership.'
-              : 'Access CBT practice, guided services, and student tools.'}
-          </p>
-        </div>
+        <div className="auth-columns">
+          <aside className="auth-intro" aria-label="About EduReach">
+            <span className="auth-eyebrow"><BookOpenCheck size={15} /> YOUR NEXT STEP STARTS HERE</span>
+            <h2>Make your student journey a little easier.</h2>
+            <p>One account for exam practice, education updates, and guided student services.</p>
+            <ul className="auth-benefits">
+              <li><span><CheckCircle2 size={17} /></span><div><strong>Prepare with purpose</strong><small>Practice for JAMB, WAEC, NECO, and Post-UTME.</small></div></li>
+              <li><span><CheckCircle2 size={17} /></span><div><strong>Keep useful details together</strong><small>Save your profile and return to your services.</small></div></li>
+              <li><span><CheckCircle2 size={17} /></span><div><strong>Your information stays yours</strong><small>Share only what helps us make your account useful.</small></div></li>
+            </ul>
+            <div className="auth-privacy-note"><ShieldCheck size={17} /><span>We never ask for your NIN, BVN, or banking password to create an account.</span></div>
+          </aside>
 
-        {error && (
-          <div
-            role="alert"
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#b91c1c',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              fontSize: '12.5px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {message && (
-          <div
-            style={{
-              background: '#ecfdf5',
-              border: '1px solid #a7f3d0',
-              color: '#047857',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              fontSize: '12.5px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-            <span>{message}</span>
-          </div>
-        )}
-
-        {/* MODE: EMAIL VERIFICATION */}
-        {currentMode === 'verify' ? (
-          <div style={{ textAlign: 'center', padding: '10px 0' }}>
-            <div
-              style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '50%',
-                background: '#ecfdf5',
-                color: 'var(--er-primary)',
-                display: 'grid',
-                placeItems: 'center',
-                margin: '0 auto 16px',
-              }}
-            >
-              <Mail size={26} />
-            </div>
-            <p style={{ fontSize: '13.5px', color: '#334155', lineHeight: 1.6, marginBottom: '20px' }}>
-              {isSupabaseConfigured
-                ? <>We sent a verification link to <strong>{verifyEmailSent || email}</strong>. Please check your inbox or spam folder to confirm your email.</>
-                : <>Email verification needs the live EduReach account service. It is not configured in this environment, so no verification email can be sent yet.</>}
-            </p>
-
-            <div style={{ display: 'grid', gap: '10px' }}>
-              <a
-                href="/profile"
-                className="hub-primary-btn"
-                style={{
-                  textDecoration: 'none',
-                  background: 'var(--er-primary)',
-                  textAlign: 'center',
-                  padding: '12px',
-                  borderRadius: '9px',
-                }}
-              >
-                Proceed to Profile Completion →
-              </a>
-
-              <button
-                type="button"
-                onClick={() => void resendVerification()}
-                className="hub-outline-btn"
-                style={{ padding: '10px', fontSize: '12px' }}
-              >
-                Resend Verification Email
-              </button>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={submit} style={{ display: 'grid', gap: '14px' }}>
-            {/* REGISTRATION FORM (SIGNUP) */}
-            {currentMode === 'signup' && (
-              <>
-                {/* 1. FIRST NAME & 2. LAST NAME */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label htmlFor="auth-first-name" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                      First Name *
-                    </label>
-                    <input
-                      id="auth-first-name"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="e.g. First name"
-                      required
-                      autoComplete="given-name"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="auth-last-name" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                      Last Name *
-                    </label>
-                    <input
-                      id="auth-last-name"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="e.g. Last name"
-                      required
-                      autoComplete="family-name"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* 3. EMAIL ADDRESS */}
-                <div>
-                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                    Email Address *
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="auth-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="student@example.com"
-                      required
-                      autoComplete="email"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px 10px 36px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
-                    <Mail size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
-                  </div>
-                </div>
-
-                {/* 4. PHONE NUMBER */}
-                <div>
-                  <label htmlFor="auth-phone" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                    Phone Number *
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="auth-phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="08012345678"
-                      required
-                      autoComplete="tel"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px 10px 36px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
-                    <Phone size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
-                  </div>
-                </div>
-
-                {/* 7. ACCOUNT TYPE - Student / Parent / Teacher */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                    Account Type *
-                  </label>
-                  <div role="group" aria-label="Account type" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                    {(['student', 'parent', 'teacher'] as const).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setAccountType(type)}
-                        style={{
-                          padding: '8px',
-                          borderRadius: '8px',
-                          border: '1px solid',
-                          borderColor: accountType === type ? 'var(--er-primary)' : '#cbd5e1',
-                          background: accountType === type ? 'var(--er-primary-soft)' : '#ffffff',
-                          color: accountType === type ? 'var(--er-primary)' : '#475569',
-                          fontWeight: 620,
-                          fontSize: '12px',
-                          textTransform: 'capitalize',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 5. PASSWORD & 6. CONFIRM PASSWORD */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div>
-                    <label htmlFor="auth-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                      Password *
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        id="auth-password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Min. 8 chars"
-                        minLength={8}
-                        required
-                        autoComplete="new-password"
-                        style={{
-                          width: '100%',
-                          padding: '10px 30px 10px 12px',
-                          fontSize: '13px',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '8px',
-                          outline: 'none',
-                          color: '#0f172a',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="auth-confirm-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                      Confirm Password *
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        id="auth-confirm-password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Re-type password"
-                        minLength={8}
-                        required
-                        autoComplete="new-password"
-                        style={{
-                          width: '100%',
-                          padding: '10px 30px 10px 12px',
-                          fontSize: '13px',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '8px',
-                          outline: 'none',
-                          color: '#0f172a',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        style={{ position: 'absolute', right: '8px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 8. TERMS & PRIVACY AGREEMENT */}
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '10px',
-                    fontSize: '12px',
-                    color: '#475569',
-                    cursor: 'pointer',
-                    marginTop: '4px',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={termsAgreed}
-                    onChange={(e) => setTermsAgreed(e.target.checked)}
-                    required
-                    style={{ width: '16px', height: '16px', accentColor: 'var(--er-primary)', marginTop: '2px' }}
-                  />
-                  <span>
-                    I agree to the <strong>Terms of Service</strong> and <strong>Privacy Policy</strong>. No sensitive PII (NIN, BVN, banking passwords) will be requested during registration.
-                  </span>
-                </label>
-              </>
-            )}
-
-            {/* SIGNIN FORM */}
-            {currentMode === 'signin' && (
-              <>
-                <div>
-                  <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                    Email Address
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="auth-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="student@example.com"
-                      required
-                      autoComplete="email"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px 10px 36px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
-                    <Mail size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <label htmlFor="auth-password" style={{ fontSize: '12px', fontWeight: 560, color: '#334155' }}>
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCurrentMode('forgot');
-                        setMessage('');
-                        setError('');
-                      }}
-                      style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontSize: '11.5px', fontWeight: 620, cursor: 'pointer' }}
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="auth-password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your account password"
-                      required
-                      autoComplete="current-password"
-                      style={{
-                        width: '100%',
-                        padding: '10px 36px 10px 36px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                        color: '#0f172a',
-                      }}
-                    />
-                    <Lock size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-              </>
-            )}
-
-            {/* FORGOT PASSWORD FORM */}
-            {currentMode === 'forgot' && (
-              <div>
-                <label htmlFor="auth-email" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                  Enter Account Email
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    id="auth-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="student@example.com"
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px 10px 36px',
-                      fontSize: '13px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      outline: 'none',
-                      color: '#0f172a',
-                    }}
-                  />
-                  <Mail size={16} color="#5e6c82" style={{ position: 'absolute', left: '12px', top: '12px' }} />
-                </div>
+          <section className={`auth-card${currentMode === 'signup' ? ' auth-card--signup' : ''}`} aria-labelledby="auth-title">
+            {allowModeSwitch && (
+              <div className="auth-tabs" role="tablist" aria-label="Account access">
+                <button type="button" role="tab" aria-selected={currentMode === 'signin'} onClick={() => changeMode('signin')}>Sign in</button>
+                <button type="button" role="tab" aria-selected={currentMode === 'signup'} onClick={() => changeMode('signup')}>Create account</button>
               </div>
             )}
 
-            {/* RESET PASSWORD FORM */}
-            {currentMode === 'reset' && (
-              <>
-                <div>
-                  <label htmlFor="auth-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                    New Password
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="auth-new-password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 8 characters"
-                      minLength={8}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '10px 36px 10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+            <header className="auth-card-heading">
+              <span className="auth-card-kicker">
+                {currentMode === 'signup' ? 'A GOOD PLACE TO BEGIN' : currentMode === 'signin' ? 'YOUR EDUREACH ACCOUNT' : 'ACCOUNT SUPPORT'}
+              </span>
+              <h1 id="auth-title">{pageTitle}</h1>
+              <p>
+                {currentMode === 'signup'
+                  ? 'Start with the essentials. You can add or update your academic profile later.'
+                  : currentMode === 'signin'
+                    ? 'Sign in to continue to your saved services and practice.'
+                    : currentMode === 'verify'
+                      ? 'We sent a verification link to your inbox.'
+                      : currentMode === 'reset'
+                        ? 'Use a new password you have not used here before.'
+                        : 'Enter your email and we will send reset instructions if an account exists.'}
+              </p>
+            </header>
+
+            {error && <div role="alert" className="auth-alert auth-alert--error"><span aria-hidden="true">!</span>{error}</div>}
+            {message && <div className="auth-alert auth-alert--success" role="status"><CheckCircle2 size={17} />{message}</div>}
+
+            {currentMode === 'verify' ? (
+              <div className="auth-verification">
+                <div className="auth-verification-icon"><Mail size={24} /></div>
+                <p>
+                  {isSupabaseConfigured
+                    ? <>We sent a verification link to <strong>{verifyEmailSent || email}</strong>. Open it to activate your account.</>
+                    : 'Email verification needs the live EduReach account service, which is not configured in this environment.'}
+                </p>
+                <button className="auth-submit auth-submit--secondary" type="button" disabled={busy} onClick={() => void handleResendVerification()}>
+                  Resend verification email
+                </button>
+                <button className="auth-text-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
+              </div>
+            ) : (
+              <form className="auth-form" onSubmit={submit}>
+                {currentMode === 'signup' && (
+                  <>
+                    <fieldset className="auth-account-types">
+                      <legend>How will you use EduReach?</legend>
+                      <div className="auth-account-options">
+                        {accountTypes.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`auth-account-option${accountType === option.value ? ' is-selected' : ''}`}
+                            aria-pressed={accountType === option.value}
+                            onClick={() => setAccountType(option.value)}
+                          >
+                            <span className="auth-account-icon"><UserRound size={17} /></span>
+                            <span><strong>{option.label}</strong><small>{option.detail}</small></span>
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <div className="auth-field-grid">
+                      <div className="auth-field">
+                        <label htmlFor="auth-first-name">First name</label>
+                        <input id="auth-first-name" name="given-name" type="text" value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" maxLength={80} required />
+                      </div>
+                      <div className="auth-field">
+                        <label htmlFor="auth-last-name">Last name</label>
+                        <input id="auth-last-name" name="family-name" type="text" value={lastName} onChange={(event) => setLastName(event.target.value)} autoComplete="family-name" maxLength={80} required />
+                      </div>
+                    </div>
+
+                    <div className="auth-field">
+                      <label htmlFor="auth-email">Email address</label>
+                      <div className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="auth-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} required /></div>
+                      <small>We use this for sign-in and account updates.</small>
+                    </div>
+
+                    <div className="auth-field">
+                      <label htmlFor="auth-phone">Phone number</label>
+                      <div className="auth-input-wrap"><Phone size={17} aria-hidden="true" /><input id="auth-phone" name="tel" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" inputMode="tel" maxLength={20} placeholder="+234 801 234 5678" required /></div>
+                      <small>Include your country code if you are outside Nigeria.</small>
+                    </div>
+
+                    {accountType === 'student' && (
+                      <fieldset className="auth-student-details">
+                        <legend><GraduationCap size={17} /> Personalise your student account <span>Optional</span></legend>
+                        <p>You can skip these now and complete your profile later.</p>
+                        <div className="auth-field">
+                          <label htmlFor="auth-school">School or institution</label>
+                          <input id="auth-school" name="school" type="text" list="auth-school-options" value={school} onChange={(event) => setSchool(event.target.value)} autoComplete="organization" maxLength={120} placeholder="Start typing your school" />
+                          <datalist id="auth-school-options">{commonInstitutions.map((item) => <option key={item} value={item} />)}</datalist>
+                        </div>
+                        <div className="auth-field-grid">
+                          <div className="auth-field">
+                            <label htmlFor="auth-level">Current level</label>
+                            <select id="auth-level" name="level" value={level} onChange={(event) => setLevel(event.target.value)}>
+                              <option value="">Choose if applicable</option>
+                              {levels.map((item) => <option key={item} value={item}>{item}</option>)}
+                            </select>
+                          </div>
+                          <div className="auth-field">
+                            <label htmlFor="auth-course">Course or programme</label>
+                            <input id="auth-course" name="course_programme" type="text" list="auth-course-options" value={courseProgramme} onChange={(event) => setCourseProgramme(event.target.value)} maxLength={120} placeholder="Optional" />
+                            <datalist id="auth-course-options">{courseProgrammes.filter((item) => item !== 'Other programme').map((item) => <option key={item} value={item} />)}</datalist>
+                          </div>
+                        </div>
+                      </fieldset>
+                    )}
+                  </>
+                )}
+
+                {(currentMode === 'signin' || currentMode === 'forgot') && (
+                  <div className="auth-field">
+                    <label htmlFor="auth-email">{currentMode === 'signin' ? 'Email address' : 'Account email'}</label>
+                    <div className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="auth-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} required /></div>
                   </div>
-                </div>
-                <div>
-                  <label htmlFor="auth-confirm-new-password" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                    Confirm New Password
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="auth-confirm-new-password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Repeat new password"
-                      minLength={8}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: '10px 36px 10px 12px',
-                        fontSize: '13px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        outline: 'none',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{ position: 'absolute', right: '12px', top: '10px', background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+                )}
+
+                {currentMode === 'signin' && (
+                  <div className="auth-field">
+                    <div className="auth-label-row">
+                      <label htmlFor="auth-password">Password</label>
+                      <button className="auth-text-button" type="button" onClick={() => changeMode('forgot')}>Forgot password?</button>
+                    </div>
+                    <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="current-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
                   </div>
-                </div>
-              </>
+                )}
+
+                {(currentMode === 'signup' || currentMode === 'reset') && (
+                  <div className="auth-field-grid">
+                    <div className="auth-field">
+                      <label htmlFor="auth-password">{currentMode === 'signup' ? 'Create password' : 'New password'}</label>
+                      <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name={currentMode === 'signup' ? 'new-password' : 'new-password'} type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={8} required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
+                      <small>Use at least 8 characters.</small>
+                    </div>
+                    <div className="auth-field">
+                      <label htmlFor="auth-confirm-password">Confirm password</label>
+                      <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required /></div>
+                    </div>
+                  </div>
+                )}
+
+                {currentMode === 'signup' && (
+                  <label className="auth-consent">
+                    <input type="checkbox" checked={termsAgreed} onChange={(event) => setTermsAgreed(event.target.checked)} required />
+                    <span>I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.</span>
+                  </label>
+                )}
+
+                <button className="auth-submit" type="submit" disabled={busy} aria-busy={busy} data-ready={authFormComplete}>
+                  {busy ? 'Please wait…' : currentMode === 'signup' ? 'Create my account' : currentMode === 'forgot' ? 'Send reset instructions' : currentMode === 'reset' ? 'Save new password' : 'Sign in'}
+                  {!busy && <ArrowRight size={17} aria-hidden="true" />}
+                </button>
+              </form>
             )}
 
-            {/* SUBMIT BUTTON - matches the site search button; turns bright orange the moment every required detail is validly filled. */}
-            <button
-              type="submit"
-              disabled={busy}
-              aria-busy={busy}
-              style={{
-                background: 'var(--er-primary)',
-                color: '#ffffff',
-                border: 0,
-                borderRadius: '9px',
-                padding: '12px',
-                fontSize: '13.5px',
-                fontWeight: 620,
-                cursor: 'pointer',
-                transition: 'background .2s ease, box-shadow .2s ease',
-                boxShadow: authFormComplete ? '0 6px 18px rgba(23, 74, 58, 0.3)' : '0 2px 6px rgba(23, 74, 58, 0.22)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                marginTop: '6px',
-              }}
-            >
-              {busy
-                ? 'Processing…'
-                : currentMode === 'signup'
-                ? 'Register & Continue'
-                : currentMode === 'forgot'
-                ? 'Send Reset Link'
-                : currentMode === 'reset'
-                ? 'Save New Password'
-                : 'Sign In to Portal'}
-              <ArrowRight size={16} />
-            </button>
-          </form>
-        )}
+            {allowModeSwitch && (
+              <p className="auth-switch-copy">
+                {currentMode === 'signin' ? 'New to EduReach?' : 'Already have an account?'}
+                {' '}
+                <button className="auth-text-button" type="button" onClick={() => changeMode(currentMode === 'signin' ? 'signup' : 'signin')}>
+                  {currentMode === 'signin' ? 'Create an account' : 'Sign in'}
+                </button>
+              </p>
+            )}
 
-        {/* SWITCH MODES */}
-        <div
-          style={{
-            marginTop: '20px',
-            paddingTop: '16px',
-            borderTop: '1px solid #f1f5f9',
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '10px 18px',
-            fontSize: '13px',
-          }}
-        >
-          {currentMode !== 'signin' && (
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentMode('signin');
-                setMessage('');
-                setError('');
-              }}
-              style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
-            >
-              Already have an account? Sign in
-            </button>
-          )}
-
-          {currentMode !== 'signup' && (
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentMode('signup');
-                setMessage('');
-                setError('');
-              }}
-              style={{ background: 'none', border: 0, color: 'var(--er-primary)', fontWeight: 620, cursor: 'pointer', whiteSpace: 'nowrap', padding: '4px 0' }}
-            >
-              Need an account? Register
-            </button>
-          )}
+            {(currentMode === 'forgot' || currentMode === 'reset') && (
+              <button className="auth-text-button auth-back-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
+            )}
+          </section>
         </div>
 
-        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-          <a href="/" style={{ fontSize: '12.5px', fontWeight: 620, color: '#5e6c82', textDecoration: 'none' }}>
-            ← Back to portal
-          </a>
-        </div>
-
+        <footer className="auth-footer">
+          <span>© {new Date().getFullYear()} EduReach Hub</span>
+          <span>Secure account access</span>
+          <a href="/">Back to home</a>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }

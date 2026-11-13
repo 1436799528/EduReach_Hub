@@ -46,6 +46,26 @@ export function cbtAttemptState(attempt: CbtAttemptLike, now: number = Date.now(
   return 'active';
 }
 
+export type CbtMetricAttempt = CbtAttemptLike & {
+  total_questions?: number | null;
+};
+
+export function summarizeCbtAttempts<T extends CbtMetricAttempt>(attempts: T[], now: number = Date.now()) {
+  const completedAttempts = attempts.filter((attempt) => cbtAttemptState(attempt, now) === 'finished');
+  const expiredAttempts = attempts.filter((attempt) => cbtAttemptState(attempt, now) === 'expired');
+  const scores = completedAttempts
+    .map((attempt) => attempt.score)
+    .filter((score): score is number => typeof score === 'number' && Number.isFinite(score));
+
+  return {
+    completedAttempts,
+    expiredAttempts,
+    averageScore: scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : null,
+    bestScore: scores.length ? Math.max(...scores) : null,
+    questionsInCompletedTests: completedAttempts.reduce((sum, attempt) => sum + Number(attempt.total_questions || 0), 0),
+  };
+}
+
 /** Whole minutes left, or null when there is no usable expiry. Never negative. */
 export function minutesRemaining(expiresAt?: string | null, now: number = Date.now()): number | null {
   if (!expiresAt) return null;

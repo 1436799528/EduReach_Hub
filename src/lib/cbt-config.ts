@@ -3,6 +3,8 @@
  * wizard and unit-testable without any UI import chain.
  */
 
+import { jambSubjectCatalog } from '../data/examPreparation';
+
 export type CatalogExam = {
   id: string;
   title: string;
@@ -144,6 +146,33 @@ export function isEnglishSubject(value: string): boolean {
   return normalizeSubject(value) === 'english';
 }
 
+export type JambSubjectGroup = 'Science' | 'Commercial' | 'Arts';
+
+export function jambSubjectsForGroup(
+  group: JambSubjectGroup,
+  databaseSubjects: Array<{ subject_name: string; subject_group: string }> = [],
+): string[] {
+  const staticSubjects = group === 'Science'
+    ? [
+      ...jambSubjectCatalog.Science,
+      ...jambSubjectCatalog.Engineering,
+      ...jambSubjectCatalog['Medicine & Health'],
+      ...jambSubjectCatalog.Education,
+    ]
+    : group === 'Commercial'
+      ? [...jambSubjectCatalog.Commercial, ...jambSubjectCatalog['Social Science']]
+      : [...jambSubjectCatalog['Arts & Humanities'], ...jambSubjectCatalog['Social Science']];
+  const databaseGroup = group === 'Arts' ? 'Arts' : group;
+  const catalogSubjects = databaseSubjects
+    .filter((entry) => entry.subject_group === databaseGroup)
+    .map((entry) => entry.subject_name);
+  return Array.from(new Map(
+    [...staticSubjects, ...catalogSubjects]
+      .filter((subject) => !isEnglishSubject(subject))
+      .map((subject) => [normalizeSubject(subject), subject]),
+  ).values());
+}
+
 /**
  * Compulsory subjects, by exam body - product rule, enforced identically by
  * the wizard and (for JAMB) by `start_cbt_attempt_configured`. Use of
@@ -207,6 +236,10 @@ export function paperStandardFor(examBodyOrKey: string): ExamPaperStandard | nul
  * standard and any other body has no fixed paper at all.
  */
 export function mockPaperFor(examBodyOrKey: string, meta?: MockPaperMeta | null): MockPaper | null {
+  const standard = paperStandardFor(examBodyOrKey);
+  if (standard) {
+    return { questions: standard.questions, subjectQuota: JAMB_PAPER_STANDARD.subjectQuota };
+  }
   // `undefined` means no bank payload was loaded, so the examination default
   // applies. `null` (or a meta object with no count) means the bank reported
   // that it has no fixed paper, which must not be overridden by that default.
@@ -216,8 +249,7 @@ export function mockPaperFor(examBodyOrKey: string, meta?: MockPaperMeta | null)
     const quota = meta?.subjectQuota && Object.keys(meta.subjectQuota).length ? meta.subjectQuota : null;
     return { questions, subjectQuota: quota };
   }
-  const standard = paperStandardFor(examBodyOrKey);
-  return standard ? { questions: standard.questions, subjectQuota: JAMB_PAPER_STANDARD.subjectQuota } : null;
+  return null;
 }
 
 function quotaForSubject(subject: string, quota: Record<string, number>): number | null {
@@ -285,8 +317,9 @@ export function durationForQuestionCount(
   return Math.max(limits.minMinutes, Math.min(limits.maxMinutes, proportional));
 }
 
-/** The time a mock runs for: the exam's configured duration, or 120 minutes. */
-export function mockDurationMinutes(defaultMinutes?: number | null): number {
+/** JAMB uses a fixed 120-minute mock; other mocks use their configured duration. */
+export function mockDurationMinutes(defaultMinutes?: number | null, examBodyOrKey?: string): number {
+  if (examBodyOrKey && paperStandardFor(examBodyOrKey)) return JAMB_PAPER_STANDARD.minutes;
   const value = Math.round(Number(defaultMinutes));
   return Number.isFinite(value) && value > 0 ? value : 120;
 }

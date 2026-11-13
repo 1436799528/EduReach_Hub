@@ -202,3 +202,25 @@ Hierarchy:
 > Deep green marks what the student can do; crimson appears only where the brand
 > speaks. Do not create pages where crimson, orange, or burgundy fills most of
 > the screen, and do not paint a card with an action colour.
+
+## 10. Semantic token API
+
+`src/styles/theme.css` exposes semantic `--color-*` tokens for shared UI:
+
+| Purpose | Token |
+|---|---|
+| Page, surface and raised surface | `--color-bg-primary`, `--color-bg-surface`, `--color-bg-elevated`, `--color-bg-muted`, `--color-bg-disabled` |
+| Borders | `--color-border-default`, `--color-border-subtle`, `--color-border-strong` |
+| Text | `--color-text-primary`, `--color-text-secondary`, `--color-text-muted`, `--color-text-inverse`, `--color-text-disabled` |
+| Brand and interaction | `--color-brand-primary`, `--color-brand-primary-hover`, `--color-brand-accent`, `--color-focus` |
+| Status | `--color-success`, `--color-warning`, `--color-error`, `--color-info` and their `*-bg` surfaces |
+
+These are aliases over the established EduReach palette; they do not introduce a
+new theme or replace the legacy `--er-*` variables used by existing pages.
+New shared styles should prefer semantic tokens, while existing page-specific
+values should only be migrated when that improves consistency without changing
+the established layout.
+
+The shared spacing scale is `--er-space-1` through `--er-space-8` (4, 8, 12,
+16, 24, 32, 48 and 64px). Type-size tokens describe a modular hierarchy; the
+`.er-type-*` utility roles retain compact EduReach sizing where needed.

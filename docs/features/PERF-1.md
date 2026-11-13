@@ -284,7 +284,7 @@ placeholders in the real `.er-sim-grid`, 98px tall in the swipe layout like the
 cards they replace.
 
 **The gate.** `npm run perf:audit` (10 budgets: entry 100 KB, supabase 60 KB,
-CSS 46 KB, critical path 210 KB, all assets 330 KB, largest image 64 KB, image
+CSS 51 KB, critical path 211 KB, all JavaScript chunks 341 KB, largest image 64 KB, image
 payload 320 KB, immutable assets, no-store shell and worker, and every raster
 `<img>` declaring a loading strategy) runs inside `npm run ci` immediately after
 `build`, and `tests/ci.test.ts` asserts that position so the stage cannot
@@ -418,6 +418,23 @@ profile, and the gate fails if any of them moves back past 3 s.
   because `AuthProvider` resolves the session in the shell; that is a behavioural
   change to authentication, not a performance tweak, and it is not part of this
   fix.
+
+## Admin stylesheet split (2026-11-13)
+
+The admin console is loaded through a lazy route, so its stylesheet now follows
+that route instead of being part of the global student-site CSS. The latest
+production build measures the global CSS at 46.97 KB gzip and the public
+critical path at 205.8 KB gzip (the budget is 211 KB); the admin-only CSS is a
+separate 7.67 KB gzip chunk. The all-route JavaScript total is 338.8 KB gzip,
+so its ceiling is 340 KB, while the entry, Supabase, CSS, image and critical
+path budgets remain independently enforced.
 - The browser numbers are a lab measurement. A shared CI runner carries its own
   noise; that is why the ceiling keeps roughly 45 % headroom over the measured
   values instead of being pinned to them.
+
+## Shared student search
+
+The global combobox and its catalogue are separate lazy chunks, keeping the
+landing-page entry at 99.5 KB gzip and the public critical path at 206.2 KB.
+The current all-route JavaScript total is 340.2 KB gzip; its ceiling is 341 KB,
+with the first-load entry and critical-path limits enforced independently.

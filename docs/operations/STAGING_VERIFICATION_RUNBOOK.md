@@ -118,9 +118,9 @@ generated checklist of all 74 inside `supabase/ci/production-validation.sql`
 ### 3a. INSPECT — what the repository says (no project contacted)
 
 ```bash
-npm test                        # PGlite applies all 74 migrations to a scratch database
+npm test                         # PGlite applies all 75 migrations to a scratch database
 npm run schema:audit            # static: references, ordering, object creation
-npm run migrations:checklist    # 74/74 listed in the artifact
+npm run migrations:checklist    # 75/75 listed in the artifact
 ```
 
 These three are safe anywhere: they read files and a throwaway in-memory database.

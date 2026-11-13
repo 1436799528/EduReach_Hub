@@ -56,21 +56,19 @@ test('the search page is the other end of that contract', () => {
   const page = read('pages/SearchPage.tsx');
   assert.match(page, /new URLSearchParams\(window\.location\.search\)\.get\('q'\)/, 'the page reads q from the URL');
   assert.match(page, /\.trim\(\) \|\| ''/, 'and treats a missing term as empty rather than crashing');
+  const search = read('src/components/SiteSearch.tsx');
+  assert.match(search, /navigateInApp\(normalized \? `\/search\?q=\$\{encodeURIComponent\(normalized\)\}` : '\/search'\)/, 'all search fields share the same route behavior');
 });
 
 test('the bar survives the widths the header search does not', () => {
-  const portal = read('src/edu-portal.css');
+  const portal = read('src/site-search.css');
   // The header form is hidden under 1040px; the home bar has no such rule, and
   // its field is allowed to shrink, which is what keeps it usable on a phone.
-  assert.match(portal, /@media\(max-width:1040px\)\{\.hub-global-search\{display:none\}\}/);
-  const hidingRules = [...portal.matchAll(/@media\([^)]*\)\{[^@]*?\.er-search\{[^}]*display:none/g)];
-  assert.deepEqual(hidingRules.map((match) => match[0]), [], 'the portal bar is never hidden by a breakpoint');
-  assert.match(portal, /\.er-search\{[^}]*height:44px/, 'the bar keeps its 44px row');
-  assert.match(portal, /\.er-search input\{[^}]*flex:1;/, 'the field takes the remaining width');
-  assert.match(portal, /\.er-search input\{[^}]*min-width:0/, 'and can shrink below its content size');
-  // A 34px button inside a 44px row with 4px padding is a 34px target, not 44;
-  // the row is the touch target and the button fills its height.
-  assert.match(portal, /\.er-search button\{[^}]*height:34px/, 'the submit keeps its authored height');
+  assert.match(portal, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/);
+  assert.match(portal, /\.site-search--home \{[^}]*min-height: 48px/);
+  assert.match(portal, /\.site-search input \{[^}]*min-width: 0/);
+  assert.match(portal, /\.site-search > button\[type="submit"\] \{[^}]*min-height: 44px/);
+  assert.match(portal, /@media \(max-width: 768px\)[\s\S]*?\.site-search--home, \.site-search--page, \.site-search--drawer \{ width: 100%; \}/);
 });
 
 // ---------------------------------------------------------------------------
@@ -95,12 +93,38 @@ test('search matches words in any order and ignores punctuation', async () => {
   assert.deepEqual(searchTokens('jamb jamb slip'), ['jamb', 'slip'], 'repeated words are one requirement');
 });
 
-test('the search page uses the matcher and admits a partial failure', () => {
+test('the search page uses the shared matcher and reports incomplete live sources', () => {
   const page = read('pages/SearchPage.tsx');
-  assert.match(page, /matchesSearch\(\[result\.title, result\.description, result\.category\], query\)/, 'the matcher is used, not includes()');
+  assert.match(page, /filterSearchItems\(catalog\?\.items \|\| \[\], query/, 'the shared matcher filters current catalogue items');
   assert.doesNotMatch(page, /value\.includes\(query\.toLowerCase\(\)\)/, 'the old substring comparison is gone');
-  assert.match(page, /const guard = /, 'each live source fails independently');
-  assert.match(page, /setPartialFailure\(failed\)/, 'the failure is recorded');
+  const catalog = read('src/lib/siteSearch.ts');
+  assert.match(catalog, /Promise\.allSettled\(\[fetchNews\(\), fetchCbtExams\(\), fetchOpportunities\(\)\]\)/, 'live sources fail independently');
+  assert.match(catalog, /partialFailure: settled\.some/, 'partial failures are retained');
   assert.match(page, /Some live results could not be loaded/, 'the page says the list may be incomplete');
   assert.match(page, /role="status"/, 'and announces it');
+});
+
+test('shared search supports a suggestion list, keyboard controls, and lazy catalogue loading', () => {
+  const component = read('src/components/SiteSearch.tsx');
+  assert.match(component, /role={suggestionsEnabled \? 'combobox' : undefined}/);
+  assert.match(component, /const suggestionsEnabled = variant !== 'page'/, 'the full results page does not overlay its result cards');
+  assert.match(component, /role="listbox"/);
+  assert.match(component, /role="option"/);
+  assert.match(component, /event\.key === 'ArrowDown' \? 1 : event\.key === 'ArrowUp' \? -1 : 0/);
+  assert.match(component, /event\.key === 'Escape'/);
+  assert.match(component, /import\('\.\.\/lib\/siteSearch'\)/, 'catalogue code is loaded only when needed');
+  assert.match(component, /aria-activedescendant=/);
+  assert.match(component, /if \(suggestionsEnabled && activeIndex >= 0 && visibleItems\[activeIndex\]\)/, 'Enter submits the active suggestion from the form handler');
+});
+
+test('search suggestions rank exact and title-prefix matches without sending query text', async () => {
+  const { filterSearchItems } = await import('../src/lib/searchMatch');
+  const items = [
+    { title: 'Past questions', description: 'Study materials', category: 'Library', id: 'later' },
+    { title: 'Physics', description: 'Subject', category: 'Practice', id: 'prefix' },
+    { title: 'Physics practice', description: 'Timed session', category: 'CBT', id: 'exact' },
+  ];
+  assert.deepEqual(filterSearchItems(items, 'physics').map((item) => item.id), ['prefix', 'exact']);
+  assert.deepEqual(filterSearchItems(items, 'study').map((item) => item.id), ['later']);
+  assert.deepEqual(filterSearchItems(items, 'not-present'), []);
 });

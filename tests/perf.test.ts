@@ -209,10 +209,15 @@ test('the simulator section reserves its footprint while its catalogue loads', (
   };
   assert.ok(pxValue(declarations(css, '.er-late-region--simulators'), '--er-late-min') >= 200);
 
-  // The placeholder card is exactly as tall as the card it replaces, in the swipe layout.
+  // The placeholder card is exactly as tall as the card it replaces in the
+  // single-row mobile swipe layout.
   const mobileCard = blocks('.er-sim-card').find((block) => block.includes('flex-direction:row'));
+  const mobileGrid = blocks('.er-sim-grid').find((block) => block.includes('grid-auto-flow:column'));
   const placeholderHeights = blocks('.er-sim-grid .er-skeleton-tile').map((block) => pxValue(block, 'min-height'));
   assert.ok(mobileCard, 'the mobile simulator card rule still exists');
+  assert.ok(mobileGrid, 'the mobile simulator grid remains horizontally scrollable');
+  assert.match(mobileGrid!, /grid-template-rows:auto/, 'all cards share one mobile row');
+  assert.doesNotMatch(mobileGrid!, /grid-template-rows:auto auto/, 'mobile cards must not create a cramped second row');
   assert.ok(
     placeholderHeights.includes(pxValue(mobileCard!, 'min-height')),
     `the swipe-layout placeholder is ${placeholderHeights.join('/')}px, the card is ${pxValue(mobileCard!, 'min-height')}px`,

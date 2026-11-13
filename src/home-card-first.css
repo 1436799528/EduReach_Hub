@@ -25,7 +25,6 @@
   .hub-home-news-deadline-grid{grid-template-columns:1fr}
 }
 @media(max-width:700px){
-  .hub-home-container{width:calc(100% - 20px)!important}
   .hub-home-search{height:45px}
   .hub-home-card-grid-4{grid-template-columns:1fr}
   .hub-home-card-grid .hub-compact-card{min-height:135px!important}
@@ -50,4 +49,3 @@
   .home-resume>a{width:100%;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){.home-resume-bar span{transition:none}}
-

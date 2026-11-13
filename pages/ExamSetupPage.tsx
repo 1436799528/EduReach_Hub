@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Calculator, Clock3, Info, Lock, Plus, RotateCcw, ShieldCheck, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Calculator, Clock3, Info, Lock, RotateCcw, ShieldCheck, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark from '../src/components/CardIdentityMark';
@@ -26,6 +26,7 @@ import {
   mockDurationMinutes,
   mockPaperError,
   mockPaperFor,
+  jambSubjectsForGroup,
   normalizeSubject,
   paperStandardFor,
   previewPlan,
@@ -105,7 +106,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // Practice configuration - the student's own session.
   const [practiceSubjects, setPracticeSubjects] = useState<string[]>([]);
   const [questionCount, setQuestionCount] = useState<number | null>(null);
-  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts & Humanities' | 'Technical / Vocational'>('General');
+  const [practiceTrack, setPracticeTrack] = useState<'General' | 'Science' | 'Commercial' | 'Arts' | 'Arts & Humanities' | 'Technical / Vocational'>(() => exam === 'jamb' ? 'Science' : 'General');
 
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -213,7 +214,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // bank may not hold them, and the wizard would then argue with itself.
   const selectionBank = useRef<string | null>(null);
   useEffect(() => {
-    if (!availability.length) return;
+    if (!bank) return;
     const bankId = bank?.exam.id || '';
     const changedBank = selectionBank.current !== bankId;
     selectionBank.current = bankId;
@@ -237,11 +238,13 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       // pinned into the default selection; other bodies start from the
       // student's own choice, never from JAMB's rules.
       const compulsoryEntries = availability.filter((entry) => compulsory.includes(normalizeSubject(entry.subject)));
+      if (exam === 'jamb' && !compulsoryEntries.length) compulsoryEntries.push({ subject: 'Use of English', questionCount: 0 });
       const withCompulsory = [
         ...compulsoryEntries.map((entry) => entry.subject),
         ...defaultSubjects.filter((subject) => !compulsoryEntries.some((entry) => normalizeSubject(entry.subject) === normalizeSubject(subject))),
       ];
-      return withCompulsory.slice(0, subjectLimitFor(examBody, limits));
+      const unique = Array.from(new Map(withCompulsory.map((subject) => [normalizeSubject(subject), subject])).values());
+      return unique.slice(0, subjectLimitFor(examBody, limits));
     });
     setQuestionCount((current) => (changedBank ? null : current) ?? Math.min(20, bank?.totalQuestions || 20));
   }, [availability, bank, exam, limits]);
@@ -260,9 +263,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // number on screen is the number the attempt will enforce.
   const practiceStandard = useMemo(() => {
     if (bank) {
+      if (examBody === 'JAMB') return paperStandardFor(examBody);
       const questions = Number(bank.mock?.questionCount) || 0;
       return questions > 0
-        ? { questions, minutes: mockDurationMinutes(bank.exam.defaultDurationMinutes) }
+        ? { questions, minutes: mockDurationMinutes(bank.exam.defaultDurationMinutes, examBody) }
         : null;
     }
     return paperStandardFor(examBody);
@@ -278,7 +282,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // Server rules win; the exam-key rule is the offline/older-API fallback.
   // For WAEC/NECO/Post-UTME this is null - English is selectable, never forced.
   const compulsoryEnglish = bank?.rules?.compulsorySubjects?.[0]
-    ?? (compulsorySubjectKeys(exam).length ? availability.find((entry) => isEnglishSubject(entry.subject))?.subject || null : null);
+    ?? (compulsorySubjectKeys(exam).length ? availability.find((entry) => isEnglishSubject(entry.subject))?.subject || (exam === 'jamb' ? 'Use of English' : null) : null);
   const compulsoryKeys = useMemo(
     () => (bank?.rules?.compulsorySubjects?.length
       ? bank.rules.compulsorySubjects.map(normalizeSubject)
@@ -293,8 +297,15 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   // actually has one. Gating on `!compulsoryEnglish` alone disabled the Start
   // button for WAEC, NECO and Post-UTME, where no subject is compulsory.
   const compulsoryMissing = Boolean(bank?.rules?.compulsoryMissing)
-    || (compulsoryKeys.length > 0 && !compulsoryEnglish);
+    || (compulsoryKeys.length > 0 && (
+      !compulsoryEnglish
+      || !availability.some((entry) => isEnglishSubject(entry.subject) && entry.questionCount > 0)
+    ));
   const trackSubjectNames = useMemo(() => {
+    if (exam === 'jamb') {
+      const names = jambSubjectsForGroup(practiceTrack === 'Arts' ? 'Arts' : practiceTrack as 'Science' | 'Commercial' | 'Arts', databaseSubjects);
+      return new Set(names.map(normalizeSubject));
+    }
     if (practiceTrack === 'General') return null;
     const secondary = secondarySubjectCatalog[practiceTrack as keyof typeof secondarySubjectCatalog] || [];
     const jamb = practiceTrack === 'Science'
@@ -314,7 +325,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       .filter((entry) => entry.subject_group === databaseGroup)
       .map((entry) => entry.subject_name);
     return new Set([...secondary, ...jamb, ...vocational, ...databaseNames].map(normalizeSubject));
-  }, [practiceTrack, databaseSubjects]);
+  }, [exam, practiceTrack, databaseSubjects]);
   // A subject the static catalogues do not know (Post-UTME "General
   // Knowledge", for example) must not disappear because of a group filter:
   // the filter is a convenience, not a way to hide a bank the student can use.
@@ -346,6 +357,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   }), [availability, catalogueNames]);
   const visiblePracticeAvailability = subjectPickerAvailability.filter((entry) => {
     const key = normalizeSubject(entry.subject);
+    if (exam === 'jamb') return trackSubjectNames?.has(key) || isCompulsorySubject(entry.subject);
     return !trackSubjectNames
       || trackSubjectNames.has(key)
       || isCompulsorySubject(entry.subject)
@@ -426,7 +438,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       mode,
       subjects,
       questionCount: mode === 'practice' ? effectiveCount : mockCount,
-      durationMinutes: mode === 'practice' ? effectiveDuration : mockDurationMinutes(bank?.exam.defaultDurationMinutes),
+      durationMinutes: mode === 'practice' ? effectiveDuration : mockDurationMinutes(bank?.exam.defaultDurationMinutes, examBody),
     };
 
     // The same subject cap the picker applies, so the client-side validation
@@ -477,7 +489,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       mode,
       subjects: mode === 'practice' ? practiceSubjects : governedCombination,
       questionCount: mode === 'practice' ? effectiveCount : mockCount,
-      durationMinutes: mode === 'practice' ? effectiveDuration : mockDurationMinutes(bank?.exam.defaultDurationMinutes),
+      durationMinutes: mode === 'practice' ? effectiveDuration : mockDurationMinutes(bank?.exam.defaultDurationMinutes, examBody),
     },
     activePlan,
   );
@@ -687,38 +699,60 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         onChange={(event) => { setPracticeTrack(event.target.value as typeof practiceTrack); setFormError(''); }}
                         style={{ width: '100%', minHeight: 44, padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5d1', background: '#fff', color: '#174A3A', font: 'inherit' }}
                       >
-                        <option value="General">All subjects</option>
-                        <option value="Science">Science</option>
-                        <option value="Arts & Humanities">Arts</option>
-                        <option value="Commercial">Commercial</option>
-                        <option value="Technical / Vocational">Technical &amp; Vocational</option>
+                        {exam === 'jamb' ? (
+                          <>
+                            <option value="Science">Science</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Arts">Arts</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="General">All subjects</option>
+                            <option value="Science">Science</option>
+                            <option value="Arts & Humanities">Arts</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Technical / Vocational">Technical &amp; Vocational</option>
+                          </>
+                        )}
                       </select>
                     </div>
                     <div className="er-setup-full-width">
                       <div className="er-setup-label">
                         Subjects ({practiceSubjects.length} of {subjectLimitFor(examBody, limits)} selected){compulsoryEnglish ? ` · ${compulsoryEnglish} compulsory` : ''}
                       </div>
-                      <div className="er-setup-subject-grid" aria-label="Available subjects">
-                        {addableSubjects.length ? addableSubjects.map((entry) => {
-                          const lockedAtLimit = practiceSubjects.length >= subjectLimitFor(examBody, limits);
-                          return (
-                            <button
-                              key={entry.subject}
-                              type="button"
-                              className="er-setup-duration-option"
-                              disabled={lockedAtLimit || entry.questionCount < 1}
-                              onClick={() => addPracticeSubject(entry.subject)}
-                              aria-label={`Add ${entry.subject}`}
-                              title={lockedAtLimit ? 'Subject limit reached' : entry.questionCount < 1 ? 'Questions have not been added to this subject bank yet' : `Add ${entry.subject}`}
+                      <div className="er-setup-full-width" role="group" aria-label="Available subjects">
+                        <label className="er-setup-label" htmlFor={exam === 'jamb' ? 'er-jamb-subject' : 'er-optional-subject'}>
+                          {exam === 'jamb' ? 'Add an optional JAMB subject' : 'Add a subject'}
+                        </label>
+                        <select
+                          id={exam === 'jamb' ? 'er-jamb-subject' : 'er-optional-subject'}
+                          className="er-setup-subject-select"
+                          aria-label={exam === 'jamb' ? 'Add an optional JAMB subject' : 'Add a subject'}
+                          aria-describedby="cbt-subject-help"
+                          value=""
+                          disabled={practiceSubjects.length >= subjectLimitFor(examBody, limits) || addableSubjects.length === 0}
+                          onChange={(event) => { if (event.target.value) addPracticeSubject(event.target.value); }}
+                        >
+                          <option value="">Choose a subject</option>
+                          {addableSubjects.map((entry) => (
+                            <option
+                              key={normalizeSubject(entry.subject)}
+                              value={entry.subject}
+                              disabled={entry.questionCount < 1}
                             >
-                              <Plus size={15} aria-hidden="true" />
-                              <span>{entry.subject}</span>
-                              <small>{entry.questionCount > 0 ? 'Ready to practise' : 'Question bank being prepared'}</small>
-                            </button>
-                          );
-                        }) : (
-                          <p className="er-setup-field-note">{practiceSubjects.length >= subjectLimitFor(examBody, limits) ? 'Subject combination complete. Remove a subject only if you need to change it.' : practiceTrack === 'General' ? 'No more subjects available in this bank.' : 'No more subjects from this group in the bank. Switch to General to see every subject it holds.'}</p>
-                        )}
+                              {entry.subject}{entry.questionCount < 1 ? ' — question bank not ready' : ''}
+                            </option>
+                          ))}
+                        </select>
+                        {practiceSubjects.length >= subjectLimitFor(examBody, limits) ? (
+                          <p className="er-setup-field-note">Subject combination complete. Remove an optional subject to choose a replacement.</p>
+                        ) : addableSubjects.length === 0 ? (
+                          <p className="er-setup-field-note">
+                            {practiceTrack === 'General'
+                              ? 'No more subjects are available in this bank.'
+                              : 'No more subjects from this group are available. Switch groups to see other subjects.'}
+                          </p>
+                        ) : null}
                       </div>
                       {practiceSubjects.length > 0 ? (
                         <ul className="er-selected-subjects" aria-label="Selected subjects">
@@ -753,7 +787,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         </InlineNotice>
                       )}
                       <p className="er-setup-field-note" id="cbt-subject-help">
-                        <Info size={14} /> Only subjects with questions are listed. For JAMB, Use of English is compulsory and the combination is capped at four subjects.
+                        <Info size={14} /> {exam === 'jamb' ? 'Choose optional subjects from the selected group. Subjects without questions in this bank are unavailable. JAMB is limited to four subjects including compulsory Use of English.' : 'Only subjects with questions are listed.'}
                         {compulsoryEnglish ? ` ${compulsoryEnglish} is compulsory for this examination and cannot be removed.` : ''}
                       </p>
                     </div>
@@ -799,7 +833,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <p className="er-setup-field-note">
                     <ShieldCheck size={14} /> {mode === 'mock'
                       ? (mockPaper
-                        ? `The mock reproduces the examination paper: ${mockPaper.questions} questions in ${mockDurationMinutes(bank?.exam.defaultDurationMinutes)} minutes, timed from the moment you press Start mock.`
+                        ? `The mock reproduces the examination paper: ${mockPaper.questions} questions in ${mockDurationMinutes(bank?.exam.defaultDurationMinutes, examBody)} minutes, timed from the moment you press Start mock.`
                         : 'The paper is filled from your chosen subjects, up to the session limit, and runs for the examination\'s configured time. The timer starts the moment you press Start mock.')
                       : 'You can leave and come back: your answers are saved and the remaining time is preserved.'}
                   </p>

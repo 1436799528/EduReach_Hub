@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 import JSZip from 'jszip';
 import { XMLParser } from 'fast-xml-parser';
 import {
@@ -349,7 +350,7 @@ test('a large shared-string table is read without building an object tree', () =
   try {
     const script = join(directory, 'read.mjs');
     writeFileSync(script, [
-      `import { parseSharedStringsXml } from ${JSON.stringify(join(import.meta.dirname, '..', 'src', 'server', 'question-import', 'extract.ts'))};`,
+      `import { parseSharedStringsXml } from ${JSON.stringify(pathToFileURL(join(import.meta.dirname, '..', 'src', 'server', 'question-import', 'extract.ts')).href)};`,
       'const parts = [];',
       "let size = 0, index = 0;",
       'while (size < 12 * 1024 * 1024) { const entry = `<si><t>Option ${index}</t></si>`; parts.push(entry); size += entry.length; index += 1; }',

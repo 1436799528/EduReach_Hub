@@ -90,6 +90,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingAnswers = useRef<Record<number, number> | null>(null);
   const autoSubmitStarted = useRef(false);
+  const sessionActionInFlight = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,7 +200,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const markedCount = questions.filter((item) => Boolean(marked[item.position])).length;
 
   const submit = useCallback(async (reason: 'manual' | 'timer') => {
-    if (submitting || !attempt || closed === 'submitted') return;
+    if (sessionActionInFlight.current || !attempt || closed === 'submitted') return;
+    sessionActionInFlight.current = true;
     setSubmitting(true);
     setActionError('');
     try {
@@ -223,9 +225,10 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         setActionError(userFacingError(error, 'Your paper could not be submitted. Please try again.'));
       }
     } finally {
+      sessionActionInFlight.current = false;
       setSubmitting(false);
     }
-  }, [answers, attempt, closed, submitting]);
+  }, [answers, attempt, closed]);
 
   // Time expired: stop the session exactly once, and never show negative time.
   useEffect(() => {
@@ -237,6 +240,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   }, [attempt, closed, expiresAt, loading, remainingSeconds, submit]);
 
   const endTest = useCallback(async () => {
+    if (sessionActionInFlight.current) return;
+    sessionActionInFlight.current = true;
     setSubmitting(true);
     setActionError('');
     try {
@@ -247,6 +252,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     } catch (error) {
       setActionError(userFacingError(error, 'The test could not be ended. Check your connection and try again.'));
     } finally {
+      sessionActionInFlight.current = false;
       setSubmitting(false);
     }
   }, [attempt?.mode, attemptId]);

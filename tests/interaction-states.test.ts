@@ -171,11 +171,11 @@ test('secondary controls stay white with a green edge in every state', () => {
 
 test('form fields declare hover, focus, invalid and disabled states', () => {
   assert.match(theme, /:where\(input, select, textarea\):hover:not\(:disabled\):not\(:focus\)\s*\{[^}]*--er-field-border-hover/);
-  assert.match(theme, /:where\(input, select, textarea\):focus\s*\{[^}]*border-color: var\(--er-primary\)/);
-  assert.match(theme, /:where\(input, select, textarea\)\[aria-invalid="true"\]\s*\{[^}]*--er-field-invalid/);
-  assert.match(theme, /:where\(input, select, textarea\):disabled\s*\{[^}]*--er-disabled-surface/);
+  assert.match(theme, /:where\(input, select, textarea\):focus\s*\{[^}]*border-color: var\(--color-brand-primary\)/);
+  assert.match(theme, /:where\(input, select, textarea\)\[aria-invalid="true"\]\s*\{[^}]*--color-error/);
+  assert.match(theme, /:where\(input, select, textarea\):disabled\s*\{[^}]*--color-bg-disabled/);
   // Native checkboxes and radios keep their geometry; only the fill is themed.
-  assert.match(theme, /:where\(input\[type="checkbox"\], input\[type="radio"\]\)\s*\{\s*accent-color: var\(--er-primary\)/);
+  assert.match(theme, /:where\(input\[type="checkbox"\], input\[type="radio"\]\)\s*\{\s*accent-color: var\(--color-brand-primary\)/);
   // An invalid field is not explained by its border alone.
   assert.match(read('pages/ServiceApplyPage.tsx'), /aria-invalid=/);
 });
@@ -183,11 +183,39 @@ test('form fields declare hover, focus, invalid and disabled states', () => {
 test('the focus ring is the brand colour and keeps its white under-ring', () => {
   const ring = /:root :where\(a, button, input, select, textarea, summary, \[tabindex\], \[contenteditable\]\):focus-visible\s*\{([^}]*)\}/.exec(a11y);
   assert.ok(ring, 'a11y.css owns the focus indicator');
-  assert.match(ring[1], /outline: 3px solid var\(--er-primary-focus, #174A3A\) !important/);
+  assert.match(ring[1], /outline: 3px solid var\(--color-focus, #174A3A\) !important/);
   assert.match(ring[1], /box-shadow: 0 0 0 2px #ffffff !important/, 'the ring stays separated from a green button');
   assert.match(a11y, /outline-color: #f8fafc !important/, 'dark surfaces keep the light ring');
   assert.ok(contrast('#174A3A', '#FFFFFF') >= 3, 'the ring clears 3:1 on white');
   assert.ok(contrast('#174A3A', '#EDF5F0') >= 3, 'the ring clears 3:1 on the selected surface');
+});
+
+test('mobile inputs avoid browser zoom and coarse-pointer controls have thumb-sized targets', () => {
+  assert.ok(a11y.includes('@media (max-width: 640px)'));
+  assert.ok(a11y.includes('input:not([type="checkbox"]):not([type="radio"]),'));
+  assert.ok(a11y.includes('font-size: 16px !important;'));
+  assert.match(a11y, /@media \(pointer: coarse\)[\s\S]*button,\s*select,\s*summary,[\s\S]*\{\s*min-height: 44px !important/);
+  const portal = read('src/edu-portal.css');
+  assert.match(portal, /\.er-mobile-bottom-nav a\{[^}]*height:48px/);
+  assert.match(portal, /padding-bottom:calc\(62px \+ env\(safe-area-inset-bottom\)\)/);
+});
+
+test('semantic design tokens map to the EduReach palette and shared scales', () => {
+  for (const [semantic, legacy] of [
+    ['--color-bg-primary', '--er-bg'],
+    ['--color-bg-surface', '--er-surface'],
+    ['--color-text-primary', '--er-text-primary'],
+    ['--color-brand-primary', '--er-primary'],
+    ['--color-brand-accent', '--er-crimson'],
+    ['--color-error', '--er-status-error'],
+  ] as const) {
+    assert.ok(theme.includes(`${semantic}: var(${legacy})`), `${semantic} reuses ${legacy}`);
+  }
+  assert.match(theme, /--er-space-1:\s*4px/);
+  assert.match(theme, /--er-space-5:\s*24px/);
+  assert.match(theme, /--er-space-8:\s*64px/);
+  assert.match(theme, /--er-type-size-display:\s*48px/);
+  assert.match(read('src/styles/type-system.css'), /\.er-type-body\s*\{\s*font-size: var\(--er-type-size-compact-body\)/);
 });
 
 test('navigation states use the shared tokens and keep the active route honest', () => {

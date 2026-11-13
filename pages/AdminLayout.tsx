@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import '../src/admin.css';
 import {
   BarChart3,
   Briefcase,
@@ -12,15 +13,18 @@ import {
   Laptop,
   LayoutDashboard,
   ListChecks,
+  Menu,
   Newspaper,
   School,
   Users,
+  X,
 } from 'lucide-react';
 import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
 import SkipLink from '../src/components/a11y/SkipLink';
-import { useAdminHealth } from '../src/components/admin/AdminKit';
+import { AdminStatusDot, useAdminHealth } from '../src/components/admin/AdminKit';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { AdminCapabilityProvider } from '../src/components/admin/Can';
 import { API_BASE_PATH } from '../src/lib/apiBase';
 import {
@@ -170,7 +174,6 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'group', label: 'Site' },
   { kind: 'link', href: '/admin/site', label: 'Site & Policies', icon: <FileText size={15} />, capability: 'site.read' },
   { kind: 'link', href: '/admin/pdf-bank', label: 'PDF Bank', icon: <FileText size={15} />, capability: 'data.read' },
-  { kind: 'link', href: '/', label: 'View Public Site', icon: <Globe size={15} />, capability: null },
 ];
 
 /** Path changes go through history/popstate in this app, so track them. */
@@ -207,6 +210,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // and authenticated. This hook was previously below the early-return guards,
   // triggering React error #310 when session verification completed.
   const pathname = useCurrentAdminPath();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const sidebarRef = useModalDialog<HTMLElement>(mobileNavOpen, () => setMobileNavOpen(false));
   const cached = sessionCache && Date.now() - sessionCache.verifiedAt < SESSION_CACHE_TTL_MS ? sessionCache : null;
   const [checking, setChecking] = useState(!cached);
   const [session, setSession] = useState<AdminSession | null>(cached?.session || null);
@@ -289,17 +294,30 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   const navItems = ADMIN_CONSOLE_NAV.filter((item) => item.kind === 'group' || item.capability === null || hasCapability(session, item.capability));
+  const activeSection = ADMIN_CONSOLE_NAV.find((item) => item.kind === 'link' && item.href === pathname);
+  const healthLabel = health.state === 'ok'
+    ? `API reachable${health.latencyMs !== null ? ` in ${health.latencyMs} milliseconds` : ''}`
+    : health.state === 'down' ? 'API unreachable' : 'Checking API health';
 
   return <div className="admin-shell">
     <SkipLink />
-    <aside className="admin-sidebar">
+    {mobileNavOpen && <button type="button" className="admin-drawer-backdrop" aria-label="Close admin navigation" onClick={() => setMobileNavOpen(false)} />}
+    <aside
+      ref={sidebarRef}
+      id="admin-navigation"
+      className={`admin-sidebar ${mobileNavOpen ? 'is-open' : ''}`}
+      tabIndex={-1}
+      role={mobileNavOpen ? 'dialog' : undefined}
+      aria-modal={mobileNavOpen ? true : undefined}
+      aria-label={mobileNavOpen ? 'Admin navigation' : undefined}
+    >
       <div>
         <div className="admin-brand"><BrandLogo height={40} radius="50%" /><div><strong>Admin</strong><span>Production Control</span></div></div>
         <nav className="admin-nav">
           {navItems.map((item, index) => (
             item.kind === 'group'
               ? <div className="admin-nav-group" key={`group-${index}`}>{item.label}</div>
-              : <NavLink key={item.href} href={item.href} icon={item.icon}>{item.label}</NavLink>
+              : <NavLink key={item.href} href={item.href} icon={item.icon} onNavigate={() => setMobileNavOpen(false)}>{item.label}</NavLink>
           ))}
         </nav>
       </div>
@@ -315,10 +333,32 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     </aside>
     <div className="admin-workspace">
       <header className="admin-topbar">
-        <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · {session.fullName || session.email}</span>
-        <span className={`admin-health-pill ${health.state}`}>
-          <i /> {health.state === 'ok' ? `API Online${health.latencyMs !== null ? ` · ${health.latencyMs}ms` : ''}` : health.state === 'down' ? 'API Unreachable' : 'Checking API…'}
+        <button
+          type="button"
+          className="admin-menu-toggle"
+          aria-controls="admin-navigation"
+          aria-expanded={mobileNavOpen}
+          aria-label={mobileNavOpen ? 'Close admin navigation' : 'Open admin navigation'}
+          onClick={() => setMobileNavOpen((open) => !open)}
+        >
+          {mobileNavOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+        </button>
+        <div className="admin-breadcrumb"><span>Admin</span><span aria-hidden="true">/</span><strong>{activeSection?.kind === 'link' ? activeSection.label : 'Overview'}</strong></div>
+        <nav className="admin-top-links" aria-label="Admin shortcuts">
+          <a href="/admin" aria-current={pathname === '/admin' ? 'page' : undefined}>Overview</a>
+          <a href="/" aria-label="Open EduReach student site"><Globe size={15} aria-hidden="true" /><span>Student site</span></a>
+        </nav>
+        <span
+          className={`admin-health-pill ${health.state}`}
+          title="This checks the API endpoint only, not database or feature availability."
+        >
+          <AdminStatusDot
+            status={health.state === 'ok' ? 'healthy' : health.state === 'down' ? 'error' : 'pending'}
+            label={healthLabel}
+          />
+          <span>{health.state === 'ok' ? 'API' : health.state === 'down' ? 'Offline' : 'Checking'}</span>
         </span>
+        <span className="admin-topbar-user" title={session.email}>{session.fullName || session.email}</span>
       </header>
       <main className="admin-main" id="main-content" tabIndex={-1}>
         <AdminCapabilityProvider value={session}>{children}</AdminCapabilityProvider>

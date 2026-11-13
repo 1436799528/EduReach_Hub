@@ -19,7 +19,6 @@ const EXPECTED = [
   './card-system.css',
   './hub-portal-tuning.css',
   './dashboard-v2.css',
-  './admin.css',
   './cbt-engine.css',
   './compact-portal.css',
   './image-card-system.css',
@@ -51,6 +50,14 @@ test('the stylesheet set and its order match the documented contract', () => {
 test('a11y.css stays last so the focus-ring cascade cannot be overridden', () => {
   const sheets = importedSheets();
   assert.equal(sheets.at(-1), './styles/a11y.css');
+});
+
+test('admin CSS is loaded with the lazy admin route, not every student page', () => {
+  const adminLayout = readFileSync(join(root, 'pages/AdminLayout.tsx'), 'utf8');
+  const note = readFileSync(join(root, 'docs/architecture/STYLESHEET_LAYERS.md'), 'utf8');
+  assert.match(adminLayout, /import ['"]\.\.\/src\/admin\.css['"]/);
+  assert.equal(importedSheets().includes('./admin.css'), false);
+  assert.match(note, /Lazy route sheet[\s\S]*`admin\.css`[\s\S]*lazy/);
 });
 
 test('the type system follows the component sheets it standardises', () => {

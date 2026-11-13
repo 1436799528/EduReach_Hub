@@ -5,6 +5,7 @@ import {
   dashboardPriorities,
   minutesRemaining,
   remainingLabel,
+  summarizeCbtAttempts,
 } from '../src/lib/dashboardPriority';
 
 // DASH-1: the dashboard must describe the state the server will actually
@@ -25,6 +26,23 @@ test('an attempt is only resumable while its own expiry is in the future', () =>
   assert.equal(cbtAttemptState({ id: 'f', status: 'cancelled' }, NOW), 'finished');
   // A record saved without a status is a record, never an open test.
   assert.equal(cbtAttemptState({ id: 'g', submitted_at: at(-10) }, NOW), 'finished');
+});
+
+test('dashboard CBT metrics exclude expired attempts and do not treat missing scores as zero', () => {
+  const metrics = summarizeCbtAttempts([
+    { id: 'scored', status: 'submitted', score: 80, total_questions: 40 },
+    { id: 'zero-score', status: 'submitted', score: 0, total_questions: 20 },
+    { id: 'no-score', status: 'submitted', score: null, total_questions: 10 },
+    { id: 'expired', status: 'expired', score: 100, total_questions: 50 },
+    { id: 'active', status: 'in_progress', score: 90, total_questions: 30, expires_at: at(10) },
+  ], NOW);
+
+  assert.deepEqual(metrics.completedAttempts.map((attempt) => attempt.id), ['scored', 'zero-score', 'no-score']);
+  assert.deepEqual(metrics.expiredAttempts.map((attempt) => attempt.id), ['expired']);
+  assert.equal(metrics.averageScore, 40, 'the genuine zero score is included, the missing score is not');
+  assert.equal(metrics.bestScore, 80);
+  assert.equal(metrics.questionsInCompletedTests, 70);
+  assert.equal(summarizeCbtAttempts([{ id: 'unscored', status: 'submitted', score: null }], NOW).averageScore, null);
 });
 
 test('the countdown never goes negative and never guesses', () => {

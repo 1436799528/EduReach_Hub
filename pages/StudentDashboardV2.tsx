@@ -3,18 +3,12 @@ import {
   AlarmClock,
   Bell,
   Bookmark,
-  Calculator,
-  CheckSquare,
-  ChevronRight,
   ClipboardList,
   Edit,
   ExternalLink,
-  FileText,
   LayoutDashboard,
   LogOut,
   MonitorPlay,
-  ScanSearch,
-  Search,
   Shield,
   ShieldCheck,
   Trash2,
@@ -23,7 +17,6 @@ import {
   X,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
-import { identityClassFor } from '../src/components/CardIdentityMark';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { apiUrl } from '../src/lib/apiBase';
 import { deleteCbtAttempt, trackEvent } from '../src/lib/api';
@@ -39,8 +32,9 @@ import { pageTitleFor } from '../src/lib/pageMeta';
 import { needsStudentAction, serviceStatusMeaning } from '../src/lib/serviceLifecycle';
 import { useModalDialog } from '../src/lib/useModalDialog';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
+import SiteSearch from '../src/components/LazySiteSearch';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
-import { cbtAttemptState, dashboardPriorities } from '../src/lib/dashboardPriority';
+import { cbtAttemptState, dashboardPriorities, summarizeCbtAttempts } from '../src/lib/dashboardPriority';
 import {
   deleteSavedItem,
   fetchLatestCgpaSnapshot,
@@ -253,7 +247,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>([]);
   const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [accountSheetOpen, setAccountSheetOpen] = useState(false);
@@ -432,7 +425,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const serviceMap = useMemo(() => Object.fromEntries(services.map((s) => [s.id, s])), [services]);
   const displayName = profile?.full_name || authUser?.name || 'Student';
   const firstName = profile?.first_name || displayName.split(/\s+/)[0];
-  const profileBits = [profile?.school, profile?.course_programme || profile?.department, profile?.level].filter(Boolean) as string[];
   const requiredProfileValues = [profile?.school, profile?.course_programme, profile?.department, profile?.faculty, profile?.level, profile?.session];
   const profileComplete = requiredProfileValues.every((value) => Boolean(String(value || '').trim()));
   const requestTitle = (row: RequestRow) => String(row.form_data?.serviceTitle || row.form_data?.title || serviceMap[row.service_id]?.title || 'EduReach Request');
@@ -445,8 +437,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   // reads the same rule, so it never offers "Resume" for a test the server will
   // refuse - and never counts an expired attempt as one still in progress.
   const isActiveCbtAttempt = (attempt: Attempt) => cbtAttemptState(attempt) === 'active';
-  const completedAttempts = attempts.filter((attempt) => cbtAttemptState(attempt) !== 'active');
-  const expiredAttempts = attempts.filter((attempt) => cbtAttemptState(attempt) === 'expired');
+  const { completedAttempts, expiredAttempts, averageScore, bestScore, questionsInCompletedTests } = summarizeCbtAttempts(attempts);
   const profileMissing = [
     ['Institution', profile?.school],
     ['Course / programme', profile?.course_programme],
@@ -466,10 +457,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   });
   // A score only exists once a paper has been sat. With none, the card says so
   // instead of reporting a 0% average, which reads as a measurement.
-  const hasScores = completedAttempts.length > 0;
-  const averageScore = hasScores ? Math.round(completedAttempts.reduce((sum, a) => sum + Number(a.score || 0), 0) / completedAttempts.length) : 0;
-  const bestScore = hasScores ? Math.max(...completedAttempts.map((a) => Number(a.score || 0))) : 0;
-  const questionsAnswered = completedAttempts.reduce((sum, a) => sum + Number(a.total_questions || 0), 0);
+  const hasScores = averageScore !== null;
 
   const ATTEMPTS_PER_PAGE = 8;
   const attemptPageView = pageSlice(attempts, attemptPage, ATTEMPTS_PER_PAGE);
@@ -637,7 +625,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             return <tr key={row.id}>
               <td>{row.subject || 'CBT Practice'}{state === 'active' && <small className="dash-table-description">Unfinished attempt</small>}</td>
               <td><span className={`dash-status-pill ${state === 'active' ? 'dash-status-processing' : state === 'expired' ? 'dash-status-rejected' : 'dash-status-completed'}`}>{label}</span></td>
-              <td><strong>{state === 'finished' ? `${Math.round(Number(row.score || 0))}%` : '—'}</strong></td>
+              <td><strong>{state === 'finished' ? row.score !== null && Number.isFinite(row.score) ? `${Math.round(row.score)}%` : 'Result unavailable' : '—'}</strong></td>
               <td>{fmtDate(row.submitted_at || row.created_at)}</td>
               <td>
                 <span className="dash-row-actions">
@@ -671,7 +659,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </div>
       <ul className="dash-rows dash-mobile-only">{rows.map((row) => {
         const state = cbtAttemptState(row);
-        const label = state === 'active' ? 'In progress' : state === 'expired' ? 'Time ran out' : `${Math.round(Number(row.score || 0))}%`;
+        const label = state === 'active'
+          ? 'In progress'
+          : state === 'expired'
+            ? 'Time ran out'
+            : row.score !== null && Number.isFinite(row.score) ? `${Math.round(row.score)}%` : 'Result unavailable';
         return <li key={row.id} className={`dash-row${state === 'active' ? ' dash-cbt-active-row' : ''}`}>
           <div className="dash-row-top"><strong className="dash-row-title">{row.subject || 'CBT Practice'}</strong><span className="dash-row-score">{label}</span></div>
           <div className="dash-row-meta">
@@ -702,16 +694,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="dash-welcome-top">
           <div>
             <h1 className="dash-welcome-title">Welcome back, {firstName}</h1>
-            <p className="dash-welcome-subtitle">
-              {profileBits.length ? profileBits.join(' • ') : 'Complete your academic profile to personalise this dashboard.'}
-            </p>
+            <p className="dash-welcome-subtitle">Your practice, requests and saved resources in one place.</p>
           </div>
           <a href="/profile" className="dash-btn dash-btn-secondary"><Edit size={13} /> {profileComplete ? 'Edit Profile' : 'Complete Profile'}</a>
         </div>
         <div className="dash-welcome-pills">
-          <span className="dash-pill dash-pill-green"><ShieldCheck size={12} /> {isLocalMode ? 'Local session' : 'Verified student'}</span>
-          {email && <span className="dash-pill">{email}</span>}
-          {(profile?.jamb_reg_no || profile?.matric_number) && <span className="dash-pill dash-mono">{profile?.jamb_reg_no || profile?.matric_number}</span>}
+          <span className="dash-pill dash-pill-green"><ShieldCheck size={12} /> {profileComplete ? 'Academic profile complete' : 'Academic profile needs attention'}</span>
         </div>
       </section>
 
@@ -737,29 +725,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           ))}
         </ul>
       </section>
-
-      <div className="dash-quick-grid">
-        <a href="/cbt" className={`dash-quick-card ${identityClassFor('cbt', 'service')}`}>
-          <div className="dash-quick-card-top"><MonitorPlay size={18} color="#b14933" /></div>
-          <h3 className="dash-quick-card-title">Start a CBT test</h3>
-          <span className="dash-quick-card-sub">JAMB • WAEC • NECO • Post-UTME</span>
-        </a>
-        <a href="/services" className={`dash-quick-card ${identityClassFor('support', 'service')}`}>
-          <div className="dash-quick-card-top"><FileText size={18} color="#1d4ed8" /></div>
-          <h3 className="dash-quick-card-title">Request a service</h3>
-          <span className="dash-quick-card-sub">NELFUND, results, slips</span>
-        </a>
-        <a href="/dashboard/services" className={`dash-quick-card ${identityClassFor('track request', 'service')}`}>
-          <div className="dash-quick-card-top"><ScanSearch size={18} color="#047857" /></div>
-          <h3 className="dash-quick-card-title">Track a request</h3>
-          <span className="dash-quick-card-sub">Live status by reference</span>
-        </a>
-        <a href="/screening-calculator" className={`dash-quick-card ${identityClassFor('calculator', 'service')}`}>
-          <div className="dash-quick-card-top"><Calculator size={18} color="#7c3aed" /></div>
-          <h3 className="dash-quick-card-title">Screening calculator</h3>
-          <span className="dash-quick-card-sub">Estimate your aggregate</span>
-        </a>
-      </div>
 
       <section className="dash-card" id="dashboard-notifications">
         <div className="dash-card-header">
@@ -797,48 +762,27 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         ) : emptyState('No notifications yet. When a service request you submitted changes status, it appears here.', '/services', 'Browse services')}
       </section>
 
-      <section className="dash-card">
+      <section className="dash-card dash-recent-activity" aria-labelledby="dash-recent-activity-heading">
         <div className="dash-card-header">
-          <h2 className="dash-card-title"><ClipboardList size={14} className="dash-card-title-icon" /> Latest requests</h2>
-          {requests.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('services')}>View all ({requests.length})</button>}
+          <h2 className="dash-card-title" id="dash-recent-activity-heading">Recent activity</h2>
         </div>
-        {requests.length
-          ? requestsTable(requests.slice(0, 3))
-          : emptyState('No service requests yet. When you request NELFUND help, result checking, a JAMB slip or admission support, its live status appears here.', '/services', 'Browse services')}
-      </section>
-
-      <section className="dash-card">
-        <div className="dash-card-header">
-          <h2 className="dash-card-title"><CheckSquare size={14} className="dash-card-title-icon" /> Latest CBT results</h2>
-          {attempts.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>View all ({attempts.length})</button>}
-        </div>
-        {attempts.length
-          ? attemptsTable(attempts.slice(0, 3))
-          : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start practice')}
-      </section>
-
-      <section className="dash-profile-summary" aria-labelledby="saved-profile-heading">
-        <div className="dash-section-head">
-          <div>
-            <h2 id="saved-profile-heading">Saved profile details</h2>
-            <p>{profileComplete ? 'These details are used to personalise exam and service guidance.' : 'Add the missing details so exam and service guidance can be personalised.'}</p>
+        <div className="dash-recent-activity-group">
+          <div className="dash-recent-activity-heading">
+            <h3>Service requests</h3>
+            {requests.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('services')}>View all ({requests.length})</button>}
           </div>
-          <a href="/profile" className="dash-card-link">{profileComplete ? 'Update details' : 'Complete profile'} <ChevronRight size={13} /></a>
+          {requests.length
+            ? requestsTable(requests.slice(0, 3))
+            : emptyState('No service requests yet. When you request NELFUND help, result checking, a JAMB slip or admission support, its live status appears here.', '/services', 'Browse services')}
         </div>
-        <div className="dash-profile-detail-grid">
-          {[
-            ['Institution', profile?.school],
-            ['Course / programme', profile?.course_programme],
-            ['Department', profile?.department],
-            ['Faculty', profile?.faculty],
-            ['Level', profile?.level],
-            ['Session', profile?.session],
-          ].map(([label, value]) => (
-            <div className="dash-profile-detail" key={label}>
-              <span>{label}</span>
-              <strong>{value || 'Not added yet'}</strong>
-            </div>
-          ))}
+        <div className="dash-recent-activity-group">
+          <div className="dash-recent-activity-heading">
+            <h3>CBT results</h3>
+            {attempts.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>View all ({attempts.length})</button>}
+          </div>
+          {attempts.length
+            ? attemptsTable(attempts.slice(0, 3))
+            : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start practice')}
         </div>
       </section>
 
@@ -880,12 +824,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
         <div className="dash-metric-card">
           <span className="dash-metric-label">Average score</span>
-          <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{hasScores ? `${averageScore}%` : '—'}</span>
+          <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{averageScore !== null ? `${averageScore}%` : '—'}</span>
           {!hasScores && <span className="dash-metric-hint">After your first test</span>}
         </div>
         <div className="dash-metric-card">
           <span className="dash-metric-label">Best score</span>
-          <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{hasScores ? `${bestScore}%` : '—'}</span>
+          <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{bestScore !== null ? `${bestScore}%` : '—'}</span>
           {!hasScores && <span className="dash-metric-hint">After your first test</span>}
         </div>
         <div className="dash-metric-card">
@@ -899,9 +843,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           </div>
         )}
         <div className="dash-metric-card">
-          <span className="dash-metric-label">Questions answered</span>
-          <span className="dash-metric-val">{questionsAnswered}</span>
-          {questionsAnswered === 0 && <span className="dash-metric-hint">No completed paper yet</span>}
+          <span className="dash-metric-label">Questions in completed tests</span>
+          <span className="dash-metric-val">{questionsInCompletedTests}</span>
+          {questionsInCompletedTests === 0 && <span className="dash-metric-hint">No completed paper yet</span>}
         </div>
       </div>
 
@@ -984,18 +928,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="edureach-dash-bar">
           <a href="/" className="edureach-dash-brand" aria-label="EduReach home"><BrandLogo height={36} radius="50%" /></a>
 
-          <form
-            className="edureach-dash-search"
-            role="search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const q = searchTerm.trim();
-              navigateInApp(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
-            }}
-          >
-            <Search size={15} className="edureach-dash-search-icon" />
-            <input type="search" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search services…" aria-label="Search services" />
-          </form>
+          <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" submitLabel="Go" />
 
           <div className="edureach-dash-actions">
             <button type="button" className="dash-icon-btn" style={{ position: 'relative' }} aria-label={unreadNotifications ? `Notifications, ${unreadNotifications} unread` : 'Notifications'}

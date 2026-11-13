@@ -82,7 +82,8 @@ function PhaseProbe({ pending }: { pending: boolean }) {
   return createElement('span', null, phase);
 }
 
-test('the pending phase follows the request and never invents progress', async () => {
+test('the pending phase follows the request and never invents progress', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const { container, root: reactRoot } = mount();
 
   act(() => {
@@ -90,10 +91,10 @@ test('the pending phase follows the request and never invents progress', async (
   });
   assert.equal(container.textContent, 'pending', 'a young request is still a skeleton, not a spinner');
 
-  await act(async () => { await new Promise((done) => setTimeout(done, 50)); });
+  act(() => t.mock.timers.tick(30));
   assert.equal(container.textContent, 'slow', 'a named wait appears once the request is old enough');
 
-  await act(async () => { await new Promise((done) => setTimeout(done, 60)); });
+  act(() => t.mock.timers.tick(60));
   assert.equal(container.textContent, 'stalled', 'waiting has a ceiling');
 
   act(() => {

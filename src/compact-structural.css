@@ -44,7 +44,7 @@
 @media(max-width:900px){.hub-home-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:600px){
  .hub-shell>header>div{height:50px!important}
- .hub-home-container,.hub-container{width:calc(100% - 12px)!important}
+ .hub-container{width:calc(100% - 12px)!important}
  .hub-home-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important}
  .hub-home-card-grid .hub-compact-card,.hub-home-card-grid .hub-service-profile-card{height:54px!important;min-height:54px!important}
  .hub-home-search{height:31px!important}

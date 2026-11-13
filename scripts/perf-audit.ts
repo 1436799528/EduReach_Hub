@@ -64,10 +64,10 @@ export const BUDGETS = {
   // Raised 330 -> 334 KB for the admin service-guide editor: a lazy,
   // admin-only route chunk (+3.3 KB measured) that students never download.
   // The first-load critical path above is unchanged and still enforced.
-  // 2026-10-21: the CBT catalogue and exam-specific result rules measured
-  // 335.1 KB total; 336 KB allows under 1 KB of headroom without relaxing
-  // entry, Supabase, CSS, image, or loading-strategy checks.
-  totalJsGzip: 336 * 1024,
+  // The shared search combobox and live catalogue measure 340.2 KB across all
+  // route chunks. 341 KB keeps a small allowance for this feature;
+  // the public first-load path remains separately capped at 211 KB.
+  totalJsGzip: 341 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

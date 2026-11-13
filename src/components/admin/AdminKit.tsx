@@ -106,6 +106,38 @@ export function Metric({ label, value, detail, icon, tone }: { label: string; va
   );
 }
 
+export type AdminSummaryItem = { label: string; value: ReactNode; detail?: string };
+
+export function AdminSummary({ label, items }: { label: string; items: AdminSummaryItem[] }) {
+  return (
+    <section className="admin-summary" aria-label={label}>
+      {items.map((item) => (
+        <div className="admin-summary-item" key={item.label}>
+          <span className="admin-summary-label">{item.label}</span>
+          <strong className="admin-summary-value">{item.value}</strong>
+          {item.detail && <small className="admin-summary-detail">{item.detail}</small>}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export function AdminCountBadge({ count, label }: { count: number; label: string }) {
+  if (!Number.isFinite(count) || count <= 0) return null;
+  return <span className="admin-count-badge" aria-label={`${count} ${label}`}>{count.toLocaleString()}</span>;
+}
+
+export type AdminStatus = 'live' | 'healthy' | 'attention' | 'error' | 'pending' | 'inactive';
+
+export function AdminStatusDot({ status, label, detail }: { status: AdminStatus; label: string; detail?: string }) {
+  const description = detail ? `${label}: ${detail}` : label;
+  return (
+    <span className={`admin-status-dot ${status}`} role="img" aria-label={description} title={description} tabIndex={0}>
+      <i aria-hidden="true" />
+    </span>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Service request status actions (single source of truth for Dashboard + Queue)
 // ---------------------------------------------------------------------------
@@ -234,14 +266,15 @@ export function AuditTimeline({ items, emptyText = 'No staff activity recorded y
 
 export function BarStat({ label, value, max, hint, tone = 'orange' }: { label: string; value: number; max: number; hint?: string; tone?: 'orange' | 'green' | 'blue' }) {
   const safeMax = max > 0 ? max : 1;
-  const pct = Math.max(2, Math.min(100, Math.round((value / safeMax) * 100)));
+  const pct = value <= 0 ? 0 : Math.max(2, Math.min(100, Math.round((value / safeMax) * 100)));
+  const accessibleValue = hint ?? value.toLocaleString();
   return (
     <div className="admin-bar-row">
       <div className="admin-bar-top">
         <span>{label}</span>
-        <b>{hint ?? value}</b>
+        <b>{accessibleValue}</b>
       </div>
-      <div className="admin-bar-track" role="img" aria-label={`${label}: ${hint ?? value}`}>
+      <div className="admin-bar-track" role="img" aria-label={`${label}: ${accessibleValue}`} title={`${label}: ${accessibleValue}`}>
         <div className={`admin-bar-fill ${tone}`} style={{ width: `${pct}%` }} />
       </div>
     </div>

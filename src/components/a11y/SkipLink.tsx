@@ -20,7 +20,10 @@ export default function SkipLink({ targetId = 'main-content' }: { targetId?: str
         if (!target) return;
         event.preventDefault();
         target.focus({ preventScroll: true });
-        target.scrollIntoView({ block: 'start' });
+
+        if (typeof target.scrollIntoView === 'function') {
+          target.scrollIntoView({ block: 'start' });
+        }
       }}
     >
       Skip to main content

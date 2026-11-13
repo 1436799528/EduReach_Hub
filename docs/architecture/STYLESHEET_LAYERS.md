@@ -1,6 +1,6 @@
 # Stylesheet layers and load order
 
-**Finding this answers:** P3-5 — 17 CSS files (~46 KB gzip, bundled to 47 KB)
+**Finding this answers:** P3-5 — 17 global CSS files (~47 KB gzip)
 loaded on every route. The audit's options were "raise the budget deliberately"
 (done once: 46 → 50 KB, and again 50 → 51 KB for the UI-4 interaction states) or "consolidate". This
 document is the precondition for consolidating safely: it records what each
@@ -9,7 +9,7 @@ not silently dropped — see the plan at the end.
 
 ## The order contract
 
-`src/main.tsx` imports every sheet, in this order, and the order is load-bearing:
+`src/main.tsx` imports the global sheets, in this order, and the order is load-bearing:
 
 | # | Sheet | Owns |
 | :-- | :--- | :--- |
@@ -17,20 +17,27 @@ not silently dropped — see the plan at the end.
 | 2 | `card-system.css` | Card surfaces and their states |
 | 3 | `hub-portal-tuning.css` | Corrections to 1–2 for the portal shell |
 | 4 | `dashboard-v2.css` | Student dashboard surfaces |
-| 5 | `admin.css` | Admin console |
-| 6 | `cbt-engine.css` | CBT session, timer, question sheet |
-| 7 | `compact-portal.css` | Compact density pass over 1–4 |
-| 8 | `image-card-system.css` | Image-card variants |
-| 9 | `home-card-first.css` | Home page card-first layout |
-| 10 | `myschool-clean.css` | School finder/detail |
-| 11 | `styles/theme.css` | Token layer (colour, spacing) consumed by 12–14 |
-| 12 | `compact-design-system.css` | Compact design system |
-| 13 | `compact-structural.css` | Compact structural pass |
-| 14 | `edu-portal.css` | Feature surfaces layered over the design system |
-| 15 | `data-control.css` | Data-control centre |
-| 16 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
-| 17 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
-| 18 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+| 5 | `cbt-engine.css` | CBT session, timer, question sheet |
+| 6 | `compact-portal.css` | Compact density pass over 1–4 |
+| 7 | `image-card-system.css` | Image-card variants |
+| 8 | `home-card-first.css` | Home page card-first layout |
+| 9 | `myschool-clean.css` | School finder/detail |
+| 10 | `styles/theme.css` | Token layer (colour, spacing) consumed by 11–13 |
+| 11 | `compact-design-system.css` | Compact design system |
+| 12 | `compact-structural.css` | Compact structural pass |
+| 13 | `edu-portal.css` | Feature surfaces layered over the design system |
+| 14 | `data-control.css` | Data-control centre |
+| 15 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
+| 16 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
+| 17 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+
+## Lazy route sheet
+
+`pages/AdminLayout.tsx` imports `admin.css` with the lazy admin route instead
+of loading it for every student page. The admin stylesheet is therefore not
+part of the global order above; it arrives with the admin route's JS chunk.
+This keeps admin styling out of the public first-load CSS while preserving the
+shared global type, token and accessibility layers.
 
 Two rules follow from that:
 
@@ -42,9 +49,9 @@ Two rules follow from that:
 2. **`styles/type-system.css` follows every component sheet.** It standardises
    type that the component sheets set; importing it earlier lets them win.
 
-`tests/stylesheet-layers.test.ts` pins the exact list and both rules, so adding a
-sheet requires editing this table and that test deliberately — the crowd of
-sheets cannot grow by accident.
+`tests/stylesheet-layers.test.ts` pins the exact global list, the lazy admin
+sheet, and both ordering rules, so adding or moving a sheet requires editing
+this table and that test deliberately — the crowd of sheets cannot grow by accident.
 
 ## Consolidation plan (the actual P3-5 work)
 
