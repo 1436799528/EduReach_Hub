@@ -224,10 +224,14 @@ test('navigation states use the shared tokens and keep the active route honest',
   assert.match(actions, /\.er-mobile-bottom-nav a:hover\s*\{[^}]*var\(--er-nav-hover-bg\)/);
   assert.match(actions, /\.er-mobile-bottom-nav a\.active\s*\{[^}]*var\(--er-nav-active-bg\)/);
   const layout = read('src/components/HubLayout.tsx');
-  assert.match(layout, /color: path === '\/' \? 'var\(--er-primary\)'/, 'the current route is green');
-  assert.match(layout, /2px solid var\(--er-primary-soft-border\)/, 'its underline uses the soft border token');
+  const product = read('src/styles/ux5-product.css');
+  // UX-5: one navigation class owns every primary destination, so the active
+  // state cannot drift between links written at different times.
+  assert.match(layout, /className="hub-nav-link"/, 'primary destinations share one class');
+  assert.match(layout, /aria-current=\{item\.active \? 'page' : undefined\}/, 'selection is not communicated by colour alone');
+  assert.match(product, /\.hub-nav-link\[aria-current="page"\]\s*\{[^}]*var\(--er-primary\)/, 'the current route uses the primary token');
+  assert.match(product, /\.hub-nav-link\[aria-current="page"\]\s*\{[^}]*border-bottom-color:\s*var\(--er-primary\)/, 'its underline uses the primary token');
   assert.doesNotMatch(layout, /'#b14933'/, 'no navigation colour is hard-coded');
-  assert.match(layout, /aria-current=/, 'selection is not communicated by colour alone');
 });
 
 test('status colours are semantic, and used by the shared surfaces', () => {

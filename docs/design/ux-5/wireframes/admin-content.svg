@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: Content — publish and verify">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Content — publish and verify</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">An administrator sees what is live, what is scheduled, and what needs review.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="33.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin top bar</text>
+  </g>
+  <g>
+    <rect x="24.0" y="101.0" width="136.4" height="462.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="117.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Sidebar · Content</text>
+  </g>
+  <g>
+    <rect x="178.0" y="114.2" width="514.8" height="44.0" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="186.0" y="130.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Content · new article</text>
+  </g>
+  <g>
+    <rect x="178.0" y="167.0" width="514.8" height="39.6" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="186.0" y="183.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">State tabs · Published · Scheduled · Needs review · Archived</text>
+  </g>
+  <g>
+    <rect x="178.0" y="215.4" width="514.8" height="253.0" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="186.0" y="231.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Content table · title · type · source · state · updated · actions</text>
+  </g>
+  <g>
+    <rect x="178.0" y="477.2" width="514.8" height="55.0" rx="4" fill="#0F172A" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="186.0" y="493.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Bulk actions bar</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin bar</text>
+  </g>
+  <g>
+    <rect x="776.8" y="107.6" width="196.9" height="38.5" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="784.8" y="123.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Content</text>
+  </g>
+  <g>
+    <rect x="776.8" y="152.7" width="196.9" height="28.6" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="784.8" y="168.7" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">State chips</text>
+  </g>
+  <g>
+    <rect x="776.8" y="187.9" width="196.9" height="275.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="784.8" y="203.9" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Content cards</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• State is a tab, not a column to scan</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Source and verification are first-class</text>
+</svg>

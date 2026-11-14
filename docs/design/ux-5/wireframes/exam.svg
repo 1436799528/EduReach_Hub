@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: Examination — calm, single-focus paper">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Examination — calm, single-focus paper</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">A student answers, navigates and submits without losing time or state.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="35.2" rx="4" fill="#0F172A" stroke="#174A3A" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Exam bar · exam · timer · saved indicator · submit</text>
+  </g>
+  <g>
+    <rect x="59.2" y="112.0" width="459.8" height="418.0" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="67.2" y="128.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Question card · number · subject · prompt · options</text>
+  </g>
+  <g>
+    <rect x="532.2" y="112.0" width="160.6" height="231.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="540.2" y="128.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Question palette · answered / flagged /</text><text x="540.2" y="140.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">current</text>
+  </g>
+  <g>
+    <rect x="532.2" y="354.0" width="160.6" height="82.5" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="540.2" y="370.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Paper summary · answered count · flags</text>
+  </g>
+  <g>
+    <rect x="532.2" y="447.5" width="160.6" height="82.5" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="540.2" y="463.5" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Submit panel · “Review before</text><text x="540.2" y="475.5" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">submitting”</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#174A3A" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Exam bar · timer · menu</text>
+  </g>
+  <g>
+    <rect x="776.8" y="107.6" width="196.9" height="286.0" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="784.8" y="123.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Question · options full width, 48 px targets</text>
+  </g>
+  <g>
+    <rect x="768.0" y="461.8" width="214.5" height="35.2" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="776.0" y="477.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Question palette drawer handle</text>
+  </g>
+  <g>
+    <rect x="768.0" y="497.0" width="214.5" height="35.2" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="513.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Previous · Flag · Next</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Timer and saved state always visible</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Options use full tap targets</text><text x="24" y="633.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Palette available without leaving the paper</text>
+</svg>

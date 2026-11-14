@@ -19,12 +19,12 @@ const adminDashboard = read('pages/AdminDashboardPage.tsx');
 const quickFind = read('src/components/admin/AdminQuickFind.tsx');
 
 test('the student overview is identity, KPIs and analytics before explanation', () => {
-  assert.match(dashboard, /Your learning overview/);
+  assert.match(dashboard, /<h1>Overview<\/h1>/, 'the page title names the task, not the person');
+  assert.match(dashboard, /Welcome back, \{displayName\}/, 'the student is greeted by name beneath it');
   assert.match(dashboard, /className="dash-kpi-grid"/);
   assert.match(dashboard, /className="dash-analytics"/);
   assert.match(dashboard, /Not enough activity yet/);
   assert.match(dashboard, /className="dash-attention"/);
-  assert.doesNotMatch(dashboard, /Welcome back/);
   assert.doesNotMatch(dashboard, /dash-quick-actions/);
   assert.doesNotMatch(dashboard, /dash-report-strip/);
 });

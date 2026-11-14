@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  MoreVertical,
+  Menu,
   X,
   ScanSearch,
   User,
@@ -113,65 +113,32 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </div>
 
-          {/* DESKTOP NAVIGATION LINKS */}
-          <nav className="hub-desktop-nav">
+          {/* DESKTOP NAVIGATION LINKS — one primary destination per job. */}
+          <nav className="hub-desktop-nav" aria-label="Primary">
+            {[
+              { href: '/', label: 'Home', active: path === '/' },
+              { href: '/cbt', label: 'CBT practice', active: path.startsWith('/cbt') },
+              { href: '/past-questions', label: 'Past questions', active: path.startsWith('/past-questions') },
+              { href: '/services', label: 'Services', active: path.startsWith('/services') && path !== '/services/track' },
+              { href: '/news', label: 'News', active: path.startsWith('/news') },
+              { href: '/jobs', label: 'Scholarships', active: path === '/jobs' },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="hub-nav-link"
+                aria-current={item.active ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
             <a
-              href="/"
-              style={{
-                color: path === '/' ? 'var(--er-primary)' : '#334155',
-                textDecoration: 'none',
-                borderBottom: path === '/' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
-                padding: '4px 0',
-              }}
+              href={`https://wa.me/${EDUREACH_WHATSAPP}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hub-nav-link hub-nav-link--quiet"
             >
-              Home
-            </a>
-            <a
-              href="/cbt"
-              style={{
-                color: path.startsWith('/cbt') ? 'var(--er-primary)' : '#334155',
-                textDecoration: 'none',
-                borderBottom: path.startsWith('/cbt') ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
-                padding: '4px 0',
-              }}
-            >
-              CBT Practice
-            </a>
-            <a
-              href="/services"
-              style={{
-                color: path === '/services' || path.startsWith('/services/apply') ? 'var(--er-primary)' : '#334155',
-                textDecoration: 'none',
-                borderBottom: path.startsWith('/services') && path !== '/services/track' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
-                padding: '4px 0',
-              }}
-            >
-              Services
-            </a>
-            <a
-              href="/news"
-              style={{
-                color: path.startsWith('/news') ? 'var(--er-primary)' : '#334155',
-                textDecoration: 'none',
-                borderBottom: path.startsWith('/news') ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
-                padding: '4px 0',
-              }}
-            >
-              News
-            </a>
-            <a
-              href="/jobs"
-              style={{
-                color: path === '/jobs' ? 'var(--er-primary)' : '#334155',
-                textDecoration: 'none',
-                borderBottom: path === '/jobs' ? '2px solid var(--er-primary-soft-border)' : '2px solid transparent',
-                padding: '4px 0',
-              }}
-            >
-              Grants
-            </a>
-            <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" style={{ color: '#047857', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 0', fontWeight: 620 }}>
-              <MessageCircle size={14} /> Talk to Us
+              <MessageCircle size={14} /> Talk to us
             </a>
           </nav>
 
@@ -316,7 +283,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 justifyContent: 'center',
               }}
             >
-              <MoreVertical size={18} />
+              <Menu size={18} aria-hidden="true" />
+              <span className="hub-menu-label">Menu</span>
             </button>
           </div>
         </div>
@@ -377,29 +345,37 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
             <SiteSearch variant="drawer" label="Site search (mobile)" onNavigate={() => setMobileOpen(false)} />
 
-            <nav className="hub-mobile-nav" style={{ display: 'grid', gap: '4px', fontSize: '14px', fontWeight: 560 }}>
-              <a href="/" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Home
-              </a>
-              <a href="/cbt" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                CBT Practice
-              </a>
-              <a href="/services" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Services
-              </a>
-              {isAuthenticated && (
-                <a href="/dashboard/services" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                  My Requests
+            <nav className="hub-mobile-nav" aria-label="Site sections">
+              {[
+                { href: '/', label: 'Home', active: path === '/' },
+                { href: '/cbt', label: 'CBT practice', active: path.startsWith('/cbt') },
+                { href: '/past-questions', label: 'Past questions', active: path.startsWith('/past-questions') },
+                { href: '/services', label: 'Services', active: path.startsWith('/services') && path !== '/services/track' },
+                { href: '/news', label: 'News and noticeboard', active: path.startsWith('/news') },
+                { href: '/jobs', label: 'Scholarships and grants', active: path === '/jobs' },
+                ...(isAuthenticated ? [
+                  { href: '/dashboard', label: 'Dashboard', active: path.startsWith('/dashboard') },
+                  { href: '/dashboard/services', label: 'My requests', active: path === '/dashboard/services' },
+                  { href: '/profile', label: 'Academic profile', active: path === '/profile' },
+                ] : []),
+              ].map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  aria-current={item.active ? 'page' : undefined}
+                >
+                  {item.label}
                 </a>
-              )}
-              <a href="/news" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                News &amp; Noticeboard
-              </a>
-              <a href="/jobs" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
-                Scholarships &amp; Grants
-              </a>
-              <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#047857', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <MessageCircle size={16} /> Talk to Us
+              ))}
+              <a
+                href={`https://wa.me/${EDUREACH_WHATSAPP}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileOpen(false)}
+                style={{ color: '#047857' }}
+              >
+                <MessageCircle size={16} /> Talk to us
               </a>
             </nav>
 

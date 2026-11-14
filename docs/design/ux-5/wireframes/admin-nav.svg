@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: Admin navigation — grouped by job">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Admin navigation — grouped by job</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">An administrator finds a section by the job they are doing, not by database table.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="33.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin top bar</text>
+  </g>
+  <g>
+    <rect x="24.0" y="101.0" width="158.4" height="462.0" rx="4" fill="#0F172A" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="32.0" y="117.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Sidebar · Overview</text>
+  </g>
+  <g>
+    <rect x="24.0" y="189.0" width="158.4" height="115.5" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="205.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">People · Students · Staff · Profiles</text>
+  </g>
+  <g>
+    <rect x="24.0" y="304.5" width="158.4" height="115.5" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="320.5" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Learning · Question banks · Questions ·</text><text x="32.0" y="332.5" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Exams · Imports</text>
+  </g>
+  <g>
+    <rect x="24.0" y="420.0" width="158.4" height="82.5" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="436.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Requests &amp; content · Services · News ·</text><text x="32.0" y="448.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Opportunities</text>
+  </g>
+  <g>
+    <rect x="24.0" y="502.5" width="158.4" height="60.5" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="518.5" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">System · Settings · Security · Audit log</text>
+  </g>
+  <g>
+    <rect x="200.0" y="116.4" width="492.8" height="132.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="208.0" y="132.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Explanatory panel · what each group is for</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin bar · menu</text>
+  </g>
+  <g>
+    <rect x="768.0" y="98.8" width="214.5" height="433.4" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="114.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Full-screen drawer · groups · search · current section</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• 38 flat links become 5 job groups</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Search within navigation for uncommon sections</text>
+</svg>

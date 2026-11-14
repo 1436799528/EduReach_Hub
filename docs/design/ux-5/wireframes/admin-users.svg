@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: Users — find, inspect, act">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Users — find, inspect, act</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">An administrator finds a student, understands their state, and takes a safe action.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="33.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin top bar</text>
+  </g>
+  <g>
+    <rect x="24.0" y="101.0" width="136.4" height="462.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="117.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Sidebar</text>
+  </g>
+  <g>
+    <rect x="178.0" y="114.2" width="514.8" height="44.0" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="186.0" y="130.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Students · export · invite</text>
+  </g>
+  <g>
+    <rect x="178.0" y="167.0" width="514.8" height="35.2" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="186.0" y="183.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Toolbar · search · role filter · status filter · count</text>
+  </g>
+  <g>
+    <rect x="178.0" y="211.0" width="514.8" height="231.0" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="186.0" y="227.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Table · student · role · status · joined · last active · row actions</text>
+  </g>
+  <g>
+    <rect x="178.0" y="448.6" width="514.8" height="33.0" rx="4" fill="#0F172A" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="186.0" y="464.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Pagination · range · page size</text>
+  </g>
+  <g>
+    <rect x="442.0" y="109.8" width="250.8" height="352.0" rx="4" fill="#FFFFFF" stroke="#174A3A" stroke-width="1"/>
+    <text x="450.0" y="125.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">Detail drawer (on selection) · identity · requests · CBT ·</text><text x="450.0" y="137.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">actions</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin bar</text>
+  </g>
+  <g>
+    <rect x="776.8" y="107.6" width="196.9" height="41.8" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="784.8" y="123.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Students</text>
+  </g>
+  <g>
+    <rect x="776.8" y="156.0" width="196.9" height="30.8" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="784.8" y="172.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Search + filter button</text>
+  </g>
+  <g>
+    <rect x="776.8" y="193.4" width="196.9" height="264.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="784.8" y="209.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Stacked records · name · role · status · key</text><text x="784.8" y="221.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">action</text>
+  </g>
+  <g>
+    <rect x="768.0" y="497.0" width="214.5" height="35.2" rx="6" fill="#174A3A" stroke="#174A3A" stroke-width="1"/>
+    <text x="776.0" y="513.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Filter sheet trigger · “Filters”</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Desktop table keeps columns; mobile becomes records</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Row action opens a drawer instead of a new page</text>
+</svg>

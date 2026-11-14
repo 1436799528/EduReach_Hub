@@ -1,0 +1,1308 @@
+/* ==========================================================================
+   UX-5 product design layer
+   --------------------------------------------------------------------------
+   This is the deliberate visual and interaction system for the student and
+   administrator applications. It is loaded after the legacy component sheets
+   (which still own their component internals) and before a11y.css, so it can
+   standardise rhythm, hierarchy and control states without !important.
+
+   Rules for this layer:
+   - Only tokens, role classes and structural layouts. No per-page hacks.
+   - Colour communicates hierarchy and state: green is the action colour,
+     crimson is contextual attention/destructive, neutral carries the page.
+   - Sentence case for labels. Uppercase survives only for the tiny exam badge,
+     where the exam body is an acronym or a proper name.
+   - Every touch target is at least 44 px on coarse pointers.
+   ========================================================================== */
+
+:root {
+  /* Spacing — one 4 px base, used for gaps and padding. */
+  --er-space-1: 4px;
+  --er-space-2: 8px;
+  --er-space-3: 12px;
+  --er-space-4: 16px;
+  --er-space-5: 20px;
+  --er-space-6: 24px;
+  --er-space-8: 32px;
+  --er-space-10: 40px;
+  --er-space-12: 48px;
+
+  /* Shape and elevation — restrained, consistent with the existing cards. */
+  --er-radius-xs: 6px;
+  --er-radius-sm: 8px;
+  --er-radius-md: 12px;
+  --er-radius-lg: 16px;
+  --er-shadow-card: 0 1px 2px rgba(16, 24, 40, .05);
+  --er-shadow-raised: 0 8px 24px rgba(16, 24, 40, .08);
+
+  /* Controls */
+  --er-control-height: 42px;
+  --er-control-height-sm: 34px;
+  --er-tap-target: 44px;
+
+  /* Type roles. Sizes are fluid only where the viewport genuinely changes
+     reading distance (page titles); everything else stays stable. */
+  --er-type-page: clamp(24px, 2.4vw, 32px);
+  --er-type-section: 17px;
+  --er-type-card: 15px;
+  --er-type-body: 14px;
+  --er-type-meta: 12.5px;
+  --er-type-label: 12px;
+  --er-leading-body: 1.6;
+  --er-leading-title: 1.2;
+
+  /* Content measure. Long prose is capped; dashboards use the full column. */
+  --er-measure: 68ch;
+}
+
+/* --------------------------------------------------------------------------
+   Page hierarchy
+   -------------------------------------------------------------------------- */
+
+.dash-overview-head,
+.profile-page-head {
+  gap: var(--er-space-4);
+}
+
+/* Eyebrows and kickers are sentence case everywhere. The old product used
+   wide-tracked uppercase for almost every label, which flattened hierarchy:
+   labels competed with titles instead of supporting them. */
+[class*="eyebrow"],
+[class*="kicker"],
+[class*="overview-role"],
+[class*="section-kicker"] {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* Section headings share one rhythm. */
+.er-section {
+  margin-top: var(--er-space-8);
+}
+
+.er-section-head {
+  align-items: end;
+  padding-bottom: var(--er-space-2);
+  margin-bottom: var(--er-space-3);
+  border-bottom-color: var(--er-border);
+}
+
+.er-section-head h2 {
+  font-size: var(--er-type-section);
+  font-weight: 680;
+  line-height: 1.3;
+  letter-spacing: -.01em;
+  color: var(--er-text-primary);
+}
+
+.er-section-head a {
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Global header and navigation
+   -------------------------------------------------------------------------- */
+
+.hub-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--er-tap-target);
+  padding: 0 2px;
+  color: var(--er-text-secondary);
+  font-size: 13.5px;
+  font-weight: 560;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.hub-nav-link:hover {
+  color: var(--er-primary);
+}
+
+.hub-nav-link[aria-current="page"] {
+  color: var(--er-primary);
+  border-bottom-color: var(--er-primary);
+  font-weight: 650;
+}
+
+.hub-nav-link--quiet {
+  color: var(--er-status-success);
+}
+
+.hub-nav-link--quiet:hover {
+  color: #065F46;
+}
+
+.hub-brand-link {
+  min-height: var(--er-tap-target);
+}
+
+.hub-desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+@media (max-width: 1120px) {
+  .hub-desktop-nav { gap: 12px; }
+  .hub-nav-link { font-size: 13px; }
+  .hub-requests-label { display: none; }
+}
+
+/* The menu trigger is a hamburger with a visible label on wide phones, not a
+   three-dot “more” affordance: navigation is not an overflow menu. */
+.hub-mobile-trigger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--er-tap-target);
+  min-width: var(--er-tap-target);
+}
+
+@media (max-width: 900px) {
+  .hub-mobile-trigger { display: inline-flex !important; }
+  .hub-desktop-nav { display: none !important; }
+}
+
+/* Mobile drawer: one clear list, generous rows, current page marked. */
+.hub-mobile-nav a {
+  display: flex;
+  align-items: center;
+  min-height: var(--er-tap-target);
+  padding: 8px 10px;
+  border-radius: var(--er-radius-sm);
+  color: var(--er-text-primary);
+  font-size: 14.5px;
+  font-weight: 560;
+}
+
+.hub-mobile-nav a[aria-current="page"] {
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+  font-weight: 650;
+}
+
+.hub-mobile-nav a:active {
+  background: var(--er-surface-soft);
+}
+
+/* Bottom navigation never sits on top of the last line of content. */
+@media (max-width: 900px) {
+  .hub-shell {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+
+  .er-mobile-bottom-nav a {
+    min-height: var(--er-tap-target);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Homepage
+   -------------------------------------------------------------------------- */
+
+.hub-home-container {
+  padding-top: var(--er-space-5);
+}
+
+.er-home-intro {
+  padding: var(--er-space-8) var(--er-space-8) var(--er-space-6);
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-lg);
+  background:
+    radial-gradient(120% 120% at 0% 0%, #F2F8F4 0%, #FFFFFF 58%),
+    var(--er-surface);
+  box-shadow: var(--er-shadow-card);
+}
+
+.er-home-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--er-space-3);
+  color: var(--er-primary);
+  font-size: var(--er-type-label);
+  font-weight: 650;
+}
+
+.er-home-title {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--er-text-primary);
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 740;
+  line-height: 1.08;
+  letter-spacing: -.03em;
+}
+
+.er-home-sub {
+  max-width: 52ch;
+  margin: var(--er-space-3) 0 0;
+  color: var(--er-text-secondary);
+  font-size: 15px;
+  line-height: var(--er-leading-body);
+}
+
+.er-home-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--er-space-3);
+  flex-wrap: wrap;
+  margin-top: var(--er-space-6);
+}
+
+.er-home-proof {
+  display: flex;
+  gap: var(--er-space-5);
+  flex-wrap: wrap;
+  margin: var(--er-space-6) 0 0;
+  padding: var(--er-space-4) 0 0;
+  border-top: 1px solid var(--er-border);
+  list-style: none;
+}
+
+.er-home-proof li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--er-text-secondary);
+  font-size: var(--er-type-meta);
+}
+
+.er-home-proof b {
+  color: var(--er-text-primary);
+  font-size: var(--er-type-card);
+  font-weight: 680;
+}
+
+.er-home-search {
+  margin-bottom: var(--er-space-5);
+}
+
+/* The study-centre banner is a quiet link, not a second hero. */
+.er-banner {
+  min-height: 84px;
+  border-color: var(--er-border);
+  background: var(--er-surface);
+}
+
+.er-banner small {
+  color: var(--er-text-secondary);
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: var(--er-type-meta);
+  font-weight: 600;
+}
+
+.er-banner > svg {
+  color: var(--er-primary);
+}
+
+/* Exam cards: one neutral surface, exam identity in the badge and the mark.
+   Four unrelated pastel backgrounds made the choice look like four products. */
+.er-sim-card,
+.er-sim-jamb,
+.er-sim-waec,
+.er-sim-neco,
+.er-sim-post-utme {
+  background: var(--er-surface) !important;
+  border-color: var(--er-border) !important;
+  color: var(--er-text-primary);
+}
+
+.er-sim-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 164px;
+  padding: var(--er-space-4);
+  border-radius: var(--er-radius-md);
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.er-sim-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--er-primary);
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.er-sim-card:hover {
+  border-color: var(--er-border-strong) !important;
+  box-shadow: var(--er-shadow-raised);
+  transform: translateY(-1px);
+}
+
+.er-sim-card:hover::before,
+.er-sim-card:focus-visible::before {
+  opacity: 1;
+}
+
+.er-sim-body > strong {
+  color: var(--er-text-primary) !important;
+  font-size: var(--er-type-card) !important;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+
+.er-sim-body > small {
+  color: var(--er-text-secondary) !important;
+  font-size: var(--er-type-meta) !important;
+  line-height: 1.45;
+}
+
+.er-sim-badge {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--er-text-secondary);
+  border-color: var(--er-border);
+  background: var(--er-surface-soft);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.er-sim-foot {
+  border-top-color: var(--er-border) !important;
+  color: var(--er-text-secondary) !important;
+  font-size: var(--er-type-meta) !important;
+}
+
+.er-sim-foot .er-card-arrow {
+  color: var(--er-primary);
+}
+
+/* On phones the horizontal card rail hid three of the four exams. A compact
+   vertical list keeps every choice visible without a sideways gesture. */
+@media (max-width: 640px) {
+  .er-sim-grid {
+    display: grid !important;
+    grid-auto-flow: row !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: var(--er-space-2) !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .er-sim-card {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--er-space-3);
+    min-height: 84px;
+    padding: 12px 14px 12px 16px;
+    scroll-snap-align: none;
+  }
+
+  .er-sim-top {
+    order: 0;
+    flex: none;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .er-sim-top img {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* The title already names the exam; the badge would repeat it. */
+  .er-sim-badge {
+    display: none;
+  }
+
+  .er-sim-body {
+    order: 1;
+    display: block;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .er-sim-body > small {
+    display: none;
+  }
+
+  .er-sim-body > strong {
+    font-size: 14.5px !important;
+  }
+
+  /* One quiet arrow marks the row as a link; the rest of the metadata is
+     already in the title on a phone. */
+  .er-sim-foot {
+    display: flex;
+    order: 2;
+    flex: none;
+    margin: 0;
+    padding: 0;
+    border-top: 0;
+  }
+
+  .er-sim-foot > span:first-child {
+    display: none;
+  }
+
+  /* The skeleton used to reserve 734 px for the old horizontal rail, which
+     left an empty screen under the four compact rows. */
+  .er-late-region--simulators {
+    --er-late-min: 360px;
+  }
+}
+
+/* A one-line empty state must not reserve the height of the four-card feed. */
+.er-late-region--feed:has(> .er-empty) {
+  --er-late-min: 0;
+}
+
+/* Exam materials: a compact link row, not three large empty cards. */
+.er-exam-materials {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--er-space-2);
+}
+
+.er-exam-material {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--er-space-2);
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: var(--er-radius-sm);
+  border-color: var(--er-border);
+  background: var(--er-surface);
+}
+
+.er-exam-material small {
+  margin: 0;
+  color: var(--er-text-secondary);
+  font-size: 10.5px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.er-exam-material strong {
+  font-size: var(--er-type-body);
+  font-weight: 600;
+}
+
+.er-exam-material .er-card-arrow {
+  margin-left: auto;
+  color: var(--er-primary);
+}
+
+.er-exam-material:hover {
+  border-color: var(--er-border-strong);
+  box-shadow: var(--er-shadow-card);
+}
+
+@media (max-width: 720px) {
+  .er-exam-materials {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Study tools are a single unbroken row of equal tiles. */
+.er-test-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--er-space-2);
+}
+
+.er-mini-link {
+  min-height: 56px;
+  border-radius: var(--er-radius-sm);
+  background: var(--er-surface);
+  border-color: var(--er-border);
+}
+
+@media (max-width: 640px) {
+  .er-test-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Home hero responsiveness
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   Student dashboard
+   -------------------------------------------------------------------------- */
+
+.dash-overview-head {
+  align-items: flex-start;
+  gap: var(--er-space-4);
+  padding-bottom: var(--er-space-4);
+  border-bottom: 1px solid var(--er-border);
+  margin-bottom: var(--er-space-4);
+}
+
+.dash-overview-role {
+  color: var(--er-primary);
+  font-weight: 650;
+}
+
+.dash-overview-name {
+  margin: 0;
+}
+
+.dash-overview-name h1 {
+  font-size: var(--er-type-page);
+}
+
+.dash-overview-head > div > p {
+  margin-top: var(--er-space-1);
+}
+
+.dash-overview-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--er-space-2);
+  flex-wrap: wrap;
+}
+
+.dash-profile-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--er-border);
+  background: var(--er-surface-soft);
+  color: var(--er-text-secondary);
+  font-size: var(--er-type-label);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dash-profile-state.is-complete {
+  border-color: var(--er-status-success-border);
+  background: var(--er-status-success-bg);
+  color: var(--er-status-success);
+}
+
+/* The attention panel is the one place crimson appears on this page. */
+.dash-attention {
+  border: 1px solid var(--er-crimson-border, #EBCFC6);
+  background: #FDF7F4;
+  border-radius: var(--er-radius-md);
+  padding: var(--er-space-3) var(--er-space-4);
+  margin-bottom: var(--er-space-4);
+}
+
+.dash-attention-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--er-space-2);
+  margin-bottom: var(--er-space-1);
+}
+
+.dash-attention-head h2 {
+  margin: 0;
+  font-size: var(--er-type-card);
+  font-weight: 680;
+  color: #7A3222;
+}
+
+.dash-attention-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--er-crimson);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dash-priority-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dash-priority-item {
+  display: flex;
+  align-items: center;
+  gap: var(--er-space-3);
+  padding: var(--er-space-2) 0;
+  border-top: 1px solid rgba(177, 73, 51, .12);
+  min-height: var(--er-tap-target);
+}
+
+.dash-priority-item:first-child {
+  border-top: 0;
+}
+
+.dash-priority-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.dash-priority-copy strong {
+  display: block;
+  font-size: var(--er-type-body);
+  font-weight: 650;
+  color: var(--er-text-primary);
+}
+
+.dash-priority-copy span {
+  display: block;
+  font-size: var(--er-type-meta);
+  color: var(--er-text-secondary);
+  line-height: 1.45;
+}
+
+/* KPI cards: label, number, context. Four maximum. */
+.dash-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--er-space-3);
+  margin-bottom: var(--er-space-5);
+}
+
+.dash-kpi {
+  padding: var(--er-space-3) var(--er-space-4);
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+  box-shadow: var(--er-shadow-card);
+}
+
+.dash-kpi-label,
+.dash-metric-label {
+  margin: 0;
+  color: var(--er-text-secondary);
+  font-size: var(--er-type-label);
+  font-weight: 560;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.dash-kpi-value {
+  display: block;
+  margin-top: 4px;
+  color: var(--er-text-primary);
+  font-size: 27px;
+  font-weight: 720;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-kpi-meta {
+  margin: 4px 0 0;
+  color: var(--er-text-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .dash-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Section titles inside dashboard cards: sentence case, one weight. */
+.dash-analytics-head h2,
+.dash-card-title {
+  text-transform: none;
+  letter-spacing: -.01em;
+}
+
+/* Empty states inside the overview are compact. Three padded dashed boxes in
+   a row read as three failures; one checklist plus one link is enough. */
+.dash-empty,
+.dash-empty-state {
+  padding: var(--er-space-4);
+}
+
+/* --------------------------------------------------------------------------
+   MyCBT
+   -------------------------------------------------------------------------- */
+
+.dash-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--er-space-3);
+}
+
+.dash-metric-card {
+  padding: var(--er-space-3) var(--er-space-4);
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+  box-shadow: var(--er-shadow-card);
+}
+
+.dash-metric-val {
+  display: block;
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 720;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+}
+
+.dash-metric-hint {
+  margin: 4px 0 0;
+  color: var(--er-text-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.dash-metric-hint:first-of-type {
+  max-width: var(--er-measure);
+}
+
+@media (max-width: 900px) {
+  .dash-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .dash-metric-strip,
+  .dash-kpi-grid {
+    gap: var(--er-space-2);
+  }
+
+  .dash-metric-val {
+    font-size: 22px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Profile
+   -------------------------------------------------------------------------- */
+
+.profile-page-head {
+  align-items: flex-start;
+  padding-bottom: var(--er-space-4);
+  border-bottom: 1px solid var(--er-border);
+  margin-bottom: var(--er-space-4);
+}
+
+.profile-form .profile-group-title {
+  text-transform: none;
+  letter-spacing: -.01em;
+  font-size: var(--er-type-card);
+  font-weight: 680;
+  color: var(--er-text-primary);
+}
+
+.profile-save-bar {
+  gap: var(--er-space-3);
+}
+
+@media (max-width: 760px) {
+  .profile-save-bar {
+    position: sticky;
+    bottom: calc(62px + env(safe-area-inset-bottom));
+    z-index: 20;
+    margin: 20px -18px -18px;
+    box-shadow: 0 -6px 18px rgba(15, 23, 42, .06);
+  }
+
+  .profile-save-actions {
+    width: 100%;
+  }
+
+  .profile-save-actions .hub-primary-btn,
+  .profile-save-actions button {
+    flex: 1;
+    min-height: var(--er-tap-target);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Controls — one predictable set of heights and states
+   -------------------------------------------------------------------------- */
+
+.hub-primary-btn,
+.hub-outline-btn,
+.hub-ghost-btn,
+.hub-icon-btn,
+.dash-btn,
+.admin-btn {
+  min-height: var(--er-control-height);
+  border-radius: var(--er-radius-sm);
+}
+
+.hub-outline-btn {
+  background: var(--er-surface);
+  border: 1px solid var(--er-secondary-border);
+  color: var(--er-text-primary);
+  font-weight: 600;
+}
+
+.hub-outline-btn:hover {
+  background: var(--er-secondary-hover-bg);
+  border-color: var(--er-secondary-hover-border);
+}
+
+.hub-primary-btn {
+  font-weight: 620;
+}
+
+@media (pointer: coarse) {
+  .hub-primary-btn,
+  .hub-outline-btn,
+  .dash-btn,
+  .admin-btn,
+  .er-sim-card,
+  .er-mini-link {
+    min-height: var(--er-tap-target);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Administrator console
+   -------------------------------------------------------------------------- */
+
+.admin-nav-group {
+  text-transform: none;
+  letter-spacing: .01em;
+  font-weight: 650;
+  color: var(--er-text-muted);
+}
+
+.admin-topbar h1,
+.admin-page-title {
+  letter-spacing: -.02em;
+}
+
+.admin-shell .admin-nav-link {
+  min-height: 38px;
+}
+
+@media (pointer: coarse) {
+  .admin-shell .admin-nav-link {
+    min-height: var(--er-tap-target);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Small screens: safe areas and readable measure
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .hub-container {
+    width: min(1180px, calc(100% - 28px));
+  }
+
+  .dash-overview-head p,
+  .profile-page-head p {
+    font-size: 13px;
+  }
+
+  .dash-overview-head {
+    flex-direction: column;
+  }
+
+  .dash-overview-actions {
+    width: 100%;
+  }
+
+  .dash-overview-actions .dash-profile-state {
+    order: 2;
+  }
+
+  .dash-overview-actions .dash-btn {
+    flex: 1;
+    justify-content: center;
+    min-height: var(--er-tap-target);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .er-sim-card:hover {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Header fit: the primary nav owns the row; search moves to the page itself
+   and remains available in the mobile drawer.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1240px) {
+  .hub-shell header .site-search--header {
+    display: none;
+  }
+}
+
+.hub-menu-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--er-text-primary);
+}
+
+@media (max-width: 370px) {
+  .hub-menu-label {
+    display: none;
+  }
+}
+
+.er-home-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  gap: var(--er-space-8);
+  align-items: center;
+}
+
+.er-home-intro-copy {
+  min-width: 0;
+}
+
+.er-home-steps {
+  display: grid;
+  gap: var(--er-space-4);
+  margin: 0;
+  padding: var(--er-space-2) 0 var(--er-space-2) var(--er-space-6);
+  border-left: 1px solid var(--er-border);
+  list-style: none;
+}
+
+.er-home-steps li {
+  display: flex;
+  gap: var(--er-space-3);
+  align-items: flex-start;
+}
+
+.er-home-steps .n {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--er-primary-soft-border);
+  background: var(--er-surface);
+  color: var(--er-primary);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.er-home-steps b {
+  display: block;
+  color: var(--er-text-primary);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.er-home-steps small {
+  display: block;
+  margin-top: 2px;
+  color: var(--er-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .er-home-intro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--er-space-5);
+  }
+
+  .er-home-steps {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Dashboard heading overrides
+   The dashboard sheet is code-split and loads after this layer, so these
+   selectors carry one extra class to win on specificity rather than order.
+   Uppercase labels were the single biggest reason the console read as a wall
+   of shouting text.
+   -------------------------------------------------------------------------- */
+
+.dash-card .dash-card-title,
+.dash-card .dash-card-header h2,
+.dash-card .dash-recent-activity-heading h3,
+.dash-card h3 {
+  text-transform: none !important;
+  letter-spacing: -.01em !important;
+}
+
+.dash-card .dash-card-title {
+  font-size: 15px !important;
+  font-weight: 650;
+}
+
+.dash-card .dash-card-header h2 {
+  font-size: 15px;
+}
+
+.dash-card .dash-recent-activity-heading h3 {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.dash-metric-strip .dash-metric-label,
+.dash-kpi-grid .dash-kpi-label {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 12px;
+}
+
+.dash-cbt-latest-grid span {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 11px;
+}
+
+.dash-insight h3 {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.dash-card .dash-empty,
+.dash-card > .dash-empty {
+  padding: var(--er-space-4) !important;
+}
+
+/* Dashboard mobile: keep the icon beside the copy and let the action wrap
+   underneath the sentence, not after a full-width split. */
+@media (max-width: 640px) {
+  .dash-attention .dash-priority-item {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .dash-attention .dash-priority-copy {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .dash-attention .dash-priority-item .dash-card-link {
+    flex: 1 1 100%;
+    margin-left: 40px;
+    max-width: none;
+    text-align: left;
+  }
+
+  .dash-kpi {
+    padding: 12px 14px;
+  }
+}
+
+@media (min-width: 360px) and (max-width: 520px) {
+  .dash-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+.dash-metric-strip .dash-metric-label,
+.dash-kpi-grid .dash-kpi-label {
+  font-weight: 560 !important;
+}
+
+.dash-metric-hint {
+  font-weight: 400;
+}
+
+/* KPI context is a sentence, not a truncated ticker. */
+.dash-kpi-grid .dash-kpi-meta {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* Admin navigation groups are labels, not section shouts. */
+.admin-sidebar .admin-nav-group {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+/* Filters wrap instead of disappearing into a sideways scroller on a phone. */
+@media (max-width: 640px) {
+  .er-library-toolbar .er-pills {
+    overflow: visible;
+    flex-wrap: wrap;
+  }
+}
+
+/* MyCBT metrics: the code-split dashboard sheet fixes four columns, which
+   leaves the last row of seven metrics short. Flex lets every row finish
+   flush without hard-coding a card count. */
+.dash-metric-strip {
+  display: flex !important;
+  flex-wrap: wrap;
+}
+
+.dash-metric-strip > .dash-metric-card {
+  flex: 1 1 168px;
+  min-width: 0;
+}
+
+/* Dashboard sidebar groups are labels, not shouts. */
+.edureach-dash-sidebar .dash-nav-label {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--er-text-secondary);
+}
+
+.dash-table th {
+  text-transform: none !important;
+  letter-spacing: .01em !important;
+  font-size: 11.5px;
+}
+
+.dash-status-pill {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 600;
+}
+
+/* The analysis section has three findings. Without a surface they read as one
+   long block of prose after the charts. */
+.dash-learning-progress,
+[aria-labelledby="dash-subject-summary"] {
+  margin-top: var(--er-space-4);
+  padding: var(--er-space-4);
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+}
+
+.dash-learning-progress h3 {
+  margin: var(--er-space-4) 0 0;
+  padding-top: var(--er-space-4);
+  border-top: 1px solid var(--er-border-subtle);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.dash-learning-progress .dash-card-title,
+[aria-labelledby="dash-subject-summary"] .dash-card-title {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.dash-card .dash-chart-empty,
+.dash-card .dash-empty {
+  margin: var(--er-space-3) 0 0;
+  text-align: left;
+  color: var(--er-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* Profile: leaving without saving is a quiet text action. A second full-width
+   outline button next to a save bar read as two competing cancel buttons. */
+.profile-page-head > .profile-cancel-link {
+  flex: none;
+  min-height: 0;
+  height: auto;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--er-text-secondary);
+  font-size: 12.5px;
+  font-weight: 560;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.profile-page-head > .profile-cancel-link:hover {
+  background: transparent;
+  color: var(--er-primary);
+}
+
+@media (pointer: coarse) {
+  .profile-page-head > .profile-cancel-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 4px;
+  }
+}
+
+@media (max-width: 760px) {
+  .profile-page-head {
+    display: grid;
+    gap: 4px;
+    justify-items: start;
+  }
+
+  .profile-page-head > .profile-cancel-link {
+    order: 0;
+  }
+}
+
+/* Admin KPIs: labels are words, and "Unavailable" is a word, not an excuse
+   to break at any letter on a 390px screen. */
+.admin-kpi span {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--er-text-secondary) !important;
+}
+
+@media (max-width: 640px) {
+  .admin-kpi-grid .admin-kpi strong {
+    font-size: 21px !important;
+    line-height: 1.2;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+  }
+}
+
+/* Admin summary values are short words, not URLs: do not break them mid-word. */
+.admin-summary .admin-summary-value {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+@media (max-width: 640px) {
+  .admin-summary .admin-summary-value {
+    font-size: 20px !important;
+  }
+}
+
+/* Crimson is reserved for attention and destruction. A session type and a
+   step number are neither. */
+.er-setup-duration {
+  color: var(--er-text-secondary);
+}
+
+.er-setup-duration svg {
+  color: var(--er-primary);
+}
+
+.er-setup-guide-item > span {
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+}
+
+.er-setup-section-heading > svg {
+  color: var(--er-text-secondary);
+}
+
+/* Footer column headings are labels, not a second navigation shout. */
+.er-footer-heading {
+  text-transform: none;
+  letter-spacing: .01em;
+  font-size: 13px;
+  font-weight: 650;
+}

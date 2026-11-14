@@ -1,5 +1,5 @@
 import { userFacingError } from '../lib/errors';
-import { ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowRight, Clock3, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react';
 import { Suspense, lazy, useEffect, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
@@ -25,9 +25,9 @@ const ContinuePracticeCard = lazy(() => import('../src/components/ContinuePracti
 // (er-mini-link + the shared identity mark): same card, same edge, same hover.
 // The simulator-first layout changed the order of the page, not the card design.
 const toolTiles = [
-  { title: 'Past questions', href: '/past-questions' },
   { title: 'Screening calculator', href: '/screening-calculator' },
   { title: 'CGPA calculator', href: '/tools/cgpa-calculator' },
+  { title: 'School finder', href: '/schools' },
 ];
 
 // The three main exam bodies live on the home page by name. Keeping this as a
@@ -78,36 +78,68 @@ export default function HubHomePage() {
     <HubLayout>
       <div className="er-portal">
         <div className="er-container hub-home-container">
-          {/* The page keeps one heading for structure and screen readers, as the
-              homepage did before the simulator rewrite. The visible title is the
-              page bar and the sections below it; there is no promotional hero. */}
+          {/* One h1 for structure and screen readers, followed by the visible
+              product statement. The page leads with what EduReach is for and
+              the two actions a student can take immediately. */}
           <h1 className="er-visually-hidden">EduReach Hub CBT practice, past questions and student services</h1>
 
-          <SiteSearch
-            variant="home"
-            label="Search services and study resources"
-            placeholder="Search services, subjects, exams or news"
-          />
-
-          {/* The study-centre card is one click to the past-question library.
-              No start-practice button, no PDF list: the card is the link. */}
-          <a href="/past-questions" className="er-banner">
-            <div className="er-banner-art">
-              <img src="/news/photos/jamb-cbt-banner.webp" alt="CBT study centre" width={160} height={80} loading="lazy" decoding="async" />
+          {/* The first screen answers three questions in order: what is this,
+              what can I do here, and which exam am I sitting? The visible
+              title is an h2 because the screen-reader h1 stays first. */}
+          <section className="er-home-intro" aria-labelledby="er-home-title">
+            <div className="er-home-intro-copy">
+              <span className="er-home-kicker"><Sparkles size={14} aria-hidden="true" /> EduReach study centre</span>
+              <h2 className="er-home-title" id="er-home-title">Practise the exam you are sitting.</h2>
+              <p className="er-home-sub">
+                Timed JAMB, WAEC, NECO and Post-UTME papers with answers saved as you go,
+                a real countdown, and a result you can understand.
+              </p>
+              <div className="er-home-actions">
+                <a className="hub-primary-btn" href="/cbt">Start CBT practice <ArrowRight size={14} aria-hidden="true" /></a>
+                <a className="hub-outline-btn" href="/past-questions">Browse past questions</a>
+              </div>
+              <ul className="er-home-proof" aria-label="How practice works">
+                <li><b>4</b> exam bodies</li>
+                <li><Clock3 size={14} aria-hidden="true" /><span><b>Exam pace</b> timing</span></li>
+                <li><ShieldCheck size={14} aria-hidden="true" /><span><b>Answers saved</b> as you go</span></li>
+              </ul>
             </div>
-            <div>
-              <small>EDUREACH STUDY CENTRE</small>
-              <strong>Past questions &amp; CBT practice</strong>
-              <p>Timed JAMB, WAEC, NECO and Post-UTME practice.</p>
-            </div>
-            <ArrowRight size={18} />
-          </a>
+            <ol className="er-home-steps" aria-label="How a practice paper works">
+              <li><span className="n">1</span><span><b>Pick your exam</b><small>JAMB, WAEC, NECO or Post-UTME.</small></span></li>
+              <li><span className="n">2</span><span><b>Set your paper</b><small>Pick subjects and see the time before you start.</small></span></li>
+              <li><span className="n">3</span><span><b>Review the result</b><small>Every paper is saved to My CBT.</small></span></li>
+            </ol>
+          </section>
 
-          {isAuthenticated && (
-            <Suspense fallback={null}>
-              <ContinuePracticeCard />
-            </Suspense>
-          )}
+          <div className="er-home-search">
+            <SiteSearch
+              variant="home"
+              label="Search services and study resources"
+              placeholder="Search services, subjects, exams or news"
+            />
+          </div>
+
+          <div className="er-home-quick">
+            {/* The study-centre card is one click to the past-question library.
+                No start-practice button, no PDF list: the card is the link. */}
+            <a href="/past-questions" className="er-banner">
+              <div className="er-banner-art">
+                <img src="/news/photos/jamb-cbt-banner.webp" alt="CBT study centre" width={160} height={80} loading="lazy" decoding="async" />
+              </div>
+              <div>
+                <small>EDUREACH STUDY CENTRE</small>
+                <strong>Past questions &amp; CBT practice</strong>
+                <p>Timed JAMB, WAEC, NECO and Post-UTME practice.</p>
+              </div>
+              <ArrowRight size={18} />
+            </a>
+
+            {isAuthenticated && (
+              <Suspense fallback={null}>
+                <ContinuePracticeCard />
+              </Suspense>
+            )}
+          </div>
 
           <section className="er-section">
             <SectionHead title="Choose your exam" />

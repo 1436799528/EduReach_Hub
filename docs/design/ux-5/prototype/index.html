@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EduReach UX-5 interactive prototype</title>
+<style>
+  :root{
+    --green:#174A3A;--green-hover:#123C2F;--green-soft:#EDF5F0;--green-border:#CFE4D8;
+    --crimson:#B14933;--crimson-soft:#FBF0EC;--crimson-border:#EBCFC6;
+    --ink:#131B2E;--body:#475467;--muted:#667085;--line:#E2E8F0;--line-strong:#CBD5E1;
+    --bg:#F7F8F7;--surface:#FFFFFF;--surface-soft:#F4F6F5;
+    --warn:#92400E;--warn-bg:#FFFBEB;--warn-line:#FDE68A;
+    --ok:#166534;--ok-bg:#F0FDF4;--ok-line:#BBF7D0;
+    --r-sm:8px;--r:12px;--r-lg:16px;
+    --shadow:0 1px 2px rgba(16,24,40,.05);
+    --nav-w:232px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.55 Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;cursor:pointer}
+  h1,h2,h3,p{margin:0}
+  :focus-visible{outline:2px solid var(--green);outline-offset:2px}
+  .proto-bar{position:sticky;top:0;z-index:80;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:8px 16px;background:#0F172A;color:#E2E8F0;font-size:12px}
+  .proto-bar strong{color:#fff;letter-spacing:.06em;font-size:11px;text-transform:uppercase}
+  .proto-bar .sp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .proto-bar button{background:#1E293B;border:1px solid #334155;color:#E2E8F0;border-radius:6px;padding:4px 9px;font-size:11.5px}
+  .proto-bar button[aria-pressed="true"]{background:#fff;color:#0F172A;border-color:#fff}
+  .app-header{position:sticky;top:37px;z-index:60;background:rgba(255,255,255,.97);border-bottom:1px solid var(--line)}
+  .app-header .inner{max-width:1240px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:18px}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:730;letter-spacing:-.02em;font-size:18px}
+  .brand svg{flex:none}
+  .brand .hub{color:var(--crimson)}
+  .top-nav{display:flex;gap:20px;font-size:13.5px;font-weight:560;color:#334155}
+  .top-nav a{padding:6px 0;border-bottom:2px solid transparent}
+  .top-nav a[aria-current="page"]{color:var(--green);border-color:var(--green)}
+  .top-nav a:hover{color:var(--green)}
+  .head-search{margin-left:auto;display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;min-width:220px}
+  .head-search input{border:0;background:transparent;padding:9px 12px;width:100%;font:inherit;font-size:13px;outline:0}
+  .head-search button{border:0;border-left:1px solid var(--line);background:#F8FAFC;padding:9px 12px;font-size:12.5px;font-weight:600}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:700;border:1px solid var(--green-border);flex:none}
+  .bell{position:relative;background:#fff;border:1px solid var(--line);width:36px;height:36px;border-radius:9px;display:grid;place-items:center}
+  .bell .dot{position:absolute;top:7px;right:7px;width:7px;height:7px;background:var(--crimson);border-radius:50%;border:1.5px solid #fff}
+  .menu-btn{display:none;background:#fff;border:1px solid var(--line);border-radius:9px;width:38px;height:38px;place-items:center}
+  .shell{max-width:1240px;margin:auto;display:grid;grid-template-columns:var(--nav-w) minmax(0,1fr);gap:28px;padding:24px 20px 56px;min-height:calc(100vh - 120px)}
+  .side{position:sticky;top:96px;align-self:start;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:10px;box-shadow:var(--shadow)}
+  .side .group{margin:8px 0 4px;padding:12px 10px 2px;border-top:1px solid #EEF2F6;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .side .group:first-child{border-top:0;margin-top:0;padding-top:4px}
+  .side a{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:13.5px;color:#334155;min-height:40px}
+  .side a:hover{background:var(--surface-soft)}
+  .side a[aria-current="page"]{background:var(--green-soft);color:var(--green);font-weight:650}
+  .side svg{flex:none;color:#64748B}
+  .side a[aria-current="page"] svg{color:var(--green)}
+  main{min-width:0}
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .page-head .eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);font-weight:650;margin-bottom:5px}
+  .page-head h1{font-size:clamp(24px,3vw,32px);line-height:1.15;letter-spacing:-.02em;font-weight:730}
+  .page-head .sub{margin-top:6px;color:var(--body);font-size:14px;max-width:640px}
+  .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 14px;border-radius:9px;border:1px solid transparent;font-size:13px;font-weight:620;background:var(--green);color:#fff;white-space:nowrap}
+  .btn:hover{background:var(--green-hover)}
+  .btn.secondary{background:#fff;border-color:var(--line-strong);color:#1E293B}
+  .btn.secondary:hover{background:#F8FAFC}
+  .btn.quiet{background:transparent;color:var(--green);border-color:transparent;padding:0 6px}
+  .btn.small{min-height:34px;font-size:12.5px;padding:0 11px}
+  .btn.danger{background:#fff;border-color:var(--crimson-border);color:var(--crimson)}
+  .grid{display:grid;gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+  .card h2{font-size:15px;font-weight:650;letter-spacing:-.01em}
+  .card .hint{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .next-step{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(0deg,rgba(237,245,240,.5),rgba(237,245,240,.5)),#fff;border:1px solid var(--green-border)}
+  .next-step .n{display:flex;gap:12px;align-items:flex-start;min-width:0}
+  .next-step .icon{width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid var(--green-border);display:grid;place-items:center;color:var(--green);flex:none}
+  .next-step h2 a{color:var(--green);text-decoration:underline;text-underline-offset:2px}
+  .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .metric{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+  .metric .label{font-size:12px;color:var(--body);font-weight:560}
+  .metric .value{font-size:26px;font-weight:720;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.1}
+  .metric .meta{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .metric .value.empty{color:#94A3B8;font-size:22px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #EEF2F6}
+  .row:first-of-type{border-top:0;padding-top:2px}
+  .row .main{min-width:0;flex:1}
+  .row .title{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:600;background:var(--surface-soft);border:1px solid var(--line);color:#334155;white-space:nowrap}
+  .chip.good{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+  .chip.warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+  .chip.attention{background:var(--crimson-soft);border-color:var(--crimson-border);color:#8A3220}
+  .empty{padding:22px;border:1px dashed var(--line-strong);border-radius:10px;text-align:center;color:var(--muted);font-size:13px;background:#FBFCFC}
+  .empty strong{display:block;color:var(--ink);font-size:13.5px;margin-bottom:3px}
+  .callout{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.5;border:1px solid var(--line);background:var(--surface-soft)}
+  .callout.attention{background:var(--crimson-soft);border-color:var(--crimson-border);color:#7A3222}
+  .callout.info{background:#EFF6FF;border-color:#BFDBFE;color:#1E3A8A}
+  .section{margin-top:22px}
+  .section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .section-head h2{font-size:16px;font-weight:650;letter-spacing:-.01em}
+  .section-head a{font-size:12.5px;color:var(--green);font-weight:600}
+  /* setup */
+  .setup{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+  .setup .summary{position:sticky;top:96px}
+  .rules{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .rule{border:1px solid var(--line);border-radius:10px;padding:12px;background:#FBFCFC}
+  .rule b{display:block;font-size:13px;margin:4px 0 2px}
+  .rule span{font-size:12px;color:var(--muted);line-height:1.45}
+  .rule .num{width:22px;height:22px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:700}
+  .subject{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:8px}
+  .subject:has(input:checked){border-color:var(--green);background:var(--green-soft)}
+  .subject input{width:18px;height:18px;accent-color:var(--green)}
+  .subject .name{flex:1;font-size:13.5px;font-weight:560}
+  .subject .meta{font-size:11.5px;color:var(--muted)}
+  .summary-line{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #EEF2F6;font-size:13px}
+  .summary-line:first-of-type{border-top:0}
+  .summary-line b{font-variant-numeric:tabular-nums}
+  .big{font-size:30px;font-weight:740;letter-spacing:-.02em}
+  /* exam */
+  .exam-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r);background:#fff;margin-bottom:14px}
+  .timer{font-variant-numeric:tabular-nums;font-weight:700;font-size:17px}
+  .exam-grid{display:grid;grid-template-columns:minmax(0,1fr) 236px;gap:16px;align-items:start}
+  .qpanel{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+  .qmeta{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .qpanel h2{font-size:18px;line-height:1.45;font-weight:600}
+  .option{display:flex;gap:11px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px 13px;margin-top:9px;font-size:14px;min-height:48px}
+  .option:hover{border-color:var(--line-strong);background:#FBFCFC}
+  .option[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft);box-shadow:inset 0 0 0 1px var(--green)}
+  .option .key{width:24px;height:24px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:none}
+  .palette{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .palette button{height:36px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600}
+  .palette button.answered{background:var(--green-soft);border-color:var(--green-border);color:var(--green)}
+  .palette button.current{background:var(--green);border-color:var(--green);color:#fff}
+  .palette button.flagged{box-shadow:inset 0 -3px 0 var(--crimson)}
+  /* results */
+  .score-hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+  .score-ring{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--p,75) * 1%),#E8EEEA 0);flex:none}
+  .score-ring .inner{width:76px;height:76px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:22px;font-weight:740;font-variant-numeric:tabular-nums}
+  .bar{height:8px;border-radius:4px;background:#EDF1EE;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--green);border-radius:4px}
+  /* profile */
+  .profile-grid{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  .identity{display:flex;gap:13px;align-items:center}
+  .identity .big-avatar{width:56px;height:56px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-weight:720;border:1px solid var(--green-border);flex:none}
+  .progress{height:7px;background:#EDF1EE;border-radius:4px;overflow:hidden;margin-top:12px}
+  .progress i{display:block;height:100%;width:65%;background:var(--green)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+  .field input,.field select{width:100%;min-height:42px;border:1px solid var(--line-strong);border-radius:8px;padding:9px 11px;background:#fff;font:inherit;font-size:14px}
+  .field .help{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  .group-title{font-size:12px;text-transform:none;letter-spacing:0;color:var(--body);font-weight:650;margin:20px 0 10px;padding-top:16px;border-top:1px solid #EEF2F6}
+  .group-title:first-child{margin-top:0;padding-top:0;border-top:0}
+  .save-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r);background:#fff;margin-top:14px}
+  /* notifications */
+  .filters{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+  .filters button{border:0;background:transparent;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--body)}
+  .filters button[aria-pressed="true"]{background:var(--green-soft);color:var(--green)}
+  .notif{display:flex;gap:11px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:8px;align-items:flex-start}
+  .notif.unread{background:#FBFDFC;border-color:var(--green-border)}
+  .notif .dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-top:7px;flex:none}
+  .notif.read .dot{background:#E2E8F0}
+  .notif .body{flex:1;min-width:0}
+  .notif .t{font-size:13.5px;font-weight:600}
+  .notif .m{font-size:12.5px;color:var(--body);margin-top:2px}
+  .notif .time{font-size:11.5px;color:var(--muted);white-space:nowrap}
+  /* admin */
+  .admin-bar{background:#0F172A;color:#E2E8F0;font-size:12.5px}
+  .admin-bar .inner{max-width:1400px;margin:auto;padding:9px 20px;display:flex;align-items:center;gap:14px}
+  .admin-bar .tag{background:#1E293B;border:1px solid #334155;border-radius:5px;padding:2px 7px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+  .admin-shell{max-width:1400px;margin:auto;display:grid;grid-template-columns:236px minmax(0,1fr);gap:24px;padding:20px 20px 56px}
+  .admin-side{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:10px;position:sticky;top:96px;align-self:start}
+  .admin-side .group{padding:12px 10px 2px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:650}
+  .admin-side a{display:block;padding:8px 10px;border-radius:7px;font-size:13px;color:#334155}
+  .admin-side a[aria-current="page"]{background:#F1F5F9;color:#0F172A;font-weight:650;box-shadow:inset 3px 0 0 var(--green)}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;font-size:13px}
+  th{text-align:left;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);background:#F8FAFC}
+  td{padding:11px 12px;border-bottom:1px solid #EEF2F6;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .toolbar input{min-height:38px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 11px;font:inherit;font-size:13px;min-width:240px;flex:1}
+  .toolbar select{min-height:38px;border:1px solid var(--line-strong);border-radius:8px;padding:8px;background:#fff;font-size:13px}
+  .drawer{position:fixed;inset:0;z-index:120;display:none}
+  .drawer.open{display:block}
+  .drawer .scrim{position:absolute;inset:0;background:rgba(15,23,42,.45)}
+  .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:#fff;padding:20px;overflow:auto;box-shadow:-12px 0 40px rgba(15,23,42,.18)}
+  .drawer h2{font-size:18px;margin-bottom:4px}
+  .drawer .close{position:absolute;left:20px;bottom:20px;right:20px;display:flex;gap:8px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:#0F172A;color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;z-index:200;transition:.2s;pointer-events:none;max-width:calc(100% - 32px)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .mobile-drawer{display:none}
+  .bottom-nav{display:none}
+  .muted{color:var(--muted)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  [hidden]{display:none!important}
+ /* tablet */
+  @media (max-width:1080px){
+    .shell{grid-template-columns:1fr;gap:0;padding-top:16px}
+    .side{display:none}
+    .setup{grid-template-columns:1fr}
+    .setup .summary{position:static}
+    .exam-grid{grid-template-columns:1fr}
+    .profile-grid{grid-template-columns:1fr}
+    .admin-shell{grid-template-columns:1fr}
+    .admin-side{display:none}
+    .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .head-search{display:none}
+    .menu-btn{display:grid}
+    .top-nav{display:none}
+  }
+  @media (max-width:720px){
+    :root{--r:12px}
+    .app-header{top:0}
+    .app-header .inner{padding:8px 14px;gap:10px}
+    .brand{font-size:16px}
+    .brand svg{width:30px;height:30px}
+    .shell{padding:14px 14px calc(92px + env(safe-area-inset-bottom));gap:0}
+    .page-head{margin-bottom:16px;gap:10px}
+    .page-head h1{font-size:23px}
+    .page-head .sub{font-size:13px}
+    .next-step{padding:14px;align-items:flex-start}
+    .next-step .btn{width:100%}
+    .metrics{grid-template-columns:repeat(2,1fr);gap:9px}
+    .metric{padding:12px}
+    .metric .value{font-size:22px}
+    .two{grid-template-columns:1fr}
+    .rules{grid-template-columns:1fr}
+    .exam-grid{display:block}
+    .qpanel{padding:16px}
+    .palette{grid-template-columns:repeat(6,1fr)}
+    .setup .summary{position:static}
+    .setup .summary .btn{width:100%}
+    .form-grid{grid-template-columns:1fr}
+    .profile-grid{gap:12px}
+    .notif{flex-wrap:wrap}
+    .notif .time{margin-left:19px}
+    .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:90;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(15,23,42,.06)}
+    .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:600;color:#64748B;padding:5px 2px;border-radius:8px;min-height:48px;justify-content:center}
+    .bottom-nav a[aria-current="page"]{color:var(--green)}
+    .bottom-nav a.cbt{margin-top:-14px;background:var(--green);color:#fff;border-radius:12px;flex:0 0 64px;height:56px;justify-content:center;box-shadow:0 6px 16px rgba(23,74,58,.28)}
+    .mobile-drawer{display:block;position:fixed;inset:0;z-index:130;background:rgba(15,23,42,.5)}
+    .mobile-drawer[hidden]{display:none}
+    .mobile-drawer .panel{width:min(320px,88%);height:100%;background:#fff;padding:18px;overflow:auto;display:flex;flex-direction:column}
+    .mobile-drawer nav a{display:block;padding:11px 8px;border-radius:8px;font-size:14px;font-weight:560}
+    .mobile-drawer nav a[aria-current="page"]{background:var(--green-soft);color:var(--green)}
+    .admin-shell{padding:14px 14px calc(24px + env(safe-area-inset-bottom))}
+    .admin-side{display:none}
+    .admin-bar .inner{padding:8px 14px}
+    .score-hero{gap:14px}
+    .score-ring{width:82px;height:82px}
+    .score-ring .inner{width:64px;height:64px;font-size:19px}
+    table,.table-wrap{display:block;overflow-x:auto;white-space:nowrap}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="proto-bar" role="status">
+  <div class="sp"><strong>Interactive prototype</strong><span>Simulated data — no production writes</span></div>
+  <div class="sp">
+    <button id="mode-student" aria-pressed="true">Student app</button>
+    <button id="mode-admin" aria-pressed="false">Admin console</button>
+    <button id="reset">Reset prototype</button>
+  </div>
+</div>
+
+<header class="app-header">
+  <div class="inner">
+    <a class="brand" href="#/dashboard" aria-label="EduReach Hub prototype home">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" fill="#174A3A"/><path d="M8 22V12l6-3 6 3v10l-6-3-6 3Z" fill="#fff"/><path d="M20 12l6-3v10l-6 3" fill="#B14933"/></svg>
+      EduReach<span class="hub">Hub</span>
+    </a>
+    <nav class="top-nav" aria-label="Primary">
+      <a href="#/dashboard">Home</a>
+      <a href="#/setup">CBT practice</a>
+      <a href="#/mycbt">Past questions</a>
+      <a href="#/notifications">Updates</a>
+    </nav>
+    <form class="head-search" role="search" onsubmit="return false"><input aria-label="Search prototype" placeholder="Search services, exams or news"><button>Search</button></form>
+    <button class="bell" aria-label="Notifications (2 unread)" onclick="location.hash='#/notifications'">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span class="dot"></span>
+    </button>
+    <div class="avatar" title="Amaka Okonkwo">AO</div>
+    <button class="menu-btn" aria-label="Open menu" aria-expanded="false" id="menu-open">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="side" aria-label="Student sections">
+    <div class="group">Study</div>
+    <a href="#/dashboard" data-nav="dashboard">Overview</a>
+    <a href="#/mycbt" data-nav="mycbt">My CBT</a>
+    <a href="#/setup" data-nav="setup">Start practice</a>
+    <a href="#/notifications" data-nav="notifications">Notifications <span class="chip attention" style="margin-left:auto">2</span></a>
+    <div class="group">Account</div>
+    <a href="#/profile" data-nav="profile">Academic profile</a>
+    <a href="#/profile" data-nav="profile">Security</a>
+    <a href="#/dashboard" onclick="toast('Prototype: sign out is simulated')">Sign out</a>
+  </aside>
+  <main id="view" tabindex="-1"></main>
+</div>
+<div id="admin-root" hidden></div>
+
+<nav class="bottom-nav" aria-label="Mobile navigation">
+  <a href="#/dashboard" data-nav="dashboard">Home</a>
+  <a href="#/mycbt" data-nav="mycbt">My CBT</a>
+  <a href="#/setup" class="cbt" data-nav="setup">Start</a>
+  <a href="#/notifications" data-nav="notifications">Alerts</a>
+  <a href="#/profile" data-nav="profile">Account</a>
+</nav>
+
+<div class="mobile-drawer" id="drawer" hidden>
+  <div class="scrim" data-close-drawer></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-label="Menu">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <strong>Menu</strong>
+      <button class="btn secondary small" data-close-drawer>Close</button>
+    </div>
+    <nav aria-label="Mobile menu">
+      <a href="#/dashboard">Overview</a>
+      <a href="#/mycbt">My CBT</a>
+      <a href="#/setup">Start practice</a>
+      <a href="#/notifications">Notifications</a>
+      <a href="#/profile">Academic profile</a>
+      <a href="#/admin" id="admin-link">Admin console</a>
+    </nav>
+    <p class="muted" style="margin-top:auto;font-size:11.5px;padding-top:20px">Prototype only. Actions are simulated and never reach EduReach servers.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="drawer" id="record-drawer" aria-hidden="true">
+  <div class="scrim" data-close-record></div>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="record-title">
+    <div id="record-body"></div>
+    <div class="close"><button class="btn secondary" data-close-record>Close</button><button class="btn" onclick="toast('Simulated: record updated')">Save changes</button></div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------- state */
+const INITIAL = {
+  screen: 'dashboard',
+  mode: 'student',
+  selected: ['Use of English', 'Mathematics'],
+  answers: {},
+  flagged: {},
+  q: 0,
+  submitted: false,
+  profile: { name:'Amaka Okonkwo', email:'amaka@example.com', phone:'08012345678', institution:'University of Lagos', course:'Mass Communication', level:'200', state:'Lagos' },
+  unread: 2,
+  adminQuery: '',
+  adminRole: 'all',
+};
+let state = structuredClone(INITIAL);
+let timer = null;
+const SUBJECTS = [
+  {name:'Use of English', count: 40, required:true},
+  {name:'Mathematics', count: 40},
+  {name:'Biology', count: 40},
+  {name:'Government', count: 40},
+  {name:'Literature in English', count: 40},
+  {name:'Economics', count: 40},
+];
+const QUESTIONS = [
+  {subject:'Use of English', prompt:'Choose the option that is nearest in meaning to the underlined word: The committee’s decision was <u>unanimous</u>.', options:['divided','unopposed','delayed','confusing'], correct:1},
+  {subject:'Mathematics', prompt:'If 3x + 7 = 25, what is the value of x?', options:['4','5','6','7'], correct:2},
+  {subject:'Use of English', prompt:'Which option best completes the sentence? Neither the teacher nor the students ___ arrived.', options:['has','have','is','was'], correct:1},
+  {subject:'Mathematics', prompt:'A trader buys an item for ₦4,000 and sells it for ₦5,000. What is the percentage profit?', options:['10%','20%','25%','40%'], correct:2},
+  {subject:'Biology', prompt:'Which organelle is responsible for producing energy in a cell?', options:['Nucleus','Ribosome','Mitochondrion','Golgi body'], correct:2},
+  {subject:'Economics', prompt:'Demand for a good is said to be elastic when a small change in price causes:', options:['no change in quantity demanded','a proportionally larger change in quantity demanded','a proportionally smaller change','a fall in supply'], correct:1},
+];
+const ATTEMPTS = [
+  {id:'a1', date:'10 Nov 2026', subject:'Use of English · Mathematics', score:75, correct:30, total:40},
+  {id:'a2', date:'6 Nov 2026', subject:'Biology', score:62, correct:25, total:40},
+  {id:'a3', date:'1 Nov 2026', subject:'JAMB mock · 4 subjects', score:null, correct:null, total:160, expired:true},
+];
+const REQUESTS = [
+  {ref:'ER-27K4', service:'WAEC / NECO result checking', status:'In progress', age:'2 days', student:'Amaka Okonkwo'},
+  {ref:'ER-19B2', service:'JAMB slip printing', status:'Completed', age:'9 days', student:'Amaka Okonkwo'},
+  {ref:'ER-31M8', service:'NELFUND loan application', status:'Needs action', age:'4 hours', student:'Chidi Eze'},
+  {ref:'ER-30K1', service:'Admission letter support', status:'In progress', age:'1 day', student:'Fatima Bello'},
+];
+const USERS = [
+  {name:'Amaka Okonkwo', email:'amaka@example.com', role:'Student', status:'Active', joined:'12 Sep 2026', last:'2 min ago'},
+  {name:'Chidi Eze', email:'chidi@example.com', role:'Student', status:'Active', joined:'3 Oct 2026', last:'1 hour ago'},
+  {name:'Fatima Bello', email:'fatima@example.com', role:'Student', status:'Invited', joined:'—', last:'—'},
+  {name:'James Adeyemi', email:'james@edureachhub.ng', role:'Admin', status:'Active', joined:'1 Aug 2026', last:'Yesterday'},
+];
+
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const esc = (s='') => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(message){
+  const el = $('#toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ---------------------------------------------------------------- helpers */
+const icons = {
+  spark:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/></svg>',
+  chart:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  check:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 12 5 5L20 6"/></svg>',
+  arrow:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  clock:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+};
+const pageHead = (eyebrow, title, sub, actions='') => `
+  <div class="page-head">
+    <div><div class="eyebrow">${esc(eyebrow)}</div><h1>${title}</h1>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}</div>
+    ${actions ? `<div class="actions">${actions}</div>` : ''}
+  </div>`;
+
+const selectedSubjects = () => state.selected;
+const questionCount = () => Math.max(10, selectedSubjects().length * 10);
+const minutes = () => Math.max(20, selectedSubjects().length * 25);
+
+/* ---------------------------------------------------------------- views */
+function dashboard(){
+  const latest = ATTEMPTS.find(a => a.score !== null);
+  return `
+    ${pageHead('Student · Overview', 'Good afternoon, Amaka', 'You are preparing for JAMB 2027. Your last paper scored 75%.', `<a class="btn" href="#/setup">Start practice</a>`)}
+    <div class="card next-step">
+      <div class="n">
+        <span class="icon">${icons.spark}</span>
+        <div><h2>Finish your academic profile</h2><p class="hint">Two details are missing: department and expected graduation year. They personalise exam guidance.</p></div>
+      </div>
+      <a class="btn secondary" href="#/profile">Complete profile</a>
+    </div>
+    <div class="metrics" style="margin-top:14px">
+      <div class="metric"><div class="label">Average score</div><div class="value">69%</div><div class="meta">Across 2 scored papers</div></div>
+      <div class="metric"><div class="label">Papers completed</div><div class="value">2</div><div class="meta">1 ran out of time</div></div>
+      <div class="metric"><div class="label">Open requests</div><div class="value">1</div><div class="meta">ER-27K4 · in progress</div></div>
+      <div class="metric"><div class="label">Study streak</div><div class="value">3 <span style="font-size:13px;font-weight:600;color:#667085">days</span></div><div class="meta">Best: 6 days</div></div>
+    </div>
+    <div class="two section">
+      <section class="card" aria-labelledby="recent-cbt">
+        <div class="section-head"><h2 id="recent-cbt">Recent CBT</h2><a href="#/mycbt">View all</a></div>
+        ${ATTEMPTS.map(a => `
+          <div class="row">
+            <div class="main"><div class="title">${esc(a.subject)}</div><div class="meta">${a.date}${a.expired ? ' · ran out of time' : ` · ${a.correct}/${a.total} correct`}</div></div>
+            ${a.score === null ? '<span class="chip warn">No score</span>' : `<strong style="font-variant-numeric:tabular-nums">${a.score}%</strong>`}
+          </div>`).join('')}
+      </section>
+      <section class="card" aria-labelledby="request-summary">
+        <div class="section-head"><h2 id="request-summary">Requests</h2><a href="#/notifications">Track</a></div>
+        ${REQUESTS.slice(0,2).map(r => `
+          <div class="row"><div class="main"><div class="title">${esc(r.service)}</div><div class="meta">${esc(r.ref)} · submitted ${r.age} ago</div></div>
+          <span class="chip ${r.status==='Completed'?'good':'warn'}">${esc(r.status)}</span></div>`).join('')}
+        <div class="callout info" style="margin-top:12px">${icons.clock}<span>Requests update in your notifications. You do not need to keep this page open.</span></div>
+      </section>
+    </div>
+    <section class="section card" aria-labelledby="getting-started">
+      <div class="section-head"><h2 id="getting-started">Getting started</h2><span class="chip good">1 of 3 done</span></div>
+      <div class="row"><div class="main"><div class="title">Create your account</div><div class="meta">Email verified</div></div><span class="chip good">${icons.check} Done</span></div>
+      <div class="row"><div class="main"><div class="title">Complete your academic profile</div><div class="meta">Improves exam guidance and school matching</div></div><a class="btn secondary small" href="#/profile">Finish</a></div>
+      <div class="row"><div class="main"><div class="title">Sit your first practice paper</div><div class="meta">Start with Use of English · 10 questions</div></div><a class="btn secondary small" href="#/setup">Start</a></div>
+    </section>`;
+}
+
+function setup(){
+  const chosen = selectedSubjects();
+  return `
+    ${pageHead('JAMB · Practice setup', 'Set up your JAMB practice', 'Choose up to four subjects including Use of English. Time follows the exam pace.', '<a class="btn secondary" href="#/dashboard">Back to dashboard</a>')}
+    <div class="rules" style="margin-bottom:16px">
+      <div class="rule"><span class="num">1</span><b>You choose the paper</b><span>Pick subjects and how many questions you want.</span></div>
+      <div class="rule"><span class="num">2</span><b>The timer is real</b><span>The countdown keeps running if you refresh or leave.</span></div>
+      <div class="rule"><span class="num">3</span><b>Your work is saved</b><span>Answers are kept as you go, so a lost connection is recoverable.</span></div>
+    </div>
+    <div class="setup">
+      <section class="card" aria-labelledby="subjects-title">
+        <div class="section-head"><h2 id="subjects-title">Choose subjects</h2><span class="chip">${chosen.length} of 4 selected</span></div>
+        <p class="hint" style="margin-bottom:12px">Use of English is required. You can change this until you start.</p>
+        ${SUBJECTS.map(s => `
+          <label class="subject">
+            <input type="checkbox" data-subject="${esc(s.name)}" ${chosen.includes(s.name)?'checked':''} ${s.required?'disabled':''}>
+            <span class="name">${esc(s.name)}${s.required?' <span class="chip" style="margin-left:4px">Required</span>':''}</span>
+            <span class="meta">${s.count} questions available</span>
+          </label>`).join('')}
+        <div class="callout" style="margin-top:12px">${icons.clock}<span>A 4-subject paper runs for ${minutes()} minutes and contains ${questionCount()} questions.</span></div>
+      </section>
+      <aside class="card summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">Your paper</h2>
+        <p class="hint" style="margin-bottom:10px">Review before you start.</p>
+        <div class="summary-line"><span>Subjects</span><b>${chosen.length}</b></div>
+        <div class="summary-line"><span>Questions</span><b>${questionCount()}</b></div>
+        <div class="summary-line"><span>Time</span><b>${minutes()} min</b></div>
+        <div class="summary-line"><span>Saved automatically</span><b>Yes</b></div>
+        <button class="btn" style="width:100%;margin-top:12px" ${chosen.length < 2 ? 'disabled style="width:100%;margin-top:12px;opacity:.5"' : ''} onclick="startExam()">Start paper ${icons.arrow}</button>
+        <p class="hint" style="margin-top:8px">You can pause once. The timer continues while paused.</p>
+      </aside>
+    </div>`;
+}
+
+function exam(){
+  const q = QUESTIONS[state.q];
+  const answered = Object.keys(state.answers).length;
+  return `
+    <div class="exam-bar">
+      <div><strong>JAMB practice</strong><div class="muted" style="font-size:12px">${selectedSubjects().length} subjects · ${questionCount()} questions</div></div>
+      <div class="timer" id="timer">25:00</div>
+      <button class="btn" onclick="submitExam()">Submit paper</button>
+    </div>
+    <div class="exam-grid">
+      <section class="qpanel" aria-labelledby="q-title">
+        <div class="qmeta"><span class="chip">Question ${state.q+1} of ${QUESTIONS.length}</span><span>${esc(q.subject)}</span><span class="muted">· answers saved</span></div>
+        <h2 id="q-title">${q.prompt}</h2>
+        <div role="group" aria-label="Answer options">
+          ${q.options.map((o,i) => `<button class="option" aria-pressed="${state.answers[state.q]===i}" onclick="answer(${i})"><span class="key">${'ABCD'[i]}</span><span>${esc(o)}</span></button>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;justify-content:space-between;margin-top:18px;flex-wrap:wrap">
+          <button class="btn secondary" ${state.q===0?'disabled style="opacity:.5"':''} onclick="prevQ()">Previous</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn secondary" onclick="flagQ()">${state.flagged[state.q]?'Unflag':'Flag for review'}</button>
+            <button class="btn" onclick="nextQ()">Next question</button>
+          </div>
+        </div>
+      </section>
+      <aside class="card" aria-labelledby="palette-title">
+        <h2 id="palette-title">Questions</h2>
+        <p class="hint" style="margin-bottom:10px">${answered} answered · ${Object.keys(state.flagged).length} flagged</p>
+        <div class="palette">
+          ${QUESTIONS.map((_,i) => `<button class="${state.answers[i]!==undefined?'answered':''} ${i===state.q?'current':''} ${state.flagged[i]?'flagged':''}" aria-label="Question ${i+1}${state.answers[i]!==undefined?', answered':''}" onclick="gotoQ(${i})">${i+1}</button>`).join('')}
+        </div>
+        <div class="callout" style="margin-top:14px">${icons.clock}<span>Submitting ends the paper. Unanswered questions are marked as skipped.</span></div>
+      </aside>
+    </div>`;
+}
+
+function result(){
+  const answers = Object.keys(state.answers).length;
+  const correct = Object.entries(state.answers).filter(([i,v]) => QUESTIONS[+i].correct === v).length;
+  const score = answers ? Math.round(correct / QUESTIONS.length * 100) : 0;
+  return `
+    ${pageHead('Result · JAMB practice', 'Paper complete', 'Submitted just now · 25 minutes used')}
+    <section class="card">
+      <div class="score-hero">
+        <div class="score-ring" style="--p:${score}"><div class="inner">${score}%</div></div>
+        <div style="min-width:200px;flex:1">
+          <h2 style="font-size:20px">${score >= 70 ? 'A strong result' : score >= 50 ? 'A fair result' : 'Room to improve'}</h2>
+          <p class="hint">${correct} of ${QUESTIONS.length} answered correctly. ${answers < QUESTIONS.length ? `${QUESTIONS.length-answers} question${QUESTIONS.length-answers===1?'':'s'} skipped.` : 'Every question was answered.'}</p>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <a class="btn" href="#/setup">Practise again</a>
+            <a class="btn secondary" href="#/mycbt">See your progress</a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="two section">
+      <section class="card"><div class="section-head"><h2>By subject</h2></div>
+        <div class="row"><div class="main"><div class="title">Use of English</div><div class="meta">2 of 3 correct</div></div><strong>67%</strong></div>
+        <div class="row us"><div class="main"><div class="title">Mathematics</div><div class="meta">1 of 2 correct</div></div><strong>50%</strong></div>
+        <div class="row"><div class="main"><div class="title">Biology</div><div class="meta">0 of 1 correct</div></div><strong>0%</strong></div>
+      </section>
+      <section class="card"><div class="section-head"><h2>What this means</h2></div>
+        <p class="hint" style="font-size:13px;color:var(--body)">Mathematics is your weakest area in this paper. A short 10-question Mathematics paper would give you a clearer signal than repeating the full mock.</p>
+        <div class="callout" style="margin-top:12px">${icons.spark}<span>Your average across scored papers is 69%. This paper was 6 points above it.</span></div>
+      </section>
+    </div>
+    <section class="card section"><div class="section-head"><h2>Review answers</h2><a href="#/mycbt">All attempts</a></div>
+      ${QUESTIONS.map((q,i) => {
+        const picked = state.answers[i];
+        const ok = picked === q.correct;
+        return `<div class="row"><div class="main"><div class="title">${esc(q.prompt.replace(/<[^>]+>/g,''))}</div><div class="meta">Your answer: ${picked===undefined?'skipped':esc(q.options[picked])} · Correct: ${esc(q.options[q.correct])}</div></div><span class="chip ${ok?'good':'attention'}">${picked===undefined?'Skipped':ok?'Correct':'Wrong'}</span></div>`;
+      }).join('')}
+    </section>`;
+}
+
+function mycbt(){
+  return `
+    ${pageHead('Student · My CBT', 'My CBT', 'Your last two scored papers average 69%. Mathematics is the next useful focus.', '<a class="btn" href="#/setup">Start practice</a>')}
+    <div class="two">
+      <section class="card"><span class="hint">Average score</span><div class="big" style="margin-top:6px">69%</div><p class="hint">Across 2 scored papers</p><div class="bar" style="margin-top:12px"><i style="width:69%"></i></div></section>
+      <div class="metrics" style="grid-template-columns:1fr 1fr">
+        <div class="metric"><div class="label">Best score</div><div class="value">75%</div><div class="meta">10 Nov 2026</div></div>
+        <div class="metric"><div class="label">Accuracy</div><div class="value">68%</div><div class="meta">55 of 80 questions</div></div>
+        <div class="metric"><div class="label">Papers</div><div class="value">3</div><div class="meta">2 scored · 1 expired</div></div>
+        <div class="metric"><div class="label">In progress</div><div class="value">0</div><div class="meta">Nothing unfinished</div></div>
+      </div>
+    </div>
+    <section class="card section"><div class="section-head"><h2>Score trend</h2><span class="chip good">+13 points</span></div>
+      <svg viewBox="0 0 600 170" width="100%" height="170" role="img" aria-label="Scores rose from 62 percent to 75 percent">
+        <line x1="30" y1="140" x2="570" y2="140" stroke="#E2E8F0"/><line x1="30" y1="80" x2="570" y2="80" stroke="#F1F5F9"/>
+        <polyline points="80,112 300,128 520,58" fill="none" stroke="#174A3A" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="80" cy="112" r="5" fill="#174A3A"/><circle cx="300" cy="128" r="5" fill="#174A3A"/><circle cx="520" cy="58" r="5" fill="#174A3A"/>
+        <text x="66" y="98" font-size="11" fill="#475467">62%</text><text x="286" y="148" font-size="11" fill="#475467">62%</text><text x="500" y="44" font-size="12" font-weight="700" fill="#174A3A">75%</text>
+        <text x="60" y="162" font-size="11" fill="#667085">30 Oct</text><text x="280" y="162" font-size="11" fill="#667085">6 Nov</text><text x="498" y="162" font-size="11" fill="#667085">10 Nov</text>
+      </svg>
+      <p class="hint">Up 13 points from your first scored paper. Two papers is a direction, not a guarantee.</p>
+    </section>
+    <section class="card section"><div class="section-head"><h2>Subjects</h2><a href="#/setup">Practise Mathematics</a></div>
+      <div class="row"><div class="main"><div class="title">Use of English</div><div class="meta">1 paper · 30 of 40 correct</div></div><div style="width:140px"><div class="bar"><i style="width:75%"></i></div></div><strong style="width:44px;text-align:right">75%</strong></div>
+      <div class="row"><div class="main"><div class="title">Mathematics</div><div class="meta">1 paper · 25 of 40 correct</div></div><div style="width:140px"><div class="bar"><i style="width:62%"></i></div></div><strong style="width:44px;text-align:right">62%</strong></div>
+      <div class="row"><div class="main"><div class="title">Biology</div><div class="meta">Insufficient scored papers</div></div><span class="chip">Needs 1 more</span></div>
+    </section>`;
+}
+
+function profile(){
+  const p = state.profile;
+  return `
+    ${pageHead('Student · Account', 'Academic profile', 'These details identify you on EduReach. Nothing is saved until you choose Save changes.')}
+    <div class="profile-grid">
+      <aside class="card">
+        <div class="identity"><div class="big-avatar">AO</div><div><strong>${esc(p.name)}</strong><div class="hint">${esc(p.email)}</div></div></div>
+        <div class="progress"><i></i></div>
+        <p class="hint" style="margin-top:6px">65% complete · 2 details missing</p>
+        <div style="margin-top:14px" class="callout attention"><span>Missing department and expected graduation year.</span></div>
+        <p class="hint" style="margin-top:14px">Your public profile is private. Only you can see these details.</p>
+      </aside>
+      <div>
+        <form class="card" id="profile-form" onsubmit="saveProfile(event)">
+          <div class="group-title">Personal information</div>
+          <div class="form-grid">
+            <div class="field"><label for="p-name">Full name</label><input id="p-name" name="name" value="${esc(p.name)}" autocomplete="name"></div>
+            <div class="field"><label for="p-email">Email</label><input id="p-email" value="${esc(p.email)}" disabled><div class="help">Managed by your sign-in method.</div></div>
+            <div class="field"><label for="p-phone">Phone number</label><input id="p-phone" name="phone" value="${esc(p.phone)}" inputmode="tel" autocomplete="tel"></div>
+            <div class="field"><label for="p-state">State</label><input id="p-state" name="state" value="${esc(p.state)}"></div>
+          </div>
+          <div class="group-title">Academic details</div>
+          <div class="form-grid">
+            <div class="field"><label for="p-institution">Institution</label><input id="p-institution" name="institution" value="${esc(p.institution)}"></div>
+            <div class="field"><label for="p-course">Course / programme</label><input id="p-course" name="course" value="${esc(p.course)}"></div>
+            <div class="field"><label for="p-level">Level</label><select id="p-level" name="level"><option ${p.level==='100'?'selected':''}>100</option><option ${p.level==='200'?'selected':''}>200</option><option ${p.level==='300'?'selected':''}>300</option><option ${p.level==='400'?'selected':''}>400</option></select></div>
+            <div class="field"><label for="p-dept">Department</label><input id="p-dept" name="department" placeholder="e.g. Mass Communication"></div>
+          </div>
+          <div class="group-title">Exam preferences</div>
+          <div class="field"><label for="p-exam">Main exam</label><select id="p-exam"><option>JAMB UTME</option><option>WAEC SSCE</option><option>NECO SSCE</option><option>Post-UTME</option></select><div class="help">Used to order practice papers and updates on your dashboard.</div></div>
+          <div class="save-bar">
+            <span class="hint" id="save-state">No unsaved changes</span>
+            <div style="display:flex;gap:8px"><button type="button" class="btn secondary" onclick="resetProfile()">Cancel</button><button class="btn" type="submit">Save changes</button></div>
+          </div>
+        </form>
+      </div>
+    </div>`;
+}
+
+function notifications(){
+  const items = [
+    {id:1,title:'JAMB slip ready',body:'Your 2026 JAMB slip request (ER-27K4) has been completed.',time:'2 hours ago',unread:true,action:'Open request'},
+    {id:2,title:'New practice suggestion',body:'Mathematics is your weakest subject this week. A 10-question paper is ready.',time:'Yesterday',unread:true,action:'Start paper'},
+    {id:3,title:'Request received',body:'We received your WAEC / NECO result-checking request. Expected within 48 hours.',time:'2 days ago',unread:false,action:'Track request'},
+    {id:4,title:'Result scored',body:'Your JAMB practice paper scored 75%. Your average is now 69%.',time:'3 days ago',unread:false,action:'View result'},
+  ];
+  return `
+    ${pageHead('Student · Updates', 'Notifications', 'Updates about requests, results and practice.', `<button class="btn secondary" onclick="markAllRead()">Mark all as read</button>`)}
+    <div class="toolbar"><div class="filters" role="group" aria-label="Filter notifications"><button aria-pressed="true">All</button><button aria-pressed="false">Unread ${state.unread?`(${state.unread})`:''}</button></div></div>
+    <div>
+      ${items.map(n => `<div class="notif ${n.id<=state.unread?'unread':'read'}"><span class="dot"></span><div class="body"><div class="t">${esc(n.title)}</div><div class="m">${esc(n.body)}</div><div style="margin-top:6px"><a class="chip ${n.id<=state.unread?'good':''}" href="#/mycbt">${esc(n.action)}</a></div></div><div class="time">${esc(n.time)}</div></div>`).join('')}
+    </div>
+    <div class="callout info section">${icons.clock}<span>Email notifications are off in this prototype. In the product, this preference lives in account settings.</span></div>`;
+}
+
+/* ---------------------------------------------------------------- admin views */
+function adminNav(active){
+  const link = (hash, label) => `<a href="${hash}" ${active===hash?'aria-current="page"':''}>${label}</a>`;
+  return `<aside class="admin-side" aria-label="Admin sections">
+    <div class="group">Operations</div>${link('#/admin','Overview')}${link('#/admin-requests','Service requests')}
+    <div class="group">People</div>${link('#/admin-users','Students & users')}
+    <div class="group">Learning</div>${link('#/admin-questions','Question banks')}${link('#/admin-questions','Questions')}${link('#/admin','Exams')}
+    <div class="group">Content</div>${link('#/admin','News & updates')}${link('#/admin','Opportunities')}
+    <div class="group">System</div>${link('#/admin','Settings')}${link('#/admin','Audit log')}
+  </aside>`;
+}
+function adminShell(active, head, body){
+  return `<div class="admin-bar"><div class="inner"><strong>EduReach console</strong><span class="tag">Prototype</span><span style="margin-left:auto">Signed in as James · Admin</span></div></div>
+    <div class="admin-shell">${adminNav(active)}<main>${head}${body}</main></div>`;
+}
+function adminOverview(){
+  return adminShell('#/admin', pageHead('Admin · Operations', 'Operations overview', 'Thursday 13 November · all systems operational except one queue.', '<a class="btn secondary" href="#/admin-users">Find a student</a>'),
+    `<div class="grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card" style="border-color:var(--crimson-border)"><span class="chip attention">Needs action</span><div class="big" style="margin-top:8px">3</div><p class="hint">Service requests waiting more than 24 hours</p></div>
+      <div class="card"><span class="chip warn">Watch</span><div class="big" style="margin-top:8px">1</div><p class="hint">Question bank below its publish threshold</p></div>
+      <div class="card"><span class="chip good">Healthy</span><div class="big" style="margin-top:8px">99.9%</div><p class="hint">API availability, last 24 hours</p></div>
+    </div>
+    <div class="two section">
+      <section class="card"><div class="section-head"><h2>Activity</h2><span class="hint">Last 14 days</span></div>
+        <svg viewBox="0 0 400 150" width="100%" height="150" role="img" aria-label="Practice attempts and service requests over 14 days">
+          <line x1="20" y1="130" x2="390" y2="130" stroke="#E2E8F0"/>
+          <polyline points="20,110 50,104 80,96 110,100 140,88 170,82 200,86 230,70 260,62 290,66 320,52 350,44 380,40" fill="none" stroke="#174A3A" stroke-width="2.5"/>
+          <polyline points="20,122 50,120 80,118 110,121 140,116 170,112 200,114 230,108 260,106 290,102 320,100 350,96 380,94" fill="none" stroke="#B14933" stroke-width="2" stroke-dasharray="4 4"/>
+        </svg>
+        <p class="hint">Green: practice attempts. Crimson: service requests.</p>
+      </section>
+      <section class="card"><div class="section-head"><h2>Workload</h2><a href="#/admin-requests">Open queue</a></div>
+        <div class="row"><div class="main"><div class="title">Service requests</div><div class="meta">3 need action · 4 in progress</div></div><a class="btn secondary small" href="#/admin-requests">Review</a></div>
+        <div class="row"><div class="main"><div class="title">Question imports</div><div class="meta">1 waiting for review</div></div><a class="btn secondary small" href="#/admin-questions">Review</a></div>
+        <div class="row"><div class="main"><div class="title">Content review</div><div class="meta">2 articles awaiting verification</div></div><a class="btn secondary small" href="#/admin">Review</a></div>
+      </section>
+    </div>
+    <section class="card section"><div class="section-head"><h2>Recent admin actions</h2><span class="hint">Audit log keeps 90 days</span></div>
+      <div class="row"><div class="main"><div class="title">Published “COP31: Catholic groups demand climate grants”</div><div class="meta">James Adeyemi · 12 min ago</div></div><span class="chip">Content</span></div>
+      <div class="row"><div class="main"><div class="title">Updated request ER-19B2 to Completed</div><div class="meta">Fatima Bello · 1 hour ago · student notified</div></div><span class="chip">Requests</span></div>
+      <div class="row"><div class="main"><div class="title">Imported 40 Biology questions</div><div class="meta">James Adeyemi · 3 hours ago · import validation passed</div></div><span class="chip">Learning</span></div>
+    </section>`);
+}
+function adminUsers(){
+  const rows = USERS.filter(u => (state.adminRole==='all' || u.role===state.adminRole) && (u.name+u.email).toLowerCase().includes(state.adminQuery.toLowerCase()));
+  return adminShell('#/admin-users', pageHead('Admin · People', 'Students & users', 'Find an account, verify its state, and take the smallest safe action.', '<button class="btn secondary" onclick="toast(&quot;Prototype: invite flow not simulated&quot;)">Invite user</button>'),
+    `<div class="toolbar">
+      <input id="user-search" placeholder="Search name or email" value="${esc(state.adminQuery)}" aria-label="Search users">
+      <select id="role-filter" aria-label="Filter by role"><option value="all">All roles</option><option>Student</option><option>Admin</option></select>
+      <span class="chip">${rows.length} result${rows.length===1?'':'s'}</span>
+    </div>
+    <div class="table-wrap"><table><caption class="sr">Users</caption><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Joined</th><th>Last active</th><th></th></tr></thead><tbody>
+      ${rows.map(u => `<tr><td><strong>${esc(u.name)}</strong><div class="meta muted">${esc(u.email)}</div></td><td>${esc(u.role)}</td><td><span class="chip ${u.status==='Active'?'good':'warn'}">${esc(u.status)}</span></td><td>${esc(u.joined)}</td><td>${esc(u.last)}</td><td><button class="btn secondary small" onclick="openRecord('${esc(u.name)}','${esc(u.email)}','${esc(u.role)}')">View</button></td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="hint" style="margin-top:10px">On phones this table becomes stacked records; the primary action stays visible.</p>`);
+}
+function adminRequests(){
+  return adminShell('#/admin-requests', pageHead('Admin · Requests', 'Service requests', 'Work the queue by need, then record the outcome and notify the student.'),
+    `<div class="filters" style="margin-bottom:12px"><button aria-pressed="true">Needs action (1)</button><button aria-pressed="false">In progress (2)</button><button aria-pressed="false">Completed</button><button aria-pressed="false">All</button></div>
+    <div class="table-wrap"><table><caption class="sr">Service requests</caption><thead><tr><th>Reference</th><th>Service</th><th>Student</th><th>Status</th><th>Age</th><th></th></tr></thead><tbody>
+      ${REQUESTS.map(r => `<tr><td><strong>${esc(r.ref)}</strong></td><td>${esc(r.service)}</td><td>${esc(r.student)}</td><td><span class="chip ${r.status==='Completed'?'good':r.status==='Needs action'?'attention':'warn'}">${esc(r.status)}</span></td><td>${esc(r.age)}</td><td><button class="btn secondary small" onclick="openRecord('${esc(r.ref)}','${esc(r.service)}','${esc(r.student)}')">Open</button></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="callout info section">A status change requires a short reason. The student receives a notification and the reference remains the same.</div>`);
+}
+function adminQuestions(){
+  return adminShell('#/admin-questions', pageHead('Admin · Learning', 'Questions', 'Filter to a bank, inspect provenance, and edit without losing your place.', '<button class="btn">New question</button>'),
+    `<div class="toolbar"><input placeholder="Search question text" aria-label="Search questions"><select aria-label="Bank"><option>JAMB UTME</option><option>WAEC SSCE</option><option>NECO SSCE</option></select><select aria-label="Status"><option>All statuses</option><option>Published</option><option>Draft</option></select></div>
+    <div class="two" style="align-items:start">
+      <div>${[
+        ['Simplify 3(x + 4) − 2x.','Mathematics','Published'],
+        ['Which organelle produces energy?','Biology','Published'],
+        ['Choose the synonym of “unanimous”.','Use of English','Draft'],
+        ['A trader sells at ₦5,000 after buying at ₦4,000. Profit %?','Mathematics','Needs review'],
+      ].map(([q,s,st]) => `<div class="card" style="margin-bottom:8px;padding:13px"><div class="row" style="border:0;padding:0"><div class="main"><div class="title" style="white-space:normal">${esc(q)}</div><div class="meta">${esc(s)} · 4 options · source verified</div></div><span class="chip ${st==='Published'?'good':st==='Needs review'?'attention':'warn'}">${esc(st)}</span></div></div>`).join('')}</div>
+      <div class="card"><h2>Question preview</h2><p class="hint">Select a question to edit it here. The list keeps its scroll position.</p><div class="callout section">Provenance: WAEC 2022 · Paper 1 · Q14. Verified 4 Nov 2026.</div></div>
+    </div>`);
+}
+
+/* ---------------------------------------------------------------- actions */
+function render(){
+  const hash = location.hash.replace('#/','') || 'dashboard';
+  state.screen = hash;
+  let html = '';
+  if (hash.startsWith('admin')){
+    state.mode = 'admin';
+    if (hash==='admin-users') html = adminUsers();
+    else if (hash==='admin-requests') html = adminRequests();
+    else if (hash==='admin-questions') html = adminQuestions();
+    else html = adminOverview();
+    document.querySelector('.shell').hidden = true;
+    document.querySelector('.app-header').hidden = true;
+    document.querySelector('.bottom-nav').hidden = true;
+    $('#admin-root').hidden = false;
+    $('#admin-root').innerHTML = html;
+    return;
+  }
+  document.querySelector('.shell').hidden = false;
+  document.querySelector('.app-header').hidden = false;
+  document.querySelector('.bottom-nav').hidden = false;
+  $('#admin-root').hidden = true;
+  if (hash==='setup') html = setup();
+  else if (hash==='exam') html = exam();
+  else if (hash==='result') html = result();
+  else if (hash==='mycbt') html = mycbt();
+  else if (hash==='profile') html = profile();
+  else if (hash==='notifications') html = notifications();
+  else html = dashboard();
+  $('#view').innerHTML = html;
+  $$('[data-nav]').forEach(a => {
+    const active = a.dataset.nav === hash;
+    if (active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+  });
+  if (hash==='exam') startTimer();
+  if (hash==='setup'){
+    $$('input[data-subject]').forEach(cb => cb.addEventListener('change', () => {
+      const name = cb.dataset.subject;
+      if (cb.checked){ if (state.selected.length >= 4){ cb.checked = false; toast('A JAMB paper has at most four subjects'); return; } state.selected.push(name); }
+      else state.selected = state.selected.filter(s => s!==name);
+      render();
+    }));
+  }
+  if (hash==='profile'){
+    const form = $('#profile-form');
+    form?.addEventListener('input', () => { $('#save-state').textContent = 'Unsaved changes'; });
+  }
+}
+function startTimer(){
+  clearInterval(timer);
+  let left = 25*60;
+  const el = $('#timer');
+  timer = setInterval(() => {
+    left--;
+    if (left <= 0){ clearInterval(timer); submitExam(); return; }
+    const m = String(Math.floor(left/60)).padStart(2,'0'), s = String(left%60).padStart(2,'0');
+    if (el) el.textContent = `${m}:${s}`;
+  }, 1000);
+}
+function answer(i){ state.answers[state.q] = i; render(); }
+function nextQ(){ if (state.q < QUESTIONS.length-1) state.q++; else toast('Last question. Submit when ready.'); render(); }
+function prevQ(){ if (state.q>0) state.q--; render(); }
+function gotoQ(i){ state.q = i; render(); }
+function flagQ(){ state.flagged[state.q] = !state.flagged[state.q]; render(); }
+function startExam(){ if (state.selected.length < 2){ toast('Choose at least two subjects'); return; } state.answers={}; state.flagged={}; state.q=0; location.hash='#/exam'; }
+function submitExam(){ clearInterval(timer); location.hash='#/result'; }
+function saveProfile(e){
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  for (const [k,v] of fd.entries()) state.profile[k] = v;
+  $('#save-state').textContent = 'Saved just now';
+  toast('Saved in this prototype — no server write');
+}
+function resetProfile(){ render(); toast('Changes discarded'); }
+function markAllRead(){ state.unread = 0; render(); toast('All notifications marked read (simulated)'); }
+function openRecord(a,b,c){
+  $('#record-title');
+  $('#record-body').innerHTML = `<h2 id="record-title">${esc(a)}</h2><p class="hint">${esc(b)}${c?` · ${esc(c)}`:''}</p>
+    <div class="callout section">Prototype record. In the product this drawer shows account state, request history and CBT results from the API.</div>
+    <div class="field" style="margin-top:14px"><label>Status</label><select><option>Needs action</option><option>In progress</option><option>Completed</option></select></div>
+    <div class="field"><label>Reason (required for changes)</label><input placeholder="Short note to the student"></div>`;
+  $('#record-drawer').classList.add('open');
+  $('#record-drawer').setAttribute('aria-hidden','false');
+}
+function closeRecord(){ $('#record-drawer').classList.remove('open'); $('#record-drawer').setAttribute('aria-hidden','true'); }
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('[data-close-record]')) closeRecord();
+  if (t.closest('[data-close-drawer]')) { $('#drawer').hidden = true; $('#menu-open').setAttribute('aria-expanded','false'); }
+  if (t.closest('#menu-open')) { $('#drawer').hidden = false; $('#menu-open').setAttribute('aria-expanded','true'); }
+  if (t.closest('#mode-student')){ location.hash='#/dashboard'; }
+  if (t.closest('#mode-admin')){ location.hash='#/admin'; }
+  if (t.closest('#reset')){ state = structuredClone(INITIAL); location.hash='#/dashboard'; render(); toast('Prototype reset'); }
+  if (t.closest('#admin-link')){ $('#drawer').hidden = true; location.hash='#/admin'; }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'user-search'){ state.adminQuery = e.target.value; render(); const s=$('#user-search'); if (s){ s.focus(); s.setSelectionRange(s.value.length,s.value.length); } }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'role-filter'){ state.adminRole = e.target.value; render(); }
+});
+window.addEventListener('hashchange', render);
+window.addEventListener('keydown', e => { if (e.key==='Escape'){ closeRecord(); $('#drawer').hidden = true; } });
+render();
+</script>
+</body>
+</html>

@@ -26,6 +26,8 @@ import './styles/type-system.css';
 // Brand action colours are the last word on primary buttons and selected
 // states, so they follow every component sheet; a11y.css still closes the file.
 import './styles/brand-actions.css';
+// UX-5 product system: hierarchy, spacing, navigation and control states.
+import './styles/ux5-product.css';
 import './styles/a11y.css';
 
 
