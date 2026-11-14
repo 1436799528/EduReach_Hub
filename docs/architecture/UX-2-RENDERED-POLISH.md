@@ -64,7 +64,7 @@ Evidence lives in:
 | Admin pages, 7 widths | **0** page-level overflows |
 | Admin element overflows | **33 of 105** states, every one a `<th>` inside a labelled, horizontally scrollable `.admin-table-wrap`; `documentElement.scrollWidth === innerWidth` in all 147 states |
 | React route errors | **0** |
-| Student header at 320 px | brand 138 px, bell/avatar/menu inside the viewport, menu right edge 304 px |
+| Student header at 320 px | brand 138 px, `scrollWidth === 320`; bell/avatar/menu inside the viewport |
 | Student header at 390 px | bell 36 × 36, profile trigger 44 × 44 at x = 288, "My Requests" hidden |
 | Analytics KPI strip | 3 × 2 at ≥ 781 px, 2 × 3 below; no orphan card |
 | Dashboard KPI strip | 3 × 2 at ≥ 781 px, 2 × 3 below; "Unavailable" no longer breaks mid-word |
@@ -102,8 +102,8 @@ tall. They are now 44 px rows with a hover surface, and the close control is a
 - **Photo controls were unlabelled floating text.** "Use my initials instead"
   rendered as plain text between the avatar and the URL field, and "Choose
   photo" had no clear button shape. Both now sit in one `.profile-photo-actions`
-  cluster with a real border, a 40 px minimum (44 px coarse pointer) and the URL
-  field directly underneath. On phones they sit two-up. Evidence:
+  cluster with a real border, a 32 px desktop height (44 px under a coarse
+  pointer) and the URL field directly underneath. On phones they sit two-up. Evidence:
   `final-profile-1440.png`, `final-profile-390.png`.
 - **Cancel was a blank white block.** The compact button reset removed the
   border from `.hub-outline-btn`. The profile header now declares its own
@@ -166,9 +166,9 @@ tall. They are now 44 px rows with a hover surface, and the close control is a
   a global `-webkit-line-clamp: 2` rule, so "The site reads the same records"
   became an ellipsis with no way to read the rest. Admin page headers are no
   longer clamped.
-- **Page finder looked disabled.** "Find a page" had a grey fill and 2.57:1
-  placeholder. It is now a white field with a neutral edge and `#475467`
-  placeholder text.
+- **Page finder looked disabled.** "Find a page" had a grey fill and a grey
+  placeholder that read as an inactive field. It is now a white field with a
+  neutral edge and `#475467` placeholder text.
 - **Drawer close label was ambiguous.** Two controls both announced "Close admin
   menu", which made the accessible name non-unique and broke a strict locator.
   The in-drawer control now says "Close navigation drawer".
