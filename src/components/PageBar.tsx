@@ -17,7 +17,15 @@ export default function PageBar() {
     return () => window.removeEventListener('popstate', sync);
   }, []);
 
-  if (path === '/') return null;
+  // App-level destinations already carry their own title and the global
+  // navigation. A "Back / CBT" bar above an "CBT practice" heading repeated the
+  // same information twice and cost the first screen 37px.
+  const topLevel = new Set([
+    '/', '/cbt', '/past-questions', '/services', '/news', '/jobs',
+    '/dashboard', '/dashboard/cbt', '/dashboard/services', '/dashboard/tools',
+    '/profile', '/settings',
+  ]);
+  if (topLevel.has(path)) return null;
 
   const goBack = () => {
     let sameOriginReferrer = false;

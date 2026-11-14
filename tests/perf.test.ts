@@ -235,7 +235,7 @@ test('the simulator section reserves its footprint while its catalogue loads', (
     const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return [...css.matchAll(new RegExp(`${escaped}\\{([^}]*)\\}`, 'g'))].map((match) => match[1]);
   };
-  assert.ok(pxValue(declarations(css, '.er-late-region--simulators'), '--er-late-min') >= 200);
+  assert.ok(pxValue(declarations(css, '.er-late-region--simulators'), '--er-late-min') >= 140, 'the floor covers the 148px card row');
 
   // UI-7b: mobile keeps the desktop card shape and stacks it to the screen
   // width. No swipe row, no reshaped two-column row.
@@ -248,11 +248,11 @@ test('the simulator section reserves its footprint while its catalogue loads', (
 });
 
 test('the pages the measurement named use the reservation', () => {
+  // UX-7 removed the four-story feed from the home screen: news is a secondary
+  // destination, not a reason to keep a 300px reservation under the practice
+  // controls. The feed's own page keeps the reservation it still needs.
   const home = stylesheet('pages/HubHomePage.tsx');
-  assert.match(home, /er-late-region--feed/);
-  assert.match(home, /latestNews\.map/, 'the home feed renders the current four stories');
-  assert.match(home, /slice\(0, 4\)/, 'the home feed fills all four news columns');
-  assert.match(home, /<SkeletonRows rows=\{4\}/, 'the skeleton shows as many rows as the feed');
+  assert.doesNotMatch(home, /er-late-region--feed|latestNews/, 'the home page no longer reserves a news feed');
 
   assert.match(stylesheet('pages/NewsPage.tsx'), /er-late-region--feed-page/);
 

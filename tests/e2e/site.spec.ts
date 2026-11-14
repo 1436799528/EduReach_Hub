@@ -188,6 +188,9 @@ test('registration collects account essentials and only asks students for option
 test('navigation opens services on desktop and mobile', async ({ page, isMobile }) => {
   await page.goto('/');
   if (!isMobile) {
+    // UX-7: services is a secondary destination, disclosed from the "More"
+    // menu instead of competing with the five student jobs.
+    await page.locator('.hub-more summary').click();
     await page.locator('header nav a[href="/services"]').click();
     await expect(page).toHaveURL(/\/services$/);
     return;

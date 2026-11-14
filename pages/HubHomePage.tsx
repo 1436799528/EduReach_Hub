@@ -1,200 +1,225 @@
-import { userFacingError } from '../lib/errors';
-import { ArrowRight, Clock3, RefreshCw, ShieldCheck, Sparkles } from 'lucide-react';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpenCheck,
+  Calculator,
+  FileText,
+  GraduationCap,
+  Laptop,
+  PlayCircle,
+  School,
+  type LucideIcon,
+} from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
-import { NewsCard } from '../src/components/NewsSections';
-import { isArticleCurrent } from '../src/lib/newsFreshness';
-import { SkeletonRows } from '../src/components/Skeleton';
-import { fetchNews, type NewsItem } from '../src/lib/api';
-import { useAuth } from '../src/lib/auth';
 import SiteSearch from '../src/components/LazySiteSearch';
+import { useAuth } from '../src/lib/auth';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { cbtAttemptState } from '../src/lib/dashboardPriority';
+import {
+  homeAttemptHref,
+  homeAttemptLabel,
+  readLocalHomeAttempts,
+  recentHomeAttempts,
+  summarizeHomeActivity,
+  type HomeAttempt,
+} from '../src/lib/homeActivity';
 
 // The resume card is for signed-in students with an unfinished paper. Loading
 // it after the shell keeps a convenience out of the first-paint bundle.
 const ContinuePracticeCard = lazy(() => import('../src/components/ContinuePracticeCard'));
 
-// The home page is the simulator's front door, not a magazine cover. It keeps
-// three things above the fold: what the site is for, the exam a student is
-// sitting, and a way in. News sits below the practice tools and shows three
-// headlines; anything more belongs on /news.
-
-// The study tools reuse the MySchool link tile that the home page already had
-// (er-mini-link + the shared identity mark): same card, same edge, same hover.
-// The simulator-first layout changed the order of the page, not the card design.
-const toolTiles = [
-  { title: 'Screening calculator', href: '/screening-calculator' },
-  { title: 'CGPA calculator', href: '/tools/cgpa-calculator' },
-  { title: 'School finder', href: '/schools' },
+const toolLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
+  { title: 'Screening calculator', href: '/screening-calculator', Icon: Calculator },
+  { title: 'CGPA calculator', href: '/tools/cgpa-calculator', Icon: GraduationCap },
+  { title: 'School finder', href: '/schools', Icon: School },
 ];
 
-// The three main exam bodies live on the home page by name. Keeping this as a
-// tiny local list (rather than importing the whole study-material catalogue)
-// keeps the home route out of the library data chunk.
-const mainExamMaterials = [
-  { exam: 'JAMB', title: 'JAMB past questions' },
-  { exam: 'WAEC', title: 'WAEC past questions' },
-  { exam: 'NECO', title: 'NECO past questions' },
-];
-
-function LinkTile({ title, href }: { title: string; href: string }) {
-  return (
-    <a className={`er-mini-link ${identityClassFor(title, 'service')}`} href={href}>
-      <CardIdentityMark value={title} type="service" size="sm" />
-      <span>{title}</span>
-      <ArrowRight size={13} />
-    </a>
-  );
+function shortDate(value?: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(date);
 }
 
+function subjectCount(attempt: HomeAttempt): number | null {
+  for (const raw of [attempt.selected_subjects, attempt.subject_plan]) {
+    if (Array.isArray(raw)) return raw.length;
+    if (raw && typeof raw === 'object') return Object.keys(raw).length;
+  }
+  return null;
+}
+
+/**
+ * UX-7 - the home screen is the product's first screen, not a landing page.
+ *
+ * It answers, in this order: who am I here (greeting), what can I do now
+ * (practice, past questions, My CBT, results), what has already happened
+ * (record and recent activity), and which exam am I sitting (catalogue).
+ * There is no hero, slogan, proof strip or promotional section; every block is
+ * a control the student can act on.
+ */
 export default function HubHomePage() {
-  const { isAuthenticated } = useAuth();
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
-  const [newsError, setNewsError] = useState('');
-  const [feedVersion, setFeedVersion] = useState(0);
+  const { user, isAuthenticated } = useAuth();
+  const [attempts, setAttempts] = useState<HomeAttempt[]>([]);
 
   useEffect(() => {
     let active = true;
-    setNewsLoading(true);
-    setNewsError('');
-    void fetchNews()
-      .then((items) => active && setNews(items))
-      .catch((value) => active && setNewsError(userFacingError(value, 'Unable to load updates.')))
-      .finally(() => active && setNewsLoading(false));
+    if (!isAuthenticated || !user?.id) {
+      setAttempts([]);
+      return () => { active = false; };
+    }
+    if (!isSupabaseConfigured) {
+      setAttempts(readLocalHomeAttempts());
+      return () => { active = false; };
+    }
+    void supabase
+      .from('cbt_attempts')
+      .select('id,status,mode,exam_id,score,selected_subjects,subject_plan,total_questions,created_at,submitted_at,expires_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data, error }) => {
+        // A summary is a convenience, never an error page.
+        if (active && !error && Array.isArray(data)) setAttempts(data as HomeAttempt[]);
+      });
     return () => { active = false; };
-  }, [feedVersion]);
+  }, [isAuthenticated, user?.id]);
 
-  // Only current stories reach the home feed; expired notices are removed, and
-  // the newest published items come first.
-  const latestNews = news
-    .filter(isArticleCurrent)
-    .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime())
-    .slice(0, 4);
+  const summary = useMemo(() => summarizeHomeActivity(attempts), [attempts]);
+  const recent = useMemo(() => recentHomeAttempts(attempts, 3), [attempts]);
+  const firstName = user?.name?.split(/\s+/)[0] || 'Student';
+  const hasRecord = summary.papers > 0 || recent.length > 0;
+  const myCbtHref = isAuthenticated ? '/dashboard/cbt' : '/login';
+  const resultsHref = isAuthenticated ? '/dashboard/cbt/results' : '/login';
 
   return (
     <HubLayout>
       <div className="er-portal">
-        <div className="er-container hub-home-container">
-          {/* One h1 for structure and screen readers, followed by the visible
-              product statement. The page leads with what EduReach is for and
-              the two actions a student can take immediately. */}
+        <div className="er-container hub-home-container er-home-app">
+          {/* One h1 for structure and screen readers. The visible greeting is an
+              h2 because it is the first section of an application screen. */}
           <h1 className="er-visually-hidden">EduReach Hub CBT practice, past questions and student services</h1>
 
-          {/* The first screen answers three questions in order: what is this,
-              what can I do here, and which exam am I sitting? The visible
-              title is an h2 because the screen-reader h1 stays first. */}
-          <section className="er-home-intro" aria-labelledby="er-home-title">
-            <div className="er-home-intro-copy">
-              <span className="er-home-kicker"><Sparkles size={14} aria-hidden="true" /> EduReach study centre</span>
-              <h2 className="er-home-title" id="er-home-title">Practise the exam you are sitting.</h2>
-              <p className="er-home-sub">
-                Timed JAMB, WAEC, NECO and Post-UTME papers with answers saved as you go,
-                a real countdown, and a result you can understand.
+          <header className="er-home-head">
+            <div className="er-home-head-copy">
+              <p className="er-home-eyebrow">Home</p>
+              <h2 className="er-home-greeting" id="er-home-title">
+                {isAuthenticated ? `Welcome back, ${firstName}.` : 'What are you studying for?'}
+              </h2>
+              <p className="er-home-lede">
+                {isAuthenticated
+                  ? 'Pick up a paper, check a result, or start a new one.'
+                  : 'Practise a timed paper or revise by subject. You can start without an account.'}
               </p>
-              <div className="er-home-actions">
-                <a className="hub-primary-btn" href="/cbt">Start CBT practice <ArrowRight size={14} aria-hidden="true" /></a>
-                <a className="hub-outline-btn" href="/past-questions">Browse past questions</a>
-              </div>
-              <ul className="er-home-proof" aria-label="How practice works">
-                <li><b>4</b> exam bodies</li>
-                <li><Clock3 size={14} aria-hidden="true" /><span><b>Exam pace</b> timing</span></li>
-                <li><ShieldCheck size={14} aria-hidden="true" /><span><b>Answers saved</b> as you go</span></li>
-              </ul>
             </div>
-            <ol className="er-home-steps" aria-label="How a practice paper works">
-              <li><span className="n">1</span><span><b>Pick your exam</b><small>JAMB, WAEC, NECO or Post-UTME.</small></span></li>
-              <li><span className="n">2</span><span><b>Set your paper</b><small>Pick subjects and see the time before you start.</small></span></li>
-              <li><span className="n">3</span><span><b>Review the result</b><small>Every paper is saved to My CBT.</small></span></li>
-            </ol>
+            <div className="er-home-head-search">
+              <SiteSearch
+                variant="home"
+                label="Search services and study resources"
+                placeholder="Search services or exams"
+              />
+            </div>
+          </header>
+
+          {/* Four controls, one primary. Position and colour carry the
+              hierarchy; none of them needs a whole card. */}
+          <section className="er-home-start" aria-label="Start studying">
+            <a className="er-home-primary" href="/cbt">
+              <span className="er-home-primary-mark" aria-hidden="true"><PlayCircle size={22} /></span>
+              <span className="er-home-primary-copy">
+                <strong>Start practice</strong>
+                <small>Timed paper at exam pace, result saved</small>
+              </span>
+              <ArrowRight size={18} className="er-home-primary-arrow" aria-hidden="true" />
+            </a>
+            <div className="er-home-tiles">
+              <a className="er-home-tile" href="/past-questions">
+                <FileText size={18} aria-hidden="true" />
+                <span><strong>Past questions</strong><small>By exam and subject</small></span>
+              </a>
+              <a className="er-home-tile" href={myCbtHref}>
+                <Laptop size={18} aria-hidden="true" />
+                <span><strong>My CBT</strong><small>{isAuthenticated ? 'Continue or review' : 'Sign in to continue'}</small></span>
+              </a>
+              <a className="er-home-tile" href={resultsHref}>
+                <BarChart3 size={18} aria-hidden="true" />
+                <span><strong>Results</strong><small>Scores and attempts</small></span>
+              </a>
+            </div>
           </section>
 
-          <div className="er-home-search">
-            <SiteSearch
-              variant="home"
-              label="Search services and study resources"
-              placeholder="Search services, subjects, exams or news"
-            />
-          </div>
+          {isAuthenticated && hasRecord && (
+            <section className="er-home-record" aria-label="Your practice record">
+              <div><strong>{summary.papers}</strong><span>Papers completed</span></div>
+              <div><strong>{summary.averageScore === null ? '—' : `${summary.averageScore}%`}</strong><span>Average score</span></div>
+              <div><strong>{summary.bestScore === null ? '—' : `${summary.bestScore}%`}</strong><span>Best score</span></div>
+              <div><strong>{summary.subjects || '—'}</strong><span>Subjects practised</span></div>
+            </section>
+          )}
 
-          <div className="er-home-quick">
-            {/* The study-centre card is one click to the past-question library.
-                No start-practice button, no PDF list: the card is the link. */}
-            <a href="/past-questions" className="er-banner">
-              <div className="er-banner-art">
-                <img src="/news/photos/jamb-cbt-banner.webp" alt="CBT study centre" width={160} height={80} loading="lazy" decoding="async" />
-              </div>
-              <div>
-                <small>EDUREACH STUDY CENTRE</small>
-                <strong>Past questions &amp; CBT practice</strong>
-                <p>Timed JAMB, WAEC, NECO and Post-UTME practice.</p>
-              </div>
-              <ArrowRight size={18} />
-            </a>
-
-            {isAuthenticated && (
+          {isAuthenticated && (
+            <section className="er-section er-home-recent" aria-label="Recent activity">
+              <SectionHead title="Recent activity" href="/dashboard/cbt" linkLabel="All results" />
               <Suspense fallback={null}>
                 <ContinuePracticeCard />
               </Suspense>
-            )}
-          </div>
+              {recent.length ? (
+                <ul className="er-home-activity">
+                  {recent.map((attempt) => {
+                    const state = cbtAttemptState(attempt);
+                    const subjects = subjectCount(attempt);
+                    const date = shortDate(attempt.submitted_at || attempt.created_at);
+                    const score = typeof attempt.score === 'number' ? Math.round(attempt.score) : null;
+                    return (
+                      <li key={attempt.id}>
+                        <a href={homeAttemptHref(attempt)}>
+                          <span className="er-home-activity-mark" aria-hidden="true"><BookOpenCheck size={16} /></span>
+                          <span className="er-home-activity-copy">
+                            <strong>{homeAttemptLabel(attempt)}</strong>
+                            <small>
+                              {state === 'active' ? 'In progress' : state === 'expired' ? 'Expired' : date || 'Finished'}
+                              {subjects ? ` · ${subjects} ${subjects === 1 ? 'subject' : 'subjects'}` : ''}
+                            </small>
+                          </span>
+                          <span className={`er-home-activity-score${score === null ? ' is-empty' : ''}`}>
+                            {score === null ? '—' : `${score}%`}
+                          </span>
+                          <ArrowRight size={14} aria-hidden="true" />
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="er-home-empty">
+                  No papers yet. Finish a practice test and it will appear here.
+                </p>
+              )}
+            </section>
+          )}
 
-          <section className="er-section">
+          <section className="er-section" aria-label="Choose your exam">
             <SectionHead title="Choose your exam" />
             <ExamSimulatorGrid variant="start" />
           </section>
 
-          <section className="er-section">
-            <SectionHead title="Exam materials" href="/past-questions" linkLabel="All materials" />
-            <div className="er-exam-materials">
-              {mainExamMaterials.map((material) => (
-                <a className="er-exam-material" key={material.exam} href={`/past-questions?exam=${encodeURIComponent(material.exam)}`}>
-                  <small>{material.exam}</small>
-                  <strong>{material.title}</strong>
-                  <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={16} /></span>
-                </a>
-              ))}
-            </div>
-          </section>
-
-          <section className="er-section">
+          <section className="er-section" aria-label="Study tools">
             <SectionHead title="Study tools" />
-            <div className="er-test-strip">
-              {toolTiles.map((tile) => <LinkTile key={tile.title} title={tile.title} href={tile.href} />)}
-            </div>
+            <ul className="er-home-tool-list">
+              {toolLinks.map(({ title, href, Icon }) => (
+                <li key={href}>
+                  <a href={href}>
+                    <Icon size={16} aria-hidden="true" />
+                    <span>{title}</span>
+                    <ArrowRight size={13} aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </section>
-
-          <section className="er-section">
-            <SectionHead title="Updates" href="/news" linkLabel="All updates" />
-            <div className="er-late-region er-late-region--feed">
-              {newsError ? (
-                <div className="er-empty" role="alert">
-                  <span>{newsError}</span>
-                  <button type="button" className="hub-outline-btn" onClick={() => setFeedVersion((value) => value + 1)}>
-                    <RefreshCw size={13} /> Try again
-                  </button>
-                </div>
-              ) : latestNews.length ? (
-                <div className="er-news-card-grid">
-                  {latestNews.map((item) => <NewsCard key={item.id} item={item} />)}
-                </div>
-              ) : newsLoading ? (
-                <SkeletonRows rows={4} label="Loading updates" />
-              ) : (
-                <div className="er-empty">No updates have been published yet.</div>
-              )}
-            </div>
-          </section>
-
-          <div className="hub-home-footer-callout">
-            <div>
-              <h2>Need a student service?</h2>
-              <p>Check your results, request a JAMB slip or apply for NELFUND.</p>
-            </div>
-            <a className="hub-outline-btn" href="/services">Browse services <ArrowRight size={13} /></a>
-          </div>
         </div>
       </div>
     </HubLayout>

@@ -77,7 +77,7 @@ test('JAMB subject selection keeps English locked and uses a group-filtered drop
   await mockJambBank(page);
   await page.goto('/cbt/setup/jamb');
 
-  await expect(page.getByRole('heading', { name: 'How this CBT session works' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Set up your JAMB practice or mock' })).toBeVisible();
   const groupSelect = page.getByRole('combobox', { name: 'Choose subject group' });
   await expect(groupSelect).toHaveValue('Science');
   await expect(groupSelect.getByRole('option')).toHaveCount(3);

@@ -58,7 +58,10 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /practiceTrack/, 'the picker is filtered by the subject group the student chose');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
   assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
-  assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
+  // UX-7: the explanatory three-step interstitial delayed the paper. The
+  // honesty note stays beside the setup heading; the screen is the setup form.
+  assert.doesNotMatch(setup, /How this CBT session works|guideItems/, 'no explanatory interstitial before the paper');
+  assert.match(setup, /er-setup-note--hero/, 'the practice-environment note stays visible');
 });
 
 test('compulsory English is always selected and a missing bank pool blocks the start', () => {

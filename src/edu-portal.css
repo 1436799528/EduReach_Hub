@@ -108,7 +108,7 @@
 @media(max-width:600px){.er-major-page{padding:10px 0 84px}.er-major-container{width:calc(100% - 32px)}.er-major-heading{padding:12px;gap:12px;border-radius:12px}.er-major-logo{width:48px;height:48px}.er-major-logo img{width:36px;height:36px}.er-major-heading h1{font-size:19px}.er-major-heading p{font-size:12.5px}.er-major-grid{grid-template-columns:1fr;gap:8px}}
 
 .er-mobile-bottom-nav{display:none}
-@media(max-width:600px){
+@media(max-width:768px){
   body:not(.er-exam-mode) .hub-shell{padding-bottom:calc(62px + env(safe-area-inset-bottom))}
   .er-mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:90;height:calc(58px + env(safe-area-inset-bottom));background:rgba(255,255,255,.98);border-top:1px solid #dfe4ea;box-shadow:0 -3px 12px rgba(15,23,42,.08);padding:5px 8px calc(5px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);align-items:center}
   .er-mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:48px;color:#5e6c82;text-decoration:none;font-size:11px;font-weight: 560}
@@ -446,6 +446,10 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-late-region--feed{--er-late-min:300px}       /* the four-card news row the home page shows */
 .er-late-region--feed-page{--er-late-min:450px}  /* the 5 rows its skeleton shows */
 .er-late-region--library{--er-late-min:670px}    /* 6 cards in two columns: 3x214 + 2x14 */
+/* UX-7: an empty or failed library is a sentence, not six reserved card slots.
+   The 670px floor under a one-line notice was the blank half-screen on
+   /past-questions in the unconfigured build. */
+.er-late-region--library:has(> .er-resource-block > :is(.er-inline-notice,.er-state)){--er-late-min:0}
 @media(max-width:700px){
   /* .er-library-grid is a single column here, so six cards are six rows tall */
   .er-late-region--library{--er-late-min:1350px}
@@ -456,7 +460,7 @@ body.er-exam-mode{padding-bottom:0!important}
    and scrolls exactly like the cards, and the floor covers the guide strip the
    placeholder does not draw. Measured cause: the section grew 262px at 4.7s
    and pushed the rest of the page down (CLS 0.21 on /). */
-.er-late-region--simulators{--er-late-min:210px}
+.er-late-region--simulators{--er-late-min:150px}
 .er-sim-grid .er-skeleton-tile{min-height:150px}
 @media(max-width:700px){
   .er-late-region--simulators{--er-late-min:280px}
@@ -1236,6 +1240,23 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-footer-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 20px !important; }
   .er-footer-brand { grid-column: auto; }
   .er-footer-links { gap: 0; }
+}
+
+/* UX-7: on a phone the footer is a quiet legal/utility block, not a second
+   landing page. Two link columns, no promotional paragraph or long contact
+   note, and the policy row starts left. Every link stays present. */
+@media (max-width: 640px) {
+  .er-footer { padding: 22px 0 18px !important; }
+  .er-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px 14px !important; margin-bottom: 16px !important; }
+  .er-footer-brand { grid-column: 1 / -1; align-items: flex-start; justify-items: start; text-align: left; }
+  .er-footer-brand-link, .er-footer-social, .er-footer-bottom, .er-footer-legal { justify-content: flex-start; }
+  .er-footer-col, .er-footer-links { text-align: left; justify-items: start; }
+  .er-footer-about, .er-footer-note { display: none; }
+  .er-footer-heading { margin-bottom: 6px; font-size: 12px; }
+  .er-footer-links a { min-height: 28px; font-size: 12px; justify-content: flex-start; }
+  .er-footer-bottom { gap: 10px; padding-top: 14px; }
+  .er-footer-copy, .er-footer-legal { font-size: 10.5px; }
+  .er-footer-legal { gap: 10px; }
 }
 
 
