@@ -238,3 +238,15 @@ test('unlinked historical superseded records and non-atomic replacements remain 
     assert.equal(await legacy.journal.readSubmission(scope), null);
   } finally { await legacy.journal.close(); }
 });
+
+test('a reviewed submission conflict can clear the old seal and use a new key', async () => {
+  const f = fixture();
+  try {
+    const first = await f.journal.sealSubmission(scope, crypto.randomUUID(), 0);
+    await f.journal.clearSubmission(scope);
+    assert.equal(await f.journal.readSubmission(scope), null);
+    const second = await f.journal.sealSubmission(scope, crypto.randomUUID(), 2);
+    assert.equal(second.expectedRevision, 2);
+    assert.notEqual(second.operationKey, first.operationKey);
+  } finally { await f.journal.close(); }
+});

@@ -87,9 +87,15 @@ function timeAgo(value: string) {
   if (Number.isNaN(date.getTime())) return 'Recently';
   if (diffMs < minute) return 'Just now';
   if (diffMs < hour) return `${Math.max(1, Math.round(diffMs / minute))} min ago`;
-  if (diffMs < day) return `${Math.round(diffMs / hour)} hours ago`;
+  if (diffMs < day) {
+    const hours = Math.round(diffMs / hour);
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
   if (diffMs < day * 2) return 'Yesterday';
-  if (diffMs < day * 7) return `${Math.round(diffMs / day)} days ago`;
+  if (diffMs < day * 7) {
+    const days = Math.round(diffMs / day);
+    return `${days} day${days === 1 ? '' : 's'} ago`;
+  }
   return new Intl.DateTimeFormat('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
 }
 

@@ -3217,26 +3217,31 @@ async function cbtV2LocalWrite(req: express.Request, res: express.Response, kind
   if (!cbtV2LocalRehearsalEnabled()) return res.status(503).json({ error: 'CBT versioned rehearsal is unavailable.' });
   try {
     const caller = await requireUser(req, 'cbt.attempt');
-    // A browser seal cannot prove the absence of offline work on other devices.
-    // Finalization stays unavailable even when the answer gateway is enabled.
-    if (kind === 'finalize') return res.status(503).json({ error: 'CBT finalization is unavailable pending recovery verification.' });
     const token = req.header('authorization')?.slice('Bearer '.length).trim() || '';
     // Never fall back to service role: the gateway uses the verified JWT's auth.uid().
     const callerDb = getUserScopedSupabase(token);
     if (!callerDb) return res.status(503).json({ error: 'CBT authorization is unavailable.' });
     const { protocol, expectedRevision, operationKey, questionId, selected, sessionId, sessionGeneration } = req.body || {};
-    if (protocol !== 2 || !CBT_V2_UUID.test(req.params.attemptId) || !CBT_V2_UUID.test(String(operationKey || '')) ||
-        !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 ||
-        !CBT_V2_UUID.test(String(sessionId || '')) || !Number.isSafeInteger(sessionGeneration) || sessionGeneration < 1 ||
-        !CBT_V2_UUID.test(String(questionId || '')) ||
-        !(selected === null || (Number.isInteger(selected) && selected >= 0 && selected <= 3))) {
+    const commonValid = protocol === 2 && CBT_V2_UUID.test(req.params.attemptId) && CBT_V2_UUID.test(String(operationKey || '')) &&
+      Number.isSafeInteger(expectedRevision) && expectedRevision >= 0 &&
+      CBT_V2_UUID.test(String(sessionId || '')) && Number.isSafeInteger(sessionGeneration) && sessionGeneration >= 1;
+    if (!commonValid || (kind === 'answer' &&
+        (!CBT_V2_UUID.test(String(questionId || '')) || !(selected === null || (Number.isInteger(selected) && selected >= 0 && selected <= 3))))) {
       return res.status(400).json({ error: 'Invalid versioned CBT operation.' });
     }
     if (!await v2AttemptAccessible(caller, req.params.attemptId, caller.user.id)) return res.status(404).json({ error: 'CBT attempt not found.' });
-    const { data, error } = await callerDb.rpc('cbt_v2_answer_gateway', {
-      p_attempt: req.params.attemptId, p_expected_revision: expectedRevision, p_operation_key: operationKey,
-      p_question: questionId, p_selected: selected, p_session: sessionId, p_generation: sessionGeneration,
-    });
+    // Finalization uses the same writing lease as answers. The database is
+    // still the authority for revision, expiry, scoring and idempotency; a
+    // client seal only lets an uncertain response be retried safely.
+    const { data, error } = kind === 'answer'
+      ? await callerDb.rpc('cbt_v2_answer_gateway', {
+        p_attempt: req.params.attemptId, p_expected_revision: expectedRevision, p_operation_key: operationKey,
+        p_question: questionId, p_selected: selected, p_session: sessionId, p_generation: sessionGeneration,
+      })
+      : await callerDb.rpc('cbt_v2_finalize_gateway', {
+        p_attempt: req.params.attemptId, p_expected_revision: expectedRevision, p_operation_key: operationKey,
+        p_session: sessionId, p_generation: sessionGeneration,
+      });
     if (error) {
       if (error.code === 'P0001' && error.message === 'CBT writing session is no longer active.') return res.status(409).json({ protocol: 2, outcome: 'session_revoked', error: 'This device is no longer authorized to write. Your pending answers remain on this device for review.', code: 'CBT_SESSION_REVOKED' });
       if (error.code === 'P0001' && error.message === 'CBT attempt not found.') return res.status(404).json({ error: 'CBT attempt not found.' });
@@ -3246,7 +3251,10 @@ async function cbtV2LocalWrite(req: express.Request, res: express.Response, kind
       if (error.code === 'P0001' && /requires review|Operation key used for different input|Question is not in this paper/.test(error.message)) return res.status(409).json({ error: 'The operation requires review.' });
       return res.status(503).json({ error: 'Unable to confirm this CBT operation.' });
     }
-    if (!data || typeof data !== 'object' || !['accepted', 'replayed', 'conflict', 'expired', 'closed'].includes(data.outcome)) {
+    const allowed = kind === 'answer'
+      ? ['accepted', 'replayed', 'conflict', 'expired', 'closed']
+      : ['submitted', 'replayed', 'already_submitted', 'conflict', 'expired', 'closed'];
+    if (!data || typeof data !== 'object' || !allowed.includes(data.outcome)) {
       return res.status(503).json({ error: 'Unable to confirm this CBT operation.' });
     }
     return res.status(['conflict', 'expired', 'closed'].includes(data.outcome) ? 409 : 200).json({ protocol: 2, ...data });

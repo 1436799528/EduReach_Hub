@@ -1,6 +1,11 @@
 # UX-5 — Product design and responsive system
 
-**Status:** implementation in progress on `arena/0681e5d9-edureach-hub`
+> **Follow-on:** implementation and real-browser verification for the CBT
+> journey, result, profile summary and notifications are recorded in
+> [`UX-6-PROTOTYPE-TO-PRODUCTION-CORE-EXPERIENCE.md`](./UX-6-PROTOTYPE-TO-PRODUCTION-CORE-EXPERIENCE.md).
+> UX-6 reuses this system; it does not replace it.
+
+**Status:** merged in PR #42 (`47f3e24`). Follow-on production verification is UX-6.
 (based on `fa51d7d`). The shared shell, homepage, dashboard, My CBT, profile
 entry and admin console are implemented and verified. The CBT setup rules,
 exam surface and result page are fully specified in the prototype and

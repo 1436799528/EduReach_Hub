@@ -37,7 +37,6 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
   const [markError, setMarkError] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const autoMarkedRef = useRef(false);
   const panelId = `er-notif-panel-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const refresh = useCallback(async () => {
@@ -79,13 +78,10 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
   const failed = Boolean(load?.error);
 
   /**
-   * UX-3: opening the panel is the read action where the notification store
-   * supports it. The dot is a promise that the count is real; making the user
-   * hunt for a second "mark all read" control leaves it lying.
-   *
-   * The write is optimistic but reconciled: a failure restores the previous
-   * list and shows the error, so the dot comes back rather than pretending the
-   * server accepted it.
+   * UX-6: opening the panel never marks everything read. The unread count is a
+   * promise that those items still need attention; a bulk write happens only
+   * through the explicit control below. The write is optimistic but
+   * reconciled: a failure restores the previous list and shows the error.
    */
   const markAllRead = useCallback(async () => {
     if (!userId || marking || unread === 0) return;
@@ -122,16 +118,6 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
       setMarkError('That notification could not be marked as read. Try again.');
     }
   }, [userId, load]);
-  useEffect(() => {
-    if (!open) {
-      autoMarkedRef.current = false;
-      return;
-    }
-    if (!userId || failed || unread === 0 || autoMarkedRef.current) return;
-    autoMarkedRef.current = true;
-    void markAllRead();
-  }, [open, userId, failed, unread, markAllRead]);
-
   if (!userId) return null;
 
   return (

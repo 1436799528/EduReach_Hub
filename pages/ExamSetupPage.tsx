@@ -16,6 +16,7 @@ import { usePendingPhase } from '../src/lib/usePendingPhase';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
+import './ExamSetupPage.css';
 import {
   DEFAULT_CBT_LIMITS,
   compulsorySubjectKeys,
@@ -365,6 +366,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
     (entry) => !practiceSubjects.some((subject) => normalizeSubject(subject) === normalizeSubject(entry.subject)),
   );
   const practicePlan = useMemo(() => previewPlan(selectedAvailability, effectiveCount), [selectedAvailability, effectiveCount]);
+  const subjectLimit = subjectLimitFor(examBody, limits);
+  const slotsLeft = Math.max(0, subjectLimit - practiceSubjects.length);
 
   // ---- Derived mock combination ---------------------------------------
   // Both modes use the same available subject picker. A mock simply lets the system
@@ -499,7 +502,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '22px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '860px' }}>
+        <div className="hub-container hub-narrow er-setup-container">
           <section className="er-setup-hero">
             <div className="er-setup-hero-mark"><img src={copy.logo} alt={`${exam.toUpperCase()} logo`} width={48} height={48} decoding="async" /></div>
             <div>
@@ -683,6 +686,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <Calculator size={22} aria-hidden="true" />
                 </div>
 
+                <div className="er-setup-plan-layout">
+                  <div className="er-setup-plan-main">
                 {(mode === 'practice' || mode === 'mock') && (
                   <div className="er-setup-form-grid">
                     <div className="er-setup-full-width">
@@ -712,9 +717,14 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       </select>
                     </div>
                     <div className="er-setup-full-width">
-                      <div className="er-setup-label">
-                        Subjects ({practiceSubjects.length} of {subjectLimitFor(examBody, limits)} selected){compulsoryEnglish ? ` · ${compulsoryEnglish} compulsory` : ''}
+                      <div className="er-setup-label" role="status" aria-live="polite">
+                        Subjects ({practiceSubjects.length} of {subjectLimit} selected){compulsoryEnglish ? ` · ${compulsoryEnglish} compulsory` : ''}
                       </div>
+                      <p className="er-setup-field-note er-setup-slot-note">
+                        {slotsLeft > 0
+                          ? `${slotsLeft} optional subject slot${slotsLeft === 1 ? '' : 's'} left in this paper.`
+                          : 'All subject slots are used. Remove an optional subject to choose a replacement.'}
+                      </p>
                       <div className="er-setup-full-width" role="group" aria-label="Available subjects">
                         <label className="er-setup-label" htmlFor={exam === 'jamb' ? 'er-jamb-subject' : 'er-optional-subject'}>
                           {exam === 'jamb' ? 'Add an optional JAMB subject' : 'Add a subject'}
@@ -725,7 +735,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                           aria-label={exam === 'jamb' ? 'Add an optional JAMB subject' : 'Add a subject'}
                           aria-describedby="cbt-subject-help"
                           value=""
-                          disabled={practiceSubjects.length >= subjectLimitFor(examBody, limits) || addableSubjects.length === 0}
+                          disabled={practiceSubjects.length >= subjectLimit || addableSubjects.length === 0}
                           onChange={(event) => { if (event.target.value) addPracticeSubject(event.target.value); }}
                         >
                           <option value="">Choose a subject</option>
@@ -739,7 +749,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                             </option>
                           ))}
                         </select>
-                        {practiceSubjects.length >= subjectLimitFor(examBody, limits) ? (
+                        {practiceSubjects.length >= subjectLimit ? (
                           <p className="er-setup-field-note">Subject combination complete. Remove an optional subject to choose a replacement.</p>
                         ) : addableSubjects.length === 0 ? (
                           <p className="er-setup-field-note">
@@ -818,7 +828,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     </>}
                   </div>
                 )}
+                  </div>
 
+                  <aside className="er-setup-plan-aside" aria-label="Your paper summary">
                 {/* What is about to happen, in one place. */}
                 <div className="er-summary" aria-live="polite">
                   <h3>Before you start</h3>
@@ -853,6 +865,9 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 {formError && <div className="hub-form-error" role="alert">{formError}</div>}
 
                 <div className="er-setup-actions">
+                  <p className="er-setup-sticky-meta">
+                    {mode === 'mock' ? 'Mock' : 'Practice'} · {practiceSubjects.length} subject{practiceSubjects.length === 1 ? '' : 's'} · {mode === 'practice' ? effectiveCount : mockCount} questions · {mode === 'practice' ? effectiveDuration : mockDurationMinutes(bank?.exam.defaultDurationMinutes, examBody)} min
+                  </p>
                   <button
                     type="button"
                     className="hub-primary-btn"
@@ -873,6 +888,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                     If nothing happens, <a href="/cbt">go back to the CBT Centre</a> and try again.
                   </p>
                 )}
+                  </aside>
+                </div>
               </section>
             </>
           )}

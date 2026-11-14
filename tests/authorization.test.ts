@@ -286,12 +286,13 @@ backend.post('/rest/v1/rpc/cbt_v2_session_gateway', (req, res) => {
   if (cbtSessionOutcome === 'malformed') return res.json({ outcome: 'created', revision: 0, answers: {}, status: 'in_progress' });
   return res.json({ outcome: cbtSessionOutcome, sessionId: 'd1111111-1111-4111-8111-111111111111', generation: 1, revision: 0, answers: {}, status: 'in_progress' });
 });
-for (const rpc of ['cbt_v2_answer_gateway', 'cbt_candidate_answer', 'cbt_candidate_finalize']) {
+for (const rpc of ['cbt_v2_answer_gateway', 'cbt_v2_finalize_gateway', 'cbt_candidate_answer', 'cbt_candidate_finalize']) {
   backend.post(`/rest/v1/rpc/${rpc}`, (req, res) => {
     recorded.push(`RPC ${rpc} auth=${String(req.header('authorization'))} body=${JSON.stringify(req.body)}`);
     if (cbtV2Outcome === 'protocol-mismatch') return res.status(400).json({ code: 'P0001', message: 'CBT protocol mismatch.' });
     if (cbtV2Outcome === 'revoked') return res.status(400).json({ code: 'P0001', message: 'CBT writing session is no longer active.' });
     if (cbtV2Outcome === 'not-active') return res.status(400).json({ code: 'P0001', message: 'CBT attempt is not active.' });
+    if (rpc === 'cbt_v2_finalize_gateway') return res.json({ outcome: 'submitted', revision: 2, result: { attempt_id: 'synthetic', score: 50 } });
     return res.json({ outcome: cbtV2Outcome, revision: 2, answers: { '1': 0 }, status: 'in_progress' });
   });
 }
@@ -1222,8 +1223,19 @@ test('local CBT v2 HTTP rejects bad protocol and forwards caller-bound operation
     assert.doesNotMatch(rpc, /p_expected_user|user-student/, 'database derives identity from the forwarded token');
     assert.doesNotMatch(rpc, /hostile-other-user/);
     const finalize = `/api/cbt/v2/attempts/${id}/finalize`;
-    assert.equal((await call(finalize, undefined, { method: 'POST' })).status, 401);
-    assert.equal((await call(finalize, 'student', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ protocol: 2, expectedRevision: 1, operationKey: key, recovery_complete: true }) })).status, 503);
+    const postFinalize = (value: unknown) => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
+    assert.equal((await call(finalize, undefined, postFinalize({}))).status, 401);
+    assert.equal((await call(finalize, 'student', postFinalize({ protocol: 2, expectedRevision: 1, operationKey: key }))).status, 400, 'submission requires the writing lease');
+    assert.ok(!recorded.some(entry => entry.startsWith('RPC cbt_v2_finalize_gateway')));
+    recorded.length = 0;
+    const submitted = await call(finalize, 'student', postFinalize({ protocol: 2, expectedRevision: 1, operationKey: key, sessionId: key, sessionGeneration: 1 }));
+    assert.equal(submitted.status, 200);
+    assert.equal(submitted.body.outcome, 'submitted');
+    const finalizeRpc = recorded.find(entry => entry.startsWith('RPC cbt_v2_finalize_gateway')) || '';
+    assert.match(finalizeRpc, /auth=Bearer token-student/);
+    assert.match(finalizeRpc, /p_session/);
+    assert.match(finalizeRpc, /p_generation/);
+    assert.doesNotMatch(finalizeRpc, /p_expected_user|user-student/);
     assert.ok(!recorded.some(entry => entry.startsWith('RPC cbt_candidate_finalize')));
     cbtV2Outcome = 'conflict';
     const conflict = await call(endpoint, 'student', patch(body));

@@ -1713,7 +1713,7 @@ function validCbtV2Outcome(value: unknown, kind: 'answer' | 'finalize'): value i
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const row = value as Record<string, unknown>;
   if (row.protocol !== 2 || typeof row.outcome !== 'string') return false;
-  if (row.outcome === 'session_revoked') return kind === 'answer' && row.code === 'CBT_SESSION_REVOKED';
+  if (row.outcome === 'session_revoked') return row.code === 'CBT_SESSION_REVOKED';
   if (row.outcome === 'expired' || row.outcome === 'closed') return true;
   if (row.outcome === 'conflict') return validCbtV2Revision(row.revision) && validCbtV2Draft(row.answers) && row.status === 'in_progress';
   if (kind === 'answer' && (row.outcome === 'accepted' || row.outcome === 'replayed')) {

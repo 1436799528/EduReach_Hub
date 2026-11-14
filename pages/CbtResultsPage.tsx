@@ -1,6 +1,6 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CbtResultSlip from '../src/components/CbtResultSlip';
 import { deleteCbtAttempt, fetchCbtResult, type CbtResultPayload, type CbtResultQuestion, type CbtResultAnswer } from '../src/lib/api';
@@ -144,6 +144,25 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
     URL.revokeObjectURL(url);
   };
 
+  const displayPercent = isJambStyle && subjectRows.length
+    ? Math.round((score / Math.max(1, markMaximum)) * 100)
+    : Math.round((correctCount / Math.max(1, totalCount)) * 100);
+  const resultBand = displayPercent >= 70
+    ? { title: 'A strong result', detail: 'Keep the same paper pattern and protect the time you used.' }
+    : displayPercent >= 50
+      ? { title: 'A fair result', detail: 'The paper found gaps worth practising before the next full attempt.' }
+      : { title: 'Room to improve', detail: 'Use the subject breakdown below to choose a smaller paper next.' };
+  const scoredSubjects = subjectRows
+    .filter((row) => row.total > 0)
+    .map((row) => ({ ...row, percent: Math.round((row.correct / row.total) * 100) }));
+  const subjectSpread = new Set(scoredSubjects.map((row) => row.percent)).size > 1;
+  const weakestSubject = scoredSubjects.length > 1 && subjectSpread
+    ? scoredSubjects.reduce((lowest, row) => (row.percent < lowest.percent ? row : lowest), scoredSubjects[0])
+    : null;
+  const strongestSubject = scoredSubjects.length > 1 && subjectSpread
+    ? scoredSubjects.reduce((best, row) => (row.percent > best.percent ? row : best), scoredSubjects[0])
+    : null;
+
   const timeUsed = result?.attempt?.duration_minutes
     ? `${result.attempt.duration_minutes} minutes`
     : (result?.attempt?.started_at && result?.attempt?.submitted_at
@@ -152,7 +171,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
           const mins = Math.round(ms / 60000);
           return `${mins} minute${mins === 1 ? '' : 's'}`;
         })()
-      : '—');
+      : 'Not recorded');
 
   return (
     <HubLayout>
@@ -189,9 +208,25 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
           {!loading && result && !deleteSuccess && (
             <>
               <section className="er-result-header" aria-labelledby="result-heading">
-                <span className="er-result-kicker">CBT RESULT</span>
-                <h1 id="result-heading">{isWaecStyle ? 'Subject Grades' : isJambStyle ? 'Total Mark' : 'Practice Mark'}</h1>
-                {!isWaecStyle && <div className="er-result-score">{isJambStyle ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{`/${markMaximum}`}</span></div>}
+                <div className="er-result-hero">
+                  <div className="er-result-ring" role="img" aria-label={`${displayPercent} percent in this paper`}>
+                    <svg viewBox="0 0 120 120" aria-hidden="true">
+                      <circle className="er-result-ring-track" cx="60" cy="60" r="52" pathLength="100" />
+                      <circle className="er-result-ring-value" cx="60" cy="60" r="52" pathLength="100" strokeDasharray={`${displayPercent} 100`} />
+                    </svg>
+                    <span className="er-result-ring-label">{displayPercent}%</span>
+                  </div>
+                  <div className="er-result-hero-copy">
+                    <span className="er-result-kicker">CBT result</span>
+                    <h1 id="result-heading">{resultBand.title}</h1>
+                    <p className="er-result-band-detail">{resultBand.detail}</p>
+                    <p className="er-result-band-detail">
+                      {correctCount} of {totalCount} question{totalCount === 1 ? '' : 's'} correct
+                      {isWaecStyle ? ' · subject grades use estimated A1–F9 bands' : isJambStyle ? ` · total mark ${score}/${markMaximum} (estimated)` : ''}.
+                    </p>
+                    {!isWaecStyle && <div className="er-result-score">{isJambStyle ? score : Math.round((correctCount / Math.max(1, totalCount)) * 100)}<span>{`/${markMaximum}`}</span></div>}
+                  </div>
+                </div>
                 {isWaecStyle && <p className="er-result-grade-note">Subject grades use estimated A1–F9 bands from this simulator's objective questions; official results may use subject-specific marking schemes.</p>}
                 {isJambStyle && <p className="er-result-grade-note">Marks are estimated from subject-level correct-answer rates; official JAMB or institution scoring may differ.</p>}
               </section>
@@ -203,6 +238,66 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 <div><span>Unanswered</span><strong>{unansweredCount ?? '—'}</strong></div>
                 <div><span>Time used</span><strong>{timeUsed}</strong></div>
               </section>
+
+              {scoredSubjects.length > 0 && (
+                <section className="er-result-guidance" aria-label="What this result means">
+                  <div className="er-result-guidance-main">
+                    <h2 className="er-result-section-title">What this means</h2>
+                    {weakestSubject ? (
+                      <p>
+                        <strong>{weakestSubject.subject}</strong> was the lowest subject in this paper at <strong>{weakestSubject.percent}%</strong>.
+                        {' '}A shorter {weakestSubject.subject} paper would give a clearer signal than repeating this paper immediately.
+                        {strongestSubject && strongestSubject.subject !== weakestSubject.subject
+                          ? ` ${strongestSubject.subject} was the strongest at ${strongestSubject.percent}%.`
+                          : ''}
+                      </p>
+                    ) : scoredSubjects.length === 1 ? (
+                      <p>
+                        This paper covered <strong>{scoredSubjects[0].subject}</strong> only, so there is no subject comparison to make.
+                        Add a second subject to see where to focus next.
+                      </p>
+                    ) : scoredSubjects.length > 1 && !subjectSpread ? (
+                      <p>
+                        No subject stood out in this paper — every subject scored <strong>{scoredSubjects[0].percent}%</strong>.
+                        Use the answers below to decide which subject to revisit first.
+                      </p>
+                    ) : (
+                      <p>Subject breakdown is unavailable for this attempt. The overall score is still recorded.</p>
+                    )}
+                  </div>
+                  <div className="er-result-guidance-actions">
+                    <a className="hub-primary-btn" href="/cbt"><RotateCcw size={15} /> Practise again</a>
+                    <a className="hub-outline-btn" href="/dashboard/cbt">View My CBT <ArrowRight size={15} /></a>
+                  </div>
+                </section>
+              )}
+
+              {scoredSubjects.length > 0 && (
+                <section className="er-result-subject-bars" aria-label="Subject comparison">
+                  <h2 className="er-result-section-title">By subject</h2>
+                  <ul>
+                    {scoredSubjects.map((row) => (
+                      <li key={row.subject}>
+                        <div className="er-result-bar-head">
+                          <span>{row.subject}</span>
+                          <strong>{row.percent}%</strong>
+                        </div>
+                        <div
+                          className="er-result-bar"
+                          role="progressbar"
+                          aria-label={`${row.subject}: ${row.percent} percent`}
+                          aria-valuenow={row.percent}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <span style={{ width: `${row.percent}%` }} />
+                        </div>
+                        <span className="er-result-bar-meta">{row.correct} of {row.total} correct</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {subjectRows.length > 0 && (
                 <section className="er-result-subject-table-wrap er-result-visible-subject-table" aria-label="Performance by subject">

@@ -44,8 +44,8 @@ test('the notification icon is a small dot, never a numbered red block', () => {
   const css = read('src/styles/type-system.css');
   assert.doesNotMatch(component, /er-notif-badge/, 'the count block markup is gone');
   assert.match(component, /er-notif-unread-dot/, 'the dot markup is present');
-  assert.match(component, /markNotificationsRead\(userId\)/, 'opening reconciles read state with the server');
-  assert.match(component, /autoMarkedRef/, 'a failed auto-mark does not loop');
+  assert.match(component, /markNotificationsRead\(userId\)/, 'mark-all reconciles read state with the server');
+  assert.doesNotMatch(component, /autoMarkedRef/, 'opening the panel never blanket-marks every notification read');
   const dotRule = css.match(/\.er-notif-unread-dot\s*\{([\s\S]*?)\}/)?.[1] || '';
   assert.match(dotRule, /width:\s*8px/);
   assert.match(dotRule, /height:\s*8px/);
