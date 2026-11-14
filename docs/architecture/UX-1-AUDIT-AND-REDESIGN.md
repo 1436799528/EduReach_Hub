@@ -377,13 +377,20 @@ and the `is_staff` grant.
 
 - Branch: `arena/c839064e-edureach-hub`
 - Base: `d048916` (merge of PR #39)
-- Working tree at report time: 30 modified files, 2 deleted files, 3 new files
-  (including this report and `tests/ux-audit.test.ts`).
+- UX-1 commit: `705677e` — *UX-1: green action system, analytics-first
+  dashboard, admin lookup, profile persistence fix*.
+- Branch pushed to origin. A Vercel branch preview built successfully:
+  `dpl_ChJytfyWbrvuzt5Lo9Rbtx5LahiM`, state `READY`, at
+  `aponijames-ime1p3qcd-james-projects-cc0475f0.vercel.app`. The preview is
+  SSO-protected, so it was not anonymously smoke-tested.
+- Production is still `d048916` until this branch is merged; no production
+  promotion was forced.
 - No `git reset --hard`, `git clean -fd`, force push or staging environment was
   used.
 - Hosted database changes: two additive, idempotent migrations
-  (`public_profiles`, `repair_profile_write_policy`); no student row was deleted
-  or rewritten. The RLS impersonation test ran in a rolled-back transaction.
+  (`public_profiles`, `repair_profile_write_policy`), both now recorded in
+  `supabase_migrations.schema_migrations`; no student row was deleted or
+  rewritten. The RLS impersonation test ran in a rolled-back transaction.
 
 ---
 
