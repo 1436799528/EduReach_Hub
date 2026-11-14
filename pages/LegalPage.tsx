@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { useSiteContent } from '../src/components/useSiteContent';
 import { sanitizeRichHtml } from '../src/lib/html-sanitize';
@@ -37,10 +37,6 @@ export default function LegalPage({ slug }: { slug: string }) {
     <HubLayout>
       <div className="er-legal-page">
         <div className="hub-container er-legal-container">
-          <a className="er-legal-back" href="/">
-            <ArrowLeft size={14} aria-hidden="true" /> Back to EduReach
-          </a>
-
           {!page && status === 'live' && (
             <div className="er-legal-missing">
               <h1>This page is not published</h1>

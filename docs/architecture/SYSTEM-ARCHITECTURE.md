@@ -49,7 +49,7 @@ The browser talks to **two** backends today:
 | Storage | Supabase Storage buckets: `past-questions` (private import sources), `resource-files` (private, signed URLs), `admin-content` (public images/PDFs). |
 | Notifications | In-app only: `student_notifications` rows written by `src/server/notifications.ts` on service-request status changes. **No email/SMS provider is present in the repository** — notification emails are not implemented today. |
 | Newsroom | Ingestion pipeline (`src/server/newsroom/*`), `news_sources`/`news_ingest_runs`/`news_ingest_candidates`, a `daily-news-refresh` Netlify scheduled function, and a `pg_cron` job that expires stale news on the hosted project. |
-| Database size | 85 migration files in `supabase/migrations`, 52 tables classified by `scripts/rls-posture.ts`; the hosted project reports **88** public tables and **195** ledger rows, i.e. the lineages diverged. |
+| Database size | 86 migration files in `supabase/migrations`, 52 tables classified by `scripts/rls-posture.ts`; the hosted project reports **88** public tables and **195** ledger rows, i.e. the lineages diverged. |
 
 ### 1.3 Verified weaknesses of the current split
 

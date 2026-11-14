@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { readPrivacyPreferences, savePrivacyPreferences } from '../lib/privacyPreferences';
 import { OPTIONAL_ANALYTICS_ENABLED } from '../lib/analyticsAvailability';
 
-/** Optional analytics remain off until a visitor explicitly opts in. */
+/**
+ * The privacy choice is deliberately small and immediate.
+ *
+ * Essential storage is always on because sign-in cannot work without it.
+ * Optional analytics are off until a visitor says otherwise. When the browser
+ * refuses storage, the choice cannot be recorded, so the panel says that and
+ * offers a session-only way to dismiss it. A button that looks broken is worse
+ * than an honest limitation.
+ */
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [customizing, setCustomizing] = useState(false);
@@ -17,7 +26,8 @@ export default function CookieConsent() {
 
   function save(value: boolean) {
     if (!savePrivacyPreferences(value)) {
-      setError('Your choice could not be saved. Optional analytics are disabled. Enable browser storage and try again.');
+      setError('Your choice could not be saved. Optional analytics are disabled. Enable browser storage and try again, or continue without saving for this visit.');
+      setAnalytics(false);
       return;
     }
     setError('');
@@ -27,8 +37,17 @@ export default function CookieConsent() {
     window.dispatchEvent(new CustomEvent('edureach:privacy-preferences-changed'));
   }
 
+  function continueWithoutSaving() {
+    // Nothing is claimed about the choice: analytics remain off and the next
+    // visit asks again. This only removes the panel the visitor is stuck behind.
+    setError('');
+    setVisible(false);
+    setCustomizing(false);
+  }
+
   function openSettings() {
     setAnalytics(OPTIONAL_ANALYTICS_ENABLED && readPrivacyPreferences()?.analytics === true);
+    setError('');
     setCustomizing(true);
     setVisible(true);
   }
@@ -38,27 +57,40 @@ export default function CookieConsent() {
       {!visible && <button className="er-cookie-settings" type="button" onClick={openSettings}>Cookie settings</button>}
       {visible && (
         <section className="er-cookie-consent" aria-labelledby="er-cookie-title" aria-describedby="er-cookie-description">
-          <h2 id="er-cookie-title">Your privacy choices</h2>
+          <div className="er-cookie-heading">
+            <h2 id="er-cookie-title">Your privacy choices</h2>
+            <button className="er-cookie-close" type="button" aria-label="Close privacy choices" onClick={continueWithoutSaving}><X size={15} aria-hidden="true" /></button>
+          </div>
           <p id="er-cookie-description">
-            Essential browser storage supports core features. {OPTIONAL_ANALYTICS_ENABLED ? 'Optional analytics stay off unless you allow them.' : 'Optional analytics are temporarily disabled.'}
-            Change this choice any time in Cookie settings. Read our <a href="/cookies">Cookie Policy</a> and <a href="/privacy">Privacy Notice</a>.
+            Essential storage keeps sign-in and security working. Optional analytics stay off unless you allow them.
+            Read our <a href="/cookies" target="_blank" rel="noopener noreferrer">Cookie Policy</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
           </p>
-          {error && <p role="alert">{error}</p>}
+
           {customizing && (
             <div className="er-cookie-options">
               <p><strong>Essential storage</strong> is always active for sign-in, security and core functions.</p>
               <label>
                 <input type="checkbox" checked={analytics} disabled={!OPTIONAL_ANALYTICS_ENABLED} onChange={(event) => setAnalytics(event.target.checked)} />
-                <span><strong>Optional analytics</strong> — {OPTIONAL_ANALYTICS_ENABLED ? 'allow aggregated first-party product analytics.' : 'temporarily unavailable.'}</span>
+                <span><strong>Optional analytics</strong> {OPTIONAL_ANALYTICS_ENABLED ? '— allow aggregated first-party product analytics.' : 'are temporarily unavailable.'}</span>
               </label>
             </div>
           )}
+
+          {error && (
+            <div className="er-cookie-error" role="alert">
+              <p>{error}</p>
+              <button type="button" onClick={continueWithoutSaving}>Continue for this visit</button>
+            </div>
+          )}
+
           <div className="er-cookie-actions">
             <button type="button" onClick={() => save(false)}>Reject optional</button>
             {customizing
-              ? <button type="button" onClick={() => save(analytics)}>Save choices</button>
+              ? <button type="button" className="er-cookie-save" onClick={() => save(analytics)}>Save choices</button>
               : <button type="button" onClick={() => setCustomizing(true)}>Customize</button>}
-            <button className="er-cookie-accept" type="button" disabled={!OPTIONAL_ANALYTICS_ENABLED} onClick={() => save(true)}>Accept optional</button>
+            {OPTIONAL_ANALYTICS_ENABLED && (
+              <button className="er-cookie-accept" type="button" onClick={() => save(true)}>Allow analytics</button>
+            )}
           </div>
         </section>
       )}

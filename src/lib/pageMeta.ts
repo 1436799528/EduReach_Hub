@@ -84,6 +84,7 @@ const routeTitles: Record<string, string> = {
 
 export function pageTitleFor(pathname: string): string {
   const normalized = pathname.replace(/\/$/, '') || '/';
+  if (normalized.startsWith('/u/')) return 'Student Profile';
   if (normalized.startsWith('/cbt/setup/')) return 'Practice Setup';
   if (normalized.startsWith('/services/apply/')) return 'Service Guide';
   if (normalized.startsWith('/services/')) return 'Service';

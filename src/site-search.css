@@ -85,3 +85,26 @@
   .site-search--home, .site-search--page, .site-search--drawer { width: 100%; }
   .site-search--dashboard { display: none; }
 }
+
+/* UI-5: typeahead emphasis and its pending indicator.
+   The mark uses the selected-state surface rather than a new colour; the only
+   meaning it adds is "this is the part you typed". */
+.site-search-list mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: var(--er-primary-soft, #edf4fb);
+  color: var(--er-primary, #0a3e83);
+}
+.site-search-spinner {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 2px solid #cbd5e1;
+  border-top-color: #475569;
+  border-radius: 50%;
+  animation: site-search-spin .7s linear infinite;
+}
+@keyframes site-search-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .site-search-spinner { animation: none; border-top-color: #475569; }
+}

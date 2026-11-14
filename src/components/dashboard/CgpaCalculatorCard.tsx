@@ -1,11 +1,10 @@
 import { userFacingError } from '../../../lib/errors';
 import { useMemo, useState } from 'react';
-import { Calculator, Trash2 } from 'lucide-react';
+import { Calculator, Plus, Trash2 } from 'lucide-react';
 import { calculateCgpa, gradesForScale, gradePointsByScale, saveCgpaSnapshot, type CgpaCourseInput, type CgpaScale, type CgpaSnapshot } from '../../lib/studentDashboard';
 import { localStorageKey } from '../../lib/localPreview';
 
 const localCoursesKey = () => localStorageKey('cgpa-courses');
-const fieldStyle = { padding: '8px 9px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '6px', width: '100%', boxSizing: 'border-box' } as const;
 
 function readLocalCourses(): CgpaCourseInput[] {
   try {
@@ -97,80 +96,109 @@ export default function CgpaCalculatorCard({
     }
   };
 
+  const addCourse = () => {
+    const nextCourses = [...courses, { code: '', units: 2, grade: 'A' }];
+    setCourses(nextCourses);
+    try {
+      localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
+    } catch {
+      // storage unavailable - calculator still works for this session
+    }
+  };
+
   return (
-    <section className="dash-card" id="cgpa">
-      <div className="dash-card-header">
-        <h2 className="dash-card-title"><Calculator size={14} className="dash-card-title-icon" /> CGPA Calculator</h2>
-        <label className="dash-card-meta">Scale{' '}
-          <select value={scale} onChange={(e) => changeScale(Number(e.target.value) as CgpaScale)} aria-label="Grading scale" style={fieldStyle}>
-            <option value={5}>5.0 scale</option>
-            <option value={4}>4.0 scale</option>
-          </select>
-        </label>
-      </div>
-      <p className="dash-note">Estimate only — not an official transcript. Bands vary by institution ({scale === 5 ? 'A=5, B=4, C=3, D=2, E=1, F=0' : 'A=4, B=3, C=2, D=1, F=0'}).</p>
-
-      <div className="dash-cgpa-result">
-        <span className="dash-metric-label">Estimated GPA</span>
-        <div className="dash-cgpa-value">{result.gpaText} <small>/ {scale.toFixed(2)}</small></div>
-        <span className="dash-cgpa-class">{result.totalUnits ? result.classification : 'Add your courses and grades below'}</span>
-      </div>
-
-      <div className="dash-cgpa-rows">
-        <div className="dash-cgpa-row dash-cgpa-head" aria-hidden="true">
-          <span>Course</span><span>Units</span><span>Grade</span><span />
+    <section className="dash-card dash-cgpa" id="cgpa">
+      <div className="dash-cgpa-top">
+        <div>
+          <h2 className="dash-card-title"><Calculator size={14} className="dash-card-title-icon" /> CGPA calculator</h2>
+          <p className="dash-card-help">One workspace for both Nigerian grading systems. Your estimate updates as you type.</p>
         </div>
-        {courses.map((course, index) => (
-          <div key={index} className="dash-cgpa-row">
-            <input type="text" value={course.code} onChange={(e) => update(index, { code: e.target.value })} placeholder={`Course ${index + 1}`} aria-label={`Course ${index + 1} code`} style={fieldStyle} />
-            <input type="number" min={1} max={6} value={course.units} onChange={(e) => update(index, { units: Number(e.target.value) || 1 })} aria-label={`Course ${index + 1} units`} style={fieldStyle} />
-            <select value={course.grade} onChange={(e) => update(index, { grade: e.target.value })} aria-label={`Course ${index + 1} grade`} style={fieldStyle}>
-              {gradesForScale(scale).map((g) => <option key={g} value={g}>{g} ({gradePointsByScale[scale][g]})</option>)}
-            </select>
+        <div className="dash-segmented" role="group" aria-label="Grading scale">
+          {([4, 5] as CgpaScale[]).map((option) => (
             <button
+              key={option}
               type="button"
-              onClick={() => {
-                const next = courses.filter((_, i) => i !== index);
-                const nextCourses = next.length ? next : [{ code: '', units: 2, grade: 'A' }];
-                setCourses(nextCourses);
-                try {
-                  localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
-                } catch {
-                  // storage unavailable - calculator still works for this session
-                }
-              }}
-              aria-label={`Remove course ${index + 1}`}
-              className="dash-icon-btn"
+              aria-pressed={scale === option}
+              className={scale === option ? 'is-active' : undefined}
+              onClick={() => changeScale(option)}
             >
-              <Trash2 size={14} />
+              {option.toFixed(1)} scale
             </button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {latestSnapshot && (
-        <div className="dash-note">Last saved: {latestSnapshot.gpa}/{(latestSnapshot.scale ?? 5).toFixed(2)} • {latestSnapshot.totalUnits} units • {latestSnapshot.classification}</div>
-      )}
-      {message && <div className={`dash-note ${message.toLowerCase().includes('unable') ? 'is-error' : 'is-success'}`}>{message}</div>}
+      <div className="dash-cgpa-layout">
+        <aside className="dash-cgpa-summary" aria-label="CGPA estimate">
+          <span className="dash-cgpa-summary-label">Estimated GPA</span>
+          <div className="dash-cgpa-value">{result.gpaText}<small>/ {scale.toFixed(1)}</small></div>
+          <span className="dash-cgpa-class">{result.totalUnits ? result.classification : 'Add your courses and grades'}</span>
+          <span className="dash-cgpa-summary-rule" aria-hidden="true" />
+          <dl className="dash-cgpa-stats">
+            <div><dt>Credit units</dt><dd>{result.totalUnits || 0}</dd></div>
+            <div><dt>Courses</dt><dd>{courses.length}</dd></div>
+          </dl>
+          <p className="dash-cgpa-note">Estimate only, not an official transcript. Bands vary by institution.</p>
+        </aside>
 
-      <div className="dash-btn-row">
-        <button
-          type="button"
-          className="dash-btn dash-btn-secondary"
-          onClick={() => {
-            const nextCourses = [...courses, { code: '', units: 2, grade: 'A' }];
-            setCourses(nextCourses);
-            try {
-              localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
-            } catch {
-              // storage unavailable - calculator still works for this session
-            }
-          }}
-        >
-          + Add Course
-        </button>
-        <button type="button" className="dash-btn dash-btn-secondary" onClick={clearAll}>Clear</button>
-        <button type="button" className="dash-btn dash-btn-primary" onClick={save} disabled={saving || !result.totalUnits}>{saving ? 'Saving…' : 'Save Snapshot'}</button>
+        <div className="dash-cgpa-editor">
+          <div className="dash-cgpa-rows">
+            <div className="dash-cgpa-row dash-cgpa-head-row" aria-hidden="true">
+              <span>Course</span><span>Units</span><span>Grade</span><span />
+            </div>
+            {courses.map((course, index) => (
+              <div className="dash-cgpa-row" key={index}>
+                <label className="dash-cgpa-field">
+                  <span>Course {index + 1}</span>
+                  <input type="text" value={course.code} onChange={(e) => update(index, { code: e.target.value })} placeholder="e.g. MTH101" aria-label={`Course ${index + 1} code`} />
+                </label>
+                <label className="dash-cgpa-field">
+                  <span>Units</span>
+                  <input type="number" min={1} max={6} value={course.units} onChange={(e) => update(index, { units: Number(e.target.value) || 1 })} aria-label={`Course ${index + 1} units`} />
+                </label>
+                <label className="dash-cgpa-field">
+                  <span>Grade</span>
+                  <select value={course.grade} onChange={(e) => update(index, { grade: e.target.value })} aria-label={`Course ${index + 1} grade`}>
+                    {gradesForScale(scale).map((g) => <option key={g} value={g}>{g} · {gradePointsByScale[scale][g]} points</option>)}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = courses.filter((_, i) => i !== index);
+                    const nextCourses = next.length ? next : [{ code: '', units: 2, grade: 'A' }];
+                    setCourses(nextCourses);
+                    try {
+                      localStorage.setItem(localCoursesKey(), JSON.stringify(nextCourses));
+                    } catch {
+                      // storage unavailable - calculator still works for this session
+                    }
+                  }}
+                  aria-label={`Remove course ${index + 1}`}
+                  className="dash-cgpa-remove"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button type="button" className="dash-cgpa-add" onClick={addCourse}><Plus size={15} /> Add course</button>
+        </div>
+      </div>
+
+      <div className="dash-cgpa-footer">
+        <div className="dash-cgpa-footnote">
+          {latestSnapshot && (
+            <p>Last saved: {latestSnapshot.gpa}/{ (latestSnapshot.scale ?? 5).toFixed(1) } · {latestSnapshot.totalUnits} units · {latestSnapshot.classification}</p>
+          )}
+          {message && <p className={`dash-cgpa-message ${message.toLowerCase().includes('unable') ? 'is-error' : 'is-success'}`}>{message}</p>}
+          {!latestSnapshot && !message && <p>Save a semester to keep the estimate on your dashboard.</p>}
+        </div>
+        <div className="dash-cgpa-actions">
+          <button type="button" className="dash-btn dash-btn-secondary" onClick={clearAll}>Clear</button>
+          <button type="button" className="dash-btn dash-btn-primary" onClick={save} disabled={saving || !result.totalUnits}>{saving ? 'Saving…' : 'Save snapshot'}</button>
+        </div>
       </div>
     </section>
   );

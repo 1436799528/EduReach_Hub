@@ -6,7 +6,7 @@ One design system serves all three areas. Tokens live in `src/styles/theme.css`
 ## Shared foundation (all three)
 | Token | Value | Used for |
 |---|---|---|
-| `--er-primary` | `#174A3A` deep green (hover `#123A2D`, pressed `#0E3025`) | **Only** primary-button fill; selected/active states; links; focus ring |
+| `--er-primary` | `#0A3E83` logo navy (hover `#083570`, pressed `#062B5C`) | **Only** primary-button fill; selected/active states; links; focus ring |
 | `--er-crimson` | `#B14933` (deep `#B3331A`) | Brand accent only: logo/wordmark, eyebrows, identity marks, unread-notification badge — never the current-nav state or default button |
 | `--er-navy` | `#0F172A` | Headings, dark shells (admin sidebar, exam bar, footer) |
 | `--er-tangerine` | `#D2732A` | Small secondary highlights only |
@@ -15,7 +15,7 @@ One design system serves all three areas. Tokens live in `src/styles/theme.css`
 | Background/surface | `#FAF8FF` bg, `#FFFFFF` cards, soft surfaces `#F2F3FF/#EAEDFF` | Page and card surfaces |
 
 Rules enforced by tests (`brand-colors`, `type-system`, `touch-targets`, `a11y`):
-white on green = 10.11:1; coarse-pointer targets ≥44px; visible focus ring
+white on logo navy = 10.35:1; coarse-pointer targets ≥44px; visible focus ring
 (`src/styles/a11y.css`, loaded last); primary buttons defined once in
 `src/styles/brand-actions.css` (loaded after component sheets).
 
@@ -23,10 +23,10 @@ white on green = 10.11:1; coarse-pointer targets ≥44px; visible focus ring
 CSS: `src/student-dashboard.css` + `src/dashboard-v2.css` (classes `edureach-dash-*`, `dash-*`).
 - **Layout:** sticky top header (brand → home, service search, notification Bell
   with crimson unread badge — no badge at zero, profile menu) → desktop **left
-  sidebar** (`edureach-dash-sidebar`, green selected surface) → mobile **bottom nav**.
+  sidebar** (`edureach-dash-sidebar`, logo-navy selected surface) → mobile **bottom nav**.
 - **Cards:** white `dash-card`, 14px-ish radius, hairline border, small icon+title
   header (`dash-card-title`), rows (`dash-row`), metric labels in muted caps.
-- **Buttons:** `dash-btn dash-btn-primary` (green), `dash-btn-secondary` (white, green edge).
+- **Buttons:** `dash-btn dash-btn-primary` (logo navy), `dash-btn-secondary` (white, logo-blue edge).
 - Tabs: Overview · My Requests · My CBT · Tools & Saved (`?/dashboard/*` routes alias to them).
 
 ## 2. Admin Console — `pages/AdminLayout.tsx` + `pages/Admin*.tsx`
@@ -35,7 +35,7 @@ CSS: `src/admin.css` (classes `admin-*`), shared kit `src/components/admin/Admin
   nav (Content/Services/Academics/Examinations/Users/Analytics/Site), sticky topbar
   with API health pill, content max-width 1440px. Mobile (≤780px): sidebar stacks,
   nav becomes **one scrollable 44px row**.
-- **Selected nav:** green surface `#174A3A` with pale-green inset bar (crimson is
+- **Selected nav:** navy surface `#0A3E83` with pale-blue inset bar (crimson is
   brand-only; `--admin-orange` variable is a legacy name for `#B14933` crimson).
 - **Components:** `admin-page-header` (title + contextual action), KPI cards,
   tables in `admin-table-wrap` (horizontal scroll on mobile, 640px min table),
@@ -48,7 +48,7 @@ public-site look, since it is a student-facing account page, not a console.
   `profile-summary-card` with avatar/initials, `profile-summary-grid` of fields;
   edit mode is a sectioned form (`profile-contact-section`, hub form labels/inputs).
 - Crimson is used only for small icon accents; the primary action ("Edit Profile",
-  save) is the green `hub-primary-btn`.
+  save) is the logo-navy `hub-primary-btn`.
 
 ## Service-guide steps (fixed 2026-10-21)
 Step cards (`.er-service-guide-step`, alternating 170px image left/right) must

@@ -41,7 +41,7 @@ test('opportunities state their verification and provenance instead of implying 
   const page = read('pages/JobsPage.tsx');
   assert.match(page, /opportunityStatus\(item\)/, 'the status comes from the shared rule');
   assert.match(page, /status\.verificationLabel/, 'the card states whether EduReach checked it');
-  assert.match(page, /status\.cta/, 'the button wording follows the verification state');
+  assert.match(page, /er-card-arrow/, 'the card action is a thin arrow; the status chips carry the wording');
   assert.match(page, /Eligibility/, 'eligibility is shown, including when it is not recorded');
   assert.match(page, /Last checked/, 'the check date is visible on the card');
   assert.match(page, /source_name/, 'the source is shown when one is recorded');
@@ -58,10 +58,23 @@ test('news rows carry their age and the list can be searched', () => {
   assert.match(rows, /newsFreshness\(item\)/, 'the row derives a freshness state');
   assert.match(rows, /er-news-freshness/, 'and shows it');
   const page = read('pages/NewsPage.tsx');
-  assert.match(page, /type="search"/, 'the list has a search box');
-  assert.match(page, /Number\(newsFreshness\(b\)\.current\) - Number\(newsFreshness\(a\)\.current\)/, 'current stories sort above expired ones');
+  assert.match(page, /FilterSearch/, 'the list uses the shared filter search');
+  const field = read('src/components/ui/FilterSearch.tsx');
+  assert.match(field, /type="search"/, 'the shared field is still a real search input');
+  assert.match(page, /filter\(isArticleCurrent\)/, 'expired stories are removed from the board');
+  assert.match(page, /new Date\(b\.published_at \|\| 0\)\.getTime\(\) - new Date\(a\.published_at \|\| 0\)\.getTime\(\)/, 'the newest current stories are listed first');
   assert.match(page, /newsCategorySlug\(raw\)/, 'category links resolve through the one canonicaliser');
   assert.ok(!/legacyCategoryAliases/.test(page), 'the duplicate alias map is gone');
+});
+
+test('the four main simulators are present and Post-UTME opens the real set-up flow', () => {
+  const grid = read('src/components/ExamSimulatorGrid.tsx');
+  for (const mode of ['JAMB', 'WAEC', 'NECO', 'Post-UTME']) {
+    assert.match(grid, new RegExp(`\\['${mode.replace(/[-]/g, '\\-')}',`), `${mode} is a main simulator`);
+  }
+  assert.match(grid, /staticMain: true/, 'main simulators stay visible before their bank is published');
+  assert.match(grid, /exam\.staticMain \? simulatorStartHref\(exam\.mode\)/, 'a static card opens the mode set-up flow');
+  assert.match(grid, /er-card-arrow/, 'the only card action is the thin arrow');
 });
 
 test('the service page says what happens after Submit, before and after it', () => {

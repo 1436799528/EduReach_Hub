@@ -90,7 +90,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const copy = setupCopy[exam];
   const { user } = useAuth();
 
-  const [catalog, setCatalog] = useState<CatalogExam[]>([]);
   const [postUtmeInstitutions, setPostUtmeInstitutions] = useState<PostUtmeInstitution[]>([]);
   const [postUtmeInstitutionId, setPostUtmeInstitutionId] = useState(() => new URLSearchParams(window.location.search).get('school') || '');
   const [postUtmePapers, setPostUtmePapers] = useState<PastQuestionResource[]>([]);
@@ -151,7 +150,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
       const exams = (isSupabaseConfigured
         ? await fetchCbtExamsWithAvailability()
         : await fetchCbtExams());
-      setCatalog(exams);
       let eligibleExams = exams;
       if (exam === 'post-utme') {
         const schools = await fetchPostUtmeInstitutions();
@@ -518,10 +516,10 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                 <div><span className="hub-eyebrow">Institution-specific screening</span><h2 id="post-utme-school-title">Choose your school</h2></div>
                 <BookOpen size={22} aria-hidden="true" />
               </div>
-              <p>Post-UTME is not the same across institutions. EduReach lists only schools whose participation and screening method have been verified from an official school source.</p>
-              <label className="admin-field" style={{ maxWidth: 560 }}>
-                <span>Participating institution</span>
-                <select className="admin-select" value={postUtmeInstitutionId} onChange={(event) => {
+              <p>Only schools with a verified screening method are listed.</p>
+              <div className="er-setup-field">
+                <label htmlFor="post-utme-school">Participating institution</label>
+                <select id="post-utme-school" className="er-setup-school-select" value={postUtmeInstitutionId} onChange={(event) => {
                   const id = event.target.value;
                   setPostUtmeInstitutionId(id);
                   const params = new URLSearchParams(window.location.search);
@@ -532,18 +530,16 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   <option value="">Select a verified school…</option>
                   {postUtmeInstitutions.map((school) => <option key={school.id} value={school.id}>{school.school_name}{school.acronym ? ` (${school.acronym})` : ''}{school.state ? ` · ${school.state}` : ''}</option>)}
                 </select>
-              </label>
+              </div>
               {!catalogLoading && postUtmeInstitutions.length === 0 && (
-                <InlineNotice tone="warning" title="No verified Post-UTME schools listed yet">
-                  EduReach will not assume that a school conducts screening or guess its method. The admin team must verify participation and the official school announcement first.
-                </InlineNotice>
+                <InlineNotice tone="warning" title="No verified Post-UTME schools listed yet" />
               )}
               {selectedPostUtmeInstitution && (
                 <InlineNotice tone="info" title={selectedPostUtmeInstitution.post_utme_method === 'cbt' ? 'This school uses CBT' : 'This school uses handwritten / paper-based screening'}>
-                  Official school source: <a href={selectedPostUtmeInstitution.post_utme_source_url} target="_blank" rel="noreferrer">view announcement</a>.
+                  <a href={selectedPostUtmeInstitution.post_utme_source_url} target="_blank" rel="noreferrer">View official announcement</a>.
                   {selectedPostUtmeInstitution.post_utme_method === 'cbt'
-                    ? ' EduReach will show a CBT setup only when a question bank is configured specifically for this institution.'
-                    : ' EduReach keeps a separate paper/PDF area for this school; it will not launch a CBT session for a handwritten examination.'}
+                    ? ' A practice bank is available only when this school has one.'
+                    : ' Its papers are listed below.'}
                 </InlineNotice>
               )}
             </section>
@@ -697,7 +693,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         aria-label="Choose subject group"
                         value={practiceTrack}
                         onChange={(event) => { setPracticeTrack(event.target.value as typeof practiceTrack); setFormError(''); }}
-                        style={{ width: '100%', minHeight: 44, padding: '10px 12px', borderRadius: 10, border: '1px solid #cbd5d1', background: '#fff', color: '#174A3A', font: 'inherit' }}
                       >
                         {exam === 'jamb' ? (
                           <>
@@ -770,8 +765,8 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                                 {compulsory ? (
                                   <span className="er-selected-locked"><Lock size={13} aria-hidden="true" /> Required</span>
                                 ) : (
-                                  <button type="button" className="er-selected-remove" onClick={() => removePracticeSubject(subject)} aria-label={`Remove ${subject}`}>
-                                    <X size={14} aria-hidden="true" /> Remove
+                                  <button type="button" className="er-selected-remove" onClick={() => removePracticeSubject(subject)} aria-label={`Remove ${subject}`} title={`Remove ${subject}`}>
+                                    <X size={16} aria-hidden="true" />
                                   </button>
                                 )}
                               </li>
@@ -882,11 +877,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
             </>
           )}
 
-          {isSupabaseConfigured && catalog.length === 0 && !catalogLoading && !catalogError && (
-            <InlineNotice tone="warning" title="No question bank is published yet">
-              No active CBT question bank is available. <a href="/cbt">Browse the CBT Centre</a> or check back soon.
-            </InlineNotice>
-          )}
         </div>
       </div>
     </HubLayout>

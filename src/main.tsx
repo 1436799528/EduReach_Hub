@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './app/App';
 import PwaRegister from './components/PwaRegister';
 import CookieConsent from './components/CookieConsent';
+import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './lib/auth';
 import { installGlobalErrorReporting } from './lib/errorTelemetry';
 import './hub.css';
@@ -38,9 +39,11 @@ installGlobalErrorReporting();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <PwaRegister />
-      <App />
-      <CookieConsent />
+      <ToastProvider>
+        <PwaRegister />
+        <App />
+        <CookieConsent />
+      </ToastProvider>
     </AuthProvider>
   </StrictMode>,
 );

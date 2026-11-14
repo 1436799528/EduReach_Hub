@@ -157,3 +157,53 @@ test('customize and settings remain available and publish only a saved choice', 
     savePrivacyPreferences(false);
   }
 });
+
+test('the choice buttons close the panel immediately, and settings reopens it', async () => {
+  window.localStorage.clear();
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const button = (label: string) => Array.from(container.querySelectorAll('button')).find((item) => item.textContent === label);
+  try {
+    await act(async () => { root.render(createElement(CookieConsent)); });
+    assert.ok(button('Reject optional'));
+    await act(async () => { button('Reject optional')!.click(); });
+    assert.equal(container.querySelector('.er-cookie-consent'), null, 'the panel closes after a saved choice');
+    assert.equal(readPrivacyPreferences()?.analytics, false);
+    await act(async () => { button('Cookie settings')!.click(); });
+    assert.ok(container.querySelector('.er-cookie-consent'), 'settings reopens the same panel');
+  } finally {
+    await act(async () => { root.unmount(); });
+    container.remove();
+    delete (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT;
+    savePrivacyPreferences(false);
+  }
+});
+
+test('a blocked save offers a working session-only dismissal instead of a dead panel', async () => {
+  window.localStorage.clear();
+  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const button = (label: string) => Array.from(container.querySelectorAll('button')).find((item) => item.textContent === label);
+  const storage = Object.getPrototypeOf(window.localStorage);
+  const set = storage.setItem;
+  try {
+    await act(async () => { root.render(createElement(CookieConsent)); });
+    storage.setItem = () => { throw new Error('storage denied'); };
+    await act(async () => { button('Reject optional')!.click(); });
+    assert.ok(container.querySelector('[role="alert"]'));
+    assert.ok(button('Continue for this visit'));
+    await act(async () => { button('Continue for this visit')!.click(); });
+    assert.equal(container.querySelector('.er-cookie-consent'), null, 'the panel is dismissible for this visit');
+    assert.equal(hasAnalyticsConsent(), false);
+  } finally {
+    storage.setItem = set;
+    await act(async () => { root.unmount(); });
+    container.remove();
+    delete (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT;
+    savePrivacyPreferences(false);
+  }
+});

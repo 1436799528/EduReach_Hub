@@ -436,5 +436,5 @@ path budgets remain independently enforced.
 
 The global combobox and its catalogue are separate lazy chunks, keeping the
 landing-page entry at 99.5 KB gzip and the public critical path at 206.2 KB.
-The current all-route JavaScript total is 340.2 KB gzip; its ceiling is 341 KB,
+The current all-route JavaScript total is 353.2 KB gzip (UI-5 added 9.3 KB; AUTH-1 added 3.7 KB for phone, OAuth and consent settlement); its ceiling is 356 KB,
 with the first-load entry and critical-path limits enforced independently.

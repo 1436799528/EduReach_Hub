@@ -120,8 +120,8 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   height: 38px;
   flex: 0 0 38px;
   border-radius: 10px;
-  background: var(--er-surface-soft);
-  color: var(--er-navy-soft);
+  background: var(--er-primary-soft);
+  color: var(--er-brand-blue-ink, #0f6baa);
 }
 
 .er-state strong { display: block; font-size: 14px; font-weight: var(--er-w-subhead); }
@@ -282,3 +282,298 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
 .er-confirm-body h2 { margin: 0; font-size: 18px; }
 .er-confirm-body p { margin: 0; font-size: 13px; color: var(--er-text-secondary); line-height: 1.6; }
 .er-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; flex-wrap: wrap; }
+
+/* ========================================================================
+   Feedback surfaces (UI-5)
+   Toasts, the notification centre and the verification mark. These are shared
+   by every shell, so they live here rather than in a page sheet.
+   ======================================================================== */
+
+.er-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--er-status-success);
+  font-size: 11px;
+  font-weight: var(--er-w-label);
+  vertical-align: middle;
+}
+
+.er-toast-viewport {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 320;
+  display: grid;
+  gap: 8px;
+  width: min(360px, calc(100vw - 40px));
+  pointer-events: none;
+}
+
+.er-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid var(--er-border);
+  border-radius: 11px;
+  background: var(--er-surface);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .14);
+  pointer-events: auto;
+  animation: er-toast-in .18s ease both;
+}
+
+.er-toast-icon { display: grid; place-items: center; flex: 0 0 auto; color: var(--er-text-muted); }
+.er-toast-copy { min-width: 0; flex: 1; }
+.er-toast-copy strong { display: block; font-size: 13px; color: var(--er-text-primary); }
+.er-toast-copy p { margin: 2px 0 0; font-size: 12px; line-height: 1.45; color: var(--er-text-secondary); }
+.er-toast-close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--er-text-muted);
+  cursor: pointer;
+}
+.er-toast-close:hover { background: var(--er-surface-soft); color: var(--er-text-primary); }
+
+/* The accent is on the icon, not the whole card: the card is still a neutral
+   surface, and the colour says which kind of outcome this is. */
+.er-toast--success { border-color: var(--er-status-success-border); }
+.er-toast--success .er-toast-icon { color: var(--er-status-success); }
+.er-toast--warning { border-color: var(--er-status-warning-border); }
+.er-toast--warning .er-toast-icon { color: var(--er-status-warning); }
+.er-toast--danger { border-color: var(--er-status-error-border); }
+.er-toast--danger .er-toast-icon { color: var(--er-status-error); }
+.er-toast--info .er-toast-icon { color: var(--er-info, #0f6baa); }
+
+@keyframes er-toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .er-toast { animation: none; }
+}
+
+@media (max-width: 600px) {
+  .er-toast-viewport { right: 12px; left: 12px; bottom: 12px; width: auto; }
+}
+
+/* Notification centre (UI-5). The trigger is an ordinary icon button; the
+   panel is a plain surface; the only saturated colour is the unread count and
+   the three semantic icons. */
+.er-notif { position: relative; display: inline-flex; }
+.er-notif-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--er-border);
+  border-radius: 8px;
+  background: var(--er-surface);
+  color: var(--er-text-secondary);
+  cursor: pointer;
+}
+.er-notif-trigger:hover { border-color: var(--er-border-strong); background: var(--er-surface-soft); color: var(--er-text-primary); }
+.er-notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--er-crimson);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: var(--er-w-numeric);
+  line-height: 1;
+}
+.er-notif-alert {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--er-surface);
+  border-radius: 50%;
+  background: var(--er-status-warning);
+}
+.er-notif-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 240;
+  width: 350px;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  border: 1px solid var(--er-border);
+  border-radius: 12px;
+  background: var(--er-surface);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, .16);
+}
+.er-notif-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--er-border);
+}
+.er-notif-header h2 { margin: 0; font-size: 13.5px; color: var(--er-text-primary); }
+.er-notif-header p { margin: 2px 0 0; font-size: 11px; color: var(--er-text-muted); }
+.er-notif-mark {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid var(--er-border);
+  border-radius: 7px;
+  background: var(--er-surface);
+  color: var(--er-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+.er-notif-mark:hover { border-color: var(--er-border-strong); color: var(--er-text-primary); }
+.er-notif-mark:disabled { color: var(--er-text-muted); cursor: default; }
+.er-notif-body { max-height: 360px; overflow-y: auto; }
+.er-notif-list { margin: 0; padding: 4px; list-style: none; }
+.er-notif-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+a.er-notif-row:hover { background: var(--er-surface-soft); }
+.er-notif-list li.is-unread .er-notif-row { background: #fbfdfc; }
+.er-notif-icon { display: grid; place-items: center; flex: 0 0 auto; margin-top: 1px; color: var(--er-brand-blue-ink, #0f6baa); }
+.er-notif-icon.is-success { color: var(--er-status-success); }
+.er-notif-icon.is-warning { color: var(--er-status-warning); }
+.er-notif-icon.is-danger { color: var(--er-status-error); }
+.er-notif-icon.is-info { color: var(--er-brand-blue-ink, #0f6baa); }
+.er-notif-copy { display: grid; min-width: 0; gap: 2px; }
+.er-notif-copy strong {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: var(--er-w-label);
+  color: var(--er-text-primary);
+}
+.er-notif-list li.is-unread .er-notif-copy strong { font-weight: var(--er-w-subhead); }
+.er-notif-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--er-crimson); }
+.er-notif-detail { font-size: 11.5px; line-height: 1.45; color: var(--er-text-secondary); }
+.er-notif-copy small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+  font-size: 10.5px;
+  color: var(--er-text-muted);
+}
+.er-notif-category { padding-left: 6px; border-left: 1px solid var(--er-border); }
+.er-notif-category.is-success { color: var(--er-status-success); }
+.er-notif-category.is-warning { color: var(--er-status-warning); }
+.er-notif-category.is-danger { color: var(--er-status-error); }
+.er-notif-category.is-info { color: var(--er-text-muted); }
+.er-notif-empty { display: grid; gap: 8px; margin: 0; padding: 18px 16px; color: var(--er-text-secondary); font-size: 12px; line-height: 1.5; }
+.er-notif-empty p { margin: 0; }
+.er-notif-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 6px 9px;
+  border: 1px solid var(--er-border);
+  border-radius: 7px;
+  background: var(--er-surface);
+  color: var(--er-text-secondary);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.er-notif-error { margin: 0; padding: 8px 14px 10px; font-size: 11px; color: var(--er-status-warning); }
+.er-notif-footer { padding: 9px 14px; border-top: 1px solid var(--er-border); background: #fbfcfd; }
+.er-notif-footer a { font-size: 11.5px; font-weight: var(--er-w-label); color: var(--er-primary); text-decoration: none; }
+.er-notif-footer a:hover { text-decoration: underline; }
+
+@media (max-width: 520px) {
+  .er-notif { position: static; }
+  .er-notif-alert {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--er-surface);
+  border-radius: 50%;
+  background: var(--er-status-warning);
+}
+.er-notif-panel {
+    position: fixed;
+    top: 66px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* The shared page-filter search (UI-5). Same white surface, neutral icon and
+   subtle focus ring as the site search, without a submit CTA. */
+.er-filter-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--er-border);
+  border-radius: 9px;
+  background: var(--er-surface);
+  color: var(--er-text-muted);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.er-filter-search:focus-within {
+  border-color: var(--er-field-border-hover);
+  box-shadow: 0 0 0 3px rgba(71, 85, 105, .12);
+}
+.er-filter-search input {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--er-text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+.er-filter-search-clear {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--er-text-muted);
+  cursor: pointer;
+}
+.er-filter-search-clear:hover { background: var(--er-surface-soft); color: var(--er-text-primary); }
+@media (prefers-reduced-motion: reduce) {
+  .er-filter-search { transition: none; }
+}

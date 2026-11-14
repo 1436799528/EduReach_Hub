@@ -18,7 +18,7 @@
   border: 0 !important;
   border-radius: var(--er-banner-radius) !important;
   box-shadow: var(--er-banner-shadow) !important;
-  background: linear-gradient(135deg, #2563eb, #0f3b8f) !important;
+  background: linear-gradient(135deg, #0a3e83, #0f3b8f) !important;
 }
 
 .er-banner-card::before {

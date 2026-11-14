@@ -102,7 +102,7 @@
   height: 30px;
   border-radius: 50%;
   background: #dbeafe;
-  color: #1d4ed8;
+  color: #0f6baa;
   font-weight: 620;
   font-size: 12px;
   display: grid;
@@ -657,7 +657,7 @@
 
 .dash-status-submitted {
   background: #eff6ff;
-  color: #1d4ed8;
+  color: #0f6baa;
   border: 1px solid #bfdbfe;
 }
 
@@ -1108,7 +1108,7 @@
 .dash-priority-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .dash-priority-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e6ebf3;border-radius:9px;background:#fbfcfe}
 .dash-priority-item.is-urgent{border-color:#f0cfc4;background:#fff7f4}
-.dash-priority-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#eef2f8;color:#41506b;flex:0 0 auto}
+.dash-priority-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--er-primary-soft);color:var(--er-brand-blue-ink,#0f6baa);flex:0 0 auto}
 .dash-priority-item.is-urgent .dash-priority-icon{background:#fdece5;color:#b14933}
 .dash-priority-copy{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto}
 .dash-priority-copy strong{font-size:14px;color:#0f172a}
@@ -1140,3 +1140,528 @@
 .dash-learning-progress .dash-card-title { margin: 14px 0 8px; }
 .dash-learning-progress .dash-row-title, .dash-learning-progress .dash-row-meta { overflow-wrap: anywhere; }
 .dash-learning-progress .dash-row-meta { display: block; }
+
+/* ========================================================================
+   Progress analytics (UI-5)
+   The Overview now answers "how am I doing" before "what needs doing".
+   Cards stay neutral; only movement and band carry colour.
+   ======================================================================== */
+
+.dash-performance .dash-card-help { max-width: 620px; }
+.dash-performance-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(0, 1.4fr);
+  gap: 12px;
+}
+.dash-performance-panel {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e6ebf3;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+.dash-performance-panel h3 { margin: 0 0 10px; font-size: 12.5px; color: #0f172a; }
+.dash-performance-latest { display: flex; flex-direction: column; gap: 3px; }
+.dash-performance-latest .dash-metric-label { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: #5e6c82; }
+.dash-latest-score { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dash-latest-score strong { font-size: 34px; line-height: 1; color: #0f172a; letter-spacing: -.03em; }
+.dash-latest-subject { margin: 0; font-size: 12.5px; font-weight: 560; color: #334155; }
+.dash-performance-latest .dash-metric-hint { margin: 4px 0 0; }
+.dash-performance-latest .dash-card-link { margin-top: 8px; }
+
+.dash-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 620;
+  white-space: nowrap;
+}
+.dash-change.is-up { background: #ecfdf3; color: #166534; }
+.dash-change.is-down { background: #fef2f2; color: #b91c1c; }
+.dash-change.is-flat { background: #f1f5f9; color: #475569; }
+
+.dash-trend-chart { display: block; width: 100%; height: 150px; }
+.dash-chart-empty {
+  margin: 0;
+  padding: 22px 8px;
+  color: #5e6c82;
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.dash-subject-bars { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.dash-subject-bar-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.dash-subject-bar-head strong { font-size: 12.5px; color: #0f172a; }
+.dash-subject-bar-head span { font-size: 12.5px; font-weight: 680; color: #0f172a; }
+.dash-subject-track { height: 7px; overflow: hidden; border-radius: 999px; background: #e8edf4; }
+.dash-subject-track span { display: block; height: 100%; border-radius: inherit; background: #94a3b8; }
+.dash-subject-bar-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: #64748b;
+}
+.dash-band { padding: 1px 6px; border-radius: 999px; font-weight: 560; }
+.dash-band.is-strong { background: #ecfdf3; color: #166534; }
+.dash-band.is-building { background: #f1f5f9; color: #475569; }
+.dash-band.is-needs-practice { background: #fff7ed; color: #9a3412; }
+
+.dash-distribution {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 5px;
+  height: 132px;
+  padding-top: 16px;
+}
+.dash-distribution-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  min-width: 0;
+}
+.dash-distribution-count { height: 14px; font-size: 10px; color: #475569; }
+.dash-distribution-bar {
+  width: 100%;
+  max-width: 26px;
+  border-radius: 4px 4px 2px 2px;
+  background: #94a3b8;
+}
+.dash-distribution-bar.is-empty { background: #e8edf4; }
+.dash-distribution-label {
+  margin-top: 4px;
+  font-size: 8.5px;
+  line-height: 1.2;
+  color: #64748b;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.dash-performance-insights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.dash-insight {
+  padding: 12px 14px;
+  border: 1px solid #e6ebf3;
+  border-radius: 10px;
+  background: #fff;
+}
+.dash-insight h3 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #5e6c82;
+}
+.dash-insight ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.dash-insight li { font-size: 12.5px; color: #0f172a; }
+.dash-insight p { margin: 0; font-size: 12.5px; line-height: 1.55; color: #334155; }
+.dash-insight .dash-card-link { display: inline-block; margin-top: 7px; font-size: 12px; }
+.dash-insight.is-next { border-color: #cce0f3; background: #f7fbf9; }
+
+@media (max-width: 900px) {
+  .dash-performance-grid { grid-template-columns: 1fr; }
+  .dash-performance-insights { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .dash-distribution { height: 116px; gap: 3px; }
+  .dash-distribution-label { font-size: 7.5px; }
+  .dash-latest-score strong { font-size: 30px; }
+}
+
+/* Common actions stay navigation: quiet controls, not four competing CTAs. */
+.dash-quick-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dash-quick-actions a {
+  padding: 7px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 560;
+  text-decoration: none;
+}
+.dash-quick-actions a:hover { border-color: #cbd5e1; background: #f8fafc; color: #0f172a; }
+
+/* ========================================================================
+   Student progress analytics — the same quiet card language as the admin
+   console: white panels, generous padding, one number that carries the eye.
+   ======================================================================== */
+
+.dash-report-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+.dash-report-card {
+  min-width: 0;
+  padding: 17px 18px 16px;
+  border: 1px solid #e9ecf1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+.dash-report-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 12px;
+  border-radius: 9px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #0f6baa;
+}
+.dash-report-icon.is-green { border-color: #d1fadf; background: #ecfdf3; color: #067647; }
+.dash-report-icon.is-amber { border-color: #fedf89; background: #fffaeb; color: #b54708; }
+.dash-report-icon.is-violet { border-color: #e9d7fe; background: #f4f3ff; color: #5925dc; }
+.dash-report-label {
+  margin: 0;
+  color: #667085;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.dash-report-value {
+  display: block;
+  margin-top: 6px;
+  color: #101828;
+  font-size: clamp(23px, 2.1vw, 28px);
+  font-weight: 680;
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+.dash-report-detail {
+  margin: 7px 0 0;
+  color: #98a2b3;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.dash-report-meter {
+  height: 6px;
+  margin-top: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f2f4f7;
+}
+.dash-report-meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #0a3e83;
+}
+.dash-performance-panel {
+  padding: 18px;
+  border-color: #e9ecf1;
+  border-radius: 14px;
+  background: #fff;
+}
+.dash-performance-panel h3 {
+  margin-bottom: 14px;
+  color: #101828;
+  font-size: 13px;
+  font-weight: 620;
+  letter-spacing: -.005em;
+}
+.dash-cgpa-trend ol {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 140px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dash-cgpa-trend li {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  text-align: center;
+}
+.dash-cgpa-trend-value { color: #101828; font-size: 11px; font-weight: 680; }
+.dash-cgpa-trend-bar {
+  display: flex;
+  align-items: flex-end;
+  width: min(34px, 100%);
+  height: 78px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #f2f4f7;
+}
+.dash-cgpa-trend-bar i { display: block; width: 100%; border-radius: 6px; background: #1d9be0; }
+.dash-cgpa-trend-label {
+  max-width: 100%;
+  overflow: hidden;
+  color: #667085;
+  font-size: 9.5px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-cgpa-trend .dash-metric-hint { margin-top: 10px; }
+
+@media (max-width: 900px) {
+  .dash-report-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .dash-report-strip { grid-template-columns: 1fr; }
+  .dash-report-card { padding: 15px; }
+}
+
+/* ------------------------------------------------------------------------
+   CGPA calculator — an editorial result panel, a roomy course table and a
+   segmented scale switch. It reads as a workspace, not a stack of buttons.
+   ------------------------------------------------------------------------ */
+
+.dash-cgpa { padding: 22px; border-radius: 16px; }
+.dash-cgpa-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.dash-cgpa-top .dash-card-title { margin: 0; }
+.dash-cgpa-top .dash-card-help { margin: 7px 0 0; max-width: 560px; line-height: 1.6; }
+.dash-segmented {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #e4e7ec;
+  border-radius: 999px;
+  background: #f2f4f7;
+}
+.dash-segmented button {
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #667085;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 560;
+  cursor: pointer;
+}
+.dash-segmented button.is-active { background: #101828; color: #fff; box-shadow: 0 1px 2px rgba(16, 24, 40, .18); }
+.dash-segmented button:focus-visible { outline: 3px solid #9fc7f4; outline-offset: 2px; }
+
+.dash-cgpa-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, .72fr) minmax(0, 1.5fr);
+  gap: 18px;
+  align-items: start;
+}
+.dash-cgpa-summary {
+  padding: 20px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #f6faff 0%, #edf4fb 100%);
+}
+.dash-cgpa-summary-label {
+  display: block;
+  color: #5b6b82;
+  font-size: 11px;
+  font-weight: 560;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.dash-cgpa .dash-cgpa-value {
+  margin-top: 10px;
+  color: #0a3e83;
+  font-size: clamp(40px, 4.4vw, 54px);
+  font-weight: 680;
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+.dash-cgpa .dash-cgpa-value small { margin-left: 7px; color: #5b6b82; font-size: 14px; font-weight: 560; letter-spacing: 0; }
+.dash-cgpa .dash-cgpa-class { display: block; margin-top: 10px; color: #0a3e83; font-size: 13px; font-weight: 620; line-height: 1.4; }
+.dash-cgpa-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid #cce0f3;
+}
+.dash-cgpa-stats div { min-width: 0; }
+.dash-cgpa-stats dt { color: #5b6b82; font-size: 10.5px; font-weight: 500; }
+.dash-cgpa-stats dd { margin: 3px 0 0; color: #101828; font-size: 17px; font-weight: 680; }
+.dash-cgpa-note { margin: 16px 0 0; color: #667085; font-size: 10.5px; line-height: 1.55; }
+
+.dash-cgpa-editor { min-width: 0; }
+.dash-cgpa-rows { display: grid; gap: 10px; }
+.dash-cgpa .dash-cgpa-row {
+  grid-template-columns: minmax(0, 1.5fr) minmax(72px, .5fr) minmax(120px, .8fr) 44px;
+  gap: 12px;
+  align-items: end;
+}
+.dash-cgpa .dash-cgpa-head-row { align-items: center; padding: 0 2px; }
+.dash-cgpa .dash-cgpa-head-row span {
+  color: #98a2b3;
+  font-size: 10px;
+  font-weight: 560;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.dash-cgpa-field { display: grid; min-width: 0; gap: 6px; }
+.dash-cgpa-field > span { color: #667085; font-size: 10.5px; font-weight: 500; }
+.dash-cgpa-field input,
+.dash-cgpa-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  background: #fff;
+  color: #101828;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.dash-cgpa-field input:focus,
+.dash-cgpa-field select:focus { border-color: #0a3e83; outline: 0; box-shadow: 0 0 0 3px rgba(10, 62, 131, .12); }
+.dash-cgpa-remove {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  background: #fff;
+  color: #667085;
+  cursor: pointer;
+}
+.dash-cgpa-remove:hover { border-color: #fecdca; background: #fef3f2; color: #b42318; }
+.dash-cgpa-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  margin-top: 14px;
+  padding: 9px 14px;
+  border: 1px dashed #cfd7e3;
+  border-radius: 9px;
+  background: #fcfcfd;
+  color: #344054;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 560;
+  cursor: pointer;
+}
+.dash-cgpa-add:hover { border-color: #0a3e83; background: #f6faff; color: #0a3e83; }
+
+.dash-cgpa-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #eef1f5;
+}
+.dash-cgpa-footnote { min-width: 0; }
+.dash-cgpa-footnote p { margin: 0; color: #98a2b3; font-size: 10.5px; line-height: 1.55; }
+.dash-cgpa-message.is-error { color: #b42318; }
+.dash-cgpa-message.is-success { color: #067647; }
+.dash-cgpa-actions { display: inline-flex; flex: none; gap: 8px; }
+.dash-cgpa-actions .dash-btn { min-height: 42px; padding: 10px 16px; border-radius: 9px; font-size: 12px; font-weight: 560; }
+
+@media (max-width: 900px) {
+  .dash-cgpa-layout { grid-template-columns: 1fr; }
+  .dash-cgpa-top { flex-direction: column; }
+}
+@media (max-width: 560px) {
+  .dash-cgpa { padding: 16px; }
+  .dash-cgpa .dash-cgpa-row { grid-template-columns: minmax(0, 1fr) 1fr; }
+  .dash-cgpa .dash-cgpa-head-row { display: none; }
+  .dash-cgpa-remove { width: 100%; height: 42px; }
+  .dash-cgpa-footer { flex-direction: column; align-items: stretch; }
+  .dash-cgpa-actions { justify-content: flex-end; }
+}
+
+/* Dashboard surfaces follow the same calm card rhythm as the new analytics
+   language: more room inside each card, and actions that no longer read as
+   squeezed chips. */
+.dash-card {
+  padding: 18px 20px;
+  border-radius: 16px;
+}
+.dash-card-header { gap: 12px; align-items: flex-start; }
+.dash-card-title { line-height: 1.35; }
+.dash-card-help { line-height: 1.6; }
+.dash-quick-actions a {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+@media (max-width: 520px) {
+  .dash-card { padding: 15px; border-radius: 14px; }
+  .dash-quick-actions a { padding: 9px 13px; }
+}
+
+/* UI-7 — CGPA calculator parity with the screening calculator. The tool now
+   owns the full width of the Tools page, and the estimate panel is a deep navy
+   summary rather than a pale box squeezed beside a half-width table. */
+.dash-tools-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.dash-cgpa { padding: 26px; }
+.dash-cgpa-layout {
+  grid-template-columns: minmax(260px, .62fr) minmax(0, 1.38fr);
+  gap: 22px;
+}
+.dash-cgpa-summary {
+  position: sticky;
+  top: 20px;
+  padding: 24px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #0a3e83 0%, #062b5c 100%);
+  color: #fff;
+  box-shadow: 0 18px 40px -26px rgba(6, 43, 92, .55);
+}
+.dash-cgpa-summary-label { color: #b9d3ef; font-size: 10.5px; font-weight: 620; letter-spacing: .08em; }
+.dash-cgpa .dash-cgpa-value { color: #fff; font-size: clamp(44px, 4.6vw, 58px); }
+.dash-cgpa .dash-cgpa-value small { color: #b9d3ef; }
+.dash-cgpa .dash-cgpa-class { margin-top: 12px; color: #dceaf8; font-size: 13px; }
+.dash-cgpa-summary-rule { display: block; margin: 18px 0 0; height: 1px; background: rgba(255, 255, 255, .16); }
+.dash-cgpa-stats { margin-top: 16px; padding-top: 0; border-top: 0; }
+.dash-cgpa-stats dt { color: #b9d3ef; font-size: 10.5px; }
+.dash-cgpa-stats dd { color: #fff; font-size: 20px; }
+.dash-cgpa-note { margin-top: 18px; color: #cfe2f5; font-size: 10.5px; }
+.dash-cgpa-editor { padding: 2px 0 0; }
+.dash-cgpa .dash-cgpa-row { grid-template-columns: minmax(0, 1.4fr) minmax(80px, .45fr) minmax(140px, .8fr) 40px; gap: 12px; }
+.dash-cgpa-field input, .dash-cgpa-field select { min-height: 46px; font-size: 13px; }
+.dash-cgpa-remove { width: 40px; height: 46px; }
+.dash-cgpa-add { min-height: 44px; }
+@media (max-width: 1000px) {
+  .dash-cgpa-layout { grid-template-columns: minmax(0, 1fr); }
+  .dash-cgpa-summary { position: static; }
+}
+@media (max-width: 560px) {
+  .dash-cgpa { padding: 18px; }
+  .dash-cgpa .dash-cgpa-row { grid-template-columns: minmax(0, 1fr) 78px; }
+  .dash-cgpa-remove { width: 100%; height: 42px; }
+}

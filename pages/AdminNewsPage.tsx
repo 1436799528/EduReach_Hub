@@ -12,7 +12,7 @@ import {
 } from '../src/lib/api';
 import { newsCategories, newsCategoryLabel, newsCategoryOptions } from '../src/data/newsCategories';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
-import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminPageReport, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
 import { Can } from '../src/components/admin/Can';
@@ -263,6 +263,16 @@ export default function AdminNewsPage() {
           </Can>
         </div>
       </div>
+
+      <AdminPageReport
+        title="Newsroom reporting"
+        items={[
+          { label: 'Published', value: articles.filter((article) => article.published).length.toLocaleString() },
+          { label: 'Drafts', value: articles.filter((article) => !article.published && !article.is_placeholder).length.toLocaleString() },
+          { label: 'Placeholders', value: articles.filter((article) => article.is_placeholder).length.toLocaleString() },
+          { label: 'Featured', value: articles.filter((article) => article.featured).length.toLocaleString() },
+        ]}
+      />
 
       {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
       {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}

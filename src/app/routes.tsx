@@ -17,6 +17,7 @@ import { navigateInApp } from '../lib/navigation';
 // just to read the home page. App.tsx wraps routes in <Suspense>.
 const AuthPageV2 = lazy(() => import('../../pages/AuthPageV2'));
 const ProfileCompletionPage = lazy(() => import('../../pages/ProfileCompletionPage'));
+const PublicProfilePage = lazy(() => import('../../pages/PublicProfilePage'));
 const StudentDashboardV2 = lazy(() => import('../../pages/StudentDashboardV2'));
 const CbtPracticeEntryPage = lazy(() => import('../../pages/CbtPracticeEntryPage'));
 const CbtSessionPage = lazy(() => import('../../pages/CbtSessionPage'));
@@ -105,6 +106,17 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/verify-email') return <AuthPageV2 mode="verify" />;
 
   if (path === '/profile/complete' || path === '/profile' || path === '/dashboard/profile') return protectedProfile();
+  // A shared public profile is a visitor route, not the owner's private page.
+  if (path.startsWith('/u/')) {
+    let slug = '';
+    try {
+      slug = decodeURIComponent(path.slice('/u/'.length));
+    } catch {
+      // Malformed percent-encoding is a bad link, not a crashed app.
+      slug = '';
+    }
+    return <PublicProfilePage slug={slug} />;
+  }
   if (path === '/settings' || path === '/dashboard/settings') return protectedDashboard('dashboard', true);
 
   // Four dashboard pages: Overview · My Requests · My CBT · Tools & Saved.

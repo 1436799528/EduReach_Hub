@@ -8,7 +8,7 @@ import {
   updateAdminCalendarItem,
   type AdminCalendarItem,
 } from '../src/lib/api';
-import { AdminEmptyState, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminPageReport, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
 
@@ -120,6 +120,17 @@ export default function AdminContentPage() {
             <button type="button" className="admin-btn" onClick={() => setForm({ ...emptyForm })}><Plus size={14} /> New {type === 'exam' ? 'exam date' : 'deadline'}</button>
           </div>
         </div>
+
+        <AdminPageReport
+          title={type === 'exam' ? 'Exam date reporting' : 'Deadline reporting'}
+          items={[
+            { label: 'Visible', value: items.filter((item) => item.status !== 'cancelled').length.toLocaleString() },
+            { label: 'Hidden', value: items.filter((item) => item.status === 'cancelled').length.toLocaleString() },
+            { label: 'High priority', value: items.filter((item) => item.priority === 'high' || item.priority === 'urgent').length.toLocaleString() },
+            { label: 'Next 7 days', value: items.filter((item) => { const when = new Date(String(whenField(item))).getTime(); const now = Date.now(); return Number.isFinite(when) && when >= now && when <= now + 7 * 86400000; }).length.toLocaleString() },
+          ]}
+          note="Counts describe every row returned for this calendar type; no second availability check is made."
+        />
 
         {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
         {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}

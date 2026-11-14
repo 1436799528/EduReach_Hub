@@ -8,28 +8,28 @@
   --er-font-sans: Inter, Arial, sans-serif;
   --er-font-mono: var(--er-font-sans);
 
-  /* 1. Primary action - Deep Green (Clickmor)
-     The colour every main action uses: start, continue, submit, save. White
-     text clears AA on every step of the ramp (10.11:1 resting, 12.58:1 hover,
-     14.30:1 pressed) and the border steps darken with it. */
-  --er-primary: #174A3A;
-  --er-primary-hover: #123A2D;
-  --er-primary-active: #0E3025;
-  --er-primary-border: #123A2D;
-  --er-primary-border-hover: #0F3025;
-  --er-primary-border-active: #0B261E;
-  --er-primary-focus: #174A3A;
-  --er-primary-soft: #EDF5F0;
-  --er-primary-soft-border: #D4E4DA;
+  /* 1. Primary action - EduReach logo navy
+     The wordmark is navy, blue and red; the action colour is the navy so white
+     text clears AA at every step (10.35:1 resting, 11.98:1 hover, 13.93:1
+     pressed) and the border steps darken with it. */
+  --er-primary: #0A3E83;
+  --er-primary-hover: #083570;
+  --er-primary-active: #062B5C;
+  --er-primary-border: #083570;
+  --er-primary-border-hover: #072F64;
+  --er-primary-border-active: #05264F;
+  --er-primary-focus: #0A3E83;
+  --er-primary-soft: #EDF4FB;
+  --er-primary-soft-border: #CCE0F3;
   --er-on-primary: #FFFFFF;
 
-  /* 1a. Secondary action - a white control with a green edge, never a second
-     solid green button. */
-  --er-secondary-border: #D4E4DA;
-  --er-secondary-hover-bg: #EDF5F0;
-  --er-secondary-hover-border: #B5CBBF;
-  --er-secondary-active-bg: #DCE9E1;
-  --er-secondary-active-border: #A3BFAF;
+  /* 1a. Secondary action - a white control with a logo-blue edge, never a
+     second solid navy button. */
+  --er-secondary-border: #CCE0F3;
+  --er-secondary-hover-bg: #EDF4FB;
+  --er-secondary-hover-border: #A9C8E8;
+  --er-secondary-active-bg: #DCEAF8;
+  --er-secondary-active-border: #8FB7DE;
 
   /* 1b. Disabled controls are neutral: no brand colour, no hover, no press. */
   --er-disabled-bg: #E2E8F0;
@@ -37,10 +37,10 @@
   --er-disabled-border: #CBD5E1;
   --er-disabled-surface: #F8FAFC;
 
-  /* 1c. Navigation states. Hover and selection are surfaces plus green text;
+  /* 1c. Navigation states. Hover and selection are surfaces plus navy text;
      the border is a soft edge on top of them, not the only signal. */
   --er-nav-hover-bg: #F1F5F9;
-  --er-nav-active-bg: #EDF5F0;
+  --er-nav-active-bg: #EDF4FB;
 
   /* 1d. Form fields. */
   --er-field-border-hover: #94A3B8;
@@ -60,6 +60,15 @@
   --er-status-info: #1D4ED8;
   --er-status-info-bg: #EFF6FF;
   --er-status-info-border: #BFDBFE;
+
+  /* Logo accents. The wordmark is #0A3E83 navy, #1D9BE0 blue and #E3232D red.
+     The bright blue is for fills, gradients and decorative marks; --er-brand-blue-ink
+     is the accessible ink used for blue icons and small text on pale surfaces
+     (5.67:1 on white, 5.11:1 on the primary soft surface). */
+  --er-brand-navy: #0A3E83;
+  --er-brand-blue: #1D9BE0;
+  --er-brand-blue-ink: #0F6BAA;
+  --er-brand-logo-red: #E3232D;
 
   /* The portal red. This is the colour the home search submit and the
      study-centre card shipped with, kept exactly as authored: it is a
@@ -184,8 +193,8 @@
   --hub-border: var(--er-border);
   --hub-text: var(--er-text-primary);
   --hub-muted: var(--er-text-muted);
-  --hub-blue: var(--er-crimson);
-  --hub-blue-soft: var(--er-surface-soft);
+  --hub-blue: var(--er-primary);
+  --hub-blue-soft: var(--er-primary-soft);
   --hub-green: var(--er-success);
   --hub-green-soft: var(--er-success-soft);
   --hub-amber: var(--er-gold);

@@ -5,7 +5,7 @@ Stack: React 19 / Vite + Express 4 + Supabase. No new dependencies, no backend c
 Status: implementation complete; typecheck, unit tests, and production build all green. Nothing staged, committed, or pushed.
 
 ## Scope & constraints honored
-- Brand preserved: `#174A3A` green primary, `#B14933` crimson sparingly (exam "End Test" accent, WhatsApp link, past-questions eyebrow). No gradients, glow, glassmorphism, textures, pulsing, over-rounding, or AI colour treatments.
+- Brand preserved: `#0A3E83` green primary, `#B14933` crimson sparingly (exam "End Test" accent, WhatsApp link, past-questions eyebrow). No gradients, glow, glassmorphism, textures, pulsing, over-rounding, or AI colour treatments.
 - Existing cards/structure untouched; only demonstrable usability problems fixed with documented reason.
 - No new UI/animation framework or deps; existing utilities/components reused (`Skeleton`, `AsyncState`, `WaveLoader`, `usePendingPhase`, theme tokens, `brand-actions.css`, `a11y.css`).
 - No business-logic/backend/API/DB/auth-provider changes; frontend remains compatible with the existing backend.
@@ -82,7 +82,7 @@ Design-system files inspected: `src/styles/theme.css`, `brand-actions.css`, `a11
 None detected. Typecheck, unit tests, and production build all pass. The strict stylesheet contract tests (import order, type-system position, curated brand-actions selector list, brand colours) all pass — no new stylesheet or selector was added to `brand-actions.css`.
 
 ## Preservation confirmation
-- Brand: `#174A3A` primary, `#B14933` crimson (exam End Test, WhatsApp, past-questions eyebrow) — unchanged.
+- Brand: `#0A3E83` primary, `#B14933` crimson (exam End Test, WhatsApp, past-questions eyebrow) — unchanged.
 - Cards/structure: no card redesigns; no layout takeover.
 - Auth: flows, validation, account-type selection, verification/resend, `?next=` handling, bootstrap, admin detection — unchanged.
 - CBT: immediate answer selection, optimistic local save, v2 journal/lease rules, submit grace, paper never includes `correct_option`/`explanation`, timer/persistence/submission integrity — unchanged.

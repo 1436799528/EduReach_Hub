@@ -14,8 +14,8 @@ test('optional analytics stay disabled across stale tabs, navigation and reload'
   const second = await context.newPage();
   await second.goto('/services');
   await page.getByRole('button', { name: 'Customize' }).click();
-  await expect(page.getByText('Optional analytics are temporarily disabled.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Accept optional' })).toBeDisabled();
+  await expect(page.getByText('Optional analytics are temporarily unavailable.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Allow analytics' })).toHaveCount(0);
   await expect(page.getByRole('checkbox', { name: /Optional analytics/ })).toBeDisabled();
   await page.getByRole('button', { name: 'Reject optional' }).click();
   await second.reload();
@@ -65,7 +65,7 @@ test('failed withdrawal, corrupt storage and reload never enable analytics', asy
   await other.goto('/');
   await other.evaluate(preferenceKey => localStorage.setItem(preferenceKey, '{broken'), key);
   await other.reload();
-  await expect(other.getByRole('button', { name: 'Accept optional' })).toBeDisabled();
+  await expect(other.getByRole('button', { name: 'Allow analytics' })).toHaveCount(0);
   await other.waitForLoadState('networkidle');
   expect(events).toBe(0);
 });

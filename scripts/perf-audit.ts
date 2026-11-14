@@ -66,10 +66,16 @@ export const BUDGETS = {
   // Raised 330 -> 334 KB for the admin service-guide editor: a lazy,
   // admin-only route chunk (+3.3 KB measured) that students never download.
   // The first-load critical path above is unchanged and still enforced.
-  // The shared search combobox and live catalogue measure 340.2 KB across all
-  // route chunks. 341 KB keeps a small allowance for this feature;
-  // the public first-load path remains separately capped at 211 KB.
-  totalJsGzip: 341 * 1024,
+  // The shared search combobox and live catalogue measured 340.2 KB. UI-5 adds
+  // the public-profile route, the visibility panel and dashboard analytics:
+  // 349.5 KB across 60 lazy route chunks, +9.3 KB. Raised to 352 KB with the
+  // measured cost plus the previous 0.8 KB headroom rather than leaving a gate
+  // that fails on the change that introduced it.
+  // AUTH-1 adds phone OTP, OAuth and the consent-settlement helper to the lazy
+  // auth route: 353.2 KB across 61 chunks. Raised to 356 KB with 2.8 KB
+  // headroom; the public first-load path is still capped separately at 211 KB
+  // and measured 209.0 KB.
+  totalJsGzip: 356 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

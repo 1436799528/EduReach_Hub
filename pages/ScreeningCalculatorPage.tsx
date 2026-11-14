@@ -1,13 +1,32 @@
-import { ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowRight, Info, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import { admissionMethodProfiles } from '../src/data/examPreparation';
+import '../src/screening-calculator.css';
 
 type Formula = '50-50' | '60-40' | '70-30' | 'jamb-only' | 'points';
 
+// Keep the field itself inside the real range, not just the computed result.
+// A number input can otherwise be nudged or typed past the maximum while the
+// calculation silently clamps it — the score on screen would disagree with the
+// score being used.
+function clampScoreInput(value: string, max: number): string {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return '';
+  return String(Math.min(max, Number(digits)));
+}
+
 const clamp = (value: string, max: number) => Math.min(max, Math.max(0, Number(value) || 0));
+
+const FORMULAS: Array<{ value: Formula; label: string; summary: string }> = [
+  { value: '50-50', label: '50 / 50', summary: 'Half JAMB, half Post-UTME' },
+  { value: '60-40', label: '60 / 40', summary: 'JAMB carries more weight' },
+  { value: '70-30', label: '70 / 30', summary: 'JAMB-heavy screening' },
+  { value: 'jamb-only', label: 'JAMB only', summary: 'Cut-off planning' },
+  { value: 'points', label: 'Points', summary: 'Requirement planning' },
+];
 
 export default function ScreeningCalculatorPage() {
   const [institution, setInstitution] = useState('custom');
@@ -26,9 +45,11 @@ export default function ScreeningCalculatorPage() {
 
   const result = useMemo(() => {
     const jambScore = clamp(jamb, 400);
-    const postScore = clamp(postUtme, 100);
+    const postScore = clamp(postUtme, 400);
     const jambPercent = (jambScore / 400) * 100;
-    const postPercent = postScore;
+    // Most schools print Post-UTME out of 100; some print it out of 400. Values
+    // above 100 are read on the 400 scale rather than silently becoming >100%.
+    const postPercent = postScore > 100 ? (postScore / 400) * 100 : postScore;
     const aggregate = formula === 'points'
       ? (jambPercent + postPercent) / 2
       : (jambPercent * weights.jamb + postPercent * weights.postUtme) / 100;
@@ -43,38 +64,31 @@ export default function ScreeningCalculatorPage() {
   }
 
   const ready = jamb !== '' || postUtme !== '';
+  const jambContribution = formula === 'jamb-only' ? result.jambPercent : (result.jambPercent * weights.jamb) / 100;
+  const postContribution = formula === 'points' ? result.postPercent : (result.postPercent * weights.postUtme) / 100;
+  const ringLength = 339.292;
+  const ringDash = Math.max(0, Math.min(100, result.aggregate)) / 100 * ringLength;
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '18px 0 50px' }}>
-        <div className="hub-container hub-narrow">
-          <div
-            className="hub-section-heading hub-page-heading-compact"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-              <CardIdentityMark value="calculator" type="service" size="sm" />
-              <div>
-                <h1 style={{ fontSize: '19px', fontWeight: 680, margin: 0, color: '#0f172a' }}>
-                  Screening Aggregate Calculator
-                </h1>
-                <p style={{ margin: '3px 0 0', fontSize: '11px', color: '#5e6c82' }}>
-                  Enter your JAMB and Post-UTME scores to estimate your aggregate.
-                </p>
-              </div>
+      <div className="scr-page">
+        <div className="hub-container">
+          <header className="scr-head">
+            <div className="scr-head-copy">
+              <span className="scr-eyebrow">Admission planning</span>
+              <h1>Screening aggregate calculator</h1>
+              <p>Estimate how your JAMB and Post-UTME scores combine under the model a school is likely to use. It is a planning score, not a cut-off decision.</p>
             </div>
-            <button type="button" className="hub-outline-btn" onClick={reset} style={{ fontSize: '11px', padding: '5px 9px' }}>
-              <RotateCcw size={13} /> Reset
-            </button>
-          </div>
+            <div className="scr-head-actions">
+              <CardIdentityMark value="calculator" type="service" size="sm" />
+              <button type="button" className="scr-reset" onClick={reset}><RotateCcw size={14} /> Reset</button>
+            </div>
+          </header>
 
-          <div className={`hub-calculator-card ${identityClassFor('calculator', 'service')}`}>
-
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div>
-                <label htmlFor="screening-institution" style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155', marginBottom: '5px' }}>
-                  School method profile
-                </label>
+          <div className="scr-layout">
+            <div className="scr-form-card">
+              <div className="scr-block">
+                <label className="scr-label" htmlFor="screening-institution">School method profile</label>
                 <select
                   id="screening-institution"
                   value={institution}
@@ -83,115 +97,117 @@ export default function ScreeningCalculatorPage() {
                     setInstitution(next.id);
                     setFormula(next.formula);
                   }}
-                  style={{ width: '100%', boxSizing: 'border-box' }}
                 >
                   {admissionMethodProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.school}</option>)}
                 </select>
-                <p style={{ margin: '6px 0 0', fontSize: '11.5px', color: '#5e6c82', lineHeight: 1.45 }}>{methodProfile.method}: {methodProfile.explanation}</p>
+                <p className="scr-method-hint"><strong>{methodProfile.method}</strong> {methodProfile.explanation}</p>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: '10px',
-                }}
-              >
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155' }}>
-                  JAMB / UTME score
+              <div className="scr-scores">
+                <label className="scr-field">
+                  <span>JAMB / UTME score</span>
                   <input
-                    type="number"
-                    min="0"
-                    max="400"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={3}
                     value={jamb}
-                    onChange={(e) => setJamb(e.target.value)}
+                    onChange={(e) => setJamb(clampScoreInput(e.target.value, 400))}
                     placeholder="0 – 400"
-                    style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
+                    aria-describedby="screening-jamb-help"
                   />
-                  <small style={{ display: 'block', marginTop: '4px', color: '#5e6c82', fontWeight: 400, fontSize: '12px' }}>
-                    Your JAMB score out of 400.
-                  </small>
+                  <small id="screening-jamb-help">Out of 400, never more. We convert it to a 100-point scale first.</small>
                 </label>
-
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 560, color: '#334155' }}>
-                  Post-UTME score
+                <label className="scr-field">
+                  <span>Post-UTME score</span>
                   <input
-                    type="number"
-                    min="0"
-                    max="100"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={3}
                     value={postUtme}
-                    onChange={(e) => setPostUtme(e.target.value)}
-                    placeholder="0 – 100"
-                    style={{ width: '100%', marginTop: '5px', boxSizing: 'border-box' }}
+                    onChange={(e) => setPostUtme(clampScoreInput(e.target.value, 400))}
+                    placeholder="0 – 100 or 400"
+                    aria-describedby="screening-postutme-help"
                   />
-                  <small style={{ display: 'block', marginTop: '4px', color: '#5e6c82', fontWeight: 400, fontSize: '12px' }}>
-                    Your screening score out of 100.
-                  </small>
+                  <small id="screening-postutme-help">Capped at 400. Use the scale printed on your screening slip (100 or 400).</small>
                 </label>
               </div>
 
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '11px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 620, color: '#334155', marginBottom: '7px' }}>
-                  Which formula should I use?
-                </div>
-                <div style={{ display: 'grid', gap: '6px' }}>
-                  {([
-                    ['50-50', '50% JAMB + 50% Post-UTME'],
-                    ['60-40', '60% JAMB + 40% Post-UTME'],
-                    ['70-30', '70% JAMB + 30% Post-UTME'],
-                    ['jamb-only', 'JAMB score / cut-off planning'],
-                    ['points', 'Points or requirement planning'],
-                  ] as const).map(([value, label]) => (
-                    <label key={value} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '11.5px', color: '#334155', fontWeight: 680 }}>
+              <fieldset className="scr-formula-block">
+                <legend>Which formula should I use?</legend>
+                <div className="scr-formula-grid">
+                  {FORMULAS.map((option) => (
+                    <label key={option.value} className={`scr-formula${formula === option.value ? ' is-active' : ''}`}>
                       <input
                         type="radio"
                         name="formula"
-                        value={value}
-                        checked={formula === value}
-                        onChange={() => setFormula(value)}
+                        value={option.value}
+                        checked={formula === option.value}
+                        onChange={() => setFormula(option.value)}
                       />
-                      {label}
+                      <strong>{option.label}</strong>
+                      <small>{option.summary}</small>
                     </label>
                   ))}
                 </div>
-                <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: '#5e6c82', lineHeight: 1.5 }}>
+                <p className="scr-footnote">
                   These are planning models, not a claim that every school uses them. Always confirm the current school brochure; some institutions use O-Level points, cut-offs or programme-specific requirements instead.
                 </p>
-              </div>
+              </fieldset>
 
-              <div
-                style={{
-                  background: '#ecfdf5',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr auto',
-                  gap: '12px',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '10px', fontWeight: 620, color: '#047857', textTransform: 'uppercase', letterSpacing: '.04em' }}>
-                    Estimated aggregate
-                  </div>
-                  <strong style={{ display: 'block', marginTop: '2px', fontSize: '30px', lineHeight: 1, color: '#065f46' }}>
-                    {ready ? result.aggregate.toFixed(2) : '—'}
-                  </strong>
-                  <span style={{ display: 'block', marginTop: '5px', fontSize: '11px', color: '#475569' }}>
-                    {methodProfile.school} • planning score out of 100
-                  </span>
-                </div>
-                <div style={{ textAlign: 'right', fontSize: '11px', color: '#475569', lineHeight: 1.6 }}>
-                  <div>{formula === 'jamb-only' ? 'JAMB planning score' : 'JAMB contribution'}: <strong>{ready ? (formula === 'jamb-only' ? result.jambPercent : ((result.jambPercent * weights.jamb) / 100)).toFixed(2) : '—'}</strong></div>
-                  <div>{formula === 'points' ? 'Post-UTME planning input' : 'Post-UTME contribution'}: <strong>{ready ? (formula === 'points' ? result.postPercent : ((result.postPercent * weights.postUtme) / 100)).toFixed(2) : '—'}</strong></div>
-                </div>
-              </div>
-
-              <div style={{ fontSize: '11px', color: '#5e6c82', lineHeight: 1.5 }}>
-                <strong style={{ color: '#334155' }}>How it works:</strong> JAMB is first converted from 400 to 100, then the selected percentages are applied. For example, 240 JAMB becomes 60/100.
+              <div className="scr-explainer">
+                <Info size={15} aria-hidden="true" />
+                <p><strong>How it works.</strong> JAMB is converted from 400 to 100, then the selected percentages are applied. For example, 240 in JAMB becomes 60 out of 100.</p>
               </div>
             </div>
+
+            <aside className="scr-result-card" aria-label="Screening estimate">
+              <div className="scr-result-top">
+                <span className="scr-result-label">Estimated aggregate</span>
+                <span className="scr-result-school">{methodProfile.school}</span>
+              </div>
+
+              <div className="scr-gauge">
+                <svg viewBox="0 0 160 160" role="img" aria-label={ready ? `Estimated aggregate ${result.aggregate.toFixed(2)} out of 100` : 'No estimate yet'}>
+                  <circle cx="80" cy="80" r="54" fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="12" />
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="54"
+                    fill="none"
+                    stroke="#7cc4f5"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    strokeDasharray={`${ringDash} ${ringLength}`}
+                    transform="rotate(-90 80 80)"
+                  />
+                </svg>
+                <div className="scr-gauge-value">
+                  <strong>{ready ? result.aggregate.toFixed(2) : '—'}</strong>
+                  <span>out of 100</span>
+                </div>
+              </div>
+
+              <div className="scr-contributions">
+                <div>
+                  <span>JAMB contribution</span>
+                  <strong>{ready ? jambContribution.toFixed(2) : '—'}</strong>
+                  <div className="scr-track"><i style={{ width: `${ready ? Math.min(100, jambContribution) : 0}%` }} /></div>
+                </div>
+                <div>
+                  <span>{formula === 'points' ? 'Post-UTME planning input' : 'Post-UTME contribution'}</span>
+                  <strong>{ready ? postContribution.toFixed(2) : '—'}</strong>
+                  <div className="scr-track"><i style={{ width: `${ready ? Math.min(100, postContribution) : 0}%`, background: '#b9e0ff' }} /></div>
+                </div>
+              </div>
+
+              <p className="scr-result-note">
+                {ready
+                  ? `Based on ${formula === 'points' ? 'a points-planning model' : (formula === 'jamb-only' ? 'a JAMB-only model' : `${weights.jamb}% JAMB and ${weights.postUtme}% Post-UTME`)}. Confirm the active cut-off with ${methodProfile.school}.`
+                  : 'Enter one or both scores to see the estimate and how each part contributes.'}
+              </p>
+            </aside>
           </div>
 
           <section className="er-methods-section" aria-labelledby="admission-methods-title">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, School } from 'lucide-react';
+import { ArrowRight, BookmarkPlus, Check, School } from 'lucide-react';
 import type { DashboardSavedItemInput } from '../../lib/studentDashboard';
+import FilterSearch from '../ui/FilterSearch';
 
 export type Institution = {
   id: string;
@@ -68,7 +69,16 @@ export default function SchoolFinderCard({
       <p className="dash-card-help">Search by school name, acronym, state, type or a configured course tag. Course tags are limited search hints, not a full programme catalogue.</p>
 
       <div className="dash-finder-controls dash-finder-autocomplete">
-        <div className="dash-finder-search-wrap"><input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="School, state or course..." aria-label="Search institutions" />{suggestions.length > 0 && <div className="dash-finder-suggestions" role="listbox">{suggestions.map((school) => <button type="button" key={school.id} onClick={() => setQuery(school.school_name)}><strong>{school.school_name}</strong><span>{school.acronym || school.state || 'Institution'}</span></button>)}</div>}</div>
+        <div className="dash-finder-search-wrap">
+          <FilterSearch
+            value={query}
+            onChange={setQuery}
+            label="Search institutions"
+            placeholder="School, state or course..."
+            clearLabel="Clear institution search"
+          />
+          {suggestions.length > 0 && <div className="dash-finder-suggestions" role="listbox">{suggestions.map((school) => <button type="button" key={school.id} onClick={() => setQuery(school.school_name)}><strong>{school.school_name}</strong><span>{school.acronym || school.state || 'Institution'}</span></button>)}</div>}
+        </div>
         <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Institution type"><option value="ALL">All institutions</option><option value="Federal">Federal universities</option><option value="State">State universities</option><option value="Private">Private universities</option><option value="Polytechnic">Polytechnics</option><option value="College">Colleges</option></select>
       </div>
 
@@ -78,7 +88,7 @@ export default function SchoolFinderCard({
       {filtered.length > 0 && <ul className="dash-list">{filtered.map((school) => {
         const key = itemKey(school.school_name);
         const saved = isSaved('school', key);
-        return <li key={school.id} className="dash-list-row"><div className="dash-list-copy"><strong>{school.school_name}</strong><span>{school.institution_type || 'Institution'}{school.acronym ? ` (${school.acronym})` : ''} · {school.state ? `${school.state} State` : 'Nigeria'}</span></div><div className="dash-list-actions"><a className="dash-btn dash-btn-small dash-btn-secondary" href={detailPath(school, returnPath)}>Details</a><button type="button" className={`dash-btn dash-btn-small ${saved ? 'is-saved' : 'dash-btn-secondary'}`} disabled={saved} onClick={() => onSave({ type: 'school', key, name: school.school_name, detail: school.institution_type || 'Institution', location: school.state ? `${school.state} State` : 'Nigeria', href: school.website_url || undefined })}>{saved ? 'Saved' : 'Save'}</button></div></li>;
+        return <li key={school.id} className="dash-list-row"><div className="dash-list-copy"><strong>{school.school_name}</strong><span>{school.institution_type || 'Institution'}{school.acronym ? ` (${school.acronym})` : ''} · {school.state ? `${school.state} State` : 'Nigeria'}</span></div><div className="dash-list-actions"><a className="dash-btn dash-btn-small dash-btn-secondary" href={detailPath(school, returnPath)}>Details</a><button type="button" className={`dash-btn dash-btn-small ${saved ? 'is-saved' : 'dash-btn-secondary'}`} disabled={saved} onClick={() => onSave({ type: 'school', key, name: school.school_name, detail: school.institution_type || 'Institution', location: school.state ? `${school.state} State` : 'Nigeria', href: school.website_url || undefined })} aria-pressed={saved}>{saved ? <><Check size={13} aria-hidden="true" /> Saved</> : <><BookmarkPlus size={13} aria-hidden="true" /> Save</>}</button></div></li>;
       })}</ul>}
     </section>
   );

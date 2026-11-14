@@ -217,8 +217,9 @@ test('a region that fills in after the first paint reserves its footprint', () =
   const floor = (selector: string) => pxValue(declarations(css, selector), '--er-late-min');
   const rows = (count: number, row: number) => count * row + (count - 1) * 10; // 10px gutter
 
-  // 82px rows: the height .er-skeleton-row and .er-news-row share.
-  assert.equal(floor('.er-late-region--feed'), rows(3, 82), 'the home feed reserves exactly the three rows it shows');
+  // The home feed is now one four-column card row; reserve that footprint so
+  // the section does not jump when the cards arrive.
+  assert.ok(floor('.er-late-region--feed') >= 260, 'the home feed reserves the four-card row it shows');
   assert.ok(floor('.er-late-region--feed-page') >= rows(5, 82), 'the noticeboard reserves its five rows');
   assert.ok(floor('.er-late-region--library') >= 600, 'the question-bank grid reserves its cards');
 });
@@ -236,27 +237,22 @@ test('the simulator section reserves its footprint while its catalogue loads', (
   };
   assert.ok(pxValue(declarations(css, '.er-late-region--simulators'), '--er-late-min') >= 200);
 
-  // The placeholder card is exactly as tall as the card it replaces in the
-  // single-row mobile swipe layout.
-  const mobileCard = blocks('.er-sim-card').find((block) => block.includes('flex-direction:row'));
-  const mobileGrid = blocks('.er-sim-grid').find((block) => block.includes('grid-auto-flow:column'));
+  // UI-7b: mobile keeps the desktop card shape and stacks it to the screen
+  // width. No swipe row, no reshaped two-column row.
+  const mobileGrid = blocks('.er-sim-grid').find((block) => block.includes('grid-auto-flow: row'));
   const placeholderHeights = blocks('.er-sim-grid .er-skeleton-tile').map((block) => pxValue(block, 'min-height'));
-  assert.ok(mobileCard, 'the mobile simulator card rule still exists');
-  assert.ok(mobileGrid, 'the mobile simulator grid remains horizontally scrollable');
-  assert.match(mobileGrid!, /grid-template-rows:auto/, 'all cards share one mobile row');
-  assert.doesNotMatch(mobileGrid!, /grid-template-rows:auto auto/, 'mobile cards must not create a cramped second row');
-  assert.ok(
-    placeholderHeights.includes(pxValue(mobileCard!, 'min-height')),
-    `the swipe-layout placeholder is ${placeholderHeights.join('/')}px, the card is ${pxValue(mobileCard!, 'min-height')}px`,
-  );
+  assert.ok(mobileGrid, 'the mobile simulator grid stacks cards');
+  assert.match(mobileGrid!, /grid-template-columns:\s*minmax\(0, 1fr\)/, 'one card per row on mobile');
+  assert.doesNotMatch(mobileGrid!, /grid-auto-flow:\s*column|overflow-x:\s*auto/, 'mobile cards must not scroll sideways');
+  assert.ok(placeholderHeights.includes(176), `the stacked placeholder is ${placeholderHeights.join('/')}px, the card is 176px`);
 });
 
 test('the pages the measurement named use the reservation', () => {
   const home = stylesheet('pages/HubHomePage.tsx');
   assert.match(home, /er-late-region--feed/);
-  const rendered = Number(/news\.slice\(0, (\d+)\)/.exec(home)?.[1]);
-  assert.ok(Number.isFinite(rendered), 'the home feed still renders a fixed number of rows');
-  assert.match(home, new RegExp(`<SkeletonRows rows=\\{${rendered}\\}`), 'the skeleton shows as many rows as the feed');
+  assert.match(home, /latestNews\.map/, 'the home feed renders the current four stories');
+  assert.match(home, /slice\(0, 4\)/, 'the home feed fills all four news columns');
+  assert.match(home, /<SkeletonRows rows=\{4\}/, 'the skeleton shows as many rows as the feed');
 
   assert.match(stylesheet('pages/NewsPage.tsx'), /er-late-region--feed-page/);
 

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { navigateInApp } from '../lib/navigation';
-import { filterSearchItems } from '../lib/searchMatch';
+import { filterSearchItems, highlightSegments } from '../lib/searchMatch';
 import type { SiteSearchItem } from '../lib/siteSearch';
 
 export type SiteSearchProps = {
@@ -39,6 +39,7 @@ export default function SiteSearch({
   const [catalogFailed, setCatalogFailed] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const catalogRequested = useRef(false);
 
   useEffect(() => setQuery(initialQuery), [initialQuery]);
@@ -63,8 +64,21 @@ export default function SiteSearch({
     }
   }
 
-  const visibleItems = filterSearchItems(catalog, query, 6);
-  const isLoading = suggestionsLoading || catalogLoading;
+  // UI-5: the field stays instant, the suggestion list waits 120 ms. That is
+  // short enough to feel immediate and long enough that a fast typist does not
+  // re-filter and re-announce a list for every keystroke. The pending window is
+  // exposed to assistive technology rather than hidden behind stale results.
+  useEffect(() => {
+    if (query === debouncedQuery) return;
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 120);
+    return () => window.clearTimeout(timer);
+  }, [query, debouncedQuery]);
+
+  const isPending = query !== debouncedQuery;
+  const visibleItems = isPending && !debouncedQuery.trim()
+    ? []
+    : filterSearchItems(catalog, debouncedQuery, 6);
+  const isLoading = suggestionsLoading || catalogLoading || isPending;
   const hasPartialFailure = suggestionsError || catalogFailed;
   const suggestionsEnabled = variant !== 'page';
   const suggestionsOpen = suggestionsEnabled && open && query.trim().length > 0;
@@ -143,6 +157,7 @@ export default function SiteSearch({
         aria-expanded={suggestionsEnabled ? suggestionsOpen : undefined}
         aria-controls={suggestionsOpen ? listId : undefined}
         aria-activedescendant={suggestionsOpen && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
+        aria-busy={suggestionsOpen && isLoading ? true : undefined}
         autoComplete="off"
         autoFocus={autoFocus}
       />
@@ -150,7 +165,7 @@ export default function SiteSearch({
       {suggestionsOpen && (
         <div className="site-search-popover">
           {isLoading && !visibleItems.length ? (
-            <p className="site-search-message" role="status">Finding destinations…</p>
+            <p className="site-search-message" role="status"><span className="site-search-spinner" aria-hidden="true" /> Finding destinations…</p>
           ) : visibleItems.length ? (
             <>
               <ul id={listId} className="site-search-list" role="listbox" aria-label="Search suggestions">
@@ -164,7 +179,16 @@ export default function SiteSearch({
                       aria-selected={index === activeIndex}
                       onClick={() => selectSuggestion(item)}
                     >
-                      <span><small>{item.category}</small><strong>{item.title}</strong></span>
+                      <span>
+                        <small>{item.category}</small>
+                        <strong>
+                          {highlightSegments(item.title, debouncedQuery).map((segment, segmentIndex) =>
+                            segment.match
+                              ? <mark key={segmentIndex}>{segment.text}</mark>
+                              : <span key={segmentIndex}>{segment.text}</span>
+                          )}
+                        </strong>
+                      </span>
                     </button>
                   </li>
                 ))}

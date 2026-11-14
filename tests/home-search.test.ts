@@ -128,3 +128,36 @@ test('search suggestions rank exact and title-prefix matches without sending que
   assert.deepEqual(filterSearchItems(items, 'study').map((item) => item.id), ['later']);
   assert.deepEqual(filterSearchItems(items, 'not-present'), []);
 });
+
+test('suggestion labels highlight the matched tokens safely', async () => {
+  const { highlightSegments } = await import('../src/lib/searchMatch');
+
+  assert.deepEqual(highlightSegments('Mathematics Past Questions', 'math'), [
+    { text: 'Math', match: true },
+    { text: 'ematics Past Questions', match: false },
+  ]);
+  assert.deepEqual(
+    highlightSegments('JAMB exam slip', 'slip jamb').filter((segment) => segment.match).map((segment) => segment.text),
+    ['JAMB', 'slip'],
+    'both tokens are marked, in any order',
+  );
+  assert.deepEqual(highlightSegments('Physics', ''), [{ text: 'Physics', match: false }]);
+  assert.deepEqual(
+    highlightSegments('Result (checking)', '(').map((segment) => segment.text).join(''),
+    'Result (checking)',
+    'punctuation cannot become a regular-expression operator',
+  );
+  assert.equal(
+    highlightSegments('Result (checking)', '(').some((segment) => segment.match),
+    false,
+    'a query made only of punctuation does not highlight anything',
+  );
+});
+
+test('shared search debounces suggestions and marks the match', () => {
+  const component = read('src/components/SiteSearch.tsx');
+  assert.match(component, /window\.setTimeout\(\(\) => setDebouncedQuery\(query\), 120\)/, 'typing is debounced');
+  assert.match(component, /aria-busy=\{suggestionsOpen && isLoading \? true : undefined\}/, 'the pending window is announced');
+  assert.match(component, /highlightSegments\(item\.title, debouncedQuery\)/, 'suggestions use the shared highlighter');
+  assert.match(component, /<mark key=\{segmentIndex\}>/, 'the matched part is a mark element, not a second colour');
+});

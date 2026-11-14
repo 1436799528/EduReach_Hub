@@ -23,6 +23,7 @@ import { navigateInApp } from '../lib/navigation';
 import { EDUREACH_WHATSAPP } from '../data/hubContent';
 import SiteFooter from './SiteFooter';
 import SiteSearch from './LazySiteSearch';
+import NotificationCenter from './NotificationCenter';
 import '../hub-rail.css';
 
 export default function HubLayout({ children }: { children: ReactNode }) {
@@ -177,6 +178,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {!isLoading && isAuthenticated && <NotificationCenter />}
             {!isLoading && isAuthenticated && (
               <a
                 href="/dashboard/services"
@@ -458,8 +460,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
       {/* MOBILE PORTAL NAVIGATION */}
       <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
         <a className={path === '/' ? 'active' : ''} aria-current={path === '/' ? 'page' : undefined} href="/"><Home size={18} /><span>Home</span></a>
-        <a className={path.startsWith('/cbt') ? 'active' : ''} aria-current={path.startsWith('/cbt') ? 'page' : undefined} href="/cbt"><Laptop size={18} /><span>CBT</span></a>
         <a className={path.startsWith('/news') ? 'active' : ''} aria-current={path.startsWith('/news') ? 'page' : undefined} href="/news"><Newspaper size={18} /><span>News</span></a>
+        <a className={`mobile-cbt${path.startsWith('/cbt') ? ' active' : ''}`} aria-current={path.startsWith('/cbt') ? 'page' : undefined} href="/cbt"><Laptop size={22} /><span>CBT</span></a>
         <a className={path.startsWith('/services') ? 'active' : ''} aria-current={path.startsWith('/services') ? 'page' : undefined} href="/services"><Briefcase size={18} /><span>Services</span></a>
         <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
       </nav>

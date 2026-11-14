@@ -2,23 +2,30 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlarmClock,
   Bell,
+  GraduationCap,
   Bookmark,
   ClipboardList,
   Edit,
   ExternalLink,
   LayoutDashboard,
   LogOut,
+  Inbox,
   MonitorPlay,
   Shield,
   ShieldCheck,
   Trash2,
+  TrendingUp,
   User,
+  UserCheck,
   Wrench,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
+import NotificationCenter from '../src/components/NotificationCenter';
+import { useToast } from '../src/components/ui/Toast';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { InlineNotice } from '../src/components/AsyncState';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
+import { ChangeChip, DistributionChart, SubjectBars, TrendChart } from '../src/components/dashboard/ProgressCharts';
 import { apiUrl } from '../src/lib/apiBase';
 import { deleteCbtAttempt, trackEvent } from '../src/lib/api';
 import { userFacingError } from '../lib/errors';
@@ -37,8 +44,10 @@ import SiteSearch from '../src/components/LazySiteSearch';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import { cbtAttemptState, dashboardPriorities, summarizeCbtAttempts } from '../src/lib/dashboardPriority';
 import { cbtModeLabel, isScoredSubmission, practiceSuggestion, singleSubjectProgress, submittedSubjectCounts } from '../src/lib/dashboardCbtStats';
+import { summarizePerformance } from '../src/lib/dashboardAnalytics';
 import {
   deleteSavedItem,
+  fetchCgpaSnapshots,
   fetchLatestCgpaSnapshot,
   fetchNotifications,
   markNotificationsRead,
@@ -220,6 +229,7 @@ function statusClass(status: string) {
 
 export default function StudentDashboardV2({ initialTab = 'dashboard', openSettings = false }: { initialTab?: DashboardTab; openSettings?: boolean }) {
   const { user: authUser, signOut: authSignOut } = useAuth();
+  const { push: pushToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
   const [loading, setLoading] = useState(true);
@@ -246,12 +256,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [attemptPage, setAttemptPage] = useState(0);
   const [confirmDeleteId, setConfirmDeleteId] = useState('');
   const [deletingId, setDeletingId] = useState('');
+  const [confirmSavedId, setConfirmSavedId] = useState('');
+  const [removingSavedId, setRemovingSavedId] = useState('');
   const [attemptNotice, setAttemptNotice] = useState('');
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>([]);
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
   const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>([]);
   const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
+  const [cgpaSnapshots, setCgpaSnapshots] = useState<CgpaSnapshot[]>([]);
 
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -315,7 +328,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       }
 
       const user = session.user;
-      const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot, notificationResult] = await Promise.all([
+      const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot, cgpaHistory, notificationResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
         supabase.from('institutions').select('id,school_name,acronym,state,institution_type,website_url').order('school_name').limit(400),
@@ -323,6 +336,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         supabase.from('cbt_attempts').select('id,exam_id,status,mode,selected_subjects,subject_plan,score,correct_answers,total_questions,submitted_at,created_at,expires_at,current_question').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
         fetchSavedItems(user.id),
         fetchLatestCgpaSnapshot(user.id),
+        fetchCgpaSnapshots(user.id),
         fetchNotifications(user.id),
       ]);
       if (!active) return;
@@ -364,6 +378,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       setAttempts((attemptsResult.data || []) as Attempt[]);
       setSavedItems(savedResult);
       setLatestCgpaSnapshot(cgpaSnapshot);
+      setCgpaSnapshots(cgpaHistory);
       setNotifications(notificationResult);
       if (cgpaSnapshot?.courses?.length) setCgpaCourses(cgpaSnapshot.courses);
       setLoading(false);
@@ -441,6 +456,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const firstName = profile?.first_name || displayName.split(/\s+/)[0];
   const requiredProfileValues = [profile?.school, profile?.course_programme, profile?.department, profile?.faculty, profile?.level, profile?.session];
   const profileComplete = requiredProfileValues.every((value) => Boolean(String(value || '').trim()));
+  const profileCompletionPercent = Math.round((requiredProfileValues.filter((value) => Boolean(String(value || '').trim())).length / requiredProfileValues.length) * 100);
+  const cgpaHistory = [...cgpaSnapshots].reverse();
+  const cgpaScaleMax = latestCgpaSnapshot?.scale === 4 ? 4 : 5;
   const requestTitle = (row: RequestRow) => String(row.form_data?.serviceTitle || row.form_data?.title || serviceMap[row.service_id]?.title || 'EduReach Request');
   const requestCategory = (row: RequestRow) => String(row.form_data?.requestCategory || row.form_data?.requestType || requestTitle(row));
   const requestDescription = (row: RequestRow) => String(row.form_data?.requestDescription || row.form_data?.notes || row.form_data?.requestDetails || 'Request submitted to EduReach support.');
@@ -483,6 +501,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const scoreChange = latestScores.length === 2 ? Math.round(Number(latestScores[0].score) - Number(latestScores[1].score)) : null;
   const subjectCounts = submittedSubjectCounts(attempts);
   const subjectProgress = singleSubjectProgress(attempts);
+  // UI-5: the Overview derives its own honest summary from the same bounded
+  // sample; nothing here is a second, incompatible set of numbers.
+  const performance = summarizePerformance(attempts);
   const suggestedSubject = practiceSuggestion(subjectProgress);
   const attemptTitle = (row: Attempt) => row.subject || (row.selected_subjects?.length ? row.selected_subjects.join(', ') : 'CBT');
 
@@ -538,28 +559,39 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     setSavedItems(next);
     if (isLocalMode || !userId) {
       writeLocalSavedItems(next);
+      pushToast({ tone: 'success', title: 'Saved to dashboard', detail: `${input.name} is in Tools & Saved.` });
       return;
     }
     const persisted = await upsertSavedItem(userId, input);
-    if (persisted) setSavedItems((prev) => prev.map((item) => (item.id === optimistic.id ? persisted : item)));
-    else {
+    if (persisted) {
+      setSavedItems((prev) => prev.map((item) => (item.id === optimistic.id ? persisted : item)));
+      pushToast({ tone: 'success', title: 'Saved to dashboard', detail: `${input.name} is in Tools & Saved.` });
+    } else {
       setSavedItems((prev) => prev.filter((item) => item.id !== optimistic.id));
       setNotice('We could not save that item online. Please try again.');
+      pushToast({ tone: 'danger', title: 'Not saved', detail: 'We could not reach your saved items. Try again.' });
     }
   };
 
   const removeSaved = async (id: string) => {
+    if (removingSavedId) return; // one removal at a time, like result deletion
     const index = savedItems.findIndex((entry) => entry.id === id);
     if (index < 0) return;
     const item = savedItems[index];
     const next = savedItems.filter((entry) => entry.id !== id);
+    setRemovingSavedId(id);
     setSavedItems(next);
     if (isLocalMode || !userId || id.startsWith('local-')) {
       writeLocalSavedItems(next);
+      setConfirmSavedId('');
+      setRemovingSavedId('');
+      pushToast({ tone: 'info', title: 'Removed from saved', detail: `${item.name} is no longer in Tools & Saved.` });
       return;
     }
     try {
       await deleteSavedItem(id);
+      setConfirmSavedId('');
+      pushToast({ tone: 'info', title: 'Removed from saved', detail: `${item.name} is no longer in Tools & Saved.` });
     } catch {
       // Put it back where it was, not at the top: a failed delete must not look
       // like a successful re-add.
@@ -569,6 +601,10 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         return restored;
       });
       setNotice('Unable to remove saved item. Please check your connection and try again.');
+      setConfirmSavedId('');
+      pushToast({ tone: 'danger', title: 'Could not remove item', detail: 'It is back in your saved list. Check your connection and try again.' });
+    } finally {
+      setRemovingSavedId('');
     }
   };
 
@@ -728,6 +764,32 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     </>
   );
 
+  const cgpaTrendPanel = (
+    <div className="dash-performance-panel">
+      <h3>CGPA by saved term</h3>
+      {cgpaHistory.length ? (
+        <div className="dash-cgpa-trend">
+          <ol>
+            {cgpaHistory.map((snapshot) => {
+              const max = snapshot.scale === 4 ? 4 : 5;
+              const height = Math.max(6, (Number(snapshot.gpa) / max) * 100);
+              return (
+                <li key={snapshot.id}>
+                  <span className="dash-cgpa-trend-value">{Number(snapshot.gpa).toFixed(2)}</span>
+                  <span className="dash-cgpa-trend-bar" aria-hidden="true"><i style={{ height: `${height}%` }} /></span>
+                  <span className="dash-cgpa-trend-label">{snapshot.termLabel}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="dash-metric-hint">Each bar is measured against its own {cgpaScaleMax}.0 scale. Terms are saved when you use the CGPA calculator.</p>
+        </div>
+      ) : (
+        <p className="dash-chart-empty">No saved semester yet. Save a term in the CGPA calculator to start this trend.</p>
+      )}
+    </div>
+  );
+
   const overview = (
     <>
       <section className="dash-welcome-card">
@@ -742,6 +804,161 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-pill dash-pill-green"><ShieldCheck size={12} /> {profileComplete ? 'Academic profile complete' : 'Academic profile needs attention'}</span>
         </div>
       </section>
+
+      <section className="dash-card dash-performance" aria-labelledby="dash-performance-heading">
+        <div className="dash-card-header">
+          <div>
+            <h2 className="dash-card-title" id="dash-performance-heading">Your progress</h2>
+            <p className="dash-card-help">
+              {performance.scoredCount
+                ? `Based on ${performance.scoredCount} scored ${performance.scoredCount === 1 ? 'paper' : 'papers'} in the most recent attempts loaded.${performance.averageScore !== null ? ` Average ${performance.averageScore}%.` : ''}`
+                : 'Your latest result, subject averages and trend will appear after your first scored paper.'}
+            </p>
+          </div>
+          <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>See all CBT results</button>
+        </div>
+
+        <div className="dash-report-strip">
+          <article className="dash-report-card">
+            <span className="dash-report-icon is-blue"><TrendingUp size={15} aria-hidden="true" /></span>
+            <p className="dash-report-label">Latest CBT score</p>
+            <strong className="dash-report-value">{performance.latest ? `${performance.latest.score}%` : '—'}</strong>
+            <p className="dash-report-detail">
+              {performance.latest
+                ? performance.latest.change === null
+                  ? 'First scored paper in this sample'
+                  : `${performance.latest.change > 0 ? 'Up' : performance.latest.change < 0 ? 'Down' : 'Level'} ${Math.abs(performance.latest.change)} points on the previous paper`
+                : 'No scored paper yet'}
+            </p>
+          </article>
+          <article className="dash-report-card">
+            <span className="dash-report-icon is-green"><GraduationCap size={15} aria-hidden="true" /></span>
+            <p className="dash-report-label">Current CGPA</p>
+            <strong className="dash-report-value">{latestCgpaSnapshot ? latestCgpaSnapshot.gpa : '—'}</strong>
+            <p className="dash-report-detail">
+              {latestCgpaSnapshot ? `${latestCgpaSnapshot.termLabel} · ${latestCgpaSnapshot.scale === 4 ? '4.0' : '5.0'} scale` : 'Save a semester in the CGPA calculator'}
+            </p>
+          </article>
+          <article className="dash-report-card">
+            <span className="dash-report-icon is-amber"><Inbox size={15} aria-hidden="true" /></span>
+            <p className="dash-report-label">Open requests</p>
+            <strong className="dash-report-value">{openRequests.toLocaleString()}</strong>
+            <p className="dash-report-detail">{requests.length ? `${requests.length} request${requests.length === 1 ? '' : 's'} in your history` : 'No service requests yet'}</p>
+          </article>
+          <article className="dash-report-card">
+            <span className="dash-report-icon is-violet"><UserCheck size={15} aria-hidden="true" /></span>
+            <p className="dash-report-label">Profile completion</p>
+            <strong className="dash-report-value">{profileCompletionPercent}%</strong>
+            <div className="dash-report-meter" role="img" aria-label={`Profile ${profileCompletionPercent} percent complete`}><span style={{ width: `${profileCompletionPercent}%` }} /></div>
+            <p className="dash-report-detail">{profileComplete ? 'Every required academic field is filled' : 'Complete the missing academic fields'}</p>
+          </article>
+        </div>
+
+        {performance.latest ? (
+          <>
+            <div className="dash-performance-grid">
+              <div className="dash-performance-panel dash-performance-latest">
+                <span className="dash-metric-label">Latest result</span>
+                <div className="dash-latest-score">
+                  <strong>{performance.latest.score}%</strong>
+                  {performance.latest.change !== null && <ChangeChip change={performance.latest.change} />}
+                </div>
+                <p className="dash-latest-subject">{performance.latest.subject}</p>
+                <p className="dash-metric-hint">
+                  {performance.latest.change === null
+                    ? 'This is your first scored paper in this sample.'
+                    : performance.latest.change > 0
+                      ? `Up ${performance.latest.change} points from your previous scored paper.`
+                      : performance.latest.change < 0
+                        ? `Down ${Math.abs(performance.latest.change)} points from your previous scored paper.`
+                        : 'The same score as your previous scored paper.'}
+                </p>
+                {performance.latest.id && (
+                  <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(performance.latest.id)}`}>View result →</a>
+                )}
+              </div>
+
+              <div className="dash-performance-panel">
+                <h3>Score trend</h3>
+                <TrendChart points={performance.trend} />
+              </div>
+
+              <div className="dash-performance-panel">
+                <h3>Subject averages</h3>
+                {performance.subjects.length ? (
+                  <SubjectBars rows={performance.subjects} />
+                ) : (
+                  <p className="dash-chart-empty">
+                    A subject average needs a scored paper whose saved plan contains one subject. Multi-subject papers are not split into invented subject scores.
+                  </p>
+                )}
+              </div>
+
+              <div className="dash-performance-panel">
+                <h3>How your scores are distributed</h3>
+                <DistributionChart buckets={performance.distribution} total={performance.distributionTotal} />
+              </div>
+
+              {cgpaTrendPanel}
+            </div>
+
+            <div className="dash-performance-insights">
+              <div className="dash-insight">
+                <h3>Strengths</h3>
+                {performance.highlights.strengths.length ? (
+                  <ul>
+                    {performance.highlights.strengths.map((row) => (
+                      <li key={row.subject}><strong>{row.subject}</strong> — {row.average}% average</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No subject average has reached 70% yet. That is a threshold, not a grade.</p>
+                )}
+              </div>
+              <div className="dash-insight">
+                <h3>Needs practice</h3>
+                {performance.highlights.needsPractice.length ? (
+                  <ul>
+                    {performance.highlights.needsPractice.map((row) => (
+                      <li key={row.subject}>
+                        <strong>{row.subject}</strong> is your lowest subject average at {row.average}%.
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No subject average is below 70% in this sample, so there is no weakest subject to name.</p>
+                )}
+              </div>
+              <div className="dash-insight is-next">
+                <h3>Next step</h3>
+                {performance.recommendation ? (
+                  <>
+                    <p><strong>{performance.recommendation.title}.</strong> {performance.recommendation.detail}</p>
+                    <a className="dash-card-link" href={performance.recommendation.href}>{performance.recommendation.cta} →</a>
+                  </>
+                ) : (
+                  <p>Complete another scored paper to make the next step more specific.</p>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="dash-empty">
+              <p>No scored paper yet, so there is nothing to compare. Take one timed practice test and this area will show your latest score, subject averages and trend.</p>
+              <a className="dash-btn dash-btn-primary" href="/cbt">Start practice</a>
+            </div>
+            {cgpaTrendPanel}
+          </>
+        )}
+      </section>
+
+      <nav className="dash-quick-actions" aria-label="Common student actions">
+        <a href="/cbt">Start CBT</a>
+        <a href="/services">Request a service</a>
+        <a href="/dashboard/services">Track requests</a>
+        <a href="/screening-calculator">Screening calculator</a>
+      </nav>
 
       <section className="dash-priority" aria-labelledby="dash-priority-heading">
         <div className="dash-section-head">
@@ -952,7 +1169,16 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <p className="dash-page-sub">Your CGPA calculator, the verified school directory and everything you have shortlisted.</p>
       </div>
       <div className="dash-tools-grid">
-        <CgpaCalculatorCard userId={userId} isLocalMode={isLocalMode} initialCourses={cgpaCourses} latestSnapshot={latestCgpaSnapshot} onSnapshotSaved={setLatestCgpaSnapshot} />
+        <CgpaCalculatorCard
+          userId={userId}
+          isLocalMode={isLocalMode}
+          initialCourses={cgpaCourses}
+          latestSnapshot={latestCgpaSnapshot}
+          onSnapshotSaved={(snapshot) => {
+            setLatestCgpaSnapshot(snapshot);
+            setCgpaSnapshots((current) => current.some((entry) => entry.id === snapshot.id) ? current : [snapshot, ...current].slice(0, 8));
+          }}
+        />
         <SchoolFinderCard institutions={institutions} isSaved={isSavedItem} onSave={saveItem} />
       </div>
       <section className="dash-card" id="saved">
@@ -970,7 +1196,30 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 </div>
                 <div className="dash-list-actions">
                   {item.href && <a className="dash-btn dash-btn-small dash-btn-secondary" href={item.href} target={item.href.startsWith('/') ? undefined : '_blank'} rel="noopener noreferrer">Open</a>}
-                  <button type="button" className="dash-icon-btn" aria-label={`Remove ${item.name}`} onClick={() => removeSaved(item.id)}><Trash2 size={14} /></button>
+                  {confirmSavedId === item.id ? (
+                    <span className="dash-inline-confirm" role="group" aria-label={`Remove ${item.name}`}>
+                      <span>Remove?</span>
+                      <button type="button" className="dash-card-link" onClick={() => setConfirmSavedId('')} disabled={removingSavedId === item.id}>Keep</button>
+                      <button
+                        type="button"
+                        className="dash-btn dash-btn-small dash-btn-danger"
+                        onClick={() => void removeSaved(item.id)}
+                        disabled={removingSavedId === item.id}
+                        aria-busy={removingSavedId === item.id}
+                      >
+                        {removingSavedId === item.id ? 'Removing…' : 'Remove'}
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="dash-icon-btn"
+                      aria-label={`Remove ${item.name}`}
+                      onClick={() => { setNotice(''); setConfirmSavedId(item.id); }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
@@ -1002,11 +1251,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" submitLabel="Go" />
 
           <div className="edureach-dash-actions">
-            <button type="button" className="dash-icon-btn" style={{ position: 'relative' }} aria-label={unreadNotifications ? `Notifications, ${unreadNotifications} unread` : 'Notifications'}
-              onClick={() => { openTab('dashboard'); window.setTimeout(() => document.getElementById('dashboard-notifications')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}>
-              <Bell size={17} />
-              {unreadNotifications > 0 && <span aria-hidden="true" style={{ position: 'absolute', top: '-4px', right: '-4px', minWidth: '17px', height: '17px', borderRadius: '999px', background: '#B14933', color: '#fff', fontSize: '10px', fontWeight: 680, display: 'grid', placeItems: 'center', padding: '0 4px' }}>{unreadNotifications}</span>}
-            </button>
+            <NotificationCenter variant="dashboard" />
             <a href="/" className="dash-btn dash-btn-secondary dash-hide-mobile">Student site</a>
             <div style={{ position: 'relative' }}>
               <button type="button" className="edureach-dash-profile-btn" onClick={() => setProfileMenuOpen((open) => !open)} aria-haspopup="menu" aria-expanded={profileMenuOpen}>

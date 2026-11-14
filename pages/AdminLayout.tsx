@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import '../src/admin.css';
+import '../src/admin-analytics.css';
 import {
   BarChart3,
   Briefcase,
