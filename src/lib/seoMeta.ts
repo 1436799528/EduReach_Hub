@@ -65,7 +65,7 @@ const AUTH_PATHS = new Set([
 /** Prefixes that must never be indexed, whatever their content. */
 const PRIVATE_PREFIXES = [
   '/admin', '/dashboard', '/profile', '/settings', '/search', '/api',
-  '/cbt/practice', '/cbt/results', '/cbt/setup', '/services/track', '/track',
+  '/cbt/practice', '/cbt/results', '/cbt/setup', '/services/track', '/track', '/u',
 ];
 
 const AUTH_AND_PRIVATE_EXACT = new Set(['/services/track', '/track']);

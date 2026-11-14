@@ -86,18 +86,7 @@ a.er-opportunity-link:focus-visible {
   outline-offset: 2px;
 }
 
-/* CTA rendered inside a whole-card link: looks like the old button but is not
-   a nested interactive element. */
-.er-card-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
-  pointer-events: none;
-}
-.er-library-card .er-card-cta { min-height: 36px; }
 .er-material-card .er-material-actions { width: 100%; display: flex; margin-top: auto; }
-.er-material-card .er-material-actions .er-card-cta { width: 100%; justify-content: center; }
 .er-material-school-static {
   display: inline-flex;
   align-items: center;

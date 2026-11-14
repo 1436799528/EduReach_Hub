@@ -176,11 +176,14 @@ test('registration collects account essentials and only asks students for option
   await expect(page.getByLabel('Current level')).toBeVisible();
   await expect(page.getByLabel('Course or programme')).toBeVisible();
 
-  await page.getByRole('button', { name: /Parent or guardian/ }).click();
-  await expect(page.getByLabel('School or institution')).toHaveCount(0);
-  await expect(page.getByLabel('Current level')).toHaveCount(0);
-  await expect(page.getByLabel('Course or programme')).toHaveCount(0);
-  await expect(page.getByText(/never ask for your NIN, BVN/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Parent or guardian/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /Teacher or educator/ })).toBeDisabled();
+  await expect(page.getByText(/Parent and teacher accounts are not available yet/i)).toBeVisible();
+  await expect(page.getByLabel('School or institution')).toBeVisible();
+  await expect(page.getByLabel('Current level')).toBeVisible();
+  await expect(page.getByLabel('Course or programme')).toBeVisible();
+  await expect(page.getByText(/never ask for your NIN, BVN/i)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
 });
 test('navigation opens services on desktop and mobile', async ({ page, isMobile }) => {
   await page.goto('/');

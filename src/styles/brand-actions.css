@@ -344,7 +344,3 @@
 /* --- Clickmor crimson controls ------------------------------------------- */
 /* Crimson is an accent, so it only appears where a control is deliberately
    branded. Hover and press darken through the crimson ramp. */
-
-.er-sim-cta:hover {
-  color: var(--er-crimson-hover);
-}

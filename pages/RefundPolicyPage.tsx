@@ -1,12 +1,11 @@
 import HubLayout from '../src/components/HubLayout';
-import { ArrowLeft, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 export default function RefundPolicyPage() {
   return (
     <HubLayout>
       <div className="er-legal-page">
         <div className="hub-container er-legal-container">
-          <a className="er-legal-back" href="/"><ArrowLeft size={14} aria-hidden="true" /> Back to EduReach</a>
           <article className="er-legal-article" aria-labelledby="refund-title">
             <div className="er-legal-draft" role="note">
               <ShieldAlert size={18} aria-hidden="true" />

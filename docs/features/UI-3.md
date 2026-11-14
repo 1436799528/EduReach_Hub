@@ -1,4 +1,4 @@
-# UI-3 · Global colour system: deep green actions, crimson brand accent
+# UI-3 · Global colour system: logo-navy actions, logo-blue icons, crimson brand accent
 
 **Status:** delivered
 **Scope:** colour only. No layout, component, copy, navigation, exam-rule or
@@ -32,17 +32,17 @@ inline, which beats every stylesheet.
 
 | Token | Value | Use |
 |---|---|---|
-| `--er-primary` | `#174A3A` | every primary action |
-| `--er-primary-hover` | `#123A2D` | hover |
-| `--er-primary-active` | `#0E3025` | pressed |
+| `--er-primary` | `#0A3E83` | every primary action |
+| `--er-primary-hover` | `#083570` | hover |
+| `--er-primary-active` | `#062B5C` | pressed |
 | `--er-primary-border` | `#0B3126` | outline around the hero pair |
 | `--er-primary-soft` | `#E8F1EC` | selected-state surfaces |
 | `--er-on-primary` | `#FFFFFF` | text on the fill |
 | `--er-crimson` | `#B14933` | brand accent (unchanged) |
 | `--er-crimson-deep` | `#B3331A` | brand accent, deep |
 
-Contrast, measured from the literals: white on `#174A3A` **10.11:1**, hover
-**12.58:1**, pressed **14.30:1**; `#174A3A` as text on white **10.11:1** and on
+Contrast, measured from the literals: white on `#0A3E83` **10.35:1**, hover
+**11.98:1**, pressed **13.93:1**; `#0A3E83` as text on white **10.35:1** and on
 the page background **9.59:1**. Crimson stays at **5.43:1** where it is used.
 
 ## 3. One owner for action colour — `src/styles/brand-actions.css`
@@ -53,7 +53,7 @@ A new final layer, imported after every component sheet and immediately before
 indicator, a primary link or a form affordance. It sets no card surface,
 border, radius, shadow or size.
 
-| Surface | What turns green |
+| Surface | What turns logo navy |
 |---|---|
 | Home | `Start practising` / `Past questions` (`.hub-home-cta`), "View all", and the link tile hover |
 | Simulator setup | the Start button, chosen question count, chosen mode, subject checkboxes |
@@ -64,13 +64,13 @@ border, radius, shadow or size.
 | Forms | input/select/textarea focus tint, search submits, notice "Try again" |
 | Mobile | the mobile search submit, and every control above at its existing size |
 
-The hero pair had already been switched from crimson to a literal `#174a3a` in
+The hero pair had already been switched from crimson to a literal `#0a3e83` in
 `9f0517a`, which left `tests/site-experience.test.ts` asserting the old hover
 and pressed values and broke the gate. This branch keeps the colour and replaces
 the three literals with the tokens, so the test and every other button read the
 same definition. The hover and pressed shades are the token ramp
-(`#0F3A2D` / `#0A2C22`) rather than `#123a2d` / `#0e3025`. UI-4 later adopted the
-lighter `#123A2D` / `#0E3025` steps as the specified palette; see `UI-4.md`.
+(`#0F3A2D` / `#0A2C22`) rather than `#083570` / `#062b5c`. UI-4 later adopted the
+lighter `#083570` / `#062B5C` steps as the specified palette; see `UI-4.md`.
 
 `.er-exam` already owned an accent variable (`--er-exam-accent`). It now points
 at `var(--er-primary)`, which repaints the exam submit, side submit, mobile bar,
@@ -83,7 +83,7 @@ Crimson remains in exactly these contexts:
 - **Brand marks** — the wordmark suffix, the app badge, `admin-brand-mark`, the
   logo fallback, the wallet/avatar marks.
 - **Navigation accents** — the Clickmor elements in the header and the
-  admin sidebar (the selected route itself became a green surface in UI-4).
+  admin sidebar (the selected route itself became a navy surface in UI-4).
 - **Kickers and eyebrows** — the small uppercase label above page titles, which
   is the brand signature across pages.
 - **Exam identity colours** that carry meaning (simulator tiles, service card
@@ -102,7 +102,7 @@ bar. The inline `#b14933` fills in six TSX files now reference
   exam; the per-exam brand tiles and badges keep their own colours.
 - **Typography, layout, navigation, content, functionality.** Untouched.
 - **Focus ring.** Kept `#8f1d18` + white under-ring at the time (8.91:1 on
-  white). UI-4 moved it to the primary token, `#174A3A`, at 10.11:1; the
+  white). UI-4 moved it to the primary token, `#0A3E83`, at 10.35:1; the
   two-tone system is unchanged.
 - **`--hub-blue`.** Still aliased to crimson in `theme.css` because cards read
   it. Renaming it is a cascade change with no visual benefit; recorded as a
@@ -145,7 +145,7 @@ Tests added (`tests/brand-colors.test.ts`):
    `auth-page-brand`, `wallet-modal-brand`, `.er-banner-card`, one
    `.ms-service-card` variant). They are identity surfaces, not actions.
 4. **Crimson eyebrows and page icons** (Jobs, News, Past questions, CGPA,
-   Events) are kept as the brand kicker. If they should go green too, that is a
+   Events) are kept as the brand kicker. If they should go logo navy too, that is a
    brand decision for a later pass, not a mechanical swap.
 5. **Inline styles remain** in `AuthPageV2`, `ComingSoonPage`, `HubLayout` and
    `ServiceApplyPage` — now tokenised, but still inline. Moving them into the

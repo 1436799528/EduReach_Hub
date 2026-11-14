@@ -5,7 +5,8 @@ import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
-import { NewsRow } from '../src/components/NewsSections';
+import { NewsCard } from '../src/components/NewsSections';
+import { isArticleCurrent } from '../src/lib/newsFreshness';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { fetchNews, type NewsItem } from '../src/lib/api';
 import { useAuth } from '../src/lib/auth';
@@ -27,6 +28,15 @@ const toolTiles = [
   { title: 'Past questions', href: '/past-questions' },
   { title: 'Screening calculator', href: '/screening-calculator' },
   { title: 'CGPA calculator', href: '/tools/cgpa-calculator' },
+];
+
+// The three main exam bodies live on the home page by name. Keeping this as a
+// tiny local list (rather than importing the whole study-material catalogue)
+// keeps the home route out of the library data chunk.
+const mainExamMaterials = [
+  { exam: 'JAMB', title: 'JAMB past questions' },
+  { exam: 'WAEC', title: 'WAEC past questions' },
+  { exam: 'NECO', title: 'NECO past questions' },
 ];
 
 function LinkTile({ title, href }: { title: string; href: string }) {
@@ -56,6 +66,13 @@ export default function HubHomePage() {
       .finally(() => active && setNewsLoading(false));
     return () => { active = false; };
   }, [feedVersion]);
+
+  // Only current stories reach the home feed; expired notices are removed, and
+  // the newest published items come first.
+  const latestNews = news
+    .filter(isArticleCurrent)
+    .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime())
+    .slice(0, 4);
 
   return (
     <HubLayout>
@@ -98,6 +115,19 @@ export default function HubHomePage() {
           </section>
 
           <section className="er-section">
+            <SectionHead title="Exam materials" href="/past-questions" linkLabel="All materials" />
+            <div className="er-exam-materials">
+              {mainExamMaterials.map((material) => (
+                <a className="er-exam-material" key={material.exam} href={`/past-questions?exam=${encodeURIComponent(material.exam)}`}>
+                  <small>{material.exam}</small>
+                  <strong>{material.title}</strong>
+                  <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={16} /></span>
+                </a>
+              ))}
+            </div>
+          </section>
+
+          <section className="er-section">
             <SectionHead title="Study tools" />
             <div className="er-test-strip">
               {toolTiles.map((tile) => <LinkTile key={tile.title} title={tile.title} href={tile.href} />)}
@@ -114,12 +144,12 @@ export default function HubHomePage() {
                     <RefreshCw size={13} /> Try again
                   </button>
                 </div>
-              ) : news.length ? (
-                <div className="hub-home-updates">
-                  {news.slice(0, 3).map((item) => <NewsRow key={item.id} item={item} />)}
+              ) : latestNews.length ? (
+                <div className="er-news-card-grid">
+                  {latestNews.map((item) => <NewsCard key={item.id} item={item} />)}
                 </div>
               ) : newsLoading ? (
-                <SkeletonRows rows={3} label="Loading updates" />
+                <SkeletonRows rows={4} label="Loading updates" />
               ) : (
                 <div className="er-empty">No updates have been published yet.</div>
               )}

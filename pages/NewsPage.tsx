@@ -2,13 +2,13 @@ import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
-import { FeaturedNews, NewsRow } from '../src/components/NewsSections';
+import { FeaturedNews, NewsCard } from '../src/components/NewsSections';
 import { fetchNews, type NewsItem } from '../src/lib/api';
 import { newsCategories, newsCategoryLabel, newsCategoryMatches, newsCategorySlug } from '../src/data/newsCategories';
 import { matchesSearch } from '../src/lib/searchMatch';
 import { SkeletonRows } from '../src/components/Skeleton';
-import { newsFreshness } from '../src/lib/newsFreshness';
-import { Search, X } from 'lucide-react';
+import { isArticleCurrent } from '../src/lib/newsFreshness';
+import FilterSearch from '../src/components/ui/FilterSearch';
 
 // Category pills are the shared database-driven category list (the same slugs
 // the Admin Newsroom writes), so public filtering and admin authoring can
@@ -71,10 +71,12 @@ export default function NewsPage() {
     ));
   }, [items, activeFilter, query]);
 
-  // Expired or superseded stories are listed after current ones rather than
-  // hidden: a student searching for a closed deadline must still find it.
+  // Expired and superseded stories are removed from the public board; the
+  // remaining cards are ordered newest first.
   const orderedItems = useMemo(
-    () => [...filteredItems].sort((a, b) => Number(newsFreshness(b).current) - Number(newsFreshness(a).current)),
+    () => [...filteredItems]
+      .filter(isArticleCurrent)
+      .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime()),
     [filteredItems],
   );
 
@@ -110,22 +112,15 @@ export default function NewsPage() {
                 {filters.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
               </select>
             </label>
-            {/* A control group, not a <label>: the clear button must not be
-                nested inside the label element that annotates the input. */}
-            <div className="er-library-search" role="search" aria-label="Search news" style={{ marginTop: '12px', maxWidth: '420px', width: '100%' }}>
-              <Search size={17} aria-hidden="true" />
-              <input
-                type="search"
+            {/* UI-5: one shared filter field, instead of a page-local copy. */}
+            <div style={{ marginTop: '12px', width: '100%', maxWidth: '420px' }}>
+              <FilterSearch
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={setQuery}
+                label="Search news"
                 placeholder="Search headlines, sources, tags"
-                aria-label="Search news"
+                clearLabel="Clear news search"
               />
-              {query && (
-                <button type="button" className="er-search-clear" onClick={() => setQuery('')} aria-label="Clear news search">
-                  <X size={14} />
-                </button>
-              )}
             </div>
           </div>
 
@@ -142,7 +137,7 @@ export default function NewsPage() {
                 {query.trim()
                   ? `Nothing matches “${query.trim()}”${activeFilter === 'ALL' ? '' : ' in this category'}. Clear the search or try another category.`
                   : items.length
-                    ? 'No announcements match this category yet. The category exists, but nothing has been published under it.'
+                    ? 'No current announcements match this category yet. Expired notices are removed.'
                     : 'No news content available yet. Verified education updates are published here as soon as they are ready.'}
               </div>
             )}
@@ -158,9 +153,9 @@ export default function NewsPage() {
                 <section className="er-section" style={{ marginTop: 0 }}>
                   <SectionHead title={activeFilter === 'ALL' ? 'Latest stories' : 'Results'} />
                   {latestItems.length > 0 ? (
-                    <div className="er-news-list" style={{ display: 'grid', gap: '10px' }}>
+                    <div className="er-news-card-grid">
                       {latestItems.map((item) => (
-                        <NewsRow key={item.id} item={item} />
+                        <NewsCard key={item.id} item={item} />
                       ))}
                     </div>
                   ) : (

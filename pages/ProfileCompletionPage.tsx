@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
   Camera,
   Check,
@@ -12,13 +12,25 @@ import {
   Mail,
   Smartphone,
   ChevronRight,
+  ShieldCheck,
+  Settings,
+  UserRound,
+  Globe,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
-import { supabase } from '../src/lib/supabase';
+import VerifiedBadge from '../src/components/VerifiedBadge';
+import WaveLoader from '../src/components/WaveLoader';
+import { useToast } from '../src/components/ui/Toast';
+import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
+import { saveStudentProfile, type ProfileWriteClient, type StudentProfilePayload } from '../src/lib/profileSave';
+import { generatePublicProfileSlug } from '../src/lib/publicProfile';
+import { publicProfileUrl } from '../src/lib/publicProfileClient';
 import {
   academicSessions,
   academicYears,
@@ -42,6 +54,13 @@ const academicInterestOptions = [
 
 export default function ProfileCompletionPage() {
   const { user } = useAuth();
+  const { push: pushToast } = useToast();
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [savedSignature, setSavedSignature] = useState('');
+  const [publicProfile, setPublicProfile] = useState(false);
+  const [publicSlug, setPublicSlug] = useState('');
+  const [visibilityBusy, setVisibilityBusy] = useState(false);
+  const [visibilityError, setVisibilityError] = useState('');
   const [userId, setUserId] = useState('');
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
@@ -138,6 +157,8 @@ export default function ProfileCompletionPage() {
         if (stored.admission_year) setAdmissionYear(String(stored.admission_year));
         if (stored.expected_graduation_year) setExpectedGradYear(String(stored.expected_graduation_year));
         if (stored.avatar_url) setAvatarUrl(stored.avatar_url);
+        if (stored.public_profile) setPublicProfile(true);
+        if (stored.public_profile_slug) setPublicSlug(String(stored.public_profile_slug));
         if (Array.isArray(stored.academic_interests) && stored.academic_interests.length) setInterests(stored.academic_interests);
         if (stored.notification_preferences) {
           setEmailAlerts(Boolean(stored.notification_preferences.email_alerts));
@@ -160,6 +181,7 @@ export default function ProfileCompletionPage() {
       if (data?.user) {
         setUserId(data.user.id);
         setUserEmail(data.user.email || '');
+        setEmailVerified(Boolean(data.user.email_confirmed_at));
         const meta = data.user.user_metadata || {};
         if (meta.phone) setPhone(meta.phone);
         const fullName = meta.full_name || `${meta.first_name || ''} ${meta.last_name || ''}`.trim() || 'Student';
@@ -203,6 +225,8 @@ export default function ProfileCompletionPage() {
               if (profile.admission_year) setAdmissionYear(String(profile.admission_year));
               if (profile.expected_graduation_year) setExpectedGradYear(String(profile.expected_graduation_year));
               if (profile.avatar_url) setAvatarUrl(profile.avatar_url);
+              if (profile.public_profile) setPublicProfile(true);
+              if (profile.public_profile_slug) setPublicSlug(String(profile.public_profile_slug));
               if (Array.isArray(profile.academic_interests) && profile.academic_interests.length) {
                 setInterests(profile.academic_interests);
               }
@@ -247,21 +271,163 @@ export default function ProfileCompletionPage() {
     reader.readAsDataURL(file);
   }
 
-  // Mirror of the save validation: the Save button glows bright orange only
-  // when every required profile detail is filled in.
-  const profileComplete = [
-    school.includes('Other') ? customSchool.trim() : school,
-    courseProgramme || customCourseProgramme.trim(),
-    department || customDepartment.trim(),
+  // UI-5: identity fields use explicit Save/Cancel, so the form has to be able
+  // to say whether anything is unsaved. The signature is one string, which is
+  // more reliable than one boolean per field drifting out of sync.
+  const formSignature = JSON.stringify({
+    userName,
+    phone,
+    school,
+    customSchool,
+    courseProgramme,
+    customCourseProgramme,
+    courseOtherSelected,
+    department,
+    customDepartment,
+    departmentOtherSelected,
     faculty,
     level,
     session,
     admissionYear,
     expectedGradYear,
-  ].every((value) => String(value || '').trim().length > 0);
+    avatarUrl,
+    customAvatar,
+    avatarImageUrl,
+    interests,
+    emailAlerts,
+    whatsappAlerts,
+    smsAlerts,
+  });
+  const isDirty = formSignature !== savedSignature && !savedSuccess;
+
+  // The snapshot is taken only after the saved profile has been applied, so an
+  // untouched form never claims unsaved changes on first paint.
+  useEffect(() => {
+    if (!profileLoading) setSavedSignature(formSignature);
+    // `formSignature` intentionally is not a dependency: the snapshot is the
+    // state the form *loaded*, not every subsequent keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileLoading]);
+
+  function persistProfileLocally(payload: StudentProfilePayload) {
+    // A cache, not the source of truth. It keeps the no-Supabase preview and a
+    // flaky connection readable, but it is written only after the server has
+    // accepted the change (or when there is no server to accept it).
+    try {
+      localStorage.setItem(localStorageKey('profile-completed'), 'true');
+      // The public-link setting is written immediately and is not part of the
+      // identity payload, so a later Save must not erase it from the cache.
+      let stored: Record<string, unknown> = {};
+      try {
+        stored = JSON.parse(readLocalPreviewValue('profile') || '{}');
+      } catch {
+        stored = {};
+      }
+      localStorage.setItem(
+        localStorageKey('profile'),
+        JSON.stringify({
+          ...stored,
+          ...payload,
+          full_name: userName,
+          email: userEmail,
+          public_profile: publicProfile,
+          public_profile_slug: publicSlug || stored.public_profile_slug || null,
+        })
+      );
+    } catch {
+      // Storage can be unavailable; the account update already succeeded.
+    }
+  }
+
+  /**
+   * UI-5: public visibility is a low-risk, reversible setting, not an identity
+   * field, so it applies immediately with its own feedback instead of waiting
+   * for Save changes. The write touches exactly the two columns the migration
+   * grants; everything else about the profile is unchanged.
+   */
+  const updateVisibility = async (enabled: boolean) => {
+    if (visibilityBusy) return;
+    setVisibilityBusy(true);
+    setVisibilityError('');
+    const slug = publicSlug || generatePublicProfileSlug(userName || userEmail || 'student');
+
+    if (!isSupabaseConfigured || user?.isLocal) {
+      try {
+        const stored = JSON.parse(readLocalPreviewValue('profile') || '{}');
+        localStorage.setItem(
+          localStorageKey('profile'),
+          JSON.stringify({ ...stored, public_profile: enabled, public_profile_slug: slug, full_name: userName, email: userEmail })
+        );
+      } catch {
+        // The preview cache is best effort; the state below is still explicit.
+      }
+      setPublicProfile(enabled);
+      setPublicSlug(slug);
+      setVisibilityBusy(false);
+      pushToast({
+        tone: enabled ? 'success' : 'info',
+        title: enabled ? 'Public link ready' : 'Public link turned off',
+        detail: enabled ? 'Only your academic details are shown on the link.' : 'Your profile is private again.',
+      });
+      return;
+    }
+
+    let activeUserId = userId;
+    if (!activeUserId) {
+      try {
+        const { data } = await supabase.auth.getUser();
+        activeUserId = data.user?.id || '';
+      } catch {
+        activeUserId = '';
+      }
+    }
+    if (!activeUserId) {
+      setVisibilityError('Sign in again to change this setting.');
+      setVisibilityBusy(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ public_profile: enabled, public_profile_slug: slug })
+      .eq('id', activeUserId)
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      setVisibilityError('Your public profile could not be updated. This setting may not be available in this environment yet.');
+      setVisibilityBusy(false);
+      return;
+    }
+    if (!data) {
+      setVisibilityError('Your profile has not been created yet. Save your details first, then try again.');
+      setVisibilityBusy(false);
+      return;
+    }
+
+    setPublicProfile(enabled);
+    setPublicSlug(slug);
+    setVisibilityBusy(false);
+    pushToast({
+      tone: enabled ? 'success' : 'info',
+      title: enabled ? 'Public link ready' : 'Public link turned off',
+      detail: enabled ? 'Only your academic details are shown on the link.' : 'Your profile is private again.',
+    });
+  };
+
+  const copyPublicLink = async () => {
+    if (!publicSlug) return;
+    try {
+      await navigator.clipboard.writeText(publicProfileUrl(publicSlug));
+      pushToast({ tone: 'success', title: 'Link copied', detail: 'Paste it wherever you want to share your profile.' });
+    } catch {
+      pushToast({ tone: 'warning', title: 'Copy unavailable', detail: 'Select the link and copy it manually.' });
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setMessage('');
 
@@ -297,7 +463,7 @@ export default function ProfileCompletionPage() {
       return;
     }
 
-    const payload = {
+    const payload: StudentProfilePayload = {
       full_name: userName.trim() || 'Student',
       phone: phone.trim() || null,
       school: finalSchool,
@@ -318,38 +484,58 @@ export default function ProfileCompletionPage() {
       profile_completed: true,
     };
 
-    // Save locally for instant persistence when running without configured auth services
-    try {
-      localStorage.setItem(localStorageKey('profile-completed'), 'true');
-      localStorage.setItem(
-        localStorageKey('profile'),
-        JSON.stringify({ ...payload, full_name: userName, email: userEmail })
-      );
-    } catch {
-      // ignore
+    const finish = (detail: string) => {
+      persistProfileLocally(payload);
+      setSavedSignature(formSignature);
+      setProfileCompleted(true);
+      setSavedSuccess(true);
+      setSaving(false);
+      pushToast({ tone: 'success', title: 'Profile saved', detail });
+      window.setTimeout(() => {
+        setSavedSuccess(false);
+        navigateInApp(editMode ? '/profile' : '/dashboard');
+      }, 1100);
+    };
+
+    if (!isSupabaseConfigured || user?.isLocal) {
+      finish('Your profile is saved on this device.');
+      return;
     }
 
-    if (userId) {
+    // Resolve the account id at save time. Reporting success with an empty id
+    // was how a signed-in save could look fine while writing only localStorage.
+    let activeUserId = userId;
+    if (!activeUserId) {
       try {
-        const { error } = await supabase.from('profiles').upsert({ id: userId, ...payload }, { onConflict: 'id' });
-        if (error) throw error;
-      } catch (err) {
-        setSaving(false);
-        const safeMessage = userFacingError(err, 'Please try again.');
-        setMessage(safeMessage === 'Please try again.' ? 'Profile was not saved. Please try again.' : `Profile was not saved: ${safeMessage}`);
-        return;
+        const { data } = await supabase.auth.getUser();
+        activeUserId = data.user?.id || '';
+      } catch {
+        activeUserId = '';
       }
     }
+    if (!activeUserId) {
+      setSaving(false);
+      const detail = 'We could not confirm your account session. Sign in again, then retry the save.';
+      setMessage(detail);
+      pushToast({ tone: 'danger', title: 'Profile not saved', detail });
+      return;
+    }
 
-    const wasEditingExisting = editMode;
-    setSaving(false);
-    setProfileCompleted(true);
-    setSavedSuccess(true);
-    window.setTimeout(() => {
+    const result = await saveStudentProfile(supabase as unknown as ProfileWriteClient, activeUserId, payload);
+    if (!result.ok) {
+      setSaving(false);
+      const safe = userFacingError(result.error, '').trim();
+      const detail = safe
+        ? `Profile was not saved: ${safe}`
+        : 'Profile was not saved. Check your connection and try again.';
+      setMessage(detail);
+      pushToast({ tone: 'danger', title: 'Profile not saved', detail: 'Your changes are still on this page. Try again when you are connected.' });
+      // Never leave a stale success state claiming the write happened.
       setSavedSuccess(false);
-      const destination = wasEditingExisting ? '/profile' : '/dashboard';
-      navigateInApp(destination);
-    }, 1200);
+      return;
+    }
+
+    finish(editMode ? 'Your profile changes are now on your account.' : 'Profile completed. Opening your dashboard…');
   };
 
   if (profileLoading) {
@@ -368,45 +554,183 @@ export default function ProfileCompletionPage() {
     const savedSchool = school.includes('Other') ? customSchool : school;
     const savedCourse = courseProgramme || customCourseProgramme;
     const savedDepartment = department || customDepartment;
-    // Personal identity/contact stays visibly separate from academic record.
-    const personalRows = [
-      ['Name', userName],
-      ['Email', userEmail],
-      ['Phone', phone || 'Not added yet'],
+    const personalFacts: Array<[string, string]> = [
+      ['Full name', userName || 'Student'],
+      ['Email address', userEmail || 'Not added yet'],
+      ['Phone number', phone || 'Not added yet'],
     ];
-    const academicRows = [
+    const academicFacts: Array<[string, string]> = [
       ['Institution', savedSchool],
-      ['Level', level],
       ['Course / programme', savedCourse],
       ['Department', savedDepartment],
       ['Faculty', faculty],
+      ['Level', level],
       ['Academic session', session],
       ['Admission year', admissionYear],
-      ['Expected graduation year', expectedGradYear],
+      ['Expected graduation', expectedGradYear],
     ];
+    const channels = [
+      emailAlerts ? 'Email' : '',
+      whatsappAlerts ? 'WhatsApp' : '',
+      smsAlerts ? 'SMS' : '',
+    ].filter(Boolean);
+
+    // UI-5: a profile is identity first, then grouped facts. The old screen was
+    // one card of labelled database fields; this one answers "who am I here?"
+    // before listing the record, and keeps account actions separate from the
+    // academic record they protect.
     return (
       <HubLayout>
-        <div className="hub-page" style={{ padding: '24px 0 60px' }}>
-          <div className="hub-container" style={{ maxWidth: '780px' }}>
-            <div className="profile-summary-page-head">
-              <div><span className="hub-eyebrow">Account</span><h1>My Profile</h1><p>Your saved student information is shown below.</p></div>
-              <a className="hub-primary-btn" href="/profile?edit=1"><Pencil size={15} /> Edit Profile</a>
+        <div className="hub-page profile-page">
+          <div className="hub-container profile-shell">
+            <header className="profile-identity-card">
+              <div className="profile-identity-main">
+                <div className="profile-avatar" style={{ background: avatarTone }}>
+                  {displayAvatar
+                    ? <img src={displayAvatar} alt="" decoding="async" />
+                    : avatarInitials}
+                </div>
+                <div className="profile-identity-copy">
+                  <div className="profile-identity-name">
+                    <h1>{userName || 'Student'}</h1>
+                    {emailVerified && <VerifiedBadge />}
+                  </div>
+                  <p className="profile-identity-role">
+                    {level ? `${level} student` : 'Student'}
+                    {savedSchool ? ` · ${savedSchool}` : ''}
+                  </p>
+                  {(savedCourse || savedDepartment) && (
+                    <p className="profile-identity-programme">
+                      {[savedCourse, savedDepartment].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="profile-identity-actions">
+                <a className="hub-primary-btn" href="/profile?edit=1"><Pencil size={15} /> Edit profile</a>
+              </div>
+            </header>
+
+            <div className="profile-panel-grid">
+              <section className="profile-panel" aria-labelledby="profile-personal">
+                <div className="profile-panel-heading">
+                  <UserRound size={17} aria-hidden="true" />
+                  <h2 id="profile-personal">Personal information</h2>
+                </div>
+                <dl className="profile-facts">
+                  {personalFacts.map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd className={value && value !== 'Not added yet' ? undefined : 'is-empty'}>{value || 'Not added yet'}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+
+              <section className="profile-panel" aria-labelledby="profile-academic">
+                <div className="profile-panel-heading">
+                  <GraduationCap size={17} aria-hidden="true" />
+                  <h2 id="profile-academic">Academic information</h2>
+                </div>
+                <dl className="profile-facts profile-facts--two">
+                  {academicFacts.map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd className={value ? undefined : 'is-empty'}>{value || 'Not added yet'}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+
+              <section className="profile-panel" aria-labelledby="profile-account">
+                <div className="profile-panel-heading">
+                  <ShieldCheck size={17} aria-hidden="true" />
+                  <h2 id="profile-account">Account &amp; security</h2>
+                </div>
+                <dl className="profile-facts">
+                  <div><dt>Account email</dt><dd>{userEmail || 'Not added yet'}</dd></div>
+                  <div><dt>Password</dt><dd>Managed through your secure account settings</dd></div>
+                  <div><dt>Account type</dt><dd>Student</dd></div>
+                </dl>
+                <div className="profile-panel-actions">
+                  <a className="hub-outline-btn" href="/settings"><Settings size={14} /> Security &amp; password</a>
+                </div>
+              </section>
+
+              <section className="profile-panel" aria-labelledby="profile-preferences">
+                <div className="profile-panel-heading">
+                  <Bell size={17} aria-hidden="true" />
+                  <h2 id="profile-preferences">Preferences</h2>
+                </div>
+                <div className="profile-preference-group">
+                  <span>Academic interests</span>
+                  {interests.length ? (
+                    <ul className="profile-tags">
+                      {interests.map((interest) => <li key={interest}>{interest}</li>)}
+                    </ul>
+                  ) : <p className="profile-muted">No interests selected yet.</p>}
+                </div>
+                <div className="profile-preference-group">
+                  <span>Notification channels</span>
+                  <p className="profile-muted">{channels.length ? channels.join(' · ') : 'All optional alerts are off.'}</p>
+                </div>
+                <div className="profile-panel-actions">
+                  <a className="hub-outline-btn" href="/profile?edit=1#profile-preferences">Change preferences</a>
+                </div>
+              </section>
+
+              <section className="profile-panel profile-panel--wide" aria-labelledby="profile-public">
+                <div className="profile-panel-heading">
+                  <Globe size={17} aria-hidden="true" />
+                  <h2 id="profile-public">Public profile</h2>
+                </div>
+                <p className="profile-muted">
+                  A public link shows only your name, institution, programme and level.
+                  Your email, phone number, matric number, results and notifications are never included.
+                </p>
+                {publicProfile && publicSlug ? (
+                  <>
+                    <div className="profile-public-link">
+                      <code>{publicProfileUrl(publicSlug)}</code>
+                      <button type="button" className="hub-outline-btn" onClick={() => void copyPublicLink()}>
+                        <Copy size={13} /> Copy link
+                      </button>
+                    </div>
+                    <div className="profile-public-actions">
+                      <a className="hub-outline-btn" href={`/u/${publicSlug}`} target="_blank" rel="noopener noreferrer">
+                        View public profile <ExternalLink size={13} />
+                      </a>
+                      <button
+                        type="button"
+                        className="profile-skip-link"
+                        onClick={() => void updateVisibility(false)}
+                        disabled={visibilityBusy}
+                      >
+                        {visibilityBusy ? 'Turning off…' : 'Turn off public link'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="profile-public-actions">
+                    <button
+                      type="button"
+                      className="hub-outline-btn"
+                      onClick={() => void updateVisibility(true)}
+                      disabled={visibilityBusy}
+                    >
+                      {visibilityBusy ? 'Creating…' : 'Create public link'}
+                    </button>
+                    <span className="profile-muted">Off by default. You can turn it off again at any time.</span>
+                  </div>
+                )}
+                {visibilityError && <p className="profile-error" role="alert">{visibilityError}</p>}
+              </section>
             </div>
-            <section className="profile-summary-card">
-              <div className="profile-summary-identity">
-                <div className="profile-summary-avatar" style={{ background: avatarTone }}>{displayAvatar ? <img src={displayAvatar} alt="" decoding="async" /> : avatarInitials}</div>
-                <div><h2>{userName || 'Student'}</h2><p>{userEmail || 'Your account email'}</p></div>
-              </div>
-              <h3 style={{ margin: "18px 0 8px", fontSize: 12, fontWeight: 680, letterSpacing: ".08em", textTransform: "uppercase", color: "#174A3A" }}>Personal profile</h3>
-              <div className="profile-summary-grid">
-                {personalRows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value || 'Not added yet'}</strong></div>)}
-              </div>
-              <h3 style={{ margin: "18px 0 8px", fontSize: 12, fontWeight: 680, letterSpacing: ".08em", textTransform: "uppercase", color: "#174A3A" }}>Academic profile</h3>
-              <div className="profile-summary-grid">
-                {academicRows.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value || 'Not added yet'}</strong></div>)}
-              </div>
-            </section>
-            <p className="profile-summary-note">Need to change your information? Select Edit Profile. Your updates will be used for your dashboard and service requests.</p>
+
+            <p className="profile-summary-note">
+              Your academic profile is used to personalise your dashboard and service requests.
+              {emailVerified ? ' Your email is verified.' : ' Verify your email to add the verified mark beside your name.'}
+            </p>
           </div>
         </div>
       </HubLayout>
@@ -415,12 +739,15 @@ export default function ProfileCompletionPage() {
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '24px 0 60px' }}>
-        <div className="hub-container" style={{ maxWidth: '780px' }}>
-          <div style={{ marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
-            <h1 style={{ fontSize: '19px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
-              Academic Profile &amp; Preferences
-            </h1>
+      <div className="hub-page profile-page">
+        <div className="hub-container profile-shell">
+          <div className="profile-page-head">
+            <div>
+              <span className="hub-eyebrow">Account</span>
+              <h1>{editMode ? 'Edit your profile' : 'Complete your profile'}</h1>
+              <p>These details identify you on EduReach. Nothing is saved until you choose Save changes.</p>
+            </div>
+            <a className="hub-outline-btn" href="/profile">Cancel</a>
           </div>
 
           {!savedSuccess && profileMissingLabels.length > 0 && (
@@ -459,22 +786,14 @@ export default function ProfileCompletionPage() {
               }}
             >
               <CheckCircle2 size={20} color="#047857" />
-              <span>Profile completed successfully! Redirecting to your student dashboard…</span>
+              <span>{editMode ? 'Profile saved. Taking you back to your profile…' : 'Profile completed. Opening your dashboard…'}</span>
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '16px',
-              padding: '28px',
-              boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
-            }}
-          >
+          <form onSubmit={handleSubmit} className="profile-form">
+            <h2 className="profile-group-title">Personal information</h2>
             <section className="profile-contact-section">
-              <div className="profile-contact-heading"><Smartphone size={17} color="#b14933" /><h2>Account contact</h2></div>
+              <div className="profile-contact-heading"><Smartphone size={17} color="#64748b" /><h2>Contact</h2></div>
               <p>Keep a phone number on your account so EduReach can attach service updates to the right student.</p>
               <label className="hub-form-label">Phone number <span>(Optional)</span><input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="080 1234 5678" autoComplete="tel" /></label>
               <div className="profile-contact-email"><Mail size={14} /> <span>Email: <strong>{userEmail || 'Your account email'}</strong></span></div>
@@ -483,7 +802,7 @@ export default function ProfileCompletionPage() {
             {/* 9. PROFILE PHOTO (OPTIONAL) */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Camera size={18} color="#b14933" />
+                <Camera size={18} color="#64748b" />
                 <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Profile Photo <span style={{ fontSize: '12px', fontWeight: 500, color: '#5e6c82' }}>(Optional)</span>
                 </h2>
@@ -499,7 +818,7 @@ export default function ProfileCompletionPage() {
                     width: '64px',
                     height: '64px',
                     borderRadius: '50%',
-                    border: '3px solid #b14933',
+                    border: '2px solid var(--er-primary-soft-border)',
                     overflow: 'hidden',
                     background: avatarTone,
                     flexShrink: 0,
@@ -587,9 +906,10 @@ export default function ProfileCompletionPage() {
             </section>
 
             {/* 10-13. INSTITUTION & FACULTY DETAILS */}
+            <h2 className="profile-group-title">Academic information</h2>
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <School size={18} color="#b14933" />
+                <School size={18} color="#64748b" />
                 <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Institution &amp; Programme
                 </h2>
@@ -777,7 +1097,7 @@ export default function ProfileCompletionPage() {
             {/* 14-16. LEVEL & ACADEMIC YEARS */}
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <GraduationCap size={18} color="#b14933" />
+                <GraduationCap size={18} color="#64748b" />
                 <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Level &amp; Academic Timeline
                 </h2>
@@ -895,9 +1215,10 @@ export default function ProfileCompletionPage() {
             </section>
 
             {/* 17. ACADEMIC INTERESTS (OPTIONAL) */}
+            <h2 className="profile-group-title" id="profile-preferences">Preferences</h2>
             <section style={{ marginBottom: '26px', paddingBottom: '22px', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <Sparkles size={18} color="#b14933" />
+                <Sparkles size={18} color="#64748b" />
                 <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Academic Interests <span style={{ fontSize: '12px', fontWeight: 500, color: '#5e6c82' }}>(Optional)</span>
                 </h2>
@@ -920,9 +1241,9 @@ export default function ProfileCompletionPage() {
                         fontSize: '12px',
                         fontWeight: 620,
                         border: '1px solid',
-                        borderColor: selected ? '#b14933' : '#cbd5e1',
-                        background: selected ? '#F9F0EE' : '#ffffff',
-                        color: selected ? '#b14933' : '#475569',
+                        borderColor: selected ? 'var(--er-primary)' : '#cbd5e1',
+                        background: selected ? 'var(--er-primary-soft)' : '#ffffff',
+                        color: selected ? 'var(--er-primary)' : '#475569',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -941,7 +1262,7 @@ export default function ProfileCompletionPage() {
             {/* 18. NOTIFICATION PREFERENCES */}
             <section style={{ marginBottom: '26px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                <Bell size={18} color="#b14933" />
+                <Bell size={18} color="#64748b" />
                 <h2 style={{ fontSize: '15px', fontWeight: 620, color: '#0f172a', margin: 0 }}>
                   Notification Preferences
                 </h2>
@@ -964,11 +1285,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={emailAlerts}
                     onChange={(e) => setEmailAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#b14933' }}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--er-primary)' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Mail size={14} color="#b14933" /> Email Notifications
+                      <Mail size={14} color="#64748b" /> Email Notifications
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>
                       Receive official examination alerts, result check notifications, and scholarship updates.
@@ -992,11 +1313,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={whatsappAlerts}
                     onChange={(e) => setWhatsappAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#b14933' }}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--er-primary)' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <MessageSquare size={14} color="#b14933" /> WhatsApp Order &amp; Request Alerts
+                      <MessageSquare size={14} color="#64748b" /> WhatsApp Order &amp; Request Alerts
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>
                       WhatsApp updates when your service request or result verification is ready.
@@ -1020,11 +1341,11 @@ export default function ProfileCompletionPage() {
                     type="checkbox"
                     checked={smsAlerts}
                     onChange={(e) => setSmsAlerts(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#b14933' }}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--er-primary)' }}
                   />
                   <div style={{ flex: 1 }}>
                     <strong style={{ fontSize: '13px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Smartphone size={14} color="#b14933" /> SMS Urgent Deadline Reminders
+                      <Smartphone size={14} color="#64748b" /> SMS Urgent Deadline Reminders
                     </strong>
                     <span style={{ fontSize: '11.5px', color: '#5e6c82' }}>
                       Receive high-priority SMS reminders for closing dates (e.g. JAMB registration &amp; Post-UTME).
@@ -1034,44 +1355,30 @@ export default function ProfileCompletionPage() {
               </div>
             </section>
 
-            {message && <div className="hub-form-error" style={{ marginBottom: '16px' }}>{message}</div>}
+            {message && <div className="hub-form-error" role="alert" style={{ marginBottom: '16px' }}>{message}</div>}
 
-            {/* ACTION BUTTONS */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <a
-                href="/dashboard"
-                style={{
-                  fontSize: '12.5px',
-                  fontWeight: 620,
-                  color: '#5e6c82',
-                  textDecoration: 'none',
-                }}
-              >
-                Skip for now →
-              </a>
-
-              <button
-                type="submit"
-                disabled={saving || savedSuccess}
-                  aria-busy={saving}
-                style={{
-                  background: 'var(--er-primary)',
-                  color: '#ffffff',
-                  border: 0,
-                  borderRadius: '10px',
-                  padding: '12px 24px',
-                  fontSize: '13.5px',
-                  fontWeight: 620,
-                  cursor: 'pointer',
-                  transition: 'background .2s ease, box-shadow .2s ease',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: profileComplete ? '0 6px 18px rgba(23, 74, 58, 0.3)' : '0 2px 6px rgba(23, 74, 58, 0.22)',
-                }}
-              >
-                {saving ? 'Saving Profile…' : editMode ? 'Save Profile Changes' : 'Save & Open Dashboard'} <ChevronRight size={16} />
-              </button>
+            <div className="profile-save-bar">
+              <div className="profile-save-state" role="status" aria-live="polite">
+                {saving
+                  ? 'Saving changes…'
+                  : savedSuccess
+                    ? 'Saved'
+                    : isDirty
+                      ? 'Unsaved changes'
+                      : 'All changes saved'}
+                {isDirty && !saving && !savedSuccess && (
+                  <span className="profile-save-hint"> Choose Save changes to keep them.</span>
+                )}
+              </div>
+              <div className="profile-save-actions">
+                {!editMode && (
+                  <a className="profile-skip-link" href="/dashboard">Skip for now</a>
+                )}
+                <a className="hub-outline-btn" href="/profile">Cancel</a>
+                <button type="submit" className="hub-primary-btn" disabled={saving || savedSuccess} aria-busy={saving}>
+                  {saving ? <><WaveLoader variant="inline" decorative /> Saving…</> : <>Save changes <ChevronRight size={16} /></>}
+                </button>
+              </div>
             </div>
           </form>
         </div>

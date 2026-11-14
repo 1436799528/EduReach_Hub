@@ -8,7 +8,7 @@ import {
   updateAdminInstitution,
   type AdminInstitution,
 } from '../src/lib/api';
-import { AdminEmptyState, TableSkeleton } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminPageReport, TableSkeleton } from '../src/components/admin/AdminKit';
 
 // Schools manager: direct CRUD over the `institutions` rows the public
 // School Finder (/schools) reads. Same columns, one source of truth.
@@ -99,6 +99,16 @@ export default function AdminSchoolsPage() {
             <button type="button" className="admin-btn" onClick={() => setForm({ ...emptyForm })}><Plus size={14} /> New institution</button>
           </div>
         </div>
+
+        <AdminPageReport
+          title="Institution reporting"
+          items={[
+            { label: 'Institutions', value: institutions.length.toLocaleString() },
+            { label: 'Verified', value: institutions.filter((item) => item.is_verified).length.toLocaleString() },
+            { label: 'Post-UTME detail', value: institutions.filter((item) => item.post_utme_available).length.toLocaleString() },
+            { label: 'States covered', value: new Set(institutions.map((item) => item.state).filter(Boolean)).size.toLocaleString() },
+          ]}
+        />
 
         {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
         {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}

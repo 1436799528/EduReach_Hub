@@ -2,6 +2,7 @@ import { userFacingError } from '../lib/errors';
 import { useEffect, useMemo, useState } from 'react';
 import { Download, Pencil, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { adminApiFetch } from '../src/lib/api';
+import { AdminPageReport } from '../src/components/admin/AdminKit';
 
 type Field = {
   name: string;
@@ -198,6 +199,17 @@ export default function AdminContentManagerPage() {
           <button className="admin-btn" type="button" onClick={startNew}><Plus size={14} /> New</button>
         </div>
       </div>
+
+      <AdminPageReport
+        title="Data control reporting"
+        items={[
+          { label: 'Managed tables', value: resources.length.toLocaleString() },
+          { label: 'Rows loaded', value: loading ? '—' : rows.length.toLocaleString() },
+          { label: 'Editable fields', value: resource ? resource.fields.filter((field) => !field.readonly).length.toLocaleString() : '—' },
+          { label: 'Required fields', value: resource ? resource.fields.filter((field) => field.required).length.toLocaleString() : '—' },
+        ]}
+        note="Counts describe the selected table and the latest loaded page; the workspace does not invent archive totals."
+      />
 
       {error && <div className="admin-card" role="alert" style={{ padding: 14 }}>{error}</div>}
       {message && <div className="admin-card" style={{ padding: 14, borderLeft: '4px solid var(--admin-green)' }}>{message}</div>}

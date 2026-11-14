@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// UI-3: deep green is the colour of an action; crimson is the brand accent.
+// UI-3: logo navy is the colour of an action; crimson is the brand accent.
 //
 // The palette had drifted into "crimson is the default button", set
 // independently by five component sheets. This file pins the replacement rules
@@ -36,34 +36,39 @@ test('the palette is defined once, in the token layer', () => {
     return match[1].toUpperCase();
   };
 
-  assert.equal(token('--er-primary'), '#174A3A', 'primary action is deep green');
+  assert.equal(token('--er-primary'), '#0A3E83', 'primary action is logo navy');
   assert.equal(token('--er-on-primary'), '#FFFFFF', 'text on a primary action is white');
   assert.equal(token('--er-crimson'), '#B14933', 'crimson stays the brand accent');
+  assert.equal(token('--er-brand-navy'), '#0A3E83', 'the wordmark navy is the action colour');
+  assert.equal(token('--er-brand-blue'), '#1D9BE0', 'the wordmark blue is available for fills');
+  assert.equal(token('--er-brand-blue-ink'), '#0F6BAA', 'blue ink is readable on pale surfaces');
+  assert.ok(contrast('#0F6BAA', '#ffffff') >= 4.5, 'logo-blue ink clears AA on white');
+  assert.ok(contrast('#0F6BAA', '#EDF4FB') >= 4.5, 'logo-blue ink clears AA on the selected surface');
 
   // Hover and pressed must darken, not lighten: white text has to keep its
   // contrast as the fill changes.
-  assert.equal(token('--er-primary-hover'), '#123A2D', 'hover steps down one shade');
-  assert.equal(token('--er-primary-active'), '#0E3025', 'press steps down again');
-  assert.equal(token('--er-primary-soft'), '#EDF5F0', 'the selected surface is pale green');
-  assert.equal(token('--er-primary-soft-border'), '#D4E4DA', 'the selected edge is pale green');
+  assert.equal(token('--er-primary-hover'), '#083570', 'hover steps down one shade');
+  assert.equal(token('--er-primary-active'), '#062B5C', 'press steps down again');
+  assert.equal(token('--er-primary-soft'), '#EDF4FB', 'the selected surface is pale blue');
+  assert.equal(token('--er-primary-soft-border'), '#CCE0F3', 'the selected edge is pale blue');
 
   const hover = token('--er-primary-hover');
   const active = token('--er-primary-active');
-  assert.ok(luminance(hover) < luminance('#174A3A'), 'hover is darker than rest');
+  assert.ok(luminance(hover) < luminance('#0A3E83'), 'hover is darker than rest');
   assert.ok(luminance(active) < luminance(hover), 'pressed is darker than hover');
 });
 
 test('the action colour clears AA at every state', () => {
   for (const [fill, label] of [
-    ['#174A3A', 'resting'],
-    ['#123A2D', 'hover'],
-    ['#0E3025', 'pressed'],
+    ['#0A3E83', 'resting'],
+    ['#083570', 'hover'],
+    ['#062B5C', 'pressed'],
   ] as const) {
     assert.ok(contrast('#ffffff', fill) >= 4.5, `white text on the ${label} fill`);
   }
   // The primary is also used as a link and icon colour on light surfaces.
-  assert.ok(contrast('#174A3A', '#ffffff') >= 4.5, 'primary text on white');
-  assert.ok(contrast('#174A3A', '#f7f9fc') >= 4.5, 'primary text on the page background');
+  assert.ok(contrast('#0A3E83', '#ffffff') >= 4.5, 'primary text on white');
+  assert.ok(contrast('#0A3E83', '#f7f9fc') >= 4.5, 'primary text on the page background');
   // Crimson remains readable where it is kept.
   assert.ok(contrast('#b14933', '#ffffff') >= 4.5, 'crimson brand accent on white');
 });
@@ -125,7 +130,6 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.hub-desktop-nav a:hover',
     '.er-mobile-bottom-nav a:hover',
     '.er-mobile-bottom-nav a.active',
-    '.er-sim-cta:hover',
   ];
 
   const selectors = [...actions.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{/g)]
@@ -189,7 +193,7 @@ test('inline action styles reference the token instead of a literal', () => {
   for (const file of files) {
     const source = read(file);
     for (const match of source.matchAll(/background:\s*'(#[0-9A-Fa-f]{6})'/g)) {
-      if (['#b14933', '#B14933', '#B3331A', '#2563eb', '#1d4ed8'].includes(match[1])) offenders.push(`${file}: ${match[1]}`);
+      if (['#b14933', '#B14933', '#B3331A', '#0a3e83', '#1d9be0'].includes(match[1])) offenders.push(`${file}: ${match[1]}`);
     }
   }
   assert.deepEqual(offenders, [], 'no inline primary fill is hard-coded');

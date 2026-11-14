@@ -25,17 +25,17 @@ The interface maintains a balance between:
 
 ## 2. Core Color Palette
 
-### Primary action — Deep Green
-* **HEX:** `#174A3A` (token `--er-primary`)
+### Primary action — Logo Navy
+* **HEX:** `#0A3E83` (token `--er-primary`)
 * The colour of an action the student takes. It carries the meaning that used to
   be split between blue and crimson, and it is the only fill for a primary
   button.
-* **States:** hover `#123A2D` (`--er-primary-hover`), pressed `#0E3025`
-  (`--er-primary-active`), border `#123A2D` (`--er-primary-border`) stepping to
-  `#0F3025` and `#0B261E`, selected surface `#EDF5F0` (`--er-primary-soft`)
-  with edge `#D4E4DA` (`--er-primary-soft-border`).
-* **Contrast:** white text on the fill measures **10.11:1** at rest, 12.58:1 on
-  hover and 14.30:1 pressed; as text on white it is 10.11:1 and 9.11:1 on the
+* **States:** hover `#083570` (`--er-primary-hover`), pressed `#062B5C`
+  (`--er-primary-active`), border `#083570` (`--er-primary-border`) stepping to
+  `#072F64` and `#05264F`, selected surface `#EDF4FB` (`--er-primary-soft`)
+  with edge `#CCE0F3` (`--er-primary-soft-border`).
+* **Contrast:** white text on the fill measures **10.35:1** at rest, 11.98:1 on
+  hover and 13.93:1 pressed; as text on white it is 10.35:1 and 9.33:1 on the
   selected surface. Every state clears AA (4.5:1) with a wide margin.
 * **Use for:**
   - Primary buttons: Start practising, Past questions, Continue, Submit, Save
@@ -45,6 +45,18 @@ The interface maintains a balance between:
   - Form focus tint and `accent-color`
 * **Never** for card surfaces, banners, exam identity marks or decorative
   section backgrounds.
+
+### Logo accents — Blue and Red
+* **Navy:** `#0A3E83` (`--er-brand-navy`), the primary action colour.
+* **Blue:** `#1D9BE0` (`--er-brand-blue`) for large fills, gradients and
+  decorative marks. For a blue icon or small label on a pale surface use the
+  accessible ink `#0F6BAA` (`--er-brand-blue-ink`): 5.67:1 on white and 5.11:1
+  on `#EDF4FB`.
+* **Red:** `#E3232D` (`--er-brand-logo-red`) is the wordmark's red. It is a
+  brand mark, not the error colour and not a button fill; errors stay `#B91C1C`.
+* The header search, mobile navigation, state, notification, profile and auth
+  icons use the blue ink. Icons are not left at a neutral grey when colour
+  carries the brand.
 
 ### Brand accent — Crimson
 * **HEX:** `#B14933` (token `--er-crimson`); deep `#B3331A`
@@ -58,7 +70,7 @@ The interface maintains a balance between:
   - Explicitly designated Clickmor accents and eyebrow/kicker labels
   - Exam-specific identity colours where they carry meaning
 * **Not** for the current navigation item, a selected filter or any state that
-  means "this is where you are" - those are green surfaces (section 2b).
+  means "this is where you are" - those are navy surfaces (section 2b).
 * **Avoid** spreading it across unrelated cards, sections, headings and icons.
 
 > Superseded in this document: the earlier `#C85841` "Academic Crimson" primary.
@@ -74,27 +86,27 @@ navigation) and in the form block of `theme.css`.
 
 | Primary button | Background | Text | Border |
 |---|---|---|---|
-| Default | `#174A3A` | `#FFFFFF` | `#123A2D` |
-| Hover | `#123A2D` | `#FFFFFF` | `#0F3025` |
-| Pressed | `#0E3025` | `#FFFFFF` | `#0B261E` |
-| Focus | `#174A3A` | `#FFFFFF` | `#123A2D` + the shared ring |
+| Default | `#0A3E83` | `#FFFFFF` | `#083570` |
+| Hover | `#083570` | `#FFFFFF` | `#072F64` |
+| Pressed | `#062B5C` | `#FFFFFF` | `#05264F` |
+| Focus | `#0A3E83` | `#FFFFFF` | `#083570` + the shared ring |
 | Disabled | `#E2E8F0` | `#64748B` | `#CBD5E1` |
-| Busy (`aria-busy`) | `#174A3A` | `#FFFFFF` | `#123A2D` |
+| Busy (`aria-busy`) | `#0A3E83` | `#FFFFFF` | `#083570` |
 
 | Secondary button | Background | Text | Border |
 |---|---|---|---|
-| Default | `#FFFFFF` | `#174A3A` | `#D4E4DA` |
-| Hover | `#EDF5F0` | `#174A3A` | `#B5CBBF` |
-| Pressed | `#DCE9E1` | `#123A2D` | `#A3BFAF` |
+| Default | `#FFFFFF` | `#0A3E83` | `#CCE0F3` |
+| Hover | `#EDF4FB` | `#0A3E83` | `#A9C8E8` |
+| Pressed | `#DCEAF8` | `#083570` | `#8FB7DE` |
 | Disabled | `#F8FAFC` | `#64748B` | `#E2E8F0` |
 
 | Other families | Default | Hover | Selected / focus | Disabled |
 |---|---|---|---|---|
-| Links | `#174A3A` | `#123A2D` | `#0E3025` | - |
-| Navigation item | existing text | `#F1F5F9` / `#174A3A` | `#EDF5F0` / `#174A3A` | `#F8FAFC` / `#64748B` |
-| Field border | `#CBD5E1` | `#94A3B8` | `#174A3A` (focus), `#B91C1C` (invalid) | `#E2E8F0` |
+| Links | `#0A3E83` | `#083570` | `#062B5C` | - |
+| Navigation item | existing text | `#F1F5F9` / `#0A3E83` | `#EDF4FB` / `#0A3E83` | `#F8FAFC` / `#64748B` |
+| Field border | `#CBD5E1` | `#94A3B8` | `#0A3E83` (focus), `#B91C1C` (invalid) | `#E2E8F0` |
 
-Native checkboxes and radios use `accent-color: #174A3A`, so the platform paints
+Native checkboxes and radios use `accent-color: #0A3E83`, so the platform paints
 the white tick and keeps its own geometry and keyboard behaviour. Status colours
 (success `#166534`, warning `#92400E`, error `#B91C1C`, information `#1D4ED8`,
 each on its pale surface) are tokens too and never double as an action colour.
@@ -189,18 +201,19 @@ Hierarchy:
 1. **NAVY (`#0F172A`)** → institutional foundation and trust
 2. **SOFT ACADEMIC BLUE (`#FAF8FF`, `#F2F3FF`, `#EAEDFF`)** → primary interface environment
 3. **WHITE (`#FFFFFF`)** → clean content surfaces
-4. **DEEP GREEN (`#174A3A`)** → primary action and every interaction state
-   (hover `#123A2D`, pressed `#0E3025`)
-5. **CRIMSON (`#B14933`)** → Clickmor brand accent (marks, navigation, kickers)
-6. **TANGERINE (`#D2732A`)** → energetic secondary accent
-7. **SUCCESS GREEN (`#047857`)** → success and verification
-8. **GOLD (`#CA8A04`)** → trust and recognition
-9. **BURGUNDY (`#54080C`)** → special institutional emphasis
+4. **LOGO NAVY (`#0A3E83`)** → primary action and every interaction state
+   (hover `#083570`, pressed `#062B5C`)
+5. **LOGO BLUE (`#1D9BE0`, ink `#0F6BAA`)** → icon and highlight accent
+6. **CRIMSON (`#B14933`)** → Clickmor brand accent (marks, navigation, kickers)
+7. **TANGERINE (`#D2732A`)** → energetic secondary accent
+8. **SUCCESS GREEN (`#047857`)** → success and verification
+9. **GOLD (`#CA8A04`)** → trust and recognition
+10. **BURGUNDY (`#54080C`)** → special institutional emphasis
 
 **Principle:**
-> **Calm surfaces + strong navy foundation + a green signal for action.**
-> Deep green marks what the student can do; crimson appears only where the brand
-> speaks. Do not create pages where crimson, orange, or burgundy fills most of
+> **Calm surfaces + strong navy foundation + the logo palette for action.**
+> Logo navy marks what the student can do; logo blue colours icons and small
+> highlights; crimson appears only where the brand speaks. Do not create pages where crimson, orange, or burgundy fills most of
 > the screen, and do not paint a card with an action colour.
 
 ## 10. Semantic token API

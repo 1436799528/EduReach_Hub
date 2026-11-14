@@ -11,6 +11,7 @@ import {
   type AdminSiteRevision,
 } from '../src/lib/api';
 import { useSiteContent } from '../src/components/useSiteContent';
+import { AdminPageReport } from '../src/components/admin/AdminKit';
 import { resetSiteContentCache } from '../src/lib/siteContent';
 import { POLICY_SLUGS, isSafeHttpsUrl, mergeSiteSettings } from '../src/lib/siteContentModel';
 
@@ -200,6 +201,16 @@ export default function AdminSitePage() {
           <p>What every visitor reads in the footer, and the policy pages a student can open without signing in.</p>
         </div>
       </div>
+
+      <AdminPageReport
+        title="Policy reporting"
+        items={[
+          { label: 'Policy pages', value: pages.length.toLocaleString() },
+          { label: 'Published', value: pages.filter((page) => page.status === 'published').length.toLocaleString() },
+          { label: 'Review pending', value: pages.filter((page) => page.reviewState !== 'approved').length.toLocaleString() },
+          { label: 'Legal approved', value: pages.filter((page) => page.reviewState === 'approved').length.toLocaleString() },
+        ]}
+      />
 
       <div className="admin-tabs" role="tablist" aria-label="Site content sections">
         <button type="button" role="tab" aria-selected={tab === 'settings'} className={`admin-tab${tab === 'settings' ? ' is-active' : ''}`} onClick={() => setTab('settings')}>

@@ -40,9 +40,17 @@
    header and sidebar. `:root` is there to out-specify the `!important` resets in
    the earlier stylesheets. */
 :root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
-  outline: 3px solid var(--color-focus, #174A3A) !important;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px #ffffff !important;
+  outline: 2px solid var(--color-focus, #0A3E83) !important;
+  outline-offset: 0;
+  box-shadow: none !important;
+}
+
+/* Search fields sit inside a rounded control. Their focused outline belongs to
+   that control, not to the raw input rectangle, so the container draws a 1px
+   ring in its own shape (see edu-portal.css). */
+:root :where(.site-search, .er-filter-search, .hub-global-search, .hub-search, .er-library-search, .school-finder-search-input, .er-search, .hub-mobile-search, .er-site-search-page-form, .er-search-page-form) :where(input, select):focus-visible {
+  outline: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Dark surfaces: the white under-ring carries the indicator, so keep the dark
@@ -85,7 +93,6 @@
   select,
   summary,
   a[class*="btn"],
-  .er-pagebar-home,
   .hub-desktop-nav a {
     min-height: 44px !important;
     min-width: 44px !important;

@@ -5,7 +5,7 @@ import {
   updateAdminServiceRequest,
   type AdminServiceRequest,
 } from '../src/lib/api';
-import { ACTIVE_REQUEST_STATUSES, AdminSummary, RequestActions, StatusBadge, TimeAgo, requestStudentName, TableSkeleton } from '../src/components/admin/AdminKit';
+import { ACTIVE_REQUEST_STATUSES, AdminPageReport, RequestActions, StatusBadge, TimeAgo, requestStudentName, TableSkeleton } from '../src/components/admin/AdminKit';
 import { Can } from '../src/components/admin/Can';
 import { serviceRequestUpdateFailure } from '../src/lib/serviceRequestErrors';
 
@@ -99,16 +99,16 @@ export default function AdminQueuePage() {
 
         {!loading && !error && (
           <>
-            <AdminSummary
-              label="Current service queue results"
+            <AdminPageReport
+              title="Queue reporting"
               items={[
-                { label: 'Records shown', value: rows.length.toLocaleString(), detail: `${FILTERS.find((entry) => entry.value === filter)?.label || 'Filtered'} result set` },
-                { label: 'Open requests shown', value: rows.filter((row) => ACTIVE_REQUEST_STATUSES.includes(row.status)).length.toLocaleString(), detail: 'Among returned rows' },
-                { label: 'Awaiting information', value: rows.filter((row) => row.status === 'awaiting_information').length.toLocaleString(), detail: 'Among returned rows' },
-                { label: 'Completed', value: rows.filter((row) => row.status === 'completed').length.toLocaleString(), detail: 'Among returned rows' },
+                { label: 'Records shown', value: rows.length.toLocaleString() },
+                { label: 'Open requests', value: rows.filter((row) => ACTIVE_REQUEST_STATUSES.includes(row.status)).length.toLocaleString() },
+                { label: 'Completed', value: rows.filter((row) => row.status === 'completed').length.toLocaleString() },
+                { label: 'Rejected / cancelled', value: rows.filter((row) => row.status === 'rejected' || row.status === 'cancelled').length.toLocaleString() },
               ]}
+              note="The queue API returns at most 200 matching records and does not provide a response-time trend."
             />
-            <p className="admin-data-note">The queue API returns at most 200 matching records and does not provide a response-time or resolution trend.</p>
           </>
         )}
 

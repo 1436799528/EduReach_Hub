@@ -39,6 +39,40 @@ export function matchesSearch(fields: Array<string | null | undefined>, query: s
   return tokens.every((token) => haystack.includes(token));
 }
 
+export type HighlightSegment = { text: string; match: boolean };
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Split a label into the parts a suggestion should emphasise.
+ *
+ * The matcher is token-based, so highlighting uses the same tokens rather than
+ * the raw query: typing "jamb slip" marks both words wherever they appear, and
+ * punctuation in the query cannot become a regular-expression operator. Longer
+ * tokens come first so "past questions" marks the phrase rather than "past"
+ * twice. The unstyled text is always a segment, so a no-match still renders the
+ * complete label.
+ */
+export function highlightSegments(value: string, query: string): HighlightSegment[] {
+  const text = String(value ?? '');
+  if (!text) return [];
+  const tokens = searchTokens(query).sort((a, b) => b.length - a.length);
+  if (!tokens.length) return [{ text, match: false }];
+  const pattern = new RegExp(`(${tokens.map(escapeRegExp).join('|')})`, 'gi');
+  const segments: HighlightSegment[] = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(pattern)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) segments.push({ text: text.slice(lastIndex, index), match: false });
+    segments.push({ text: match[0], match: true });
+    lastIndex = index + match[0].length;
+  }
+  if (lastIndex < text.length) segments.push({ text: text.slice(lastIndex), match: false });
+  return segments.length ? segments : [{ text, match: false }];
+}
+
 export function filterSearchItems<T extends { title: string; description: string; category: string }>(
   items: T[],
   query: string,

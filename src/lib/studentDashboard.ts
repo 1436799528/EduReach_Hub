@@ -212,29 +212,25 @@ export async function deleteSavedItem(id: string) {
   if (error) throw error;
 }
 
-export async function fetchNotifications(userId: string): Promise<DashboardNotification[]> {
-  const { data, error } = await supabase
-    .from('student_notifications')
-    .select('id,title,body,notification_type,href,read_at,created_at,metadata')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(20);
+type NotificationRow = {
+  id: string;
+  title?: string | null;
+  body?: string | null;
+  read_at?: string | null;
+  created_at?: string | null;
+  notification_type?: string | null;
+  metadata?: { to?: unknown } | null;
+  href?: string | null;
+};
 
-  if (error) {
-    logOptionalTableError('Unable to load notifications', error);
-    return [];
-  }
+export type NotificationLoad = {
+  items: DashboardNotification[];
+  /** True when the query itself failed, so the bell can offer a retry. */
+  error: boolean;
+};
 
-  return (data || []).map((row: {
-    id: string;
-    title?: string | null;
-    body?: string | null;
-    read_at?: string | null;
-    created_at?: string | null;
-    notification_type?: string | null;
-    metadata?: { to?: unknown } | null;
-    href?: string | null;
-  }) => ({
+function mapNotification(row: NotificationRow): DashboardNotification {
+  return {
     id: String(row.id),
     title: String(row.title),
     body: row.body || undefined,
@@ -244,7 +240,36 @@ export async function fetchNotifications(userId: string): Promise<DashboardNotif
     status: typeof row.metadata?.to === 'string' && row.metadata.to ? row.metadata.to : undefined,
     href: row.href || undefined,
     created_at: String(row.created_at),
-  }));
+  };
+}
+
+/**
+ * UI-5 — the same query, with the failure state kept.
+ *
+ * `fetchNotifications` predates the global notification centre and deliberately
+ * degrades to an empty list so the dashboard card never blocks the page. A bell
+ * that cannot tell "nothing new" from "we could not ask" is worse than no bell,
+ * so the centre uses this form and renders a retry.
+ */
+export async function fetchNotificationsWithStatus(userId: string): Promise<NotificationLoad> {
+  const { data, error } = await supabase
+    .from('student_notifications')
+    .select('id,title,body,notification_type,href,read_at,created_at,metadata')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    logOptionalTableError('Unable to load notifications', error);
+    return { items: [], error: true };
+  }
+
+  return { items: (data || []).map((row: NotificationRow) => mapNotification(row)), error: false };
+}
+
+export async function fetchNotifications(userId: string): Promise<DashboardNotification[]> {
+  const result = await fetchNotificationsWithStatus(userId);
+  return result.items;
 }
 
 export async function createNotification(
@@ -329,6 +354,33 @@ export async function fetchLatestCgpaSnapshot(userId: string): Promise<CgpaSnaps
       grade: String(course.grade || 'A'),
     })),
   };
+}
+
+/** Recent saved terms, newest first. Used for the dashboard CGPA trend. */
+export async function fetchCgpaSnapshots(userId: string, limit = 8): Promise<CgpaSnapshot[]> {
+  const { data, error } = await supabase
+    .from('student_cgpa_terms')
+    .select('id,term_label,gpa,total_units,classification,created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    logOptionalTableError('Unable to load CGPA history', error);
+    return [];
+  }
+
+  return (data || []).map((term: Record<string, unknown>) => ({
+    id: String(term.id),
+    termLabel: String(term.term_label || 'Semester'),
+    gpa: Number(term.gpa || 0).toFixed(2),
+    totalUnits: Number(term.total_units || 0),
+    classification: String(term.classification || ''),
+    createdAt: String(term.created_at),
+    courses: [],
+    // The table has no scale column; stored snapshots are 5.0 records.
+    scale: 5,
+  }));
 }
 
 export async function saveCgpaSnapshot(userId: string, courses: CgpaCourseInput[]) {

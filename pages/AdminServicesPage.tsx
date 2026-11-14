@@ -18,7 +18,7 @@ type AdminServiceGuide = ServiceGuide & { status: 'draft' | 'published'; updated
 const fetchAdminServiceGuide = (serviceId: string) => adminApiFetch<{ guide: AdminServiceGuide | null; serviceKey: string }>(`/api/admin/services/${encodeURIComponent(serviceId)}/guide`);
 const saveAdminServiceGuide = async (serviceId: string, guide: AdminServiceGuide): Promise<AdminServiceGuide> => (await adminApiFetch<{ guide: AdminServiceGuide }>(`/api/admin/services/${encodeURIComponent(serviceId)}/guide`, { method: 'PUT', body: JSON.stringify(guide) })).guide;
 const resetAdminServiceGuide = (serviceId: string) => adminApiFetch(`/api/admin/services/${encodeURIComponent(serviceId)}/guide`, { method: 'DELETE' });
-import { AdminEmptyState, StatusBadge } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminPageReport, StatusBadge } from '../src/components/admin/AdminKit';
 
 // Service Catalogue manager: full CRUD over the service_catalog rows the
 // public /services page renders. The four built-in application-form services
@@ -286,6 +286,16 @@ export default function AdminServicesPage() {
             <button type="button" className="admin-btn" onClick={() => setEdit({ ...emptyEdit })}><Plus size={14} /> New service</button>
           </div>
         </div>
+
+        <AdminPageReport
+          title="Catalogue reporting"
+          items={[
+            { label: 'Active services', value: services.filter((service) => service.active).length.toLocaleString() },
+            { label: 'In-app forms', value: services.filter((service) => service.is_form_service).length.toLocaleString() },
+            { label: 'External links', value: services.filter((service) => Boolean(service.application_url)).length.toLocaleString() },
+            { label: 'Categories', value: new Set(services.map((service) => service.category || 'Services')).size.toLocaleString() },
+          ]}
+        />
 
         {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
         {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}

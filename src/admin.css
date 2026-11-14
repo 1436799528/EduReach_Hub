@@ -54,12 +54,12 @@
 
 .admin-nav { padding: 10px 12px 20px; }
 .admin-nav-link { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 9px 10px; margin: 2px 0; border: 1px solid transparent; border-radius: 8px; color: #53615a; text-decoration: none; font: 600 12.5px var(--er-font-sans); transition: background .15s, color .15s; }
-.admin-nav-link:hover { background: #f3f6f3; color: #174a3a; }
-.admin-shell .admin-nav-link.active { background: #e9f2ed; color: #174a3a; border-color: #d7e8dd; box-shadow: none; }
-.admin-sidebar .admin-btn.secondary { color: #174a3a; border-color: #cfddd3; background: #fff; }
+.admin-nav-link:hover { background: #f3f6f3; color: #0a3e83; }
+.admin-shell .admin-nav-link.active { background: #e9f2ed; color: #0a3e83; border-color: #d7e8dd; box-shadow: none; }
+.admin-sidebar .admin-btn.secondary { color: #0a3e83; border-color: #cfddd3; background: #fff; }
 .admin-shell .admin-btn { border-radius: 8px; box-shadow: none; }
 .admin-nav-icon { width: 20px; display: grid; place-items: center; color: #6b7a72; }
-.admin-nav-link.active .admin-nav-icon { color: #174a3a; }
+.admin-nav-link.active .admin-nav-icon { color: #0a3e83; }
 
 .admin-sidebar-footer { padding: 14px; border-top: 1px solid var(--admin-border); }
 .admin-health-card { margin-bottom: 12px; padding: 10px 12px; background: #f7f9f7; border: 1px solid var(--admin-border); border-radius: 9px; }
@@ -407,7 +407,7 @@
 .import-status { border-radius: 999px; padding: 4px 9px; font: 700 10px var(--er-font-sans); text-transform: uppercase; letter-spacing: .05em; background: #eef2f7; color: #5e6c82; }
 .import-status-approved { background: rgba(5,150,105,.12); color: #047857; }
 .import-status-rejected { background: rgba(186,26,26,.1); color: var(--admin-danger); }
-.import-status-imported { background: rgba(37,99,235,.1); color: #1d4ed8; }
+.import-status-imported { background: rgba(37,99,235,.1); color: #0f6baa; }
 .import-more summary { cursor: pointer; color: var(--admin-muted); font-size: 12px; font-weight: 620; }
 .import-more[open] { display: grid; gap: 10px; }
 .import-raw { margin: 0; max-height: 220px; overflow: auto; padding: 11px 12px; border-radius: 10px; background: #f6f8fb; color: #4b5768; font: 11px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }

@@ -1,7 +1,7 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useState } from 'react';
 import { fetchAdminAnalytics, fetchAdminScheduledJobStatus, type AdminScheduledJobStatus } from '../src/lib/api';
-import { AdminEmptyState, AdminStatusDot, AdminSummary, AuditTimeline, BarStat, SectionLabel, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminDonut, AdminEmptyState, AdminStatusDot, AdminSummary, AuditTimeline, BarStat, SectionLabel, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<Awaited<ReturnType<typeof fetchAdminAnalytics>> | null>(null);
@@ -48,7 +48,6 @@ export default function AdminAnalyticsPage() {
   const totalRequests = metric('service_requests');
   const queueDataAvailable = pending !== null && completed !== null && rejected !== null && totalRequests !== null;
   const otherRequests = queueDataAvailable ? Math.max(totalRequests - pending - completed - rejected, 0) : null;
-  const queueMax = queueDataAvailable ? Math.max(pending, completed, rejected, otherRequests || 0, 1) : 1;
   const events24 = metric('events_24h');
   const events7 = metric('events_7d');
   const submittedAttempts = metric('cbt_submitted');
@@ -77,12 +76,12 @@ export default function AdminAnalyticsPage() {
           <AdminSummary
             label="Analytics summary"
             items={[
-              { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Administrator count unavailable' : `${metricText('admins')} administrators` },
-              { label: 'Open requests', value: metricText('pending_requests'), detail: totalRequests === null ? 'Total request count unavailable' : `${metricText('service_requests')} all-time requests` },
-              { label: 'Completed requests', value: metricText('completed_requests'), detail: metric('rejected_requests') === null ? 'Rejected/cancelled count unavailable' : `${metricText('rejected_requests')} rejected or cancelled` },
-              { label: 'Events · 24h', value: metricText('events_24h'), detail: metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions` },
-              { label: 'CBT attempts', value: metricText('cbt_attempts'), detail: submittedAttempts === null ? 'Submitted count unavailable' : `${metricText('cbt_submitted')} submitted` },
-              { label: 'Average submitted score', value: averageScore, detail: submittedAttempts === null ? 'Submission count unavailable' : submittedAttempts === 0 ? 'No submitted attempts' : 'Across submitted attempts' },
+              { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Administrator count unavailable' : `${metricText('admins')} administrators`, tone: 'blue' as const },
+              { label: 'Open requests', value: metricText('pending_requests'), detail: totalRequests === null ? 'Total request count unavailable' : `${metricText('service_requests')} all-time requests`, tone: 'amber' as const },
+              { label: 'Completed requests', value: metricText('completed_requests'), detail: metric('rejected_requests') === null ? 'Rejected/cancelled count unavailable' : `${metricText('rejected_requests')} rejected or cancelled`, tone: 'green' as const },
+              { label: 'Events · 24h', value: metricText('events_24h'), detail: metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions`, tone: 'violet' as const },
+              { label: 'CBT attempts', value: metricText('cbt_attempts'), detail: submittedAttempts === null ? 'Submitted count unavailable' : `${metricText('cbt_submitted')} submitted`, tone: 'blue' as const },
+              { label: 'Average submitted score', value: averageScore, detail: submittedAttempts === null ? 'Submission count unavailable' : submittedAttempts === 0 ? 'No submitted attempts' : 'Across submitted attempts', tone: 'green' as const },
             ]}
           />
         )}
@@ -92,36 +91,35 @@ export default function AdminAnalyticsPage() {
             <p className="admin-data-note">
               Daily trend lines, active or returning-user totals, CBT completion time, subject-level performance and score distributions are not supplied by the current analytics API; comparisons are omitted.
             </p>
-            <div className="admin-two-col">
-              <div className="admin-card">
-                <div className="admin-card-header"><h2>Service Queue Composition</h2><span>All-time</span></div>
-                <div style={{ padding: '8px 14px 14px' }}>
-                  {queueDataAvailable ? (
-                    <>
-                      <BarStat label="Open (submitted through awaiting info)" value={pending} max={queueMax} />
-                      <BarStat label="Completed" value={completed} max={queueMax} />
-                      <BarStat label="Rejected / cancelled" value={rejected} max={queueMax} />
-                      {otherRequests !== null && otherRequests > 0 && <BarStat label="Closed / other" value={otherRequests} max={queueMax} />}
-                    </>
-                  ) : <AdminEmptyState title="Queue distribution unavailable" hint="The analytics response does not include all service-request totals, so no distribution is calculated." />}
-                </div>
+            <div className="admin-chart-grid">
+              <div className="admin-chart-card">
+                <div className="admin-chart-head"><div><h2>Service queue composition</h2><p>Every request status the analytics API returns.</p></div><span className="admin-report-period">All-time</span></div>
+                {queueDataAvailable ? (
+                  <AdminDonut
+                    ariaLabel="Service queue composition by status"
+                    segments={[
+                      { label: 'Open', value: pending || 0, color: '#0A3E83' },
+                      { label: 'Completed', value: completed || 0, color: '#067647' },
+                      { label: 'Rejected / cancelled', value: rejected || 0, color: '#B42318' },
+                      { label: 'Closed / other', value: otherRequests || 0, color: '#98A2B3' },
+                    ].filter((segment) => segment.value > 0)}
+                  />
+                ) : <AdminEmptyState title="Queue distribution unavailable" hint="The analytics response does not include all service-request totals, so no distribution is calculated." />}
               </div>
 
-              <div className="admin-card">
-                <div className="admin-card-header"><h2>Application Traffic</h2><span>Tracked events</span></div>
-                <div style={{ padding: '8px 14px 14px' }}>
-                  {events24 !== null && events7 !== null ? (
-                    <>
-                      <BarStat label="Last 24 hours" value={events24} max={Math.max(events24, events7, 1)} hint={`${events24.toLocaleString()} events`} />
-                      <BarStat label="Last 7 days" value={events7} max={Math.max(events24, events7, 1)} hint={`${events7.toLocaleString()} events`} />
-                      <p className="admin-footnote" style={{ margin: '4px 0 0' }}>
-                        {metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions in 24 hours`}
-                        {' · '}
-                        {metric('audit_events') === null ? 'Audit event total unavailable.' : `${metricText('audit_events')} audit events recorded.`}
-                      </p>
-                    </>
-                  ) : <AdminEmptyState title="Traffic totals unavailable" hint="The analytics response has no complete 24-hour and 7-day event totals." />}
-                </div>
+              <div className="admin-chart-card">
+                <div className="admin-chart-head"><div><h2>Application traffic</h2><p>Tracked events, not extrapolated.</p></div></div>
+                {events24 !== null && events7 !== null ? (
+                  <>
+                    <BarStat label="Last 24 hours" value={events24} max={Math.max(events24, events7, 1)} hint={`${events24.toLocaleString()} events`} />
+                    <BarStat label="Last 7 days" value={events7} max={Math.max(events24, events7, 1)} hint={`${events7.toLocaleString()} events`} />
+                    <p className="admin-report-note">
+                      {metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions in 24 hours`}
+                      {' · '}
+                      {metric('audit_events') === null ? 'Audit event total unavailable.' : `${metricText('audit_events')} audit events recorded.`}
+                    </p>
+                  </>
+                ) : <AdminEmptyState title="Traffic totals unavailable" hint="The analytics response has no complete 24-hour and 7-day event totals." />}
               </div>
             </div>
 

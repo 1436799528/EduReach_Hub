@@ -25,15 +25,15 @@ and the rules that apply it are the ones that already own the control.
 
 | Family | Before | After |
 |---|---|---|
-| Primary button | green at rest/hover/press, no disabled or busy treatment | full ramp with border steps, neutral disabled, green `aria-busy` |
-| Secondary button | navy text, `#d7dee8` border (admin), `#cbd5e1` (elsewhere) | white + green edge, pale-green hover/press, neutral disabled |
-| Links | green at rest, one hover rule | hover and press steps on every primary link |
-| Navigation | current page crimson (`#b14933` inline), mobile current page `#c02220` | pale green surface + green text, soft-green underline, `aria-current` already present |
+| Primary button | green at rest/hover/press, no disabled or busy treatment | full logo-navy ramp with border steps, neutral disabled, navy `aria-busy` |
+| Secondary button | navy text, `#d7dee8` border (admin), `#cbd5e1` (elsewhere) | white + logo-blue edge, pale-blue hover/press, neutral disabled |
+| Links | logo navy at rest, one hover rule | hover and press steps on every primary link |
+| Navigation | current page crimson (`#b14933` inline), mobile current page `#c02220` | pale navy surface + navy text, soft-blue underline, `aria-current` already present |
 | Fields | focus only | hover, focus, invalid (`aria-invalid`), disabled; checkbox/radio accent |
 | Status | literals in four sheets | status tokens on notices, badges and the form error |
-| Focus ring | `#8f1d18` | `--er-primary-focus` `#174A3A`, same two-tone ring |
-| Off-palette red `#c02220` | eleven rules in `edu-portal.css` plus two inline submit fills | green for actions and links, crimson `#B14933` for the three kicker labels |
-| Sign-in and profile submit | red, turning orange `#F97316` when the form was complete | green in every state; completion keeps the stronger elevation, not a different hue |
+| Focus ring | `#8f1d18` | `--er-primary-focus` `#0A3E83`, same two-tone ring |
+| Off-palette red `#c02220` | eleven rules in `edu-portal.css` plus two inline submit fills | logo navy for actions and links, crimson `#B14933` for the three kicker labels |
+| Sign-in and profile submit | red, turning orange `#F97316` when the form was complete | logo navy in every state; completion keeps the stronger elevation, not a different hue |
 
 ## 2. Tokens
 
@@ -41,30 +41,30 @@ All in `src/styles/theme.css`, one definition each.
 
 | Token | Value | Used by |
 |---|---|---|
-| `--er-primary` | `#174A3A` | primary fill, links, selected states, focus ring |
-| `--er-primary-hover` | `#123A2D` | hover fill and link hover |
-| `--er-primary-active` | `#0E3025` | pressed fill, link press |
-| `--er-primary-border` | `#123A2D` | primary border at rest and busy |
-| `--er-primary-border-hover` | `#0F3025` | primary border on hover |
-| `--er-primary-border-active` | `#0B261E` | primary border while pressed |
-| `--er-primary-focus` | `#174A3A` | the shared focus ring |
-| `--er-primary-soft` | `#EDF5F0` | selected surfaces |
-| `--er-primary-soft-border` | `#D4E4DA` | selected edges, secondary border |
-| `--er-secondary-border` | `#D4E4DA` | secondary button edge |
-| `--er-secondary-hover-bg` / `-border` | `#EDF5F0` / `#B5CBBF` | secondary hover |
-| `--er-secondary-active-bg` / `-border` | `#DCE9E1` / `#A3BFAF` | secondary press |
+| `--er-primary` | `#0A3E83` | primary fill, links, selected states, focus ring |
+| `--er-primary-hover` | `#083570` | hover fill and link hover |
+| `--er-primary-active` | `#062B5C` | pressed fill, link press |
+| `--er-primary-border` | `#083570` | primary border at rest and busy |
+| `--er-primary-border-hover` | `#072F64` | primary border on hover |
+| `--er-primary-border-active` | `#05264F` | primary border while pressed |
+| `--er-primary-focus` | `#0A3E83` | the shared focus ring |
+| `--er-primary-soft` | `#EDF4FB` | selected surfaces |
+| `--er-primary-soft-border` | `#CCE0F3` | selected edges, secondary border |
+| `--er-secondary-border` | `#CCE0F3` | secondary button edge |
+| `--er-secondary-hover-bg` / `-border` | `#EDF4FB` / `#A9C8E8` | secondary hover |
+| `--er-secondary-active-bg` / `-border` | `#DCEAF8` / `#8FB7DE` | secondary press |
 | `--er-disabled-bg` / `-text` / `-border` | `#E2E8F0` / `#64748B` / `#CBD5E1` | disabled controls |
 | `--er-disabled-surface` | `#F8FAFC` | disabled secondary and fields |
-| `--er-nav-hover-bg` / `--er-nav-active-bg` | `#F1F5F9` / `#EDF5F0` | navigation |
+| `--er-nav-hover-bg` / `--er-nav-active-bg` | `#F1F5F9` / `#EDF4FB` | navigation |
 | `--er-field-border-hover` | `#94A3B8` | field hover |
 | `--er-field-valid` / `--er-field-invalid` | `#15803D` / `#B91C1C` | field state |
 | `--er-crimson-hover` / `-pressed` | `#963D2C` / `#803222` | branded crimson controls |
 | `--er-status-{success,warning,error,info}` + `-bg` + `-border` | `#166534`/`#F0FDF4`/`#BBF7D0`, `#92400E`/`#FFFBEB`/`#FDE68A`, `#B91C1C`/`#FEF2F2`/`#FECACA`, `#1D4ED8`/`#EFF6FF`/`#BFDBFE` | notices, badges, form errors |
 
 `--er-primary-hover` and `--er-primary-active` moved from the darker UI-3 steps
-(`#0F3A2D`, `#0A2C22`) to the specified `#123A2D` and `#0E3025`. `#174A3A` used
+(`#0F3A2D`, `#0A2C22`) to the specified `#083570` and `#062B5C`. `#0A3E83` used
 to step down to `#0F3A2D`; the owner's own commit `9f0517a` had already used
-`#123A2D`/`#0E3025` on the home pair, and the specification now names them.
+`#083570`/`#062B5C` on the home pair, and the specification now names them.
 
 ## 3. Where the states are applied
 
@@ -83,7 +83,7 @@ to step down to `#0F3A2D`; the owner's own commit `9f0517a` had already used
 - **Navigation** - mobile bottom navigation takes the hover and selected
   surfaces; the desktop header's inline route colours now read
   `var(--er-primary)` and `var(--er-primary-soft-border)`, so the current page
-  is green instead of crimson. `aria-current="page"` was already on the mobile
+  is logo navy instead of crimson. `aria-current="page"` was already on the mobile
   items and remains the non-colour signal.
 - **Fields** - `theme.css` owns the shared `:where(input, select, textarea)`
   rules, so hover, `[aria-invalid="true"]`, `:disabled` and the checkbox/radio
@@ -96,12 +96,12 @@ to step down to `#0F3A2D`; the owner's own commit `9f0517a` had already used
 
 | Pair | Ratio |
 |---|---|
-| White on `#174A3A` / `#123A2D` / `#0E3025` | 10.11 / 12.58 / 14.30 |
-| `#174A3A` on `#FFFFFF` / `#EDF5F0` / `#F1F5F9` | 10.11 / 9.11 / 9.23 |
-| `#123A2D` on `#DCE9E1` | 10.06 |
+| White on `#0A3E83` / `#083570` / `#062B5C` | 10.35 / 11.98 / 13.93 |
+| `#0A3E83` on `#FFFFFF` / `#EDF4FB` / `#F1F5F9` | 10.35 / 9.33 / 9.44 |
+| `#083570` on `#DCEAF8` | 10.06 |
 | White on `#B14933` / `#963D2C` / `#803222` | 5.43 / 7.00 / 8.76 |
 | Status text on its surface (success / warning / error / info) | 6.81 / 6.84 / 5.91 / 6.16 |
-| Focus ring `#174A3A` on white / on `#EDF5F0` | 10.11 / 9.11 |
+| Focus ring `#0A3E83` on white / on `#EDF4FB` | 10.35 / 9.33 |
 | Valid / invalid field boundary on white | 5.02 / 6.47 |
 
 Measured by `tests/interaction-states.test.ts`, which fails if any pair drops
@@ -109,11 +109,11 @@ below 4.5:1 (text) or 3:1 (a boundary that carries state alone).
 
 ## 5. Documented deviations
 
-1. **Pale borders sit below 3:1.** The specified secondary border `#D4E4DA`
+1. **Pale borders sit below 3:1.** The specified secondary border `#CCE0F3`
    measures 1.32:1 on white, the field border `#CBD5E1` 1.48:1 and the selected
-   edge `#D4E4DA` 1.19:1 on `#EDF5F0`. They are decorative edges: the label
-   (10.11:1) and the fill carry the control, and every state that must be
-   distinguishable by its border alone - focus `#174A3A`, valid `#15803D`,
+   edge `#CCE0F3` 1.19:1 on `#EDF4FB`. They are decorative edges: the label
+   (10.35:1) and the fill carry the control, and every state that must be
+   distinguishable by its border alone - focus `#0A3E83`, valid `#15803D`,
    invalid `#B91C1C` - clears 3:1. Darkening the pale edges to 3:1 would replace
    the specified palette with a different one, so they are kept as written.
 2. **Disabled text is 3.86:1** on `#E2E8F0` (4.55:1 on `#F8FAFC`). WCAG 1.4.3

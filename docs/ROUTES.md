@@ -34,6 +34,7 @@ trailing slash is ignored and unmatched paths render `NotFoundPage`.
 | `/tools/cgpa-calculator`, `/cgpa-calculator` | CGPA calculator |
 | `/jamb`, `/waec`, `/neco`, `/post-utme` | Exam hubs |
 | `/search` | Site search |
+| `/u/:slug` | Opt-in public student profile (academic identity only; not indexed) |
 
 ## Signed in
 
@@ -46,7 +47,7 @@ trailing slash is ignored and unmatched paths render `NotFoundPage`.
 | `/dashboard/tools`, `/dashboard/saved` | Tools and saved items |
 | `/dashboard/notifications` | Notifications |
 | `/dashboard/settings`, `/settings` | Account settings |
-| `/profile`, `/profile/complete`, `/dashboard/profile` | Profile |
+| `/profile`, `/profile/complete`, `/dashboard/profile` | Profile (private; a shared link uses `/u/:slug`) |
 
 `/dashboard/scholarships` redirects to `/jobs`.
 

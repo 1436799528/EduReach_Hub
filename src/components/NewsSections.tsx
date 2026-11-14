@@ -96,6 +96,26 @@ export function NewsRow({ item }: { item: NewsItem }) {
   );
 }
 
+/** Four-column news card: image, category/date, headline, excerpt. */
+export function NewsCard({ item }: { item: NewsItem }) {
+  const freshness = newsFreshness(item);
+  return (
+    <a className={`er-news-card is-${freshness.state}`} href={articleHref(item)}>
+      <span className="er-news-card-media"><NewsImage item={item} className="er-news-photo" /></span>
+      <span className="er-news-card-body">
+        <small>{newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}</small>
+        <strong>{item.title}</strong>
+        {item.summary && <span className="er-news-card-summary">{item.summary}</span>}
+        {!freshness.current && <small className="er-news-freshness is-warning">{freshness.label}</small>}
+        <span className="er-news-card-foot">
+          <span>{item.source_name || 'EduReach updates'}</span>
+          <ArrowRight size={13} aria-hidden="true" />
+        </span>
+      </span>
+    </a>
+  );
+}
+
 /**
  * Featured cards. Only articles explicitly flagged as student-critical in the
  * Newsroom lead; ordinary recency does not promote a story into a highlight.

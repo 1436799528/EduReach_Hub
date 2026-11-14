@@ -454,7 +454,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
                     {guide.steps.map((guideStep, index) => (
                      <Fragment key={guideStep.title}>
                       {guideStep.section && guideStep.section !== guide.steps[index - 1]?.section && (
-                        <h3 style={{ margin: "10px 0 0", fontSize: 13, fontWeight: 680, color: "#174A3A" }}>{guideStep.section}</h3>
+                        <h3 style={{ margin: "10px 0 0", fontSize: 13, fontWeight: 680, color: "#0A3E83" }}>{guideStep.section}</h3>
                       )}
                       <article className="er-service-guide-step" key={guideStep.title}>
                         <figure className={`er-service-guide-media is-${guideStep.imageKind}`} style={{ margin: 0, position: "relative" }}>

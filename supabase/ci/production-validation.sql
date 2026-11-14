@@ -251,7 +251,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261107130000', 'cbt_v2_server_lifecycle', '20261107130000_cbt_v2_server_lifecycle.sql', 'unique'),
     ('20261107140000', 'cbt_v2_answer_gateway', '20261107140000_cbt_v2_answer_gateway.sql', 'unique'),
     ('20261107150000', 'cbt_single_writing_session', '20261107150000_cbt_single_writing_session.sql', 'unique'),
-    ('20261108120000', 'question_import_atomic_publication', '20261108120000_question_import_atomic_publication.sql', 'unique')
+    ('20261108120000', 'question_import_atomic_publication', '20261108120000_question_import_atomic_publication.sql', 'unique'),
+    ('20261113000000', 'public_profiles', '20261113000000_public_profiles.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -362,6 +363,7 @@ with expected(version, migration) as (
     ,('20261107140000', '20261107140000_cbt_v2_answer_gateway.sql')
     ,('20261107150000', '20261107150000_cbt_single_writing_session.sql')
     ,('20261108120000', '20261108120000_question_import_atomic_publication.sql')
+    ,('20261113000000', '20261113000000_public_profiles.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -387,6 +389,10 @@ with expected(version, migration) as (
   select 'public.service_guides', '20261026120000_service_guides.sql'
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'service_guides')
+  union all
+  select 'public.profiles.public_profile', '20261113000000_public_profiles.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema = 'public' and table_name = 'profiles' and column_name = 'public_profile')
   union all
   select 'public.cbt_subject_catalog', '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
   where not exists (select 1 from information_schema.tables

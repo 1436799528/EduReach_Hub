@@ -290,7 +290,7 @@
 
 .ms-mark-tone-blue {
   background: #F2F3FF;
-  color: #1d4ed8;
+  color: #0f6baa;
   border: 1px solid #EAEDFF;
 }
 
@@ -809,7 +809,7 @@
   justify-content: center !important;
   background: linear-gradient(115deg,#0f766e,#159a8a) !important;
 }
-.ms-service-card:nth-child(2) { background: linear-gradient(115deg,#1e3a8a,#2563eb) !important; }
+.ms-service-card:nth-child(2) { background: linear-gradient(115deg,#1e3a8a,#0a3e83) !important; }
 .ms-service-card:nth-child(3) { background: linear-gradient(115deg,#7c2d12,#b45309) !important; }
 .ms-service-card .ms-service-card-header,
 .ms-service-card .ms-service-body { position: relative !important; z-index: 1 !important; }

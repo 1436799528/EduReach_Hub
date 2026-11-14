@@ -107,19 +107,111 @@ export function Metric({ label, value, detail, icon, tone }: { label: string; va
   );
 }
 
-export type AdminSummaryItem = { label: string; value: ReactNode; detail?: string };
+export type AdminReportTone = 'blue' | 'green' | 'amber' | 'rose' | 'violet';
+
+export type AdminSummaryItem = {
+  label: string;
+  value: ReactNode;
+  detail?: string;
+  icon?: ReactNode;
+  tone?: AdminReportTone;
+};
 
 export function AdminSummary({ label, items }: { label: string; items: AdminSummaryItem[] }) {
   return (
     <section className="admin-summary" aria-label={label}>
       {items.map((item) => (
         <div className="admin-summary-item" key={item.label}>
-          <span className="admin-summary-label">{item.label}</span>
+          <div className="admin-summary-top">
+            <span className="admin-summary-label">{item.label}</span>
+            {(item.icon || item.tone) && <i className={`admin-summary-icon ${item.tone || 'blue'}`} aria-hidden="true">{item.icon}</i>}
+          </div>
           <strong className="admin-summary-value">{item.value}</strong>
           {item.detail && <small className="admin-summary-detail">{item.detail}</small>}
         </div>
       ))}
     </section>
+  );
+}
+
+/** Per-page analytical report. Every admin section renders one from the rows it
+ * already loaded; it never invents a trend the API did not return. */
+export function AdminPageReport({
+  title,
+  subtitle,
+  items,
+  note,
+}: {
+  title: string;
+  subtitle?: string;
+  items: AdminSummaryItem[];
+  note?: string;
+}) {
+  return (
+    <section className="admin-report" aria-label={`${title} report`}>
+      <div className="admin-report-head">
+        <div>
+          <span className="admin-report-kicker">Page analytics</span>
+          <h2>{title}</h2>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+        <span className="admin-report-period">Current view</span>
+      </div>
+      <AdminSummary label={`${title} metrics`} items={items} />
+      {note && <p className="admin-report-note">{note}</p>}
+    </section>
+  );
+}
+
+/** Donut built from real segments; the legend carries the numbers. */
+export function AdminDonut({
+  segments,
+  ariaLabel,
+}: {
+  segments: Array<{ label: string; value: number; color: string }>;
+  ariaLabel: string;
+}) {
+  const total = segments.reduce((sum, segment) => sum + Math.max(segment.value, 0), 0);
+  const radius = 38;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+  return (
+    <div className="admin-donut-wrap">
+      <svg className="admin-donut" viewBox="0 0 100 100" role="img" aria-label={ariaLabel}>
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="#EEF2F6" strokeWidth="13" />
+        {total > 0 && segments.map((segment) => {
+          const length = (Math.max(segment.value, 0) / total) * circumference;
+          const circle = (
+            <circle
+              key={segment.label}
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="none"
+              stroke={segment.color}
+              strokeWidth="13"
+              strokeDasharray={`${length} ${circumference - length}`}
+              strokeDashoffset={-offset}
+              transform="rotate(-90 50 50)"
+              strokeLinecap="butt"
+            />
+          );
+          offset += length;
+          return circle;
+        })}
+        <text x="50" y="47" textAnchor="middle" className="admin-donut-total">{total.toLocaleString()}</text>
+        <text x="50" y="60" textAnchor="middle" className="admin-donut-caption">total</text>
+      </svg>
+      <ul className="admin-donut-legend">
+        {segments.map((segment) => (
+          <li key={segment.label}>
+            <i style={{ background: segment.color }} aria-hidden="true" />
+            <span>{segment.label}</span>
+            <b>{segment.value.toLocaleString()}</b>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

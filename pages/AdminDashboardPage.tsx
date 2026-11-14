@@ -18,6 +18,7 @@ import {
 import {
   ACTIVE_REQUEST_STATUSES,
   AdminCountBadge,
+  AdminDonut,
   AdminEmptyState,
   AdminStatusDot,
   AdminSummary,
@@ -100,7 +101,7 @@ export default function AdminDashboardPage() {
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
-            <h1>Operations Control</h1>
+            <h1>Operations overview</h1>
             <p>Operational snapshots from service requests, student accounts, traffic and CBT activity.</p>
           </div>
           <div className="admin-header-actions">
@@ -126,15 +127,15 @@ export default function AdminDashboardPage() {
           <AdminSummary
             label="Operational summary"
             items={[
-              { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Staff accounts unavailable' : `${metricText('admins')} staff accounts` },
-              { label: 'Open requests', value: metricText('pending_requests'), detail: metric('service_requests') === null ? 'All-time request count unavailable' : `${metricText('service_requests')} requests all-time` },
-              { label: 'Completed requests', value: metricText('completed_requests'), detail: metric('rejected_requests') === null ? 'Rejected/cancelled count unavailable' : `${metricText('rejected_requests')} rejected or cancelled` },
-              { label: 'Site events · 24h', value: metricText('events_24h'), detail: metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions` },
-              { label: 'CBT attempts', value: metricText('cbt_attempts'), detail: metric('cbt_submitted') === null ? 'Submission count unavailable' : `${metricText('cbt_submitted')} submitted` },
+              { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Staff accounts unavailable' : `${metricText('admins')} staff accounts`, tone: 'blue' },
+              { label: 'Open requests', value: metricText('pending_requests'), detail: metric('service_requests') === null ? 'All-time request count unavailable' : `${metricText('service_requests')} requests all-time`, tone: 'amber' },
+              { label: 'Completed requests', value: metricText('completed_requests'), detail: metric('rejected_requests') === null ? 'Rejected/cancelled count unavailable' : `${metricText('rejected_requests')} rejected or cancelled`, tone: 'green' },
+              { label: 'Site events · 24h', value: metricText('events_24h'), detail: metric('sessions_24h') === null ? 'Unique sessions unavailable' : `${metricText('sessions_24h')} unique sessions`, tone: 'violet' },
+              { label: 'CBT attempts', value: metricText('cbt_attempts'), detail: metric('cbt_submitted') === null ? 'Submission count unavailable' : `${metricText('cbt_submitted')} submitted`, tone: 'blue' },
               {
                 label: 'Average submitted score',
                 value: metric('cbt_submitted') === 0 ? 'Unavailable' : metric('average_cbt_score') === null ? 'Unavailable' : `${metricText('average_cbt_score')}%`,
-                detail: metric('cbt_submitted') === 0 ? 'No submitted attempts' : 'Across submitted attempts',
+                detail: metric('cbt_submitted') === 0 ? 'No submitted attempts' : 'Across submitted attempts', tone: 'green',
               },
             ]}
           />
@@ -157,6 +158,32 @@ export default function AdminDashboardPage() {
                 <a className="admin-btn small" href="/admin/queue">Open queue</a>
               </div>
             )}
+
+            <div className="admin-chart-grid">
+              <div className="admin-chart-card">
+                <div className="admin-chart-head"><div><h2>Request mix</h2><p>Current service-request state from the analytics totals.</p></div><span className="admin-report-period">All-time</span></div>
+                {['pending_requests', 'completed_requests', 'rejected_requests'].every((key) => metric(key) !== null) ? (
+                  <AdminDonut
+                    ariaLabel="Service request mix"
+                    segments={[
+                      { label: 'Open', value: metric('pending_requests') || 0, color: '#0A3E83' },
+                      { label: 'Completed', value: metric('completed_requests') || 0, color: '#067647' },
+                      { label: 'Rejected / cancelled', value: metric('rejected_requests') || 0, color: '#B42318' },
+                    ].filter((segment) => segment.value > 0)}
+                  />
+                ) : <AdminEmptyState title="Request mix unavailable" hint="The analytics totals do not include all request states." />}
+              </div>
+              <div className="admin-chart-card">
+                <div className="admin-chart-head"><div><h2>Traffic snapshot</h2><p>Events recorded by the platform.</p></div></div>
+                {metric('events_24h') !== null && metric('events_7d') !== null ? (
+                  <>
+                    <BarStat label="Last 24 hours" value={metric('events_24h')!} max={Math.max(metric('events_24h')!, metric('events_7d')!, 1)} hint={`${metricText('events_24h')} events`} />
+                    <BarStat label="Last 7 days" value={metric('events_7d')!} max={Math.max(metric('events_24h')!, metric('events_7d')!, 1)} hint={`${metricText('events_7d')} events`} />
+                    <p className="admin-report-note">{metric('sessions_24h') === null ? 'Unique session total unavailable.' : `${metricText('sessions_24h')} unique sessions in 24 hours.`}</p>
+                  </>
+                ) : <AdminEmptyState title="Traffic totals unavailable" hint="No complete 24-hour and 7-day totals were returned." />}
+              </div>
+            </div>
 
             <div className="admin-two-col">
               <div className="admin-card">

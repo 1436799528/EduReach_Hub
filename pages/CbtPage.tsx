@@ -64,9 +64,13 @@ export default function CbtPage() {
       const catalogue = (isSupabaseConfigured
         ? (await fetchCbtExamsWithAvailability()) as unknown as Exam[]
         : (await fetchCbtExams()) as Exam[]);
-      // Banks too small to start a session are not listed as sittable tests.
-      setExams(catalogue.filter((exam) => typeof exam.question_count !== 'number'
-        || (exam.question_count >= 5 && (exam.subject_count ?? 1) >= 1)));
+      // Show the catalogue the server returned. "Too few questions" is a
+      // startability detail the setup wizard explains; it is not a reason to
+      // make the listing disagree with the rest of the CBT surfaces.
+      setExams([...catalogue].sort((a, b) => {
+        const readiness = (exam: Exam) => typeof exam.question_count === 'number' && (exam.question_count < 5 || (exam.subject_count ?? 1) < 1) ? 1 : 0;
+        return readiness(a) - readiness(b) || String(a.title).localeCompare(String(b.title));
+      }));
     } catch (value) {
       setError(userFacingError(value, 'Unable to load CBT exams.'));
     } finally {
@@ -174,8 +178,8 @@ export default function CbtPage() {
                     </div>
                   </div>
 
-                  <span className="hub-primary-btn er-bank-cta er-card-cta">
-                    Start practice <ArrowRight size={14} />
+                  <span className="er-card-arrow" aria-hidden="true">
+                    <ArrowRight size={16} />
                   </span>
                 </a>
               ))}

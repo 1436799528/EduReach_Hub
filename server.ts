@@ -33,6 +33,8 @@ import { isArticleCurrent } from './src/lib/newsFreshness';
 import { registerQuestionImportRoutes } from './src/server/question-import/routes';
 import { isQuestionId, literalLike, parseQuestionBankFilters } from './src/server/questionBankList';
 import { registerSiteContentRoutes } from './src/server/siteContent';
+import { publicProfileResponse, PUBLIC_PROFILE_SELECT, type PublicProfileRecord } from './src/server/publicProfile';
+import { PUBLIC_PROFILE_SLUG_PATTERN } from './src/lib/publicProfile';
 
 export const app = express();
 const publicErrorMessage = normalizeUserFacingError;
@@ -2854,6 +2856,61 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
           : /No questions are available|Choose at least one subject|Choose a duration|Use of English plus|A JAMB mock paper|A session can include|Unknown CBT mode|cannot fill the|can only supply/i.test(message) ? 422
             : 409;
     res.status(status).json({ error: publicErrorMessage(message, 'Unable to start this practice session. Please try again.') });
+  }
+});
+
+/**
+ * UI-5 - the opt-in public profile.
+ *
+ * A copied profile link used to land on the private /profile route, so a
+ * visitor was pushed into the owner's dashboard or a login wall. This route is
+ * deliberately narrow:
+ *
+ *   - only rows with public_profile = true are readable;
+ *   - the select is an explicit whitelist, and `id` is never returned;
+ *   - email, phone, matric number, JAMB registration, results and notifications
+ *     are not selected at all;
+ *   - the "verified" mark is derived from a confirmed account email, not from a
+ *     name or a stored self-assertion.
+ *
+ * It is a same-origin API read (service role) rather than an anonymous table
+ * grant, so the public surface stays one reviewed projection.
+ */
+app.get('/api/public/profiles/:slug', async (req, res) => {
+  const slug = String(req.params.slug || '').trim().toLowerCase();
+  if (!PUBLIC_PROFILE_SLUG_PATTERN.test(slug)) {
+    return res.status(404).json({ error: 'Profile not found.' });
+  }
+  if (!isServerSupabaseConfigured()) {
+    return res.status(503).json({ error: 'Public profiles are not available in this environment.' });
+  }
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(PUBLIC_PROFILE_SELECT)
+      .eq('public_profile_slug', slug)
+      .eq('public_profile', true)
+      .maybeSingle();
+    if (error) throw error;
+    const row = data as unknown as PublicProfileRecord | null;
+    if (!row) return res.status(404).json({ error: 'Profile not found.' });
+
+    let emailVerified = false;
+    try {
+      const { data: account } = await supabase.auth.admin.getUserById(String(row.id));
+      emailVerified = Boolean(account?.user?.email_confirmed_at);
+    } catch {
+      // A failed verification lookup must not turn a readable profile into an
+      // error, and it must not claim a check that did not happen.
+      emailVerified = false;
+    }
+
+    res.set('Cache-Control', 'no-store');
+    return res.json({ profile: publicProfileResponse(row, emailVerified) });
+  } catch (error) {
+    console.error('Public profile read error:', error);
+    return res.status(503).json({ error: 'This profile could not be loaded right now.' });
   }
 });
 

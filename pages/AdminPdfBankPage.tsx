@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, RefreshCw, Upload, Route, FolderOpen } from 'lucide-react';
+import { FileText, FolderOpen, RefreshCw, Route, Upload } from 'lucide-react';
 import { userFacingError } from '../lib/errors';
+import { AdminPageReport } from '../src/components/admin/AdminKit';
 import {
   fetchAdminInstitutions,
   fetchAdminNews,
@@ -142,6 +143,16 @@ export default function AdminPdfBankPage() {
         <div><h1>PDF Bank</h1><p>Upload PDFs once, keep a central record, then classify and route them. Nothing is automatically labelled as an official past paper.</p></div>
         <div className="admin-header-actions"><button type="button" className="admin-btn secondary-dark" onClick={() => void load()} disabled={loading}><RefreshCw size={14} /> Refresh</button></div>
       </div>
+
+      <AdminPageReport
+        title="PDF bank reporting"
+        items={[
+          { label: 'Documents held', value: items.length.toLocaleString() },
+          { label: 'Needs routing', value: items.filter((item) => item.status === 'inbox').length.toLocaleString() },
+          { label: 'Routed', value: items.filter((item) => item.status === 'routed').length.toLocaleString() },
+          { label: 'Source verified', value: items.filter((item) => item.source_verified).length.toLocaleString() },
+        ]}
+      />
 
       {error && <div className="admin-card" role="alert" style={{ padding: 14 }}>{error}</div>}
       {message && <div className="admin-card" role="status" style={{ padding: 14, borderLeft: '4px solid var(--admin-green)' }}>{message}</div>}

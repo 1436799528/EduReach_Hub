@@ -78,6 +78,7 @@ export const DISALLOWED_PATHS = [
   '/cbt/setup',
   '/services/track',
   '/track',
+  '/u/',
   '/login',
   '/signin',
   '/register',

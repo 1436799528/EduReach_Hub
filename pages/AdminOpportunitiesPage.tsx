@@ -8,7 +8,7 @@ import {
   updateAdminOpportunity,
   type Opportunity,
 } from '../src/lib/api';
-import { AdminEmptyState, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
+import { AdminEmptyState, AdminPageReport, StatusBadge, TimeAgo } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 
 // Opportunities manager: scholarships, grants, jobs and fellowships listed on
@@ -150,6 +150,16 @@ export default function AdminOpportunitiesPage() {
             <button type="button" className="admin-btn" onClick={() => { setEdit({ ...emptyEdit }); setDescriptionHtml(''); }}><Plus size={14} /> New opportunity</button>
           </div>
         </div>
+
+        <AdminPageReport
+          title="Opportunity reporting"
+          items={[
+            { label: 'Open listings', value: items.filter((item) => item.is_active !== false).length.toLocaleString() },
+            { label: 'Closing in 14 days', value: items.filter((item) => { if (!item.deadline) return false; const due = new Date(item.deadline).getTime(); const now = Date.now(); return Number.isFinite(due) && due >= now && due <= now + 14 * 86400000; }).length.toLocaleString() },
+            { label: 'Verified sources', value: items.filter((item) => Boolean(item.last_verified_at)).length.toLocaleString() },
+            { label: 'Featured', value: items.filter((item) => item.is_featured).length.toLocaleString() },
+          ]}
+        />
 
         {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
         {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}

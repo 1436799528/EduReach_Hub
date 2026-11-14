@@ -4,7 +4,7 @@ Branch: `arena/7f1c35f5-edureach-hub` — Stack: React 19 / Vite + Express 4 + S
 
 ## Source of truth
 Stage A audit is complete and summarized in session memory. Tokens/primitives already exist and are reused:
-- `src/styles/theme.css` — `--er-primary #174A3A`, `--er-crimson #B14933`, status colours, radii, shadows.
+- `src/styles/theme.css` — `--er-primary #0A3E83`, `--er-crimson #B14933`, status colours, radii, shadows.
 - `src/styles/brand-actions.css` — single owner for `.hub-primary-btn`, `.hub-outline-btn`, ghost, selected states, disabled/busy states.
 - `src/styles/a11y.css` (imported last) — skip link, focus ring (green+white), reduced-motion reset, 24px password targets, 44px coarse-pointer targets.
 - `src/styles/type-system.css` — `.er-state` surfaces, `.er-inline-notice`, WaveLoader CSS, weight scale.
@@ -13,7 +13,7 @@ Stage A audit is complete and summarized in session memory. Tokens/primitives al
 - `src/styles/theme.css` global form/button/focus rules (imported last in `main.tsx`).
 
 ## Brand & standing constraints (preserve)
-- Green `#174A3A` primary only; crimson `#B14933` sparingly (brand mark, designated accents). No gradients/glow/glassmorphism/textures/pulsing/over-rounding/AI colour treatments on auth.
+- Green `#0A3E83` primary only; crimson `#B14933` sparingly (brand mark, designated accents). No gradients/glow/glassmorphism/textures/pulsing/over-rounding/AI colour treatments on auth.
 - Do NOT redesign cards; fix demonstrable usability/responsiveness problems with documented reason.
 - No new UI/animation framework or deps; no broad rewrites; no business-logic/backend/API/DB/auth-provider changes; keep frontend compatible with existing backend.
 - No artificial loading delays or fake success. CBT navigation/answer selection immediate; timers/persistence/submission integrity preserved.

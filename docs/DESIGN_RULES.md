@@ -18,6 +18,26 @@ EduReach is a high-performance Nigerian student-services and examination support
 9. **Single Source of Truth**: All services and tools are registered in `src/data/services.ts`. No route may define its own hardcoded service list.
 10. **State Completeness**: Every interactive view must support Default, Loading, Empty, Error, and Success states.
 
+## Interaction Hierarchy (UI-5)
+
+11. **One meaning per colour.** Green is a primary action or a positive movement;
+    crimson is the brand accent, a destructive consequence or a decline; amber is
+    a warning; neutral is everything else. Never colour a card because it exists.
+12. **Search is a utility.** `SiteSearch` is the only navigation search;
+    `FilterSearch` is the only live page-filter field; server-side lookups that submit a query are not a second filter. White surface, neutral icon,
+    subtle focus, no bright fill.
+13. **Destructive actions are never one click.** A compact icon opens a
+    confirmation; the confirmation carries the seriousness, not a giant red
+    button. Failures restore the item.
+14. **Loading fits the wait.** Skeleton for first paint, inline progress in the
+    control that is busy, a named slow state, and the branded wave loader only
+    for a meaningful wait. Disabled is a separate, neutral state.
+15. **Profile is identity; dashboard is performance.** Profile groups personal,
+    academic and account information behind explicit Save/Cancel. The dashboard
+    answers "how am I doing?" with evidence, then offers navigation.
+16. **A shared link is a designed route.** Public profile data is opt-in and
+    allow-listed; contact details, identifiers and results are never included.
+
 ## Mandatory Compliance
 
 All routes must adhere strictly to `docs/PAGE_QUALITY_GATE.md` before being marked complete.

@@ -13,9 +13,9 @@ export type ExamSimulator = {
   title: string;
   mode: string;
   logo: string;
-  desc: string;
+  desc?: string;
   meta: string;
-  guideHref: string;
+  staticMain?: boolean;
 };
 
 const brandLogo = (mode: string) => {
@@ -26,15 +26,24 @@ const brandLogo = (mode: string) => {
   return '/icons/brands/jamb.webp';
 };
 
-const guideHref = (mode: string) => {
-  const normalized = mode.toLowerCase();
-  if (normalized === 'post-utme') return '/post-utme';
-  if (normalized === 'jamb') return '/jamb';
-  if (normalized === 'waec') return '/waec';
-  if (normalized === 'neco') return '/neco';
-  if (normalized === 'nabteb') return '/nabteb';
-  return '/cbt';
-};
+
+// The four main examinations are the front door of the home page, even while
+// their question bank is being prepared. A live catalogue card replaces the
+// matching fallback, so there is never a duplicate.
+const MAIN_EXAM_NAMES: Array<[string, string]> = [
+  ['JAMB', 'JAMB UTME'],
+  ['WAEC', 'WAEC SSCE'],
+  ['NECO', 'NECO SSCE'],
+  ['Post-UTME', 'Post-UTME'],
+];
+const mainExams: ExamSimulator[] = MAIN_EXAM_NAMES.map(([mode, title]) => ({
+  id: `${mode.toLowerCase()}-main`,
+  title,
+  mode,
+  logo: brandLogo(mode),
+  meta: 'Timed practice',
+  staticMain: true,
+}));
 
 export function simulatorStartHref(key: string, examId?: string) {
   const mode = key.trim().toLowerCase().replace(/[\s_-]+/g, '-');
@@ -46,10 +55,8 @@ export function simulatorStartHref(key: string, examId?: string) {
 
 export default function ExamSimulatorGrid({
   variant = 'start',
-  showGuides = false,
 }: {
   variant?: 'mode' | 'start';
-  showGuides?: boolean;
 }) {
   const [exams, setExams] = useState<ExamSimulator[]>([]);
   const [error, setError] = useState<unknown>(null);
@@ -71,12 +78,12 @@ export default function ExamSimulatorGrid({
     void (isSupabaseConfigured ? fetchCbtExamsWithAvailability() : fetchCbtExams())
       .then((items: CbtExamSummary[]) => {
         if (!active) return;
-        // Never advertise a bank a student cannot start (too few questions
-        // for the minimum session, or no subjects at all). Catalogues
-        // without counts (local preview) cannot be judged and pass through.
-        const startable = items.filter((exam) => typeof exam.question_count !== 'number'
-          || (exam.question_count >= 5 && (exam.subject_count ?? 1) >= 1));
-        setExams(startable.map((exam) => {
+        // List every active bank the catalogue returns. Availability counts
+        // describe whether a full session can start; they are not permission to
+        // hide a published bank from the listing. Hiding them here made the
+        // main page say "no active CBT" while /cbt and past questions listed
+        // the same banks.
+        const live = items.map((exam) => {
           const mode = String(exam.exam_body || exam.subject || 'CBT').trim();
           return {
             id: String(exam.id),
@@ -87,10 +94,17 @@ export default function ExamSimulatorGrid({
             // A bank's size and the standard paper time are configuration, not
             // a promise about every practice session. The setup screen derives
             // the real time from the subjects and question count.
-            meta: 'Timed practice',
-            guideHref: guideHref(mode),
+            meta: typeof exam.question_count === 'number' && (exam.question_count < 5 || (exam.subject_count ?? 1) < 1)
+              ? 'Question pool still being prepared'
+              : 'Timed practice',
           };
-        }));
+        });
+        const normalizeMode = (mode: string) => mode.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '');
+        const present = new Set(live.map((exam) => normalizeMode(exam.mode)));
+        setExams([
+          ...mainExams.filter((exam) => !present.has(normalizeMode(exam.mode))),
+          ...live,
+        ]);
       })
       .catch((value) => active && setError(value))
       .finally(() => { if (active) setSettled(true); });
@@ -128,7 +142,7 @@ export default function ExamSimulatorGrid({
   if (!exams.length) {
     return (
       <div className="er-late-region er-late-region--simulators">
-        <div className="er-empty">No active CBT question banks have been published yet.</div>
+        <div className="er-empty">No CBT question banks are listed right now. Browse past questions while the catalogue is updated.</div>
       </div>
     );
   }
@@ -140,7 +154,7 @@ export default function ExamSimulatorGrid({
           <a
             key={exam.id}
             className={`er-sim-card er-sim-${exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
-            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.mode, exam.id)}
+            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : (exam.staticMain ? simulatorStartHref(exam.mode) : simulatorStartHref(exam.mode, exam.id))}
           >
             <span className="er-sim-top">
               <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" decoding="async" />
@@ -148,24 +162,15 @@ export default function ExamSimulatorGrid({
             </span>
             <span className="er-sim-body">
               <strong>{exam.title}</strong>
-              <small>{exam.desc}</small>
+              {exam.desc && <small>{exam.desc}</small>}
               <span className="er-sim-foot">
                 <span>{exam.meta}</span>
-                <span className="er-sim-cta">{variant === 'mode' ? 'Practice' : 'Start practice'} <ArrowRight size={12} /></span>
+                <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={14} /></span>
               </span>
             </span>
           </a>
         ))}
       </div>
-      {showGuides && (
-        <div className="er-guide-strip">
-          {exams.map((exam) => (
-            <a key={exam.id} href={exam.guideHref}>
-              {exam.mode === 'POST-UTME' ? 'Post-UTME' : exam.mode} Guide <ArrowRight size={11} />
-            </a>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
-import { BookOpen, Download, ExternalLink, FileText, Laptop, Link2Off, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, BookOpen, Download, ExternalLink, FileText, Link2Off, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { SkeletonTiles } from '../src/components/Skeleton';
 import { ErrorState, InlineNotice } from '../src/components/AsyncState';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
+import FilterSearch from '../src/components/ui/FilterSearch';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import {
   studyMaterialLibrary,
@@ -31,6 +32,17 @@ function readQuery() {
     search: params.get('q') || '',
     filter: filters.some((item) => item.id === requestedFilter) ? requestedFilter as Filter : 'ALL' as Filter,
   };
+}
+
+// Exam bodies arrive with every spelling the database allows ("POST UTME",
+// "Post-UTME", "postutme"). Comparing the raw strings made the Post-UTME pill
+// look broken, so both sides are reduced to letters and digits first.
+function normalizeExam(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+function matchesExamFilter(examBody: string, filter: Filter) {
+  return filter === 'ALL' || normalizeExam(examBody).includes(normalizeExam(filter));
 }
 
 function materialRequestHref(material: StudyMaterialRecord) {
@@ -69,7 +81,7 @@ export default function PastQuestionsPage() {
     const list = library?.items || [];
     const query = search.trim().toLowerCase();
     return list.filter((resource) => {
-      const matchesFilter = filter === 'ALL' || resource.examBody.toUpperCase().includes(filter.toUpperCase()) || (filter === 'Post-UTME' && resource.examBody.toUpperCase() === 'POST-UTME');
+      const matchesFilter = matchesExamFilter(resource.examBody, filter);
       if (!matchesFilter) return false;
       if (!query) return true;
       return `${resource.title} ${resource.subject || ''} ${resource.course || ''} ${resource.year || ''}`.toLowerCase().includes(query);
@@ -79,7 +91,7 @@ export default function PastQuestionsPage() {
   const materials = useMemo(() => {
     const query = search.trim().toLowerCase();
     return studyMaterialLibrary.filter((record) => {
-      const matchesFilter = filter === 'ALL' || record.exam === filter;
+      const matchesFilter = matchesExamFilter(record.exam, filter);
       const searchable = `${record.title} ${record.school} ${record.availability} ${record.subjects}`.toLowerCase();
       return matchesFilter && (!query || searchable.includes(query));
     });
@@ -140,13 +152,20 @@ export default function PastQuestionsPage() {
           </div>
 
           <div className="er-library-toolbar">
-            <label className="er-library-search">
-              <Search size={17} aria-hidden="true" />
-              <span className="er-visually-hidden">Search past questions and materials</span>
-              <input value={search} onChange={(event) => changeSearch(event.target.value)} placeholder="Search school, exam, subject or material" aria-label="Search past questions and materials" />
-            </label>
-            <div className="er-library-filter-label"><SlidersHorizontal size={15} /> Filter</div>
-            <FilterPills options={filters} active={filter} onChange={changeFilter} ariaLabel="Past question examination filters" />
+            <FilterSearch
+              value={search}
+              onChange={changeSearch}
+              label="Search past questions and materials"
+              placeholder="Search school, exam, subject or material"
+              clearLabel="Clear past question search"
+            />
+            <div className="er-library-filter-row">
+              <span className="er-library-filter-label"><SlidersHorizontal size={15} aria-hidden="true" /> Filter</span>
+              <FilterPills options={filters} active={filter} onChange={changeFilter} ariaLabel="Past question examination filters" />
+              <span className="er-library-result-count" role="status" aria-live="polite">
+                {visibleResources.length + materials.length} result{visibleResources.length + materials.length === 1 ? '' : 's'}
+              </span>
+            </div>
           </div>
 
           <div className="er-late-region er-late-region--library">
@@ -219,6 +238,14 @@ export default function PastQuestionsPage() {
           </div>
           </div>
 
+          <div className="er-resource-head">
+            <div>
+              <span className="hub-eyebrow">Study materials</span>
+              <h2>JAMB, WAEC, NECO and school papers</h2>
+            </div>
+            <span className="er-type-meta">Main exams and Post-UTME by school</span>
+          </div>
+
           {!materials.length ? (
               <div className="hub-panel hub-empty">
                 <h2>We don't have study materials for this selection yet</h2>
@@ -244,9 +271,7 @@ export default function PastQuestionsPage() {
                     <p>{material.description}</p>
                     <div className="er-library-subjects"><strong>Subjects</strong><span>{material.subjects}</span></div>
                     <span className="er-material-actions">
-                      {material.cbtHref
-                        ? <span className="hub-primary-btn er-card-cta"><Laptop size={14} /> Practice CBT</span>
-                        : <span className="hub-primary-btn er-card-cta"><MessageCircle size={14} /> Request via EduReach</span>}
+                      <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={16} /></span>
                     </span>
                   </a>
                 ))}

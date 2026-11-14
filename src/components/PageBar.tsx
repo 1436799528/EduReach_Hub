@@ -1,4 +1,4 @@
-import { ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { pageTitleFor } from '../lib/pageMeta';
 import { navigateInApp } from '../lib/navigation';
@@ -48,10 +48,6 @@ export default function PageBar() {
           <span>Back</span>
         </button>
         <span className="er-pagebar-title">{pageTitleFor(path)}</span>
-        <a className="er-pagebar-home" href="/">
-          <Home size={14} />
-          <span>Home</span>
-        </a>
       </div>
     </div>
   );

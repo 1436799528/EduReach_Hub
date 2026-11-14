@@ -316,11 +316,8 @@ export default function JobsPage() {
                         {item.note}
                       </p>
                     </div>
-                    <span
-                      className="hub-primary-btn er-card-cta"
-                      style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
-                    >
-                      Apply <ArrowRight size={13} />
+                    <span className="er-card-arrow" aria-hidden="true" style={{ alignSelf: 'center', flexShrink: 0 }}>
+                      <ArrowRight size={16} />
                     </span>
                   </a>
                 ))}
@@ -375,11 +372,8 @@ export default function JobsPage() {
                           </div>
                         </dl>
                       </div>
-                      <span
-                        className={status.actionable ? 'hub-primary-btn er-card-cta' : 'hub-outline-btn er-card-cta'}
-                        style={{ alignSelf: 'center', flexShrink: 0, fontSize: '11.5px', padding: '7px 14px', whiteSpace: 'nowrap' }}
-                      >
-                        {status.cta} <ArrowRight size={13} />
+                      <span className="er-card-arrow" aria-hidden="true" style={{ alignSelf: 'center', flexShrink: 0 }}>
+                        <ArrowRight size={16} />
                       </span>
                     </a>
                   );
