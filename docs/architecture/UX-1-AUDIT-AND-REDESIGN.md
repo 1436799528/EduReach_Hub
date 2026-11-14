@@ -233,6 +233,30 @@ the existing columns.
 - The missing live columns that made the feature fail in production are now
   present.
 
+### Production schema reconciliation
+The hosted project's migration ledger was eight canonical versions behind the
+repository even though part of the schema had been applied under earlier
+generated version labels. Verified against the live catalogue instead of trusting
+the filenames:
+
+- Backfilled canonical ledger entries for `20261024120000`,
+  `20261025120000`, `20261027120000` and `20261027130000` after confirming the
+  tables, policies, 120-second grace function, subject catalogue and mock-duration
+  trigger were already present.
+- Applied `20261102190000`, `20261102200000` and `20261102210000`, which close
+  the direct service-request write path and install
+  `submit_service_request_idempotent(...)`. Before this, the deployed client's
+  service submission failed closed because the RPC did not exist. A
+  transaction-scoped call as the owner created exactly one request row and was
+  rolled back; the table still has zero rows and the test key is gone.
+- Applied `20261031120000` (news placeholder columns, constraint and delete
+  guard) and `20261104120000` (`cbt_expire_owned_attempt`).
+- Deliberately not applied: the four `20261107*` CBT v2 migrations and
+  `20261108120000_question_import_atomic_publication`. The shipped client does
+  not call the CBT v2 gateway; the v2 files themselves say "local review
+  required" and create new database roles. The legacy import function is
+  present and working. These need a staged rollout, not an opportunistic apply.
+
 ### Auth and workflows
 
 - Auth page remains a utility screen: sign-in/sign-up tabs, email/phone, password
@@ -342,13 +366,17 @@ and the `is_staff` grant.
 
 ## 9. Remaining problems
 
-1. **Hosted production is still behind the repository by 11 migrations.** The
-   live ledger ends at `20261023155533` apart from the two migrations applied
-   here. The outstanding files start at `20261026120000_service_guides.sql` and
-   include the CBT serving/deadline, question import, service boundary and CBT
-   v2 migrations. I did not replay them blindly against a populated project.
-   Reconcile each one and apply through a reviewed release process. Until then,
-   deployed CBT and service behaviour may not match `main`.
+1. **Five migrations remain unapplied in production.** These are
+   `20261107120000_cbt_attempt_protocol_fence.sql`,
+   `20261107130000_cbt_v2_server_lifecycle.sql`,
+   `20261107140000_cbt_v2_answer_gateway.sql`,
+   `20261107150000_cbt_single_writing_session.sql` and
+   `20261108120000_question_import_atomic_publication.sql`. The first four are a
+   new CBT protocol with dedicated database roles; they must be rolled out to a
+   disposable staging project and exercised before production. The last replaces
+   the question-import function with an all-or-nothing publication transaction.
+   A production `prod:validate` run will therefore still report those versions
+   missing; that report is truthful, not noise.
 2. **No rendered browser pass.** Chromium is unavailable, so screenshots,
    actual 320/360/390/430/768/1024/1280/1440 overflow checks, keyboard-only
    walkthroughs and the mobile-performance project were not run. The code-level
@@ -387,10 +415,13 @@ and the `is_staff` grant.
   promotion was forced.
 - No `git reset --hard`, `git clean -fd`, force push or staging environment was
   used.
-- Hosted database changes: two additive, idempotent migrations
-  (`public_profiles`, `repair_profile_write_policy`), both now recorded in
-  `supabase_migrations.schema_migrations`; no student row was deleted or
-  rewritten. The RLS impersonation test ran in a rolled-back transaction.
+- Hosted database changes: two UX migrations (`public_profiles`,
+  `repair_profile_write_policy`) plus the service-request boundary
+  (`20261102190000`, `20261102200000`, `20261102210000`), the news placeholder
+  guard and CBT owner expiry; four canonical versions were backfilled after
+  schema verification. Every change is recorded in
+  `supabase_migrations.schema_migrations`. No student row was deleted or
+  rewritten; the RLS and submission tests ran in rolled-back transactions.
 
 ---
 
