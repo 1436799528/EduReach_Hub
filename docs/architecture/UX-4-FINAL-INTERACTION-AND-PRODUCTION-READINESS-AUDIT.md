@@ -45,14 +45,19 @@ places where the interface still made a claim the code could not keep:
 - The admin quick-find survives below 900 px by moving into the navigation
   drawer, remembers recent pages, and matches word starts and in-order letters.
 
-Production is **not** publishable yet. The first deploy that read the new
-configuration completed its build and function bundling; Netlify’s secrets
-scanner then failed it because the literal `VITE_SUPABASE_URL` value appeared in
-two repository files. Those literals are now placeholders, and a clean deploy
-must still be observed. Separately, the hosted project has phone and social
-providers disabled while the UI advertises them, the confirmation template does
-not include a token, and the `avatars` bucket the profile uploader needs is
-absent. Those are section J blockers, each with the exact operator action.
+The release path is no longer hypothetical. The first deploy that read the new
+Netlify configuration built the app and bundled both functions, then failed only
+at Netlify’s secrets scanner because the literal `VITE_SUPABASE_URL` value
+appeared in two repository files. Those literals are now placeholders. The next
+deploy (`6af8a4b8948af9a7799b611b`, commit `da4c4a6`) is **ready**, and its
+`/api/health`, `/api/*` 404, `/robots.txt`, `/sitemap.xml` and `/news` were
+verified anonymously.
+
+Production is still **not** publishable: that preview has not been merged to
+`main`, the hosted project has phone and social providers disabled while the UI
+advertises them, the confirmation template does not include a token, and the
+`avatars` bucket the profile uploader needs is absent. Those are section J
+blockers, each with the exact operator action.
 
 ---
 
@@ -66,6 +71,7 @@ absent. Those are section J blockers, each with the exact operator action.
 | Netlify | published deploy `6ad3202676087dafb6c42140` | `ready`, commit `e38e54b`, published **17 October 2026** |
 | Netlify | deploy `6af88c8c614632e2c4c283c2` | `state: "error"`, commit `c62d707`, PR #41, 25 s, `published_at: null` |
 | Netlify | deploy `6af8a41fc6143a04fd85ddad` | `state: "error"`, commit `5bf9c0c`, 28 s; build **succeeded** and functions bundled, then the Netlify secrets scanner failed the deploy |
+| Netlify | deploy `6af8a4b8948af9a7799b611b` | **`state: "ready"`**, commit `da4c4a6`, 30 s, `deploy_time: 30`; deploy-preview `https://deploy-preview-41--edureachhub.netlify.app` |
 | Netlify | deploy preview `deploy-preview-41--edureachhub.netlify.app` | not published |
 | Vercel | the passing deployment for this branch | “Protected Deployment” login wall; anonymous verification is impossible |
 | Supabase | project `gjdfatwcoosyuhakrrhh` | auth config and migration ledger readable; no hosted writes made by this audit |
@@ -149,7 +155,21 @@ configured value as a secret. The hard-coded URL was removed from the
 documentation table and from the safety-test mutation; the documentation now
 uses `<production-project-ref>` and the test uses a clearly synthetic ref. No
 `SECRETS_SCAN_OMIT_KEYS` exemption was added, because the repository should not
-carry the literal value. A new deploy is required to confirm the scan is clean.
+carry the literal value. The next deploy (`6af8a4b8948af9a7799b611b`, commit `da4c4a6`) completed in
+**30 s** with `state: "ready"`. The preview origin is live and was checked
+anonymously:
+
+| Preview request | Result |
+| :--- | :--- |
+| `/api/health` | `200 {"status":"ok","service":"edureach"}` |
+| `/api/does-not-exist` | `404 {"error":"API endpoint not found."}` — the SPA never masks an API 404 |
+| `/robots.txt` | `200 text/plain`, real rules and the preview sitemap URL |
+| `/sitemap.xml` | `200 application/xml`, real sitemap with live news and school URLs |
+| `/news` | `200` SPA shell with the live newsroom data |
+| `/dashboard` | `200` SPA shell (the client redirects an anonymous visitor to `/login`) |
+
+This is the first deploy in this audit that both built and served the Express
+API and the SPA from the same origin.
 
 ### B.4 Function evidence
 
@@ -568,14 +588,12 @@ regression.
 
 ### Blocking before a public launch
 
-1. **A clean Netlify deploy must be observed end to end.** Config-as-code now
-   works: the 5bf9c0c deploy read the command, publish directory, functions
-   directory, redirects and environment from `netlify.toml`, and
-   `npm run build` completed. That deploy failed only at the secrets scanner
-   because the literal `VITE_SUPABASE_URL` value was in two repository files;
-   both are now placeholders. Push the fix and confirm the next deploy reaches
-   `published`, then check `/api/health`, `/robots.txt` and `/sitemap.xml` on
-   the published origin.
+1. **Publish the verified preview to production.** The `da4c4a6` preview is
+   `ready` and its API, crawler routes and SPA were verified anonymously. The
+   production site is still the 17 October deployment because this branch has
+   not been merged. Merge PR #41, then confirm the production deploy reaches
+   `published` and repeat the `/api/health`, `/robots.txt`, `/sitemap.xml` and
+   one authenticated flow on `https://edureachhub.netlify.app`.
 2. **The advertised auth methods are not enabled.** Google, Apple and phone
    are visible on the account page; the hosted project has
    `external_google_enabled=false`, `external_apple_enabled=false` and
