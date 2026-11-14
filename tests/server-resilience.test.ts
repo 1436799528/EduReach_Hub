@@ -77,7 +77,16 @@ test('supabaseFetch always passes an abort signal and enforces the timeout', asy
     globalThis.fetch = ((_input: unknown, init?: RequestInit) => new Promise((_resolve, reject) => {
       init?.signal?.addEventListener('abort', () => reject(new Error('aborted by signal')));
     })) as typeof fetch;
-    await assert.rejects(supabaseFetch('https://example.invalid/', {}, 5), /abort/i);
+    // `AbortSignal.timeout()` uses an unref'd timer. Node's test runner treats
+    // an otherwise-empty event loop as a cancelled subtest, so keep one ref'd
+    // timer alive until the abort has been observed. This is harness-only: the
+    // production fetch still uses the unref'd signal and does not pin the loop.
+    const keepAlive = setTimeout(() => {}, 1000);
+    try {
+      await assert.rejects(supabaseFetch('https://example.invalid/', {}, 5), /abort/i);
+    } finally {
+      clearTimeout(keepAlive);
+    }
   } finally {
     globalThis.fetch = realFetch;
   }

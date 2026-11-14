@@ -27,7 +27,6 @@ test('server code only lacks objects that the non-deployable candidate provides'
   // closed: a new undeclared table/RPC, or a candidate becoming a migration,
   // changes it and requires review rather than passing silently.
   assert.deepEqual([...report.candidateDependencies].sort(), [
-    'cbt_bank_security',
     'rpc:cbt_bank_admin_assign',
     'rpc:cbt_bank_admin_candidates',
     'rpc:cbt_bank_admin_history',

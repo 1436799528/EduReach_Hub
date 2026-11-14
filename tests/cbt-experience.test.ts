@@ -109,11 +109,11 @@ test('destructive actions are confirmed and the server enforces them', () => {
   const history = read('src/components/CbtHistoryPanel.tsx');
   assert.match(history, /er-confirm/, 'deleting a practice session asks first');
   assert.match(history, /deleteCbtAttempt/, 'and calls the delete endpoint');
-  assert.match(history, /Delete result/, 'practice and mock records can both be deleted');
+  assert.match(history, /aria-label="Delete"/, 'practice and mock records can both be deleted from a trash control');
   assert.match(history, /aria-label="Close delete confirmation"/, 'the delete dialog has a corner close control');
 
   const resultPage = read('pages/CbtResultsPage.tsx');
-  assert.match(resultPage, /Delete result/, 'students can delete a saved practice result');
+  assert.match(resultPage, /aria-label="Delete"/, 'students can delete a saved practice result from a trash control');
   assert.match(resultPage, /Keep result/, 'students can keep the saved result instead');
   assert.match(resultPage, /aria-label="Close delete confirmation"/, 'the result delete dialog has a corner close control');
 

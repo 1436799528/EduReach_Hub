@@ -38,6 +38,9 @@ import {
   departments,
   faculties,
   levels,
+  normalizeFacultyValue,
+  normalizeLevelValue,
+  optionsIncludingSaved,
 } from '../src/data/studentOptions';
 const academicInterestOptions = [
   'JAMB UTME Prep',
@@ -68,7 +71,6 @@ export default function ProfileCompletionPage() {
   // 9. Profile photo (optional)
   const [avatarUrl, setAvatarUrl] = useState('');
   const [customAvatar, setCustomAvatar] = useState('');
-  const [avatarImageUrl, setAvatarImageUrl] = useState('');
 
   // 10-17. Academic details. Empty defaults keep an incomplete profile visibly incomplete.
   const [school, setSchool] = useState('');
@@ -101,7 +103,7 @@ export default function ProfileCompletionPage() {
   // Initials are the fallback. A legacy base64 data URL is not rendered or
   // re-saved: profile photos live in Supabase Storage and only their public URL
   // is stored in `profiles.avatar_url`.
-  const rawAvatar = (customAvatar || avatarImageUrl || avatarUrl || '').trim();
+  const rawAvatar = (customAvatar || avatarUrl || '').trim();
   const displayAvatar = rawAvatar.startsWith('data:') || rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
   const avatarInitials =
     userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
@@ -153,8 +155,8 @@ export default function ProfileCompletionPage() {
             setCustomDepartment(stored.department);
           }
         }
-        if (stored.faculty) setFaculty(stored.faculty);
-        if (stored.level) setLevel(stored.level);
+        if (stored.faculty) setFaculty(normalizeFacultyValue(stored.faculty));
+        if (stored.level) setLevel(normalizeLevelValue(stored.level));
         if (stored.session) setSession(stored.session);
         if (stored.admission_year) setAdmissionYear(String(stored.admission_year));
         if (stored.expected_graduation_year) setExpectedGradYear(String(stored.expected_graduation_year));
@@ -221,8 +223,8 @@ export default function ProfileCompletionPage() {
                   setCustomDepartment(profile.department);
                 }
               }
-              if (profile.faculty) setFaculty(profile.faculty);
-              if (profile.level) setLevel(profile.level);
+              if (profile.faculty) setFaculty(normalizeFacultyValue(profile.faculty));
+              if (profile.level) setLevel(normalizeLevelValue(profile.level));
               if (profile.session) setSession(profile.session);
               if (profile.admission_year) setAdmissionYear(String(profile.admission_year));
               if (profile.expected_graduation_year) setExpectedGradYear(String(profile.expected_graduation_year));
@@ -282,10 +284,9 @@ export default function ProfileCompletionPage() {
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       if (!data?.publicUrl) throw new Error('No public URL returned');
       setCustomAvatar(data.publicUrl);
-      setAvatarImageUrl('');
       setAvatarFileName(file.name);
     } catch {
-      setMessage('We could not upload that photo. Try a smaller JPEG or PNG, or paste a public image URL.');
+      setMessage('We could not upload that photo. Choose a smaller JPEG or PNG, or keep your initials for now.');
     } finally {
       setAvatarUploading(false);
     }
@@ -312,7 +313,6 @@ export default function ProfileCompletionPage() {
     expectedGradYear,
     avatarUrl,
     customAvatar,
-    avatarImageUrl,
     interests,
     emailAlerts,
     whatsappAlerts,
@@ -445,6 +445,11 @@ export default function ProfileCompletionPage() {
     }
   };
 
+  const confirmDiscard = (event: { preventDefault: () => void }) => {
+    if (!isDirty) return;
+    if (!window.confirm('Discard your unsaved profile changes?')) event.preventDefault();
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (saving) return;
@@ -454,7 +459,9 @@ export default function ProfileCompletionPage() {
     const finalSchool = school.includes('Other') ? customSchool.trim() : school;
     const finalCourseProgramme = courseProgramme || customCourseProgramme.trim();
     const finalDepartment = department || customDepartment.trim();
-    const finalAvatar = [customAvatar, avatarImageUrl, avatarUrl].find((value) => value && !value.startsWith('data:')) || '';
+    // UX-3: only a Storage public URL is saved. A legacy data: URL is ignored;
+    // the avatar is never a base64 blob inside the profile row.
+    const finalAvatar = [customAvatar, avatarUrl].find((value) => value && !value.startsWith('data:')) || '';
     const missing = [
       ['institution', finalSchool],
       ['course/programme', finalCourseProgramme],
@@ -780,7 +787,7 @@ export default function ProfileCompletionPage() {
               <h1>{editMode ? 'Edit your profile' : 'Complete your profile'}</h1>
               <p>These details identify you on EduReach. Nothing is saved until you choose Save changes.</p>
             </div>
-            <a className="hub-outline-btn" href="/profile">Cancel</a>
+            <a className="hub-outline-btn" href="/profile" onClick={confirmDiscard}>Cancel</a>
           </div>
 
           {!savedSuccess && profileMissingLabels.length > 0 && (
@@ -823,7 +830,7 @@ export default function ProfileCompletionPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="profile-form">
+          <form onSubmit={handleSubmit} className="profile-form" noValidate>
             <h2 className="profile-group-title">Personal information</h2>
             <section className="profile-contact-section">
               <div className="profile-contact-heading"><Smartphone size={17} color="#64748b" /><h2>Contact</h2></div>
@@ -841,7 +848,7 @@ export default function ProfileCompletionPage() {
                 </h2>
               </div>
               <p style={{ fontSize: '12.5px', color: '#5e6c82', margin: '0 0 14px' }}>
-                Choose a photo from your device, or use a trusted image URL. The photo is saved with your profile; initials remain the fallback.
+                Choose a photo from your device. It is uploaded to secure storage and saved as a link with your profile; initials remain the fallback.
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
@@ -902,7 +909,6 @@ export default function ProfileCompletionPage() {
                       onClick={() => {
                         setAvatarUrl('');
                         setCustomAvatar('');
-                        setAvatarImageUrl('');
                         setAvatarFileName('');
                       }}
                       className="hub-outline-btn"
@@ -913,18 +919,6 @@ export default function ProfileCompletionPage() {
                   </div>
                   {avatarFileName && <span className="profile-photo-note">{avatarFileName}</span>}
                   {avatarUploading && <span className="profile-photo-note" role="status">Uploading your photo…</span>}
-                  <input
-                    type="url"
-                    value={avatarImageUrl}
-                    aria-label="Profile image URL"
-                    onChange={(e) => {
-                      setAvatarImageUrl(e.target.value);
-                      setCustomAvatar('');
-                      setAvatarFileName('');
-                    }}
-                    placeholder="Or paste image URL (https://…)"
-                    className="profile-photo-url"
-                  />
                 </div>
               </div>
             </section>
@@ -1108,7 +1102,7 @@ export default function ProfileCompletionPage() {
                     }}
                   >
                     <option value="">Choose a faculty</option>
-                    {faculties.map((fac) => (
+                    {optionsIncludingSaved(faculties, faculty).map((fac) => (
                       <option key={fac} value={fac}>
                         {fac}
                       </option>
@@ -1150,7 +1144,7 @@ export default function ProfileCompletionPage() {
                     }}
                   >
                     <option value="">Choose current level</option>
-                    {levels.map((lvl) => (
+                    {optionsIncludingSaved(levels, level).map((lvl) => (
                       <option key={lvl} value={lvl}>
                         {lvl}
                       </option>
@@ -1398,8 +1392,8 @@ export default function ProfileCompletionPage() {
                 {!editMode && (
                   <a className="profile-skip-link" href="/dashboard">Skip for now</a>
                 )}
-                <a className="hub-outline-btn" href="/profile">Cancel</a>
-                <button type="submit" className="hub-primary-btn" disabled={saving || savedSuccess} aria-busy={saving}>
+                <a className="hub-outline-btn" href="/profile" onClick={confirmDiscard}>Cancel</a>
+                <button type="submit" className="hub-primary-btn" disabled={saving || savedSuccess || !isDirty} aria-busy={saving}>
                   {saving ? <><WaveLoader variant="inline" decorative /> Saving…</> : <>Save changes <ChevronRight size={16} /></>}
                 </button>
               </div>

@@ -158,8 +158,15 @@ export default function CbtHistoryPanel() {
                 {item.status !== 'in_progress' && (
                   <a className="hub-outline-btn" href={`/cbt/setup/jamb?mode=${item.mode}`}><RotateCcw size={14} /> Start a new session</a>
                 )}
-                <button type="button" className="er-danger-btn" onClick={() => { setDeleteError(''); setConfirming(item); }} disabled={busyId === item.id}>
-                  <Trash2 size={14} /> {busyId === item.id ? 'Deleting…' : 'Delete result'}
+                <button
+                  type="button"
+                  className="er-history-delete"
+                  aria-label="Delete"
+                  title="Delete this result"
+                  onClick={() => { setDeleteError(''); setConfirming(item); }}
+                  disabled={busyId === item.id}
+                >
+                  <Trash2 size={18} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -198,7 +205,7 @@ export default function CbtHistoryPanel() {
               disabled={Boolean(busyId)}
               aria-busy={Boolean(busyId)}
             >
-              <Trash2 size={14} /> {busyId ? 'Deleting…' : 'Delete result'}
+              {busyId ? 'Deleting…' : 'Delete permanently'}
             </button>
           </div>
         </div>

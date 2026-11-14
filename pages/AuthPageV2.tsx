@@ -73,6 +73,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [currentMode, setCurrentMode] = useState<Mode>(mode);
   const [contactMethod, setContactMethod] = useState<ContactMethod>('email');
+  const [accountType, setAccountType] = useState<'student' | 'parent' | 'teacher'>('student');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -622,11 +623,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         <button
                           key={option.value}
                           type="button"
-                          className={`auth-account-option${option.value === 'student' ? ' is-selected' : ''}${option.available ? '' : ' is-coming-soon'}`}
-                          aria-pressed={option.value === 'student'}
+                          className={`auth-account-option${option.value === accountType ? ' is-selected' : ''}${option.available ? '' : ' is-coming-soon'}`}
+                          aria-pressed={option.value === accountType}
                           aria-describedby={option.available ? undefined : 'auth-coming-soon'}
                           disabled={!option.available}
-                          onClick={() => undefined}
+                          onClick={() => { if (option.available) setAccountType(option.value); }}
                         >
                           <span className="auth-account-icon"><UserRound size={17} /></span>
                           <span>

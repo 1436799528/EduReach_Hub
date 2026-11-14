@@ -967,3 +967,75 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-two-col .admin-table { min-width: 0; }
 .admin-two-col .admin-table th,
 .admin-two-col .admin-table td { padding: 10px; }
+
+/* ==========================================================================
+   UX-3 — selection, bulk actions, reversible delete and icon-only row actions.
+   These are table primitives, not a new visual language: 4px rhythm, hairline
+   borders, 44px targets, crimson reserved for destructive controls.
+   ========================================================================== */
+.admin-select-cell { width: 44px; padding-right: 0 !important; }
+.admin-select-cell input { width: 18px; height: 18px; accent-color: var(--er-primary); cursor: pointer; }
+.admin-table tr.is-selected > td { background: var(--er-primary-soft); }
+.admin-bulk-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 12px; padding: 10px 14px;
+  border: 1px solid var(--admin-border); border-left: 3px solid var(--er-crimson);
+  border-radius: 8px; background: #fff;
+}
+.admin-bulk-bar > span { font-size: 13px; color: #344054; }
+.admin-bulk-bar .admin-btn.danger {
+  background: var(--er-crimson); color: #fff; border: 1px solid var(--er-crimson);
+  box-shadow: none; min-height: 40px;
+}
+.admin-bulk-bar .admin-btn.danger:hover { background: var(--er-crimson-deep); border-color: var(--er-crimson-deep); }
+.admin-bulk-bar .admin-text-btn { min-height: 40px; padding: 0 8px; font-size: 12px; }
+
+/* The countdown is a thin drain, not another chart. Undo is the only action. */
+.admin-undo-bar {
+  position: relative; display: flex; align-items: center; gap: 14px;
+  overflow: hidden; margin: 0 0 14px; padding: 11px 14px;
+  border: 1px solid var(--admin-border); border-radius: 8px; background: #fff;
+}
+.admin-undo-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #eef2f5; }
+.admin-undo-progress i {
+  display: block; width: 100%; height: 100%; transform-origin: left center;
+  background: var(--er-crimson); transition: transform 250ms linear;
+}
+.admin-undo-copy { display: grid; gap: 1px; margin-right: auto; }
+.admin-undo-copy strong { font-size: 13px; color: var(--er-text-primary); }
+.admin-undo-copy small { font-size: 11px; color: #667085; }
+.admin-undo-action {
+  min-height: 40px; padding: 0 14px; border: 1px solid var(--admin-border) !important;
+  border-radius: 8px; background: #fff; color: var(--er-primary) !important;
+  font-size: 12px !important; font-weight: 620;
+}
+.admin-undo-action:hover { background: var(--er-primary-soft); }
+
+/* A destructive row action is a target, not a link with a 12px glyph. The
+   visible glyph is 18px; the hit area is 44×44 on touch and pointer devices. */
+.admin-icon-btn {
+  display: inline-grid; place-items: center; flex: 0 0 44px;
+  width: 44px; height: 44px; padding: 0;
+  border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: #667085; cursor: pointer;
+}
+.admin-icon-btn:hover { background: #f7f9f8; color: var(--er-text-primary); }
+.admin-icon-btn--danger { color: var(--er-crimson); }
+.admin-icon-btn--danger:hover { background: #fdf2ef; color: var(--er-crimson-deep); }
+.admin-icon-btn:focus-visible { outline: 2px solid var(--er-primary); outline-offset: 2px; }
+.admin-icon-btn:disabled { opacity: .45; cursor: not-allowed; }
+@media (pointer: coarse) {
+  .admin-icon-btn { width: 44px; height: 44px; }
+}
+.admin-select-all {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px;
+  padding: 0 10px; border: 1px solid var(--admin-border); border-radius: 8px;
+  background: #fff; color: #475467; font-size: 12px; cursor: pointer;
+}
+.admin-select-all input { width: 18px; height: 18px; accent-color: var(--er-primary); }
+.admin-check-hit { display: grid; place-items: center; width: 44px; height: 44px; margin: -10px 0; cursor: pointer; }
+@media (pointer: coarse) {
+  .admin-shell .admin-btn.small,
+  .admin-table--stack td .admin-btn,
+  .admin-table--stack td .admin-select { min-height: 44px; }
+}

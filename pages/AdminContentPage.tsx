@@ -214,7 +214,7 @@ export default function AdminContentPage() {
                           when: toLocalInput(whenField(item)), endsAt: toLocalInput(item.ends_at), location: item.location || '',
                           priority: item.priority, status: item.status,
                         })}><Pencil size={12} /> Edit</button>
-                        <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${item.title || 'this event'}`} onClick={() => void remove(item)}><Trash2 size={12} /></button>
+                        <button type="button" className="admin-icon-btn admin-icon-btn--danger" aria-label="Delete" title={`Delete “${item.title || 'this event'}”`} onClick={() => void remove(item)}><Trash2 size={18} aria-hidden="true" /></button>
                       </div>
                     </td>
                   </tr>

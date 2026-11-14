@@ -254,7 +254,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261108120000', 'question_import_atomic_publication', '20261108120000_question_import_atomic_publication.sql', 'unique'),
     ('20261113000000', 'public_profiles', '20261113000000_public_profiles.sql', 'unique'),
     ('20261113120000', 'repair_profile_write_policy', '20261113120000_repair_profile_write_policy.sql', 'unique'),
-    ('20261113140000', 'avatar_storage', '20261113140000_avatar_storage.sql', 'unique')
+    ('20261113140000', 'avatar_storage', '20261113140000_avatar_storage.sql', 'unique'),
+    ('20261114110000', 'cbt_bank_security_boundary', '20261114110000_cbt_bank_security_boundary.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -368,6 +369,7 @@ with expected(version, migration) as (
     ,('20261113000000', '20261113000000_public_profiles.sql')
     ,('20261113120000', '20261113120000_repair_profile_write_policy.sql')
     ,('20261113140000', '20261113140000_avatar_storage.sql')
+    ,('20261114110000', '20261114110000_cbt_bank_security_boundary.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -376,6 +378,8 @@ with expected(version, migration) as (
     where applied.version = e.version
        or (e.migration = '20261027120000_cbt_subject_catalog_and_mock_rules.sql'
            and applied.name = 'cbt_subject_catalog_and_mock_rules')
+       or (e.migration = '20261114110000_cbt_bank_security_boundary.sql'
+           and applied.name = 'cbt_bank_security_boundary')
   )
 ), missing_objects as (
   select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration

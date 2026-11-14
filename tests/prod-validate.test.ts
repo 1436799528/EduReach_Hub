@@ -341,6 +341,7 @@ test('the release-sync query names the migrations production is missing, and pas
     '20261018172823_pdf_bank_explicit_source_verification.sql': '20261018172823',
     '20261018174207_pdf_bank_destination_links.sql': '20261018174207',
     '20261021120000_cbt_subject_selection_rules.sql': '20261019184519',
+    '20261114110000_cbt_bank_security_boundary.sql': '20261114151105',
   };
   const recordHistory = async (db: InstanceType<typeof PGlite>, applied: string[]) => {
     await db.exec(createHistory);

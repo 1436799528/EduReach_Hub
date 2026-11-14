@@ -154,3 +154,65 @@ export const institutionCourseContexts: Record<string, string> = {
 };
 
 export type StudentOption = (typeof commonInstitutions)[number];
+
+/**
+ * UX-3 — legacy profile values.
+ *
+ * Earlier profile forms stored short faculty and level labels ("Science",
+ * "300"). The current selects use the long catalogue labels. A legacy value
+ * that is not in the option list makes the browser render an empty select and
+ * silently block native form validation, so Save appears to do nothing.
+ *
+ * These helpers keep the stored value visible and map the common legacy labels
+ * to their current name. Unknown values are returned unchanged; the caller adds
+ * them to the option list so nothing is lost or invented.
+ */
+const facultyAliases: Record<string, string> = {
+  science: 'Faculty of Science',
+  engineering: 'Faculty of Engineering & Technology',
+  'engineering & technology': 'Faculty of Engineering & Technology',
+  medicine: 'Faculty of Clinical Sciences / Medicine',
+  'clinical sciences': 'Faculty of Clinical Sciences / Medicine',
+  law: 'Faculty of Law',
+  'social sciences': 'Faculty of Social Sciences',
+  arts: 'Faculty of Arts & Humanities',
+  humanities: 'Faculty of Arts & Humanities',
+  'business administration': 'Faculty of Management / Business Administration',
+  management: 'Faculty of Management / Business Administration',
+  'environmental sciences': 'Faculty of Environmental Sciences',
+  education: 'Faculty of Education',
+  agriculture: 'Faculty of Agriculture',
+  'basic medical sciences': 'Basic Medical Sciences',
+};
+
+const levelAliases: Record<string, string> = {
+  '100': '100 Level (Freshman)',
+  '200': '200 Level',
+  '300': '300 Level',
+  '400': '400 Level',
+  '500': '500 Level (Final Year)',
+  'postgraduate': 'Post-Graduate (Masters / PhD)',
+  'post-graduate': 'Post-Graduate (Masters / PhD)',
+  'jamb': 'JAMB Aspirant / Pre-Degree',
+  'aspirant': 'JAMB Aspirant / Pre-Degree',
+};
+
+export function normalizeFacultyValue(value: string | null | undefined): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if ((faculties as readonly string[]).includes(raw)) return raw;
+  return facultyAliases[raw.toLowerCase()] || raw;
+}
+
+export function normalizeLevelValue(value: string | null | undefined): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if ((levels as readonly string[]).includes(raw)) return raw;
+  return levelAliases[raw.toLowerCase()] || raw;
+}
+
+/** Keep a saved legacy value selectable instead of rendering a blank select. */
+export function optionsIncludingSaved<T extends string>(options: readonly T[], saved: string): string[] {
+  if (!saved || (options as readonly string[]).includes(saved)) return [...options];
+  return [saved, ...options];
+}

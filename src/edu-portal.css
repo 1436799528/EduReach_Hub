@@ -802,8 +802,13 @@ body.er-exam-mode{padding-bottom:0!important}
    page is long (subjects, timing, summary), so the primary action is pinned
    above the mobile nav bar instead of only at the end of the scroll. */
 @media (max-width:640px){
-  .er-setup-actions{position:sticky;bottom:calc(58px + env(safe-area-inset-bottom));z-index:60;background:#fff;margin:16px -14px 0;padding:12px 14px;border-top:1px solid #e2e8f0;box-shadow:0 -6px 16px rgba(15,23,42,.06);border-radius:12px 12px 0 0}
-  .er-setup-actions .hub-primary-btn{min-height:46px;font-size:14px}
+  /* UX-3: one action treatment on a phone. White bar, one deep-green primary,
+     quiet text link below it. No green-on-green surface, no gradient and no
+     competing outline button beside the action that starts the paper. */
+  .er-setup-actions{position:sticky;bottom:calc(58px + env(safe-area-inset-bottom));z-index:60;background:#fff;margin:16px -14px 0;padding:12px 14px;border-top:1px solid #e2e8f0;box-shadow:0 -4px 14px rgba(15,23,42,.05);border-radius:12px 12px 0 0;display:grid;gap:6px}
+  .er-setup-actions .hub-primary-btn{min-height:48px;font-size:14px;width:100%;justify-content:center;order:1}
+  .er-setup-actions .er-setup-secondary{order:2;min-height:44px;justify-content:center;border:0;background:transparent;color:#475467;font-size:12.5px;font-weight:560;text-decoration:none}
+  .er-setup-actions .er-setup-secondary:hover{background:transparent;color:var(--er-primary)}
   .dash-priority-item .dash-btn{min-height:44px}
 }
 
@@ -1255,8 +1260,6 @@ body.er-exam-mode{padding-bottom:0!important}
 @media (max-width: 520px) { .profile-photo-actions { display: grid; grid-template-columns: 1fr 1fr; } .profile-photo-actions .hub-outline-btn { width: 100%; padding: 0 8px; } }
 .profile-photo-actions .hub-outline-btn input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .profile-photo-note { color: #475569; font-size: 11px; }
-.profile-photo-url { width: 100%; box-sizing: border-box; padding: 9px 12px; font: inherit; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
-.profile-photo-url:focus-visible { outline: 2px solid var(--er-primary); outline-offset: 2px; border-color: var(--er-primary); box-shadow: 0 0 0 3px var(--er-primary-soft); }
 
 /* The global compact button reset removes the border, which left the profile
    "Cancel" link as a blank white block. Restore an explicit secondary button. */
@@ -1274,3 +1277,16 @@ body.er-exam-mode{padding-bottom:0!important}
 .hub-mobile-nav a { display: flex; align-items: center; min-height: 44px; padding: 0 8px; border-radius: 8px; text-decoration: none; color: #0f172a; }
 .hub-mobile-nav a:hover { background: #f8fafc; }
 .hub-mobile-close { display: grid !important; place-items: center; width: 44px; height: 44px; margin-right: -8px; border-radius: 8px !important; }
+
+/* UX-3 — touch targets. A phone action is 44px even when a compact sheet set a
+   32–34px height for desktop density. The hit area grows; the font does not. */
+@media (max-width: 640px) {
+  .hub-primary-btn,
+  .hub-outline-btn,
+  .dash-btn,
+  .er-setup-actions .hub-primary-btn {
+    min-height: 44px !important;
+    height: auto !important;
+  }
+  .er-setup-actions .hub-primary-btn { min-height: 48px !important; }
+}

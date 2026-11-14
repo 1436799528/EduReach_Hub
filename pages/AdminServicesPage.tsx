@@ -385,7 +385,7 @@ export default function AdminServicesPage() {
                         <button type="button" className="admin-btn small" onClick={() => void toggleActive(service)}>{service.active ? 'Hide' : 'Show'}</button>
                         <button type="button" className="admin-btn small" onClick={() => setGuideService(service)}><BookOpen size={12} /> Guide</button>
                         {!service.is_form_service && (
-                          <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${service.title || service.category || 'this service'}`} onClick={() => void remove(service)}><Trash2 size={12} /></button>
+                          <button type="button" className="admin-icon-btn admin-icon-btn--danger" aria-label="Delete" title={`Delete “${service.title || service.category || 'this service'}”`} onClick={() => void remove(service)}><Trash2 size={18} aria-hidden="true" /></button>
                         )}
                       </div>
                     </td>

@@ -95,6 +95,7 @@ export default function AdminQuestionImportPage() {
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
   const [committing, setCommitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
 
   // UI-2: extraction is a server job that can take minutes on a large paper.
@@ -410,6 +411,27 @@ export default function AdminQuestionImportPage() {
     }
   }
 
+  const reviewItems = detail
+    ? detail.items.filter((item) => reviewFilter === 'all' || item.review_status === reviewFilter)
+    : [];
+  const selectableReviewItems = reviewItems.filter((item) => item.review_status === 'pending');
+  const selectedReviewItems = selectableReviewItems.filter((item) => selectedItems.includes(item.id));
+  const allReviewSelected = selectableReviewItems.length > 0 && selectedReviewItems.length === selectableReviewItems.length;
+  const someReviewSelected = selectedReviewItems.length > 0 && !allReviewSelected;
+  const reviewSelectAllLabel = `Select all ${selectableReviewItems.length} matching`;
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someReviewSelected;
+  }, [someReviewSelected, reviewFilter, detail]);
+
+  function toggleReviewPage(checked: boolean) {
+    setSelectedItems((current) => {
+      const pageIds = new Set(selectableReviewItems.map((item) => item.id));
+      if (checked) return [...new Set([...current, ...pageIds])];
+      return current.filter((id) => !pageIds.has(id));
+    });
+  }
+
   if (selectedId) {
     return (
       <div className="admin-page">
@@ -427,7 +449,7 @@ export default function AdminQuestionImportPage() {
               <button type="button" className="admin-btn small secondary" onClick={beginMetaEdit}><Pencil size={14} /> Edit details</button>
             )}
             {detail && detail.item.imported_count === 0 && (
-              <button type="button" className="admin-btn small danger" onClick={() => void remove()}><Trash2 size={14} /> Delete</button>
+              <button type="button" className="admin-icon-btn admin-icon-btn--danger" aria-label="Delete" title="Delete this import" onClick={() => void remove()}><Trash2 size={18} aria-hidden="true" /></button>
             )}
           </div>
         </div>
@@ -566,6 +588,17 @@ export default function AdminQuestionImportPage() {
                   </button>
                 ))}
               </div>
+              <label className="admin-select-all">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  aria-label={reviewSelectAllLabel}
+                  checked={allReviewSelected}
+                  disabled={bulkBusy || committing || !selectableReviewItems.length}
+                  onChange={(event) => toggleReviewPage(event.target.checked)}
+                />
+                <span>{reviewSelectAllLabel}</span>
+              </label>
               <button type="button" className="admin-btn secondary" onClick={() => void approveSelected()} disabled={bulkBusy || committing || !selectedItems.length}>
                 {bulkBusy ? 'Approving…' : `Approve selected (${selectedItems.length})`}
               </button>

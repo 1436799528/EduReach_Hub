@@ -368,3 +368,25 @@ img,table,pre,.hub-panel,.er-exam-option,.er-exam-question{max-width:100%;box-si
   .er-footer{padding:16px 0 76px!important}
   .er-footer-links{gap:10px!important}
 }
+
+/* UX-3 — deleting one result is a trash target, not a labelled danger link.
+   18px glyph inside a 44px hit area; the confirmation carries the words. */
+.er-history-delete,
+.er-result-delete {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 1px solid #f3c3be;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--er-crimson, #b14933);
+  cursor: pointer;
+}
+.er-history-delete:hover,
+.er-result-delete:hover { background: #fdf2ef; border-color: #e7a99f; color: var(--er-crimson-deep, #B3331A); }
+.er-history-delete:focus-visible,
+.er-result-delete:focus-visible { outline: 2px solid var(--er-primary, #174A3A); outline-offset: 2px; }
+.er-history-delete:disabled { opacity: .45; cursor: not-allowed; }

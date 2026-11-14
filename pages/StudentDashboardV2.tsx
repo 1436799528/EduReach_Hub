@@ -499,6 +499,22 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const hasScores = averageScore !== null;
   const questionsInCompletedTests = attemptSummary.questionsInCompletedTests;
   const latestScores = [...completedAttempts].sort((a, b) => new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime()).slice(0, 2);
+  // UX-3: MyCBT's summary uses the same real attempt rows as the table. No
+  // metric is invented when a row lacks the fields it needs.
+  const latestAttempt = latestScores[0] || null;
+  const accuracyOf = (row: Attempt): number | null => {
+    const total = Number(row.total_questions);
+    const correct = Number(row.correct_answers);
+    if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(correct) || correct < 0) return null;
+    return Math.round((Math.min(correct, total) / total) * 100);
+  };
+  const latestAccuracy = latestAttempt ? accuracyOf(latestAttempt) : null;
+  const scoredQuestions = completedAttempts.reduce((total, row) => total + (Number.isFinite(Number(row.total_questions)) ? Number(row.total_questions) : 0), 0);
+  const scoredCorrect = completedAttempts.reduce((total, row) => total + (Number.isFinite(Number(row.correct_answers)) ? Number(row.correct_answers) : 0), 0);
+  const overallAccuracy = scoredQuestions > 0 ? Math.round((Math.min(scoredCorrect, scoredQuestions) / scoredQuestions) * 100) : null;
+  const latestDurationMinutes = latestAttempt?.submitted_at
+    ? Math.round((new Date(latestAttempt.submitted_at).getTime() - new Date(latestAttempt.created_at).getTime()) / 60_000)
+    : null;
   const scoreChange = latestScores.length === 2 ? Math.round(Number(latestScores[0].score) - Number(latestScores[1].score)) : null;
   const subjectCounts = submittedSubjectCounts(attempts);
   const subjectProgress = singleSubjectProgress(attempts);
@@ -731,11 +747,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     <button
                       type="button"
                       className="dash-icon-btn"
-                      aria-label={`Delete ${attemptTitle(row)} result`}
-                      title="Delete result"
+                      aria-label="Delete"
+                      title="Delete this result"
                       onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
                     >
-                      <Trash2 size={15} aria-hidden="true" />
+                      <Trash2 size={18} aria-hidden="true" />
                     </button>
                   ))}
                 </span>
@@ -766,11 +782,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <button
                 type="button"
                 className="dash-icon-btn"
-                aria-label={`Delete ${attemptTitle(row)} result`}
-                title="Delete result"
+                aria-label="Delete"
+                title="Delete this result"
                 onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
               >
-                <Trash2 size={15} aria-hidden="true" />
+                <Trash2 size={18} aria-hidden="true" />
               </button>
             ))}
           </div>
@@ -1072,6 +1088,16 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           {!hasScores && <span className="dash-metric-hint">After your first test</span>}
         </div>
         <div className="dash-metric-card">
+          <span className="dash-metric-label">Latest score</span>
+          <span className={`dash-metric-val${performance.latest ? '' : ' is-empty'}`}>{performance.latest ? `${performance.latest.score}%` : '—'}</span>
+          <span className="dash-metric-hint">{performance.latest ? performance.latest.subject : 'No scored paper yet'}</span>
+        </div>
+        <div className="dash-metric-card">
+          <span className="dash-metric-label">Accuracy</span>
+          <span className={`dash-metric-val${overallAccuracy !== null ? '' : ' is-empty'}`}>{overallAccuracy !== null ? `${overallAccuracy}%` : '—'}</span>
+          <span className="dash-metric-hint">{overallAccuracy !== null ? `${scoredCorrect} of ${scoredQuestions} questions` : 'No question counts recorded'}</span>
+        </div>
+        <div className="dash-metric-card">
           <span className="dash-metric-label">In progress</span>
           <span className="dash-metric-val">{attempts.filter(isActiveCbtAttempt).length}</span>
         </div>
@@ -1093,6 +1119,56 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           {questionsInCompletedTests === 0 && <span className="dash-metric-hint">No completed paper yet</span>}
         </div>
       </div>
+
+      <section className="dash-cbt-latest" aria-labelledby="dash-latest-cbt">
+        <div className="dash-cbt-latest-head">
+          <div>
+            <h2 id="dash-latest-cbt" className="dash-card-title">Latest CBT</h2>
+            <p className="dash-metric-hint">The most recent submitted paper in this sample. Nothing is inferred for missing fields.</p>
+          </div>
+          {latestAttempt && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(latestAttempt.id)}`}>Review result →</a>}
+        </div>
+        {latestAttempt ? (
+          <div className="dash-cbt-latest-grid">
+            <div><span>Exam / subjects</span><strong>{attemptTitle(latestAttempt)}</strong></div>
+            <div><span>Date</span><strong>{fmtDate(latestAttempt.submitted_at || latestAttempt.created_at)}</strong></div>
+            <div><span>Score</span><strong>{isScoredSubmission(latestAttempt) ? `${Math.round(Number(latestAttempt.score))}%` : 'Unavailable'}</strong></div>
+            <div><span>Status</span><strong>{latestAttempt.status === 'submitted' ? 'Submitted' : latestAttempt.status || 'Recorded'}</strong></div>
+            <div><span>Accuracy</span><strong>{latestAccuracy !== null ? `${latestAccuracy}%` : 'Unavailable'}</strong></div>
+            <div><span>Time</span><strong>{latestDurationMinutes !== null && latestDurationMinutes > 0 ? `${latestDurationMinutes} min` : 'Not recorded'}</strong></div>
+          </div>
+        ) : (
+          <p className="dash-chart-empty">No submitted CBT yet. Start a practice paper and your latest result will appear here.</p>
+        )}
+      </section>
+
+      <section className="dash-cbt-analysis" aria-labelledby="dash-performance-analysis">
+        <div className="dash-card-header">
+          <div>
+            <h2 id="dash-performance-analysis" className="dash-card-title">Performance analysis</h2>
+            <p className="dash-metric-hint">Latest, average, best and accuracy come from the scored papers loaded above.</p>
+          </div>
+        </div>
+        <div className="dash-cbt-analysis-grid">
+          <div className="dash-chart-panel">
+            <h3>Score trend</h3>
+            {performance.trend.length >= 2
+              ? <><TrendChart points={performance.trend} /><p className="dash-metric-hint">{performance.trendSummary ? `${performance.trendSummary.direction === 'up' ? 'Up' : performance.trendSummary.direction === 'down' ? 'Down' : 'No change'} ${Math.abs(performance.trendSummary.change)} points from the first to the latest scored paper in this sample.` : 'Trend needs two scored papers.'}</p></>
+              : <p className="dash-chart-empty">No performance trend yet. Complete two scored papers to compare your scores; one score is a result, not a direction.</p>}
+          </div>
+          <div className="dash-chart-panel">
+            <h3>Subjects</h3>
+            {performance.subjects.length ? (
+              <>
+                <p className="dash-metric-hint">Only single-subject papers with a complete saved plan are compared.</p>
+                {performance.highlights.strengths.length > 0 && <p className="dash-cbt-subject-line"><span className="dash-band is-strong">Strongest</span> {performance.highlights.strengths.map((row) => `${row.subject} ${row.average}%`).join(' · ')}</p>}
+                {performance.highlights.needsPractice.length > 0 && <p className="dash-cbt-subject-line"><span className="dash-band is-needs-practice">Needs practice</span> {performance.highlights.needsPractice.map((row) => `${row.subject} ${row.average}%`).join(' · ')}</p>}
+                {!performance.highlights.strengths.length && !performance.highlights.needsPractice.length && <p className="dash-chart-empty">No strong or weak subject yet; more single-subject papers are needed.</p>}
+              </>
+            ) : <p className="dash-chart-empty">No subject comparison yet. A single-subject paper with a saved question plan is needed.</p>}
+          </div>
+        </div>
+      </section>
 
       {subjectCounts.length > 0 && <div aria-labelledby="dash-subject-summary">
         <h2 id="dash-subject-summary" className="dash-card-title">Subjects selected in completed tests</h2>
