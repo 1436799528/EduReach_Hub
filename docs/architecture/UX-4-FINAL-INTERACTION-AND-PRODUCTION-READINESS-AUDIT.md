@@ -38,6 +38,8 @@ places where the interface still made a claim the code could not keep:
   not send, and its resend action is named for what it does.
 - A failed policy read is titled “Policy unavailable”, not “Page not found”,
   and its reload control is a 44 px target.
+- The persistent floating “Cookie settings” pill was removed. Privacy choices
+  reopen from a normal footer control, so nothing hovers over page content.
 - Student dashboard TIME now uses a real start time fallback, so a completed
   local paper does not look instantaneous; the failure action says “Refresh
   page” rather than repeating “Try again”.
@@ -276,6 +278,11 @@ protection. That work was not done; the recorded target is Netlify.
   titles; a failed `/api/site-content` read is “Policy unavailable”, not a 404.
   `.er-legal-retry` is a 44 px inline-flex target rather than a 22 px bare
   button.
+- `CookieConsent` no longer renders a fixed pill after a choice is saved. The
+  footer’s **Cookie settings** button dispatches
+  `edureach:open-cookie-settings`, which reopens the same preferences panel.
+  The floating control was removed completely; there is no hidden replacement
+  over the page.
 - The skip link is 44 px tall and remains the first focusable element.
 
 ### C.5 Shared primitives
@@ -448,9 +455,9 @@ Static budget audit after the final build: **10 / 10 checks pass**.
 | :--- | ---: | ---: |
 | Entry chunk (gzip) | 46.6 KB | ≤ 100.0 KB |
 | Supabase client chunk (gzip) | 53.0 KB | ≤ 60.0 KB |
-| Bundle CSS (gzip) | 46.1 KB | ≤ 51.0 KB |
-| Critical path (gzip) | 207.1 KB | ≤ 211.0 KB |
-| All chunks (gzip) | 362.4 KB | ≤ 365.0 KB |
+| Bundle CSS (gzip) | 45.9 KB | ≤ 51.0 KB |
+| Critical path (gzip) | 206.8 KB | ≤ 211.0 KB |
+| All chunks (gzip) | 362.3 KB | ≤ 365.0 KB |
 | Largest image | 41.2 KB | ≤ 64.0 KB |
 | Raster images in deploy | 310.4 KB | ≤ 320.0 KB |
 | Font chain | 2 preconnects, stylesheet, `display=swap`, 0 `@import` | pass |
@@ -458,7 +465,7 @@ Static budget audit after the final build: **10 / 10 checks pass**.
 | Image loading | 0 of 17 raster `<img>` without `loading`/`fetchPriority` | pass |
 
 The all-chunks budget was raised from **362 KB to 365 KB** this pass. The
-measured value is 362.4 KB; the change is recorded in `scripts/perf-audit.ts`
+measured value is 362.3 KB; the change is recorded in `scripts/perf-audit.ts`
 with the reason (the added interaction primitives plus ordinary route growth),
 and the separate first-load cap remains 211 KB. This is not a silent regression.
 
@@ -667,7 +674,7 @@ regression.
    unconfigured server returns 503 for `/api/site-content`; the page says
    “Policy unavailable” and offers a reload and contact link. Do not mistake
    that state for a missing route.
-5. **The performance budget is tight.** All chunks are 362.4 KB against a
+5. **The performance budget is tight.** All chunks are 362.3 KB against a
    365 KB cap. The next JavaScript addition should trim or record another
    measured change; first load is the stronger 211 KB constraint.
 6. **The admin table header region** is still a labelled scroll region on
@@ -712,6 +719,7 @@ Modified interaction surfaces: `pages/AdminNewsPage.tsx`,
 `pages/LegalPage.tsx`, `server.ts`,
 `src/lib/api.ts`, `src/lib/studentDashboard.ts`,
 `src/components/AsyncState.tsx`, `src/components/NotificationCenter.tsx`,
+`src/components/CookieConsent.tsx`, `src/components/SiteFooter.tsx`,
 `src/components/admin/AdminQuickFind.tsx`, `src/admin.css`,
 `src/auth-page.css`, `src/edu-portal.css`, `src/styles/a11y.css`,
 `scripts/perf-audit.ts`, `docs/DEPLOYMENT_DECISION.md`, and the affected

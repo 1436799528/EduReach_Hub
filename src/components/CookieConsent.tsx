@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Cookie, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { readPrivacyPreferences, savePrivacyPreferences } from '../lib/privacyPreferences';
 import { OPTIONAL_ANALYTICS_ENABLED } from '../lib/analyticsAvailability';
 
@@ -52,9 +52,17 @@ export default function CookieConsent() {
     setVisible(true);
   }
 
+  // The persistent floating pill covered page controls, especially on phones.
+  // The footer's "Cookie settings" control dispatches this event instead, so a
+  // saved choice can still be reviewed without a control hovering the page.
+  useEffect(() => {
+    const openFromFooter = () => openSettings();
+    window.addEventListener('edureach:open-cookie-settings', openFromFooter);
+    return () => window.removeEventListener('edureach:open-cookie-settings', openFromFooter);
+  }, []);
+
   return (
     <>
-      {!visible && <button className="er-cookie-settings" type="button" aria-label="Cookie settings" onClick={openSettings}><Cookie size={15} aria-hidden="true" /><span className="er-cookie-settings-label">Cookie settings</span></button>}
       {visible && (
         <section className="er-cookie-consent" aria-labelledby="er-cookie-title" aria-describedby="er-cookie-description">
           <div className="er-cookie-heading">

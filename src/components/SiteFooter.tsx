@@ -106,6 +106,13 @@ export default function SiteFooter() {
             {LEGAL.map((link) => (
               <a key={link.href} href={link.href}>{link.label}</a>
             ))}
+            <button
+              type="button"
+              className="er-footer-cookie-settings"
+              onClick={() => window.dispatchEvent(new CustomEvent('edureach:open-cookie-settings'))}
+            >
+              Cookie settings
+            </button>
           </nav>
         </div>
       </div>
