@@ -66,7 +66,7 @@ export default function AdminAnalyticsPage() {
   return (
       <div className="admin-page">
         <div className="admin-page-header">
-          <div><h1>Analytics &amp; Reports</h1><p>Recorded platform activity and operational health. Missing data is shown as unavailable, not zero.</p></div>
+          <div><h1>Analytics</h1><p>Recorded activity and operational health. Missing data reads as unavailable.</p></div>
           <button type="button" className="admin-btn" onClick={() => void load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
         </div>
 
@@ -88,9 +88,7 @@ export default function AdminAnalyticsPage() {
 
         {data && (
           <>
-            <p className="admin-data-note">
-              Daily trend lines, active or returning-user totals, CBT completion time, subject-level performance and score distributions are not supplied by the current analytics API; comparisons are omitted.
-            </p>
+            <p className="admin-data-note">Trend lines and subject breakdowns are not supplied by the analytics API, so no comparison is drawn.</p>
             <div className="admin-chart-grid">
               <div className="admin-chart-card">
                 <div className="admin-chart-head"><div><h2>Service queue composition</h2><p>Every request status the analytics API returns.</p></div><span className="admin-report-period">All-time</span></div>
@@ -98,7 +96,7 @@ export default function AdminAnalyticsPage() {
                   <AdminDonut
                     ariaLabel="Service queue composition by status"
                     segments={[
-                      { label: 'Open', value: pending || 0, color: '#0A3E83' },
+                      { label: 'Open', value: pending || 0, color: '#174A3A' },
                       { label: 'Completed', value: completed || 0, color: '#067647' },
                       { label: 'Rejected / cancelled', value: rejected || 0, color: '#B42318' },
                       { label: 'Closed / other', value: otherRequests || 0, color: '#98A2B3' },
@@ -133,7 +131,7 @@ export default function AdminAnalyticsPage() {
                       <h3>Searches</h3>
                       <BarStat label="Searches performed" value={data.activity.searches} max={Math.max(data.activity.searches, 1)} />
                       <BarStat label="Found no result" value={data.activity.zeroResultSearches} max={Math.max(data.activity.searches, 1)} />
-                      <p className="admin-footnote">Search terms are not collected, only how many searches happened and how many found nothing. That is what this panel is for.</p>
+                      <p className="admin-footnote">Only search counts are recorded, not the terms.</p>
                     </div>
                     <div className="admin-focus-group"><h3>Most-started CBT exams</h3>{data.activity.cbtStarts.length ? data.activity.cbtStarts.slice(0, 6).map((row) => <BarStat key={row.exam} label={row.exam} value={row.count} max={data.activity!.cbtStarts[0].count} tone="green" />) : <p className="admin-footnote">No CBT attempts recorded yet.</p>}</div>
                     <div className="admin-focus-group"><h3>Service funnels (views → submissions)</h3>

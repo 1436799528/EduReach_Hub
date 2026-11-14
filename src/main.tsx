@@ -8,8 +8,6 @@ import { AuthProvider } from './lib/auth';
 import { installGlobalErrorReporting } from './lib/errorTelemetry';
 import './hub.css';
 import './card-system.css';
-import './hub-portal-tuning.css';
-import './dashboard-v2.css';
 import './cbt-engine.css';
 import './compact-portal.css';
 import './image-card-system.css';

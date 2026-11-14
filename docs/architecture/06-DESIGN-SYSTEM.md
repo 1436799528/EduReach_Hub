@@ -12,7 +12,7 @@ be invented per page.
 
 The repository contains 16 stylesheets (`src/myschool-clean.css`,
 `src/compact-*.css`, `src/card-system.css`, `src/image-card-system.css`,
-`src/dashboard-v2.css`, `src/admin.css`, `src/cbt-engine.css`,
+`src/admin.css`, `src/cbt-engine.css`,
 `src/student-dashboard.css`, `src/hub*.css`, `src/edu-portal.css`,
 `src/home-card-first.css`, `src/data-control.css`, `src/theme.css` …). That is a
 consequence of fast iteration, not a plan. The 2026-09-30 audit warned about

@@ -6,7 +6,6 @@ exam-rule or schema change.
 **Touches:** `src/styles/theme.css`, `src/styles/brand-actions.css`,
 `src/styles/a11y.css`, `src/styles/type-system.css`, `src/home-card-first.css`,
 `src/hub.css`, `src/myschool-clean.css`, `src/edu-portal.css`,
-`src/dashboard-v2.css`, `src/hub-portal-tuning.css`,
 `src/components/HubLayout.tsx`, `pages/AuthPageV2.tsx`,
 `pages/ProfileCompletionPage.tsx`, twelve admin save buttons,
 `scripts/perf-audit.ts`, four documents, one new test file.
@@ -88,9 +87,8 @@ to step down to `#0F3A2D`; the owner's own commit `9f0517a` had already used
 - **Fields** - `theme.css` owns the shared `:where(input, select, textarea)`
   rules, so hover, `[aria-invalid="true"]`, `:disabled` and the checkbox/radio
   `accent-color` are added there rather than duplicated per page.
-- **Status** - `type-system.css` notices, `hub-portal-tuning.css` and
-  `dashboard-v2.css` badges, and `hub.css` form errors now read the status
-  tokens.
+- **Status** - shared notices and status badges now live in `type-system.css`,
+  and `hub.css` form errors read the status tokens.
 
 ## 4. Contrast, measured
 

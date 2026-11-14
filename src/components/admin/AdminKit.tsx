@@ -91,16 +91,13 @@ export function StatusBadge({ status }: { status: string }) {
 // KPI metric card
 // ---------------------------------------------------------------------------
 
-export function Metric({ label, value, detail, icon, tone }: { label: string; value: ReactNode; detail?: string; icon?: ReactNode; tone?: 'orange' | 'green' | 'blue' | 'purple' }) {
+export function Metric({ label, value, detail, icon }: { label: string; value: ReactNode; detail?: string; icon?: ReactNode; tone?: 'orange' | 'green' | 'blue' | 'purple' }) {
   return (
     <div className="admin-kpi">
-      {(icon || tone) && (
-        <div className="admin-kpi-head">
-          <span>{label}</span>
-          {icon && <i className={`admin-kpi-icon ${tone ? tone : ''}`}>{icon}</i>}
-        </div>
-      )}
-      {!(icon || tone) && <span>{label}</span>}
+      <div className="admin-kpi-head">
+        <span>{label}</span>
+        {icon && <i className="admin-kpi-icon" aria-hidden="true">{icon}</i>}
+      </div>
       <strong>{value}</strong>
       {detail && <small>{detail}</small>}
     </div>
@@ -124,7 +121,7 @@ export function AdminSummary({ label, items }: { label: string; items: AdminSumm
         <div className="admin-summary-item" key={item.label}>
           <div className="admin-summary-top">
             <span className="admin-summary-label">{item.label}</span>
-            {(item.icon || item.tone) && <i className={`admin-summary-icon ${item.tone || 'blue'}`} aria-hidden="true">{item.icon}</i>}
+            {item.icon && <i className="admin-summary-icon" aria-hidden="true">{item.icon}</i>}
           </div>
           <strong className="admin-summary-value">{item.value}</strong>
           {item.detail && <small className="admin-summary-detail">{item.detail}</small>}

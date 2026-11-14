@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// P3-5: 17 stylesheets are loaded on every route. The audit's complaint is not
+// P3-5: 16 stylesheets are loaded on every route. The audit's complaint is not
 // the count for its own sake — it is that the count grew unmanaged and nothing
 // recorded why each sheet exists or which order they depend on. This test pins
 // the load order contract so growth (and consolidation) is a deliberate edit to
@@ -17,8 +17,6 @@ const main = readFileSync(join(root, 'src/main.tsx'), 'utf8');
 const EXPECTED = [
   './hub.css',
   './card-system.css',
-  './hub-portal-tuning.css',
-  './dashboard-v2.css',
   './cbt-engine.css',
   './compact-portal.css',
   './image-card-system.css',
@@ -77,5 +75,5 @@ test('every sheet named in the architecture note exists on disk', () => {
     assert.doesNotThrow(() => readFileSync(path, 'utf8'), `${sheet} is documented but missing`);
   }
   const note = readFileSync(join(root, 'docs/architecture/STYLESHEET_LAYERS.md'), 'utf8');
-  assert.match(note, /17 sheets → 8/, 'the consolidation target is recorded in the note');
+  assert.match(note, /16 sheets → 8/, 'the consolidation target is recorded in the note');
 });

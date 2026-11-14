@@ -28,6 +28,7 @@ import SkipLink from '../src/components/a11y/SkipLink';
 import { AdminStatusDot, useAdminHealth } from '../src/components/admin/AdminKit';
 import { useModalDialog } from '../src/lib/useModalDialog';
 import { AdminCapabilityProvider } from '../src/components/admin/Can';
+import AdminQuickFind from '../src/components/admin/AdminQuickFind';
 import { API_BASE_PATH } from '../src/lib/apiBase';
 import {
   capabilitiesForRole,
@@ -300,6 +301,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   const navItems = ADMIN_CONSOLE_NAV.filter((item) => item.kind === 'group' || item.capability === null || hasCapability(session, item.capability));
   const activeSection = ADMIN_CONSOLE_NAV.find((item) => item.kind === 'link' && item.href === pathname);
+  const quickFindItems = navItems.flatMap((item) => (item.kind === 'link' ? [{ href: item.href, label: item.label }] : []));
   const healthLabel = health.state === 'ok'
     ? `API reachable${health.latencyMs !== null ? ` in ${health.latencyMs} milliseconds` : ''}`
     : health.state === 'down' ? 'API unreachable' : 'Checking API health';
@@ -352,6 +354,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           {mobileNavOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
         </button>
         <div className="admin-breadcrumb"><span>Admin</span><span aria-hidden="true">/</span><strong>{activeSection?.kind === 'link' ? activeSection.label : 'Overview'}</strong></div>
+        <AdminQuickFind items={quickFindItems} />
         <nav className="admin-top-links" aria-label="Admin shortcuts">
           <a href="/admin" aria-current={pathname === '/admin' ? 'page' : undefined}>Overview</a>
           <a href="/" aria-label="Open EduReach student site"><Globe size={15} aria-hidden="true" /><span>Student site</span></a>

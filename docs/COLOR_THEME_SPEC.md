@@ -25,38 +25,41 @@ The interface maintains a balance between:
 
 ## 2. Core Color Palette
 
-### Primary action — Logo Navy
-* **HEX:** `#0A3E83` (token `--er-primary`)
-* The colour of an action the student takes. It carries the meaning that used to
-  be split between blue and crimson, and it is the only fill for a primary
-  button.
-* **States:** hover `#083570` (`--er-primary-hover`), pressed `#062B5C`
-  (`--er-primary-active`), border `#083570` (`--er-primary-border`) stepping to
-  `#072F64` and `#05264F`, selected surface `#EDF4FB` (`--er-primary-soft`)
-  with edge `#CCE0F3` (`--er-primary-soft-border`).
-* **Contrast:** white text on the fill measures **10.35:1** at rest, 11.98:1 on
-  hover and 13.93:1 pressed; as text on white it is 10.35:1 and 9.33:1 on the
-  selected surface. Every state clears AA (4.5:1) with a wide margin.
+### Primary action — Deep green
+* **HEX:** `#174A3A` (token `--er-primary`)
+* The colour of an action the student takes, a selected navigation item and a
+  positive key state. It is the only fill for a primary button.
+* **States:** hover `#123C2F` (`--er-primary-hover`), pressed `#0D2E24`
+  (`--er-primary-active`), border `#123C2F` (`--er-primary-border`), selected
+  surface `#EDF5F0` (`--er-primary-soft`) with edge `#CFE4D8`
+  (`--er-primary-soft-border`).
+* **Contrast:** white text on the fill measures 9.89:1 at rest, 11.8:1 on hover
+  and 14.1:1 pressed. As text it clears AA on white and on the selected surface.
 * **Use for:**
-  - Primary buttons: Start practising, Past questions, Continue, Submit, Save
+  - Primary buttons: Start practising, Continue, Submit, Save changes
   - Primary links and the action inside a block
-  - Selected states: filters, tabs, steps, answer options, the current question
-  - Active progress indicators (page progress, the resume bar)
-  - Form focus tint and `accent-color`
+  - Selected states: filters, tabs, steps, answer options, current navigation
+  - Form focus ring and `accent-color`
 * **Never** for card surfaces, banners, exam identity marks or decorative
-  section backgrounds.
+  section backgrounds. Selected states use the pale green surface, not a solid
+  green block.
 
-### Logo accents — Blue and Red
-* **Navy:** `#0A3E83` (`--er-brand-navy`), the primary action colour.
+### Logo accents — Navy, Blue and Red
+* **Navy:** `#0A3E83` (`--er-brand-navy`), the wordmark colour. It is a brand
+  mark, not the action colour.
 * **Blue:** `#1D9BE0` (`--er-brand-blue`) for large fills, gradients and
   decorative marks. For a blue icon or small label on a pale surface use the
-  accessible ink `#0F6BAA` (`--er-brand-blue-ink`): 5.67:1 on white and 5.11:1
-  on `#EDF4FB`.
+  accessible ink `#0F6BAA` (`--er-brand-blue-ink`): 5.67:1 on white.
 * **Red:** `#E3232D` (`--er-brand-logo-red`) is the wordmark's red. It is a
   brand mark, not the error colour and not a button fill; errors stay `#B91C1C`.
-* The header search, mobile navigation, state, notification, profile and auth
-  icons use the blue ink. Icons are not left at a neutral grey when colour
-  carries the brand.
+* Ordinary metadata icons are neutral grey. Brand colour is not sprayed across
+  every icon in a card.
+
+### Secondary action — quiet outline
+* **Surface:** white (`--er-surface`); **edge:** `#D8DEE5`
+  (`--er-secondary-border`); **label:** `#475467` (`--er-text-secondary`).
+* Hover surface `#F7F9F8`, pressed `#EEF1F4`. A secondary control never becomes
+  a second solid green button.
 
 ### Brand accent — Crimson
 * **HEX:** `#B14933` (token `--er-crimson`); deep `#B3331A`

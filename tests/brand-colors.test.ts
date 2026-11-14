@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// UI-3: logo navy is the colour of an action; crimson is the brand accent.
+// UI-3: deep green is the colour of an action; crimson is the brand accent.
 //
 // The palette had drifted into "crimson is the default button", set
 // independently by five component sheets. This file pins the replacement rules
@@ -36,10 +36,10 @@ test('the palette is defined once, in the token layer', () => {
     return match[1].toUpperCase();
   };
 
-  assert.equal(token('--er-primary'), '#0A3E83', 'primary action is logo navy');
+  assert.equal(token('--er-primary'), '#174A3A', 'primary action is deep green');
   assert.equal(token('--er-on-primary'), '#FFFFFF', 'text on a primary action is white');
   assert.equal(token('--er-crimson'), '#B14933', 'crimson stays the brand accent');
-  assert.equal(token('--er-brand-navy'), '#0A3E83', 'the wordmark navy is the action colour');
+  assert.equal(token('--er-brand-navy'), '#0A3E83', 'the wordmark navy stays a brand colour');
   assert.equal(token('--er-brand-blue'), '#1D9BE0', 'the wordmark blue is available for fills');
   assert.equal(token('--er-brand-blue-ink'), '#0F6BAA', 'blue ink is readable on pale surfaces');
   assert.ok(contrast('#0F6BAA', '#ffffff') >= 4.5, 'logo-blue ink clears AA on white');
@@ -47,28 +47,28 @@ test('the palette is defined once, in the token layer', () => {
 
   // Hover and pressed must darken, not lighten: white text has to keep its
   // contrast as the fill changes.
-  assert.equal(token('--er-primary-hover'), '#083570', 'hover steps down one shade');
-  assert.equal(token('--er-primary-active'), '#062B5C', 'press steps down again');
-  assert.equal(token('--er-primary-soft'), '#EDF4FB', 'the selected surface is pale blue');
-  assert.equal(token('--er-primary-soft-border'), '#CCE0F3', 'the selected edge is pale blue');
+  assert.equal(token('--er-primary-hover'), '#123C2F', 'hover steps down one shade');
+  assert.equal(token('--er-primary-active'), '#0D2E24', 'press steps down again');
+  assert.equal(token('--er-primary-soft'), '#EDF5F0', 'the selected surface is pale green');
+  assert.equal(token('--er-primary-soft-border'), '#CFE4D8', 'the selected edge is pale green');
 
   const hover = token('--er-primary-hover');
   const active = token('--er-primary-active');
-  assert.ok(luminance(hover) < luminance('#0A3E83'), 'hover is darker than rest');
+  assert.ok(luminance(hover) < luminance('#174A3A'), 'hover is darker than rest');
   assert.ok(luminance(active) < luminance(hover), 'pressed is darker than hover');
 });
 
 test('the action colour clears AA at every state', () => {
   for (const [fill, label] of [
-    ['#0A3E83', 'resting'],
-    ['#083570', 'hover'],
-    ['#062B5C', 'pressed'],
+    ['#174A3A', 'resting'],
+    ['#123C2F', 'hover'],
+    ['#0D2E24', 'pressed'],
   ] as const) {
     assert.ok(contrast('#ffffff', fill) >= 4.5, `white text on the ${label} fill`);
   }
   // The primary is also used as a link and icon colour on light surfaces.
-  assert.ok(contrast('#0A3E83', '#ffffff') >= 4.5, 'primary text on white');
-  assert.ok(contrast('#0A3E83', '#f7f9fc') >= 4.5, 'primary text on the page background');
+  assert.ok(contrast('#174A3A', '#ffffff') >= 4.5, 'primary text on white');
+  assert.ok(contrast('#174A3A', '#f7f8f7') >= 4.5, 'primary text on the page background');
   // Crimson remains readable where it is kept.
   assert.ok(contrast('#b14933', '#ffffff') >= 4.5, 'crimson brand accent on white');
 });

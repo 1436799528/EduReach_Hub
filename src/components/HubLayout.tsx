@@ -174,7 +174,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </nav>
 
-          <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" submitLabel="Go" />
+          {path !== '/' && <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" submitLabel="Go" />}
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

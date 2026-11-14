@@ -26,7 +26,6 @@ import { useToast } from '../src/components/ui/Toast';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
-import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
 import { saveStudentProfile, type ProfileWriteClient, type StudentProfilePayload } from '../src/lib/profileSave';
 import { generatePublicProfileSlug } from '../src/lib/publicProfile';
@@ -490,11 +489,11 @@ export default function ProfileCompletionPage() {
       setProfileCompleted(true);
       setSavedSuccess(true);
       setSaving(false);
-      pushToast({ tone: 'success', title: 'Profile saved', detail });
+      pushToast({ tone: 'success', title: 'Profile saved successfully', detail });
       window.setTimeout(() => {
         setSavedSuccess(false);
         navigateInApp(editMode ? '/profile' : '/dashboard');
-      }, 1100);
+      }, 1400);
     };
 
     if (!isSupabaseConfigured || user?.isLocal) {
@@ -524,12 +523,11 @@ export default function ProfileCompletionPage() {
     const result = await saveStudentProfile(supabase as unknown as ProfileWriteClient, activeUserId, payload);
     if (!result.ok) {
       setSaving(false);
-      const safe = userFacingError(result.error, '').trim();
-      const detail = safe
-        ? `Profile was not saved: ${safe}`
-        : 'Profile was not saved. Check your connection and try again.';
+      // Never surface a database or PostgREST message to a student. The field
+      // level detail is already in the form; this is the sentence they act on.
+      const detail = 'Couldn’t save your profile. Try again.';
       setMessage(detail);
-      pushToast({ tone: 'danger', title: 'Profile not saved', detail: 'Your changes are still on this page. Try again when you are connected.' });
+      pushToast({ tone: 'danger', title: 'Profile not saved', detail: 'Your changes are still on this page.' });
       // Never leave a stale success state claiming the write happened.
       setSavedSuccess(false);
       return;
@@ -541,9 +539,27 @@ export default function ProfileCompletionPage() {
   if (profileLoading) {
     return (
       <HubLayout>
-        <div className="hub-page" style={{ padding: '32px 0 60px' }}>
-          <div className="hub-container" style={{ maxWidth: '780px' }}>
-            <div className="hub-panel" style={{ padding: '30px', textAlign: 'center', color: '#5e6c82' }}>Loading your saved profile…</div>
+        <div className="hub-page profile-page">
+          <div className="hub-container profile-shell" aria-busy="true" aria-label="Loading your profile">
+            <div className="profile-identity-card">
+              <div className="profile-identity-main">
+                <div className="profile-avatar er-skel" style={{ background: '#e8edf2' }} aria-hidden="true" />
+                <div className="profile-identity-copy" style={{ minWidth: 220 }}>
+                  <div className="er-skel" style={{ width: 180, height: 24, borderRadius: 6 }} aria-hidden="true" />
+                  <div className="er-skel" style={{ width: 250, height: 14, marginTop: 9, borderRadius: 5 }} aria-hidden="true" />
+                </div>
+              </div>
+            </div>
+            <div className="profile-panel-grid">
+              {[0, 1].map((panel) => (
+                <div className="profile-panel" key={panel} aria-hidden="true">
+                  <div className="er-skel" style={{ width: 130, height: 13, borderRadius: 5 }} />
+                  {[0, 1, 2].map((row) => (
+                    <div className="er-skel" key={row} style={{ height: 38, marginTop: 12, borderRadius: 7 }} />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </HubLayout>
@@ -727,10 +743,6 @@ export default function ProfileCompletionPage() {
               </section>
             </div>
 
-            <p className="profile-summary-note">
-              Your academic profile is used to personalise your dashboard and service requests.
-              {emailVerified ? ' Your email is verified.' : ' Verify your email to add the verified mark beside your name.'}
-            </p>
           </div>
         </div>
       </HubLayout>
@@ -786,7 +798,7 @@ export default function ProfileCompletionPage() {
               }}
             >
               <CheckCircle2 size={20} color="#047857" />
-              <span>{editMode ? 'Profile saved. Taking you back to your profile…' : 'Profile completed. Opening your dashboard…'}</span>
+              <span>{editMode ? 'Profile saved successfully. Returning to your profile…' : 'Profile saved successfully. Opening your dashboard…'}</span>
             </div>
           )}
 
@@ -1360,7 +1372,7 @@ export default function ProfileCompletionPage() {
             <div className="profile-save-bar">
               <div className="profile-save-state" role="status" aria-live="polite">
                 {saving
-                  ? 'Saving changes…'
+                  ? 'Saving...'
                   : savedSuccess
                     ? 'Saved'
                     : isDirty

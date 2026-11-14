@@ -1,25 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   AlarmClock,
+  BarChart3,
   Bell,
-  GraduationCap,
+  BookOpen,
+  Calculator,
   Bookmark,
   ClipboardList,
   Edit,
-  ExternalLink,
   LayoutDashboard,
   LogOut,
-  Inbox,
   MonitorPlay,
   Shield,
   ShieldCheck,
   Trash2,
-  TrendingUp,
   User,
-  UserCheck,
   Wrench,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
+import VerifiedBadge from '../src/components/VerifiedBadge';
 import NotificationCenter from '../src/components/NotificationCenter';
 import { useToast } from '../src/components/ui/Toast';
 import { SkeletonRows } from '../src/components/Skeleton';
@@ -232,6 +231,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const { push: pushToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadFailure, setLoadFailure] = useState(false);
   const [error, setError] = useState('');
@@ -328,6 +328,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       }
 
       const user = session.user;
+      setEmailVerified(Boolean(user.email_confirmed_at));
       const [profileResult, serviceResult, institutionResult, requestResult, attemptsResult, savedResult, cgpaSnapshot, cgpaHistory, notificationResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('service_catalog').select('id,service_key,title').eq('active', true).order('title'),
@@ -727,8 +728,14 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       </button>
                     </span>
                   ) : (
-                    <button type="button" className="dash-card-link dash-delete-link" onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}>
-                      Delete
+                    <button
+                      type="button"
+                      className="dash-icon-btn"
+                      aria-label={`Delete ${attemptTitle(row)} result`}
+                      title="Delete result"
+                      onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
                     </button>
                   ))}
                 </span>
@@ -756,7 +763,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 </button>
               </span>
             ) : (
-              <button type="button" className="dash-card-link dash-delete-link" onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}>Delete →</button>
+              <button
+                type="button"
+                className="dash-icon-btn"
+                aria-label={`Delete ${attemptTitle(row)} result`}
+                title="Delete result"
+                onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
+              >
+                <Trash2 size={15} aria-hidden="true" />
+              </button>
             ))}
           </div>
         </li>;
@@ -764,224 +779,188 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     </>
   );
 
-  const cgpaTrendPanel = (
-    <div className="dash-performance-panel">
-      <h3>CGPA by saved term</h3>
-      {cgpaHistory.length ? (
-        <div className="dash-cgpa-trend">
-          <ol>
-            {cgpaHistory.map((snapshot) => {
-              const max = snapshot.scale === 4 ? 4 : 5;
-              const height = Math.max(6, (Number(snapshot.gpa) / max) * 100);
-              return (
-                <li key={snapshot.id}>
-                  <span className="dash-cgpa-trend-value">{Number(snapshot.gpa).toFixed(2)}</span>
-                  <span className="dash-cgpa-trend-bar" aria-hidden="true"><i style={{ height: `${height}%` }} /></span>
-                  <span className="dash-cgpa-trend-label">{snapshot.termLabel}</span>
-                </li>
-              );
-            })}
-          </ol>
-          <p className="dash-metric-hint">Each bar is measured against its own {cgpaScaleMax}.0 scale. Terms are saved when you use the CGPA calculator.</p>
-        </div>
-      ) : (
-        <p className="dash-chart-empty">No saved semester yet. Save a term in the CGPA calculator to start this trend.</p>
-      )}
-    </div>
-  );
-
   const overview = (
     <>
-      <section className="dash-welcome-card">
-        <div className="dash-welcome-top">
-          <div>
-            <h1 className="dash-welcome-title">Welcome back, {firstName}</h1>
-            <p className="dash-welcome-subtitle">Your practice, requests and saved resources in one place.</p>
+      <header className="dash-overview-head">
+        <div>
+          <span className="dash-overview-role">Student · Overview</span>
+          <div className="dash-overview-name">
+            <h1>{displayName}</h1>
+            {emailVerified && <VerifiedBadge />}
           </div>
-          <a href="/profile" className="dash-btn dash-btn-secondary"><Edit size={13} /> {profileComplete ? 'Edit Profile' : 'Complete Profile'}</a>
+          <p>Your learning overview</p>
         </div>
-        <div className="dash-welcome-pills">
-          <span className="dash-pill dash-pill-green"><ShieldCheck size={12} /> {profileComplete ? 'Academic profile complete' : 'Academic profile needs attention'}</span>
+        <div className="dash-overview-actions">
+          <span className={`dash-profile-state${profileComplete ? ' is-complete' : ''}`}>
+            {profileComplete ? <ShieldCheck size={14} aria-hidden="true" /> : <User size={14} aria-hidden="true" />}
+            {profileComplete ? 'Profile complete' : `${profileCompletionPercent}% complete`}
+          </span>
+          <a href="/profile" className="dash-btn dash-btn-secondary">
+            <Edit size={13} aria-hidden="true" /> {profileComplete ? 'Edit profile' : 'Complete profile'}
+          </a>
         </div>
+      </header>
+
+      {priorities.length > 0 && (
+        <section className="dash-attention" aria-labelledby="dash-priority-heading">
+          <div className="dash-attention-head">
+            <h2 id="dash-priority-heading">Needs attention</h2>
+            <span className="dash-attention-count">{priorities.length}</span>
+          </div>
+          <ul className="dash-priority-list">
+            {priorities.map((item) => (
+              <li key={item.id} className={`dash-priority-item is-${item.tone}`}>
+                <span className="dash-priority-icon" aria-hidden="true">
+                  {item.tone === 'urgent' ? <AlarmClock size={15} /> : item.id === 'request-needs-info' ? <ClipboardList size={15} /> : item.id === 'profile-incomplete' ? <User size={15} /> : <Bell size={15} />}
+                </span>
+                <div className="dash-priority-copy">
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </div>
+                <a className="dash-card-link" href={item.href}>{item.cta} →</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="dash-kpi-grid" aria-label="Learning summary">
+        <article className="dash-kpi">
+          <p className="dash-kpi-label">Average score</p>
+          <strong className="dash-kpi-value">{performance.averageScore !== null ? `${performance.averageScore}%` : '—'}</strong>
+          <p className="dash-kpi-meta">{performance.scoredCount ? `Across ${performance.scoredCount} scored ${performance.scoredCount === 1 ? 'paper' : 'papers'}` : 'No scored paper yet'}</p>
+        </article>
+        <article className="dash-kpi">
+          <p className="dash-kpi-label">Latest score</p>
+          <div className="dash-kpi-inline">
+            <strong className="dash-kpi-value">{performance.latest ? `${performance.latest.score}%` : '—'}</strong>
+            {performance.latest?.change !== null && performance.latest?.change !== undefined && <ChangeChip change={performance.latest.change} />}
+          </div>
+          <p className="dash-kpi-meta">{performance.latest ? performance.latest.subject : 'Take a practice paper to begin'}</p>
+        </article>
+        <article className="dash-kpi">
+          <p className="dash-kpi-label">Papers scored</p>
+          <strong className="dash-kpi-value">{performance.scoredCount.toLocaleString()}</strong>
+                  </article>
+        <article className="dash-kpi">
+          <p className="dash-kpi-label">Open requests</p>
+          <strong className="dash-kpi-value">{openRequests.toLocaleString()}</strong>
+          <p className="dash-kpi-meta">{requests.length ? `${requests.length} in your history` : 'No service requests yet'}</p>
+        </article>
       </section>
 
-      <section className="dash-card dash-performance" aria-labelledby="dash-performance-heading">
-        <div className="dash-card-header">
-          <div>
-            <h2 className="dash-card-title" id="dash-performance-heading">Your progress</h2>
-            <p className="dash-card-help">
-              {performance.scoredCount
-                ? `Based on ${performance.scoredCount} scored ${performance.scoredCount === 1 ? 'paper' : 'papers'} in the most recent attempts loaded.${performance.averageScore !== null ? ` Average ${performance.averageScore}%.` : ''}`
-                : 'Your latest result, subject averages and trend will appear after your first scored paper.'}
-            </p>
-          </div>
-          <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>See all CBT results</button>
-        </div>
-
-        <div className="dash-report-strip">
-          <article className="dash-report-card">
-            <span className="dash-report-icon is-blue"><TrendingUp size={15} aria-hidden="true" /></span>
-            <p className="dash-report-label">Latest CBT score</p>
-            <strong className="dash-report-value">{performance.latest ? `${performance.latest.score}%` : '—'}</strong>
-            <p className="dash-report-detail">
-              {performance.latest
-                ? performance.latest.change === null
-                  ? 'First scored paper in this sample'
-                  : `${performance.latest.change > 0 ? 'Up' : performance.latest.change < 0 ? 'Down' : 'Level'} ${Math.abs(performance.latest.change)} points on the previous paper`
-                : 'No scored paper yet'}
-            </p>
-          </article>
-          <article className="dash-report-card">
-            <span className="dash-report-icon is-green"><GraduationCap size={15} aria-hidden="true" /></span>
-            <p className="dash-report-label">Current CGPA</p>
-            <strong className="dash-report-value">{latestCgpaSnapshot ? latestCgpaSnapshot.gpa : '—'}</strong>
-            <p className="dash-report-detail">
-              {latestCgpaSnapshot ? `${latestCgpaSnapshot.termLabel} · ${latestCgpaSnapshot.scale === 4 ? '4.0' : '5.0'} scale` : 'Save a semester in the CGPA calculator'}
-            </p>
-          </article>
-          <article className="dash-report-card">
-            <span className="dash-report-icon is-amber"><Inbox size={15} aria-hidden="true" /></span>
-            <p className="dash-report-label">Open requests</p>
-            <strong className="dash-report-value">{openRequests.toLocaleString()}</strong>
-            <p className="dash-report-detail">{requests.length ? `${requests.length} request${requests.length === 1 ? '' : 's'} in your history` : 'No service requests yet'}</p>
-          </article>
-          <article className="dash-report-card">
-            <span className="dash-report-icon is-violet"><UserCheck size={15} aria-hidden="true" /></span>
-            <p className="dash-report-label">Profile completion</p>
-            <strong className="dash-report-value">{profileCompletionPercent}%</strong>
-            <div className="dash-report-meter" role="img" aria-label={`Profile ${profileCompletionPercent} percent complete`}><span style={{ width: `${profileCompletionPercent}%` }} /></div>
-            <p className="dash-report-detail">{profileComplete ? 'Every required academic field is filled' : 'Complete the missing academic fields'}</p>
-          </article>
-        </div>
-
-        {performance.latest ? (
-          <>
-            <div className="dash-performance-grid">
-              <div className="dash-performance-panel dash-performance-latest">
-                <span className="dash-metric-label">Latest result</span>
-                <div className="dash-latest-score">
-                  <strong>{performance.latest.score}%</strong>
-                  {performance.latest.change !== null && <ChangeChip change={performance.latest.change} />}
-                </div>
-                <p className="dash-latest-subject">{performance.latest.subject}</p>
-                <p className="dash-metric-hint">
-                  {performance.latest.change === null
-                    ? 'This is your first scored paper in this sample.'
-                    : performance.latest.change > 0
-                      ? `Up ${performance.latest.change} points from your previous scored paper.`
-                      : performance.latest.change < 0
-                        ? `Down ${Math.abs(performance.latest.change)} points from your previous scored paper.`
-                        : 'The same score as your previous scored paper.'}
-                </p>
-                {performance.latest.id && (
-                  <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(performance.latest.id)}`}>View result →</a>
-                )}
+      {performance.scoredCount ? (
+        <>
+          <section className="dash-analytics" aria-labelledby="dash-analytics-heading">
+            <div className="dash-analytics-head">
+              <div>
+                <h2 id="dash-analytics-heading">Performance</h2>
+                <p>Scored papers only.</p>
               </div>
-
-              <div className="dash-performance-panel">
+              <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>All results</button>
+            </div>
+            <div className="dash-analytics-grid">
+              <article className="dash-chart-panel dash-chart-panel--wide">
                 <h3>Score trend</h3>
                 <TrendChart points={performance.trend} />
-              </div>
+              </article>
 
-              <div className="dash-performance-panel">
+              <article className="dash-chart-panel">
                 <h3>Subject averages</h3>
                 {performance.subjects.length ? (
                   <SubjectBars rows={performance.subjects} />
                 ) : (
-                  <p className="dash-chart-empty">
-                    A subject average needs a scored paper whose saved plan contains one subject. Multi-subject papers are not split into invented subject scores.
-                  </p>
+                  <p className="dash-chart-empty">Needs a single-subject paper.</p>
                 )}
-              </div>
+              </article>
 
-              <div className="dash-performance-panel">
-                <h3>How your scores are distributed</h3>
-                <DistributionChart buckets={performance.distribution} total={performance.distributionTotal} />
-              </div>
-
-              {cgpaTrendPanel}
-            </div>
-
-            <div className="dash-performance-insights">
-              <div className="dash-insight">
-                <h3>Strengths</h3>
-                {performance.highlights.strengths.length ? (
-                  <ul>
-                    {performance.highlights.strengths.map((row) => (
-                      <li key={row.subject}><strong>{row.subject}</strong> — {row.average}% average</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No subject average has reached 70% yet. That is a threshold, not a grade.</p>
-                )}
-              </div>
-              <div className="dash-insight">
-                <h3>Needs practice</h3>
-                {performance.highlights.needsPractice.length ? (
-                  <ul>
-                    {performance.highlights.needsPractice.map((row) => (
-                      <li key={row.subject}>
-                        <strong>{row.subject}</strong> is your lowest subject average at {row.average}%.
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No subject average is below 70% in this sample, so there is no weakest subject to name.</p>
-                )}
-              </div>
-              <div className="dash-insight is-next">
-                <h3>Next step</h3>
-                {performance.recommendation ? (
+              <article className="dash-chart-panel dash-latest-panel">
+                <h3>Latest result</h3>
+                {performance.latest ? (
                   <>
-                    <p><strong>{performance.recommendation.title}.</strong> {performance.recommendation.detail}</p>
-                    <a className="dash-card-link" href={performance.recommendation.href}>{performance.recommendation.cta} →</a>
+                    <div className="dash-latest-score">
+                      <strong>{performance.latest.score}%</strong>
+                      {performance.latest.change !== null && <ChangeChip change={performance.latest.change} />}
+                    </div>
+                    <p className="dash-latest-subject">{performance.latest.subject}</p>
+                    {performance.latest.id && (
+                      <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(performance.latest.id)}`}>View result →</a>
+                    )}
                   </>
                 ) : (
-                  <p>Complete another scored paper to make the next step more specific.</p>
+                  <p className="dash-chart-empty">No scored paper yet.</p>
                 )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="dash-empty">
-              <p>No scored paper yet, so there is nothing to compare. Take one timed practice test and this area will show your latest score, subject averages and trend.</p>
-              <a className="dash-btn dash-btn-primary" href="/cbt">Start practice</a>
-            </div>
-            {cgpaTrendPanel}
-          </>
-        )}
-      </section>
+              </article>
 
-      <nav className="dash-quick-actions" aria-label="Common student actions">
-        <a href="/cbt">Start CBT</a>
-        <a href="/services">Request a service</a>
-        <a href="/dashboard/services">Track requests</a>
-        <a href="/screening-calculator">Screening calculator</a>
-      </nav>
+              <article className="dash-chart-panel">
+                <h3>Score distribution</h3>
+                <DistributionChart buckets={performance.distribution} total={performance.distributionTotal} />
+              </article>
 
-      <section className="dash-priority" aria-labelledby="dash-priority-heading">
-        <div className="dash-section-head">
+              {latestCgpaSnapshot ? (
+                <article className="dash-chart-panel dash-cgpa-trend">
+                  <h3>CGPA trend</h3>
+                  <ol>
+                    {cgpaHistory.slice(-6).map((snapshot) => (
+                      <li key={`${snapshot.termLabel}-${snapshot.gpa}`}>
+                        <span className="dash-cgpa-trend-value">{snapshot.gpa}</span>
+                        <span className="dash-cgpa-trend-bar" aria-hidden="true"><i style={{ height: `${Math.max((Number(snapshot.gpa) / cgpaScaleMax) * 100, 4)}%` }} /></span>
+                        <span className="dash-cgpa-trend-label">{snapshot.termLabel}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </article>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="dash-insights" aria-label="Performance summary">
+            <article className="dash-insight">
+              <h3>Strengths</h3>
+              {performance.highlights.strengths.length ? (
+                <ul>
+                  {performance.highlights.strengths.map((row) => (
+                    <li key={row.subject}><strong>{row.subject}</strong><span>{row.average}% average</span></li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No subject average is above 70% yet.</p>
+              )}
+            </article>
+            <article className="dash-insight">
+              <h3>Needs practice</h3>
+              {performance.highlights.needsPractice.length ? (
+                <ul>
+                  {performance.highlights.needsPractice.map((row) => (
+                    <li key={row.subject}><strong>{row.subject}</strong><span>{row.average}% average</span></li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No subject average is below 70% in this sample.</p>
+              )}
+            </article>
+            <article className="dash-insight is-next">
+              <h3>Next step</h3>
+              {performance.recommendation ? (
+                <>
+                  <p>{performance.recommendation.detail}</p>
+                  <a className="dash-card-link" href={performance.recommendation.href}>{performance.recommendation.cta} →</a>
+                </>
+              ) : (
+                <p>Complete one more scored paper for a specific recommendation.</p>
+              )}
+            </article>
+          </section>
+        </>
+      ) : (
+        <section className="dash-card dash-no-data">
           <div>
-            <h2 id="dash-priority-heading">What matters now</h2>
-            <p>Ordered by what is time-critical: a running test expires, a request can be blocked waiting on you.</p>
+            <h2>Not enough activity yet</h2>
+            <p>Your first scored paper unlocks the score trend, subject averages and recommendations.</p>
           </div>
-        </div>
-        <ul className="dash-priority-list">
-          {priorities.map((item) => (
-            <li key={item.id} className={`dash-priority-item is-${item.tone}`}>
-              <span className="dash-priority-icon" aria-hidden="true">
-                {item.tone === 'urgent' ? <AlarmClock size={16} /> : item.id === 'request-needs-info' ? <ClipboardList size={16} /> : item.id === 'profile-incomplete' ? <User size={16} /> : <Bell size={16} />}
-              </span>
-              <div className="dash-priority-copy">
-                <strong>{item.title}</strong>
-                <span>{item.detail}</span>
-              </div>
-              <a className={`dash-btn ${item.tone === 'urgent' ? 'dash-btn-primary' : 'dash-btn-secondary'}`} href={item.href}>{item.cta}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
+          <a className="dash-btn dash-btn-primary" href="/cbt">Start a practice paper</a>
+        </section>
+      )}
 
       <section className="dash-card" id="dashboard-notifications">
         <div className="dash-card-header">
@@ -1047,11 +1026,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start practice')}
         </div>
       </section>
-
-      <a className="dash-help" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer">
-        <strong>Need help with a request?</strong>
-        <span>Chat with EduReach support on WhatsApp <ExternalLink size={12} /></span>
-      </a>
     </>
   );
 
@@ -1280,6 +1254,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               {tab === 'services' && openRequests > 0 && <span className="edureach-nav-item-badge">{openRequests}</span>}
             </button>
           ))}
+          <div className="dash-nav-divider" />
+          <span className="dash-nav-label">Study</span>
+          <a href="/past-questions" className="edureach-nav-item"><BookOpen size={15} /> Past questions</a>
+          <a href="/dashboard/cbt/results" className="edureach-nav-item"><BarChart3 size={15} /> Results</a>
+          <a href="/services" className="edureach-nav-item"><ClipboardList size={15} /> Services</a>
+          <a href="/screening-calculator" className="edureach-nav-item"><Calculator size={15} /> Calculators</a>
           <div className="dash-nav-divider" />
           {accountLinks}
         </aside>

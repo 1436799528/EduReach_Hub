@@ -554,8 +554,8 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-kpi-icon.green,
 .admin-kpi-icon.blue,
 .admin-kpi-icon.purple {
-  background: #F1F5F9;
-  color: var(--er-crimson);
+  background: #F2F4F7;
+  color: #667085;
   border-color: var(--er-border);
 }
 .admin-btn { background: var(--er-primary); box-shadow: none; }
@@ -719,3 +719,137 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   .admin-summary-item:nth-child(2n) { border-right: 0; }
   .admin-summary-item:nth-child(n + 3) { border-top: 1px solid var(--admin-border); }
 }
+
+/* ==========================================================================
+   UX-1 — one compact control language for the console.
+   Buttons are 40px quiet controls, not pills; the sidebar selection is green;
+   crimson appears only where something needs attention.
+   ========================================================================== */
+
+.admin-shell .admin-btn {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font: 600 12.5px var(--er-font-sans);
+  box-shadow: none;
+}
+.admin-shell .admin-btn:hover { background: var(--er-primary-hover); filter: none; transform: none; }
+.admin-shell .admin-btn.small { min-height: 34px; padding: 7px 11px; font-size: 12px; }
+.admin-shell .admin-btn.secondary,
+.admin-shell .admin-btn.secondary-dark,
+.admin-page-header .admin-btn.secondary,
+.admin-card .admin-btn.secondary,
+.admin-inline-form .admin-btn.secondary {
+  background: #fff;
+  color: #344054;
+  border: 1px solid #d8dee5;
+  box-shadow: none;
+}
+.admin-shell .admin-btn.secondary:hover,
+.admin-shell .admin-btn.secondary-dark:hover,
+.admin-page-header .admin-btn.secondary:hover,
+.admin-card .admin-btn.secondary:hover,
+.admin-inline-form .admin-btn.secondary:hover { background: #f7f9f8; color: #101828; }
+.admin-shell .admin-btn.danger {
+  background: #fff;
+  color: var(--er-status-error);
+  border: 1px solid #f3c3be;
+  box-shadow: none;
+}
+.admin-shell .admin-btn.danger:hover { background: #fef2f2; }
+.admin-shell .admin-btn.success { background: var(--er-primary); box-shadow: none; }
+
+.admin-nav-link:hover { background: var(--er-primary-soft); color: var(--er-primary); }
+.admin-shell .admin-nav-link.active {
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+  border-color: var(--er-primary-soft-border);
+}
+.admin-nav-icon { color: #667085; }
+.admin-nav-link.active .admin-nav-icon { color: var(--er-primary); }
+
+.admin-page-header { align-items: flex-start; margin-bottom: 20px; }
+.admin-page-header h1 { font-size: clamp(22px, 2.1vw, 28px); font-weight: 680; }
+.admin-page-header p { margin-top: 5px; font-size: 13px; line-height: 1.5; }
+.admin-card-header h2 { font-size: 15px; font-weight: 620; }
+.admin-card-header { padding: 14px 16px; }
+.admin-card { border-radius: 10px; }
+.admin-kpi { border-radius: 10px; padding: 16px; }
+.admin-kpi span { font-size: 10.5px; letter-spacing: .06em; }
+.admin-kpi strong { font-size: 27px; font-weight: 680; margin: 7px 0 5px; }
+
+.admin-kpi-icon,
+.admin-kpi-icon.green,
+.admin-kpi-icon.blue,
+.admin-kpi-icon.purple {
+  background: #f2f4f7;
+  color: #667085;
+  border-color: #e4e7ec;
+}
+
+.admin-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d7e8dd;
+  border-radius: 8px;
+  background: #f6fbf8;
+  color: #17603f;
+  font-size: 11.5px;
+  font-weight: 620;
+  cursor: help;
+}
+.admin-live-time { color: #617069; font-weight: 500; }
+.admin-alert {
+  background: #fff8f5;
+  border-color: #f0d2c4;
+  color: #7c3d2c;
+}
+.admin-alert b { color: #9a3412; }
+.admin-table-wrap { overscroll-behavior: contain; }
+.admin-report-period { color: #667085; font-size: 11px; }
+
+@media (max-width: 760px) {
+  .admin-main { padding: 18px 16px 28px; }
+  .admin-topbar { padding: 0 14px; gap: 10px; }
+  .admin-page-header { flex-direction: column; gap: 12px; }
+  .admin-header-actions { width: 100%; justify-content: space-between; }
+  .admin-summary-item { padding: 12px; }
+}
+
+.admin-quickfind {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 210px;
+  min-height: 34px;
+  margin-left: auto;
+  padding: 0 9px;
+  border: 1px solid #d8dee5;
+  border-radius: 8px;
+  background: #f8faf9;
+  color: #667085;
+}
+.admin-quickfind:focus-within { border-color: var(--er-primary); background: #fff; box-shadow: 0 0 0 2px rgba(23, 74, 58, .12); }
+.admin-quickfind input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #101828; font: 500 12px var(--er-font-sans); }
+.admin-quickfind input::placeholder { color: #667085; }
+.admin-quickfind-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  width: 260px;
+  padding: 5px;
+  border: 1px solid #e2e7e3;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(16, 24, 40, .14);
+}
+.admin-quickfind-pop ul { margin: 0; padding: 0; list-style: none; }
+.admin-quickfind-pop a { display: block; padding: 8px 10px; border-radius: 6px; color: #344054; font-size: 12.5px; text-decoration: none; }
+.admin-quickfind-pop a:hover, .admin-quickfind-pop a.is-active { background: var(--er-primary-soft); color: var(--er-primary); }
+.admin-quickfind-pop p { margin: 0; padding: 9px 10px; color: #667085; font-size: 12px; line-height: 1.4; }
+@media (max-width: 900px) { .admin-quickfind { display: none; } }

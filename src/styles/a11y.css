@@ -40,7 +40,7 @@
    header and sidebar. `:root` is there to out-specify the `!important` resets in
    the earlier stylesheets. */
 :root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
-  outline: 2px solid var(--color-focus, #0A3E83) !important;
+  outline: 2px solid var(--color-focus, #174A3A) !important;
   outline-offset: 0;
   box-shadow: none !important;
 }

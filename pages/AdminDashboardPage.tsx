@@ -1,13 +1,7 @@
 import { userFacingError } from '../lib/errors';
 import { serviceRequestUpdateFailure } from '../src/lib/serviceRequestErrors';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ListChecks,
-  BarChart3,
-  FileUp,
-  RefreshCw,
-  ShieldCheck,
-} from 'lucide-react';
+import { ListChecks, RefreshCw } from 'lucide-react';
 import {
   fetchAdminAnalytics,
   fetchAdminServiceRequests,
@@ -17,7 +11,6 @@ import {
 } from '../src/lib/api';
 import {
   ACTIVE_REQUEST_STATUSES,
-  AdminCountBadge,
   AdminDonut,
   AdminEmptyState,
   AdminStatusDot,
@@ -101,11 +94,15 @@ export default function AdminDashboardPage() {
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
-            <h1>Operations overview</h1>
-            <p>Operational snapshots from service requests, student accounts, traffic and CBT activity.</p>
+            <h1>Overview</h1>
+            <p>Queues, platform health and recorded activity.</p>
           </div>
           <div className="admin-header-actions">
-            {updatedAt && <span className="admin-updated">Updated <TimeAgo value={updatedAt.toISOString()} /></span>}
+            <span className="admin-live" title="Data refreshed automatically every minute">
+              <AdminStatusDot status="healthy" label="Live operational data" />
+              Live
+              {updatedAt && <span className="admin-live-time">Updated <TimeAgo value={updatedAt.toISOString()} /></span>}
+            </span>
             <button type="button" className="admin-btn secondary-dark" onClick={() => void load(true)} disabled={refreshing}>
               <RefreshCw size={14} className={refreshing ? 'spin' : undefined} /> {refreshing ? 'Refreshing…' : 'Refresh'}
             </button>
@@ -143,13 +140,6 @@ export default function AdminDashboardPage() {
 
         {!loading && (
           <>
-            <div className="admin-quick-grid">
-              <a className="admin-quick-tile" href="/admin/queue"><i className="admin-kpi-icon"><ListChecks size={16} /></i><div><b>Process Queue <AdminCountBadge count={pendingCount ?? 0} label="open service requests" /></b><small>Review, complete or reject requests</small></div></a>
-              <a className="admin-quick-tile" href="/admin/cbt"><i className="admin-kpi-icon"><BarChart3 size={16} /></i><div><b>CBT Question Bank</b><small>Manage exams, questions and review status</small></div></a>
-              <a className="admin-quick-tile" href="/admin/question-imports"><i className="admin-kpi-icon"><FileUp size={16} /></i><div><b>Question Imports</b><small>Review extraction and import outcomes</small></div></a>
-              <a className="admin-quick-tile" href="/admin/analytics"><i className="admin-kpi-icon"><BarChart3 size={16} /></i><div><b>Analytics &amp; Reports</b><small>Explore recorded activity and system status</small></div></a>
-            </div>
-
             {pendingCount !== null && pendingCount > 0 && (
               <div className="admin-alert" role="status">
                 <ListChecks size={15} />
@@ -166,7 +156,7 @@ export default function AdminDashboardPage() {
                   <AdminDonut
                     ariaLabel="Service request mix"
                     segments={[
-                      { label: 'Open', value: metric('pending_requests') || 0, color: '#0A3E83' },
+                      { label: 'Open', value: metric('pending_requests') || 0, color: '#174A3A' },
                       { label: 'Completed', value: metric('completed_requests') || 0, color: '#067647' },
                       { label: 'Rejected / cancelled', value: metric('rejected_requests') || 0, color: '#B42318' },
                     ].filter((segment) => segment.value > 0)}
@@ -243,7 +233,7 @@ export default function AdminDashboardPage() {
                   <div className="admin-account-list">
                     {recentUsers.map((u) => (
                       <div className="admin-account-item" key={String(u.id)}>
-                        <div className="admin-account-id"><i className="admin-kpi-icon blue"><ShieldCheck size={14} /></i><b>{String(u.full_name || 'Unnamed user')}</b></div>
+                        <div className="admin-account-id"><b>{String(u.full_name || 'Unnamed user')}</b></div>
                         <div className="admin-account-side"><StatusBadge status={String(u.role || 'student')} /><TimeAgo value={u.created_at} /></div>
                       </div>
                     ))}

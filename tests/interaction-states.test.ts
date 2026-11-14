@@ -38,30 +38,30 @@ const contrast = (a: string, b: string): number => {
 
 test('every state colour in the specification is a token', () => {
   const expected: Record<string, string> = {
-    '--er-primary': '#0A3E83',
-    '--er-primary-hover': '#083570',
-    '--er-primary-active': '#062B5C',
-    '--er-primary-border': '#083570',
-    '--er-primary-border-hover': '#072F64',
-    '--er-primary-border-active': '#05264F',
-    '--er-primary-focus': '#0A3E83',
-    '--er-primary-soft': '#EDF4FB',
-    '--er-primary-soft-border': '#CCE0F3',
+    '--er-primary': '#174A3A',
+    '--er-primary-hover': '#123C2F',
+    '--er-primary-active': '#0D2E24',
+    '--er-primary-border': '#123C2F',
+    '--er-primary-border-hover': '#0D2E24',
+    '--er-primary-border-active': '#0A241C',
+    '--er-primary-focus': '#174A3A',
+    '--er-primary-soft': '#EDF5F0',
+    '--er-primary-soft-border': '#CFE4D8',
     '--er-on-primary': '#FFFFFF',
     '--er-crimson': '#B14933',
     '--er-crimson-hover': '#963D2C',
     '--er-crimson-pressed': '#803222',
-    '--er-secondary-border': '#CCE0F3',
-    '--er-secondary-hover-bg': '#EDF4FB',
-    '--er-secondary-hover-border': '#A9C8E8',
-    '--er-secondary-active-bg': '#DCEAF8',
-    '--er-secondary-active-border': '#8FB7DE',
+    '--er-secondary-border': '#D8DEE5',
+    '--er-secondary-hover-bg': '#F7F9F8',
+    '--er-secondary-hover-border': '#C4CBD4',
+    '--er-secondary-active-bg': '#EEF1F4',
+    '--er-secondary-active-border': '#B4BCC7',
     '--er-disabled-bg': '#E2E8F0',
     '--er-disabled-text': '#64748B',
     '--er-disabled-border': '#CBD5E1',
     '--er-disabled-surface': '#F8FAFC',
     '--er-nav-hover-bg': '#F1F5F9',
-    '--er-nav-active-bg': '#EDF4FB',
+    '--er-nav-active-bg': '#EDF5F0',
     '--er-field-border-hover': '#94A3B8',
     '--er-field-valid': '#15803D',
     '--er-field-invalid': '#B91C1C',
@@ -85,14 +85,14 @@ test('every state colour in the specification is a token', () => {
 
 test('text clears AA on every surface the specification pairs it with', () => {
   const pairs: Array<[string, string, string]> = [
-    ['#FFFFFF', '#0A3E83', 'primary label at rest'],
-    ['#FFFFFF', '#083570', 'primary label on hover'],
-    ['#FFFFFF', '#062B5C', 'primary label while pressed'],
-    ['#0A3E83', '#FFFFFF', 'secondary label at rest'],
-    ['#0A3E83', '#EDF4FB', 'secondary label on hover'],
-    ['#083570', '#DCEAF8', 'secondary label while pressed'],
-    ['#0A3E83', '#F1F5F9', 'navigation label on hover'],
-    ['#0A3E83', '#EDF4FB', 'navigation label when selected'],
+    ['#FFFFFF', '#174A3A', 'primary label at rest'],
+    ['#FFFFFF', '#123C2F', 'primary label on hover'],
+    ['#FFFFFF', '#0D2E24', 'primary label while pressed'],
+    ['#475467', '#FFFFFF', 'secondary label at rest'],
+    ['#101828', '#F7F9F8', 'secondary label on hover'],
+    ['#101828', '#EEF1F4', 'secondary label while pressed'],
+    ['#174A3A', '#F1F5F9', 'navigation label on hover'],
+    ['#174A3A', '#EDF5F0', 'navigation label when selected'],
     ['#FFFFFF', '#B14933', 'crimson control at rest'],
     ['#FFFFFF', '#963D2C', 'crimson control on hover'],
     ['#FFFFFF', '#803222', 'crimson control while pressed'],
@@ -112,7 +112,7 @@ test('text clears AA on every surface the specification pairs it with', () => {
 
   // Boundaries that carry a state on their own clear 3:1.
   for (const [border, label] of [
-    ['#0A3E83', 'focused field'],
+    ['#174A3A', 'focused field'],
     ['#15803D', 'valid field'],
     ['#B91C1C', 'invalid field'],
   ] as const) {
@@ -146,11 +146,11 @@ test('a primary action has a disabled state and a busy state', () => {
   }
 });
 
-test('secondary controls stay white with a blue edge in every state', () => {
+test('secondary controls stay white with a neutral edge in every state', () => {
   const base = /\.hub-outline-btn,\s*\.dash-btn-secondary,[\s\S]*?\{([^}]*)\}/.exec(actions);
   assert.ok(base, 'secondary buttons have one shared rule');
   assert.match(base[1], /background: var\(--er-surface\)/, 'secondary is not filled with the brand colour');
-  assert.match(base[1], /color: var\(--er-primary\)/);
+  assert.match(base[1], /color: var\(--er-text-secondary\)/);
   assert.match(base[1], /border-color: var\(--er-secondary-border\)/);
 
   for (const [state, bg, border] of [
@@ -183,13 +183,13 @@ test('form fields declare hover, focus, invalid and disabled states', () => {
 test('the focus ring is the brand colour, thin and follows the control', () => {
   const ring = /:root :where\(a, button, input, select, textarea, summary, \[tabindex\], \[contenteditable\]\):focus-visible\s*\{([^}]*)\}/.exec(a11y);
   assert.ok(ring, 'a11y.css owns the focus indicator');
-  assert.match(ring[1], /outline: 2px solid var\(--color-focus, #0A3E83\) !important/);
+  assert.match(ring[1], /outline: 2px solid var\(--color-focus, #174A3A\) !important/);
   assert.match(ring[1], /outline-offset: 0/, 'the ring hugs the control instead of floating away from it');
   assert.match(ring[1], /box-shadow: none !important/, 'no second ink line doubles the ring');
   assert.match(a11y, /\.site-search[^}]*input[^}]*:focus-visible[\s\S]*outline: 0 !important/, 'search fields defer the ring to their rounded container');
   assert.match(a11y, /outline-color: #f8fafc !important/, 'dark surfaces keep the light ring');
-  assert.ok(contrast('#0A3E83', '#FFFFFF') >= 3, 'the ring clears 3:1 on white');
-  assert.ok(contrast('#0A3E83', '#EDF4FB') >= 3, 'the ring clears 3:1 on the selected surface');
+  assert.ok(contrast('#174A3A', '#FFFFFF') >= 3, 'the ring clears 3:1 on white');
+  assert.ok(contrast('#174A3A', '#EDF5F0') >= 3, 'the ring clears 3:1 on the selected surface');
 });
 
 test('mobile inputs avoid browser zoom and coarse-pointer controls have thumb-sized targets', () => {
@@ -235,8 +235,8 @@ test('status colours are semantic, and used by the shared surfaces', () => {
   assert.match(types, /\.er-inline-notice\.is-warning\s*\{[^}]*--er-status-warning/);
   assert.match(types, /\.er-inline-notice\.is-danger\s*\{[^}]*--er-status-error/);
   assert.match(types, /\.er-inline-notice\.is-success\s*\{[^}]*--er-status-success/);
-  assert.match(read('src/hub-portal-tuning.css'), /\.badge-submitted\{[^}]*--er-status-info/);
-  assert.match(read('src/dashboard-v2.css'), /\.badge-processing\{[^}]*--er-status-warning/);
+  assert.match(read('src/styles/type-system.css'), /\.badge-submitted\{[^}]*--er-status-info/);
+  assert.match(read('src/styles/type-system.css'), /\.badge-processing\{[^}]*--er-status-warning/);
   assert.match(read('src/hub.css'), /\.hub-form-error\{[^}]*--er-status-error/);
 
   // The status ramp never coincides with the action ramp.

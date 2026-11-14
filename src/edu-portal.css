@@ -622,7 +622,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-selected-locked{display:inline-flex;align-items:center;gap:4px;margin-left:auto;color:#8f3525;font-weight:560}
 .er-selected-remove{display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:6px 9px;border:1px solid #e9b5a8;border-radius:7px;background:#fff4f1;color:#8f3525;font:inherit;font-size:12px;font-weight:560;cursor:pointer}
 .er-selected-remove:hover{background:#ffe9e2}
-.er-selected-remove:focus-visible,.er-setup-subject-select:focus-visible{outline:2px solid #b14933;outline-offset:2px}
+.er-selected-remove:focus-visible,.er-setup-subject-select:focus-visible{outline:2px solid var(--er-primary);outline-offset:2px}
 .er-setup-subject-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .er-setup-school-card{display:flex;align-items:flex-start;gap:10px;padding:13px;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:10px;color:#047857}
 .er-setup-school-card>svg{flex:none;margin-top:2px}
