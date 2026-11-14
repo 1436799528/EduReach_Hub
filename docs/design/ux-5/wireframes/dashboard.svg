@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: Student dashboard — what to do next">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Student dashboard — what to do next</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">A signed-in student sees their next action, their numbers, and recent activity without reading three empty states.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="35.2" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Global header · wordmark · primary nav · search · account</text>
+  </g>
+  <g>
+    <rect x="59.2" y="116.4" width="127.6" height="308.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="67.2" y="132.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Sidebar · Overview · Requests ·</text><text x="67.2" y="144.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">My CBT · Tools · Academic</text><text x="67.2" y="156.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">profile</text>
+  </g>
+  <g>
+    <rect x="200.0" y="116.4" width="492.8" height="48.4" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="208.0" y="132.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · “Overview” · greeting · primary CTA “Start practice”</text>
+  </g>
+  <g>
+    <rect x="200.0" y="173.6" width="492.8" height="52.8" rx="4" fill="#FFFFFF" stroke="#174A3A" stroke-width="1"/>
+    <text x="208.0" y="189.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">Next step panel · one recommended action with reason</text>
+  </g>
+  <g>
+    <rect x="200.0" y="235.2" width="492.8" height="59.4" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="208.0" y="251.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Metric strip · Average score · Papers · Open requests · Study streak</text>
+  </g>
+  <g>
+    <rect x="200.0" y="303.4" width="242.0" height="121.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="208.0" y="319.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Recent CBT · last 3 attempts with score and subject</text>
+  </g>
+  <g>
+    <rect x="450.8" y="303.4" width="242.0" height="121.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="458.8" y="319.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Requests + notifications · compact rows, one CTA each</text>
+  </g>
+  <g>
+    <rect x="200.0" y="433.2" width="492.8" height="66.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="208.0" y="449.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Getting started checklist (only while profile incomplete)</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Header · logo · menu</text>
+  </g>
+  <g>
+    <rect x="776.8" y="107.6" width="196.9" height="40.7" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="784.8" y="123.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Overview · greeting</text>
+  </g>
+  <g>
+    <rect x="776.8" y="156.0" width="196.9" height="50.6" rx="4" fill="#FFFFFF" stroke="#174A3A" stroke-width="1"/>
+    <text x="784.8" y="172.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">Next step panel</text>
+  </g>
+  <g>
+    <rect x="776.8" y="213.2" width="196.9" height="88.0" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="784.8" y="229.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Metric grid 2×2</text>
+  </g>
+  <g>
+    <rect x="776.8" y="310.0" width="196.9" height="121.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="784.8" y="326.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Recent CBT list</text>
+  </g>
+  <g>
+    <rect x="776.8" y="439.8" width="196.9" height="52.8" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="784.8" y="455.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Requests summary</text>
+  </g>
+  <g>
+    <rect x="768.0" y="497.0" width="214.5" height="35.2" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="513.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Bottom nav · Home · News · CBT · Services · Account</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Person name is a greeting, not the page title</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• One recommendation replaces three stacked empty boxes</text><text x="24" y="633.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Metrics capped at four</text>
+</svg>

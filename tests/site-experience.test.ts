@@ -135,25 +135,29 @@ test('the product uses one name for the collection and one for each CBT action',
   assert.match(read('pages/StudentDashboardV2.tsx'), /Start practice</);
 });
 
-test('the home page has no promotional hero, only the working page', () => {
+test('the home page leads with one product statement, not a wall of cards', () => {
   const home = read('pages/HubHomePage.tsx');
 
-  // Removed on request: the simulator-first hero and its Start practising /
-  // Past questions pair duplicated navigation the cards already provide.
-  assert.doesNotMatch(home, /hub-home-intro/, 'the hero section is gone');
-  assert.doesNotMatch(home, /hub-home-cta|Start practising/, 'its call-to-action pair is gone');
-  assert.doesNotMatch(home, /Practise the exam you are sitting/, 'and so is the promotional line');
+  // UX-5: the simulator-first layout had no visible statement of what the
+  // product is for. The page now opens with a short product statement and the
+  // two actions a student can take immediately; the exam cards still follow.
+  assert.match(home, /className="er-home-intro"/, 'the visible product statement exists');
+  assert.match(home, /Practise the exam you are sitting\./, 'it says what the product is for');
+  assert.match(home, /Start CBT practice/, 'the primary action is above the fold');
+  assert.match(home, /Browse past questions/, 'the secondary action is present');
 
-  // The page keeps exactly one h1 for structure, hidden as it was before the
-  // rewrite. A page without a heading is an accessibility regression, not a
-  // simplification.
+  // Exactly one h1 remains, hidden for structure and screen readers; the
+  // visible product statement is an h2. A page without a heading is an
+  // accessibility regression, not a simplification.
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1, 'exactly one h1');
   assert.match(home, /<h1 className="er-visually-hidden">/, 'it is the screen-reader heading');
+  assert.match(home, /<h2 className="er-home-title"/, 'the visible title is a section heading');
   assert.match(read('src/edu-portal.css'), /\.er-visually-hidden\{position:absolute/, 'the class really hides it visually');
 
-  // The styles are gone with the markup, from every sheet that set them.
+  // The old home-local hero classes stay deleted; the new statement is owned
+  // by the UX-5 product layer, not re-grown inside a legacy sheet.
   for (const sheet of ['src/home-card-first.css', 'src/compact-design-system.css', 'src/compact-structural.css']) {
-    assert.doesNotMatch(read(sheet), /hub-home-intro|hub-home-cta|hub-home-actions/, `${sheet} no longer carries hero rules`);
+    assert.doesNotMatch(read(sheet), /hub-home-intro|hub-home-cta|hub-home-actions/, `${sheet} carries no hero rules`);
   }
 });
 
@@ -171,7 +175,7 @@ test('the home page keeps the shared search bar and it still searches', () => {
   const searchAt = home.indexOf('<SiteSearch');
   assert.ok(searchAt > home.indexOf('<h1'), 'the heading stays first for structure');
   assert.ok(searchAt < home.indexOf('className="er-banner"'), 'the card follows the search bar');
-  assert.ok(searchAt < home.indexOf('Choose your exam'), 'search is above the exam cards');
+  assert.ok(searchAt < home.indexOf('<SectionHead title="Choose your exam"'), 'search is above the exam cards');
 
   const styles = read('src/site-search.css');
   assert.match(styles, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/, 'the header search is desktop-only');

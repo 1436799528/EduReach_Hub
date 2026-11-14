@@ -787,7 +787,7 @@ export default function ProfileCompletionPage() {
               <h1>{editMode ? 'Edit your profile' : 'Complete your profile'}</h1>
               <p>These details identify you on EduReach. Nothing is saved until you choose Save changes.</p>
             </div>
-            <a className="hub-outline-btn" href="/profile" onClick={confirmDiscard}>Cancel</a>
+            <a className="profile-cancel-link" href="/profile" onClick={confirmDiscard}>Cancel</a>
           </div>
 
           {!savedSuccess && profileMissingLabels.length > 0 && (

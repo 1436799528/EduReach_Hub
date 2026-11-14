@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: CBT setup — choose paper with confidence">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">CBT setup — choose paper with confidence</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">A student understands the rules, picks subjects, sees time and question count, and starts without surprises.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="35.2" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Global header · wordmark · primary nav · search · account</text>
+  </g>
+  <g>
+    <rect x="59.2" y="116.4" width="633.6" height="41.8" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="67.2" y="132.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · exam identity · “JAMB practice” · back link</text>
+  </g>
+  <g>
+    <rect x="59.2" y="169.2" width="418.0" height="72.6" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="67.2" y="185.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Instruction strip · 3 numbered rules · time · questions · autosave</text>
+  </g>
+  <g>
+    <rect x="59.2" y="252.8" width="418.0" height="187.0" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="67.2" y="268.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Subject selection · grouped checkboxes with availability</text>
+  </g>
+  <g>
+    <rect x="59.2" y="450.8" width="418.0" height="35.2" rx="4" fill="#FEF3C7" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="67.2" y="466.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Validation / bank status line</text>
+  </g>
+  <g>
+    <rect x="490.4" y="169.2" width="202.4" height="209.0" rx="4" fill="#FFFFFF" stroke="#174A3A" stroke-width="1"/>
+    <text x="498.4" y="185.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">Sticky summary · subjects chosen · questions · time</text><text x="498.4" y="197.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">· “Start paper”</text>
+  </g>
+  <g>
+    <rect x="490.4" y="391.4" width="202.4" height="77.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="498.4" y="407.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">What happens next · result saved · resume rules</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Header · logo · menu</text>
+  </g>
+  <g>
+    <rect x="776.8" y="107.6" width="196.9" height="41.8" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="784.8" y="123.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · exam · back</text>
+  </g>
+  <g>
+    <rect x="776.8" y="156.0" width="196.9" height="50.6" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="784.8" y="172.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Instruction summary · collapsible</text>
+  </g>
+  <g>
+    <rect x="776.8" y="213.2" width="196.9" height="198.0" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="784.8" y="229.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Subject selection list</text>
+  </g>
+  <g>
+    <rect x="768.0" y="461.8" width="214.5" height="35.2" rx="4" fill="#FFFFFF" stroke="#174A3A" stroke-width="1"/>
+    <text x="776.0" y="477.8" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#123C2F">Sticky summary · 4 subjects · 120 min</text>
+  </g>
+  <g>
+    <rect x="768.0" y="497.0" width="214.5" height="35.2" rx="6" fill="#174A3A" stroke="#174A3A" stroke-width="1"/>
+    <text x="776.0" y="513.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Sticky primary action · Start paper</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Summary is sticky and visible while choosing</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Bank availability explained before the click</text><text x="24" y="633.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Mobile start action within thumb reach</text>
+</svg>

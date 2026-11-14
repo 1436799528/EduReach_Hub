@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1007" height="683" viewBox="0 0 1007 683" role="img" aria-label="Wireframe: Service requests — work the queue">
+  <rect width="100%" height="100%" fill="#F8FAFC"/>
+  <text x="24" y="32" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">Service requests — work the queue</text>
+  <text x="24" y="50" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">An administrator sees requests needing action, opens one, and changes status with a reason.</text>
+  <text x="24" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">DESKTOP 1280</text>
+  <text x="768" y="66" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="600" fill="#64748B" letter-spacing=".08em">MOBILE 390</text>
+  <rect x="20" y="64" width="712" height="503.00000000000006" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="764" y="64" width="222.50000000000003" height="472.20000000000005" fill="#FFFFFF" stroke="#E2E8F0"/>
+  
+  <g>
+    <rect x="24.0" y="68.0" width="704.0" height="33.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin top bar</text>
+  </g>
+  <g>
+    <rect x="24.0" y="101.0" width="136.4" height="462.0" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="32.0" y="117.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Sidebar · Requests</text>
+  </g>
+  <g>
+    <rect x="178.0" y="114.2" width="514.8" height="44.0" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="186.0" y="130.2" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Service requests</text>
+  </g>
+  <g>
+    <rect x="178.0" y="167.0" width="514.8" height="39.6" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="186.0" y="183.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Queue tabs · Needs action · In progress · Completed · All</text>
+  </g>
+  <g>
+    <rect x="178.0" y="215.4" width="330.0" height="275.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="186.0" y="231.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Request rows · reference · service · student · status · age</text>
+  </g>
+  <g>
+    <rect x="516.8" y="215.4" width="176.0" height="275.0" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1"/>
+    <text x="524.8" y="231.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Detail · request data · status control ·</text><text x="524.8" y="243.4" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">reason · notify student</text>
+  </g>
+  
+  <g>
+    <rect x="768.0" y="68.0" width="214.5" height="30.8" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="776.0" y="84.0" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#F8FAFC">Admin bar</text>
+  </g>
+  <g>
+    <rect x="776.8" y="107.6" width="196.9" height="38.5" rx="4" fill="#E7EFEA" stroke="#174A3A" stroke-width="1"/>
+    <text x="784.8" y="123.6" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="700" fill="#123C2F">Page head · Requests</text>
+  </g>
+  <g>
+    <rect x="776.8" y="152.7" width="196.9" height="28.6" rx="4" fill="#0F172A" stroke="#94A3B8" stroke-width="1"/>
+    <text x="784.8" y="168.7" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#1E293B">Queue tabs scroll</text>
+  </g>
+  <g>
+    <rect x="776.8" y="187.9" width="196.9" height="275.0" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+    <text x="784.8" y="203.9" font-family="Inter, Arial, sans-serif" font-size="8.6" font-weight="500" fill="#334155">Request cards</text>
+  </g>
+  <text x="24" y="597.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Queue is ordered by need, not newest</text><text x="24" y="615.0" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• Status changes require a reason and notify the student</text>
+</svg>

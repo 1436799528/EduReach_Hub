@@ -107,7 +107,7 @@ test('the type system defines the scale once and is loaded after the component s
   // documented order.
   assert.deepEqual(
     imports.slice(typeIndex + 1).map((path) => path.split('/').pop()),
-    ['brand-actions.css', 'a11y.css'],
+    ['brand-actions.css', 'ux5-product.css', 'a11y.css'],
     'the type layer loads after the component sheets and before the closing layers',
   );
   assert.match(imports[imports.length - 1], /a11y\.css$/, 'a11y.css stays last, as the focus-ring order test requires');

@@ -801,12 +801,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <header className="dash-overview-head">
         <div>
-          <span className="dash-overview-role">Student · Overview</span>
+          <span className="dash-overview-role">Student dashboard</span>
           <div className="dash-overview-name">
-            <h1>{displayName}</h1>
+            <h1>Overview</h1>
             {emailVerified && <VerifiedBadge />}
           </div>
-          <p>Your learning overview</p>
+          <p>Welcome back, {displayName}. Here is what needs your attention next.</p>
         </div>
         <div className="dash-overview-actions">
           <span className={`dash-profile-state${profileComplete ? ' is-complete' : ''}`}>
@@ -1073,7 +1073,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <a href="/cbt" className="dash-btn dash-btn-primary">Start practice</a>
       </div>
       {attemptsUnavailable ? <p role="status">CBT history could not be loaded. Please refresh to try again.</p> : <>
-      <p className="dash-metric-hint">Statistics below cover the most recent {attempts.length} attempt{attempts.length === 1 ? '' : 's'} loaded (up to 50), not all-time totals.</p>
+      <p className="dash-metric-hint">Showing your last {attempts.length} attempt{attempts.length === 1 ? '' : 's'} (maximum 50), not all-time totals.</p>
       <div className="dash-metric-strip">
         <div className="dash-metric-card">
           <span className="dash-metric-label">Scored tests</span>
@@ -1126,7 +1126,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="dash-cbt-latest-head">
           <div>
             <h2 id="dash-latest-cbt" className="dash-card-title">Latest CBT</h2>
-            <p className="dash-metric-hint">The most recent submitted paper in this sample. Nothing is inferred for missing fields.</p>
+            <p className="dash-metric-hint">Your most recent submitted paper.</p>
           </div>
           {latestAttempt && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(latestAttempt.id)}`}>Review result →</a>}
         </div>
@@ -1148,7 +1148,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="dash-card-header">
           <div>
             <h2 id="dash-performance-analysis" className="dash-card-title">Performance analysis</h2>
-            <p className="dash-metric-hint">Latest, average, best and accuracy come from the scored papers loaded above.</p>
+            <p className="dash-metric-hint">Calculated from your scored papers above.</p>
           </div>
         </div>
         <div className="dash-cbt-analysis-grid">
