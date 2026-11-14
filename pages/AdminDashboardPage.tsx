@@ -1,13 +1,7 @@
 import { userFacingError } from '../lib/errors';
 import { serviceRequestUpdateFailure } from '../src/lib/serviceRequestErrors';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ListChecks,
-  BarChart3,
-  FileUp,
-  RefreshCw,
-  ShieldCheck,
-} from 'lucide-react';
+import { ListChecks, RefreshCw } from 'lucide-react';
 import {
   fetchAdminAnalytics,
   fetchAdminServiceRequests,
@@ -17,7 +11,6 @@ import {
 } from '../src/lib/api';
 import {
   ACTIVE_REQUEST_STATUSES,
-  AdminCountBadge,
   AdminDonut,
   AdminEmptyState,
   AdminStatusDot,
@@ -101,11 +94,15 @@ export default function AdminDashboardPage() {
       <div className="admin-page">
         <div className="admin-page-header">
           <div>
-            <h1>Operations overview</h1>
-            <p>Operational snapshots from service requests, student accounts, traffic and CBT activity.</p>
+            <h1>Overview</h1>
+            <p>Queues, platform health and recorded activity.</p>
           </div>
           <div className="admin-header-actions">
-            {updatedAt && <span className="admin-updated">Updated <TimeAgo value={updatedAt.toISOString()} /></span>}
+            <span className="admin-live" title="Data refreshed automatically every minute">
+              <AdminStatusDot status="healthy" label="Live operational data" />
+              Live
+              {updatedAt && <span className="admin-live-time">Updated <TimeAgo value={updatedAt.toISOString()} /></span>}
+            </span>
             <button type="button" className="admin-btn secondary-dark" onClick={() => void load(true)} disabled={refreshing}>
               <RefreshCw size={14} className={refreshing ? 'spin' : undefined} /> {refreshing ? 'Refreshing…' : 'Refresh'}
             </button>
@@ -113,9 +110,12 @@ export default function AdminDashboardPage() {
         </div>
 
         {error && (
-          <div className="admin-card" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="admin-card admin-error-card" role="alert">
             <span>{error}</span>
-            <button type="button" className="admin-btn small" onClick={() => void load()} disabled={loading}>Try again</button>
+            <div className="admin-header-actions">
+              <a className="admin-btn secondary" href="/admin/queue">Open queue</a>
+              <button type="button" className="admin-btn small" onClick={() => void load()} disabled={loading}>Try again</button>
+            </div>
           </div>
         )}
 
@@ -126,6 +126,7 @@ export default function AdminDashboardPage() {
         ) : (
           <AdminSummary
             label="Operational summary"
+            className="dashboard-summary"
             items={[
               { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Staff accounts unavailable' : `${metricText('admins')} staff accounts`, tone: 'blue' },
               { label: 'Open requests', value: metricText('pending_requests'), detail: metric('service_requests') === null ? 'All-time request count unavailable' : `${metricText('service_requests')} requests all-time`, tone: 'amber' },
@@ -143,13 +144,6 @@ export default function AdminDashboardPage() {
 
         {!loading && (
           <>
-            <div className="admin-quick-grid">
-              <a className="admin-quick-tile" href="/admin/queue"><i className="admin-kpi-icon"><ListChecks size={16} /></i><div><b>Process Queue <AdminCountBadge count={pendingCount ?? 0} label="open service requests" /></b><small>Review, complete or reject requests</small></div></a>
-              <a className="admin-quick-tile" href="/admin/cbt"><i className="admin-kpi-icon"><BarChart3 size={16} /></i><div><b>CBT Question Bank</b><small>Manage exams, questions and review status</small></div></a>
-              <a className="admin-quick-tile" href="/admin/question-imports"><i className="admin-kpi-icon"><FileUp size={16} /></i><div><b>Question Imports</b><small>Review extraction and import outcomes</small></div></a>
-              <a className="admin-quick-tile" href="/admin/analytics"><i className="admin-kpi-icon"><BarChart3 size={16} /></i><div><b>Analytics &amp; Reports</b><small>Explore recorded activity and system status</small></div></a>
-            </div>
-
             {pendingCount !== null && pendingCount > 0 && (
               <div className="admin-alert" role="status">
                 <ListChecks size={15} />
@@ -166,7 +160,7 @@ export default function AdminDashboardPage() {
                   <AdminDonut
                     ariaLabel="Service request mix"
                     segments={[
-                      { label: 'Open', value: metric('pending_requests') || 0, color: '#0A3E83' },
+                      { label: 'Open', value: metric('pending_requests') || 0, color: '#174A3A' },
                       { label: 'Completed', value: metric('completed_requests') || 0, color: '#067647' },
                       { label: 'Rejected / cancelled', value: metric('rejected_requests') || 0, color: '#B42318' },
                     ].filter((segment) => segment.value > 0)}
@@ -191,17 +185,17 @@ export default function AdminDashboardPage() {
                   <h2>Needs Attention</h2>
                   <span>{pendingCount === null ? 'Status unavailable' : pendingCount === 0 ? 'Queue clear' : `Showing ${attention.length} of ${pendingCount.toLocaleString()} open`}</span>
                 </div>
-                <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-                  <table className="admin-table">
+                <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+                  <table className="admin-table admin-table--stack">
                     <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
                     <tbody>
                       {attention.map((row) => (
                         <tr key={row.id}>
-                          <td className="accent">{requestStudentName(row)}</td>
-                          <td>{row.service_catalog?.title || 'Student service'}</td>
-                          <td><StatusBadge status={row.status} /></td>
-                          <td><TimeAgo value={row.created_at} /></td>
-                          <td className="right"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
+                          <td className="accent" data-label="Student">{requestStudentName(row)}</td>
+                          <td data-label="Service">{row.service_catalog?.title || 'Student service'}</td>
+                          <td data-label="Status"><StatusBadge status={row.status} /></td>
+                          <td data-label="Age"><TimeAgo value={row.created_at} /></td>
+                          <td className="right" data-label="Action"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
                         </tr>
                       ))}
                       {!attention.length && <tr><td colSpan={5} className="empty-state">{pendingCount === null ? 'Queue status could not be determined.' : pendingCount === 0 ? 'Queue is clear. No active service requests.' : 'Open requests are reported, but no recent request rows were returned. Open the full queue to investigate.'}</td></tr>}
@@ -243,7 +237,7 @@ export default function AdminDashboardPage() {
                   <div className="admin-account-list">
                     {recentUsers.map((u) => (
                       <div className="admin-account-item" key={String(u.id)}>
-                        <div className="admin-account-id"><i className="admin-kpi-icon blue"><ShieldCheck size={14} /></i><b>{String(u.full_name || 'Unnamed user')}</b></div>
+                        <div className="admin-account-id"><b>{String(u.full_name || 'Unnamed user')}</b></div>
                         <div className="admin-account-side"><StatusBadge status={String(u.role || 'student')} /><TimeAgo value={u.created_at} /></div>
                       </div>
                     ))}
@@ -269,7 +263,7 @@ function FocusGroup({ title, rows }: { title: string; rows: Array<{ label: strin
     <div className="admin-focus-group">
       <h3>{title}</h3>
       {rows.slice(0, 5).map((row) => (
-        <BarStat key={row.label} label={row.label} value={row.value} max={max} tone="orange" />
+        <BarStat key={row.label} label={row.label} value={row.value} max={max} tone="green" />
       ))}
     </div>
   );

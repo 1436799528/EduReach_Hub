@@ -31,7 +31,7 @@ test('admin shell adapts at narrow, tablet and desktop widths without losing nav
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Operations Control' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   const menu = page.getByRole('button', { name: 'Open admin menu' });
   const nav = page.getByRole('navigation', { name: 'Administration' });
   await expect(nav).toBeHidden();
@@ -62,14 +62,14 @@ test('dashboard failure does not present invented zero metrics or a clear queue'
   await expect(page.getByRole('alert')).toContainText(/unavailable|unable/i);
   await expect(page.getByText('Active Queue', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Queue is clear. No active service requests.')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: /Process Queue/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open queue' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
 });
 
 test('navigation continues to respect server-provided capabilities', async ({ page }) => {
   await mockAdmin(page, { capabilities: ['news.read'] });
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Operations Control' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   const menu = page.getByRole('button', { name: 'Open admin menu' });
   if (await menu.isVisible()) await menu.click();
   const nav = page.getByRole('navigation', { name: 'Administration' });
@@ -80,7 +80,7 @@ test('navigation continues to respect server-provided capabilities', async ({ pa
 test('rendered mocked admin shell has no axe WCAG A/AA violations', async ({ page }) => {
   await mockAdmin(page);
   await page.goto('/admin');
-  await expect(page.getByRole('heading', { name: 'Operations Control' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   const menu = page.getByRole('button', { name: 'Open admin menu' });
   if (await menu.isVisible()) await menu.click();
   const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();

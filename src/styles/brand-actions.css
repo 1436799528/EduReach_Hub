@@ -12,8 +12,8 @@
    - Deep green (--er-primary) is the fill for an action the student takes.
    - Every state is a token: hover, press, border, focus, disabled. A hex value
      in this file would be a second definition of the palette.
-   - Secondary controls are white with a green edge, never a second solid green
-     button.
+   - Secondary controls are white with a green-grey edge, never a second solid
+     green button.
    - Crimson (--er-crimson) stays for the brand mark and explicitly designated
      Clickmor accents. It is not a default button colour, and a selected
      navigation item is a green surface, not a red one.
@@ -111,20 +111,20 @@
 .admin-card .admin-btn.secondary,
 .admin-inline-form .admin-btn.secondary {
   background: var(--er-surface) !important;
-  color: var(--er-primary) !important;
+  color: var(--er-text-secondary) !important;
   border-color: var(--er-secondary-border) !important;
 }
 
 :is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):hover {
   background: var(--er-secondary-hover-bg) !important;
   border-color: var(--er-secondary-hover-border) !important;
-  color: var(--er-primary) !important;
+  color: var(--er-text-primary) !important;
 }
 
 :is(.hub-outline-btn, .dash-btn-secondary, .er-exam-ghost, .admin-page-header .admin-btn.secondary, .admin-card .admin-btn.secondary, .admin-inline-form .admin-btn.secondary):active {
   background: var(--er-secondary-active-bg) !important;
   border-color: var(--er-secondary-active-border) !important;
-  color: var(--er-primary-hover) !important;
+  color: var(--er-text-primary) !important;
 }
 
 /* After hover and press on purpose: a disabled control must look disabled even

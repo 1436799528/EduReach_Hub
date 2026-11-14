@@ -91,16 +91,13 @@ export function StatusBadge({ status }: { status: string }) {
 // KPI metric card
 // ---------------------------------------------------------------------------
 
-export function Metric({ label, value, detail, icon, tone }: { label: string; value: ReactNode; detail?: string; icon?: ReactNode; tone?: 'orange' | 'green' | 'blue' | 'purple' }) {
+export function Metric({ label, value, detail, icon }: { label: string; value: ReactNode; detail?: string; icon?: ReactNode; tone?: 'orange' | 'green' | 'blue' | 'purple' }) {
   return (
     <div className="admin-kpi">
-      {(icon || tone) && (
-        <div className="admin-kpi-head">
-          <span>{label}</span>
-          {icon && <i className={`admin-kpi-icon ${tone ? tone : ''}`}>{icon}</i>}
-        </div>
-      )}
-      {!(icon || tone) && <span>{label}</span>}
+      <div className="admin-kpi-head">
+        <span>{label}</span>
+        {icon && <i className="admin-kpi-icon" aria-hidden="true">{icon}</i>}
+      </div>
       <strong>{value}</strong>
       {detail && <small>{detail}</small>}
     </div>
@@ -117,14 +114,14 @@ export type AdminSummaryItem = {
   tone?: AdminReportTone;
 };
 
-export function AdminSummary({ label, items }: { label: string; items: AdminSummaryItem[] }) {
+export function AdminSummary({ label, items, className }: { label: string; items: AdminSummaryItem[]; className?: string }) {
   return (
-    <section className="admin-summary" aria-label={label}>
+    <section className={`admin-summary${className ? ` ${className}` : ''}`} aria-label={label}>
       {items.map((item) => (
         <div className="admin-summary-item" key={item.label}>
           <div className="admin-summary-top">
             <span className="admin-summary-label">{item.label}</span>
-            {(item.icon || item.tone) && <i className={`admin-summary-icon ${item.tone || 'blue'}`} aria-hidden="true">{item.icon}</i>}
+            {item.icon && <i className="admin-summary-icon" aria-hidden="true">{item.icon}</i>}
           </div>
           <strong className="admin-summary-value">{item.value}</strong>
           {item.detail && <small className="admin-summary-detail">{item.detail}</small>}
@@ -332,7 +329,7 @@ export function AuditTimeline({ items, emptyText = 'No staff activity recorded y
 // Simple horizontal stat bar (no chart library; pure CSS)
 // ---------------------------------------------------------------------------
 
-export function BarStat({ label, value, max, hint, tone = 'orange' }: { label: string; value: number; max: number; hint?: string; tone?: 'orange' | 'green' | 'blue' }) {
+export function BarStat({ label, value, max, hint, tone = 'green' }: { label: string; value: number; max: number; hint?: string; tone?: 'orange' | 'green' | 'blue' }) {
   const safeMax = max > 0 ? max : 1;
   const pct = value <= 0 ? 0 : Math.max(2, Math.min(100, Math.round((value / safeMax) * 100)));
   const accessibleValue = hint ?? value.toLocaleString();

@@ -12,8 +12,8 @@
   --admin-border: #e9ecf1;
   --admin-text: #101828;
   --admin-muted: #667085;
-  --admin-navy: #0a3e83;
-  --admin-blue: #0a3e83;
+  --admin-navy: #202b27;
+  --admin-blue: var(--er-primary);
   --admin-green: #067647;
   --admin-green-soft: #ecfdf3;
   --admin-radius: 14px;
@@ -28,12 +28,12 @@
 }
 .admin-brand { padding: 22px 20px; border-bottom: 0; gap: 11px; }
 .admin-brand strong { color: #101828; font-size: 14px; font-weight: 730; }
-.admin-brand span { color: #98a2b3; font-size: 10.5px; font-weight: 500; }
+.admin-brand span { color: #5f6f76; font-size: 10.5px; font-weight: 500; }
 .admin-nav { padding: 8px 14px 22px; }
 .admin-nav-group {
   margin: 20px 0 7px;
   padding: 0 10px;
-  color: #98a2b3;
+  color: #5f6f76;
   font-size: 10px;
   font-weight: 620;
   letter-spacing: .08em;
@@ -57,12 +57,12 @@
   color: #101828;
   box-shadow: none;
 }
-.admin-nav-icon { color: #98a2b3; }
+.admin-nav-icon { color: #5f6f76; }
 .admin-shell .admin-nav-link.active .admin-nav-icon { color: #0a3e83; }
 .admin-sidebar-footer { padding: 16px; border-top: 1px solid var(--admin-border); }
 .admin-health-card { background: #f8f9fb; border-color: #eef1f5; border-radius: 10px; }
 .admin-health-card b { color: #067647; }
-.admin-user-email { font-size: 11px; color: #98a2b3; }
+.admin-user-email { font-size: 11px; color: #5f6f76; }
 .admin-sidebar .admin-btn.secondary {
   color: #344054;
   border-color: #e4e7ec;
@@ -79,7 +79,7 @@
   border-bottom: 1px solid var(--admin-border);
   backdrop-filter: blur(10px);
 }
-.admin-breadcrumb { color: #98a2b3; font-size: 12px; font-weight: 500; }
+.admin-breadcrumb { color: #5f6f76; font-size: 12px; font-weight: 500; }
 .admin-breadcrumb strong { color: #344054; font-weight: 560; }
 .admin-top-links a {
   border-radius: 9px;
@@ -136,14 +136,14 @@
   min-height: 42px;
   padding: 10px 16px;
   border-radius: 10px;
-  background: #0a3e83;
+  background: var(--er-primary);
   box-shadow: none;
   font-size: 12px;
   font-weight: 620;
   letter-spacing: .01em;
 }
 .admin-btn:hover { transform: none; filter: brightness(.94); }
-.admin-btn:focus-visible { outline: 3px solid #9fc7f4; outline-offset: 2px; }
+.admin-btn:focus-visible { outline: 3px solid var(--er-primary-border, #cfe4d8); outline-offset: 2px; }
 .admin-btn.secondary,
 .admin-page-header .admin-btn.secondary,
 .admin-card .admin-btn.secondary,
@@ -157,7 +157,10 @@
 .admin-page-header .admin-btn.secondary:hover,
 .admin-card .admin-btn.secondary:hover,
 .admin-inline-form .admin-btn.secondary:hover { background: #f9fafb; }
-.admin-btn.secondary-dark { background: #101828; box-shadow: none; }
+/* `secondary-dark` is the historical name for an ordinary secondary action
+   (refresh, edit, back). It is not a second primary button. */
+.admin-btn.secondary-dark { background: #fff; color: #344054; border: 1px solid #e4e7ec; box-shadow: none; }
+.admin-btn.secondary-dark:hover { background: #f9fafb; color: #101828; }
 .admin-btn.success { background: #067647; box-shadow: none; }
 .admin-btn.danger { background: #b42318; box-shadow: none; }
 .admin-btn.small { min-height: 36px; border-radius: 9px; padding: 8px 12px; font-size: 11.5px; }
@@ -176,7 +179,7 @@
   border-bottom: 1px solid #f0f2f5;
 }
 .admin-card-header h2 { color: #101828; font-size: 15px; font-weight: 620; letter-spacing: -.01em; }
-.admin-card-header span { color: #98a2b3; font-size: 11.5px; font-weight: 500; }
+.admin-card-header span { color: #5f6f76; font-size: 11.5px; font-weight: 500; }
 .admin-filter-card {
   padding: 14px 16px;
   border-radius: 12px;
@@ -201,7 +204,7 @@
 
 /* KPI summary cards: icon, quiet label, editorial number. */
 .admin-summary {
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 14px;
   margin-bottom: 22px;
   overflow: visible;
@@ -252,10 +255,10 @@
   line-height: 1.05;
   letter-spacing: -.035em;
 }
-.admin-summary-detail { margin-top: 7px; color: #98a2b3; font-size: 11px; line-height: 1.45; }
+.admin-summary-detail { margin-top: 7px; color: #5f6f76; font-size: 11px; line-height: 1.45; }
 .admin-summary-loading {
   min-height: 112px;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 14px;
   padding: 0;
 }
@@ -305,7 +308,7 @@
   border-radius: var(--admin-radius);
   background: #fff;
 }
-.admin-report-note { margin: 9px 0 0; color: #98a2b3; font-size: 11px; line-height: 1.5; }
+.admin-report-note { margin: 9px 0 0; color: #5f6f76; font-size: 11px; line-height: 1.5; }
 
 /* Dashboard chart surfaces */
 .admin-chart-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr); gap: 18px; margin-bottom: 20px; }
@@ -318,14 +321,14 @@
 }
 .admin-chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .admin-chart-head h2 { margin: 0; color: #101828; font-size: 15px; font-weight: 620; }
-.admin-chart-head p { margin: 4px 0 0; color: #98a2b3; font-size: 11px; line-height: 1.5; }
+.admin-chart-head p { margin: 4px 0 0; color: #5f6f76; font-size: 11px; line-height: 1.5; }
 .admin-sparkline-wrap { min-width: 0; }
 .admin-sparkline { width: 100%; height: 170px; display: block; overflow: visible; }
-.admin-sparkline-labels { display: flex; justify-content: space-between; gap: 4px; margin-top: 8px; color: #98a2b3; font-size: 9.5px; }
+.admin-sparkline-labels { display: flex; justify-content: space-between; gap: 4px; margin-top: 8px; color: #5f6f76; font-size: 9.5px; }
 .admin-donut-wrap { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 16px; }
 .admin-donut { width: 132px; height: 132px; }
 .admin-donut-total { fill: #101828; font-size: 15px; font-weight: 680; }
-.admin-donut-caption { fill: #98a2b3; font-size: 7px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+.admin-donut-caption { fill: #5f6f76; font-size: 7px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .admin-donut-legend { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
 .admin-donut-legend li { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; align-items: center; gap: 8px; color: #475467; font-size: 11.5px; }
 .admin-donut-legend i { width: 9px; height: 9px; border-radius: 3px; }
@@ -334,8 +337,8 @@
 .admin-bar-top { color: #475467; font-size: 11.5px; font-weight: 500; }
 .admin-bar-top b { color: #101828; font-weight: 620; }
 .admin-bar-track { height: 7px; border: 0; background: #f2f4f7; }
-.admin-bar-fill { background: #1d9be0; }
-.admin-bar-fill.blue { background: #0a3e83; }
+.admin-bar-fill { background: var(--er-primary); }
+.admin-bar-fill.blue { background: var(--er-primary); }
 .admin-bar-fill.green { background: #067647; }
 .admin-bar-fill.orange { background: #f79009; }
 
@@ -375,7 +378,8 @@
   .admin-summary-loading { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 780px) {
-  .admin-sidebar { width: 100%; }
+  .admin-sidebar { width: min(320px, 86vw); }
+  .admin-topbar-user { display: none !important; }
   .admin-main { padding: 18px 14px 30px; }
   .admin-page-header h1 { font-size: 24px; }
   .admin-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -386,7 +390,9 @@
   .admin-donut { width: 116px; height: 116px; }
 }
 @media (max-width: 460px) {
-  .admin-summary { grid-template-columns: 1fr; }
+  /* Two columns keeps the KPI strip above the fold on a phone. The cards hold
+     a label, a number and one caption at 320px without truncation. */
+  .admin-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-report-head { flex-direction: column; }
   .admin-donut-wrap { grid-template-columns: 1fr; justify-items: center; }
   .admin-donut-legend { width: 100%; }
@@ -404,4 +410,31 @@
   border-radius: 3px;
   background: currentColor;
   opacity: .75;
+}
+
+/* Row actions are not page actions. A table can show twenty rows, so giving
+   every Edit/Feature button the primary fill produces a wall of green and
+   leaves no visual answer to "what is the one action here?". Row buttons are
+   secondary; destructive controls keep the crimson class. */
+.admin-table .admin-btn:not(.danger):not(.secondary) {
+  background: #fff;
+  color: #344054;
+  border: 1px solid var(--admin-border);
+  box-shadow: none;
+}
+.admin-table .admin-btn:not(.danger):not(.secondary):hover {
+  background: #f9fafb;
+  color: #101828;
+}
+
+/* Six KPI cards must not leave a single orphan card on a second row at common
+   desktop widths. Three columns give two balanced rows; 2-up below 780px. */
+.analytics-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.analytics-summary .admin-summary-item:nth-child(3n) { border-right: 0; }
+.analytics-summary .admin-summary-item:nth-child(n + 4) { border-top: 1px solid var(--admin-border); }
+@media (max-width: 780px) {
+  .analytics-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .analytics-summary .admin-summary-item:nth-child(3n) { border-right: 1px solid var(--admin-border); }
+  .analytics-summary .admin-summary-item:nth-child(2n) { border-right: 0; }
+  .analytics-summary .admin-summary-item:nth-child(n + 3) { border-top: 1px solid var(--admin-border); }
 }

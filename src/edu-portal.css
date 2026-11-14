@@ -622,7 +622,7 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-selected-locked{display:inline-flex;align-items:center;gap:4px;margin-left:auto;color:#8f3525;font-weight:560}
 .er-selected-remove{display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:6px 9px;border:1px solid #e9b5a8;border-radius:7px;background:#fff4f1;color:#8f3525;font:inherit;font-size:12px;font-weight:560;cursor:pointer}
 .er-selected-remove:hover{background:#ffe9e2}
-.er-selected-remove:focus-visible,.er-setup-subject-select:focus-visible{outline:2px solid #b14933;outline-offset:2px}
+.er-selected-remove:focus-visible,.er-setup-subject-select:focus-visible{outline:2px solid var(--er-primary);outline-offset:2px}
 .er-setup-subject-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .er-setup-school-card{display:flex;align-items:flex-start;gap:10px;padding:13px;background:#ecfdf5;border:1px solid #bbf7d0;border-radius:10px;color:#047857}
 .er-setup-school-card>svg{flex:none;margin-top:2px}
@@ -1230,3 +1230,47 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-footer-brand { grid-column: auto; }
   .er-footer-links { gap: 0; }
 }
+
+
+/* UX-2 rendered pass: at 390px the brand, notification bell, requests link and
+   account button together were wider than the container, so the account button
+   was clipped by the viewport edge. The requests shortcut and the account name
+   are secondary on a phone; the initials button and the avatar menu remain. */
+@media (max-width: 430px) {
+  .hub-requests-link { display: none !important; }
+  .hub-profile-trigger-name { display: none; }
+  .hub-profile-trigger { padding: 6px 9px !important; }
+}
+/* The WhatsApp link is the only bright action on the dark footer; the dark
+   green failed contrast there. */
+.er-footer-help { color: #a7f3d0 !important; }
+
+/* Profile photo controls: keep the photo, the device picker and the URL field
+   in one labelled cluster instead of leaving bare buttons floating between
+   the avatar and the input. */
+.profile-photo-controls { flex: 1 1 320px; min-width: 0; display: grid; gap: 8px; }
+.profile-photo-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.profile-photo-actions .hub-outline-btn { border: 1px solid #d8dee5; background: #fff; color: #344054; min-height: 40px; padding: 0 14px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font: 600 12px/1 var(--er-font-sans); cursor: pointer; position: relative; }
+.profile-photo-actions .hub-outline-btn:hover { background: #f8fafc; border-color: #b9c4d0; }
+@media (max-width: 520px) { .profile-photo-actions { display: grid; grid-template-columns: 1fr 1fr; } .profile-photo-actions .hub-outline-btn { width: 100%; padding: 0 8px; } }
+.profile-photo-actions .hub-outline-btn input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.profile-photo-note { color: #475569; font-size: 11px; }
+.profile-photo-url { width: 100%; box-sizing: border-box; padding: 9px 12px; font: inherit; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.profile-photo-url:focus-visible { outline: 2px solid var(--er-primary); outline-offset: 2px; border-color: var(--er-primary); box-shadow: 0 0 0 3px var(--er-primary-soft); }
+
+/* The global compact button reset removes the border, which left the profile
+   "Cancel" link as a blank white block. Restore an explicit secondary button. */
+.profile-page-head .hub-outline-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 1px solid #d8dee5; border-radius: 9px; background: #fff; color: #344054; font: 600 12px/1 var(--er-font-sans); text-decoration: none; }
+.profile-page-head .hub-outline-btn:hover { background: #f8fafc; border-color: #b9c4d0; }
+
+/* At 320px the full wordmark plus the 44px bell, avatar and menu no longer fit
+   inside the viewport; shrink the wordmark rather than the touch targets. */
+@media (max-width: 360px) {
+  .hub-brand-link img { height: 30px !important; max-width: 160px !important; }
+  .hub-main-nav { gap: 6px; }
+}
+
+/* Every drawer row is a full 44px target; the bare text links were 16px tall. */
+.hub-mobile-nav a { display: flex; align-items: center; min-height: 44px; padding: 0 8px; border-radius: 8px; text-decoration: none; color: #0f172a; }
+.hub-mobile-nav a:hover { background: #f8fafc; }
+.hub-mobile-close { display: grid !important; place-items: center; width: 44px; height: 44px; margin-right: -8px; border-radius: 8px !important; }

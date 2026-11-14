@@ -102,7 +102,7 @@ export default function PublicProfilePage({ slug }: { slug: string }) {
             <>
               <header className="profile-identity-card">
                 <div className="profile-identity-main">
-                  <div className="profile-avatar" style={{ background: '#0a3e83' }}>
+                  <div className="profile-avatar" style={{ background: '#174A3A' }}>
                     {profile.avatar_url
                       ? <img src={profile.avatar_url} alt="" loading="lazy" decoding="async" />
                       : initials(profile.full_name)}

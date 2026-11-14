@@ -132,7 +132,7 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
           <header className="er-notif-header">
             <div>
               <h2>Notifications</h2>
-              <p>{failed ? 'Could not check for updates' : unread ? `${unread} unread` : 'You are up to date'}</p>
+              <p>{failed ? 'Could not check for updates' : loading && !load ? 'Checking for updates…' : unread ? `${unread} unread` : 'You are up to date'}</p>
             </div>
             {unread > 0 && !failed && (
               <button type="button" className="er-notif-mark" onClick={() => void markAllRead()} disabled={marking}>

@@ -195,19 +195,19 @@ export default function AdminContentPage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>{type === 'exam' ? 'Exam dates' : 'Deadlines'}</h2><span>{loading ? 'Loading…' : `${items.length} item${items.length === 1 ? '' : 's'}`}</span></div>
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead><tr><th scope="col">Title</th><th scope="col">{type === 'exam' ? 'Starts' : 'Due'}</th><th scope="col">Priority</th><th scope="col">Visibility</th><th scope="col">Created</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={6} />}
                 {!loading && sorted.map((item) => (
                   <tr key={item.id}>
-                    <td><b>{item.title}</b><div className="muted">{plainTextFromHtml(item.description || '') || '—'}</div></td>
-                    <td>{new Date(String(whenField(item))).toLocaleString()}{item.location ? <div className="muted">{item.location}</div> : null}</td>
-                    <td><StatusBadge status={item.priority} /></td>
-                    <td><StatusBadge status={item.status === 'pending' ? 'published' : 'archived'} /></td>
-                    <td><TimeAgo value={item.created_at} /></td>
-                    <td className="right">
+                    <td data-label="Title"><b>{item.title}</b><div className="muted">{plainTextFromHtml(item.description || '') || '—'}</div></td>
+                    <td data-label={type === 'exam' ? 'Starts' : 'Due'}>{new Date(String(whenField(item))).toLocaleString()}{item.location ? <div className="muted">{item.location}</div> : null}</td>
+                    <td data-label="Priority"><StatusBadge status={item.priority} /></td>
+                    <td data-label="Visibility"><StatusBadge status={item.status === 'pending' ? 'published' : 'archived'} /></td>
+                    <td data-label="Created"><TimeAgo value={item.created_at} /></td>
+                    <td className="right" data-label="Actions">
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => setForm({
                           id: item.id, title: item.title, description: item.description || '',

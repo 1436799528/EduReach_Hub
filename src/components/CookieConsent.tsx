@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { Cookie, X } from 'lucide-react';
 import { readPrivacyPreferences, savePrivacyPreferences } from '../lib/privacyPreferences';
 import { OPTIONAL_ANALYTICS_ENABLED } from '../lib/analyticsAvailability';
 
@@ -54,7 +54,7 @@ export default function CookieConsent() {
 
   return (
     <>
-      {!visible && <button className="er-cookie-settings" type="button" onClick={openSettings}>Cookie settings</button>}
+      {!visible && <button className="er-cookie-settings" type="button" aria-label="Cookie settings" onClick={openSettings}><Cookie size={15} aria-hidden="true" /><span className="er-cookie-settings-label">Cookie settings</span></button>}
       {visible && (
         <section className="er-cookie-consent" aria-labelledby="er-cookie-title" aria-describedby="er-cookie-description">
           <div className="er-cookie-heading">

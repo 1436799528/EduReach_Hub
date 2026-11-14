@@ -577,3 +577,10 @@ a.er-notif-row:hover { background: var(--er-surface-soft); }
 @media (prefers-reduced-motion: reduce) {
   .er-filter-search { transition: none; }
 }
+
+/* Status badges used by request and attempt rows. The class names predate the
+   status token layer, so the mapping is recorded here rather than duplicated
+   in a dead legacy sheet. */
+.badge-processing{background: var(--er-status-warning-bg); color: var(--er-status-warning); border: 1px solid var(--er-status-warning-border); }
+.badge-submitted{background: var(--er-status-info-bg); color: var(--er-status-info); border: 1px solid var(--er-status-info-border); }
+.badge-completed{background: var(--er-status-success-bg); color: var(--er-status-success); border: 1px solid var(--er-status-success-border); }

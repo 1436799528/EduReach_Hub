@@ -26,7 +26,6 @@ import { useToast } from '../src/components/ui/Toast';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
-import { userFacingError } from '../lib/errors';
 import { navigateInApp } from '../src/lib/navigation';
 import { saveStudentProfile, type ProfileWriteClient, type StudentProfilePayload } from '../src/lib/profileSave';
 import { generatePublicProfileSlug } from '../src/lib/publicProfile';
@@ -86,6 +85,7 @@ export default function ProfileCompletionPage() {
   const [admissionYear, setAdmissionYear] = useState('');
   const [expectedGradYear, setExpectedGradYear] = useState('');
   const [avatarFileName, setAvatarFileName] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // 17. Academic interests (optional)
   const [interests, setInterests] = useState<string[]>(['JAMB UTME Prep', 'Undergraduate Scholarships']);
@@ -98,14 +98,16 @@ export default function ProfileCompletionPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Local initials avatar: no external images. Legacy unsplash presets are ignored.
+  // Initials are the fallback. A legacy base64 data URL is not rendered or
+  // re-saved: profile photos live in Supabase Storage and only their public URL
+  // is stored in `profiles.avatar_url`.
   const rawAvatar = (customAvatar || avatarImageUrl || avatarUrl || '').trim();
-  const displayAvatar = rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
+  const displayAvatar = rawAvatar.startsWith('data:') || rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
   const avatarInitials =
     userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
-  const avatarTones = ['#b14933', '#0F172A', '#B45309', '#0E7490'];
-  const avatarTone =
-    avatarTones[[...userName].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % avatarTones.length];
+  // Initials sit on the action green, matching the dashboard avatar. A
+  // hash-picked crimson/amber/navy avatar read as a status colour.
+  const avatarTone = '#174A3A';
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileCompleted, setProfileCompleted] = useState(false);
@@ -251,7 +253,7 @@ export default function ProfileCompletionPage() {
     );
   };
 
-  function handleAvatarFile(file: File | undefined) {
+  async function handleAvatarFile(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setMessage('Choose an image file for your profile photo.');
@@ -261,14 +263,32 @@ export default function ProfileCompletionPage() {
       setMessage('Profile photos must be 2 MB or smaller.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCustomAvatar(typeof reader.result === 'string' ? reader.result : '');
+    if (!isSupabaseConfigured || user?.isLocal || !userId) {
+      setMessage('Photo upload needs your signed-in EduReach account. Your initials are used on this device instead.');
+      return;
+    }
+
+    setAvatarUploading(true);
+    setMessage('');
+    try {
+      const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+      const path = `${userId}/avatar-${Date.now()}.${extension}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, file, {
+        cacheControl: '3600',
+        contentType: file.type,
+        upsert: false,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      if (!data?.publicUrl) throw new Error('No public URL returned');
+      setCustomAvatar(data.publicUrl);
       setAvatarImageUrl('');
       setAvatarFileName(file.name);
-      setMessage('');
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      setMessage('We could not upload that photo. Try a smaller JPEG or PNG, or paste a public image URL.');
+    } finally {
+      setAvatarUploading(false);
+    }
   }
 
   // UI-5: identity fields use explicit Save/Cancel, so the form has to be able
@@ -434,7 +454,7 @@ export default function ProfileCompletionPage() {
     const finalSchool = school.includes('Other') ? customSchool.trim() : school;
     const finalCourseProgramme = courseProgramme || customCourseProgramme.trim();
     const finalDepartment = department || customDepartment.trim();
-    const finalAvatar = customAvatar || avatarImageUrl || avatarUrl;
+    const finalAvatar = [customAvatar, avatarImageUrl, avatarUrl].find((value) => value && !value.startsWith('data:')) || '';
     const missing = [
       ['institution', finalSchool],
       ['course/programme', finalCourseProgramme],
@@ -490,11 +510,11 @@ export default function ProfileCompletionPage() {
       setProfileCompleted(true);
       setSavedSuccess(true);
       setSaving(false);
-      pushToast({ tone: 'success', title: 'Profile saved', detail });
+      pushToast({ tone: 'success', title: 'Profile saved successfully', detail });
       window.setTimeout(() => {
         setSavedSuccess(false);
         navigateInApp(editMode ? '/profile' : '/dashboard');
-      }, 1100);
+      }, 1400);
     };
 
     if (!isSupabaseConfigured || user?.isLocal) {
@@ -524,12 +544,11 @@ export default function ProfileCompletionPage() {
     const result = await saveStudentProfile(supabase as unknown as ProfileWriteClient, activeUserId, payload);
     if (!result.ok) {
       setSaving(false);
-      const safe = userFacingError(result.error, '').trim();
-      const detail = safe
-        ? `Profile was not saved: ${safe}`
-        : 'Profile was not saved. Check your connection and try again.';
+      // Never surface a database or PostgREST message to a student. The field
+      // level detail is already in the form; this is the sentence they act on.
+      const detail = 'Couldn’t save your profile. Try again.';
       setMessage(detail);
-      pushToast({ tone: 'danger', title: 'Profile not saved', detail: 'Your changes are still on this page. Try again when you are connected.' });
+      pushToast({ tone: 'danger', title: 'Profile not saved', detail: 'Your changes are still on this page.' });
       // Never leave a stale success state claiming the write happened.
       setSavedSuccess(false);
       return;
@@ -541,9 +560,27 @@ export default function ProfileCompletionPage() {
   if (profileLoading) {
     return (
       <HubLayout>
-        <div className="hub-page" style={{ padding: '32px 0 60px' }}>
-          <div className="hub-container" style={{ maxWidth: '780px' }}>
-            <div className="hub-panel" style={{ padding: '30px', textAlign: 'center', color: '#5e6c82' }}>Loading your saved profile…</div>
+        <div className="hub-page profile-page">
+          <div className="hub-container profile-shell" aria-busy="true" aria-label="Loading your profile">
+            <div className="profile-identity-card">
+              <div className="profile-identity-main">
+                <div className="profile-avatar er-skel" style={{ background: '#e8edf2' }} aria-hidden="true" />
+                <div className="profile-identity-copy" style={{ minWidth: 220 }}>
+                  <div className="er-skel" style={{ width: 180, height: 24, borderRadius: 6 }} aria-hidden="true" />
+                  <div className="er-skel" style={{ width: 250, height: 14, marginTop: 9, borderRadius: 5 }} aria-hidden="true" />
+                </div>
+              </div>
+            </div>
+            <div className="profile-panel-grid">
+              {[0, 1].map((panel) => (
+                <div className="profile-panel" key={panel} aria-hidden="true">
+                  <div className="er-skel" style={{ width: 130, height: 13, borderRadius: 5 }} />
+                  {[0, 1, 2].map((row) => (
+                    <div className="er-skel" key={row} style={{ height: 38, marginTop: 12, borderRadius: 7 }} />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </HubLayout>
@@ -727,10 +764,6 @@ export default function ProfileCompletionPage() {
               </section>
             </div>
 
-            <p className="profile-summary-note">
-              Your academic profile is used to personalise your dashboard and service requests.
-              {emailVerified ? ' Your email is verified.' : ' Verify your email to add the verified mark beside your name.'}
-            </p>
           </div>
         </div>
       </HubLayout>
@@ -786,7 +819,7 @@ export default function ProfileCompletionPage() {
               }}
             >
               <CheckCircle2 size={20} color="#047857" />
-              <span>{editMode ? 'Profile saved. Taking you back to your profile…' : 'Profile completed. Opening your dashboard…'}</span>
+              <span>{editMode ? 'Profile saved successfully. Returning to your profile…' : 'Profile saved successfully. Opening your dashboard…'}</span>
             </div>
           )}
 
@@ -852,36 +885,34 @@ export default function ProfileCompletionPage() {
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAvatarUrl('');
-                    setCustomAvatar('');
-                    setAvatarImageUrl('');
-                    setAvatarFileName('');
-                  }}
-                  className="hub-outline-btn"
-                  style={{ fontSize: '12px', padding: '8px 14px' }}
-                >
-                  Use my initials instead
-                </button>
-
-                {/* LOCAL PHOTO + OPTIONAL IMAGE URL */}
-                <div style={{ flex: '1 1 260px', display: 'grid', gap: '8px' }}>
-                  <label
-                    className="hub-outline-btn"
-                    style={{ fontSize: '12px', padding: '8px 14px', cursor: 'pointer', width: 'fit-content' }}
-                  >
-                    <Camera size={14} /> Choose photo
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      aria-label="Choose profile photo"
-                      onChange={(event) => handleAvatarFile(event.target.files?.[0])}
-                      style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
-                    />
-                  </label>
-                  {avatarFileName && <span style={{ fontSize: '11px', color: '#475569' }}>{avatarFileName}</span>}
+                <div className="profile-photo-controls">
+                  <div className="profile-photo-actions">
+                    <label className="hub-outline-btn">
+                      <Camera size={14} /> {avatarUploading ? 'Uploading…' : 'Choose photo'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        aria-label="Choose profile photo"
+                        disabled={avatarUploading}
+                        onChange={(event) => void handleAvatarFile(event.target.files?.[0])}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatarUrl('');
+                        setCustomAvatar('');
+                        setAvatarImageUrl('');
+                        setAvatarFileName('');
+                      }}
+                      className="hub-outline-btn"
+                      aria-label="Use my initials instead of a photo"
+                    >
+                      Use initials
+                    </button>
+                  </div>
+                  {avatarFileName && <span className="profile-photo-note">{avatarFileName}</span>}
+                  {avatarUploading && <span className="profile-photo-note" role="status">Uploading your photo…</span>}
                   <input
                     type="url"
                     value={avatarImageUrl}
@@ -892,14 +923,7 @@ export default function ProfileCompletionPage() {
                       setAvatarFileName('');
                     }}
                     placeholder="Or paste image URL (https://…)"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '8px',
-                      outline: 'none',
-                    }}
+                    className="profile-photo-url"
                   />
                 </div>
               </div>
@@ -1360,7 +1384,7 @@ export default function ProfileCompletionPage() {
             <div className="profile-save-bar">
               <div className="profile-save-state" role="status" aria-live="polite">
                 {saving
-                  ? 'Saving changes…'
+                  ? 'Saving...'
                   : savedSuccess
                     ? 'Saved'
                     : isDirty

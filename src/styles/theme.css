@@ -8,28 +8,29 @@
   --er-font-sans: Inter, Arial, sans-serif;
   --er-font-mono: var(--er-font-sans);
 
-  /* 1. Primary action - EduReach logo navy
-     The wordmark is navy, blue and red; the action colour is the navy so white
-     text clears AA at every step (10.35:1 resting, 11.98:1 hover, 13.93:1
-     pressed) and the border steps darken with it. */
-  --er-primary: #0A3E83;
-  --er-primary-hover: #083570;
-  --er-primary-active: #062B5C;
-  --er-primary-border: #083570;
-  --er-primary-border-hover: #072F64;
-  --er-primary-border-active: #05264F;
-  --er-primary-focus: #0A3E83;
-  --er-primary-soft: #EDF4FB;
-  --er-primary-soft-border: #CCE0F3;
+  /* 1. Primary action - deep green
+     The wordmark keeps its navy and blue; the action colour is the deep green
+     the student sees on primary buttons, selected navigation and positive key
+     states. White text clears AA at every step (9.89:1 resting, 11.8:1 hover,
+     14.1:1 pressed). */
+  --er-primary: #174A3A;
+  --er-primary-hover: #123C2F;
+  --er-primary-active: #0D2E24;
+  --er-primary-border: #123C2F;
+  --er-primary-border-hover: #0D2E24;
+  --er-primary-border-active: #0A241C;
+  --er-primary-focus: #174A3A;
+  --er-primary-soft: #EDF5F0;
+  --er-primary-soft-border: #CFE4D8;
   --er-on-primary: #FFFFFF;
 
-  /* 1a. Secondary action - a white control with a logo-blue edge, never a
-     second solid navy button. */
-  --er-secondary-border: #CCE0F3;
-  --er-secondary-hover-bg: #EDF4FB;
-  --er-secondary-hover-border: #A9C8E8;
-  --er-secondary-active-bg: #DCEAF8;
-  --er-secondary-active-border: #8FB7DE;
+  /* 1a. Secondary action - a quiet white control with a green-grey edge,
+     never a second solid green button. */
+  --er-secondary-border: #D8DEE5;
+  --er-secondary-hover-bg: #F7F9F8;
+  --er-secondary-hover-border: #C4CBD4;
+  --er-secondary-active-bg: #EEF1F4;
+  --er-secondary-active-border: #B4BCC7;
 
   /* 1b. Disabled controls are neutral: no brand colour, no hover, no press. */
   --er-disabled-bg: #E2E8F0;
@@ -40,7 +41,7 @@
   /* 1c. Navigation states. Hover and selection are surfaces plus navy text;
      the border is a soft edge on top of them, not the only signal. */
   --er-nav-hover-bg: #F1F5F9;
-  --er-nav-active-bg: #EDF4FB;
+  --er-nav-active-bg: #EDF5F0;
 
   /* 1d. Form fields. */
   --er-field-border-hover: #94A3B8;
@@ -86,19 +87,19 @@
 
   /* 2. Secondary - Academic Tangerine */
   --er-tangerine: #D2732A;
-  --er-secondary-soft: #F9F0EE;
+  --er-secondary-soft: #F6F7F6;
 
   /* 3. Institutional Navy */
   --er-navy: #0F172A;
   --er-navy-soft: #283044;
 
   /* 4. Academic Surface Colors */
-  --er-bg: #FAF8FF;
+  --er-bg: #F7F8F7;
   --er-surface: #FFFFFF;
-  --er-surface-soft: #F2F3FF;
-  --er-surface-academic: #EAEDFF;
-  --er-surface-elevated: #E2E7FF;
-  --er-surface-deep: #DAE2FD;
+  --er-surface-soft: #F4F6F5;
+  --er-surface-academic: #EDF5F0;
+  --er-surface-elevated: #E4EEE7;
+  --er-surface-deep: #D8E6DD;
 
   /* 5. Supporting Colors */
   --er-burgundy: #54080C;
@@ -109,7 +110,7 @@
 
   /* 6. Text Colors */
   --er-text-primary: #131B2E;
-  --er-text-secondary: #5B403B;
+  --er-text-secondary: #475467;
   --er-text-muted: #5e6c82;
   --er-text-inverse: #FFFFFF;
 
@@ -397,7 +398,7 @@ samp,
 }
 
 /* Compact card/content rhythm: keep pages scannable and avoid stretched text-heavy cards. */
-:where(.ms-news-main p, .ms-service-body p, .dash-quick-card-sub, .dash-card p, .hub-service-profile-body p, .service-track-intro p, .admin-page-header p) {
+:where(.ms-news-main p, .ms-service-body p, .dash-quick-card-sub, .dash-card p, .hub-service-profile-body p, .service-track-intro p) {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

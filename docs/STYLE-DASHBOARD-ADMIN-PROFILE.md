@@ -20,7 +20,7 @@ white on logo navy = 10.35:1; coarse-pointer targets ≥44px; visible focus ring
 `src/styles/brand-actions.css` (loaded after component sheets).
 
 ## 1. Student Dashboard — `pages/StudentDashboardV2.tsx`
-CSS: `src/student-dashboard.css` + `src/dashboard-v2.css` (classes `edureach-dash-*`, `dash-*`).
+CSS: `src/student-dashboard.css` (classes `edureach-dash-*`, `dash-*`). The former `src/dashboard-v2.css` held no live selectors and was removed in UX-1.
 - **Layout:** sticky top header (brand → home, service search, notification Bell
   with crimson unread badge — no badge at zero, profile menu) → desktop **left
   sidebar** (`edureach-dash-sidebar`, logo-navy selected surface) → mobile **bottom nav**.
