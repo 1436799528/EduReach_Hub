@@ -258,22 +258,22 @@ export default function AdminOpportunitiesPage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>Opportunities</h2><span>{loading ? 'Loading…' : `${items.length} total`}</span></div>
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead><tr><th scope="col">Opportunity</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">State</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <tr><td colSpan={6} className="empty-state">Loading opportunities…</td></tr>}
                 {!loading && visible.map((item) => (
                   <tr key={item.id}>
-                    <td>
+                    <td data-label="Opportunity">
                       <b>{item.title}</b>
                       <div className="muted">{item.organisation || '—'}{item.link_url ? <> · <a href={item.link_url} target="_blank" rel="noopener noreferrer">official link</a></> : null}</div>
                     </td>
-                    <td>{item.category}</td>
-                    <td>{item.deadline || '—'}</td>
-                    <td><StatusBadge status={item.is_active !== false ? 'published' : 'archived'} /></td>
-                    <td><TimeAgo value={item.updated_at} /></td>
-                    <td className="right">
+                    <td data-label="Category">{item.category}</td>
+                    <td data-label="Deadline">{item.deadline || '—'}</td>
+                    <td data-label="State"><StatusBadge status={item.is_active !== false ? 'published' : 'archived'} /></td>
+                    <td data-label="Updated"><TimeAgo value={item.updated_at} /></td>
+                    <td className="right" data-label="Actions">
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => openEdit(item)}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-btn small" onClick={() => void toggleActive(item)}>{item.is_active !== false ? 'Hide' : 'Show'}</button>

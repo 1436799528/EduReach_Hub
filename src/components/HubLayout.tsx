@@ -97,6 +97,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <a
               href="/"
               aria-label="EduReach Hub home"
+              className="hub-brand-link"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -182,6 +183,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             {!isLoading && isAuthenticated && (
               <a
                 href="/dashboard/services"
+                className="hub-requests-link"
                 style={{
                   background: '#f8fafc',
                   border: '1px solid #e2e8f0',
@@ -197,7 +199,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 }}
               >
                 <ScanSearch size={14} color="#b14933" />
-                <span>My Requests</span>
+                <span className="hub-requests-label">My Requests</span>
               </a>
             )}
 
@@ -364,6 +366,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               <button
                 ref={mobileCloseRef}
                 type="button"
+                className="hub-mobile-close"
                 onClick={() => { setMobileOpen(false); window.setTimeout(() => mobileTriggerRef.current?.focus(), 0); }}
                 style={{ background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
                 aria-label="Close menu"
@@ -374,7 +377,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
 
             <SiteSearch variant="drawer" label="Site search (mobile)" onNavigate={() => setMobileOpen(false)} />
 
-            <nav style={{ display: 'grid', gap: '12px', fontSize: '14px', fontWeight: 560 }}>
+            <nav className="hub-mobile-nav" style={{ display: 'grid', gap: '4px', fontSize: '14px', fontWeight: 560 }}>
               <a href="/" onClick={() => setMobileOpen(false)} style={{ textDecoration: 'none', color: '#0f172a' }}>
                 Home
               </a>

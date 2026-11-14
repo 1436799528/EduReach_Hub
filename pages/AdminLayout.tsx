@@ -322,6 +322,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="admin-brand">
           <BrandLogo variant="mark" height={38} radius={8} />
           <div className="admin-brand-text"><strong>EduReach Hub</strong><span>Management console</span></div>
+          {mobileNavOpen && (
+            <button type="button" className="admin-drawer-close" aria-label="Close navigation drawer" onClick={() => setMobileNavOpen(false)}>
+              <X size={18} aria-hidden="true" />
+            </button>
+          )}
         </div>
         <nav id="admin-navigation" className="admin-nav" aria-label="Administration">
           {navItems.map((item, index) => (

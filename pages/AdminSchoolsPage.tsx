@@ -195,19 +195,19 @@ export default function AdminSchoolsPage() {
         </div>
 
         <div className="admin-card">
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead><tr><th scope="col">Institution</th><th scope="col">State</th><th scope="col">Type</th><th scope="col">Website</th><th scope="col">Post-UTME</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={6} />}
                 {!loading && institutions.map((institution) => (
                   <tr key={institution.id}>
-                    <td><b>{institution.school_name}</b><div className="muted">{institution.acronym || '—'}</div></td>
-                    <td>{institution.state || '—'}</td>
-                    <td>{institution.institution_type || '—'}</td>
-                    <td>{institution.website_url ? <a href={institution.website_url} target="_blank" rel="noopener noreferrer">Open</a> : '—'}</td>
-                    <td>{institution.post_utme_available && institution.post_utme_verified ? (institution.post_utme_method === 'cbt' ? 'CBT verified' : 'Handwritten verified') : 'Not listed'}</td>
-                    <td className="right">
+                    <td data-label="Institution"><b>{institution.school_name}</b><div className="muted">{institution.acronym || '—'}</div></td>
+                    <td data-label="State">{institution.state || '—'}</td>
+                    <td data-label="Type">{institution.institution_type || '—'}</td>
+                    <td data-label="Website">{institution.website_url ? <a href={institution.website_url} target="_blank" rel="noopener noreferrer">Open</a> : '—'}</td>
+                    <td data-label="Post-UTME">{institution.post_utme_available && institution.post_utme_verified ? (institution.post_utme_method === 'cbt' ? 'CBT verified' : 'Handwritten verified') : 'Not listed'}</td>
+                    <td className="right" data-label="Actions">
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => setForm({
                           id: institution.id,

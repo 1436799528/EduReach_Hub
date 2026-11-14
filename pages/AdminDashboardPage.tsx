@@ -110,9 +110,12 @@ export default function AdminDashboardPage() {
         </div>
 
         {error && (
-          <div className="admin-card" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="admin-card admin-error-card" role="alert">
             <span>{error}</span>
-            <button type="button" className="admin-btn small" onClick={() => void load()} disabled={loading}>Try again</button>
+            <div className="admin-header-actions">
+              <a className="admin-btn secondary" href="/admin/queue">Open queue</a>
+              <button type="button" className="admin-btn small" onClick={() => void load()} disabled={loading}>Try again</button>
+            </div>
           </div>
         )}
 
@@ -123,6 +126,7 @@ export default function AdminDashboardPage() {
         ) : (
           <AdminSummary
             label="Operational summary"
+            className="dashboard-summary"
             items={[
               { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Staff accounts unavailable' : `${metricText('admins')} staff accounts`, tone: 'blue' },
               { label: 'Open requests', value: metricText('pending_requests'), detail: metric('service_requests') === null ? 'All-time request count unavailable' : `${metricText('service_requests')} requests all-time`, tone: 'amber' },
@@ -181,17 +185,17 @@ export default function AdminDashboardPage() {
                   <h2>Needs Attention</h2>
                   <span>{pendingCount === null ? 'Status unavailable' : pendingCount === 0 ? 'Queue clear' : `Showing ${attention.length} of ${pendingCount.toLocaleString()} open`}</span>
                 </div>
-                <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-                  <table className="admin-table">
+                <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+                  <table className="admin-table admin-table--stack">
                     <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
                     <tbody>
                       {attention.map((row) => (
                         <tr key={row.id}>
-                          <td className="accent">{requestStudentName(row)}</td>
-                          <td>{row.service_catalog?.title || 'Student service'}</td>
-                          <td><StatusBadge status={row.status} /></td>
-                          <td><TimeAgo value={row.created_at} /></td>
-                          <td className="right"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
+                          <td className="accent" data-label="Student">{requestStudentName(row)}</td>
+                          <td data-label="Service">{row.service_catalog?.title || 'Student service'}</td>
+                          <td data-label="Status"><StatusBadge status={row.status} /></td>
+                          <td data-label="Age"><TimeAgo value={row.created_at} /></td>
+                          <td className="right" data-label="Action"><RequestActions row={row} disabled={busyId === row.id} onAction={act} /></td>
                         </tr>
                       ))}
                       {!attention.length && <tr><td colSpan={5} className="empty-state">{pendingCount === null ? 'Queue status could not be determined.' : pendingCount === 0 ? 'Queue is clear. No active service requests.' : 'Open requests are reported, but no recent request rows were returned. Open the full queue to investigate.'}</td></tr>}
@@ -259,7 +263,7 @@ function FocusGroup({ title, rows }: { title: string; rows: Array<{ label: strin
     <div className="admin-focus-group">
       <h3>{title}</h3>
       {rows.slice(0, 5).map((row) => (
-        <BarStat key={row.label} label={row.label} value={row.value} max={max} tone="orange" />
+        <BarStat key={row.label} label={row.label} value={row.value} max={max} tone="green" />
       ))}
     </div>
   );

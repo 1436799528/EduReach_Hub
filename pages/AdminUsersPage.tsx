@@ -111,7 +111,7 @@ export default function AdminUsersPage() {
             <input
               className="admin-input admin-search"
               aria-label="Search student accounts"
-              placeholder="Search name, school or matric number"
+              placeholder="Search name, school or matric"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -130,8 +130,8 @@ export default function AdminUsersPage() {
         )}
 
         <div className="admin-card">
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead>
                 <tr>
                   <th scope="col">Name</th>
@@ -150,25 +150,25 @@ export default function AdminUsersPage() {
                 {!loading &&
                   profiles.map((p) => (
                     <tr key={p.id}>
-                      <td>
+                      <td data-label="Name">
                         <b>{p.full_name || 'Unnamed student'}</b>
                         <div className="muted">{p.matric_number || 'No matric number'}</div>
                       </td>
-                      <td>{p.school || '—'}</td>
-                      <td>{p.department || '—'}</td>
-                      <td>{p.level || '—'}</td>
-                      <td>
+                      <td data-label="Institution">{p.school || '—'}</td>
+                      <td data-label="Department">{p.department || '—'}</td>
+                      <td data-label="Level">{p.level || '—'}</td>
+                      <td data-label="Role">
                         <span className={`status-badge ${p.role}`}>{p.role}</span>
                         {p.suspended && <div className="muted" style={{ color: 'var(--admin-danger)', fontWeight: 620 }}>Suspended</div>}
                       </td>
-                      <td>
+                      <td data-label="Profile">
                         <div className="admin-meter" title={`${profileCompletion(p)}% of profile fields completed`}>
                           <div className="admin-meter-fill" style={{ width: `${profileCompletion(p)}%` }} />
                         </div>
                         <div className="muted">{profileCompletion(p)}%</div>
                       </td>
-                      <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                      <td className="right">
+                      <td data-label="Joined">{new Date(p.created_at).toLocaleDateString()}</td>
+                      <td className="right" data-label="Actions">
                         <div className="admin-action-row">
                           <button type="button" className="admin-btn small" onClick={() => void openActivity(p)}>View</button>
                           <Can capability="user.suspend">

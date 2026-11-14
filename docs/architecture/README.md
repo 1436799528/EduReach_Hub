@@ -25,6 +25,7 @@ otherwise — or the document is updated in the same change.
 | 07 | [Feature catalogue](07-FEATURE-CATALOGUE.md) | Every feature, its status, dependencies and build order |
 | 08 | [Feature template](08-FEATURE-TEMPLATE.md) | The required structure for any new feature, with a worked example |
 | — | [UX-1 audit and redesign](UX-1-AUDIT-AND-REDESIGN.md) | What the UX-1 pass found, what changed, how it was verified and what remains |
+| — | [UX-2 rendered polish](UX-2-RENDERED-POLISH.md) | What the rendered 147-state browser sweep found, the fixes, the gates and what remains |
 
 Existing documents these extend rather than replace:
 `docs/DESIGN_RULES.md`, `docs/COMPONENT_RULES.md`, `docs/COLOR_THEME_SPEC.md`,

@@ -617,8 +617,10 @@
   border: 1px solid #fecaca;
 }
 
-/* Stacked rows used instead of tables on phones */
-.dash-mobile-only {
+/* Stacked rows used instead of tables on phones. The selector has to match
+   `.dash-rows` specificity, otherwise the grid display below wins and every
+   request/result renders twice on desktop. */
+.dash-rows.dash-mobile-only {
   display: none;
 }
 
@@ -973,7 +975,7 @@
     display: none;
   }
 
-  .dash-mobile-only {
+  .dash-rows.dash-mobile-only {
     display: grid;
   }
 

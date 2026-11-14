@@ -75,7 +75,11 @@ export const BUDGETS = {
   // auth route: 353.2 KB across 61 chunks. Raised to 356 KB with 2.8 KB
   // headroom; the public first-load path is still capped separately at 211 KB
   // and measured 209.0 KB.
-  totalJsGzip: 356 * 1024,
+  // UX-2 moves profile photos out of `profiles.avatar_url` and into the lazy
+  // profile route's Storage upload path (356.5 KB measured). The 0.5 KB is a
+  // deliberate trade for removing base64 images that could add megabytes to a
+  // profile row and every public-profile response. 357 KB keeps 0.5 KB slack.
+  totalJsGzip: 357 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

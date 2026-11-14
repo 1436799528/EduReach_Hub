@@ -352,23 +352,23 @@ export default function AdminServicesPage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>Catalogue</h2><span>{loading ? 'Loading…' : `${services.length} services`}</span></div>
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead><tr><th scope="col">Service</th><th scope="col">Key</th><th scope="col">Destination</th><th scope="col">Order</th><th scope="col">State</th><th scope="col" className="right">Actions</th></tr></thead>
               <tbody>
                 {loading && <tr><td colSpan={6} className="empty-state">Loading catalogue…</td></tr>}
                 {!loading && services.map((service) => (
                   <tr key={service.id}>
-                    <td><b>{service.title}</b><div className="muted">{service.category || '—'}</div></td>
-                    <td className="mono">{service.service_key}{service.is_form_service && <div className="muted">form service</div>}</td>
-                    <td>{service.application_url
+                    <td data-label="Service"><b>{service.title}</b><div className="muted">{service.category || '—'}</div></td>
+                    <td className="mono" data-label="Key">{service.service_key}{service.is_form_service && <div className="muted">form service</div>}</td>
+                    <td data-label="Destination">{service.application_url
                       ? <a href={service.application_url} target="_blank" rel="noopener noreferrer">External</a>
                       : service.route ? <span className="mono">{service.route}</span>
                       : service.is_form_service ? <span className="muted">In-app form</span>
                       : <span className="muted">—</span>}</td>
-                    <td>{service.sort_order ?? '—'}</td>
-                    <td><StatusBadge status={service.active ? 'published' : 'unpaid'} /></td>
-                    <td className="right">
+                    <td data-label="Order">{service.sort_order ?? '—'}</td>
+                    <td data-label="State"><StatusBadge status={service.active ? 'published' : 'unpaid'} /></td>
+                    <td className="right" data-label="Actions">
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => setEdit({
                           id: service.id,

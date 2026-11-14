@@ -107,7 +107,7 @@
 .auth-verification-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;color:var(--auth-blue-ink);background:#e6f3fd}
 .auth-verification p{margin:0;color:#53636b;font-size:13px;line-height:1.65}
 .auth-verification .auth-submit{margin-top:3px}
-.auth-footer{display:flex;justify-content:space-between;gap:12px;margin:19px 2px 0;color:#738188;font-size:10.5px}
+.auth-footer{display:flex;justify-content:space-between;gap:12px;margin:19px 2px 0;color:#5f6f76;font-size:11px}
 .auth-footer a{color:var(--auth-brand);font-weight:560;text-decoration:none}
 .auth-footer a:hover{text-decoration:underline}
 .auth-page :focus-visible{outline:3px solid var(--auth-brand,#0a3e83);outline-offset:2px}

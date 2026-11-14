@@ -289,6 +289,9 @@
 .admin-alert svg { color: #8a5a00; }
 .admin-alert span { flex: 1; min-width: 200px; }
 .admin-alert .admin-btn { box-shadow: none; }
+/* The attention dot is a status mark, not the message: without this it takes
+   the alert copy's `flex: 1` and floats to the middle of the banner. */
+.admin-alert .admin-status-dot { flex: 0 0 auto; min-width: 0; }
 
 .admin-section-label { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 4px 9px; border-radius: 999px; background: #eef3ff; color: #42578b; border: 1px solid #ccd7f6; font: 700 9.5px var(--er-font-sans); text-transform: uppercase; letter-spacing: .08em; vertical-align: middle; }
 .admin-section-label i { width: 6px; height: 6px; border-radius: 50%; background: #42578b; }
@@ -526,6 +529,7 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-topbar-user { max-width: 180px; overflow: hidden; color: var(--admin-text); font-size: 12px; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
 .admin-menu-toggle { display: none; }
 .admin-drawer-backdrop { display: none; }
+.admin-drawer-close { display: none; }
 
 .admin-health-pill {
   flex: 0 0 auto;
@@ -573,7 +577,7 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-bar-fill.green,
 .admin-bar-fill.blue { background: var(--er-primary); }
 .admin-bar-fill.blue { opacity: .62; }
-.admin-timeline li::before { background: var(--er-crimson); box-shadow: none; }
+.admin-timeline li::before { background: #98A2B3; box-shadow: none; }
 .admin-alert { background: var(--er-status-error-bg); border-color: var(--er-status-error-border); color: #7F1D1D; }
 .admin-alert svg { color: var(--er-status-error); }
 .admin-section-label { background: #F1F5F9; color: var(--admin-muted); border-color: var(--admin-border); }
@@ -599,6 +603,21 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
     box-shadow: 0 20px 50px rgba(15, 23, 42, .16);
   }
   .admin-sidebar.is-open { transform: translateX(0); visibility: visible; }
+  .admin-brand { position: relative; padding-right: 56px; }
+  .admin-drawer-close {
+    display: inline-grid;
+    place-items: center;
+    position: absolute;
+    top: 18px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--admin-navy);
+    cursor: pointer;
+  }
   .admin-drawer-backdrop {
     display: block;
     position: fixed;
@@ -830,12 +849,12 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   padding: 0 9px;
   border: 1px solid #d8dee5;
   border-radius: 8px;
-  background: #f8faf9;
-  color: #667085;
+  background: #fff;
+  color: #475467;
 }
 .admin-quickfind:focus-within { border-color: var(--er-primary); background: #fff; box-shadow: 0 0 0 2px rgba(23, 74, 58, .12); }
 .admin-quickfind input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #101828; font: 500 12px var(--er-font-sans); }
-.admin-quickfind input::placeholder { color: #667085; }
+.admin-quickfind input::placeholder { color: #475467; opacity: 1; }
 .admin-quickfind-pop {
   position: absolute;
   top: calc(100% + 6px);
@@ -853,3 +872,98 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-quickfind-pop a:hover, .admin-quickfind-pop a.is-active { background: var(--er-primary-soft); color: var(--er-primary); }
 .admin-quickfind-pop p { margin: 0; padding: 9px 10px; color: #667085; font-size: 12px; line-height: 1.4; }
 @media (max-width: 900px) { .admin-quickfind { display: none; } }
+
+/* A failed dashboard read keeps the recovery path visible beside the message. */
+.admin-error-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------------- */
+/* Mobile row cards for ordinary operational tables                  */
+/* ---------------------------------------------------------------- */
+/* Dense, schema-driven tables keep a labelled scroll region. Tables that
+   represent one student, request, article or job at a time become a card
+   below 700px so the phone is not asked to pan a desktop grid. */
+@media (max-width: 700px) {
+  .admin-table-wrap--stack { overflow: visible; }
+
+  .admin-table--stack { display: block; width: 100%; min-width: 0; }
+  .admin-table--stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .admin-table--stack tbody { display: grid; gap: 10px; }
+  .admin-table--stack tr {
+    display: block;
+    padding: 10px 12px;
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    background: var(--admin-surface);
+    box-shadow: none;
+  }
+  .admin-table--stack td {
+    display: grid;
+    grid-template-columns: minmax(88px, 34%) minmax(0, 1fr);
+    gap: 4px 10px;
+    align-items: start;
+    width: auto;
+    padding: 5px 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .admin-table--stack td::before {
+    content: attr(data-label);
+    color: var(--admin-muted);
+    font-size: 10.5px;
+    font-weight: 620;
+    letter-spacing: .045em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+  .admin-table--stack td[colspan],
+  .admin-table--stack td[data-label=""] { display: block; }
+  .admin-table--stack td[colspan]::before,
+  .admin-table--stack td[data-label=""]::before { display: none; }
+  .admin-table--stack td.right { text-align: left; }
+  .admin-table--stack td .admin-action-row { justify-content: flex-start; flex-wrap: wrap; }
+  .admin-table--stack td .admin-btn,
+  .admin-table--stack td .admin-select { min-height: 40px; }
+  .admin-table--stack tr:last-child { margin-bottom: 0; }
+}
+
+/* Six operational KPIs read as two balanced rows of three. The previous
+   auto-fit row squeezed six 150px tracks into ~170px, which broke the word
+   "Unavailable" mid-word on every card when the API was down. */
+.admin-summary.dashboard-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dashboard-summary .admin-summary-item:nth-child(3n) { border-right: 0; }
+.dashboard-summary .admin-summary-item:nth-child(n + 4) { border-top: 1px solid var(--admin-border); }
+@media (max-width: 780px) {
+  .admin-summary.dashboard-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-summary .admin-summary-item:nth-child(3n) { border-right: 1px solid var(--admin-border); }
+  .dashboard-summary .admin-summary-item:nth-child(2n) { border-right: 0; }
+  .dashboard-summary .admin-summary-item:nth-child(n + 3) { border-top: 1px solid var(--admin-border); }
+}
+
+/* Card headers pair copy with actions. Below 560px the action group moves to
+   its own row instead of squeezing the copy into a 110px column. */
+@media (max-width: 560px) {
+  .admin-card-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .admin-card-header > div:last-child { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+  .admin-card-header .admin-btn { flex: 1 1 auto; }
+}
+
+/* A dense table in a half-width card must shrink with the card; the global
+   820px min-width forced a hidden horizontal scroll on 1440px desktops. */
+.admin-two-col .admin-table { min-width: 0; }
+.admin-two-col .admin-table th,
+.admin-two-col .admin-table td { padding: 10px; }

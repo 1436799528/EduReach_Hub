@@ -82,7 +82,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
       <polyline
         points={line}
         fill="none"
-        stroke="#64748b"
+        stroke="#174A3A"
         strokeWidth="2"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -97,7 +97,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
             cy={y(point.score)}
             r={isLast ? 4 : 2.6}
             fill={tone}
-            stroke={isLast ? tone : '#64748b'}
+            stroke={isLast ? tone : '#174A3A'}
             strokeWidth="1.6"
           />
         );

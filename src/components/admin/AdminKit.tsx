@@ -114,9 +114,9 @@ export type AdminSummaryItem = {
   tone?: AdminReportTone;
 };
 
-export function AdminSummary({ label, items }: { label: string; items: AdminSummaryItem[] }) {
+export function AdminSummary({ label, items, className }: { label: string; items: AdminSummaryItem[]; className?: string }) {
   return (
-    <section className="admin-summary" aria-label={label}>
+    <section className={`admin-summary${className ? ` ${className}` : ''}`} aria-label={label}>
       {items.map((item) => (
         <div className="admin-summary-item" key={item.label}>
           <div className="admin-summary-top">
@@ -329,7 +329,7 @@ export function AuditTimeline({ items, emptyText = 'No staff activity recorded y
 // Simple horizontal stat bar (no chart library; pure CSS)
 // ---------------------------------------------------------------------------
 
-export function BarStat({ label, value, max, hint, tone = 'orange' }: { label: string; value: number; max: number; hint?: string; tone?: 'orange' | 'green' | 'blue' }) {
+export function BarStat({ label, value, max, hint, tone = 'green' }: { label: string; value: number; max: number; hint?: string; tone?: 'orange' | 'green' | 'blue' }) {
   const safeMax = max > 0 ? max : 1;
   const pct = value <= 0 ? 0 : Math.max(2, Math.min(100, Math.round((value / safeMax) * 100)));
   const accessibleValue = hint ?? value.toLocaleString();

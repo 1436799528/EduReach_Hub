@@ -114,17 +114,17 @@ export default function AdminQueuePage() {
 
         <div className="admin-card">
           <div className="admin-card-header"><h2>{FILTERS.find((f) => f.value === filter)?.label || 'Queue'}</h2><span>{loading ? 'Loading…' : loadFailed ? 'Unavailable' : `${rows.length} request${rows.length === 1 ? '' : 's'}`}</span></div>
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead><tr><th scope="col">Student</th><th scope="col">Service</th><th scope="col">Reference</th><th scope="col">Details</th><th scope="col">Status</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
               <tbody>
                 {loading && <TableSkeleton rows={6} columns={7} />}
                 {!loading && rows.map((row) => (
                   <tr key={row.id}>
-                    <td className="accent">{requestStudentName(row)}</td>
-                    <td>{row.service_catalog?.title || 'Service request'}</td>
-                    <td className="mono">{row.reference_code || '—'}</td>
-                    <td>
+                    <td className="accent" data-label="Student">{requestStudentName(row)}</td>
+                    <td data-label="Service">{row.service_catalog?.title || 'Service request'}</td>
+                    <td className="mono" data-label="Reference">{row.reference_code || '—'}</td>
+                    <td data-label="Details">
                       {String(row.form_data?.message || row.form_data?.requestDetails || '—')}
                       {row.admin_note && <div className="muted" style={{ marginTop: 4 }}><b>Note:</b> {row.admin_note}</div>}
                       <button type="button" className="admin-text-btn" style={{ marginTop: 4 }} onClick={() => { setNoteId(noteId === row.id ? null : row.id); setNoteText(row.admin_note || ''); setNoteVersion(row.updated_at); }}>
@@ -149,9 +149,9 @@ export default function AdminQueuePage() {
                         </div>
                       )}
                     </td>
-                    <td><StatusBadge status={row.status} /></td>
-                    <td><TimeAgo value={row.created_at} /></td>
-                    <td className="right"><RequestActions row={row} disabled={needsRefresh || busyId === row.id} onAction={act} /></td>
+                    <td data-label="Status"><StatusBadge status={row.status} /></td>
+                    <td data-label="Age"><TimeAgo value={row.created_at} /></td>
+                    <td className="right" data-label="Action"><RequestActions row={row} disabled={needsRefresh || busyId === row.id} onAction={act} /></td>
                   </tr>
                 ))}
                 {!loading && !loadFailed && !rows.length && <tr><td colSpan={7} className="empty-state">No matching service requests.</td></tr>}

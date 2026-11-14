@@ -253,7 +253,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261107150000', 'cbt_single_writing_session', '20261107150000_cbt_single_writing_session.sql', 'unique'),
     ('20261108120000', 'question_import_atomic_publication', '20261108120000_question_import_atomic_publication.sql', 'unique'),
     ('20261113000000', 'public_profiles', '20261113000000_public_profiles.sql', 'unique'),
-    ('20261113120000', 'repair_profile_write_policy', '20261113120000_repair_profile_write_policy.sql', 'unique')
+    ('20261113120000', 'repair_profile_write_policy', '20261113120000_repair_profile_write_policy.sql', 'unique'),
+    ('20261113140000', 'avatar_storage', '20261113140000_avatar_storage.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -366,6 +367,7 @@ with expected(version, migration) as (
     ,('20261108120000', '20261108120000_question_import_atomic_publication.sql')
     ,('20261113000000', '20261113000000_public_profiles.sql')
     ,('20261113120000', '20261113120000_repair_profile_write_policy.sql')
+    ,('20261113140000', '20261113140000_avatar_storage.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e

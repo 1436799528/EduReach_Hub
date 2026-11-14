@@ -75,6 +75,7 @@ export default function AdminAnalyticsPage() {
         {loading ? <div className="admin-summary admin-summary-loading" aria-label="Loading analytics summary">{Array.from({ length: 6 }, (_, index) => <span className="admin-skel admin-skel-line" key={index} aria-hidden="true" />)}</div> : data && (
           <AdminSummary
             label="Analytics summary"
+            className="analytics-summary"
             items={[
               { label: 'Registered users', value: metricText('users'), detail: metric('admins') === null ? 'Administrator count unavailable' : `${metricText('admins')} administrators`, tone: 'blue' as const },
               { label: 'Open requests', value: metricText('pending_requests'), detail: totalRequests === null ? 'Total request count unavailable' : `${metricText('service_requests')} all-time requests`, tone: 'amber' as const },
@@ -126,7 +127,7 @@ export default function AdminAnalyticsPage() {
               <div className="admin-focus-body">
                 {data?.activity && activityHasData ? (
                   <>
-                    <div className="admin-focus-group"><h3>Most viewed pages</h3>{data.activity.topPages.slice(0, 6).map((row) => <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.topPages[0].views} tone="orange" />)}</div>
+                    <div className="admin-focus-group"><h3>Most viewed pages</h3>{data.activity.topPages.slice(0, 6).map((row) => <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.topPages[0].views} tone="green" />)}</div>
                     <div className="admin-focus-group">
                       <h3>Searches</h3>
                       <BarStat label="Searches performed" value={data.activity.searches} max={Math.max(data.activity.searches, 1)} />
@@ -137,7 +138,7 @@ export default function AdminAnalyticsPage() {
                     <div className="admin-focus-group"><h3>Service funnels (views → submissions)</h3>
                       {data.activity.serviceViews.length ? data.activity.serviceViews.slice(0, 6).map((row) => {
                         const submits = data.activity!.serviceSubmits.find((s) => s.path === row.path)?.count || 0;
-                        return <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.serviceViews[0].views} hint={`${row.views} views · ${submits} submitted`} tone="orange" />;
+                        return <BarStat key={row.path} label={row.path} value={row.views} max={data.activity!.serviceViews[0].views} hint={`${row.views} views · ${submits} submitted`} tone="green" />;
                       }) : <p className="admin-footnote">No service views recorded yet.</p>}
                     </div>
                     <p className="admin-footnote">{data.activity.eventsTotal} events recorded since {new Date(data.activity.since).toLocaleDateString()}.</p>
@@ -158,8 +159,8 @@ export default function AdminAnalyticsPage() {
 
               <div className="admin-card">
                 <div className="admin-card-header"><h2>Recent Service Activity</h2><span>Latest 10</span></div>
-                <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}><table className="admin-table"><thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Created</th></tr></thead><tbody>
-                  {(data?.recentRequests || []).map((r) => <tr key={String(r.id)}><td className="mono accent">{String(r.reference_code || String(r.id).slice(0, 8))}</td><td>{r.service_catalog?.title || 'Service'}</td><td><StatusBadge status={String(r.status)} /></td><td><TimeAgo value={r.created_at} /></td></tr>)}
+                <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}><table className="admin-table admin-table--stack"><thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Created</th></tr></thead><tbody>
+                  {(data?.recentRequests || []).map((r) => <tr key={String(r.id)}><td className="mono accent" data-label="Reference">{String(r.reference_code || String(r.id).slice(0, 8))}</td><td data-label="Service">{r.service_catalog?.title || 'Service'}</td><td data-label="Status"><StatusBadge status={String(r.status)} /></td><td data-label="Created"><TimeAgo value={r.created_at} /></td></tr>)}
                   {!data?.recentRequests?.length && <tr><td colSpan={4} className="empty-state">No service activity yet.</td></tr>}
                 </tbody></table></div>
               </div>
@@ -167,8 +168,8 @@ export default function AdminAnalyticsPage() {
 
             <div className="admin-card">
               <div className="admin-card-header"><h2>Recent Accounts</h2><span>Latest 10</span></div>
-              <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}><table className="admin-table"><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Joined</th></tr></thead><tbody>
-                {(data?.recentUsers || []).map((u) => <tr key={String(u.id)}><td>{String(u.full_name || 'Unnamed user')}</td><td><StatusBadge status={String(u.role || 'student')} /></td><td><TimeAgo value={u.created_at} /></td></tr>)}
+              <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}><table className="admin-table admin-table--stack"><thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Joined</th></tr></thead><tbody>
+                {(data?.recentUsers || []).map((u) => <tr key={String(u.id)}><td data-label="Name">{String(u.full_name || 'Unnamed user')}</td><td data-label="Role"><StatusBadge status={String(u.role || 'student')} /></td><td data-label="Joined"><TimeAgo value={u.created_at} /></td></tr>)}
                 {!data?.recentUsers?.length && <tr><td colSpan={3} className="empty-state">No accounts yet.</td></tr>}
               </tbody></table></div>
             </div>
@@ -188,8 +189,8 @@ export default function AdminAnalyticsPage() {
               {jobs && (
                 <>
                   <p className="admin-footnote admin-job-note">Freshness window: {jobs.sinceHours} hours. This reports scheduled jobs only; it does not certify database, authentication or all API features.</p>
-                  <div className="admin-table-wrap">
-                    <table className="admin-table">
+                  <div className="admin-table-wrap admin-table-wrap--stack">
+                    <table className="admin-table admin-table--stack">
                       <thead><tr><th scope="col">Job</th><th scope="col">Status</th><th scope="col">Last success</th><th scope="col">Recorded failures</th></tr></thead>
                       <tbody>
                         {jobs.jobs.map((job) => {
@@ -197,19 +198,19 @@ export default function AdminAnalyticsPage() {
                           const state = needsAttention ? 'Attention' : job.fresh ? 'Fresh' : 'Stale';
                           return (
                             <tr key={job.job_name}>
-                              <td>{job.job_name}</td>
-                              <td><span className="admin-job-status"><AdminStatusDot status={needsAttention ? 'attention' : job.fresh ? 'healthy' : 'pending'} label={`${job.job_name}: ${state}`} />{state}</span></td>
-                              <td>{job.last_success_at ? <TimeAgo value={job.last_success_at} /> : 'No successful run recorded'}</td>
-                              <td>{job.failures.toLocaleString()}</td>
+                              <td data-label="Job">{job.job_name}</td>
+                              <td data-label="Status"><span className="admin-job-status"><AdminStatusDot status={needsAttention ? 'attention' : job.fresh ? 'healthy' : 'pending'} label={`${job.job_name}: ${state}`} />{state}</span></td>
+                              <td data-label="Last success">{job.last_success_at ? <TimeAgo value={job.last_success_at} /> : 'No successful run recorded'}</td>
+                              <td data-label="Recorded failures">{job.failures.toLocaleString()}</td>
                             </tr>
                           );
                         })}
                         {jobs.health.missing.map((name) => (
                           <tr key={`missing-${name}`}>
-                            <td>{name}</td>
-                            <td><span className="admin-job-status"><AdminStatusDot status="attention" label={`${name}: no run recorded in the freshness window`} />Missing run</span></td>
-                            <td>No successful run recorded</td>
-                            <td>Unavailable</td>
+                            <td data-label="Job">{name}</td>
+                            <td data-label="Status"><span className="admin-job-status"><AdminStatusDot status="attention" label={`${name}: no run recorded in the freshness window`} />Missing run</span></td>
+                            <td data-label="Last success">No successful run recorded</td>
+                            <td data-label="Recorded failures">Unavailable</td>
                           </tr>
                         ))}
                         {!jobs.jobs.length && !jobs.health.missing.length && <tr><td colSpan={4} className="empty-state">No scheduled job information returned.</td></tr>}

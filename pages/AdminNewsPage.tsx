@@ -402,23 +402,23 @@ export default function AdminNewsPage() {
       </div>
 
       <div className="admin-card">
-        <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-          <table className="admin-table">
+        <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+          <table className="admin-table admin-table--stack">
             <thead><tr><th scope="col">Title</th><th scope="col">Category</th><th scope="col">State</th><th scope="col">Published</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
             <tbody>
               {loading && <TableSkeleton rows={6} columns={6} />}
               {!loading && visible.map((article) => (
                 <tr key={article.id}>
-                  <td>
+                  <td data-label="Title">
                     <b>{article.title}</b>{article.is_placeholder && <strong> · PLACEHOLDER</strong>}
                     <div className="muted">/{article.slug}{article.featured ? ' · ★ featured' : ''}</div>
                     {article.is_placeholder && article.placeholder_note && <div className="muted">{article.placeholder_note}</div>}
                   </td>
-                  <td>{newsCategoryLabel(article.category)}</td>
-                  <td><StatusBadge status={article.published ? 'published' : 'draft'} /></td>
-                  <td>{article.published && article.published_at ? new Date(article.published_at).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
-                  <td><TimeAgo value={article.updated_at} /></td>
-                  <td className="right">
+                  <td data-label="Category">{newsCategoryLabel(article.category)}</td>
+                  <td data-label="State"><StatusBadge status={article.published ? 'published' : 'draft'} /></td>
+                  <td data-label="Published">{article.published && article.published_at ? new Date(article.published_at).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+                  <td data-label="Updated"><TimeAgo value={article.updated_at} /></td>
+                  <td className="right" data-label="Actions">
                     <div className="admin-action-row">
                       <Can capability="news.update">
                         <button type="button" className="admin-btn small" onClick={() => openEdit(article)}><Pencil size={12} /> Edit</button>

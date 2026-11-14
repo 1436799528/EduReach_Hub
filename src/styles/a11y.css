@@ -112,3 +112,71 @@
     font-size: 16px !important;
   }
 }
+
+/* UX-2 rendered pass: the dense layers set 32–36px controls with `!important`.
+   A coarse pointer is a phone or tablet, not a density problem: the final layer
+   restores the 44px target for the real controls and the footer navigation. */
+@media (pointer: coarse) {
+  .hub-primary-btn,
+  .hub-ghost-btn,
+  .hub-outline-btn,
+  .hub-icon-btn,
+  .admin-btn,
+  .admin-icon-btn,
+  .admin-text-btn,
+  .admin-table button,
+  .admin-page-header button,
+  .admin-filter button,
+  .hub-search,
+  .dash-card-link,
+  .dash-text-btn,
+  .dash-icon-btn,
+  .admin-text-btn {
+    min-height: 44px !important;
+  }
+  .hub-primary-btn,
+  .hub-ghost-btn,
+  .hub-outline-btn,
+  .hub-icon-btn {
+    height: 44px !important;
+  }
+  .admin-btn,
+  .admin-icon-btn,
+  .admin-table button,
+  .admin-page-header button,
+  .admin-filter button,
+  .er-cookie-close {
+    min-width: 44px;
+  }
+  .dash-card-link,
+  .dash-text-btn,
+  .admin-text-btn {
+    display: inline-flex;
+    align-items: center;
+  }
+  .er-footer-brand-link,
+  .er-footer-links a,
+  .er-footer-legal a,
+  .er-footer-social a,
+  .er-footer-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px !important;
+  }
+  .hub-requests-link,
+  .dash-table a,
+  .dash-table button {
+    min-width: 44px;
+    min-height: 44px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
