@@ -45,8 +45,11 @@ places where the interface still made a claim the code could not keep:
 - The admin quick-find survives below 900 px by moving into the navigation
   drawer, remembers recent pages, and matches word starts and in-order letters.
 
-Production is **not** publishable yet: the Netlify site still has no build
-settings or verified environment, the hosted project has phone and social
+Production is **not** publishable yet. The first deploy that read the new
+configuration completed its build and function bundling; Netlify’s secrets
+scanner then failed it because the literal `VITE_SUPABASE_URL` value appeared in
+two repository files. Those literals are now placeholders, and a clean deploy
+must still be observed. Separately, the hosted project has phone and social
 providers disabled while the UI advertises them, the confirmation template does
 not include a token, and the `avatars` bucket the profile uploader needs is
 absent. Those are section J blockers, each with the exact operator action.
@@ -59,9 +62,10 @@ absent. Those are section J blockers, each with the exact operator action.
 
 | System | Object | State on 13 Nov 2026 |
 | :--- | :--- | :--- |
-| Netlify | site `aa0aef85-2371-48ec-9569-3dcacb7cfe47` (`edureachhub`) | `build_settings: {}` — no build command or publish directory in the site record |
+| Netlify | site `aa0aef85-2371-48ec-9569-3dcacb7cfe47` (`edureachhub`) | `build_settings: {}` in the site record; the 5bf9c0c deploy resolved the command, publish directory and environment from `netlify.toml` |
 | Netlify | published deploy `6ad3202676087dafb6c42140` | `ready`, commit `e38e54b`, published **17 October 2026** |
-| Netlify | latest deploy `6af88c8c614632e2c4c283c2` | `state: "error"`, commit `c62d707`, PR #41, 25 s, `published_at: null` |
+| Netlify | deploy `6af88c8c614632e2c4c283c2` | `state: "error"`, commit `c62d707`, PR #41, 25 s, `published_at: null` |
+| Netlify | deploy `6af8a41fc6143a04fd85ddad` | `state: "error"`, commit `5bf9c0c`, 28 s; build **succeeded** and functions bundled, then the Netlify secrets scanner failed the deploy |
 | Netlify | deploy preview `deploy-preview-41--edureachhub.netlify.app` | not published |
 | Vercel | the passing deployment for this branch | “Protected Deployment” login wall; anonymous verification is impossible |
 | Supabase | project `gjdfatwcoosyuhakrrhh` | auth config and migration ledger readable; no hosted writes made by this audit |
@@ -116,7 +120,38 @@ return `index.html` with a 200 to a crawler.
 `/api/...`, so the handler is correct whether Netlify preserves the original
 URL or the rewrite target.
 
-### B.3 Function evidence
+### B.3 The first configured deploy: build succeeded, secrets scan failed
+
+Deploy `6af8a41fc6143a04fd85ddad` (commit `5bf9c0c`) proved that the new
+configuration is read. Netlify’s resolved config showed:
+
+- `command: npm run build`, origin `config`;
+- `publish: /opt/build/repo/dist`, origin `config`;
+- `functionsDirectory: /opt/build/repo/netlify/functions`;
+- the API, crawler and SPA redirects in the intended order;
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY` and the bootstrap email
+  present in the build environment.
+
+The build completed in **9.6 s**, Vite emitted the bundle, `build/server.cjs`
+was written, and both functions (`api.zip`, `daily-news-refresh`) bundled. The
+deploy then failed at Netlify’s **secrets scanner**, not at the app:
+
+```
+Secret env var "VITE_SUPABASE_URL"'s value detected:
+ found value at line 55 in docs/SUPABASE_ENVIRONMENT_CAPABILITY.md
+ found value at line 45 in scripts/tests/cbt-real-supabase-safety.test.mjs
+Secrets scanning found secrets in build.
+```
+
+The value is a public project URL, not a privileged key, but Netlify treats the
+configured value as a secret. The hard-coded URL was removed from the
+documentation table and from the safety-test mutation; the documentation now
+uses `<production-project-ref>` and the test uses a clearly synthetic ref. No
+`SECRETS_SCAN_OMIT_KEYS` exemption was added, because the repository should not
+carry the literal value. A new deploy is required to confirm the scan is clean.
+
+### B.4 Function evidence
 
 The function was bundled with the same esbuild shape Netlify uses and invoked
 with Lambda events:
@@ -143,7 +178,7 @@ inside Lambda it would have called `startServer()` and tried to listen on port
 `AWS_LAMBDA_FUNCTION_NAME` set: **port 3999 stayed closed** and
 `/api/health` still returned `200`.
 
-### B.4 Why Vercel is not a fallback
+### B.5 Why Vercel is not a fallback
 
 The Vercel deployment is protected, so it cannot be anonymously verified or
 shared. `vercel.json` also has **no `/api` route**: its catch-all rewrite sends
@@ -533,14 +568,14 @@ regression.
 
 ### Blocking before a public launch
 
-1. **Netlify site build settings and environment.** The site record still has
-   `build_settings: {}`. The new `netlify.toml` should supply the build on the
-   next deploy, but this must be verified in the deploy log. Production builds
-   run with `CONTEXT=production`, and `scripts/client-env-check.ts` fails
-   closed unless `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are
-   set. The function additionally needs `SUPABASE_SERVICE_ROLE_KEY` (or
-   `SUPABASE_SECRET_KEY`) at runtime. None of these can be confirmed from the
-   repository.
+1. **A clean Netlify deploy must be observed end to end.** Config-as-code now
+   works: the 5bf9c0c deploy read the command, publish directory, functions
+   directory, redirects and environment from `netlify.toml`, and
+   `npm run build` completed. That deploy failed only at the secrets scanner
+   because the literal `VITE_SUPABASE_URL` value was in two repository files;
+   both are now placeholders. Push the fix and confirm the next deploy reaches
+   `published`, then check `/api/health`, `/robots.txt` and `/sitemap.xml` on
+   the published origin.
 2. **The advertised auth methods are not enabled.** Google, Apple and phone
    are visible on the account page; the hosted project has
    `external_google_enabled=false`, `external_apple_enabled=false` and
@@ -659,7 +694,12 @@ Modified interaction surfaces: `pages/AdminNewsPage.tsx`,
 `src/components/AsyncState.tsx`, `src/components/NotificationCenter.tsx`,
 `src/components/admin/AdminQuickFind.tsx`, `src/admin.css`,
 `src/auth-page.css`, `src/edu-portal.css`, `src/styles/a11y.css`,
-`scripts/perf-audit.ts`, `docs/DEPLOYMENT_DECISION.md`, and the two affected
+`scripts/perf-audit.ts`, `docs/DEPLOYMENT_DECISION.md`, and the affected
 tests.
+
+Release-hygiene edits: `docs/SUPABASE_ENVIRONMENT_CAPABILITY.md` and
+`scripts/tests/cbt-real-supabase-safety.test.mjs` no longer contain the literal
+`VITE_SUPABASE_URL` value, so Netlify’s secrets scanner can pass without an
+omit-list exemption.
 
 No hosted database write, no force push, reset or history rewrite was used.
