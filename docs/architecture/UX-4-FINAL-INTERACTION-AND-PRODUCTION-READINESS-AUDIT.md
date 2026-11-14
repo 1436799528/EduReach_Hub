@@ -165,7 +165,9 @@ anonymously:
 | `/api/does-not-exist` | `404 {"error":"API endpoint not found."}` — the SPA never masks an API 404 |
 | `/robots.txt` | `200 text/plain`, real rules and the preview sitemap URL |
 | `/sitemap.xml` | `200 application/xml`, real sitemap with live news and school URLs |
+| `/api/public/profiles/does-not-exist` | `404 {"error":"Profile not found."}` — the server key and hosted Supabase are working, not degraded to `503` |
 | `/news` | `200` SPA shell with the live newsroom data |
+| `/privacy` | `200` with the real hosted policy text, not the local “Policy unavailable” state |
 | `/dashboard` | `200` SPA shell (the client redirects an anonymous visitor to `/login`) |
 
 This is the first deploy in this audit that both built and served the Express
