@@ -1,0 +1,134 @@
+
+@media (max-width: 360px) {
+  .er-exam-shell .er-exam-candidate {
+    display: none;
+  }
+}
+/* UX-6: the exam bar must stay opaque while content scrolls beneath it, and
+   selected/palette states must not rely on colour alone. */
+.er-exam-shell {
+  --er-exam-ink: #0f172a;
+  --er-exam-top: 0px;
+  /* The exam page sits under the site header, which is fixed. Without this
+     offset the sticky exam bar moves down while its content stays behind it. */
+  padding-top: var(--er-exam-top);
+  scroll-padding-top: calc(var(--er-exam-top) + 56px);
+}
+
+html.er-exam-mode,
+body.er-exam-mode {
+  /* `overflow-x: hidden` creates a non-scrolling container that breaks the
+     sticky exam bar. `clip` contains horizontal overflow without doing that. */
+  overflow-x: clip;
+}
+
+.er-exam-shell .er-exam-bar {
+  background: #0f172a;
+  color: #fff;
+}
+
+.er-exam-shell .er-exam-candidate-meta strong {
+  color: #fff;
+}
+
+.er-exam-shell .er-exam-candidate-meta span {
+  color: #cbd5e1;
+}
+
+.er-exam-option-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.er-exam-option-check {
+  flex: none;
+  color: currentColor;
+}
+
+.er-exam-palette-cell.is-current {
+  outline: 2px solid #174a3a;
+  outline-offset: 1px;
+  box-shadow: inset 0 0 0 1px #fff;
+}
+
+.er-exam-palette-legend .is-both {
+  color: #8a4b12;
+  text-decoration: underline;
+  text-decoration-color: #166534;
+  text-underline-offset: 2px;
+}
+
+.er-exam-palette-cell.is-answered.is-marked {
+  box-shadow: inset 3px 0 0 #166534;
+}
+
+.er-exam-submit-primary {
+  background: #174a3a !important;
+  border-color: #174a3a !important;
+  box-shadow: 0 2px 8px rgba(23, 74, 58, .22) !important;
+}
+
+.er-exam-submit-primary:hover {
+  background: #123c2f !important;
+}
+
+.er-exam-ghost:hover {
+  border-color: #174a3a;
+  color: #174a3a;
+}
+
+
+@media (max-width: 480px) {
+  .er-exam-shell .er-exam-bar {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .er-exam-shell .er-exam-bar-left {
+    flex: 0 0 auto;
+  }
+
+  .er-exam-shell .er-exam-candidate-meta {
+    display: none;
+  }
+
+  .er-exam-shell .er-exam-candidate-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+
+  .er-exam-shell .er-exam-bar-controls {
+    width: auto;
+    flex: 1 1 auto;
+    margin-left: 0;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+
+  .er-exam-shell .er-exam-timer {
+    padding: 7px 8px;
+    gap: 4px;
+  }
+
+  .er-exam-shell .er-exam-timer span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .er-exam-shell .er-exam-tool {
+    min-width: 44px;
+    padding: 6px;
+    justify-content: center;
+  }
+
+  .er-exam-shell .er-exam-end {
+    padding: 6px 8px;
+  }
+}

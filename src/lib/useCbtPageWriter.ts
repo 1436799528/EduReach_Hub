@@ -4,10 +4,15 @@ import { CbtAnswerQueue, CbtWritingSessionRevokedError, IndexedDbAnswerJournal, 
 import { CBT_UUID } from './cbtProtocolValidation';
 
 type Lease = { sessionId: string; sessionGeneration: number };
-type Phase = 'loading' | 'active' | 'takeover' | 'revoked' | 'expired' | 'error';
+type Phase = 'loading' | 'active' | 'takeover' | 'revoked' | 'expired' | 'submitted' | 'error';
 type View = { phase: Phase; answers: Record<number, number>; rows: AnswerOperation[]; busy: boolean; message: string; hasSnapshot: boolean };
 const initial: View = { phase: 'loading', answers: {}, rows: [], busy: false, message: '', hasSnapshot: false };
-type Controller = { choose: (question: CbtQuestionPayload, selected: QueueAnswer) => Promise<void>; takeover: () => Promise<void>; retry: () => Promise<void>; review: (key: string) => Promise<void>; resolve: (row: AnswerOperation, choice: 'local' | 'server') => Promise<void> };
+export type CbtFinalizeResult = {
+  outcome: 'submitted' | 'replayed' | 'already_submitted' | 'conflict' | 'expired' | 'closed' | 'unavailable' | 'error';
+  message: string;
+  result?: Record<string, unknown>;
+};
+type Controller = { choose: (question: CbtQuestionPayload, selected: QueueAnswer) => Promise<void>; takeover: () => Promise<void>; retry: () => Promise<void>; review: (key: string) => Promise<void>; resolve: (row: AnswerOperation, choice: 'local' | 'server') => Promise<void>; finalize: () => Promise<CbtFinalizeResult> };
 
 /** Page orchestration only: all durable operations remain in the existing journal. */
 export function useCbtPageWriter(accountId: string | undefined, attemptId: string, paper: CbtQuestionPayload[] | null) {
@@ -177,6 +182,75 @@ export function useCbtPageWriter(accountId: string | undefined, attemptId: strin
       }
     });
     controller.current = {
+      finalize: async () => {
+        current();
+        if (busy) return { outcome: 'error', message: 'Another action is still finishing. Wait for it to complete.' };
+        if (phase !== 'active' || !lease || !snapshot) return { outcome: 'unavailable', message: 'The server has not confirmed this writing session. Pending answers remain in this browser.' };
+        busy = true; publish();
+        try {
+          // A submission may only use revisions the server has already
+          // acknowledged. Drain the journal first and refuse if anything is
+          // still pending, conflicted or closed.
+          await drain();
+          await reloadRows();
+          if (rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))) {
+            return { outcome: 'error', message: 'Some answers are not confirmed saved. Review the pending work before submitting.' };
+          }
+          if (phase !== 'active' || !lease || !snapshot) return { outcome: 'unavailable', message: 'The writing session changed before submission could be confirmed.' };
+          const used = lease;
+          const prior = await journal.readSubmission(scope); current();
+          const seal = prior ?? await journal.sealSubmission(scope, crypto.randomUUID(), snapshot.revision); current();
+          if (seal.expectedRevision !== snapshot.revision) {
+            // A previous submission was attempted at an older revision. Never
+            // reuse that key with different input; make the student review.
+            await journal.clearSubmission(scope); current();
+            await refresh();
+            return { outcome: 'conflict', message: 'This paper changed after an earlier submission attempt. Check your answers and submit again.' };
+          }
+          const response = await sendCbtV2Operation(scope.attemptId, 'finalize', {
+            expectedRevision: seal.expectedRevision, operationKey: seal.operationKey,
+            sessionId: used.sessionId, sessionGeneration: used.sessionGeneration,
+          });
+          current();
+          if (lease !== used) throw new CbtWritingSessionRevokedError();
+          if (response.outcome === 'submitted' || response.outcome === 'replayed' || response.outcome === 'already_submitted') {
+            lease = null; phase = 'submitted'; message = 'The server confirmed this submission.';
+            return { outcome: response.outcome, message, result: response.result };
+          }
+          if (response.outcome === 'conflict') {
+            await journal.clearSubmission(scope); current();
+            await refresh();
+            return { outcome: 'conflict', message: 'The server has newer answers for this paper. Review them and submit again.' };
+          }
+          if (response.outcome === 'expired') {
+            stop('expired', 'This attempt expired before submission was confirmed. Pending answers remain in this browser.');
+            return { outcome: 'expired', message };
+          }
+          if (response.outcome === 'closed') {
+            stop('revoked', 'This attempt was closed before submission was confirmed. Nothing was submitted by this page.');
+            return { outcome: 'closed', message };
+          }
+          if (response.outcome === 'session_revoked') {
+            stop('revoked', 'This writing session was replaced before submission. Nothing was submitted by this page.');
+            return { outcome: 'unavailable', message };
+          }
+          throw new Error('Unexpected CBT finalization response.');
+        } catch (error) {
+          if (!alive) return { outcome: 'error', message: 'The page changed before submission completed.' };
+          if (error instanceof CbtWritingSessionRevokedError) {
+            stop('revoked', 'This writing session was replaced before submission. Nothing was submitted by this page.');
+            return { outcome: 'unavailable', message };
+          }
+          message = 'Submission could not be confirmed. Keep this page open, check your connection and review the attempt before trying again.';
+          return { outcome: 'error', message };
+        } finally {
+          busy = false;
+          if (alive) {
+            try { await reloadRows(); } catch { stop('error', 'Browser storage is unavailable. Pending answers have not been discarded.'); }
+            publish();
+          }
+        }
+      },
       choose: async (question, selected) => run(async () => {
         current();
         if (phase !== 'active' || !lease || !snapshot || rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))) return;
@@ -225,5 +299,5 @@ export function useCbtPageWriter(accountId: string | undefined, attemptId: strin
     })();
     return () => { alive = false; controller.current = null; releaseTab?.(); if (timer) clearTimeout(timer); channel?.close(); window.removeEventListener('online', online); if (journal!) void journal.close().catch(() => {}); };
   }, [accountId, attemptId, paper]);
-  return { ...view, choose: (q: CbtQuestionPayload, v: QueueAnswer) => controller.current?.choose(q, v), takeover: () => controller.current?.takeover(), retry: () => controller.current?.retry(), review: (key: string) => controller.current?.review(key), resolve: (row: AnswerOperation, choice: 'local' | 'server') => controller.current?.resolve(row, choice) };
+  return { ...view, choose: (q: CbtQuestionPayload, v: QueueAnswer) => controller.current?.choose(q, v), takeover: () => controller.current?.takeover(), retry: () => controller.current?.retry(), review: (key: string) => controller.current?.review(key), resolve: (row: AnswerOperation, choice: 'local' | 'server') => controller.current?.resolve(row, choice), finalize: (): Promise<CbtFinalizeResult> => controller.current?.finalize() ?? Promise.resolve({ outcome: 'unavailable', message: 'The writing session is not ready.' }) };
 }

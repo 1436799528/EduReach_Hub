@@ -10,12 +10,12 @@ const question = '33333333-3333-4333-8333-333333333333';
 
 type Write = { expectedRevision: number; operationKey: string; questionId: string; selected: number | null; sessionId: string; sessionGeneration: number };
 async function setup(context: BrowserContext) {
-  let revision = 0, answers: Record<string, number> = {}, active: { id: string; generation: number } | null = null;
+  let revision = 0, answers: Record<string, number> = {}, active: { id: string; generation: number } | null = null, status = 'in_progress';
   const sessions = new Map<string, { id: string; generation: number }>();
   const ledger = new Map<string, { body: Write; acceptedRevision: number; outcome: 'accepted' | 'conflict' }>();
-  const writes: Write[] = [], sessionsSent: unknown[] = [], legacy: string[] = [];
+  const writes: Write[] = [], sessionsSent: unknown[] = [], finalizes: { expectedRevision: number; operationKey: string; sessionId: string; sessionGeneration: number }[] = [], legacy: string[] = [];
   let failWrites = false, loseFirstResponse = false, loseSession = false, advanceOnSession = false, staleNextState = false, held: (() => void) | null = null, holdWrite = false, rejected = 0;
-  const state = () => ({ protocol: 2 as const, revision, answers: { ...answers }, status: 'in_progress', questionIds: [question] });
+  const state = () => ({ protocol: 2 as const, revision, answers: { ...answers }, status, questionIds: [question] });
   const attach = async (context: BrowserContext) => {
     await context.addInitScript(id => {
       localStorage.setItem('sb-edureach-unconfigured-auth-token', JSON.stringify({ access_token: 'synthetic-test-token', refresh_token: 'synthetic-refresh', expires_at: Math.floor(Date.now() / 1000) + 3600, expires_in: 3600, token_type: 'bearer', user: { id, aud: 'authenticated', email: 'student@example.test', app_metadata: {}, user_metadata: {} } }));
@@ -60,20 +60,29 @@ async function setup(context: BrowserContext) {
         if (loseFirstResponse) { loseFirstResponse = false; return route.fulfill({ status: 503, json: { error: 'response lost' } }); }
         return route.fulfill({ status: outcome === 'conflict' ? 409 : 200, json: { ...state(), outcome, ...(outcome === 'conflict' ? {} : { acceptedRevision: old.acceptedRevision }) } });
       }
+      if (url.endsWith('/finalize')) {
+        const body = req.postDataJSON() as { expectedRevision: number; operationKey: string; sessionId: string; sessionGeneration: number };
+        finalizes.push(body);
+        if (body.sessionId !== active?.id || body.sessionGeneration !== active?.generation) return route.fulfill({ status: 409, json: { protocol: 2, outcome: 'session_revoked', code: 'CBT_SESSION_REVOKED' } });
+        if (status === 'submitted') return route.fulfill({ json: { protocol: 2, outcome: 'already_submitted', revision, result: { attempt_id: attempt, score: 100 } } });
+        if (body.expectedRevision !== revision) return route.fulfill({ status: 409, json: { ...state(), outcome: 'conflict' } });
+        status = 'submitted';
+        return route.fulfill({ json: { protocol: 2, outcome: 'submitted', revision, result: { attempt_id: attempt, score: 100, correct_answers: 1, total_questions: 1, breakdown: [] } } });
+      }
       if (req.method() !== 'GET') legacy.push(url);
       return route.fulfill({ status: 503, json: { error: 'Unexpected request' } });
     });
   };
   await attach(context);
-  return { attach, writes, sessionsSent, legacy, getState: state, getRejected: () => rejected, changeServer: (value: number) => { answers = { '1': value }; revision++; }, fail: (value: boolean) => { failWrites = value; }, lose: () => { loseFirstResponse = true; }, loseSession: () => { loseSession = true; }, regressAfterSession: () => { advanceOnSession = true; }, hold: () => { holdWrite = true; }, release: () => { if (!held) throw new Error('No held request'); held(); }, hasHeld: () => Boolean(held) };
+  return { attach, writes, sessionsSent, finalizes, legacy, getState: state, getRejected: () => rejected, changeServer: (value: number) => { answers = { '1': value }; revision++; }, fail: (value: boolean) => { failWrites = value; }, lose: () => { loseFirstResponse = true; }, loseSession: () => { loseSession = true; }, regressAfterSession: () => { advanceOnSession = true; }, hold: () => { holdWrite = true; }, release: () => { if (!held) throw new Error('No held request'); held(); }, hasHeld: () => Boolean(held) };
 }
 async function open(page: Page) { await page.goto(`/cbt/session/${attempt}`); await expect(page.getByRole('heading', { name: 'Test question' })).toBeVisible(); }
 async function active(page: Page) { await expect(page.getByText('Writing session confirmed by the server.')).toBeVisible(); }
 async function takeOver(page: Page) { page.once('dialog', dialog => void dialog.accept()); await page.getByRole('button', { name: 'Take over writing' }).click(); await active(page); }
 
-test('real page saves via durable leased operation, refreshes, and keeps finalization closed', async ({ context, page }) => {
+test('real page saves via durable leased operation and refreshes', async ({ context, page }) => {
   const server = await setup(context); await open(page); await active(page);
-  await expect(page.getByRole('button', { name: 'Submit Examination' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Submit Examination' })).toBeEnabled();
   await page.getByRole('radio', { name: 'Bravo' }).click();
   await expect.poll(() => server.writes.length).toBe(1);
   await expect(page.getByRole('status').filter({ hasText: /^saved$/ })).toBeVisible();
@@ -242,4 +251,20 @@ test('an older state response cannot undo a newer acquisition revision', async (
   expect(server.getState().revision).toBe(1); expect(server.writes).toHaveLength(0);
   await page.getByRole('button', { name: 'Retry connection' }).click(); await active(page);
   await expect(page.getByRole('radio', { name: 'Bravo' })).toHaveAttribute('aria-checked', 'true');
+});
+
+
+test('v2 submission goes through the leased finalization gateway once', async ({ context, page }) => {
+  const server = await setup(context); await open(page); await active(page);
+  await page.getByRole('radio', { name: 'Bravo' }).click();
+  await expect.poll(() => server.writes.length).toBe(1);
+  await expect(page.getByRole('status').filter({ hasText: /^saved$/ })).toBeVisible();
+  await page.locator('.er-exam-submit-primary').click();
+  const dialog = page.getByRole('dialog', { name: 'Submit examination?' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Submit Examination' }).click();
+  await expect(page).toHaveURL(new RegExp(`/cbt/results/${attempt}$`));
+  expect(server.finalizes).toHaveLength(1);
+  expect(server.finalizes[0]).toMatchObject({ expectedRevision: 1, sessionGeneration: 1 });
+  expect(server.legacy).toEqual([]);
 });

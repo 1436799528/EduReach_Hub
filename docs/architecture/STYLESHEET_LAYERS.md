@@ -39,6 +39,19 @@ part of the global order above; it arrives with the admin route's JS chunk.
 This keeps admin styling out of the public first-load CSS while preserving the
 shared global type, token and accessibility layers.
 
+UX-6 uses the same rule for three CBT route sheets:
+
+| Sheet | Imported by | Owns |
+| :--- | :--- | :--- |
+| `pages/ExamSetupPage.css` | `ExamSetupPage.tsx` | Two-column setup plan, sticky summary, mobile action region |
+| `pages/CbtSessionPage.css` | `CbtSessionPage.tsx` | Exam-bar opacity/offset, selected-answer check, compact mobile bar, palette states |
+| `pages/CbtResultsPage.css` | `CbtResultsPage.tsx` | Result score ring, per-subject bars, guidance card, result mobile layout |
+
+They are deliberately **not** added to the global list: a student who never opens
+a CBT paper should not download exam CSS. Each sheet may override an earlier
+global CBT rule, so it must be imported after `cbt-engine.css`; the route's own
+import order provides that. None of them is imported by `src/main.tsx`.
+
 Two rules follow from that:
 
 1. **`styles/a11y.css` is the final import.** Later declarations win in CSS; a

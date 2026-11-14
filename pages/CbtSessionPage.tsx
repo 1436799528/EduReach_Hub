@@ -19,6 +19,7 @@ import { navigateInApp } from '../src/lib/navigation';
 import { useCbtPageWriter } from '../src/lib/useCbtPageWriter';
 import { inspectCbtAnswerJournal, validateCbtJournalPaper } from '../src/lib/cbtAnswerQueue';
 import { CBT_UUID } from '../src/lib/cbtProtocolValidation';
+import './CbtSessionPage.css';
 
 /**
  * CBT-3 - the examination hall.
@@ -65,6 +66,28 @@ function clearAcknowledgedPending(attemptId: string, snapshot: Record<number, nu
     localStorage.removeItem(key);
     return localStorage.getItem(key) === null;
   } catch { return false; }
+}
+
+/**
+ * UX-6: a flag is review intent, not an answer. The server protocol does not
+ * carry flag state, so it is kept per attempt in this browser. It never
+ * changes scoring or submission and disappears with the attempt's local data.
+ */
+function readFlags(attemptId: string): Record<number, boolean> | null {
+  try {
+    const raw = localStorage.getItem(`edureach-cbt-flags:${attemptId}`);
+    return raw ? JSON.parse(raw) as Record<number, boolean> : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeFlags(attemptId: string, flags: Record<number, boolean>) {
+  try {
+    localStorage.setItem(`edureach-cbt-flags:${attemptId}`, JSON.stringify(flags));
+  } catch {
+    // Flagging still works for this page view when storage is unavailable.
+  }
 }
 
 function formatClock(totalSeconds: number) {
@@ -149,6 +172,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         setAttempt(payload.attempt);
         setQuestions(payload.questions);
         setClockOffsetMs(Date.parse(payload.serverTime) - Date.now());
+        setMarked(readFlags(attemptId) ?? {});
         setIndex(Math.max(0, Math.min(payload.attempt.questionIndex || 0, Math.max(0, payload.questions.length - 1))));
         setV2Paper(payload.questions);
         return;
@@ -157,6 +181,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       setAttempt(payload.attempt);
       setQuestions(payload.questions);
       setClockOffsetMs(Date.parse(payload.serverTime) - Date.now());
+      setMarked(readFlags(attemptId) ?? {});
       // A pending draft is a whole snapshot, not a patch: merging would
       // resurrect answers the student deliberately cleared. Its age relative
       // to another tab/device or an in-flight request cannot be established.
@@ -292,14 +317,41 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   // Count only questions on this paper so stale local draft keys cannot inflate progress.
   const answeredCount = questions.filter((item) => visibleAnswers[item.position] !== undefined).length;
   const markedCount = questions.filter((item) => Boolean(marked[item.position])).length;
+  const answeredAndMarkedCount = questions.filter((item) => visibleAnswers[item.position] !== undefined && Boolean(marked[item.position])).length;
 
   const submit = useCallback(async (reason: 'manual' | 'timer') => {
-    if (!legacyProtocol.current || submitting) return;
+    if (submitting) return;
     if (sessionActionInFlight.current || !attempt || closed === 'submitted') return;
+    if (!legacyProtocol.current && !v2Paper) return;
     sessionActionInFlight.current = true;
     setSubmitting(true);
     setActionError('');
     try {
+      if (v2Paper) {
+        // v2 submissions use the leased, revision-checked finalization
+        // gateway. The server alone confirms that the paper was submitted.
+        const outcome = await writer.finalize();
+        if (outcome.outcome === 'submitted' || outcome.outcome === 'replayed' || outcome.outcome === 'already_submitted') {
+          trackEvent('cbt_submit', { metadata: { examId: attempt.examId } });
+          setClosed('submitted');
+          navigateInApp(`/cbt/results/${encodeURIComponent(attempt.id)}`, { replace: true });
+          return;
+        }
+        if (outcome.outcome === 'expired') {
+          setClosed('expired');
+          setActionError(reason === 'timer'
+            ? 'Time is up. The server did not confirm a submission, so nothing was submitted.'
+            : outcome.message);
+          return;
+        }
+        if (outcome.outcome === 'closed') {
+          setClosed('expired');
+          setActionError(outcome.message);
+          return;
+        }
+        setActionError(outcome.message);
+        return;
+      }
       await submitConfiguredCbt(attempt.id, answers);
       // AN-1: attempt completion is the denominator for cbt_start. Only a
       // submission the server accepted is counted, so a failed or expired
@@ -323,7 +375,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       sessionActionInFlight.current = false;
       setSubmitting(false);
     }
-  }, [answers, attempt, closed]);
+  }, [answers, attempt, closed, submitting, v2Paper, writer]);
 
   // Time expired: stop the session exactly once, and never show negative time.
   useEffect(() => {
@@ -382,6 +434,14 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
     if (attempt) queueSave(pendingAnswers.current || answers, nextIndex, true);
   }, [answers, attempt, queueSave, questions.length]);
 
+  const toggleMark = useCallback((position: number) => {
+    setMarked((current) => {
+      const next = { ...current, [position]: !current[position] };
+      writeFlags(attemptId, next);
+      return next;
+    });
+  }, [attemptId]);
+
   // Keyboard: 1–4 / A–D choose, arrows move, M marks. Never while a dialog is open.
   useEffect(() => {
     if (confirmKind || loading || loadError || !attempt || !questions[index]) return;
@@ -392,11 +452,11 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       else if (/^[a-dA-D]$/.test(event.key)) choose(event.key.toUpperCase().charCodeAt(0) - 65);
       else if (event.key === 'ArrowRight') goTo(index + 1);
       else if (event.key === 'ArrowLeft') goTo(index - 1);
-      else if (event.key.toLowerCase() === 'm') setMarked((current) => ({ ...current, [questions[index].position]: !current[questions[index].position] }));
+      else if (event.key.toLowerCase() === 'm') toggleMark(questions[index].position);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [attempt, choose, confirmKind, goTo, index, loadError, loading, questions]);
+  }, [attempt, choose, confirmKind, goTo, index, loadError, loading, questions, toggleMark]);
 
   const unansweredDialog = useRef<HTMLDialogElement | null>(null);
 
@@ -528,7 +588,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
 
       <header className="er-exam-bar">
         <div className="er-exam-bar-left">
-          <div className="er-exam-candidate" aria-label="Candidate information">
+          <div className="er-exam-candidate" aria-label={`Candidate ${studentDisplayName}, ${attempt.mode === 'mock' ? 'mock examination' : 'practice'}${attempt.programme ? `, ${attempt.programme}` : ''}`}>
             <div className="er-exam-candidate-avatar" aria-hidden="true">{studentInitials}</div>
             <div className="er-exam-candidate-meta">
               <strong>{studentDisplayName}</strong>
@@ -541,7 +601,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         </div>
 
         <div className="er-exam-bar-controls">
-          <div className="er-exam-timer" role="timer" aria-live="off">
+          <div className="er-exam-timer" role="timer" aria-live="off" aria-label={`${formatClock(remainingSeconds)} remaining`}>
             <Clock3 size={15} aria-hidden="true" />
             <b className={timeAlmostUp ? 'is-critical' : ''}>{formatClock(remainingSeconds)}</b>
             <span>remaining</span>
@@ -557,7 +617,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <button type="button" className="er-exam-tool" onClick={() => setPaletteOpen((current) => !current)} aria-expanded={paletteOpen} aria-controls="er-exam-question-navigator" aria-label="Toggle question navigator">
             <Grid3X3 size={15} /> <span className="er-exam-tool-label">Questions</span>
           </button>
-          <button type="button" className="er-exam-end" style={{ backgroundColor: '#B14933', color: '#ffffff', border: '2px solid #8f3727', boxShadow: '0 2px 8px rgba(0,0,0,0.22)', minHeight: 40, padding: '8px 14px', borderRadius: 8 }} onClick={() => setConfirmKind('end')} disabled={Boolean(v2Paper)} aria-label="End test">
+          <button type="button" className="er-exam-end" style={{ backgroundColor: '#B14933', color: '#ffffff', border: '2px solid #8f3727', boxShadow: '0 2px 8px rgba(0,0,0,0.22)', minHeight: 40, padding: '8px 14px', borderRadius: 8 }} onClick={() => setConfirmKind('end')} disabled={Boolean(v2Paper)} aria-label="End test" title={v2Paper ? 'Ending without submitting is unavailable for this attempt' : undefined}>
             <LogOut size={15} /> <span className="er-exam-tool-label">End Test</span>
           </button>
         </div>
@@ -567,7 +627,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         {recoveryNotice && !v2Paper && <p className="hub-form-error" role="note">{recoveryNotice}</p>}
         {v2Paper && <section aria-label="Writing session and recovery" className="hub-form-error">
           <p role="status">{writer.phase === 'loading' ? 'Confirming writing session…' : writer.phase === 'active' ? 'Writing session confirmed by the server.' : 'Writing is paused.'} {writer.message}</p>
-          <p>Submission and ending this v2 attempt are unavailable. Work on another disconnected device cannot be discovered here.</p>
+          <p>Submit when the writing session is confirmed and every answer is saved. Ending this attempt without submitting is unavailable. Work on another disconnected device cannot be discovered here.</p>
           {writer.phase !== 'active' && writer.hasSnapshot && <section aria-label="Read-only recovery preview">
             <h2>Read-only recovery preview</h2>
             <p>These are the last confirmed server answers, not confirmation that pending local work is saved. Review unsaved answers separately below.</p>
@@ -656,7 +716,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                     onClick={() => choose(optionIndex)}
                   >
                     <span className="er-exam-option-letter">{letter}</span>
-                    <span>{option}</span>
+                    <span className="er-exam-option-text">{option}</span>
+                    {isSelected && <CheckCircle2 size={16} className="er-exam-option-check" aria-hidden="true" />}
                   </button>
                 );
               })}
@@ -664,14 +725,21 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           </article>
 
           <div className="er-exam-question-actions">
-            <button type="button" className="er-exam-ghost" onClick={() => goTo(index - 1)} disabled={index === 0}>
+            <button
+              type="button"
+              className="er-exam-ghost"
+              onClick={() => goTo(index - 1)}
+              disabled={index === 0}
+              aria-label={index === 0 ? 'Previous question — you are on the first question' : 'Previous question'}
+              title={index === 0 ? 'You are on the first question' : undefined}
+            >
               <ArrowLeft size={15} /> Previous
             </button>
             <button
               type="button"
               className={isMarked ? 'er-exam-mark is-on' : 'er-exam-mark'}
               aria-pressed={isMarked}
-              onClick={() => setMarked((current) => ({ ...current, [question.position]: !current[question.position] }))}
+              onClick={() => toggleMark(question.position)}
             >
               <Flag size={15} /> {isMarked ? 'Marked for review' : 'Mark for review'}
             </button>
@@ -681,7 +749,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               </button>
             )}
             {isLastQuestion ? (
-              <button type="button" className="er-exam-next er-exam-submit-primary" disabled={Boolean(v2Paper)} onClick={handlePrimaryAction}>
+              <button type="button" className="er-exam-next er-exam-submit-primary" disabled={v2Blocked || submitting} title={v2Blocked ? 'Submit after every answer is saved and the writing session is active.' : undefined} onClick={handlePrimaryAction}>
                 Submit Examination <Send size={15} />
               </button>
             ) : (
@@ -702,6 +770,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               <span className="is-answered">{answeredCount} answered</span>
               <span className="is-unanswered">{questions.length - answeredCount} unanswered</span>
               {markedCount > 0 && <span className="is-marked">{markedCount} marked</span>}
+              {answeredAndMarkedCount > 0 && <span className="is-both">{answeredAndMarkedCount} answered + marked</span>}
             </p>
             {bySubject.map(([subject, list]) => (
               <div key={subject} className="er-exam-palette-group">
@@ -733,7 +802,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                 </div>
               </div>
             ))}
-            <button type="button" className="hub-primary-btn er-exam-palette-submit" disabled={Boolean(v2Paper)} onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
+            <button type="button" className="hub-primary-btn er-exam-palette-submit" disabled={v2Blocked || submitting} title={v2Blocked ? 'Submit after every answer is saved and the writing session is active.' : undefined} onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
               <Send size={15} /> Submit paper
             </button>
           </aside>
@@ -751,6 +820,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <h2 id="er-unanswered-title">You have {unansweredCount} unanswered question{unansweredCount === 1 ? '' : 's'}</h2>
           <p>
             You have answered <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions.
+            {markedCount > 0 && <> <strong>{markedCount}</strong> question{markedCount === 1 ? '' : 's'} marked for review.</>}
             Unanswered questions score zero.
           </p>
           <div className="er-confirm-actions">
@@ -787,6 +857,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <h2 id="er-submit-title">Submit examination?</h2>
           <p>
             You have answered <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions.
+            {markedCount > 0 && <> <strong>{markedCount}</strong> marked for review.</>}
           </p>
           <p>
             Once submitted, you cannot return to this examination.
@@ -797,7 +868,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <button
               type="button"
               className="hub-primary-btn"
-              disabled={submitting}
+              disabled={submitting || v2Blocked}
               onClick={() => { setConfirmKind(null); submitDialog.current?.close(); void submit('manual'); }}
             >
               {submitting ? 'Submitting…' : 'Submit Examination'}

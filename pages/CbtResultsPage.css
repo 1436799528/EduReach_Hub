@@ -32,3 +32,188 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+
+/* UX-6: the result answers "how did I do?" before it lists rows. */
+.er-result-header {
+  text-align: left;
+}
+
+.er-result-hero {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.er-result-ring {
+  position: relative;
+  flex: none;
+  width: 132px;
+  height: 132px;
+}
+
+.er-result-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.er-result-ring circle {
+  fill: none;
+  stroke-width: 10;
+}
+
+.er-result-ring-track {
+  stroke: #e2e8f0;
+}
+
+.er-result-ring-value {
+  stroke: #174a3a;
+  stroke-linecap: round;
+}
+
+.er-result-ring-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #131b2e;
+  font-size: 27px;
+  font-weight: 730;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.er-result-hero-copy {
+  min-width: 0;
+}
+
+.er-result-hero-copy h1 {
+  margin: 2px 0 4px;
+  color: #131b2e;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 730;
+  letter-spacing: -.02em;
+}
+
+.er-result-header .er-result-kicker {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 12px;
+  color: #475467;
+}
+
+.er-result-band-detail {
+  margin: 2px 0;
+  max-width: 62ch;
+  color: #475467;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.er-result-hero-copy .er-result-score {
+  margin-top: 8px;
+  font-size: 34px;
+}
+
+.er-result-guidance {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 16px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.er-result-guidance p {
+  margin: 6px 0 0;
+  max-width: 64ch;
+  color: #475467;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.er-result-guidance-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.er-result-subject-bars {
+  margin: 0 0 16px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.er-result-subject-bars ul {
+  display: grid;
+  gap: 14px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.er-result-bar-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #131b2e;
+}
+
+.er-result-bar {
+  height: 8px;
+  margin: 6px 0 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eef2f5;
+}
+
+.er-result-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #174a3a;
+}
+
+.er-result-bar-meta {
+  color: #5e6c82;
+  font-size: 11.5px;
+}
+
+@media (max-width: 700px) {
+  .er-result-hero {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .er-result-ring {
+    width: 96px;
+    height: 96px;
+  }
+
+  .er-result-ring-label {
+    font-size: 21px;
+  }
+
+  .er-result-guidance {
+    display: grid;
+  }
+
+  .er-result-guidance-actions .hub-primary-btn,
+  .er-result-guidance-actions .hub-outline-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .er-result-hero {
+    flex-direction: column;
+  }
+}

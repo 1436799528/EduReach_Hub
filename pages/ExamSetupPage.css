@@ -1,0 +1,70 @@
+/* UX-6: the setup paper summary is visible while the student configures the
+   paper, and becomes a safe-area-aware action region on a phone. */
+.er-setup-container {
+  max-width: 1080px;
+}
+
+.er-setup-plan-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 20px;
+  align-items: start;
+}
+
+.er-setup-plan-main,
+.er-setup-plan-aside {
+  min-width: 0;
+}
+
+.er-setup-plan-aside {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 12px;
+}
+
+.er-setup-slot-note {
+  margin: 4px 0 10px;
+}
+
+.er-setup-sticky-meta {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .er-setup-plan-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .er-setup-plan-aside {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .er-setup-plan-aside .er-setup-actions {
+    position: sticky;
+    bottom: calc(62px + env(safe-area-inset-bottom));
+    z-index: 25;
+    display: grid;
+    gap: 8px;
+    margin: 12px -15px -15px;
+    padding: 10px 15px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 -6px 18px rgba(15, 23, 42, .06);
+  }
+
+  .er-setup-sticky-meta {
+    display: block;
+    margin: 0;
+    color: #475467;
+    font-size: 12px;
+    font-weight: 560;
+  }
+
+  .er-setup-plan-aside .er-setup-actions .hub-primary-btn,
+  .er-setup-plan-aside .er-setup-actions .er-setup-secondary {
+    min-height: 44px;
+  }
+}

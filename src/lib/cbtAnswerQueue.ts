@@ -149,6 +149,7 @@ export type CbtSubmissionSeal = { accountId: string; attemptId: string; operatio
 export interface CbtSubmissionJournal extends AnswerJournal {
   readSubmission(scope: QueueScope): Promise<CbtSubmissionSeal | null>;
   sealSubmission(scope: QueueScope, operationKey: string, expectedRevision: number): Promise<CbtSubmissionSeal>;
+  clearSubmission(scope: QueueScope): Promise<void>;
 }
 function submissionKey(scope: QueueScope): string { return `submission:${scope.accountId}:${scope.attemptId}`; }
 function writingSessionKey(scope: QueueScope, tabId?: string): string { return `writing-session:${scope.accountId}:${scope.attemptId}${tabId === undefined ? '' : `:${canonicalId(tabId)}`}`; }
@@ -339,6 +340,18 @@ export class IndexedDbAnswerJournal implements CbtSubmissionJournal {
       tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('CBT storage unavailable.'));
     });
   }
+  /** Only used after an unresolved submission conflict; a new key is never reused silently. */
+  async clearSubmission(scope: QueueScope): Promise<void> {
+    scope = canonicalScope(scope);
+    const db = await this.db;
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('metadata', 'readwrite');
+      tx.objectStore('metadata').delete(submissionKey(scope));
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject(tx.error ?? new Error('CBT storage unavailable.'));
+    });
+  }
+
   async sealSubmission(scope: QueueScope, operationKey: string, expectedRevision: number): Promise<CbtSubmissionSeal> {
     scope = canonicalScope(scope);
     const proposed = validateSubmissionSeal({ ...scope, operationKey: canonicalId(operationKey), expectedRevision }, scope);

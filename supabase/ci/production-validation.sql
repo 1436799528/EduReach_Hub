@@ -255,7 +255,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261113000000', 'public_profiles', '20261113000000_public_profiles.sql', 'unique'),
     ('20261113120000', 'repair_profile_write_policy', '20261113120000_repair_profile_write_policy.sql', 'unique'),
     ('20261113140000', 'avatar_storage', '20261113140000_avatar_storage.sql', 'unique'),
-    ('20261114110000', 'cbt_bank_security_boundary', '20261114110000_cbt_bank_security_boundary.sql', 'unique')
+    ('20261114110000', 'cbt_bank_security_boundary', '20261114110000_cbt_bank_security_boundary.sql', 'unique'),
+    ('20261114120000', 'cbt_v2_finalize_gateway', '20261114120000_cbt_v2_finalize_gateway.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -370,6 +371,7 @@ with expected(version, migration) as (
     ,('20261113120000', '20261113120000_repair_profile_write_policy.sql')
     ,('20261113140000', '20261113140000_avatar_storage.sql')
     ,('20261114110000', '20261114110000_cbt_bank_security_boundary.sql')
+    ,('20261114120000', '20261114120000_cbt_v2_finalize_gateway.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -382,6 +384,11 @@ with expected(version, migration) as (
            and applied.name = 'cbt_bank_security_boundary')
   )
 ), missing_objects as (
+  select 'public.cbt_v2_finalize_gateway(uuid,bigint,uuid,uuid,bigint)' as object,
+         '20261114120000_cbt_v2_finalize_gateway.sql' as migration
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'cbt_v2_finalize_gateway')
+  union all
   select 'public.cbt_attempts.mode' as object, '20261002120000_cbt_practice_and_mock_modes.sql' as migration
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'cbt_attempts' and column_name = 'mode')

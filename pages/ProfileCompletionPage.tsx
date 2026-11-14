@@ -598,6 +598,10 @@ export default function ProfileCompletionPage() {
     const savedSchool = school.includes('Other') ? customSchool : school;
     const savedCourse = courseProgramme || customCourseProgramme;
     const savedDepartment = department || customDepartment;
+    // Honest completeness from fields already on this account. It is a count,
+    // not a score: an empty field is simply not added yet.
+    const completenessFields = [userName, userEmail, phone, savedSchool, savedCourse, savedDepartment, faculty, level];
+    const completenessCount = completenessFields.filter((value) => Boolean(String(value || '').trim())).length;
     const personalFacts: Array<[string, string]> = [
       ['Full name', userName || 'Student'],
       ['Email address', userEmail || 'Not added yet'],
@@ -648,6 +652,12 @@ export default function ProfileCompletionPage() {
                       {[savedCourse, savedDepartment].filter(Boolean).join(' · ')}
                     </p>
                   )}
+                  <p className="profile-identity-programme">
+                    {completenessCount === completenessFields.length
+                      ? `All ${completenessFields.length} profile details added`
+                      : `${completenessCount} of ${completenessFields.length} profile details added`}
+                    {completenessCount < completenessFields.length && ' · add the rest in Edit profile'}
+                  </p>
                 </div>
               </div>
               <div className="profile-identity-actions">
