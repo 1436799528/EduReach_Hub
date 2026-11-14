@@ -328,6 +328,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </button>
           )}
         </div>
+        <div className="admin-sidebar-search">
+          <AdminQuickFind items={quickFindItems} />
+        </div>
         <nav id="admin-navigation" className="admin-nav" aria-label="Administration">
           {navItems.map((item, index) => (
             item.kind === 'group'

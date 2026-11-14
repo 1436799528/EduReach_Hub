@@ -389,8 +389,8 @@ export default function AdminBankSecurityPage() {
                   ) : candidates.length === 0 ? (
                     <AdminEmptyState title="No candidate has been assigned" hint="Nobody can open this bank until at least one candidate is assigned here." />
                   ) : (
-                    <div className="admin-table-wrap">
-                      <table className="admin-table bs-table">
+                    <div className="admin-table-wrap admin-table-wrap--stack">
+                      <table className="admin-table bs-table admin-table--stack">
                         <caption className="bs-visually-hidden">Candidate access for this restricted bank</caption>
                         <thead>
                           <tr><th scope="col">Candidate</th><th scope="col">Status</th><th scope="col">Assigned</th><th scope="col">Revoked</th><th scope="col" className="right">Action</th></tr>
@@ -398,11 +398,11 @@ export default function AdminBankSecurityPage() {
                         <tbody>
                           {candidates.map((candidate) => (
                             <tr key={candidate.user_id}>
-                              <td>{candidate.full_name || 'Unnamed account'}</td>
-                              <td><span className={`bs-pill ${candidate.status === 'active' ? 'bs-pill-public' : 'bs-pill-neutral'}`}>{candidate.status === 'active' ? 'Active' : 'Revoked'}</span></td>
-                              <td><TimeAgo value={candidate.assigned_at} /></td>
-                              <td>{candidate.revoked_at ? <TimeAgo value={candidate.revoked_at} /> : '—'}</td>
-                              <td className="right">
+                              <td data-label="Candidate">{candidate.full_name || 'Unnamed account'}</td>
+                              <td data-label="Status"><span className={`bs-pill ${candidate.status === 'active' ? 'bs-pill-public' : 'bs-pill-neutral'}`}>{candidate.status === 'active' ? 'Active' : 'Revoked'}</span></td>
+                              <td data-label="Assigned"><TimeAgo value={candidate.assigned_at} /></td>
+                              <td data-label="Revoked">{candidate.revoked_at ? <TimeAgo value={candidate.revoked_at} /> : '—'}</td>
+                              <td className="right" data-label="Action">
                                 {candidate.status === 'active' ? (
                                   <button type="button" className="bs-btn bs-btn-small bs-btn-danger" disabled={busy === 'revoke'} onClick={() => void doRevoke(candidate.user_id, candidate.full_name || '')}>
                                     <UserMinus size={13} aria-hidden="true" /> Revoke

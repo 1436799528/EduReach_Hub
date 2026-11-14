@@ -5,6 +5,8 @@ import { Ban, RefreshCw } from 'lucide-react';
 import { fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, updateAdminUserRole, type AdminUser, type AdminUserActivity } from '../src/lib/api';
 import { Can } from '../src/components/admin/Can';
 import { AdminEmptyState, AdminPageReport, StatusBadge, TableSkeleton } from '../src/components/admin/AdminKit';
+import AdminSortButton from '../src/components/admin/AdminSortButton';
+import { ariaSortFor, nextSortState, sortRows, NO_SORT, type SortState } from '../src/lib/tableSort';
 
 function profileCompletion(p: AdminUser): number {
   const fields = [p.full_name, p.school, p.faculty, p.department, p.level, p.matric_number];
@@ -15,6 +17,7 @@ function profileCompletion(p: AdminUser): number {
 export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState<AdminUser[]>([]);
   const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortState>(NO_SORT);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -134,13 +137,13 @@ export default function AdminUsersPage() {
             <table className="admin-table admin-table--stack">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Institution</th>
-                  <th scope="col">Department</th>
-                  <th scope="col">Level</th>
-                  <th scope="col">Role</th>
+                  <th scope="col" aria-sort={ariaSortFor(sort, 'name')}><AdminSortButton label="Name" sortKey="name" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+                  <th scope="col" aria-sort={ariaSortFor(sort, 'school')}><AdminSortButton label="Institution" sortKey="school" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+                  <th scope="col" aria-sort={ariaSortFor(sort, 'department')}><AdminSortButton label="Department" sortKey="department" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+                  <th scope="col" aria-sort={ariaSortFor(sort, 'level')}><AdminSortButton label="Level" sortKey="level" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+                  <th scope="col" aria-sort={ariaSortFor(sort, 'role')}><AdminSortButton label="Role" sortKey="role" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
                   <th scope="col">Profile</th>
-                  <th scope="col">Joined</th>
+                  <th scope="col" aria-sort={ariaSortFor(sort, 'joined')}><AdminSortButton label="Joined" sortKey="joined" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
                   <th scope="col" className="right">Actions</th>
                 </tr>
               </thead>
@@ -148,7 +151,15 @@ export default function AdminUsersPage() {
                 {loading && <TableSkeleton rows={6} columns={8} />}
 
                 {!loading &&
-                  profiles.map((p) => (
+                  sortRows(profiles, sort, (profile, key) => {
+                    if (key === 'name') return profile.full_name || '';
+                    if (key === 'school') return profile.school || '';
+                    if (key === 'department') return profile.department || '';
+                    if (key === 'level') return profile.level || '';
+                    if (key === 'role') return profile.role || '';
+                    if (key === 'joined') return new Date(profile.created_at).getTime();
+                    return null;
+                  }).map((p) => (
                     <tr key={p.id}>
                       <td data-label="Name">
                         <b>{p.full_name || 'Unnamed student'}</b>
@@ -227,16 +238,16 @@ export default function AdminUsersPage() {
                 {viewingActivity && (
                   <>
                     <h3 style={{ margin: '0 0 8px', color: 'var(--admin-navy)', fontSize: 14 }}>Service requests</h3>
-                    <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0} style={{ marginBottom: 18 }}>
-                      <table className="admin-table">
+                    <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0} style={{ marginBottom: 18 }}>
+                      <table className="admin-table admin-table--stack">
                         <thead><tr><th scope="col">Reference</th><th scope="col">Service</th><th scope="col">Status</th><th scope="col">Date</th></tr></thead>
                         <tbody>
                           {viewingActivity.requests.map((row) => (
                             <tr key={row.id}>
-                              <td className="mono accent">{row.reference_code || row.id.slice(0, 8)}</td>
-                              <td>{row.service_catalog?.title || 'Service'}</td>
-                              <td><StatusBadge status={row.status} /></td>
-                              <td>{new Date(row.created_at).toLocaleDateString()}</td>
+                              <td className="mono accent" data-label="Reference">{row.reference_code || row.id.slice(0, 8)}</td>
+                              <td data-label="Service">{row.service_catalog?.title || 'Service'}</td>
+                              <td data-label="Status"><StatusBadge status={row.status} /></td>
+                              <td data-label="Date">{new Date(row.created_at).toLocaleDateString()}</td>
                             </tr>
                           ))}
                           {!viewingActivity.requests.length && <tr><td colSpan={4} className="empty-state">No service requests yet.</td></tr>}
@@ -244,16 +255,16 @@ export default function AdminUsersPage() {
                       </table>
                     </div>
                     <h3 style={{ margin: '0 0 8px', color: 'var(--admin-navy)', fontSize: 14 }}>CBT attempts</h3>
-                    <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-                      <table className="admin-table">
+                    <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+                      <table className="admin-table admin-table--stack">
                         <thead><tr><th scope="col">Exam</th><th scope="col">Status</th><th scope="col">Score</th><th scope="col">Started</th></tr></thead>
                         <tbody>
                           {viewingActivity.attempts.map((row) => (
                             <tr key={row.id}>
-                              <td>{row.cbt_exams?.title || 'CBT exam'}</td>
-                              <td><StatusBadge status={row.status === 'in_progress' ? 'processing' : row.status === 'submitted' ? 'completed' : row.status} /></td>
-                              <td>{row.status === 'submitted' ? `${row.score ?? 0}%` : '—'}</td>
-                              <td>{new Date(row.started_at).toLocaleString()}</td>
+                              <td data-label="Exam">{row.cbt_exams?.title || 'CBT exam'}</td>
+                              <td data-label="Status"><StatusBadge status={row.status === 'in_progress' ? 'processing' : row.status === 'submitted' ? 'completed' : row.status} /></td>
+                              <td data-label="Score">{row.status === 'submitted' ? `${row.score ?? 0}%` : '—'}</td>
+                              <td data-label="Started">{new Date(row.started_at).toLocaleString()}</td>
                             </tr>
                           ))}
                           {!viewingActivity.attempts.length && <tr><td colSpan={4} className="empty-state">No CBT attempts yet.</td></tr>}

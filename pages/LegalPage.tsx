@@ -28,8 +28,14 @@ export default function LegalPage({ slug }: { slug: string }) {
   const page = isPolicySlug(slug) ? content.pages.find((entry) => entry.slug === slug) ?? null : null;
 
   useEffect(() => {
-    document.title = page ? `${page.title} | EduReach Hub` : 'Page not found | EduReach Hub';
-  }, [page]);
+    document.title = page
+      ? `${page.title} | EduReach Hub`
+      : status === 'error'
+        ? 'Policy unavailable | EduReach Hub'
+        : status === 'loading'
+          ? 'Loading policy… | EduReach Hub'
+          : 'Page not found | EduReach Hub';
+  }, [page, status]);
 
   const updated = formatDate(page?.updatedAt ?? null);
 

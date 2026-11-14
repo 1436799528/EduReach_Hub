@@ -64,6 +64,7 @@ export default function PublicProfilePage({ slug }: { slug: string }) {
         <div className="hub-container profile-shell">
           {view.status === 'loading' && (
             <>
+              <h1 className="er-visually-hidden">Student profile</h1>
               <div className="profile-identity-card" aria-busy="true">
                 <div className="profile-identity-main">
                   <div className="profile-avatar" style={{ background: '#e2e8f0' }} aria-hidden="true" />
@@ -79,7 +80,7 @@ export default function PublicProfilePage({ slug }: { slug: string }) {
 
           {view.status === 'missing' && (
             <section className="profile-panel" aria-labelledby="public-missing">
-              <div className="profile-panel-heading"><Lock size={17} aria-hidden="true" /><h2 id="public-missing">Profile link unavailable</h2></div>
+              <div className="profile-panel-heading"><Lock size={17} aria-hidden="true" /><h1 id="public-missing">Profile link unavailable</h1></div>
               <p className="profile-muted" style={{ marginBottom: 14 }}>
                 This public profile link is not available. It may have been turned off, or it may never have existed.
                 Profile links only work while the student keeps their public profile enabled.
@@ -90,7 +91,7 @@ export default function PublicProfilePage({ slug }: { slug: string }) {
 
           {view.status === 'error' && (
             <section className="profile-panel" role="alert" aria-labelledby="public-error">
-              <div className="profile-panel-heading"><ShieldCheck size={17} aria-hidden="true" /><h2 id="public-error">Profile could not be loaded</h2></div>
+              <div className="profile-panel-heading"><ShieldCheck size={17} aria-hidden="true" /><h1 id="public-error">Profile could not be loaded</h1></div>
               <p className="profile-muted" style={{ marginBottom: 14 }}>
                 EduReach could not load this profile right now. The link may still work in a moment.
               </p>

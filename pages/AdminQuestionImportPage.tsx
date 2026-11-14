@@ -972,8 +972,8 @@ export default function AdminQuestionImportPage() {
         ) : !imports.length ? (
           <AdminEmptyState title="No past questions have been imported yet" hint="Upload a paper above. It stays in review until you approve its questions." />
         ) : (
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead>
                 <tr>
                   <th scope="col">File</th>
@@ -987,16 +987,16 @@ export default function AdminQuestionImportPage() {
               <tbody>
                 {imports.map((entry) => (
                   <tr key={entry.id}>
-                    <td>
+                    <td data-label="File">
                       <strong>{entry.original_filename}</strong>
                       <br /><small>{entry.paper_year || 'Undated'} · <TimeAgo value={entry.created_at} /></small>
                       <br /><button type="button" className="admin-text-btn" onClick={() => void openImport(entry.id)}>Review</button>
                     </td>
-                    <td>{entry.exam_body} · {entry.subject}</td>
-                    <td><StatusBadge status={STATUS_LABEL[entry.status]} /></td>
-                    <td>{entry.item_count}</td>
-                    <td>{entry.imported_count}</td>
-                    <td>{entry.duplicate_count}</td>
+                    <td data-label="Bank">{entry.exam_body} · {entry.subject}</td>
+                    <td data-label="Status"><StatusBadge status={STATUS_LABEL[entry.status]} /></td>
+                    <td data-label="Questions">{entry.item_count}</td>
+                    <td data-label="Saved">{entry.imported_count}</td>
+                    <td data-label="Added">{entry.duplicate_count}</td>
                   </tr>
                 ))}
               </tbody>

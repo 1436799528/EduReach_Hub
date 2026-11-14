@@ -1032,6 +1032,73 @@ app.post('/api/admin/news', requireCapability('news.create'), async (req, res) =
   }
 });
 
+// Undo used to re-create a deleted article through POST /api/admin/news. That
+// worked, but it changed the row's id and sometimes its slug, so an old link or
+// an audit reference pointed at an article that no longer existed. Restore is a
+// separate write: it keeps the original id and slug when they are still free,
+// and reports a conflict instead of silently inventing a new identity.
+app.post('/api/admin/news/restore', requireCapability('news.create'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const item = req.body?.item;
+    if (!item || typeof item !== 'object') return res.status(400).json({ error: 'The deleted article snapshot is required.' });
+    const id = String(item.id || '').trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      return res.status(400).json({ error: 'The deleted article id is not valid.' });
+    }
+    const title = String(item.title || '').trim();
+    const bodyText = String(item.body || '').trim();
+    const slug = String(item.slug || '').trim();
+    if (!title || !bodyText) return res.status(400).json({ error: 'Article title and body are required.' });
+    if (!slug) return res.status(400).json({ error: 'Article slug is required.' });
+    const published = item.published === true;
+    if (published && !hasCapability((req as AuthorizedRequest).adminUser, 'news.publish')) {
+      return res.status(403).json({ error: 'You do not have permission to perform this action.' });
+    }
+    const isPlaceholder = item.is_placeholder === true;
+    const placeholderNote = typeof item.placeholder_note === 'string' ? item.placeholder_note.trim().slice(0, 1000) : '';
+    if (isPlaceholder && !placeholderNote) return res.status(400).json({ error: 'Describe what information is needed for this placeholder.' });
+    if (isPlaceholder && published) return res.status(400).json({ error: 'Placeholder articles must remain unpublished.' });
+    let publishedAt: string | null = null;
+    if (published && item.published_at) {
+      const parsedAt = new Date(String(item.published_at));
+      if (!Number.isFinite(parsedAt.getTime())) return res.status(400).json({ error: 'The publication date is invalid.' });
+      publishedAt = parsedAt.toISOString();
+    }
+    const imageUrl = safeContentUrl(item.image_url);
+    const sourceUrl = safeContentUrl(item.source_url);
+    if ((item.image_url && !imageUrl) || (item.source_url && !sourceUrl)) {
+      return res.status(400).json({ error: 'Image and source links must use HTTPS or a site-relative path.' });
+    }
+    const row = {
+      id,
+      slug,
+      title,
+      excerpt: item.excerpt ? String(item.excerpt).trim() : null,
+      body: bodyText,
+      category: String(item.category || 'general').trim().toLowerCase() || 'general',
+      image_url: imageUrl,
+      source_name: item.source_name ? String(item.source_name).trim() : null,
+      source_url: sourceUrl,
+      published,
+      published_at: publishedAt,
+      featured: item.featured === true,
+      tags: normalizeTags(item.tags),
+      is_placeholder: isPlaceholder,
+      placeholder_note: isPlaceholder ? placeholderNote : null,
+    };
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.from('news_articles').insert(row).select(newsRowSelect).single();
+    if (error?.code === '23505') return res.status(409).json({ error: 'An article with this identity already exists. Reload the list before trying again.' });
+    if (error) throw error;
+    await supabase.rpc('admin_audit_log', { p_admin_user_id: adminUser.id, p_action: 'news_restore', p_entity_type: 'news_article', p_entity_id: data.id, p_metadata: { slug } });
+    res.status(201).json({ item: data });
+  } catch (error) {
+    console.error('Admin news restore error:', error);
+    res.status(500).json({ error: 'Unable to restore this article.' });
+  }
+});
+
 app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
@@ -4247,7 +4314,16 @@ async function startServer() {
 const cbtLocalTestImport = process.env.NODE_ENV === 'test' && process.env.CBT_V2_LOCAL_REHEARSAL === '1' && process.env.CBT_V2_TEST_IMPORT === '1';
 // Never start the listener on a hosted function platform; only self-hosted
 // Express binds a port.
-if (!process.env.NETLIFY && !process.env.VERCEL && !cbtLocalTestImport) {
+// `NETLIFY` is set during the build, not inside the deployed function. The Lambda
+// runtime variables are the reliable runtime signal; without them the Express
+// app would try to bind port 3000 inside the function invocation.
+const hostedFunctionRuntime = Boolean(
+  process.env.NETLIFY ||
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT
+);
+if (!hostedFunctionRuntime && !cbtLocalTestImport) {
   startServer().catch((error) => {
     console.error('Unable to start EduReach:', error);
     process.exitCode = 1;

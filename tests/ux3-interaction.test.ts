@@ -69,7 +69,8 @@ test('news table has honest select-all, live selection and reversible bulk delet
   assert.match(page, /deleteSelected/, 'bulk delete exists');
   assert.match(page, /10_000/, 'Undo has a ten-second window');
   assert.match(page, /undoDelete/, 'Undo is wired');
-  assert.match(page, /createAdminNews\(input\)/, 'Undo restores through the server, not the client list');
+  assert.match(page, /restoreAdminNews\(article\)/, 'Undo restores through the server with the original identity');
+  assert.match(read('src/lib/api.ts'), /news\/restore/, 'the restore endpoint is a real API call, not a client-side reinsert');
   assert.match(page, /aria-label="Delete"/, 'the row delete affordance is named Delete');
   assert.match(page, /<Trash2 size=\{18\}/, 'the delete glyph is 18px');
   assert.doesNotMatch(page, /<Trash2 size=\{12\} \/> Delete/, 'the old text+12px delete control is gone');

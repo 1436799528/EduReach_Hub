@@ -6,16 +6,18 @@ import {
   createAdminNews,
   deleteAdminNews,
   fetchAdminNews,
+  restoreAdminNews,
   updateAdminNews,
   uploadAdminImage,
   type AdminNewsArticle,
-  type AdminNewsInput,
 } from '../src/lib/api';
 import { newsCategories, newsCategoryLabel, newsCategoryOptions } from '../src/data/newsCategories';
 import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { AdminEmptyState, AdminPageReport, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
+import AdminSortButton from '../src/components/admin/AdminSortButton';
+import { ariaSortFor, nextSortState, sortRows, NO_SORT, type SortState } from '../src/lib/tableSort';
 import { Can } from '../src/components/admin/Can';
 
 type EditorState = {
@@ -67,12 +69,14 @@ export default function AdminNewsPage() {
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
+  const [sort, setSort] = useState<SortState>(NO_SORT);
   const [selected, setSelected] = useState<Map<string, AdminNewsArticle>>(new Map());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [undoBatch, setUndoBatch] = useState<{ items: AdminNewsArticle[]; expiresAt: number } | null>(null);
   const [undoSeconds, setUndoSeconds] = useState(0);
   const [undoBusy, setUndoBusy] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const lastSelectedRef = useRef('');
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [gateError, setGateError] = useState('');
@@ -98,7 +102,14 @@ export default function AdminNewsPage() {
     return () => { window.clearTimeout(timer); requestNumber.current++; };
   }, [page, filter, query]);
 
-  const visible = articles;
+  const visible = sortRows(articles, sort, (article, key) => {
+    if (key === 'title') return article.title;
+    if (key === 'category') return newsCategoryLabel(article.category);
+    if (key === 'state') return article.published ? 'published' : 'draft';
+    if (key === 'published') return article.published_at ? new Date(article.published_at).getTime() : null;
+    if (key === 'updated') return new Date(article.updated_at).getTime();
+    return null;
+  });
 
   /* ---------------- selection, bulk delete and undo ---------------- */
   // Selection is the id -> row snapshot map, not just ids: bulk delete must be
@@ -125,12 +136,23 @@ export default function AdminNewsPage() {
     return () => window.clearInterval(timer);
   }, [undoBatch]);
 
-  function toggleSelected(article: AdminNewsArticle, checked: boolean) {
+  function toggleSelected(article: AdminNewsArticle, checked: boolean, range = false) {
     setSelected((current) => {
       const next = new Map(current);
-      if (checked) next.set(article.id, article); else next.delete(article.id);
+      if (checked) {
+        const start = visible.findIndex((row) => row.id === lastSelectedRef.current);
+        const end = visible.findIndex((row) => row.id === article.id);
+        if (range && start >= 0 && end >= 0 && start !== end) {
+          visible.slice(Math.min(start, end), Math.max(start, end) + 1).forEach((row) => next.set(row.id, row));
+        } else {
+          next.set(article.id, article);
+        }
+      } else {
+        next.delete(article.id);
+      }
       return next;
     });
+    lastSelectedRef.current = article.id;
   }
 
   function toggleSelectPage(checked: boolean) {
@@ -181,24 +203,8 @@ export default function AdminNewsPage() {
     const restored: AdminNewsArticle[] = [];
     const failed: AdminNewsArticle[] = [];
     for (const article of undoBatch.items) {
-      const input: AdminNewsInput = {
-        title: article.title,
-        slug: article.slug,
-        excerpt: article.excerpt,
-        body: article.body,
-        category: article.category,
-        image_url: article.image_url,
-        source_url: article.source_url,
-        source_name: article.source_name,
-        published: article.published,
-        published_at: article.published_at,
-        featured: article.featured === true,
-        tags: article.tags || null,
-        is_placeholder: article.is_placeholder,
-        placeholder_note: article.placeholder_note,
-      };
       try {
-        restored.push(await createAdminNews(input));
+        restored.push(await restoreAdminNews(article));
       } catch {
         failed.push(article);
       }
@@ -569,7 +575,12 @@ export default function AdminNewsPage() {
                   </label>
                 </th>
               </Can>
-              <th scope="col">Title</th><th scope="col">Category</th><th scope="col">State</th><th scope="col">Published</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'title')}><AdminSortButton label="Title" sortKey="title" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'category')}><AdminSortButton label="Category" sortKey="category" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'state')}><AdminSortButton label="State" sortKey="state" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'published')}><AdminSortButton label="Published" sortKey="published" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'updated')}><AdminSortButton label="Updated" sortKey="updated" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" className="right">Actions</th>
             </tr></thead>
             <tbody>
               {loading && <TableSkeleton rows={6} columns={7} />}
@@ -583,7 +594,7 @@ export default function AdminNewsPage() {
                           aria-label={`Select ${article.title}`}
                           checked={selected.has(article.id)}
                           disabled={bulkDeleting}
-                          onChange={(event) => toggleSelected(article, event.target.checked)}
+                          onChange={(event) => toggleSelected(article, event.target.checked, (event.nativeEvent as MouseEvent).shiftKey)}
                         />
                       </label>
                     </td>

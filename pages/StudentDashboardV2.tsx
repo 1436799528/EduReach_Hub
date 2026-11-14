@@ -162,7 +162,9 @@ function readLocalCbtAttempts(): Attempt[] {
         correct_answers: Number(stored.attempt.correct_answers || 0),
         total_questions: Number(stored.attempt.total_questions || stored.questions?.length || 0),
         submitted_at: stored.attempt.submitted_at || null,
-        created_at: stored.attempt.submitted_at || new Date().toISOString(),
+        // Keep the real start time when the scorecard recorded one: replacing it
+        // with submitted_at made every local paper look like it took 0 minutes.
+        created_at: stored.attempt.created_at || stored.attempt.started_at || stored.attempt.submitted_at || new Date().toISOString(),
         subject: stored.exam?.title || stored.exam?.subject || stored.attempt.exam_id || 'CBT Practice',
         exam_id: stored.attempt.exam_id || undefined,
         status: 'submitted',
@@ -674,7 +676,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   );
 
   const requestLoadFailure = (
-    <InlineNotice tone="danger" title="Requests unavailable" onRetry={() => window.location.reload()}>
+    <InlineNotice tone="danger" title="Requests unavailable" retryLabel="Refresh page" onRetry={() => window.location.reload()}>
       We could not load your requests. Check your connection and try again to see your service request status.
     </InlineNotice>
   );
@@ -1080,12 +1082,12 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="dash-metric-card">
           <span className="dash-metric-label">Average score</span>
           <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{averageScore !== null ? `${averageScore}%` : '—'}</span>
-          {!hasScores && <span className="dash-metric-hint">After your first test</span>}
+          {!hasScores && <span className="dash-metric-hint">{submittedAttempts.length ? 'When a scored result is available' : 'After your first test'}</span>}
         </div>
         <div className="dash-metric-card">
           <span className="dash-metric-label">Best score</span>
           <span className={`dash-metric-val${hasScores ? '' : ' is-empty'}`}>{bestScore !== null ? `${bestScore}%` : '—'}</span>
-          {!hasScores && <span className="dash-metric-hint">After your first test</span>}
+          {!hasScores && <span className="dash-metric-hint">{submittedAttempts.length ? 'When a scored result is available' : 'After your first test'}</span>}
         </div>
         <div className="dash-metric-card">
           <span className="dash-metric-label">Latest score</span>

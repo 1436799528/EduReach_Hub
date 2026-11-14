@@ -871,7 +871,7 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-quickfind-pop a { display: block; padding: 8px 10px; border-radius: 6px; color: #344054; font-size: 12.5px; text-decoration: none; }
 .admin-quickfind-pop a:hover, .admin-quickfind-pop a.is-active { background: var(--er-primary-soft); color: var(--er-primary); }
 .admin-quickfind-pop p { margin: 0; padding: 9px 10px; color: #667085; font-size: 12px; line-height: 1.4; }
-@media (max-width: 900px) { .admin-quickfind { display: none; } }
+
 
 /* A failed dashboard read keeps the recovery path visible beside the message. */
 .admin-error-card {
@@ -887,8 +887,8 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 /* ---------------------------------------------------------------- */
 /* Dense, schema-driven tables keep a labelled scroll region. Tables that
    represent one student, request, article or job at a time become a card
-   below 700px so the phone is not asked to pan a desktop grid. */
-@media (max-width: 700px) {
+   below 820px so a phone or small tablet is not asked to pan a desktop grid. */
+@media (max-width: 820px) {
   .admin-table-wrap--stack { overflow: visible; }
 
   .admin-table--stack { display: block; width: 100%; min-width: 0; }
@@ -1038,4 +1038,56 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   .admin-shell .admin-btn.small,
   .admin-table--stack td .admin-btn,
   .admin-table--stack td .admin-select { min-height: 44px; }
+}
+
+/* Sortable column headers keep the 11px caps label and add a quiet state icon.
+   The whole header is the target so a mouse does not have to find a tiny glyph. */
+.admin-sort-btn {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 32px;
+  margin: -6px -4px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.admin-sort-btn svg { color: #98a2b3; flex: 0 0 auto; }
+.admin-sort-btn:hover { color: var(--admin-navy); background: #f2f5f3; }
+.admin-sort-btn.is-active { color: var(--admin-navy); }
+.admin-sort-btn.is-active svg { color: var(--er-primary); }
+.admin-sort-btn:focus-visible { outline: 2px solid var(--er-primary); outline-offset: 1px; }
+@media (max-width: 820px) {
+  .admin-table--stack .admin-sort-btn { display: none; }
+}
+
+.admin-quickfind-pop { max-height: min(420px, 70vh); overflow-y: auto; }
+.admin-quickfind-group {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin: 4px 0 2px;
+  padding: 4px 10px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 620;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.admin-quickfind-group:not(:first-child) { border-top: 1px solid #eef1ee; margin-top: 5px; padding-top: 8px; }
+
+/* Below 900px the topbar has no room for a search field, so the same control
+   moves into the navigation drawer rather than disappearing. */
+.admin-sidebar-search { display: none; padding: 8px 16px 4px; }
+.admin-sidebar-search .admin-quickfind { width: 100%; max-width: none; }
+.admin-sidebar-search .admin-quickfind-pop { right: auto; left: 0; width: 100%; }
+@media (max-width: 900px) {
+  .admin-topbar > .admin-quickfind { display: none; }
+  .admin-sidebar-search { display: block; }
 }

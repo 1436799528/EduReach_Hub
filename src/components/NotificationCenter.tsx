@@ -3,6 +3,7 @@ import { AlertTriangle, Bell, CheckCircle2, Info, RefreshCw } from 'lucide-react
 import { useAuth } from '../lib/auth';
 import {
   fetchNotificationsWithStatus,
+  markNotificationRead,
   markNotificationsRead,
   type NotificationLoad,
 } from '../lib/studentDashboard';
@@ -102,6 +103,25 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
     }
   }, [userId, marking, unread, load, items]);
 
+
+  /**
+   * If the bulk write failed, opening one unread row can still record that one
+   * read. It is optimistic with the same rollback contract as mark-all-read.
+   */
+  const markOneRead = useCallback(async (notificationId: string) => {
+    if (!userId) return;
+    const previous = load;
+    const target = (previous?.items || []).find((item) => item.id === notificationId);
+    if (!target || target.read) return;
+    setLoad((current) => current ? { ...current, items: current.items.map((item) => item.id === notificationId ? { ...item, read: true } : item) } : current);
+    setMarkError('');
+    try {
+      await markNotificationRead(userId, notificationId);
+    } catch {
+      setLoad(previous);
+      setMarkError('That notification could not be marked as read. Try again.');
+    }
+  }, [userId, load]);
   useEffect(() => {
     if (!open) {
       autoMarkedRef.current = false;
@@ -198,11 +218,22 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
                   return (
                     <li key={item.id} className={item.read ? undefined : 'is-unread'}>
                       {item.href ? (
-                        <a className="er-notif-row" href={item.href} onClick={() => setOpen(false)}>
+                        <a className="er-notif-row" href={item.href} onClick={() => { if (!item.read) void markOneRead(item.id); setOpen(false); }}>
                           {content}
                         </a>
                       ) : (
-                        <div className="er-notif-row">{content}</div>
+                        <div
+                          className="er-notif-row"
+                          role={item.read ? undefined : 'button'}
+                          tabIndex={item.read ? undefined : 0}
+                          onClick={item.read ? undefined : () => void markOneRead(item.id)}
+                          onKeyDown={item.read ? undefined : (event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              void markOneRead(item.id);
+                            }
+                          }}
+                        >{content}</div>
                       )}
                     </li>
                   );

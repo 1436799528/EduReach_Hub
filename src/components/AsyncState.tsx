@@ -74,6 +74,8 @@ export function ErrorState({
 }: {
   error: unknown;
   onRetry?: () => void;
+  /** The control's verb should name the recovery, not repeat "try again". */
+  retryLabel?: string;
   action?: ReactNode;
   compact?: boolean;
 }) {
@@ -111,12 +113,15 @@ export function InlineNotice({
   title,
   children,
   onRetry,
+  retryLabel = 'Try again',
   action,
 }: {
   tone?: 'info' | 'warning' | 'danger' | 'success';
   title?: string;
   children?: ReactNode;
   onRetry?: () => void;
+  /** The control's verb should name the recovery, not repeat "try again". */
+  retryLabel?: string;
   action?: ReactNode;
 }) {
   return (
@@ -127,7 +132,7 @@ export function InlineNotice({
       </div>
       {onRetry && (
         <button type="button" className="er-inline-notice-action" onClick={onRetry}>
-          <RefreshCw size={13} /> Try again
+          <RefreshCw size={13} /> {retryLabel}
         </button>
       )}
       {action}

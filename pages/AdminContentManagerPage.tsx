@@ -307,10 +307,10 @@ export default function AdminContentManagerPage() {
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-            <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-              <table className="admin-table"><thead><tr>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <th scope="col" key={f.name}>{f.label}</th>)}<th scope="col" className="right">Actions</th></tr></thead>
+            <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+              <table className="admin-table admin-table--stack"><thead><tr>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <th scope="col" key={f.name}>{f.label}</th>)}<th scope="col" className="right">Actions</th></tr></thead>
                 <tbody>
-                  {!loading && rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" aria-label="Delete this row" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}
+                  {!loading && rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).map(row => <tr key={String(row.id)}>{resource.fields.filter(f => !f.readonly).slice(0, 6).map(f => <td key={f.name} data-label={f.label}>{String(row[f.name] ?? '—').slice(0, 120)}</td>)}<td className="right" data-label="Actions"><div className="admin-action-row"><button className="admin-btn small" type="button" onClick={() => startEdit(row)}><Pencil size={12} /> Edit</button><button className="admin-text-btn danger-text" type="button" aria-label="Delete this row" onClick={() => void removeRow(row)}><Trash2 size={12} /></button></div></td></tr>)}
                   {loading && <tr><td colSpan={7} className="empty-state">Loading…</td></tr>}
                   {!loading && !rows.length && <tr><td colSpan={7} className="empty-state">No records yet.</td></tr>}
                 </tbody>

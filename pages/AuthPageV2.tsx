@@ -8,7 +8,6 @@ import {
   Eye,
   EyeOff,
   GraduationCap,
-  KeyRound,
   LockKeyhole,
   Mail,
   Phone,
@@ -32,6 +31,8 @@ import { navigateInApp } from '../src/lib/navigation';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { InlineNotice } from '../src/components/AsyncState';
 import BrandLogo from '../src/components/BrandLogo';
+import OtpInput from '../src/components/OtpInput';
+import PasswordStrengthMeter from '../src/components/PasswordStrengthMeter';
 import '../src/auth-page.css';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -179,7 +180,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     const target = (verifyEmailSent || email).trim();
     const token = emailOtp.replace(/\D/g, '');
     if (!target || !target.includes('@')) { setError('Enter the email address you used to register.'); return; }
-    if (token.length < 6) { setError('Enter the 6-digit code from the email.'); return; }
+    if (token.length < 6) { setError('Enter the verification code from the email.'); return; }
     if (!isSupabaseConfigured) { setError('Email verification needs the live account service.'); return; }
     setEmailVerifyBusy(true);
     setError('');
@@ -216,7 +217,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: target });
       if (resendError) throw resendError;
       setEmailOtp('');
-      setMessage('A new code has been sent to your email.');
+      setMessage('A new verification email has been sent.');
     } catch (value) {
       setError(userFacingError(value, 'Unable to resend the verification email.'));
     } finally {
@@ -404,7 +405,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         }
         setVerifyEmailSent(email.trim());
         setCurrentMode('verify');
-        setMessage('Enter the 6-digit code we sent to your email.');
+        setMessage('Open the verification email we sent, or enter its code below.');
         return;
       }
 
@@ -518,7 +519,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   {currentMode === 'signin'
                     ? 'Sign in to continue to your saved services and practice.'
                     : currentMode === 'verify'
-                      ? 'Enter the code we sent to your email.'
+                      ? 'Open the link in your email, or enter its code.'
                       : currentMode === 'reset'
                         ? 'Use a new password you have not used here before.'
                         : 'Enter your email and we will send reset instructions if an account exists.'}
@@ -547,33 +548,21 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 <div className="auth-verification-icon"><Mail size={24} /></div>
                 <p>
                   {isSupabaseConfigured
-                    ? <>We sent a 6-digit code to <strong>{verifyEmailSent || email}</strong>. Enter it below. The email also contains a link you can open instead.</>
+                    ? (verifyEmailSent || email)
+                      ? <>We sent a verification email to <strong>{verifyEmailSent || email}</strong>. Open the link in it to finish. If the email also shows a code, enter it below.</>
+                      : <>Open the verification link in your email, or enter the code if the email includes one. If you opened this page directly, sign up first or request a new email.</>
                     : 'Email verification needs the live EduReach account service, which is not configured in this environment.'}
                 </p>
                 {isSupabaseConfigured && (
                   <div className="auth-code-form">
-                    <div className="auth-field">
-                      <label htmlFor="auth-email-code">6-digit code</label>
-                      <input
-                        id="auth-email-code"
-                        name="one-time-code"
-                        type="text"
-                        value={emailOtp}
-                        onChange={(event) => setEmailOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                        autoComplete="one-time-code"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={6}
-                        placeholder="000000"
-                      />
-                    </div>
+                    <OtpInput id="auth-email-code" label="Verification code" value={emailOtp} onChange={setEmailOtp} length={8} disabled={emailVerifyBusy} />
                     <button className="auth-submit" type="button" disabled={emailVerifyBusy || emailOtp.length < 6} aria-busy={emailVerifyBusy} onClick={() => void verifyEmailCode()}>
                       {emailVerifyBusy ? 'Verifying…' : 'Verify code'}
                     </button>
                   </div>
                 )}
                 <button className="auth-submit auth-submit--secondary" type="button" disabled={busy || emailVerifyBusy} onClick={() => void resendVerification()}>
-                  Send a new code
+                  Resend verification email
                 </button>
                 <button className="auth-text-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
               </div>
@@ -686,22 +675,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
                     {phoneStage === 'sent' && (
                       <div className="auth-field">
-                        <label htmlFor="auth-otp">Code sent to {phoneSentTo}</label>
-                        <div className="auth-input-wrap"><KeyRound size={17} aria-hidden="true" />
-                          <input
-                            id="auth-otp"
-                            name="one-time-code"
-                            type="text"
-                            value={otp}
-                            onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 8))}
-                            autoComplete="one-time-code"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            maxLength={8}
-                            placeholder="6-digit code"
-                            required
-                          />
-                        </div>
+                        <OtpInput id="auth-otp" label={`Code sent to ${phoneSentTo}`} value={otp} onChange={setOtp} />
                         <small>Enter the code from the text message. <button className="auth-text-button auth-inline-button" type="button" onClick={() => { setPhoneStage('idle'); setOtp(''); setPhoneSentTo(''); }}>Use a different number</button></small>
                       </div>
                     )}
@@ -742,13 +716,15 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         <div className="auth-field">
                           <label htmlFor="auth-password">{currentMode === 'signup' ? 'Create password' : 'New password'}</label>
                           <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="new-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={8} required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
-                          <small>Use at least 8 characters.</small>
                         </div>
                         <div className="auth-field">
                           <label htmlFor="auth-confirm-password">Confirm password</label>
                           <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required /></div>
                         </div>
                       </div>
+                    )}
+                    {(currentMode === 'signup' || currentMode === 'reset') && (
+                      <PasswordStrengthMeter value={password} confirm={confirmPassword} />
                     )}
                   </>
                 )}
