@@ -95,6 +95,7 @@ export default function AdminQuestionImportPage() {
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
   const [committing, setCommitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
 
   // UI-2: extraction is a server job that can take minutes on a large paper.
@@ -410,6 +411,27 @@ export default function AdminQuestionImportPage() {
     }
   }
 
+  const reviewItems = detail
+    ? detail.items.filter((item) => reviewFilter === 'all' || item.review_status === reviewFilter)
+    : [];
+  const selectableReviewItems = reviewItems.filter((item) => item.review_status === 'pending');
+  const selectedReviewItems = selectableReviewItems.filter((item) => selectedItems.includes(item.id));
+  const allReviewSelected = selectableReviewItems.length > 0 && selectedReviewItems.length === selectableReviewItems.length;
+  const someReviewSelected = selectedReviewItems.length > 0 && !allReviewSelected;
+  const reviewSelectAllLabel = `Select all ${selectableReviewItems.length} matching`;
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someReviewSelected;
+  }, [someReviewSelected, reviewFilter, detail]);
+
+  function toggleReviewPage(checked: boolean) {
+    setSelectedItems((current) => {
+      const pageIds = new Set(selectableReviewItems.map((item) => item.id));
+      if (checked) return [...new Set([...current, ...pageIds])];
+      return current.filter((id) => !pageIds.has(id));
+    });
+  }
+
   if (selectedId) {
     return (
       <div className="admin-page">
@@ -427,7 +449,7 @@ export default function AdminQuestionImportPage() {
               <button type="button" className="admin-btn small secondary" onClick={beginMetaEdit}><Pencil size={14} /> Edit details</button>
             )}
             {detail && detail.item.imported_count === 0 && (
-              <button type="button" className="admin-btn small danger" onClick={() => void remove()}><Trash2 size={14} /> Delete</button>
+              <button type="button" className="admin-icon-btn admin-icon-btn--danger" aria-label="Delete" title="Delete this import" onClick={() => void remove()}><Trash2 size={18} aria-hidden="true" /></button>
             )}
           </div>
         </div>
@@ -566,6 +588,17 @@ export default function AdminQuestionImportPage() {
                   </button>
                 ))}
               </div>
+              <label className="admin-select-all">
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  aria-label={reviewSelectAllLabel}
+                  checked={allReviewSelected}
+                  disabled={bulkBusy || committing || !selectableReviewItems.length}
+                  onChange={(event) => toggleReviewPage(event.target.checked)}
+                />
+                <span>{reviewSelectAllLabel}</span>
+              </label>
               <button type="button" className="admin-btn secondary" onClick={() => void approveSelected()} disabled={bulkBusy || committing || !selectedItems.length}>
                 {bulkBusy ? 'Approving…' : `Approve selected (${selectedItems.length})`}
               </button>
@@ -939,8 +972,8 @@ export default function AdminQuestionImportPage() {
         ) : !imports.length ? (
           <AdminEmptyState title="No past questions have been imported yet" hint="Upload a paper above. It stays in review until you approve its questions." />
         ) : (
-          <div className="admin-table-wrap" role="region" aria-label="Scrollable table" tabIndex={0}>
-            <table className="admin-table">
+          <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
+            <table className="admin-table admin-table--stack">
               <thead>
                 <tr>
                   <th scope="col">File</th>
@@ -954,16 +987,16 @@ export default function AdminQuestionImportPage() {
               <tbody>
                 {imports.map((entry) => (
                   <tr key={entry.id}>
-                    <td>
+                    <td data-label="File">
                       <strong>{entry.original_filename}</strong>
                       <br /><small>{entry.paper_year || 'Undated'} · <TimeAgo value={entry.created_at} /></small>
                       <br /><button type="button" className="admin-text-btn" onClick={() => void openImport(entry.id)}>Review</button>
                     </td>
-                    <td>{entry.exam_body} · {entry.subject}</td>
-                    <td><StatusBadge status={STATUS_LABEL[entry.status]} /></td>
-                    <td>{entry.item_count}</td>
-                    <td>{entry.imported_count}</td>
-                    <td>{entry.duplicate_count}</td>
+                    <td data-label="Bank">{entry.exam_body} · {entry.subject}</td>
+                    <td data-label="Status"><StatusBadge status={STATUS_LABEL[entry.status]} /></td>
+                    <td data-label="Questions">{entry.item_count}</td>
+                    <td data-label="Saved">{entry.imported_count}</td>
+                    <td data-label="Added">{entry.duplicate_count}</td>
                   </tr>
                 ))}
               </tbody>

@@ -146,7 +146,8 @@ test('customize and settings remain available and publish only a saved choice', 
     await act(async () => { button('Save choices')!.click(); });
     assert.equal(readPrivacyPreferences()?.analytics, false);
     assert.equal(changes, 1);
-    await act(async () => { button('Cookie settings')!.click(); });
+    assert.equal(container.querySelector('.er-cookie-settings'), null, 'the floating settings pill is gone');
+    await act(async () => { window.dispatchEvent(new window.CustomEvent('edureach:open-cookie-settings')); });
     assert.equal((container.querySelector('input[type="checkbox"]') as HTMLInputElement).checked, false);
   } finally {
     window.removeEventListener('edureach:privacy-preferences-changed', onChange);
@@ -171,8 +172,9 @@ test('the choice buttons close the panel immediately, and settings reopens it', 
     await act(async () => { button('Reject optional')!.click(); });
     assert.equal(container.querySelector('.er-cookie-consent'), null, 'the panel closes after a saved choice');
     assert.equal(readPrivacyPreferences()?.analytics, false);
-    await act(async () => { button('Cookie settings')!.click(); });
-    assert.ok(container.querySelector('.er-cookie-consent'), 'settings reopens the same panel');
+    assert.equal(container.querySelector('.er-cookie-settings'), null, 'the floating settings pill is gone');
+    await act(async () => { window.dispatchEvent(new window.CustomEvent('edureach:open-cookie-settings')); });
+    assert.ok(container.querySelector('.er-cookie-consent'), 'the footer event reopens the same panel');
   } finally {
     await act(async () => { root.unmount(); });
     container.remove();

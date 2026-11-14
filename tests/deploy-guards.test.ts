@@ -152,3 +152,35 @@ test('a real environment variable is not overridden by a stale .env', () => {
     assert.equal(code, 0, `the environment must win over .env:\n${output}`);
   });
 });
+
+// --- UX-4: the Netlify release contract must exist in the tree ----------------
+//
+// The September decision record described `netlify.toml` and
+// `netlify/functions/api.ts` as if they were committed. They were not, so every
+// deploy failed in about 25 seconds while the live site stayed on an old build.
+// These assertions keep the deployment shape from drifting back to a description.
+
+test('the Netlify build, API and crawler routes are committed in the right order', () => {
+  const toml = read('netlify.toml');
+  assert.match(toml, /command = "npm run build"/);
+  assert.match(toml, /publish = "dist"/);
+  assert.match(toml, /functions = "netlify\/functions"/);
+  assert.match(toml, /from = "\/api\/\*"[\s\S]*?to = "\/\.netlify\/functions\/api\/:splat"/);
+  assert.match(toml, /from = "\/robots\.txt"[\s\S]*?to = "\/\.netlify\/functions\/api\/robots\.txt"/);
+  assert.match(toml, /from = "\/sitemap\.xml"[\s\S]*?to = "\/\.netlify\/functions\/api\/sitemap\.xml"/);
+
+  const fallback = toml.indexOf('from = "/*"');
+  assert.ok(fallback > 0, 'the SPA fallback must exist');
+  for (const route of ['/api/*', '/robots.txt', '/sitemap.xml']) {
+    assert.ok(toml.indexOf(`from = "${route}"`) < fallback, `${route} must be redirected before the SPA fallback`);
+  }
+
+  const fn = read('netlify/functions/api.ts');
+  assert.match(fn, /export const handler = serverless\(app\)/);
+  assert.doesNotMatch(fn, /export const config/, 'a legacy serverless-http handler must not mix in a Functions v2 config export');
+
+  const server = read('server.ts');
+  assert.match(server, /AWS_LAMBDA_FUNCTION_NAME/);
+  assert.match(server, /LAMBDA_TASK_ROOT/);
+  assert.match(read('netlify/functions/daily-news-refresh.ts'), /schedule: '@daily'/);
+});

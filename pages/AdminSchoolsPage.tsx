@@ -225,7 +225,7 @@ export default function AdminSchoolsPage() {
                           post_utme_source_url: institution.post_utme_source_url || '',
                           post_utme_verified: institution.post_utme_verified || false,
                         })}><Pencil size={12} /> Edit</button>
-                        <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${institution.school_name || 'this institution'}`} onClick={() => void remove(institution)}><Trash2 size={12} /></button>
+                        <button type="button" className="admin-icon-btn admin-icon-btn--danger" aria-label="Delete" title={`Delete “${institution.school_name || 'this institution'}”`} onClick={() => void remove(institution)}><Trash2 size={18} aria-hidden="true" /></button>
                       </div>
                     </td>
                   </tr>

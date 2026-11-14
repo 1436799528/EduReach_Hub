@@ -123,6 +123,10 @@ export const RLS_POSTURE: TablePosture[] = [
 
   // --- server-only: active features reached by restricted server roles -----
   {
+    table: 'cbt_bank_security', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'The release boundary is read only by the server catalogue/guest reader with service_role; the migration revokes it from anon and authenticated and adds no client policy.',
+  },
+  {
     table: 'cbt_v2_operations', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
     why: 'Attempt-scoped idempotency ledger is accessed only by the restricted v2 definer role; service_role and both ordinary client roles are explicitly denied direct table access.',
   },

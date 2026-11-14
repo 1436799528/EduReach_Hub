@@ -316,6 +316,22 @@ export async function markNotificationsRead(userId: string) {
   if (error) throw error;
 }
 
+/**
+ * Reading one row is the fallback when the bulk mark-all write fails. The
+ * filter includes user_id even though the row id is unique, so a stale id from
+ * another account can never be marked by this session.
+ */
+export async function markNotificationRead(userId: string, notificationId: string) {
+  const { error } = await supabase
+    .from('student_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('id', notificationId)
+    .is('read_at', null);
+
+  if (error) throw error;
+}
+
 export async function fetchLatestCgpaSnapshot(userId: string): Promise<CgpaSnapshot | null> {
   const { data: term, error: termError } = await supabase
     .from('student_cgpa_terms')

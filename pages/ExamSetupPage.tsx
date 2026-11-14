@@ -865,7 +865,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                       <>{mode === 'mock' ? 'Start mock examination' : 'Start practice'} <ArrowRight size={15} /></>
                     )}
                   </button>
-                  <a className="hub-outline-btn" href="/past-questions"><BookOpen size={15} /> Browse past questions</a>
+                  <a className="hub-outline-btn er-setup-secondary" href="/past-questions"><BookOpen size={15} /> Browse past questions</a>
                 </div>
                 {startPhase === 'stalled' && (
                   <p className="er-setup-field-note" role="status">

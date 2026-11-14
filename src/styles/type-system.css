@@ -372,8 +372,8 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   position: relative;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--er-border);
   border-radius: 8px;
   background: var(--er-surface);
@@ -381,21 +381,22 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   cursor: pointer;
 }
 .er-notif-trigger:hover { border-color: var(--er-border-strong); background: var(--er-surface-soft); color: var(--er-text-primary); }
-.er-notif-badge {
+/* UX-3: a dot, not a red block. It sits on the glyph's upper-right, is
+   smaller than the bell's stroke weight, and carries no number. The real
+   unread count lives in the accessible label and the panel header. */
+.er-notif-unread-dot {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  display: grid;
-  place-items: center;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  border-radius: 999px;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--er-surface);
+  border-radius: 50%;
   background: var(--er-crimson);
-  color: #fff;
-  font-size: 9.5px;
-  font-weight: var(--er-w-numeric);
-  line-height: 1;
+  box-sizing: content-box;
+}
+@media (pointer: coarse) {
+  .er-notif-trigger { width: 44px; height: 44px; }
 }
 .er-notif-alert {
   position: absolute;
@@ -584,3 +585,70 @@ a.er-notif-row:hover { background: var(--er-surface-soft); }
 .badge-processing{background: var(--er-status-warning-bg); color: var(--er-status-warning); border: 1px solid var(--er-status-warning-border); }
 .badge-submitted{background: var(--er-status-info-bg); color: var(--er-status-info); border: 1px solid var(--er-status-info-border); }
 .badge-completed{background: var(--er-status-success-bg); color: var(--er-status-success); border: 1px solid var(--er-status-success-border); }
+
+/* ==========================================================================
+   UX-3 — motion system.
+   Motion explains a change; it is never the decoration. One set of durations,
+   one ease-out curve, all on transform/opacity or colour. A tap is under
+   100 ms, an ordinary state change 100–150 ms, an entrance 200–300 ms, an exit
+   faster than its entrance. Reduced motion removes it rather than shortening
+   one or two selectors.
+   ========================================================================== */
+:root {
+  --er-motion-tap: 80ms;
+  --er-motion-standard: 140ms;
+  --er-motion-enter: 240ms;
+  --er-motion-exit: 160ms;
+  --er-motion-attention: 650ms;
+  --er-ease-out: cubic-bezier(.22, .61, .36, 1);
+}
+
+.hub-primary-btn,
+.hub-outline-btn,
+.admin-btn,
+.admin-icon-btn,
+.dash-btn,
+.dash-card-link,
+.nav-link,
+.er-notif-trigger,
+.er-notif-row,
+.admin-nav-link {
+  transition:
+    background-color var(--er-motion-standard) var(--er-ease-out),
+    border-color var(--er-motion-standard) var(--er-ease-out),
+    color var(--er-motion-standard) var(--er-ease-out),
+    box-shadow var(--er-motion-standard) var(--er-ease-out),
+    transform var(--er-motion-tap) var(--er-ease-out);
+}
+
+:is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit):active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* A card is a surface. On a hover-capable pointer it gains a hairline edge and
+   a small elevation; on touch it does not pretend to hover. */
+@media (hover: hover) and (pointer: fine) {
+  :is(.dash-card, .hub-panel, .admin-card, .profile-panel) {
+    transition: box-shadow var(--er-motion-standard) var(--er-ease-out), border-color var(--er-motion-standard) var(--er-ease-out);
+  }
+  :is(.dash-card, .hub-panel, .admin-card, .profile-panel):hover {
+    box-shadow: 0 6px 18px -12px rgba(16, 24, 40, .22);
+  }
+}
+
+/* View switching is one short fade-up, not a whole-page crawl and not a
+   stagger across every card. */
+.dash-card { animation: er-view-enter var(--er-motion-enter) var(--er-ease-out) both; }
+@keyframes er-view-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

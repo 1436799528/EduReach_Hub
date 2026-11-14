@@ -42,7 +42,7 @@ test('staging requires a matching nonproduction ref, full TLS and explicit hoste
   assert.equal(realSupabaseConfig(staging).mode, 'staging');
   for (const change of [
     { CBT_REAL_HOSTED_AUTHORIZATION: '' }, { CBT_REAL_STAGING_REF: 'gjdfatwcoosyuhakrrhh' },
-    { CBT_REAL_STAGING_REF: 'differentproject0000' }, { CBT_REAL_SUPABASE_URL: 'https://gjdfatwcoosyuhakrrhh.supabase.co' },
+    { CBT_REAL_STAGING_REF: 'differentproject0000' }, { CBT_REAL_SUPABASE_URL: 'https://differentproject0000.supabase.co' },
     { CBT_REAL_DATABASE_URL: `postgresql://postgres:x@db.${ref}.supabase.co/postgres?sslmode=require` },
     { CBT_REAL_DATABASE_URL: 'postgresql://postgres:x@127.0.0.1:54322/postgres?sslmode=verify-full' },
   ]) assert.throws(() => realSupabaseConfig({ ...staging, ...change }), /preflight refused/);

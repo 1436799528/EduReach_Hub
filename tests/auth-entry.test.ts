@@ -74,11 +74,13 @@ test('a social sign-up records consent before redirecting and settles it on retu
   assert.match(page, /termsGateFor/, 'a new OAuth account without recorded consent is asked before the dashboard');
 });
 
-test('email registration offers a 6-digit code just like phone registration', () => {
+test('email verification accepts the hosted eight-digit code while phone stays six', () => {
   const page = read('pages/AuthPageV2.tsx');
   assert.match(page, /verifyOtp\(\{ email: target, token, type: 'signup' \}\)/);
-  assert.match(page, /autoComplete="one-time-code"/);
-  assert.match(page, /6-digit code/);
+  assert.match(page, /<OtpInput[^>]*id="auth-email-code"[^>]*length=\{8\}/, 'email verification matches mailer_otp_length = 8');
+  assert.match(page, /<OtpInput[^>]*id="auth-otp"/, 'phone verification uses the shared code field');
+  assert.doesNotMatch(page, /6-digit code/, 'the copy no longer promises a six-digit code the hosted project does not send');
+  assert.match(page, /verification email/i);
 });
 
 test('the return bar keeps Back and nothing else', () => {

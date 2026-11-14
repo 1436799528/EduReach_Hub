@@ -272,7 +272,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 />
               </div>
 
-              <p className="er-result-review-intro">Your result is saved in CBT history. Leave it here to keep it, or choose Delete result to remove it.</p>
+              <p className="er-result-review-intro">Your result is saved in CBT history. Leave it here to keep it, or use the trash button to remove it permanently.</p>
               <div className="er-result-actions" aria-label="Result actions">
                 {(result.questions?.length ?? 0) > 0 ? (
                   <button type="button" className="hub-primary-btn" onClick={() => setShowReview((open) => !open)}>
@@ -284,7 +284,17 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                 <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
                 <button type="button" className="hub-outline-btn" onClick={printResult}><Printer size={15} /> Print</button>
                 <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download</button>
-                {result?.attempt?.id && <button type="button" className="hub-outline-btn" onClick={() => { setDeleteError(''); setConfirmDelete(true); }}><Trash2 size={15} /> Delete result</button>}
+                {result?.attempt?.id && (
+                  <button
+                    type="button"
+                    className="er-result-delete"
+                    aria-label="Delete"
+                    title="Delete this result"
+                    onClick={() => { setDeleteError(''); setConfirmDelete(true); }}
+                  >
+                    <Trash2 size={18} aria-hidden="true" />
+                  </button>
+                )}
                 <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt')}><ArrowLeft size={15} /> Back to CBT</button>
               </div>
 
@@ -330,7 +340,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
           {deleteError && <p role="alert" className="hub-form-error">{deleteError}</p>}
           <div className="er-confirm-actions">
             <button type="button" className="hub-outline-btn" onClick={() => { setConfirmDelete(false); deleteDialog.current?.close(); }}>Keep result</button>
-            <button type="button" className="er-danger-btn" onClick={() => void removeResult()} disabled={deleteBusy}><Trash2 size={14} /> {deleteBusy ? 'Deleting…' : 'Delete result'}</button>
+            <button type="button" className="er-danger-btn" onClick={() => void removeResult()} disabled={deleteBusy}>{deleteBusy ? 'Deleting…' : 'Delete permanently'}</button>
           </div>
         </div>
       </dialog>

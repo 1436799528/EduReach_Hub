@@ -277,7 +277,7 @@ export default function AdminOpportunitiesPage() {
                       <div className="admin-action-row">
                         <button type="button" className="admin-btn small" onClick={() => openEdit(item)}><Pencil size={12} /> Edit</button>
                         <button type="button" className="admin-btn small" onClick={() => void toggleActive(item)}>{item.is_active !== false ? 'Hide' : 'Show'}</button>
-                        <button type="button" className="admin-text-btn danger-text" aria-label={`Delete ${item.title || 'this opportunity'}`} onClick={() => void remove(item)}><Trash2 size={12} /></button>
+                        <button type="button" className="admin-icon-btn admin-icon-btn--danger" aria-label="Delete" title={`Delete “${item.title || 'this opportunity'}”`} onClick={() => void remove(item)}><Trash2 size={18} aria-hidden="true" /></button>
                       </div>
                     </td>
                   </tr>

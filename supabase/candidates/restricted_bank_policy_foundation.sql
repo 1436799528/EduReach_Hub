@@ -19,6 +19,13 @@ grant update (first_name,last_name,full_name,phone,account_type,avatar_url,schoo
   academic_interests,notification_preferences,terms_agreed_at,profile_completed,
   mfa_enabled,session,matric_number) on table public.profiles to authenticated;
 
+-- UX-3: the deployable 20261114110000 boundary now creates a minimal
+-- cbt_bank_security table. This non-deployable candidate predates it and owns a
+-- richer shape. Rehearsal applies both, so replace the minimal table rather
+-- than failing with "relation already exists". This statement never runs in a
+-- production migration.
+drop table if exists public.cbt_bank_security cascade;
+
 create table public.cbt_bank_security (
   exam_id uuid primary key references public.cbt_exams(id) on delete restrict,
   visibility text not null check (visibility in ('public', 'restricted')),

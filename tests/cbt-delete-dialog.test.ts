@@ -55,7 +55,7 @@ test('the dialog shows the failure and blocks a duplicate submit', () => {
   assert.match(dialog, /\{deleteError &&/, 'the message only appears when there is an error');
   assert.match(dialog, /aria-busy=\{Boolean\(busyId\)\}/, 'the button reports pending work');
   assert.match(dialog, /disabled=\{Boolean\(busyId\)\}/, 'and cannot be pressed twice');
-  assert.match(dialog, /\{busyId \? 'Deleting…' : 'Delete result'\}/, 'its label says what is happening');
+  assert.match(dialog, /\{busyId \? 'Deleting…' : 'Delete permanently'\}/, 'its label says what is happening');
 });
 
 test('the confirm dialog follows the showModal/close lifecycle it depends on', () => {

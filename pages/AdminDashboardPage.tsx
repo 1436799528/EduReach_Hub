@@ -218,6 +218,7 @@ export default function AdminDashboardPage() {
                         <FocusGroup title="Searches" rows={[{ label: 'Searches performed', value: activity.searches }, { label: 'Found no result', value: activity.zeroResultSearches }]} />
                         <FocusGroup title="Most-started CBT exams" rows={activity.cbtStarts.map((row) => ({ label: row.exam, value: row.count }))} />
                         <FocusGroup title="Most-completed services" rows={activity.serviceSubmits.map((row) => ({ label: row.path, value: row.count }))} />
+                        {activity.serviceViews.length > 0 && <FocusGroup title="Most-viewed services" rows={activity.serviceViews.map((row) => ({ label: row.path, value: row.views }))} />}
                       </>
                     ) : activity ? (
                       <AdminEmptyState

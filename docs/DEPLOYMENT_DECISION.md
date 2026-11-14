@@ -1,6 +1,6 @@
 # Deployment architecture — decision record
 
-Status: **open decision, documented as recommended (audit P0-4)**
+Status: **Netlify confirmed; repository configuration restored 13 November 2026; the hosted site still needs its build and environment settings before it can publish**
 Date: 30 September 2026
 Owner: EduReach maintainer
 
@@ -23,6 +23,35 @@ assumes today, what would have to change for the alternative, and how to close
 the question. It does not change any configuration — that is the maintainer's
 call, and the audit explicitly asked for the choice to be made explicitly rather
 than by drift.
+
+## Update — 13 November 2026 (UX-4 production audit)
+
+The 30 September audit described `netlify.toml` and
+`netlify/functions/api.ts` as present. They were not in the repository: Netlify
+had no build command or publish directory, every deploy failed in about 25
+seconds, and the published site stayed on deployment `6ad32026` (commit
+`e38e54b`, 17 October 2026).
+
+Both files are now committed. `netlify.toml` sets `npm run build`, publishes
+`dist`, points at `netlify/functions`, and rewrites `/api/*`, `/robots.txt` and
+`/sitemap.xml` to the Express function before the SPA fallback. The function is
+the legacy `handler` export that `serverless-http` requires; a v2 `config.path`
+was deliberately not mixed with it.
+
+Two operator actions remain outside the repository:
+
+1. Netlify site `aa0aef85-2371-48ec-9569-3dcacb7cfe47` still reports
+   `build_settings: {}`. Config-as-code should supply the build values on the
+   next deploy, but the site must be checked after that deploy.
+2. Production deploys run with `CONTEXT=production`, so
+   `scripts/client-env-check.ts` fails the build unless `VITE_SUPABASE_URL` and
+   `VITE_SUPABASE_PUBLISHABLE_KEY` are set for the build, and the function needs
+   `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_SECRET_KEY`) at runtime. These
+   values cannot be verified from the repository.
+
+The Vercel project is not a working fallback: its deployment is protected and
+`vercel.json` has no `/api` route, so every API request would be rewritten to
+`index.html`.
 
 ## What the repository assumes today
 

@@ -430,9 +430,9 @@
 }
 
 .dash-icon-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   color: #5e6c82;
@@ -1614,8 +1614,8 @@
 .dash-icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   flex: none;
   padding: 0;
   border: 1px solid #e2e8f0;
@@ -1627,3 +1627,44 @@
 .dash-icon-btn:hover { border-color: #f3c3be; background: #fef5f3; color: var(--er-status-error); }
 .dash-icon-btn:disabled { color: #98a2b3; cursor: not-allowed; }
 @media (pointer: coarse) { .dash-icon-btn { width: 44px; height: 44px; } }
+
+/* UX-3 — MyCBT's latest paper and performance analysis. The grid is data
+   first: labels are support text, values are numbers, and the only accent is
+   the strong/needs-practice band already used by SubjectBars. */
+.dash-cbt-latest,
+.dash-cbt-analysis {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--dash-border, #e4e7ec);
+  border-radius: 12px;
+  background: #fff;
+}
+.dash-cbt-latest-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.dash-cbt-latest-head h2 { margin: 0; }
+.dash-cbt-latest-grid {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0; margin-top: 14px; border-top: 1px solid #eef2f5;
+}
+.dash-cbt-latest-grid > div { display: grid; gap: 3px; padding: 12px 12px 0 0; min-width: 0; }
+.dash-cbt-latest-grid span { color: #667085; font-size: 10px; font-weight: 620; letter-spacing: .05em; text-transform: uppercase; }
+.dash-cbt-latest-grid strong { color: #101828; font-size: 13px; font-weight: 620; line-height: 1.35; overflow-wrap: anywhere; }
+.dash-cbt-analysis-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 16px; margin-top: 12px; }
+.dash-cbt-analysis .dash-chart-panel { margin: 0; }
+.dash-cbt-subject-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: #475467; }
+@media (max-width: 900px) {
+  .dash-cbt-latest-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dash-cbt-analysis-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .dash-cbt-latest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* UX-3 — explanatory copy is not a teaser. The compact theme clamps every
+   .dash-card paragraph to two lines, which cut empty-state and data caveats in
+   half. These are the paragraphs a student must be able to read in full. */
+:is(.dash-chart-empty, .dash-metric-hint, .dash-cbt-latest p, .dash-cbt-analysis p, .dash-subject-bar-meta, .dash-attempt-notice) {
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  -webkit-box-orient: initial !important;
+  overflow: visible !important;
+}

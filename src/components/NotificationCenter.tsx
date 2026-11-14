@@ -3,6 +3,7 @@ import { AlertTriangle, Bell, CheckCircle2, Info, RefreshCw } from 'lucide-react
 import { useAuth } from '../lib/auth';
 import {
   fetchNotificationsWithStatus,
+  markNotificationRead,
   markNotificationsRead,
   type NotificationLoad,
 } from '../lib/studentDashboard';
@@ -36,6 +37,7 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
   const [markError, setMarkError] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const autoMarkedRef = useRef(false);
   const panelId = `er-notif-panel-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const refresh = useCallback(async () => {
@@ -72,19 +74,24 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
     };
   }, [open]);
 
-  if (!userId) return null;
-
   const items = load?.items || [];
   const unread = items.filter((item) => !item.read).length;
   const failed = Boolean(load?.error);
 
-  const markAllRead = async () => {
+  /**
+   * UX-3: opening the panel is the read action where the notification store
+   * supports it. The dot is a promise that the count is real; making the user
+   * hunt for a second "mark all read" control leaves it lying.
+   *
+   * The write is optimistic but reconciled: a failure restores the previous
+   * list and shows the error, so the dot comes back rather than pretending the
+   * server accepted it.
+   */
+  const markAllRead = useCallback(async () => {
     if (!userId || marking || unread === 0) return;
     const previous = load;
     setMarkError('');
     setMarking(true);
-    // Optimistic because marking read is cheap and reversible. The server call
-    // is the reconciliation, and a failure puts the previous state back.
     setLoad({ items: items.map((item) => ({ ...item, read: true })), error: false });
     try {
       await markNotificationsRead(userId);
@@ -94,7 +101,38 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
     } finally {
       setMarking(false);
     }
-  };
+  }, [userId, marking, unread, load, items]);
+
+
+  /**
+   * If the bulk write failed, opening one unread row can still record that one
+   * read. It is optimistic with the same rollback contract as mark-all-read.
+   */
+  const markOneRead = useCallback(async (notificationId: string) => {
+    if (!userId) return;
+    const previous = load;
+    const target = (previous?.items || []).find((item) => item.id === notificationId);
+    if (!target || target.read) return;
+    setLoad((current) => current ? { ...current, items: current.items.map((item) => item.id === notificationId ? { ...item, read: true } : item) } : current);
+    setMarkError('');
+    try {
+      await markNotificationRead(userId, notificationId);
+    } catch {
+      setLoad(previous);
+      setMarkError('That notification could not be marked as read. Try again.');
+    }
+  }, [userId, load]);
+  useEffect(() => {
+    if (!open) {
+      autoMarkedRef.current = false;
+      return;
+    }
+    if (!userId || failed || unread === 0 || autoMarkedRef.current) return;
+    autoMarkedRef.current = true;
+    void markAllRead();
+  }, [open, userId, failed, unread, markAllRead]);
+
+  if (!userId) return null;
 
   return (
     <div className={`er-notif er-notif--${variant}`} ref={rootRef}>
@@ -121,7 +159,7 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
         )}
         {unread > 0 && (
           <>
-            <span className="er-notif-badge" aria-hidden="true">{unread > 9 ? '9+' : unread}</span>
+            <span className="er-notif-unread-dot" aria-hidden="true" />
             <span className="er-visually-hidden">{unread} unread</span>
           </>
         )}
@@ -180,11 +218,22 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
                   return (
                     <li key={item.id} className={item.read ? undefined : 'is-unread'}>
                       {item.href ? (
-                        <a className="er-notif-row" href={item.href} onClick={() => setOpen(false)}>
+                        <a className="er-notif-row" href={item.href} onClick={() => { if (!item.read) void markOneRead(item.id); setOpen(false); }}>
                           {content}
                         </a>
                       ) : (
-                        <div className="er-notif-row">{content}</div>
+                        <div
+                          className="er-notif-row"
+                          role={item.read ? undefined : 'button'}
+                          tabIndex={item.read ? undefined : 0}
+                          onClick={item.read ? undefined : () => void markOneRead(item.id)}
+                          onKeyDown={item.read ? undefined : (event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              void markOneRead(item.id);
+                            }
+                          }}
+                        >{content}</div>
                       )}
                     </li>
                   );

@@ -824,6 +824,22 @@ export async function updateAdminNews(id: string, input: Partial<AdminNewsInput>
   return body.item;
 }
 
+/**
+ * Restore a just-deleted article with its original id and slug. Undo used to
+ * call createAdminNews, which produced a valid article with a different
+ * identity; any link, audit reference or bookmark to the old row then broke.
+ */
+export async function restoreAdminNews(item: AdminNewsArticle): Promise<AdminNewsArticle> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Administrator session required.');
+  const body = await jsonFetch<{ item: AdminNewsArticle }>('/api/admin/news/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ item }),
+  });
+  return body.item;
+}
+
 export async function deleteAdminNews(id: string): Promise<void> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Administrator session required.');

@@ -52,7 +52,7 @@ allowlisted to GitHub, npm and PyPI.
 |---|---|
 | `https://github.com` | 200 |
 | `https://registry.npmjs.org` | 200 |
-| `https://gjdfatwcoosyuhakrrhh.supabase.co/rest/v1/` | **000 — no response** |
+| `https://<production-project-ref>.supabase.co/rest/v1/` | **000 — no response** |
 | `https://supabase.com` | **000 — no response** |
 
 DNS resolves (`172.64.149.246`), and the TCP/TLS connection is refused, so this

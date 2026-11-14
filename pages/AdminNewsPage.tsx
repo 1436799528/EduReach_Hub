@@ -6,6 +6,7 @@ import {
   createAdminNews,
   deleteAdminNews,
   fetchAdminNews,
+  restoreAdminNews,
   updateAdminNews,
   uploadAdminImage,
   type AdminNewsArticle,
@@ -15,6 +16,8 @@ import { looksLikeHtml, sanitizeRichHtml } from '../src/lib/html-sanitize';
 import { AdminEmptyState, AdminPageReport, StatusBadge, TimeAgo, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminRichTextEditor from '../src/components/admin/AdminRichTextEditor';
 import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
+import AdminSortButton from '../src/components/admin/AdminSortButton';
+import { ariaSortFor, nextSortState, sortRows, NO_SORT, type SortState } from '../src/lib/tableSort';
 import { Can } from '../src/components/admin/Can';
 
 type EditorState = {
@@ -66,6 +69,14 @@ export default function AdminNewsPage() {
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
+  const [sort, setSort] = useState<SortState>(NO_SORT);
+  const [selected, setSelected] = useState<Map<string, AdminNewsArticle>>(new Map());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [undoBatch, setUndoBatch] = useState<{ items: AdminNewsArticle[]; expiresAt: number } | null>(null);
+  const [undoSeconds, setUndoSeconds] = useState(0);
+  const [undoBusy, setUndoBusy] = useState(false);
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  const lastSelectedRef = useRef('');
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [gateError, setGateError] = useState('');
@@ -91,7 +102,125 @@ export default function AdminNewsPage() {
     return () => { window.clearTimeout(timer); requestNumber.current++; };
   }, [page, filter, query]);
 
-  const visible = articles;
+  const visible = sortRows(articles, sort, (article, key) => {
+    if (key === 'title') return article.title;
+    if (key === 'category') return newsCategoryLabel(article.category);
+    if (key === 'state') return article.published ? 'published' : 'draft';
+    if (key === 'published') return article.published_at ? new Date(article.published_at).getTime() : null;
+    if (key === 'updated') return new Date(article.updated_at).getTime();
+    return null;
+  });
+
+  /* ---------------- selection, bulk delete and undo ---------------- */
+  // Selection is the id -> row snapshot map, not just ids: bulk delete must be
+  // able to offer Undo after the server rows are gone, and a selection has to
+  // survive a page change where the row is no longer in `visible`.
+  const selectedOnPage = visible.filter((article) => selected.has(article.id)).length;
+  const allOnPageSelected = visible.length > 0 && selectedOnPage === visible.length;
+  const someOnPageSelected = selectedOnPage > 0 && !allOnPageSelected;
+  const selectAllLabel = `Select all ${visible.length} matching${hasMore ? ' on this page' : ''}`;
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someOnPageSelected;
+  }, [someOnPageSelected, loading]);
+
+  useEffect(() => {
+    if (!undoBatch) { setUndoSeconds(0); return; }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((undoBatch.expiresAt - Date.now()) / 1000));
+      setUndoSeconds(remaining);
+      if (remaining === 0) setUndoBatch(null);
+    };
+    tick();
+    const timer = window.setInterval(tick, 250);
+    return () => window.clearInterval(timer);
+  }, [undoBatch]);
+
+  function toggleSelected(article: AdminNewsArticle, checked: boolean, range = false) {
+    setSelected((current) => {
+      const next = new Map(current);
+      if (checked) {
+        const start = visible.findIndex((row) => row.id === lastSelectedRef.current);
+        const end = visible.findIndex((row) => row.id === article.id);
+        if (range && start >= 0 && end >= 0 && start !== end) {
+          visible.slice(Math.min(start, end), Math.max(start, end) + 1).forEach((row) => next.set(row.id, row));
+        } else {
+          next.set(article.id, article);
+        }
+      } else {
+        next.delete(article.id);
+      }
+      return next;
+    });
+    lastSelectedRef.current = article.id;
+  }
+
+  function toggleSelectPage(checked: boolean) {
+    setSelected((current) => {
+      const next = new Map(current);
+      for (const article of visible) {
+        if (checked) next.set(article.id, article); else next.delete(article.id);
+      }
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    if (bulkDeleting || !selected.size) return;
+    const items = [...selected.values()];
+    setBulkDeleting(true);
+    setError('');
+    setMessage('');
+    const deleted: AdminNewsArticle[] = [];
+    const failed: AdminNewsArticle[] = [];
+    for (const article of items) {
+      try {
+        await deleteAdminNews(article.id);
+        deleted.push(article);
+      } catch {
+        failed.push(article);
+      }
+    }
+    const deletedIds = new Set(deleted.map((article) => article.id));
+    setArticles((current) => current.filter((article) => !deletedIds.has(article.id)));
+    setSelected(new Map());
+    if (deleted.length) {
+      setUndoBatch({ items: deleted, expiresAt: Date.now() + 10_000 });
+      setUndoSeconds(10);
+      setMessage(`${deleted.length} article${deleted.length === 1 ? '' : 's'} deleted.`);
+    }
+    if (failed.length) {
+      setError(`${failed.length} article${failed.length === 1 ? '' : 's'} could not be deleted. ${deleted.length ? `${deleted.length} were deleted.` : ''} Try the remaining selection again.`.trim());
+      setSelected(new Map(failed.map((article) => [article.id, article] as const)));
+    }
+    setBulkDeleting(false);
+  }
+
+  async function undoDelete() {
+    if (!undoBatch || undoBusy) return;
+    setUndoBusy(true);
+    setError('');
+    const restored: AdminNewsArticle[] = [];
+    const failed: AdminNewsArticle[] = [];
+    for (const article of undoBatch.items) {
+      try {
+        restored.push(await restoreAdminNews(article));
+      } catch {
+        failed.push(article);
+      }
+    }
+    if (restored.length) {
+      setMessage(`${restored.length} article${restored.length === 1 ? '' : 's'} restored.`);
+      await load();
+    }
+    if (failed.length) {
+      setError(`${failed.length} article${failed.length === 1 ? '' : 's'} could not be restored. Nothing was invented; try Undo again before the countdown ends.`);
+      setUndoBatch({ items: failed, expiresAt: Date.now() + 10_000 });
+    } else {
+      setUndoBatch(null);
+    }
+    setUndoBusy(false);
+  }
 
   function openCreate() { setEditor({ ...emptyEditor }); setMessage(''); setGateError(''); }
   function openEdit(article: AdminNewsArticle) {
@@ -275,7 +404,22 @@ export default function AdminNewsPage() {
       />
 
       {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
-      {message && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}
+      {message && !undoBatch && <div className="admin-card" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}
+
+      {undoBatch && (
+        <div className="admin-undo-bar" role="status" aria-live="polite">
+          <span className="admin-undo-progress" aria-hidden="true">
+            <i style={{ transform: `scaleX(${Math.max(0, Math.min(1, undoSeconds / 10))})` }} />
+          </span>
+          <span className="admin-undo-copy">
+            <strong>{undoBatch.items.length} article{undoBatch.items.length === 1 ? '' : 's'} deleted</strong>
+            <small>Undo closes in {undoSeconds}s</small>
+          </span>
+          <button type="button" className="admin-text-btn admin-undo-action" onClick={() => void undoDelete()} disabled={undoBusy}>
+            {undoBusy ? 'Restoring…' : 'Undo'}
+          </button>
+        </div>
+      )}
 
       <AdminNewsroomQueue onPublished={() => void load()} />
 
@@ -401,14 +545,60 @@ export default function AdminNewsPage() {
         <button type="button" className="admin-btn small" disabled={loading || !hasMore} onClick={() => setPage((current) => current + 1)}>Next</button>
       </div>
 
+      {selected.size > 0 && (
+        <div className="admin-bulk-bar" role="status" aria-live="polite">
+          <span><strong>{selected.size}</strong> selected</span>
+          <Can capability="news.delete">
+            <button type="button" className="admin-btn danger" onClick={() => void deleteSelected()} disabled={bulkDeleting}>
+              <Trash2 size={16} aria-hidden="true" /> {bulkDeleting ? 'Deleting…' : 'Delete selected'}
+            </button>
+          </Can>
+          <button type="button" className="admin-text-btn" onClick={() => setSelected(new Map())} disabled={bulkDeleting}>Clear selection</button>
+        </div>
+      )}
+
       <div className="admin-card">
         <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>
           <table className="admin-table admin-table--stack">
-            <thead><tr><th scope="col">Title</th><th scope="col">Category</th><th scope="col">State</th><th scope="col">Published</th><th scope="col">Updated</th><th scope="col" className="right">Actions</th></tr></thead>
+            <thead><tr>
+              <Can capability="news.delete" fallback={<th scope="col" className="admin-select-cell" aria-hidden="true" />}>
+                <th scope="col" className="admin-select-cell">
+                  <label className="admin-check-hit">
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      aria-label={selectAllLabel}
+                      checked={allOnPageSelected}
+                      disabled={!visible.length || bulkDeleting}
+                      onChange={(event) => toggleSelectPage(event.target.checked)}
+                    />
+                  </label>
+                </th>
+              </Can>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'title')}><AdminSortButton label="Title" sortKey="title" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'category')}><AdminSortButton label="Category" sortKey="category" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'state')}><AdminSortButton label="State" sortKey="state" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'published')}><AdminSortButton label="Published" sortKey="published" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" aria-sort={ariaSortFor(sort, 'updated')}><AdminSortButton label="Updated" sortKey="updated" sort={sort} onSort={(key) => setSort((current) => nextSortState(current, key))} /></th>
+              <th scope="col" className="right">Actions</th>
+            </tr></thead>
             <tbody>
-              {loading && <TableSkeleton rows={6} columns={6} />}
+              {loading && <TableSkeleton rows={6} columns={7} />}
               {!loading && visible.map((article) => (
-                <tr key={article.id}>
+                <tr key={article.id} className={selected.has(article.id) ? 'is-selected' : undefined}>
+                  <Can capability="news.delete" fallback={<td className="admin-select-cell" aria-hidden="true" />}>
+                    <td className="admin-select-cell">
+                      <label className="admin-check-hit">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${article.title}`}
+                          checked={selected.has(article.id)}
+                          disabled={bulkDeleting}
+                          onChange={(event) => toggleSelected(article, event.target.checked, (event.nativeEvent as MouseEvent).shiftKey)}
+                        />
+                      </label>
+                    </td>
+                  </Can>
                   <td data-label="Title">
                     <b>{article.title}</b>{article.is_placeholder && <strong> · PLACEHOLDER</strong>}
                     <div className="muted">/{article.slug}{article.featured ? ' · ★ featured' : ''}</div>
@@ -430,14 +620,22 @@ export default function AdminNewsPage() {
                         <Star size={12} /> {article.featured ? 'Unfeature' : 'Feature'}
                       </button>
                       <Can capability="news.delete">
-                        <button type="button" className="admin-text-btn danger-text" onClick={() => void remove(article)}><Trash2 size={12} /> Delete</button>
+                        <button
+                          type="button"
+                          className="admin-icon-btn admin-icon-btn--danger"
+                          aria-label="Delete"
+                          title={`Delete “${article.title}”`}
+                          onClick={() => void remove(article)}
+                        >
+                          <Trash2 size={18} aria-hidden="true" />
+                        </button>
                       </Can>
                     </div>
                   </td>
                 </tr>
               ))}
               {!loading && !error && !visible.length && (
-                <tr><td colSpan={6} className="empty-state">
+                <tr><td colSpan={7} className="empty-state">
                   {filter !== 'all' || query.trim() || page > 1
                     ? 'No articles match this filter or page.'
                     : <AdminEmptyState title="No news articles yet" hint="Create the first article. It goes straight to the live news page when published. The public site shows an empty state until then." action={<button type="button" className="admin-btn small" onClick={openCreate}><Plus size={13} /> New article</button>} />}

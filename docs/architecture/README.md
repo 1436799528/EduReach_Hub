@@ -26,6 +26,8 @@ otherwise — or the document is updated in the same change.
 | 08 | [Feature template](08-FEATURE-TEMPLATE.md) | The required structure for any new feature, with a worked example |
 | — | [UX-1 audit and redesign](UX-1-AUDIT-AND-REDESIGN.md) | What the UX-1 pass found, what changed, how it was verified and what remains |
 | — | [UX-2 rendered polish](UX-2-RENDERED-POLISH.md) | What the rendered 147-state browser sweep found, the fixes, the gates and what remains |
+| — | [UX-3 interaction integrity and motion](UX-3-INTERACTION-INTEGRITY-AND-MOTION.md) | Honest selection, reversible delete, a profile save that works, dynamic MyCBT, the motion scale and the gates |
+| — | [UX-4 final interaction and production readiness](UX-4-FINAL-INTERACTION-AND-PRODUCTION-READINESS-AUDIT.md) | The final browser sweep, truth fixes, the restored Netlify function/build path, every skipped test classified, and the hosted blockers |
 
 Existing documents these extend rather than replace:
 `docs/DESIGN_RULES.md`, `docs/COMPONENT_RULES.md`, `docs/COLOR_THEME_SPEC.md`,
