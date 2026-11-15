@@ -38,15 +38,15 @@ const contrast = (a: string, b: string): number => {
 
 test('every state colour in the specification is a token', () => {
   const expected: Record<string, string> = {
-    '--er-primary': '#174A3A',
-    '--er-primary-hover': '#123C2F',
-    '--er-primary-active': '#0D2E24',
-    '--er-primary-border': '#123C2F',
-    '--er-primary-border-hover': '#0D2E24',
-    '--er-primary-border-active': '#0A241C',
-    '--er-primary-focus': '#174A3A',
-    '--er-primary-soft': '#EDF5F0',
-    '--er-primary-soft-border': '#CFE4D8',
+    '--er-primary': '#1E40AF',
+    '--er-primary-hover': '#1E3A8A',
+    '--er-primary-active': '#172554',
+    '--er-primary-border': '#1E3A8A',
+    '--er-primary-border-hover': '#172554',
+    '--er-primary-border-active': '#0F172A',
+    '--er-primary-focus': '#1E40AF',
+    '--er-primary-soft': '#EEF2FF',
+    '--er-primary-soft-border': '#C7D2FE',
     '--er-on-primary': '#FFFFFF',
     '--er-crimson': '#B14933',
     '--er-crimson-hover': '#963D2C',
@@ -61,7 +61,7 @@ test('every state colour in the specification is a token', () => {
     '--er-disabled-border': '#CBD5E1',
     '--er-disabled-surface': '#F8FAFC',
     '--er-nav-hover-bg': '#F1F5F9',
-    '--er-nav-active-bg': '#EDF5F0',
+    '--er-nav-active-bg': '#EEF2FF',
     '--er-field-border-hover': '#94A3B8',
     '--er-field-valid': '#15803D',
     '--er-field-invalid': '#B91C1C',
@@ -85,14 +85,14 @@ test('every state colour in the specification is a token', () => {
 
 test('text clears AA on every surface the specification pairs it with', () => {
   const pairs: Array<[string, string, string]> = [
-    ['#FFFFFF', '#174A3A', 'primary label at rest'],
-    ['#FFFFFF', '#123C2F', 'primary label on hover'],
-    ['#FFFFFF', '#0D2E24', 'primary label while pressed'],
+    ['#FFFFFF', '#1E40AF', 'primary label at rest'],
+    ['#FFFFFF', '#1E3A8A', 'primary label on hover'],
+    ['#FFFFFF', '#172554', 'primary label while pressed'],
     ['#475467', '#FFFFFF', 'secondary label at rest'],
     ['#101828', '#F7F9F8', 'secondary label on hover'],
     ['#101828', '#EEF1F4', 'secondary label while pressed'],
-    ['#174A3A', '#F1F5F9', 'navigation label on hover'],
-    ['#174A3A', '#EDF5F0', 'navigation label when selected'],
+    ['#1E40AF', '#F1F5F9', 'navigation label on hover'],
+    ['#1E40AF', '#EEF2FF', 'navigation label when selected'],
     ['#FFFFFF', '#B14933', 'crimson control at rest'],
     ['#FFFFFF', '#963D2C', 'crimson control on hover'],
     ['#FFFFFF', '#803222', 'crimson control while pressed'],
@@ -112,7 +112,7 @@ test('text clears AA on every surface the specification pairs it with', () => {
 
   // Boundaries that carry a state on their own clear 3:1.
   for (const [border, label] of [
-    ['#174A3A', 'focused field'],
+    ['#1E40AF', 'focused field'],
     ['#15803D', 'valid field'],
     ['#B91C1C', 'invalid field'],
   ] as const) {
@@ -183,13 +183,13 @@ test('form fields declare hover, focus, invalid and disabled states', () => {
 test('the focus ring is the brand colour, thin and follows the control', () => {
   const ring = /:root :where\(a, button, input, select, textarea, summary, \[tabindex\], \[contenteditable\]\):focus-visible\s*\{([^}]*)\}/.exec(a11y);
   assert.ok(ring, 'a11y.css owns the focus indicator');
-  assert.match(ring[1], /outline: 2px solid var\(--color-focus, #174A3A\) !important/);
+  assert.match(ring[1], /outline: 2px solid var\(--color-focus, #1E40AF\) !important/);
   assert.match(ring[1], /outline-offset: 0/, 'the ring hugs the control instead of floating away from it');
   assert.match(ring[1], /box-shadow: none !important/, 'no second ink line doubles the ring');
   assert.match(a11y, /\.site-search[^}]*input[^}]*:focus-visible[\s\S]*outline: 0 !important/, 'search fields defer the ring to their rounded container');
   assert.match(a11y, /outline-color: #f8fafc !important/, 'dark surfaces keep the light ring');
-  assert.ok(contrast('#174A3A', '#FFFFFF') >= 3, 'the ring clears 3:1 on white');
-  assert.ok(contrast('#174A3A', '#EDF5F0') >= 3, 'the ring clears 3:1 on the selected surface');
+  assert.ok(contrast('#1E40AF', '#FFFFFF') >= 3, 'the ring clears 3:1 on white');
+  assert.ok(contrast('#1E40AF', '#EEF2FF') >= 3, 'the ring clears 3:1 on the selected surface');
 });
 
 test('mobile inputs avoid browser zoom and coarse-pointer controls have thumb-sized targets', () => {

@@ -79,9 +79,10 @@ change is part of this work.
 
 Full detail: [`design-system.md`](../design/ux-5/design-system.md).
 
-- **Colour:** primary `#174A3A`; neutral surfaces/borders/text; crimson
-  `#B14933` only for contextual attention/destructive; navy `#0A3E83` wordmark
-  only; semantic status colours for success/warning/error/info.
+- **Colour:** primary action blue `#1E40AF`; neutral surfaces/borders/text;
+  green reserved for Passed/Correct/Completed; crimson `#B14933` only for
+  contextual attention/destructive; navy `#0A3E83` wordmark only; semantic
+  status colours for success/warning/error/info.
 - **Type:** page title `clamp(24px,2.4vw,32px)/730`; section 17/680; card
   15/650; body 14/400 at 1.6; supporting 12.5–13; label 12/560; numeric 26–32
   with tabular figures.

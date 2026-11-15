@@ -41,7 +41,7 @@
 .home-resume h2{margin:3px 0 2px;color:#0f172a;font-size:16px;line-height:1.3}
 .home-resume p{margin:0;color:#475569;font-size:12.5px;line-height:1.5}
 .home-resume-bar{height:4px;margin-top:9px;border-radius:999px;background:#dbeafe;overflow:hidden}
-.home-resume-bar span{display:block;height:100%;border-radius:inherit;background:#0a3e83;transition:width .2s ease}
+.home-resume-bar span{display:block;height:100%;border-radius:inherit;background:#1E40AF;transition:width .2s ease}
 .home-resume>a{flex:none;text-decoration:none}
 @media(max-width:600px){
   .home-resume{flex-direction:column;align-items:stretch;gap:12px}

@@ -78,11 +78,11 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           <text x={pad.left - 6} y={y(tick) + 3} textAnchor="end" fontSize="9" fill="#64748b">{tick}</text>
         </g>
       ))}
-      <polygon points={area} fill="rgba(23, 74, 58, .07)" />
+      <polygon points={area} fill="rgba(30, 64, 175, .07)" />
       <polyline
         points={line}
         fill="none"
-        stroke="#174A3A"
+        stroke="#1E40AF"
         strokeWidth="2"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -97,7 +97,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
             cy={y(point.score)}
             r={isLast ? 4 : 2.6}
             fill={tone}
-            stroke={isLast ? tone : '#174A3A'}
+            stroke={isLast ? tone : '#1E40AF'}
             strokeWidth="1.6"
           />
         );

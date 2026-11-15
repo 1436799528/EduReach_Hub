@@ -388,5 +388,5 @@ img,table,pre,.hub-panel,.er-exam-option,.er-exam-question{max-width:100%;box-si
 .er-history-delete:hover,
 .er-result-delete:hover { background: #fdf2ef; border-color: #e7a99f; color: var(--er-crimson-deep, #B3331A); }
 .er-history-delete:focus-visible,
-.er-result-delete:focus-visible { outline: 2px solid var(--er-primary, #174A3A); outline-offset: 2px; }
+.er-result-delete:focus-visible { outline: 2px solid var(--er-primary, #1E40AF); outline-offset: 2px; }
 .er-history-delete:disabled { opacity: .45; cursor: not-allowed; }

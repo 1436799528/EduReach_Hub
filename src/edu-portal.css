@@ -976,7 +976,7 @@ body.er-exam-mode{padding-bottom:0!important}
   border: 1px solid #cfd9dd;
   border-radius: 10px;
   background: #fff;
-  color: #0a3e83;
+  color: #1E40AF;
   font: inherit;
   font-size: 13.5px;
   font-weight: 560;
@@ -1028,11 +1028,11 @@ body.er-exam-mode{padding-bottom:0!important}
   text-decoration: none;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-.er-exam-material:hover { border-color: #0a3e83; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
+.er-exam-material:hover { border-color: #1E40AF; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
 .er-exam-material small { color: #0f6baa; font-size: 10.5px; font-weight: 620; letter-spacing: .06em; text-transform: uppercase; }
 .er-exam-material strong { color: #0f172a; font-size: 15px; line-height: 1.35; font-weight: 620; }
 .er-exam-material span { color: #5e6c82; font-size: 12px; line-height: 1.5; }
-.er-exam-material em { margin-top: auto; padding-top: 4px; color: #0a3e83; font-size: 11.5px; font-style: normal; font-weight: 620; }
+.er-exam-material em { margin-top: auto; padding-top: 4px; color: #1E40AF; font-size: 11.5px; font-style: normal; font-weight: 620; }
 
 /* UI-7 — news cards in four simulator-like columns. Unlike the simulator grid,
    this one wraps at every breakpoint and never becomes a horizontal scroller. */
@@ -1055,7 +1055,7 @@ body.er-exam-mode{padding-bottom:0!important}
   text-decoration: none;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-.er-news-card:hover { border-color: #0a3e83; box-shadow: 0 8px 22px rgba(15, 23, 42, .07); }
+.er-news-card:hover { border-color: #1E40AF; box-shadow: 0 8px 22px rgba(15, 23, 42, .07); }
 .er-news-card:focus-visible { outline: 3px solid #9fc7f4; outline-offset: 2px; }
 .er-news-card-media { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: #eef2f6; }
 .er-news-card-media .er-news-photo,
@@ -1089,7 +1089,7 @@ body.er-exam-mode{padding-bottom:0!important}
   gap: 8px;
   margin-top: auto;
   padding-top: 7px;
-  color: #0a3e83;
+  color: #1E40AF;
   font-size: 11px;
   font-weight: 620;
 }
@@ -1140,8 +1140,8 @@ body.er-exam-mode{padding-bottom:0!important}
 .hub-mobile-search:focus-within,
 .er-site-search-page-form:focus-within,
 .er-search-page-form:focus-within {
-  border-color: #0a3e83 !important;
-  box-shadow: 0 0 0 1px #0a3e83 !important;
+  border-color: #1E40AF !important;
+  box-shadow: 0 0 0 1px #1E40AF !important;
 }
 
 /* UI-8 — one thin arrow is the card action; the card copy already explains it. */
@@ -1152,7 +1152,7 @@ body.er-exam-mode{padding-bottom:0!important}
   width: 30px;
   height: 30px;
   margin-left: auto;
-  color: var(--er-primary, #0a3e83);
+  color: var(--er-primary, #1E40AF);
   transition: transform .18s ease;
 }
 
@@ -1209,16 +1209,16 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-mobile-bottom-nav a.mobile-cbt {
     height: 56px;
     margin-top: -11px;
-    border: 1px solid var(--er-primary, #0a3e83);
+    border: 1px solid var(--er-primary, #1E40AF);
     border-radius: 14px;
-    background: var(--er-primary, #0a3e83) !important;
+    background: var(--er-primary, #1E40AF) !important;
     color: #fff !important;
-    box-shadow: 0 6px 14px rgba(10, 62, 131, .24);
+    box-shadow: 0 6px 14px rgba(30, 64, 175, .24);
   }
   .er-mobile-bottom-nav a.mobile-cbt svg { width: 22px; height: 22px; color: #fff !important; }
   .er-mobile-bottom-nav a.mobile-cbt span { font-size: 12px; font-weight: 620; }
   .er-mobile-bottom-nav a.mobile-cbt:hover,
-  .er-mobile-bottom-nav a.mobile-cbt.active { background: var(--er-primary, #0a3e83) !important; color: #fff !important; }
+  .er-mobile-bottom-nav a.mobile-cbt.active { background: var(--er-primary, #1E40AF) !important; color: #fff !important; }
 }
 
 /* UI-8 — footer columns share one centred rhythm on every screen size. */

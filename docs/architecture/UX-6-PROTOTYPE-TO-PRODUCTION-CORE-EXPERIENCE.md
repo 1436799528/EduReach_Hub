@@ -77,11 +77,12 @@ Route: `/cbt/session/:attemptId` (`pages/CbtSessionPage.tsx`,
    reversible, and never alter answers or scoring. This is explicit storage, not
    a fake server write: the v2 protocol has no flag column.
 2. **Non-colour selected state.** The chosen option keeps its check icon and
-   `aria-checked`, so selection is not conveyed by the green tint alone.
+   `aria-checked`, so selection is not conveyed by the blue tint alone.
 3. **Palette both-state.** Answered + marked cells get a green inset edge and a
    legend item "n answered + marked"; the accessible name includes both states.
-4. **Crimson discipline.** Current-question outline is the primary green, not
-   crimson. Submit is green. End Test remains the destructive crimson action.
+4. **Crimson discipline.** Current-question outline is the primary action
+   blue, not crimson. Submit is blue. End Test remains the destructive crimson
+   action.
 5. **Previous explanation.** On the first question, Previous has an accessible
    name and title explaining that this is the first question.
 6. **Submit confirmation.** Both dialogs now state marked-for-review count

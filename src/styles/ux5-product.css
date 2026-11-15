@@ -8,8 +8,9 @@
 
    Rules for this layer:
    - Only tokens, role classes and structural layouts. No per-page hacks.
-   - Colour communicates hierarchy and state: green is the action colour,
-     crimson is contextual attention/destructive, neutral carries the page.
+   - Colour communicates hierarchy and state: blue is the action colour,
+     green is reserved for success/completion, crimson is contextual
+     attention/destructive, neutral carries the page.
    - Sentence case for labels. Uppercase survives only for the tiny exam badge,
      where the exam body is an acronym or a proper name.
    - Every touch target is at least 44 px on coarse pointers.
@@ -288,7 +289,7 @@
 }
 
 .er-home-primary:hover {
-  background: var(--er-primary-strong, #123C2F);
+  background: var(--er-primary-hover, #1E3A8A);
 }
 
 .er-home-primary-mark {
@@ -442,7 +443,7 @@
   height: 30px;
   flex: none;
   border-radius: var(--er-radius-sm);
-  background: var(--er-primary-soft, #EDF5F0);
+  background: var(--er-primary-soft, #EEF2FF);
   color: var(--er-primary);
 }
 
@@ -533,10 +534,10 @@
 }
 
 /* The resume card predates UX-5 and used a blue product accent. It keeps its
-   shape and adopts the shared green action colour. */
+   shape and adopts the shared blue action colour. */
 .home-resume {
-  border-color: var(--er-primary-soft-border, #CFE4D8);
-  background: var(--er-primary-soft, #EDF5F0);
+  border-color: var(--er-primary-soft-border, #C7D2FE);
+  background: var(--er-primary-soft, #EEF2FF);
 }
 
 .home-resume-kicker {
@@ -544,7 +545,7 @@
 }
 
 .home-resume-bar {
-  background: #CFE4D8;
+  background: var(--er-primary-soft-border, #C7D2FE);
 }
 
 .home-resume-bar span {
@@ -1352,8 +1353,8 @@
   margin-top: 0;
 }
 
-/* Mobile bottom navigation: neutral icons, green current state. The old blue
-   utility accent and the raised CBT pill made one tab look like an ad. */
+/* Mobile bottom navigation: neutral icons, blue current state. The raised CBT
+   pill is the one deliberate exception on phones. */
 .er-mobile-bottom-nav a {
   color: var(--er-text-secondary);
   white-space: nowrap;

@@ -18,7 +18,7 @@ These are interaction principles, not branding. None of the reference products' 
 
 | Product | Principle observed | Where UX-7 applied it |
 |---|---|---|
-| **OPay** | The home screen is a wallet, not a brochure: identity, one primary action, a short grid of utilities, bottom tabs. | Greeting + one green **Start practice** control + three secondary controls. No hero, no slogan. |
+| **OPay** | The home screen is a wallet, not a brochure: identity, one primary action, a short grid of utilities, bottom tabs. | Greeting + one blue **Start practice** control + three secondary controls. No hero, no slogan. |
 | **Facebook** | Dense but predictable: identity at top, content immediately, overflow destinations in a labelled menu. | Search and actions above the fold; Services/News/Scholarships moved into **More** instead of competing with five jobs. |
 | **Instagram** | A bottom bar of five icon **and** label destinations; the current section is the only one emphasised. | Home · Practice · My CBT · Results · Profile, same labels and order on public pages and the dashboard. |
 | **TikTok** | One screen, one job; chrome stays out of the way of the content. | The hero, proof strip and three-step rail are gone; the first viewport is usable, not readable. |
@@ -37,7 +37,7 @@ These are interaction principles, not branding. None of the reference products' 
 
 | Level | Role | Rules | Examples |
 |---|---|---|---|
-| **Primary** | The one thing to do now | Green surface or 15–26 px weight; one per screen | Greeting (26 px max), **Start practice** (15 px on solid primary), result score |
+| **Primary** | The one thing to do now | Blue surface or 15–26 px weight; one per screen | Greeting (26 px max), **Start practice** (15 px on solid primary), result score |
 | **Supporting** | What else can be done / what happened | 13–17 px, neutral text, no colour except icon | Section headings (17 px), action tiles (13 px), activity title (13.5 px), record values (20 px) |
 | **Secondary** | Context, labels, status | 10.5–12 px, muted; borders instead of boxes | “Home” eyebrow, scores, dates, subject counts, card meta, drawer group labels |
 
@@ -78,7 +78,7 @@ Rules that follow from the hierarchy:
 
 - Delete the hero, slogan, proof strip, step rail, banner, duplicate exam-material row, news feed and footer callout.
 - Lead with a 26 px greeting, not a 44 px headline.
-- Four controls in one row: the primary is a solid green **Start practice** tile; secondary tiles are Past questions, My CBT, Results. Each has a familiar icon and a short label.
+- Four controls in one row: the primary is a solid blue **Start practice** tile; secondary tiles are Past questions, My CBT, Results. Each has a familiar icon and a short label.
 - Signed-in students get a compact record strip (papers, average, best, subjects) and a three-row recent-activity list; guests see the exam catalogue instead. No zero-filled statistics.
 - Keep the shared search component, now in the greeting row.
 - Exam cards remain cards because four exam banks are independent objects. Their height drops 164 → 148 px and the late-region floor drops 210 → 150 px.
@@ -192,7 +192,13 @@ The `/past-questions` library still reserves the footprint of six document cards
 
 ## 7. What deliberately did not change
 
-- **Brand tokens:** primary `#174A3A`, accent/destructive `#B14933`, neutral surfaces and type. The UI did not turn red; no gradients were added.
+- **Brand tokens:** the accent was changed from green to action blue
+  `#1E40AF` (hover `#1E3A8A`, pressed `#172554`, selected surface `#EEF2FF`) in
+  the follow-up to review. Green is now reserved for Passed/Correct/Completed;
+  accent/destructive crimson `#B14933`, neutral surfaces and type are unchanged.
+  The UI did not turn red; no gradients were added. See
+  [`BLUE-ACCENT.md`](BLUE-ACCENT.md) and `evidence/after-blue/` for the
+  contrast table and the re-shot screens.
 - **UX-5 component system:** `.er-section-head`, the exam card, `.hub-primary-btn`, `.hub-outline-btn`, the identity cards, focus rings and touch targets.
 - **CBT protocol and timing:** no change to session, lease, finalize or result logic.
 - **Data truth:** no invented counts, rankings, completion percentages or activity. An empty record says it is empty. The score strip is derived from finished attempts only.
@@ -227,7 +233,7 @@ All commands were run on this branch after the final source change.
 | `npm run typecheck` | **0 errors** |
 | `npm test` | **1069 passed, 0 failed** (1069), including 5 new home-activity rules |
 | `npm run build` | **success** |
-| `npm run perf:audit` | **all budgets pass**: entry 49.0/100 KB, Supabase 53.0/60, CSS 49.8/51, critical path 213.2/214, all chunks 365.4/366, largest image 41.2/64 |
+| `npm run perf:audit` | **all budgets pass**: entry 49.0/100 KB, Supabase 53.0/60, CSS 49.8/51, critical path 213.2/214, all chunks 365.3/366, largest image 41.2/64 |
 | `npm run a11y:audit` | **0 blocking**, 6 informational |
 | Playwright, full suite | **293 passed, 29 skipped** |
 | Playwright, `site.spec` + `a11y.spec` | **165 passed, 5 skipped** |

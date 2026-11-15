@@ -10,19 +10,21 @@ rhythm, navigation states and the responsive shell.
 
 | Role | Value | Where it is allowed |
 | :--- | :--- | :--- |
-| Primary / action | `#174A3A` (hover `#123C2F`, active `#0D2E24`) | Primary buttons, active navigation, links that start work, focus ring |
-| Primary soft | `#EDF5F0` surface, `#CFE4D8` border | Selected navigation, quiet callouts, identity chips |
+| Primary / action | `#1E40AF` (hover `#1E3A8A`, active `#172554`) | Primary buttons, active navigation, links that start work, focus ring |
+| Primary soft | `#EEF2FF` surface, `#C7D2FE` border | Selected navigation, quiet callouts, identity chips |
 | Contextual attention | Crimson `#B14933` | Expiry, destructive confirmation, a blocked/attention state. **Not** for neutral labels, step numbers or decoration |
-| Status success | `#166534` on soft green | Completed/saved |
+| Status success | `#166534` on soft green | Passed/correct/completed/saved; green is reserved for this |
 | Status warning | `#92400E` on soft amber | Degraded/unavailable-but-not-broken |
 | Status error | `#B91C1C` | Validation and failed actions |
 | Info | `#1D4ED8` | Informational callouts only |
-| Surfaces | `#FFFFFF`, `#F7F8F7`, `#F4F6F5`, `#EDF5F0` | Cards, page, inset regions, selected rows |
+| Surfaces | `#FFFFFF`, `#F7F8F7`, `#F4F6F5`, `#EEF2FF` | Cards, page, inset regions, selected rows |
 | Text | `#131B2E` primary, `#475467` secondary, `#5E6C82` muted | Never use muted text for a title |
 | Borders | `#E2E8F0`, `#CBD5E1` (control), `#D8DEE5` (secondary button) | Surfaces and dividers |
 
-Navy `#0A3E83` appears only in the EduReach wordmark. Blue (`#1D9BE0`), logo red
-(`#E3232D`) and portal red (`#C02220`) belong to brand assets, not to UI state.
+Navy `#0A3E83` remains the EduReach wordmark colour. `#1E40AF` is the action
+blue; the brighter logo blue (`#1D9BE0`), logo red (`#E3232D`) and portal red
+(`#C02220`) belong to brand assets, not to UI state. Green is reserved for
+success, not for primary actions.
 The homepage hero wash was removed; surfaces are flat.
 
 **Verified in the build:** the only crimson on the CBT setup page is now the
@@ -73,12 +75,12 @@ Evidence: `evidence/after/dashboard-390.png` shows 2-up KPIs with full hints;
 
 | Control | Height | Appearance | States |
 | :--- | :--- | :--- | :--- |
-| Primary | 42 px (44 px coarse) | Green fill, white label | hover darkens, active darker, disabled `#E2E8F0`/`#64748B`, loading shows a spinner and keeps width |
-| Secondary | 42 px | White fill, `#D8DEE5` border | hover `#F7F8F7`, never green text |
+| Primary | 42 px (44 px coarse) | Blue fill, white label | hover darkens, active darker, disabled `#E2E8F0`/`#64748B`, loading shows a spinner and keeps width |
+| Secondary | 42 px | White fill, `#D8DEE5` border | hover `#F7F9F8`, never blue text |
 | Quiet / text | content height, 44 px coarse | No border, underline on hover | Used for "Cancel" in the profile head and "Sign out" |
 | Icon | 36–44 px | Neutral stroke icon | Accessible name required |
 | Field | 42 px | 1 px `#CBD5E1`, 8 px radius | focus ring, invalid red, valid green |
-| Pill / filter | 32 px | Neutral border | selected uses primary green, wraps on phones |
+| Pill / filter | 32 px | Neutral border | selected uses primary blue, wraps on phones |
 
 Rules: one primary action per screen region; destructive actions are crimson and
 require a consequence sentence; loading keeps the label visible with

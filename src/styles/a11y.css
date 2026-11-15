@@ -37,13 +37,13 @@
 }
 
 /* Focus indicator (WCAG 2.4.7 / 2.4.11).
-   Two tones: the green ring reads on the light surfaces that dominate the app
-   (10.11:1 on white, 9.11:1 on the pale green surface), the white ring
-   underneath keeps it separated from a green button and reads on the dark
-   header and sidebar. `:root` is there to out-specify the `!important` resets in
-   the earlier stylesheets. */
+   Two tones: the blue ring reads on the light surfaces that dominate the app
+   (8.72:1 on white, 7.8:1 on the pale blue surface), the white ring underneath
+   keeps it separated from a blue button and reads on the dark header and
+   sidebar. `:root` is there to out-specify the `!important` resets in the
+   earlier stylesheets. */
 :root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
-  outline: 2px solid var(--color-focus, #174A3A) !important;
+  outline: 2px solid var(--color-focus, #1E40AF) !important;
   outline-offset: 0;
   box-shadow: none !important;
 }

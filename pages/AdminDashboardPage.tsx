@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
                   <AdminDonut
                     ariaLabel="Service request mix"
                     segments={[
-                      { label: 'Open', value: metric('pending_requests') || 0, color: '#174A3A' },
+                      { label: 'Open', value: metric('pending_requests') || 0, color: '#1E40AF' },
                       { label: 'Completed', value: metric('completed_requests') || 0, color: '#067647' },
                       { label: 'Rejected / cancelled', value: metric('rejected_requests') || 0, color: '#B42318' },
                     ].filter((segment) => segment.value > 0)}

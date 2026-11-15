@@ -8,24 +8,24 @@
   --er-font-sans: Inter, Arial, sans-serif;
   --er-font-mono: var(--er-font-sans);
 
-  /* 1. Primary action - deep green
-     The wordmark keeps its navy and blue; the action colour is the deep green
-     the student sees on primary buttons, selected navigation and positive key
-     states. White text clears AA at every step (9.89:1 resting, 11.8:1 hover,
-     14.1:1 pressed). */
-  --er-primary: #174A3A;
-  --er-primary-hover: #123C2F;
-  --er-primary-active: #0D2E24;
-  --er-primary-border: #123C2F;
-  --er-primary-border-hover: #0D2E24;
-  --er-primary-border-active: #0A241C;
-  --er-primary-focus: #174A3A;
-  --er-primary-soft: #EDF5F0;
-  --er-primary-soft-border: #CFE4D8;
+  /* 1. Primary action - cobalt blue
+     Blue is the action colour: primary buttons, selected navigation and links
+     that start work. Green is now reserved for success and completion, so a
+     green surface always means Passed, Correct or Completed. White text clears
+     AA at every step (8.72:1 resting, 10.36:1 hover, 14.69:1 pressed). */
+  --er-primary: #1E40AF;
+  --er-primary-hover: #1E3A8A;
+  --er-primary-active: #172554;
+  --er-primary-border: #1E3A8A;
+  --er-primary-border-hover: #172554;
+  --er-primary-border-active: #0F172A;
+  --er-primary-focus: #1E40AF;
+  --er-primary-soft: #EEF2FF;
+  --er-primary-soft-border: #C7D2FE;
   --er-on-primary: #FFFFFF;
 
-  /* 1a. Secondary action - a quiet white control with a green-grey edge,
-     never a second solid green button. */
+  /* 1a. Secondary action - a quiet white control with a blue-grey edge,
+     never a second solid blue button. */
   --er-secondary-border: #D8DEE5;
   --er-secondary-hover-bg: #F7F9F8;
   --er-secondary-hover-border: #C4CBD4;
@@ -38,10 +38,10 @@
   --er-disabled-border: #CBD5E1;
   --er-disabled-surface: #F8FAFC;
 
-  /* 1c. Navigation states. Hover and selection are surfaces plus navy text;
+  /* 1c. Navigation states. Hover and selection are surfaces plus blue text;
      the border is a soft edge on top of them, not the only signal. */
   --er-nav-hover-bg: #F1F5F9;
-  --er-nav-active-bg: #EDF5F0;
+  --er-nav-active-bg: #EEF2FF;
 
   /* 1d. Form fields. */
   --er-field-border-hover: #94A3B8;
@@ -97,9 +97,9 @@
   --er-bg: #F7F8F7;
   --er-surface: #FFFFFF;
   --er-surface-soft: #F4F6F5;
-  --er-surface-academic: #EDF5F0;
-  --er-surface-elevated: #E4EEE7;
-  --er-surface-deep: #D8E6DD;
+  --er-surface-academic: #EEF2FF;
+  --er-surface-elevated: #E0E7FF;
+  --er-surface-deep: #C7D2FE;
 
   /* 5. Supporting Colors */
   --er-burgundy: #54080C;
@@ -300,7 +300,7 @@ samp,
 
 :where(input, select, textarea):focus {
   border-color: var(--color-brand-primary) !important;
-  box-shadow: 0 0 0 3px rgba(23, 74, 58, 0.14) !important;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.14) !important;
   outline: 0 !important;
 }
 
@@ -417,11 +417,11 @@ samp,
    src/styles/brand-actions.css; only the elevation is set here. */
 .hub-primary-btn {
   border: 0 !important;
-  box-shadow: 0 2px 6px rgba(23, 74, 58, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25) !important;
 }
 
 .hub-primary-btn:hover {
-  box-shadow: 0 4px 12px rgba(23, 74, 58, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3) !important;
 }
 
 /* Active navigation indicators */

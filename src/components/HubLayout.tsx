@@ -185,7 +185,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   fontSize: '12px',
                   fontWeight: 620,
                   textDecoration: 'none',
-                  boxShadow: '0 2px 6px rgba(23, 74, 58, 0.25)',
+                  boxShadow: '0 2px 6px rgba(30, 64, 175, 0.25)',
                 }}
               >
                 Sign In
@@ -214,7 +214,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: '0 2px 6px rgba(23, 74, 58, 0.22)',
+                    boxShadow: '0 2px 6px rgba(30, 64, 175, 0.22)',
                   }}
                 >
                   <span className="hub-profile-trigger-name"><User size={14} /> {firstName}</span>
