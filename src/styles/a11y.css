@@ -51,7 +51,7 @@
 /* Search fields sit inside a rounded control. Their focused outline belongs to
    that control, not to the raw input rectangle, so the container draws a 1px
    ring in its own shape (see edu-portal.css). */
-:root :where(.site-search, .er-filter-search, .hub-global-search, .hub-search, .er-library-search, .school-finder-search-input, .er-search, .hub-mobile-search, .er-site-search-page-form, .er-search-page-form) :where(input, select):focus-visible {
+:root :where(.site-search, .er-filter-search, .er-library-search, .school-finder-search-input, .er-search) :where(input, select):focus-visible {
   outline: 0 !important;
   box-shadow: none !important;
 }
@@ -130,7 +130,6 @@
   .admin-table button,
   .admin-page-header button,
   .admin-filter button,
-  .hub-search,
   .dash-card-link,
   .dash-text-btn,
   .dash-icon-btn,

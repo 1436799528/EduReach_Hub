@@ -27,28 +27,25 @@
    way to win without deleting their rules; every one of those rules is kept
    intact for the case where this sheet is not loaded. */
 
-.hub-primary-btn {
+:is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)) {
   background: var(--er-primary) !important;
   color: var(--er-on-primary) !important;
+  border-color: var(--er-primary) !important;
 }
 
-.hub-primary-btn:hover {
+:is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)):hover:not(:disabled) {
   background: var(--er-primary-hover) !important;
+  border-color: var(--er-primary-hover) !important;
 }
 
-.hub-primary-btn:active {
+:is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)):active:not(:disabled) {
   background: var(--er-primary-active) !important;
+  border-color: var(--er-primary-active) !important;
 }
 
 /* A disabled action is neutral, flat and unmistakable. It also has to stop
    looking pressable: the hover shadow and lift are cancelled here. */
-.hub-primary-btn:disabled,
-.admin-btn:disabled,
-.dash-btn-primary:disabled,
-.auth-v2-submit:disabled,
-.er-exam-submit-primary:disabled,
-.er-exam-next:disabled,
-.er-exam-end:disabled {
+:is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .auth-submit, .er-exam-submit, .er-exam-submit-primary, .er-exam-next, .er-exam-end):disabled {
   background: var(--er-disabled-bg) !important;
   color: var(--er-disabled-text) !important;
   border-color: var(--er-disabled-border) !important;
@@ -62,7 +59,7 @@
 /* Busy keeps the action colour: the control is working, not unavailable. The
    label has already changed ("Saving..."), and aria-busy says the same thing
    to a screen reader. */
-:is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .er-exam-submit-primary)[aria-busy="true"] {
+:is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .auth-submit, .er-exam-submit, .er-exam-submit-primary)[aria-busy="true"] {
   background: var(--er-primary) !important;
   color: var(--er-on-primary) !important;
   border-color: var(--er-primary-border) !important;
@@ -192,7 +189,6 @@
 
 .hub-card-link,
 .hub-section-heading.compact > a,
-.hub-auth-switch,
 .dash-card-link {
   color: var(--er-primary);
 }
@@ -201,11 +197,11 @@
   color: var(--er-primary-hover);
 }
 
-:is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a, .er-inline-notice-action):hover {
+:is(.hub-card-link, .hub-section-heading.compact > a, .hub-home-section-title > a, .er-inline-notice-action):hover {
   color: var(--er-primary-hover);
 }
 
-:is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a):active {
+:is(.hub-card-link, .hub-section-heading.compact > a, .hub-home-section-title > a):active {
   color: var(--er-primary-active);
 }
 

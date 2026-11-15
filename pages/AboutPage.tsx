@@ -18,7 +18,6 @@ export default function AboutPage() {
         <div className="hub-container er-legal-container">
           <article className="er-legal-article" aria-labelledby="about-title">
             <header className="er-legal-head">
-              <span className="hub-eyebrow">About EduReach</span>
               <h1 id="about-title">{brand.name}</h1>
               <p className="er-legal-summary">{footer.about}</p>
             </header>

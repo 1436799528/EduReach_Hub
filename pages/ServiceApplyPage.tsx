@@ -382,7 +382,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '24px 0 60px' }}>
-        <div className="hub-container" style={{ maxWidth: '760px' }}>
+        <div className="hub-container hub-form-narrow">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
               <CardIdentityMark value={service.service_key + ' ' + service.title} type="service" size="sm" />

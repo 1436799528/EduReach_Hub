@@ -1,19 +1,31 @@
+/* One search control, five placements. Variants change width and spacing only:
+   height, radius, icon, type, focus and submit treatment are shared. */
 .site-search {
   position: relative;
   display: flex;
   min-width: 0;
+  min-height: 48px;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 2px 4px 2px 10px;
   border: 1px solid var(--er-border, #d9dee5);
   border-radius: 9px;
   background: #fff;
   color: #5e6c82;
 }
-.site-search:focus-within { border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(71, 85, 105, .12); }
+.site-search:hover { border-color: #cbd5e1; }
+.site-search:focus-within { border-color: var(--er-primary, #1E40AF); box-shadow: 0 0 0 1px var(--er-primary, #1E40AF); }
+.site-search-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #64748b;
+}
 .site-search input {
   width: 100%;
   min-width: 0;
   flex: 1;
+  padding: 0 4px;
   border: 0;
   outline: 0;
   background: transparent;
@@ -21,10 +33,26 @@
   font: inherit;
   font-size: 14px;
 }
+.site-search input::placeholder { color: #64748b; opacity: 1; }
+.site-search input::-webkit-search-cancel-button { appearance: none; }
+.site-search-clear {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+.site-search-clear:hover { background: #f1f5f9; color: #0f172a; }
 .site-search > button[type="submit"] {
   min-width: 44px;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 10px;
   border: 0;
   border-radius: 7px;
   background: #f1f5f9;
@@ -70,16 +98,10 @@
 .site-search-list small { color: #64748b; font-size: 10px; }
 .site-search-list strong { overflow: hidden; font-size: 13px; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
 .site-search-message { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 12px; color: #64748b; font-size: 12px; line-height: 1.4; }
-.site-search--header { width: 220px; min-height: 40px; padding-left: 2px; }
-.site-search--header input { font-size: 12px; }
-.site-search--header > button[type="submit"] { min-height: 34px; min-width: 40px; padding: 0 9px; }
-.site-search--drawer { min-height: 44px; padding-left: 2px; }
-.site-search--home { min-height: 48px; margin-bottom: 12px; padding: 3px 4px 3px 2px; }
-.site-search--page { min-height: 48px; margin-bottom: 10px; padding: 3px 4px 3px 2px; }
-.site-search--home input, .site-search--page input { padding: 0 4px; }
-.site-search--dashboard { width: min(440px, 100%); min-height: 40px; padding-left: 2px; }
-.site-search--dashboard input { font-size: 13px; }
-.site-search--dashboard > button[type="submit"] { min-height: 34px; min-width: 40px; padding: 0 9px; }
+.site-search--header { width: 250px; }
+.site-search--home { margin-bottom: 12px; }
+.site-search--page { margin-bottom: 10px; }
+.site-search--dashboard { width: min(440px, 100%); }
 @media (max-width: 1040px) { .site-search--header { display: none; } }
 @media (max-width: 768px) {
   .site-search--home, .site-search--page, .site-search--drawer { width: 100%; }

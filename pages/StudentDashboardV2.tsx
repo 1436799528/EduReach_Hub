@@ -1296,7 +1296,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="edureach-dash-bar">
           <a href="/" className="edureach-dash-brand" aria-label="EduReach home"><BrandLogo height={36} radius="50%" /></a>
 
-          <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" submitLabel="Go" />
+          <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" />
 
           <div className="edureach-dash-actions">
             <NotificationCenter variant="dashboard" />

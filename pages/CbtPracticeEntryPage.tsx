@@ -66,7 +66,7 @@ export default function CbtPracticeEntryPage() {
     return (
       <HubLayout>
         <div className="hub-page" style={{ padding: '22px 0 64px' }}>
-          <div className="hub-container hub-narrow" style={{ maxWidth: '720px' }}>
+          <div className="hub-container hub-form-narrow">
             <ErrorState error={error} action={<a className="hub-outline-btn" href="/cbt">Back to the CBT Centre</a>} />
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function CbtPracticeEntryPage() {
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '22px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '720px' }}>
+        <div className="hub-container hub-form-narrow">
           <div className="er-state" role="status">
             <span className="er-state-icon" aria-hidden="true"><Loader2 className="er-spin" size={20} /></span>
             <div>

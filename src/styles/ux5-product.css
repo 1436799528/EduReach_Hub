@@ -1204,10 +1204,6 @@
    -------------------------------------------------------------------------- */
 
 @media (max-width: 640px) {
-  .hub-container {
-    width: min(1180px, calc(100% - 28px));
-  }
-
   .dash-overview-head p,
   .profile-page-head p {
     font-size: 13px;

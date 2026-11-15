@@ -141,7 +141,7 @@ export default function PastQuestionsPage() {
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '22px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '980px' }}>
+        <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
               <span className="hub-eyebrow" style={{ color: '#b14933' }}>Past questions</span>

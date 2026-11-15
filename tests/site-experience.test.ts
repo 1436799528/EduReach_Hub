@@ -141,7 +141,7 @@ test('the home page opens as a product screen, not a hero', () => {
 
   // UX-7: the oversized statement is gone. The first screen is an application
   // home: a greeting, the four jobs a student performs, and their own record.
-  assert.match(home, /className="er-container hub-home-container er-home-app"/, 'the product home shell exists');
+  assert.match(home, /className="hub-home-container er-home-app"/, 'the product home shell exists');
   assert.doesNotMatch(home, /er-home-intro|er-home-proof|er-home-steps|er-home-actions/, 'no hero block survives');
   assert.doesNotMatch(home, /Practise the exam you are sitting\./, 'the slogan is gone');
   assert.match(home, /className="er-home-greeting"/, 'the first line is the student greeting');
@@ -183,7 +183,8 @@ test('the home page keeps the shared search bar and it still searches', () => {
 
   const styles = read('src/site-search.css');
   assert.match(styles, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/, 'the header search is desktop-only');
-  assert.match(styles, /\.site-search--home \{[^}]*min-height: 48px/, 'the portal bar remains visible with a touch-friendly height');
+  assert.match(styles, /\.site-search \{[^}]*min-height: 48px/, 'every placement uses the same touch-friendly height');
+  assert.doesNotMatch(styles, /\.site-search--(?:header|home|page|drawer|dashboard) \{[^}]*min-height/, 'variants do not change the control height');
   assert.match(styles, /\.site-search input \{[^}]*min-width: 0/, 'the field shrinks instead of overflowing on a phone');
 });
 

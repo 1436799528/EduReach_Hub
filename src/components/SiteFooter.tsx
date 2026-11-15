@@ -21,9 +21,12 @@ import { useSiteContent } from './useSiteContent';
 
 interface FooterLink { href: string; label: string }
 
-const ESSENTIAL: FooterLink[] = [
+const COMPANY: FooterLink[] = [
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
+];
+
+const POLICIES: FooterLink[] = [
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/cookies', label: 'Cookies' },
@@ -47,17 +50,24 @@ export default function SiteFooter() {
           </p>
         </div>
 
-        <nav className="er-footer-legal" aria-label="Footer: policies">
-          {ESSENTIAL.map((link) => (
-            <a key={link.href} href={link.href}>{link.label}</a>
-          ))}
-          <button
-            type="button"
-            className="er-footer-cookie-settings"
-            onClick={() => window.dispatchEvent(new CustomEvent('edureach:open-cookie-settings'))}
-          >
-            Cookie settings
-          </button>
+        <nav className="er-footer-legal" aria-label="Footer: company and policies">
+          <div className="er-footer-group">
+            {COMPANY.map((link) => (
+              <a key={link.href} href={link.href}>{link.label}</a>
+            ))}
+          </div>
+          <div className="er-footer-group">
+            {POLICIES.map((link) => (
+              <a key={link.href} href={link.href}>{link.label}</a>
+            ))}
+            <button
+              type="button"
+              className="er-footer-cookie-settings"
+              onClick={() => window.dispatchEvent(new CustomEvent('edureach:open-cookie-settings'))}
+            >
+              Cookie settings
+            </button>
+          </div>
         </nav>
       </div>
     </footer>

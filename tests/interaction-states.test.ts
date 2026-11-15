@@ -121,13 +121,13 @@ test('text clears AA on every surface the specification pairs it with', () => {
 });
 
 test('a primary action has a disabled state and a busy state', () => {
-  const disabled = /\.hub-primary-btn:disabled,[\s\S]*?\{([^}]*)\}/.exec(actions);
+  const disabled = /:is\([^)]*\.hub-primary-btn[^)]*\):disabled\s*\{([^}]*)\}/.exec(actions);
   assert.ok(disabled, 'primary buttons declare a disabled state');
   assert.match(disabled[1], /background: var\(--er-disabled-bg\) !important/);
   assert.match(disabled[1], /color: var\(--er-disabled-text\) !important/);
   assert.match(disabled[1], /border-color: var\(--er-disabled-border\) !important/);
   assert.match(disabled[1], /cursor: not-allowed/, 'a disabled control does not invite a click');
-  for (const selector of ['.admin-btn:disabled', '.dash-btn-primary:disabled', '.auth-v2-submit:disabled', '.er-exam-submit-primary:disabled']) {
+  for (const selector of ['.admin-btn', '.dash-btn-primary', '.auth-v2-submit', '.er-exam-submit-primary']) {
     assert.ok(disabled[0].includes(selector), `${selector} is part of the disabled group`);
   }
 
@@ -157,13 +157,13 @@ test('secondary controls stay white with a neutral edge in every state', () => {
     ['hover', '--er-secondary-hover-bg', '--er-secondary-hover-border'],
     ['active', '--er-secondary-active-bg', '--er-secondary-active-border'],
   ] as const) {
-    const rule = new RegExp(`:is\\([^)]*\\):${state}\\s*\\{([^}]*)\\}`).exec(actions);
+    const rule = new RegExp(`:is\\([^)]*\\.hub-outline-btn[^)]*\\):${state}\\s*\\{([^}]*)\\}`).exec(actions);
     assert.ok(rule, `secondary ${state} state exists`);
     assert.ok(rule[1].includes(`var(${bg})`), `secondary ${state} uses its surface token`);
     assert.ok(rule[1].includes(`var(${border})`), `secondary ${state} uses its border token`);
   }
 
-  const disabled = /:is\([^)]*\):disabled\s*\{([^}]*)\}/.exec(actions);
+  const disabled = /:is\([^)]*\.hub-outline-btn[^)]*\):disabled\s*\{([^}]*)\}/.exec(actions);
   assert.ok(disabled, 'secondary buttons can be disabled');
   assert.match(disabled[1], /background: var\(--er-disabled-surface\)/);
   assert.match(disabled[1], /color: var\(--er-disabled-text\)/);

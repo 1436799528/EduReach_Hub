@@ -128,6 +128,7 @@
   --er-radius-lg: 16px;
   --er-radius-pill: 999px;
   --er-radius-card: 12px;
+  --er-radius-panel: 14px;
   --er-shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.04);
   --er-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
 
@@ -188,18 +189,18 @@
   --er-line-height-body: 1.6;
   --er-line-height-ui: 1.15;
 
-  /* Legacy variable mapping to preserve system compatibility */
-  --hub-bg: var(--er-bg);
-  --hub-surface: var(--er-surface);
-  --hub-border: var(--er-border);
-  --hub-text: var(--er-text-primary);
-  --hub-muted: var(--er-text-muted);
-  --hub-blue: var(--er-primary);
-  --hub-blue-soft: var(--er-primary-soft);
-  --hub-green: var(--er-success);
-  --hub-green-soft: var(--er-success-soft);
-  --hub-amber: var(--er-gold);
-  --hub-amber-soft: var(--er-gold-soft);
+  /* Layout scale (UX-8). One width and gutter model replaces the per-sheet
+     .hub-container overrides that used to disagree at every breakpoint. */
+  --page-max-width: 1180px;
+  --page-max-detail: 920px;
+  --page-max-reading: 820px;
+  --page-max-form: 760px;
+  --page-max-compact: 640px;
+  --page-gutter: 28px;
+  --page-gutter-tablet: 20px;
+  --page-gutter-mobile: 16px;
+  --section-gap: var(--er-space-6);
+  --content-gap: var(--er-space-4);
 
   /* Admin variable mapping so admin pages inherit the same styling language */
   --admin-navy: var(--er-navy);
@@ -246,6 +247,24 @@ body,
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-family: var(--er-font-sans) !important;
+}
+
+/* Every page column is the same width model: a fluid width with a readable
+   maximum, and one gutter per breakpoint. Page-specific widths opt into the
+   named maximum below instead of passing a new number in a style attribute. */
+:is(.hub-container, .hub-home-container) {
+  width: min(var(--page-max-width), calc(100% - (var(--page-gutter) * 2)));
+  margin-inline: auto;
+}
+.hub-narrow { max-width: var(--page-max-detail); }
+.er-reading-container { max-width: var(--page-max-reading); }
+.hub-form-narrow { max-width: var(--page-max-form); }
+.hub-compact-narrow { max-width: var(--page-max-compact); }
+@media (max-width: 1024px) {
+  :is(.hub-container, .hub-home-container) { width: calc(100% - (var(--page-gutter-tablet) * 2)); }
+}
+@media (max-width: 640px) {
+  :is(.hub-container, .hub-home-container) { width: calc(100% - (var(--page-gutter-mobile) * 2)); }
 }
 
 body,
@@ -326,17 +345,6 @@ samp,
 
 :where(input[type="checkbox"], input[type="radio"]):disabled {
   accent-color: var(--er-disabled-text);
-}
-
-:where(.hub-search input, .hub-home-search input, .ms-search-input, .edureach-dash-search input, .student-search input) {
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-:where(.hub-search input, .hub-home-search input, .ms-search-input, .edureach-dash-search input, .student-search input):focus {
-  box-shadow: none !important;
 }
 
 :where(button, a, input, select, textarea):focus-visible {

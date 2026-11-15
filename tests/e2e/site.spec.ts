@@ -129,7 +129,7 @@ test('every public shell carries the same compact footer', async ({ page, isMobi
     await page.goto(path);
     const footer = page.locator('footer.er-footer');
     await expect(footer).toBeVisible();
-    await expect(footer.getByRole('navigation', { name: 'Footer: policies' })).toBeVisible();
+    await expect(footer.getByRole('navigation', { name: 'Footer: company and policies' })).toBeVisible();
     for (const name of ['About', 'Contact', 'Terms', 'Privacy', 'Cookies', 'Cookie settings']) {
       await expect(footer.getByRole('link', { name, exact: true }).or(footer.getByRole('button', { name, exact: true }))).toBeVisible();
     }

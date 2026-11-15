@@ -98,7 +98,7 @@ export default function HubHomePage() {
   return (
     <HubLayout>
       <div className="er-portal">
-        <div className="er-container hub-home-container er-home-app">
+        <div className="hub-home-container er-home-app">
           {/* One h1 for structure and screen readers. The visible greeting is an
               h2 because it is the first section of an application screen. */}
           <h1 className="er-visually-hidden">EduReach Hub CBT practice, past questions and student services</h1>

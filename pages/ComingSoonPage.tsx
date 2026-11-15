@@ -82,7 +82,7 @@ export default function ComingSoonPage({ title, description }: { title?: string;
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '32px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '640px' }}>
+        <div className="hub-container hub-compact-narrow">
           <div
             style={{
               background: '#ffffff',

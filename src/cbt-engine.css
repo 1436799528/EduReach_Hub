@@ -352,7 +352,6 @@
 .hub-profile-trigger-initials{display:none}
 .hub-profile-trigger-name{display:inline}
 @media(max-width:720px){
-  .hub-global-search{display:none!important}
   .hub-desktop-nav{display:none}
   .hub-mobile-trigger{display:flex!important}
   .hub-profile-trigger{padding:6px 8px!important}
@@ -363,7 +362,6 @@
 html,body{overflow-x:hidden}
 body{max-width:100vw}
 img,table,pre,.hub-panel,.er-exam-option,.er-exam-question{max-width:100%;box-sizing:border-box}
-.hub-container{max-width:min(1180px,100%);box-sizing:border-box}
 
 /* UX-3 — deleting one result is a trash target, not a labelled danger link.
    18px glyph inside a 44px hit area; the confirmation carries the words. */

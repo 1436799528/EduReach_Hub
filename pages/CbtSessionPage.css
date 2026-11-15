@@ -63,18 +63,18 @@ body.er-exam-mode {
 }
 
 .er-exam-submit-primary {
-  background: #1E40AF !important;
-  border-color: #1E40AF !important;
+  background: var(--er-primary) !important;
+  border-color: var(--er-primary) !important;
   box-shadow: 0 2px 8px rgba(30, 64, 175, .22) !important;
 }
 
 .er-exam-submit-primary:hover {
-  background: #1E3A8A !important;
+  background: var(--er-primary-hover) !important;
 }
 
 .er-exam-ghost:hover {
-  border-color: #1E40AF;
-  color: #1E40AF;
+  border-color: var(--er-primary);
+  color: var(--er-primary);
 }
 
 

@@ -233,7 +233,7 @@ test('every policy page is a real route, not a footer link to nowhere', () => {
 
 test('the footer is one compact bar with the essential destinations only', () => {
   const footer = read('src/components/SiteFooter.tsx');
-  assert.match(footer, /const ESSENTIAL: FooterLink\[\]/, 'the footer has one short link set');
+  assert.match(footer, /const (?:COMPANY|POLICIES): FooterLink\[\]/, 'the footer has one short link set');
   for (const label of ['About', 'Contact', 'Terms', 'Privacy', 'Cookies', 'Cookie settings']) {
     assert.ok(footer.includes(`label: '${label}'`) || footer.includes(`>${label}<`) || footer.includes(label), `the bar keeps ${label}`);
   }
@@ -325,7 +325,7 @@ test('the footer renders a complete, honest footer with no dead links', async ()
   }
   assert.match(html, /er-footer-bar/, 'the footer is a single bar, not a column grid');
   assert.doesNotMatch(html, /instagram|facebook|twitter|x\.com|wa\.me/i, 'no social or chat block crowds the bar');
-  assert.match(html, /<nav[^>]*aria-label="Footer: policies"/, 'the policy links are a labelled landmark');
+  assert.match(html, /<nav[^>]*aria-label="Footer: company and policies"/, 'the policy links are a labelled landmark');
   assert.equal((html.match(/<h2/g) ?? []).length, 0, 'the compact bar has no column headings');
   assert.match(html, />About<\/a>/, 'About is present');
   assert.match(html, />Cookie settings<\/button>/, 'consent stays reopenable from every page');

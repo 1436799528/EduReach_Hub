@@ -78,11 +78,11 @@ test('only the action surfaces are recoloured by the final layer', () => {
   // A curated list, on purpose: adding a selector here is a decision to change
   // a component's colour, and it should be reviewed as one.
   const expected = [
-    '.hub-primary-btn',
-    '.hub-primary-btn:hover',
-    '.hub-primary-btn:active',
-    '.hub-primary-btn:disabled, .admin-btn:disabled, .dash-btn-primary:disabled, .auth-v2-submit:disabled, .er-exam-submit-primary:disabled, .er-exam-next:disabled, .er-exam-end:disabled',
-    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .er-exam-submit-primary)[aria-busy="true"]',
+    ':is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary))',
+    ':is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)):hover:not(:disabled)',
+    ':is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)):active:not(:disabled)',
+    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .auth-submit, .er-exam-submit, .er-exam-submit-primary, .er-exam-next, .er-exam-end):disabled',
+    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .auth-submit, .er-exam-submit, .er-exam-submit-primary)[aria-busy="true"]',
     '.admin-btn',
     '.admin-btn:hover',
     '.dash-btn-primary',
@@ -102,10 +102,10 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.er-mode-option.is-selected',
     '.hub-stepper > div.active',
     '.hub-stepper > div.active span',
-    '.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .dash-card-link',
+    '.hub-card-link, .hub-section-heading.compact > a, .dash-card-link',
     '.dash-card-link:hover',
-    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a, .er-inline-notice-action):hover',
-    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a):active',
+    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-home-section-title > a, .er-inline-notice-action):hover',
+    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-home-section-title > a):active',
     '.er-route-progress',
     '.home-resume-kicker',
     '.home-resume-bar',
@@ -157,8 +157,8 @@ test('the layer never touches a card, tile, banner or exam identity', () => {
   // Spot-check the card treatments that must survive untouched.
   const hub = read('src/hub.css');
   const banner = /\.hub-service-banner\{([^}]*)\}/.exec(hub);
-  assert.ok(banner && banner[1].includes('background:var(--hub-blue)'), 'the service card banner keeps its own fill');
-  assert.match(hub, /\.hub-service-profile-card\{[^}]*border:1px solid var\(--hub-border\)/, 'the service card keeps its border');
+  assert.ok(banner && banner[1].includes('background:var(--er-primary)'), 'the service card banner keeps its own fill');
+  assert.match(hub, /\.hub-service-profile-card\{[^}]*border:1px solid var\(--er-border\)/, 'the service card keeps its border');
   const portal = read('src/edu-portal.css');
   assert.match(portal, /\.er-sim-card/, 'exam tiles still have their own identity colours');
 });
