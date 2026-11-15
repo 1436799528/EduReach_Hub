@@ -180,19 +180,13 @@ The student 390 capture shows the whole first viewport as an app screen: greetin
 
 ---
 
-## 6. Two additional defects found while reviewing the rendered product
+## 6. One additional defect found while reviewing the rendered product
 
-### 6.1 The empty past-question library reserved 670 px of blank space
-
-**BEFORE** — `/past-questions` measured 3392 px at 1440 and 7060 px at 390. A one-paragraph “document library is not connected yet” notice sat above roughly half a screen of empty space because the late-region floor was sized for six document cards.
-
-**Decision:** when the library region holds an empty notice or an error state, its reservation is 0. The floor still applies while loading and while documents exist.
-
-**AFTER** — [`past-questions-1440.png`](./evidence/after/past-questions-1440.png), [`past-questions-390.png`](./evidence/after/past-questions-390.png); document **3392 → 2885 px** at 1440 and **7060 → 5596 px** at 390. The study-material section now follows the notice immediately.
-
-### 6.2 The setup note was a section; it is now a sentence
+### The setup note was a section; it is now a sentence
 
 Covered in §5.4. The honesty note remains visible; only the teaching section is removed.
+
+The `/past-questions` library still reserves the footprint of six document cards while it waits for data, and the unconfigured preview therefore shows an empty block under its notice. Removing that reservation was attempted and reverted: it reduced 459 px of document height but introduced 0.2318 CLS in the production gate (empty state shorter than its skeleton), which is worse than the blank space. The reservation stays until a loading state can be sized to the empty state without moving content.
 
 ---
 
@@ -218,8 +212,8 @@ Covered in §5.4. The honesty note remains visible; only the teaching section is
 | `src/components/PageBar.tsx` | App-level routes no longer render a duplicate Back/title bar. |
 | `pages/ExamSetupPage.tsx` | “How this CBT session works” section deleted; honesty note moved into the heading. |
 | `src/styles/ux5-product.css` | Hero rules deleted; product-home, More menu, drawer labels and unified bottom-bar states added. |
-| `src/edu-portal.css` | Simulator floor 210 → 150 px; empty/failed library floor 0; bottom bar available ≤768 px; compact two-column footer ≤640 px. |
-| `tests/site-experience.test.ts`, `tests/cbt-experience.test.ts`, `tests/perf.test.ts`, `tests/home-activity.test.ts`, `tests/e2e/site.spec.ts`, `tests/e2e/jamb-subject-selection.spec.ts` | Contract updated to the UX-7 behaviour, including the unified bar, no hero, no guide and the empty-library floor. |
+| `src/edu-portal.css` | Simulator floor 210 → 150 px; bottom bar available ≤768 px; compact two-column footer ≤640 px. |
+| `tests/site-experience.test.ts`, `tests/cbt-experience.test.ts`, `tests/perf.test.ts`, `tests/home-activity.test.ts`, `tests/e2e/site.spec.ts`, `tests/e2e/jamb-subject-selection.spec.ts` | Contract updated to the UX-7 behaviour, including the unified bar, no hero, no guide and the reduced simulator floor. |
 | `scripts/perf-audit.ts` | Critical-path and total-JS caps raised to the measured UX-7 cost with headroom; see §9. |
 
 ---
@@ -233,14 +227,14 @@ All commands were run on this branch after the final source change.
 | `npm run typecheck` | **0 errors** |
 | `npm test` | **1069 passed, 0 failed** (1069), including 5 new home-activity rules |
 | `npm run build` | **success** |
-| `npm run perf:audit` | **all budgets pass**: entry 49.0/100 KB, Supabase 53.0/60, CSS 49.9/51, critical path 213.2/214, all chunks 365.4/366, largest image 41.2/64 |
+| `npm run perf:audit` | **all budgets pass**: entry 49.0/100 KB, Supabase 53.0/60, CSS 49.8/51, critical path 213.2/214, all chunks 365.4/366, largest image 41.2/64 |
 | `npm run a11y:audit` | **0 blocking**, 6 informational |
 | Playwright, full suite | **293 passed, 29 skipped** |
 | Playwright, `site.spec` + `a11y.spec` | **165 passed, 5 skipped** |
 | Browser overflow | **0** at 1440, 700, 390 and 320 |
 | Browser page errors | **0** on the captured public routes |
 
-**Performance budget note:** the critical path cap moved from 211 → 214 KB and total JS from 365 → 366 KB. The measured cost is the product home, the five-destination navigation and the familiar icons (+2.6 KB critical, +0.4 KB total). The entry chunk remains 49.0/100 KB and CSS 49.9/51 KB; no lazy route was made eager to buy the headroom. The cap is enforced at the new measured value, not removed.
+**Performance budget note:** the critical path cap moved from 211 → 214 KB and total JS from 365 → 366 KB. The measured cost is the product home, the five-destination navigation and the familiar icons (+2.6 KB critical, +0.4 KB total). The entry chunk remains 49.0/100 KB and CSS 49.8/51 KB; no lazy route was made eager to buy the headroom. The cap is enforced at the new measured value, not removed.
 
 **Honesty constraints**
 

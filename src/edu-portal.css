@@ -446,10 +446,6 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-late-region--feed{--er-late-min:300px}       /* the four-card news row the home page shows */
 .er-late-region--feed-page{--er-late-min:450px}  /* the 5 rows its skeleton shows */
 .er-late-region--library{--er-late-min:670px}    /* 6 cards in two columns: 3x214 + 2x14 */
-/* UX-7: an empty or failed library is a sentence, not six reserved card slots.
-   The 670px floor under a one-line notice was the blank half-screen on
-   /past-questions in the unconfigured build. */
-.er-late-region--library:has(> .er-resource-block > :is(.er-inline-notice,.er-state)){--er-late-min:0}
 @media(max-width:700px){
   /* .er-library-grid is a single column here, so six cards are six rows tall */
   .er-late-region--library{--er-late-min:1350px}
