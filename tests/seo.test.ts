@@ -252,7 +252,7 @@ test('sitemap XML is well-formed, escaped, deduplicated and sorted', () => {
 test('static sitemap entries cover public routes and live services only', () => {
   const entries = staticSitemapEntries('https://edureach.example');
   const locs = entries.map((entry) => entry.loc);
-  for (const expected of ['/', '/news', '/jobs', '/schools', '/services', '/cbt', '/events', '/jamb', '/screening-calculator', '/tools/cgpa-calculator']) {
+  for (const expected of ['/', '/about', '/news', '/jobs', '/schools', '/services', '/cbt', '/events', '/jamb', '/screening-calculator', '/tools/cgpa-calculator']) {
     assert.ok(locs.includes(`https://edureach.example${expected}`), `${expected} missing from the sitemap`);
   }
   for (const slug of ['nelfund-loan', 'results', 'jamb-slip', 'admission-letters']) {

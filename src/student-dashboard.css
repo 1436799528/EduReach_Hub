@@ -962,10 +962,16 @@
 }
 
 @media (max-width: 768px) {
+  /* The compact footer is the last element in the dashboard shell. Reserve the
+     fixed bottom navigation's height below it so no link sits under the bar. */
+  .edureach-dash-container {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+
   .edureach-dash-body {
     grid-template-columns: 1fr;
     padding: 10px;
-    padding-bottom: 76px; /* space for the bottom nav */
+    padding-bottom: 10px;
   }
 
   .edureach-dash-sidebar,

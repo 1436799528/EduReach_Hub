@@ -109,25 +109,6 @@ export default function LegalPage({ slug }: { slug: string }) {
               />
             </article>
           )}
-
-          <footer className="er-legal-foot">
-            <p>
-              Something here wrong or unclear? <a href="/contact">Tell us</a> and we will fix the page rather than
-              leave it misleading.
-            </p>
-            <nav aria-label="Other policies">
-              {[
-                ['privacy', 'Privacy'],
-                ['terms', 'Terms'],
-                ['cookies', 'Cookies'],
-                ['accessibility', 'Accessibility'],
-                ['disclaimer', 'Disclaimer'],
-                ['contact', 'Contact'],
-              ].map(([key, label]) => (
-                <a key={key} href={`/${key}`} aria-current={key === slug ? 'page' : undefined}>{label}</a>
-              ))}
-            </nav>
-          </footer>
         </div>
       </div>
     </HubLayout>

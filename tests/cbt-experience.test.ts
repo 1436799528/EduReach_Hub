@@ -22,7 +22,8 @@ test('the examination hall is a dedicated route, not a page inside the site shel
   assert.match(routes, /CbtSessionPage/, 'and its own component');
 
   const shell = read('pages/CbtSessionPage.tsx');
-  assert.ok(!/HubLayout/.test(shell), 'the hall must not render the site header/footer');
+  assert.ok(!/HubLayout/.test(shell), 'the hall must not render the site header or navigation');
+  assert.match(shell, /<SiteFooter \/>/, 'the compact legal footer stays reachable at the bottom of the hall');
   assert.match(shell, /er-exam-shell/, 'it owns a dedicated shell class');
   assert.match(shell, /End Test/, 'End Test is a distinct, named action');
   assert.match(shell, /Submit/, 'and Submit is separate from it');

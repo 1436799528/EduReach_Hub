@@ -21,7 +21,7 @@ const publicRoutes = [
   '/jobs', '/events', '/schools', '/schools/unilag', '/schools/missing-school', '/past-questions', '/search',
   '/jamb', '/waec', '/neco', '/post-utme', '/cbt', '/cbt/setup/jamb', '/cbt/setup/waec',
   '/cbt/setup/neco', '/cbt/setup/post-utme', '/cbt/practice', '/cbt/results',
-  '/screening-calculator', '/tools/cgpa-calculator', '/nabteb', '/support', '/tools', '/admission',
+  '/screening-calculator', '/tools/cgpa-calculator', '/nabteb', '/support', '/about', '/tools', '/admission',
   '/login', '/register', '/forgot-password', '/reset-password', '/verify-email',
 ];
 for (const path of publicRoutes) {
@@ -123,6 +123,29 @@ test('mobile forms and navigation meet touch-size and input-size targets', async
   });
   expect(footerClearance).not.toBeNull();
   expect(footerClearance).toBeGreaterThanOrEqual(0);
+});
+test('every public shell carries the same compact footer', async ({ page, isMobile }) => {
+  for (const path of ['/', '/about', '/terms', '/cookies', '/contact', '/login']) {
+    await page.goto(path);
+    const footer = page.locator('footer.er-footer');
+    await expect(footer).toBeVisible();
+    await expect(footer.getByRole('navigation', { name: 'Footer: policies' })).toBeVisible();
+    for (const name of ['About', 'Contact', 'Terms', 'Privacy', 'Cookies', 'Cookie settings']) {
+      await expect(footer.getByRole('link', { name, exact: true }).or(footer.getByRole('button', { name, exact: true }))).toBeVisible();
+    }
+    const height = await footer.evaluate((element) => element.getBoundingClientRect().height);
+    expect(height).toBeLessThan(220);
+    if (isMobile && await page.locator('.er-mobile-bottom-nav').count() > 0) {
+      const clearance = await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+        const bar = document.querySelector('footer.er-footer')?.getBoundingClientRect();
+        const nav = document.querySelector('.er-mobile-bottom-nav')?.getBoundingClientRect();
+        return bar && nav ? nav.top - bar.bottom : null;
+      });
+      expect(clearance).not.toBeNull();
+      expect(clearance).toBeGreaterThanOrEqual(0);
+    }
+  }
 });
 test('unconfigured login fails closed and cannot create a local session', async ({ page }) => {
   await page.goto('/login');

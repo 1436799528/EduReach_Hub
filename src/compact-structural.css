@@ -39,8 +39,6 @@
 .hub-shell .hub-page{padding-top:8px!important;padding-bottom:20px!important}
 .hub-shell .hub-layout-with-rail{gap:10px!important}
 .hub-sidebar-card{padding:8px!important;border-radius:6px!important}
-.hub-shell footer{padding:20px 0 12px!important;margin-top:20px!important}
-.hub-shell footer>div>div:first-child{gap:18px!important;margin-bottom:16px!important}
 @media(max-width:900px){.hub-home-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:600px){
  .hub-shell>header>div{height:50px!important}

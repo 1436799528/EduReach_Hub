@@ -106,16 +106,17 @@ test('the shared rules are used, not re-implemented per page', () => {
 });
 
 test('the dark footer keeps every text pair above 4.5:1 on navy', () => {
-  // Phase 8 moved the footer from inline styles in HubLayout to a component with
-  // its own rules, so the assertion follows it. Measured on #0f172a:
-  // #94a3b8 6.96, #8fa0b5 6.68, #7d8ca3 5.23, #cbd5e1 12.02, #86efac 12.71.
+  // The compact bar still uses the readable dark surface. Measured on #0f172a:
+  // #94a3b8 6.96, #8fa0b5 6.68, #cbd5e1 12.02, #fff 17.85.
   const css = read('src/edu-portal.css');
   const footer = css.slice(css.indexOf('.er-footer{'), css.indexOf('.er-legal-page{'));
   assert.match(footer, /\.er-footer\{background:#0f172a;color:#94a3b8/, 'the footer sets its readable base colour');
   assert.ok(!/#64748b/.test(footer), 'no low-contrast slate is introduced anywhere in the footer');
-  for (const pair of ['#8fa0b5', '#7d8ca3']) {
+  for (const pair of ['#8fa0b5', '#cbd5e1']) {
     assert.ok(footer.includes(pair), `${pair} is a documented footer text colour`);
   }
+  assert.match(footer, /padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom\)\)/, 'the bar clears the phone safe area');
+  assert.doesNotMatch(footer, /er-footer-grid|er-footer-bottom|er-footer-about/, 'the old multi-row footer is gone');
   const component = read('src/components/SiteFooter.tsx');
   assert.doesNotMatch(component, /color:\s*'#/, 'the footer does not override its colours inline');
 });

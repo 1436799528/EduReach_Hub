@@ -158,10 +158,8 @@
     align-items: center;
   }
   .er-footer-brand-link,
-  .er-footer-links a,
   .er-footer-legal a,
-  .er-footer-social a,
-  .er-footer-help {
+  .er-footer-cookie-settings {
     display: inline-flex;
     align-items: center;
     justify-content: center;

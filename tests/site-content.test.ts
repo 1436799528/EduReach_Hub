@@ -226,17 +226,36 @@ test('every policy page is a real route, not a footer link to nowhere', () => {
   }
   const footer = read('src/components/SiteFooter.tsx');
   assert.doesNotMatch(footer, /href="#"/, 'a footer link must never be a dead anchor');
-  for (const href of ['/privacy', '/terms', '/cookies', '/accessibility', '/disclaimer', '/contact']) {
+  for (const href of ['/about', '/privacy', '/terms', '/cookies', '/contact']) {
     assert.ok(footer.includes(`href: '${href}'`) || footer.includes(`href="${href}"`), `footer links ${href}`);
   }
 });
 
-test('the footer renders contact and social only when configured', () => {
+test('the footer is one compact bar with the essential destinations only', () => {
   const footer = read('src/components/SiteFooter.tsx');
-  assert.match(footer, /whatsappHref\(contact\.whatsapp\)/, 'the WhatsApp link is built, not pasted');
-  assert.match(footer, /social\.links\.length > 0/, 'no social block when nothing is configured');
-  assert.match(footer, /contact\.email &&/, 'no mailto when there is no mailbox');
+  assert.match(footer, /const ESSENTIAL: FooterLink\[\]/, 'the footer has one short link set');
+  for (const label of ['About', 'Contact', 'Terms', 'Privacy', 'Cookies', 'Cookie settings']) {
+    assert.ok(footer.includes(`label: '${label}'`) || footer.includes(`>${label}<`) || footer.includes(label), `the bar keeps ${label}`);
+  }
+  assert.doesNotMatch(footer, /LEARN|EXPLORE|LinkColumn|footer\.about|social\.links|whatsappHref|contact\.email/,
+    'the old four-column sitemap is gone');
   assert.match(footer, /not affiliated with JAMB, WAEC,\s+NECO or any institution/, 'the independence line stays');
+  assert.match(read('pages/AboutPage.tsx'), /footer\.about/, 'the admin-managed description still has a visible home');
+});
+
+test('the same compact footer is mounted in every shell and nobody keeps a second one', () => {
+  for (const file of [
+    'src/components/HubLayout.tsx',
+    'pages/AuthPageV2.tsx',
+    'pages/StudentDashboardV2.tsx',
+    'pages/CbtSessionPage.tsx',
+  ]) {
+    assert.match(read(file), /<SiteFooter \/>/, `${file} renders the shared footer`);
+  }
+  for (const file of ['pages/LegalPage.tsx', 'pages/RefundPolicyPage.tsx', 'pages/AuthPageV2.tsx']) {
+    assert.doesNotMatch(read(file), /er-legal-foot|auth-footer/, `${file} does not add a second footer`);
+  }
+  assert.match(read('src/app/routes.tsx'), /path === '\/about'/, 'the About footer link resolves to a real route');
 });
 
 test('the site content API is public for reading and capability-gated for writing', () => {
@@ -298,20 +317,18 @@ test('the footer renders a complete, honest footer with no dead links', async ()
   const html = renderToStaticMarkup(createElement(SiteFooter));
 
   assert.match(html, /EduReach Hub/, 'the brand is named');
-  assert.match(html, /Practice for JAMB, WAEC, NECO and Post-UTME/, 'the shipped description is used when nothing is loaded');
-  assert.match(html, /wa\.me\/2349130134969/, 'contact comes from settings, through the validated builder');
   assert.match(html, /© \d{4} EduReach Hub/, 'copyright names the year and the brand');
   assert.match(html, /not affiliated with JAMB, WAEC,\s+NECO or any institution/, 'the independence line is present');
   assert.doesNotMatch(html, /href="#"/, 'no placeholder anchors');
-  for (const href of ['/privacy', '/terms', '/cookies', '/accessibility', '/disclaimer', '/contact', '/cbt', '/past-questions', '/schools']) {
+  for (const href of ['/about', '/contact', '/privacy', '/terms', '/cookies']) {
     assert.ok(html.includes(`href="${href}"`), `the footer links ${href}`);
   }
-  assert.doesNotMatch(html, /instagram|facebook|twitter|x\.com/i, 'no social account is rendered until an administrator configures one');
+  assert.match(html, /er-footer-bar/, 'the footer is a single bar, not a column grid');
+  assert.doesNotMatch(html, /instagram|facebook|twitter|x\.com|wa\.me/i, 'no social or chat block crowds the bar');
   assert.match(html, /<nav[^>]*aria-label="Footer: policies"/, 'the policy links are a labelled landmark');
-  assert.equal((html.match(/<h2/g) ?? []).length, 3, 'each link column has a real heading, not a styled div');
-  for (const heading of ['Learn', 'Explore', 'Get help']) {
-    assert.ok(html.includes(`>${heading}</h2>`), `the ${heading} column is labelled by a heading`);
-  }
+  assert.equal((html.match(/<h2/g) ?? []).length, 0, 'the compact bar has no column headings');
+  assert.match(html, />About<\/a>/, 'About is present');
+  assert.match(html, />Cookie settings<\/button>/, 'consent stays reopenable from every page');
 });
 
 test('a policy page never spins forever when the API is unreachable', () => {

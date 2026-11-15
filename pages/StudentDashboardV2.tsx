@@ -32,6 +32,7 @@ import { userFacingError } from '../lib/errors';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
 import SkipLink from '../src/components/a11y/SkipLink';
+import SiteFooter from '../src/components/SiteFooter';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
@@ -1362,6 +1363,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <a href="/dashboard/cbt/results"><BarChart3 size={18} aria-hidden="true" /><span>Results</span></a>
         <a className={activeTab === 'services' || activeTab === 'tools' ? 'active' : ''} href="/profile"><User size={18} aria-hidden="true" /><span>Profile</span></a>
       </nav>
+
+      <SiteFooter />
 
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} userId={userId} isLocalMode={isLocalMode} mfaEnabled={mfaEnabled} onMfaChange={setMfaEnabled} />
     </div>

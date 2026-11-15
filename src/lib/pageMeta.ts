@@ -78,6 +78,7 @@ const routeTitles: Record<string, string> = {
   '/cookie-policy': 'Cookies & Browser Storage',
   '/accessibility': 'Accessibility',
   '/disclaimer': 'Disclaimer',
+  '/about': 'About',
   '/contact': 'Contact EduReach',
   '/contact-us': 'Contact EduReach',
 };

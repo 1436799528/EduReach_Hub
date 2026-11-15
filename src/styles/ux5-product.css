@@ -1650,11 +1650,3 @@
 .er-setup-section-heading > svg {
   color: var(--er-text-secondary);
 }
-
-/* Footer column headings are labels, not a second navigation shout. */
-.er-footer-heading {
-  text-transform: none;
-  letter-spacing: .01em;
-  font-size: 13px;
-  font-weight: 650;
-}

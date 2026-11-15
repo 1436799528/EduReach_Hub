@@ -364,10 +364,6 @@ html,body{overflow-x:hidden}
 body{max-width:100vw}
 img,table,pre,.hub-panel,.er-exam-option,.er-exam-question{max-width:100%;box-sizing:border-box}
 .hub-container{max-width:min(1180px,100%);box-sizing:border-box}
-@media(max-width:600px){
-  .er-footer{padding:16px 0 76px!important}
-  .er-footer-links{gap:10px!important}
-}
 
 /* UX-3 — deleting one result is a trash target, not a labelled danger link.
    18px glyph inside a 44px hit area; the confirmation carries the words. */

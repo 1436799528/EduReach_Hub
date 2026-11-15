@@ -82,7 +82,7 @@ Rules that follow from the hierarchy:
 - Signed-in students get a compact record strip (papers, average, best, subjects) and a three-row recent-activity list; guests see the exam catalogue instead. No zero-filled statistics.
 - Keep the shared search component, now in the greeting row.
 - Exam cards remain cards because four exam banks are independent objects. Their height drops 164 → 148 px and the late-region floor drops 210 → 150 px.
-- Study tools become one inline link list. The global footer keeps every link and sits below all product content; on phones it is compacted (see §7).
+- Study tools become one inline link list. The global footer sits below all product content as one compact bar (see [`COMPACT-FOOTER.md`](COMPACT-FOOTER.md)).
 
 **AFTER** — guest [`home-guest-1440.png`](./evidence/after/home-guest-1440.png), [`home-guest-390.png`](./evidence/after/home-guest-390.png); student [`home-student-1440.png`](./evidence/after/home-student-1440.png), [`home-student-390.png`](./evidence/after/home-student-390.png); 320 px [`home-320.png`](./evidence/after/home-320.png); 700 px [`home-700.png`](./evidence/after/home-700.png)
 
@@ -129,9 +129,9 @@ The student 390 capture shows the whole first viewport as an app screen: greetin
 
 ### 5.5 CBT exam
 
-**BEFORE / AFTER:** no UX-7 source change to `CbtSessionPage`.
+**BEFORE / AFTER:** UX-7 changed the shell that leads into the exam; the follow-up compact-footer pass adds the shared footer bar at the bottom of the hall. The header and navigation away remain absent.
 
-**Decision:** the exam is already a single-purpose full-screen surface. Adding a new visual treatment would violate “preserve UX-5” and risk the timing/legal protocol. The global bottom bar and footer are hidden in `body.er-exam-mode`, so the exam keeps the whole viewport. UX-7 only changes the shell that leads into it (one primary Start practice, no guide).
+**Decision:** the exam is already a single-purpose full-screen surface. Adding a new visual treatment would violate “preserve UX-5” and risk the timing/legal protocol. The site header, page bar and bottom navigation stay hidden in `body.er-exam-mode`; only the compact legal footer is rendered at the bottom so consent and the policies remain reachable during a paper. UX-7 only changes the shell that leads into it (one primary Start practice, no guide).
 
 **Verification:** covered by the full Playwright suite (293 passed / 29 skipped), including the CBT session and v2 protocol specs. No screenshot is claimed for the exam itself: the unconfigured preview has no published question bank, so a real attempt cannot be started there. This is a stated limitation, not a skipped verification.
 
@@ -203,7 +203,7 @@ The `/past-questions` library still reserves the footprint of six document cards
 - **CBT protocol and timing:** no change to session, lease, finalize or result logic.
 - **Data truth:** no invented counts, rankings, completion percentages or activity. An empty record says it is empty. The score strip is derived from finished attempts only.
 - **Forms:** profile/setup fields remain visible rather than being hidden behind progressive disclosure that would make a required field harder to find.
-- **Footer content:** every link remains. On phones the global footer is compacted into two columns, with the promotional paragraph and the long contact note hidden and the legal row left-aligned. It is still a secondary surface below every product screen, but it no longer reads as a second landing page. Desktop footer is unchanged.
+- **Footer content:** one compact bar on every surface: About, Contact, Terms, Privacy, Cookies, Cookie settings, with the brand copyright and independence line. The old four-column sitemap, social strip and contact note are gone. See [`COMPACT-FOOTER.md`](COMPACT-FOOTER.md).
 
 ---
 
@@ -218,7 +218,7 @@ The `/past-questions` library still reserves the footprint of six document cards
 | `src/components/PageBar.tsx` | App-level routes no longer render a duplicate Back/title bar. |
 | `pages/ExamSetupPage.tsx` | “How this CBT session works” section deleted; honesty note moved into the heading. |
 | `src/styles/ux5-product.css` | Hero rules deleted; product-home, More menu, drawer labels and unified bottom-bar states added. |
-| `src/edu-portal.css` | Simulator floor 210 → 150 px; bottom bar available ≤768 px; compact two-column footer ≤640 px. |
+| `src/edu-portal.css` | Simulator floor 210 → 150 px; bottom bar available ≤768 px; one compact footer bar on every surface (see [`COMPACT-FOOTER.md`](COMPACT-FOOTER.md)). |
 | `tests/site-experience.test.ts`, `tests/cbt-experience.test.ts`, `tests/perf.test.ts`, `tests/home-activity.test.ts`, `tests/e2e/site.spec.ts`, `tests/e2e/jamb-subject-selection.spec.ts` | Contract updated to the UX-7 behaviour, including the unified bar, no hero, no guide and the reduced simulator floor. |
 | `scripts/perf-audit.ts` | Critical-path and total-JS caps raised to the measured UX-7 cost with headroom; see §9. |
 

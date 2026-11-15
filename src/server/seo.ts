@@ -62,6 +62,7 @@ const STATIC_ENTRIES: Array<{ path: string; changefreq: SitemapEntry['changefreq
   { path: '/cookies', changefreq: 'yearly', priority: 0.2 },
   { path: '/accessibility', changefreq: 'yearly', priority: 0.3 },
   { path: '/disclaimer', changefreq: 'yearly', priority: 0.2 },
+  { path: '/about', changefreq: 'yearly', priority: 0.4 },
   { path: '/contact', changefreq: 'yearly', priority: 0.4 },
 ];
 
