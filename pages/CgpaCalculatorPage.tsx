@@ -13,7 +13,7 @@ export default function CgpaCalculatorPage() {
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '24px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '760px' }}>
+        <div className="hub-container hub-form-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '18px' }}>
             <div>
               <span className="hub-eyebrow" style={{ color: '#b14933' }}>STUDENT ACADEMIC TOOLS</span>

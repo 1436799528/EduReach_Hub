@@ -352,7 +352,6 @@
 .hub-profile-trigger-initials{display:none}
 .hub-profile-trigger-name{display:inline}
 @media(max-width:720px){
-  .hub-global-search{display:none!important}
   .hub-desktop-nav{display:none}
   .hub-mobile-trigger{display:flex!important}
   .hub-profile-trigger{padding:6px 8px!important}
@@ -363,11 +362,6 @@
 html,body{overflow-x:hidden}
 body{max-width:100vw}
 img,table,pre,.hub-panel,.er-exam-option,.er-exam-question{max-width:100%;box-sizing:border-box}
-.hub-container{max-width:min(1180px,100%);box-sizing:border-box}
-@media(max-width:600px){
-  .er-footer{padding:16px 0 76px!important}
-  .er-footer-links{gap:10px!important}
-}
 
 /* UX-3 — deleting one result is a trash target, not a labelled danger link.
    18px glyph inside a 44px hit area; the confirmation carries the words. */
@@ -388,5 +382,5 @@ img,table,pre,.hub-panel,.er-exam-option,.er-exam-question{max-width:100%;box-si
 .er-history-delete:hover,
 .er-result-delete:hover { background: #fdf2ef; border-color: #e7a99f; color: var(--er-crimson-deep, #B3331A); }
 .er-history-delete:focus-visible,
-.er-result-delete:focus-visible { outline: 2px solid var(--er-primary, #174A3A); outline-offset: 2px; }
+.er-result-delete:focus-visible { outline: 2px solid var(--er-primary, #1E40AF); outline-offset: 2px; }
 .er-history-delete:disabled { opacity: .45; cursor: not-allowed; }

@@ -21,7 +21,7 @@ test('privacy and terms retain CMS text, flag review needs and remain accessible
   await expect(page.getByRole('note', { name: 'Privacy information requiring review' })).toContainText('Retention and age claims');
   await expect(page.getByRole('note', { name: 'Privacy information requiring review' })).toContainText('deletion and data export are not currently available');
   await expect(page.getByText('Draft pending legal review.')).toBeVisible();
-  const terms = page.getByRole('navigation', { name: 'Other policies' }).getByRole('link', { name: 'Terms', exact: true });
+  const terms = page.getByRole('navigation', { name: 'Footer: company and policies' }).getByRole('link', { name: 'Terms', exact: true });
   await terms.focus();
   await expect(terms).toBeFocused();
   const violations = (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze()).violations;

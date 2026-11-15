@@ -33,6 +33,7 @@ import { InlineNotice } from '../src/components/AsyncState';
 import BrandLogo from '../src/components/BrandLogo';
 import OtpInput from '../src/components/OtpInput';
 import PasswordStrengthMeter from '../src/components/PasswordStrengthMeter';
+import SiteFooter from '../src/components/SiteFooter';
 import '../src/auth-page.css';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -489,317 +490,315 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           : 'Sign in';
 
   return (
-    <main className="auth-page">
-      <div className="auth-frame">
-        <div className="auth-topbar">
-          <button type="button" className="auth-back" onClick={goBack}>
-            <ArrowLeft size={15} aria-hidden="true" />
-            <span>Back</span>
-          </button>
-        </div>
+    <div className="auth-shell">
+      <main className="auth-page">
+        <div className="auth-frame">
+          <div className="auth-topbar">
+            <button type="button" className="auth-back" onClick={goBack}>
+              <ArrowLeft size={15} aria-hidden="true" />
+              <span>Back</span>
+            </button>
+          </div>
 
-        <div className="auth-brand">
-          <BrandLogo height={42} radius="50%" />
-          <span><strong>EduReach</strong><small>Student support, all in one place</small></span>
-        </div>
+          <div className="auth-brand">
+            <BrandLogo height={42} radius="50%" />
+            <span><strong>EduReach</strong><small>Student support, all in one place</small></span>
+          </div>
 
-        <div className="auth-columns">
-          <section className={`auth-card${currentMode === 'signup' ? ' auth-card--signup' : ''}`} aria-labelledby="auth-title">
-            {allowModeSwitch && (
-              <div className="auth-tabs" role="tablist" aria-label="Account access">
-                <button type="button" role="tab" aria-selected={currentMode === 'signin'} onClick={() => changeMode('signin')}>Sign in</button>
-                <button type="button" role="tab" aria-selected={currentMode === 'signup'} onClick={() => changeMode('signup')}>Create account</button>
-              </div>
-            )}
-
-            <header className="auth-card-heading">
-              <h1 id="auth-title">{pageTitle}</h1>
-              {currentMode !== 'signup' && (
-                <p>
-                  {currentMode === 'signin'
-                    ? 'Sign in to continue to your saved services and practice.'
-                    : currentMode === 'verify'
-                      ? 'Open the link in your email, or enter its code.'
-                      : currentMode === 'reset'
-                        ? 'Use a new password you have not used here before.'
-                        : 'Enter your email and we will send reset instructions if an account exists.'}
-                </p>
+          <div className="auth-columns">
+            <section className={`auth-card${currentMode === 'signup' ? ' auth-card--signup' : ''}`} aria-labelledby="auth-title">
+              {allowModeSwitch && (
+                <div className="auth-tabs" role="tablist" aria-label="Account access">
+                  <button type="button" role="tab" aria-selected={currentMode === 'signin'} onClick={() => changeMode('signin')}>Sign in</button>
+                  <button type="button" role="tab" aria-selected={currentMode === 'signup'} onClick={() => changeMode('signup')}>Create account</button>
+                </div>
               )}
-            </header>
 
-            {error && <InlineNotice tone="danger">{error}</InlineNotice>}
-            {message && <div className="auth-alert auth-alert--success" role="status"><CheckCircle2 size={17} />{message}</div>}
-
-            {termsGateFor ? (
-              <div className="auth-consent-gate">
-                <p>Confirm your age and agreement before we open your dashboard.</p>
-                <label className="auth-consent">
-                  <input ref={termsRef} type="checkbox" checked={termsAgreed} onChange={(event) => setTermsAgreed(event.target.checked)} required />
-                  <span>
-                    I am 16 or older, and I agree to the <a className="auth-legal-link" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a className="auth-legal-link" href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
-                  </span>
-                </label>
-                <button className="auth-submit" type="button" disabled={busy} aria-busy={busy} onClick={() => void acceptReturningTerms()}>
-                  {busy ? 'Recording…' : 'Agree and continue'}
-                </button>
-              </div>
-            ) : currentMode === 'verify' ? (
-              <div className="auth-verification">
-                <div className="auth-verification-icon"><Mail size={24} /></div>
-                <p>
-                  {isSupabaseConfigured
-                    ? (verifyEmailSent || email)
-                      ? <>We sent a verification email to <strong>{verifyEmailSent || email}</strong>. Open the link in it to finish. If the email also shows a code, enter it below.</>
-                      : <>Open the verification link in your email, or enter the code if the email includes one. If you opened this page directly, sign up first or request a new email.</>
-                    : 'Email verification needs the live EduReach account service, which is not configured in this environment.'}
-                </p>
-                {isSupabaseConfigured && (
-                  <div className="auth-code-form">
-                    <OtpInput id="auth-email-code" label="Verification code" value={emailOtp} onChange={setEmailOtp} length={8} disabled={emailVerifyBusy} />
-                    <button className="auth-submit" type="button" disabled={emailVerifyBusy || emailOtp.length < 6} aria-busy={emailVerifyBusy} onClick={() => void verifyEmailCode()}>
-                      {emailVerifyBusy ? 'Verifying…' : 'Verify code'}
-                    </button>
-                  </div>
+              <header className="auth-card-heading">
+                <h1 id="auth-title">{pageTitle}</h1>
+                {currentMode !== 'signup' && (
+                  <p>
+                    {currentMode === 'signin'
+                      ? 'Sign in to continue to your saved services and practice.'
+                      : currentMode === 'verify'
+                        ? 'Open the link in your email, or enter its code.'
+                        : currentMode === 'reset'
+                          ? 'Use a new password you have not used here before.'
+                          : 'Enter your email and we will send reset instructions if an account exists.'}
+                  </p>
                 )}
-                <button className="auth-submit auth-submit--secondary" type="button" disabled={busy || emailVerifyBusy} onClick={() => void resendVerification()}>
-                  Resend verification email
-                </button>
-                <button className="auth-text-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
-              </div>
-            ) : (
-              <form className="auth-form" onSubmit={submit}>
-                {allowModeSwitch && (
-                  <div className="auth-social">
-                    {(['google', 'apple'] as const).map((provider) => {
-                      const Icon = socialIcons[provider];
-                      const label = provider === 'google' ? 'Google' : 'Apple';
-                      return (
-                        <button
-                          key={provider}
-                          type="button"
-                          className={`auth-social-btn auth-social-btn--${provider}`}
-                          disabled={Boolean(socialBusy) || busy || phoneBusy}
-                          aria-busy={socialBusy === provider}
-                          onClick={() => void startSocial(provider)}
-                        >
-                          <Icon size={17} aria-hidden="true" />
-                          {socialBusy === provider ? `Opening ${label}…` : currentMode === 'signup' ? `Sign up with ${label}` : `Continue with ${label}`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+              </header>
 
-                {allowModeSwitch && (
-                  <>
-                    <div className="auth-divider"><span>or use email or phone</span></div>
-                    <div className="auth-method-tabs" role="tablist" aria-label="Contact method">
-                      <button type="button" role="tab" aria-selected={contactMethod === 'email'} onClick={() => changeContactMethod('email')}>
-                        <Mail size={15} aria-hidden="true" /> Email
-                      </button>
-                      <button type="button" role="tab" aria-selected={contactMethod === 'phone'} onClick={() => changeContactMethod('phone')}>
-                        <Phone size={15} aria-hidden="true" /> Phone
+              {error && <InlineNotice tone="danger">{error}</InlineNotice>}
+              {message && <div className="auth-alert auth-alert--success" role="status"><CheckCircle2 size={17} />{message}</div>}
+
+              {termsGateFor ? (
+                <div className="auth-consent-gate">
+                  <p>Confirm your age and agreement before we open your dashboard.</p>
+                  <label className="auth-consent">
+                    <input ref={termsRef} type="checkbox" checked={termsAgreed} onChange={(event) => setTermsAgreed(event.target.checked)} required />
+                    <span>
+                      I am 16 or older, and I agree to the <a className="auth-legal-link" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a className="auth-legal-link" href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
+                    </span>
+                  </label>
+                  <button className="auth-submit" type="button" disabled={busy} aria-busy={busy} onClick={() => void acceptReturningTerms()}>
+                    {busy ? 'Recording…' : 'Agree and continue'}
+                  </button>
+                </div>
+              ) : currentMode === 'verify' ? (
+                <div className="auth-verification">
+                  <div className="auth-verification-icon"><Mail size={24} /></div>
+                  <p>
+                    {isSupabaseConfigured
+                      ? (verifyEmailSent || email)
+                        ? <>We sent a verification email to <strong>{verifyEmailSent || email}</strong>. Open the link in it to finish. If the email also shows a code, enter it below.</>
+                        : <>Open the verification link in your email, or enter the code if the email includes one. If you opened this page directly, sign up first or request a new email.</>
+                      : 'Email verification needs the live EduReach account service, which is not configured in this environment.'}
+                  </p>
+                  {isSupabaseConfigured && (
+                    <div className="auth-code-form">
+                      <OtpInput id="auth-email-code" label="Verification code" value={emailOtp} onChange={setEmailOtp} length={8} disabled={emailVerifyBusy} />
+                      <button className="auth-submit" type="button" disabled={emailVerifyBusy || emailOtp.length < 6} aria-busy={emailVerifyBusy} onClick={() => void verifyEmailCode()}>
+                        {emailVerifyBusy ? 'Verifying…' : 'Verify code'}
                       </button>
                     </div>
-                  </>
-                )}
+                  )}
+                  <button className="auth-submit auth-submit--secondary" type="button" disabled={busy || emailVerifyBusy} onClick={() => void resendVerification()}>
+                    Resend verification email
+                  </button>
+                  <button className="auth-text-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
+                </div>
+              ) : (
+                <form className="auth-form" onSubmit={submit}>
+                  {allowModeSwitch && (
+                    <div className="auth-social">
+                      {(['google', 'apple'] as const).map((provider) => {
+                        const Icon = socialIcons[provider];
+                        const label = provider === 'google' ? 'Google' : 'Apple';
+                        return (
+                          <button
+                            key={provider}
+                            type="button"
+                            className={`auth-social-btn auth-social-btn--${provider}`}
+                            disabled={Boolean(socialBusy) || busy || phoneBusy}
+                            aria-busy={socialBusy === provider}
+                            onClick={() => void startSocial(provider)}
+                          >
+                            <Icon size={17} aria-hidden="true" />
+                            {socialBusy === provider ? `Opening ${label}…` : currentMode === 'signup' ? `Sign up with ${label}` : `Continue with ${label}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                {currentMode === 'signup' && (
-                  <fieldset className="auth-account-types">
-                    <legend>How will you use EduReach?</legend>
-                    <div className="auth-account-options">
-                      {accountTypes.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          className={`auth-account-option${option.value === accountType ? ' is-selected' : ''}${option.available ? '' : ' is-coming-soon'}`}
-                          aria-pressed={option.value === accountType}
-                          aria-describedby={option.available ? undefined : 'auth-coming-soon'}
-                          disabled={!option.available}
-                          onClick={() => { if (option.available) setAccountType(option.value); }}
-                        >
-                          <span className="auth-account-icon"><UserRound size={17} /></span>
-                          <span>
-                            <strong>{option.label}</strong>
-                            <small>{option.available ? option.detail : 'Not open yet'}</small>
-                          </span>
+                  {allowModeSwitch && (
+                    <>
+                      <div className="auth-divider"><span>or use email or phone</span></div>
+                      <div className="auth-method-tabs" role="tablist" aria-label="Contact method">
+                        <button type="button" role="tab" aria-selected={contactMethod === 'email'} onClick={() => changeContactMethod('email')}>
+                          <Mail size={15} aria-hidden="true" /> Email
                         </button>
-                      ))}
-                    </div>
-                    <p className="auth-account-note" id="auth-coming-soon">
-                      Parent and teacher accounts are not available yet.
-                    </p>
-                  </fieldset>
-                )}
-
-                {currentMode === 'signup' && (
-                  <div className="auth-field-grid">
-                    <div className="auth-field">
-                      <label htmlFor="auth-first-name">First name</label>
-                      <input id="auth-first-name" name="given-name" type="text" value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" maxLength={80} required />
-                    </div>
-                    <div className="auth-field">
-                      <label htmlFor="auth-last-name">Last name</label>
-                      <input id="auth-last-name" name="family-name" type="text" value={lastName} onChange={(event) => setLastName(event.target.value)} autoComplete="family-name" maxLength={80} required />
-                    </div>
-                  </div>
-                )}
-
-                {phoneMethod && allowModeSwitch ? (
-                  <>
-                    <div className="auth-field">
-                      <label htmlFor="auth-phone">{currentMode === 'signup' ? 'Phone number' : 'Phone number for sign-in'}</label>
-                      <div className="auth-input-wrap"><Phone size={17} aria-hidden="true" />
-                        <input
-                          id="auth-phone"
-                          name="tel"
-                          type="tel"
-                          value={phone}
-                          onChange={(event) => {
-                            setPhone(event.target.value);
-                            if (phoneStage === 'sent') {
-                              setPhoneStage('idle');
-                              setPhoneSentTo('');
-                              setOtp('');
-                            }
-                          }}
-                          autoComplete="tel"
-                          inputMode="tel"
-                          maxLength={20}
-                          placeholder="+234 801 234 5678"
-                          required
-                        />
+                        <button type="button" role="tab" aria-selected={contactMethod === 'phone'} onClick={() => changeContactMethod('phone')}>
+                          <Phone size={15} aria-hidden="true" /> Phone
+                        </button>
                       </div>
-                      <small>Include the country code. Nigerian numbers starting with 0 are converted automatically.</small>
-                    </div>
+                    </>
+                  )}
 
-                    {phoneStage === 'sent' && (
-                      <div className="auth-field">
-                        <OtpInput id="auth-otp" label={`Code sent to ${phoneSentTo}`} value={otp} onChange={setOtp} />
-                        <small>Enter the code from the text message. <button className="auth-text-button auth-inline-button" type="button" onClick={() => { setPhoneStage('idle'); setOtp(''); setPhoneSentTo(''); }}>Use a different number</button></small>
+                  {currentMode === 'signup' && (
+                    <fieldset className="auth-account-types">
+                      <legend>How will you use EduReach?</legend>
+                      <div className="auth-account-options">
+                        {accountTypes.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`auth-account-option${option.value === accountType ? ' is-selected' : ''}${option.available ? '' : ' is-coming-soon'}`}
+                            aria-pressed={option.value === accountType}
+                            aria-describedby={option.available ? undefined : 'auth-coming-soon'}
+                            disabled={!option.available}
+                            onClick={() => { if (option.available) setAccountType(option.value); }}
+                          >
+                            <span className="auth-account-icon"><UserRound size={17} /></span>
+                            <span>
+                              <strong>{option.label}</strong>
+                              <small>{option.available ? option.detail : 'Not open yet'}</small>
+                            </span>
+                          </button>
+                        ))}
                       </div>
-                    )}
-                    {currentMode === 'signup' && (
-                      <p className="auth-phone-note">A phone account has no password. You can sign in with a code each time and add academic details after you arrive.</p>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {(currentMode === 'signup' || currentMode === 'signin' || currentMode === 'forgot') && (
-                      <div className="auth-field">
-                        <label htmlFor="auth-email">{currentMode === 'forgot' ? 'Account email' : 'Email address'}</label>
-                        <div className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="auth-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} required /></div>
-                        {currentMode === 'signup' && <small>We use this for sign-in and account updates.</small>}
-                      </div>
-                    )}
+                      <p className="auth-account-note" id="auth-coming-soon">
+                        Parent and teacher accounts are not available yet.
+                      </p>
+                    </fieldset>
+                  )}
 
-                    {currentMode === 'signup' && (
-                      <div className="auth-field">
-                        <label htmlFor="auth-phone">Phone number <span className="auth-optional">Optional</span></label>
-                        <div className="auth-input-wrap"><Phone size={17} aria-hidden="true" /><input id="auth-phone" name="tel" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" inputMode="tel" maxLength={20} placeholder="+234 801 234 5678" /></div>
-                        <small>For account recovery and optional SMS alerts. You can add it later.</small>
-                      </div>
-                    )}
-
-                    {currentMode === 'signin' && (
-                      <div className="auth-field">
-                        <div className="auth-label-row">
-                          <label htmlFor="auth-password">Password</label>
-                          <button className="auth-text-button" type="button" onClick={() => changeMode('forgot')}>Forgot password?</button>
-                        </div>
-                        <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="current-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
-                      </div>
-                    )}
-
-                    {(currentMode === 'signup' || currentMode === 'reset') && (
-                      <div className="auth-field-grid">
-                        <div className="auth-field">
-                          <label htmlFor="auth-password">{currentMode === 'signup' ? 'Create password' : 'New password'}</label>
-                          <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="new-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={8} required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
-                        </div>
-                        <div className="auth-field">
-                          <label htmlFor="auth-confirm-password">Confirm password</label>
-                          <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required /></div>
-                        </div>
-                      </div>
-                    )}
-                    {(currentMode === 'signup' || currentMode === 'reset') && (
-                      <PasswordStrengthMeter value={password} confirm={confirmPassword} />
-                    )}
-                  </>
-                )}
-
-                {currentMode === 'signup' && !phoneMethod && (
-                  <fieldset className="auth-student-details">
-                    <legend><GraduationCap size={17} /> Personalise your student account <span>Optional</span></legend>
-                    <p>You can skip these now and complete your profile later.</p>
-                    <div className="auth-field">
-                      <label htmlFor="auth-school">School or institution</label>
-                      <input id="auth-school" name="school" type="text" list="auth-school-options" value={school} onChange={(event) => setSchool(event.target.value)} autoComplete="organization" maxLength={120} placeholder="Start typing your school" />
-                      <datalist id="auth-school-options">{commonInstitutions.map((item) => <option key={item} value={item} />)}</datalist>
-                    </div>
+                  {currentMode === 'signup' && (
                     <div className="auth-field-grid">
                       <div className="auth-field">
-                        <label htmlFor="auth-level">Current level</label>
-                        <select id="auth-level" name="level" value={level} onChange={(event) => setLevel(event.target.value)}>
-                          <option value="">Choose if applicable</option>
-                          {levels.map((item) => <option key={item} value={item}>{item}</option>)}
-                        </select>
+                        <label htmlFor="auth-first-name">First name</label>
+                        <input id="auth-first-name" name="given-name" type="text" value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" maxLength={80} required />
                       </div>
                       <div className="auth-field">
-                        <label htmlFor="auth-course">Course or programme</label>
-                        <input id="auth-course" name="course_programme" type="text" list="auth-course-options" value={courseProgramme} onChange={(event) => setCourseProgramme(event.target.value)} maxLength={120} placeholder="Optional" />
-                        <datalist id="auth-course-options">{courseProgrammes.filter((item) => item !== 'Other programme').map((item) => <option key={item} value={item} />)}</datalist>
+                        <label htmlFor="auth-last-name">Last name</label>
+                        <input id="auth-last-name" name="family-name" type="text" value={lastName} onChange={(event) => setLastName(event.target.value)} autoComplete="family-name" maxLength={80} required />
                       </div>
                     </div>
-                  </fieldset>
-                )}
+                  )}
 
-                {currentMode === 'signup' && (
-                  <div className="auth-legal-intro auth-legal-intro--bottom">
-                    <label className="auth-consent">
-                      <input
-                        ref={termsRef}
-                        type="checkbox"
-                        checked={termsAgreed}
-                        onChange={(event) => setTermsAgreed(event.target.checked)}
-                        required
-                      />
-                      <span>
-                        I am 16 or older, and I agree to the <a className="auth-legal-link" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a className="auth-legal-link" href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
-                      </span>
-                    </label>
-                  </div>
-                )}
+                  {phoneMethod && allowModeSwitch ? (
+                    <>
+                      <div className="auth-field">
+                        <label htmlFor="auth-phone">{currentMode === 'signup' ? 'Phone number' : 'Phone number for sign-in'}</label>
+                        <div className="auth-input-wrap"><Phone size={17} aria-hidden="true" />
+                          <input
+                            id="auth-phone"
+                            name="tel"
+                            type="tel"
+                            value={phone}
+                            onChange={(event) => {
+                              setPhone(event.target.value);
+                              if (phoneStage === 'sent') {
+                                setPhoneStage('idle');
+                                setPhoneSentTo('');
+                                setOtp('');
+                              }
+                            }}
+                            autoComplete="tel"
+                            inputMode="tel"
+                            maxLength={20}
+                            placeholder="+234 801 234 5678"
+                            required
+                          />
+                        </div>
+                        <small>Include the country code. Nigerian numbers starting with 0 are converted automatically.</small>
+                      </div>
 
-                <button className="auth-submit" type="submit" disabled={busy || phoneBusy} aria-busy={busy || phoneBusy} data-ready={authFormComplete}>
-                  {(busy || phoneBusy) ? 'Please wait…' : submitLabel}
-                  {!(busy || phoneBusy) && <ArrowRight size={17} aria-hidden="true" />}
-                </button>
-              </form>
-            )}
+                      {phoneStage === 'sent' && (
+                        <div className="auth-field">
+                          <OtpInput id="auth-otp" label={`Code sent to ${phoneSentTo}`} value={otp} onChange={setOtp} />
+                          <small>Enter the code from the text message. <button className="auth-text-button auth-inline-button" type="button" onClick={() => { setPhoneStage('idle'); setOtp(''); setPhoneSentTo(''); }}>Use a different number</button></small>
+                        </div>
+                      )}
+                      {currentMode === 'signup' && (
+                        <p className="auth-phone-note">A phone account has no password. You can sign in with a code each time and add academic details after you arrive.</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {(currentMode === 'signup' || currentMode === 'signin' || currentMode === 'forgot') && (
+                        <div className="auth-field">
+                          <label htmlFor="auth-email">{currentMode === 'forgot' ? 'Account email' : 'Email address'}</label>
+                          <div className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="auth-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} required /></div>
+                          {currentMode === 'signup' && <small>We use this for sign-in and account updates.</small>}
+                        </div>
+                      )}
 
-            {allowModeSwitch && (
-              <p className="auth-switch-copy">
-                {currentMode === 'signin' ? 'New to EduReach?' : 'Already have an account?'}
-                {' '}
-                <button className="auth-text-button" type="button" onClick={() => changeMode(currentMode === 'signin' ? 'signup' : 'signin')}>
-                  {currentMode === 'signin' ? 'Create an account' : 'Sign in'}
-                </button>
-              </p>
-            )}
+                      {currentMode === 'signup' && (
+                        <div className="auth-field">
+                          <label htmlFor="auth-phone">Phone number <span className="auth-optional">Optional</span></label>
+                          <div className="auth-input-wrap"><Phone size={17} aria-hidden="true" /><input id="auth-phone" name="tel" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" inputMode="tel" maxLength={20} placeholder="+234 801 234 5678" /></div>
+                          <small>For account recovery and optional SMS alerts. You can add it later.</small>
+                        </div>
+                      )}
 
-            {(currentMode === 'forgot' || currentMode === 'reset') && (
-              <button className="auth-text-button auth-back-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
-            )}
-          </section>
+                      {currentMode === 'signin' && (
+                        <div className="auth-field">
+                          <div className="auth-label-row">
+                            <label htmlFor="auth-password">Password</label>
+                            <button className="auth-text-button" type="button" onClick={() => changeMode('forgot')}>Forgot password?</button>
+                          </div>
+                          <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="current-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
+                        </div>
+                      )}
+
+                      {(currentMode === 'signup' || currentMode === 'reset') && (
+                        <div className="auth-field-grid">
+                          <div className="auth-field">
+                            <label htmlFor="auth-password">{currentMode === 'signup' ? 'Create password' : 'New password'}</label>
+                            <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="new-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={8} required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
+                          </div>
+                          <div className="auth-field">
+                            <label htmlFor="auth-confirm-password">Confirm password</label>
+                            <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required /></div>
+                          </div>
+                        </div>
+                      )}
+                      {(currentMode === 'signup' || currentMode === 'reset') && (
+                        <PasswordStrengthMeter value={password} confirm={confirmPassword} />
+                      )}
+                    </>
+                  )}
+
+                  {currentMode === 'signup' && !phoneMethod && (
+                    <fieldset className="auth-student-details">
+                      <legend><GraduationCap size={17} /> Personalise your student account <span>Optional</span></legend>
+                      <p>You can skip these now and complete your profile later.</p>
+                      <div className="auth-field">
+                        <label htmlFor="auth-school">School or institution</label>
+                        <input id="auth-school" name="school" type="text" list="auth-school-options" value={school} onChange={(event) => setSchool(event.target.value)} autoComplete="organization" maxLength={120} placeholder="Start typing your school" />
+                        <datalist id="auth-school-options">{commonInstitutions.map((item) => <option key={item} value={item} />)}</datalist>
+                      </div>
+                      <div className="auth-field-grid">
+                        <div className="auth-field">
+                          <label htmlFor="auth-level">Current level</label>
+                          <select id="auth-level" name="level" value={level} onChange={(event) => setLevel(event.target.value)}>
+                            <option value="">Choose if applicable</option>
+                            {levels.map((item) => <option key={item} value={item}>{item}</option>)}
+                          </select>
+                        </div>
+                        <div className="auth-field">
+                          <label htmlFor="auth-course">Course or programme</label>
+                          <input id="auth-course" name="course_programme" type="text" list="auth-course-options" value={courseProgramme} onChange={(event) => setCourseProgramme(event.target.value)} maxLength={120} placeholder="Optional" />
+                          <datalist id="auth-course-options">{courseProgrammes.filter((item) => item !== 'Other programme').map((item) => <option key={item} value={item} />)}</datalist>
+                        </div>
+                      </div>
+                    </fieldset>
+                  )}
+
+                  {currentMode === 'signup' && (
+                    <div className="auth-legal-intro auth-legal-intro--bottom">
+                      <label className="auth-consent">
+                        <input
+                          ref={termsRef}
+                          type="checkbox"
+                          checked={termsAgreed}
+                          onChange={(event) => setTermsAgreed(event.target.checked)}
+                          required
+                        />
+                        <span>
+                          I am 16 or older, and I agree to the <a className="auth-legal-link" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a className="auth-legal-link" href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  <button className="auth-submit" type="submit" disabled={busy || phoneBusy} aria-busy={busy || phoneBusy} data-ready={authFormComplete}>
+                    {(busy || phoneBusy) ? 'Please wait…' : submitLabel}
+                    {!(busy || phoneBusy) && <ArrowRight size={17} aria-hidden="true" />}
+                  </button>
+                </form>
+              )}
+
+              {allowModeSwitch && (
+                <p className="auth-switch-copy">
+                  {currentMode === 'signin' ? 'New to EduReach?' : 'Already have an account?'}
+                  {' '}
+                  <button className="auth-text-button" type="button" onClick={() => changeMode(currentMode === 'signin' ? 'signup' : 'signin')}>
+                    {currentMode === 'signin' ? 'Create an account' : 'Sign in'}
+                  </button>
+                </p>
+              )}
+
+              {(currentMode === 'forgot' || currentMode === 'reset') && (
+                <button className="auth-text-button auth-back-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
+              )}
+            </section>
+          </div>
         </div>
-
-        <footer className="auth-footer">
-          <span>© {new Date().getFullYear()} EduReach Hub</span>
-          <span>Secure account access</span>
-        </footer>
-      </div>
-    </main>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

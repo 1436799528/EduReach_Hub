@@ -2,13 +2,17 @@
  * Bank security console.
  *
  * Scoped to the page only (`.bs-*` selectors) so the admin console's card
- * system stays the source of truth. The two brand colours are fixed here:
- *   deep green #174A3A  - public / permitted / active
+ * system stays the source of truth. The colours are fixed here:
+ *   blue      #1E40AF  - actions, selection, headings
+ *   green     #174A3A  - public / permitted (a semantic state, not an action)
  *   crimson   #B14933  - restricted / embargoed / destructive
  * Everything is a single column at narrow widths and two columns from 1080px.
  */
 
 .bs-page {
+  --bs-blue: #1e40af;
+  --bs-blue-soft: #eef2ff;
+  --bs-blue-border: #c7d2fe;
   --bs-green: #174a3a;
   --bs-green-soft: #eef4f1;
   --bs-green-border: #c9dcd4;
@@ -25,7 +29,7 @@
 .bs-page h1,
 .bs-page h2,
 .bs-page h3 {
-  color: var(--bs-green);
+  color: var(--bs-blue);
 }
 
 .bs-layout {
@@ -65,11 +69,12 @@
 }
 
 .bs-stat span { color: var(--admin-muted); font: 600 11px var(--er-font-sans); letter-spacing: .06em; text-transform: uppercase; }
-.bs-stat strong { color: var(--bs-green); font: 700 24px var(--er-font-sans); }
+.bs-stat strong { color: var(--bs-blue); font: 700 24px var(--er-font-sans); }
 
 .bs-stat-warn { border-left-color: #b07a1f; }
 .bs-stat-warn strong { color: #8a5f13; }
 .bs-stat-ok { border-left-color: var(--bs-green); }
+.bs-stat-ok strong { color: var(--bs-green); }
 .bs-stat-danger { border-left-color: var(--bs-crimson); }
 .bs-stat-danger strong { color: var(--bs-crimson); }
 
@@ -102,7 +107,7 @@
   padding: 10px 16px;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--bs-green);
+  background: var(--bs-blue);
   color: #fff;
   font: 700 12px var(--er-font-sans);
   cursor: pointer;
@@ -111,12 +116,12 @@
 
 .bs-btn:hover:not(:disabled) { filter: brightness(1.08); }
 .bs-btn:disabled { opacity: .55; cursor: default; }
-.bs-btn:focus-visible { outline: 3px solid rgba(23, 74, 58, .35); outline-offset: 2px; }
+.bs-btn:focus-visible { outline: 3px solid rgba(30, 64, 175, .35); outline-offset: 2px; }
 
 .bs-btn-ghost {
   background: #fff;
-  color: var(--bs-green);
-  border-color: var(--bs-green-border);
+  color: var(--bs-blue);
+  border-color: var(--bs-blue-border);
 }
 
 .bs-btn-danger { background: #fff; color: var(--bs-crimson); border-color: var(--bs-crimson-border); }
@@ -138,8 +143,8 @@
   cursor: pointer;
 }
 
-.bs-chip.is-active { background: var(--bs-green-soft); border-color: var(--bs-green-border); color: var(--bs-green); }
-.bs-chip:focus-visible { outline: 3px solid rgba(23, 74, 58, .3); outline-offset: 1px; }
+.bs-chip.is-active { background: var(--bs-blue-soft); border-color: var(--bs-blue-border); color: var(--bs-blue); }
+.bs-chip:focus-visible { outline: 3px solid rgba(30, 64, 175, .3); outline-offset: 1px; }
 
 .bs-bank-list { list-style: none; margin: 0; padding: 8px 14px 16px; display: grid; gap: 8px; }
 
@@ -156,11 +161,11 @@
   transition: border-color .18s ease, background .18s ease;
 }
 
-.bs-bank:hover { border-color: var(--bs-green-border); background: #fcfdfc; }
-.bs-bank.is-selected { border-color: var(--bs-green); box-shadow: inset 3px 0 0 var(--bs-green); background: var(--bs-green-soft); }
-.bs-bank:focus-visible { outline: 3px solid rgba(23, 74, 58, .3); outline-offset: 1px; }
+.bs-bank:hover { border-color: var(--bs-blue-border); background: #fcfdff; }
+.bs-bank.is-selected { border-color: var(--bs-blue); box-shadow: inset 3px 0 0 var(--bs-blue); background: var(--bs-blue-soft); }
+.bs-bank:focus-visible { outline: 3px solid rgba(30, 64, 175, .3); outline-offset: 1px; }
 
-.bs-bank-title { color: var(--bs-green); font: 700 14px var(--er-font-sans); }
+.bs-bank-title { color: var(--bs-blue); font: 700 14px var(--er-font-sans); }
 .bs-bank-meta { color: var(--admin-muted); font: 500 12px var(--er-font-sans); }
 .bs-bank-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
 
@@ -232,15 +237,15 @@
   color: var(--admin-text);
   font: 500 13px var(--er-font-sans);
 }
-.bs-field input:focus-visible { outline: 3px solid rgba(23, 74, 58, .25); outline-offset: 1px; border-color: var(--bs-green); }
+.bs-field input:focus-visible { outline: 3px solid rgba(30, 64, 175, .25); outline-offset: 1px; border-color: var(--bs-blue); }
 .bs-field small { color: var(--admin-muted); font: 500 11.5px/1.5 var(--er-font-sans); }
 
 .bs-fieldset { border: 1px solid var(--bs-neutral-border); border-radius: var(--bs-radius); padding: 14px 16px; margin: 0; display: grid; gap: 12px; }
-.bs-fieldset legend { padding: 0 6px; color: var(--bs-green); font: 700 12px var(--er-font-sans); }
+.bs-fieldset legend { padding: 0 6px; color: var(--bs-blue); font: 700 12px var(--er-font-sans); }
 
 .bs-radio { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; align-items: start; font: 500 12.5px/1.6 var(--er-font-sans); color: #3d4a44; }
-.bs-radio input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--bs-green); }
-.bs-radio b { color: var(--bs-green); }
+.bs-radio input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--bs-blue); }
+.bs-radio b { color: var(--bs-blue); }
 
 /* --- search + tables ---------------------------------------------------- */
 
@@ -252,12 +257,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 11px 13px;
-  border: 1px solid var(--bs-green-border);
+  border: 1px solid var(--bs-blue-border);
   border-radius: var(--bs-radius);
-  background: var(--bs-green-soft);
+  background: var(--bs-blue-soft);
 }
 .bs-search-results span { display: grid; gap: 2px; }
-.bs-search-results b { color: var(--bs-green); font: 600 13px var(--er-font-sans); }
+.bs-search-results b { color: var(--bs-blue); font: 600 13px var(--er-font-sans); }
 .bs-search-results small { color: var(--admin-muted); font: 500 11.5px var(--er-font-sans); }
 
 .bs-subheading { margin: 6px 20px 10px; font: 700 12px var(--er-font-sans); letter-spacing: .05em; text-transform: uppercase; }
@@ -272,10 +277,10 @@
   display: grid;
   gap: 2px;
   padding: 11px 0 11px 16px;
-  border-left: 2px solid var(--bs-green-border);
+  border-left: 2px solid var(--bs-blue-border);
 }
 .bs-timeline li + li { border-top: 1px solid var(--admin-border); }
-.bs-timeline strong { color: var(--bs-green); font: 600 12.5px var(--er-font-sans); text-transform: capitalize; }
+.bs-timeline strong { color: var(--bs-blue); font: 600 12.5px var(--er-font-sans); text-transform: capitalize; }
 .bs-timeline span { color: var(--admin-muted); font: 500 11.5px var(--er-font-sans); }
 
 .bs-visually-hidden {

@@ -65,7 +65,8 @@ test('the bar survives the widths the header search does not', () => {
   // The header form is hidden under 1040px; the home bar has no such rule, and
   // its field is allowed to shrink, which is what keeps it usable on a phone.
   assert.match(portal, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/);
-  assert.match(portal, /\.site-search--home \{[^}]*min-height: 48px/);
+  assert.match(portal, /\.site-search \{[^}]*min-height: 48px/, 'one canonical height');
+  assert.doesNotMatch(portal, /\.site-search--(?:header|home|page|drawer|dashboard) \{[^}]*min-height/, 'variants do not override the height');
   assert.match(portal, /\.site-search input \{[^}]*min-width: 0/);
   assert.match(portal, /\.site-search > button\[type="submit"\] \{[^}]*min-height: 44px/);
   assert.match(portal, /@media \(max-width: 768px\)[\s\S]*?\.site-search--home, \.site-search--page, \.site-search--drawer \{ width: 100%; \}/);

@@ -150,20 +150,6 @@
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
 }
 
-.ms-search-input {
-  flex: 1;
-  border: 0;
-  outline: none;
-  font-size: 14px;
-  color: #0f172a;
-  background: transparent;
-  padding: 6px 0;
-}
-
-.ms-search-input::placeholder {
-  color: #5e6c82;
-}
-
 /* 4. MYSCHOOL TOP 4 EXAM & SERVICE TILES (Compact, Just Like Myschool.ng) */
 .ms-top-tiles-grid {
   display: grid;
@@ -529,7 +515,7 @@
   border: 0 !important;
   border-radius: 8px !important;
   font-weight: 560;
-  box-shadow: 0 2px 6px rgba(23, 74, 58, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25) !important;
   transition: all 0.15s ease !important;
 }
 
@@ -590,12 +576,6 @@
   }
   .hub-mobile-trigger {
     display: inline-flex !important;
-  }
-}
-
-@media (max-width: 680px) {
-  .hub-desktop-search {
-    display: none !important;
   }
 }
 
@@ -809,7 +789,7 @@
   justify-content: center !important;
   background: linear-gradient(115deg,#0f766e,#159a8a) !important;
 }
-.ms-service-card:nth-child(2) { background: linear-gradient(115deg,#1e3a8a,#0a3e83) !important; }
+.ms-service-card:nth-child(2) { background: linear-gradient(115deg,#1e3a8a,#1E40AF) !important; }
 .ms-service-card:nth-child(3) { background: linear-gradient(115deg,#7c2d12,#b45309) !important; }
 .ms-service-card .ms-service-card-header,
 .ms-service-card .ms-service-body { position: relative !important; z-index: 1 !important; }
@@ -878,10 +858,6 @@
   padding:8px 0 28px !important;
   background:#f7f8fa;
 }
-.edureach-landing > .hub-container{
-  width:calc(100% - 28px) !important;
-  max-width:1280px !important;
-}
 .ms-ticker-strip{
   min-height:30px !important;
   padding:5px 10px !important;
@@ -901,10 +877,6 @@
   margin-bottom:9px !important;
   border-radius:5px !important;
   box-shadow:none !important;
-}
-.ms-search-input{
-  font-size:12px !important;
-  padding:4px 0 !important;
 }
 .ms-top-tiles-grid{
   gap:7px !important;
@@ -1035,7 +1007,6 @@
 }
 
 @media(max-width:700px){
-  .edureach-landing > .hub-container{width:calc(100% - 14px) !important}
   .ms-top-tiles-grid{gap:5px !important}
   .ms-top-tile{min-height:64px !important;padding:7px !important}
   .ms-top-tile-icon{width:32px !important;height:32px !important}

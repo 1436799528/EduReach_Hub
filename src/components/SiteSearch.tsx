@@ -7,7 +7,6 @@ export type SiteSearchProps = {
   variant?: 'header' | 'drawer' | 'home' | 'dashboard' | 'page';
   label?: string;
   placeholder?: string;
-  submitLabel?: string;
   initialQuery?: string;
   items?: SiteSearchItem[];
   suggestionsLoading?: boolean;
@@ -21,7 +20,6 @@ export default function SiteSearch({
   variant = 'header',
   label = 'Search EduReach',
   placeholder = 'Search EduReach',
-  submitLabel = 'Search',
   initialQuery = '',
   items: providedItems,
   suggestionsLoading = false,
@@ -33,6 +31,7 @@ export default function SiteSearch({
   const generatedId = useId();
   const listId = `site-search-options-${generatedId}`;
   const rootRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(initialQuery);
   const [catalog, setCatalog] = useState<SiteSearchItem[]>(providedItems || []);
   const [catalogLoading, setCatalogLoading] = useState(false);
@@ -91,6 +90,14 @@ export default function SiteSearch({
     if (value.trim()) void loadCatalog();
   }
 
+  function clearQuery() {
+    setQuery('');
+    onQueryChange?.('');
+    setOpen(false);
+    setActiveIndex(-1);
+    inputRef.current?.focus();
+  }
+
   function goToSearch(value: string) {
     const normalized = value.trim();
     navigateInApp(normalized ? `/search?q=${encodeURIComponent(normalized)}` : '/search');
@@ -144,7 +151,12 @@ export default function SiteSearch({
       aria-label={label}
       onSubmit={submit}
     >
+      <svg className="site-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
       <input
+        ref={inputRef}
         type="search"
         role={suggestionsEnabled ? 'combobox' : undefined}
         value={query}
@@ -161,7 +173,14 @@ export default function SiteSearch({
         autoComplete="off"
         autoFocus={autoFocus}
       />
-      <button type="submit">{submitLabel}</button>
+      {query && (
+        <button type="button" className="site-search-clear" aria-label="Clear search" onClick={clearQuery}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="m7 7 10 10M17 7 7 17" />
+          </svg>
+        </button>
+      )}
+      <button type="submit">Search</button>
       {suggestionsOpen && (
         <div className="site-search-popover">
           {isLoading && !visibleItems.length ? (

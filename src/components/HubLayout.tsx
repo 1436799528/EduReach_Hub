@@ -12,6 +12,12 @@ import {
   Newspaper,
   Briefcase,
   MessageCircle,
+  BookOpenCheck,
+  FileText,
+  GraduationCap,
+  BarChart3,
+  Settings,
+  ChevronDown,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import SkipLink from './a11y/SkipLink';
@@ -113,63 +119,60 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </a>
           </div>
 
-          {/* DESKTOP NAVIGATION LINKS — one primary destination per job. */}
+          {/* DESKTOP NAVIGATION — the five student jobs, then a secondary
+              menu. News, services and scholarships are not primary tasks, so
+              they stop competing with practice for the first five slots. */}
           <nav className="hub-desktop-nav" aria-label="Primary">
             {[
-              { href: '/', label: 'Home', active: path === '/' },
-              { href: '/cbt', label: 'CBT practice', active: path.startsWith('/cbt') },
-              { href: '/past-questions', label: 'Past questions', active: path.startsWith('/past-questions') },
-              { href: '/services', label: 'Services', active: path.startsWith('/services') && path !== '/services/track' },
-              { href: '/news', label: 'News', active: path.startsWith('/news') },
-              { href: '/jobs', label: 'Scholarships', active: path === '/jobs' },
+              { href: '/', label: 'Home', Icon: Home, active: path === '/' },
+              { href: '/cbt', label: 'Practice', Icon: BookOpenCheck, active: path.startsWith('/cbt') },
+              { href: '/past-questions', label: 'Past questions', Icon: FileText, active: path.startsWith('/past-questions') },
+              {
+                href: isAuthenticated ? '/dashboard/cbt' : '/login',
+                label: 'My CBT',
+                Icon: Laptop,
+                active: isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results'),
+              },
+              {
+                href: isAuthenticated ? '/dashboard/cbt/results' : '/login',
+                label: 'Results',
+                Icon: BarChart3,
+                active: isAuthenticated && path.startsWith('/dashboard/cbt/results'),
+              },
             ].map((item) => (
               <a
-                key={item.href}
+                key={item.label}
                 href={item.href}
                 className="hub-nav-link"
                 aria-current={item.active ? 'page' : undefined}
               >
+                <item.Icon size={15} aria-hidden="true" />
                 {item.label}
               </a>
             ))}
-            <a
-              href={`https://wa.me/${EDUREACH_WHATSAPP}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hub-nav-link hub-nav-link--quiet"
-            >
-              <MessageCircle size={14} /> Talk to us
-            </a>
+            <details className="hub-more" onKeyDown={(event) => {
+              if (event.key !== 'Escape') return;
+              const details = event.currentTarget;
+              details.open = false;
+              details.querySelector('summary')?.focus();
+            }}>
+              <summary className="hub-nav-link">
+                More <ChevronDown size={14} aria-hidden="true" />
+              </summary>
+              <div className="hub-more-panel">
+                <a href="/services"><Briefcase size={15} aria-hidden="true" /> Services</a>
+                <a href="/news"><Newspaper size={15} aria-hidden="true" /> News</a>
+                <a href="/jobs"><GraduationCap size={15} aria-hidden="true" /> Scholarships</a>
+                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} aria-hidden="true" /> Talk to us</a>
+              </div>
+            </details>
           </nav>
 
-          {path !== '/' && <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" submitLabel="Go" />}
+          {path !== '/' && <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" />}
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {!isLoading && isAuthenticated && <NotificationCenter />}
-            {!isLoading && isAuthenticated && (
-              <a
-                href="/dashboard/services"
-                className="hub-requests-link"
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  color: '#334155',
-                  borderRadius: '7px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  fontWeight: 620,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}
-              >
-                <ScanSearch size={14} color="#b14933" />
-                <span className="hub-requests-label">My Requests</span>
-              </a>
-            )}
-
             {!isLoading && !isAuthenticated && (
               <a
                 href="/login"
@@ -182,7 +185,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                   fontSize: '12px',
                   fontWeight: 620,
                   textDecoration: 'none',
-                  boxShadow: '0 2px 6px rgba(23, 74, 58, 0.25)',
+                  boxShadow: '0 2px 6px rgba(30, 64, 175, 0.25)',
                 }}
               >
                 Sign In
@@ -211,7 +214,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: '0 2px 6px rgba(200, 88, 65, 0.22)',
+                    boxShadow: '0 2px 6px rgba(30, 64, 175, 0.22)',
                   }}
                 >
                   <span className="hub-profile-trigger-name"><User size={14} /> {firstName}</span>
@@ -249,6 +252,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     </a>
                     <a href="/dashboard/cbt" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
                       <Laptop size={14} /> My CBT
+                    </a>
+                    <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
+                      <Settings size={14} /> Settings
                     </a>
                     <button
                       type="button"
@@ -346,21 +352,40 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             <SiteSearch variant="drawer" label="Site search (mobile)" onNavigate={() => setMobileOpen(false)} />
 
             <nav className="hub-mobile-nav" aria-label="Site sections">
+              <p className="hub-mobile-nav-label">Study</p>
               {[
                 { href: '/', label: 'Home', active: path === '/' },
-                { href: '/cbt', label: 'CBT practice', active: path.startsWith('/cbt') },
+                { href: '/cbt', label: 'Practice', active: path.startsWith('/cbt') },
                 { href: '/past-questions', label: 'Past questions', active: path.startsWith('/past-questions') },
+                {
+                  href: isAuthenticated ? '/dashboard/cbt' : '/login',
+                  label: 'My CBT',
+                  active: isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results'),
+                },
+                {
+                  href: isAuthenticated ? '/dashboard/cbt/results' : '/login',
+                  label: 'Results',
+                  active: isAuthenticated && path.startsWith('/dashboard/cbt/results'),
+                },
+              ].map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  aria-current={item.active ? 'page' : undefined}
+                >
+                  {item.label}
+                </a>
+              ))}
+
+              <p className="hub-mobile-nav-label">Explore</p>
+              {[
                 { href: '/services', label: 'Services', active: path.startsWith('/services') && path !== '/services/track' },
                 { href: '/news', label: 'News and noticeboard', active: path.startsWith('/news') },
                 { href: '/jobs', label: 'Scholarships and grants', active: path === '/jobs' },
-                ...(isAuthenticated ? [
-                  { href: '/dashboard', label: 'Dashboard', active: path.startsWith('/dashboard') },
-                  { href: '/dashboard/services', label: 'My requests', active: path === '/dashboard/services' },
-                  { href: '/profile', label: 'Academic profile', active: path === '/profile' },
-                ] : []),
               ].map((item) => (
                 <a
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   aria-current={item.active ? 'page' : undefined}
@@ -377,6 +402,27 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               >
                 <MessageCircle size={16} /> Talk to us
               </a>
+
+              {isAuthenticated && (
+                <>
+                  <p className="hub-mobile-nav-label">Account</p>
+                  {[
+                    { href: '/dashboard', label: 'Dashboard', active: path === '/dashboard' },
+                    { href: '/dashboard/services', label: 'My requests', active: path === '/dashboard/services' },
+                    { href: '/profile', label: 'Profile', active: path === '/profile' },
+                    { href: '/settings', label: 'Settings', active: path === '/settings' || path === '/dashboard/settings' },
+                  ].map((item) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      aria-current={item.active ? 'page' : undefined}
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </>
+              )}
             </nav>
 
             <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #f1f5f9', display: 'grid', gap: '10px' }}>
@@ -436,13 +482,14 @@ export default function HubLayout({ children }: { children: ReactNode }) {
         )}
       </main>
 
-      {/* MOBILE PORTAL NAVIGATION */}
+      {/* MOBILE PORTAL NAVIGATION — the five jobs a phone user performs, each
+          with an icon and its short label. Everything else lives in the menu. */}
       <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
-        <a className={path === '/' ? 'active' : ''} aria-current={path === '/' ? 'page' : undefined} href="/"><Home size={18} /><span>Home</span></a>
-        <a className={path.startsWith('/news') ? 'active' : ''} aria-current={path.startsWith('/news') ? 'page' : undefined} href="/news"><Newspaper size={18} /><span>News</span></a>
-        <a className={`mobile-cbt${path.startsWith('/cbt') ? ' active' : ''}`} aria-current={path.startsWith('/cbt') ? 'page' : undefined} href="/cbt"><Laptop size={22} /><span>CBT</span></a>
-        <a className={path.startsWith('/services') ? 'active' : ''} aria-current={path.startsWith('/services') ? 'page' : undefined} href="/services"><Briefcase size={18} /><span>Services</span></a>
-        <a className={path.startsWith('/dashboard') || path === '/login' ? 'active' : ''} aria-current={path.startsWith('/dashboard') || path === '/login' ? 'page' : undefined} href={isAuthenticated ? '/dashboard' : '/login'}><User size={18} /><span>Account</span></a>
+        <a className={path === '/' ? 'active' : ''} aria-current={path === '/' ? 'page' : undefined} href="/"><Home size={18} aria-hidden="true" /><span>Home</span></a>
+        <a className={path.startsWith('/cbt') ? 'active' : ''} aria-current={path.startsWith('/cbt') ? 'page' : undefined} href="/cbt"><BookOpenCheck size={18} aria-hidden="true" /><span>Practice</span></a>
+        <a className={isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results') ? 'active' : ''} aria-current={isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results') ? 'page' : undefined} href={isAuthenticated ? '/dashboard/cbt' : '/login'}><Laptop size={18} aria-hidden="true" /><span>My CBT</span></a>
+        <a className={isAuthenticated && path.startsWith('/dashboard/cbt/results') ? 'active' : ''} aria-current={isAuthenticated && path.startsWith('/dashboard/cbt/results') ? 'page' : undefined} href={isAuthenticated ? '/dashboard/cbt/results' : '/login'}><BarChart3 size={18} aria-hidden="true" /><span>Results</span></a>
+        <a className={path === '/profile' || path === '/settings' ? 'active' : ''} aria-current={path === '/profile' || path === '/settings' ? 'page' : undefined} href={isAuthenticated ? '/profile' : '/login'}><User size={18} aria-hidden="true" /><span>Profile</span></a>
       </nav>
 
       <SiteFooter />

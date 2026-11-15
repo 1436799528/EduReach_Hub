@@ -34,7 +34,7 @@
   color: var(--er-text-muted, #64748b);
   cursor: pointer;
 }
-.er-cookie-close:focus-visible { outline: 3px solid var(--er-primary, #0a3e83); outline-offset: 2px; }
+.er-cookie-close:focus-visible { outline: 3px solid var(--er-primary, #1E40AF); outline-offset: 2px; }
 .er-cookie-consent p,
 .er-cookie-consent label {
   font-size: 12.5px;
@@ -42,10 +42,10 @@
   line-height: 1.55;
 }
 .er-cookie-consent p { margin: 0 0 8px; }
-.er-cookie-consent a { color: var(--er-primary, #0a3e83); font-weight: 500; text-decoration: underline; }
+.er-cookie-consent a { color: var(--er-primary, #1E40AF); font-weight: 500; text-decoration: underline; }
 .er-cookie-options { margin: 10px 0 4px; padding: 10px 0; border-block: 1px solid var(--er-border, #e2e8f0); }
 .er-cookie-options label { display: flex; align-items: flex-start; gap: 8px; }
-.er-cookie-options input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--er-primary, #0a3e83); }
+.er-cookie-options input { flex: none; width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--er-primary, #1E40AF); }
 .er-cookie-error {
   margin: 10px 0;
   padding: 9px 10px;
@@ -80,16 +80,16 @@
   font-weight: 500;
   cursor: pointer;
 }
-.er-cookie-actions button:focus-visible { outline: 3px solid var(--er-primary, #0a3e83); outline-offset: 2px; }
+.er-cookie-actions button:focus-visible { outline: 3px solid var(--er-primary, #1E40AF); outline-offset: 2px; }
 .er-cookie-actions .er-cookie-save,
 .er-cookie-actions .er-cookie-accept {
-  border-color: var(--er-primary, #0a3e83);
-  background: var(--er-primary, #0a3e83);
+  border-color: var(--er-primary, #1E40AF);
+  background: var(--er-primary, #1E40AF);
   color: #fff;
 }
 .er-cookie-actions .er-cookie-save:focus-visible,
-.er-cookie-actions .er-cookie-accept:focus-visible { outline-color: #0a3e83; }
-.er-cookie-consent a:focus-visible { outline: 3px solid var(--er-primary, #0a3e83); outline-offset: 2px; }
+.er-cookie-actions .er-cookie-accept:focus-visible { outline-color: #1E40AF; }
+.er-cookie-consent a:focus-visible { outline: 3px solid var(--er-primary, #1E40AF); outline-offset: 2px; }
 @media (max-width: 600px) {
   .er-cookie-consent { left: 12px; right: 12px; bottom: 12px; width: auto; max-width: none; max-height: calc(100vh - 24px); }
 }

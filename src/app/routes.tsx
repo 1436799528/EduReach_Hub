@@ -51,6 +51,7 @@ const AdminContentManagerPage = lazy(() => import('../../pages/AdminContentManag
 const AdminPdfBankPage = lazy(() => import('../../pages/AdminPdfBankPage'));
 const AdminQuestionImportPage = lazy(() => import('../../pages/AdminQuestionImportPage'));
 const AdminSitePage = lazy(() => import('../../pages/AdminSitePage'));
+const AboutPage = lazy(() => import('../../pages/AboutPage'));
 const LegalPage = lazy(() => import('../../pages/LegalPage'));
 const RefundPolicyPage = lazy(() => import('../../pages/RefundPolicyPage'));
 
@@ -197,6 +198,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/refunds' || path === '/refund-policy') return <RefundPolicyPage />;
   if (path === '/accessibility') return <LegalPage slug="accessibility" />;
   if (path === '/disclaimer') return <LegalPage slug="disclaimer" />;
+  if (path === '/about') return <AboutPage />;
   if (path === '/contact' || path === '/contact-us') return <LegalPage slug="contact" />;
 
   if (path === '/news') return <NewsPage />;

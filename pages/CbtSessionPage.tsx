@@ -5,6 +5,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ScientificCalculator from '../src/components/ScientificCalculator';
 import ConnectionBanner from '../src/components/ConnectionBanner';
+import SiteFooter from '../src/components/SiteFooter';
 import { ErrorState } from '../src/components/AsyncState';
 import WaveLoader from '../src/components/WaveLoader';
 import { useAuth } from '../src/lib/auth';
@@ -24,8 +25,10 @@ import './CbtSessionPage.css';
 /**
  * CBT-3 - the examination hall.
  *
- * This is a dedicated shell on purpose: no site header, no footer, no navigation
- * away. The student sees one paper, one timer and two ways out:
+ * This is a dedicated shell on purpose: no site header and no navigation away.
+ * The compact site footer stays at the very bottom of the document so the legal
+ * and cookie entries remain reachable, but the paper, the timer and the two
+ * ways out own the screen:
  *
  *   Submit  - ends the examination, scores the paper and shows the result.
  *   End Test - leaves the examination; the paper is closed, not scored.
@@ -503,12 +506,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             </button>
           )}
         </div>
+        <SiteFooter />
       </div>
     );
   }
 
   if (v2Paper && user?.id?.toLowerCase() !== v2Owner) {
-    return <div className="er-exam-shell"><div className="er-exam-centred" role="alert">The signed-in account changed. Reopen the attempt with the original account; local work is preserved.</div></div>;
+    return <div className="er-exam-shell"><div className="er-exam-centred" role="alert">The signed-in account changed. Reopen the attempt with the original account; local work is preserved.</div><SiteFooter /></div>;
   }
 
   if (loadError || !attempt) {
@@ -525,6 +529,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <ErrorState error={loadError} onRetry={() => void load()} action={<a className="hub-outline-btn" href="/cbt">Back to the CBT Centre</a>} />
           )}
         </div>
+        <SiteFooter />
       </div>
     );
   }
@@ -554,6 +559,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             </div>
           </div>
         </div>
+        <SiteFooter />
       </div>
     );
   }
@@ -906,6 +912,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       </dialog>
 
       {calcOpen && <ScientificCalculator onClose={() => setCalcOpen(false)} />}
+      <SiteFooter />
     </div>
   );
 }

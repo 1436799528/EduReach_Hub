@@ -106,16 +106,17 @@ test('the shared rules are used, not re-implemented per page', () => {
 });
 
 test('the dark footer keeps every text pair above 4.5:1 on navy', () => {
-  // Phase 8 moved the footer from inline styles in HubLayout to a component with
-  // its own rules, so the assertion follows it. Measured on #0f172a:
-  // #94a3b8 6.96, #8fa0b5 6.68, #7d8ca3 5.23, #cbd5e1 12.02, #86efac 12.71.
+  // The compact bar still uses the readable dark surface. Measured on #0f172a:
+  // #94a3b8 6.96, #8fa0b5 6.68, #cbd5e1 12.02, #fff 17.85.
   const css = read('src/edu-portal.css');
   const footer = css.slice(css.indexOf('.er-footer{'), css.indexOf('.er-legal-page{'));
   assert.match(footer, /\.er-footer\{background:#0f172a;color:#94a3b8/, 'the footer sets its readable base colour');
   assert.ok(!/#64748b/.test(footer), 'no low-contrast slate is introduced anywhere in the footer');
-  for (const pair of ['#8fa0b5', '#7d8ca3']) {
+  for (const pair of ['#8fa0b5', '#cbd5e1']) {
     assert.ok(footer.includes(pair), `${pair} is a documented footer text colour`);
   }
+  assert.match(footer, /padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom\)\)/, 'the bar clears the phone safe area');
+  assert.doesNotMatch(footer, /er-footer-grid|er-footer-bottom|er-footer-about/, 'the old multi-row footer is gone');
   const component = read('src/components/SiteFooter.tsx');
   assert.doesNotMatch(component, /color:\s*'#/, 'the footer does not override its colours inline');
 });
@@ -135,30 +136,35 @@ test('the product uses one name for the collection and one for each CBT action',
   assert.match(read('pages/StudentDashboardV2.tsx'), /Start practice</);
 });
 
-test('the home page leads with one product statement, not a wall of cards', () => {
+test('the home page opens as a product screen, not a hero', () => {
   const home = read('pages/HubHomePage.tsx');
 
-  // UX-5: the simulator-first layout had no visible statement of what the
-  // product is for. The page now opens with a short product statement and the
-  // two actions a student can take immediately; the exam cards still follow.
-  assert.match(home, /className="er-home-intro"/, 'the visible product statement exists');
-  assert.match(home, /Practise the exam you are sitting\./, 'it says what the product is for');
-  assert.match(home, /Start CBT practice/, 'the primary action is above the fold');
-  assert.match(home, /Browse past questions/, 'the secondary action is present');
+  // UX-7: the oversized statement is gone. The first screen is an application
+  // home: a greeting, the four jobs a student performs, and their own record.
+  assert.match(home, /className="hub-home-container er-home-app"/, 'the product home shell exists');
+  assert.doesNotMatch(home, /er-home-intro|er-home-proof|er-home-steps|er-home-actions/, 'no hero block survives');
+  assert.doesNotMatch(home, /Practise the exam you are sitting\./, 'the slogan is gone');
+  assert.match(home, /className="er-home-greeting"/, 'the first line is the student greeting');
+  for (const action of ['Start practice', 'Past questions', 'My CBT', 'Results']) {
+    assert.ok(home.includes(action), `the ${action} control is on the first screen`);
+  }
+  assert.match(home, /className="er-home-record"/, 'signed-in students see their record as one strip');
+  assert.match(home, /className="er-home-activity"/, 'recent papers are a list, not a card wall');
 
   // Exactly one h1 remains, hidden for structure and screen readers; the
-  // visible product statement is an h2. A page without a heading is an
-  // accessibility regression, not a simplification.
+  // visible greeting is an h2. A page without a heading is an accessibility
+  // regression, not a simplification.
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1, 'exactly one h1');
   assert.match(home, /<h1 className="er-visually-hidden">/, 'it is the screen-reader heading');
-  assert.match(home, /<h2 className="er-home-title"/, 'the visible title is a section heading');
+  assert.match(home, /<h2 className="er-home-greeting" id="er-home-title">/, 'the visible title is a section heading');
   assert.match(read('src/edu-portal.css'), /\.er-visually-hidden\{position:absolute/, 'the class really hides it visually');
 
-  // The old home-local hero classes stay deleted; the new statement is owned
-  // by the UX-5 product layer, not re-grown inside a legacy sheet.
-  for (const sheet of ['src/home-card-first.css', 'src/compact-design-system.css', 'src/compact-structural.css']) {
-    assert.doesNotMatch(read(sheet), /hub-home-intro|hub-home-cta|hub-home-actions/, `${sheet} carries no hero rules`);
-  }
+  // The headline scale is product-sized, not landing-page-sized.
+  const product = read('src/styles/ux5-product.css');
+  const greeting = /\.er-home-greeting \{([^}]*)\}/.exec(product);
+  assert.ok(greeting, 'the greeting has a rule');
+  assert.match(greeting![1], /clamp\(21px, 2\.2vw, 26px\)/, 'it tops out at 26px');
+  assert.doesNotMatch(product, /clamp\(28px, 3\.4vw, 44px\)/, 'the 44px hero headline is deleted');
 });
 
 test('the home page keeps the shared search bar and it still searches', () => {
@@ -167,36 +173,27 @@ test('the home page keeps the shared search bar and it still searches', () => {
   const search = read('src/components/SiteSearch.tsx');
   assert.match(search, /role="search"/, 'it is announced as a search landmark');
   assert.match(search, /aria-label=\{label\}/, 'the field keeps its accessible name');
-  assert.match(home, /placeholder="Search services, subjects, exams or news"/, 'the prompt describes searchable content');
-  assert.match(search, /navigateInApp\(normalized \? `\/search\?q=\$\{encodeURIComponent\(normalized\)\}` : '\/search'\)/, 'submitting goes to the shared search page');
+  assert.match(home, /placeholder="Search services or exams"/, 'the prompt describes searchable content in four words');
 
-  // It sits above every card, which is what "top of the homepage" means once
-  // the simulator hero has the first line.
+  // It sits above the exam catalogue, which is what "on the home screen" means
+  // once the greeting and the four actions take the first line.
   const searchAt = home.indexOf('<SiteSearch');
   assert.ok(searchAt > home.indexOf('<h1'), 'the heading stays first for structure');
-  assert.ok(searchAt < home.indexOf('className="er-banner"'), 'the card follows the search bar');
-  assert.ok(searchAt < home.indexOf('<SectionHead title="Choose your exam"'), 'search is above the exam cards');
+  assert.ok(searchAt < home.indexOf('aria-label="Choose your exam"'), 'search is above the exam cards');
 
   const styles = read('src/site-search.css');
   assert.match(styles, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/, 'the header search is desktop-only');
-  assert.match(styles, /\.site-search--home \{[^}]*min-height: 48px/, 'the portal bar remains visible with a touch-friendly height');
+  assert.match(styles, /\.site-search \{[^}]*min-height: 48px/, 'every placement uses the same touch-friendly height');
+  assert.doesNotMatch(styles, /\.site-search--(?:header|home|page|drawer|dashboard) \{[^}]*min-height/, 'variants do not change the control height');
   assert.match(styles, /\.site-search input \{[^}]*min-width: 0/, 'the field shrinks instead of overflowing on a phone');
 });
 
-test('the study-centre card is restored as one click, not a menu', () => {
+test('the home page does not repeat the practice shortcut as a banner', () => {
   const home = read('pages/HubHomePage.tsx');
-  const start = home.indexOf('<a href="/past-questions" className="er-banner">');
-  assert.ok(start > -1, 'the study-centre card is back');
-  const card = home.slice(start, home.indexOf('</a>', start) + 4);
-  assert.match(card, /EDUREACH STUDY CENTRE/, 'it keeps its kicker');
-  assert.match(card, /Past questions &amp; CBT practice/, 'and its title');
-  assert.match(card, /jamb-cbt-banner\.webp/, 'and its artwork');
-  assert.match(card, /loading="lazy"/, 'the thumbnail stays lazy');
-  // One click: the whole card is the link, with nothing nested inside it.
-  assert.doesNotMatch(card, /<button/, 'no start-practice button inside the card');
-  assert.equal((card.match(/<a\b/g) ?? []).length, 1, 'the card is a single anchor, with no second link inside it');
-  assert.doesNotMatch(card, /pdf/i, 'no PDF list inside the card');
-  assert.doesNotMatch(card, /start practi/i, 'no start-practice action inside the card');
+  assert.doesNotMatch(home, /className="er-banner"/, 'the study-centre banner is gone');
+  assert.doesNotMatch(home, /jamb-cbt-banner\.webp/, 'its artwork is not reloaded');
+  assert.doesNotMatch(home, /EDUREACH STUDY CENTRE/, 'the duplicate practice card is gone');
+  assert.doesNotMatch(home, /hub-home-footer-callout/, 'the second services CTA is gone');
 });
 
 test('the portal search submit keeps a neutral non-primary treatment', () => {
@@ -208,30 +205,25 @@ test('the portal search submit keeps a neutral non-primary treatment', () => {
   assert.doesNotMatch(submit[1], /var\(--er-primary\)|#b14933/i, 'search is not styled like a primary action');
 });
 
-test('the home page reuses the existing card system, not a home-local one', () => {
-  // The simulator-first layout reordered the page. It must not have brought its
-  // own card: the study tools are the same link tile the home page already had
-  // (er-mini-link + the shared identity mark), and no home-local card CSS may
-  // exist to drift from it.
+test('study tools are inline links, not another row of cards', () => {
+  // UX-7: utilities are not destinations. They use one compact link list and
+  // do not re-introduce the identity-card tile that this page no longer needs.
   const home = read('pages/HubHomePage.tsx');
-  assert.match(home, /className=\{`er-mini-link \$\{identityClassFor\(title, 'service'\)\}`\}/, 'the tile is the shared MySchool-style link tile');
-  assert.match(home, /<CardIdentityMark value=\{title\} type="service" size="sm" \/>/, 'it carries the shared identity mark');
-  assert.match(home, /className="er-test-strip"/, 'it sits in the existing tile strip');
-  assert.doesNotMatch(home, /hub-home-tool/, 'the home page has no bespoke card class');
+  assert.match(home, /className="er-home-tool-list"/, 'the tools are a link list');
+  assert.match(home, /toolLinks\.map/, 'the list is driven by one source');
+  assert.doesNotMatch(home, /er-mini-link|er-test-strip|CardIdentityMark/, 'no card tile is rebuilt on the home page');
 
-  const homeCss = read('src/home-card-first.css');
-  assert.doesNotMatch(homeCss, /hub-home-tool/, 'the home sheet defines no card surface of its own');
+  const product = read('src/styles/ux5-product.css');
+  const link = /\.er-home-tool-list a \{([^}]*)\}/.exec(product);
+  assert.ok(link, 'the link row has a rule');
+  assert.match(link![1], /min-height: 44px/, 'each link is a touch-sized target');
+  assert.match(link![1], /border: 1px solid var\(--er-border\)/, 'it uses the shared border token');
 
-  // The appearance comes from the shared rule, so a future edit to the tile
-  // reaches the home page too instead of leaving a copy behind.
+  // The shared card system still owns the cards that remain.
   const portal = read('src/edu-portal.css');
   const tile = /\.er-mini-link\{([^}]*)\}/.exec(portal);
-  assert.ok(tile, 'the shared link tile rule exists');
-  assert.match(tile[1], /border:1px solid #dfe4ea/, 'the tile keeps its existing border');
-  assert.match(tile[1], /border-radius:10px/, 'the tile keeps its existing radius');
-  // The hover accent is the card-identity colour (.er-identity-card:hover), which
-  // is how every existing identity card behaves; this page does not override it.
-  assert.match(portal, /\.er-identity-card:hover\{[^}]*--er-card-accent/, 'the identity accent still owns the card hover');
+  assert.ok(tile, 'the shared link tile rule survives for other screens');
+  assert.match(portal, /\.er-identity-card:hover\{[^}]*--er-card-accent/, 'the identity accent still owns its card hover');
 });
 
 test('the MySchool card CSS survives in the stylesheet that owns it', () => {
@@ -260,4 +252,23 @@ test('the setup screen keeps internal review counts in the admin console', () =>
   assert.doesNotMatch(setup, /bank\.review\.approved/, 'students do not see editorial counts');
   assert.doesNotMatch(setup, /editorially approved/, 'approval progress is an admin statistic');
   assert.match(setup, /These are practice questions, not certified official past papers\./, 'the honesty note replaces the counts');
+});
+
+test('every app shell shows the same five bottom destinations on a phone', () => {
+  // UX-7: navigation is a product constant. The public shell and the dashboard
+  // used to swap five different labels when a student crossed into the account
+  // area, which made the app feel like two products.
+  const labels = ['Home', 'Practice', 'My CBT', 'Results', 'Profile'];
+  for (const file of ['src/components/HubLayout.tsx', 'pages/StudentDashboardV2.tsx']) {
+    const source = read(file);
+    assert.match(source, /<nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">/, `${file} uses the shared bottom bar`);
+    for (const label of labels) {
+      assert.ok(source.includes(`<span>${label}</span>`), `${file} labels its ${label} destination`);
+    }
+    assert.doesNotMatch(source, /<span>CBT<\/span>|<span>Account<\/span>|<span>Services<\/span>/, `${file} keeps the five product labels`);
+  }
+  // Icons are familiar and every one of these destinations keeps its label.
+  assert.match(read('src/components/HubLayout.tsx'), /<BookOpenCheck size=\{18\}/, 'Practice carries its familiar icon');
+  // The bar is reachable at tablet widths too, where the dashboard hides its sidebar.
+  assert.match(read('src/edu-portal.css'), /@media\(max-width:768px\)\{\s*body:not\(\.er-exam-mode\) \.hub-shell\{padding-bottom/, 'the bar appears while the sidebar is hidden');
 });

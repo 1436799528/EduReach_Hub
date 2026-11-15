@@ -67,7 +67,7 @@
 }
 
 .er-result-ring-value {
-  stroke: #174a3a;
+  stroke: #1E40AF;
   stroke-linecap: round;
 }
 
@@ -178,7 +178,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #174a3a;
+  background: #1E40AF;
 }
 
 .er-result-bar-meta {

@@ -97,7 +97,7 @@ export default function AdminAnalyticsPage() {
                   <AdminDonut
                     ariaLabel="Service queue composition by status"
                     segments={[
-                      { label: 'Open', value: pending || 0, color: '#174A3A' },
+                      { label: 'Open', value: pending || 0, color: '#1E40AF' },
                       { label: 'Completed', value: completed || 0, color: '#067647' },
                       { label: 'Rejected / cancelled', value: rejected || 0, color: '#B42318' },
                       { label: 'Closed / other', value: otherRequests || 0, color: '#98A2B3' },

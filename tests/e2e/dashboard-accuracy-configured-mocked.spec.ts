@@ -49,6 +49,7 @@ test('dashboard shows bounded submitted scores and reports failed history reads'
   const consent = page.getByRole('button', { name: 'Reject optional' });
   if (await consent.isVisible()) await consent.click();
   await expect(page.getByRole('heading', { name: 'My CBT' })).toBeVisible();
+  await expect(page.locator('footer.er-footer')).toBeVisible();
   await expect(page.getByText('not all-time totals', { exact: false })).toBeVisible();
   await expect(page.locator('.dash-metric-card').filter({ hasText: 'Scored tests' })).toContainText('5');
   await expect(page.locator('.dash-metric-card').filter({ hasText: 'Submitted, score unavailable' })).toContainText('1');

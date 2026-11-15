@@ -68,8 +68,6 @@ const OUTLINE_RESET_ATTRIBUTIONS = new Map<string, string>([
   ['src/admin.css::.admin-textarea', 'a <textarea>; the a11y.css ring matches the element'],
   ['src/admin.css::.admin-rte-area', 'a contentEditable [role="textbox"] div; .admin-shell :focus-visible (admin.css) draws its ring'],
   ['src/edu-portal.css::.er-calc-input', 'the calculator screen input; the a11y.css ring matches the element and out-specifies this reset'],
-  ['src/hub.css::.hub-field', 'a text input when it is used (no markup renders it today); the a11y.css ring matches the element'],
-  ['src/myschool-clean.css::.ms-search-input', 'the school-finder search input; the a11y.css ring matches the element'],
 ]);
 
 /** Colour the focus ring must reach 3:1 against; kept next to the value it judges. */

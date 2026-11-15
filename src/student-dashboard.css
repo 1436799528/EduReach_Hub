@@ -41,39 +41,6 @@
   color: #0f172a;
 }
 
-.edureach-dash-search {
-  flex: 1;
-  max-width: 440px;
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.edureach-dash-search input {
-  width: 100%;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 8px 12px 8px 34px;
-  font-size: 13px;
-  color: #0f172a;
-  outline: none;
-  transition: all 0.15s ease;
-}
-
-.edureach-dash-search input:focus {
-  background: #ffffff;
-  border-color: var(--er-primary);
-  box-shadow: 0 0 0 2px rgba(23, 74, 58, 0.14);
-}
-
-.edureach-dash-search-icon {
-  position: absolute;
-  left: 10px;
-  color: #5e6c82;
-  pointer-events: none;
-}
-
 .edureach-dash-actions {
   display: flex;
   align-items: center;
@@ -962,14 +929,19 @@
 }
 
 @media (max-width: 768px) {
+  /* The compact footer is the last element in the dashboard shell. Reserve the
+     fixed bottom navigation's height below it so no link sits under the bar. */
+  .edureach-dash-container {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+
   .edureach-dash-body {
     grid-template-columns: 1fr;
     padding: 10px;
-    padding-bottom: 76px; /* space for the bottom nav */
+    padding-bottom: 10px;
   }
 
   .edureach-dash-sidebar,
-  .edureach-dash-search,
   .dash-hide-mobile,
   .dash-desktop-only {
     display: none;
@@ -1233,7 +1205,7 @@
 .dash-insight li span { color: #667085; font-size: 11.5px; white-space: nowrap; }
 .dash-insight p { margin: 0; color: #475467; font-size: 12.5px; line-height: 1.5; }
 .dash-insight .dash-card-link { display: inline-block; margin-top: 8px; font-size: 12px; }
-.dash-insight.is-next { border-color: #cfe4d8; background: #f7fbf8; }
+.dash-insight.is-next { border-color: var(--er-primary-soft-border, #C7D2FE); background: var(--er-primary-soft, #EEF2FF); }
 
 .dash-no-data {
   display: flex;
@@ -1440,14 +1412,14 @@
 }
 .dash-cgpa .dash-cgpa-value {
   margin-top: 10px;
-  color: #0a3e83;
+  color: #1E40AF;
   font-size: clamp(40px, 4.4vw, 54px);
   font-weight: 680;
   line-height: .98;
   letter-spacing: -.045em;
 }
 .dash-cgpa .dash-cgpa-value small { margin-left: 7px; color: #5b6b82; font-size: 14px; font-weight: 560; letter-spacing: 0; }
-.dash-cgpa .dash-cgpa-class { display: block; margin-top: 10px; color: #0a3e83; font-size: 13px; font-weight: 620; line-height: 1.4; }
+.dash-cgpa .dash-cgpa-class { display: block; margin-top: 10px; color: #1E40AF; font-size: 13px; font-weight: 620; line-height: 1.4; }
 .dash-cgpa-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1492,7 +1464,7 @@
   font-weight: 500;
 }
 .dash-cgpa-field input:focus,
-.dash-cgpa-field select:focus { border-color: #0a3e83; outline: 0; box-shadow: 0 0 0 3px rgba(10, 62, 131, .12); }
+.dash-cgpa-field select:focus { border-color: #1E40AF; outline: 0; box-shadow: 0 0 0 3px rgba(30, 64, 175, .12); }
 .dash-cgpa-remove {
   display: grid;
   place-items: center;
@@ -1521,7 +1493,7 @@
   font-weight: 560;
   cursor: pointer;
 }
-.dash-cgpa-add:hover { border-color: #0a3e83; background: #f6faff; color: #0a3e83; }
+.dash-cgpa-add:hover { border-color: #1E40AF; background: #f6faff; color: #1E40AF; }
 
 .dash-cgpa-footer {
   display: flex;
@@ -1581,7 +1553,7 @@
   padding: 24px;
   border: 0;
   border-radius: 16px;
-  background: linear-gradient(160deg, #0a3e83 0%, #062b5c 100%);
+  background: linear-gradient(160deg, #1E40AF 0%, #062b5c 100%);
   color: #fff;
   box-shadow: 0 18px 40px -26px rgba(6, 43, 92, .55);
 }

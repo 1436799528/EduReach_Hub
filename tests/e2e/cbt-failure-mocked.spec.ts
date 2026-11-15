@@ -28,6 +28,7 @@ test('CBT does not claim an unconfirmed draft or submission was saved', async ({
   const rejectOptional = page.getByRole('button', { name: 'Reject optional' });
   if (await rejectOptional.isVisible()) await rejectOptional.click();
   await expect(page.getByRole('heading', { name: 'Test-only question' })).toBeVisible();
+  await expect(page.locator('footer.er-footer')).toBeAttached();
   await page.getByRole('radio', { name: /Option one/ }).click();
   await expect(page.getByRole('status').filter({ hasText: 'not yet saved' })).toContainText('keep this page open');
   await page.getByRole('button', { name: 'End test', exact: true }).click();

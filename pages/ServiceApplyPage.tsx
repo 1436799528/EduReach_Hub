@@ -382,7 +382,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '24px 0 60px' }}>
-        <div className="hub-container" style={{ maxWidth: '760px' }}>
+        <div className="hub-container hub-form-narrow">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
               <CardIdentityMark value={service.service_key + ' ' + service.title} type="service" size="sm" />
@@ -454,7 +454,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
                     {guide.steps.map((guideStep, index) => (
                      <Fragment key={guideStep.title}>
                       {guideStep.section && guideStep.section !== guide.steps[index - 1]?.section && (
-                        <h3 style={{ margin: "10px 0 0", fontSize: 13, fontWeight: 680, color: "#0A3E83" }}>{guideStep.section}</h3>
+                        <h3 style={{ margin: "10px 0 0", fontSize: 13, fontWeight: 680, color: "#1E40AF" }}>{guideStep.section}</h3>
                       )}
                       <article className="er-service-guide-step" key={guideStep.title}>
                         <figure className={`er-service-guide-media is-${guideStep.imageKind}`} style={{ margin: 0, position: "relative" }}>

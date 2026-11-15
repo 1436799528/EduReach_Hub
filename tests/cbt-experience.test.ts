@@ -22,7 +22,8 @@ test('the examination hall is a dedicated route, not a page inside the site shel
   assert.match(routes, /CbtSessionPage/, 'and its own component');
 
   const shell = read('pages/CbtSessionPage.tsx');
-  assert.ok(!/HubLayout/.test(shell), 'the hall must not render the site header/footer');
+  assert.ok(!/HubLayout/.test(shell), 'the hall must not render the site header or navigation');
+  assert.match(shell, /<SiteFooter \/>/, 'the compact legal footer stays reachable at the bottom of the hall');
   assert.match(shell, /er-exam-shell/, 'it owns a dedicated shell class');
   assert.match(shell, /End Test/, 'End Test is a distinct, named action');
   assert.match(shell, /Submit/, 'and Submit is separate from it');
@@ -58,7 +59,10 @@ test('the setup wizard configures from the real bank, never a static subject lis
   assert.match(setup, /practiceTrack/, 'the picker is filtered by the subject group the student chose');
   assert.match(setup, /governedCombination/, 'mock mode uses the selected subject combination');
   assert.match(setup, /mode === 'practice' && <>/, 'question and timer controls are practice-only');
-  assert.match(setup, /How this CBT session works/, 'instructions are shown before mode selection');
+  // UX-7: the explanatory three-step interstitial delayed the paper. The
+  // honesty note stays beside the setup heading; the screen is the setup form.
+  assert.doesNotMatch(setup, /How this CBT session works|guideItems/, 'no explanatory interstitial before the paper');
+  assert.match(setup, /er-setup-note--hero/, 'the practice-environment note stays visible');
 });
 
 test('compulsory English is always selected and a missing bank pool blocks the start', () => {

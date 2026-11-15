@@ -4,7 +4,8 @@ import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// UI-3: deep green is the colour of an action; crimson is the brand accent.
+// UI-3: blue is the colour of an action; crimson is the brand accent and
+// green is reserved for success (Passed, Correct, Completed).
 //
 // The palette had drifted into "crimson is the default button", set
 // independently by five component sheets. This file pins the replacement rules
@@ -36,7 +37,7 @@ test('the palette is defined once, in the token layer', () => {
     return match[1].toUpperCase();
   };
 
-  assert.equal(token('--er-primary'), '#174A3A', 'primary action is deep green');
+  assert.equal(token('--er-primary'), '#1E40AF', 'primary action is cobalt blue');
   assert.equal(token('--er-on-primary'), '#FFFFFF', 'text on a primary action is white');
   assert.equal(token('--er-crimson'), '#B14933', 'crimson stays the brand accent');
   assert.equal(token('--er-brand-navy'), '#0A3E83', 'the wordmark navy stays a brand colour');
@@ -47,28 +48,28 @@ test('the palette is defined once, in the token layer', () => {
 
   // Hover and pressed must darken, not lighten: white text has to keep its
   // contrast as the fill changes.
-  assert.equal(token('--er-primary-hover'), '#123C2F', 'hover steps down one shade');
-  assert.equal(token('--er-primary-active'), '#0D2E24', 'press steps down again');
-  assert.equal(token('--er-primary-soft'), '#EDF5F0', 'the selected surface is pale green');
-  assert.equal(token('--er-primary-soft-border'), '#CFE4D8', 'the selected edge is pale green');
+  assert.equal(token('--er-primary-hover'), '#1E3A8A', 'hover steps down one shade');
+  assert.equal(token('--er-primary-active'), '#172554', 'press steps down again');
+  assert.equal(token('--er-primary-soft'), '#EEF2FF', 'the selected surface is pale blue');
+  assert.equal(token('--er-primary-soft-border'), '#C7D2FE', 'the selected edge is pale blue');
 
   const hover = token('--er-primary-hover');
   const active = token('--er-primary-active');
-  assert.ok(luminance(hover) < luminance('#174A3A'), 'hover is darker than rest');
+  assert.ok(luminance(hover) < luminance('#1E40AF'), 'hover is darker than rest');
   assert.ok(luminance(active) < luminance(hover), 'pressed is darker than hover');
 });
 
 test('the action colour clears AA at every state', () => {
   for (const [fill, label] of [
-    ['#174A3A', 'resting'],
-    ['#123C2F', 'hover'],
-    ['#0D2E24', 'pressed'],
+    ['#1E40AF', 'resting'],
+    ['#1E3A8A', 'hover'],
+    ['#172554', 'pressed'],
   ] as const) {
     assert.ok(contrast('#ffffff', fill) >= 4.5, `white text on the ${label} fill`);
   }
   // The primary is also used as a link and icon colour on light surfaces.
-  assert.ok(contrast('#174A3A', '#ffffff') >= 4.5, 'primary text on white');
-  assert.ok(contrast('#174A3A', '#f7f8f7') >= 4.5, 'primary text on the page background');
+  assert.ok(contrast('#1E40AF', '#ffffff') >= 4.5, 'primary text on white');
+  assert.ok(contrast('#1E40AF', '#f7f8f7') >= 4.5, 'primary text on the page background');
   // Crimson remains readable where it is kept.
   assert.ok(contrast('#b14933', '#ffffff') >= 4.5, 'crimson brand accent on white');
 });
@@ -77,11 +78,11 @@ test('only the action surfaces are recoloured by the final layer', () => {
   // A curated list, on purpose: adding a selector here is a decision to change
   // a component's colour, and it should be reviewed as one.
   const expected = [
-    '.hub-primary-btn',
-    '.hub-primary-btn:hover',
-    '.hub-primary-btn:active',
-    '.hub-primary-btn:disabled, .admin-btn:disabled, .dash-btn-primary:disabled, .auth-v2-submit:disabled, .er-exam-submit-primary:disabled, .er-exam-next:disabled, .er-exam-end:disabled',
-    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .er-exam-submit-primary)[aria-busy="true"]',
+    ':is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary))',
+    ':is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)):hover:not(:disabled)',
+    ':is(.hub-primary-btn, .er-exam-submit, .er-exam-submit-primary, .auth-submit:not(.auth-submit--secondary)):active:not(:disabled)',
+    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .auth-submit, .er-exam-submit, .er-exam-submit-primary, .er-exam-next, .er-exam-end):disabled',
+    ':is(.hub-primary-btn, .admin-btn, .dash-btn-primary, .auth-v2-submit, .auth-submit, .er-exam-submit, .er-exam-submit-primary)[aria-busy="true"]',
     '.admin-btn',
     '.admin-btn:hover',
     '.dash-btn-primary',
@@ -101,10 +102,10 @@ test('only the action surfaces are recoloured by the final layer', () => {
     '.er-mode-option.is-selected',
     '.hub-stepper > div.active',
     '.hub-stepper > div.active span',
-    '.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .dash-card-link',
+    '.hub-card-link, .hub-section-heading.compact > a, .dash-card-link',
     '.dash-card-link:hover',
-    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a, .er-inline-notice-action):hover',
-    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-auth-switch, .hub-home-section-title > a):active',
+    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-home-section-title > a, .er-inline-notice-action):hover',
+    ':is(.hub-card-link, .hub-section-heading.compact > a, .hub-home-section-title > a):active',
     '.er-route-progress',
     '.home-resume-kicker',
     '.home-resume-bar',
@@ -156,8 +157,8 @@ test('the layer never touches a card, tile, banner or exam identity', () => {
   // Spot-check the card treatments that must survive untouched.
   const hub = read('src/hub.css');
   const banner = /\.hub-service-banner\{([^}]*)\}/.exec(hub);
-  assert.ok(banner && banner[1].includes('background:var(--hub-blue)'), 'the service card banner keeps its own fill');
-  assert.match(hub, /\.hub-service-profile-card\{[^}]*border:1px solid var\(--hub-border\)/, 'the service card keeps its border');
+  assert.ok(banner && banner[1].includes('background:var(--er-primary)'), 'the service card banner keeps its own fill');
+  assert.match(hub, /\.hub-service-profile-card\{[^}]*border:1px solid var\(--er-border\)/, 'the service card keeps its border');
   const portal = read('src/edu-portal.css');
   assert.match(portal, /\.er-sim-card/, 'exam tiles still have their own identity colours');
 });
@@ -193,7 +194,7 @@ test('inline action styles reference the token instead of a literal', () => {
   for (const file of files) {
     const source = read(file);
     for (const match of source.matchAll(/background:\s*'(#[0-9A-Fa-f]{6})'/g)) {
-      if (['#b14933', '#B14933', '#B3331A', '#0a3e83', '#1d9be0'].includes(match[1])) offenders.push(`${file}: ${match[1]}`);
+      if (['#b14933', '#B14933', '#B3331A', '#0a3e83', '#1d9be0', '#1e40af', '#1E40AF'].includes(match[1])) offenders.push(`${file}: ${match[1]}`);
     }
   }
   assert.deepEqual(offenders, [], 'no inline primary fill is hard-coded');

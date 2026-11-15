@@ -107,9 +107,9 @@ export default function ProfileCompletionPage() {
   const displayAvatar = rawAvatar.startsWith('data:') || rawAvatar.includes('unsplash.com') ? '' : rawAvatar;
   const avatarInitials =
     userName.trim().split(/\s+/).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'ER';
-  // Initials sit on the action green, matching the dashboard avatar. A
+  // Initials sit on the action blue, matching the dashboard avatar. A
   // hash-picked crimson/amber/navy avatar read as a status colour.
-  const avatarTone = '#174A3A';
+  const avatarTone = '#1E40AF';
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileCompleted, setProfileCompleted] = useState(false);

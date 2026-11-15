@@ -37,13 +37,13 @@
 }
 
 /* Focus indicator (WCAG 2.4.7 / 2.4.11).
-   Two tones: the green ring reads on the light surfaces that dominate the app
-   (10.11:1 on white, 9.11:1 on the pale green surface), the white ring
-   underneath keeps it separated from a green button and reads on the dark
-   header and sidebar. `:root` is there to out-specify the `!important` resets in
-   the earlier stylesheets. */
+   Two tones: the blue ring reads on the light surfaces that dominate the app
+   (8.72:1 on white, 7.8:1 on the pale blue surface), the white ring underneath
+   keeps it separated from a blue button and reads on the dark header and
+   sidebar. `:root` is there to out-specify the `!important` resets in the
+   earlier stylesheets. */
 :root :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
-  outline: 2px solid var(--color-focus, #174A3A) !important;
+  outline: 2px solid var(--color-focus, #1E40AF) !important;
   outline-offset: 0;
   box-shadow: none !important;
 }
@@ -51,7 +51,7 @@
 /* Search fields sit inside a rounded control. Their focused outline belongs to
    that control, not to the raw input rectangle, so the container draws a 1px
    ring in its own shape (see edu-portal.css). */
-:root :where(.site-search, .er-filter-search, .hub-global-search, .hub-search, .er-library-search, .school-finder-search-input, .er-search, .hub-mobile-search, .er-site-search-page-form, .er-search-page-form) :where(input, select):focus-visible {
+:root :where(.site-search, .er-filter-search, .er-library-search, .school-finder-search-input, .er-search) :where(input, select):focus-visible {
   outline: 0 !important;
   box-shadow: none !important;
 }
@@ -130,7 +130,6 @@
   .admin-table button,
   .admin-page-header button,
   .admin-filter button,
-  .hub-search,
   .dash-card-link,
   .dash-text-btn,
   .dash-icon-btn,
@@ -158,10 +157,8 @@
     align-items: center;
   }
   .er-footer-brand-link,
-  .er-footer-links a,
   .er-footer-legal a,
-  .er-footer-social a,
-  .er-footer-help {
+  .er-footer-cookie-settings {
     display: inline-flex;
     align-items: center;
     justify-content: center;

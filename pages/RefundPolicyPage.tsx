@@ -30,7 +30,6 @@ export default function RefundPolicyPage() {
               <p>For current platform questions, use the <a href="/contact">contact page</a>. Billing-specific contact details will be published before paid transactions are enabled.</p>
             </div>
           </article>
-          <footer className="er-legal-foot"><nav aria-label="Other policies"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/accessibility">Accessibility</a></nav></footer>
         </div>
       </div>
     </HubLayout>

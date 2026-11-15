@@ -34,7 +34,7 @@ export default function EventsPage() {
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '22px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '820px' }}>
+        <div className="hub-container er-reading-container">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
               <span className="hub-eyebrow" style={{ color: '#b14933' }}>NOTICEBOARD CALENDAR</span>

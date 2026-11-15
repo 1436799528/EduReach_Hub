@@ -25,24 +25,29 @@ The interface maintains a balance between:
 
 ## 2. Core Color Palette
 
-### Primary action — Deep green
-* **HEX:** `#174A3A` (token `--er-primary`)
-* The colour of an action the student takes, a selected navigation item and a
-  positive key state. It is the only fill for a primary button.
-* **States:** hover `#123C2F` (`--er-primary-hover`), pressed `#0D2E24`
-  (`--er-primary-active`), border `#123C2F` (`--er-primary-border`), selected
-  surface `#EDF5F0` (`--er-primary-soft`) with edge `#CFE4D8`
+### Primary action — Cobalt blue
+* **HEX:** `#1E40AF` (token `--er-primary`)
+* The colour of an action the student takes and of a selected navigation item.
+  It is the only fill for a primary button. Green is no longer a generic action
+  colour: it is reserved for **Passed, Correct and Completed**, so a green
+  surface always carries a positive outcome.
+* **States:** hover `#1E3A8A` (`--er-primary-hover`), pressed `#172554`
+  (`--er-primary-active`), border `#1E3A8A` (`--er-primary-border`), selected
+  surface `#EEF2FF` (`--er-primary-soft`) with edge `#C7D2FE`
   (`--er-primary-soft-border`).
-* **Contrast:** white text on the fill measures 9.89:1 at rest, 11.8:1 on hover
-  and 14.1:1 pressed. As text it clears AA on white and on the selected surface.
+* **Contrast:** white text on the fill measures 8.72:1 at rest, 10.36:1 on hover
+  and 14.69:1 pressed. As text it clears AA on white (8.72:1), the page
+  background (8.19:1) and the selected surface (7.8:1).
 * **Use for:**
   - Primary buttons: Start practising, Continue, Submit, Save changes
   - Primary links and the action inside a block
   - Selected states: filters, tabs, steps, answer options, current navigation
   - Form focus ring and `accent-color`
 * **Never** for card surfaces, banners, exam identity marks or decorative
-  section backgrounds. Selected states use the pale green surface, not a solid
-  green block.
+  section backgrounds. Selected states use the pale blue surface, not a solid
+  blue block.
+* **Not** for success. Passed, correct and completed states keep the semantic
+  green tokens (`--er-status-success`, `--er-success`).
 
 ### Logo accents — Navy, Blue and Red
 * **Navy:** `#0A3E83` (`--er-brand-navy`), the wordmark colour. It is a brand
@@ -59,7 +64,7 @@ The interface maintains a balance between:
 * **Surface:** white (`--er-surface`); **edge:** `#D8DEE5`
   (`--er-secondary-border`); **label:** `#475467` (`--er-text-secondary`).
 * Hover surface `#F7F9F8`, pressed `#EEF1F4`. A secondary control never becomes
-  a second solid green button.
+  a second solid blue button.
 
 ### Brand accent — Crimson
 * **HEX:** `#B14933` (token `--er-crimson`); deep `#B3331A`
@@ -89,27 +94,27 @@ navigation) and in the form block of `theme.css`.
 
 | Primary button | Background | Text | Border |
 |---|---|---|---|
-| Default | `#0A3E83` | `#FFFFFF` | `#083570` |
-| Hover | `#083570` | `#FFFFFF` | `#072F64` |
-| Pressed | `#062B5C` | `#FFFFFF` | `#05264F` |
-| Focus | `#0A3E83` | `#FFFFFF` | `#083570` + the shared ring |
+| Default | `#1E40AF` | `#FFFFFF` | `#1E3A8A` |
+| Hover | `#1E3A8A` | `#FFFFFF` | `#172554` |
+| Pressed | `#172554` | `#FFFFFF` | `#0F172A` |
+| Focus | `#1E40AF` | `#FFFFFF` | `#1E3A8A` + the shared ring |
 | Disabled | `#E2E8F0` | `#64748B` | `#CBD5E1` |
-| Busy (`aria-busy`) | `#0A3E83` | `#FFFFFF` | `#083570` |
+| Busy (`aria-busy`) | `#1E40AF` | `#FFFFFF` | `#1E3A8A` |
 
 | Secondary button | Background | Text | Border |
 |---|---|---|---|
-| Default | `#FFFFFF` | `#0A3E83` | `#CCE0F3` |
-| Hover | `#EDF4FB` | `#0A3E83` | `#A9C8E8` |
-| Pressed | `#DCEAF8` | `#083570` | `#8FB7DE` |
+| Default | `#FFFFFF` | `#475467` | `#D8DEE5` |
+| Hover | `#F7F9F8` | `#131B2E` | `#C4CBD4` |
+| Pressed | `#EEF1F4` | `#131B2E` | `#B4BCC7` |
 | Disabled | `#F8FAFC` | `#64748B` | `#E2E8F0` |
 
 | Other families | Default | Hover | Selected / focus | Disabled |
 |---|---|---|---|---|
-| Links | `#0A3E83` | `#083570` | `#062B5C` | - |
-| Navigation item | existing text | `#F1F5F9` / `#0A3E83` | `#EDF4FB` / `#0A3E83` | `#F8FAFC` / `#64748B` |
-| Field border | `#CBD5E1` | `#94A3B8` | `#0A3E83` (focus), `#B91C1C` (invalid) | `#E2E8F0` |
+| Links | `#1E40AF` | `#1E3A8A` | `#172554` | - |
+| Navigation item | existing text | `#F1F5F9` / `#1E40AF` | `#EEF2FF` / `#1E40AF` | `#F8FAFC` / `#64748B` |
+| Field border | `#CBD5E1` | `#94A3B8` | `#1E40AF` (focus), `#B91C1C` (invalid) | `#E2E8F0` |
 
-Native checkboxes and radios use `accent-color: #0A3E83`, so the platform paints
+Native checkboxes and radios use `accent-color: #1E40AF`, so the platform paints
 the white tick and keeps its own geometry and keyboard behaviour. Status colours
 (success `#166534`, warning `#92400E`, error `#B91C1C`, information `#1D4ED8`,
 each on its pale surface) are tokens too and never double as an action colour.
@@ -147,12 +152,12 @@ each on its pale surface) are tokens too and never double as an action colour.
 
 EduReach uses soft, calm surfaces rather than relying entirely on plain white:
 
-* **Main Background:** `#FAF8FF` (Subtle academic/lavender tone)
+* **Main Background:** `#F7F8F7` (Calm near-neutral page)
 * **Pure Surface:** `#FFFFFF` (Clean content surfaces, maximum readability)
-* **Soft Academic Surface:** `#F2F3FF` (Service areas, secondary sections, information groups)
-* **Academic Surface:** `#EAEDFF` (Visual grouping and highlighted content)
-* **Elevated Academic Surface:** `#E2E7FF` (Stronger visual emphasis)
-* **Deep Academic Surface:** `#DAE2FD` (Layered surfaces)
+* **Soft Surface:** `#F4F6F5` (Service areas, secondary sections, information groups)
+* **Academic Surface:** `#EEF2FF` (Visual grouping and highlighted content)
+* **Elevated Academic Surface:** `#E0E7FF` (Stronger visual emphasis)
+* **Deep Academic Surface:** `#C7D2FE` (Layered surfaces)
 
 ---
 
@@ -164,8 +169,10 @@ EduReach uses soft, calm surfaces rather than relying entirely on plain white:
 * Use sparingly for special institutional sections, footer accents, and verified authority contexts.
 
 ### Success Green
-* **HEX:** `#16A34A`
-* Represents successful actions, completed processes, verified info, positive status.
+* **HEX:** `#047857` (token `--er-success`); status text uses `#166534` on
+  `#F0FDF4` (`--er-status-success`, `--er-status-success-bg`).
+* Reserved for passed, correct and completed states, completed processes and
+  verified information. Never a button fill.
 * **Soft Success:** `#EAF8EE`
 
 ### Trust Gold
@@ -204,9 +211,10 @@ Hierarchy:
 1. **NAVY (`#0F172A`)** → institutional foundation and trust
 2. **SOFT ACADEMIC BLUE (`#FAF8FF`, `#F2F3FF`, `#EAEDFF`)** → primary interface environment
 3. **WHITE (`#FFFFFF`)** → clean content surfaces
-4. **LOGO NAVY (`#0A3E83`)** → primary action and every interaction state
-   (hover `#083570`, pressed `#062B5C`)
-5. **LOGO BLUE (`#1D9BE0`, ink `#0F6BAA`)** → icon and highlight accent
+4. **ACTION BLUE (`#1E40AF`)** → primary action and every interaction state
+   (hover `#1E3A8A`, pressed `#172554`)
+5. **LOGO NAVY (`#0A3E83`) and LOGO BLUE (`#1D9BE0`, ink `#0F6BAA`)** → brand
+   marks, icons and highlights, never the action fill
 6. **CRIMSON (`#B14933`)** → Clickmor brand accent (marks, navigation, kickers)
 7. **TANGERINE (`#D2732A`)** → energetic secondary accent
 8. **SUCCESS GREEN (`#047857`)** → success and verification
@@ -214,9 +222,9 @@ Hierarchy:
 10. **BURGUNDY (`#54080C`)** → special institutional emphasis
 
 **Principle:**
-> **Calm surfaces + strong navy foundation + the logo palette for action.**
-> Logo navy marks what the student can do; logo blue colours icons and small
-> highlights; crimson appears only where the brand speaks. Do not create pages where crimson, orange, or burgundy fills most of
+> **Calm surfaces + strong navy foundation + blue for action.**
+> Action blue marks what the student can do; logo navy and logo blue carry the
+> brand marks; green means success; crimson appears only where the brand speaks. Do not create pages where crimson, orange, or burgundy fills most of
 > the screen, and do not paint a card with an action colour.
 
 ## 10. Semantic token API

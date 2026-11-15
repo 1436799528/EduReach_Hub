@@ -8,8 +8,9 @@
 
    Rules for this layer:
    - Only tokens, role classes and structural layouts. No per-page hacks.
-   - Colour communicates hierarchy and state: green is the action colour,
-     crimson is contextual attention/destructive, neutral carries the page.
+   - Colour communicates hierarchy and state: blue is the action colour,
+     green is reserved for success/completion, crimson is contextual
+     attention/destructive, neutral carries the page.
    - Sentence case for labels. Uppercase survives only for the tiny exam badge,
      where the exam body is an acronym or a proper name.
    - Every touch target is at least 44 px on coarse pointers.
@@ -207,97 +208,405 @@
   padding-top: var(--er-space-5);
 }
 
-.er-home-intro {
-  padding: var(--er-space-8) var(--er-space-8) var(--er-space-6);
-  border: 1px solid var(--er-border);
-  border-radius: var(--er-radius-lg);
-  background:
-    radial-gradient(120% 120% at 0% 0%, #F2F8F4 0%, #FFFFFF 58%),
-    var(--er-surface);
-  box-shadow: var(--er-shadow-card);
+.er-home-app {
+  display: grid;
+  gap: var(--er-space-5);
+  padding-bottom: var(--er-space-8);
 }
 
-.er-home-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: var(--er-space-3);
-  color: var(--er-primary);
-  font-size: var(--er-type-label);
+.er-home-app > .er-section {
+  margin-top: 0;
+}
+
+/* The greeting is the screen's identity, not a headline. It shares the first
+   row with search, so the first viewport is the app, not a poster. */
+.er-home-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--er-space-4);
+  flex-wrap: wrap;
+}
+
+.er-home-head-copy {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.er-home-eyebrow {
+  margin: 0 0 2px;
+  color: var(--er-text-secondary);
+  font-size: 11px;
   font-weight: 650;
+  letter-spacing: .07em;
+  text-transform: uppercase;
 }
 
-.er-home-title {
-  max-width: 18ch;
+.er-home-greeting {
   margin: 0;
   color: var(--er-text-primary);
-  font-size: clamp(28px, 3.4vw, 44px);
-  font-weight: 740;
-  line-height: 1.08;
-  letter-spacing: -.03em;
+  font-size: clamp(21px, 2.2vw, 26px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.02em;
 }
 
-.er-home-sub {
-  max-width: 52ch;
-  margin: var(--er-space-3) 0 0;
+.er-home-lede {
+  margin: 3px 0 0;
   color: var(--er-text-secondary);
-  font-size: 15px;
-  line-height: var(--er-leading-body);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.er-home-actions {
+.er-home-head-search {
+  flex: 0 1 380px;
+  min-width: 240px;
+}
+
+.er-home-head-search .site-search--home {
+  margin: 0;
+}
+
+/* One primary control and three secondary ones. The primary earns its weight
+   from colour and position; none of them is a full-width marketing card. */
+.er-home-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+  gap: var(--er-space-2);
+}
+
+.er-home-primary {
   display: flex;
   align-items: center;
   gap: var(--er-space-3);
-  flex-wrap: wrap;
-  margin-top: var(--er-space-6);
+  min-height: 88px;
+  padding: 14px 16px;
+  border-radius: var(--er-radius-md);
+  background: var(--er-primary);
+  color: #fff;
+  text-decoration: none;
+  transition: background .15s ease;
 }
 
-.er-home-proof {
+.er-home-primary:hover {
+  background: var(--er-primary-hover, #1E3A8A);
+}
+
+.er-home-primary-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .14);
+}
+
+.er-home-primary-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.er-home-primary-copy strong {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+
+.er-home-primary-copy small {
+  color: rgba(255, 255, 255, .82);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.er-home-primary-arrow {
+  margin-left: auto;
+  flex: none;
+  opacity: .8;
+}
+
+.er-home-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--er-space-2);
+}
+
+.er-home-tile {
   display: flex;
-  gap: var(--er-space-5);
-  flex-wrap: wrap;
-  margin: var(--er-space-6) 0 0;
-  padding: var(--er-space-4) 0 0;
-  border-top: 1px solid var(--er-border);
-  list-style: none;
-}
-
-.er-home-proof li {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  color: var(--er-text-secondary);
-  font-size: var(--er-type-meta);
-}
-
-.er-home-proof b {
+  align-items: center;
+  gap: 10px;
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
   color: var(--er-text-primary);
-  font-size: var(--er-type-card);
-  font-weight: 680;
+  text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
 
-.er-home-search {
-  margin-bottom: var(--er-space-5);
+.er-home-tile:hover {
+  border-color: var(--er-border-strong);
+  box-shadow: var(--er-shadow-card);
 }
 
-/* The study-centre banner is a quiet link, not a second hero. */
-.er-banner {
-  min-height: 84px;
-  border-color: var(--er-border);
+.er-home-tile > svg {
+  flex: none;
+  color: var(--er-primary);
+}
+
+.er-home-tile > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.er-home-tile strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.er-home-tile small {
+  color: var(--er-text-secondary);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+/* The student's own record is one strip, not four KPI cards. */
+.er-home-record {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
   background: var(--er-surface);
 }
 
-.er-banner small {
-  color: var(--er-text-secondary);
-  letter-spacing: 0;
-  text-transform: none;
-  font-size: var(--er-type-meta);
-  font-weight: 600;
+.er-home-record > div {
+  display: grid;
+  gap: 1px;
+  padding: 12px 16px;
+  border-left: 1px solid var(--er-border);
 }
 
-.er-banner > svg {
+.er-home-record > div:first-child {
+  border-left: 0;
+}
+
+.er-home-record strong {
+  color: var(--er-text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.er-home-record span {
+  color: var(--er-text-secondary);
+  font-size: 11.5px;
+}
+
+/* Activity is a list because papers are a history, not independent objects. */
+.er-home-activity {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+  list-style: none;
+}
+
+.er-home-activity li + li {
+  border-top: 1px solid var(--er-border);
+}
+
+.er-home-activity a {
+  display: flex;
+  align-items: center;
+  gap: var(--er-space-3);
+  min-height: 56px;
+  padding: 10px 14px;
+  color: var(--er-text-primary);
+  text-decoration: none;
+}
+
+.er-home-activity a:hover {
+  background: var(--er-surface-soft, #F4F6F5);
+}
+
+.er-home-activity-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: var(--er-radius-sm);
+  background: var(--er-primary-soft, #EEF2FF);
   color: var(--er-primary);
+}
+
+.er-home-activity-copy {
+  display: grid;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.er-home-activity-copy strong {
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.er-home-activity-copy small {
+  color: var(--er-text-secondary);
+  font-size: 11.5px;
+}
+
+.er-home-activity-score {
+  flex: none;
+  color: var(--er-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.er-home-activity-score.is-empty {
+  color: var(--er-text-secondary);
+  font-weight: 560;
+}
+
+.er-home-activity a > svg {
+  flex: none;
+  color: #94A3B8;
+}
+
+.er-home-empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--er-border-strong);
+  border-radius: var(--er-radius-md);
+  color: var(--er-text-secondary);
+  font-size: 12.5px;
+}
+
+/* Study tools are inline links: they are utilities, not destinations. */
+.er-home-tool-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--er-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.er-home-tool-list a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-sm);
+  background: var(--er-surface);
+  color: var(--er-text-primary);
+  font-size: 12.5px;
+  font-weight: 560;
+  text-decoration: none;
+}
+
+.er-home-tool-list a:hover {
+  border-color: var(--er-border-strong);
+}
+
+.er-home-tool-list a > svg:first-child {
+  flex: none;
+  color: var(--er-primary);
+}
+
+.er-home-tool-list a > svg:last-child {
+  flex: none;
+  margin-left: auto;
+  color: #94A3B8;
+}
+
+/* The resume card predates UX-5 and used a blue product accent. It keeps its
+   shape and adopts the shared blue action colour. */
+.home-resume {
+  border-color: var(--er-primary-soft-border, #C7D2FE);
+  background: var(--er-primary-soft, #EEF2FF);
+}
+
+.home-resume-kicker {
+  color: var(--er-primary);
+}
+
+.home-resume-bar {
+  background: var(--er-primary-soft-border, #C7D2FE);
+}
+
+.home-resume-bar span {
+  background: var(--er-primary);
+}
+
+@media (max-width: 900px) {
+  .er-home-start {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .er-home-record {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .er-home-record > div:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid var(--er-border);
+  }
+
+  .er-home-record > div:nth-child(4) {
+    border-top: 1px solid var(--er-border);
+  }
+}
+
+@media (max-width: 640px) {
+  .er-home-app {
+    gap: var(--er-space-4);
+    padding-bottom: var(--er-space-6);
+  }
+
+  .er-home-head-search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .er-home-primary {
+    min-height: 76px;
+    padding: 12px 14px;
+  }
+
+  .er-home-tile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 84px;
+    padding: 10px 11px;
+  }
+
+  .er-home-tile small {
+    display: none;
+  }
+
+  .er-home-tile strong {
+    font-size: 12.5px;
+    line-height: 1.25;
+  }
+
+  .er-home-tool-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Exam cards: one neutral surface, exam identity in the badge and the mark.
@@ -315,7 +624,7 @@
 .er-sim-card {
   position: relative;
   overflow: hidden;
-  min-height: 164px;
+  min-height: 148px;
   padding: var(--er-space-4);
   border-radius: var(--er-radius-md);
   transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
@@ -895,10 +1204,6 @@
    -------------------------------------------------------------------------- */
 
 @media (max-width: 640px) {
-  .hub-container {
-    width: min(1180px, calc(100% - 28px));
-  }
-
   .dash-overview-head p,
   .profile-page-head p {
     font-size: 13px;
@@ -956,69 +1261,112 @@
   }
 }
 
-.er-home-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
-  gap: var(--er-space-8);
-  align-items: center;
-}
-
-.er-home-intro-copy {
-  min-width: 0;
-}
-
-.er-home-steps {
-  display: grid;
-  gap: var(--er-space-4);
-  margin: 0;
-  padding: var(--er-space-2) 0 var(--er-space-2) var(--er-space-6);
-  border-left: 1px solid var(--er-border);
-  list-style: none;
-}
-
-.er-home-steps li {
-  display: flex;
-  gap: var(--er-space-3);
-  align-items: flex-start;
-}
-
-.er-home-steps .n {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid var(--er-primary-soft-border);
-  background: var(--er-surface);
-  color: var(--er-primary);
+/* The setup screen's honesty note belongs to the heading, not to a separate
+   explanatory section that delays the start of the paper. */
+.er-setup-note--hero {
+  margin: 8px 0 0;
   font-size: 11.5px;
-  font-weight: 700;
-}
-
-.er-home-steps b {
-  display: block;
-  color: var(--er-text-primary);
-  font-size: 13.5px;
-  font-weight: 650;
-}
-
-.er-home-steps small {
-  display: block;
-  margin-top: 2px;
-  color: var(--er-text-secondary);
-  font-size: 12px;
   line-height: 1.45;
 }
 
-@media (max-width: 900px) {
-  .er-home-intro {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--er-space-5);
-  }
+/* --------------------------------------------------------------------------
+   Secondary navigation (desktop "More")
+   -------------------------------------------------------------------------- */
 
-  .er-home-steps {
-    display: none;
+.hub-nav-link svg {
+  flex: none;
+}
+
+.hub-more {
+  position: relative;
+}
+
+.hub-more summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.hub-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.hub-more[open] > summary {
+  color: var(--er-primary);
+  border-bottom-color: var(--er-primary);
+}
+
+.hub-more summary:focus-visible {
+  outline: 2px solid var(--er-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.hub-more-panel {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  width: 210px;
+  padding: 6px;
+  border: 1px solid var(--er-border-strong);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+  box-shadow: var(--er-shadow-raised);
+  z-index: 150;
+}
+
+.hub-more-panel a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border-radius: var(--er-radius-sm);
+  color: var(--er-text-primary);
+  font-size: 13px;
+  font-weight: 560;
+  text-decoration: none;
+}
+
+.hub-more-panel a:hover {
+  background: var(--er-surface-soft, #F4F6F5);
+}
+
+.hub-more-panel svg {
+  color: var(--er-primary);
+}
+
+.hub-mobile-nav-label {
+  margin: 12px 0 2px;
+  padding: 0 10px;
+  color: var(--er-text-secondary);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.hub-mobile-nav-label:first-child {
+  margin-top: 0;
+}
+
+/* Mobile bottom navigation: neutral icons, blue current state. The raised CBT
+   pill is the one deliberate exception on phones. */
+.er-mobile-bottom-nav a {
+  color: var(--er-text-secondary);
+  white-space: nowrap;
+}
+
+.er-mobile-bottom-nav svg {
+  color: currentColor;
+}
+
+.er-mobile-bottom-nav a.active {
+  color: var(--er-primary);
+}
+
+@media (max-width: 380px) {
+  .er-mobile-bottom-nav a {
+    font-size: 10px;
   }
 }
 
@@ -1297,12 +1645,4 @@
 
 .er-setup-section-heading > svg {
   color: var(--er-text-secondary);
-}
-
-/* Footer column headings are labels, not a second navigation shout. */
-.er-footer-heading {
-  text-transform: none;
-  letter-spacing: .01em;
-  font-size: 13px;
-  font-weight: 650;
 }

@@ -54,12 +54,12 @@
 
 .admin-nav { padding: 10px 12px 20px; }
 .admin-nav-link { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 9px 10px; margin: 2px 0; border: 1px solid transparent; border-radius: 8px; color: #53615a; text-decoration: none; font: 600 12.5px var(--er-font-sans); transition: background .15s, color .15s; }
-.admin-nav-link:hover { background: #f3f6f3; color: #0a3e83; }
-.admin-shell .admin-nav-link.active { background: #e9f2ed; color: #0a3e83; border-color: #d7e8dd; box-shadow: none; }
-.admin-sidebar .admin-btn.secondary { color: #0a3e83; border-color: #cfddd3; background: #fff; }
+.admin-nav-link:hover { background: #F5F7FF; color: var(--er-primary); }
+.admin-shell .admin-nav-link.active { background: var(--er-primary-soft); color: var(--er-primary); border-color: var(--er-primary-soft-border); box-shadow: none; }
+.admin-sidebar .admin-btn.secondary { color: var(--er-primary); border-color: var(--er-secondary-border); background: #fff; }
 .admin-shell .admin-btn { border-radius: 8px; box-shadow: none; }
 .admin-nav-icon { width: 20px; display: grid; place-items: center; color: #6b7a72; }
-.admin-nav-link.active .admin-nav-icon { color: #0a3e83; }
+.admin-nav-link.active .admin-nav-icon { color: var(--er-primary); }
 
 .admin-sidebar-footer { padding: 14px; border-top: 1px solid var(--admin-border); }
 .admin-health-card { margin-bottom: 12px; padding: 10px 12px; background: #f7f9f7; border: 1px solid var(--admin-border); border-radius: 9px; }
@@ -105,7 +105,7 @@
   background: #f8fafc;
   transform: none;
 }
-.admin-btn.success { background: var(--admin-green); box-shadow: 0 10px 22px rgba(5,150,105,.15); }
+.admin-btn.success { background: var(--er-primary); box-shadow: none; }
 .admin-btn.danger { background: var(--admin-danger); box-shadow: 0 10px 22px rgba(186,26,26,.12); }
 .admin-btn.small { min-height: 36px; padding: 8px 12px; font-size: 12px; }
 
@@ -852,7 +852,7 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   background: #fff;
   color: #475467;
 }
-.admin-quickfind:focus-within { border-color: var(--er-primary); background: #fff; box-shadow: 0 0 0 2px rgba(23, 74, 58, .12); }
+.admin-quickfind:focus-within { border-color: var(--er-primary); background: #fff; box-shadow: 0 0 0 2px rgba(30, 64, 175, .12); }
 .admin-quickfind input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #101828; font: 500 12px var(--er-font-sans); }
 .admin-quickfind input::placeholder { color: #475467; opacity: 1; }
 .admin-quickfind-pop {

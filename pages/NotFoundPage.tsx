@@ -5,7 +5,7 @@ export default function NotFoundPage() {
   return (
     <HubLayout>
       <div className="hub-page" style={{ padding: '40px 0 80px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '600px', textAlign: 'center' }}>
+        <div className="hub-container hub-compact-narrow" style={{ textAlign: 'center' }}>
           <div
             style={{
               background: '#ffffff',

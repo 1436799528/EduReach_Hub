@@ -8,6 +8,7 @@ import {
   Bookmark,
   ClipboardList,
   Edit,
+  Home,
   LayoutDashboard,
   LogOut,
   MonitorPlay,
@@ -31,13 +32,13 @@ import { userFacingError } from '../lib/errors';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
 import SkipLink from '../src/components/a11y/SkipLink';
+import SiteFooter from '../src/components/SiteFooter';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { useAuth } from '../src/lib/auth';
 import { navigateInApp } from '../src/lib/navigation';
 import { pageTitleFor } from '../src/lib/pageMeta';
 import { needsStudentAction, serviceStatusMeaning } from '../src/lib/serviceLifecycle';
-import { useModalDialog } from '../src/lib/useModalDialog';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import SiteSearch from '../src/components/LazySiteSearch';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
@@ -270,10 +271,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [accountSheetOpen, setAccountSheetOpen] = useState(false);
-
-  // A11Y-1: the account sheet is a dialog, so it behaves like one.
-  const accountSheetRef = useModalDialog<HTMLDivElement>(accountSheetOpen, () => setAccountSheetOpen(false));
   const focusedRequestReference = new URLSearchParams(window.location.search).get('ref') || '';
 
   /* ---------------- data ---------------- */
@@ -417,7 +414,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   /* ---------------- tabs & URL ---------------- */
   const openTab = (tab: DashboardTab) => {
     setActiveTab(tab);
-    setAccountSheetOpen(false);
     setProfileMenuOpen(false);
     const route = TAB_ROUTES[tab];
     if (`${window.location.pathname}` !== route) {
@@ -660,7 +656,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const accountLinks = (
     <>
       <a href="/profile" className="edureach-nav-item"><User size={15} /> Academic Profile</a>
-      <button type="button" className="edureach-nav-item" onClick={() => { setSecurityOpen(true); setAccountSheetOpen(false); setProfileMenuOpen(false); }}>
+      <button type="button" className="edureach-nav-item" onClick={() => { setSecurityOpen(true); setProfileMenuOpen(false); }}>
         <Shield size={15} /> Security &amp; Password
       </button>
       {isAdminUser && <a href="/admin" className="edureach-nav-item"><ShieldCheck size={15} /> Admin Console</a>}
@@ -1300,7 +1296,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="edureach-dash-bar">
           <a href="/" className="edureach-dash-brand" aria-label="EduReach home"><BrandLogo height={36} radius="50%" /></a>
 
-          <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" submitLabel="Go" />
+          <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" />
 
           <div className="edureach-dash-actions">
             <NotificationCenter variant="dashboard" />
@@ -1357,34 +1353,18 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </main>
       </div>
 
-      <nav className="edureach-bottom-nav" aria-label="Dashboard">
-        <div className="edureach-bottom-nav-inner">
-          {NAV.map(({ tab, short, Icon }) => (
-            <button key={tab} type="button" className={`edureach-bottom-link ${activeTab === tab && !accountSheetOpen ? 'active' : ''}`} onClick={() => openTab(tab)}>
-              <Icon size={18} /> {short}
-            </button>
-          ))}
-          <button type="button" className={`edureach-bottom-link ${accountSheetOpen ? 'active' : ''}`} onClick={() => setAccountSheetOpen((open) => !open)} aria-expanded={accountSheetOpen}>
-            <User size={18} /> Account
-          </button>
-        </div>
+      {/* UX-7: the dashboard is part of the product, so a phone keeps the same
+          five destinations as every other screen. Requests and Tools remain in
+          the header profile menu and the desktop sidebar. */}
+      <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
+        <a href="/"><Home size={18} aria-hidden="true" /><span>Home</span></a>
+        <a href="/cbt"><BookOpen size={18} aria-hidden="true" /><span>Practice</span></a>
+        <a className={activeTab === 'cbt' ? 'active' : ''} aria-current={activeTab === 'cbt' ? 'page' : undefined} href="/dashboard/cbt"><MonitorPlay size={18} aria-hidden="true" /><span>My CBT</span></a>
+        <a href="/dashboard/cbt/results"><BarChart3 size={18} aria-hidden="true" /><span>Results</span></a>
+        <a className={activeTab === 'services' || activeTab === 'tools' ? 'active' : ''} href="/profile"><User size={18} aria-hidden="true" /><span>Profile</span></a>
       </nav>
 
-      {accountSheetOpen && (
-        // Redundant pointer affordance: the Account button toggles the sheet and Escape closes it.
-        <div className="dash-sheet-backdrop" role="presentation" onClick={() => setAccountSheetOpen(false)}>
-          <div ref={accountSheetRef} tabIndex={-1} className="dash-sheet" role="dialog" aria-modal="true" aria-label="Account" onClick={(e) => e.stopPropagation()}>
-            <div className="dash-sheet-head">
-              <div className="edureach-dash-avatar">{avatar}</div>
-              <div>
-                <strong>{displayName}</strong>
-                {email && <span>{email}</span>}
-              </div>
-            </div>
-            {accountLinks}
-          </div>
-        </div>
-      )}
+      <SiteFooter />
 
       <SecurityModal open={securityOpen} onClose={() => setSecurityOpen(false)} userId={userId} isLocalMode={isLocalMode} mfaEnabled={mfaEnabled} onMfaChange={setMfaEnabled} />
     </div>

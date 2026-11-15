@@ -20,9 +20,10 @@ EduReach is a high-performance Nigerian student-services and examination support
 
 ## Interaction Hierarchy (UI-5)
 
-11. **One meaning per colour.** Green is a primary action or a positive movement;
-    crimson is the brand accent, a destructive consequence or a decline; amber is
-    a warning; neutral is everything else. Never colour a card because it exists.
+11. **One meaning per colour.** Blue is a primary action or the current
+    selection; green means Passed/Correct/Completed and nothing else; crimson is
+    the brand accent, a destructive consequence or a decline; amber is a warning;
+    neutral is everything else. Never colour a card because it exists.
 12. **Search is a utility.** `SiteSearch` is the only navigation search;
     `FilterSearch` is the only live page-filter field; server-side lookups that submit a query are not a second filter. White surface, neutral icon,
     subtle focus, no bright fill.

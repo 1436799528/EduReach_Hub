@@ -56,7 +56,10 @@ export const BUDGETS = {
   // not make the consent feature pass by raising its performance budgets.
   entryJsGzip: 100 * 1024,
   supabaseChunkGzip: 60 * 1024, // measured 56.2 KB — the session client, on every page by design
-  criticalPathGzip: 211 * 1024,
+  // UX-7 replaced the home hero with the product home (greeting, four action
+  // tiles, record strip, activity list) and added the five-destination nav with
+  // familiar icons. Measured 213.1 KB; raised 211 -> 214 with 0.9 KB headroom.
+  criticalPathGzip: 214 * 1024,
   // Measured 311.0 KB across 65 chunks (CBT subject-selection fix plus the
   // grouped WAEC picker). The 310 KB budget's baseline (280.9 KB across 58
   // chunks) was fully consumed by feature growth, leaving a gate that failed
@@ -87,7 +90,10 @@ export const BUDGETS = {
   // restore; the measured build is 362.4 KB, so the cap moves to 365 KB with
   // 2.6 KB of headroom. The first-load critical path is unchanged and has its
   // own 211 KB cap.
-  totalJsGzip: 365 * 1024,
+  // UX-7 measured 365.4 KB across 61 chunks (the extra chunk is the dashboard's
+  // shared nav/icons). Raised 365 -> 366; lazy route chunks are still excluded
+  // from the critical path above.
+  totalJsGzip: 366 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

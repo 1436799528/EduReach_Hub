@@ -1,20 +1,20 @@
+.auth-shell{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:#f4f7fb}
 .auth-page{
-  --auth-brand:var(--er-primary,#0a3e83);
-  --auth-brand-dark:#083570;
+  --auth-brand:var(--er-primary,#1E40AF);
+  --auth-brand-dark:#1E3A8A;
   --auth-soft:#edf4fb;
   --auth-blue:var(--er-brand-blue,#1d9be0);
   --auth-blue-ink:var(--er-brand-blue-ink,#0f6baa);
   --auth-ink:#17212b;
   --auth-muted:#617181;
   --auth-line:#dce4e8;
-  min-height:100vh;
-  min-height:100svh;
+  flex:1;
   display:flex;
   align-items:center;
   justify-content:center;
   padding:28px 20px;
   color:var(--auth-ink);
-  background:#f4f7fb;
+  background:transparent;
 }
 .auth-frame{width:min(700px,100%);margin:auto}
 .auth-topbar{display:flex;margin:0 0 10px}
@@ -34,12 +34,12 @@
   border:1px solid #e1e7e9;
   border-radius:18px;
   background:#fff;
-  box-shadow:0 12px 36px rgba(10,62,131,.08);
+  box-shadow:0 12px 36px rgba(30,64,175,.08);
 }
 .auth-card--signup{max-width:660px}
 .auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 24px;padding:4px;border-radius:10px;background:#f0f4f9}
 .auth-tabs button{min-height:40px;border:0;border-radius:7px;color:var(--auth-muted);background:transparent;font:inherit;font-size:13px;font-weight:620;cursor:pointer}
-.auth-tabs button[aria-selected="true"]{color:var(--auth-brand);background:#fff;box-shadow:0 1px 3px rgba(10,62,131,.14)}
+.auth-tabs button[aria-selected="true"]{color:var(--auth-brand);background:#fff;box-shadow:0 1px 3px rgba(30,64,175,.14)}
 .auth-card-heading{margin:0 0 22px;text-align:center}
 .auth-card-heading h1{margin:7px 0 6px;color:var(--auth-ink);font-size:28px;line-height:1.2;letter-spacing:-.04em}
 .auth-card-heading p{max-width:37ch;margin:0 auto;color:var(--auth-muted);font-size:13px;line-height:1.55}
@@ -67,7 +67,7 @@
   font-size:16px;
 }
 .auth-field input::placeholder{color:#8a989f}
-.auth-field input:focus,.auth-field select:focus{border-color:var(--auth-brand);box-shadow:0 0 0 3px rgba(10,62,131,.14)}
+.auth-field input:focus,.auth-field select:focus{border-color:var(--auth-brand);box-shadow:0 0 0 3px rgba(30,64,175,.14)}
 .auth-field small{color:var(--auth-muted);font-size:11px;line-height:1.45}
 .auth-input-wrap{position:relative}
 .auth-input-wrap>svg{position:absolute;top:50%;left:13px;z-index:1;transform:translateY(-50%);color:var(--auth-blue-ink);pointer-events:none}
@@ -107,10 +107,7 @@
 .auth-verification-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;color:var(--auth-blue-ink);background:#e6f3fd}
 .auth-verification p{margin:0;color:#53636b;font-size:13px;line-height:1.65}
 .auth-verification .auth-submit{margin-top:3px}
-.auth-footer{display:flex;justify-content:space-between;gap:12px;margin:19px 2px 0;color:#5f6f76;font-size:11px}
-.auth-footer a{color:var(--auth-brand);font-weight:560;text-decoration:none}
-.auth-footer a:hover{text-decoration:underline}
-.auth-page :focus-visible{outline:3px solid var(--auth-brand,#0a3e83);outline-offset:2px}
+.auth-page :focus-visible{outline:3px solid var(--auth-brand,#1E40AF);outline-offset:2px}
 @media(max-width:900px){
   .auth-columns{grid-template-columns:minmax(0,1fr);gap:0}
   .auth-card,.auth-card--signup{max-width:680px}
@@ -127,8 +124,6 @@
   .auth-account-options{grid-template-columns:1fr}
   .auth-account-option{align-items:center;min-height:53px;padding:8px 10px}
   .auth-account-option small{margin-top:2px}
-  .auth-footer{flex-wrap:wrap;justify-content:center;margin-top:15px}
-  .auth-footer span:nth-child(2){display:none}
 }
 @media(max-width:380px){
   .auth-page{padding-right:10px;padding-left:10px}
@@ -295,13 +290,13 @@
 .auth-legal-intro--bottom .auth-consent { margin: 0; align-items: flex-start; }
 .auth-legal-intro--bottom .auth-consent input { margin-top: 2px; }
 .auth-legal-link {
-  color: var(--auth-brand, #0a3e83);
+  color: var(--auth-brand, #1E40AF);
   font-weight: 620;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
-.auth-legal-link:hover { color: #083570; }
+.auth-legal-link:hover { color: #1E3A8A; }
 .auth-code-form { display: grid; gap: 10px; width: 100%; max-width: 320px; margin: 2px 0 4px; }
 .auth-code-form .auth-field { text-align: left; }
 .auth-code-form input {
@@ -319,7 +314,7 @@
   letter-spacing: .28em;
   text-align: center;
 }
-.auth-code-form input:focus { border-color: var(--auth-brand, #0a3e83); box-shadow: 0 0 0 3px rgba(10,62,131,.14); }
+.auth-code-form input:focus { border-color: var(--auth-brand, #1E40AF); box-shadow: 0 0 0 3px rgba(30,64,175,.14); }
 
 /* A one-time code is one value with one box per digit (6 for SMS, 8 for the
    hosted email code). The group stays on one line even at 320px; each box is
@@ -347,12 +342,12 @@
   font: 650 20px/1 var(--auth-font-sans, Inter, sans-serif);
   letter-spacing: 0;
   text-align: center;
-  caret-color: var(--auth-brand, #0a3e83);
+  caret-color: var(--auth-brand, #1E40AF);
 }
 .auth-otp input:focus,
 .auth-code-form .auth-otp input:focus {
-  border-color: var(--auth-brand, #0a3e83);
-  box-shadow: 0 0 0 3px rgba(10, 62, 131, .14);
+  border-color: var(--auth-brand, #1E40AF);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, .14);
 }
 .auth-otp input:disabled { opacity: .6; }
 @media (max-width: 360px) {

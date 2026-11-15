@@ -57,11 +57,11 @@ export default function SearchPage() {
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '24px 0 64px' }}>
-        <div className="hub-container hub-narrow" style={{ maxWidth: '940px' }}>
+      <div className="hub-page er-search-page">
+        <div className="hub-container er-search-page-container">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
-              <span className="hub-eyebrow" style={{ color: '#b14933' }}>EDUREACH SEARCH</span>
+              <span className="hub-eyebrow">EDUREACH SEARCH</span>
               <h1>{query ? `Search results for “${query}”` : 'Search EduReach'}</h1>
               <p>Find a direct destination across services, CBT, past questions, materials, news and opportunities.</p>
             </div>

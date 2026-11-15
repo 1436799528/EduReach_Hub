@@ -81,12 +81,6 @@ const setupCopy: Record<ExamSetupKey, SetupCopy> = {
   },
 };
 
-const guideItems = [
-  { title: 'You choose the paper', body: 'Pick the subjects and the number of questions. Time follows the exam pace.' },
-  { title: 'The timer is real', body: 'The countdown keeps running when you refresh or leave the page.' },
-  { title: 'Your work is saved', body: 'Answers are saved as you go, so a lost connection does not lose the session.' },
-];
-
 export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
   const copy = setupCopy[exam];
   const { user } = useAuth();
@@ -510,6 +504,7 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
               <h1>{copy.title}</h1>
               <p>{copy.intro}</p>
               <span className="er-setup-duration"><Clock3 size={14} /> {defaultMinutes ? `${targetExam?.title || 'This bank'} · standard time ${defaultMinutes} minutes` : copy.duration}</span>
+              <p className="er-setup-note er-setup-note--hero"><ShieldCheck size={15} /> Practice environment. Check the official instructions for your exam year.</p>
             </div>
           </section>
 
@@ -560,27 +555,6 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                   </div></article>)}
                 </div>
               ) : <InlineNotice tone="info" title="No papers uploaded for this school yet">This school is verified as handwritten, but EduReach has no reviewed PDF papers for it yet. Check back after the admin team uploads and routes the documents.</InlineNotice>}
-            </section>
-          )}
-
-          {(exam !== 'post-utme' || selectedPostUtmeInstitution?.post_utme_method === 'cbt') && (
-            <section className="er-setup-guide" aria-labelledby="cbt-guide-title">
-              <div className="er-setup-section-heading">
-                <div>
-                  <span className="hub-eyebrow">Before you begin</span>
-                  <h2 id="cbt-guide-title">How this CBT session works</h2>
-                </div>
-                <Calculator size={22} aria-hidden="true" />
-              </div>
-              <div className="er-setup-guide-grid">
-                {guideItems.map((item, index) => (
-                  <div className="er-setup-guide-item" key={item.title}>
-                    <span>{index + 1}</span>
-                    <div><strong>{item.title}</strong><p>{item.body}</p></div>
-                  </div>
-                ))}
-              </div>
-              <p className="er-setup-note"><ShieldCheck size={15} /> This is a practice environment. Confirm the current official examination instructions for your examination year.</p>
             </section>
           )}
 
