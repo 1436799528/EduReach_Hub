@@ -87,9 +87,11 @@ Run on the UX-7 branch after the change:
 | `npm run typecheck` | pass |
 | `npm test` | 1069 passed, 0 failed, 0 skipped |
 | `npm run build` | pass |
-| `npm run perf:audit` | 10/10; CSS 49.8/51 KB, critical 213.2/214 KB |
+| `npm run perf:audit` | 10/10; CSS 49.8/51 KB, critical 213.2/214 KB, all chunks 365.3/366 KB |
 | `npm run a11y:audit` | 0 blocking, 6 informational |
+| Playwright full suite, desktop + mobile | 293 passed, 29 skipped |
 | Playwright site + a11y, desktop + mobile | 165 passed, 5 skipped |
+| `mobile-perf`, `/past-questions` | LCP 2324 ms, CLS 0 |
 
 Evidence is in [`evidence/after-blue/`](evidence/after-blue/): guest and
 signed-in home, dashboard overview at 1440/390, My CBT, setup, a scored result
