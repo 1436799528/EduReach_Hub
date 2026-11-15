@@ -87,7 +87,7 @@ Run on the UX-7 branch after the change:
 | `npm run typecheck` | pass |
 | `npm test` | 1069 passed, 0 failed, 0 skipped |
 | `npm run build` | pass |
-| `npm run perf:audit` | 10/10; CSS 49.8/51 KB, critical 213.2/214 KB, all chunks 365.3/366 KB |
+| `npm run perf:audit` | 10/10; CSS 49.8/51 KB, critical 213.2/214 KB, all chunks 365.4/366 KB |
 | `npm run a11y:audit` | 0 blocking, 6 informational |
 | Playwright full suite, desktop + mobile | 293 passed, 29 skipped |
 | Playwright site + a11y, desktop + mobile | 165 passed, 5 skipped |

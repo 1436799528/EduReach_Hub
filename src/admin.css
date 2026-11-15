@@ -105,7 +105,7 @@
   background: #f8fafc;
   transform: none;
 }
-.admin-btn.success { background: var(--admin-green); box-shadow: 0 10px 22px rgba(5,150,105,.15); }
+.admin-btn.success { background: var(--er-primary); box-shadow: none; }
 .admin-btn.danger { background: var(--admin-danger); box-shadow: 0 10px 22px rgba(186,26,26,.12); }
 .admin-btn.small { min-height: 36px; padding: 8px 12px; font-size: 12px; }
 

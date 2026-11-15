@@ -233,7 +233,7 @@ All commands were run on this branch after the final source change.
 | `npm run typecheck` | **0 errors** |
 | `npm test` | **1069 passed, 0 failed** (1069), including 5 new home-activity rules |
 | `npm run build` | **success** |
-| `npm run perf:audit` | **all budgets pass**: entry 49.0/100 KB, Supabase 53.0/60, CSS 49.8/51, critical path 213.2/214, all chunks 365.3/366, largest image 41.2/64 |
+| `npm run perf:audit` | **all budgets pass**: entry 49.0/100 KB, Supabase 53.0/60, CSS 49.8/51, critical path 213.2/214, all chunks 365.4/366, largest image 41.2/64 |
 | `npm run a11y:audit` | **0 blocking**, 6 informational |
 | Playwright, full suite | **293 passed, 29 skipped** |
 | Playwright, `site.spec` + `a11y.spec` | **165 passed, 5 skipped** |
