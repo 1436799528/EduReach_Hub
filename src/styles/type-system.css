@@ -387,19 +387,27 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   position: relative;
   display: inline-flex;
 }
-/* UX-3: a dot, not a red block. It sits on the glyph's upper-right, is
-   smaller than the bell's stroke weight, and carries no number. The real
-   unread count lives in the accessible label and the panel header. */
-.er-notif-unread-dot {
+/* OPay-style numeric badge */
+.er-notif-unread-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--er-surface);
-  border-radius: 50%;
-  background: var(--er-crimson);
-  box-sizing: content-box;
+  top: -6px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--er-crimson, #b14933);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--er-surface, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-sizing: border-box;
 }
 @media (pointer: coarse) {
   .er-notif-trigger { width: 44px; height: 44px; }

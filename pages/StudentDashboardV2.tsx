@@ -11,12 +11,14 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
+  Menu,
   MonitorPlay,
   Shield,
   ShieldCheck,
   Trash2,
   User,
   Wrench,
+  X,
 } from 'lucide-react';
 import BrandLogo from '../src/components/BrandLogo';
 import VerifiedBadge from '../src/components/VerifiedBadge';
@@ -27,7 +29,7 @@ import { InlineNotice } from '../src/components/AsyncState';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
 import { ChangeChip, DistributionChart, SubjectBars, TrendChart } from '../src/components/dashboard/ProgressCharts';
 import { apiUrl } from '../src/lib/apiBase';
-import { deleteCbtAttempt, trackEvent } from '../src/lib/api';
+import { deleteCbtAttempt } from '../src/lib/api';
 import { userFacingError } from '../lib/errors';
 import SchoolFinderCard, { type Institution } from '../src/components/dashboard/SchoolFinderCard';
 import SecurityModal from '../src/components/dashboard/SecurityModal';
@@ -50,7 +52,6 @@ import {
   fetchCgpaSnapshots,
   fetchLatestCgpaSnapshot,
   fetchNotifications,
-  markNotificationsRead,
   pageSlice,
   type DashboardNotification,
   fetchSavedItems,
@@ -264,13 +265,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [attemptNotice, setAttemptNotice] = useState('');
   const [savedItems, setSavedItems] = useState<DashboardSavedItem[]>([]);
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
-  const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [cgpaCourses, setCgpaCourses] = useState<CgpaCourseInput[]>([]);
   const [latestCgpaSnapshot, setLatestCgpaSnapshot] = useState<CgpaSnapshot | null>(null);
   const [cgpaSnapshots, setCgpaSnapshots] = useState<CgpaSnapshot[]>([]);
 
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const focusedRequestReference = new URLSearchParams(window.location.search).get('ref') || '';
 
   /* ---------------- data ---------------- */
@@ -396,25 +397,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const unreadNotifications = notifications.filter((item) => !item.read).length;
 
-  async function markAllNotificationsRead() {
-    if (!unreadNotifications || notificationsBusy || !userId) return;
-    setNotificationsBusy(true);
-    setNotice('');
-    try {
-      await markNotificationsRead(userId);
-      // Mark by the same predicate the list uses, so the badge and the rows agree.
-      setNotifications((current) => current.map((item) => (item.read ? item : { ...item, read: true })));
-    } catch {
-      setNotice('We could not update your notifications. Please try again.');
-    } finally {
-      setNotificationsBusy(false);
-    }
-  }
-
   /* ---------------- tabs & URL ---------------- */
   const openTab = (tab: DashboardTab) => {
     setActiveTab(tab);
     setProfileMenuOpen(false);
+    setMobileNavOpen(false);
     const route = TAB_ROUTES[tab];
     if (`${window.location.pathname}` !== route) {
       window.history.pushState({}, '', route);
@@ -725,33 +712,41 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
               <td>
                 <span className="dash-row-actions">
                   {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
-                  {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test</a>}
-                  {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review</a>}
-                  {state !== 'active' && (confirmDeleteId === row.id ? (
-                    <span className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`}>
-                      <span>Delete this result?</span>
-                      <button type="button" className="dash-card-link" onClick={() => setConfirmDeleteId('')} disabled={deletingId === row.id}>Keep</button>
-                      <button
-                        type="button"
-                        className="dash-btn dash-btn-small dash-btn-danger"
-                        onClick={() => void removeAttempt(row)}
-                        disabled={deletingId === row.id}
-                        aria-busy={deletingId === row.id}
-                      >
-                        {deletingId === row.id ? 'Deleting…' : 'Delete'}
-                      </button>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="dash-icon-btn"
-                      aria-label="Delete"
-                      title="Delete this result"
-                      onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
-                    >
-                      <Trash2 size={15} aria-hidden="true" />
-                    </button>
-                  ))}
+                  {state === 'expired' && <a className="dash-card-link" href="/cbt">Start new test</a>}
+                  {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review result</a>}
+                  {state !== 'active' && (
+                    <details className="hub-more" style={{ display: 'inline-block' }}>
+                      <summary aria-label="More actions" className="dash-card-link" style={{ textDecoration: 'none', padding: '4px 8px' }}>•••</summary>
+                      <div className="hub-more-panel" style={{ width: '180px', zIndex: 100 }}>
+                        {confirmDeleteId === row.id ? (
+                          <div className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`} style={{ padding: '8px', display: 'grid', gap: '8px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600 }}>Delete this result?</span>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button type="button" className="dash-card-link" onClick={() => setConfirmDeleteId('')} disabled={deletingId === row.id}>Keep</button>
+                              <button
+                                type="button"
+                                className="dash-btn dash-btn-small dash-btn-danger"
+                                onClick={() => void removeAttempt(row)}
+                                disabled={deletingId === row.id}
+                              >
+                                {deletingId === row.id ? 'Deleting…' : 'Delete'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="dash-card-link"
+                            style={{ width: '100%', textAlign: 'left', padding: '8px 10px', color: '#b14933' }}
+                            onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
+                            disabled={deletingId === row.id}
+                          >
+                            Delete result
+                          </button>
+                        )}
+                      </div>
+                    </details>
+                  )}
                 </span>
               </td>
             </tr>;
@@ -981,58 +976,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </section>
       )}
 
-      <section className="dash-card" id="dashboard-notifications">
-        <div className="dash-card-header">
-          <h2 className="dash-card-title"><Bell size={14} className="dash-card-title-icon" /> Notifications</h2>
-          {unreadNotifications > 0 && (
-            <button type="button" className="dash-card-link" onClick={markAllNotificationsRead} disabled={notificationsBusy}>
-              {notificationsBusy ? 'Marking…' : `Mark all as read (${unreadNotifications})`}
-            </button>
-          )}
-        </div>
-        {notifications.length ? (
-          <ul className="dash-rows">
-            {notifications.slice(0, 4).map((item) => (
-              <li key={item.id} className={`dash-row ${item.read ? '' : 'dash-notification-unread'}`}>
-                <div className="dash-row-top">
-                  <strong className="dash-row-title">
-                    {!item.read && <span className="dash-notification-dot" aria-label="Unread" />}
-                    {item.title}
-                  </strong>
-                  <span className="dash-row-meta">{item.time}</span>
-                </div>
-                {item.body && <p className="dash-request-description">{item.body}</p>}
-                {item.href && (
-                  <a
-                    className="dash-card-link"
-                    href={item.href}
-                    onClick={() => trackEvent('notification_open', { metadata: { status: item.status } })}
-                  >
-                    Open
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : emptyState('No notifications yet. When a service request you submitted changes status, it appears here.', '/services', 'Browse services')}
-      </section>
-
       <section className="dash-card dash-recent-activity" aria-labelledby="dash-recent-activity-heading">
         <div className="dash-card-header">
           <h2 className="dash-card-title" id="dash-recent-activity-heading">Recent activity</h2>
         </div>
-        {isLocalMode && requests.length > 0 && <p>These local preview records were not submitted to EduReach; they exist only on this device.</p>}
-        <div className="dash-recent-activity-group">
-          <div className="dash-recent-activity-heading">
-            <h3>Service requests</h3>
-            {requests.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('services')}>View all ({requests.length})</button>}
-          </div>
-          {requestsUnavailable
-            ? requestLoadFailure
-            : requests.length
-            ? requestsTable(requests.slice(0, 3))
-            : emptyState('No service requests yet. When you request NELFUND help, result checking, a JAMB slip or admission support, its live status appears here.', '/services', 'Browse services')}
-        </div>
+        {isLocalMode && attempts.length > 0 && <p>These local preview records were not submitted to EduReach; they exist only on this device.</p>}
         <div className="dash-recent-activity-group">
           <div className="dash-recent-activity-heading">
             <h3>CBT results</h3>
@@ -1173,10 +1121,24 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
       </section>
 
-      {subjectCounts.length > 0 && <div aria-labelledby="dash-subject-summary">
-        <h2 id="dash-subject-summary" className="dash-card-title">Subjects selected in completed tests</h2>
-        <p className="dash-metric-hint">Counts use loaded submissions with recorded subjects, including unscored submissions. A paper with multiple subjects counts once for each subject; these are not subject scores.</p>
-        <ul>{subjectCounts.map(({ subject, count }) => <li key={subject}>{subject}: {count} submitted {count === 1 ? 'test' : 'tests'}</li>)}</ul>
+      {subjectCounts.length > 0 && <div className="dash-card dash-subject-activity" aria-labelledby="dash-subject-summary" style={{ marginTop: '16px' }}>
+        <h2 id="dash-subject-summary" className="dash-card-title">Subject activity</h2>
+        <p className="dash-metric-hint" style={{ marginBottom: '16px' }}>Submissions containing each subject. This counts test volume, not academic performance.</p>
+        <div className="dash-activity-bars">
+          {subjectCounts.map(({ subject, count }) => {
+            const maxCount = Math.max(...subjectCounts.map(s => s.count));
+            const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+            return (
+              <div key={subject} className="dash-activity-bar-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <div style={{ flex: '0 0 130px', fontSize: '12.5px', color: '#1f2937', fontWeight: 560, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={subject}>{subject}</div>
+                <div style={{ flex: '1', background: '#f1f5f9', height: '14px', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, background: '#b14933', height: '100%', borderRadius: '4px' }} />
+                </div>
+                <div style={{ flex: '0 0 32px', fontSize: '11.5px', color: '#64748b', textAlign: 'right' }}>{count}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>}
       <div className="dash-learning-progress" aria-labelledby="dash-subject-progress">
         <h2 id="dash-subject-progress" className="dash-card-title">Subject progress</h2>
@@ -1244,11 +1206,19 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             {activeSaved.map((item) => (
               <li key={item.id} className="dash-list-row">
                 <div className="dash-list-copy">
-                  <strong>{item.name}</strong>
+                  <strong style={{ marginBottom: '2px' }}>
+                    {item.type === 'school' ? (
+                      <a href={`/schools/${encodeURIComponent(item.key)}?name=${encodeURIComponent(item.name)}&return=${encodeURIComponent('/dashboard')}`} style={{ color: 'var(--er-primary)', textDecoration: 'none' }} className="dash-card-link" aria-label={`View details for ${item.name}`}>
+                        {item.name}
+                      </a>
+                    ) : (
+                      item.name
+                    )}
+                  </strong>
                   <span>{[item.detail, item.location].filter(Boolean).join(' • ') || statusLabel(item.type)}</span>
                 </div>
                 <div className="dash-list-actions">
-                  {item.href && <a className="dash-btn dash-btn-small dash-btn-secondary" href={item.href} target={item.href.startsWith('/') ? undefined : '_blank'} rel="noopener noreferrer">Open</a>}
+                  {item.href && <a className="dash-btn dash-btn-small dash-btn-secondary" href={item.type === 'school' ? `/schools/${encodeURIComponent(item.key)}?name=${encodeURIComponent(item.name)}&return=${encodeURIComponent('/dashboard')}` : item.href} target={item.href.startsWith('/') || item.type === 'school' ? undefined : '_blank'} rel="noopener noreferrer">Details</a>}
                   {confirmSavedId === item.id ? (
                     <span className="dash-inline-confirm" role="group" aria-label={`Remove ${item.name}`}>
                       <span>Remove?</span>
@@ -1297,8 +1267,18 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         </div>
       )}
 
+      {mobileNavOpen && <button type="button" className="dash-drawer-backdrop" aria-label="Close menu" onClick={() => setMobileNavOpen(false)} />}
       <header className="edureach-dash-header">
         <div className="edureach-dash-bar">
+          <button
+            type="button"
+            className="edureach-menu-toggle"
+            aria-expanded={mobileNavOpen}
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileNavOpen((open) => !open)}
+          >
+            {mobileNavOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+          </button>
           <a href="/" className="edureach-dash-brand" aria-label="EduReach home"><BrandLogo height={36} radius="50%" /></a>
 
           <SiteSearch variant="dashboard" label="Search EduReach" placeholder="Search services, exams or news" />
@@ -1332,7 +1312,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </header>
 
       <div className="edureach-dash-body">
-        <aside className="edureach-dash-sidebar" aria-label="Dashboard navigation">
+        <aside className={`edureach-dash-sidebar ${mobileNavOpen ? 'is-open' : ''}`} aria-label="Dashboard navigation" role={mobileNavOpen ? 'dialog' : undefined} aria-modal={mobileNavOpen ? true : undefined}>
           {NAV.map(({ tab, label, Icon }) => (
             <button key={tab} type="button" className={`edureach-nav-item ${activeTab === tab ? 'active' : ''}`} onClick={() => openTab(tab)} aria-current={activeTab === tab ? 'page' : undefined}>
               <Icon size={15} /> {label}

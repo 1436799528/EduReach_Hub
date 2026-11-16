@@ -1,5 +1,5 @@
 import { userFacingError } from '../lib/errors';
-import { MessageSquare, Search } from 'lucide-react';
+import { MessageSquare, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import ServiceCard from '../src/components/ServiceCard';
@@ -92,7 +92,29 @@ export default function ServicesCatalogPage() {
   }, [activeFilter, filteredServices, search]);
 
   return (
-    <HubLayout>
+    <HubLayout
+      customSearch={
+        <div className="site-search site-search--header" role="search">
+          <Search size={16} aria-hidden="true" style={{ color: '#b14933' }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search services (e.g. NELFUND)..."
+            aria-label="Search services"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              style={{ border: 0, background: 'none', color: '#5e6c82', cursor: 'pointer', display: 'flex' }}
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+      }
+    >
       <div className="hub-page" style={{ padding: '20px 0 60px' }}>
         <div className="hub-container">
           <div
@@ -133,27 +155,6 @@ export default function ServicesCatalogPage() {
               boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
-              <Search size={18} style={{ color: '#b14933' }} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search services (e.g. NELFUND, result checking, JAMB slip)..."
-                aria-label="Search services"
-                style={{ border: 0, outline: 0, width: '100%', fontSize: '13px', color: '#0f172a' }}
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  aria-label="Clear search"
-                  style={{ border: 0, background: 'none', color: '#5e6c82', cursor: 'pointer', fontSize: '16px' }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
-
             <FilterPills options={filters} active={activeFilter} onChange={setActiveFilter} ariaLabel="Service categories" />
           </div>
 
@@ -185,7 +186,7 @@ export default function ServicesCatalogPage() {
                 href="/services"
                 linkLabel="Browse all services"
               />
-              <div className="er-service-grid">
+              <div className="er-square-grid er-service-grid">
                 {filteredServices.map((service) => <ServiceCard key={service.id} service={service} />)}
               </div>
             </section>

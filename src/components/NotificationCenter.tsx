@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AlertTriangle, Bell, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { trackEvent } from '../lib/api';
 import {
   fetchNotificationsWithStatus,
   markNotificationRead,
@@ -145,7 +146,7 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
             </>
           ) : (unread > 0 && !loading) ? (
             <>
-              <span className="er-notif-unread-dot" aria-hidden="true" />
+              <span className="er-notif-unread-badge" aria-hidden="true">{unread > 99 ? '99+' : unread}</span>
               <span className="er-visually-hidden">{unread} unread</span>
             </>
           ) : null}
@@ -205,7 +206,7 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
                   return (
                     <li key={item.id} className={item.read ? undefined : 'is-unread'}>
                       {item.href ? (
-                        <a className="er-notif-row" href={item.href} onClick={() => { if (!item.read) void markOneRead(item.id); setOpen(false); }}>
+                        <a className="er-notif-row" href={item.href} onClick={() => { if (!item.read) void markOneRead(item.id); setOpen(false); trackEvent('notification_open', { metadata: { status: 'clicked' } }); }}>
                           {content}
                         </a>
                       ) : (

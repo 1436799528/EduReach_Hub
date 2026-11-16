@@ -1,6 +1,6 @@
 import { userFacingError } from '../lib/errors';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Download, Printer, RotateCcw, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, MoreHorizontal, Printer, RotateCcw, Trash2, X } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CbtResultSlip from '../src/components/CbtResultSlip';
 import { deleteCbtAttempt, fetchCbtResult, type CbtResultPayload, type CbtResultQuestion, type CbtResultAnswer } from '../src/lib/api';
@@ -377,35 +377,34 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                   <p role="status" className="er-result-review-intro">Your saved score is available. Answer-by-answer review is unavailable for this attempt.</p>
                 )}
                 <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
-                <button
-                  type="button"
-                  className="hub-icon-btn"
-                  onClick={printResult}
-                  aria-label="Print result"
-                  title="Print result"
-                >
-                  <Printer size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="hub-icon-btn"
-                  onClick={downloadResult}
-                  aria-label="Download result as PDF"
-                  title="Download PDF"
-                >
-                  <Download size={15} aria-hidden="true" />
-                </button>
-                {result?.attempt?.id && (
-                  <button
-                    type="button"
-                    className="er-result-delete"
-                    aria-label="Delete"
-                    title="Delete this result"
-                    onClick={() => { setDeleteError(''); setConfirmDelete(true); }}
-                  >
-                    <Trash2 size={15} aria-hidden="true" />
-                  </button>
-                )}
+                <details className="hub-more">
+                  <summary aria-label="More actions" className="hub-icon-btn" style={{ minWidth: '40px', padding: '0' }}><MoreHorizontal size={15} /></summary>
+                  <div className="hub-more-panel" style={{ bottom: '100%', top: 'auto', marginBottom: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={printResult}
+                      style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '100%', padding: '7px 9px', background: 'transparent', border: 0, color: 'var(--er-text-primary)', fontSize: '13px', fontWeight: 560, cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <Printer size={15} aria-hidden="true" style={{ color: 'var(--er-primary)' }} /> Print result
+                    </button>
+                    <button
+                      type="button"
+                      onClick={downloadResult}
+                      style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '100%', padding: '7px 9px', background: 'transparent', border: 0, color: 'var(--er-text-primary)', fontSize: '13px', fontWeight: 560, cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <Download size={15} aria-hidden="true" style={{ color: 'var(--er-primary)' }} /> Download PDF
+                    </button>
+                    {result?.attempt?.id && (
+                      <button
+                        type="button"
+                        onClick={() => { setDeleteError(''); setConfirmDelete(true); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '100%', padding: '7px 9px', background: 'transparent', border: 0, color: '#b14933', fontSize: '13px', fontWeight: 560, cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        <Trash2 size={15} aria-hidden="true" /> Delete result
+                      </button>
+                    )}
+                  </div>
+                </details>
                 <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt')}><ArrowLeft size={15} /> Back to CBT</button>
               </div>
 

@@ -3,7 +3,7 @@ import { userFacingError } from '../../lib/errors';
 import { fetchNews, type NewsItem } from '../lib/api';
 import { isArticleCurrent } from '../lib/newsFreshness';
 import { EmptyState, ErrorState } from './AsyncState';
-import { NewsRow } from './NewsSections';
+import { NewsCard } from './NewsSections';
 import SectionHead from './SectionHead';
 import { SkeletonRows } from './Skeleton';
 
@@ -48,8 +48,8 @@ export default function HomeNewsSection() {
           />
         )}
         {!loading && !error && items.length > 0 && (
-          <div className="er-news-list">
-            {items.map((item) => <NewsRow key={item.id} item={item} />)}
+          <div className="er-square-grid er-home-news-grid">
+            {items.map((item) => <NewsCard key={item.id} item={item} />)}
           </div>
         )}
       </div>

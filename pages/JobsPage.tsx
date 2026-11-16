@@ -276,7 +276,7 @@ export default function JobsPage() {
           {!loadingLive && !isSupabaseConfigured && filteredStatic.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
               <SectionHead title={`${filteredStatic.length} preview listing${filteredStatic.length === 1 ? '' : 's'}`} />
-              <div style={{ display: 'grid', gap: '12px' }}>
+              <div className="er-square-grid" style={{ gap: '12px' }}>
                 {filteredStatic.map((item) => (
                   <a
                     key={item.title}
@@ -328,7 +328,7 @@ export default function JobsPage() {
           {!loadingLive && isSupabaseConfigured && filteredLive && filteredLive.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
               <SectionHead title={`${filteredLive.length} matching listing${filteredLive.length === 1 ? '' : 's'}`} />
-              <div style={{ display: 'grid', gap: '12px' }}>
+              <div className="er-square-grid" style={{ gap: '12px' }}>
                 {filteredLive.map((item) => {
                   const status = opportunityStatus(item);
                   return (
