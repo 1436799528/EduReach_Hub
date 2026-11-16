@@ -27,8 +27,7 @@ const toolLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
 
 /** The home screen offers study actions and current public information only. */
 export default function HubHomePage() {
-  const { user, isAuthenticated } = useAuth();
-  const firstName = user?.name?.split(/\s+/)[0] || 'Student';
+  const { isAuthenticated } = useAuth();
   const myCbtHref = isAuthenticated ? '/dashboard/cbt' : '/login';
 
   return (
@@ -41,7 +40,7 @@ export default function HubHomePage() {
             <div className="er-home-head-copy">
               <p className="er-home-eyebrow">Home</p>
               <h2 className="er-home-greeting" id="er-home-title">
-                {isAuthenticated ? `Welcome back, ${firstName}.` : 'What are you studying for?'}
+                What are you studying for?
               </h2>
               <p className="er-home-lede">
                 {isAuthenticated

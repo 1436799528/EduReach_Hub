@@ -51,7 +51,20 @@ export default function PublicPdfList({
                   <strong>{item.title}</strong>
                   {item.description && <p style={{ margin: '5px 0', lineHeight: 1.5 }}>{item.description}</p>}
                   <small className="hub-muted-label">{[item.source_name, item.subject, item.course, item.paper_year].filter(Boolean).join(' · ')}</small>
-                  {href && <div style={{ marginTop: 8 }}><a href={href} target="_blank" rel="noreferrer" className="hub-card-link">{item.href ? <><Download size={14} /> Open PDF</> : <>Open source <ExternalLink size={14} /></>}</a></div>}
+                  {href && (
+                    <div style={{ marginTop: 8 }}>
+                      <a 
+                        href={href} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="hub-icon-btn"
+                        aria-label={item.href ? "Download PDF" : "Open source"}
+                        title={item.href ? "Download" : "Open"}
+                      >
+                        {item.href ? <Download size={16} /> : <ExternalLink size={16} />}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </article>
             );

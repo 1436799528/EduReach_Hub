@@ -28,6 +28,7 @@ import './styles/type-system.css';
 import './styles/brand-actions.css';
 // UX-5 product system: hierarchy, spacing, navigation and control states.
 import './styles/ux5-product.css';
+import './styles/ux9-microinteractions.css';
 import './styles/a11y.css';
 
 
