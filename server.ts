@@ -212,7 +212,15 @@ app.get('/api/health/ready', async (_req, res) => {
     // candidate data. It does not prove migrations, triggers or grants.
     try {
       const { error } = await getServerSupabase().from('cbt_attempts').select('protocol').limit(0);
-      checks.cbt_protocol_schema = { ok: !error, detail: error ? 'CBT protocol schema is unavailable.' : undefined };
+      if (error) {
+        if (error.code === '42703' && !cbtV2LocalRehearsalEnabled()) {
+          checks.cbt_protocol_schema = { ok: true, detail: 'CBT operating in legacy-only mode.' };
+        } else {
+          checks.cbt_protocol_schema = { ok: false, detail: 'CBT protocol schema is unavailable.' };
+        }
+      } else {
+        checks.cbt_protocol_schema = { ok: true };
+      }
     } catch {
       checks.cbt_protocol_schema = { ok: false, detail: 'CBT protocol schema is unavailable.' };
     }
@@ -3287,10 +3295,21 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
     // the legacy reader. This requires the protocol migration before rollout.
     const lookup = await supabase.from('cbt_attempts').select('protocol')
       .eq('id', req.params.attemptId).eq('user_id', user.id).maybeSingle();
-    if (lookup.error || !lookup.data || !['legacy', 'v2'].includes(String(lookup.data.protocol))) {
+      
+    let storedProtocol: string;
+    
+    if (lookup.error) {
+      if (lookup.error.code === '42703' && !localVersioned) {
+        storedProtocol = 'legacy';
+      } else {
+        return res.status(503).json({ error: 'Unable to confirm this CBT protocol.' });
+      }
+    } else if (lookup.data && ['legacy', 'v2'].includes(String(lookup.data.protocol))) {
+      storedProtocol = lookup.data.protocol;
+    } else {
       return res.status(503).json({ error: 'Unable to confirm this CBT protocol.' });
     }
-    const storedProtocol = lookup.data.protocol;
+
     if (storedProtocol === 'v2' && !localVersioned) return res.status(503).json({ error: 'CBT versioned rehearsal is unavailable.' });
 
     let paper: CbtPaperRow[];
