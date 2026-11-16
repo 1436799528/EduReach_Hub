@@ -15,7 +15,7 @@ import { applyMigrations } from './replay';
 // RLS disabled.
 
 export type Privilege = 'select' | 'insert' | 'update' | 'delete';
-export type Access = 'public-read' | 'owner' | 'server-only' | 'dormant';
+export type Access = 'public-read' | 'authenticated-read' | 'owner' | 'server-only' | 'dormant';
 
 export interface TablePosture {
   table: string;
@@ -81,6 +81,60 @@ export const RLS_POSTURE: TablePosture[] = [
   {
     table: 'past_question_resources', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,
     why: 'PQR-1: the policy is published = true and verified_at is not null, so an unverified paper is never shown as available. Publishing is server-side only.',
+  },
+
+  // --- institution facts and admission guidance ------------------------------
+  {
+    table: 'faculties', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: true,
+    why: 'Faculty names are public directory structure; write operations are kept off the student-facing client.',
+  },
+  {
+    table: 'departments', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: true,
+    why: 'Department names are public directory structure; write operations are kept off the student-facing client.',
+  },
+  {
+    table: 'programmes', access: 'authenticated-read', anon: NONE, authenticated: SELECT, policies: 1, browser: false,
+    why: 'Institution programme rows are read through the backend catalogue API; the table permits authenticated reads only and never exposes inactive entries.',
+  },
+  {
+    table: 'cutoff_marks', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Only verified or reported cutoffs can be read; authenticated staff writes are additionally gated by the staff-management policy.',
+  },
+  {
+    table: 'institution_profiles', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Only verified institution profiles are public; authenticated write grants are constrained to authorised staff by RLS.',
+  },
+  {
+    table: 'institution_leadership', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Current and historical leadership is published only after verification; updates are limited to authorised staff.',
+  },
+  {
+    table: 'institution_campuses', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Verified campus information is public; staff RLS controls all management operations.',
+  },
+  {
+    table: 'institution_admission_modes', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Session-specific entry and screening modes are public only after verification; staff RLS controls updates.',
+  },
+  {
+    table: 'institution_portal_guides', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Official portal navigation guides are public only after source review; staff RLS controls publication.',
+  },
+  {
+    table: 'programme_entry_requirements', access: 'public-read', anon: SELECT, authenticated: OWN_FULL, policies: 2, browser: false,
+    why: 'Programme subject combinations and entry requirements are exposed only when verified; staff RLS controls edits.',
+  },
+  {
+    table: 'student_admission_targets', access: 'owner', anon: NONE, authenticated: OWN_FULL, policies: 1, browser: false,
+    why: 'Admission goals are student-owned records. Only the matching auth.uid() can read or modify them.',
+  },
+  {
+    table: 'institution_import_batches', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Raw NUC and school-source import batches are accessible only to the backend service role until reviewed.',
+  },
+  {
+    table: 'institution_import_rows', access: 'server-only', anon: NONE, authenticated: NONE, policies: 0, browser: false,
+    why: 'Unreviewed source rows, matching candidates and private import notes are backend-only; nothing is published directly from staging.',
   },
 
   // --- owner-scoped: authenticated, restricted to its own rows by policy ----
