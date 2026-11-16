@@ -250,6 +250,18 @@ export type AdmissionPreparationReadiness = {
   averagePracticePercent?: number | null;
   practiceTargetPercent?: number | null;
   gapPercent?: number | null;
+  publishedCutoffs?: Array<{
+    id: string;
+    programme_name: string | null;
+    admission_session: string;
+    cutoff_type: string | null;
+    utme_cutoff: number | string | null;
+    departmental_cutoff: number | string | null;
+    score_scale_max: number | string | null;
+    source_url: string | null;
+    source_authority: string | null;
+    verified_at: string | null;
+  }>;
   note?: string;
 };
 
