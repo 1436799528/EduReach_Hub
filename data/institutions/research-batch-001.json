@@ -85,7 +85,7 @@
       "url": "https://postutme.unical.edu.ng/",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["admission application portal", "UTME and Direct Entry screening"],
+      "supports": ["admission application portal", "UTME and Direct Entry screening"]
     },
     {
       "sourceKey": "unical-2026-27-screening",
