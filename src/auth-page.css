@@ -375,3 +375,18 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-strength-track i { transition: none; }
 }
+
+/* UX-10: the two auth tab strips now render through the shared TabBar
+   (src/components/ui/Tabs.tsx), so only the local spacing lives here. The
+   sliding white indicator, roving tabindex and arrow keys come from the
+   component; the old .auth-tabs / .auth-method-tabs button rules no longer
+   style anything and are kept only until the next stylesheet consolidation. */
+.auth-tabs-bar { margin: 0 0 24px; }
+.auth-method-tabs-bar { margin: 0 0 16px; }
+
+@media (max-width: 640px) {
+  .auth-tabs-bar .er-tabs-strip { width: 100%; }
+}
+@media (max-width: 380px) {
+  .auth-tabs-bar .er-tab { padding: 0 6px; font-size: 12px; }
+}

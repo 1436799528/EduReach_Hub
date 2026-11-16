@@ -34,6 +34,7 @@ import BrandLogo from '../src/components/BrandLogo';
 import OtpInput from '../src/components/OtpInput';
 import PasswordStrengthMeter from '../src/components/PasswordStrengthMeter';
 import SiteFooter from '../src/components/SiteFooter';
+import { TabBar } from '../src/components/ui/Tabs';
 import '../src/auth-page.css';
 
 type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
@@ -508,10 +509,18 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           <div className="auth-columns">
             <section className={`auth-card${currentMode === 'signup' ? ' auth-card--signup' : ''}`} aria-labelledby="auth-title">
               {allowModeSwitch && (
-                <div className="auth-tabs" role="tablist" aria-label="Account access">
-                  <button type="button" role="tab" aria-selected={currentMode === 'signin'} onClick={() => changeMode('signin')}>Sign in</button>
-                  <button type="button" role="tab" aria-selected={currentMode === 'signup'} onClick={() => changeMode('signup')}>Create account</button>
-                </div>
+                <TabBar
+                  className="auth-tabs-bar"
+                  label="Account access"
+                  idPrefix="auth-mode"
+                  variant="segmented"
+                  value={currentMode === 'signup' ? 'signup' : 'signin'}
+                  onChange={(id) => changeMode(id as Mode)}
+                  items={[
+                    { id: 'signin', label: 'Sign in' },
+                    { id: 'signup', label: 'Create account' },
+                  ]}
+                />
               )}
 
               <header className="auth-card-heading">
@@ -595,14 +604,18 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   {allowModeSwitch && (
                     <>
                       <div className="auth-divider"><span>or use email or phone</span></div>
-                      <div className="auth-method-tabs" role="tablist" aria-label="Contact method">
-                        <button type="button" role="tab" aria-selected={contactMethod === 'email'} onClick={() => changeContactMethod('email')}>
-                          <Mail size={15} aria-hidden="true" /> Email
-                        </button>
-                        <button type="button" role="tab" aria-selected={contactMethod === 'phone'} onClick={() => changeContactMethod('phone')}>
-                          <Phone size={15} aria-hidden="true" /> Phone
-                        </button>
-                      </div>
+                      <TabBar
+                        className="auth-method-tabs-bar"
+                        label="Contact method"
+                        idPrefix="auth-contact"
+                        variant="segmented"
+                        value={contactMethod}
+                        onChange={(id) => changeContactMethod(id as ContactMethod)}
+                        items={[
+                          { id: 'email', label: <><Mail size={15} aria-hidden="true" /> Email</> },
+                          { id: 'phone', label: <><Phone size={15} aria-hidden="true" /> Phone</> },
+                        ]}
+                      />
                     </>
                   )}
 
