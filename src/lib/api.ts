@@ -232,6 +232,35 @@ export async function fetchCbtExams(): Promise<CbtExamSummary[]> {
   return data || [];
 }
 
+export type AdmissionPreparationReadiness = {
+  status: 'no_target' | 'entry_mode_not_utme' | 'requirements_unverified' | 'practice_target_not_set' | 'insufficient_evidence' | 'below_target' | 'on_track';
+  target: {
+    institution_id: string;
+    school_name: string;
+    programme_id: string | null;
+    programme_name: string;
+    entry_mode: 'UTME' | 'DIRECT_ENTRY';
+    admission_session: string;
+    target_utme_score: number | string | null;
+    practice_target_percent: number | string | null;
+  } | null;
+  requiredSubjects: string[];
+  practiceRunsCount: number;
+  measuredRuns?: number;
+  averagePracticePercent?: number | null;
+  practiceTargetPercent?: number | null;
+  gapPercent?: number | null;
+  note?: string;
+};
+
+export async function fetchAdmissionPreparationReadiness(): Promise<AdmissionPreparationReadiness | null> {
+  if (!isSupabaseConfigured) return null;
+  const headers = await authHeaders();
+  if (!headers.Authorization) return null;
+  return jsonFetch<AdmissionPreparationReadiness>('/api/me/admission-target/readiness', { headers });
+}
+
+
 
 
 
