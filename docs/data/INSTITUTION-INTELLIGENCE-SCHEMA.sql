@@ -176,9 +176,9 @@ create table if not exists public.institution_programme_offerings (
   updated_at timestamptz not null default now(),
   unique (id, institution_id),
   foreign key (academic_unit_id, institution_id)
-    references public.institution_academic_units(id, institution_id) on delete set null,
+    references public.institution_academic_units(id, institution_id) on delete restrict,
   foreign key (campus_id, institution_id)
-    references public.institution_campuses(id, institution_id) on delete set null,
+    references public.institution_campuses(id, institution_id) on delete restrict,
   check (duration_years is null or duration_years between 0.5 and 15)
 );
 create index if not exists institution_programme_offerings_institution_idx
