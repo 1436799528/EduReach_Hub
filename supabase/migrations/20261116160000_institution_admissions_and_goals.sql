@@ -1,6 +1,35 @@
 begin;
 
 
+
+
+-- Fresh-test and fresh-project compatibility. The live EduReach schema already
+-- has these catalogue tables; IF NOT EXISTS leaves those definitions and data
+-- untouched. The frontend's canonical schema snapshot predates them.
+create table if not exists public.faculties (
+  id uuid primary key default gen_random_uuid(),
+  school text not null,
+  name text not null,
+  slug text not null,
+  created_at timestamptz not null default now(),
+  institution_id uuid references public.institutions(id) on delete set null,
+  ccmas_discipline text,
+  ccmas_source_url text,
+  ccmas_verified_at timestamptz
+);
+create index if not exists faculties_institution_idx
+  on public.faculties(institution_id, name);
+
+create table if not exists public.departments (
+  id uuid primary key default gen_random_uuid(),
+  faculty_id uuid not null references public.faculties(id) on delete cascade,
+  name text not null,
+  slug text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists departments_faculty_idx
+  on public.departments(faculty_id, name);
+
 -- The production catalogue already has this table, but the canonical test
 -- schema did not include it. Create the compatible base only when absent.
 create table if not exists public.programmes (
