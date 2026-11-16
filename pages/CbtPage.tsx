@@ -8,6 +8,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { SkeletonTiles } from '../src/components/Skeleton';
+import { identityClassFor } from '../src/components/CardIdentityMark';
 import { useAuth } from '../src/lib/auth';
 import { fetchAdmissionPreparationReadiness, fetchCbtExams, fetchCbtExamsWithAvailability, type AdmissionPreparationReadiness } from '../src/lib/api';
 import FilterPills from '../src/components/FilterPills';
@@ -20,7 +21,7 @@ type Exam = { id: string; title: string; exam_body: string; subject: string; des
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
 function simulatorKeyForBody(value: string): 'jamb' | 'waec' | 'neco' | 'post-utme' {
-  const normalized = value.trim().toLowerCase().replace(/[\\s_-]+/g, '');
+  const normalized = value.trim().toLowerCase().replace(/[\s_-]+/g, '');
   if (normalized.includes('postutme')) return 'post-utme';
   if (normalized.includes('waec')) return 'waec';
   if (normalized.includes('neco')) return 'neco';
@@ -171,7 +172,7 @@ export default function CbtPage() {
                 <span>Practice goal <b>{admissionReadiness.practiceTargetPercent == null ? '—' : `${admissionReadiness.practiceTargetPercent}%`}</b></span>
               </div>
               {admissionReadiness.requiredSubjects.length > 0 && (
-                <p className="er-prep-goal-subjects">Required JAMB subjects: {admissionReadiness.requiredSubjects.map((subject) => subject === 'english' ? 'Use of English' : subject.replace(/\\b\\w/g, (letter) => letter.toUpperCase())).join(' · ')}</p>
+                <p className="er-prep-goal-subjects">Required JAMB subjects: {admissionReadiness.requiredSubjects.map((subject) => subject === 'english' ? 'Use of English' : subject.replace(/\b\w/g, (letter) => letter.toUpperCase())).join(' · ')}</p>
               )}
               {admissionReadiness.publishedCutoffs && admissionReadiness.publishedCutoffs.length > 0 ? (
                 <div className="er-prep-goal-cutoffs">
@@ -237,14 +238,14 @@ export default function CbtPage() {
               {filteredExams.map((exam) => {
                 const body = String(exam.exam_body || 'JAMB');
                 const simulatorKey = simulatorKeyForBody(body);
-                const rawBody = body.trim().toUpperCase().replace(/[\\s_-]+/g, '');
+                const rawBody = body.trim().toUpperCase().replace(/[\s_-]+/g, '');
                 const isJambTarget = ['JAMB', 'UTME'].includes(rawBody) && admissionReadiness?.target?.entry_mode === 'UTME';
                 const preferredSubjects = isJambTarget ? admissionReadiness?.requiredSubjects || [] : [];
                 return (
                   <a
                     key={exam.id}
                     href={setupPathForExam(exam, preferredSubjects)}
-                    className={`er-sim-card er-sim-${simulatorKey}`}
+                    className={`er-sim-card er-sim-${simulatorKey} ${identityClassFor(body, 'service')}`}
                   >
                     <span className="er-sim-top">
                       <img src={simulatorLogoForBody(body)} alt="" width={40} height={40} loading="lazy" decoding="async" />
