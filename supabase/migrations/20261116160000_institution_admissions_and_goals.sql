@@ -1,5 +1,26 @@
 begin;
 
+
+-- The production catalogue already has this table, but the canonical test
+-- schema did not include it. Create the compatible base only when absent.
+create table if not exists public.programmes (
+  id uuid primary key default gen_random_uuid(),
+  institution_id uuid not null references public.institutions(id) on delete cascade,
+  faculty_id uuid references public.faculties(id) on delete set null,
+  department_id uuid references public.departments(id) on delete set null,
+  ccmas_programme_id uuid,
+  programme_code text,
+  programme_name text not null check (length(btrim(programme_name)) > 1),
+  degree_title text,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists programmes_institution_active_idx
+  on public.programmes(institution_id, is_active, programme_name);
+create index if not exists programmes_department_active_idx
+  on public.programmes(department_id, is_active, programme_name);
+
 -- Institution detail records are separate from the compact directory row.
 -- Existing institutions remain untouched; a profile is not "verified" merely
 -- because the legacy institutions.is_verified flag is true.
