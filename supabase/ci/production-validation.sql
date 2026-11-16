@@ -256,7 +256,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261113120000', 'repair_profile_write_policy', '20261113120000_repair_profile_write_policy.sql', 'unique'),
     ('20261113140000', 'avatar_storage', '20261113140000_avatar_storage.sql', 'unique'),
     ('20261114110000', 'cbt_bank_security_boundary', '20261114110000_cbt_bank_security_boundary.sql', 'unique'),
-    ('20261114120000', 'cbt_v2_finalize_gateway', '20261114120000_cbt_v2_finalize_gateway.sql', 'unique')
+    ('20261114120000', 'cbt_v2_finalize_gateway', '20261114120000_cbt_v2_finalize_gateway.sql', 'unique'),
+    ('20261116160000', 'institution_admissions_and_goals', '20261116160000_institution_admissions_and_goals.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -372,6 +373,7 @@ with expected(version, migration) as (
     ,('20261113140000', '20261113140000_avatar_storage.sql')
     ,('20261114110000', '20261114110000_cbt_bank_security_boundary.sql')
     ,('20261114120000', '20261114120000_cbt_v2_finalize_gateway.sql')
+    ,('20261116160000', '20261116160000_institution_admissions_and_goals.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -818,6 +820,52 @@ with expected(version, migration) as (
   select 'public.opportunities.is_featured', '20261003190000_opportunity_discovery_engine.sql'
   where not exists (select 1 from information_schema.columns
                     where table_schema = 'public' and table_name = 'opportunities' and column_name = 'is_featured')
+  union all
+  select 'public.institution_profiles (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_profiles' and c.relrowsecurity)
+  union all
+  select 'public.institution_leadership (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_leadership' and c.relrowsecurity)
+  union all
+  select 'public.institution_campuses (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_campuses' and c.relrowsecurity)
+  union all
+  select 'public.institution_admission_modes (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_admission_modes' and c.relrowsecurity)
+  union all
+  select 'public.institution_portal_guides (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_portal_guides' and c.relrowsecurity)
+  union all
+  select 'public.programme_entry_requirements (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='programme_entry_requirements' and c.relrowsecurity)
+  union all
+  select 'public.student_admission_targets (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='student_admission_targets' and c.relrowsecurity)
+  union all
+  select 'public.institution_import_batches (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_import_batches' and c.relrowsecurity)
+  union all
+  select 'public.institution_import_rows (RLS)', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                    where n.nspname='public' and c.relname='institution_import_rows' and c.relrowsecurity)
+  union all
+  select 'public.cutoff_marks.score_scale_max', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from information_schema.columns
+                    where table_schema='public' and table_name='cutoff_marks' and column_name='score_scale_max')
+  union all
+  select 'public.programme_entry_requirements UTME subject integrity', '20261116160000_institution_admissions_and_goals.sql'
+  where not exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid
+                    join pg_namespace n on n.oid=t.relnamespace
+                    where n.nspname='public' and t.relname='programme_entry_requirements'
+                      and c.conname='programme_entry_requirements_check')
 ), missing as (
   select object, migration from missing_versions
   union all
