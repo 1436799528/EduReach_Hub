@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
+import { SkeletonTiles } from '../src/components/Skeleton';
+import { useAuth } from '../src/lib/auth';
+import { fetchAdmissionPreparationReadiness, type AdmissionPreparationReadiness } from '../src/lib/api';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
 import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../src/lib/api';
@@ -20,11 +21,24 @@ type Exam = { id: string; title: string; exam_body: string; subject: string; des
 
 type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
 
+function simulatorKeyForBody(value: string): 'jamb' | 'waec' | 'neco' | 'post-utme' {
+  const normalized = value.trim().toLowerCase().replace(/[\\s_-]+/g, '');
+  if (normalized.includes('postutme')) return 'post-utme';
+  if (normalized.includes('waec')) return 'waec';
+  if (normalized.includes('neco')) return 'neco';
+  return 'jamb';
+}
+
+function simulatorLogoForBody(value: string): string {
+  const key = simulatorKeyForBody(value);
+  return `/icons/brands/${key === 'post-utme' ? 'jamb' : key}.webp`;
+}
+
 // The card routes into the body-specific setup wizard and carries the real
 // exam id, so the setup page can show THIS exam's configured default duration
 // and start THIS exam's question pool. Durations are not shown on the card
 // itself; they live on the setup page where the student configures the session.
-function setupPathForExam(exam: Exam) {
+function setupPathForExam(exam: Exam, preferredSubjects: string[] = []) {
   const value = `${exam.exam_body} ${exam.id} ${exam.title}`.toLowerCase();
   const base = value.includes('post-utme') || value.includes('postutme')
     ? '/cbt/setup/post-utme'
@@ -35,8 +49,10 @@ function setupPathForExam(exam: Exam) {
         : value.includes('jamb') || value.includes('utme')
           ? '/cbt/setup/jamb'
           : null;
-  if (!base) return `/cbt/practice?exam=${encodeURIComponent(exam.id)}`;
-  return `${base}?exam=${encodeURIComponent(exam.id)}`;
+  const params = new URLSearchParams({ exam: exam.id });
+  if (preferredSubjects.length) params.set('subjects', preferredSubjects.join('|'));
+  if (!base) return `/cbt/practice?${params.toString()}`;
+  return `${base}?${params.toString()}`;
 }
 const modes: Array<{ id: ExamMode; label: string }> = [
   { id: 'ALL', label: 'All Exams' },
@@ -47,6 +63,7 @@ const modes: Array<{ id: ExamMode; label: string }> = [
 ];
 
 export default function CbtPage() {
+  const { isAuthenticated } = useAuth();
   const readModeFromUrl = (): ExamMode => {
     if (typeof window === 'undefined') return 'ALL';
     const requested = new URLSearchParams(window.location.search).get('mode')?.trim().toUpperCase();
@@ -57,6 +74,7 @@ export default function CbtPage() {
   const [mode, setMode] = useState<ExamMode>(() => readModeFromUrl());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [admissionReadiness, setAdmissionReadiness] = useState<AdmissionPreparationReadiness | null>(null);
 
   async function loadExams() {
     setLoading(true);
@@ -78,6 +96,18 @@ export default function CbtPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    let active = true;
+    if (!isAuthenticated) {
+      setAdmissionReadiness(null);
+      return () => { active = false; };
+    }
+    void fetchAdmissionPreparationReadiness()
+      .then((data) => { if (active) setAdmissionReadiness(data); })
+      .catch(() => { if (active) setAdmissionReadiness(null); });
+    return () => { active = false; };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const syncMode = () => setMode(readModeFromUrl());
@@ -128,19 +158,35 @@ export default function CbtPage() {
             </div>
           </div>
 
-          <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Choose an exam simulator" />
-            <ExamSimulatorGrid variant="start" />
-          </section>
+          {admissionReadiness?.target && (
+            <section className="er-prep-goal" aria-label="Your admission preparation target">
+              <div className="er-prep-goal-heading">
+                <span className="er-prep-goal-mark" aria-hidden="true"><Trophy size={17} /></span>
+                <div>
+                  <strong>{admissionReadiness.target.programme_name}</strong>
+                  <small>{admissionReadiness.target.school_name} · {admissionReadiness.target.admission_session}</small>
+                </div>
+              </div>
+              <div className="er-prep-goal-stats">
+                <span>UTME target <b>{admissionReadiness.target.target_utme_score == null ? '—' : `${admissionReadiness.target.target_utme_score}/400`}</b></span>
+                <span>Practice average <b>{admissionReadiness.averagePracticePercent == null ? '—' : `${admissionReadiness.averagePracticePercent}%`}</b></span>
+                <span>Practice goal <b>{admissionReadiness.practiceTargetPercent == null ? '—' : `${admissionReadiness.practiceTargetPercent}%`}</b></span>
+              </div>
+              {admissionReadiness.requiredSubjects.length > 0 && (
+                <p className="er-prep-goal-subjects">Required JAMB subjects: {admissionReadiness.requiredSubjects.map((subject) => subject === 'english' ? 'Use of English' : subject.replace(/\\b\\w/g, (letter) => letter.toUpperCase())).join(' · ')}</p>
+              )}
+              <small className="er-prep-goal-note">Practice results are preparation indicators, not an admission prediction.</small>
+            </section>
+          )}
 
-          <section className="er-section">
-            <SectionHead title="Browse specific question banks" />
-            <div style={{ marginBottom: '18px' }}>
+          <section className="er-section" style={{ marginTop: admissionReadiness?.target ? 20 : 0 }}>
+            <SectionHead title="Choose an exam simulator" />
+            <div style={{ marginBottom: '14px' }}>
               <FilterPills options={modes} active={mode} onChange={changeMode} ariaLabel="Exam categories" />
             </div>
           </section>
 
-          {loading && <SkeletonRows rows={4} label="Loading question banks" />}
+          {loading && <SkeletonTiles className="er-sim-grid" tiles={4} label="Loading exam simulators" />}
           {error && (
             <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
               <span>{error}</span>
@@ -152,6 +198,36 @@ export default function CbtPage() {
               <FileQuestion size={26} style={{ color: '#5e6c82', marginBottom: '8px' }} />
               <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No {mode === 'ALL' ? '' : mode + ' '}exams available yet.</h3>
               <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Select another category to practice.</p>
+            </div>
+          )}
+          {!loading && !error && filteredExams.length > 0 && (
+            <div className="er-sim-grid">
+              {filteredExams.map((exam) => {
+                const body = String(exam.exam_body || 'JAMB');
+                const simulatorKey = simulatorKeyForBody(body);
+                const isJambTarget = simulatorKey === 'jamb' && admissionReadiness?.target?.entry_mode === 'UTME';
+                const preferredSubjects = isJambTarget ? admissionReadiness?.requiredSubjects || [] : [];
+                return (
+                  <a
+                    key={exam.id}
+                    href={setupPathForExam(exam, preferredSubjects)}
+                    className={`er-sim-card er-sim-${simulatorKey}`}
+                  >
+                    <span className="er-sim-top">
+                      <img src={simulatorLogoForBody(body)} alt="" width={40} height={40} loading="lazy" decoding="async" />
+                      <span className="er-sim-badge">{isJambTarget && preferredSubjects.length === 4 ? 'YOUR COURSE' : body}</span>
+                    </span>
+                    <span className="er-sim-body">
+                      <strong>{exam.title}</strong>
+                      {exam.description && <small>{exam.description}</small>}
+                      <span className="er-sim-foot">
+                        <span>{exam.subject || 'Timed practice'}</span>
+                        <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={14} /></span>
+                      </span>
+                    </span>
+                  </a>
+                );
+              })}
             </div>
           )}
 
