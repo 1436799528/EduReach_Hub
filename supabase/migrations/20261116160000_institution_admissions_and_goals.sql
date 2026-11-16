@@ -482,6 +482,15 @@ revoke all on public.institution_import_batches, public.institution_import_rows
   from anon, authenticated, public;
 grant all on public.institution_import_batches, public.institution_import_rows to service_role;
 
+
+-- Remove permissive default test/platform grants before installing the
+-- narrowly scoped grants documented by the RLS posture audit.
+revoke all on public.institution_profiles, public.institution_leadership,
+  public.institution_campuses, public.institution_admission_modes,
+  public.institution_portal_guides, public.programme_entry_requirements,
+  public.student_admission_targets
+  from public, anon, authenticated;
+
 grant select on public.institution_profiles, public.institution_leadership,
   public.institution_campuses, public.institution_admission_modes,
   public.institution_portal_guides, public.programme_entry_requirements
