@@ -203,7 +203,8 @@ export default function CbtPage() {
               {filteredExams.map((exam) => {
                 const body = String(exam.exam_body || 'JAMB');
                 const simulatorKey = simulatorKeyForBody(body);
-                const isJambTarget = simulatorKey === 'jamb' && admissionReadiness?.target?.entry_mode === 'UTME';
+                const rawBody = body.trim().toUpperCase().replace(/[\\s_-]+/g, '');
+                const isJambTarget = ['JAMB', 'UTME'].includes(rawBody) && admissionReadiness?.target?.entry_mode === 'UTME';
                 const preferredSubjects = isJambTarget ? admissionReadiness?.requiredSubjects || [] : [];
                 return (
                   <a
