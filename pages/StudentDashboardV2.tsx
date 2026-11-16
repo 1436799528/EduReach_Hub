@@ -720,7 +720,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       <div className="hub-more-panel" style={{ width: '180px', zIndex: 100 }}>
                         {confirmDeleteId === row.id ? (
                           <div className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`} style={{ padding: '8px', display: 'grid', gap: '8px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600 }}>Delete this result?</span>
+                            <span style={{ fontSize: '13px', fontWeight: 620 }}>Delete this result?</span>
                             <div style={{ display: 'flex', gap: '6px' }}>
                               <button type="button" className="dash-card-link" onClick={() => setConfirmDeleteId('')} disabled={deletingId === row.id}>Keep</button>
                               <button
