@@ -217,7 +217,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                     boxShadow: '0 2px 6px rgba(30, 64, 175, 0.22)',
                   }}
                 >
-                  <span className="hub-profile-trigger-name"><User size={14} /> {firstName}</span>
                   <span className="hub-profile-trigger-initials" aria-hidden="true">{userInitials}</span>
                 </button>
                 {profileOpen && (

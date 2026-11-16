@@ -4,9 +4,8 @@ import { identityClassFor } from './CardIdentityMark';
 import { ErrorState } from './AsyncState';
 import { SkeletonTiles } from './Skeleton';
 import WaveLoader from './WaveLoader';
-import { fetchCbtExams, fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
+import { fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
 import { usePendingPhase } from '../lib/usePendingPhase';
-import { isSupabaseConfigured } from '../lib/supabase';
 
 export type ExamSimulator = {
   id: string;
@@ -15,7 +14,6 @@ export type ExamSimulator = {
   logo: string;
   desc?: string;
   meta: string;
-  staticMain?: boolean;
 };
 
 const brandLogo = (mode: string) => {
@@ -27,29 +25,16 @@ const brandLogo = (mode: string) => {
 };
 
 
-// The four main examinations are the front door of the home page, even while
-// their question bank is being prepared. A live catalogue card replaces the
-// matching fallback, so there is never a duplicate.
-const MAIN_EXAM_NAMES: Array<[string, string]> = [
-  ['JAMB', 'JAMB UTME'],
-  ['WAEC', 'WAEC SSCE'],
-  ['NECO', 'NECO SSCE'],
-  ['Post-UTME', 'Post-UTME'],
-];
-const mainExams: ExamSimulator[] = MAIN_EXAM_NAMES.map(([mode, title]) => ({
-  id: `${mode.toLowerCase()}-main`,
-  title,
-  mode,
-  logo: brandLogo(mode),
-  meta: 'Timed practice',
-  staticMain: true,
-}));
+
 
 export function simulatorStartHref(key: string, examId?: string) {
   const mode = key.trim().toLowerCase().replace(/[\s_-]+/g, '-');
   const normalized = mode === 'postutme' ? 'post-utme' : mode;
-  if (!['jamb', 'waec', 'neco', 'post-utme'].includes(normalized)) return '/cbt';
   const query = examId ? `?exam=${encodeURIComponent(examId)}` : '';
+  if (!['jamb', 'waec', 'neco', 'post-utme'].includes(normalized)) {
+    // Preserve the exact live bank even when it uses a less common exam body.
+    return examId ? `/cbt/practice?exam=${encodeURIComponent(examId)}` : '/cbt';
+  }
   return `/cbt/setup/${normalized}${query}`;
 }
 
@@ -75,14 +60,13 @@ export default function ExamSimulatorGrid({
     let active = true;
     setError(null);
     setSettled(false);
-    void (isSupabaseConfigured ? fetchCbtExamsWithAvailability() : fetchCbtExams())
+    // The server catalogue is authoritative for both the bank and its question
+    // availability. It works without exposing privileged bank reads to the browser.
+    void fetchCbtExamsWithAvailability()
       .then((items: CbtExamSummary[]) => {
         if (!active) return;
-        // List every active bank the catalogue returns. Availability counts
-        // describe whether a full session can start; they are not permission to
-        // hide a published bank from the listing. Hiding them here made the
-        // main page say "no active CBT" while /cbt and past questions listed
-        // the same banks.
+        // Cards only come from real rows returned by the server. Never invent
+        // mode-only destinations: each card must point at the bank it describes.
         const live = items.map((exam) => {
           const mode = String(exam.exam_body || exam.subject || 'CBT').trim();
           return {
@@ -99,12 +83,7 @@ export default function ExamSimulatorGrid({
               : 'Timed practice',
           };
         });
-        const normalizeMode = (mode: string) => mode.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '');
-        const present = new Set(live.map((exam) => normalizeMode(exam.mode)));
-        setExams([
-          ...mainExams.filter((exam) => !present.has(normalizeMode(exam.mode))),
-          ...live,
-        ]);
+        setExams(live);
       })
       .catch((value) => active && setError(value))
       .finally(() => { if (active) setSettled(true); });
@@ -142,7 +121,7 @@ export default function ExamSimulatorGrid({
   if (!exams.length) {
     return (
       <div className="er-late-region er-late-region--simulators">
-        <div className="er-empty">No CBT question banks are listed right now. Browse past questions while the catalogue is updated.</div>
+        <div className="er-empty">No active public question banks are connected right now. Browse past questions while the bank catalogue is updated.</div>
       </div>
     );
   }
@@ -154,7 +133,7 @@ export default function ExamSimulatorGrid({
           <a
             key={exam.id}
             className={`er-sim-card er-sim-${exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
-            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : (exam.staticMain ? simulatorStartHref(exam.mode) : simulatorStartHref(exam.mode, exam.id))}
+            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.mode, exam.id)}
           >
             <span className="er-sim-top">
               <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" decoding="async" />

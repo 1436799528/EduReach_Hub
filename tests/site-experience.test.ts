@@ -67,14 +67,15 @@ test('news rows carry their age and the list can be searched', () => {
   assert.ok(!/legacyCategoryAliases/.test(page), 'the duplicate alias map is gone');
 });
 
-test('the four main simulators are present and Post-UTME opens the real set-up flow', () => {
+test('home simulators are fetched from the live bank catalogue and keep their exact bank id', () => {
   const grid = read('src/components/ExamSimulatorGrid.tsx');
-  for (const mode of ['JAMB', 'WAEC', 'NECO', 'Post-UTME']) {
-    assert.match(grid, new RegExp(`\\['${mode.replace(/[-]/g, '\\-')}',`), `${mode} is a main simulator`);
-  }
-  assert.match(grid, /staticMain: true/, 'main simulators stay visible before their bank is published');
-  assert.match(grid, /exam\.staticMain \? simulatorStartHref\(exam\.mode\)/, 'a static card opens the mode set-up flow');
+  assert.match(grid, /fetchCbtExamsWithAvailability\(\)/, 'the server returns public banks with live availability');
+  assert.match(grid, /setExams\(live\)/, 'only actual catalogue rows become cards');
+  assert.doesNotMatch(grid, /MAIN_EXAM_NAMES|mainExams|staticMain/, 'there are no invented fallback banks');
+  assert.match(grid, /simulatorStartHref\(exam\.mode, exam\.id\)/, 'each card routes to the exact exam bank it represents');
+  assert.match(grid, /No active public question banks are connected/, 'an empty catalogue is disclosed honestly');
   assert.match(grid, /er-card-arrow/, 'the only card action is the thin arrow');
+  assert.ok(grid.includes('`/cbt/practice?exam=${encodeURIComponent(examId)}`'), 'less common exam types still retain the bank id');
 });
 
 test('the service page says what happens after Submit, before and after it', () => {
@@ -139,17 +140,18 @@ test('the product uses one name for the collection and one for each CBT action',
 test('the home page opens as a product screen, not a hero', () => {
   const home = read('pages/HubHomePage.tsx');
 
-  // UX-7: the oversized statement is gone. The first screen is an application
-  // home: a greeting, the four jobs a student performs, and their own record.
+  // The home screen is an application surface: a greeting and study actions;
+  // attempt history and scored student results belong in the dashboard.
   assert.match(home, /className="hub-home-container er-home-app"/, 'the product home shell exists');
   assert.doesNotMatch(home, /er-home-intro|er-home-proof|er-home-steps|er-home-actions/, 'no hero block survives');
   assert.doesNotMatch(home, /Practise the exam you are sitting\./, 'the slogan is gone');
   assert.match(home, /className="er-home-greeting"/, 'the first line is the student greeting');
-  for (const action of ['Start practice', 'Past questions', 'My CBT', 'Results']) {
+  for (const action of ['Start practice', 'Past questions', 'My CBT']) {
     assert.ok(home.includes(action), `the ${action} control is on the first screen`);
   }
-  assert.match(home, /className="er-home-record"/, 'signed-in students see their record as one strip');
-  assert.match(home, /className="er-home-activity"/, 'recent papers are a list, not a card wall');
+  assert.match(home, /HomeNewsSection/, 'the home page restores its public news feed');
+  assert.doesNotMatch(home, /Results|score|recentHomeAttempts|summarizeHomeActivity|fetchCbtHistory|cbt-result-/, 'student results and attempt history never render on home');
+  assert.doesNotMatch(home, /er-home-record|er-home-activity|ContinuePracticeCard/, 'personal result and attempt widgets are absent from home');
 
   // Exactly one h1 remains, hidden for structure and screen readers; the
   // visible greeting is an h2. A page without a heading is an accessibility
@@ -165,6 +167,24 @@ test('the home page opens as a product screen, not a hero', () => {
   assert.ok(greeting, 'the greeting has a rule');
   assert.match(greeting![1], /clamp\(21px, 2\.2vw, 26px\)/, 'it tops out at 26px');
   assert.doesNotMatch(product, /clamp\(28px, 3\.4vw, 44px\)/, 'the 44px hero headline is deleted');
+});
+
+test('home shows current news with a retryable feed and a route to all stories', () => {
+  const news = read('src/components/HomeNewsSection.tsx');
+  assert.match(news, /fetchNews\(\)/, 'the section uses published news from the shared API');
+  assert.match(news, /NewsRow/, 'the feed uses the established news row component');
+  assert.match(news, /href="\/news"/, 'readers can open all news');
+  assert.match(news, /ErrorState error=\{error\} onRetry/, 'a failed feed has a recovery path');
+  assert.match(news, /No current news yet/, 'an empty news catalogue is not mistaken for a failure');
+});
+
+test('the account trigger uses initials on desktop and mobile, not a name beside navigation', () => {
+  const layout = read('src/components/HubLayout.tsx');
+  assert.match(layout, /className="hub-profile-trigger-initials"/, 'the trigger contains initials');
+  assert.doesNotMatch(layout, /className="hub-profile-trigger-name"/, 'no visible name is rendered in the trigger');
+  const styles = read('src/cbt-engine.css');
+  assert.match(styles, /\.hub-profile-trigger-initials\{display:inline-grid/, 'initials show by default, including desktop');
+  assert.match(styles, /\.hub-profile-trigger-name\{display:none\}/, 'the name beside the trigger is hidden');
 });
 
 test('the home page keeps the shared search bar and it still searches', () => {
@@ -236,15 +256,6 @@ test('the MySchool card CSS survives in the stylesheet that owns it', () => {
   const card = /\.ms-service-card \{([^}]*)\}/.exec(myschool);
   assert.ok(card, 'the MySchool service card is still defined');
   assert.match(card[1], /background: #ffffff/, 'its surface is untouched');
-});
-
-test('the home resume card is lazy, signed-in only and follows the shared expiry rule', () => {
-  const home = read('pages/HubHomePage.tsx');
-  assert.match(home, /lazy\(\(\) => import\('\.\.\/src\/components\/ContinuePracticeCard'\)\)/, 'the card is code-split');
-  assert.match(home, /\{isAuthenticated && \(/, 'guests do not download it');
-  const card = read('src/components/ContinuePracticeCard.tsx');
-  assert.match(card, /selectResumableAttempt\(/, 'the decision is the tested rule, not a local status check');
-  assert.match(card, /\/cbt\/session\/\$\{encodeURIComponent\(attempt\.id\)\}/, 'it goes straight into the attempt');
 });
 
 test('the setup screen keeps internal review counts in the admin console', () => {

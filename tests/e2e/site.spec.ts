@@ -67,6 +67,32 @@ test('search filters services, updates URL and follows its direct result', async
   await page.goForward();
   await expect(page).toHaveURL(/\/nelfund$/);
 });
+test('home keeps student results off the public screen and links simulators to real bank ids', async ({ page }) => {
+  await page.route('**/api/cbt/exams', (route) => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({
+      items: [{
+        id: 'live-jamb-bank-42',
+        title: 'JAMB UTME Practice Bank',
+        exam_body: 'JAMB',
+        subject: 'Multiple subjects',
+        description: 'A live question bank.',
+        duration_minutes: 120,
+        question_count: 180,
+        subject_count: 4,
+      }],
+    }),
+  }));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Latest news' })).toBeVisible();
+  await expect(page.getByText('No current news yet')).toBeVisible();
+  await expect(page.getByText(/Papers completed|Average score|Best score|Recent activity/)).toHaveCount(0);
+  await expect(page.locator('main').getByText('Results', { exact: true })).toHaveCount(0); // navigation remains global; home content has no result link
+  const bank = page.locator('.er-sim-card').filter({ hasText: 'JAMB UTME Practice Bank' });
+  await expect(bank).toHaveCount(1);
+  await expect(bank).toHaveAttribute('href', '/cbt/setup/jamb?exam=live-jamb-bank-42');
+  await expect(page.locator('.er-sim-card')).toHaveCount(1); // no invented fallback cards
+});
 test('global search suggestions expose and support keyboard selection', async ({ page }) => {
   await page.goto('/');
   const search = page.getByRole('combobox', { name: 'Search services and study resources' });
@@ -158,9 +184,8 @@ test('unconfigured login fails closed and cannot create a local session', async 
   await page.goto('/dashboard');
   await expect(page).toHaveURL(/\/login\?next=/);
 });
-test('mobile CBT simulator cards stay in one row without overlapping', async ({ page, isMobile }) => {
+test('mobile CBT simulator cards stack in one column without overlapping', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'mobile card geometry applies to the mobile project');
-  test.skip(process.env.PLAYWRIGHT_JAMB_UI !== '1', 'Run with the isolated mocked CBT UI build.');
   await page.route('**/api/cbt/exams', (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({
@@ -184,8 +209,9 @@ test('mobile CBT simulator cards stay in one row without overlapping', async ({ 
     return { left, right, top, bottom };
   }));
   for (let index = 1; index < boxes.length; index += 1) {
-    expect(Math.abs(boxes[index].top - boxes[0].top)).toBeLessThan(2);
-    expect(boxes[index].left).toBeGreaterThanOrEqual(boxes[index - 1].right);
+    expect(Math.abs(boxes[index].left - boxes[0].left)).toBeLessThan(2);
+    expect(boxes[index].top).toBeGreaterThanOrEqual(boxes[index - 1].bottom);
+    expect(boxes[index].right).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   }
 });
 test('registration collects account essentials and only asks students for optional study context', async ({ page }) => {
@@ -257,6 +283,23 @@ test('school finder has no horizontal overflow on small mobile viewports and res
   await expect(page.locator('h1')).toContainText('University of Lagos');
 });
 
+test('core mobile routes do not overflow narrow screens', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'phone viewport audit applies to the mobile project');
+  const widths = [320, 360, 375, 390];
+  const routes = ['/', '/services', '/news', '/cbt', '/past-questions', '/login'];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 844 });
+    for (const path of routes) {
+      await page.goto(path);
+      await expect(page.locator('main')).toBeVisible();
+      const overflow = await page.evaluate(() => Math.max(
+        document.documentElement.scrollWidth,
+        document.body.scrollWidth,
+      ) - window.innerWidth);
+      expect(overflow, `${path} overflows at ${width}px`).toBeLessThanOrEqual(1);
+    }
+  }
+});
 test('home page has no horizontal overflow across common viewport widths', async ({ page }) => {
   const widths = [320, 360, 375, 390, 430, 768, 1024, 1280];
   await page.setViewportSize({ width: widths[0], height: 900 });

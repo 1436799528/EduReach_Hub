@@ -1191,7 +1191,6 @@ body.er-exam-mode{padding-bottom:0!important}
    are secondary on a phone; the initials button and the avatar menu remain. */
 @media (max-width: 430px) {
   .hub-requests-link { display: none !important; }
-  .hub-profile-trigger-name { display: none; }
   .hub-profile-trigger { padding: 6px 9px !important; }
 }
 /* Profile photo controls: keep the photo, the device picker and the URL field
