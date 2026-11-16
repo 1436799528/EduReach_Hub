@@ -25,6 +25,7 @@ import { NavLink, useNavigate } from './AdminNav';
 import { supabase } from '../src/lib/supabase';
 import BrandLogo from '../src/components/BrandLogo';
 import SkipLink from '../src/components/a11y/SkipLink';
+import SiteFooter from '../src/components/SiteFooter';
 import { AdminStatusDot, useAdminHealth } from '../src/components/admin/AdminKit';
 import { useModalDialog } from '../src/lib/useModalDialog';
 import { AdminCapabilityProvider } from '../src/components/admin/Can';
@@ -379,6 +380,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </header>
       <main className="admin-main" id="main-content" tabIndex={-1}>
         <AdminCapabilityProvider value={session}>{children}</AdminCapabilityProvider>
+        <SiteFooter />
       </main>
     </div>
   </div>;

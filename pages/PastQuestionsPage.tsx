@@ -1,16 +1,10 @@
-import { ArrowRight, BookOpen, Download, ExternalLink, Link2Off, SlidersHorizontal } from 'lucide-react';
+import { BookOpen, Download, ExternalLink, Link2Off, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { SkeletonTiles } from '../src/components/Skeleton';
 import { ErrorState, InlineNotice } from '../src/components/AsyncState';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import FilterSearch from '../src/components/ui/FilterSearch';
-import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
-import {
-  studyMaterialLibrary,
-  type StudyMaterialRecord,
-} from '../src/data/examPreparation';
 import { fetchPastQuestionResources, type PastQuestionLibrary } from '../src/lib/api';
 
 type Filter = 'ALL' | 'JAMB' | 'WAEC' | 'NECO' | 'Post-UTME';
@@ -45,17 +39,6 @@ function matchesExamFilter(examBody: string, filter: Filter) {
   return filter === 'ALL' || normalizeExam(examBody).includes(normalizeExam(filter));
 }
 
-function materialRequestHref(material: StudyMaterialRecord) {
-  const message = [
-    'Hello EduReach, I want to get study materials.',
-    `School / exam: ${material.school}`,
-    `Material: ${material.title}`,
-    `Material: ${material.availability === 'on-request' ? 'document request' : 'practice access'}`,
-    'Please share the available next step.',
-  ].join('\n');
-  return `https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent(message)}`;
-}
-
 export default function PastQuestionsPage() {
   const initial = readQuery();
   const [filter, setFilter] = useState<Filter>(initial.filter);
@@ -88,18 +71,9 @@ export default function PastQuestionsPage() {
     });
   }, [filter, library, search]);
 
-  const materials = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return studyMaterialLibrary.filter((record) => {
-      const matchesFilter = matchesExamFilter(record.exam, filter);
-      const searchable = `${record.title} ${record.school} ${record.availability} ${record.subjects}`.toLowerCase();
-      return matchesFilter && (!query || searchable.includes(query));
-    });
-  }, [filter, search]);
-
   useEffect(() => {
     if (!search.trim()) return;
-    const firstId = materials[0]?.id;
+    const firstId = visibleResources[0]?.id;
     if (!firstId) return;
     window.requestAnimationFrame(() => {
       const target = document.getElementById(`materials-${firstId}`);
@@ -107,7 +81,7 @@ export default function PastQuestionsPage() {
       target?.classList.add('is-search-focus');
       window.setTimeout(() => target?.classList.remove('is-search-focus'), 1800);
     });
-  }, [materials, search]);
+  }, [visibleResources, search]);
 
   useEffect(() => {
     const syncFromUrl = () => {
@@ -163,7 +137,7 @@ export default function PastQuestionsPage() {
               <span className="er-library-filter-label"><SlidersHorizontal size={15} aria-hidden="true" /> Filter</span>
               <FilterPills options={filters} active={filter} onChange={changeFilter} ariaLabel="Past question examination filters" />
               <span className="er-library-result-count" role="status" aria-live="polite">
-                {visibleResources.length + materials.length} result{visibleResources.length + materials.length === 1 ? '' : 's'}
+                {visibleResources.length} result{visibleResources.length === 1 ? '' : 's'}
               </span>
             </div>
           </div>
@@ -244,46 +218,6 @@ export default function PastQuestionsPage() {
               )}
           </div>
           </div>
-
-          <div className="er-resource-head">
-            <div>
-              <span className="hub-eyebrow">Study materials</span>
-              <h2>JAMB, WAEC, NECO and school papers</h2>
-            </div>
-            <span className="er-type-meta">Main exams and Post-UTME by school</span>
-          </div>
-
-          {!materials.length ? (
-              <div className="hub-panel hub-empty">
-                <h2>We don't have study materials for this selection yet</h2>
-                <p>Try another examination body or school. EduReach will not claim a document that is not configured. Reach out on WhatsApp if you need help sourcing a paper, and we will tell you when a verified copy is available.</p>
-                <a className="hub-primary-btn" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer">Request a paper</a>
-              </div>
-            ) : (
-              <div className="er-material-grid">
-                {materials.map((material) => (
-                  <a
-                    className={`er-material-card er-material-card-link ${identityClassFor(material.exam, 'service')}`}
-                    id={`materials-${material.id}`}
-                    key={material.id}
-                    href={material.cbtHref || materialRequestHref(material)}
-                    {...(material.cbtHref ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
-                  >
-                    <div className="er-material-card-top">
-                      <CardIdentityMark value={material.exam} type="service" size="sm" />
-                      <span className="er-material-formats">{material.availability === 'on-request' ? 'On request' : 'Practice available'}</span>
-                    </div>
-                    <h2>{material.title}</h2>
-                    <span className="er-material-school-static">{material.school}</span>
-                    <p>{material.description}</p>
-                    <div className="er-library-subjects"><strong>Subjects</strong><span>{material.subjects}</span></div>
-                    <span className="er-material-actions">
-                      <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={16} /></span>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            )}
         </div>
       </div>
     </HubLayout>

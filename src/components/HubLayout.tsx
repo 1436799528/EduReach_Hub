@@ -32,7 +32,7 @@ import SiteSearch from './LazySiteSearch';
 import NotificationCenter from './NotificationCenter';
 import '../hub-rail.css';
 
-export default function HubLayout({ children }: { children: ReactNode }) {
+export default function HubLayout({ children, customSearch }: { children: ReactNode; customSearch?: ReactNode }) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -168,7 +168,7 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             </details>
           </nav>
 
-          {path !== '/' && <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" />}
+          {customSearch !== undefined ? customSearch : <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" />}
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

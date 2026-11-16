@@ -31,7 +31,7 @@ export default function HubHomePage() {
   const myCbtHref = isAuthenticated ? '/dashboard/cbt' : '/login';
 
   return (
-    <HubLayout>
+    <HubLayout customSearch={<SiteSearch variant="header" label="Search services and study resources" placeholder="Search services or exams" />}>
       <div className="er-portal">
         <div className="hub-home-container er-home-app">
           <h1 className="er-visually-hidden">EduReach Hub CBT practice, past questions and student services</h1>
@@ -48,13 +48,6 @@ export default function HubHomePage() {
                   : 'Practise a timed paper or revise by subject. You can start without an account.'}
               </p>
             </div>
-            <div className="er-home-head-search">
-              <SiteSearch
-                variant="home"
-                label="Search services and study resources"
-                placeholder="Search services or exams"
-              />
-            </div>
           </header>
 
           <section className="er-home-start" aria-label="Start studying">
@@ -66,14 +59,16 @@ export default function HubHomePage() {
               </span>
               <ArrowRight size={18} className="er-home-primary-arrow" aria-hidden="true" />
             </a>
-            <a className="er-home-tile" href="/past-questions">
-              <FileText size={18} aria-hidden="true" className="er-home-tile-icon" />
-              <span className="er-home-tile-copy"><strong>Past questions</strong><small>By exam and subject</small></span>
-            </a>
-            <a className="er-home-tile" href={myCbtHref}>
-              <Laptop size={18} aria-hidden="true" className="er-home-tile-icon" />
-              <span className="er-home-tile-copy"><strong>My CBT</strong><small>{isAuthenticated ? 'Your practice' : 'Sign in to continue'}</small></span>
-            </a>
+            <div className="er-home-tiles">
+              <a className="er-home-tile" href="/past-questions">
+                <FileText size={18} aria-hidden="true" />
+                <span><strong>Past questions</strong><small>By exam and subject</small></span>
+              </a>
+              <a className="er-home-tile" href={myCbtHref}>
+                <Laptop size={18} aria-hidden="true" />
+                <span><strong>My CBT</strong><small>{isAuthenticated ? 'Your practice' : 'Sign in to continue'}</small></span>
+              </a>
+            </div>
           </section>
 
           <section className="er-section" aria-label="Choose your exam">

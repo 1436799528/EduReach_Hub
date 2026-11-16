@@ -275,19 +275,16 @@
    from colour and position; none of them is a full-width marketing card. */
 .er-home-start {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
   gap: var(--er-space-2);
 }
 
 .er-home-primary {
-  aspect-ratio: 1 / 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--er-space-3);
-  min-height: 0;
-  padding: 16px;
+  min-height: 88px;
+  padding: 14px 16px;
   border-radius: var(--er-radius-md);
   background: var(--er-primary);
   color: #fff;
@@ -302,8 +299,8 @@
 .er-home-primary-mark {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   flex: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, .14);
@@ -311,7 +308,7 @@
 
 .er-home-primary-copy {
   display: grid;
-  gap: 4px;
+  gap: 1px;
   min-width: 0;
 }
 
@@ -326,29 +323,26 @@
   color: rgba(255, 255, 255, .82);
   font-size: 11.5px;
   line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .er-home-primary-arrow {
-  display: none;
+  margin-left: auto;
+  flex: none;
+  opacity: .8;
 }
 
 .er-home-tiles {
-  display: contents; /* the wrapper was removed in JSX, but in case it's used elsewhere */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--er-space-2);
 }
 
 .er-home-tile {
-  aspect-ratio: 1 / 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 10px;
-  min-height: 0;
-  padding: 16px;
+  min-height: 88px;
+  padding: 12px 14px;
   border: 1px solid var(--er-border);
   border-radius: var(--er-radius-md);
   background: var(--er-surface);
@@ -362,33 +356,26 @@
   box-shadow: var(--er-shadow-card);
 }
 
-.er-home-tile-icon {
+.er-home-tile > svg {
   flex: none;
   color: var(--er-primary);
-  width: 32px;
-  height: 32px;
 }
 
-.er-home-tile-copy {
+.er-home-tile > span {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
-.er-home-tile-copy strong {
-  font-size: 14px;
+.er-home-tile strong {
+  font-size: 13px;
   font-weight: 650;
-  color: var(--er-text-primary);
 }
 
-.er-home-tile-copy small {
+.er-home-tile small {
   color: var(--er-text-secondary);
   font-size: 11.5px;
   line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 /* The student's own record is one strip, not four KPI cards. */
@@ -513,7 +500,7 @@
 /* Study tools are inline links: they are utilities, not destinations. */
 .er-home-tool-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--er-space-2);
   margin: 0;
   padding: 0;
@@ -522,43 +509,32 @@
 
 .er-home-tool-list a {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
-  aspect-ratio: 1 / 1;
-  min-height: 0;
-  padding: 14px;
+  min-height: 44px;
+  padding: 0 12px;
   border: 1px solid var(--er-border);
   border-radius: var(--er-radius-sm);
   background: var(--er-surface);
   color: var(--er-text-primary);
-  font-size: 13px;
-  text-decoration: none;
+  font-size: 12.5px;
   font-weight: 560;
+  text-decoration: none;
 }
 
 .er-home-tool-list a:hover {
   border-color: var(--er-border-strong);
 }
 
-.er-home-tool-list a span {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.3;
-}
-
 .er-home-tool-list a > svg:first-child {
   flex: none;
   color: var(--er-primary);
-  width: 24px;
-  height: 24px;
 }
 
 .er-home-tool-list a > svg:last-child {
-  display: none;
+  flex: none;
+  margin-left: auto;
+  color: #94A3B8;
 }
 
 /* The resume card predates UX-5 and used a blue product accent. It keeps its
@@ -582,15 +558,15 @@
 
 @media (max-width: 900px) {
   .er-home-start {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .er-home-tool-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .er-home-record {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .er-home-tool-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .er-home-record > div:nth-child(3) {
@@ -615,15 +591,19 @@
   }
 
   .er-home-start {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .er-home-primary {
+    min-height: 76px;
     padding: 12px 14px;
   }
 
   .er-home-tile {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 6px;
+    min-height: 84px;
     padding: 10px 11px;
   }
 
@@ -637,7 +617,7 @@
   }
 
   .er-home-tool-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1261,8 +1241,116 @@
 }
 
 /* --------------------------------------------------------------------------
-   Reduced motion
+   Square Card System
+   Strictly scoped to: Homepage simulators, Homepage news, Services, Scholarships
    -------------------------------------------------------------------------- */
+
+.er-square-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--er-space-3);
+}
+
+@media (max-width: 1024px) {
+  .er-square-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .er-square-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--er-space-2);
+  }
+}
+
+.er-square-grid > a,
+.er-square-grid > div {
+  aspect-ratio: 1 / 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  min-height: 0 !important;
+  padding: 16px !important;
+  height: auto !important;
+}
+
+/* Internal fixups for the square boundary */
+.er-square-grid .er-service-copy,
+.er-square-grid .er-news-card-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+}
+
+.er-square-grid .er-service-copy > small {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  flex: 1 !important;
+}
+
+.er-square-grid .er-service-meta {
+  margin-top: auto !important;
+}
+
+.er-home-news-grid .er-news-card-media, .er-home-news-grid .er-news-photo {
+  width: 100%;
+  height: 90px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.er-home-news-grid .er-news-card-body strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.er-home-news-grid .er-news-card-summary, .er-home-news-grid .er-news-card-foot {
+  display: none;
+}
+
+.er-square-grid .er-opportunity-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: auto;
+}
+.er-square-grid .er-opp-facts {
+  display: none; /* Hide large metadata list in square cards */
+}
+.er-square-grid .er-card-arrow {
+  display: none !important;
+}
+.er-square-grid .er-opportunity-card > div:nth-child(2) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+}
+.er-square-grid .er-opportunity-card h2 {
+  font-size: 14px !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.er-square-grid .er-opportunity-card p {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .er-sim-card:hover {
@@ -1281,7 +1369,30 @@
   }
 }
 
-.hub-menu-label {
+.hub-sidebar {
+  position: sticky;
+  top: 90px;
+  max-height: calc(100vh - 90px - 20px);
+  max-height: calc(100dvh - 90px - 20px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 980px) {
+  .hub-sidebar {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+.hub-compact-site .hub-sidebar,
+.hub-global-compact .hub-sidebar {
+  top: 70px;
+  max-height: calc(100vh - 70px - 20px);
+  max-height: calc(100dvh - 70px - 20px);
+}
   font-size: 12px;
   font-weight: 600;
   color: var(--er-text-primary);
