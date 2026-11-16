@@ -191,7 +191,7 @@
 
   /* Layout scale (UX-8). One width and gutter model replaces the per-sheet
      .hub-container overrides that used to disagree at every breakpoint. */
-  --page-max-width: 1180px;
+  --page-max-width: 1480px;
   --page-max-detail: 920px;
   --page-max-reading: 820px;
   --page-max-form: 760px;

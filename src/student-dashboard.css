@@ -23,10 +23,10 @@
 }
 
 .edureach-dash-bar {
-  max-width: 1160px;
+  max-width: var(--page-max-width, 1480px);
   margin: 0 auto;
-  padding: 0 16px;
-  height: 58px;
+  padding: 0 24px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -138,12 +138,12 @@
 /* Layout                                                            */
 /* ---------------------------------------------------------------- */
 .edureach-dash-body {
-  max-width: 1160px;
+  max-width: var(--page-max-width, 1480px);
   width: 100%;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
   flex: 1;
