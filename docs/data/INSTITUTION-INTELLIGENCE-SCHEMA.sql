@@ -5,6 +5,25 @@
 
 begin;
 
+-- Canonical aliases and historical names; never merge institution rows implicitly.
+create table if not exists public.institution_aliases (
+  id uuid primary key default gen_random_uuid(),
+  institution_id uuid not null references public.institutions(id) on delete cascade,
+  alias_name text not null,
+  alias_type text not null default 'alternate_name'
+    check (alias_type in ('acronym','alternate_name','former_name','official_variant','duplicate_candidate')),
+  preferred_display boolean not null default false,
+  verification_status text not null default 'unresearched'
+    check (verification_status in ('unresearched','discovered','in_review','verified','disputed','outdated')),
+  source_id uuid references public.edureach_sources(id) on delete set null,
+  source_url text,
+  verified_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (institution_id, alias_name)
+);
+create index if not exists institution_aliases_search_idx
+  on public.institution_aliases(lower(alias_name));
+
 -- 1. Institutional profile extension (one profile per canonical institution).
 create table if not exists public.institution_profiles (
   institution_id uuid primary key references public.institutions(id) on delete cascade,
@@ -87,6 +106,7 @@ create table if not exists public.institution_campuses (
   verified_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (id, institution_id),
   check (latitude is null or latitude between -90 and 90),
   check (longitude is null or longitude between -180 and 180)
 );
@@ -115,7 +135,7 @@ create table if not exists public.institution_academic_units (
   updated_at timestamptz not null default now(),
   unique (id, institution_id),
   foreign key (parent_unit_id, institution_id)
-    references public.institution_academic_units(id, institution_id) on delete set null
+    references public.institution_academic_units(id, institution_id) on delete cascade
 );
 create index if not exists institution_academic_units_institution_idx
   on public.institution_academic_units(institution_id, unit_type, is_active);
@@ -234,6 +254,31 @@ create table if not exists public.institution_programme_requirements (
 );
 create index if not exists institution_programme_requirements_route_idx
   on public.institution_programme_requirements(admission_route_id, admission_session);
+
+-- National-level policy data is stored separately from institution/course cut-offs.
+create table if not exists public.national_admission_policies (
+  id uuid primary key default gen_random_uuid(),
+  authority text not null,
+  admission_session text not null,
+  institution_category text not null
+    check (institution_category in ('university','college_of_nursing','polytechnic','monotechnic','college_of_education','college_of_agriculture','innovation_enterprise_institute','other')),
+  entry_mode text not null default 'UTME',
+  policy_type text not null
+    check (policy_type in ('minimum_tolerable_utme_score','minimum_admission_age','other')),
+  numeric_value numeric(8,3),
+  value_unit text not null,
+  notes text,
+  publication_status text not null default 'draft'
+    check (publication_status in ('draft','in_review','published','archived')),
+  verification_status text not null default 'unresearched'
+    check (verification_status in ('unresearched','discovered','in_review','verified','disputed','outdated')),
+  source_id uuid references public.edureach_sources(id) on delete set null,
+  source_url text not null,
+  source_published_at timestamptz,
+  verified_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (authority, admission_session, institution_category, entry_mode, policy_type)
+);
 
 -- 8. Typed admission benchmarks. Separates national minimums, institution
 -- thresholds, programme UTME thresholds and 0-100 screening aggregates.
@@ -361,10 +406,14 @@ create table if not exists public.student_admission_goals (
   foreign key (programme_offering_id, institution_id)
     references public.institution_programme_offerings(id, institution_id) on delete restrict,
   check (student_target_utme_score is null or student_target_utme_score between 0 and 400),
-  check (student_target_aggregate is null or student_target_aggregate between 0 and 100)
+  check (student_target_aggregate is null or student_target_aggregate between 0 and 100),
+  unique (id, student_id)
 );
 create index if not exists student_admission_goals_institution_idx
   on public.student_admission_goals(institution_id, programme_offering_id, admission_session);
+
+create unique index if not exists cbt_attempts_id_user_id_unique
+  on public.cbt_attempts(id, user_id);
 
 -- 12. Link only owner-scoped CBT attempts to a goal. "matched" means its exam
 -- body and selected subjects match the verified goal requirements; mismatches
@@ -381,13 +430,19 @@ create table if not exists public.student_admission_goal_attempts (
   projection_model text,
   projection_value numeric(8,3),
   linked_at timestamptz not null default now(),
-  unique (goal_id, attempt_id)
+  unique (goal_id, attempt_id),
+  foreign key (goal_id, student_id)
+    references public.student_admission_goals(id, student_id) on delete cascade,
+  foreign key (attempt_id, student_id)
+    references public.cbt_attempts(id, user_id) on delete cascade
 );
 create index if not exists student_admission_goal_attempts_student_idx
   on public.student_admission_goal_attempts(student_id, goal_id, linked_at desc);
 
 -- 13. RLS: public institution intelligence is visible only when both published
 -- and verified. Fact-level evidence is not exposed to public clients.
+alter table public.institution_aliases enable row level security;
+alter table public.national_admission_policies enable row level security;
 alter table public.institution_profiles enable row level security;
 alter table public.institution_leadership enable row level security;
 alter table public.institution_campuses enable row level security;
@@ -401,6 +456,15 @@ alter table public.institution_portal_guide_steps enable row level security;
 alter table public.institution_fact_evidence enable row level security;
 alter table public.student_admission_goals enable row level security;
 alter table public.student_admission_goal_attempts enable row level security;
+
+drop policy if exists institution_aliases_public_read on public.institution_aliases;
+create policy institution_aliases_public_read on public.institution_aliases
+  for select to anon, authenticated
+  using (verification_status = 'verified');
+drop policy if exists national_admission_policies_public_read on public.national_admission_policies;
+create policy national_admission_policies_public_read on public.national_admission_policies
+  for select to anon, authenticated
+  using (publication_status = 'published' and verification_status = 'verified');
 
 -- Public readers only see verified/published institution profile facts.
 drop policy if exists institution_profiles_public_read on public.institution_profiles;
@@ -447,6 +511,12 @@ create policy institution_portal_guide_steps_public_read on public.institution_p
       and g.verification_status = 'verified'
   ));
 
+drop policy if exists institution_aliases_staff_manage on public.institution_aliases;
+create policy institution_aliases_staff_manage on public.institution_aliases
+  for all to authenticated using ((select private.is_staff())) with check ((select private.is_staff()));
+drop policy if exists national_admission_policies_staff_manage on public.national_admission_policies;
+create policy national_admission_policies_staff_manage on public.national_admission_policies
+  for all to authenticated using ((select private.is_staff())) with check ((select private.is_staff()));
 drop policy if exists institution_profiles_staff_manage on public.institution_profiles;
 create policy institution_profiles_staff_manage on public.institution_profiles
   for all to authenticated
@@ -542,7 +612,8 @@ create policy student_admission_goal_attempts_staff_manage on public.student_adm
   with check ((select private.is_staff()));
 
 -- Table grants are separate from RLS; readers get SELECT only on published data.
-grant select on public.institution_profiles,
+grant select on public.institution_aliases, public.national_admission_policies,
+  public.institution_profiles,
   public.institution_leadership,
   public.institution_campuses,
   public.institution_academic_units,
@@ -556,10 +627,12 @@ to anon, authenticated;
 
 grant select, insert, update on public.student_admission_goals to authenticated;
 grant select on public.student_admission_goal_attempts to authenticated;
+grant insert, update, delete on public.student_admission_goal_attempts to service_role;
 grant select, insert, update, delete on public.institution_fact_evidence to authenticated;
 
 -- Authenticated staff write grants are intentionally governed by the staff RLS policies.
-grant insert, update, delete on public.institution_profiles,
+grant insert, update, delete on public.institution_aliases, public.national_admission_policies,
+  public.institution_profiles,
   public.institution_leadership,
   public.institution_campuses,
   public.institution_academic_units,
