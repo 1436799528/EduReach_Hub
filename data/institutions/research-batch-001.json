@@ -16,7 +16,12 @@
       "url": "https://enuc.nuc.edu.ng/nus",
       "authority": "National Universities Commission",
       "sourceType": "official",
-      "supports": ["current university registry", "ownership", "state", "year established"],
+      "supports": [
+        "current university registry",
+        "ownership",
+        "state",
+        "year established"
+      ],
       "caveat": "The NUS page reports 328 universities: 77 federal, 69 state and 182 private. Reconcile the production directory's 329 rows against this current registry; do not assume a one-row difference is only a duplicate."
     },
     {
@@ -25,7 +30,11 @@
       "url": "https://www.nuc.edu.ng/nigerian-univerisities/federal-univeristies/",
       "authority": "National Universities Commission",
       "sourceType": "official",
-      "supports": ["discovery of federal universities", "official website discovery", "year established"],
+      "supports": [
+        "discovery of federal universities",
+        "official website discovery",
+        "year established"
+      ],
       "caveat": "This directory can be stale for leadership. It still lists Prof. Florence Banku Obi as UNICAL Vice-Chancellor, while UNICAL's current official About page identifies Professor Offiong Efanga Offiong. Verify active office holders at institution-level."
     },
     {
@@ -34,7 +43,13 @@
       "url": "https://eligibility.jamb.gov.ng/",
       "authority": "Joint Admissions and Matriculation Board",
       "sourceType": "official",
-      "supports": ["entry mode", "institution/programme eligibility", "O'Level credits and passes", "A'Level credits and passes", "UTME subject combination"],
+      "supports": [
+        "entry mode",
+        "institution/programme eligibility",
+        "O'Level credits and passes",
+        "A'Level credits and passes",
+        "UTME subject combination"
+      ],
       "caveat": "The checker is interactive. Programme-specific combinations must be retrieved for the selected institution, programme and entry mode; do not use a general subject list as a substitute."
     },
     {
@@ -43,7 +58,9 @@
       "url": "https://www.jamb.gov.ng/FAQ",
       "authority": "Joint Admissions and Matriculation Board",
       "sourceType": "official",
-      "supports": ["IBASS as authoritative candidate tool for subject combinations"]
+      "supports": [
+        "IBASS as authoritative candidate tool for subject combinations"
+      ]
     },
     {
       "sourceKey": "unical-about",
@@ -51,7 +68,14 @@
       "url": "https://unical.edu.ng/about.php",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["history", "year founded", "academic commencement", "current Vice-Chancellor", "mission", "vision"]
+      "supports": [
+        "history",
+        "year founded",
+        "academic commencement",
+        "current Vice-Chancellor",
+        "mission",
+        "vision"
+      ]
     },
     {
       "sourceKey": "unical-faculties",
@@ -59,7 +83,9 @@
       "url": "https://unical.edu.ng/faculties.php",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["current listed academic units"],
+      "supports": [
+        "current listed academic units"
+      ],
       "caveat": "The directory mixes faculties with institutes and non-teaching units. Preserve the source label but classify each unit before presenting it as a faculty."
     },
     {
@@ -68,15 +94,24 @@
       "url": "https://www.unical.edu.ng/home.php",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["official website", "portal gateway discovery", "current public notices", "contact details"]
+      "supports": [
+        "official website",
+        "portal gateway discovery",
+        "current public notices",
+        "contact details"
+      ]
     },
     {
       "sourceKey": "unical-student-portal",
       "name": "University of Calabar - 2026/2027 Student Portal",
-      "url": "https://site.unical.edu.ng/",
+      "url": "https://portal.unical.edu.ng/",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["new student portal flow", "returning student activation", "portal services"],
+      "supports": [
+        "new student portal flow",
+        "returning student activation",
+        "portal services"
+      ],
       "caveat": "The student portal hostname should be periodically checked against the university's main portal directory."
     },
     {
@@ -85,7 +120,10 @@
       "url": "https://postutme.unical.edu.ng/",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["admission application portal", "UTME and Direct Entry screening"]
+      "supports": [
+        "admission application portal",
+        "UTME and Direct Entry screening"
+      ]
     },
     {
       "sourceKey": "unical-2026-27-screening",
@@ -93,7 +131,11 @@
       "url": "https://www.unical.edu.ng/news-item.php?id=7",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["2026/2027 admission eligibility", "150 UTME threshold", "first-choice/change-of-institution conditions"],
+      "supports": [
+        "2026/2027 admission eligibility",
+        "150 UTME threshold",
+        "first-choice/change-of-institution conditions"
+      ],
       "caveat": "The 150 value is an institution-wide UTME eligibility threshold, not a course-specific departmental cut-off."
     },
     {
@@ -102,7 +144,11 @@
       "url": "https://www.unical.edu.ng/civil_engineering.php",
       "authority": "University of Calabar",
       "sourceType": "official",
-      "supports": ["Civil Engineering O'Level requirements", "department-published subject combination", "Direct Entry pathways"],
+      "supports": [
+        "Civil Engineering O'Level requirements",
+        "department-published subject combination",
+        "Direct Entry pathways"
+      ],
       "caveat": "Cross-check the listed UTME subjects against JAMB IBASS for the exact institution/programme/entry mode before public display."
     },
     {
@@ -111,7 +157,12 @@
       "url": "https://www.fuhsi.edu.ng/about.html",
       "authority": "Federal University of Health Sciences, Ila-Orangun",
       "sourceType": "official",
-      "supports": ["institution overview", "current Vice-Chancellor", "principal officers", "mission and vision"]
+      "supports": [
+        "institution overview",
+        "current Vice-Chancellor",
+        "principal officers",
+        "mission and vision"
+      ]
     },
     {
       "sourceKey": "fuhsi-administration",
@@ -119,7 +170,11 @@
       "url": "https://www.fuhsi.edu.ng/administration.html",
       "authority": "Federal University of Health Sciences, Ila-Orangun",
       "sourceType": "official",
-      "supports": ["founding year", "principal officers", "governing council context"]
+      "supports": [
+        "founding year",
+        "principal officers",
+        "governing council context"
+      ]
     },
     {
       "sourceKey": "fuhsi-admissions-2026-27",
@@ -127,7 +182,16 @@
       "url": "https://www.fuhsi.edu.ng/admissions.html",
       "authority": "Federal University of Health Sciences, Ila-Orangun",
       "sourceType": "official",
-      "supports": ["2026/2027 UTME programme thresholds", "Direct Entry requirements", "subject combinations", "O'Level requirements", "screening aggregate", "programme cut-offs", "portal guide", "online clearance notice"],
+      "supports": [
+        "2026/2027 UTME programme thresholds",
+        "Direct Entry requirements",
+        "subject combinations",
+        "O'Level requirements",
+        "screening aggregate",
+        "programme cut-offs",
+        "portal guide",
+        "online clearance notice"
+      ],
       "caveat": "The same page contains older session material in some sections. Import only statements that explicitly identify 2026/2027; preserve the session on every record."
     },
     {
@@ -136,7 +200,9 @@
       "url": "https://portal.fuhsi.edu.ng/apply",
       "authority": "Federal University of Health Sciences, Ila-Orangun",
       "sourceType": "official",
-      "supports": ["application and admission status portal"]
+      "supports": [
+        "application and admission status portal"
+      ]
     },
     {
       "sourceKey": "fuhsi-student-portal",
@@ -144,7 +210,23 @@
       "url": "https://portal.fuhsi.edu.ng/main",
       "authority": "Federal University of Health Sciences, Ila-Orangun",
       "sourceType": "official",
-      "supports": ["admission status", "online clearance", "student account and payment workflow"]
+      "supports": [
+        "admission status",
+        "online clearance",
+        "student account and payment workflow"
+      ]
+    },
+    {
+      "sourceKey": "jamb-2026-policy",
+      "name": "JAMB - 2026 Policy Meeting",
+      "url": "https://www.jamb.gov.ng/",
+      "authority": "Joint Admissions and Matriculation Board",
+      "sourceType": "official",
+      "supports": [
+        "2026 minimum tolerable admission scores by institution category",
+        "2026 minimum admission age"
+      ],
+      "caveat": "These are national tolerable minimums, not institution or programme admission guarantees."
     }
   ],
   "institutions": [
@@ -157,7 +239,7 @@
       "ownership": "federal",
       "officialWebsite": "https://www.unical.edu.ng/",
       "admissionPortal": "https://postutme.unical.edu.ng/",
-      "studentPortal": "https://site.unical.edu.ng/",
+      "studentPortal": "https://portal.unical.edu.ng/",
       "profile": {
         "yearFounded": 1975,
         "historySummary": "The university grew out of the Calabar campus of the University of Nigeria, Nsukka, which began operating in the 1973/1974 academic session. The Federal Military Government announced in April 1975 that the Calabar campus would become a full university. UNICAL states that its academic journey as a full university began in October 1976.",
@@ -228,14 +310,19 @@
         "routes": [
           {
             "entryMode": "UTME",
-            "assessment": ["post_utme_screening"],
-            "firstChoiceRequired": "source_notice_should_be_checked_for_exact_current_rule",
+            "assessment": [
+              "post_utme_screening"
+            ],
+            "firstChoiceRequired": false,
             "applicationUrl": "https://postutme.unical.edu.ng/",
-            "sourceKey": "unical-2026-27-screening"
+            "sourceKey": "unical-2026-27-screening",
+            "firstChoicePolicyNote": "The 2026/2027 notice accepts candidates who selected UNICAL first choice and candidates who did not select it but wish to change to UNICAL, subject to the published 150+ UTME score. Verify and complete the required JAMB change-of-institution process before admission processing."
           },
           {
             "entryMode": "DIRECT_ENTRY",
-            "assessment": ["direct_entry_screening"],
+            "assessment": [
+              "direct_entry_screening"
+            ],
             "applicationUrl": "https://postutme.unical.edu.ng/",
             "sourceKey": "unical-2026-27-screening"
           }
@@ -257,11 +344,26 @@
           {
             "programmeName": "Civil Engineering",
             "entryMode": "UTME",
-            "utmeSubjects": ["Use of English", "Mathematics", "Physics", "Chemistry"],
+            "utmeSubjects": [
+              "Use of English",
+              "Mathematics",
+              "Physics",
+              "Chemistry"
+            ],
             "oLevel": {
               "minimumCredits": 5,
-              "requiredSubjects": ["English Language", "Mathematics", "Physics", "Chemistry"],
-              "fifthCreditOptions": ["Biology", "Technical Drawing", "Building Construction", "Metalwork"],
+              "requiredSubjects": [
+                "English Language",
+                "Mathematics",
+                "Physics",
+                "Chemistry"
+              ],
+              "fifthCreditOptions": [
+                "Biology",
+                "Technical Drawing",
+                "Building Construction",
+                "Metalwork"
+              ],
               "maximumSittings": 2
             },
             "sourceKey": "unical-civil-engineering",
@@ -290,11 +392,12 @@
           "portal": "student",
           "session": "2026/2027",
           "steps": [
-            "Open the official student portal.",
-            "For a new undergraduate, buy the official status PIN and check admission using the JAMB registration number.",
-            "Create the portal account after the admission status workflow allows it.",
-            "For returning students, activate using the matriculation number and complete the university's verification step.",
-            "Use the activated account for portal services shown by the institution."
+            "Open the official UNICAL student portal.",
+            "New undergraduate candidates: buy the status PIN through the portal, then check admission with the JAMB registration number and PIN.",
+            "After an offer is confirmed, follow the portal's account-creation and acceptance instructions.",
+            "Returning students: activate using the matriculation number or JAMB number and surname, then set the email address and password.",
+            "Already activated students: sign in with the matriculation/JAMB number and password.",
+            "For activation or payment problems, use the portal Help page and the official university contact channels."
           ],
           "sourceKey": "unical-student-portal",
           "verificationStatus": "verified_as_published"
@@ -370,7 +473,11 @@
       "academicUnits": {
         "sourceUrl": "https://www.fuhsi.edu.ng/admissions.html",
         "status": "groupings_observed_not_yet_classified",
-        "items": ["Allied Health Sciences", "Basic Medical Sciences", "Sciences"],
+        "items": [
+          "Allied Health Sciences",
+          "Basic Medical Sciences",
+          "Sciences"
+        ],
         "note": "These are academic groupings in the official navigation; confirm official faculty/college nomenclature before publishing as faculties."
       },
       "admission": {
@@ -380,7 +487,11 @@
             "entryMode": "UTME",
             "level": 100,
             "firstChoiceRequired": true,
-            "assessment": ["online_application", "post_utme_screening", "online_document_verification_after_offer"],
+            "assessment": [
+              "online_application",
+              "post_utme_screening",
+              "online_document_verification_after_offer"
+            ],
             "applicationUrl": "https://portal.fuhsi.edu.ng/apply",
             "sourceKey": "fuhsi-admissions-2026-27"
           },
@@ -388,71 +499,116 @@
             "entryMode": "DIRECT_ENTRY",
             "level": 200,
             "firstChoiceRequired": true,
-            "assessment": ["online_application", "document_review"],
+            "assessment": [
+              "online_application",
+              "document_review"
+            ],
             "sourceKey": "fuhsi-admissions-2026-27"
           }
         ],
         "generalOLevel": {
-          "requiredCredits": ["English Language", "Mathematics", "Physics", "Chemistry", "Biology"],
+          "requiredCredits": [
+            "English Language",
+            "Mathematics",
+            "Physics",
+            "Chemistry",
+            "Biology"
+          ],
           "minimumCredits": 5,
           "sittingRules": {
-            "oneSittingProgrammes": ["Medicine and Surgery", "Nursing Science", "Medical Laboratory Science", "Doctor of Physiotherapy"],
+            "oneSittingProgrammes": [
+              "Medicine and Surgery",
+              "Nursing Science",
+              "Medical Laboratory Science",
+              "Doctor of Physiotherapy"
+            ],
             "otherListedProgrammes": "maximum two sittings"
           },
           "sourceKey": "fuhsi-admissions-2026-27"
         },
-        "generalUtmeSubjectsForCoreHealthProgrammes": ["Use of English", "Physics", "Chemistry", "Biology"],
-        "programmeMinimumUtmeScores": [
-          {"programme": "Medicine and Surgery (MBBS)", "score": 220, "scaleMaximum": 400},
-          {"programme": "Medical Laboratory Science", "score": 210, "scaleMaximum": 400},
-          {"programme": "Nursing Science", "score": 210, "scaleMaximum": 400},
-          {"programme": "Audiology", "score": 200, "scaleMaximum": 400},
-          {"programme": "Doctor of Physiotherapy", "score": 200, "scaleMaximum": 400},
-          {"programme": "Biochemistry", "score": 180, "scaleMaximum": 400},
-          {"programme": "Biotechnology and Molecular Biology", "score": 180, "scaleMaximum": 400},
-          {"programme": "Environmental Health Science", "score": 180, "scaleMaximum": 400},
-          {"programme": "Information Technology and Health Informatics", "score": 180, "scaleMaximum": 400},
-          {"programme": "Microbiology", "score": 180, "scaleMaximum": 400},
-          {"programme": "Nutrition and Dietetics", "score": 180, "scaleMaximum": 400},
-          {"programme": "Pharmacology", "score": 180, "scaleMaximum": 400},
-          {"programme": "Prosthetics and Orthotics", "score": 180, "scaleMaximum": 400}
+        "generalUtmeSubjectsForCoreHealthProgrammes": [
+          "Use of English",
+          "Physics",
+          "Chemistry",
+          "Biology"
         ],
-        "newProgrammeRequirements": [
+        "programmeMinimumUtmeScores": [
           {
-            "programme": "Healthcare Administration and Hospital Management",
-            "minimumUtme": 180,
-            "scaleMaximum": 400,
-            "utmeSubjects": ["Use of English", "Chemistry", "Physics", "Biology"],
-            "oLevelCredits": ["English Language", "Mathematics", "Physics", "Chemistry", "Biology"],
-            "maximumSittings": 2
+            "programme": "Medicine and Surgery (MBBS)",
+            "score": 220,
+            "scaleMaximum": 400
           },
           {
-            "programme": "Social Work",
-            "minimumUtme": 180,
-            "scaleMaximum": 400,
-            "utmeSubjects": ["Use of English", "Mathematics", "Economics or Geography", "Any other Arts or Social Science subject"],
-            "oLevelRequirements": "Five credits in not more than two sittings: English, Mathematics and three other relevant Arts/Social Science subjects."
+            "programme": "Medical Laboratory Science",
+            "score": 210,
+            "scaleMaximum": 400
           },
           {
-            "programme": "Medical Physics",
-            "minimumUtme": 180,
-            "scaleMaximum": 400,
-            "utmeSubjects": ["Use of English", "Chemistry", "Physics", "Biology"],
-            "oLevelCredits": ["English Language", "Mathematics", "Physics", "Chemistry", "Biology"],
-            "maximumSittings": 2
+            "programme": "Nursing Science",
+            "score": 210,
+            "scaleMaximum": 400
           },
           {
-            "programme": "Chemistry",
-            "minimumUtme": 180,
-            "scaleMaximum": 400,
-            "utmeSubjects": ["Use of English", "Chemistry", "Any two of Physics, Mathematics, Biology"],
-            "oLevelCredits": ["English Language", "Mathematics", "Physics", "Chemistry", "Biology"],
-            "maximumSittings": 2
+            "programme": "Audiology",
+            "score": 200,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Doctor of Physiotherapy",
+            "score": 200,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Biochemistry",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Biotechnology and Molecular Biology",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Environmental Health Science",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Information Technology and Health Informatics",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Microbiology",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Nutrition and Dietetics",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Pharmacology",
+            "score": 180,
+            "scaleMaximum": 400
+          },
+          {
+            "programme": "Prosthetics and Orthotics",
+            "score": 180,
+            "scaleMaximum": 400
           }
         ],
+        "newProgrammeRequirements": [],
         "directEntryRequirements": {
           "firstChoiceRequired": true,
-          "generalOLevel": ["English Language", "Mathematics", "Physics", "Chemistry", "Biology"],
+          "generalOLevel": [
+            "English Language",
+            "Mathematics",
+            "Physics",
+            "Chemistry",
+            "Biology"
+          ],
           "notes": [
             "For MBBS and Nursing Science, the page specifies at least a Second Class Upper degree in a relevant biological science course OR high A-Level/JUPEB/IJMB grades in Physics, Chemistry and Biology.",
             "Registered Nurse / Registered Midwife qualifications are also accepted for Nursing Science.",
@@ -464,35 +620,173 @@
           "session": "2026/2027",
           "benchmarkType": "departmental_screening_aggregate",
           "scoreScaleMaximum": 100,
-          "categories": ["merit", "Osun", "Oyo", "Ondo", "Ogun", "Ekiti", "Lagos"],
+          "categories": [
+            "merit",
+            "Osun",
+            "Oyo",
+            "Ondo",
+            "Ogun",
+            "Ekiti",
+            "Lagos"
+          ],
           "records": [
-            {"programme": "Medicine and Surgery (MBBS)", "merit": 81.3, "Osun": 80.3, "Oyo": 79.7, "Ondo": 79.8, "Ogun": 76.1, "Ekiti": 79.4, "Lagos": 72.2},
-            {"programme": "Nursing Science", "merit": 75.4, "Osun": 73.7, "Oyo": 71.9, "Ondo": 74.5, "Ogun": 73.0, "Ekiti": 71.3, "Lagos": 70.3},
-            {"programme": "Doctor of Physiotherapy", "merit": 73.3, "Osun": 73.3, "Oyo": 71.9, "Ondo": 69.7, "Ogun": 71.4, "Ekiti": 68.0, "Lagos": 68.2},
-            {"programme": "Medical Laboratory Science", "merit": 72.2, "Osun": 71.4, "Oyo": 70.8, "Ondo": 69.4, "Ogun": 70.8, "Ekiti": 70.1, "Lagos": 67.6},
-            {"programme": "Prosthetics and Orthotics", "merit": 65.7, "Osun": 65.4, "Oyo": 63.4, "Ondo": 60.1, "Ogun": 62.4, "Ekiti": 63.7, "Lagos": 61.5},
-            {"programme": "Audiology", "merit": 65.5, "Osun": 65.1, "Oyo": 65.1, "Ondo": 63.2, "Ogun": 62.5, "Ekiti": 64.3, "Lagos": 61.4},
-            {"programme": "Pharmacology", "merit": 64.6, "Osun": 63.4, "Oyo": 63.0, "Ondo": 60.8, "Ogun": 62.9, "Ekiti": 61.5, "Lagos": 56.2},
-            {"programme": "Nutrition and Dietetics", "merit": 61.8, "Osun": 61.2, "Oyo": 60.4, "Ondo": 55.8, "Ogun": 59.6, "Ekiti": 59.7, "Lagos": 51.4},
-            {"programme": "Information Technology and Health Informatics", "merit": 59.8, "Osun": 59.2, "Oyo": 58.2, "Ondo": 57.2, "Ogun": 52.9, "Ekiti": 56.5, "Lagos": 52.0},
-            {"programme": "Environmental Health Science", "merit": 59.3, "Osun": 57.7, "Oyo": 58.2, "Ondo": 52.2, "Ogun": 51.6, "Ekiti": 56.0, "Lagos": 54.1},
-            {"programme": "Biochemistry", "merit": 50.3, "Osun": 50.3, "Oyo": 50.3, "Ondo": 50.3, "Ogun": 50.3, "Ekiti": 50.3, "Lagos": 50.3},
-            {"programme": "Microbiology", "merit": 50.0, "Osun": 50.0, "Oyo": 50.0, "Ondo": 50.0, "Ogun": 50.0, "Ekiti": 50.0, "Lagos": 50.0},
-            {"programme": "Biotechnology and Molecular Biology", "merit": 50.0, "Osun": 50.0, "Oyo": 50.0, "Ondo": 50.0, "Ogun": 50.0, "Ekiti": 50.0, "Lagos": 50.0}
+            {
+              "programme": "Medicine and Surgery (MBBS)",
+              "merit": 81.3,
+              "Osun": 80.3,
+              "Oyo": 79.7,
+              "Ondo": 79.8,
+              "Ogun": 76.1,
+              "Ekiti": 79.4,
+              "Lagos": 72.2
+            },
+            {
+              "programme": "Nursing Science",
+              "merit": 75.4,
+              "Osun": 73.7,
+              "Oyo": 71.9,
+              "Ondo": 74.5,
+              "Ogun": 73,
+              "Ekiti": 71.3,
+              "Lagos": 70.3
+            },
+            {
+              "programme": "Doctor of Physiotherapy",
+              "merit": 73.3,
+              "Osun": 73.3,
+              "Oyo": 71.9,
+              "Ondo": 69.7,
+              "Ogun": 71.4,
+              "Ekiti": 68,
+              "Lagos": 68.2
+            },
+            {
+              "programme": "Medical Laboratory Science",
+              "merit": 72.2,
+              "Osun": 71.4,
+              "Oyo": 70.8,
+              "Ondo": 69.4,
+              "Ogun": 70.8,
+              "Ekiti": 70.1,
+              "Lagos": 67.6
+            },
+            {
+              "programme": "Prosthetics and Orthotics",
+              "merit": 65.7,
+              "Osun": 65.4,
+              "Oyo": 63.4,
+              "Ondo": 60.1,
+              "Ogun": 62.4,
+              "Ekiti": 63.7,
+              "Lagos": 61.5
+            },
+            {
+              "programme": "Audiology",
+              "merit": 65.5,
+              "Osun": 65.1,
+              "Oyo": 65.1,
+              "Ondo": 63.2,
+              "Ogun": 62.5,
+              "Ekiti": 64.3,
+              "Lagos": 61.4
+            },
+            {
+              "programme": "Pharmacology",
+              "merit": 64.6,
+              "Osun": 63.4,
+              "Oyo": 63,
+              "Ondo": 60.8,
+              "Ogun": 62.9,
+              "Ekiti": 61.5,
+              "Lagos": 56.2
+            },
+            {
+              "programme": "Nutrition and Dietetics",
+              "merit": 61.8,
+              "Osun": 61.2,
+              "Oyo": 60.4,
+              "Ondo": 55.8,
+              "Ogun": 59.6,
+              "Ekiti": 59.7,
+              "Lagos": 51.4
+            },
+            {
+              "programme": "Information Technology and Health Informatics",
+              "merit": 59.8,
+              "Osun": 59.2,
+              "Oyo": 58.2,
+              "Ondo": 57.2,
+              "Ogun": 52.9,
+              "Ekiti": 56.5,
+              "Lagos": 52
+            },
+            {
+              "programme": "Environmental Health Science",
+              "merit": 59.3,
+              "Osun": 57.7,
+              "Oyo": 58.2,
+              "Ondo": 52.2,
+              "Ogun": 51.6,
+              "Ekiti": 56,
+              "Lagos": 54.1
+            },
+            {
+              "programme": "Biochemistry",
+              "merit": 50.3,
+              "Osun": 50.3,
+              "Oyo": 50.3,
+              "Ondo": 50.3,
+              "Ogun": 50.3,
+              "Ekiti": 50.3,
+              "Lagos": 50.3
+            },
+            {
+              "programme": "Microbiology",
+              "merit": 50,
+              "Osun": 50,
+              "Oyo": 50,
+              "Ondo": 50,
+              "Ogun": 50,
+              "Ekiti": 50,
+              "Lagos": 50
+            },
+            {
+              "programme": "Biotechnology and Molecular Biology",
+              "merit": 50,
+              "Osun": 50,
+              "Oyo": 50,
+              "Ondo": 50,
+              "Ogun": 50,
+              "Ekiti": 50,
+              "Lagos": 50
+            }
           ],
           "sourceKey": "fuhsi-admissions-2026-27",
           "verificationStatus": "official_page_publishes_2026_27_table",
-          "note": "These are aggregate screening values on a 0-100 scale, not raw JAMB scores. Keep the catchment categories as published; do not map unlisted states to a category or assume every student qualifies for each listed band."
+          "note": "These are 2026/2027 approved programme aggregate cut-offs on a 0-100 scale. The page's separate screening formula section is labeled 2025/2026; do not infer the 2026/2027 calculation formula from it."
         },
         "aggregateFormula": {
           "session": "2026/2027",
-          "utmeWeightPercent": 70,
-          "oLevelWeightPercent": 30,
-          "oLevelGradePoints": {"A1": 8, "B2": 7, "B3": 6, "C4": 5, "C5": 4, "C6": 3},
-          "maximumOLevelPoints": 40,
-          "minimumAggregateForAdmissionConsideration": 50,
-          "formula": "((UTME score / 400) * 70) + ((total points across five required O'Level subjects / 40) * 30)",
-          "sourceKey": "fuhsi-admissions-2026-27"
+          "status": "not_verified_for_this_session",
+          "note": "The same official admissions page contains a separate 2025/2026 screening-formula section. Do not apply that older formula to the 2026/2027 departmental cut-off table unless FUHSI publishes a 2026/2027 formula or confirms that it remains unchanged."
+        },
+        "newProgrammeRequirementsStatus": "Not included in the verified 2026/2027 programme table in the current official page snapshot; do not show until the university confirms the exact programmes and combinations.",
+        "legacyFormulaReference": {
+          "session": "2025/2026",
+          "status": "outdated_reference_only",
+          "utmeWeightPercent": 80,
+          "oLevelWeightPercent": 20,
+          "oLevelGradePoints": {
+            "A1": 6,
+            "B2": 5,
+            "B3": 4,
+            "C4": 3,
+            "C5": 2,
+            "C6": 1
+          },
+          "maximumOLevelPoints": 30,
+          "sourceKey": "fuhsi-admissions-2026-27",
+          "note": "The admissions page explicitly labels this formula 2025/2026; it is preserved only as a historical page statement and must not be used as a 2026/2027 benchmark."
         }
       },
       "portalGuides": [
