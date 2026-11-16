@@ -293,6 +293,10 @@ export default function Tabs(props: SharedProps) {
   const [renderedId, setRenderedId] = useState(value);
   const [leaving, setLeaving] = useState(false);
   const [lockedHeight, setLockedHeight] = useState<number | null>(null);
+  // A panel is only its own tab stop when it has nothing focusable inside it.
+  // The admin settings panel is full of fields, so making the whole card
+  // focusable would add a stop and a ring around everything for no benefit.
+  const [panelIsStop, setPanelIsStop] = useState(false);
 
   const withPanels = items.some((item) => item.panel !== undefined);
   const rendered = items.find((item) => item.id === renderedId) || items[0];
@@ -314,6 +318,12 @@ export default function Tabs(props: SharedProps) {
     };
   }, [value, renderedId]);
 
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    setPanelIsStop(panel.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])').length === 0);
+  }, [renderedId]);
+
   return (
     <div className={`er-tabs${className ? ` ${className}` : ''}`} data-variant={props.variant || 'underline'}>
       <TabBar {...props} resolvedId={baseId} />
@@ -324,7 +334,7 @@ export default function Tabs(props: SharedProps) {
           role="tabpanel"
           id={`${baseId}-panel-${rendered.id}`}
           aria-labelledby={`${baseId}-tab-${rendered.id}`}
-          tabIndex={0}
+          tabIndex={panelIsStop ? 0 : -1}
           style={lockedHeight ? { minHeight: `${lockedHeight}px` } : undefined}
         >
           {rendered.panel}
