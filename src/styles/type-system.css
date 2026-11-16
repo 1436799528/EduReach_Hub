@@ -372,15 +372,17 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   position: relative;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--er-border);
-  border-radius: 8px;
-  background: var(--er-surface);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   color: var(--er-text-secondary);
   cursor: pointer;
+  transition: color .15s ease;
 }
-.er-notif-trigger:hover { border-color: var(--er-border-strong); background: var(--er-surface-soft); color: var(--er-text-primary); }
+.er-notif-trigger:hover { background: transparent; color: var(--er-primary); }
 /* UX-3: a dot, not a red block. It sits on the glyph's upper-right, is
    smaller than the bell's stroke weight, and carries no number. The real
    unread count lives in the accessible label and the panel header. */

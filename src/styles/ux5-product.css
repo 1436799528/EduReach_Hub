@@ -267,7 +267,7 @@
   margin: 0;
 }
 
-/* One primary control and three secondary ones. The primary earns its weight
+/* One primary control and two secondary ones. The primary earns its weight
    from colour and position; none of them is a full-width marketing card. */
 .er-home-start {
   display: grid;
@@ -329,7 +329,7 @@
 
 .er-home-tiles {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--er-space-2);
 }
 

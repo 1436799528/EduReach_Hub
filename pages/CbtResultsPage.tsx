@@ -387,7 +387,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                     title="Delete this result"
                     onClick={() => { setDeleteError(''); setConfirmDelete(true); }}
                   >
-                    <Trash2 size={18} aria-hidden="true" />
+                    <Trash2 size={15} aria-hidden="true" />
                   </button>
                 )}
                 <button type="button" className="hub-text-btn er-result-return" onClick={() => navigateInApp('/cbt')}><ArrowLeft size={15} /> Back to CBT</button>

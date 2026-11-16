@@ -397,21 +397,21 @@
 }
 
 .dash-icon-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #5e6c82;
-  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #667085;
+  display: inline-grid;
   place-items: center;
   cursor: pointer;
-  flex-shrink: 0;
+  flex: 0 0 30px;
 }
 
 .dash-icon-btn:hover {
-  color: #b91c1c;
-  border-color: #fecaca;
+  color: #b42318;
   background: #fef2f2;
 }
 
@@ -1581,24 +1581,25 @@
   .dash-cgpa-remove { width: 100%; height: 42px; }
 }
 
-/* Destructive actions are compact icon controls until the confirmation row
-   appears, so a delete never competes with the page's primary action. */
+/* Destructive actions visually float until the confirmation row appears.
+   The small icon is the control; the surrounding spacing stays uncluttered. */
 .dash-icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  flex: none;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   padding: 0;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   color: #667085;
   cursor: pointer;
+  transition: color .15s ease, background-color .15s ease;
 }
-.dash-icon-btn:hover { border-color: #f3c3be; background: #fef5f3; color: var(--er-status-error); }
+.dash-icon-btn:hover { background: #fef2f2; color: var(--er-status-error); }
 .dash-icon-btn:disabled { color: #98a2b3; cursor: not-allowed; }
-@media (pointer: coarse) { .dash-icon-btn { width: 44px; height: 44px; } }
+@media (pointer: coarse) { .dash-icon-btn { width: 44px; height: 44px; flex-basis: 44px; } }
 
 /* UX-3 — MyCBT's latest paper and performance analysis. The grid is data
    first: labels are support text, values are numbers, and the only accent is

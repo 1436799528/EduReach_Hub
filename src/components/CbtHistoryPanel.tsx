@@ -166,7 +166,7 @@ export default function CbtHistoryPanel() {
                   onClick={() => { setDeleteError(''); setConfirming(item); }}
                   disabled={busyId === item.id}
                 >
-                  <Trash2 size={18} aria-hidden="true" />
+                  <Trash2 size={15} aria-hidden="true" />
                 </button>
               </div>
             </div>

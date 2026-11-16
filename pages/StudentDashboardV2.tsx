@@ -749,7 +749,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                       title="Delete this result"
                       onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
                     >
-                      <Trash2 size={18} aria-hidden="true" />
+                      <Trash2 size={15} aria-hidden="true" />
                     </button>
                   ))}
                 </span>
@@ -784,7 +784,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 title="Delete this result"
                 onClick={() => { setAttemptNotice(''); setConfirmDeleteId(row.id); }}
               >
-                <Trash2 size={18} aria-hidden="true" />
+                <Trash2 size={15} aria-hidden="true" />
               </button>
             ))}
           </div>

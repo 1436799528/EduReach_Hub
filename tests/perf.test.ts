@@ -248,11 +248,12 @@ test('the simulator section reserves its footprint while its catalogue loads', (
 });
 
 test('the pages the measurement named use the reservation', () => {
-  // UX-7 removed the four-story feed from the home screen: news is a secondary
-  // destination, not a reason to keep a 300px reservation under the practice
-  // controls. The feed's own page keeps the reservation it still needs.
+  // The restored home news feed reserves its dimensions during both the lazy
+  // chunk load and the article fetch, preventing layout shift.
   const home = stylesheet('pages/HubHomePage.tsx');
-  assert.doesNotMatch(home, /er-late-region--feed|latestNews/, 'the home page no longer reserves a news feed');
+  assert.match(home, /er-late-region--feed/, 'the home page reserves space for the news feed');
+  assert.match(stylesheet('src/components/HomeNewsSection.tsx'), /er-late-region--feed/, 'the loaded news section keeps the same reservation');
+  assert.ok(pxValue(declarations(stylesheet('src/edu-portal.css'), '.er-late-region--feed'), '--er-late-min') >= 260);
 
   assert.match(stylesheet('pages/NewsPage.tsx'), /er-late-region--feed-page/);
 

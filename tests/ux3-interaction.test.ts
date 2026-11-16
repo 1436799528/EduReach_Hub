@@ -53,6 +53,33 @@ test('the notification icon is a small dot, never a numbered red block', () => {
   assert.match(dotRule, /right:\s*5px/);
 });
 
+test('notification and delete actions float without card chrome and stay compact', () => {
+  const type = read('src/styles/type-system.css');
+  const cbt = read('src/cbt-engine.css');
+  const dashboard = read('src/student-dashboard.css');
+  const a11y = read('src/styles/a11y.css');
+  const bell = type.match(/\.er-notif-trigger\s*\{([\s\S]*?)\}/)?.[1] || '';
+  assert.match(bell, /width:\s*32px/);
+  assert.match(bell, /height:\s*32px/);
+  assert.match(bell, /border:\s*0/);
+  assert.match(bell, /background:\s*transparent/);
+  assert.match(type, /@media \(pointer: coarse\)[\s\S]*?\.er-notif-trigger \{ width: 44px; height: 44px; \}/, 'the floating bell still has a thumb-sized touch target');
+
+  const deleteActions = cbt.match(/\.er-history-delete,\s*\.er-result-delete\s*\{([\s\S]*?)\}/)?.[1] || '';
+  assert.match(deleteActions, /width:\s*30px/);
+  assert.match(deleteActions, /height:\s*30px/);
+  assert.match(deleteActions, /border:\s*0/);
+  assert.match(deleteActions, /background:\s*transparent/);
+  assert.match(cbt, /@media \(pointer: coarse\)[\s\S]*?\.er-history-delete,[\s\S]*?width:\s*44px/, 'touch users keep an accessible hit target');
+
+  const dashboardDelete = dashboard.match(/\/\* Destructive actions visually float[\s\S]*?\.dash-icon-btn\s*\{([\s\S]*?)\}/)?.[1] || '';
+  assert.match(dashboardDelete, /width:\s*30px/);
+  assert.match(dashboardDelete, /border:\s*0/);
+  assert.match(dashboardDelete, /background:\s*transparent/);
+  assert.match(dashboard, /@media \(pointer: coarse\) \{ \.dash-icon-btn \{ width: 44px; height: 44px;/, 'dashboard delete controls keep a 44px touch target');
+  assert.match(a11y, /\.dash-icon-btn,[\s\S]*?min-height: 44px !important/, 'the shared touch rule protects the delete target height');
+});
+
 test('admin navigation is client-side and still supports modified clicks', () => {
   const nav = read('pages/AdminNav.tsx');
   assert.match(nav, /event\.preventDefault\(\)/);
