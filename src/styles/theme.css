@@ -252,8 +252,12 @@ body,
 /* Every page column is the same width model: a fluid width with a readable
    maximum, and one gutter per breakpoint. Page-specific widths opt into the
    named maximum below instead of passing a new number in a style attribute. */
-:is(.hub-container, .hub-home-container) {
+:is(.hub-container) {
   width: min(var(--page-max-width), calc(100% - (var(--page-gutter) * 2)));
+  margin-inline: auto;
+}
+.hub-home-container {
+  width: min(1180px, calc(100% - (var(--page-gutter) * 2)));
   margin-inline: auto;
 }
 .hub-narrow { max-width: var(--page-max-detail); }

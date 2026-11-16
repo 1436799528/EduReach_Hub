@@ -142,7 +142,11 @@
 .hub-desktop-nav {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 28px;
+}
+
+@media (max-width: 1280px) {
+  .hub-desktop-nav { gap: 16px; }
 }
 
 @media (max-width: 1120px) {
@@ -210,8 +214,8 @@
 
 .er-home-app {
   display: grid;
-  gap: var(--er-space-5);
-  padding-bottom: var(--er-space-8);
+  gap: var(--er-space-4);
+  padding-bottom: var(--er-space-6);
 }
 
 .er-home-app > .er-section {
@@ -271,16 +275,19 @@
    from colour and position; none of them is a full-width marketing card. */
 .er-home-start {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--er-space-2);
 }
 
 .er-home-primary {
+  aspect-ratio: 1 / 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: var(--er-space-3);
-  min-height: 88px;
-  padding: 14px 16px;
+  min-height: 0;
+  padding: 16px;
   border-radius: var(--er-radius-md);
   background: var(--er-primary);
   color: #fff;
@@ -295,8 +302,8 @@
 .er-home-primary-mark {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   flex: none;
   border-radius: 50%;
   background: rgba(255, 255, 255, .14);
@@ -304,7 +311,7 @@
 
 .er-home-primary-copy {
   display: grid;
-  gap: 1px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -319,26 +326,29 @@
   color: rgba(255, 255, 255, .82);
   font-size: 11.5px;
   line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .er-home-primary-arrow {
-  margin-left: auto;
-  flex: none;
-  opacity: .8;
+  display: none;
 }
 
 .er-home-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--er-space-2);
+  display: contents; /* the wrapper was removed in JSX, but in case it's used elsewhere */
 }
 
 .er-home-tile {
+  aspect-ratio: 1 / 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
-  min-height: 88px;
-  padding: 12px 14px;
+  min-height: 0;
+  padding: 16px;
   border: 1px solid var(--er-border);
   border-radius: var(--er-radius-md);
   background: var(--er-surface);
@@ -352,26 +362,33 @@
   box-shadow: var(--er-shadow-card);
 }
 
-.er-home-tile > svg {
+.er-home-tile-icon {
   flex: none;
   color: var(--er-primary);
+  width: 32px;
+  height: 32px;
 }
 
-.er-home-tile > span {
+.er-home-tile-copy {
   display: grid;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
 }
 
-.er-home-tile strong {
-  font-size: 13px;
+.er-home-tile-copy strong {
+  font-size: 14px;
   font-weight: 650;
+  color: var(--er-text-primary);
 }
 
-.er-home-tile small {
+.er-home-tile-copy small {
   color: var(--er-text-secondary);
   font-size: 11.5px;
   line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* The student's own record is one strip, not four KPI cards. */
@@ -496,7 +513,7 @@
 /* Study tools are inline links: they are utilities, not destinations. */
 .er-home-tool-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--er-space-2);
   margin: 0;
   padding: 0;
@@ -505,17 +522,20 @@
 
 .er-home-tool-list a {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 8px;
-  min-height: 44px;
-  padding: 0 12px;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  padding: 14px;
   border: 1px solid var(--er-border);
   border-radius: var(--er-radius-sm);
   background: var(--er-surface);
   color: var(--er-text-primary);
-  font-size: 12.5px;
-  font-weight: 560;
+  font-size: 13px;
   text-decoration: none;
+  font-weight: 560;
 }
 
 .er-home-tool-list a:hover {
@@ -525,12 +545,12 @@
 .er-home-tool-list a > svg:first-child {
   flex: none;
   color: var(--er-primary);
+  width: 24px;
+  height: 24px;
 }
 
 .er-home-tool-list a > svg:last-child {
-  flex: none;
-  margin-left: auto;
-  color: #94A3B8;
+  display: none;
 }
 
 /* The resume card predates UX-5 and used a blue product accent. It keeps its
@@ -554,7 +574,11 @@
 
 @media (max-width: 900px) {
   .er-home-start {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .er-home-tool-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .er-home-record {
@@ -582,16 +606,16 @@
     min-width: 0;
   }
 
+  .er-home-start {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .er-home-primary {
-    min-height: 76px;
     padding: 12px 14px;
   }
 
   .er-home-tile {
-    flex-direction: column;
-    align-items: flex-start;
     gap: 6px;
-    min-height: 84px;
     padding: 10px 11px;
   }
 
@@ -605,7 +629,7 @@
   }
 
   .er-home-tool-list {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

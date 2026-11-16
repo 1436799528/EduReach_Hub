@@ -62,20 +62,18 @@ export default function HubHomePage() {
               <span className="er-home-primary-mark" aria-hidden="true"><PlayCircle size={22} /></span>
               <span className="er-home-primary-copy">
                 <strong>Start practice</strong>
-                <small>Choose a question bank and build a timed paper</small>
+                <small>Choose a question bank</small>
               </span>
               <ArrowRight size={18} className="er-home-primary-arrow" aria-hidden="true" />
             </a>
-            <div className="er-home-tiles">
-              <a className="er-home-tile" href="/past-questions">
-                <FileText size={18} aria-hidden="true" />
-                <span><strong>Past questions</strong><small>By exam and subject</small></span>
-              </a>
-              <a className="er-home-tile" href={myCbtHref}>
-                <Laptop size={18} aria-hidden="true" />
-                <span><strong>My CBT</strong><small>{isAuthenticated ? 'Your practice papers' : 'Sign in to continue'}</small></span>
-              </a>
-            </div>
+            <a className="er-home-tile" href="/past-questions">
+              <FileText size={18} aria-hidden="true" className="er-home-tile-icon" />
+              <span className="er-home-tile-copy"><strong>Past questions</strong><small>By exam and subject</small></span>
+            </a>
+            <a className="er-home-tile" href={myCbtHref}>
+              <Laptop size={18} aria-hidden="true" className="er-home-tile-icon" />
+              <span className="er-home-tile-copy"><strong>My CBT</strong><small>{isAuthenticated ? 'Your practice' : 'Sign in to continue'}</small></span>
+            </a>
           </section>
 
           <section className="er-section" aria-label="Choose your exam">

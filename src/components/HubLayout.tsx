@@ -94,8 +94,9 @@ export default function HubLayout({ children }: { children: ReactNode }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '16px',
-            padding: '10px 0',
+            gap: '32px',
+            padding: '12px 0',
+            minHeight: '64px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

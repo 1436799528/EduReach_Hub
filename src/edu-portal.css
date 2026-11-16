@@ -117,7 +117,7 @@
    Desktop uses four vertical cards; mobile keeps them in a single swipe row
    so card content never competes for two cramped grid tracks. */
 .er-sim-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.er-sim-card{display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;padding:14px;text-decoration:none;color:#1f2937;min-height:156px;transition:border-color .15s,box-shadow .15s}
+.er-sim-card{aspect-ratio: 1 / 1;display:flex;flex-direction:column;gap:10px;background:#fff;border:1px solid #dfe4ea;border-radius:12px;padding:14px;text-decoration:none;color:#1f2937;min-height:0;transition:border-color .15s,box-shadow .15s}
 .er-sim-card:hover{border-color:#b14933;box-shadow:0 4px 14px rgba(200,88,65,.1)}
 .er-sim-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .er-sim-top img{width:40px;height:40px;object-fit:contain;border-radius:8px;flex:none}
@@ -131,17 +131,16 @@
 .er-sim-waec{--er-sim-title:#12355f;--er-sim-text:#4b6584;--er-sim-line:#d9e4f3;background:#eef4fb;border-color:#dbe6f5}
 .er-sim-neco{--er-sim-title:#3f5607;--er-sim-text:#6a744a;--er-sim-line:#e1eac0;background:#f3f9dc;border-color:#e4eec4}
 .er-sim-post-utme{--er-sim-title:#55300e;--er-sim-text:#a75f1b;--er-sim-line:#f3e0cc;background:#fff7f0;border-color:#f6e4d2}
-@media(max-width:900px){.er-sim-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.er-sim-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:640px){
-  .er-sim-grid{grid-template-columns:none;grid-auto-flow:column;grid-template-rows:auto;grid-auto-columns:85%;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding-inline:var(--er-gutter,0px);-webkit-overflow-scrolling:touch;margin:0 calc(-1*var(--er-gutter,0px));padding:2px var(--er-gutter,0px) 6px;scrollbar-width:none}
-  .er-sim-grid::-webkit-scrollbar{display:none}
-  .er-sim-card{min-width:0;flex-direction:row;align-items:center;gap:14px;min-height:98px;padding:14px 16px;scroll-snap-align:start}
+  .er-sim-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .er-sim-card{min-width:0;flex-direction:column;align-items:flex-start;gap:10px;padding:14px 16px;}
   .er-sim-top{flex:none}
-  .er-sim-top img{width:48px;height:48px}
+  .er-sim-top img{width:40px;height:40px}
   .er-sim-badge{display:none}
-  .er-sim-body{gap:2px}
+  .er-sim-body{gap:2px; display:flex;}
   .er-sim-body>small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:none}
-  .er-sim-foot{border-top:0;padding-top:0;margin-top:4px}
+  .er-sim-foot{border-top:1px solid var(--er-sim-line,#eef1f4);padding-top:8px;margin-top:4px}
 }
 
 /* ---- Featured news (2-up) ---- */
@@ -812,7 +811,9 @@ body.er-exam-mode{padding-bottom:0!important}
 
 .er-sim-card {
   gap: 14px;
-  min-height: 176px;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  justify-content: space-between;
   padding: 20px;
   border-radius: 14px;
   line-height: 1.5;
@@ -1139,7 +1140,7 @@ body.er-exam-mode{padding-bottom:0!important}
 /* UI-8 — mobile keeps the card's own shape and simply fits it to the screen. */
 @media (max-width: 640px) {
   .er-sim-grid{
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-flow: row;
     gap: 10px;
     margin: 0;
@@ -1150,16 +1151,18 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-sim-card {
     flex-direction: column;
     align-items: stretch;
+    justify-content: space-between;
     gap: 10px;
     min-height: 0;
     padding: 16px;
+    aspect-ratio: 1 / 1;
   }
-  .er-sim-top img { width: 44px; height: 44px; }
-  .er-sim-badge { display: inline-flex; }
-  .er-sim-body > small { display: block; overflow: visible; }
+  .er-sim-top img { width: 32px; height: 32px; }
+  .er-sim-badge { display: none; }
+  .er-sim-body > small { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .er-sim-foot { border-top: 1px solid var(--er-sim-line, #eef1f4); padding-top: 8px; margin-top: 4px; }
   .er-late-region--simulators { --er-late-min: 734px; }
-  .er-sim-grid .er-skeleton-tile{min-height:176px}
+  .er-sim-grid .er-skeleton-tile{min-height:0; aspect-ratio: 1 / 1;}
 }
 
 @media (prefers-reduced-motion: reduce) {
