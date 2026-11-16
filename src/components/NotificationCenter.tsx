@@ -136,19 +136,20 @@ export default function NotificationCenter({ variant = 'site' }: { variant?: 'si
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        <Bell size={17} aria-hidden="true" />
-        {failed && (
-          <>
-            <span className="er-notif-alert" aria-hidden="true" />
-            <span className="er-visually-hidden">Could not check for updates</span>
-          </>
-        )}
-        {unread > 0 && (
-          <>
-            <span className="er-notif-unread-dot" aria-hidden="true" />
-            <span className="er-visually-hidden">{unread} unread</span>
-          </>
-        )}
+        <span className="er-notif-icon-wrapper">
+          <Bell size={17} aria-hidden="true" />
+          {failed ? (
+            <>
+              <span className="er-notif-alert" aria-hidden="true" />
+              <span className="er-visually-hidden">Could not check for updates</span>
+            </>
+          ) : (unread > 0 && !loading) ? (
+            <>
+              <span className="er-notif-unread-dot" aria-hidden="true" />
+              <span className="er-visually-hidden">{unread} unread</span>
+            </>
+          ) : null}
+        </span>
       </button>
 
       {open && (

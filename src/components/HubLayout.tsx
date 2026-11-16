@@ -17,7 +17,7 @@ import {
   GraduationCap,
   BarChart3,
   Settings,
-  ChevronDown,
+  MoreHorizontal,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import SkipLink from './a11y/SkipLink';
@@ -146,7 +146,6 @@ export default function HubLayout({ children }: { children: ReactNode }) {
                 className="hub-nav-link"
                 aria-current={item.active ? 'page' : undefined}
               >
-                <item.Icon size={15} aria-hidden="true" />
                 {item.label}
               </a>
             ))}
@@ -156,8 +155,8 @@ export default function HubLayout({ children }: { children: ReactNode }) {
               details.open = false;
               details.querySelector('summary')?.focus();
             }}>
-              <summary className="hub-nav-link">
-                More <ChevronDown size={14} aria-hidden="true" />
+              <summary className="hub-nav-link" aria-label="More" title="More">
+                <MoreHorizontal size={18} aria-hidden="true" />
               </summary>
               <div className="hub-more-panel">
                 <a href="/services"><Briefcase size={15} aria-hidden="true" /> Services</a>

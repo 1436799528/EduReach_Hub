@@ -377,8 +377,24 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                   <p role="status" className="er-result-review-intro">Your saved score is available. Answer-by-answer review is unavailable for this attempt.</p>
                 )}
                 <a className="hub-outline-btn" href="/cbt"><RotateCcw size={15} /> Try Again</a>
-                <button type="button" className="hub-outline-btn" onClick={printResult}><Printer size={15} /> Print</button>
-                <button type="button" className="hub-outline-btn" onClick={downloadResult}><Download size={15} /> Download</button>
+                <button
+                  type="button"
+                  className="hub-icon-btn"
+                  onClick={printResult}
+                  aria-label="Print result"
+                  title="Print result"
+                >
+                  <Printer size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="hub-icon-btn"
+                  onClick={downloadResult}
+                  aria-label="Download result as PDF"
+                  title="Download PDF"
+                >
+                  <Download size={15} aria-hidden="true" />
+                </button>
                 {result?.attempt?.id && (
                   <button
                     type="button"

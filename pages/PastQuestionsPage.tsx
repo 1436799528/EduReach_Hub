@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Download, ExternalLink, FileText, Link2Off, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, BookOpen, Download, ExternalLink, Link2Off, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { SkeletonTiles } from '../src/components/Skeleton';
@@ -209,8 +209,15 @@ export default function PastQuestionsPage() {
                       </div>
                       {resource.state === 'available' && resource.href && (
                         <span className="er-resource-actions">
-                          <a className="hub-primary-btn" href={resource.href} target="_blank" rel="noopener noreferrer">
-                            {resource.access === 'download' ? <><Download size={14} /> Download</> : <><FileText size={14} /> Open paper</>}
+                          <a 
+                            className="hub-icon-btn" 
+                            href={resource.href} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            aria-label={resource.access === 'download' ? "Download paper" : "Open paper"}
+                            title={resource.access === 'download' ? "Download" : "Open"}
+                          >
+                            {resource.access === 'download' ? <Download size={16} /> : <ExternalLink size={16} />}
                           </a>
                         </span>
                       )}

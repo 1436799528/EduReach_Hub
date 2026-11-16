@@ -196,6 +196,9 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                 <span>Share</span>
                 <button
                   type="button"
+                  className="hub-icon-btn"
+                  aria-label="Copy Link"
+                  title="Copy Link"
                   onClick={async () => {
                     setCopyError('');
                     try {
@@ -208,7 +211,7 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
                     }
                   }}
                 >
-                  <Share2 size={16} /> {copied ? 'Copied!' : 'Copy Link'}
+                  {copied ? <CheckCircle2 size={16} aria-hidden="true" /> : <Share2 size={16} aria-hidden="true" />}
                 </button>
                 {copyError && <small className="hub-muted-label" role="status">{copyError}</small>}
               </div>

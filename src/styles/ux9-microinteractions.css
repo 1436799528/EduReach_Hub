@@ -1,0 +1,127 @@
+/* ==========================================================================
+   UX-9: Microinteractions & satisfying feedback (OPay/Facebook/Instagram inspired)
+   ========================================================================== */
+
+/* 1. Global Interactive Defaults (120–250ms transitions) */
+/* Apply to common interactive elements that don't already have one,
+   avoiding layout shifts (CLS) by only transitioning visual properties. */
+a, button, .er-notif-trigger, .hub-nav-link, .er-mobile-bottom-nav a,
+.dash-btn, .hub-primary-btn, .hub-outline-btn, .dash-card-link,
+.er-news-card, .er-news-row, .hub-card, .hub-click-card,
+.dash-icon-btn {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-duration: 150ms; /* Button state transition 120-180ms */
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 2. Press State Feedback (70–110ms) */
+/* A subtle scale-down on active for tactile feedback, like native apps */
+button:active:not(:disabled),
+.dash-btn:active:not(:disabled),
+.hub-primary-btn:active:not(:disabled),
+.hub-outline-btn:active:not(:disabled),
+.dash-icon-btn:active:not(:disabled),
+.er-notif-trigger:active:not(:disabled),
+.er-news-card:active, .er-news-row:active {
+  transform: scale(0.97);
+  transition-duration: 80ms; /* Press feedback 70-110ms */
+}
+
+/* 3. Disable transform for CBT elements to prevent timing/interaction interference */
+.er-exam-submit:active,
+.er-exam-submit-primary:active,
+.er-exam-next:active,
+.er-exam-end:active,
+.er-exam-material:active {
+  transform: none !important;
+}
+
+/* 4. Tab / Selection transitions */
+.hub-nav-link, .er-mobile-bottom-nav a {
+  transition-duration: 180ms; /* Tab/selection transition 150-200ms */
+}
+
+/* 5. Menus and Dropdowns (150-220ms) */
+.hub-more-panel,
+#hub-profile-menu {
+  animation: ux9-menu-in 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
+}
+
+@keyframes ux9-menu-in {
+  from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 6. Success Feedback (180-250ms) */
+.er-toast--success,
+.dash-status-completed {
+  animation: ux9-success-pop 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes ux9-success-pop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 7. Loading states */
+.is-loading, [aria-busy="true"] {
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+/* 8. Error states */
+.is-error, .hub-form-error, .er-toast--danger {
+  animation: ux9-shake 300ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes ux9-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* 9. Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  a, button, .er-notif-trigger, .hub-nav-link, .er-mobile-bottom-nav a,
+  .dash-btn, .hub-primary-btn, .hub-outline-btn, .dash-card-link,
+  .er-news-card, .er-news-row, .hub-card, .hub-click-card,
+  .dash-icon-btn, .hub-more-panel, #hub-profile-menu,
+  .er-toast--success, .dash-status-completed,
+  .is-error, .hub-form-error, .er-toast--danger {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
+/* 10. Compact Icon Actions (UX-9) */
+/* 44x44 touch targets for icon-only actions */
+@media (pointer: coarse) {
+  .hub-icon-btn, .dash-icon-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+  }
+}
+.hub-icon-btn, .dash-icon-btn {
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--er-text-secondary, #5e6c82);
+  cursor: pointer;
+}
+.hub-icon-btn:hover, .dash-icon-btn:hover {
+  background: var(--er-surface-soft, #f1f5f9);
+  color: var(--er-text-primary, #0f172a);
+}
+.hub-icon-btn.is-danger, .dash-icon-btn.is-danger {
+  color: var(--er-crimson);
+}
+.hub-icon-btn.is-danger:hover, .dash-icon-btn.is-danger:hover {
+  background: var(--er-status-error-bg, #fef2f2);
+}
+

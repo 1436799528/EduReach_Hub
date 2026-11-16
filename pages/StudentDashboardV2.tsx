@@ -800,7 +800,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <span className="dash-overview-role">Student dashboard</span>
           <div className="dash-overview-name">
             <h1>Overview</h1>
-            {emailVerified && <VerifiedBadge />}
           </div>
           <p>Welcome back, {displayName}. Here is what needs your attention next.</p>
         </div>
@@ -809,9 +808,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             {profileComplete ? <ShieldCheck size={14} aria-hidden="true" /> : <User size={14} aria-hidden="true" />}
             {profileComplete ? 'Profile complete' : `${profileCompletionPercent}% complete`}
           </span>
-          <a href="/profile" className="dash-btn dash-btn-secondary">
-            <Edit size={13} aria-hidden="true" /> {profileComplete ? 'Edit profile' : 'Complete profile'}
-          </a>
+          {profileComplete ? (
+            <a href="/profile" className="dash-icon-btn" aria-label="Edit profile" title="Edit profile">
+              <Edit size={16} aria-hidden="true" />
+            </a>
+          ) : (
+            <a href="/profile" className="dash-btn dash-btn-secondary">
+              <Edit size={13} aria-hidden="true" /> Complete profile
+            </a>
+          )}
         </div>
       </header>
 
@@ -1304,12 +1309,18 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <div style={{ position: 'relative' }}>
               <button type="button" className="edureach-dash-profile-btn" onClick={() => setProfileMenuOpen((open) => !open)} aria-haspopup="menu" aria-expanded={profileMenuOpen}>
                 <div className="edureach-dash-avatar">{avatar}</div>
-                <span className="edureach-dash-profile-name">{firstName}</span>
+                <span className="edureach-dash-profile-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {firstName}
+                  {emailVerified && <VerifiedBadge />}
+                </span>
               </button>
               {profileMenuOpen && (
                 <div className="dash-menu" role="menu">
                   <div className="dash-menu-head">
-                    <strong>{displayName}</strong>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {displayName}
+                      {emailVerified && <VerifiedBadge />}
+                    </strong>
                     {email && <span>{email}</span>}
                   </div>
                   {accountLinks}
