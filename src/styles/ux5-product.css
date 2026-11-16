@@ -542,6 +542,14 @@
   border-color: var(--er-border-strong);
 }
 
+.er-home-tool-list a span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
 .er-home-tool-list a > svg:first-child {
   flex: none;
   color: var(--er-primary);
