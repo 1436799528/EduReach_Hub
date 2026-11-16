@@ -62,7 +62,7 @@ create table if not exists public.institution_leadership (
 create index if not exists institution_leadership_current_idx
   on public.institution_leadership(institution_id, office_key, is_current);
 create unique index if not exists institution_leadership_one_current_office_idx
-  on public.institution_leadership(institution_id, office_key)
+  on public.institution_leadership(institution_id, office_key, office_title)
   where is_current = true;
 
 -- 3. Physical campuses / locations.
@@ -112,7 +112,10 @@ create table if not exists public.institution_academic_units (
   source_url text,
   verified_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  unique (id, institution_id),
+  foreign key (parent_unit_id, institution_id)
+    references public.institution_academic_units(id, institution_id) on delete set null
 );
 create index if not exists institution_academic_units_institution_idx
   on public.institution_academic_units(institution_id, unit_type, is_active);
@@ -151,6 +154,11 @@ create table if not exists public.institution_programme_offerings (
   verified_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  unique (id, institution_id),
+  foreign key (academic_unit_id, institution_id)
+    references public.institution_academic_units(id, institution_id) on delete set null,
+  foreign key (campus_id, institution_id)
+    references public.institution_campuses(id, institution_id) on delete set null,
   check (duration_years is null or duration_years between 0.5 and 15)
 );
 create index if not exists institution_programme_offerings_institution_idx
@@ -350,6 +358,8 @@ create table if not exists public.student_admission_goals (
     check (status in ('active','paused','achieved','abandoned')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  foreign key (programme_offering_id, institution_id)
+    references public.institution_programme_offerings(id, institution_id) on delete restrict,
   check (student_target_utme_score is null or student_target_utme_score between 0 and 400),
   check (student_target_aggregate is null or student_target_aggregate between 0 and 100)
 );
@@ -437,6 +447,66 @@ create policy institution_portal_guide_steps_public_read on public.institution_p
       and g.verification_status = 'verified'
   ));
 
+drop policy if exists institution_profiles_staff_manage on public.institution_profiles;
+create policy institution_profiles_staff_manage on public.institution_profiles
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_leadership_staff_manage on public.institution_leadership;
+create policy institution_leadership_staff_manage on public.institution_leadership
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_campuses_staff_manage on public.institution_campuses;
+create policy institution_campuses_staff_manage on public.institution_campuses
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_academic_units_staff_manage on public.institution_academic_units;
+create policy institution_academic_units_staff_manage on public.institution_academic_units
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_programme_offerings_staff_manage on public.institution_programme_offerings;
+create policy institution_programme_offerings_staff_manage on public.institution_programme_offerings
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_admission_routes_staff_manage on public.institution_admission_routes;
+create policy institution_admission_routes_staff_manage on public.institution_admission_routes
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_programme_requirements_staff_manage on public.institution_programme_requirements;
+create policy institution_programme_requirements_staff_manage on public.institution_programme_requirements
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_admission_benchmarks_staff_manage on public.institution_admission_benchmarks;
+create policy institution_admission_benchmarks_staff_manage on public.institution_admission_benchmarks
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_portal_guides_staff_manage on public.institution_portal_guides;
+create policy institution_portal_guides_staff_manage on public.institution_portal_guides
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
+drop policy if exists institution_portal_guide_steps_staff_manage on public.institution_portal_guide_steps;
+create policy institution_portal_guide_steps_staff_manage on public.institution_portal_guide_steps
+  for all to authenticated
+  using ((select private.is_staff()))
+  with check ((select private.is_staff()));
+
 -- Private evidence is staff-only. No anonymous/authenticated public SELECT.
 drop policy if exists institution_fact_evidence_staff_manage on public.institution_fact_evidence;
 create policy institution_fact_evidence_staff_manage on public.institution_fact_evidence
@@ -465,20 +535,6 @@ create policy student_admission_goals_staff_manage on public.student_admission_g
 drop policy if exists student_admission_goal_attempts_owner_read on public.student_admission_goal_attempts;
 create policy student_admission_goal_attempts_owner_read on public.student_admission_goal_attempts
   for select to authenticated using (student_id = (select auth.uid()));
-drop policy if exists student_admission_goal_attempts_owner_insert on public.student_admission_goal_attempts;
-create policy student_admission_goal_attempts_owner_insert on public.student_admission_goal_attempts
-  for insert to authenticated
-  with check (
-    student_id = (select auth.uid())
-    and exists (
-      select 1 from public.student_admission_goals g
-      where g.id = goal_id and g.student_id = (select auth.uid())
-    )
-    and exists (
-      select 1 from public.cbt_attempts a
-      where a.id = attempt_id and a.user_id = (select auth.uid())
-    )
-  );
 drop policy if exists student_admission_goal_attempts_staff_manage on public.student_admission_goal_attempts;
 create policy student_admission_goal_attempts_staff_manage on public.student_admission_goal_attempts
   for all to authenticated
@@ -499,7 +555,7 @@ grant select on public.institution_profiles,
 to anon, authenticated;
 
 grant select, insert, update on public.student_admission_goals to authenticated;
-grant select, insert on public.student_admission_goal_attempts to authenticated;
+grant select on public.student_admission_goal_attempts to authenticated;
 grant select, insert, update, delete on public.institution_fact_evidence to authenticated;
 
 -- Authenticated staff write grants are intentionally governed by the staff RLS policies.
