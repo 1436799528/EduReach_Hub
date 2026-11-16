@@ -363,8 +363,11 @@ create policy "Public cutoff marks" on public.cutoff_marks
   for select to anon, authenticated using (status in ('verified','reported'));
 drop policy if exists "Staff manage cutoff marks" on public.cutoff_marks;
 create policy "Staff manage cutoff marks" on public.cutoff_marks
-  for all to authenticated using ((select private.is_staff()))
-  with check ((select private.is_staff()));
+  for all to authenticated
+  using (exists (select 1 from public.profiles p where p.id = (select auth.uid())
+    and p.role in ('contributor','moderator','admin','super_admin')))
+  with check (exists (select 1 from public.profiles p where p.id = (select auth.uid())
+    and p.role in ('contributor','moderator','admin','super_admin')));
 
 -- Least-privilege client grants. Cutoff writes remain available only to
 -- authenticated staff through the existing/created staff-only RLS policy.
