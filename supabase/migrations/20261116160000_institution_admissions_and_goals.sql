@@ -219,6 +219,33 @@ create index if not exists programme_entry_requirements_lookup_idx
 create index if not exists programme_entry_requirements_programme_idx
   on public.programme_entry_requirements(programme_id, admission_session);
 
+
+-- The legacy cutoff table is present in production but absent from the pinned
+-- backend test snapshot. Create a compatible base only when it does not exist.
+create table if not exists public.cutoff_marks (
+  id uuid primary key default gen_random_uuid(),
+  institution_id uuid not null references public.institutions(id) on delete cascade,
+  programme_id uuid references public.programmes(id) on delete set null,
+  programme_name text not null,
+  utme_cutoff numeric(7,2),
+  departmental_cutoff numeric(7,2),
+  admission_session text not null,
+  category text not null default 'general',
+  source_id uuid,
+  source_url text,
+  published_at timestamptz,
+  verified_at timestamptz,
+  status text not null default 'pending'
+    check (status in ('pending','verified','reported','unverified','outdated','archived')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  session_id uuid
+);
+create index if not exists cutoff_marks_institution_session_idx
+  on public.cutoff_marks(institution_id, admission_session, status);
+create index if not exists cutoff_marks_programme_idx
+  on public.cutoff_marks(programme_id, admission_session, status);
+
 -- Cutoffs are typed. The existing UTME and departmental columns are retained
 -- for compatibility; score_scale_max identifies whether the figure is /400,
 -- /100 or another explicitly declared scale.
