@@ -184,7 +184,7 @@ test('unconfigured login fails closed and cannot create a local session', async 
   await page.goto('/dashboard');
   await expect(page).toHaveURL(/\/login\?next=/);
 });
-test('mobile CBT simulator cards stay in one row without overlapping', async ({ page, isMobile }) => {
+test('mobile CBT simulator cards stack in one column without overlapping', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'mobile card geometry applies to the mobile project');
   await page.route('**/api/cbt/exams', (route) => route.fulfill({
     contentType: 'application/json',
@@ -209,8 +209,9 @@ test('mobile CBT simulator cards stay in one row without overlapping', async ({ 
     return { left, right, top, bottom };
   }));
   for (let index = 1; index < boxes.length; index += 1) {
-    expect(Math.abs(boxes[index].top - boxes[0].top)).toBeLessThan(2);
-    expect(boxes[index].left).toBeGreaterThanOrEqual(boxes[index - 1].right);
+    expect(Math.abs(boxes[index].left - boxes[0].left)).toBeLessThan(2);
+    expect(boxes[index].top).toBeGreaterThanOrEqual(boxes[index - 1].bottom);
+    expect(boxes[index].right).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
   }
 });
 test('registration collects account essentials and only asks students for optional study context', async ({ page }) => {
