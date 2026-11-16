@@ -9,12 +9,10 @@ import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { SkeletonTiles } from '../src/components/Skeleton';
 import { useAuth } from '../src/lib/auth';
-import { fetchAdmissionPreparationReadiness, type AdmissionPreparationReadiness } from '../src/lib/api';
+import { fetchAdmissionPreparationReadiness, fetchCbtExams, fetchCbtExamsWithAvailability, type AdmissionPreparationReadiness } from '../src/lib/api';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
-import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../src/lib/api';
 import { isSupabaseConfigured } from '../src/lib/supabase';
-import { SkeletonRows } from '../src/components/Skeleton';
 import CbtHistoryPanel from '../src/components/CbtHistoryPanel';
 
 type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number; question_count?: number; subject_count?: number };
@@ -237,36 +235,7 @@ export default function CbtPage() {
             <CbtHistoryPanel />
           </section>
 
-          {!loading && !error && filteredExams.length > 0 && (
-            <div className="er-bank-list">
-              {filteredExams.map((exam) => (
-                // The whole card is the link. The duration is NOT
-                // shown here - the setup page (next step) reads the exam's
-                // configured default duration from the database and lets the
-                // student choose an allowed duration before the timer starts.
-                <a
-                  key={exam.id}
-                  href={setupPathForExam(exam)}
-                  className={`er-bank-card er-bank-card-link ${identityClassFor(exam.exam_body, 'service')}`}
-                >
-                  <div className="er-bank-main">
-                    <CardIdentityMark value={exam.exam_body} type="service" />
-                    <div className="er-bank-copy">
-                      <span className="er-bank-eyebrow">
-                        {exam.exam_body} • {exam.subject}
-                      </span>
-                      <h3>{exam.title}</h3>
-                      {exam.description && <span className="er-bank-desc">{exam.description}</span>}
-                    </div>
-                  </div>
 
-                  <span className="er-card-arrow" aria-hidden="true">
-                    <ArrowRight size={16} />
-                  </span>
-                </a>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </HubLayout>
