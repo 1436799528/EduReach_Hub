@@ -334,6 +334,61 @@ create index if not exists institution_import_rows_batch_idx
 create index if not exists institution_import_rows_normalized_name_idx
   on public.institution_import_rows(normalized_institution_name);
 
+
+-- Preserve the established catalogue access boundaries when these tables are
+-- first created on a clean schema. Existing production policies with these
+-- names are retained; policies are created only when absent.
+alter table public.faculties enable row level security;
+alter table public.departments enable row level security;
+alter table public.programmes enable row level security;
+alter table public.cutoff_marks enable row level security;
+
+do $
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='faculties' and policyname='public users can read faculties') then
+    create policy "public users can read faculties" on public.faculties
+      for select to anon using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='faculties' and policyname='authenticated users can read faculties') then
+    create policy "authenticated users can read faculties" on public.faculties
+      for select to authenticated using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='departments' and policyname='public users can read departments') then
+    create policy "public users can read departments" on public.departments
+      for select to anon using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='departments' and policyname='authenticated users can read departments') then
+    create policy "authenticated users can read departments" on public.departments
+      for select to authenticated using (true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='programmes' and policyname='programmes readable by authenticated users') then
+    create policy "programmes readable by authenticated users" on public.programmes
+      for select to authenticated using (is_active = true);
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='cutoff_marks' and policyname='Public cutoff marks') then
+    create policy "Public cutoff marks" on public.cutoff_marks
+      for select to anon, authenticated using (status in ('verified','reported'));
+  end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='cutoff_marks' and policyname='Staff manage cutoff marks') then
+    create policy "Staff manage cutoff marks" on public.cutoff_marks
+      for all to authenticated
+      using (exists (select 1 from public.profiles p where p.id = (select auth.uid())
+        and p.role in ('admin','super_admin','moderator','contributor')))
+      with check (exists (select 1 from public.profiles p where p.id = (select auth.uid())
+        and p.role in ('admin','super_admin','moderator','contributor')));
+  end if;
+end
+$;
+
+-- Least-privilege client grants. Cutoff writes remain available only to
+-- authenticated staff through the existing/created staff-only RLS policy.
+revoke all on public.faculties, public.departments, public.programmes, public.cutoff_marks
+  from public, anon, authenticated;
+grant select on public.faculties, public.departments to anon, authenticated;
+grant select on public.programmes to authenticated;
+grant select on public.cutoff_marks to anon, authenticated;
+grant insert, update, delete on public.cutoff_marks to authenticated;
+
 -- RLS: verified public facts only; all unpublished and import data remains
 -- inaccessible to unauthenticated students.
 do $$
