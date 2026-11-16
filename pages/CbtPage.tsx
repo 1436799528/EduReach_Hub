@@ -173,6 +173,40 @@ export default function CbtPage() {
               {admissionReadiness.requiredSubjects.length > 0 && (
                 <p className="er-prep-goal-subjects">Required JAMB subjects: {admissionReadiness.requiredSubjects.map((subject) => subject === 'english' ? 'Use of English' : subject.replace(/\\b\\w/g, (letter) => letter.toUpperCase())).join(' · ')}</p>
               )}
+              {admissionReadiness.publishedCutoffs && admissionReadiness.publishedCutoffs.length > 0 ? (
+                <div className="er-prep-goal-cutoffs">
+                  {admissionReadiness.publishedCutoffs.map((cutoff) => {
+                    const label = cutoff.cutoff_type === 'institution_utme_minimum'
+                      ? 'School minimum'
+                      : cutoff.cutoff_type === 'departmental'
+                        ? 'Department cutoff'
+                        : cutoff.cutoff_type === 'aggregate'
+                          ? 'Aggregate cutoff'
+                          : cutoff.cutoff_type === 'post_utme'
+                            ? 'Post-UTME cutoff'
+                            : cutoff.cutoff_type === 'programme_utme_minimum'
+                              ? 'Course minimum'
+                              : 'Published cutoff';
+                    const scale = cutoff.score_scale_max == null ? '' : ` / ${cutoff.score_scale_max}`;
+                    return (
+                      <div key={cutoff.id} className="er-prep-goal-cutoff">
+                        <span>{label}</span>
+                        <b>{cutoff.utme_cutoff == null ? '—' : `${cutoff.utme_cutoff}${scale}`}</b>
+                        {cutoff.departmental_cutoff != null && (
+                          <small>Department: {cutoff.departmental_cutoff}{scale}</small>
+                        )}
+                        {cutoff.source_url && (
+                          <a href={cutoff.source_url} target="_blank" rel="noreferrer" aria-label={`View source for ${label}`} title="Source">
+                            <ArrowRight size={13} aria-hidden="true" />
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <small className="er-prep-goal-note">No verified cutoff is published for this programme and session yet.</small>
+              )}
               <small className="er-prep-goal-note">Practice results are preparation indicators, not an admission prediction.</small>
             </section>
           )}
