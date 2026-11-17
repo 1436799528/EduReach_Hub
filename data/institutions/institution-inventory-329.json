@@ -23,19 +23,19 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Niger",
-      "acronym": null,
+      "acronym": "AKUM",
       "schoolName": "Abdulkadir Kure University, Minna",
-      "websiteUrl": null,
+      "websiteUrl": "https://www.akum.edu.ng/",
       "institutionId": "afa509bc-fb6a-4dfb-ba8c-b88d5601038e",
       "institutionType": "university",
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Kwara",
@@ -47,7 +47,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Niger",
@@ -59,55 +59,55 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Abia",
-      "acronym": null,
+      "acronym": "ABSU",
       "schoolName": "Abia State University, Uturu",
-      "websiteUrl": null,
+      "websiteUrl": "https://www.abiastateuniversity.edu.ng/",
       "institutionId": "d6910190-54a4-4c72-993d-c67ac72594c5",
       "institutionType": "university",
-      "studentPortalUrl": null,
+      "studentPortalUrl": "https://www.portal.abiastateuniversity.edu.ng/",
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Bauchi",
-      "acronym": null,
+      "acronym": "ATBU",
       "schoolName": "Abubakar Tafawa Balewa University, Bauchi",
-      "websiteUrl": null,
+      "websiteUrl": "https://atbu.edu.ng/",
       "institutionId": "6a75a5e3-81d8-43fe-b951-a5b031447339",
       "institutionType": "university",
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Ondo",
-      "acronym": null,
+      "acronym": "AU",
       "schoolName": "Achievers University, Owo",
-      "websiteUrl": null,
+      "websiteUrl": "https://achievers.edu.ng/",
       "institutionId": "cdf774d4-dae8-493d-93c5-8d23c6ec501c",
       "institutionType": "university",
       "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "admissionPortalUrl": "https://admission.achievers.edu.ng/",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Adamawa",
-      "acronym": null,
+      "acronym": "ADSU",
       "schoolName": "Adamawa State University, Mubi",
-      "websiteUrl": null,
+      "websiteUrl": "https://adsu.edu.ng/",
       "institutionId": "c150e96e-c2a1-4da3-b995-480ee5a4819c",
       "institutionType": "university",
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Edo",
@@ -119,47 +119,47 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Ondo",
-      "acronym": null,
+      "acronym": "AAUA",
       "schoolName": "Adekunle Ajasin University, Akungba-Akoko",
-      "websiteUrl": null,
+      "websiteUrl": "https://aaua.edu.ng/",
       "institutionId": "73c46ac6-e7d1-4d77-84b8-eac47435ea1d",
       "institutionType": "university",
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Osun",
-      "acronym": null,
+      "acronym": "AU",
       "schoolName": "Adeleke University, Ede",
-      "websiteUrl": null,
+      "websiteUrl": "https://adelekeuniversity.edu.ng/",
       "institutionId": "0ca1ee1a-6003-4840-8cfa-8a806653fda3",
       "institutionType": "university",
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Ondo",
-      "acronym": null,
+      "acronym": "AFUED",
       "schoolName": "Adeyemi Federal University of Education, Akure",
-      "websiteUrl": null,
+      "websiteUrl": "https://afued.edu.ng/",
       "institutionId": "7a74e01e-c57f-4117-8147-8c16cec72381",
       "institutionType": "university",
-      "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "studentPortalUrl": "https://portal.afued.edu.ng/",
+      "admissionPortalUrl": "https://portal.afued.edu.ng/",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Delta",
-      "acronym": null,
+      "acronym": "ADUN",
       "schoolName": "Admiralty University, Ibusa",
       "websiteUrl": null,
       "institutionId": "8d0fda97-70f2-4873-9298-5b3b106baf23",
@@ -167,67 +167,67 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Ekiti",
-      "acronym": null,
+      "acronym": "ABUAD",
       "schoolName": "Afe Babalola University, Ado-Ekiti",
-      "websiteUrl": null,
+      "websiteUrl": "https://www.abuad.edu.ng/",
       "institutionId": "ac3bc3c5-c59c-4c3d-911c-eac82e016fa2",
       "institutionType": "university",
-      "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "studentPortalUrl": "https://portal.abuad.edu.ng/",
+      "admissionPortalUrl": "https://admissions.abuad.edu.ng/WelcomeHome",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "FCT Abuja",
-      "acronym": null,
+      "acronym": "AAAU",
       "schoolName": "African Aviation and Aerospace University, Abuja",
-      "websiteUrl": null,
+      "websiteUrl": "https://aaau.edu.ng/",
       "institutionId": "f6e79568-cbb1-414c-947b-2835caed7c79",
       "institutionType": "university",
       "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "admissionPortalUrl": "https://applicant.safapply.com/aaau",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "FCT Abuja",
-      "acronym": null,
+      "acronym": "ASE",
       "schoolName": "African School of Economics, Abuja",
-      "websiteUrl": null,
+      "websiteUrl": "https://ase.edu.ng/",
       "institutionId": "e3054006-c3de-4522-aef8-3098559df8ac",
       "institutionType": "university",
-      "studentPortalUrl": null,
+      "studentPortalUrl": "https://portal.ase.edu.ng/",
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "FCT Abuja",
-      "acronym": null,
+      "acronym": "AUST",
       "schoolName": "African University of Science & Technology, Abuja",
-      "websiteUrl": null,
+      "websiteUrl": "https://aust.edu.ng/",
       "institutionId": "814bd683-3b83-4c93-9dd2-80d6f5ea50f6",
       "institutionType": "university",
       "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "admissionPortalUrl": "https://admissions.aust.edu.ng/",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Kaduna",
-      "acronym": null,
+      "acronym": "ABU",
       "schoolName": "Ahmadu Bello University, Zaria",
-      "websiteUrl": null,
+      "websiteUrl": "https://abu.edu.ng/",
       "institutionId": "d582bec5-d9f3-4b7d-a53b-12581dac0175",
       "institutionType": "university",
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Kwara",
@@ -239,19 +239,19 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Kaduna",
-      "acronym": null,
+      "acronym": "AFIT",
       "schoolName": "Air Force Institute of Technology, Kaduna",
-      "websiteUrl": null,
+      "websiteUrl": "https://afit.edu.ng/",
       "institutionId": "e7d9f2a1-d79a-42c0-be70-252dc0b48023",
       "institutionType": "university",
       "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "admissionPortalUrl": "https://degree.afit.edu.ng/portal/public/login?action=check_eligibility",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Oyo",
