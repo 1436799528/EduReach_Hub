@@ -30,6 +30,7 @@ import { EDUREACH_WHATSAPP } from '../data/hubContent';
 import SiteFooter from './SiteFooter';
 import SiteSearch from './LazySiteSearch';
 import NotificationCenter from './NotificationCenter';
+import { useMenuDismiss, useMenuKeyboard } from '../lib/menuA11y';
 import '../hub-rail.css';
 
 export default function HubLayout({ children, customSearch }: { children: ReactNode; customSearch?: ReactNode }) {
@@ -38,6 +39,22 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
   const [profileOpen, setProfileOpen] = useState(false);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
+  const mobileDrawerRef = useRef<HTMLDivElement>(null);
+  // UX-10: both header menus share one dismissal + keyboard contract, so a
+  // pointer that wanders off, an Escape, or a Tab out actually closes them.
+  const accountMenuRootRef = useRef<HTMLDivElement>(null);
+  const accountTriggerRef = useRef<HTMLButtonElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const moreRootRef = useRef<HTMLDetailsElement>(null);
+  const moreTriggerRef = useRef<HTMLElement>(null);
+  const morePanelRef = useRef<HTMLDivElement>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const closeAccountMenu = () => setProfileOpen(false);
+  const closeMoreMenu = () => setMoreOpen(false);
+  useMenuDismiss({ open: profileOpen, onClose: closeAccountMenu, rootRef: accountMenuRootRef, triggerRef: accountTriggerRef });
+  const accountMenuKeyDown = useMenuKeyboard(accountMenuRef, profileOpen);
+  useMenuDismiss({ open: moreOpen, onClose: closeMoreMenu, rootRef: moreRootRef, triggerRef: moreTriggerRef });
+  const moreMenuKeyDown = useMenuKeyboard(morePanelRef, moreOpen);
   const path = window.location.pathname.replace(/\/$/, '') || '/';
 
   // Do not crowd full-screen tool pages with the side rail
@@ -59,17 +76,41 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
     return (parts[0]?.slice(0, 2) || 'ST').toUpperCase();
   }, [user?.name]);
 
+  // UX-10: the drawer declares `aria-modal`, so it has to behave like a modal.
+  // Focus lands on its close button, Tab and Shift+Tab cycle inside it, the page
+  // behind cannot scroll, Escape closes it, and focus returns to the trigger.
   useEffect(() => {
     if (!mobileOpen) return;
     mobileCloseRef.current?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
+    const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+    const cycleFocus = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setMobileOpen(false);
         window.setTimeout(() => mobileTriggerRef.current?.focus(), 0);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const drawer = mobileDrawerRef.current;
+      if (!drawer) return;
+      const focusables = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((node) => node.offsetParent !== null);
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', cycleFocus);
+    return () => {
+      window.removeEventListener('keydown', cycleFocus);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [mobileOpen]);
 
   return (
@@ -150,20 +191,34 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                 {item.label}
               </a>
             ))}
-            <details className="hub-more" onKeyDown={(event) => {
-              if (event.key !== 'Escape') return;
-              const details = event.currentTarget;
-              details.open = false;
-              details.querySelector('summary')?.focus();
-            }}>
-              <summary className="hub-nav-link" aria-label="More" title="More">
+            <details
+              ref={moreRootRef}
+              className="hub-more"
+              open={moreOpen}
+              onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  setMoreOpen(false);
+                  moreTriggerRef.current?.focus();
+                  return;
+                }
+                if (event.key === 'ArrowDown' && !moreOpen) {
+                  event.preventDefault();
+                  setMoreOpen(true);
+                  return;
+                }
+                moreMenuKeyDown(event);
+              }}
+            >
+              <summary ref={moreTriggerRef} className="hub-nav-link" aria-label="More" title="More" aria-haspopup="menu" aria-expanded={moreOpen}>
                 <MoreHorizontal size={18} aria-hidden="true" />
               </summary>
-              <div className="hub-more-panel">
-                <a href="/services"><Briefcase size={15} aria-hidden="true" /> Services</a>
-                <a href="/news"><Newspaper size={15} aria-hidden="true" /> News</a>
-                <a href="/jobs"><GraduationCap size={15} aria-hidden="true" /> Scholarships</a>
-                <a href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} aria-hidden="true" /> Talk to us</a>
+              <div className="hub-more-panel er-menu" role="menu" aria-label="More destinations" ref={morePanelRef}>
+                <a className="er-menu-item" role="menuitem" href="/services"><Briefcase size={15} aria-hidden="true" /> Services</a>
+                <a className="er-menu-item" role="menuitem" href="/news"><Newspaper size={15} aria-hidden="true" /> News</a>
+                <a className="er-menu-item" role="menuitem" href="/jobs"><GraduationCap size={15} aria-hidden="true" /> Scholarships</a>
+                <a className="er-menu-item" role="menuitem" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} aria-hidden="true" /> Talk to us</a>
               </div>
             </details>
           </nav>
@@ -193,13 +248,17 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
             )}
 
             {isAuthenticated && (
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div
+                ref={accountMenuRootRef}
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
                 <button
                   type="button"
+                  ref={accountTriggerRef}
                   onClick={() => setProfileOpen((open) => !open)}
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
-                  aria-controls="hub-profile-menu"
+                  aria-controls={profileOpen ? 'hub-profile-menu' : undefined}
                   aria-label={`Account menu for ${user?.name || 'Student'}`}
                   className="hub-profile-trigger"
                   style={{
@@ -222,45 +281,40 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                 {profileOpen && (
                   <div
                     id="hub-profile-menu"
+                    ref={accountMenuRef}
                     role="menu"
-                    style={{
-                      position: 'absolute',
-                      top: '40px',
-                      right: 0,
-                      width: '230px',
-                      background: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '10px',
-                      boxShadow: '0 12px 32px rgba(15, 23, 42, 0.14)',
-                      padding: '8px',
-                      zIndex: 200,
-                    }}
+                    aria-label="Account"
+                    className="er-menu"
+                    onKeyDown={accountMenuKeyDown}
+                    style={{ position: 'absolute', top: '42px', right: 0, zIndex: 200 }}
                   >
-                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9', marginBottom: '6px' }}>
-                      <strong style={{ display: 'block', fontSize: '12.5px', color: '#0f172a' }}>{user?.name}</strong>
-                      <span style={{ display: 'block', fontSize: '10.5px', color: '#5e6c82', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</span>
+                    <div className="er-menu-head">
+                      <strong>{user?.name}</strong>
+                      <span>{user?.email}</span>
                     </div>
-                    <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
-                      <LayoutDashboard size={14} /> Dashboard
+                    <a className="er-menu-item" role="menuitem" href="/dashboard">
+                      <LayoutDashboard size={14} aria-hidden="true" /> Dashboard
                     </a>
-                    <a href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
-                      <User size={14} /> Profile
+                    <a className="er-menu-item" role="menuitem" href="/profile">
+                      <User size={14} aria-hidden="true" /> Profile
                     </a>
-                    <a href="/dashboard/services" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
-                      <ScanSearch size={14} /> My Requests
+                    <a className="er-menu-item" role="menuitem" href="/dashboard/services">
+                      <ScanSearch size={14} aria-hidden="true" /> My requests
                     </a>
-                    <a href="/dashboard/cbt" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
-                      <Laptop size={14} /> My CBT
+                    <a className="er-menu-item" role="menuitem" href="/dashboard/cbt">
+                      <Laptop size={14} aria-hidden="true" /> My CBT
                     </a>
-                    <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', textDecoration: 'none', color: '#0f172a', fontSize: '12px', fontWeight: 620 }}>
-                      <Settings size={14} /> Settings
+                    <a className="er-menu-item" role="menuitem" href="/settings">
+                      <Settings size={14} aria-hidden="true" /> Settings
                     </a>
+                    <div className="er-menu-separator" role="presentation" />
                     <button
                       type="button"
+                      role="menuitem"
+                      className="er-menu-item is-danger"
                       onClick={handleLogout}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', border: 0, background: 'transparent', color: '#dc2626', fontSize: '12px', fontWeight: 620, cursor: 'pointer', textAlign: 'left' }}
                     >
-                      <LogOut size={14} /> Logout
+                      <LogOut size={14} aria-hidden="true" /> Log out
                     </button>
                   </div>
                 )}
@@ -313,8 +367,10 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
           }}
         >
           <div
+            ref={mobileDrawerRef}
             style={{
               width: '280px',
+              maxWidth: '86vw',
               background: '#ffffff',
               height: '100%',
               padding: '20px',

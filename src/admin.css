@@ -1091,3 +1091,14 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   .admin-topbar > .admin-quickfind { display: none; }
   .admin-sidebar-search { display: block; }
 }
+
+/* UX-10: the settings surface marks what has changed and gives each group its
+   own way back, so reverting one value never means rebuilding the others. */
+.admin-setting-changes {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.admin-setting-changes .admin-pill { align-self: center; }
