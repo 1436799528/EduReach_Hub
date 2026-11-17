@@ -110,11 +110,16 @@ test('CBT subject results have a mobile card layout rather than a wide table', (
 });
 
 test('destructive actions are confirmed and the server enforces them', () => {
-  const history = read('src/components/CbtHistoryPanel.tsx');
-  assert.match(history, /er-confirm/, 'deleting a practice session asks first');
-  assert.match(history, /deleteCbtAttempt/, 'and calls the delete endpoint');
-  assert.match(history, /aria-label="Delete"/, 'practice and mock records can both be deleted from a trash control');
-  assert.match(history, /aria-label="Close delete confirmation"/, 'the delete dialog has a corner close control');
+  // The history panel that lived on the Practice page is gone with the
+  // Practice-page rebuild; deletion is a Results-page action, not something a
+  // student can trigger while choosing a simulator.
+  const practice = read('pages/CbtPage.tsx');
+  assert.doesNotMatch(practice, /deleteCbtAttempt|Delete this result/, 'Practice never offers to delete a record');
+
+  const dashboard = read('pages/StudentDashboardV2.tsx');
+  assert.match(dashboard, /await deleteCbtAttempt\(row\.id\)/, 'the dashboard calls the delete endpoint');
+  assert.match(dashboard, /Delete this result\?/, 'and asks before deleting');
+  assert.match(dashboard, /Keep<\/button>/, 'with a way out');
 
   const resultPage = read('pages/CbtResultsPage.tsx');
   // The trash control carries a visible "Delete result" label, so its
@@ -124,8 +129,8 @@ test('destructive actions are confirmed and the server enforces them', () => {
   assert.match(resultPage, /Keep result/, 'students can keep the saved result instead');
   assert.match(resultPage, /aria-label="Close delete confirmation"/, 'the result delete dialog has a corner close control');
 
-  const dashboard = read('pages/StudentDashboardV2.tsx');
-  assert.match(dashboard, /dashboard\/cbt\/results\/\$\{encodeURIComponent\(row\.id\)\}/, 'dashboard review links pass the attempt id through the authenticated route');
+  const dashboardSource = read('pages/StudentDashboardV2.tsx');
+  assert.match(dashboardSource, /dashboard\/results\/\$\{encodeURIComponent\(row\.id\)\}/, 'dashboard review links pass the attempt id through the authenticated results route');
 
   const api = read('src/lib/api.ts');
   assert.match(api, /savedAttempt && savedAttempt\.status === 'submitted'/, 'result review falls back to the owner-scoped saved score');

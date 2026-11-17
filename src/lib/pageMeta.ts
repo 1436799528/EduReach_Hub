@@ -14,6 +14,7 @@ const routeTitles: Record<string, string> = {
   '/cbt/setup/neco': 'NECO Practice Setup',
   '/cbt/setup/post-utme': 'Post-UTME Practice Setup',
   '/cbt/results': 'CBT Results',
+  '/dashboard/results': 'Results',
   '/dashboard/cbt/results': 'CBT Results',
   '/screening-calculator': 'Screening Calculator',
   '/calculator': 'Screening Calculator',
@@ -48,8 +49,8 @@ const routeTitles: Record<string, string> = {
   '/dashboard': 'Student Dashboard',
   '/dashboard/services': 'My Requests',
   '/dashboard/applications': 'My Requests',
-  '/dashboard/cbt': 'My CBT',
-  '/dashboard/past-questions': 'My CBT',
+  '/dashboard/cbt': 'CBT',
+  '/dashboard/past-questions': 'Past Questions',
   '/dashboard/tools': 'Tools & Saved',
   '/dashboard/saved': 'Tools & Saved',
   '/dashboard/notifications': 'Student Dashboard',
@@ -89,7 +90,7 @@ export function pageTitleFor(pathname: string): string {
   if (normalized.startsWith('/cbt/setup/')) return 'Practice Setup';
   if (normalized.startsWith('/services/apply/')) return 'Service Guide';
   if (normalized.startsWith('/services/')) return 'Service';
-  if (normalized.startsWith('/dashboard/cbt/results') || normalized.startsWith('/cbt/results')) return 'CBT Results';
+  if (normalized.startsWith('/dashboard/results') || normalized.startsWith('/dashboard/cbt/results') || normalized.startsWith('/cbt/results')) return 'CBT Results';
   if (normalized.startsWith('/news/')) return 'News Article';
   if (normalized.startsWith('/schools/')) return 'School Details';
   if (normalized.startsWith('/admission/')) return 'Admission';

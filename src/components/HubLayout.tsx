@@ -8,7 +8,6 @@ import {
   LogOut,
   LayoutDashboard,
   Home,
-  Laptop,
   Newspaper,
   Briefcase,
   MessageCircle,
@@ -16,8 +15,13 @@ import {
   FileText,
   GraduationCap,
   BarChart3,
+  Wrench,
   Settings,
   MoreHorizontal,
+  CalendarDays,
+  School,
+  Calculator,
+  Info,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import SkipLink from './a11y/SkipLink';
@@ -32,6 +36,49 @@ import SiteSearch from './LazySiteSearch';
 import NotificationCenter from './NotificationCenter';
 import { useMenuDismiss, useMenuKeyboard } from '../lib/menuA11y';
 import '../hub-rail.css';
+
+/**
+ * The public site's information architecture.
+ *
+ * Five primary destinations, no more: discovery (Home), practice (Practice),
+ * student services (Services), education news (News) and scholarship discovery
+ * (Scholarships). Everything else is disclosed from More, so the header row
+ * cannot grow into a list of tabs. Past questions deliberately has no slot of
+ * its own: it is the revision half of the Practice/Questions experience and is
+ * linked from Practice and from More.
+ */
+const PUBLIC_PRIMARY = [
+  { href: '/', label: 'Home' },
+  { href: '/cbt', label: 'Practice' },
+  { href: '/services', label: 'Services' },
+  { href: '/news', label: 'News' },
+  { href: '/jobs', label: 'Scholarships' },
+] as const;
+
+function publicPrimaryNav(path: string): Array<{ href: string; label: string; active: boolean }> {
+  return PUBLIC_PRIMARY.map((item) => ({
+    href: item.href,
+    label: item.label,
+    active: item.href === '/'
+      ? path === '/'
+      : item.href === '/jobs'
+        ? path === '/jobs' || path.startsWith('/jobs/') || path === '/scholarships'
+        : item.href === '/services'
+          ? path.startsWith('/services') && path !== '/services/track'
+          : path.startsWith(item.href),
+  }));
+}
+
+const publicSecondaryNav: Array<{ href: string; label: string; Icon: typeof Home; external?: boolean }> = [
+  { href: '/past-questions', label: 'Past questions', Icon: FileText },
+  { href: '/events', label: 'Events and deadlines', Icon: CalendarDays },
+  { href: '/schools', label: 'School finder', Icon: School },
+  { href: '/screening-calculator', label: 'Screening calculator', Icon: Calculator },
+  { href: '/tools/cgpa-calculator', label: 'CGPA calculator', Icon: GraduationCap },
+  { href: '/about', label: 'About EduReach', Icon: Info },
+  { href: '/contact', label: 'Contact', Icon: MessageCircle },
+  { href: `https://wa.me/${EDUREACH_WHATSAPP}`, label: 'Talk to us', Icon: MessageCircle, external: true },
+];
 
 export default function HubLayout({ children, customSearch }: { children: ReactNode; customSearch?: ReactNode }) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
@@ -162,27 +209,14 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
             </a>
           </div>
 
-          {/* DESKTOP NAVIGATION — the five student jobs, then a secondary
-              menu. News, services and scholarships are not primary tasks, so
-              they stop competing with practice for the first five slots. */}
+          {/* DESKTOP NAVIGATION — the public site, and nothing else. Five
+              primary destinations at most: Home · Practice · Services · News ·
+              Scholarships. Student-only destinations (CBT sessions, results,
+              profile, tools) live inside the authenticated dashboard, so the
+              public row never competes with them. Past questions is part of the
+              Practice/Questions experience and sits in the More menu. */}
           <nav className="hub-desktop-nav" aria-label="Primary">
-            {[
-              { href: '/', label: 'Home', Icon: Home, active: path === '/' },
-              { href: '/cbt', label: 'Practice', Icon: BookOpenCheck, active: path.startsWith('/cbt') },
-              { href: '/past-questions', label: 'Past questions', Icon: FileText, active: path.startsWith('/past-questions') },
-              {
-                href: isAuthenticated ? '/dashboard/cbt' : '/login',
-                label: 'My CBT',
-                Icon: Laptop,
-                active: isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results'),
-              },
-              {
-                href: isAuthenticated ? '/dashboard/cbt/results' : '/login',
-                label: 'Results',
-                Icon: BarChart3,
-                active: isAuthenticated && path.startsWith('/dashboard/cbt/results'),
-              },
-            ].map((item) => (
+            {publicPrimaryNav(path).map((item) => (
               <a
                 key={item.label}
                 href={item.href}
@@ -216,10 +250,17 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                 <MoreHorizontal size={18} aria-hidden="true" />
               </summary>
               <div className="hub-more-panel er-menu" role="menu" aria-label="More destinations" ref={morePanelRef}>
-                <a className="er-menu-item" role="menuitem" href="/services"><Briefcase size={15} aria-hidden="true" /> Services</a>
-                <a className="er-menu-item" role="menuitem" href="/news"><Newspaper size={15} aria-hidden="true" /> News</a>
-                <a className="er-menu-item" role="menuitem" href="/jobs"><GraduationCap size={15} aria-hidden="true" /> Scholarships</a>
-                <a className="er-menu-item" role="menuitem" href={`https://wa.me/${EDUREACH_WHATSAPP}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={15} aria-hidden="true" /> Talk to us</a>
+                {publicSecondaryNav.map(({ href, label, Icon, external }) => (
+                  <a
+                    key={label}
+                    className="er-menu-item"
+                    role="menuitem"
+                    href={href}
+                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  >
+                    <Icon size={15} aria-hidden="true" /> {label}
+                  </a>
+                ))}
               </div>
             </details>
           </nav>
@@ -294,16 +335,22 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                       <span>{user?.email}</span>
                     </div>
                     <a className="er-menu-item" role="menuitem" href="/dashboard">
-                      <LayoutDashboard size={14} aria-hidden="true" /> Dashboard
+                      <LayoutDashboard size={14} aria-hidden="true" /> Overview
                     </a>
-                    <a className="er-menu-item" role="menuitem" href="/profile">
+                    <a className="er-menu-item" role="menuitem" href="/dashboard/cbt">
+                      <BookOpenCheck size={14} aria-hidden="true" /> CBT
+                    </a>
+                    <a className="er-menu-item" role="menuitem" href="/dashboard/results">
+                      <BarChart3 size={14} aria-hidden="true" /> Results
+                    </a>
+                    <a className="er-menu-item" role="menuitem" href="/dashboard/profile">
                       <User size={14} aria-hidden="true" /> Profile
+                    </a>
+                    <a className="er-menu-item" role="menuitem" href="/dashboard/tools">
+                      <Wrench size={14} aria-hidden="true" /> Tools
                     </a>
                     <a className="er-menu-item" role="menuitem" href="/dashboard/services">
                       <ScanSearch size={14} aria-hidden="true" /> My requests
-                    </a>
-                    <a className="er-menu-item" role="menuitem" href="/dashboard/cbt">
-                      <Laptop size={14} aria-hidden="true" /> My CBT
                     </a>
                     <a className="er-menu-item" role="menuitem" href="/settings">
                       <Settings size={14} aria-hidden="true" /> Settings
@@ -407,23 +454,12 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
 
             <SiteSearch variant="drawer" label="Site search (mobile)" onNavigate={() => setMobileOpen(false)} />
 
+            {/* The same hierarchy on a phone: the five primary destinations
+                first, then one disclosed list for everything else. The drawer
+                does not shrink the desktop row; it keeps one clear list. */}
             <nav className="hub-mobile-nav" aria-label="Site sections">
-              <p className="hub-mobile-nav-label">Study</p>
-              {[
-                { href: '/', label: 'Home', active: path === '/' },
-                { href: '/cbt', label: 'Practice', active: path.startsWith('/cbt') },
-                { href: '/past-questions', label: 'Past questions', active: path.startsWith('/past-questions') },
-                {
-                  href: isAuthenticated ? '/dashboard/cbt' : '/login',
-                  label: 'My CBT',
-                  active: isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results'),
-                },
-                {
-                  href: isAuthenticated ? '/dashboard/cbt/results' : '/login',
-                  label: 'Results',
-                  active: isAuthenticated && path.startsWith('/dashboard/cbt/results'),
-                },
-              ].map((item) => (
+              <p className="hub-mobile-nav-label">EduReach</p>
+              {publicPrimaryNav(path).map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
@@ -434,38 +470,29 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                 </a>
               ))}
 
-              <p className="hub-mobile-nav-label">Explore</p>
-              {[
-                { href: '/services', label: 'Services', active: path.startsWith('/services') && path !== '/services/track' },
-                { href: '/news', label: 'News and noticeboard', active: path.startsWith('/news') },
-                { href: '/jobs', label: 'Scholarships and grants', active: path === '/jobs' },
-              ].map((item) => (
+              <p className="hub-mobile-nav-label">More</p>
+              {publicSecondaryNav.map(({ href, label, Icon, external }) => (
                 <a
-                  key={item.label}
-                  href={item.href}
+                  key={label}
+                  href={href}
                   onClick={() => setMobileOpen(false)}
-                  aria-current={item.active ? 'page' : undefined}
+                  {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  style={{ color: external ? '#047857' : undefined }}
                 >
-                  {item.label}
+                  <Icon size={16} aria-hidden="true" /> {label}
                 </a>
               ))}
-              <a
-                href={`https://wa.me/${EDUREACH_WHATSAPP}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileOpen(false)}
-                style={{ color: '#047857' }}
-              >
-                <MessageCircle size={16} /> Talk to us
-              </a>
 
               {isAuthenticated && (
                 <>
-                  <p className="hub-mobile-nav-label">Account</p>
+                  <p className="hub-mobile-nav-label">Your account</p>
                   {[
-                    { href: '/dashboard', label: 'Dashboard', active: path === '/dashboard' },
+                    { href: '/dashboard', label: 'Dashboard overview', active: path === '/dashboard' },
+                    { href: '/dashboard/cbt', label: 'CBT', active: path === '/dashboard/cbt' },
+                    { href: '/dashboard/results', label: 'Results', active: path.startsWith('/dashboard/results') },
+                    { href: '/dashboard/profile', label: 'Profile', active: path === '/dashboard/profile' },
+                    { href: '/dashboard/tools', label: 'Tools', active: path === '/dashboard/tools' },
                     { href: '/dashboard/services', label: 'My requests', active: path === '/dashboard/services' },
-                    { href: '/profile', label: 'Profile', active: path === '/profile' },
                     { href: '/settings', label: 'Settings', active: path === '/settings' || path === '/dashboard/settings' },
                   ].map((item) => (
                     <a
@@ -538,14 +565,34 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
         )}
       </main>
 
-      {/* MOBILE PORTAL NAVIGATION — the five jobs a phone user performs, each
-          with an icon and its short label. Everything else lives in the menu. */}
+      {/* MOBILE PORTAL NAVIGATION — the public site's five primary
+          destinations, with the same labels and current-page state as the
+          desktop row. Student-only destinations live in the dashboard's own
+          navigation, so a visitor is never sent to a login wall by a bottom-bar
+          icon that pretends to be a public page. */}
       <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
-        <a className={path === '/' ? 'active' : ''} aria-current={path === '/' ? 'page' : undefined} href="/"><Home size={18} aria-hidden="true" /><span>Home</span></a>
-        <a className={path.startsWith('/cbt') ? 'active' : ''} aria-current={path.startsWith('/cbt') ? 'page' : undefined} href="/cbt"><BookOpenCheck size={18} aria-hidden="true" /><span>Practice</span></a>
-        <a className={isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results') ? 'active' : ''} aria-current={isAuthenticated && path.startsWith('/dashboard/cbt') && !path.startsWith('/dashboard/cbt/results') ? 'page' : undefined} href={isAuthenticated ? '/dashboard/cbt' : '/login'}><Laptop size={18} aria-hidden="true" /><span>My CBT</span></a>
-        <a className={isAuthenticated && path.startsWith('/dashboard/cbt/results') ? 'active' : ''} aria-current={isAuthenticated && path.startsWith('/dashboard/cbt/results') ? 'page' : undefined} href={isAuthenticated ? '/dashboard/cbt/results' : '/login'}><BarChart3 size={18} aria-hidden="true" /><span>Results</span></a>
-        <a className={path === '/profile' || path === '/settings' ? 'active' : ''} aria-current={path === '/profile' || path === '/settings' ? 'page' : undefined} href={isAuthenticated ? '/profile' : '/login'}><User size={18} aria-hidden="true" /><span>Profile</span></a>
+        {publicPrimaryNav(path).map((item) => {
+          const Icon = item.href === '/'
+            ? Home
+            : item.href === '/cbt'
+              ? BookOpenCheck
+              : item.href === '/services'
+                ? Briefcase
+                : item.href === '/news'
+                  ? Newspaper
+                  : GraduationCap;
+          return (
+            <a
+              key={item.label}
+              className={item.active ? 'active' : ''}
+              aria-current={item.active ? 'page' : undefined}
+              href={item.href}
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span>{item.label}</span>
+            </a>
+          );
+        })}
       </nav>
 
       <SiteFooter />

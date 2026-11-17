@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import {
   Camera,
   Check,
@@ -62,7 +62,19 @@ const academicInterestOptions = [
   'Study Abroad & Grants',
 ];
 
-export default function ProfileCompletionPage() {
+/**
+ * The profile is one page. It renders inside the public shell at `/profile`
+ * (where onboarding sends a new student) and inside the authenticated dashboard
+ * at `/dashboard/profile`, with `embedded` suppressing the site header and the
+ * page padding. Both mounts share every field, save path and panel below, so
+ * the student cannot end up with two different profiles to maintain.
+ */
+function ProfileShell({ embedded, children }: { embedded: boolean; children: ReactNode }) {
+  if (embedded) return <div className="profile-embedded">{children}</div>;
+  return <HubLayout>{children}</HubLayout>;
+}
+
+export default function ProfileCompletionPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const { push: pushToast } = useToast();
   const [emailVerified, setEmailVerified] = useState(false);
@@ -128,6 +140,9 @@ export default function ProfileCompletionPage() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileCompleted, setProfileCompleted] = useState(false);
   const editMode = new URLSearchParams(window.location.search).get('edit') === '1';
+  // The same page is mounted inside the dashboard's Profile tab, so every
+  // internal link stays in whichever shell the student is already in.
+  const profileBase = embedded ? '/dashboard/profile' : '/profile';
 
   /**
    * The live institution directory.
@@ -601,7 +616,7 @@ export default function ProfileCompletionPage() {
       pushToast({ tone: 'success', title: 'Profile saved successfully', detail });
       window.setTimeout(() => {
         setSavedSuccess(false);
-        navigateInApp(editMode ? '/profile' : '/dashboard');
+        navigateInApp(embedded ? profileBase : editMode ? '/profile' : '/dashboard');
       }, 1400);
     };
 
@@ -647,7 +662,7 @@ export default function ProfileCompletionPage() {
 
   if (profileLoading) {
     return (
-      <HubLayout>
+      <ProfileShell embedded={embedded}>
         <div className="hub-page profile-page">
           <div className="hub-container profile-shell" aria-busy="true" aria-label="Loading your profile">
             <div className="profile-identity-card">
@@ -671,7 +686,7 @@ export default function ProfileCompletionPage() {
             </div>
           </div>
         </div>
-      </HubLayout>
+      </ProfileShell>
     );
   }
 
@@ -709,7 +724,7 @@ export default function ProfileCompletionPage() {
     // before listing the record, and keeps account actions separate from the
     // academic record they protect.
     return (
-      <HubLayout>
+      <ProfileShell embedded={embedded}>
         <div className="hub-page profile-page">
           <div className="hub-container profile-shell">
             <header className="profile-identity-card">
@@ -742,7 +757,7 @@ export default function ProfileCompletionPage() {
                 </div>
               </div>
               <div className="profile-identity-actions">
-                <a className="hub-primary-btn" href="/profile?edit=1"><Pencil size={15} /> Edit profile</a>
+                <a className="hub-primary-btn" href={`${profileBase}?edit=1`}><Pencil size={15} /> Edit profile</a>
               </div>
             </header>
 
@@ -810,7 +825,7 @@ export default function ProfileCompletionPage() {
                   <p className="profile-muted">{channels.length ? channels.join(' · ') : 'All optional alerts are off.'}</p>
                 </div>
                 <div className="profile-panel-actions">
-                  <a className="hub-outline-btn" href="/profile?edit=1#profile-preferences">Change preferences</a>
+                  <a className="hub-outline-btn" href={`${profileBase}?edit=1#profile-preferences`}>Change preferences</a>
                 </div>
               </section>
 
@@ -860,16 +875,41 @@ export default function ProfileCompletionPage() {
                 )}
                 {visibilityError && <p className="profile-error" role="alert">{visibilityError}</p>}
               </section>
+
+              {/* Privacy is stated where the account lives, next to the
+                  visibility control it qualifies. The deletion route goes
+                  through support because removing an account also removes
+                  saved results and requests, and that is a confirmed action,
+                  not a one-tap toggle. */}
+              <section className="profile-panel profile-panel--wide" aria-labelledby="profile-data">
+                <div className="profile-panel-heading">
+                  <ShieldCheck size={17} aria-hidden="true" />
+                  <h2 id="profile-data">Privacy and data</h2>
+                </div>
+                <p className="profile-muted">
+                  Your results, practice sessions, service requests and notifications are private to your account.
+                  They are never shown on the public homepage or on your public profile link.
+                </p>
+                <div className="profile-panel-actions">
+                  <a className="hub-outline-btn" href="/privacy">Privacy policy</a>
+                  <a className="hub-outline-btn" href="/cookies">Cookie policy</a>
+                  <a className="hub-outline-btn" href="/contact">Request data or account deletion</a>
+                </div>
+                <p className="profile-muted">
+                  Deleting an account removes your profile, saved practice sessions and results. EduReach support
+                  confirms the request with you before anything is removed, so nothing is lost by accident.
+                </p>
+              </section>
             </div>
 
           </div>
         </div>
-      </HubLayout>
+      </ProfileShell>
     );
   }
 
   return (
-    <HubLayout>
+    <ProfileShell embedded={embedded}>
       <div className="hub-page profile-page">
         <div className="hub-container profile-shell">
           <div className="profile-page-head">
@@ -878,7 +918,7 @@ export default function ProfileCompletionPage() {
               <h1>{editMode ? 'Edit your profile' : 'Complete your profile'}</h1>
               <p>These details identify you on EduReach. Nothing is saved until you choose Save changes.</p>
             </div>
-            <a className="profile-cancel-link" href="/profile" onClick={confirmDiscard}>Cancel</a>
+            <a className="profile-cancel-link" href={profileBase} onClick={confirmDiscard}>Cancel</a>
           </div>
 
           {!savedSuccess && profileMissingLabels.length > 0 && (
@@ -1500,7 +1540,7 @@ export default function ProfileCompletionPage() {
                 {!editMode && (
                   <a className="profile-skip-link" href="/dashboard">Skip for now</a>
                 )}
-                <a className="hub-outline-btn" href="/profile" onClick={confirmDiscard}>Cancel</a>
+                <a className="hub-outline-btn" href={profileBase} onClick={confirmDiscard}>Cancel</a>
                 <button type="submit" className="hub-primary-btn" disabled={saving || savedSuccess || !isDirty} aria-busy={saving}>
                   {saving ? <><WaveLoader variant="inline" decorative /> Saving…</> : <>Save changes <ChevronRight size={16} /></>}
                 </button>
@@ -1509,6 +1549,6 @@ export default function ProfileCompletionPage() {
           </form>
         </div>
       </div>
-    </HubLayout>
+    </ProfileShell>
   );
 }

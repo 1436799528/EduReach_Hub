@@ -18,8 +18,8 @@ the renderer, and every route is classified so aliases cannot quietly multiply.
 | `/schools/:slug` | `SchoolDetailsPage` | Institution detail | Yes |
 | `/services` | `ServicesCatalogPage` | Service catalogue | Yes |
 | `/services/:slug` | `ServiceApplyPage` | Service detail / entry, or honest coming-soon when no workflow exists | Yes |
-| `/cbt` | `CbtPage` | Exam selection | Yes |
-| `/past-questions` | `PastQuestionsPage` | Practice entry and material notes | Yes |
+| `/cbt` | `CbtPage` | Practice: the CBT simulator hub. Every published simulator appears here from the catalogue, as one shared `SimulatorCard`; no history, results or services | Yes |
+| `/past-questions` | `PastQuestionsPage` | Past-paper library, linked from Practice/Questions rather than a navigation tab | Yes |
 | `/jamb`, `/waec`, `/neco`, `/post-utme` | `ExamHubPage` | Examination hubs | Yes |
 | `/nabteb` | `ComingSoonPage` | Declared, no content yet | No (noindex until real) |
 | `/search` | `SearchPage` | Cross-entity search | No (noindex) |
@@ -40,18 +40,25 @@ the renderer, and every route is classified so aliases cannot quietly multiply.
 ## Student (authenticated)
 
 Every route below is wrapped in `ProtectedRoute` and renders inside
-`StudentDashboardV2` — one workspace with four tabs, not four separate pages.
+`StudentDashboardV2` — one workspace with five tabs (Overview · CBT · Results ·
+Profile · Tools), not five separate pages. Service requests, notifications,
+help and account utilities are secondary navigation.
 
 | Route | Tab | Purpose |
 |---|---|---|
-| `/dashboard`, `/dashboard/notifications` | Overview | What matters now: updates, deadlines, requests, CBT, saved items |
-| `/dashboard/services`, `/dashboard/applications`, `/services/track`, `/track` | My Requests | Service request tracking |
-| `/dashboard/cbt`, `/dashboard/past-questions` | My CBT | Attempts, results, practice |
-| `/dashboard/tools`, `/dashboard/saved` | Tools & Saved | Calculators and saved items |
-| `/dashboard/cbt/results`, `/dashboard/cbt/results/:attemptId` | CBT result | Result detail |
+| `/dashboard`, `/dashboard/notifications` | Overview | The student's own homepage: preparation focus, selected exams, CBT quick access, recent activity, results summary, progress, institution preferences, notifications |
+| `/dashboard/cbt` | CBT | The same simulator hub as `/cbt`, plus a resume card for an unfinished paper |
+| `/dashboard/results`, `/dashboard/results/:attemptId` | Results | Completed sessions, scores, answer review and performance analysis |
+| `/dashboard/profile` | Profile | The canonical profile page, mounted in the dashboard (personal, academic, account, preferences, public profile, privacy and data) |
+| `/dashboard/tools`, `/dashboard/saved` | Tools | Existing utilities and saved items |
+| `/dashboard/services`, `/dashboard/applications`, `/services/track`, `/track` | My requests (secondary) | Service request tracking |
 | `/cbt/results`, `/cbt/results/:attemptId` | Public scorecard / saved attempt | Guest result or signed-in attempt |
-| `/profile`, `/profile/complete`, `/dashboard/profile` | Profile completion | Academic profile |
+| `/profile`, `/profile/complete` | Profile completion (outside the dashboard shell) | Onboarding |
 | `/settings`, `/dashboard/settings` | Settings | Account preferences |
+
+Legacy dashboard URLs redirect: `/dashboard/cbt/results*` →
+`/dashboard/results*`, `/dashboard/past-questions` → `/past-questions`,
+`/dashboard/scholarships` → `/jobs`.
 | `/services/apply/:slug` | Service wizard | Authenticated application flow (live slugs: `nelfund-loan`, `results`, `jamb-slip`, `admission-letters`) |
 | `/cbt/setup/jamb|waec|neco|post-utme` | Setup | Subject selection and instructions |
 | `/cbt/practice` | Attempt | Active CBT session |

@@ -36,7 +36,7 @@ test('an expired attempt is never offered as resumable anywhere', () => {
   const page = read('pages/StudentDashboardV2.tsx');
   assert.match(page, /cbtAttemptState\(row\)/, 'the table reads the shared attempt rule');
   assert.ok(!/status === 'in_progress';?\s*$/.test(page.split('const isActiveCbtAttempt')[1]?.split('\n')[0] || ''), 'no bare status check remains');
-  assert.match(page, /state === 'expired' && <a className="dash-card-link" href="\/cbt">Start a new test/, 'an expired attempt points at a new test, not at the old one');
+  assert.match(page, /state === 'expired' && <a className="dash-card-link" href="\/dashboard\/cbt">Start a new test/, 'an expired attempt points at a new test in the dashboard, not at the old one');
   assert.doesNotMatch(page, /state === 'expired'[^\n]*cbt\/session/, 'an expired attempt never links back into the session');
   assert.match(page, /\/cbt\/session\/\$\{encodeURIComponent\(row\.id\)\}/, 'resume goes straight into the attempt, not through setup');
 });
@@ -71,15 +71,18 @@ test('news rows carry their age and the list can be searched', () => {
   assert.ok(!/legacyCategoryAliases/.test(page), 'the duplicate alias map is gone');
 });
 
-test('home simulators are fetched from the live bank catalogue and keep their exact bank id', () => {
+test('simulators are built from the live bank catalogue, never an invented list', () => {
   const grid = read('src/components/ExamSimulatorGrid.tsx');
+  const data = read('src/data/simulators.ts');
   assert.match(grid, /fetchCbtExamsWithAvailability\(\)/, 'the server returns public banks with live availability');
-  assert.match(grid, /setExams\(live\)/, 'only actual catalogue rows become cards');
+  assert.match(grid, /setExams\(items\)/, 'only actual catalogue rows reach the builder');
   assert.doesNotMatch(grid, /MAIN_EXAM_NAMES|mainExams|staticMain/, 'there are no invented fallback banks');
-  assert.match(grid, /simulatorStartHref\(exam\.mode, exam\.id\)/, 'each card routes to the exact exam bank it represents');
+  assert.match(data, /export function buildSimulatorCards/, 'one card per simulator is derived from those rows');
+  assert.match(data, /simulatorStartHref\(group\.examType \|\| group\.label, deepest\?\.id\)/, 'each card carries its bank into the one route resolver');
   assert.match(grid, /No active public question banks are connected/, 'an empty catalogue is disclosed honestly');
-  assert.match(grid, /er-card-arrow/, 'the only card action is the thin arrow');
-  assert.ok(grid.includes('`/cbt/practice?exam=${encodeURIComponent(examId)}`'), 'less common exam types still retain the bank id');
+  const card = read('src/components/SimulatorCard.tsx');
+  assert.match(card, /er-card-arrow/, 'the only card action is the thin arrow');
+  assert.match(data, /`\/cbt\/practice\?exam=\$\{encodeURIComponent\(examId\)\}`/, 'less common exam types still retain the bank id');
 });
 
 test('the service page says what happens after Submit, before and after it', () => {
@@ -273,21 +276,25 @@ test('the setup screen keeps internal review counts in the admin console', () =>
   assert.match(setup, /These are practice questions, not certified official past papers\./, 'the honesty note replaces the counts');
 });
 
-test('every app shell shows the same five bottom destinations on a phone', () => {
-  // UX-7: navigation is a product constant. The public shell and the dashboard
-  // used to swap five different labels when a student crossed into the account
-  // area, which made the app feel like two products.
-  const labels = ['Home', 'Practice', 'My CBT', 'Results', 'Profile'];
-  for (const file of ['src/components/HubLayout.tsx', 'pages/StudentDashboardV2.tsx']) {
-    const source = read(file);
-    assert.match(source, /<nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">/, `${file} uses the shared bottom bar`);
-    for (const label of labels) {
-      assert.ok(source.includes(`<span>${label}</span>`), `${file} labels its ${label} destination`);
-    }
-    assert.doesNotMatch(source, /<span>CBT<\/span>|<span>Account<\/span>|<span>Services<\/span>/, `${file} keeps the five product labels`);
+test('each navigation layer carries five destinations on a phone', () => {
+  // The public shell and the dashboard are two different experiences, so they
+  // have different navigation — but each one keeps five destinations, and the
+  // student never loses the current page.
+  const publicLayout = read('src/components/HubLayout.tsx');
+  assert.match(publicLayout, /<nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">/, 'the public shell uses the bottom bar');
+  assert.match(publicLayout, /publicPrimaryNav\(path\)\.map/, 'driven by the five public primaries');
+  for (const label of ['Home', 'Practice', 'Services', 'News', 'Scholarships']) {
+    assert.ok(publicLayout.includes(`pub_${label}`) || publicLayout.includes(`label: '${label}'`), `the public bar can label ${label}`);
   }
-  // Icons are familiar and every one of these destinations keeps its label.
-  assert.match(read('src/components/HubLayout.tsx'), /<BookOpenCheck size=\{18\}/, 'Practice carries its familiar icon');
+  assert.match(publicLayout, /item\.href === '\/cbt'/, 'Practice carries its familiar icon');
+  assert.match(publicLayout, /\? BookOpenCheck/, 'and that icon is the open book');
+
+  const dashboard = read('pages/StudentDashboardV2.tsx');
+  assert.match(dashboard, /<nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">/, 'the dashboard uses the same bar');
+  for (const label of ['Overview', 'CBT', 'Results', 'Profile', 'Tools']) {
+    assert.ok(dashboard.includes(`<span>${label}</span>`), `the dashboard labels ${label}`);
+  }
+  assert.doesNotMatch(dashboard, /<span>My CBD<\/span>|<span>Requests<\/span>/, 'secondary functions stay out of the primary bar');
   // The bar is reachable at tablet widths too, where the dashboard hides its sidebar.
   assert.match(read('src/edu-portal.css'), /@media\(max-width:768px\)\{\s*body:not\(\.er-exam-mode\) \.hub-shell\{padding-bottom/, 'the bar appears while the sidebar is hidden');
 });

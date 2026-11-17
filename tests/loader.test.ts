@@ -114,7 +114,7 @@ test('the pending phase follows the request and never invents progress', (t) => 
 test('the wait and failure surfaces are wired where requests actually block', () => {
   const grid = read('src/components/ExamSimulatorGrid.tsx');
   assert.match(grid, /usePendingPhase\(/, 'the catalogue uses the shared phase');
-  assert.match(grid, /Connecting to the question banks/, 'a slow catalogue is named');
+  assert.match(grid, /Connecting to the CBT simulators/, 'a slow catalogue is named');
   assert.match(grid, /<ErrorState error=\{error\} onRetry=/, 'a failed catalogue offers a retry that re-runs the request');
 
   const setup = read('pages/ExamSetupPage.tsx');

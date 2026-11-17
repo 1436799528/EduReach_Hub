@@ -1,81 +1,64 @@
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { identityClassFor } from './CardIdentityMark';
+import { useEffect, useMemo, useState } from 'react';
+import SimulatorCard from './SimulatorCard';
 import { ErrorState } from './AsyncState';
 import { SkeletonTiles } from './Skeleton';
 import WaveLoader from './WaveLoader';
-import { fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
+import FilterPills from './FilterPills';
+import { fetchCbtExams, fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
 import { usePendingPhase } from '../lib/usePendingPhase';
+import { isSupabaseConfigured } from '../lib/supabase';
+import {
+  buildSimulatorCards,
+  filterSimulatorCards,
+  simulatorExamType,
+  simulatorFilters,
+  type SimulatorCardModel,
+} from '../data/simulators';
 
-export type ExamSimulator = {
-  id: string;
-  title: string;
-  mode: string;
-  logo: string;
-  desc?: string;
-  meta: string;
-};
+// One definition of the canonical examination types lives in
+// src/data/simulators.ts; these re-exports keep older imports working.
+export { SIMULATOR_EXAM_TYPES, simulatorExamType, simulatorStartHref } from '../data/simulators';
+export type { SimulatorExamType } from '../data/simulators';
 
 /**
- * The four CBT simulator card types that carry a MySchool-inspired gradient.
+ * The simulator catalogue, rendered the same way on every surface.
  *
- * Colour is bound to the exam's canonical type, never to the card's position in
- * the catalogue: `simulatorExamType()` collapses the spellings a bank row can
- * use (`JAMB`, `UTME`, `Post-UTME`, `PostUTME`, `POST UTME`) onto one key, and
- * the key is emitted as both a class and `data-exam-type`. Re-ordering or
- * filtering the catalogue therefore cannot repaint a bank.
+ * Homepage, public Practice and the authenticated CBT tab each mount this
+ * component. The grid is data-driven: a card exists only because the published
+ * question-bank catalogue returned a bank for that examination, and the cards
+ * themselves are the shared `SimulatorCard`.
+ *
+ * `showFilters` adds the examination filter row (Practice and the dashboard
+ * CBT tab); the homepage keeps the short, unfiltered discovery list.
  */
-export const SIMULATOR_EXAM_TYPES = ['jamb', 'waec', 'neco', 'post-utme'] as const;
-
-export type SimulatorExamType = (typeof SIMULATOR_EXAM_TYPES)[number];
-
-export function simulatorExamType(mode: string): SimulatorExamType | null {
-  const value = mode.trim().toLowerCase().replace(/[\s_-]+/g, '');
-  if (value === 'jamb' || value === 'utme') return 'jamb';
-  if (value === 'waec') return 'waec';
-  if (value === 'neco') return 'neco';
-  if (value === 'postutme') return 'post-utme';
-  return null;
-}
-
-const brandLogo = (mode: string) => {
-  const normalized = mode.toLowerCase();
-  if (normalized === 'waec') return '/icons/brands/waec.webp';
-  if (normalized === 'neco') return '/icons/brands/neco.webp';
-  if (normalized === 'nabteb') return '/icons/brands/nabteb.webp';
-  return '/icons/brands/jamb.webp';
-};
-
-
-
-
-export function simulatorStartHref(key: string, examId?: string) {
-  const mode = key.trim().toLowerCase().replace(/[\s_-]+/g, '-');
-  const normalized = mode === 'postutme' ? 'post-utme' : mode;
-  const query = examId ? `?exam=${encodeURIComponent(examId)}` : '';
-  if (!['jamb', 'waec', 'neco', 'post-utme'].includes(normalized)) {
-    // Preserve the exact live bank even when it uses a less common exam body.
-    return examId ? `/cbt/practice?exam=${encodeURIComponent(examId)}` : '/cbt';
-  }
-  return `/cbt/setup/${normalized}${query}`;
-}
-
 export default function ExamSimulatorGrid({
-  variant = 'start',
+  showFilters = false,
+  emptyMessage = 'No active public question banks are connected right now. Browse past questions while the bank catalogue is updated.',
+  initialFilter = 'ALL',
+  onFilterChange,
 }: {
-  variant?: 'mode' | 'start';
+  showFilters?: boolean;
+  emptyMessage?: string;
+  /** A canonical exam type (or any spelling of one) to open the grid filtered. */
+  initialFilter?: string;
+  /** Lets the host page keep the address bar in step with the chosen filter. */
+  onFilterChange?: (id: string) => void;
 }) {
-  const [exams, setExams] = useState<ExamSimulator[]>([]);
+  const [exams, setExams] = useState<CbtExamSummary[]>([]);
   const [error, setError] = useState<unknown>(null);
   // Whether the catalogue has answered at all. Until it has, the section shows
   // placeholders: claiming "no question banks have been published" while the
   // request is still in flight is both wrong and a layout jump when the cards
-  // arrive (PERF-1 measured that jump at 262px).
+  // arrive.
   const [settled, setSettled] = useState(false);
-  // Retrying re-runs the same request. It is the only recovery that makes
-  // sense here, and a failed lookup used to leave a dead sentence with no way
-  // back except a page reload.
   const [attempt, setAttempt] = useState(0);
+  // Exam hubs link here as /cbt?mode=jamb; the filter opens on that exam rather
+  // than asking the visitor to find it again in the pill row.
+  const [activeFilter, setActiveFilter] = useState(() => simulatorExamType(initialFilter) ?? 'ALL');
+  const changeFilter = (id: string) => {
+    setActiveFilter(id);
+    onFilterChange?.(id);
+  };
   const phase = usePendingPhase(!settled && error === null);
 
   useEffect(() => {
@@ -83,46 +66,36 @@ export default function ExamSimulatorGrid({
     setError(null);
     setSettled(false);
     // The server catalogue is authoritative for both the bank and its question
-    // availability. It works without exposing privileged bank reads to the browser.
-    void fetchCbtExamsWithAvailability()
-      .then((items: CbtExamSummary[]) => {
+    // availability. It works without exposing privileged bank reads to the
+    // browser. The local preview has no published catalogue and says so.
+    const request = isSupabaseConfigured
+      ? fetchCbtExamsWithAvailability()
+      : fetchCbtExams();
+    void request
+      .then((items) => {
         if (!active) return;
-        // Cards only come from real rows returned by the server. Never invent
-        // mode-only destinations: each card must point at the bank it describes.
-        const live = items.map((exam) => {
-          const mode = String(exam.exam_body || exam.subject || 'CBT').trim();
-          return {
-            id: String(exam.id),
-            title: String(exam.title),
-            mode,
-            logo: brandLogo(mode),
-            desc: String(exam.description || 'Choose your subjects and start a timed paper.'),
-            // A bank's size and the standard paper time are configuration, not
-            // a promise about every practice session. The setup screen derives
-            // the real time from the subjects and question count.
-            meta: typeof exam.question_count === 'number' && (exam.question_count < 5 || (exam.subject_count ?? 1) < 1)
-              ? 'Question pool still being prepared'
-              : 'Timed practice',
-          };
-        });
-        setExams(live);
+        setExams(items);
       })
       .catch((value) => active && setError(value))
       .finally(() => { if (active) setSettled(true); });
     return () => { active = false; };
   }, [attempt]);
 
+  const cards = useMemo<SimulatorCardModel[]>(() => buildSimulatorCards(exams), [exams]);
+  const filters = useMemo(() => simulatorFilters(cards), [cards]);
+  const visible = useMemo(() => filterSimulatorCards(cards, activeFilter), [cards, activeFilter]);
+
   if (!settled && error === null) {
     return (
       <div className="er-late-region er-late-region--simulators">
-        <SkeletonTiles className="er-sim-grid" tiles={4} label="Loading CBT question banks" />
+        <SkeletonTiles className="er-sim-grid" tiles={4} label="Loading CBT simulators" />
         {/* The skeleton keeps the layout; this names the wait once it is long
             enough to need a name, and replaces itself with a retry if the
             request never answers. */}
         {(phase === 'slow' || phase === 'stalled') && (
           <div className="er-slow-note">
             <WaveLoader variant="inline" decorative />
-            <span>{phase === 'stalled' ? 'Still waiting for the question banks.' : 'Connecting to the question banks…'}</span>
+            <span>{phase === 'stalled' ? 'Still waiting for the CBT simulators.' : 'Connecting to the CBT simulators…'}</span>
             {phase === 'stalled' && (
               <button type="button" className="hub-outline-btn" onClick={() => setAttempt((value) => value + 1)}>
                 Try again
@@ -133,6 +106,7 @@ export default function ExamSimulatorGrid({
       </div>
     );
   }
+
   if (error !== null) {
     return (
       <div className="er-late-region er-late-region--simulators">
@@ -140,45 +114,37 @@ export default function ExamSimulatorGrid({
       </div>
     );
   }
-  if (!exams.length) {
+
+  if (!cards.length) {
     return (
       <div className="er-late-region er-late-region--simulators">
-        <div className="er-empty">No active public question banks are connected right now. Browse past questions while the bank catalogue is updated.</div>
+        <div className="er-empty">{emptyMessage}</div>
       </div>
     );
   }
 
   return (
     <div className="er-late-region er-late-region--simulators">
+      {showFilters && filters.length > 2 && (
+        <div className="er-sim-filters">
+          <FilterPills
+            options={filters}
+            active={activeFilter}
+            onChange={changeFilter}
+            ariaLabel="Examination simulators"
+          />
+        </div>
+      )}
+
       <div className="er-sim-grid">
-        {exams.map((exam) => {
-          // Stable exam identity: the canonical type drives the card's gradient
-          // (see `src/styles/ux5-product.css`). A bank whose body is not one of
-          // the four keeps the neutral surface and its own identity mark.
-          const examType = simulatorExamType(exam.mode);
-          return (
-          <a
-            key={exam.id}
-            data-exam-type={examType ?? undefined}
-            className={`er-sim-card er-sim-${examType ?? exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
-            href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.mode, exam.id)}
-          >
-            <span className="er-sim-top">
-              <img src={exam.logo} alt={`${exam.mode} logo`} width={40} height={40} loading="lazy" decoding="async" />
-              <span className="er-sim-badge">{exam.mode}</span>
-            </span>
-            <span className="er-sim-body">
-              <strong>{exam.title}</strong>
-              {exam.desc && <small>{exam.desc}</small>}
-              <span className="er-sim-foot">
-                <span>{exam.meta}</span>
-                <span className="er-card-arrow" aria-hidden="true"><ArrowRight size={14} /></span>
-              </span>
-            </span>
-          </a>
-          );
-        })}
+        {visible.map((simulator) => (
+          <SimulatorCard key={simulator.key} simulator={simulator} />
+        ))}
       </div>
+
+      {showFilters && visible.length === 0 && (
+        <div className="er-empty">No simulator matches that examination yet. Choose another filter.</div>
+      )}
     </div>
   );
 }

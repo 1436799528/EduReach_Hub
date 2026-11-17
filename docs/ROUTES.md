@@ -25,11 +25,11 @@ trailing slash is ignored and unmatched paths render `NotFoundPage`.
 | `/schools` | School finder |
 | `/schools/:slug` | Institution detail; resolves by canonical `id` when present, otherwise by slug, legacy slug or acronym (see `docs/data/INSTITUTION-FRONTEND-CONTRACT.md` §5) |
 | `/events` | Deadlines and exam dates |
-| `/cbt` | CBT hall |
+| `/cbt` | Practice: every published CBT simulator, one card each |
 | `/cbt/setup/:exam` | Session setup for `jamb`, `waec`, `neco` or `post-utme` |
 | `/cbt/session/:attemptId` | Active session |
 | `/cbt/results`, `/cbt/results/:attemptId` | Result and answer review |
-| `/past-questions` | CBT bank and material requests |
+| `/past-questions` | Past-question papers and material requests (linked from Practice; not a primary tab) |
 | `/screening-calculator`, `/calculator` | Screening aggregate calculator |
 | `/tools/cgpa-calculator`, `/cgpa-calculator` | CGPA calculator |
 | `/jamb`, `/waec`, `/neco`, `/post-utme` | Exam hubs |
@@ -40,16 +40,28 @@ trailing slash is ignored and unmatched paths render `NotFoundPage`.
 
 | Path | Screen |
 | --- | --- |
-| `/dashboard` | Overview |
-| `/dashboard/services`, `/dashboard/applications` | Request history |
-| `/dashboard/cbt`, `/dashboard/past-questions` | Practice history |
-| `/dashboard/cbt/results/:attemptId` | Saved result |
-| `/dashboard/tools`, `/dashboard/saved` | Tools and saved items |
-| `/dashboard/notifications` | Notifications |
+| `/dashboard` | Overview: the student's own homepage (preparation focus, selected exams, CBT quick access, recent activity, results summary, progress, selected institutions, notifications) |
+| `/dashboard/cbt` | CBT: the same simulator hub as `/cbt`, plus a resume card for an unfinished paper |
+| `/dashboard/results` | Results: completed sessions, scores, answer review and performance analysis |
+| `/dashboard/results/:attemptId` | One saved result |
+| `/dashboard/profile` | Profile: personal, academic, account, preferences, public profile, privacy and data |
+| `/dashboard/tools`, `/dashboard/saved` | Tools and saved items (existing utilities only) |
+| `/dashboard/services`, `/dashboard/applications`, `/dashboard/requests` | Request history (secondary) |
+| `/dashboard/notifications` | Notifications (secondary) |
 | `/dashboard/settings`, `/settings` | Account settings |
-| `/profile`, `/profile/complete`, `/dashboard/profile` | Profile (private; a shared link uses `/u/:slug`) |
+| `/profile`, `/profile/complete` | The same profile page, outside the dashboard shell (onboarding) |
 
-`/dashboard/scholarships` redirects to `/jobs`.
+Legacy paths redirect rather than 404:
+
+| Old path | Redirects to |
+| --- | --- |
+| `/dashboard/cbt/results`, `/dashboard/cbt/results/:attemptId` | `/dashboard/results`, `/dashboard/results/:attemptId` |
+| `/dashboard/past-questions` | `/past-questions` |
+| `/dashboard/scholarships` | `/jobs` |
+
+The dashboard's five primary destinations are Overview · CBT · Results ·
+Profile · Tools. Service requests, notifications, help and account utilities sit
+in secondary navigation. A shared profile link uses `/u/:slug`.
 
 ## Admin
 

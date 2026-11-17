@@ -22,8 +22,8 @@ export default function PageBar() {
   // same information twice and cost the first screen 37px.
   const topLevel = new Set([
     '/', '/cbt', '/past-questions', '/services', '/news', '/jobs',
-    '/dashboard', '/dashboard/cbt', '/dashboard/services', '/dashboard/tools',
-    '/profile', '/settings',
+    '/dashboard', '/dashboard/cbt', '/dashboard/results', '/dashboard/profile',
+    '/dashboard/services', '/dashboard/tools', '/profile', '/settings',
   ]);
   if (topLevel.has(path)) return null;
 

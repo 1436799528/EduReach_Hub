@@ -126,11 +126,10 @@
 .er-sim-body>strong{font-size:14px;line-height:20px;font-weight: 620;color:var(--er-sim-title,#1f2937)}
 .er-sim-body>small{font-size:12px;line-height:16px;font-weight:500;color:var(--er-sim-text,#5e6c82);flex:1}
 .er-sim-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--er-sim-line,#eef1f4);padding-top:8px;margin-top:4px;font-size:11.5px;line-height:16px;color:var(--er-sim-text,#5e6c82);font-weight: 560}
-/* Per-exam pastel identities (Myschool simulator palette) */
-.er-sim-jamb{--er-sim-title:#131212;--er-sim-text:#3f3b3b;--er-sim-line:#e2e0e0;background:#f3f2f2;border-color:#e6e4e4}
-.er-sim-waec{--er-sim-title:#12355f;--er-sim-text:#4b6584;--er-sim-line:#d9e4f3;background:#eef4fb;border-color:#dbe6f5}
-.er-sim-neco{--er-sim-title:#3f5607;--er-sim-text:#6a744a;--er-sim-line:#e1eac0;background:#f3f9dc;border-color:#e4eec4}
-.er-sim-post-utme{--er-sim-title:#55300e;--er-sim-text:#a75f1b;--er-sim-line:#f3e0cc;background:#fff7f0;border-color:#f6e4d2}
+/* Examination tints live in one place: `src/styles/ux5-product.css` owns the
+   simulator surface (faint tint, hairline border, badge and title tone). This
+   sheet only keeps the grid and card layout, so there is no second palette to
+   drift from it. */
 @media(max-width:900px){.er-sim-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:640px){
   .er-sim-grid{grid-template-columns:repeat(2,minmax(0,1fr))}

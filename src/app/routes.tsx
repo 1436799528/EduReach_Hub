@@ -107,7 +107,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/reset-password') return <AuthPageV2 mode="reset" />;
   if (path === '/verify-email') return <AuthPageV2 mode="verify" />;
 
-  if (path === '/profile/complete' || path === '/profile' || path === '/dashboard/profile') return protectedProfile();
+  if (path === '/profile/complete' || path === '/profile') return protectedProfile();
   // A shared public profile is a visitor route, not the owner's private page.
   if (path.startsWith('/u/')) {
     let slug = '';
@@ -121,15 +121,24 @@ export function renderRoute(pathname: string): ReactElement {
   }
   if (path === '/settings' || path === '/dashboard/settings') return protectedDashboard('dashboard', true);
 
-  // Four dashboard pages: Overview · My Requests · My CBT · Tools & Saved.
+  // The student's five destinations, in order: Overview · CBT · Results ·
+  // Profile · Tools. My requests is a service workflow reached from the
+  // dashboard's secondary navigation, not a sixth primary tab.
   if (path === '/dashboard' || path === '/dashboard/notifications') return protectedDashboard('dashboard');
-  if (path === '/dashboard/services' || path === '/dashboard/applications') return protectedDashboard('services');
-  if (path === '/dashboard/cbt' || path === '/dashboard/past-questions') return protectedDashboard('cbt');
-  if (path === '/dashboard/cbt/results') return protectedCbtResult();
-  if (path.startsWith('/dashboard/cbt/results/')) {
-    return protectedCbtResult(decodeURIComponent(path.slice('/dashboard/cbt/results/'.length)));
+  if (path === '/dashboard/cbt') return protectedDashboard('cbt');
+  if (path === '/dashboard/results') return protectedDashboard('results');
+  if (path.startsWith('/dashboard/results/')) {
+    return protectedCbtResult(decodeURIComponent(path.slice('/dashboard/results/'.length)));
   }
+  if (path === '/dashboard/profile') return protectedDashboard('profile');
   if (path === '/dashboard/tools' || path === '/dashboard/saved') return protectedDashboard('tools');
+  if (path === '/dashboard/services' || path === '/dashboard/applications' || path === '/dashboard/requests') return protectedDashboard('services');
+  // Stable links from before the restructure keep working.
+  if (path === '/dashboard/cbt/results') return <RedirectTo path="/dashboard/results" />;
+  if (path.startsWith('/dashboard/cbt/results/')) {
+    return <RedirectTo path={`/dashboard/results/${path.slice('/dashboard/cbt/results/'.length)}`} />;
+  }
+  if (path === '/dashboard/past-questions') return <RedirectTo path="/past-questions" />;
   if (path === '/dashboard/scholarships') return <RedirectTo path="/jobs" />;
 
   if (path === '/admin') return <AdminDashboardPage />;

@@ -13,7 +13,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'JAMB UTME, CAPS, results, admission and examination preparation resources.',
     links: [
       { label: 'Start JAMB CBT Simulator', href: '/cbt/setup/jamb' },
-      { label: 'JAMB Question Banks', href: '/cbt?mode=JAMB' },
+      { label: 'All JAMB simulators', href: '/cbt?mode=jamb' },
       { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
       { label: 'Admission Letters', href: '/services/apply/admission-letters' },
@@ -26,7 +26,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'WAEC examination information, results, preparation and study resources.',
     links: [
       { label: 'Start WAEC CBT Practice', href: '/cbt/setup/waec' },
-      { label: 'WAEC Question Banks', href: '/cbt?mode=WAEC' },
+      { label: 'All WAEC simulators', href: '/cbt?mode=waec' },
       { label: 'Result Checking', href: '/services/apply/results' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
       { label: 'WAEC News', href: '/news?category=waec' },
@@ -38,7 +38,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'NECO examination information, results, preparation and study resources.',
     links: [
       { label: 'Start NECO CBT Practice', href: '/cbt/setup/neco' },
-      { label: 'NECO Question Banks', href: '/cbt?mode=NECO' },
+      { label: 'All NECO simulators', href: '/cbt?mode=neco' },
       { label: 'Result Checking', href: '/services/apply/results' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
       { label: 'NECO Updates', href: '/news?category=neco' },
@@ -50,7 +50,7 @@ const data: Record<ExamKey, { title: string; logo: string; description: string; 
     description: 'University screening information, admission preparation and Post-UTME practice.',
     links: [
       { label: 'Start Post-UTME Screening Test', href: '/cbt/setup/post-utme' },
-      { label: 'Post-UTME Question Banks', href: '/cbt?mode=POST-UTME' },
+      { label: 'All Post-UTME simulators', href: '/cbt?mode=post-utme' },
       { label: 'Screening Calculator', href: '/screening-calculator' },
       { label: 'JAMB Slip Printing', href: '/services/apply/jamb-slip' },
       { label: 'Admission Letters', href: '/services/apply/admission-letters' },
