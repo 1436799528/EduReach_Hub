@@ -316,7 +316,8 @@
             "firstChoiceRequired": false,
             "applicationUrl": "https://postutme.unical.edu.ng/",
             "sourceKey": "unical-2026-27-screening",
-            "firstChoicePolicyNote": "The 2026/2027 notice accepts candidates who selected UNICAL first choice and candidates who did not select it but wish to change to UNICAL, subject to the published 150+ UTME score. Verify and complete the required JAMB change-of-institution process before admission processing."
+            "firstChoicePolicyNote": "The official 2026/2027 notice allows candidates who chose UNICAL and candidates who wish to change their first choice to UNICAL, subject to the stated eligibility threshold and JAMB change-of-institution process.",
+            "changeOfInstitutionAllowed": true
           },
           {
             "entryMode": "DIRECT_ENTRY",
