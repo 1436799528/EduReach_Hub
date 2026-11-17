@@ -996,6 +996,18 @@
         "institution identity",
         "admissions information"
       ]
+    },
+    {
+      "sourceKey": "nuc-next-5fa39e65",
+      "name": "Federal University of Technology, Minna — official website",
+      "url": "https://futminna.edu.ng/",
+      "authority": "Institution",
+      "sourceType": "official",
+      "supports": [
+        "official website",
+        "institution identity"
+      ],
+      "caveat": "Website captured as an official institution domain; detailed programme, cut-off and JAMB requirements remain to be verified."
     }
   ],
   "institutions": [
@@ -6385,6 +6397,3181 @@
       "portalGuides": [],
       "knownGaps": [
         "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d6017dcd-9f1e-41f1-aa8c-daacc33ddd3f",
+      "canonicalName": "El-Amin University, Niger State",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "15214907-e367-4af3-9e6f-b601cb5c9bd0",
+      "canonicalName": "Elizade University, Ilara-Mokin",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a7c3c010-02f0-44fc-9657-d87e0b781e58",
+      "canonicalName": "Elrazi University of Medical Sciences, Kano",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "10057048-673c-44b3-9d62-c6444a53f612",
+      "canonicalName": "Emmanuel Alayande University of Education, Oyo",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "97fddb65-5779-40f6-bad2-b5cfa31a9eb9",
+      "canonicalName": "Enugu State University of Medical and Applied Sciences, Igbo-Eno",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8874912c-cd58-4d4d-9db0-1d880a6e6995",
+      "canonicalName": "Enugu State University of Science & Technology, Enugu",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d5dfe98e-a022-4c26-97c3-a7dbc4d7d477",
+      "canonicalName": "Eranova University, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3b729849-b036-4453-b672-8ba8be641576",
+      "canonicalName": "European University of Nigeria, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "84e21a5f-827d-4c26-9103-0a70c3626626",
+      "canonicalName": "Euston University, Abakaliki",
+      "state": "Ebonyi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0a85612e-ef68-490e-af15-bde7e44b9c19",
+      "canonicalName": "Evangel University, Akaeze",
+      "state": "Ebonyi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f20ca3a8-1a2b-4d75-9a04-9b9a412da9e7",
+      "canonicalName": "Federal University of Agriculture and Developmental Studies, Iragbiji",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "efa3e518-a54e-4cc2-a126-f6e3f865b9e7",
+      "canonicalName": "Federal University of Agriculture and Technology Obio-Akpa",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "884e7d54-bedb-41ea-864c-a41f8049a682",
+      "canonicalName": "Federal University of Agriculture and Technology, Okeho",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f0cbbb03-039a-4dca-a1b7-32062cd226f5",
+      "canonicalName": "Federal University of Agriculture, Abeokuta",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "6fd1425f-3829-4120-8710-cac192297249",
+      "canonicalName": "Federal University of Agriculture, Bassam-Bari",
+      "state": "Bayelsa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "4414c55d-8802-477e-957f-3ccb4fccd0ed",
+      "canonicalName": "Federal University of Agriculture, Mubi",
+      "state": "Adamawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ddaff2bd-c68b-4fef-9070-54a9eda425ab",
+      "canonicalName": "Federal University of Agriculture, Zuru",
+      "state": "Kebbi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9ff36003-0537-4b4d-9021-8501d7118540",
+      "canonicalName": "Federal University of Allied Health Sciences, Enugu",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "2579402f-45ba-4c96-b770-51e66086bb40",
+      "canonicalName": "Federal University of Applied Sciences, Kachia",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "44ba68af-8f8b-45a7-85da-3db789517a24",
+      "canonicalName": "Federal University of Education, Kantagora",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "22533318-18e1-4d4d-a4a3-b6ba783e4dda",
+      "canonicalName": "Federal University of Education, Pankshin",
+      "state": "Plateau",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d77c4b72-c813-4ad7-961d-015a85be65c4",
+      "canonicalName": "Federal University of Education, Zaria",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f1acaea6-22ef-4689-97a5-9bc0d2364530",
+      "canonicalName": "Federal University of Environment and Technology, Tai Town",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "845af8ad-76c3-430a-94e9-d20b6704665f",
+      "canonicalName": "Federal University of Health Science and Technology, Tsafe",
+      "state": "Zamfara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "562cc2ce-f11e-4ed7-9b43-042fa94f9c02",
+      "canonicalName": "Federal University of Health Sciences, Azare",
+      "state": "Bauchi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "38e5b6fc-017d-4045-acd0-f0f311a0de4a",
+      "canonicalName": "Federal University of Health Sciences, Funtua",
+      "state": "Katsina",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ce43ae2c-e875-4da4-9867-18441755435a",
+      "canonicalName": "Federal University of Health Sciences, Kwale",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "e503b3d9-28dc-47a5-aa6f-1b50000eeb36",
+      "canonicalName": "Federal University of Health Sciences, Otukpo",
+      "state": "Benue",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "abc76365-b7ee-45a6-b2d0-43f2c1c0e903",
+      "canonicalName": "Federal University of Medicine and Medical Sciences, Abeokuta",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "bfa7357b-3e08-4181-a63c-82e08a4e15f5",
+      "canonicalName": "Federal University of Petroleum Resources, Effurun",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3dceafed-26c2-4314-9ba4-8c0edb9432a9",
+      "canonicalName": "Federal University of Science and Technology, Epe",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d6c1cb69-7928-41c1-85c5-d28990d12443",
+      "canonicalName": "Federal University of Science and Technology, Kabo",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "68b6c668-50c3-43b2-b69c-a6bc8c2e9520",
+      "canonicalName": "Federal University of Technology and Environmental Studies, Iyin-Ekiti",
+      "state": "Ekiti",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "731f7b15-8931-4168-a7fa-b689ec0f9c70",
+      "canonicalName": "Federal University of Technology Ikot Abasi",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ed25c06d-981b-452d-a80b-9a6c92cfaa71",
+      "canonicalName": "Federal University of Technology, Akure",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3be1a89d-3af8-42e6-9872-3b44df69dff8",
+      "canonicalName": "Federal University of Technology, Babura",
+      "state": "Jigawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5fa39e65-48eb-4cfb-a6d4-75202e3f6ab6",
+      "canonicalName": "Federal University of Technology, Minna",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": "https://futminna.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-next-5fa39e65",
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "2552d5b7-34b8-42e3-a38e-0e6055399575",
+      "canonicalName": "Federal University of Technology, Owerri",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1d2148d2-ca8d-485b-b173-5e431c1f3a07",
+      "canonicalName": "Federal University of Transportation, Daura",
+      "state": "Katsina",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8d5fa3e5-da08-4f74-990d-f713bd6a369b",
+      "canonicalName": "Federal University, Birnin-Kebbi",
+      "state": "Kebbi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "66425cb8-ab20-4edb-ba3e-7673499a976d",
+      "canonicalName": "Federal University, Dutse",
+      "state": "Jigawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8deddfbc-eecd-4a1b-9be0-04aa3934e873",
+      "canonicalName": "Federal University, Dutsin-Ma",
+      "state": "Katsina",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "060d8fb7-fa02-4038-952e-0f481b1ec1c2",
+      "canonicalName": "Federal University, Gashua",
+      "state": "Yobe",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f8b0e066-8f34-40e5-a6f1-583862fc3123",
+      "canonicalName": "Federal University, Gusau",
+      "state": "Zamfara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "872252b7-9f0b-4bad-b712-f93d196cc27f",
+      "canonicalName": "Federal University, Kashere",
+      "state": "Gombe",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9168037b-ea7c-4f91-bf1d-b71ffd570652",
+      "canonicalName": "Federal University, Lafia",
+      "state": "Nasarawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "00d0cd95-7e47-46f8-88c9-7736b2f291e2",
+      "canonicalName": "Federal University, Lokoja",
+      "state": "Kogi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d9975d6b-36e7-46c3-a474-23b76b3c2a47",
+      "canonicalName": "Federal University, Otuoke",
+      "state": "Bayelsa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1fe33665-fdc2-43c4-9385-b90dcae310a0",
+      "canonicalName": "Federal University, Oye-Ekiti",
+      "state": "Ekiti",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7eef5c6e-3add-428e-accb-5bbe829a9540",
+      "canonicalName": "Federal University, Wukari",
+      "state": "Taraba",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ed93e671-37a3-4e49-872e-ef05ecddd957",
+      "canonicalName": "First Technical University, Ibadan",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "904f4a75-e1d0-400d-a0dc-c323120a6aad",
+      "canonicalName": "Fountain University, Oshogbo",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ce6cc1f7-f7b8-4f65-9c6f-11319acc7335",
+      "canonicalName": "Franco British International University, Kaduna",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b6df62f0-0c32-42bb-a710-36064b3b4fec",
+      "canonicalName": "Gerar University of Medical Sciences, Imope-Ijebu",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "61b22d60-5ef9-4642-b18a-7c3f36ba3947",
+      "canonicalName": "Glorious Vision University, Ogwa",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1219894e-8d58-4909-9af4-6d4cb52fba41",
+      "canonicalName": "Godday Erewa University, Sapele",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "248912ac-393c-483a-a229-66f9790abf14",
+      "canonicalName": "Godfrey Okoye University, Enugu",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "cf310659-5d12-4abd-ab8e-2c61cd0873a6",
+      "canonicalName": "Gombe State University, Gombe",
+      "state": "Gombe",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "cf1b3803-1c93-45d3-afbe-c97d8536c26a",
+      "canonicalName": "Greenfield University, Kaduna",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9f11ac22-ba14-46f2-b2ca-69630e9cde04",
+      "canonicalName": "Greenland University, Jalingo",
+      "state": "Taraba",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "4e908750-9eb7-43e6-a00b-106cf848be04",
+      "canonicalName": "Gregory University, Uturu",
+      "state": "Abia",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c89b513e-df65-4f2b-ab49-14da4fb71946",
+      "canonicalName": "Hallmark University, Ijebu-Itele",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0ebf3431-cce8-46cc-a7a5-ab765d1f3c5b",
+      "canonicalName": "Havilla University, Nde-Ikom",
+      "state": "Cross River",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d875d62c-4df8-4ef1-8b5d-b4285b3ce9a4",
+      "canonicalName": "Hensard University, Toru-Orua",
+      "state": "Bayelsa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5a9f2e5f-a99c-432a-8a92-c92c49788e71",
+      "canonicalName": "Hezekiah University, Umudi",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f3bde218-0e54-4060-8af8-c9a99ce8ed4a",
+      "canonicalName": "High-Flyers University, Ikere-Ekiti",
+      "state": "Ekiti",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "524c5feb-b7e9-41e3-944b-a8dd42ee3ef4",
+      "canonicalName": "Hillside University of Science and Technology, Okemesi Ekiti",
+      "state": "Ekiti",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c39c93d9-4292-4929-9812-1a5cde284607",
+      "canonicalName": "Huda University, Gusau",
+      "state": "Zamfara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "09d7b948-ca4c-4231-bf35-fd92213db166",
+      "canonicalName": "Ibrahim Badamasi Babangida University, Lapai",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Leadership, academic units, programme catalogue, session-specific admission thresholds and JAMB IBASS subject combinations remain to be verified from primary sources."
       ],
       "verificationStatus": "identity_research_queued",
       "checkedAt": "2026-11-17",
