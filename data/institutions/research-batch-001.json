@@ -774,6 +774,19 @@
         "candidate eligibility check",
         "JAMB first-choice/change-of-institution refresh guidance"
       ]
+    },
+    {
+      "sourceKey": "nuc-20-private-2021",
+      "name": "National Universities Commission - 20 new private universities approved in February 2021",
+      "url": "https://www.nuc.edu.ng/20-new-universities-lifts-private-varsities/",
+      "authority": "National Universities Commission",
+      "sourceType": "official",
+      "supports": [
+        "NUC approval of Ahman Pategi University in 2021",
+        "Patigi, Kwara State location",
+        "provisional licensing framework at the time"
+      ],
+      "caveat": "The notice reports the 2021 Federal Executive Council approval and provisional licensing context; it does not prove the present-day programme list or current admissions status."
     }
   ],
   "institutions": [
