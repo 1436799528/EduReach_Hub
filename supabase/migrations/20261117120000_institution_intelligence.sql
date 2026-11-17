@@ -650,21 +650,14 @@ $conditional$;
 -- 15. updated_at triggers
 -- ---------------------------------------------------------------------------
 
-do $touch$
+create or replace function public.set_institution_intelligence_updated_at()
+returns trigger
+language plpgsql
+set search_path = pg_catalog
+as $touch$
 begin
-  if to_regprocedure('public.set_institution_intelligence_updated_at()') is null then
-    execute $fn$
-      create function public.set_institution_intelligence_updated_at()
-      returns trigger
-      language plpgsql
-      as $body$
-      begin
-        new.updated_at = now();
-        return new;
-      end;
-      $body$;
-    $fn$;
-  end if;
+  new.updated_at = now();
+  return new;
 end
 $touch$;
 
