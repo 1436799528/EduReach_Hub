@@ -1,6 +1,6 @@
 {
   "schemaVersion": "research-batch-1",
-  "researchDate": "2026-11-16",
+  "researchDate": "2026-11-17",
   "batchStatus": "researched_not_imported",
   "dataPolicy": {
     "displayOnlyVerifiedFields": true,
@@ -227,6 +227,144 @@
         "2026 minimum admission age"
       ],
       "caveat": "These are national tolerable minimums, not institution or programme admission guarantees."
+    },
+    {
+      "sourceKey": "uniuyo-history",
+      "name": "University of Uyo - Institutional History",
+      "url": "https://uniuyo.edu.ng/home/history/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "current federal university status and year",
+        "predecessor institution history",
+        "academic commencement",
+        "campus system and campus names"
+      ],
+      "caveat": "The same page describes the predecessor University of Cross River State as established in 1981 in one passage and says it was converted to a university in 1983 in another. The 1991 federal conversion and 1991/1992 academic commencement are the current institution facts used here."
+    },
+    {
+      "sourceKey": "uniuyo-mission-vision",
+      "name": "University of Uyo - Official Mission and Vision",
+      "url": "https://uniuyo.edu.ng/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "institutional mission",
+        "institutional vision"
+      ]
+    },
+    {
+      "sourceKey": "uniuyo-vc-2026",
+      "name": "University of Uyo - Vice-Chancellor profile",
+      "url": "https://uniuyo.edu.ng/vice-chancellor/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "current Vice-Chancellor",
+        "appointment date and office number"
+      ],
+      "caveat": "The official page states the appointment took effect on 16 June 2026."
+    },
+    {
+      "sourceKey": "uniuyo-chancellor-directory",
+      "name": "University of Uyo - Chancellor profile",
+      "url": "https://uniuyo.edu.ng/chancellor/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "Chancellor identity as displayed on the university website",
+        "Chancellor office history"
+      ],
+      "caveat": "The page identifies Alhaji Adamu Abubakar Maje as the 4th Chancellor and states an appointment date of 5 May 2015. No newer reappointment or current-term notice was found in this pass; treat present-tenure status as requiring confirmation."
+    },
+    {
+      "sourceKey": "uniuyo-2026-27-screening",
+      "name": "University of Uyo - 2026/2027 Post-UTME and Direct Entry screening notice",
+      "url": "https://uniuyo.edu.ng/notice/2026-2027-post-utme-direct-entry-screening-exercise/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 UTME first-choice condition",
+        "2026/2027 institutional UTME screening threshold",
+        "2026/2027 Direct Entry screening invitation",
+        "admissions portal and application workflow"
+      ],
+      "caveat": "The 150 score is the university-wide minimum stated in the screening notice, not a programme-specific or guaranteed admission cut-off."
+    },
+    {
+      "sourceKey": "uniuyo-undergraduate-admissions",
+      "name": "University of Uyo - Undergraduate Admissions",
+      "url": "https://uniuyo.edu.ng/undergraduate-admissions/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "general UTME, Direct Entry and pre-degree routes",
+        "general O'Level credit requirement",
+        "general admissions screening statement"
+      ],
+      "caveat": "This is a general admissions page without a clearly specified admission session. Do not treat it as a substitute for the current session's programme-specific IBASS requirements."
+    },
+    {
+      "sourceKey": "uniuyo-portal-hub",
+      "name": "University of Uyo - Official ePortals Hub",
+      "url": "https://eportals.uniuyo.edu.ng/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "official admissions portal navigation",
+        "student portal navigation including old and new portals",
+        "CBT portal navigation",
+        "iTranscript portal navigation"
+      ],
+      "caveat": "The portal hub exposes both legacy and new student portal choices. This research stores the hub URL rather than guessing the unresolved direct URL for the new student portal."
+    },
+    {
+      "sourceKey": "uniuyo-faculty-engineering",
+      "name": "University of Uyo - Faculty of Engineering",
+      "url": "https://uniuyo.edu.ng/faculty-of-engineering/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "listed Engineering departments",
+        "Faculty of Engineering programme groupings"
+      ],
+      "caveat": "The page includes historical student-population figures from 2010/2011. Those figures are not treated as current. Department names are taken from the live department navigation."
+    },
+    {
+      "sourceKey": "uniuyo-ee-engineering-department",
+      "name": "University of Uyo - Electrical and Electronics Engineering department page",
+      "url": "https://uniuyo.edu.ng/faculty-of-engineering/electrical-electronics-engineering/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "department page existence",
+        "page-level admission text requiring editorial review"
+      ],
+      "caveat": "Despite its Electrical and Electronics Engineering page title and breadcrumb, the admission section repeats Computer Engineering as the programme twice. Do not use its displayed subject combinations as verified Electrical and Electronics Engineering requirements until the university corrects or confirms the page."
+    },
+    {
+      "sourceKey": "uniuyo-college-health-sciences",
+      "name": "University of Uyo - College of Health Sciences",
+      "url": "https://uniuyo.edu.ng/college-of-health-sciences/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "health-sciences organisational structure",
+        "faculty and department names within the College"
+      ],
+      "caveat": "The page lists internal faculties and departments; retain its hierarchy and do not flatten all listed departments into university-wide faculties."
+    },
+    {
+      "sourceKey": "uniuyo-portal-navigation",
+      "name": "University of Uyo - Main website navigation and academic directory",
+      "url": "https://uniuyo.edu.ng/",
+      "authority": "University of Uyo",
+      "sourceType": "official",
+      "supports": [
+        "faculty and college navigation labels",
+        "department-level official links"
+      ],
+      "caveat": "Navigation is a discovery index, not a complete current academic structure. Verify each unit page and active degree programme before publication."
     }
   ],
   "institutions": [
@@ -836,6 +974,205 @@
         "Official faculty/school nomenclature needs validation; the website navigation groups courses under Allied Health Sciences, Basic Medical Sciences and Sciences.",
         "Some programme-level requirements are summarised generally for Direct Entry; exact individual mappings require confirmation.",
         "The published catchment/ELDS interpretation should be confirmed against the approved cut-off document and each student's official state/category eligibility."
+      ]
+    },
+    {
+      "institutionId": "52f12019-b0a8-4bad-ad7b-768d6ac6e099",
+      "canonicalName": "University of Uyo",
+      "acronym": "UNIUYO",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": "https://uniuyo.edu.ng/",
+      "admissionPortal": "https://admissions.uniuyo.edu.ng/",
+      "studentPortal": "https://eportals.uniuyo.edu.ng/",
+      "profile": {
+        "yearFounded": 1991,
+        "historySummary": "The university states that its present federal status as the University of Uyo dates to 1991, when the Federal Government took over the University of Cross River State in Uyo; academic activities as the University of Uyo commenced in the 1991/1992 session. The official history page gives different predecessor dates in separate passages (1981 and 1983), so this earlier chronology is retained as an unresolved source discrepancy rather than collapsed into one date.",
+        "mission": "To diligently pursue scholarship and deploy its output for human capacity development and economic growth in the society, with active participation in ICT.",
+        "vision": "To be a centre of academic excellence by utilizing the available human and technological resources for teaching, research, community service and sustainable development.",
+        "location": "Uyo, Akwa Ibom State, Nigeria",
+        "campusCount": 5,
+        "campusCountStatus": "verified_as_listed_by_institution",
+        "campusNames": [
+          "Main Campus",
+          "Town Campus",
+          "Annex Campus",
+          "College of Health Sciences Campus",
+          "Ime Umanah Campus"
+        ],
+        "campusNote": "Campus names and count are taken from the university history page. Exact addresses and which programmes operate at each campus were not mapped in this batch.",
+        "officialStudentPopulationClaim": null,
+        "officialProgrammeCountClaim": null,
+        "marketingStatisticsNote": "No current audited student or programme count was collected in this pass."
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Christopher Nyong Ekong",
+          "officeNumber": 9,
+          "actingStatus": "substantive",
+          "effectiveDate": "2026-06-16",
+          "verificationStatus": "verified_from_current_institution_page",
+          "sourceKey": "uniuyo-vc-2026",
+          "sourceUrl": "https://uniuyo.edu.ng/vice-chancellor/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": "Alhaji Adamu Abubakar Maje, CON",
+        "officeNumber": 4,
+        "status": "listed_on_official_page_current_term_not_reconfirmed",
+        "sourceKey": "uniuyo-chancellor-directory",
+        "note": "The official profile identifies him as the 4th Chancellor and says he was appointed on 5 May 2015. A current-term or later reappointment confirmation was not located during this research pass."
+      },
+      "academicUnits": {
+        "sourceKey": "uniuyo-portal-navigation",
+        "sourceUrl": "https://uniuyo.edu.ng/",
+        "status": "official_navigation_snapshot_partial_classification_pending",
+        "items": [
+          "Faculty of Agriculture",
+          "Faculty of Arts",
+          "Faculty of Basic Medical Science",
+          "Faculty of Management Sciences",
+          "Faculty of Clinical Sciences",
+          "Faculty of Education",
+          "Faculty of Engineering",
+          "Faculty of Environmental Studies",
+          "Faculty of Law",
+          "Faculty of Pharmacy",
+          "Faculty of Biological Sciences",
+          "Faculty of Computing",
+          "Faculty of Vocational Education",
+          "Faculty of Physical Sciences",
+          "Faculty of Social Science",
+          "College of Health Sciences"
+        ],
+        "note": "This is a snapshot of faculty and college labels exposed by the official website navigation, not a claim that the list is a fully reconciled current organisational chart. The College of Health Sciences contains its own faculty groupings. Some new faculty pages and department pages require individual review.",
+        "facultyDepartmentSnapshots": [
+          {
+            "faculty": "Faculty of Engineering",
+            "sourceKey": "uniuyo-faculty-engineering",
+            "status": "department_names_verified_from_official_navigation",
+            "departments": [
+              "Agricultural Engineering",
+              "Food Engineering",
+              "Petroleum Engineering",
+              "Chemical Engineering",
+              "Civil Engineering",
+              "Mechanical Engineering",
+              "Computer Engineering",
+              "Electrical & Electronics Engineering"
+            ]
+          }
+        ],
+        "selectedProgrammeSnapshots": [],
+        "programmeCatalogueStatus": "partial"
+      },
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "level": 100,
+            "firstChoiceRequired": true,
+            "assessment": [
+              "online_application",
+              "post_utme_screening"
+            ],
+            "applicationUrl": "https://admissions.uniuyo.edu.ng/",
+            "sourceKey": "uniuyo-2026-27-screening"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "firstChoiceRequired": true,
+            "assessment": [
+              "online_application",
+              "direct_entry_screening"
+            ],
+            "applicationUrl": "https://admissions.uniuyo.edu.ng/",
+            "sourceKey": "uniuyo-2026-27-screening"
+          }
+        ],
+        "generalOLevel": {
+          "minimumCredits": 5,
+          "requiredSubjects": [
+            "English Language"
+          ],
+          "otherSubjects": "The general page requires five credits including English Language; the remaining subjects depend on the selected programme and must be checked against the current JAMB IBASS and programme requirements.",
+          "maximumSittings": 2,
+          "sourceKey": "uniuyo-undergraduate-admissions",
+          "verificationStatus": "general_requirement_verified_programme_mapping_pending"
+        },
+        "generalAdmissionOverview": {
+          "entryModes": [
+            "UTME",
+            "DIRECT_ENTRY",
+            "PRE_DEGREE"
+          ],
+          "screeningAppliesToAllModesAsStatedOnGeneralPage": true,
+          "session": "not_session_specific",
+          "sourceKey": "uniuyo-undergraduate-admissions",
+          "status": "general_page_only_not_used_to_extend_2026_2027_routes"
+        },
+        "benchmarks": [
+          {
+            "benchmarkType": "institution_utme_eligibility",
+            "programmeName": null,
+            "value": 150,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "category": "general",
+            "status": "verified",
+            "sourceKey": "uniuyo-2026-27-screening",
+            "note": "The 2026/2027 notice invites UTME candidates who selected UNIUYO as first choice and scored at least 150 to apply for screening. This is an institutional screening threshold, not a departmental cut-off or admission guarantee."
+          }
+        ],
+        "programmeRequirements": [],
+        "programmeSubjectCombinationStatus": "not_verified_for_this_batch",
+        "programmeSubjectCombinationNote": "No programme-specific JAMB IBASS eligibility result was captured in this pass. The Electrical and Electronics Engineering page title conflicts with its duplicated Computer Engineering admission text; its displayed combination is excluded from verified requirements.",
+        "programmeCutoffs": {
+          "status": "not_collected",
+          "note": "No current 2026/2027 programme-specific cut-off was established in this research pass. Do not substitute the institution-wide 150 UTME screening threshold."
+        }
+      },
+      "portalGuides": [
+        {
+          "portal": "admissions",
+          "session": "2026/2027",
+          "steps": [
+            "Open the official UNIUYO admissions portal.",
+            "Select Apply Now.",
+            "First-time applicants should create an account and verify the email address to activate it.",
+            "Open the Application Fee section and select the correct application type: Post-UTME or Direct Entry.",
+            "Generate the Remita Retrieval Reference (RRR), pay through the stated Remita route, then return to the portal to confirm payment.",
+            "Complete the application form and upload the required documents in PDF format.",
+            "Submit the completed application and print the 2026/2027 Screening Exercise Slip."
+          ],
+          "sourceKey": "uniuyo-2026-27-screening",
+          "verificationStatus": "verified_as_published"
+        },
+        {
+          "portal": "student_portal_hub",
+          "session": "2026/2027",
+          "steps": [
+            "Open the official UNIUYO ePortals Hub.",
+            "Choose Student's Portal - NEW for the newer student portal, or use the legacy option only when specifically instructed by the university.",
+            "Use the credentials and instructions issued by the university; EduReach should never request or store a student's portal password or one-time code."
+          ],
+          "sourceKey": "uniuyo-portal-hub",
+          "verificationStatus": "hub_verified_direct_new_portal_target_not_resolved"
+        }
+      ],
+      "knownGaps": [
+        "The Chancellor page is an official listing but provides an appointment date in 2015; current term or reappointment needs confirmation.",
+        "The full current faculty, school, department and programme hierarchy has not yet been completely reconciled.",
+        "No programme-specific 2026/2027 UTME cut-offs were collected.",
+        "No programme-specific JAMB IBASS subject combinations were verified in this pass.",
+        "The Electrical and Electronics Engineering page currently repeats Computer Engineering admission text; the university should clarify its correct programme-specific requirements.",
+        "The current direct URL behind the Student's Portal - NEW link was not resolved; only the official portal hub is stored.",
+        "Campus names are published, but campus addresses and programme-to-campus assignments remain unresearched.",
+        "The official institutional history page contains inconsistent predecessor dates (1981 and 1983); the 1991 federal conversion and 1991/1992 academic commencement are the facts used for the current institution profile."
       ]
     }
   ],
