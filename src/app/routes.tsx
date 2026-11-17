@@ -46,6 +46,7 @@ const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 const AdminContentPage = lazy(() => import('../../pages/AdminContentPage'));
 const AdminOpportunitiesPage = lazy(() => import('../../pages/AdminOpportunitiesPage'));
 const AdminSchoolsPage = lazy(() => import('../../pages/AdminSchoolsPage'));
+const AdminInstitutionIntelligencePage = lazy(() => import('../../pages/AdminInstitutionIntelligencePage'));
 const AdminServicesPage = lazy(() => import('../../pages/AdminServicesPage'));
 const AdminContentManagerPage = lazy(() => import('../../pages/AdminContentManagerPage'));
 const AdminPdfBankPage = lazy(() => import('../../pages/AdminPdfBankPage'));
@@ -141,6 +142,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/content') return <AdminContentPage />;
   if (path === '/admin/opportunities') return <AdminOpportunitiesPage />;
   if (path === '/admin/schools') return <AdminSchoolsPage />;
+  if (path === '/admin/institution-intelligence') return <AdminInstitutionIntelligencePage />;
   if (path === '/admin/services') return <AdminServicesPage />;
   if (path === '/admin/content-manager') return <AdminContentManagerPage />;
   if (path === '/admin/pdf-bank') return <AdminPdfBankPage />;

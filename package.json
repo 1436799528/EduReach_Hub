@@ -20,6 +20,8 @@
     "newsroom:run": "tsx scripts/newsroom.ts",
     "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
+    "institutions:coverage": "tsx scripts/institutions/coverageReport.ts",
+    "institutions:import": "tsx scripts/institutions/importResearchBatch.ts",
     "schema:audit": "tsx scripts/schema-audit.ts",
     "migrations:checklist": "tsx scripts/migration-checklist.ts",
     "env:check": "tsx scripts/env-check.ts",

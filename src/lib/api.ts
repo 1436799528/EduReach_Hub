@@ -2004,3 +2004,92 @@ export async function assignAdminBankCandidate(examId: string, candidateId: stri
 export async function revokeAdminBankCandidate(examId: string, candidateId: string): Promise<void> {
   await adminApiFetch(`/api/admin/cbt/banks/${encodeURIComponent(examId)}/candidates/${encodeURIComponent(candidateId)}`, { method: 'DELETE' });
 }
+
+// ------------------------------------------------------- institution intelligence
+
+export interface InstitutionEvidenceRow {
+  id: string;
+  institution_id: string;
+  entity_type: string;
+  entity_id: string | null;
+  field_key: string;
+  claimed_value: unknown;
+  source_url: string | null;
+  applicable_session: string | null;
+  verification_status: 'discovered' | 'in_review' | 'verified' | 'disputed' | 'outdated' | 'unpublished_by_institution';
+  checked_at: string | null;
+  review_note: string | null;
+  created_at: string;
+}
+
+export interface InstitutionCompletenessRow {
+  institution_id: string;
+  school_name: string;
+  state: string | null;
+  profile_status: string | null;
+  current_offices: number;
+  verified_campuses: number;
+  verified_units: number;
+  published_offerings: number;
+  offerings_in_review: number;
+  published_benchmarks: number;
+  published_guides: number;
+  facts_awaiting_review: number;
+}
+
+export interface InstitutionReviewQueue {
+  awaitingReview: InstitutionEvidenceRow[];
+  offeringsInReview: Array<{ id: string; institution_id: string; programme_name: string; admission_session: string; publication_status: string; verification_status: string }>;
+  benchmarksInReview: Array<{ id: string; institution_id: string; benchmark_type: string; benchmark_label: string | null; benchmark_value: number; score_scale_max: number | null; admission_session: string; verification_status: string }>;
+  guidesInReview: Array<{ id: string; institution_id: string; guide_type: string; title: string; admission_session: string | null; verification_status: string }>;
+  completeness: InstitutionCompletenessRow[];
+}
+
+/**
+ * The review queue is one read of every unreviewed fact plus the per-institution
+ * completeness roll-up. Nothing here decides anything: each row still needs an
+ * explicit decision from a staff member with `institution.update`.
+ */
+export async function fetchInstitutionReviewQueue(): Promise<InstitutionReviewQueue> {
+  return adminApiFetch<InstitutionReviewQueue>('/api/admin/institution-intelligence/review');
+}
+
+/**
+ * Record one decision on one evidence row. `status` is one of the four
+ * reviewable outcomes; there is no "guess" outcome and no default.
+ */
+export async function reviewInstitutionEvidence(
+  evidenceId: string,
+  status: InstitutionEvidenceRow['verification_status'],
+  note: string | null,
+): Promise<Pick<InstitutionEvidenceRow, 'id' | 'institution_id' | 'field_key' | 'verification_status' | 'checked_at'>> {
+  const body = await adminApiFetch<{ item: Pick<InstitutionEvidenceRow, 'id' | 'institution_id' | 'field_key' | 'verification_status' | 'checked_at'> }>(
+    `/api/admin/institution-intelligence/evidence/${encodeURIComponent(evidenceId)}`,
+    { method: 'PATCH', body: JSON.stringify({ status, note }) },
+  );
+  return body.item;
+}
+
+export interface InstitutionIntelligence {
+  institution: { id: string; school_name: string; acronym: string | null; state: string | null; institution_type: string | null; website_url: string | null; admission_portal_url: string | null; student_portal_url: string | null };
+  aliases: Array<{ alias_name: string; alias_type: string; preferred_display: boolean }>;
+  profile: Record<string, unknown> | null;
+  leadership: Array<Record<string, unknown>>;
+  campuses: Array<Record<string, unknown>>;
+  academicUnits: Array<Record<string, unknown>>;
+  offerings: Array<{ id: string; programme_name: string; degree_title: string | null; award_level: string | null; admission_session: string }>;
+  admissionRoutes: Array<Record<string, unknown>>;
+  programmeRequirements: Array<{ id: string; programme_offering_id: string; utme_subjects: string[] | null; minimum_utme_score: number | null; minimum_utme_scale: number | null }>;
+  benchmarks: Array<Record<string, unknown> & { description: string }>;
+  portalGuides: Array<Record<string, unknown> & { steps: Array<Record<string, unknown>> }>;
+  nationalPolicies: Array<Record<string, unknown>>;
+  caveats: string[];
+}
+
+/**
+ * Public read. An empty section is the server saying "not published yet", not
+ * "this institution has none" — the caveats array repeats that in the UI.
+ */
+export async function fetchInstitutionIntelligence(institutionId: string): Promise<InstitutionIntelligence> {
+  return jsonFetch<InstitutionIntelligence>(`/api/institutions/${encodeURIComponent(institutionId)}/intelligence`);
+}

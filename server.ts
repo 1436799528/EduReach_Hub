@@ -16,6 +16,7 @@ import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT, type UserPayload } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
 import { registerRestrictedBankAdminRoutes } from './src/server/restrictedBanks/routes';
+import { registerInstitutionIntelligenceRoutes } from './src/server/institutionIntelligence';
 import { isProvenanceGuardRefusal, questionProvenanceRefusal } from './src/server/questionProvenance';
 import { SERVICE_REQUEST_TRANSITIONS } from './src/lib/serviceRequestTransitions';
 import { type Capability } from './src/lib/capabilities';
@@ -213,8 +214,13 @@ app.get('/api/health/ready', async (_req, res) => {
     try {
       const { error } = await getServerSupabase().from('cbt_attempts').select('protocol').limit(0);
       if (error) {
-        if (error.code === '42703' && !cbtV2LocalRehearsalEnabled()) {
-          checks.cbt_protocol_schema = { ok: true, detail: 'CBT operating in legacy-only mode.' };
+        // Fail closed by default: a missing column is a missing migration, and
+        // readiness must not report ready for a schema the code needs. A
+        // deployment that deliberately runs the legacy CBT schema opts in with
+        // CBT_LEGACY_SCHEMA=1; that is an explicit operator decision, not an
+        // inference from a database error.
+        if (error.code === '42703' && cbtLegacySchemaEnabled()) {
+          checks.cbt_protocol_schema = { ok: true, detail: 'CBT operating in legacy-only mode (CBT_LEGACY_SCHEMA).' };
         } else {
           checks.cbt_protocol_schema = { ok: false, detail: 'CBT protocol schema is unavailable.' };
         }
@@ -241,6 +247,13 @@ const jsonBody = express.json({ limit: '1mb' });
 app.use((req, res, next) => {
   if (req.method === 'POST' && (req.path === '/api/admin/uploads' || req.path === '/api/admin/pdf-bank/upload' || req.path === '/api/admin/question-imports')) return next();
   return jsonBody(req, res, next);
+});
+
+registerInstitutionIntelligenceRoutes(app, {
+  requireUser,
+  requireCapability,
+  getSupabase: getServerSupabase,
+  recordAudit,
 });
 
 registerQuestionImportRoutes(app, {
@@ -3115,6 +3128,17 @@ app.get('/api/past-questions/resources', async (req, res) => {
     res.status(503).json({ error: 'The resource library is temporarily unavailable.' });
   }
 });
+
+/**
+ * A deployment that has not applied the CBT v2 protocol migration can say so
+ * explicitly. Readiness otherwise fails closed on the missing column, because a
+ * database error is not evidence that legacy mode was intended. Never inferred
+ * from NODE_ENV: the operator sets it in the environment and it is recorded in
+ * docs/features/CBT-LEGACY-SCHEMA.md.
+ */
+function cbtLegacySchemaEnabled(): boolean {
+  return process.env.CBT_LEGACY_SCHEMA === '1';
+}
 
 // NOT a rollout switch. The Phase 4 candidate deliberately disables old RPCs
 // in its disposable database. Never expose it in production or on a hosted platform.

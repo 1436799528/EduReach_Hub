@@ -4,6 +4,7 @@ import '../src/admin.css';
 import '../src/admin-analytics.css';
 import {
   BarChart3,
+  BookOpen,
   Briefcase,
   CalendarDays,
   Database,
@@ -165,6 +166,7 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin/banks', label: 'Bank Security', icon: <ShieldCheck size={15} />, capability: 'cbt.read' },
   { kind: 'link', href: '/admin/question-imports', label: 'Import Past Questions', icon: <FileUp size={15} />, capability: 'cbt.manage' },
   { kind: 'link', href: '/admin/schools', label: 'Schools & Institutions', icon: <School size={15} />, capability: 'institution.read' },
+  { kind: 'link', href: '/admin/institution-intelligence', label: 'Institution Intelligence', icon: <BookOpen size={15} />, capability: 'institution.read' },
   { kind: 'group', label: 'Requests' },
   { kind: 'link', href: '/admin/queue', label: 'Service Queue', icon: <ListChecks size={15} />, capability: 'service_request.read' },
   { kind: 'link', href: '/admin/services', label: 'Service Catalogue', icon: <Briefcase size={15} />, capability: 'service.read' },
