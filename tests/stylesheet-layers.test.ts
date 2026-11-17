@@ -18,19 +18,17 @@ const EXPECTED = [
   './hub.css',
   './card-system.css',
   './cbt-engine.css',
-  './compact-portal.css',
   './image-card-system.css',
   './home-card-first.css',
   './myschool-clean.css',
   './styles/theme.css',
-  './compact-design-system.css',
-  './compact-structural.css',
   './edu-portal.css',
   './data-control.css',
   './components/CookieConsent.css',
   './styles/type-system.css',
   './styles/brand-actions.css',
   './styles/ux5-product.css',
+  './styles/ux9-microinteractions.css',
   './styles/a11y.css',
 ];
 
@@ -68,7 +66,12 @@ test('the type system follows the component sheets it standardises', () => {
   // closing layers - brand actions, the UX-5 product system, then the
   // accessibility sheet - and nothing else, so a new component sheet cannot
   // slip in after the type scale.
-  assert.deepEqual(sheets.slice(typeSystem + 1), ['./styles/brand-actions.css', './styles/ux5-product.css', './styles/a11y.css']);
+  assert.deepEqual(sheets.slice(typeSystem + 1), [
+    './styles/brand-actions.css',
+    './styles/ux5-product.css',
+    './styles/ux9-microinteractions.css',
+    './styles/a11y.css',
+  ]);
 });
 
 test('every sheet named in the architecture note exists on disk', () => {

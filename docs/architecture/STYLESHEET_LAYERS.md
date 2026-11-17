@@ -1,6 +1,6 @@
 # Stylesheet layers and load order
 
-**Finding this answers:** P3-5 — 17 global CSS files (~49 KB gzip)
+**Finding this answers:** P3-5 — 17 global CSS files (~49 KB gzip) when the audit ran; **15** are imported today (three compact passes retired, the UX-9 interaction layer added)
 loaded on every route. The audit's options were "raise the budget deliberately"
 (done once: 46 → 50 KB, and again 50 → 51 KB for the UI-4 interaction states) or "consolidate". This
 document is the precondition for consolidating safely: it records what each
@@ -16,20 +16,28 @@ not silently dropped — see the plan at the end.
 | 1 | `hub.css` | Portal base: variables, layout primitives, buttons |
 | 2 | `card-system.css` | Card surfaces and their states |
 | 3 | `cbt-engine.css` | CBT session, timer, question sheet |
-| 4 | `compact-portal.css` | Compact density pass over 1–2 |
-| 5 | `image-card-system.css` | Image-card variants |
-| 6 | `home-card-first.css` | Home page card-first layout |
-| 7 | `myschool-clean.css` | School finder/detail |
-| 8 | `styles/theme.css` | Token layer (colour, spacing) consumed by 9–11 |
-| 9 | `compact-design-system.css` | Compact design system |
-| 10 | `compact-structural.css` | Compact structural pass |
-| 11 | `edu-portal.css` | Feature surfaces layered over the design system |
-| 12 | `data-control.css` | Data-control centre |
-| 13 | `components/CookieConsent.css` | Scoped privacy-choice panel, before the shared closing layers |
-| 14 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
-| 15 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
-| 16 | `styles/ux5-product.css` | **UX-5 product system:** spacing/type roles, navigation states, home hierarchy, dashboard/profile rhythm and control sizes. Loads after component sheets and brand actions so it can settle hierarchy; it never uses `!important` except where a code-split dashboard sheet loads later (documented inline) |
-| 17 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+| 4 | `image-card-system.css` | Image-card variants |
+| 5 | `home-card-first.css` | Home page card-first layout |
+| 6 | `myschool-clean.css` | School finder/detail |
+| 7 | `styles/theme.css` | Token layer (colour, spacing) consumed by the component sheets |
+| 8 | `edu-portal.css` | Feature surfaces layered over the design system |
+| 9 | `data-control.css` | Data-control centre |
+| 10 | `components/CookieConsent.css` | Scoped privacy-choice panel, before the shared closing layers |
+| 11 | `styles/type-system.css` | Shared type scale (must follow the component sheets it standardises) |
+| 12 | `styles/brand-actions.css` | Brand action colours: the last word on primary buttons and selected states (UI-3) |
+| 13 | `styles/ux5-product.css` | **UX-5 product system:** spacing/type roles, navigation states, home hierarchy, dashboard/profile rhythm and control sizes. Loads after component sheets and brand actions so it can settle hierarchy; it never uses `!important` except where a code-split dashboard sheet loads later (documented inline) |
+| 14 | `styles/ux9-microinteractions.css` | **UX-9 interaction layer:** hover/active/press feedback on the primitives. A closing layer, not a component sheet: it styles states of components the earlier sheets define, and it must load after them (and after the type scale) to win the state cascade |
+| 15 | `styles/a11y.css` | **Always last.** Owns the focus-ring cascade the a11y gate checks |
+
+### Retired sheets
+
+Three density passes were imported until the UX-10 desktop-layout restoration
+(`c2875da`): `compact-portal.css`, `compact-design-system.css` and
+`compact-structural.css`. They were removed from `src/main.tsx` because their
+compact spacing overrode the desktop grid the product design asks for; the
+desktop layout contract is now carried by `edu-portal.css` and
+`styles/ux5-product.css`. The files remain on disk as dead source so a revert
+is a one-line import, and they are not part of the contract above.
 
 ## Lazy route sheet
 

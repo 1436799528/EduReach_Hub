@@ -39,18 +39,24 @@ test('legacy faculty and level values stay visible and map to current labels', (
   assert.deepEqual(optionsForSavedTest(['Faculty of Law'], 'Faculty of Law'), ['Faculty of Law']);
 });
 
-test('the notification icon is a small dot, never a numbered red block', () => {
+test('the notification icon carries a small unread count, never a large red block', () => {
   const component = read('src/components/NotificationCenter.tsx');
   const css = read('src/styles/type-system.css');
-  assert.doesNotMatch(component, /er-notif-badge/, 'the count block markup is gone');
-  assert.match(component, /er-notif-unread-dot/, 'the dot markup is present');
+  // UX-3 asked for a quiet dot; the later product corrections replaced it with
+  // a numeric count so a student can see how much is waiting. The rule that
+  // survives both designs is the size: a small badge attached to the bell, with
+  // the count also announced to screen readers, never a block that competes
+  // with navigation.
+  assert.match(component, /er-notif-unread-badge/, 'the unread count is rendered on the bell');
+  assert.match(component, /aria-hidden="true">\{unread > 99 \? '99\+' : unread\}/, 'the visible count is capped and hidden from assistive tech');
+  assert.match(component, /er-visually-hidden">\{unread\} unread/, 'the same count is announced in words');
   assert.match(component, /markNotificationsRead\(userId\)/, 'mark-all reconciles read state with the server');
   assert.doesNotMatch(component, /autoMarkedRef/, 'opening the panel never blanket-marks every notification read');
-  const dotRule = css.match(/\.er-notif-unread-dot\s*\{([\s\S]*?)\}/)?.[1] || '';
-  assert.match(dotRule, /width:\s*8px/);
-  assert.match(dotRule, /height:\s*8px/);
-  assert.match(dotRule, /top:\s*5px/);
-  assert.match(dotRule, /right:\s*5px/);
+  const badgeRule = css.match(/\.er-notif-unread-badge\s*\{([\s\S]*?)\}/)?.[1] || '';
+  assert.match(badgeRule, /height:\s*16px/, 'the badge is 16px tall, not a block');
+  assert.match(badgeRule, /min-width:\s*16px/);
+  assert.match(badgeRule, /border-radius:\s*999px/, 'it is a pill, not a square');
+  assert.match(badgeRule, /font-size:\s*10px/, 'the count stays micro type');
 });
 
 test('notification and delete actions float without card chrome and stay compact', () => {
@@ -151,8 +157,15 @@ test('the old delete-result and paste-image labels are absent from source', () =
   ];
   for (const file of files) {
     const source = read(file);
-    assert.doesNotMatch(source, /Delete Result|Remove Result|Delete My Result|Paste Image/i, file);
+    // The retired labels were Title Case product copy ("Delete Result",
+    // "Remove Result", "Delete My Result"). The match is case-sensitive on
+    // purpose: the current, shorter label is the sentence-case "Delete result",
+    // and an /i match would forbid ordinary sentence case as if it were the old
+    // label. The paste-image affordance is gone in every casing.
+    assert.doesNotMatch(source, /Delete Result|Remove Result|Delete My Result/, file);
+    assert.doesNotMatch(source, /paste image/i, file);
   }
+  assert.match(read('pages/CbtResultsPage.tsx'), /Delete result/, 'the destructive action still names its object in sentence case');
 });
 
 test('the admin overview does not repeat the same activity group', () => {

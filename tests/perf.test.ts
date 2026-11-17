@@ -237,14 +237,15 @@ test('the simulator section reserves its footprint while its catalogue loads', (
   };
   assert.ok(pxValue(declarations(css, '.er-late-region--simulators'), '--er-late-min') >= 140, 'the floor covers the 148px card row');
 
-  // UI-7b: mobile keeps the desktop card shape and stacks it to the screen
-  // width. No swipe row, no reshaped two-column row.
+  // UI-7b: mobile keeps the square card shape in a bounded two-column grid
+  // (the density pass restored two-up on phones). No swipe row, no sideways
+  // scroll, and the placeholder must reserve the height those cards take.
   const mobileGrid = blocks('.er-sim-grid').find((block) => block.includes('grid-auto-flow: row'));
   const placeholderHeights = blocks('.er-sim-grid .er-skeleton-tile').map((block) => pxValue(block, 'min-height'));
-  assert.ok(mobileGrid, 'the mobile simulator grid stacks cards');
-  assert.match(mobileGrid!, /grid-template-columns:\s*minmax\(0, 1fr\)/, 'one card per row on mobile');
+  assert.ok(mobileGrid, 'the mobile simulator grid keeps its own declaration');
+  assert.match(mobileGrid!, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/, 'two square cards per row on mobile');
   assert.doesNotMatch(mobileGrid!, /grid-auto-flow:\s*column|overflow-x:\s*auto/, 'mobile cards must not scroll sideways');
-  assert.ok(placeholderHeights.includes(176), `the stacked placeholder is ${placeholderHeights.join('/')}px, the card is 176px`);
+  assert.ok(placeholderHeights.includes(98), `the mobile placeholder is ${placeholderHeights.join('/')}px, matching the two-up card height`);
 });
 
 test('the pages the measurement named use the reservation', () => {

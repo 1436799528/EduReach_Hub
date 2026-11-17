@@ -117,7 +117,10 @@ test('destructive actions are confirmed and the server enforces them', () => {
   assert.match(history, /aria-label="Close delete confirmation"/, 'the delete dialog has a corner close control');
 
   const resultPage = read('pages/CbtResultsPage.tsx');
-  assert.match(resultPage, /aria-label="Delete"/, 'students can delete a saved practice result from a trash control');
+  // The trash control carries a visible "Delete result" label, so its
+  // accessible name comes from the text (adding aria-label="Delete" would put
+  // the visible label outside the accessible name and fail WCAG 2.5.3).
+  assert.match(resultPage, /<Trash2[^>]*aria-hidden="true" \/> Delete result/, 'students can delete a saved practice result from a labelled trash control');
   assert.match(resultPage, /Keep result/, 'students can keep the saved result instead');
   assert.match(resultPage, /aria-label="Close delete confirmation"/, 'the result delete dialog has a corner close control');
 

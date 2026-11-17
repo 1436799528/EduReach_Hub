@@ -102,12 +102,12 @@ test('the type system defines the scale once and is loaded after the component s
   const imports = [...main.matchAll(/import\s+'(\.[^']*\.css)'/g)].map((m) => m[1]);
   const typeIndex = imports.findIndex((path) => path.includes('type-system.css'));
   assert.ok(typeIndex > -1, 'main.tsx loads the type system');
-  // Two closing layers follow it: brand-actions.css, then a11y.css. Anything
-  // else after the type scale would be a component sheet that escaped the
-  // documented order.
+  // Three closing layers follow it: brand actions, the UX-5 product system and
+  // the UX-9 interaction layer, then a11y.css. Anything else after the type
+  // scale would be a component sheet that escaped the documented order.
   assert.deepEqual(
     imports.slice(typeIndex + 1).map((path) => path.split('/').pop()),
-    ['brand-actions.css', 'ux5-product.css', 'a11y.css'],
+    ['brand-actions.css', 'ux5-product.css', 'ux9-microinteractions.css', 'a11y.css'],
     'the type layer loads after the component sheets and before the closing layers',
   );
   assert.match(imports[imports.length - 1], /a11y\.css$/, 'a11y.css stays last, as the focus-ring order test requires');

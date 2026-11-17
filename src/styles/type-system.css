@@ -399,7 +399,7 @@ td, .er-numeric, [class*="stat"] b, [class*="score"] {
   background: var(--er-crimson, #b14933);
   color: #fff;
   font-size: 10px;
-  font-weight: 650;
+  font-weight: 620;
   line-height: 16px;
   text-align: center;
   box-shadow: 0 0 0 2px var(--er-surface, #fff);
