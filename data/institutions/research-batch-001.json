@@ -1498,6 +1498,105 @@
       "supports": [
         "Applicant portal and course navigation"
       ]
+    },
+    {
+      "sourceKey": "acu-new-programmes-2026-27",
+      "name": "Ajayi Crowther University — NUC-approved new programmes for 2026/2027",
+      "url": "https://acu.edu.ng/nuc-approves-anatomy-pharmacology-three-other-programmes-for-ajayi-crowther-university/",
+      "authority": "Ajayi Crowther University",
+      "sourceType": "official",
+      "supports": [
+        "Five new full-time undergraduate programmes approved for 2026/2027: Anatomy, Physiology, Pharmacology, Public Health and Artificial Intelligence"
+      ],
+      "caveat": "NUC approval effective 2026/2027; confirm whether each programme is present in the current live application portal before opening applications."
+    },
+    {
+      "sourceKey": "aksu-vc-profile-2026",
+      "name": "Akwa Ibom State University — Vice-Chancellor profile",
+      "url": "https://aksu.edu.ng/web/vice-chancellor/",
+      "authority": "Akwa Ibom State University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Otoabasi Etim Akpan as Vice-Chancellor"
+      ],
+      "caveat": "Current institutional profile; recheck on subsequent admission cycles."
+    },
+    {
+      "sourceKey": "aksu-admissions-requirements-2026",
+      "name": "Akwa Ibom State University — undergraduate admission requirements",
+      "url": "https://aksu.edu.ng/web/admissions/",
+      "authority": "Akwa Ibom State University",
+      "sourceType": "official",
+      "supports": [
+        "General five-credit O'Level requirement and programme-specific departmental UTME cut-off policy"
+      ],
+      "caveat": "The page does not provide one universal UTME cutoff; use the session notice and programme-specific departmental thresholds."
+    },
+    {
+      "sourceKey": "adustech-about-2026",
+      "name": "Aliko Dangote University of Science and Technology — About and Principal Officers",
+      "url": "https://www.adustech.edu.ng/About%20Us",
+      "authority": "Aliko Dangote University of Science and Technology",
+      "sourceType": "official",
+      "supports": [
+        "Kano State ownership, Wudil location, establishment narrative, six faculties and current Vice-Chancellor Professor Musa Tukur Yakasai"
+      ],
+      "caveat": "University About page says established 2001; NUC registry baseline lists 2000. Preserve discrepancy."
+    },
+    {
+      "sourceKey": "adustech-faculties-2026",
+      "name": "Aliko Dangote University of Science and Technology — Faculties and Departments",
+      "url": "https://www.adustech.edu.ng/academics/",
+      "authority": "Aliko Dangote University of Science and Technology",
+      "sourceType": "official",
+      "supports": [
+        "Six faculty names and departmental academic areas"
+      ],
+      "caveat": "The faculty page describes academic divisions; exact current programme list should be reconciled with the live catalogue."
+    },
+    {
+      "sourceKey": "aou-leadership-2026",
+      "name": "Al-Muhibbah Open University — Administration and Executive Leadership",
+      "url": "https://aou.edu.ng/about/administration/",
+      "authority": "Al-Muhibbah Open University",
+      "sourceType": "official",
+      "supports": [
+        "Associate Professor Ibrahim Hassan as Vice-Chancellor and named principal officers"
+      ],
+      "caveat": "Institution website page; verify on next cycle."
+    },
+    {
+      "sourceKey": "aou-admissions-2026-27",
+      "name": "Al-Muhibbah Open University — 2026/2027 admission pathways",
+      "url": "https://aou.edu.ng/how-to-apply/",
+      "authority": "Al-Muhibbah Open University",
+      "sourceType": "official",
+      "supports": [
+        "September 2026 intake and UTME, Direct Entry, Transfer, Top-Up and postgraduate routes"
+      ],
+      "caveat": "Current intake announcement does not provide programme-specific JAMB subject combinations or cutoffs."
+    },
+    {
+      "sourceKey": "aefunai-faculties-2026",
+      "name": "Alex Ekwueme Federal University — Faculties and Departments",
+      "url": "https://funai.edu.ng/faculties-departments/",
+      "authority": "Alex Ekwueme Federal University",
+      "sourceType": "official",
+      "supports": [
+        "Current faculty directory and academic structure"
+      ],
+      "caveat": "Directory landing page exposes only a partial list in the search snapshot; extract all faculty subpages before final programme mapping."
+    },
+    {
+      "sourceKey": "aefunai-admission-notice-2026-27",
+      "name": "Alex Ekwueme Federal University — 2026/2027 Post-UTME and Direct Entry notice",
+      "url": "https://funai.edu.ng/news/advertisement-for-2026-2027-academic-session-post-utme-direct-entry-screening/",
+      "authority": "Alex Ekwueme Federal University",
+      "sourceType": "official",
+      "supports": [
+        "Current 2026/2027 programme list and programme-specific minimum screening scores"
+      ],
+      "caveat": "Thresholds are screening eligibility values, not aggregate departmental cutoffs; use each programme row and session label."
     }
   ],
   "institutions": [
@@ -4537,9 +4636,9 @@
       },
       "academicUnits": {
         "sourceKey": "acu-courses-2026-27",
-        "status": "2026_2027_catalogue_snapshot",
+        "status": "2026_2027_catalogue_with_five_new_NUC_approved_programmes",
         "facultyCount": 13,
-        "programmeCount": 51,
+        "programmeCount": null,
         "items": [
           "Agricultural Science",
           "Basic Medical Science",
@@ -4553,7 +4652,8 @@
           "Environmental Studies",
           "Nursing Science",
           "Pharmacy",
-          "Allied Health Sciences"
+          "Allied Health Sciences",
+          "Artificial Intelligence"
         ]
       },
       "admission": {
@@ -4588,7 +4688,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Five additional NUC-approved programmes are effective from 2026/2027; confirm their availability in the current application portal and capture course-specific subject combinations."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -4599,7 +4700,8 @@
         "acu-vc",
         "acu-courses-2026-27",
         "acu-freshers-2026-27",
-        "acu-campuses"
+        "acu-campuses",
+        "acu-new-programmes-2026-27"
       ],
       "acronym": "ACU",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -4698,7 +4800,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "General admission page confirms five O'Level credits including English and Mathematics, with programme-specific departmental UTME cutoffs; no single institution-wide cutoff should be inferred."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -4708,7 +4811,9 @@
         "aksu-history",
         "aksu-campuses",
         "aksu-principal-officers",
-        "aksu-admissions-2026-27"
+        "aksu-admissions-2026-27",
+        "aksu-vc-profile-2026",
+        "aksu-admissions-requirements-2026"
       ],
       "acronym": "AKSU",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -5019,7 +5124,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official leadership page currently identifies Professor Abdulhadi Sale Kumurya as Vice-Chancellor; current programme catalogue and full admission requirements still need extraction."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5088,13 +5194,23 @@
         "routes": [
           {
             "entryMode": "UTME",
-            "applicationUrl": "https://aou.edu.ng/",
-            "sourceKey": "al-muhibbah-home"
+            "applicationUrl": "https://aou.edu.ng/how-to-apply/",
+            "sourceKey": "aou-admissions-2026-27"
           },
           {
             "entryMode": "DIRECT_ENTRY",
-            "applicationUrl": "https://aou.edu.ng/",
-            "sourceKey": "al-muhibbah-programmes"
+            "applicationUrl": "https://aou.edu.ng/how-to-apply/",
+            "sourceKey": "aou-admissions-2026-27"
+          },
+          {
+            "entryMode": "TRANSFER",
+            "applicationUrl": "https://aou.edu.ng/how-to-apply/",
+            "sourceKey": "aou-admissions-2026-27"
+          },
+          {
+            "entryMode": "TOP_UP",
+            "applicationUrl": "https://aou.edu.ng/how-to-apply/",
+            "sourceKey": "aou-admissions-2026-27"
           }
         ],
         "benchmarks": [],
@@ -5111,7 +5227,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official admissions guide advertises September 2026 intake and UTME, Direct Entry, Transfer and Top-Up routes; exact programme-level requirements remain uncollected."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5119,7 +5236,9 @@
         "aou-2026",
         "nuc-nus-2026",
         "al-muhibbah-home",
-        "al-muhibbah-programmes"
+        "al-muhibbah-programmes",
+        "aou-leadership-2026",
+        "aou-admissions-2026-27"
       ],
       "acronym": "AOU",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -5351,7 +5470,18 @@
             "sourceKey": "aefunai-admission-2026-27"
           }
         ],
-        "benchmarks": [],
+        "benchmarks": [
+          {
+            "benchmarkType": "programme_specific_screening_minimum",
+            "value": 150,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "category": "varies_by_programme",
+            "status": "official_notice_lists_different_thresholds",
+            "sourceKey": "aefunai-admission-notice-2026-27",
+            "note": "The notice lists programme-specific minimum scores, including 150 for several programmes and 160 for Anatomy/Physiology; this is not a universal institutional cutoff."
+          }
+        ],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
@@ -5364,7 +5494,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The 2026/2027 screening notice provides programme-specific minimum scores; full catalogue and every score row must be transcribed before publishing cutoffs."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5373,7 +5504,9 @@
         "nuc-nus-2026",
         "aefunai-history",
         "aefunai-vc-2026",
-        "aefunai-admission-2026-27"
+        "aefunai-admission-2026-27",
+        "aefunai-faculties-2026",
+        "aefunai-admission-notice-2026-27"
       ],
       "acronym": "AE-FUNAI",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -5410,8 +5543,20 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "programme_navigation_not_extracted",
-        "items": []
+        "status": "six_faculties_verified_official_directory",
+        "items": [
+          "Agriculture and Agricultural Technology",
+          "Computing and Mathematical Science",
+          "Earth and Environmental Science",
+          "Engineering",
+          "Science",
+          "Science and Technical Education"
+        ],
+        "facultyCount": 6,
+        "sourceKeys": [
+          "adustech-about-2026",
+          "adustech-faculties-2026"
+        ]
       },
       "admission": {
         "session": "2026/2027",
@@ -5436,13 +5581,16 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official academic directory confirms six faculties and engineering disciplines including Electrical Engineering; full programme catalogue and 2026/2027 programme-specific cutoffs remain to be captured."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "nuc-nus-2026",
-        "adustech-home"
+        "adustech-home",
+        "adustech-about-2026",
+        "adustech-faculties-2026"
       ],
       "acronym": "ADUSTECH",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
