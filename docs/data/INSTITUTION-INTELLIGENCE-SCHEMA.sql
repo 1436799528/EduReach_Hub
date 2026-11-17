@@ -185,6 +185,8 @@ create index if not exists institution_programme_offerings_institution_idx
   on public.institution_programme_offerings(institution_id, is_active, publication_status);
 create index if not exists institution_programme_offerings_unit_idx
   on public.institution_programme_offerings(academic_unit_id);
+create unique index if not exists institution_programme_offerings_name_session_idx
+  on public.institution_programme_offerings(institution_id, lower(programme_name), coalesce(admission_session,''));
 create unique index if not exists institution_programme_offerings_code_idx
   on public.institution_programme_offerings(institution_id, programme_code, coalesce(admission_session,''))
   where programme_code is not null;
@@ -321,6 +323,16 @@ create index if not exists institution_admission_benchmarks_lookup_idx
   on public.institution_admission_benchmarks(institution_id, admission_session, benchmark_type, verification_status);
 create index if not exists institution_admission_benchmarks_programme_idx
   on public.institution_admission_benchmarks(programme_offering_id, admission_session);
+create unique index if not exists institution_admission_benchmarks_fact_idx
+  on public.institution_admission_benchmarks(
+    institution_id,
+    coalesce(programme_offering_id, '00000000-0000-0000-0000-000000000000'::uuid),
+    admission_session,
+    benchmark_type,
+    category_key,
+    coalesce(state_category, ''),
+    benchmark_label
+  );
 
 -- 9. Structured portal guides, versioned by academic session.
 create table if not exists public.institution_portal_guides (
@@ -359,6 +371,8 @@ create table if not exists public.institution_portal_guide_steps (
 );
 create index if not exists institution_portal_guides_public_idx
   on public.institution_portal_guides(institution_id, guide_type, admission_session, publication_status);
+create unique index if not exists institution_portal_guides_session_idx
+  on public.institution_portal_guides(institution_id, guide_type, coalesce(admission_session,''), title);
 
 -- 10. Field-level provenance. One profile is not globally "verified" because
 -- one field was checked. Each fact records its own source and review state.
