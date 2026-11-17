@@ -209,9 +209,14 @@ Tests: `tests/admission-goal.test.ts` (8), `tests/institution-review-ui.test.ts`
 
 ## 6. Known gaps
 
-- **Coverage is 2 of 329 institutions.** 327 have no researched facts; the review
-  queue is therefore nearly empty and the coverage table is nearly all zeros. That
-  is the honest state, not a defect.
+- **Coverage in the database is 2 of 329 institutions.** Registry identity facts
+  (ownership, year established, official website, the vice chancellor as listed)
+  are now researched for **327 of 329** and sit in
+  `data/institutions/research-batch-002-registry.json` — see
+  [`docs/data/NIGERIAN-UNIVERSITY-REGISTRY-2026-11.md`](../data/NIGERIAN-UNIVERSITY-REGISTRY-2026-11.md).
+  They are **not imported**, and would land in review if they were: a fact the
+  regulator publishes is `discovered`, not verified. The review queue is still
+  nearly empty because nothing has been loaded.
 - **Student-facing goal UI is not built.** The API and the honesty layer exist and
   are tested; the dashboard has a card, not a goal editor.
 - **No institution has been imported anywhere yet.** The dry run is green; the

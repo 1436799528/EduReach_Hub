@@ -371,7 +371,21 @@ export function transformBatch(
     // --------------------------------------------------------------- routes
     const admission = institution.admission ?? {};
     const session = admission.session;
-    if (!isSession(session)) {
+    /**
+     * A session is only required when the institution actually asserts something
+     * about admission. A registry-only record (ownership, year, website) makes no
+     * admission claim, and reporting "session undefined" for it would bury the
+     * real issues in noise; the moment a route, requirement, benchmark or score
+     * appears, the session is validated exactly as before.
+     */
+    const claimsAdmission = Boolean(
+      (admission.routes ?? []).length
+      || (admission.programmeRequirements ?? []).length
+      || (admission.benchmarks ?? []).length
+      || (admission.programmeMinimumUtmeScores ?? []).length
+      || (admission.aggregateCutoffs?.records ?? []).length,
+    );
+    if (claimsAdmission && !isSession(session)) {
       issues.push({ entity: 'institution_admission_routes', key: label, reason: `session "${String(session)}" is not YYYY/YYYY` });
     }
     for (const route of admission.routes ?? []) {
