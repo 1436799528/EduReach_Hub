@@ -33,7 +33,7 @@ Consequences that shaped the design:
 
 ## 2. Schema (migration `20261117120000_institution_intelligence.sql`)
 
-Sixteen tables plus one view, all additive. Legacy `edureach_sources` was created
+Sixteen tables plus one view, all additive. The migration explicitly extends the hosted legacy `institution_profiles` table; `CREATE TABLE IF NOT EXISTS` alone does not upgrade an existing table. Legacy `edureach_sources` was created
 back in the prototype and exists in production; the migration creates it only when
 absent, inside a `do` block guarded by `to_regclass`, so replaying on production
 leaves it and its policies untouched.
@@ -55,9 +55,7 @@ leaves it and its policies untouched.
 
 Design points worth keeping:
 
-- **Every published table carries `verification_status` and
-  `publication_status` separately.** "Someone checked it" and "we chose to show
-  it" are different editorial acts.
+- **Verification and publication are separate editorial acts.** The legacy `institution_profiles.profile_status` completeness field is preserved, while the new `publication_status` controls visibility. Existing rows default to `draft`.
 - **Benchmarks carry their own scale** (`benchmark_value`, `score_scale_min`,
   `score_scale_max`, `value_unit`) and never share a column with a UTME score.
   Aggregates are 0–100, UTME scores 0–400, and the schema will happily store both
