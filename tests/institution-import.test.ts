@@ -140,10 +140,10 @@ test('an apply lands every row in review, never published', async () => {
   assert.equal(summary.dryRun, false);
   assert.ok(total(summary.inserted) > 20);
 
-  const { rows } = await db.query<{ verification_status: string; profile_status: string }>(
-    'select verification_status, profile_status from public.institution_profiles',
+  const { rows } = await db.query<{ verification_status: string; publication_status: string }>(
+    'select verification_status, publication_status from public.institution_profiles',
   );
-  assert.deepEqual(rows.every((row) => row.verification_status === 'in_review' && row.profile_status === 'in_review'), true);
+  assert.deepEqual(rows.every((row) => row.verification_status === 'in_review' && row.publication_status === 'in_review'), true);
 
   const { rows: offerings } = await db.query<{ publication_status: string; verification_status: string }>(
     'select publication_status, verification_status from public.institution_programme_offerings',
