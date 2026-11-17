@@ -1597,6 +1597,270 @@
         "Current 2026/2027 programme list and programme-specific minimum screening scores"
       ],
       "caveat": "Thresholds are screening eligibility values, not aggregate departmental cutoffs; use each programme row and session label."
+    },
+    {
+      "sourceKey": "babcock-leadership-2026",
+      "name": "Babcock University — President/Vice-Chancellor and Principal Officers",
+      "url": "https://www.babcock.edu.ng/public/about-us",
+      "authority": "Babcock University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Afolarin Olutunde Ojewole as President/Vice-Chancellor"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "babcock-requirements-2026-27",
+      "name": "Babcock University — 2026/2027 admissions and entry requirements",
+      "url": "https://www.babcock.edu.ng/admission/requirements",
+      "authority": "Babcock University",
+      "sourceType": "official",
+      "supports": [
+        "2026 UTME/DE first-choice screening and five O'Level credits; Medicine one sitting"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "aou-accreditation-2026",
+      "name": "American Open University — Licensure and Accreditation",
+      "url": "https://www.aouniversity.edu.ng/accreditation",
+      "authority": "American Open University",
+      "sourceType": "official",
+      "supports": [
+        "Institution's claim of NUC national licensure; CMI applies only to College of Business programmes"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "aou-academics-2026",
+      "name": "American Open University — Academic Programmes",
+      "url": "https://aouniversity.edu.ng/academics/",
+      "authority": "American Open University",
+      "sourceType": "official",
+      "supports": [
+        "Eight undergraduate B.Sc programmes and three postgraduate master's programmes"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "aun-president-2026",
+      "name": "American University of Nigeria — Office of the President",
+      "url": "https://www.aun.edu.ng/office-of-president/",
+      "authority": "American University of Nigeria",
+      "sourceType": "official",
+      "supports": [
+        "DeWayne P. Frazier as current President"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "atiba-admission-criteria-2026",
+      "name": "Atiba University — Admission Requirements",
+      "url": "https://atibauniversity.edu.ng/admission/",
+      "authority": "Atiba University",
+      "sourceType": "official",
+      "supports": [
+        "Published UTME score 140 and above; first or second choice/change of institution; five relevant O'Level credits"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "augustine-home-2026",
+      "name": "Augustine University — Official Homepage and Course Listing",
+      "url": "https://www.augustineuniversity.edu.ng/",
+      "authority": "Augustine University",
+      "sourceType": "official",
+      "supports": [
+        "Licence date 5 March 2015; academic activities began 30 November 2015; published undergraduate course listing"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "augustine-programmes-2026",
+      "name": "Augustine University — Programme Directory",
+      "url": "https://www.augustineuniversity.edu.ng/Content?head=Programmes&read=8",
+      "authority": "Augustine University",
+      "sourceType": "official",
+      "supports": [
+        "Institution reports 23 programmes across 13 departments and NUC-approved Nursing Science"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "avemaria-home-2026",
+      "name": "Ave Maria University, Piyanko — Official Homepage",
+      "url": "https://www.avemariauniversity.edu.ng/",
+      "authority": "Ave Maria University",
+      "sourceType": "official",
+      "supports": [
+        "Piyanko location, published faculties and admission information; homepage contains legacy notice content"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "avemaria-application-2026",
+      "name": "Ave Maria University — Undergraduate Application Form",
+      "url": "https://www.avemariauniversity.edu.ng/application/",
+      "authority": "Ave Maria University",
+      "sourceType": "official",
+      "supports": [
+        "Applicant workflow fields for UTME score, JAMB number, admission mode, programme, faculty and result uploads"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "azione-staff-2026",
+      "name": "Azione Verde University — Staff Directory",
+      "url": "https://www.azioneverdeuniversity.edu.ng/staff-directory",
+      "authority": "Azione Verde University",
+      "sourceType": "official",
+      "supports": [
+        "Institutional staff directory identifies a Vice-Chancellor role but search rendering does not expose the person's name"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "azione-admissions-2026-27",
+      "name": "Azione Verde University — 2026/2027 Admissions",
+      "url": "https://azioneverdeuniversity.edu.ng/admissions/apply",
+      "authority": "Azione Verde University",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 application portal and ten marketed programmes across two faculties"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "azione-home-2026",
+      "name": "Azione Verde University — Official Homepage",
+      "url": "https://www.azioneverdeuniversity.edu.ng/",
+      "authority": "Azione Verde University",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 intake announcement and June 2026 NUC resource-verification approval notice"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "azman-programmes-2026",
+      "name": "Azman University — Programme Directory",
+      "url": "https://azmanuniversity.edu.ng/page/programmes",
+      "authority": "Azman University",
+      "sourceType": "official",
+      "supports": [
+        "Published undergraduate programme catalogue including computing, science and allied health programmes"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "azman-admissions-2026",
+      "name": "Azman University — Admissions Overview",
+      "url": "https://www.azmanuniversity.edu.ng/admissions",
+      "authority": "Azman University",
+      "sourceType": "official",
+      "supports": [
+        "Institutional application steps and programme/faculty prerequisite guidance"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "bauk-about-2026",
+      "name": "Baba-Ahmed University — About and Leadership",
+      "url": "https://www.bauk.edu.ng/about.php",
+      "authority": "Baba-Ahmed University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Adamu Idris Tanko as Vice-Chancellor; Chancellor and Founder/Pro-Chancellor; Kano campus address"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "bauk-academics-2026",
+      "name": "Baba-Ahmed University — Academic Programmes and Faculties",
+      "url": "https://www.bauk.edu.ng/academics.php",
+      "authority": "Baba-Ahmed University",
+      "sourceType": "official",
+      "supports": [
+        "Published programme list across Science and Computing and Social and Management Sciences"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "bauk-admissions-2026-27",
+      "name": "Baba-Ahmed University — 2026/2027 Admissions and Tuition",
+      "url": "https://www.bauk.edu.ng/admissions.php",
+      "authority": "Baba-Ahmed University",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 admissions, application pathway and admission list announcement"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "bouesti-vc-appointment-2025",
+      "name": "Ekiti State Government — Appointment of BOUESTI Vice-Chancellor",
+      "url": "https://www.ekitistate.gov.ng/archives/32117",
+      "authority": "Ekiti State Government",
+      "sourceType": "government",
+      "supports": [
+        "Professor Andrew Babatunde Omojola appointed Vice-Chancellor, effective 24 November 2025"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "bmu-vc-2026",
+      "name": "Bayelsa Medical University — Vice-Chancellor Profile",
+      "url": "https://bmu.edu.ng/about/vc/",
+      "authority": "Bayelsa Medical University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Dimie Ogoina as Vice-Chancellor; assumed office 2 October 2024"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "bmu-programmes-2026",
+      "name": "Bayelsa Medical University — Programme Explorer",
+      "url": "https://bmu.edu.ng/programs/",
+      "authority": "Bayelsa Medical University",
+      "sourceType": "official",
+      "supports": [
+        "Published programme catalogue including Medicine, Dentistry, Community Health Science, Dental Technology, Nursing and allied health programmes"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "buk-home-2026",
+      "name": "Bayero University — Official Homepage and Principal Officers",
+      "url": "https://buk.edu.ng/",
+      "authority": "Bayero University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Haruna Musa as current Vice-Chancellor and current principal officers"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "buk-leadership-2026",
+      "name": "Bayero University — University Leadership",
+      "url": "https://buk.edu.ng/index.php/University_Leadership",
+      "authority": "Bayero University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Haruna Musa assumed office 18 August 2025; Chancellor and Pro-Chancellor listing"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
+    },
+    {
+      "sourceKey": "aaue-admission-2026-27",
+      "name": "Ambrose Alli University — 2026/2027 Undergraduate Admission and Cut-off Notice",
+      "url": "https://aauekpoma.edu.ng/sales-of-2026-2027-academic-session-undergraduate-admission-form/",
+      "authority": "Ambrose Alli University",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 faculty/department screening marks and JAMB score requirements"
+      ],
+      "caveat": "Use only for the facts listed; do not infer unlisted programme accreditation, cutoffs or subject combinations."
     }
   ],
   "institutions": [
@@ -5658,7 +5922,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The March 2026 interview-based snapshot reports six faculties and 45 programmes; obtain a live catalogue and current admissions notice before publishing programme-level requirements."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5741,7 +6006,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official admission page displays 22 degree programmes while its introductory copy says 19; preserve the discrepancy pending reconciliation. Current Vice-Chancellor not verified from the pages reviewed."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5869,7 +6135,18 @@
             "sourceKey": "aaua-admission-2026-27"
           }
         ],
-        "benchmarks": [],
+        "benchmarks": [
+          {
+            "benchmarkType": "department_specific_utme_screening_minimum",
+            "value": 152,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "category": "selected_departments_in_published_notice",
+            "status": "official_notice_partial_extraction",
+            "sourceKey": "aaue-admission-2026-27",
+            "note": "The notice lists 152+ for several named departments and also publishes screening marks. This is not a universal university cutoff; extract all programme rows before use."
+          }
+        ],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
@@ -5882,7 +6159,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "2026/2027 official notice publishes department-level screening marks and UTME minimums; only initial rows were transcribed in this pass. Full table and programme requirements remain to be extracted."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5891,7 +6169,8 @@
         "nuc-nus-2026",
         "aaua-history",
         "aaua-home-2026",
-        "aaua-admission-2026-27"
+        "aaua-admission-2026-27",
+        "aaue-admission-2026-27"
       ],
       "acronym": "AAU",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -5963,7 +6242,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The institution's own site claims NUC licensure; verify the exact NUC licence and programme approvals independently. The 2026 approved postgraduate programmes are MBA, MIT and MPA; CMI accreditation is limited to College of Business programmes."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -5972,7 +6252,9 @@
         "aou-home",
         "aou-accreditation",
         "aou-academics",
-        "aou-admissions"
+        "aou-admissions",
+        "aou-accreditation-2026",
+        "aou-academics-2026"
       ],
       "acronym": "A-Global",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -5999,9 +6281,9 @@
       "leadership": [
         {
           "role": "president",
-          "name": "Dr. DeWayne Frazier",
-          "sourceKey": "aun-about",
-          "verificationStatus": "listed_on_current_institution_about_page"
+          "name": "Dr. DeWayne P. Frazier",
+          "sourceKey": "aun-president-2026",
+          "verificationStatus": "current_institution_office_of_president"
         }
       ],
       "chancellor": {
@@ -6043,7 +6325,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "AUN uses an institution-direct admissions pathway; do not apply generic Nigerian UTME cutoffs or JAMB subject combinations without programme-specific institutional evidence."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -6051,7 +6334,8 @@
         "aun-2026",
         "nuc-nus-2026",
         "aun-about",
-        "aun-home-2027"
+        "aun-home-2027",
+        "aun-president-2026"
       ],
       "acronym": "AUN",
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
@@ -6107,7 +6391,8 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The 2024 audited accounts describe ANAN University as postgraduate-only in accountancy and allied disciplines. Current 2026/2027 catalogue and leadership have not been confirmed from a current institution-owned page."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -6366,10 +6651,30 @@
             "sourceKey": "atiba-2026"
           }
         ],
-        "benchmarks": [],
+        "benchmarks": [
+          {
+            "benchmarkType": "institution_utme_eligibility",
+            "value": 140,
+            "scaleMaximum": 400,
+            "session": null,
+            "category": "general_published_admission_page",
+            "status": "verified_on_institution_admissions_page",
+            "sourceKey": "atiba-admission-criteria-2026",
+            "note": "Page says UTME 140+; candidates may have selected Atiba as first/second choice or seek change of institution. Confirm current session applicability."
+          }
+        ],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
+        },
+        "generalOLevel": {
+          "minimumCredits": 5,
+          "maximumSittings": 2,
+          "requiredSubjects": [
+            "English Language",
+            "programme-relevant subjects"
+          ],
+          "sourceKey": "atiba-admission-criteria-2026"
         }
       },
       "portalGuides": [],
@@ -6378,13 +6683,15 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The published admission page states UTME 140+ and five relevant O'Level credits, but it does not explicitly label the threshold for 2026/2027; confirm current session before student-facing display."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "atiba-2026",
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "atiba-admission-criteria-2026"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6399,11 +6706,11 @@
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
+        "yearFounded": 2015,
         "historySummary": null,
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ilara-Epe, Lagos State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
@@ -6413,8 +6720,16 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "official_programme_directory_snapshot",
+        "programmeCount": 23,
+        "departmentCount": 13,
+        "items": [
+          "Allied Health Sciences",
+          "Humanities, Management and Social Sciences"
+        ],
+        "sourceKeys": [
+          "augustine-programmes-2026"
+        ]
       },
       "admission": {
         "session": "2026/2027",
@@ -6438,13 +6753,16 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Institution reports 23 programmes across 13 departments and NUC-approved Nursing Science; extract the complete programme list and current leadership/admission requirements."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "augustine-2026",
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "augustine-home-2026",
+        "augustine-programmes-2026"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6455,87 +6773,50 @@
       "state": "Nasarawa",
       "institutionType": "university",
       "ownership": null,
-      "officialWebsite": null,
-      "admissionPortal": null,
+      "officialWebsite": "https://www.avemariauniversity.edu.ng/",
+      "admissionPortal": "https://www.avemariauniversity.edu.ng/application/",
       "studentPortal": null,
       "profile": {
         "yearFounded": null,
         "historySummary": null,
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Piyanko, Nasarawa State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "chancellor",
+          "name": "Mrs. Eucharia Onah",
+          "sourceKey": "avemaria-home-2026",
+          "verificationStatus": "named_on_institution_about_page"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "official_homepage_faculty_snapshot",
+        "items": [
+          "Health Science",
+          "Social and Management Sciences",
+          "Law",
+          "Basic Sciences",
+          "College of Medicine"
+        ],
+        "sourceKeys": [
+          "avemaria-home-2026"
+        ]
       },
       "admission": {
         "session": null,
-        "routes": [],
-        "benchmarks": [],
-        "programmeRequirements": [],
-        "programmeCutoffs": {
-          "status": "not_collected"
-        }
-      },
-      "portalGuides": [],
-      "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched.",
-        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
-        "Official admission and student portal URLs require verification from the institution's own website.",
-        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
-      ],
-      "verificationStatus": "identity_research_queued",
-      "checkedAt": "2026-11-17",
-      "sourceKeys": [
-        "nuc-nus-2026"
-      ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
-      "phase2CheckedAt": "2026-11-17"
-    },
-    {
-      "institutionId": "782cad2b-a4ae-468e-b1cb-19713ebf94d3",
-      "canonicalName": "Azione Verde University",
-      "state": "Imo",
-      "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": "https://www.azioneverdeuniversity.edu.ng/",
-      "admissionPortal": null,
-      "studentPortal": null,
-      "profile": {
-        "yearFounded": null,
-        "historySummary": null,
-        "mission": null,
-        "vision": null,
-        "location": null,
-        "campusCount": null,
-        "campusCountStatus": "not_researched"
-      },
-      "leadership": [],
-      "chancellor": {
-        "name": null,
-        "status": "not_researched"
-      },
-      "academicUnits": {
-        "status": "not_researched",
-        "items": []
-      },
-      "admission": {
-        "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://www.azioneverdeuniversity.edu.ng/",
-            "assessment": [],
-            "sourceKey": "azione-2026"
+            "entryMode": "UTME",
+            "applicationUrl": "https://www.avemariauniversity.edu.ng/application/",
+            "sourceKey": "avemaria-application-2026"
           }
         ],
         "benchmarks": [],
@@ -6550,13 +6831,87 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The homepage mixes 2026 admission marketing with older notices; confirm the active session, exact approved programmes and current minimum scores before publication. The application form requests JAMB number and UTME score."
+      ],
+      "verificationStatus": "identity_research_queued",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "avemaria-home-2026",
+        "avemaria-application-2026"
+      ],
+      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2CheckedAt": "2026-11-17"
+    },
+    {
+      "institutionId": "782cad2b-a4ae-468e-b1cb-19713ebf94d3",
+      "canonicalName": "Azione Verde University",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": "https://www.azioneverdeuniversity.edu.ng/",
+      "admissionPortal": "https://azioneverdeuniversity.edu.ng/admissions/apply",
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Amaigbo, Nwangele LGA, Imo State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "institution_marketed_catalogue_pending_NUC_programme_confirmation",
+        "facultyCount": 2,
+        "programmeCount": 10,
+        "items": [
+          "Arts, Management and Social Sciences",
+          "Science and Computing"
+        ],
+        "sourceKeys": [
+          "azione-admissions-2026-27",
+          "azione-home-2026"
+        ]
+      },
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME_or_institution_application",
+            "applicationUrl": "https://azioneverdeuniversity.edu.ng/admissions/apply",
+            "sourceKey": "azione-admissions-2026-27"
+          }
+        ],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The university states NUC approved resource verification for proposed undergraduate programmes in June 2026; its 2026/2027 admissions page markets ten programmes. Do not label all marketed programmes NUC-approved until programme-by-programme approval is verified. Staff directory does not expose the VC's name in the indexed content."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "azione-2026",
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "azione-staff-2026",
+        "azione-admissions-2026-27",
+        "azione-home-2026"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6585,17 +6940,22 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "official_programme_catalogue_partial",
+        "items": [
+          "Computing and Sciences",
+          "Allied Health Sciences"
+        ],
+        "sourceKeys": [
+          "azman-programmes-2026"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://azmanuniversity.edu.ng/",
-            "assessment": [],
-            "sourceKey": "azman-2026"
+            "entryMode": "institution_direct_application",
+            "applicationUrl": "https://www.azmanuniversity.edu.ng/admissions",
+            "sourceKey": "azman-admissions-2026"
           }
         ],
         "benchmarks": [],
@@ -6610,13 +6970,16 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official programme directory lists undergraduate programmes including Biotechnology, Microbiology, Computer Science, Cyber Security, Data Science, Information Technology, Software Engineering and Public Health. Verify current Nigerian UTME/DE requirements and programme approvals separately."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "azman-2026",
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "azman-programmes-2026",
+        "azman-admissions-2026"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6639,23 +7002,40 @@
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Adamu Idris Tanko",
+          "sourceKey": "bauk-about-2026",
+          "verificationStatus": "current_institution_leadership_page"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "official_catalogue_partial",
+        "items": [
+          "Science and Computing",
+          "Social and Management Sciences"
+        ],
+        "sourceKeys": [
+          "bauk-academics-2026"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "UTME",
             "applicationUrl": "https://www.bauk.edu.ng/admissions.php",
-            "assessment": [],
-            "sourceKey": "bauk-2026"
+            "sourceKey": "bauk-admissions-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://www.bauk.edu.ng/admissions.php",
+            "sourceKey": "bauk-admissions-2026-27"
           }
         ],
         "benchmarks": [],
@@ -6670,13 +7050,17 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official site confirms 2026/2027 admissions and names Professor Adamu Idris Tanko as VC. The academics page has inconsistent faculty-count language; full approved catalogue and programme-specific requirements need reconciliation."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "bauk-2026",
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "bauk-about-2026",
+        "bauk-academics-2026",
+        "bauk-admissions-2026-27"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6699,7 +7083,14 @@
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "president_vice_chancellor",
+          "name": "Professor Afolarin Olutunde Ojewole",
+          "sourceKey": "babcock-leadership-2026",
+          "verificationStatus": "current_institution_about_page"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
@@ -6731,6 +7122,14 @@
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
+        },
+        "generalOLevel": {
+          "minimumCredits": 5,
+          "maximumSittings": 2,
+          "requiredSubjects": [
+            "Five credits at GCE/SSCE/NECO or equivalent"
+          ],
+          "sourceKey": "babcock-requirements-2026-27"
         }
       },
       "portalGuides": [],
@@ -6739,13 +7138,16 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official requirements specify one sitting only for Medicine and first-choice processing for screening; preserve the previously captured general 170 threshold as a separate general eligibility benchmark, not a programme cutoff."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "babcock-2026",
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "babcock-leadership-2026",
+        "babcock-requirements-2026-27"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6764,11 +7166,19 @@
         "historySummary": null,
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ikere-Ekiti, Ekiti State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Andrew Babatunde Omojola",
+          "effectiveDate": "2025-11-24",
+          "sourceKey": "bouesti-vc-appointment-2025",
+          "verificationStatus": "appointed_by_ekiti_state_government"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
@@ -6792,12 +7202,14 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Current Vice-Chancellor appointment is confirmed by Ekiti State Government; current institution-owned academic catalogue, admission notice and programme requirements remain uncollected."
       ],
       "verificationStatus": "identity_research_queued",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "bouesti-vc-appointment-2025"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6808,7 +7220,7 @@
       "state": "Bayelsa",
       "institutionType": "university",
       "ownership": null,
-      "officialWebsite": null,
+      "officialWebsite": "https://bmu.edu.ng/",
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
@@ -6816,18 +7228,34 @@
         "historySummary": null,
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Yenagoa, Bayelsa State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Dimie Ogoina",
+          "effectiveDate": "2024-10-02",
+          "sourceKey": "bmu-vc-2026",
+          "verificationStatus": "current_institution_vc_profile"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "official_programme_explorer_partial",
+        "items": [
+          "Basic Medical Sciences",
+          "Clinical Sciences",
+          "Health Sciences",
+          "Dentistry"
+        ],
+        "sourceKeys": [
+          "bmu-programmes-2026"
+        ]
       },
       "admission": {
         "session": null,
@@ -6844,12 +7272,15 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official programme explorer spans multiple pages; only a partial catalogue was captured. Current 2026/2027 admission deadlines, UTME thresholds and programme-specific O'Level/JAMB requirements remain unverified."
       ],
       "verificationStatus": "identity_research_queued",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "bmu-vc-2026",
+        "bmu-programmes-2026"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
@@ -6860,19 +7291,27 @@
       "state": "Kano",
       "institutionType": "university",
       "ownership": null,
-      "officialWebsite": null,
-      "admissionPortal": null,
+      "officialWebsite": "https://buk.edu.ng/",
+      "admissionPortal": "https://buk.edu.ng/",
       "studentPortal": null,
       "profile": {
         "yearFounded": null,
         "historySummary": null,
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Kano, Kano State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Haruna Musa",
+          "effectiveDate": "2025-08-18",
+          "sourceKey": "buk-leadership-2026",
+          "verificationStatus": "current_institution_leadership_page"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
@@ -6896,12 +7335,15 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Current VC and principal officers are confirmed on the official website; current 2026/2027 admission notice, programme catalogue and programme-specific cutoffs/IBASS requirements still need extraction."
       ],
       "verificationStatus": "identity_research_queued",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "buk-home-2026",
+        "buk-leadership-2026"
       ],
       "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
       "phase2CheckedAt": "2026-11-17"
