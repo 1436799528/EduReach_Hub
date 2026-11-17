@@ -400,6 +400,188 @@
       "url": "https://afit.edu.ng/home/admissions/admission-requirements/",
       "authority": "Institution",
       "use": "First-choice and application portal guidance."
+    },
+    {
+      "sourceKey": "akum-administration",
+      "name": "Abdulkadir Kure University administration",
+      "url": "https://www.akum.edu.ng/administration",
+      "authority": "Institution",
+      "use": "Prior official administration page reference for the Vice-Chancellor; current page availability should be checked."
+    },
+    {
+      "sourceKey": "absu-student-portal",
+      "name": "Abia State University student portal",
+      "url": "https://www.portal.abiastateuniversity.edu.ng/",
+      "authority": "Institution",
+      "use": "Existing portal reference; workflow verification pending."
+    },
+    {
+      "sourceKey": "achievers-management",
+      "name": "Achievers University management",
+      "url": "https://achievers.edu.ng/university-management/",
+      "authority": "Institution",
+      "use": "Earlier official management page reference for VC identity."
+    },
+    {
+      "sourceKey": "adeleke-about",
+      "name": "Adeleke University About",
+      "url": "https://adelekeuniversity.edu.ng/about-us/",
+      "authority": "Institution",
+      "use": "Earlier official institutional profile reference."
+    },
+    {
+      "sourceKey": "adeleke-management",
+      "name": "Adeleke University management",
+      "url": "https://adelekeuniversity.edu.ng/management/",
+      "authority": "Institution",
+      "use": "Management team directory."
+    },
+    {
+      "sourceKey": "afued-home",
+      "name": "Adeyemi Federal University of Education homepage",
+      "url": "https://www.afued.edu.ng/index.php",
+      "authority": "Institution",
+      "use": "Official institution profile."
+    },
+    {
+      "sourceKey": "afued-vice-chancellor",
+      "name": "AFUED Vice-Chancellor page",
+      "url": "https://afued.edu.ng/vco.php",
+      "authority": "Institution",
+      "use": "VC office page; page content conflicts with later official assumption announcement and is treated as stale."
+    },
+    {
+      "sourceKey": "afued-undergraduate-portal",
+      "name": "AFUED undergraduate programme section",
+      "url": "https://www.afued.edu.ng/index.php",
+      "authority": "Institution",
+      "use": "Programme navigation entry point; detailed list pending."
+    },
+    {
+      "sourceKey": "abuad-home",
+      "name": "Afe Babalola University homepage",
+      "url": "https://www.abuad.edu.ng/",
+      "authority": "Institution",
+      "use": "Official institution profile."
+    },
+    {
+      "sourceKey": "abuad-admissions-2026-27",
+      "name": "ABUAD 2026/2027 admission exercise",
+      "url": "https://www.abuad.edu.ng/admission-exercise-2026-2027/",
+      "authority": "Institution",
+      "use": "2026/2027 admissions programme listing."
+    },
+    {
+      "sourceKey": "abuad-vice-chancellor-2026",
+      "name": "ABUAD Vice-Chancellor office",
+      "url": "https://vc.abuad.edu.ng/",
+      "authority": "Institution",
+      "use": "Current VC profile."
+    },
+    {
+      "sourceKey": "aaau-home",
+      "name": "African Aviation and Aerospace University homepage",
+      "url": "https://aaau.edu.ng/",
+      "authority": "Institution",
+      "use": "Official programme and calendar entry point."
+    },
+    {
+      "sourceKey": "aaau-leadership",
+      "name": "AAAU University Leadership",
+      "url": "https://aaau.edu.ng/about-us/university-leadership/",
+      "authority": "Institution",
+      "use": "Acting Vice-Chancellor and management team."
+    },
+    {
+      "sourceKey": "aaau-undergraduate-programmes",
+      "name": "AAAU undergraduate programme directory",
+      "url": "https://aaau.edu.ng/undergraduate-programme/",
+      "authority": "Institution",
+      "use": "Programme-level descriptions and historical entry criteria; session revalidation required."
+    },
+    {
+      "sourceKey": "aaau-admission-portal",
+      "name": "AAAU admissions homepage",
+      "url": "https://aaau.edu.ng/",
+      "authority": "Institution",
+      "use": "Admissions entry point; direct portal link not confirmed."
+    },
+    {
+      "sourceKey": "ase-home",
+      "name": "African School of Economics homepage",
+      "url": "https://ase.edu.ng/",
+      "authority": "Institution",
+      "use": "Current programme and faculty overview."
+    },
+    {
+      "sourceKey": "ase-undergraduate-admissions",
+      "name": "African School of Economics admissions FAQ",
+      "url": "https://ase.edu.ng/frequently-asked-questions/",
+      "authority": "Institution",
+      "use": "JAMB route and historical 2024 programme details."
+    },
+    {
+      "sourceKey": "aust-programmes-approved-2026-27",
+      "name": "AUST NUC programme approvals",
+      "url": "https://info.aust.edu.ng/2026/10/07/nuc-approves-ten-new-undergraduate-programmes-for-aust/",
+      "authority": "Institution",
+      "use": "NUC approval of ten new undergraduate programmes for 2026/2027."
+    },
+    {
+      "sourceKey": "abu-history",
+      "name": "Ahmadu Bello University homepage and history",
+      "url": "https://abu.edu.ng/",
+      "authority": "Institution",
+      "use": "Institution history and current institutional statistics."
+    },
+    {
+      "sourceKey": "abu-principal-officers",
+      "name": "Ahmadu Bello University principal officers",
+      "url": "https://abu.edu.ng/principal-officers/",
+      "authority": "Institution",
+      "use": "Principal officer directory; compare with current handbook."
+    },
+    {
+      "sourceKey": "abu-undergraduate-programmes",
+      "name": "Ahmadu Bello University undergraduate programmes",
+      "url": "https://abu.edu.ng/faculties/",
+      "authority": "Institution",
+      "use": "Faculty directory and academic structure."
+    },
+    {
+      "sourceKey": "nuc-20-private-2021",
+      "name": "NUC private universities directory",
+      "url": "https://www.nuc.edu.ng/nigerian-univerisities/private-univeristies/",
+      "authority": "NUC",
+      "use": "Historical/legacy leadership and establishment listing; not accepted as current VC confirmation."
+    },
+    {
+      "sourceKey": "afit-history",
+      "name": "Air Force Institute of Technology official website",
+      "url": "https://afit.edu.ng/",
+      "authority": "Institution",
+      "use": "Institution identity and official information entry point."
+    },
+    {
+      "sourceKey": "afit-commandant-2025",
+      "name": "AFIT Commandant profile",
+      "url": "https://afit.edu.ng/home/the-commandant/",
+      "authority": "Institution",
+      "use": "Commandant profile."
+    },
+    {
+      "sourceKey": "afit-undergraduate-admissions-2026-27",
+      "name": "AFIT 2026/2027 admissions notice",
+      "url": "https://afit.edu.ng/home/post-utme-and-direct-entry-admission-into-degree-and-national-diploma-programmes-at-the-air-force-institute-of-technology-afit-for-2026-2027-academic-session/",
+      "authority": "Institution",
+      "use": "Session-specific programme list and screening thresholds."
+    },
+    {
+      "sourceKey": "nuc-accreditation-2022",
+      "name": "NUC undergraduate programme accreditation results (January 2022)",
+      "url": "https://www.nuc.edu.ng/wp-content/uploads/2022/08/Undergraduate-Accreditation-Result-as-at-January-2022.pdf",
+      "authority": "NUC",
+      "use": "Historical accreditation status as at January 2022; not current approval proof."
     }
   ],
   "dataPolicy": {
@@ -995,7 +1177,7 @@
       "ownership": "private",
       "yearEstablished": 2021,
       "officialWebsite": "https://www.apu.edu.ng/",
-      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "leadershipStatus": "not_verified",
       "academicStructureStatus": "not_researched",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
@@ -1016,7 +1198,8 @@
         "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
         "Current Vice-Chancellor and full management team not verified from an institution-owned leadership page.",
         "Programme options are loaded dynamically; exact active degree catalogue and NUC accreditation status by programme need confirmation.",
-        "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements."
+        "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements.",
+        "The NUC private-university directory contains a legacy leadership name, but it is not accepted as evidence of the current Vice-Chancellor; no current institution-owned leadership source was verified."
       ]
     },
     {
