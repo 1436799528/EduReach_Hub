@@ -3566,7 +3566,7 @@
       "state": "Delta",
       "institutionType": "university",
       "ownership": "private",
-      "officialWebsite": "https://adun.edu.ng/",
+      "officialWebsite": null,
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
@@ -3657,7 +3657,7 @@
       "institutionType": "university",
       "ownership": "private",
       "officialWebsite": "https://www.abuad.edu.ng/",
-      "admissionPortal": "https://admissions.abuad.edu.ng/",
+      "admissionPortal": null,
       "studentPortal": "https://portal.abuad.edu.ng/",
       "profile": {
         "yearFounded": 2009,
@@ -3709,7 +3709,7 @@
         "routes": [
           {
             "entryMode": "UTME",
-            "applicationUrl": "https://admissions.abuad.edu.ng/",
+            "applicationUrl": null,
             "assessment": [
               "online_application",
               "screening"
@@ -3718,7 +3718,7 @@
           },
           {
             "entryMode": "DIRECT_ENTRY",
-            "applicationUrl": "https://admissions.abuad.edu.ng/",
+            "applicationUrl": null,
             "assessment": [
               "online_application",
               "document_review"
@@ -3768,7 +3768,7 @@
       "institutionType": "university",
       "ownership": "federal",
       "officialWebsite": "https://aaau.edu.ng/",
-      "admissionPortal": "https://applicant.safapply.com/aaau",
+      "admissionPortal": null,
       "studentPortal": null,
       "profile": {
         "yearFounded": 2023,
@@ -3810,7 +3810,7 @@
         "routes": [
           {
             "entryMode": "UTME",
-            "applicationUrl": "https://aaau.edu.ng/",
+            "applicationUrl": null,
             "assessment": [
               "online_application"
             ],
@@ -3818,7 +3818,7 @@
           },
           {
             "entryMode": "DIRECT_ENTRY",
-            "applicationUrl": "https://aaau.edu.ng/",
+            "applicationUrl": null,
             "assessment": [
               "online_application"
             ],
@@ -4269,7 +4269,7 @@
       "state": "Kwara",
       "institutionType": "university",
       "ownership": "private",
-      "officialWebsite": "https://www.apu.edu.ng/",
+      "officialWebsite": null,
       "admissionPortal": "https://www.portal.apu.edu.ng/applicant/register",
       "studentPortal": null,
       "profile": {
@@ -4335,7 +4335,8 @@
         "Current Vice-Chancellor and full management team not verified from an institution-owned leadership page.",
         "Programme options are loaded dynamically; exact active degree catalogue and NUC accreditation status by programme need confirmation.",
         "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements.",
-        "The NUC private-university directory contains a legacy leadership name, but it is not accepted as evidence of the current Vice-Chancellor; no current institution-owned leadership source was verified."
+        "The NUC private-university directory contains a legacy leadership name, but it is not accepted as evidence of the current Vice-Chancellor; no current institution-owned leadership source was verified.",
+        "The applicant portal is verified, but the root institutional website URL has not been confirmed in this pass."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
