@@ -23,7 +23,7 @@ trailing slash is ignored and unmatched paths render `NotFoundPage`.
 | `/jobs`, `/scholarships` | Opportunities catalogue |
 | `/jobs/:id` | Opportunity detail |
 | `/schools` | School finder |
-| `/schools/:slug` | Institution detail |
+| `/schools/:slug` | Institution detail; resolves by canonical `id` when present, otherwise by slug, legacy slug or acronym (see `docs/data/INSTITUTION-FRONTEND-CONTRACT.md` §5) |
 | `/events` | Deadlines and exam dates |
 | `/cbt` | CBT hall |
 | `/cbt/setup/:exam` | Session setup for `jamb`, `waec`, `neco` or `post-utme` |

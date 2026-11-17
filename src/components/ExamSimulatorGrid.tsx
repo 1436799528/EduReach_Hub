@@ -16,6 +16,28 @@ export type ExamSimulator = {
   meta: string;
 };
 
+/**
+ * The four CBT simulator card types that carry a MySchool-inspired gradient.
+ *
+ * Colour is bound to the exam's canonical type, never to the card's position in
+ * the catalogue: `simulatorExamType()` collapses the spellings a bank row can
+ * use (`JAMB`, `UTME`, `Post-UTME`, `PostUTME`, `POST UTME`) onto one key, and
+ * the key is emitted as both a class and `data-exam-type`. Re-ordering or
+ * filtering the catalogue therefore cannot repaint a bank.
+ */
+export const SIMULATOR_EXAM_TYPES = ['jamb', 'waec', 'neco', 'post-utme'] as const;
+
+export type SimulatorExamType = (typeof SIMULATOR_EXAM_TYPES)[number];
+
+export function simulatorExamType(mode: string): SimulatorExamType | null {
+  const value = mode.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  if (value === 'jamb' || value === 'utme') return 'jamb';
+  if (value === 'waec') return 'waec';
+  if (value === 'neco') return 'neco';
+  if (value === 'postutme') return 'post-utme';
+  return null;
+}
+
 const brandLogo = (mode: string) => {
   const normalized = mode.toLowerCase();
   if (normalized === 'waec') return '/icons/brands/waec.webp';
@@ -129,10 +151,16 @@ export default function ExamSimulatorGrid({
   return (
     <div className="er-late-region er-late-region--simulators">
       <div className="er-sim-grid">
-        {exams.map((exam) => (
+        {exams.map((exam) => {
+          // Stable exam identity: the canonical type drives the card's gradient
+          // (see `src/styles/ux5-product.css`). A bank whose body is not one of
+          // the four keeps the neutral surface and its own identity mark.
+          const examType = simulatorExamType(exam.mode);
+          return (
           <a
             key={exam.id}
-            className={`er-sim-card er-sim-${exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
+            data-exam-type={examType ?? undefined}
+            className={`er-sim-card er-sim-${examType ?? exam.mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')} ${identityClassFor(exam.mode, 'service')}`}
             href={variant === 'mode' ? `/cbt?mode=${encodeURIComponent(exam.mode)}` : simulatorStartHref(exam.mode, exam.id)}
           >
             <span className="er-sim-top">
@@ -148,7 +176,8 @@ export default function ExamSimulatorGrid({
               </span>
             </span>
           </a>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

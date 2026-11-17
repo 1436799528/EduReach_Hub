@@ -227,6 +227,7 @@ their official type — the importer refuses to guess "faculty" from a name. See
 | 8 | Build structured portal guides | **Batch 001 has 4 guides** with ordered steps and safety notes. |
 | 9 | Student admission goals, goal-aware selection, progress to target | **API and honesty layer done** (`src/lib/admissionGoal.ts`, `/api/student/admission-goal`). No student UI yet. |
 | 10 | Admin review tools for sources, status, changes and expiry | **Done.** `/admin/institution-intelligence` records one of four decisions per fact, with a required reason for negative decisions and an audit entry. |
+| 11 | Institution frontend: finder, profile, trust badges, admission-selection rules and Post-UTME directory, written against the deployed schema and gated for the intelligence tables | **Frontend done.** `src/lib/institutions/*` plus `src/components/institutions/*`; the finder and details page resolve the canonical Calabar identity without touching either row. The intelligence gate is closed until steps 2-8 land in the target database. See `docs/data/INSTITUTION-FRONTEND-CONTRACT.md`. |
 
 The full implementation record, including the schema inventory, the honesty
 contract and the remaining gaps, is `docs/features/INSTITUTION-INTELLIGENCE.md`.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, BookmarkPlus, Check, School } from 'lucide-react';
 import type { DashboardSavedItemInput } from '../../lib/studentDashboard';
+import { institutionSlug } from '../../lib/institutions/normalizers';
 import FilterSearch from '../ui/FilterSearch';
 
 export type Institution = {
@@ -13,10 +14,17 @@ export type Institution = {
   course_context?: string | null;
 };
 
-export const itemKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+/**
+ * One slug rule for the whole institution surface.
+ *
+ * `institutionSlug()` is the implementation; this is a re-export so the finder
+ * card, the finder page and the details page cannot drift onto three different
+ * normalizations of the same name.
+ */
+export const itemKey = institutionSlug;
 
 function detailPath(school: Institution, returnPath: string) {
-  return `/schools/${encodeURIComponent(itemKey(school.school_name))}?name=${encodeURIComponent(school.school_name)}&acronym=${encodeURIComponent(school.acronym || '')}&state=${encodeURIComponent(school.state || '')}&type=${encodeURIComponent(school.institution_type || '')}&website=${encodeURIComponent(school.website_url || '')}&course=${encodeURIComponent(school.course_context || '')}&return=${encodeURIComponent(returnPath)}`;
+  return `/schools/${encodeURIComponent(itemKey(school.school_name))}?id=${encodeURIComponent(school.id)}&name=${encodeURIComponent(school.school_name)}&acronym=${encodeURIComponent(school.acronym || '')}&state=${encodeURIComponent(school.state || '')}&type=${encodeURIComponent(school.institution_type || '')}&website=${encodeURIComponent(school.website_url || '')}&course=${encodeURIComponent(school.course_context || '')}&return=${encodeURIComponent(returnPath)}`;
 }
 
 /** Verified institution directory with search, autocomplete and shortlist actions. */
