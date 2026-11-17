@@ -162,9 +162,11 @@ alter table public.institution_profiles
   add column if not exists student_portal_url text,
   add column if not exists postgraduate_portal_url text,
   add column if not exists publication_status text not null default 'draft',
+  add column if not exists verification_status text not null default 'unresearched',
   add column if not exists profile_verified_at timestamptz,
   add column if not exists source_id uuid references public.edureach_sources(id) on delete set null,
-  add column if not exists source_url text;
+  add column if not exists source_url text,
+  add column if not exists created_at timestamptz not null default now();
 
 -- Keep the publication gate closed for pre-existing records.
 alter table public.institution_profiles
