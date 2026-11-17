@@ -1008,6 +1008,496 @@
         "institution identity"
       ],
       "caveat": "Website captured as an official institution domain; detailed programme, cut-off and JAMB requirements remain to be verified."
+    },
+    {
+      "sourceKey": "acu-history",
+      "name": "Ajayi Crowther University - Historical Background",
+      "url": "https://acu.edu.ng/historical-background/",
+      "authority": "Ajayi Crowther University",
+      "sourceType": "official",
+      "supports": [
+        "Private licence 7 January 2005 and historical roots"
+      ]
+    },
+    {
+      "sourceKey": "acu-vc",
+      "name": "Ajayi Crowther University - Vice-Chancellor",
+      "url": "https://acu.edu.ng/the-vice-chancellor/",
+      "authority": "Ajayi Crowther University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Ebunoluwa Olufemi Oduwole as substantive Vice-Chancellor"
+      ]
+    },
+    {
+      "sourceKey": "acu-courses-2026-27",
+      "name": "Ajayi Crowther University - Courses 2026/2027",
+      "url": "https://acu.edu.ng/courses/",
+      "authority": "Ajayi Crowther University",
+      "sourceType": "official",
+      "supports": [
+        "Faculty and programme list for 2026/2027"
+      ]
+    },
+    {
+      "sourceKey": "acu-freshers-2026-27",
+      "name": "Ajayi Crowther University - Freshers Registration Notice",
+      "url": "https://acu.edu.ng/mainacu/wp-content/uploads/2026/09/FRESHERS-DOCUMENTS-FOR-REGISTRATION.pdf",
+      "authority": "Ajayi Crowther University",
+      "sourceType": "official",
+      "supports": [
+        "JAMB CAPS first-choice update and 2026 fresher registration"
+      ]
+    },
+    {
+      "sourceKey": "acu-campuses",
+      "name": "Ajayi Crowther University - Campus and Location Information",
+      "url": "https://acu.edu.ng/neigbhours/",
+      "authority": "Ajayi Crowther University",
+      "sourceType": "official",
+      "supports": [
+        "Campus/location references and campus count discrepancy"
+      ]
+    },
+    {
+      "sourceKey": "aksu-history",
+      "name": "AKSU - University History",
+      "url": "https://aksu.edu.ng/newsite/history-of-the-university/",
+      "authority": "Akwa Ibom State University",
+      "sourceType": "official",
+      "supports": [
+        "2010 enabling law and academic commencement"
+      ]
+    },
+    {
+      "sourceKey": "aksu-campuses",
+      "name": "AKSU - Campus Directory",
+      "url": "https://aksu.edu.ng/newsite/campuses/",
+      "authority": "Akwa Ibom State University",
+      "sourceType": "official",
+      "supports": [
+        "Two campuses and faculty location distribution"
+      ]
+    },
+    {
+      "sourceKey": "aksu-principal-officers",
+      "name": "AKSU - Principal Officers",
+      "url": "https://aksu.edu.ng/web/principal-officers/",
+      "authority": "Akwa Ibom State University",
+      "sourceType": "official",
+      "supports": [
+        "VC, Chancellor and principal officer listing"
+      ]
+    },
+    {
+      "sourceKey": "aksu-admissions-2026-27",
+      "name": "AKSU - 2026/2027 UTME and DE Screening Notice",
+      "url": "https://aksu.edu.ng/web/post-utme-direct-entry-screening-registration-for-2026-2027-academic-session/",
+      "authority": "Akwa Ibom State University",
+      "sourceType": "official",
+      "supports": [
+        "First-choice rule and general UTME 150 eligibility threshold"
+      ]
+    },
+    {
+      "sourceKey": "alansar-home",
+      "name": "Al-Ansar University - Official Website",
+      "url": "https://www.aum.edu.ng/",
+      "authority": "Al-Ansar University",
+      "sourceType": "official",
+      "supports": [
+        "Maiduguri location, college navigation and full NUC licence announcement"
+      ]
+    },
+    {
+      "sourceKey": "alansar-vc-appointment",
+      "name": "Al-Ansar University - Acting VC Appointment Notice",
+      "url": "https://www.aum.edu.ng/news/al-ansar-university%2C-maiduguri-appoints-professor-fanna-inna-abdulrahman-as-acting-vice-chancellor",
+      "authority": "Al-Ansar University",
+      "sourceType": "official",
+      "supports": [
+        "Fanna Inna Abdulrahman appointed Acting VC effective 8 September 2025"
+      ]
+    },
+    {
+      "sourceKey": "alhikmah-home",
+      "name": "Al-Hikmah University - Main Website",
+      "url": "https://alhikmahuniversity.edu.ng/",
+      "authority": "Al-Hikmah University",
+      "sourceType": "official",
+      "supports": [
+        "2005 licence and current admissions information"
+      ]
+    },
+    {
+      "sourceKey": "alhikmah-programmes",
+      "name": "Al-Hikmah University - Programme Catalogue",
+      "url": "https://alhikmahuniversity.edu.ng/programmes/",
+      "authority": "Al-Hikmah University",
+      "sourceType": "official",
+      "supports": [
+        "Faculty/programme catalogue"
+      ]
+    },
+    {
+      "sourceKey": "alhikmah-entry-requirements",
+      "name": "Al-Hikmah University - General Admission Requirements",
+      "url": "https://alhikmahuniversity.edu.ng/admission-requirements/",
+      "authority": "Al-Hikmah University",
+      "sourceType": "official",
+      "supports": [
+        "General O'Level and Direct Entry requirements"
+      ]
+    },
+    {
+      "sourceKey": "alhikmah-vc-record",
+      "name": "Al-Hikmah University - Annual Report 2022/2023",
+      "url": "https://alhikmahuniversity.edu.ng/wp-content/uploads/2024/11/2022-2023-Anuual-Report.pdf",
+      "authority": "Al-Hikmah University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Noah Yusuf listed in report as Vice-Chancellor"
+      ]
+    },
+    {
+      "sourceKey": "al-istiqama-leadership",
+      "name": "Al-Istiqama University - Leadership Directory",
+      "url": "https://mis.ausumaila.edu.ng/leadership.php",
+      "authority": "Al-Istiqama University",
+      "sourceType": "official",
+      "supports": [
+        "VC, Chancellor and faculty deanery"
+      ]
+    },
+    {
+      "sourceKey": "al-istiqama-portal-2026-27",
+      "name": "Al-Istiqama University - 2026/2027 Admissions Portal",
+      "url": "https://ausu.admissions.cloud/",
+      "authority": "Al-Istiqama University",
+      "sourceType": "official",
+      "supports": [
+        "150 general UTME minimum and application closed status"
+      ]
+    },
+    {
+      "sourceKey": "al-muhibbah-home",
+      "name": "Al-Muhibbah Open University - Official Website",
+      "url": "https://aou.edu.ng/",
+      "authority": "Al-Muhibbah Open University",
+      "sourceType": "official",
+      "supports": [
+        "Leadership, current intake and online delivery model"
+      ]
+    },
+    {
+      "sourceKey": "al-muhibbah-programmes",
+      "name": "Al-Muhibbah - Programme Catalogue",
+      "url": "https://aou.edu.ng/programs/",
+      "authority": "Al-Muhibbah Open University",
+      "sourceType": "official",
+      "supports": [
+        "Faculties and programme listing"
+      ]
+    },
+    {
+      "sourceKey": "al-qalam-sis",
+      "name": "Al-Qalam University - SIS Portal",
+      "url": "https://sis.auk.edu.ng/",
+      "authority": "Al-Qalam University",
+      "sourceType": "official",
+      "supports": [
+        "Fresh student application and registration workflow"
+      ]
+    },
+    {
+      "sourceKey": "al-qalam-cvc",
+      "name": "CVCNU - Al-Qalam University Profile",
+      "url": "https://cvcnigeria.org/university-details/?uni=136",
+      "authority": "CVCNU",
+      "sourceType": "official",
+      "supports": [
+        "Founding year and VC listing"
+      ]
+    },
+    {
+      "sourceKey": "aletheia-home-2026-27",
+      "name": "Aletheia University - Official 2026/2027 Notice",
+      "url": "https://aletheiauniversity.edu.ng/",
+      "authority": "Aletheia University",
+      "sourceType": "official",
+      "supports": [
+        "2023 licence, faculties and current intake"
+      ]
+    },
+    {
+      "sourceKey": "aletheia-leadership-2026",
+      "name": "Aletheia University - 2026/2027 Readiness and Leadership Notice",
+      "url": "https://www.aletheiauniversity.edu.ng/news/founder-vc-lead-aletheia-universitys-readiness-for-2026-2027-academic-session",
+      "authority": "Aletheia University",
+      "sourceType": "official",
+      "supports": [
+        "Founder/Chancellor and Vice-Chancellor"
+      ]
+    },
+    {
+      "sourceKey": "aletheia-prochancellor",
+      "name": "Aletheia University - Pro-Chancellor Governance Notice",
+      "url": "https://www.aletheiauniversity.edu.ng/news/aletheia-university-pays-courtesy-visit-to-pro-chancellor-dr-mrs-onikepo-akande",
+      "authority": "Aletheia University",
+      "sourceType": "official",
+      "supports": [
+        "Pro-Chancellor Dr Onikepo Akande"
+      ]
+    },
+    {
+      "sourceKey": "aefunai-history",
+      "name": "AE-FUNAI - Institutional History",
+      "url": "https://funai.edu.ng/history/",
+      "authority": "Alex Ekwueme Federal University",
+      "sourceType": "official",
+      "supports": [
+        "Establishment, academic commencement, renaming and academic snapshot"
+      ]
+    },
+    {
+      "sourceKey": "aefunai-vc-2026",
+      "name": "AE-FUNAI - 4th Vice-Chancellor Inauguration",
+      "url": "https://funai.edu.ng/news/inauguration-address-by-prof-daniel-nwachukwu-4th-vice-chancellor-alex-ekwueme-federal-university-ndufu-alike-ebonyi-state-nigeria-wednesday-11thfebruary-2026/",
+      "authority": "Alex Ekwueme Federal University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Daniel C Nwachukwu as fourth VC"
+      ]
+    },
+    {
+      "sourceKey": "aefunai-admission-2026-27",
+      "name": "AE-FUNAI - 2026/2027 Screening Portal",
+      "url": "https://portal.funai.edu.ng/Pages/Applications/ScreeningForm.aspx",
+      "authority": "Alex Ekwueme Federal University",
+      "sourceType": "official",
+      "supports": [
+        "UTME and DE screening portal"
+      ]
+    },
+    {
+      "sourceKey": "adustech-home",
+      "name": "ADUSTECH - Official Website",
+      "url": "https://adustech.edu.ng/",
+      "authority": "Aliko Dangote University of Science and Technology",
+      "sourceType": "official",
+      "supports": [
+        "VC, ownership, Wudil and current academic notices"
+      ]
+    },
+    {
+      "sourceKey": "aifue-history",
+      "name": "Alvan Ikoku FUE - Official Website",
+      "url": "https://www.alvanikoku.edu.ng/",
+      "authority": "Alvan Ikoku Federal University of Education",
+      "sourceType": "official",
+      "supports": [
+        "Federal university identity and predecessor college transition"
+      ]
+    },
+    {
+      "sourceKey": "aifue-vc-2026",
+      "name": "Alvan Ikoku FUE - VC Interview March 2026",
+      "url": "https://blueprint.ng/im-grateful-to-fg-for-interventions-in-salaries-infrastructure-alvan-ikoku-vc/",
+      "authority": "Blueprint Newspapers",
+      "sourceType": "official",
+      "supports": [
+        "Stella Ngozi Lemchi and reported faculty/programme structure"
+      ]
+    },
+    {
+      "sourceKey": "amadeus-home-2026-27",
+      "name": "Amadeus University - Official Website",
+      "url": "https://amadeus.edu.ng/",
+      "authority": "Amadeus University",
+      "sourceType": "official",
+      "supports": [
+        "Amizi location and current admissions notices"
+      ]
+    },
+    {
+      "sourceKey": "amadeus-admissions",
+      "name": "Amadeus University - Admission Overview",
+      "url": "https://amadeus.edu.ng/admission/overview/",
+      "authority": "Amadeus University",
+      "sourceType": "official",
+      "supports": [
+        "Faculty/degree list and general entry rules"
+      ]
+    },
+    {
+      "sourceKey": "aaua-history",
+      "name": "Ambrose Alli University - History",
+      "url": "https://aauekpoma.edu.ng/about/history/",
+      "authority": "Ambrose Alli University",
+      "sourceType": "official",
+      "supports": [
+        "Bendel State University foundation history and 1999 renaming"
+      ]
+    },
+    {
+      "sourceKey": "aaua-home-2026",
+      "name": "Ambrose Alli University - Official Homepage",
+      "url": "https://aauekpoma.edu.ng/",
+      "authority": "Ambrose Alli University",
+      "sourceType": "official",
+      "supports": [
+        "Current VC, faculty navigation and 2026 notices"
+      ]
+    },
+    {
+      "sourceKey": "aaua-admission-2026-27",
+      "name": "Ambrose Alli University - 2026/2027 Admission Notice",
+      "url": "https://aauekpoma.edu.ng/sales-of-2026-2027-academic-session-undergraduate-admission-form/",
+      "authority": "Ambrose Alli University",
+      "sourceType": "official",
+      "supports": [
+        "Post-UTME dates and first-choice eligibility"
+      ]
+    },
+    {
+      "sourceKey": "aou-home",
+      "name": "American Open University - Official Website",
+      "url": "https://www.aouniversity.edu.ng/",
+      "authority": "American Open University",
+      "sourceType": "official",
+      "supports": [
+        "Institution description and contact address"
+      ]
+    },
+    {
+      "sourceKey": "aou-accreditation",
+      "name": "American Open University - Accreditation/Licence",
+      "url": "https://www.aouniversity.edu.ng/accreditation",
+      "authority": "American Open University",
+      "sourceType": "official",
+      "supports": [
+        "Institution's NUC licence statement and programme accreditation claims"
+      ]
+    },
+    {
+      "sourceKey": "aou-academics",
+      "name": "American Open University - Academic Programmes",
+      "url": "https://www.aouniversity.edu.ng/academics",
+      "authority": "American Open University",
+      "sourceType": "official",
+      "supports": [
+        "Undergraduate/postgraduate programme catalogue"
+      ]
+    },
+    {
+      "sourceKey": "aou-admissions",
+      "name": "American Open University - Admissions",
+      "url": "https://www.aouniversity.edu.ng/admissions",
+      "authority": "American Open University",
+      "sourceType": "official",
+      "supports": [
+        "Rolling admission model"
+      ]
+    },
+    {
+      "sourceKey": "aun-about",
+      "name": "American University of Nigeria - About",
+      "url": "https://aun.edu.ng/index.php/about/about",
+      "authority": "American University of Nigeria",
+      "sourceType": "official",
+      "supports": [
+        "Founder history, President and schools"
+      ]
+    },
+    {
+      "sourceKey": "aun-home-2027",
+      "name": "American University of Nigeria - Main Website",
+      "url": "https://aun.edu.ng/",
+      "authority": "American University of Nigeria",
+      "sourceType": "official",
+      "supports": [
+        "Spring 2027 admission and programme navigation"
+      ]
+    },
+    {
+      "sourceKey": "anan-annual-report-2024",
+      "name": "ANAN - Audited Accounts 2024",
+      "url": "https://anan.org.ng/wp-content/uploads/2026/02/Audited-Account-2024.pdf",
+      "authority": "Association of National Accountants of Nigeria",
+      "sourceType": "official",
+      "supports": [
+        "ANAN University management list in 2024"
+      ]
+    },
+    {
+      "sourceKey": "anchor-leadership",
+      "name": "Anchor University - Leadership and Governance",
+      "url": "https://aul.edu.ng/about/leadership/",
+      "authority": "Anchor University",
+      "sourceType": "official",
+      "supports": [
+        "Chancellor and Vice-Chancellor listing"
+      ]
+    },
+    {
+      "sourceKey": "anchor-admission-2026-27",
+      "name": "Anchor University - 2026/2027 Admissions",
+      "url": "https://aul.edu.ng/admissions/",
+      "authority": "Anchor University",
+      "sourceType": "official",
+      "supports": [
+        "General UTME 160 minimum and entry pathways"
+      ]
+    },
+    {
+      "sourceKey": "anchor-undergrad-requirements",
+      "name": "Anchor University - Undergraduate Entry Requirements",
+      "url": "https://aul.edu.ng/admissions/undergraduate/",
+      "authority": "Anchor University",
+      "sourceType": "official",
+      "supports": [
+        "O'Level and DE entry requirements"
+      ]
+    },
+    {
+      "sourceKey": "arthur-jarvis-about-faq",
+      "name": "Arthur Jarvis University - Official FAQ",
+      "url": "https://arthurjarvisuniversity.edu.ng/faq/",
+      "authority": "Arthur Jarvis University",
+      "sourceType": "official",
+      "supports": [
+        "2016 establishment and entry route overview"
+      ]
+    },
+    {
+      "sourceKey": "arthur-jarvis-programmes",
+      "name": "Arthur Jarvis University - Programme Catalogue",
+      "url": "https://arthurjarvisuniversity.edu.ng/all-programs/",
+      "authority": "Arthur Jarvis University",
+      "sourceType": "official",
+      "supports": [
+        "32 programme and faculty/dept listing"
+      ]
+    },
+    {
+      "sourceKey": "arthur-jarvis-vc-2026",
+      "name": "Arthur Jarvis University - Vice-Chancellor Profile",
+      "url": "https://arthurjarvisuniversity.edu.ng/vice-chancellor/",
+      "authority": "Arthur Jarvis University",
+      "sourceType": "official",
+      "supports": [
+        "Professor Anne Ebri Ekong as Acting VC"
+      ]
+    },
+    {
+      "sourceKey": "arthur-jarvis-admission-portal",
+      "name": "Arthur Jarvis University - ERP Application Portal",
+      "url": "https://erp.arthurjarvisuniversity.edu.ng/",
+      "authority": "Arthur Jarvis University",
+      "sourceType": "official",
+      "supports": [
+        "Applicant portal and course navigation"
+      ]
     }
   ],
   "institutions": [
@@ -3018,36 +3508,68 @@
       "canonicalName": "Ajayi Crowther University",
       "state": "Oyo",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://acu.edu.ng/",
       "admissionPortal": "https://apply.acu.edu.ng/register",
-      "studentPortal": null,
+      "studentPortal": "https://portaacu.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2005,
+        "historySummary": "Roots in the CMS Training Institution (1853) and St Andrews College, Oyo. The university's official history describes its establishment by the Church of Nigeria in 1999 and federal private-university licence on 7 January 2005.",
         "mission": null,
         "vision": null,
-        "location": null,
-        "campusCount": null,
-        "campusCountStatus": "not_researched"
+        "location": "Oyo, Oyo State, Nigeria",
+        "campusCount": 4,
+        "campusCountStatus": "needs_reconciliation"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Ebunoluwa Olufemi Oduwole",
+          "verificationStatus": "current_university_vc_page",
+          "sourceKey": "acu-vc"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "acu-courses-2026-27",
+        "status": "2026_2027_catalogue_snapshot",
+        "facultyCount": 13,
+        "programmeCount": 51,
+        "items": [
+          "Agricultural Science",
+          "Basic Medical Science",
+          "Communication and Media Studies",
+          "Humanities",
+          "Law",
+          "Management and Social Sciences",
+          "Natural Sciences",
+          "Engineering",
+          "Education",
+          "Environmental Studies",
+          "Nursing Science",
+          "Pharmacy",
+          "Allied Health Sciences"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "UTME",
             "applicationUrl": "https://apply.acu.edu.ng/register",
-            "assessment": [],
-            "sourceKey": "acu-2026"
+            "assessment": [
+              "online application",
+              "JAMB CAPS processing"
+            ],
+            "sourceKey": "acu-freshers-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://apply.acu.edu.ng/register",
+            "sourceKey": "acu-freshers-2026-27"
           }
         ],
         "benchmarks": [],
@@ -3058,60 +3580,102 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Homepage shows four campuses, while location page names three sites; verify full campus list.",
+        "2026/2027 programme subject combinations and departmental cut-offs not captured.",
+        "September 2026 freshers notice is historic registration guidance, not an open application advert."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "acu-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "acu-history",
+        "acu-vc",
+        "acu-courses-2026-27",
+        "acu-freshers-2026-27",
+        "acu-campuses"
+      ],
+      "acronym": "ACU"
     },
     {
       "institutionId": "a22bb5a1-cb65-45e2-9501-f02a683365f3",
       "canonicalName": "Akwa Ibom State University",
       "state": "Akwa Ibom",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": "https://aksu.edu.ng/",
+      "ownership": "state",
+      "officialWebsite": "https://aksu.edu.ng/web/",
       "admissionPortal": "https://aksu.edu.ng/web/post-utme-direct-entry-screening-registration-for-2026-2027-academic-session/",
-      "studentPortal": null,
+      "studentPortal": "https://aksu.edu.ng/eportals/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2010,
+        "historySummary": "The enabling law was signed in September 2010; full academic activity commenced on 1 November 2010 with the Main Campus at Ikot Akpaden and the Obio Akpa Campus.",
         "mission": null,
         "vision": null,
-        "location": null,
-        "campusCount": null,
-        "campusCountStatus": "not_researched"
+        "location": "Ikot Akpaden and Obio Akpa, Akwa Ibom State, Nigeria",
+        "campusCount": 2,
+        "campusCountStatus": "official_campus_page",
+        "campusNames": [
+          "Main Campus, Ikot Akpaden",
+          "Obio Akpa Campus"
+        ]
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Otoabasi E. Akpan",
+          "sourceKey": "aksu-principal-officers",
+          "verificationStatus": "listed_on_current_principal_officers_page"
+        },
+        {
+          "role": "chancellor",
+          "name": "His Eminence Nteyin (Dr.) Solomon D. Etuk",
+          "sourceKey": "aksu-principal-officers",
+          "verificationStatus": "listed_on_current_principal_officers_page"
+        }
+      ],
       "chancellor": {
-        "name": null,
-        "status": "not_researched"
+        "name": "His Eminence Nteyin (Dr.) Solomon D. Etuk",
+        "status": "listed_on_official_institution_page"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aksu-campuses",
+        "status": "official_campus_faculty_snapshot",
+        "items": [
+          "Engineering",
+          "Physical Sciences",
+          "Education",
+          "Biological Sciences",
+          "Arts",
+          "Agriculture",
+          "Social Sciences",
+          "Management Sciences"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "UTME",
+            "firstChoiceRequired": true,
             "applicationUrl": "https://aksu.edu.ng/web/post-utme-direct-entry-screening-registration-for-2026-2027-academic-session/",
-            "assessment": [],
-            "sourceKey": "aksu-2026"
+            "sourceKey": "aksu-admissions-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "firstChoiceRequired": true,
+            "sourceKey": "aksu-admissions-2026-27"
           }
         ],
         "benchmarks": [
           {
-            "type": "institution_screening_threshold",
+            "benchmarkType": "institution_utme_eligibility",
             "value": 150,
-            "unit": "UTME",
+            "scaleMaximum": 400,
             "session": "2026/2027",
-            "sourceKey": "aksu-2026",
-            "note": "Official 2026/2027 screening notice; not a programme-specific admission cut-off."
+            "category": "general",
+            "status": "verified",
+            "sourceKey": "aksu-admissions-2026-27",
+            "note": "Institutional screening eligibility only; not a departmental cutoff."
           }
         ],
         "programmeRequirements": [],
@@ -3121,52 +3685,65 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Programme memo and department-level cutoffs were not extracted.",
+        "No programme-specific JAMB IBASS matches captured."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "aksu-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aksu-history",
+        "aksu-campuses",
+        "aksu-principal-officers",
+        "aksu-admissions-2026-27"
+      ],
+      "acronym": "AKSU"
     },
     {
       "institutionId": "4f3a6d8b-afda-4bb9-979f-b5e64149c19a",
       "canonicalName": "Al-Ansar University",
       "state": "Borno",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": "https://au.edu.ng/",
+      "ownership": "private",
+      "officialWebsite": "https://www.aum.edu.ng/",
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2022,
+        "historySummary": "NUC lists Al-Ansar University as a private university established in 2022. The university announced that it obtained a full operational NUC licence in August 2025.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Maiduguri, Borno State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "acting_vice_chancellor",
+          "name": "Professor Fanna Inna Abdulrahman",
+          "effectiveDate": "2025-09-08",
+          "sourceKey": "alansar-vc-appointment",
+          "verificationStatus": "institution_appointment_notice"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "alansar-home",
+        "status": "official_college_navigation_snapshot",
+        "items": [
+          "Arts, Management and Social Sciences",
+          "Law",
+          "Medicine and Health Sciences",
+          "Science, Information and Communication Technology"
+        ]
       },
       "admission": {
-        "session": "2026/2027",
-        "routes": [
-          {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://au.edu.ng/",
-            "assessment": [],
-            "sourceKey": "alansar-2024"
-          }
-        ],
+        "session": null,
+        "routes": [],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
@@ -3175,30 +3752,35 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "No reliable 2026/2027 admissions notice or application portal URL verified.",
+        "Detailed course-level O'Level/JAMB requirements unavailable from JS-rendered official pages.",
+        "Confirm current approved course list, including Law availability, before student-facing display."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "alansar-2024",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "alansar-home",
+        "alansar-vc-appointment"
+      ],
+      "acronym": "AUM"
     },
     {
       "institutionId": "359b37ac-4e10-435f-b318-d9d8b465e8c3",
       "canonicalName": "Al-Bayan University",
       "state": "Kogi",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": null,
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2023,
+        "historySummary": "The NUC Nigerian University System lists Al-Bayan University as a private university established in 2023 in Ankpa, Kogi State.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ankpa, Kogi State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
@@ -3222,99 +3804,177 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "No official website, current leadership, operating campus details, admissions portal or approved programme catalogue verified."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "nuc-private-universities-2026"
+      ],
+      "acronym": null
     },
     {
       "institutionId": "b82596fa-4f97-4f65-9786-b6270d2ab402",
       "canonicalName": "Al-Hikmah University",
       "state": "Kwara",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://alhikmahuniversity.edu.ng/",
-      "admissionPortal": "https://ecampus.alhikmahuniversity.edu.ng/admissions",
-      "studentPortal": null,
+      "admissionPortal": "https://ecampus.alhikmahuniversity.edu.ng/",
+      "studentPortal": "https://ecampus.alhikmahuniversity.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2005,
+        "historySummary": "The university received its private-university licence on 7 January 2005 and began academic activities in the 2005/2006 session with 70 students.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ilorin, Kwara State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Noah Yusuf",
+          "sourceKey": "alhikmah-vc-record",
+          "verificationStatus": "named_in_2022_2023_annual_report_current_term_not_reconfirmed"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "alhikmah-programmes",
+        "status": "official_programme_directory_snapshot",
+        "items": [
+          "Humanities and Social Sciences",
+          "Management Sciences",
+          "Education",
+          "Natural and Applied Sciences",
+          "Basic Medical Sciences",
+          "Nursing Science",
+          "Computing, Engineering and Technology",
+          "Law"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://ecampus.alhikmahuniversity.edu.ng/admissions",
-            "assessment": [],
-            "sourceKey": "alhikmah-2026"
+            "entryMode": "UTME",
+            "applicationUrl": "https://ecampus.alhikmahuniversity.edu.ng/",
+            "sourceKey": "alhikmah-home"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://ecampus.alhikmahuniversity.edu.ng/",
+            "sourceKey": "alhikmah-entry-requirements"
           }
         ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "not_collected_for_2026_2027",
+          "note": "Accessible cutoff PDF was for 2025/2026; not carried forward."
+        },
+        "generalOLevel": {
+          "minimumCredits": 5,
+          "maximumSittings": 2,
+          "requiredSubjects": [
+            "English Language"
+          ],
+          "sourceKey": "alhikmah-entry-requirements"
         }
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Don't reuse 2025/2026 programme cutoffs for 2026/2027.",
+        "VC current-term status needs confirmation.",
+        "Programme-specific JAMB subject combinations and DE pathways need IBASS matching."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "alhikmah-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "alhikmah-home",
+        "alhikmah-programmes",
+        "alhikmah-entry-requirements",
+        "alhikmah-vc-record"
+      ],
+      "acronym": "AHU"
     },
     {
       "institutionId": "c2eb83a3-ea26-43ce-b32b-1505bd0a16d9",
       "canonicalName": "Al-Istiqama University",
       "state": "Kano",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": null,
-      "admissionPortal": null,
-      "studentPortal": null,
+      "ownership": "private",
+      "officialWebsite": "https://mis.ausumaila.edu.ng/",
+      "admissionPortal": "https://ausu.admissions.cloud/",
+      "studentPortal": "https://mis.ausumaila.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2021,
+        "historySummary": "NUC lists Al-Istiqama University as private, established in 2021. Its institutional portal locates it in Sumaila LGA, Kano State.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Sumaila LGA, Kano State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Abdulhadi Sale Kumurya",
+          "sourceKey": "al-istiqama-leadership"
+        },
+        {
+          "role": "chancellor",
+          "name": "Alhaji (Dr.) Hameem Nuhu Sanusi",
+          "sourceKey": "al-istiqama-leadership"
+        },
+        {
+          "role": "founder",
+          "name": "Senator Sulaiman Abdurrahman Kawu Sumaila",
+          "sourceKey": "al-istiqama-leadership"
+        }
+      ],
       "chancellor": {
-        "name": null,
-        "status": "not_researched"
+        "name": "Alhaji (Dr.) Hameem Nuhu Sanusi",
+        "status": "listed_on_official_institution_page"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "al-istiqama-leadership",
+        "status": "faculty_deanery_snapshot",
+        "items": [
+          "Science and Computing",
+          "Arts, Social and Management Sciences",
+          "Health Sciences"
+        ]
       },
       "admission": {
-        "session": null,
-        "routes": [],
-        "benchmarks": [],
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "firstChoiceRequired": true,
+            "applicationUrl": "https://ausu.admissions.cloud/",
+            "sourceKey": "al-istiqama-portal-2026-27"
+          }
+        ],
+        "benchmarks": [
+          {
+            "benchmarkType": "institution_utme_eligibility",
+            "value": 150,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "category": "general",
+            "status": "published_in_linked_admissions_portal",
+            "sourceKey": "al-istiqama-portal-2026-27",
+            "note": "General UTME threshold, not course cutoff; portal showed application closed 29 August 2026."
+          }
+        ],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
@@ -3322,87 +3982,131 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "2026/2027 application period ended 29 August 2026.",
+        "No complete current programme catalogue or programme-specific IBASS mapping."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "al-istiqama-leadership",
+        "al-istiqama-portal-2026-27"
+      ],
+      "acronym": "AUSU"
     },
     {
       "institutionId": "481e4f42-65a8-460e-89dc-e3b291f8bf81",
       "canonicalName": "Al-Muhibbah Open University",
       "state": "FCT Abuja",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://aou.edu.ng/",
       "admissionPortal": "https://aou.edu.ng/",
-      "studentPortal": null,
+      "studentPortal": "https://portal.aou.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2023,
+        "historySummary": "NUC lists Al-Muhibbah Open University as a private university established in 2023. The institution advertises flexible online study and 2026/2027 intake.",
         "mission": null,
         "vision": null,
         "location": "Abuja, FCT, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "chancellor",
+          "name": "Hajiya (Dr.) Aisha Bala Mohammed",
+          "sourceKey": "al-muhibbah-home"
+        },
+        {
+          "role": "vice_chancellor",
+          "name": "Associate Professor Ibrahim Hassan",
+          "sourceKey": "al-muhibbah-home"
+        },
+        {
+          "role": "registrar",
+          "name": "Barrister Muslim Maigari",
+          "sourceKey": "al-muhibbah-home"
+        }
+      ],
       "chancellor": {
-        "name": null,
-        "status": "not_researched"
+        "name": "Hajiya (Dr.) Aisha Bala Mohammed",
+        "status": "listed_on_official_institution_page"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "al-muhibbah-programmes",
+        "status": "official_faculty_catalogue",
+        "programmeCountClaim": "27+ homepage; catalogue search shows 29",
+        "items": [
+          "Allied Health Sciences",
+          "Computing",
+          "Management Sciences",
+          "Social Sciences",
+          "Arts"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "UTME",
             "applicationUrl": "https://aou.edu.ng/",
-            "assessment": [],
-            "sourceKey": "aou-2026"
+            "sourceKey": "al-muhibbah-home"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://aou.edu.ng/",
+            "sourceKey": "al-muhibbah-programmes"
           }
         ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
-        }
+        },
+        "deliveryModel": "online/flexible"
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Programme count differs between homepage and catalogue.",
+        "No course-specific JAMB subject combinations or departmental cutoffs verified."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "aou-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "al-muhibbah-home",
+        "al-muhibbah-programmes"
+      ],
+      "acronym": "AOU"
     },
     {
       "institutionId": "340e7568-40e4-4b5e-9c9e-be9e0c740d14",
       "canonicalName": "Al-Qalam University",
       "state": "Katsina",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://auk.edu.ng/",
       "admissionPortal": "https://sis.auk.edu.ng/",
-      "studentPortal": null,
+      "studentPortal": "https://sis.auk.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2005,
+        "historySummary": "NUC lists Al-Qalam University as private, established in 2005. The CVCNU profile describes its community-based and Islamic moral education orientation.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Katsina, Katsina State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Shehu Garki Ado",
+          "sourceKey": "al-qalam-cvc",
+          "verificationStatus": "CVCNU_profile_current_term_needs_registry_confirmation"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
@@ -3412,13 +4116,12 @@
         "items": []
       },
       "admission": {
-        "session": "2026/2027",
+        "session": null,
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "UTME",
             "applicationUrl": "https://sis.auk.edu.ng/",
-            "assessment": [],
-            "sourceKey": "alqalam-2026"
+            "sourceKey": "al-qalam-sis"
           }
         ],
         "benchmarks": [],
@@ -3429,50 +4132,81 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Current 2026/2027 admission notice, faculty list, programme catalogue, subject combinations and course cutoffs not captured.",
+        "VC identity from CVCNU profile requires current Registry confirmation."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "alqalam-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "al-qalam-sis",
+        "al-qalam-cvc"
+      ],
+      "acronym": "AUK"
     },
     {
       "institutionId": "930fc92f-a2d2-4ccb-929a-0b7a53fb11e4",
       "canonicalName": "Aletheia University",
       "state": "Ogun",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://aletheiauniversity.edu.ng/",
-      "admissionPortal": null,
+      "admissionPortal": "https://aletheiauniversity.edu.ng/",
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2023,
+        "historySummary": "Aletheia University says it received a Federal Government private-university licence on 5 June 2023.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ago-Iwoye, Ogun State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "founder_chancellor",
+          "name": "Major General Sansaadeen Awosanya",
+          "sourceKey": "aletheia-leadership-2026"
+        },
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Olukayode Dewumi Akinyemi",
+          "sourceKey": "aletheia-leadership-2026"
+        },
+        {
+          "role": "pro_chancellor",
+          "name": "Dr. (Mrs.) Onikepo Akande",
+          "sourceKey": "aletheia-prochancellor"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aletheia-home-2026-27",
+        "status": "college_navigation_snapshot",
+        "items": [
+          "Arts, Management and Social Sciences",
+          "Engineering and Technology",
+          "Law",
+          "Medical and Allied Health Sciences",
+          "Science, Agriculture and Technology"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "UTME",
             "applicationUrl": "https://aletheiauniversity.edu.ng/",
-            "assessment": [],
-            "sourceKey": "aletheia-2026"
+            "sourceKey": "aletheia-home-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://aletheiauniversity.edu.ng/",
+            "sourceKey": "aletheia-home-2026-27"
           }
         ],
         "benchmarks": [],
@@ -3483,50 +4217,82 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "No 2026/2027 course-specific cutoffs, O'Level requirements or JAMB combinations verified.",
+        "The homepage is used as entry point; dedicated admissions URL not resolved."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "aletheia-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aletheia-home-2026-27",
+        "aletheia-leadership-2026",
+        "aletheia-prochancellor"
+      ],
+      "acronym": "AUA"
     },
     {
       "institutionId": "caf0ebd2-59f3-478a-a3d4-02db121382b0",
       "canonicalName": "Alex Ekwueme Federal University",
       "state": "Ebonyi",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "federal",
       "officialWebsite": "https://funai.edu.ng/",
-      "admissionPortal": "https://apply.funai.edu.ng/",
-      "studentPortal": null,
+      "admissionPortal": "https://portal.funai.edu.ng/Pages/Applications/ScreeningForm.aspx",
+      "studentPortal": "https://portal.funai.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2011,
+        "historySummary": "Established on 26 February 2011 as Federal University Ndufu-Alike Ikwo; academic activities began on 5 November 2012, and it was renamed after Alex Ekwueme on 2 February 2018. Its official history page reports an 11-faculty, 41-department, 57-programme snapshot.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ndufu-Alike, Ikwo LGA, Ebonyi State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Daniel C. Nwachukwu",
+          "effectiveDate": "2026-02-10",
+          "sourceKey": "aefunai-vc-2026"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aefunai-history",
+        "status": "official_structure_snapshot",
+        "facultyCount": 11,
+        "departmentCount": 41,
+        "programmeCount": 57,
+        "items": [
+          "Agriculture",
+          "Basic Medical Sciences",
+          "Biological Sciences",
+          "Education",
+          "Engineering and Technology",
+          "Environmental Science",
+          "Humanities",
+          "Management Sciences",
+          "Social Sciences",
+          "Physical Sciences",
+          "College of Medicine"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://apply.funai.edu.ng/",
-            "assessment": [],
-            "sourceKey": "funai-2026"
+            "entryMode": "UTME",
+            "applicationUrl": "https://portal.funai.edu.ng/Pages/Applications/ScreeningForm.aspx",
+            "sourceKey": "aefunai-admission-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://portal.funai.edu.ng/Pages/Applications/ScreeningForm.aspx",
+            "sourceKey": "aefunai-admission-2026-27"
           }
         ],
         "benchmarks": [],
@@ -3537,45 +4303,63 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "2026/2027 screening portal redirects during direct opening; check availability before application advice.",
+        "No departmental cutoffs or course-specific JAMB IBASS combinations captured."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "funai-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aefunai-history",
+        "aefunai-vc-2026",
+        "aefunai-admission-2026-27"
+      ],
+      "acronym": "AE-FUNAI"
     },
     {
       "institutionId": "51c9da9a-6c8e-451f-b3af-5a9e60c38a26",
       "canonicalName": "Aliko Dangote University of Science & Technology",
       "state": "Kano",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": null,
-      "admissionPortal": null,
-      "studentPortal": null,
+      "ownership": "state",
+      "officialWebsite": "https://adustech.edu.ng/",
+      "admissionPortal": "https://adustech.edu.ng/",
+      "studentPortal": "https://adustech.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2000,
+        "historySummary": "NUC current NUS lists establishment in 2000; the university homepage says 2001. Formerly Kano University of Science and Technology, the university is owned by Kano State. The year discrepancy is retained.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Wudil, Kano State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Musa Tukur Yakasai",
+          "sourceKey": "adustech-home",
+          "verificationStatus": "published_on_current_homepage"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
+        "status": "programme_navigation_not_extracted",
         "items": []
       },
       "admission": {
-        "session": null,
-        "routes": [],
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "applicationUrl": "https://adustech.edu.ng/",
+            "sourceKey": "adustech-home"
+          }
+        ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
@@ -3584,40 +4368,62 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "2026/2027 Post-UTME notice surfaced, but no course-level cutoffs or minimum scores transcribed.",
+        "NUC (2000) vs university history (2001) discrepancy.",
+        "Current academic catalogue still needs extraction."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "adustech-home"
+      ],
+      "acronym": "ADUSTECH"
     },
     {
       "institutionId": "d21a8d7e-0050-4968-8b4d-905b977b9bbb",
       "canonicalName": "Alvan Ikoku Federal University of Education",
       "state": "Imo",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": null,
+      "ownership": "federal",
+      "officialWebsite": "https://www.alvanikoku.edu.ng/",
       "admissionPortal": null,
-      "studentPortal": null,
+      "studentPortal": "https://www.alvanikoku.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2023,
+        "historySummary": "NUC lists the Federal University of Education as established in 2023. It succeeded Alvan Ikoku Federal College of Education, whose roots date to 1963; predecessor and federal-university dates are distinct.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Owerri, Imo State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Stella Ngozi Lemchi",
+          "sourceKey": "aifue-vc-2026",
+          "verificationStatus": "reported_as_substantive_vc_serving_march_2026"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aifue-vc-2026",
+        "status": "reported_by_vc_interview",
+        "facultyCount": 6,
+        "programmeCount": 45,
+        "items": [
+          "Arts",
+          "Education",
+          "Sciences",
+          "Social and Management Sciences",
+          "Specialised Education",
+          "Vocational and Technology Education"
+        ],
+        "note": "Six faculties and 45 degree programmes are from a March 2026 published interview, not a live catalogue."
       },
       "admission": {
         "session": null,
@@ -3630,29 +4436,34 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Official domain contains legacy College of Education content; old admission guidance needs revalidation.",
+        "No current direct admission portal or 2026/2027 screening notice confirmed.",
+        "No programme-level JAMB combination or cut-off values collected."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aifue-history",
+        "aifue-vc-2026"
+      ],
+      "acronym": "AIFUE"
     },
     {
       "institutionId": "7fe622e9-ac98-4db8-94bc-e9b4f6f750e7",
       "canonicalName": "Amadeus University",
       "state": "Abia",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://amadeus.edu.ng/",
-      "admissionPortal": "https://admissions.amadeus.edu.ng/",
+      "admissionPortal": "https://amadeus.edu.ng/admission/overview/",
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2023,
+        "historySummary": "NUC lists Amadeus University as a private university established in 2023; the university states its campus is at Amizi, Ikwuano LGA, Abia State.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Amizi, Ikwuano LGA, Abia State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
@@ -3662,51 +4473,75 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "amadeus-admissions",
+        "status": "official_admissions_page_snapshot",
+        "items": [
+          "Science and Computing",
+          "Allied Health Sciences",
+          "Social and Management Sciences",
+          "Engineering",
+          "College of Medicine",
+          "Pharmacy",
+          "Law"
+        ],
+        "note": "Admission page says 19 programmes in its introductory copy but visible list enumerates 22; mismatch retained."
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://admissions.amadeus.edu.ng/",
-            "assessment": [],
-            "sourceKey": "amadeus-2026"
+            "entryMode": "UTME",
+            "firstChoiceRequired": true,
+            "applicationUrl": "https://amadeus.edu.ng/admission/overview/",
+            "sourceKey": "amadeus-admissions"
           }
         ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
+        },
+        "generalOLevel": {
+          "minimumCredits": 5,
+          "requiredSubjects": [
+            "English Language",
+            "Mathematics",
+            "three relevant subjects"
+          ],
+          "sourceKey": "amadeus-admissions"
         }
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Nineteen vs twenty-two programme count discrepancy on university page.",
+        "No exact course-level UTME score or IBASS combination verified.",
+        "Student portal direct endpoint not resolved."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "amadeus-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "amadeus-home-2026-27",
+        "amadeus-admissions"
+      ],
+      "acronym": "AU"
     },
     {
       "institutionId": "81a1b1e9-ada4-47f0-a154-87eecf0345ff",
       "canonicalName": "Amaj University",
       "state": "FCT Abuja",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": null,
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2023,
+        "historySummary": "NUC's current NUS lists Amaj University as a private university established in 2023; its private-university directory specifies Kwali, Abuja.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Kwali, FCT, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
@@ -3730,49 +4565,74 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "No official website, verified leadership, current campus information, admission portal or approved programme catalogue located."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "nuc-private-universities-2026"
+      ],
+      "acronym": null
     },
     {
       "institutionId": "19856fe1-39c6-4b04-8c50-e557b256f3ec",
       "canonicalName": "Ambrose Alli University",
       "state": "Edo",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "state",
       "officialWebsite": "https://aauekpoma.edu.ng/",
-      "admissionPortal": null,
-      "studentPortal": null,
+      "admissionPortal": "https://eportal.aauekpoma.edu.ng/",
+      "studentPortal": "https://eportal.aauekpoma.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 1980,
+        "historySummary": "The university's history says Bendel State University was established in 1981 and renamed Ambrose Alli University in 1999. The NUC state directory lists 1980; the conflicting year is preserved.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ekpoma, Edo State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Eunice Omonzejie",
+          "sourceKey": "aaua-home-2026",
+          "verificationStatus": "published_on_current_homepage"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aaua-home-2026",
+        "status": "official_navigation_snapshot",
+        "items": [
+          "Agriculture",
+          "Art",
+          "Basic Sciences",
+          "Clinical Sciences",
+          "Education",
+          "Engineering and Technology",
+          "Environmental Studies",
+          "Law",
+          "Management Sciences",
+          "Physical Sciences",
+          "Life Sciences",
+          "Social Sciences",
+          "Medical Laboratory Sciences",
+          "College of Medicine"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://aauekpoma.edu.ng/",
-            "assessment": [],
-            "sourceKey": "aaue-2026"
+            "entryMode": "UTME",
+            "firstChoiceRequired": true,
+            "applicationUrl": "https://eportal.aauekpoma.edu.ng/",
+            "sourceKey": "aaua-admission-2026-27"
           }
         ],
         "benchmarks": [],
@@ -3783,30 +4643,35 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "The June 1–30 2026 Post-UTME application window is closed.",
+        "No current departmental cut-off table or course-specific IBASS combinations captured."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "aaue-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aaua-history",
+        "aaua-home-2026",
+        "aaua-admission-2026-27"
+      ],
+      "acronym": "AAU"
     },
     {
       "institutionId": "351203e2-83b9-4abb-9349-3c4dfc934879",
       "canonicalName": "American Open University",
       "state": "Ogun",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": null,
-      "admissionPortal": null,
+      "ownership": "private",
+      "officialWebsite": "https://www.aouniversity.edu.ng/",
+      "admissionPortal": "https://www.aouniversity.edu.ng/admissions",
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2025,
+        "historySummary": "NUC lists American Open University as private, established in 2025, Abeokuta. Its current website gives a contact address in New Bodija, Ibadan; exact approved primary campus needs reconciliation.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "NUC registry: Abeokuta, Ogun State; institution contact address: New Bodija, Ibadan, Oyo State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
@@ -3816,101 +4681,156 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aou-academics",
+        "status": "official_programme_catalogue_snapshot",
+        "items": [
+          "College of Technology",
+          "College of Business",
+          "College of Media, Information and Communication",
+          "School of Postgraduate Studies",
+          "EDGE Institute"
+        ],
+        "undergraduateProgrammeCount": 8,
+        "postgraduateProgrammeCount": 3
       },
       "admission": {
-        "session": null,
-        "routes": [],
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "institution_direct_application",
+            "applicationUrl": "https://www.aouniversity.edu.ng/admissions",
+            "assessment": [
+              "rolling admission",
+              "academic review",
+              "statement of purpose",
+              "digital skills test"
+            ],
+            "sourceKey": "aou-admissions"
+          }
+        ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
-        }
+        },
+        "deliveryModel": "online or HyFlex"
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "NUC location conflicts with current website contact address; confirm primary campus before mapping.",
+        "Institution's NUC-licence claim and all programme-level approvals need independent regulator matching.",
+        "No programme-level JAMB/IBASS mapping verified."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aou-home",
+        "aou-accreditation",
+        "aou-academics",
+        "aou-admissions"
+      ],
+      "acronym": "A-Global"
     },
     {
       "institutionId": "562718a7-af40-4762-9a5a-7c573662efc0",
       "canonicalName": "American University of Nigeria",
       "state": "Adamawa",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://aun.edu.ng/",
-      "admissionPortal": null,
+      "admissionPortal": "https://aun.edu.ng/",
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2003,
+        "historySummary": "NUC lists AUN as private, established in 2003 in Yola; the institution identifies former Vice-President Atiku Abubakar as founder.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Yola, Adamawa State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "president",
+          "name": "Dr. DeWayne Frazier",
+          "sourceKey": "aun-about",
+          "verificationStatus": "listed_on_current_institution_about_page"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "aun-about",
+        "status": "school_navigation_snapshot",
+        "items": [
+          "School of Arts and Sciences",
+          "School of Business and Entrepreneurship",
+          "School of Information Technology and Computing",
+          "School of Law",
+          "School of Engineering",
+          "School of Graduate Studies"
+        ]
       },
       "admission": {
-        "session": "2026/2027",
+        "session": "Spring 2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
+            "entryMode": "institution_direct_application",
             "applicationUrl": "https://aun.edu.ng/",
-            "assessment": [],
-            "sourceKey": "aun-2026"
+            "sourceKey": "aun-home-2027"
           }
         ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
-        }
+        },
+        "note": "Spring 2027 admission is advertised by AUN. Do not infer Nigerian UTME cutoffs or JAMB combinations."
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "Current applicant prospectus is needed for programme-specific requirements, deadlines and fees.",
+        "No JAMB/IBASS mapping verified."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "aun-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "aun-about",
+        "aun-home-2027"
+      ],
+      "acronym": "AUN"
     },
     {
       "institutionId": "941b83c3-f2f7-4cc0-828f-576ad3dbf397",
       "canonicalName": "ANAN University",
       "state": "Plateau",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": null,
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2021,
+        "historySummary": "NUC lists ANAN University as private, established in 2021 in Kwall, Plateau State, associated with ANAN.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Kwall, Plateau State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Musa Inuwa Fodio",
+          "sourceKey": "anan-annual-report-2024",
+          "verificationStatus": "listed_in_2024_audited_accounts_current_2026_status_not_reconfirmed"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
@@ -3930,59 +4850,89 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "VC name is from 2024 audited management accounts; confirm current office holder with Registry.",
+        "No verified official website, active admission portal, current degree catalogue, course combinations or cutoffs."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "anan-annual-report-2024"
+      ],
+      "acronym": null
     },
     {
       "institutionId": "2bfbbeac-2d2b-4f25-908d-babaea3e81d0",
       "canonicalName": "Anchor University",
       "state": "Lagos",
       "institutionType": "university",
-      "ownership": null,
+      "ownership": "private",
       "officialWebsite": "https://aul.edu.ng/",
-      "admissionPortal": "https://aul.edu.ng/admissions/",
-      "studentPortal": null,
+      "admissionPortal": "https://portal-prod.aul.edu.ng/",
+      "studentPortal": "https://portal-prod.aul.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2016,
+        "historySummary": "NUC lists Anchor University as a private university established in 2016 in Ayobo, Lagos State.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Ayobo, Lagos State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "chancellor",
+          "name": "Pastor (Dr.) W. F. Kumuyi",
+          "sourceKey": "anchor-leadership"
+        },
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Samuel Oye Bandele",
+          "sourceKey": "anchor-leadership"
+        }
+      ],
       "chancellor": {
-        "name": null,
-        "status": "not_researched"
+        "name": "Pastor (Dr.) W. F. Kumuyi",
+        "status": "listed_on_official_institution_page"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "anchor-admission-2026-27",
+        "status": "official_faculty_snapshot",
+        "facultyCount": 7,
+        "items": [
+          "Basic and Allied Medical Sciences",
+          "Education",
+          "Environmental Sciences",
+          "Humanities",
+          "Law",
+          "Science",
+          "Social and Management Sciences"
+        ]
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
-            "entryMode": "UTME/DE",
-            "applicationUrl": "https://aul.edu.ng/admissions/",
-            "assessment": [],
-            "sourceKey": "anchor-2026"
+            "entryMode": "UTME",
+            "applicationUrl": "https://portal-prod.aul.edu.ng/",
+            "sourceKey": "anchor-admission-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://portal-prod.aul.edu.ng/",
+            "sourceKey": "anchor-admission-2026-27"
           }
         ],
         "benchmarks": [
           {
-            "type": "institution_screening_threshold",
+            "benchmarkType": "institution_utme_eligibility",
             "value": 160,
-            "unit": "UTME",
+            "scaleMaximum": 400,
             "session": "2026/2027",
-            "sourceKey": "anchor-2026",
-            "note": "Official admissions page; programme-specific requirements may differ."
+            "category": "general",
+            "status": "verified",
+            "sourceKey": "anchor-admission-2026-27",
+            "note": "General minimum only, not a programme cutoff."
           }
         ],
         "programmeRequirements": [],
@@ -3992,45 +4942,101 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "General UTME minimum 160 is not a departmental cutoff.",
+        "No individual subject-combination and course cut-off mapping yet.",
+        "Website admissions overview says 25+ programmes while catalogue displays more; reconcile counts."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "anchor-2026",
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "anchor-leadership",
+        "anchor-admission-2026-27",
+        "anchor-undergrad-requirements"
+      ],
+      "acronym": "AUL"
     },
     {
       "institutionId": "1e5b71fb-5ebd-41d2-82cf-6f3303cceabc",
       "canonicalName": "Arthur Jarvis University",
       "state": "Cross River",
       "institutionType": "university",
-      "ownership": null,
-      "officialWebsite": null,
-      "admissionPortal": null,
-      "studentPortal": null,
+      "ownership": "private",
+      "officialWebsite": "https://arthurjarvisuniversity.edu.ng/",
+      "admissionPortal": "https://erp.arthurjarvisuniversity.edu.ng/",
+      "studentPortal": "https://erp.arthurjarvisuniversity.edu.ng/",
       "profile": {
-        "yearFounded": null,
-        "historySummary": null,
+        "yearFounded": 2016,
+        "historySummary": "Arthur Jarvis University is a private university established in 2016 in Akpabuyo, Cross River State; its official FAQ describes it as the first private university in Cross River State.",
         "mission": null,
         "vision": null,
-        "location": null,
+        "location": "Akpabuyo, Calabar, Cross River State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "acting_vice_chancellor",
+          "name": "Professor Anne Ebri Ekong",
+          "sourceKey": "arthur-jarvis-vc-2026"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "sourceKey": "arthur-jarvis-programmes",
+        "status": "official_programme_catalogue_snapshot",
+        "programmeCount": 32,
+        "items": [
+          "Basic Medical Sciences",
+          "Humanities and Social Sciences",
+          "Law",
+          "Natural and Applied Sciences",
+          "Administration and Management",
+          "Pharmacy"
+        ],
+        "departments": [
+          "Optometry",
+          "Radiography",
+          "Medical Laboratory Science",
+          "Public Health",
+          "Nursing Science",
+          "Pharmacy",
+          "Sociology and Social Work",
+          "Political Science",
+          "Journalism and Mass Communication",
+          "Languages and Linguistics",
+          "Criminology and Security Studies",
+          "Economics",
+          "Hospitality and Tourism Management",
+          "Accounting",
+          "Physics",
+          "Human Anatomy",
+          "Human Physiology",
+          "Biological Sciences",
+          "Chemical Sciences",
+          "Earth Sciences",
+          "Mathematics and Computer Science",
+          "Business Administration"
+        ]
       },
       "admission": {
         "session": null,
-        "routes": [],
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "applicationUrl": "https://erp.arthurjarvisuniversity.edu.ng/",
+            "sourceKey": "arthur-jarvis-admission-portal"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://erp.arthurjarvisuniversity.edu.ng/",
+            "sourceKey": "arthur-jarvis-about-faq"
+          }
+        ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
@@ -4039,13 +5045,19 @@
       },
       "portalGuides": [],
       "knownGaps": [
-        "Institution-level identity has been queued from the production directory; full leadership, academic hierarchy, programme catalogue, programme-specific cut-offs and JAMB IBASS subject combinations remain to be researched."
+        "No current-session deadline or minimum UTME score was verified.",
+        "No course-level O'Level mapping, JAMB subject combination or departmental cutoff collected."
       ],
-      "verificationStatus": "identity_research_queued",
+      "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
-      ]
+        "nuc-nus-2026",
+        "arthur-jarvis-about-faq",
+        "arthur-jarvis-programmes",
+        "arthur-jarvis-vc-2026",
+        "arthur-jarvis-admission-portal"
+      ],
+      "acronym": "AJU"
     },
     {
       "institutionId": "c64590f2-e814-416e-a2f1-23cd67dd9ebf",
