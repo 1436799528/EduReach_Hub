@@ -4281,16 +4281,7 @@
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [
-        {
-          "role": "vice_chancellor",
-          "name": "Professor Adebola Mahfouz Adedimeji",
-          "verificationStatus": "listed_in_NUC_private_universities_directory",
-          "sourceKey": "nuc-private-universities-2026",
-          "sourceUrl": "https://www.nuc.edu.ng/nigerian-univerisities/private-univeristies/",
-          "checkedAt": "2026-11-17"
-        }
-      ],
+      "leadership": [],
       "chancellor": {
         "name": null,
         "status": "not_researched"
@@ -4343,7 +4334,8 @@
         "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
         "Current Vice-Chancellor and full management team not verified from an institution-owned leadership page.",
         "Programme options are loaded dynamically; exact active degree catalogue and NUC accreditation status by programme need confirmation.",
-        "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements."
+        "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements.",
+        "The NUC private-university directory contains a legacy leadership name, but it is not accepted as evidence of the current Vice-Chancellor; no current institution-owned leadership source was verified."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
