@@ -180,7 +180,7 @@ test('an older batch never overwrites verified research', async () => {
   // Research approved today, then an older batch arrives.
   await db.exec(`
     update public.institution_profiles
-      set verification_status = 'verified', profile_status = 'published',
+      set verification_status = 'verified', publication_status = 'published',
           profile_verified_at = now() + interval '1 day'
       where institution_id = '${UNICAL}';
   `);
