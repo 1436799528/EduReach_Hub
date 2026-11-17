@@ -16,3 +16,9 @@
 
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
+
+
+# Public news feed: short CDN cache with stale-while-revalidate to absorb bursts of anonymous traffic.
+# Do not apply this policy to authenticated/student-specific API responses.
+/api/news
+  Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=600
