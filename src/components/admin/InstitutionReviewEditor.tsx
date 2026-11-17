@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import OptimizedImage from '../OptimizedImage';
 import { userFacingError } from '../../../lib/errors';
 import {
   createInstitutionProgramme,
@@ -654,6 +655,34 @@ export default function InstitutionReviewEditor({
       </Section>
 
       <Section number={4} title="Images" description="Logo and campus photograph. EduReach links to the institution's own image; it does not claim to own a copy.">
+        {detail.profile?.logo_url || detail.profile?.hero_image_url ? (
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap' }}>
+            {detail.profile.logo_url && (
+              <OptimizedImage
+                src={detail.profile.logo_url}
+                alt={`${detail.institution.school_name} logo`}
+                width={96}
+                height={96}
+                layout="row"
+                attribution="Image from the institution"
+              />
+            )}
+            {detail.profile.hero_image_url && (
+              <OptimizedImage
+                src={detail.profile.hero_image_url}
+                alt={`${detail.institution.school_name} campus`}
+                width={320}
+                height={180}
+                layout="card"
+                attribution="Image from the institution"
+              />
+            )}
+          </div>
+        ) : (
+          <p className="muted" style={{ marginTop: 0 }}>
+            No logo or campus photograph recorded. The public page omits the space rather than showing a stock campus.
+          </p>
+        )}
         <ProfileSectionForm section="images" fields={IMAGE_FIELDS} detail={detail} onSaved={note} />
       </Section>
 

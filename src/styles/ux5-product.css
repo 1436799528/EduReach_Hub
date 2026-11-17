@@ -1917,21 +1917,22 @@
 }
 
 /* --------------------------------------------------------------------------
-   NEWS-1 — news cards stop being white squares
+   NEWS-1 / NEWS-3 — news cards leave the square system
    The square card system was scoped to homepage simulators, homepage news,
    services and scholarships. A news card is not a square: it leads with a
    photograph and carries a headline, so the square boundary clipped the first
    line of the title and left a 160px-wide card on a phone. These rules keep the
    system for the other three surfaces and take news out of it, then give the
-   feed one card per screen on a phone.
+   feed one card per screen on a phone. The card itself is the neutral surface
+   from NEWS-3, never the gradient NEWS-1 introduced.
    -------------------------------------------------------------------------- */
 
 .er-square-grid > a.er-news-card {
   aspect-ratio: auto !important;
   padding: 0 !important;
   gap: 0 !important;
-  background: var(--er-news-gradient) !important;
-  color: #fff !important;
+  background: var(--er-surface, #fff) !important;
+  color: var(--er-text-primary, #131B2E) !important;
   align-items: stretch !important;
 }
 

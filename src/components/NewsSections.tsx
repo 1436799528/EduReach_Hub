@@ -1,9 +1,8 @@
-import { ArrowRight, Newspaper } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { NewsItem } from '../lib/api';
 import { newsCategoryLabel } from '../data/newsCategories';
 import { freshnessDate, newsFreshness } from '../lib/newsFreshness';
-import { identityClassFor } from './CardIdentityMark';
-import { newsToneClass } from '../lib/newsTone';
+import OptimizedImage from './OptimizedImage';
 
 export { newsCategoryLabel };
 
@@ -19,53 +18,27 @@ function articleHref(item: NewsItem): string {
   return `/news/${encodeURIComponent(item.slug)}`;
 }
 
-function safeImageSrc(value: string | null): string | null {
-  const raw = String(value || '').trim();
-  if (!raw) return null;
-  if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
-  try {
-    const parsed = new URL(raw);
-    return parsed.protocol === 'https:' ? parsed.toString() : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
- * Article image with a fallback.
+ * Article image.
  *
- * Every article renders its OWN featured image. When an article genuinely has
- * no image (or the stored image fails to load), we render a neutral placeholder
- * instead of reusing one of the bundled stock photos. That reuse is what made
- * every card look identical.
+ * Every article renders its OWN featured image through the shared pipeline: the
+ * Netlify Image CDN serves WebP/AVIF at the size the slot asks for, the original
+ * is preserved, and a missing or broken image becomes the neutral placeholder
+ * rather than a stock photograph of something else. `NewsImage` never invents an
+ * image, and it never claims ownership of a remote one.
  */
-export function NewsImage({ item, className }: { item: NewsItem; className?: string }) {
-  const src = safeImageSrc(item.image_url);
+export function NewsImage({ item, className, layout = 'card' }: { item: NewsItem; className?: string; layout?: 'card' | 'row' | 'hero' }) {
   const label = newsCategoryLabel(item.category);
-  if (!src) {
-    return (
-      <span className={`er-news-noimage ${className || ''}`} aria-hidden="true">
-        <Newspaper size={18} />
-        <small>{label}</small>
-      </span>
-    );
-  }
+  const size = layout === 'row' ? { width: 112, height: 112 } : layout === 'hero' ? { width: 960, height: 540 } : { width: 300, height: 188 };
   return (
-    <img
-      src={src}
-      className={className}
+    <OptimizedImage
+      src={item.image_url}
       alt={`${item.title}, ${label}`}
-      loading="lazy"
-      decoding="async"
-      onError={(event) => {
-        // Broken media must not masquerade as a generic photo; swap to the
-        // placeholder once and stop handling errors.
-        const element = event.currentTarget;
-        element.onerror = null;
-        const placeholder = document.createElement('span');
-        placeholder.className = `er-news-noimage ${className || ''}`;
-        element.replaceWith(placeholder);
-      }}
+      width={size.width}
+      height={size.height}
+      layout={layout}
+      className={`er-news-photo ${className || ''}`.trim()}
+      placeholderLabel={label}
     />
   );
 }
@@ -97,24 +70,37 @@ export function NewsRow({ item }: { item: NewsItem }) {
   );
 }
 
-/** Four-column news card: image, category/date, headline, excerpt.
+/**
+ * News card: image, category · date, headline, summary, source.
  *
- * The card keeps the coloured gradient surface the rest of EduReach uses (its
- * tone comes from `newsToneClass`, never from row order) and always leads with
- * the article's own image. */
+ * One calm surface for every story. Colour is not decoration here: eight
+ * gradients by category made the board look like a fruit salad, and a reader
+ * does not learn anything from a card being plum rather than teal. What the
+ * reader needs is a readable headline, the article's own photograph, and an
+ * honest date — so the card is white, the type is dark, and the only colour is
+ * the category label's muted grey. Order in the grid changes nothing.
+ */
 export function NewsCard({ item }: { item: NewsItem }) {
   const freshness = newsFreshness(item);
   return (
-    <a className={`er-news-card is-${freshness.state} ${newsToneClass(item.category)}`} href={articleHref(item)}>
+    <a className={`er-news-card is-${freshness.state}`} href={articleHref(item)}>
       <span className="er-news-card-media"><NewsImage item={item} className="er-news-photo" /></span>
       <span className="er-news-card-body">
-        <small>{newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}</small>
+        <small className="er-news-card-kicker">
+          <span>{newsCategoryLabel(item.category)}</span>
+          <span aria-hidden="true">·</span>
+          <time dateTime={item.published_at || undefined}>{formatNewsDate(item.published_at)}</time>
+        </small>
         <strong>{item.title}</strong>
         {item.summary && <span className="er-news-card-summary">{item.summary}</span>}
-        {!freshness.current && <small className="er-news-freshness is-warning">{freshness.label}</small>}
+        {!freshness.current && (
+          <small className="er-news-freshness is-warning">{freshness.label}</small>
+        )}
         <span className="er-news-card-foot">
           <span>{item.source_name || 'EduReach updates'}</span>
-          <ArrowRight size={13} aria-hidden="true" />
+          <span className="er-news-card-read">
+            Read <ArrowRight size={13} aria-hidden="true" />
+          </span>
         </span>
       </span>
     </a>
@@ -134,7 +120,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
   return (
     <div className="er-featured-grid">
       {list.map((item) => (
-        <a key={item.id} className={`er-featured-card ${newsToneClass(item.category)}`} href={articleHref(item)}>
+        <a key={item.id} className="er-featured-card" href={articleHref(item)}>
           <span className="er-featured-media"><NewsImage item={item} className="er-news-photo" /></span>
           <span className="er-featured-body">
             <small>
@@ -158,7 +144,7 @@ export function TrendingNews({ items, limit = 5 }: { items: NewsItem[]; limit?: 
     <ol className="er-trend-list">
       {list.map((item, index) => (
         <li key={item.id}>
-          <a className={identityClassFor(item.category, 'news')} href={articleHref(item)}>
+          <a href={articleHref(item)}>
             <span className="er-trend-num">{String(index + 1).padStart(2, '0')}</span>
             <span className="er-trend-copy">
               <small>

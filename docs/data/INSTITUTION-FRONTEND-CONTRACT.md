@@ -184,7 +184,8 @@ table; the hardcoded record is the bridge until then.
   and filters, mappers, the deployment gate, the admission rules and the profile
   integration (29 assertions groups).
 * `tests/simulator-gradients.test.ts` — the four CBT gradients, their binding to
-  the exam type and their contrast (see `docs/features/NEWS-1-GRADIENT-CARDS.md`
-  for the news palette, which is deliberately untouched).
+  the exam type and their contrast. Simulator tints are deliberately untouched;
+  the news card is the neutral surface described in
+  `docs/features/NEWS-3-NEUTRAL-CARDS.md`.
 * `tests/e2e/institution-and-simulator-gradients.spec.ts` — the gradients in a
   real browser, the finder's honest empty state and the details page.

@@ -225,6 +225,21 @@ Tests: `tests/admission-goal.test.ts` (8), `tests/institution-review-ui.test.ts`
 - **`cutoff_marks` and `institution_course_offerings` remain empty in production**
   and are deliberately untouched: they are unreviewed legacy surfaces, and the new
   tables supersede them rather than migrate their contents.
+- **The public institution payload carries no images.** `logo_url` and
+  `hero_image_url` exist on the admin profile view only
+  (`src/lib/institutions/{types,repository}.ts`). The review editor previews both
+  through the shared image component, but a public profile cannot show a logo
+  until the public payload gains the fields and a publication rule for them —
+  an API change, not a component change, so it was not folded into this stage.
+- **News cards and the article hero moved to the shared image pipeline** (see
+  [`docs/features/NEWS-3-NEUTRAL-CARDS.md`](NEWS-3-NEUTRAL-CARDS.md)); the other
+  16 raster `<img>` sites still build their own markup. They each declare a
+  loading strategy, which is what the perf audit checks, but they do not get the
+  CDN's AVIF/WebP variants yet.
+- **Performance is build-time only.** Budgets and the current measurements are in
+  [`docs/operations/PERFORMANCE.md`](../operations/PERFORMANCE.md); no field
+  (Core Web Vitals) data has been collected, because no browser runs in this
+  sandbox.
 
 ## 7. Staging verification (2026-11-17)
 
