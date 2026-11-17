@@ -111,13 +111,14 @@ test('the phone header keeps its brand and its menu on screen', () => {
   assert.match(layout, /aria-label="Open mobile menu"/, 'and it is still named for assistive tech');
 });
 
-test('the practice page keeps the coloured cards and drops the white simulators', () => {
-  assert.doesNotMatch(cbtPage, /ExamSimulatorGrid/, 'no white simulator grid on the practice page');
-  assert.match(cbtPage, /Choose a question bank/, 'the coloured bank list is the way in');
-  assert.match(cbtPage, /er-bank-card er-bank-card-link \$\{identityClassFor\(exam\.exam_body, 'service'\)\}/, 'each bank keeps its identity colour');
-  assert.match(cbtPage, /setupPathForExam\(exam\)/, 'and still routes to its own setup');
-  // The component and its home usage are untouched, so the change is scoped.
-  assert.match(read('pages/HubHomePage.tsx'), /<ExamSimulatorGrid variant="start" \/>/, 'the home page still uses it');
+test('the practice page is one simulator hub, not a second card system', () => {
+  // The white simulator tiles and the coloured bank rows were two lists of the
+  // same banks. Practice now renders the shared simulator grid — the same card
+  // the homepage and the dashboard CBT tab use.
+  assert.match(cbtPage, /<ExamSimulatorGrid[^>]*showFilters/, 'one shared simulator grid is the way in');
+  assert.doesNotMatch(cbtPage, /er-bank-card|setupPathForExam|Choose a question bank/, 'the duplicate bank list is gone');
+  assert.match(read('pages/HubHomePage.tsx'), /<ExamSimulatorGrid \/>/, 'the home page uses the same component');
+  assert.match(read('src/components/ExamSimulatorGrid.tsx'), /<SimulatorCard key=\{simulator\.key\}/, 'and the same card');
 });
 
 test('the news page keeps its cards, its images and its empty state', () => {

@@ -1,195 +1,84 @@
-import { userFacingError } from '../lib/errors';
-import {
-  ArrowRight,
-  Calculator,
-  FileQuestion,
-  Trophy,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { BookOpen, FileText, Laptop, LogIn } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
-import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
-import FilterPills from '../src/components/FilterPills';
+import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import SectionHead from '../src/components/SectionHead';
-import { fetchCbtExams, fetchCbtExamsWithAvailability } from '../src/lib/api';
-import { isSupabaseConfigured } from '../src/lib/supabase';
-import { SkeletonRows } from '../src/components/Skeleton';
-import CbtHistoryPanel from '../src/components/CbtHistoryPanel';
+import { useAuth } from '../src/lib/auth';
+import { SIMULATOR_HUB_COPY, simulatorExamType } from '../src/data/simulators';
 
-type Exam = { id: string; title: string; exam_body: string; subject: string; description: string | null; duration_minutes: number; question_count?: number; subject_count?: number };
-
-type ExamMode = 'ALL' | 'JAMB' | 'POST-UTME' | 'WAEC' | 'NECO';
-
-// The card routes into the body-specific setup wizard and carries the real
-// exam id, so the setup page can show THIS exam's configured default duration
-// and start THIS exam's question pool. Durations are not shown on the card
-// itself; they live on the setup page where the student configures the session.
-function setupPathForExam(exam: Exam) {
-  const value = `${exam.exam_body} ${exam.id} ${exam.title}`.toLowerCase();
-  const base = value.includes('post-utme') || value.includes('postutme')
-    ? '/cbt/setup/post-utme'
-    : value.includes('waec')
-      ? '/cbt/setup/waec'
-      : value.includes('neco')
-        ? '/cbt/setup/neco'
-        : value.includes('jamb') || value.includes('utme')
-          ? '/cbt/setup/jamb'
-          : null;
-  if (!base) return `/cbt/practice?exam=${encodeURIComponent(exam.id)}`;
-  return `${base}?exam=${encodeURIComponent(exam.id)}`;
-}
-const modes: Array<{ id: ExamMode; label: string }> = [
-  { id: 'ALL', label: 'All Exams' },
-  { id: 'JAMB', label: 'JAMB / UTME' },
-  { id: 'POST-UTME', label: 'Post-UTME' },
-  { id: 'WAEC', label: 'WAEC SSCE' },
-  { id: 'NECO', label: 'NECO SSCE' },
-];
-
+/**
+ * The public Practice page.
+ *
+ * Practice answers exactly one question: *which CBT can I take?* It is the
+ * simulator hub, so every examination simulator appears here through the shared
+ * catalogue, and nothing else does — no practice history, results, analytics,
+ * services or news. Those belong to the authenticated dashboard (Results) or
+ * their own public pages.
+ *
+ * A visitor can understand and compare every simulator without an account.
+ * Starting one still follows the existing authentication rule: the session is
+ * saved to a student's account, so the setup step asks them to sign in.
+ */
 export default function CbtPage() {
-  const readModeFromUrl = (): ExamMode => {
-    if (typeof window === 'undefined') return 'ALL';
-    const requested = new URLSearchParams(window.location.search).get('mode')?.trim().toUpperCase();
-    return modes.some((item) => item.id === requested) ? (requested as ExamMode) : 'ALL';
-  };
-
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [mode, setMode] = useState<ExamMode>(() => readModeFromUrl());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  async function loadExams() {
-    setLoading(true);
-    setError('');
+  const { isAuthenticated, isLoading } = useAuth();
+  // The exam hubs deep-link here as /cbt?mode=jamb. The grid opens on that
+  // examination, and choosing another pill rewrites the query so the address
+  // stays shareable.
+  const requestedMode = (() => {
     try {
-      const catalogue = (isSupabaseConfigured
-        ? (await fetchCbtExamsWithAvailability()) as unknown as Exam[]
-        : (await fetchCbtExams()) as Exam[]);
-      // Show the catalogue the server returned. "Too few questions" is a
-      // startability detail the setup wizard explains; it is not a reason to
-      // make the listing disagree with the rest of the CBT surfaces.
-      setExams([...catalogue].sort((a, b) => {
-        const readiness = (exam: Exam) => typeof exam.question_count === 'number' && (exam.question_count < 5 || (exam.subject_count ?? 1) < 1) ? 1 : 0;
-        return readiness(a) - readiness(b) || String(a.title).localeCompare(String(b.title));
-      }));
-    } catch (value) {
-      setError(userFacingError(value, 'Unable to load CBT exams.'));
-    } finally {
-      setLoading(false);
+      return simulatorExamType(new URLSearchParams(window.location.search).get('mode') || '') ?? 'ALL';
+    } catch {
+      return 'ALL';
     }
-  }
-
-  useEffect(() => {
-    const syncMode = () => setMode(readModeFromUrl());
-    window.addEventListener('popstate', syncMode);
-    void loadExams();
-    return () => window.removeEventListener('popstate', syncMode);
-  }, []);
-
-  const filteredExams = useMemo(() => {
-    if (mode === 'ALL') return exams;
-
-    return exams.filter((exam) => {
-      const body = exam.exam_body.trim().toUpperCase().replace(/[\s_-]+/g, '');
-      const selected = mode.replace(/[\s_-]+/g, '');
-
-      if (selected === 'JAMB') return body === 'JAMB' || body === 'UTME';
-      if (selected === 'WAEC') return body === 'WAEC' || body.includes('WAEC');
-      if (selected === 'NECO') return body === 'NECO' || body.includes('NECO');
-      if (selected === 'POSTUTME') return body === 'POSTUTME' || body.includes('POSTUTME');
-      return body === selected;
-    });
-  }, [exams, mode]);
-
-  function changeMode(nextMode: string) {
-    const value = nextMode as ExamMode;
-    setMode(value);
-    window.history.replaceState({}, '', value === 'ALL' ? '/cbt' : '/cbt?mode=' + encodeURIComponent(value));
-  }
+  })();
+  const syncModeToUrl = (id: string) => {
+    try {
+      window.history.replaceState({}, '', id === 'ALL' ? '/cbt' : `/cbt?mode=${encodeURIComponent(id)}`);
+    } catch {
+      // A restricted history API does not stop the filter from working.
+    }
+  };
 
   return (
     <HubLayout>
-      <div className="hub-page">
+      <div className="hub-page er-practice-page">
         <div className="hub-container hub-narrow">
-          <div className="hub-section-heading hub-page-heading-compact">
+          <header className="er-practice-head">
             <div>
-              <h1 style={{ fontSize: '24px', fontWeight: 680, color: '#0f172a', margin: '0 0 4px' }}>CBT practice</h1>
-              <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>
-                Choose a bank, then pick your subjects and the number of questions.
-              </p>
+              <p className="hub-eyebrow">Practice</p>
+              <h1>{SIMULATOR_HUB_COPY.practice.title}</h1>
+              <p>{SIMULATOR_HUB_COPY.practice.lede}</p>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <a className="hub-outline-btn" href="/screening-calculator" style={{ textDecoration: 'none' }}>
-                <Calculator size={14} /> Screening Calculator
+            {!isLoading && (isAuthenticated ? (
+              <a className="hub-outline-btn er-practice-signin" href="/dashboard/cbt">
+                <Laptop size={14} aria-hidden="true" /> Open CBT in my dashboard
               </a>
-              <a className="hub-primary-btn" href="/dashboard/cbt" style={{ textDecoration: 'none' }}>
-                <Trophy size={14} /> My Results
+            ) : (
+              <a className="hub-outline-btn er-practice-signin" href={`/login?next=${encodeURIComponent('/dashboard/cbt')}`}>
+                <LogIn size={14} aria-hidden="true" /> Sign in to save results
               </a>
-            </div>
-          </div>
+            ))}
+          </header>
 
-          {/* The white simulator tiles are gone. They duplicated the coloured
-              bank cards below (same exams, same banks, a second trip through
-              the catalogue) and on a phone they pushed the actual subject
-              choice off the first screen. The coloured cards carry the exam's
-              identity, its mark and the exact bank id, so one list is enough. */}
-          <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Choose a question bank" />
-            <div style={{ marginBottom: '18px' }}>
-              <FilterPills options={modes} active={mode} onChange={changeMode} ariaLabel="Exam categories" />
-            </div>
+          <section className="er-section" aria-label="CBT simulators" style={{ marginTop: 0 }}>
+            <SectionHead title="Choose a simulator" />
+            <ExamSimulatorGrid key={requestedMode} showFilters initialFilter={requestedMode} onFilterChange={syncModeToUrl} />
           </section>
 
-          {loading && <SkeletonRows rows={4} label="Loading question banks" />}
-          {error && (
-            <div className="hub-form-error" role="alert" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <span>{error}</span>
-              <button type="button" className="hub-outline-btn" onClick={() => void loadExams()} disabled={loading}>Try again</button>
-            </div>
-          )}
-          {!loading && !error && !filteredExams.length && (
-            <div className="hub-panel hub-empty">
-              <FileQuestion size={26} style={{ color: '#5e6c82', marginBottom: '8px' }} />
-              <h3 style={{ margin: '0 0 4px', fontSize: '15px' }}>No {mode === 'ALL' ? '' : mode + ' '}exams available yet.</h3>
-              <p style={{ margin: 0, fontSize: '13px', color: '#5e6c82' }}>Select another category to practice.</p>
-            </div>
-          )}
-
-          {/* The student's own sessions sit directly under the banks so a
-              half-finished paper is one tap away, not buried in a dashboard. */}
-          <section className="er-section" style={{ marginTop: '26px' }}>
-            <CbtHistoryPanel />
-          </section>
-
-          {!loading && !error && filteredExams.length > 0 && (
-            <div className="er-bank-list">
-              {filteredExams.map((exam) => (
-                // The whole card is the link. The duration is NOT
-                // shown here - the setup page (next step) reads the exam's
-                // configured default duration from the database and lets the
-                // student choose an allowed duration before the timer starts.
-                <a
-                  key={exam.id}
-                  href={setupPathForExam(exam)}
-                  className={`er-bank-card er-bank-card-link ${identityClassFor(exam.exam_body, 'service')}`}
-                >
-                  <div className="er-bank-main">
-                    <CardIdentityMark value={exam.exam_body} type="service" />
-                    <div className="er-bank-copy">
-                      <span className="er-bank-eyebrow">
-                        {exam.exam_body} • {exam.subject}
-                      </span>
-                      <h3>{exam.title}</h3>
-                      {exam.description && <span className="er-bank-desc">{exam.description}</span>}
-                    </div>
-                  </div>
-
-                  <span className="er-card-arrow" aria-hidden="true">
-                    <ArrowRight size={16} />
-                  </span>
+          {/* Practice/Questions is one destination: the simulators above, and
+              the offline past-paper library below. One quiet row, not a second
+              card grid competing with the simulators. */}
+          <section className="er-section er-practice-questions" aria-label="Past questions">
+            <SectionHead title="Revise with past questions" />
+            <ul className="er-home-tool-list">
+              <li>
+                <a href="/past-questions">
+                  <FileText size={16} aria-hidden="true" />
+                  <span>Past questions by exam and subject</span>
+                  <BookOpen size={13} aria-hidden="true" />
                 </a>
-              ))}
-            </div>
-          )}
+              </li>
+            </ul>
+          </section>
         </div>
       </div>
     </HubLayout>

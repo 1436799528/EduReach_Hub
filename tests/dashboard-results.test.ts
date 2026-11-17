@@ -11,16 +11,17 @@ import { pageSlice } from '../src/lib/studentDashboard';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string): string => readFileSync(join(root, path), 'utf8');
 const dashboard = read('pages/StudentDashboardV2.tsx');
-const cbtView = dashboard.slice(dashboard.indexOf('const cbtView ='), dashboard.indexOf('const toolsView ='));
+// Results owns practice history and analysis now; CBT is the simulator hub.
+const resultsView = dashboard.slice(dashboard.indexOf('const resultsView ='), dashboard.indexOf('const cbtHubView ='));
 
 test('a score is only shown when a paper has been sat', () => {
   assert.match(dashboard, /summarizeCbtAttempts\(attempts\)/, 'all result metrics share the guarded calculation');
   assert.match(dashboard, /const hasScores = averageScore !== null/, 'the condition distinguishes missing scores from zero');
-  assert.match(cbtView, /\{averageScore !== null \? `\$\{averageScore\}%` : '—'\}/, 'no average is reported without scored tests');
-  assert.match(cbtView, /\{bestScore !== null \? `\$\{bestScore\}%` : '—'\}/, 'no best score is reported without scored tests');
-  assert.match(cbtView, /After your first test/, 'the empty value explains itself');
-  assert.doesNotMatch(cbtView, /\{averageScore\}%<\/span>/, 'the old unconditional percentage is gone');
-  assert.match(cbtView, /Questions in completed tests/, 'a question total is not mislabeled as questions answered');
+  assert.match(resultsView, /\{averageScore !== null \? `\$\{averageScore\}%` : '—'\}/, 'no average is reported without scored tests');
+  assert.match(resultsView, /\{bestScore !== null \? `\$\{bestScore\}%` : '—'\}/, 'no best score is reported without scored tests');
+  assert.match(resultsView, /After your first test/, 'the empty value explains itself');
+  assert.doesNotMatch(resultsView, /\{averageScore\}%<\/span>/, 'the old unconditional percentage is gone');
+  assert.match(resultsView, /Questions in completed tests/, 'a question total is not mislabeled as questions answered');
   assert.doesNotMatch(dashboard, /streak|rank(ing)?|hours studied|percentile/i, 'no metric is invented');
 });
 
@@ -35,8 +36,8 @@ test('a result can be reviewed and deleted from the dashboard, with confirmation
   assert.match(dashboard, /setAttempts\(\(current\) => current\.filter\(\(attempt\) => attempt\.id !== row\.id\)\)/, 'only the deleted row leaves the list');
   assert.match(dashboard, /setAttemptNotice\('Result deleted/, 'success is stated, not implied');
   assert.match(dashboard, /userFacingError\(error, 'That result could not be deleted/, 'a failure is explained');
-  assert.match(cbtView, /role="status" aria-live="polite"/, 'the outcome is announced');
-  assert.match(dashboard, /getElementById\('dash-cbt-heading'\)\?\.focus\(\)/, 'focus is not dropped when the button disappears');
+  assert.match(resultsView, /role="status" aria-live="polite"/, 'the outcome is announced');
+  assert.match(dashboard, /getElementById\('dash-results-heading'\)\?\.focus\(\)/, 'focus is not dropped when the button disappears');
   assert.match(dashboard, /state !== 'active' && \(confirmDeleteId === row\.id/, 'an in-progress paper is resumed, not deleted');
   assert.match(dashboard, /isScoredSubmission\(row\)/, 'only a valid scored submission can display a score');
 });
@@ -77,11 +78,11 @@ test('results are paged, and the page survives deleting its last row', () => {
 
 test('the dashboard renders the page slice, not the whole list', () => {
   assert.match(dashboard, /const attemptPageView = pageSlice\(attempts, attemptPage, ATTEMPTS_PER_PAGE\)/, 'the slice is computed once');
-  assert.match(cbtView, /attemptsTable\(visibleAttempts\)/, 'only the page is rendered');
-  assert.match(cbtView, /Showing \{attemptPageView\.first\}–\{attemptPageView\.last\} of \{attempts\.length\}/, 'the range is stated');
-  assert.match(cbtView, /disabled=\{safePage === 0\}/, 'Previous is unavailable on the first page');
-  assert.match(cbtView, /disabled=\{safePage >= pageCount - 1\}/, 'Next is unavailable on the last page');
-  assert.match(cbtView, /most recent 50/, 'the fetch ceiling is disclosed rather than implied');
+  assert.match(resultsView, /attemptsTable\(visibleAttempts\)/, 'only the page is rendered');
+  assert.match(resultsView, /Showing \{attemptPageView\.first\}–\{attemptPageView\.last\} of \{attempts\.length\}/, 'the range is stated');
+  assert.match(resultsView, /disabled=\{safePage === 0\}/, 'Previous is unavailable on the first page');
+  assert.match(resultsView, /disabled=\{safePage >= pageCount - 1\}/, 'Next is unavailable on the last page');
+  assert.match(resultsView, /most recent 50/, 'the fetch ceiling is disclosed rather than implied');
 });
 
 test('a failed saved-item deletion restores the item where it was', () => {

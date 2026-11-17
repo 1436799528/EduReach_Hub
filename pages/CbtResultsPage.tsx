@@ -28,6 +28,8 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
   const [deleteError, setDeleteError] = useState('');
   const [deleteSuccess, setDeleteSuccess] = useState('');
   const deleteDialog = useRef<HTMLDialogElement | null>(null);
+  // A ref, not the busy state: a second click can land before React rerenders.
+  const deleteInFlight = useRef(false);
 
   const loadResult = () => {
     const attemptId = routeAttemptId || new URLSearchParams(window.location.search).get('attempt') || localStorage.getItem(localStorageKey('last-cbt-attempt')) || '';
@@ -54,18 +56,20 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
 
   async function removeResult() {
     const attemptId = String(result?.attempt?.id || routeAttemptId || '');
-    if (!attemptId) return;
+    if (!attemptId || deleteInFlight.current) return;
+    deleteInFlight.current = true;
     setDeleteBusy(true);
     setDeleteError('');
     setDeleteSuccess('');
     try {
       await deleteCbtAttempt(attemptId);
+      setDeleteSuccess('Deleted this CBT result. It is no longer on your account. Start a new practice test from the CBT Centre.');
       setConfirmDelete(false);
       deleteDialog.current?.close();
-      setDeleteSuccess('Deleted this CBT result. It is no longer on your account. Start a new practice test from the CBT Centre.');
     } catch (value) {
       setDeleteError(userFacingError(value, 'This result could not be deleted.'));
     } finally {
+      deleteInFlight.current = false;
       setDeleteBusy(false);
     }
   }

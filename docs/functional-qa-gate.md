@@ -59,16 +59,19 @@ Public routes introduce services and tools:
 
 Protected routes manage account activity:
 
-- `/dashboard`
-- `/dashboard/services`
-- `/dashboard/applications`
-- `/dashboard/cbt`
-- `/dashboard/cbt/results`
-- `/dashboard/past-questions`
-- `/dashboard/saved`
-- `/dashboard/scholarships`
-- `/dashboard/notifications`
+- `/dashboard` — Overview
+- `/dashboard/cbt` — CBT simulator hub
+- `/dashboard/results` — completed sessions, scores and analysis
+- `/dashboard/results/:attemptId` — one saved result
+- `/dashboard/profile` — profile, preferences and privacy
+- `/dashboard/services` — request history (secondary)
+- `/dashboard/notifications` — notifications (secondary)
 - `/dashboard/tools`
+- `/dashboard/saved`
+- `/dashboard/applications` (redirects to `/dashboard/services`)
+- `/dashboard/cbt/results` (redirects to `/dashboard/results`)
+- `/dashboard/past-questions` (redirects to `/past-questions`)
+- `/dashboard/scholarships` (redirects to `/jobs`)
 - `/profile`
 - `/settings`
 

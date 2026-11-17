@@ -4,8 +4,8 @@ import { annotateFailure } from './report';
 /**
  * Two surfaces, one file:
  *
- *   * the four CBT simulator gradients — colour must follow the exam type, not
- *     the card's position in the catalogue;
+ *   * the CBT simulator cards — one shared card, faint examination tint bound
+ *     to the canonical exam type rather than the card's position;
  *   * the institution surface — honest empty states, no invented ownership and
  *     no verified tick for data that has not been published.
  *
@@ -24,17 +24,33 @@ const BANKS = [
   { id: 'bank-neco', title: 'NECO SSCE Practice Bank', exam_body: 'NECO', subject: 'English Language', description: 'A live NECO bank.', duration_minutes: 60, question_count: 40, subject_count: 4 },
 ];
 
-const EXPECTED_GRADIENTS: Record<string, string> = {
-  jamb: 'linear-gradient(115deg, rgb(18, 63, 90), rgb(29, 101, 133))',
-  waec: 'linear-gradient(115deg, rgb(20, 83, 45), rgb(22, 128, 63))',
-  neco: 'linear-gradient(115deg, rgb(76, 29, 149), rgb(109, 40, 217))',
-  'post-utme': 'linear-gradient(115deg, rgb(124, 45, 18), rgb(194, 65, 12))',
+/** The faint surface each examination declares, as the browser reports it. */
+const EXPECTED_TINTS: Record<string, string> = {
+  jamb: 'rgb(244, 248, 242)',
+  waec: 'rgb(242, 246, 251)',
+  neco: 'rgb(249, 247, 238)',
+  'post-utme': 'rgb(251, 244, 240)',
+};
+
+/** The readable title ink each examination uses on its own tint. */
+const EXPECTED_INK: Record<string, string> = {
+  jamb: 'rgb(23, 51, 44)',
+  waec: 'rgb(27, 60, 87)',
+  neco: 'rgb(64, 58, 18)',
+  'post-utme': 'rgb(77, 36, 24)',
 };
 
 async function mockBanks(page: Page, items: typeof BANKS = BANKS) {
   await page.route('**/api/cbt/exams*', (route) =>
     route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items }) }),
   );
+}
+
+async function surfaceOf(page: Page, type: string) {
+  return page.locator(`.er-sim-card[data-exam-type="${type}"]`).evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { background: style.backgroundColor, image: style.backgroundImage };
+  });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -53,32 +69,34 @@ test.afterEach(async ({ page }, testInfo) => {
   expect((page as unknown as { runtimeErrors: string[] }).runtimeErrors).toEqual([]);
 });
 
-test('each simulator card keeps its own exam gradient', async ({ page }) => {
+test('each simulator card keeps its own faint examination tint', async ({ page }) => {
   await mockBanks(page);
   await page.goto('/');
 
   await expect(page.locator('.er-sim-card')).toHaveCount(4);
-  for (const [type, gradient] of Object.entries(EXPECTED_GRADIENTS)) {
+  for (const type of Object.keys(EXPECTED_TINTS)) {
     const card = page.locator(`.er-sim-card[data-exam-type="${type}"]`);
     await expect(card).toHaveCount(1);
-    const background = await card.evaluate((element) => getComputedStyle(element).backgroundImage);
-    expect(background.replace(/\s+/g, ' '), `${type} keeps its own gradient`).toBe(gradient);
+
+    const { background, image } = await surfaceOf(page, type);
+    expect(background, `${type} keeps its faint tint`).toBe(EXPECTED_TINTS[type]);
+    expect(image, `${type} is a flat surface, not a gradient`).toBe('none');
+
     const colour = await card.locator('.er-sim-body > strong').evaluate((element) => getComputedStyle(element).color);
-    expect(colour, `${type} keeps white type`).toBe('rgb(255, 255, 255)');
+    expect(colour, `${type} uses its readable title ink`).toBe(EXPECTED_INK[type]);
+
     const href = await card.getAttribute('href');
-    expect(href, `${type} still routes to its own bank`).toBeTruthy();
+    expect(href, `${type} still routes into its own simulator`).toBeTruthy();
   }
 });
 
-test('the gradients survive a re-ordered catalogue', async ({ page }) => {
+test('the tints survive a re-ordered catalogue', async ({ page }) => {
   await mockBanks(page, [...BANKS].reverse());
   await page.goto('/');
   await expect(page.locator('.er-sim-card')).toHaveCount(4);
-  for (const [type, gradient] of Object.entries(EXPECTED_GRADIENTS)) {
-    const background = await page
-      .locator(`.er-sim-card[data-exam-type="${type}"]`)
-      .evaluate((element) => getComputedStyle(element).backgroundImage);
-    expect(background.replace(/\s+/g, ' '), `${type} is not painted by position`).toBe(gradient);
+  for (const [type, tint] of Object.entries(EXPECTED_TINTS)) {
+    const { background } = await surfaceOf(page, type);
+    expect(background, `${type} is tinted by its exam type, not its position`).toBe(tint);
   }
 });
 
@@ -94,12 +112,22 @@ test('the simulator cards stay inside a narrow phone viewport', async ({ page, i
     );
     expect(overflow, `simulator cards overflow at ${width}px`).toBeLessThanOrEqual(1);
   }
-  for (const [type] of Object.entries(EXPECTED_GRADIENTS)) {
-    const background = await page
-      .locator(`.er-sim-card[data-exam-type="${type}"]`)
-      .evaluate((element) => getComputedStyle(element).backgroundImage);
-    expect(background, `${type} keeps its gradient on a phone`).toContain('linear-gradient');
+  for (const [type, tint] of Object.entries(EXPECTED_TINTS)) {
+    const { background, image } = await surfaceOf(page, type);
+    expect(background, `${type} keeps its tint on a phone`).toBe(tint);
+    expect(image, `${type} stays flat on a phone`).toBe('none');
   }
+});
+
+test('the public Practice page shows the same simulator cards and no history', async ({ page }) => {
+  await mockBanks(page);
+  await page.goto('/cbt');
+
+  await expect(page.locator('.er-sim-card')).toHaveCount(4);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(/practice/i);
+  // Results, history and statistics belong to the signed-in dashboard.
+  await expect(page.getByText(/practice history|your results|average score/i)).toHaveCount(0);
+  await expect(page.locator('.er-bank-card')).toHaveCount(0);
 });
 
 test('news cards keep their own tone system', async ({ page }) => {
@@ -111,12 +139,10 @@ test('news cards keep their own tone system', async ({ page }) => {
     return;
   }
   const backgrounds = await cards.evaluateAll((elements) =>
-    elements.map((element) => getComputedStyle(element).backgroundImage),
+    elements.map((element) => getComputedStyle(element).backgroundColor),
   );
   for (const background of backgrounds) {
-    for (const gradient of Object.values(EXPECTED_GRADIENTS)) {
-      expect(background.replace(/\s+/g, ' '), 'a news card never borrows a simulator gradient').not.toBe(gradient);
-    }
+    expect(Object.values(EXPECTED_TINTS), 'a news card never borrows a simulator tint').not.toContain(background);
   }
 });
 

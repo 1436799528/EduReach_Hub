@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import {
   AlarmClock,
   BarChart3,
@@ -12,7 +12,9 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageCircle,
   MonitorPlay,
+  PlayCircle,
   Shield,
   ShieldCheck,
   Trash2,
@@ -27,6 +29,7 @@ import { useToast } from '../src/components/ui/Toast';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { InlineNotice } from '../src/components/AsyncState';
 import CgpaCalculatorCard from '../src/components/dashboard/CgpaCalculatorCard';
+import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import { ChangeChip, DistributionChart, SubjectBars, TrendChart } from '../src/components/dashboard/ProgressCharts';
 import { apiUrl } from '../src/lib/apiBase';
 import { deleteCbtAttempt } from '../src/lib/api';
@@ -63,11 +66,15 @@ import {
 } from '../src/lib/studentDashboard';
 import '../src/student-dashboard.css';
 
+// The profile is one page, mounted here without the public site shell so the
+// dashboard's Profile tab and /profile cannot drift apart.
+const ProfilePanel = lazy(() => import('./ProfileCompletionPage'));
+
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
 
-export type DashboardTab = 'dashboard' | 'services' | 'cbt' | 'tools';
+export type DashboardTab = 'dashboard' | 'cbt' | 'results' | 'profile' | 'tools' | 'services';
 
 type Profile = {
   first_name?: string | null;
@@ -86,6 +93,7 @@ type Profile = {
   role?: string | null;
   avatar_url?: string | null;
   mfa_enabled?: boolean | null;
+  academic_interests?: string[] | null;
 };
 
 type ServiceRow = { id: string; service_key: string; title: string };
@@ -94,16 +102,26 @@ type Attempt = { id: string; score: number | null; correct_answers: number; tota
 
 const TAB_ROUTES: Record<DashboardTab, string> = {
   dashboard: '/dashboard',
-  services: '/dashboard/services',
   cbt: '/dashboard/cbt',
+  results: '/dashboard/results',
+  profile: '/dashboard/profile',
   tools: '/dashboard/tools',
+  services: '/dashboard/services',
 };
 
+/**
+ * The student's five primary destinations, in this order: what is happening
+ * (Overview), what to practise (CBT), what has been achieved (Results), who the
+ * student is (Profile) and what supports the work (Tools). My requests is a
+ * service workflow, not a study destination, so it lives in the sidebar's
+ * secondary list instead of taking a primary slot.
+ */
 const NAV: Array<{ tab: DashboardTab; label: string; short: string; Icon: typeof LayoutDashboard }> = [
   { tab: 'dashboard', label: 'Overview', short: 'Overview', Icon: LayoutDashboard },
-  { tab: 'services', label: 'My Requests', short: 'Requests', Icon: ClipboardList },
-  { tab: 'cbt', label: 'My CBT', short: 'CBT', Icon: MonitorPlay },
-  { tab: 'tools', label: 'Tools & Saved', short: 'Tools', Icon: Wrench },
+  { tab: 'cbt', label: 'CBT', short: 'CBT', Icon: MonitorPlay },
+  { tab: 'results', label: 'Results', short: 'Results', Icon: BarChart3 },
+  { tab: 'profile', label: 'Profile', short: 'Profile', Icon: User },
+  { tab: 'tools', label: 'Tools', short: 'Tools', Icon: Wrench },
 ];
 
 const localSavedItemsKey = () => localStorageKey('saved-items');
@@ -526,7 +544,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       setAttemptNotice('Result deleted. It is no longer on your account. Start a new practice test from the CBT Centre.');
       // The row that held focus is gone; put focus back on the section heading
       // so a keyboard user is not dropped at the top of the document.
-      window.requestAnimationFrame(() => document.getElementById('dash-cbt-heading')?.focus());
+      window.requestAnimationFrame(() => document.getElementById('dash-results-heading')?.focus());
     } catch (error) {
       // The row stays, the confirmation closes, and the reason is announced.
       setAttemptNotice(userFacingError(error, 'That result could not be deleted. Check your connection and try again.'));
@@ -642,7 +660,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const accountLinks = (
     <>
-      <a href="/profile" className="edureach-nav-item"><User size={15} /> Academic Profile</a>
+      <a href="/dashboard/profile" className="edureach-nav-item"><User size={15} /> Profile</a>
       <button type="button" className="edureach-nav-item" onClick={() => { setSecurityOpen(true); setProfileMenuOpen(false); }}>
         <Shield size={15} /> Security &amp; Password
       </button>
@@ -713,7 +731,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 <span className="dash-row-actions">
                   {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume</a>}
                   {state === 'expired' && <a className="dash-card-link" href="/cbt">Start new test</a>}
-                  {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review result</a>}
+                  {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/results/${encodeURIComponent(row.id)}`}>Review result</a>}
                   {state !== 'active' && (
                     <details className="hub-more" style={{ display: 'inline-block' }}>
                       <summary aria-label="More actions" className="dash-card-link" style={{ textDecoration: 'none', padding: '4px 8px' }}>•••</summary>
@@ -761,8 +779,8 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <div className="dash-row-meta">
             <span>{isScoredSubmission(row) ? `${row.correct_answers}/${row.total_questions} correct` : state === 'expired' ? 'Time ran out' : state === 'active' ? 'Unfinished attempt' : label} • {fmtDate(row.submitted_at || row.created_at)}</span>
             {state === 'active' && <a className="dash-card-link" href={`/cbt/session/${encodeURIComponent(row.id)}`}>Resume →</a>}
-            {state === 'expired' && <a className="dash-card-link" href="/cbt">Start a new test →</a>}
-            {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(row.id)}`}>Review →</a>}
+            {state === 'expired' && <a className="dash-card-link" href="/dashboard/cbt">Start a new test →</a>}
+            {row.status === 'submitted' && <a className="dash-card-link" href={`/dashboard/results/${encodeURIComponent(row.id)}`}>Review →</a>}
             {state !== 'active' && (confirmDeleteId === row.id ? (
               <span className="dash-inline-confirm" role="group" aria-label={`Delete ${row.subject || 'this result'}`}>
                 <span>Delete this result?</span>
@@ -804,11 +822,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             {profileComplete ? 'Profile complete' : `${profileCompletionPercent}% complete`}
           </span>
           {profileComplete ? (
-            <a href="/profile" className="dash-icon-btn" aria-label="Edit profile" title="Edit profile">
+            <a href="/dashboard/profile" className="dash-icon-btn" aria-label="Edit profile" title="Edit profile">
               <Edit size={16} aria-hidden="true" />
             </a>
           ) : (
-            <a href="/profile" className="dash-btn dash-btn-secondary">
+            <a href="/dashboard/profile" className="dash-btn dash-btn-secondary">
               <Edit size={13} aria-hidden="true" /> Complete profile
             </a>
           )}
@@ -837,6 +855,40 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           </ul>
         </section>
       )}
+
+      {/* The authenticated homepage: the student's own preparation focus and
+          the quickest route back into CBT. Every value comes from this account;
+          an empty field says so rather than borrowing public content. */}
+      <section className="dash-card dash-preparation" aria-labelledby="dash-preparation-heading">
+        <div className="dash-card-header">
+          <div>
+            <h2 className="dash-card-title" id="dash-preparation-heading">Your preparation</h2>
+            <p className="dash-metric-hint">What you told EduReach you are working towards.</p>
+          </div>
+          <a className="dash-btn dash-btn-small dash-btn-primary" href="/dashboard/cbt">Open CBT</a>
+        </div>
+        <div className="dash-preparation-grid">
+          <div>
+            <span>Examinations</span>
+            <strong>{(profile?.academic_interests || []).join(' · ') || 'Not selected yet'}</strong>
+          </div>
+          <div>
+            <span>Institution</span>
+            <strong>{profile?.school || 'Not added yet'}</strong>
+          </div>
+          <div>
+            <span>Course / programme</span>
+            <strong>{profile?.course_programme || 'Not added yet'}</strong>
+          </div>
+          <div>
+            <span>Level</span>
+            <strong>{profile?.level || 'Not added yet'}</strong>
+          </div>
+        </div>
+        <p className="dash-metric-hint">
+          Update your examinations and institution in <a className="dash-card-link" href="/dashboard/profile">Profile</a>.
+        </p>
+      </section>
 
       <section className="dash-kpi-grid" aria-label="Learning summary">
         <article className="dash-kpi">
@@ -871,7 +923,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                 <h2 id="dash-analytics-heading">Performance</h2>
                 <p>Scored papers only.</p>
               </div>
-              <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>All results</button>
+              <button type="button" className="dash-card-link" onClick={() => openTab('results')}>All results</button>
             </div>
             <div className="dash-analytics-grid">
               <article className="dash-chart-panel dash-chart-panel--wide">
@@ -898,7 +950,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                     </div>
                     <p className="dash-latest-subject">{performance.latest.subject}</p>
                     {performance.latest.id && (
-                      <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(performance.latest.id)}`}>View result →</a>
+                      <a className="dash-card-link" href={`/dashboard/results/${encodeURIComponent(performance.latest.id)}`}>View result →</a>
                     )}
                   </>
                 ) : (
@@ -972,7 +1024,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <h2>Not enough activity yet</h2>
             <p>Your first scored paper unlocks the score trend, subject averages and recommendations.</p>
           </div>
-          <a className="dash-btn dash-btn-primary" href="/cbt">Start a practice paper</a>
+          <a className="dash-btn dash-btn-primary" href="/dashboard/cbt">Start a practice paper</a>
         </section>
       )}
 
@@ -984,13 +1036,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="dash-recent-activity-group">
           <div className="dash-recent-activity-heading">
             <h3>CBT results</h3>
-            {attempts.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('cbt')}>View all ({attempts.length})</button>}
+            {attempts.length > 0 && <button type="button" className="dash-card-link" onClick={() => openTab('results')}>View all ({attempts.length})</button>}
           </div>
           {attemptsUnavailable
             ? <p role="status">CBT history could not be loaded. Please refresh to try again.</p>
             : attempts.length
             ? attemptsTable(attempts.slice(0, 3))
-            : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/cbt', 'Start practice')}
+            : emptyState('No CBT attempts yet. Take a timed practice test and your scores will be tracked here.', '/dashboard/cbt', 'Start practice')}
         </div>
       </section>
     </>
@@ -1012,14 +1064,14 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     </section>
   );
 
-  const cbtView = (
-    <section className="dash-card" aria-labelledby="dash-cbt-heading">
+  const resultsView = (
+    <section className="dash-card" aria-labelledby="dash-results-heading">
       <div className="dash-card-header">
         <div>
-          <h1 className="dash-page-title" id="dash-cbt-heading" tabIndex={-1}>My CBT</h1>
-          <p className="dash-page-sub">Timed practice attempts across JAMB, WAEC, NECO and Post-UTME.</p>
+          <h1 className="dash-page-title" id="dash-results-heading" tabIndex={-1}>Results</h1>
+          <p className="dash-page-sub">Completed sessions, scores, subject performance and improvement across JAMB, WAEC, NECO and Post-UTME.</p>
         </div>
-        <a href="/cbt" className="dash-btn dash-btn-primary">Start practice</a>
+        <a href="/dashboard/cbt" className="dash-btn dash-btn-primary">Start practice</a>
       </div>
       {attemptsUnavailable ? <p role="status">CBT history could not be loaded. Please refresh to try again.</p> : <>
       <p className="dash-metric-hint">Showing your last {attempts.length} attempt{attempts.length === 1 ? '' : 's'} (maximum 50), not all-time totals.</p>
@@ -1077,7 +1129,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             <h2 id="dash-latest-cbt" className="dash-card-title">Latest CBT</h2>
             <p className="dash-metric-hint">Your most recent submitted paper.</p>
           </div>
-          {latestAttempt && <a className="dash-card-link" href={`/dashboard/cbt/results/${encodeURIComponent(latestAttempt.id)}`}>Review result →</a>}
+          {latestAttempt && <a className="dash-card-link" href={`/dashboard/results/${encodeURIComponent(latestAttempt.id)}`}>Review result →</a>}
         </div>
         {latestAttempt ? (
           <div className="dash-cbt-latest-grid">
@@ -1148,7 +1200,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           <div className="dash-row-meta">{row.correct} of {row.questions} questions correct across {row.attempts} scored {row.attempts === 1 ? 'paper' : 'papers'}{row.latest !== null ? ` · Latest ${row.latest}%` : ''}{row.previous !== null ? ` · Previous ${row.previous}%` : ''}</div>
         </li>)}</ul> : <p className="dash-metric-hint">No single-subject scored papers with a complete saved question plan in this sample yet.</p>}
         <h3 className="dash-card-title">Practice suggestion</h3>
-        {suggestedSubject ? <p className="dash-metric-hint">Consider another {suggestedSubject.subject} practice paper. It has the lowest score among subjects with at least two scored single-subject papers and 20 questions in this sample; this is not a weak-topic diagnosis. <a className="dash-card-link" href="/cbt">Choose practice</a></p> : <p className="dash-metric-hint">A comparison needs at least two subjects with two scored single-subject papers and 20 questions each, with different scores. Review a result or choose a practice paper in the meantime.</p>}
+        {suggestedSubject ? <p className="dash-metric-hint">Consider another {suggestedSubject.subject} practice paper. It has the lowest score among subjects with at least two scored single-subject papers and 20 questions in this sample; this is not a weak-topic diagnosis. <a className="dash-card-link" href="/dashboard/cbt">Choose practice</a></p> : <p className="dash-metric-hint">A comparison needs at least two subjects with two scored single-subject papers and 20 questions each, with different scores. Review a result or choose a practice paper in the meantime.</p>}
       </div>
       <p className="dash-metric-hint">{scoreChange === null ? 'Complete two scored tests to compare your latest results.' : `Latest score compared with your previous scored test: ${scoreChange > 0 ? '+' : ''}${scoreChange} percentage points. Different papers may not be directly comparable.`} Review completed results to decide what to practise next; subject-level weaknesses are not inferred from overall scores.</p>
       <div className="dash-attempt-notice" role="status" aria-live="polite">{attemptNotice}</div>
@@ -1172,7 +1224,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
             </div>
           </>
         )
-        : emptyState('No attempts yet. Your scores, best result and question count will build up here after your first practice test.', '/cbt', 'Start practice')}
+        : emptyState('No attempts yet. Your scores, best result and question count will build up here after your first practice test.', '/dashboard/cbt', 'Start practice')}
       </>}
     </section>
   );
@@ -1254,7 +1306,69 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     </>
   );
 
-  const view = activeTab === 'services' ? requestsView : activeTab === 'cbt' ? cbtView : activeTab === 'tools' ? toolsView : overview;
+  /**
+   * CBT — the same simulator hub the public Practice page renders, inside the
+   * student's own environment. Choosing a simulator opens its existing setup
+   * workflow; the session and its result are saved to this account.
+   */
+  const activeAttempt = attempts.find(isActiveCbtAttempt) || null;
+  const cbtHubView = (
+    <>
+      <div className="dash-page-head">
+        <div>
+          <h1 className="dash-page-title">CBT</h1>
+          <p className="dash-page-sub">Every simulator is here. Choose an exam to configure and start a timed session.</p>
+        </div>
+      </div>
+
+      {activeAttempt && (
+        <section className="dash-card dash-resume" aria-labelledby="dash-resume-heading">
+          <div className="dash-card-header">
+            <div>
+              <h2 className="dash-card-title" id="dash-resume-heading">You have an unfinished paper</h2>
+              <p className="dash-metric-hint">{attemptTitle(activeAttempt)} · started {fmtDate(activeAttempt.created_at)} · the timer keeps running</p>
+            </div>
+            <a className="dash-btn dash-btn-primary" href={`/cbt/session/${encodeURIComponent(activeAttempt.id)}`}>
+              <PlayCircle size={14} aria-hidden="true" /> Resume
+            </a>
+          </div>
+        </section>
+      )}
+
+      <section className="dash-card" aria-labelledby="dash-cbt-simulators">
+        <div className="dash-card-header">
+          <div>
+            <h2 className="dash-card-title" id="dash-cbt-simulators">Choose a simulator</h2>
+            <p className="dash-metric-hint">Practice and mock sessions are saved to your account.</p>
+          </div>
+        </div>
+        <ExamSimulatorGrid showFilters />
+      </section>
+    </>
+  );
+
+  /**
+   * Profile — the canonical student profile page, mounted inside the dashboard
+   * so identity, preferences and account settings are part of the student
+   * environment instead of a separate site page.
+   */
+  const profileView = (
+    <Suspense fallback={<SkeletonRows rows={4} label="Loading your profile" />}>
+      <ProfilePanel embedded />
+    </Suspense>
+  );
+
+  const view = activeTab === 'services'
+    ? requestsView
+    : activeTab === 'cbt'
+      ? cbtHubView
+      : activeTab === 'results'
+        ? resultsView
+        : activeTab === 'profile'
+          ? profileView
+          : activeTab === 'tools'
+            ? toolsView
+            : overview;
 
   /* ---------------- render ---------------- */
   return (
@@ -1316,15 +1430,27 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
           {NAV.map(({ tab, label, Icon }) => (
             <button key={tab} type="button" className={`edureach-nav-item ${activeTab === tab ? 'active' : ''}`} onClick={() => openTab(tab)} aria-current={activeTab === tab ? 'page' : undefined}>
               <Icon size={15} /> {label}
-              {tab === 'services' && openRequests > 0 && <span className="edureach-nav-item-badge">{openRequests}</span>}
             </button>
           ))}
+          {/* Everything that supports the five primary destinations. Requests
+              keeps its badge here rather than competing for a primary slot. */}
           <div className="dash-nav-divider" />
-          <span className="dash-nav-label">Study</span>
+          <span className="dash-nav-label">More</span>
+          <button
+            type="button"
+            className={`edureach-nav-item ${activeTab === 'services' ? 'active' : ''}`}
+            onClick={() => openTab('services')}
+            aria-current={activeTab === 'services' ? 'page' : undefined}
+          >
+            <ClipboardList size={15} /> My requests
+            {openRequests > 0 && <span className="edureach-nav-item-badge">{openRequests}</span>}
+          </button>
           <a href="/past-questions" className="edureach-nav-item"><BookOpen size={15} /> Past questions</a>
-          <a href="/dashboard/cbt/results" className="edureach-nav-item"><BarChart3 size={15} /> Results</a>
-          <a href="/services" className="edureach-nav-item"><ClipboardList size={15} /> Services</a>
+          <a href="/schools" className="edureach-nav-item"><Wrench size={15} /> School finder</a>
           <a href="/screening-calculator" className="edureach-nav-item"><Calculator size={15} /> Calculators</a>
+          <a href="/services" className="edureach-nav-item"><ClipboardList size={15} /> Browse services</a>
+          <a href="/contact" className="edureach-nav-item"><MessageCircle size={15} /> Help and contact</a>
+          <a href="/" className="edureach-nav-item"><Home size={15} /> Student site</a>
           <div className="dash-nav-divider" />
           {accountLinks}
         </aside>
@@ -1347,12 +1473,16 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       {/* UX-7: the dashboard is part of the product, so a phone keeps the same
           five destinations as every other screen. Requests and Tools remain in
           the header profile menu and the desktop sidebar. */}
+      {/* The same five destinations, in the same order, on a phone. CBT keeps
+          the raised centre position because it is the activity the dashboard
+          exists to support; everything else (requests, utilities, settings)
+          stays in the menu. */}
       <nav className="er-mobile-bottom-nav" aria-label="Mobile navigation">
-        <a href="/"><Home size={18} aria-hidden="true" /><span>Home</span></a>
-        <a href="/cbt"><BookOpen size={18} aria-hidden="true" /><span>Practice</span></a>
-        <a className={activeTab === 'cbt' ? 'active' : ''} aria-current={activeTab === 'cbt' ? 'page' : undefined} href="/dashboard/cbt"><MonitorPlay size={18} aria-hidden="true" /><span>My CBT</span></a>
-        <a href="/dashboard/cbt/results"><BarChart3 size={18} aria-hidden="true" /><span>Results</span></a>
-        <a className={activeTab === 'services' || activeTab === 'tools' ? 'active' : ''} href="/profile"><User size={18} aria-hidden="true" /><span>Profile</span></a>
+        <a className={activeTab === 'dashboard' ? 'active' : ''} aria-current={activeTab === 'dashboard' ? 'page' : undefined} href="/dashboard"><LayoutDashboard size={18} aria-hidden="true" /><span>Overview</span></a>
+        <a className={activeTab === 'cbt' ? 'active mobile-cbt' : 'mobile-cbt'} aria-current={activeTab === 'cbt' ? 'page' : undefined} href="/dashboard/cbt"><MonitorPlay size={18} aria-hidden="true" /><span>CBT</span></a>
+        <a className={activeTab === 'results' ? 'active' : ''} aria-current={activeTab === 'results' ? 'page' : undefined} href="/dashboard/results"><BarChart3 size={18} aria-hidden="true" /><span>Results</span></a>
+        <a className={activeTab === 'profile' ? 'active' : ''} aria-current={activeTab === 'profile' ? 'page' : undefined} href="/dashboard/profile"><User size={18} aria-hidden="true" /><span>Profile</span></a>
+        <a className={activeTab === 'tools' ? 'active' : ''} aria-current={activeTab === 'tools' ? 'page' : undefined} href="/dashboard/tools"><Wrench size={18} aria-hidden="true" /><span>Tools</span></a>
       </nav>
 
       <SiteFooter />

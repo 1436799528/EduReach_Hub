@@ -5,6 +5,8 @@ import {
   FileText,
   GraduationCap,
   Laptop,
+  Newspaper,
+  Wrench,
   PlayCircle,
   School,
   type LucideIcon,
@@ -23,6 +25,14 @@ const toolLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
   { title: 'Screening calculator', href: '/screening-calculator', Icon: Calculator },
   { title: 'CGPA calculator', href: '/tools/cgpa-calculator', Icon: GraduationCap },
   { title: 'School finder', href: '/schools', Icon: School },
+];
+
+// Public discovery destinations. They are primary navigation items and stay
+// reachable from here, without turning the homepage into a second dashboard.
+const exploreLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
+  { title: 'Student services', href: '/services', Icon: Wrench },
+  { title: 'Scholarships and grants', href: '/jobs', Icon: GraduationCap },
+  { title: 'Education news', href: '/news', Icon: Newspaper },
 ];
 
 /** The home screen offers study actions and current public information only. */
@@ -73,13 +83,31 @@ export default function HubHomePage() {
 
           <section className="er-section" aria-label="Choose your exam">
             <SectionHead title="Choose your exam" />
-            <ExamSimulatorGrid variant="start" />
+            <ExamSimulatorGrid />
           </section>
 
           <section className="er-section" aria-label="Study tools">
             <SectionHead title="Study tools" />
             <ul className="er-home-tool-list">
               {toolLinks.map(({ title, href, Icon }) => (
+                <li key={href}>
+                  <a href={href}>
+                    <Icon size={16} aria-hidden="true" />
+                    <span>{title}</span>
+                    <ArrowRight size={13} aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* Public discovery: the three things a visitor can explore without an
+              account. One quiet link list, the same surface as the tools above,
+              so the homepage does not grow another card row. */}
+          <section className="er-section" aria-label="Explore EduReach">
+            <SectionHead title="Explore EduReach" href="/services" linkLabel="All services" />
+            <ul className="er-home-tool-list">
+              {exploreLinks.map(({ title, href, Icon }) => (
                 <li key={href}>
                   <a href={href}>
                     <Icon size={16} aria-hidden="true" />

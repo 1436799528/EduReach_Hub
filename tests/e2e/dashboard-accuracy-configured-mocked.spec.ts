@@ -42,13 +42,14 @@ test('dashboard shows bounded submitted scores and reports failed history reads'
     return route.fulfill({ json: [] });
   });
   await page.route('**/api/admin/session', route => route.fulfill({ status: 403, json: { error: 'Permission denied' } }));
-  await page.goto('/dashboard/cbt');
+  // Results is its own destination now; CBT is the simulator hub.
+  await page.goto('/dashboard/results');
   await expect(page.getByRole('heading', { name: 'Loading your dashboard…' })).toBeVisible();
   await expect(page.getByLabel('Loading dashboard records')).toBeVisible();
   releaseHistory();
   const consent = page.getByRole('button', { name: 'Reject optional' });
   if (await consent.isVisible()) await consent.click();
-  await expect(page.getByRole('heading', { name: 'My CBT' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Results' })).toBeVisible();
   await expect(page.locator('footer.er-footer')).toBeVisible();
   await expect(page.getByText('not all-time totals', { exact: false })).toBeVisible();
   await expect(page.locator('.dash-metric-card').filter({ hasText: 'Scored tests' })).toContainText('5');

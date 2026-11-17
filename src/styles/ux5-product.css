@@ -621,126 +621,134 @@
   }
 }
 
-/* Exam cards: the four CBT simulator tiles keep the MySchool-inspired exam
-   gradients defined by `.ms-top-tile` in `src/myschool-clean.css`. UX-5 had
-   flattened them to one neutral surface; this restores the four, and only for
-   the simulator cards rendered by `src/components/ExamSimulatorGrid.tsx`.
+/* Simulator cards — one architecture, one faint examination tint.
+   --------------------------------------------------------------------------
+   Every surface that offers a CBT simulator (the homepage, the public Practice
+   page and the dashboard CBT tab) renders `src/components/SimulatorCard.tsx`.
+   The card is the JAMB/Practice treatment: a soft, very low-saturation tinted
+   surface, a hairline border, dark readable type and one thin arrow. Colour is
+   bound to the examination's canonical type (`data-exam-type`, emitted by
+   `simulatorExamType()`), never to the card's position in the grid, so
+   re-ordering or filtering the catalogue cannot repaint a simulator.
 
-   Colour is bound to the bank's canonical exam type — `.er-sim-<type>` and
-   `data-exam-type`, both emitted by `simulatorExamType()` — never to the card's
-   position in the grid, so filtering or re-ordering the catalogue cannot
-   repaint a bank. A bank outside the four keeps the neutral surface.
+   These are tints, not fills: the strongest stop here is #f4f8f2. No gradients,
+   no white type on a saturated panel, no heavy shadow. JAMB keeps the faint
+   green it has always carried; WAEC, NECO and Post-UTME borrow their tint from
+   the same restrained family (see the identity tones in `src/edu-portal.css`).
+   `tests/simulator-cards.test.ts` recomputes the contrast of each title tone
+   against its own tint. */
 
-   White type is measured on the LIGHTEST stop of each pair:
-   #1d6585 6.45:1 · #16803f 5.01:1 · #6d28d9 7.10:1 · #c2410c 5.18:1.
-   `tests/simulator-gradients.test.ts` recomputes those ratios. */
 .er-sim-card,
 .er-sim-jamb,
 .er-sim-waec,
 .er-sim-neco,
-.er-sim-post-utme {
-  background: var(--er-surface) !important;
-  border-color: var(--er-border) !important;
+.er-sim-post-utme,
+.er-sim-other {
+  --er-sim-tint: var(--er-surface);
+  --er-sim-border: var(--er-border);
+  --er-sim-accent: var(--er-primary);
+  --er-sim-label-bg: var(--er-surface-soft);
+  --er-sim-label-border: var(--er-border);
+  --er-sim-title: var(--er-text-primary);
+  background: var(--er-sim-tint) !important;
+  border-color: var(--er-sim-border) !important;
   color: var(--er-text-primary);
 }
 
-.er-sim-card.er-sim-jamb,
-.er-sim-card[data-exam-type='jamb'] {
-  background: linear-gradient(115deg, #123f5a, #1d6585) !important;
-  border-color: transparent !important;
-  color: #ffffff;
+.er-sim-card[data-exam-type='jamb'],
+.er-sim-card.er-sim-jamb {
+  --er-sim-tint: #f4f8f2;
+  --er-sim-border: #dfe8d9;
+  --er-sim-accent: #174A3A;
+  --er-sim-label-bg: #e8efe4;
+  --er-sim-label-border: #d6e3d0;
+  --er-sim-title: #17332c;
 }
 
-.er-sim-card.er-sim-waec,
-.er-sim-card[data-exam-type='waec'] {
-  background: linear-gradient(115deg, #14532d, #16803f) !important;
-  border-color: transparent !important;
-  color: #ffffff;
+.er-sim-card[data-exam-type='waec'],
+.er-sim-card.er-sim-waec {
+  --er-sim-tint: #f2f6fb;
+  --er-sim-border: #dde7f2;
+  --er-sim-accent: #1f4e78;
+  --er-sim-label-bg: #e7eff8;
+  --er-sim-label-border: #d5e2f0;
+  --er-sim-title: #1b3c57;
 }
 
-.er-sim-card.er-sim-neco,
-.er-sim-card[data-exam-type='neco'] {
-  background: linear-gradient(115deg, #4c1d95, #6d28d9) !important;
-  border-color: transparent !important;
-  color: #ffffff;
+.er-sim-card[data-exam-type='neco'],
+.er-sim-card.er-sim-neco {
+  --er-sim-tint: #f9f7ee;
+  --er-sim-border: #e9e4d1;
+  --er-sim-accent: #5f5417;
+  --er-sim-label-bg: #f1eddc;
+  --er-sim-label-border: #e3dcc4;
+  --er-sim-title: #403a12;
 }
 
-.er-sim-card.er-sim-post-utme,
-.er-sim-card[data-exam-type='post-utme'] {
-  background: linear-gradient(115deg, #7c2d12, #c2410c) !important;
-  border-color: transparent !important;
-  color: #ffffff;
+.er-sim-card[data-exam-type='post-utme'],
+.er-sim-card.er-sim-post-utme {
+  --er-sim-tint: #fbf4f0;
+  --er-sim-border: #f0e0d7;
+  --er-sim-accent: #7d3a26;
+  --er-sim-label-bg: #f6e9e2;
+  --er-sim-label-border: #ecd8cd;
+  --er-sim-title: #4d2418;
 }
 
-/* The MySchool tile treatment: a quiet diagonal sheen over the gradient. It
-   replaces the 3px primary edge bar, which read as a stripe on a filled card. */
-.er-sim-card[data-exam-type]::before,
-.er-sim-card.er-sim-jamb::before,
-.er-sim-card.er-sim-waec::before,
-.er-sim-card.er-sim-neco::before,
-.er-sim-card.er-sim-post-utme::before {
-  inset: 0;
-  width: auto;
-  pointer-events: none;
-  background: linear-gradient(105deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, .14));
-  opacity: 1;
+/* The faint tint is the whole surface: the content area stays the same light
+   plane, so the card reads as a soft surface rather than a coloured block. */
+.er-sim-card .er-sim-body > strong {
+  color: var(--er-sim-title) !important;
 }
 
-/* Type, badge, metadata and arrow stay on white so they read on the fill. */
-.er-sim-card[data-exam-type] .er-sim-body > strong,
-.er-sim-card.er-sim-jamb .er-sim-body > strong,
-.er-sim-card.er-sim-waec .er-sim-body > strong,
-.er-sim-card.er-sim-neco .er-sim-body > strong,
-.er-sim-card.er-sim-post-utme .er-sim-body > strong {
-  color: #ffffff !important;
+/* A simulator whose bank cannot serve a session is described, never linked. */
+.er-sim-card[aria-disabled='true'] {
+  cursor: default;
 }
 
-.er-sim-card[data-exam-type] .er-sim-body > small,
-.er-sim-card.er-sim-jamb .er-sim-body > small,
-.er-sim-card.er-sim-waec .er-sim-body > small,
-.er-sim-card.er-sim-neco .er-sim-body > small,
-.er-sim-card.er-sim-post-utme .er-sim-body > small {
-  color: rgba(255, 255, 255, .88) !important;
+.er-sim-card[aria-disabled='true'] .er-sim-foot {
+  color: var(--er-text-muted) !important;
 }
 
-.er-sim-card[data-exam-type] .er-sim-badge,
-.er-sim-card.er-sim-jamb .er-sim-badge,
-.er-sim-card.er-sim-waec .er-sim-badge,
-.er-sim-card.er-sim-neco .er-sim-badge,
-.er-sim-card.er-sim-post-utme .er-sim-badge {
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, .34) !important;
-  background: rgba(255, 255, 255, .16) !important;
+/* Filter row above the Practice/dashboard grid. */
+.er-sim-filters {
+  margin-bottom: var(--er-space-3);
 }
 
-.er-sim-card[data-exam-type] .er-sim-foot,
-.er-sim-card.er-sim-jamb .er-sim-foot,
-.er-sim-card.er-sim-waec .er-sim-foot,
-.er-sim-card.er-sim-neco .er-sim-foot,
-.er-sim-card.er-sim-post-utme .er-sim-foot {
-  border-top-color: rgba(255, 255, 255, .26) !important;
-  color: rgba(255, 255, 255, .9) !important;
+/* Practice page header: one purpose, stated once. */
+.er-practice-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--er-space-3);
+  flex-wrap: wrap;
+  margin: 0 0 var(--er-space-4);
 }
 
-.er-sim-card[data-exam-type] .er-sim-foot .er-card-arrow,
-.er-sim-card.er-sim-jamb .er-sim-foot .er-card-arrow,
-.er-sim-card.er-sim-waec .er-sim-foot .er-card-arrow,
-.er-sim-card.er-sim-neco .er-sim-foot .er-card-arrow,
-.er-sim-card.er-sim-post-utme .er-sim-foot .er-card-arrow {
-  color: #ffffff;
+.er-practice-head h1 {
+  margin: 2px 0 6px;
+  font-size: clamp(22px, 2.4vw, 28px);
+  letter-spacing: -.02em;
+  color: var(--er-text-primary);
 }
 
-/* The brand mark sits on a translucent light plate so an emblem with its own
-   transparent background is never lost against the fill. The ring is a shadow,
-   so the card's measured layout does not move. */
-.er-sim-card[data-exam-type] .er-sim-top img,
-.er-sim-card.er-sim-jamb .er-sim-top img,
-.er-sim-card.er-sim-waec .er-sim-top img,
-.er-sim-card.er-sim-neco .er-sim-top img,
-.er-sim-card.er-sim-post-utme .er-sim-top img {
-  background: rgba(255, 255, 255, .92);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, .92);
-  border-radius: 9px;
+.er-practice-head p {
+  margin: 0;
+  max-width: 620px;
+  color: var(--er-text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.er-practice-signin {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Practice is the CBT hub, and past questions are its revision half. One
+   quiet link row keeps them in the same destination without a second grid. */
+.er-practice-questions {
+  margin-top: var(--er-space-5);
 }
 
 .er-sim-card {
@@ -749,6 +757,7 @@
   min-height: 148px;
   padding: var(--er-space-4);
   border-radius: var(--er-radius-md);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
   transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
@@ -757,14 +766,16 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: var(--er-primary);
+  background: var(--er-sim-accent);
   opacity: 0;
   transition: opacity .15s ease;
 }
 
+/* The hover is a slightly stronger edge and a soft lift — no colour change and
+   no heavy shadow, so the card still reads as the same surface. */
 .er-sim-card:hover {
-  border-color: var(--er-border-strong) !important;
-  box-shadow: var(--er-shadow-raised);
+  border-color: var(--er-sim-accent) !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
   transform: translateY(-1px);
 }
 
@@ -774,7 +785,7 @@
 }
 
 .er-sim-body > strong {
-  color: var(--er-text-primary) !important;
+  color: var(--er-sim-title) !important;
   font-size: var(--er-type-card) !important;
   font-weight: 650;
   letter-spacing: -.01em;
@@ -789,21 +800,26 @@
 .er-sim-badge {
   text-transform: none;
   letter-spacing: 0;
-  color: var(--er-text-secondary);
-  border-color: var(--er-border);
-  background: var(--er-surface-soft);
+  color: var(--er-sim-accent);
+  border-color: var(--er-sim-label-border);
+  background: var(--er-sim-label-bg);
   font-size: 10.5px;
   font-weight: 600;
 }
 
 .er-sim-foot {
-  border-top-color: var(--er-border) !important;
+  border-top-color: var(--er-sim-border) !important;
   color: var(--er-text-secondary) !important;
   font-size: var(--er-type-meta) !important;
 }
 
 .er-sim-foot .er-card-arrow {
-  color: var(--er-primary);
+  color: var(--er-sim-accent);
+}
+
+/* A light tint needs no white plate behind the brand mark. */
+.er-sim-top img {
+  border-radius: 8px;
 }
 
 /* On phones the horizontal card rail hid three of the four exams. A compact

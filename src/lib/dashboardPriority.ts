@@ -179,7 +179,8 @@ export function dashboardPriorities(input: DashboardPriorityInput): PriorityItem
       detail: missing.length
         ? `Still missing: ${listMissing(missing)}. Exam guidance and school matching use these details.`
         : 'Exam guidance and school matching need your institution, course and level.',
-      href: '/profile',
+      // The dashboard owns the profile now; this keeps the student inside it.
+      href: '/dashboard/profile',
       cta: 'Complete profile',
     });
   }
