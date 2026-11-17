@@ -92,7 +92,13 @@ app.use((_req, res, next) => {
       "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://wa.me; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' ws: wss: http: https:; frame-ancestors *",
     );
   }
-  if (_req.path === '/api' || _req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
+  if (_req.path === '/api/news' || _req.path.startsWith('/api/news?')) {
+    // News is public and identical for anonymous visitors; let the CDN absorb bursts.
+    // Student/admin endpoints remain explicitly uncached below.
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+  } else if (_req.path === '/api' || _req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'no-store');
+  }
   // Server-side indexability. A client-rendered noindex is a hint; this header
   // is what a crawler actually receives for student, admin and tracker routes.
   if (isPrivatePath(_req.path)) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
