@@ -29,13 +29,20 @@ test('the student overview is identity, KPIs and analytics before explanation', 
   assert.doesNotMatch(dashboard, /dash-report-strip/);
 });
 
-test('the overview keeps attention, notifications and recent activity in that order', () => {
-  const overview = dashboard.slice(dashboard.indexOf('const overview = ('));
+test('the overview keeps attention and recent activity in that order, under a persistent bell', () => {
+  const overview = dashboard.slice(dashboard.indexOf('const overview = ('), dashboard.indexOf('const view ='));
   const attention = overview.indexOf('dash-attention');
-  const notifications = overview.indexOf('id="dashboard-notifications"');
   const recent = overview.indexOf('dash-recent-activity');
-  assert.ok(attention > 0 && notifications > attention, 'attention precedes notifications');
-  assert.ok(recent > notifications, 'notifications precede recent activity');
+  assert.ok(attention > 0, 'the overview leads with needs-attention');
+  assert.ok(recent > attention, 'recent activity follows it');
+  // The notification panel moved from the overview column into the dashboard
+  // header, so it is present on every tab rather than between two overview
+  // sections. It must still render above the tab content.
+  assert.match(dashboard, /<NotificationCenter variant="dashboard" \/>/);
+  assert.ok(
+    dashboard.indexOf('edureach-dash-header') < dashboard.indexOf('{view}'),
+    'the header, and its bell, precede the tab content',
+  );
 });
 
 test('colour is a status signal, not a category decoration', () => {

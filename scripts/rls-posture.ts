@@ -37,6 +37,74 @@ const OWN_FULL: Privilege[] = ['select', 'insert', 'update', 'delete'];
 const NONE: Privilege[] = [];
 
 export const RLS_POSTURE: TablePosture[] = [
+  // --- institution intelligence (2026-11-17) ---------------------------------
+  // Public readers see only rows that are both verified and published. The
+  // research pipeline writes through the service role and the admin console,
+  // never through a student session.
+  {
+    table: 'edureach_sources', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Source registry behind every fact. Public read exposes the citation (name, URL, authority), never review notes.',
+  },
+  {
+    table: 'institution_aliases', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Search aliases (acronyms, former names) are public once verified; duplicate candidates stay staff-visible until reconciled.',
+  },
+  {
+    table: 'institution_profiles', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Institution identity fields; the policy requires profile_status published AND verification_status verified.',
+  },
+  {
+    table: 'institution_leadership', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Current office holders only, verified only. Historical and disputed records stay staff-side.',
+  },
+  {
+    table: 'institution_campuses', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Active, verified campuses. A campus count is never inferred from faculties.',
+  },
+  {
+    table: 'institution_academic_units', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Faculties, colleges, schools and departments, verified only.',
+  },
+  {
+    table: 'institution_programme_offerings', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Institution-specific offerings; requires published + verified + active, so an unreviewed import is never public.',
+  },
+  {
+    table: 'institution_admission_routes', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Entry modes and screening methods per session, published and verified only.',
+  },
+  {
+    table: 'institution_programme_requirements', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: "Subjects and O'Level requirements, published and verified only.",
+  },
+  {
+    table: 'national_admission_policies', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'JAMB national minimums, deliberately separate from institution benchmarks so one cannot be shown as the other.',
+  },
+  {
+    table: 'institution_admission_benchmarks', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Typed, scale-carrying thresholds; published and verified only.',
+  },
+  {
+    table: 'institution_portal_guides', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Official portal instructions, published and verified only.',
+  },
+  {
+    table: 'institution_portal_guide_steps', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Steps are visible only while their parent guide is published and verified.',
+  },
+  {
+    table: 'institution_fact_evidence', access: 'server-only', anon: NONE, authenticated: NONE, policies: 1, browser: false,
+    why: 'Field-level evidence and reviewer notes. Staff-only policy, no public read, anon revoked: unreviewed claims never reach a student.',
+  },
+  {
+    table: 'student_admission_goals', access: 'owner', anon: NONE, authenticated: OWN_FULL, policies: 5, browser: false,
+    why: 'One goal per student, owner read/insert/update/delete plus staff manage. student_id is compared with auth.uid(), never read from a request body.',
+  },
+  {
+    table: 'student_admission_goal_attempts', access: 'owner', anon: NONE, authenticated: SELECT, policies: 2, browser: false,
+    why: 'Links an owner-scoped CBT attempt to a goal. Students read their rows; match status and any projection are written server-side only.',
+  },
   // --- public read: the browser reads these with or without a session -------
   {
     table: 'institutions', access: 'public-read', anon: SELECT, authenticated: SELECT, policies: 1, browser: true,

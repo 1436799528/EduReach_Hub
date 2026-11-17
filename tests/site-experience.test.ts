@@ -17,11 +17,14 @@ test('the dashboard leads with priorities, removes redundant action cards and gr
   const page = read('pages/StudentDashboardV2.tsx');
   assert.match(page, /dashboardPriorities\(/, 'the strip is derived from the shared rule');
   const priorityIndex = page.indexOf('dash-priority');
-  const notificationsIndex = page.indexOf('id="dashboard-notifications"');
-  const recentIndex = page.indexOf('Recent activity');
-  assert.ok(priorityIndex > -1 && notificationsIndex > -1 && recentIndex > -1);
-  assert.ok(priorityIndex < notificationsIndex && notificationsIndex < recentIndex, 'priorities and notifications precede recent activity');
-  assert.match(page, /Service requests/);
+  const recentIndex = page.indexOf('dash-recent-activity');
+  assert.ok(priorityIndex > -1 && recentIndex > -1 && priorityIndex < recentIndex, 'needs-attention precedes recent activity');
+  // The notification panel moved into the persistent dashboard header, where it
+  // is available from every tab instead of only the overview column. The order
+  // rule that matters still holds: nothing personal sits above the priorities.
+  assert.match(page, /<NotificationCenter variant="dashboard" \/>/, 'notifications stay in the dashboard chrome');
+  assert.ok(page.indexOf('edureach-dash-header') < page.indexOf('{view}'), 'the header, and its bell, render above the tab content');
+  assert.match(page, /service request/i, 'service-request status is still on the overview');
   assert.match(page, /CBT results/);
   assert.doesNotMatch(page, /dash-quick-card|Saved profile details|dash-profile-detail-grid/, 'large shortcuts and duplicated profile fields are removed');
   assert.doesNotMatch(page, /Verified student/, 'an authenticated account is not mislabeled as verified');
@@ -33,7 +36,8 @@ test('an expired attempt is never offered as resumable anywhere', () => {
   const page = read('pages/StudentDashboardV2.tsx');
   assert.match(page, /cbtAttemptState\(row\)/, 'the table reads the shared attempt rule');
   assert.ok(!/status === 'in_progress';?\s*$/.test(page.split('const isActiveCbtAttempt')[1]?.split('\n')[0] || ''), 'no bare status check remains');
-  assert.match(page, /state === 'expired' && <a className="dash-card-link" href="\/cbt">Start a new test<'?/, 'an expired attempt points at a new test, not at the old one');
+  assert.match(page, /state === 'expired' && <a className="dash-card-link" href="\/cbt">Start a new test/, 'an expired attempt points at a new test, not at the old one');
+  assert.doesNotMatch(page, /state === 'expired'[^\n]*cbt\/session/, 'an expired attempt never links back into the session');
   assert.match(page, /\/cbt\/session\/\$\{encodeURIComponent\(row\.id\)\}/, 'resume goes straight into the attempt, not through setup');
 });
 
@@ -172,7 +176,8 @@ test('the home page opens as a product screen, not a hero', () => {
 test('home shows current news with a retryable feed and a route to all stories', () => {
   const news = read('src/components/HomeNewsSection.tsx');
   assert.match(news, /fetchNews\(\)/, 'the section uses published news from the shared API');
-  assert.match(news, /NewsRow/, 'the feed uses the established news row component');
+  assert.match(news, /from '\.\/NewsSections'/, 'the feed uses the established news components, not its own markup');
+  assert.match(news, /<NewsCard key=\{item\.id\} item=\{item\} \/>/, 'each story renders through the shared card');
   assert.match(news, /href="\/news"/, 'readers can open all news');
   assert.match(news, /ErrorState error=\{error\} onRetry/, 'a failed feed has a recovery path');
   assert.match(news, /No current news yet/, 'an empty news catalogue is not mistaken for a failure');
@@ -189,17 +194,20 @@ test('the account trigger uses initials on desktop and mobile, not a name beside
 
 test('the home page keeps the shared search bar and it still searches', () => {
   const home = read('pages/HubHomePage.tsx');
-  assert.match(home, /<SiteSearch\s+variant="home"/, 'the shared search component is present');
+  assert.match(home, /<SiteSearch\s+variant="header"/, 'the shared search component is present');
+  assert.match(home, /import SiteSearch from '\.\.\/src\/components\/LazySiteSearch'/, 'home loads the shared search, lazily');
   const search = read('src/components/SiteSearch.tsx');
   assert.match(search, /role="search"/, 'it is announced as a search landmark');
   assert.match(search, /aria-label=\{label\}/, 'the field keeps its accessible name');
   assert.match(home, /placeholder="Search services or exams"/, 'the prompt describes searchable content in four words');
 
-  // It sits above the exam catalogue, which is what "on the home screen" means
-  // once the greeting and the four actions take the first line.
-  const searchAt = home.indexOf('<SiteSearch');
-  assert.ok(searchAt > home.indexOf('<h1'), 'the heading stays first for structure');
-  assert.ok(searchAt < home.indexOf('aria-label="Choose your exam"'), 'search is above the exam cards');
+  // The search moved into the shared header (`HubLayout customSearch`) so it is
+  // reachable from every surface, not only the top of the home body. The
+  // structural rule it must not break is that the page still opens with its
+  // (visually hidden) h1 and the exam catalogue below it.
+  assert.match(home, /customSearch=\{<SiteSearch variant="header"/, 'the header slot carries the search');
+  assert.ok(home.indexOf('<h1') < home.indexOf('er-home-head'), 'the heading stays first in the body');
+  assert.ok(home.indexOf('aria-label="Choose your exam"') > -1, 'the exam catalogue is still on the page');
 
   const styles = read('src/site-search.css');
   assert.match(styles, /@media \(max-width: 1040px\) \{ \.site-search--header \{ display: none; \} \}/, 'the header search is desktop-only');

@@ -41,7 +41,7 @@ site will not start correctly; do not continue.
 
 For this CBT release, follow the target-specific hard prerequisite and detailed catalog/ledger, backup, deployment and rollback checks in [CBT migration-first release procedure](CBT_MIGRATION_FIRST_RELEASE.md). The application cannot load legacy papers safely on a pre-protocol database, and neither Netlify nor the readiness endpoint enforces migration order. Resolve merge-triggered deployment before merge.
 
-The local release candidate contains 90 migrations in `supabase/migrations/`, including two service-request boundary migrations, one idempotency migration, the CBT owner-expiry function, protocol fence, restricted v2 lifecycle, answer and finalize gateways, single-writing-session boundary and atomic question-import publication. The CBT page writer, leased submission and recovery are integrated **only for the local rehearsal**; the hosted staging path is not enabled or verified, so hosted finalization has not been exercised. Reconcile the hosted ledger and review every pending migration and its data effects before applying anything; do not blindly replay historical migrations against a populated project. The gateways grant authenticated owners directly callable leased answer and finalize RPCs; finalization additionally requires the current server revision, an active writing session and a durable operation key. Review hosted role membership and PostgREST/JWT behavior, and exercise both gateways against disposable staging, before any rollout. If an approved rollback is ever required, quiesce traffic first; roll back the writing-session migration before the gateway, lifecycle and protocol fence, and observe its refusal while session history or v2 attempts exist. In-flight destructive rollback safety is not proven. Duplicate migration version prefixes make a blind push unsafe. First reconcile every file and obtain an independently reviewed, approved staging migration procedure as described in `CBT_STAGING_VALIDATION_PREPARATION.md`.
+The local release candidate contains 92 migrations in `supabase/migrations/`, including the additive institution-intelligence schema (20261117120000) and its transactional research importer (20261117121000), including two service-request boundary migrations, one idempotency migration, the CBT owner-expiry function, protocol fence, restricted v2 lifecycle, answer and finalize gateways, single-writing-session boundary and atomic question-import publication. The CBT page writer, leased submission and recovery are integrated **only for the local rehearsal**; the hosted staging path is not enabled or verified, so hosted finalization has not been exercised. Reconcile the hosted ledger and review every pending migration and its data effects before applying anything; do not blindly replay historical migrations against a populated project. The gateways grant authenticated owners directly callable leased answer and finalize RPCs; finalization additionally requires the current server revision, an active writing session and a durable operation key. Review hosted role membership and PostgREST/JWT behavior, and exercise both gateways against disposable staging, before any rollout. If an approved rollback is ever required, quiesce traffic first; roll back the writing-session migration before the gateway, lifecycle and protocol fence, and observe its refusal while session history or v2 attempts exist. In-flight destructive rollback safety is not proven. Duplicate migration version prefixes make a blind push unsafe. First reconcile every file and obtain an independently reviewed, approved staging migration procedure as described in `CBT_STAGING_VALIDATION_PREPARATION.md`.
 
 Do not use a generic CLI reset or push for this migration set. Obtain separate authorization for a verified disposable target, reconcile every migration file and duplicate version, then rehearse the approved target-specific procedure. Compare the resulting schema and role fingerprints against the intended target; an extra column or other drift requires review.
 
@@ -189,6 +189,43 @@ student data.
 
 **Pass:** the service catalogue is populated, and `content_integrity_report()` shows
 no prototype content.
+
+## 7b. Research, import and publish institution intelligence
+
+Institution facts follow one path and only one: **research → dry run → import to
+a non-production database → admin review → publish**. Nothing in this path can
+publish on its own, and no step may run against production data.
+
+1. **Research.** Add or extend a batch in `data/institutions/`. Each fact carries
+   a `sourceUrl`, the `applicableSession` it was true for, and an explicit gap when
+   the institution did not publish it. Do not fill a gap with a zero, a national
+   minimum or last year's figure.
+2. **Coverage.** `npm run institutions:coverage` rewrites
+   `data/institutions/coverage-report.json` and `docs/data/INSTITUTION-COVERAGE.md`
+   from the live directory plus the batches on disk. Commit both.
+3. **Dry run (default, writes nothing).**
+   `npm run institutions:import -- --batch data/institutions/research-batch-001.json`
+   prints per-table insert/update/skip counts and every validation issue. A dry run
+   exits `2` when the database rejects the payload; the transaction is rolled back.
+4. **Apply to development or staging.**
+   `INSTITUTION_IMPORT_ENV=staging npm run institutions:import -- --apply`
+   The script refuses unless `INSTITUTION_IMPORT_ENV` is `development` or
+   `staging`, `NODE_ENV` is not `production`, and the target project ref is not the
+   production project (`gjdfatwcoosyuhakrrhh` is hard-coded). Overriding the
+   environment variable cannot reach production.
+5. **Review.** Open `/admin/institution-intelligence`. Every imported row is
+   `in_review`; the reviewer marks each fact verified, disputed, outdated or
+   withdrawn, and a negative decision requires a written reason. Only verified
+   facts on published parents are visible to visitors.
+6. **Publish.** Publishing is an editorial act in the same console; an import
+   never sets `publication_status = 'published'`.
+
+Two rules an operator should not work around:
+
+- `institutions.is_verified` is a legacy column. It is **not** evidence that a
+  field was researched, and the review console never uses it as such.
+- An empty public section means "not published yet", not "the institution has
+  none". Do not backfill it to make a page look complete.
 
 ## 8. Resolve CBT coverage
 

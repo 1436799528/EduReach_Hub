@@ -138,6 +138,15 @@ function collectDefinitions(sql: string, state: {
     state.tables.set(table, { created: '', columns, referenced: true });
   }
 
+  // Views are readable objects too: server code selects from them exactly like
+  // a table, so the audit must not report one as missing.
+  for (const match of sql.matchAll(/create (?:or replace )?view public\.([a-z_][a-z0-9_]*)\s/gi)) {
+    const view = match[1];
+    if (!state.tables.has(view)) {
+      state.tables.set(view, { created: '', columns: new Map(), referenced: true });
+    }
+  }
+
   for (const statement of sql.split(';')) {
     const alter = /alter table (?:if exists )?public\.([a-z_][a-z0-9_]*)/i.exec(statement);
     if (!alter) continue;

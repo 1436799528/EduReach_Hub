@@ -1789,3 +1789,71 @@
 .er-setup-section-heading > svg {
   color: var(--er-text-secondary);
 }
+
+/* --------------------------------------------------------------------------
+   NEWS-1 — news cards stop being white squares
+   The square card system was scoped to homepage simulators, homepage news,
+   services and scholarships. A news card is not a square: it leads with a
+   photograph and carries a headline, so the square boundary clipped the first
+   line of the title and left a 160px-wide card on a phone. These rules keep the
+   system for the other three surfaces and take news out of it, then give the
+   feed one card per screen on a phone.
+   -------------------------------------------------------------------------- */
+
+.er-square-grid > a.er-news-card {
+  aspect-ratio: auto !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  background: var(--er-news-gradient) !important;
+  color: #fff !important;
+  align-items: stretch !important;
+}
+
+.er-square-grid .er-news-card .er-news-card-body {
+  align-items: flex-start !important;
+  padding: 12px 13px 14px !important;
+}
+
+.er-home-news-grid .er-news-card-media,
+.er-home-news-grid .er-news-photo {
+  width: 100% !important;
+  height: auto !important;
+  margin-bottom: 0 !important;
+  border-radius: 0 !important;
+}
+
+.er-home-news-grid .er-news-card-media { aspect-ratio: 16 / 10; }
+
+.er-home-news-grid .er-news-card .er-news-card-body > strong {
+  -webkit-line-clamp: 3;
+  font-size: 14.5px;
+}
+
+@media (max-width: 640px) {
+  /* Both news feeds become one-card-per-view scrollers. The homepage grid is
+     a `.er-square-grid`, so the layout override has to win over that system. */
+  .er-home-news .er-square-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 2px 0 14px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .er-home-news .er-square-grid::-webkit-scrollbar { display: none; }
+
+  .er-home-news .er-square-grid > .er-news-card {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    aspect-ratio: auto !important;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .er-home-news-grid .er-news-card-media { aspect-ratio: 16 / 9; }
+  .er-home-news-grid .er-news-card-summary { display: -webkit-box !important; -webkit-line-clamp: 2; }
+  .er-home-news-grid .er-news-card-body > strong { font-size: 16px; -webkit-line-clamp: 4; }
+}

@@ -1005,75 +1005,216 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-exam-material span { color: #5e6c82; font-size: 12px; line-height: 1.5; }
 .er-exam-material em { margin-top: auto; padding-top: 4px; color: #1E40AF; font-size: 11.5px; font-style: normal; font-weight: 620; }
 
-/* UI-7 — news cards in four simulator-like columns. Unlike the simulator grid,
-   this one wraps at every breakpoint and never becomes a horizontal scroller. */
+/* NEWS-1 — the coloured news card is back.
+ *
+ * UI-7 replaced the original gradient card with a white 1:1 square. On a phone
+ * that square squeezed a 13px headline under a half-height image, so the board
+ * read as a grid of shrunken placeholders. This restores the EduReach card the
+ * rest of the product uses: a gradient surface chosen by category, white type
+ * that clears 4.5:1 on the lightest pixel of that gradient, and the article's
+ * own image at the top. Colours live here, never in the component.
+ *
+ * Tone pairs: light stop → dark stop. White text on the light stop measures
+ * 4.69:1 or better; secondary text (#e8eefc) measures 4.55:1 or better.
+ */
+/* Four cards across on a desktop board, wrapping at every breakpoint. The
+   phone behaviour is below: one card per screen, snapped. */
 .er-news-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 14px;
   align-items: stretch;
   overflow: visible;
 }
 .er-news-card {
+  --er-news-gradient: linear-gradient(150deg, #2459c8 0%, #173d91 100%);
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #dfe4ea;
-  border-radius: 14px;
-  background: #fff;
-  color: #1f2937;
+  border: 0;
+  border-radius: 16px;
+  background: var(--er-news-gradient);
+  color: #fff;
   text-decoration: none;
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-  aspect-ratio: 1 / 1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
 }
-.er-news-card:hover { border-color: #1E40AF; box-shadow: 0 8px 22px rgba(15, 23, 42, .07); }
-.er-news-card:focus-visible { outline: 3px solid #9fc7f4; outline-offset: 2px; }
-.er-news-card-media { display: block; flex: 1; min-height: 0; overflow: hidden; background: #eef2f6; }
-.er-news-card-media .er-news-photo,
-.er-news-card-media .er-news-noimage { width: 100%; height: 100%; object-fit: cover; }
-.er-news-card-media .er-news-noimage { display: grid; place-content: center; gap: 4px; color: #667085; }
-.er-news-card-body { display: flex; flex: 1; flex-direction: column; gap: 7px; padding: 13px 14px 15px; }
-.er-news-card-body > small { color: #667085; font-size: 10.5px; line-height: 1.45; font-weight: 500; }
-.er-news-card-body > strong {
+.er-news-tone-indigo { --er-news-gradient: linear-gradient(150deg, #2459c8 0%, #173d91 100%); }
+.er-news-tone-blue { --er-news-gradient: linear-gradient(150deg, #1556c5 0%, #0c367f 100%); }
+.er-news-tone-teal { --er-news-gradient: linear-gradient(150deg, #08796e 0%, #07564f 100%); }
+.er-news-tone-cyan { --er-news-gradient: linear-gradient(150deg, #08706d 0%, #04413f 100%); }
+.er-news-tone-violet { --er-news-gradient: linear-gradient(150deg, #4a38c8 0%, #35248e 100%); }
+.er-news-tone-plum { --er-news-gradient: linear-gradient(150deg, #6246c5 0%, #473295 100%); }
+.er-news-tone-rose { --er-news-gradient: linear-gradient(150deg, #aa164d 0%, #7c0f38 100%); }
+.er-news-tone-amber { --er-news-gradient: linear-gradient(150deg, #b3400a 0%, #8f3d0a 100%); }
+.er-news-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, .22);
+  filter: saturate(1.06);
+}
+.er-news-card:focus-visible { outline: 3px solid #0f172a; outline-offset: 3px; }
+/* The card is a gradient, not a white box: keep the shared card reset from
+   re-painting it and keep the image from bleeding colour into the copy. */
+.er-news-card .er-news-card-media {
+  display: block;
+  flex: none;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .14);
+}
+.er-news-card-media .er-news-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.er-news-card-media .er-news-noimage {
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 14px;
+  color: #e8eefc;
+  text-align: center;
+}
+.er-news-card-media .er-news-noimage small {
+  font-size: 10.5px;
+  font-weight: 560;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #e8eefc;
+}
+.er-news-card .er-news-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px 15px 16px;
+  color: #fff;
+}
+.er-news-card .er-news-card-body > small {
+  color: #e8eefc;
+  font-size: 10.5px;
+  font-weight: 560;
+  letter-spacing: .03em;
+  line-height: 1.45;
+}
+.er-news-card .er-news-card-body > strong {
   display: -webkit-box;
   overflow: hidden;
-  color: #0f172a;
-  font-size: 13.5px;
-  line-height: 1.42;
+  color: #fff;
+  font-size: 15px;
   font-weight: 620;
+  line-height: 1.36;
+  letter-spacing: -.01em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
-.er-news-card-summary {
+.er-news-card .er-news-card-summary {
   display: -webkit-box;
   overflow: hidden;
-  color: #5e6c82;
-  font-size: 11.5px;
+  color: #e8eefc;
+  font-size: 12px;
   line-height: 1.5;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
-.er-news-card-foot {
+.er-news-card .er-news-card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin-top: auto;
-  padding-top: 7px;
-  color: #1E40AF;
+  padding-top: 8px;
+  color: #fff;
   font-size: 11px;
   font-weight: 620;
 }
-.er-news-card-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.er-news-card-foot svg { flex: none; }
-@media (max-width: 1000px) {
-  .er-exam-materials { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.er-news-card .er-news-card-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.er-news-card .er-news-card-foot svg { flex: none; }
+/* A freshness warning has to stay legible on the gradient. */
+.er-news-card.is-stale .er-news-freshness,
+.er-news-card.is-unverified .er-news-freshness,
+.er-news-card .er-news-freshness.is-warning {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .5);
+  background: rgba(15, 23, 42, .28);
 }
+
+/* The featured pair uses the same surface, one step taller. */
+.er-featured-card {
+  --er-news-gradient: linear-gradient(150deg, #2459c8 0%, #173d91 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 16px;
+  background: var(--er-news-gradient);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.er-featured-card:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(15, 23, 42, .22); }
+.er-featured-card:focus-visible { outline: 3px solid #0f172a; outline-offset: 3px; }
+.er-featured-media {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .14);
+}
+.er-featured-media .er-news-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.er-featured-media .er-news-noimage { width: 100%; height: 100%; display: grid; place-content: center; gap: 6px; color: #e8eefc; text-align: center; }
+.er-featured-body { display: block; padding: 14px 16px 16px; }
+.er-featured-body > small { display: block; color: #e8eefc; font-size: 10.5px; font-weight: 560; letter-spacing: .04em; text-transform: uppercase; }
+.er-featured-body > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: 5px; color: #fff; font-size: 17px; font-weight: 620; line-height: 1.33; letter-spacing: -.01em; }
+.er-featured-excerpt { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 6px; color: #e8eefc !important; font-size: 12.5px !important; line-height: 1.5 !important; font-weight: 400; text-transform: none !important; letter-spacing: 0 !important; }
+
+/* A phone gets one card per screen, edge to edge, snapping as it scrolls —
+   two 160px squares side by side is what made the board feel shrunken. */
+/* The rail layout drops the news container to full width on a phone, which left
+   the board touching both edges. Cards keep a 14px gutter, and the scroller
+   above snaps inside it. */
+@media (max-width: 620px) {
+  .hub-layout-content > .hub-page .hub-container { padding-inline: 14px; }
+}
+
 @media (max-width: 640px) {
   .er-news-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 2px 0 14px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
   }
+  .er-news-card-grid::-webkit-scrollbar { display: none; }
+  .er-news-card-grid > .er-news-card {
+    flex: 0 0 100%;
+    width: 100%;
+    aspect-ratio: auto;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .er-news-card .er-news-card-media { aspect-ratio: 16 / 9; }
+  .er-news-card .er-news-card-body > strong { font-size: 16px; -webkit-line-clamp: 4; }
+  .er-news-card .er-news-card-summary { -webkit-line-clamp: 3; }
+  .er-featured-grid { grid-template-columns: 1fr; gap: 12px; }
+  .er-featured-card .er-featured-body > strong { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .er-news-card, .er-featured-card { transition: none; }
+  .er-news-card:hover, .er-featured-card:hover { transform: none; }
+}
+@media (max-width: 640px) {
   .er-exam-materials { grid-template-columns: minmax(0, 1fr); }
   .er-library-toolbar .er-pills { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
   .er-library-result-count { margin-left: 0; }
@@ -1213,6 +1354,31 @@ body.er-exam-mode{padding-bottom:0!important}
    "Cancel" link as a blank white block. Restore an explicit secondary button. */
 .profile-page-head .hub-outline-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 1px solid #d8dee5; border-radius: 9px; background: #fff; color: #344054; font: 600 12px/1 var(--er-font-sans); text-decoration: none; }
 .profile-page-head .hub-outline-btn:hover { background: #f8fafc; border-color: #b9c4d0; }
+
+/* NEWS-1 — the phone header keeps its brand and its menu on screen.
+   At 390px the wordmark (≈185px at 40px tall), the sign-in pill, the bell and a
+   labelled Menu button together measure wider than the container, so the row
+   overflowed and the brand and the menu were clipped at the viewport edges. The
+   header now keeps one line, tightens its gaps, shortens the wordmark and drops
+   the Menu label (the button keeps its accessible name). The safe-area inset
+   keeps the top edge clear in a standalone/PWA window. */
+@media (max-width: 640px) {
+  header.hub-header { padding-top: env(safe-area-inset-top, 0px); }
+  .hub-header-row {
+    gap: 8px !important;
+    padding: 8px 0 !important;
+    min-height: 56px !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+  }
+  .hub-header-row > div:first-child { min-width: 0; flex: 0 1 auto; }
+  .hub-header-row .hub-brand-link { min-width: 0; overflow: hidden; }
+  .hub-header-row .hub-brand-link img { height: 30px !important; max-width: 132px !important; }
+  .hub-header-row > div:last-child { gap: 6px !important; flex: none; }
+  .hub-header-row a[href="/login"] { white-space: nowrap; }
+  .hub-header-row .hub-menu-label { display: none; }
+  .hub-header-row .hub-mobile-trigger { padding: 8px 10px !important; }
+}
 
 /* At 320px the full wordmark plus the 44px bell, avatar and menu no longer fit
    inside the viewport; shrink the wordmark rather than the touch targets. */
