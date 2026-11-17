@@ -24,10 +24,23 @@ const UNICAL = '1e7e9cdd-b6aa-42d1-b9fc-76f8d6a55ddc';
 const FUHSI = 'a413c221-219a-4120-a187-d4dc9586f1e6';
 
 const batch = JSON.parse(readFileSync(join(REPO_ROOT, 'data/institutions/research-batch-001.json'), 'utf8'));
-const directory: DirectoryEntry[] = [
-  { institutionId: UNICAL, canonicalName: 'University of Calabar', acronym: 'UNICAL' },
-  { institutionId: FUHSI, canonicalName: 'Federal University of Health Sciences, Ila Orangun', acronym: 'FUHSI' },
-];
+// The catalogue the batch is resolved against is the batch's own institution
+// list. It grew from the two universities this file started with to the full
+// 329-institution inventory, and an institution the catalogue cannot resolve is
+// a blocking failure for the whole batch — so a two-row catalogue would now
+// reject all 327 others. Deriving the directory keeps the assertion that
+// matters (every row resolves to exactly one catalogue row) true for the real
+// batch rather than for a fixture that no longer resembles it.
+const directory: DirectoryEntry[] = batch.institutions.map((institution: any) => ({
+  institutionId: institution.institutionId,
+  canonicalName: institution.canonicalName,
+  acronym: institution.acronym ?? null,
+}));
+
+/** Escapes a value for inclusion in a single-quoted SQL literal. */
+function sqlText(value: unknown): string {
+  return value === null || value === undefined ? 'null' : `'${String(value).replace(/'/g, "''")}'`;
+}
 
 let db: PGlite;
 
@@ -47,10 +60,19 @@ before(async () => {
   db = new PGlite();
   await applyMigrations(db);
   await db.exec('alter role service_role bypassrls');
+  // Every institution the batch can reference must exist before the apply
+  // tests run: the imported rows carry foreign keys to public.institutions, and
+  // the batch now covers the whole inventory rather than two universities.
+  const rows = directory
+    .map(
+      (entry) =>
+        `('${entry.institutionId}', ${sqlText(entry.canonicalName)}, ${sqlText(entry.acronym)}, 'Nigeria', 'university')`,
+    )
+    .join(',\n           ');
   await db.exec(`
     insert into public.institutions (id, school_name, acronym, state, institution_type)
-    values ('${UNICAL}', 'University of Calabar', 'UNICAL', 'Cross River', 'university'),
-           ('${FUHSI}', 'Federal University of Health Sciences, Ila Orangun', 'FUHSI', 'Osun', 'university');
+    values ${rows}
+    on conflict (id) do nothing;
   `);
 });
 
@@ -60,9 +82,19 @@ test('the real research batch maps cleanly onto the catalogue', () => {
   const { payload, issues, counts } = transformBatch(batch, directory, { batchId: 'test-batch' });
   assert.ok(payload, `payload must be produced; issues: ${JSON.stringify(issues)}`);
   const unresolved = issues.filter((issue) => /catalogue row|reconcile them/.test(issue.reason));
-  assert.deepEqual(unresolved, [], 'both institutions resolve to exactly one catalogue row');
-  assert.equal(counts.sources, 17, 'every source in the batch is carried');
-  assert.equal(counts.profiles, 2);
+  assert.deepEqual(unresolved, [], 'every institution resolves to exactly one catalogue row');
+  // The two universities this file was originally written against are still in
+  // the batch, and each must still resolve to exactly one catalogue row now that
+  // the catalogue covers the whole inventory.
+  for (const id of [UNICAL, FUHSI]) {
+    assert.equal(
+      directory.filter((entry) => entry.institutionId === id).length,
+      1,
+      `${id} resolves to exactly one catalogue row`,
+    );
+  }
+  assert.equal(counts.sources, 164, 'every source in the batch is carried');
+  assert.equal(counts.profiles, 41, 'every institution that publishes a profile is mapped');
   assert.ok(counts.leadership >= 4, 'both universities publish at least a Vice-Chancellor');
   assert.ok(counts.benchmarks >= 7, 'institution threshold, programme minimums and aggregates are all typed');
   assert.ok(counts.guides >= 4, 'portal instructions are carried');
