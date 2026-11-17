@@ -211,6 +211,195 @@
       "url": "https://www.nuc.edu.ng/fg-grants-licenses-to-11-new-private-universities/",
       "authority": "NUC",
       "use": "Operational licence announcement for Abdulrasaq Abubakar Toyin University and other institutions in May 2025."
+    },
+    {
+      "sourceKey": "adeleke-home-2026",
+      "name": "Adeleke University official homepage",
+      "url": "https://adelekeuniversity.edu.ng/",
+      "authority": "Institution",
+      "use": "Official profile, faculties and programme news."
+    },
+    {
+      "sourceKey": "adeleke-programmes-2026",
+      "name": "Adeleke University undergraduate programmes",
+      "url": "https://adelekeuniversity.edu.ng/programme/",
+      "authority": "Institution",
+      "use": "Current undergraduate programme catalogue and official admission-system link."
+    },
+    {
+      "sourceKey": "adeleke-management-2026",
+      "name": "Adeleke University management team",
+      "url": "https://adelekeuniversity.edu.ng/management/",
+      "authority": "Institution",
+      "use": "Current Chancellor, Pro-Chancellor, President/Vice-Chancellor and principal officers as published."
+    },
+    {
+      "sourceKey": "adeleke-application-2026-27",
+      "name": "Adeleke University 2026/2027 admission instructions",
+      "url": "https://adelekeuniversity.edu.ng/how-to-apply/",
+      "authority": "Institution",
+      "use": "2026/2027 application notice, UTME general threshold and programme exceptions."
+    },
+    {
+      "sourceKey": "adeleke-umis-programmes",
+      "name": "Adeleke University UMIS programme list",
+      "url": "https://umis.adelekeuniversity.edu.ng/adeleke/a_major_list.jsp",
+      "authority": "Institution",
+      "use": "Programme list with programme-specific displayed cut-off values; confirm each row and session before import."
+    },
+    {
+      "sourceKey": "afued-home-2026",
+      "name": "Adeyemi Federal University of Education official homepage",
+      "url": "https://www.afued.edu.ng/index.php",
+      "authority": "Institution",
+      "use": "Institutional identity, vision/mission and VC welcome address."
+    },
+    {
+      "sourceKey": "afued-vc-2026",
+      "name": "AFUED substantive Vice-Chancellor assumption announcement",
+      "url": "https://afued.edu.ng/view_news.php?id=8",
+      "authority": "Institution",
+      "use": "Confirms Prof Bayode Isaiah Popoola assumed office as substantive VC in August 2025."
+    },
+    {
+      "sourceKey": "admiralty-cvc-vc",
+      "name": "CVCNU Admiralty University profile",
+      "url": "https://cvcnigeria.org/university-details/?uni=163",
+      "authority": "Committee of Vice-Chancellors",
+      "use": "Independent sector-body profile naming Professor Paul Omojo Omaji as VC and listing 2017 founding; not institution-owned confirmation."
+    },
+    {
+      "sourceKey": "abuad-vc-2026",
+      "name": "ABUAD Office of the Vice-Chancellor",
+      "url": "https://vc.abuad.edu.ng/",
+      "authority": "Institution",
+      "use": "Current Vice-Chancellor identity."
+    },
+    {
+      "sourceKey": "abuad-admission-2026-27",
+      "name": "ABUAD 2026/2027 admission exercise",
+      "url": "https://www.abuad.edu.ng/admission-exercise-2026-2027/",
+      "authority": "Institution",
+      "use": "Current session undergraduate programme catalogue and admissions information."
+    },
+    {
+      "sourceKey": "abuad-colleges",
+      "name": "ABUAD colleges directory",
+      "url": "https://www.abuad.edu.ng/colleges/",
+      "authority": "Institution",
+      "use": "College structure."
+    },
+    {
+      "sourceKey": "aaau-leadership-2026",
+      "name": "AAAU University Leadership",
+      "url": "https://aaau.edu.ng/about-us/university-leadership/",
+      "authority": "Institution",
+      "use": "Acting Vice-Chancellor and management team."
+    },
+    {
+      "sourceKey": "aaau-home-2026-27",
+      "name": "AAAU official homepage",
+      "url": "https://aaau.edu.ng/",
+      "authority": "Institution",
+      "use": "Current academic calendar and currently advertised undergraduate programme."
+    },
+    {
+      "sourceKey": "aaau-aviation-business",
+      "name": "AAAU B.Sc Aviation Business programme page",
+      "url": "https://aaau.edu.ng/b-sc-aviation-business/",
+      "authority": "Institution",
+      "use": "Programme overview and historical admission details; older criteria require session revalidation."
+    },
+    {
+      "sourceKey": "ase-principal-officers",
+      "name": "African School of Economics principal officers",
+      "url": "https://ase.edu.ng/principal-officers/",
+      "authority": "Institution",
+      "use": "Current Vice-Chancellor and principal officers."
+    },
+    {
+      "sourceKey": "ase-home-2026",
+      "name": "African School of Economics homepage",
+      "url": "https://ase.edu.ng/",
+      "authority": "Institution",
+      "use": "Current programme/faculty overview and current news."
+    },
+    {
+      "sourceKey": "ase-faq-2024",
+      "name": "African School of Economics FAQ",
+      "url": "https://ase.edu.ng/frequently-asked-questions/",
+      "authority": "Institution",
+      "use": "Published location, JAMB route, programme count and licensing context; page explicitly describes 2024 facts."
+    },
+    {
+      "sourceKey": "aust-new-programmes-2026",
+      "name": "AUST NUC approval of ten new undergraduate programmes",
+      "url": "https://info.aust.edu.ng/2026/10/07/nuc-approves-ten-new-undergraduate-programmes-for-aust/",
+      "authority": "Institution",
+      "use": "Ten newly approved undergraduate programmes effective 2026/2027."
+    },
+    {
+      "sourceKey": "aust-admissions-2026-27",
+      "name": "AUST 2026/2027 admissions portal",
+      "url": "https://admissions.aust.edu.ng/",
+      "authority": "Institution",
+      "use": "Current admissions session, application steps and undergraduate/postgraduate routes."
+    },
+    {
+      "sourceKey": "aust-programmes-2026-27",
+      "name": "AUST academic programmes portal",
+      "url": "https://admissions.aust.edu.ng/programs",
+      "authority": "Institution",
+      "use": "Programme list and programme descriptions."
+    },
+    {
+      "sourceKey": "aust-president-2026",
+      "name": "AUST 2026/2027 orientation report",
+      "url": "https://info.aust.edu.ng/2026/11/10/aust-welcomes-new-students-at-2026-2027-orientation-programme/",
+      "authority": "Institution",
+      "use": "Confirms Professor Azikiwe Peter Onwualu as University President in November 2026."
+    },
+    {
+      "sourceKey": "abu-home-2026",
+      "name": "Ahmadu Bello University official homepage",
+      "url": "https://abu.edu.ng/",
+      "authority": "Institution",
+      "use": "Institution-published faculty, department and programme totals."
+    },
+    {
+      "sourceKey": "abu-faculties-2026",
+      "name": "Ahmadu Bello University faculties directory",
+      "url": "https://abu.edu.ng/faculties/",
+      "authority": "Institution",
+      "use": "Current faculty directory."
+    },
+    {
+      "sourceKey": "apu-applicant-portal",
+      "name": "Ahman Pategi University applicant registration portal",
+      "url": "https://www.portal.apu.edu.ng/applicant/register",
+      "authority": "Institution",
+      "use": "Official application form endpoint, document checklist and programme/mode/centre selectors."
+    },
+    {
+      "sourceKey": "afit-2026-27-admission",
+      "name": "AFIT 2026/2027 Post-UTME and Direct Entry admission notice",
+      "url": "https://afit.edu.ng/home/post-utme-and-direct-entry-admission-into-degree-and-national-diploma-programmes-at-the-air-force-institute-of-technology-afit-for-2026-2027-academic-session/",
+      "authority": "Institution",
+      "use": "Current 2026/2027 programmes, UTME thresholds, application window and first-choice change instructions."
+    },
+    {
+      "sourceKey": "afit-commandant-2026",
+      "name": "AFIT Commandant profile",
+      "url": "https://afit.edu.ng/home/the-commandant/",
+      "authority": "Institution",
+      "use": "Current Commandant profile as published."
+    },
+    {
+      "sourceKey": "afit-admission-requirements",
+      "name": "AFIT admission requirements",
+      "url": "https://afit.edu.ng/home/admissions/admission-requirements/",
+      "authority": "Institution",
+      "use": "First-choice and application portal guidance."
     }
   ],
   "dataPolicy": {
@@ -533,11 +722,34 @@
       "ownership": "private",
       "yearEstablished": 2011,
       "officialWebsite": "https://adelekeuniversity.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "not_researched",
-      "admissionRequirementsStatus": "not_researched",
-      "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
+      "admissionRequirementsStatus": "partial_admission_requirements_verified",
+      "programmeCutoffsStatus": "partial_cutoff_values_found_session_not_explicit",
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "adeleke-about",
+        "adeleke-management",
+        "adeleke-home-2026",
+        "adeleke-programmes-2026",
+        "adeleke-management-2026",
+        "adeleke-application-2026-27",
+        "adeleke-umis-programmes"
+      ],
+      "notes": [
+        "The current official site displayed a notice that admission into Medicine & Surgery and Law was closed; the active status of other programmes must be confirmed by programme and session.",
+        "The 2026/2027 entry notice and actual applicant portal target were not verified in this pass.",
+        "Course-by-course JAMB IBASS combinations and institutional cut-offs are pending.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "UMIS programme listing shows programme cut-off numbers but the session label is not explicit in the extracted view; do not publish as current-session thresholds without verification.",
+        "General 150 UTME threshold explicitly excludes Nursing, MBBS, Pharmacy, Law and MLS; exact minima and programme-specific subject combinations for these exceptions remain to be confirmed.",
+        "The official notice says admission into Medicine and Law is closed in a separate current homepage banner; check the live programme status before displaying availability."
+      ]
     },
     {
       "institutionId": "7a74e01e-c57f-4117-8147-8c16cec72381",
@@ -545,38 +757,95 @@
       "inventoryOrder": 12,
       "ownership": "federal",
       "yearEstablished": 2023,
-      "officialWebsite": "https://afued.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
+      "officialWebsite": "https://www.afued.edu.ng/",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
       "academicStructureStatus": "not_researched",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "afued-home",
+        "afued-vice-chancellor",
+        "afued-undergraduate-portal",
+        "nuc-federal-universities",
+        "afued-home-2026",
+        "afued-vc-2026"
+      ],
+      "notes": [
+        "The current undergraduate Post-UTME screening portal reports applications closed; the next active screening period was not published in the retrieved snapshot.",
+        "The history page was not fully transcribed; distinguish the predecessor college's legacy date from the federal university status date.",
+        "A separate legacy www subdomain page displays a different Vice-Chancellor name; the current main domain names Professor Bayode Isaiah Popoola. The Registry should resolve the discrepancy before public display.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official homepage and VC assumption notice support Prof Bayode Isaiah Popoola as substantive Vice-Chancellor. A separate /vco.php page still shows former acting VC Prof Samuel Akintunde; treat it as stale and do not use it.",
+        "The 2026/2027 admission notice needs detailed extraction of programmes, entry requirements and application workflow."
+      ]
     },
     {
       "institutionId": "8d0fda97-70f2-4873-9298-5b3b106baf23",
       "canonicalName": "Admiralty University",
       "inventoryOrder": 13,
-      "ownership": "federal",
-      "yearEstablished": 2023,
-      "officialWebsite": null,
-      "leadershipStatus": "not_verified",
-      "academicStructureStatus": "not_researched",
+      "ownership": "private",
+      "yearEstablished": 2017,
+      "officialWebsite": "https://adun.edu.ng/",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "admiralty-cvc-vc"
+      ],
+      "notes": [
+        "The current NUC Nigerian University System lists Admiralty University as a federal university established in 2023. A CVCNU profile describes it as founded in 2017 and private, which conflicts with the NUC's current registry; the NUC listing is used pending institutional clarification.",
+        "No current official university domain, leadership page, admissions portal, programme catalogue or subject combination source was verified in this pass.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The Vice-Chancellor name is sourced from CVCNU, not a current institution-owned leadership page; current appointment/tenure needs direct confirmation.",
+        "NUC accreditation result is historical (as at January 2022); it must not be used as a current programme or accreditation-status claim.",
+        "Current 2026/2027 admission notice, official application workflow, campuses, current academic units and programme-specific requirements remain unverified."
+      ]
     },
     {
       "institutionId": "ac3bc3c5-c59c-4c3d-911c-eac82e016fa2",
       "canonicalName": "Afe Babalola University",
       "inventoryOrder": 14,
       "ownership": "private",
-      "yearEstablished": 2007,
+      "yearEstablished": 2009,
       "officialWebsite": "https://www.abuad.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "not_researched",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "abuad-home",
+        "abuad-admissions-2026-27",
+        "abuad-vice-chancellor-2026",
+        "nuc-private-universities-2026",
+        "abuad-vc-2026",
+        "abuad-admission-2026-27",
+        "abuad-colleges"
+      ],
+      "notes": [
+        "The official applicant link was found on the main university site, but the target returned a 520 gateway error during this check; portal availability should be checked before displaying it as active.",
+        "The 2026/2027 prospectus contains detailed programmes, but full subject combinations, O'Level variants and course-level cut-offs have not yet been extracted.",
+        "Programme-specific JAMB IBASS cross-check remains pending.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official 2026/2027 admission notice and college structure are captured; programme-by-programme eligibility, JAMB subject combinations and departmental cut-offs remain to be extracted.",
+        "Do not infer minimum UTME score or programme-specific cut-off from the general admission exercise page."
+      ]
     },
     {
       "institutionId": "f6e79568-cbb1-414c-947b-2835caed7c79",
@@ -585,11 +854,34 @@
       "ownership": "federal",
       "yearEstablished": 2023,
       "officialWebsite": "https://aaau.edu.ng/",
-      "leadershipStatus": "not_verified",
-      "academicStructureStatus": "not_researched",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "aaau-home",
+        "aaau-leadership",
+        "aaau-undergraduate-programmes",
+        "aaau-admission-portal",
+        "nuc-federal-universities",
+        "aaau-leadership-2026",
+        "aaau-home-2026-27",
+        "aaau-aviation-business"
+      ],
+      "notes": [
+        "The undergraduate programme page also contains a 180 UTME threshold explicitly tied to the 2024 UTME; it is deliberately excluded from the 2026/2027 admission data.",
+        "The current 2026/2027 programme-specific subject combinations, O'Level mappings and cut-offs have not been verified.",
+        "The current official website identifies an Acting Vice-Chancellor; confirm when a substantive appointment is announced.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official leadership page identifies Mustapha Sheikh Abdullahi as Acting Vice-Chancellor.",
+        "The B.Sc Aviation Business page contains legacy course content references and older 140/180 thresholds; treat admission criteria as stale pending a 2026/2027 programme-specific notice.",
+        "The current homepage shows a 2026/2027 academic calendar but the complete undergraduate catalogue and live application endpoint need further extraction."
+      ]
     },
     {
       "institutionId": "e3054006-c3de-4522-aef8-3098559df8ac",
@@ -598,11 +890,32 @@
       "ownership": "private",
       "yearEstablished": 2024,
       "officialWebsite": "https://ase.edu.ng/",
-      "leadershipStatus": "not_verified",
-      "academicStructureStatus": "not_researched",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "ase-home",
+        "ase-undergraduate-admissions",
+        "nuc-private-universities-2026",
+        "ase-principal-officers",
+        "ase-home-2026",
+        "ase-faq-2024"
+      ],
+      "notes": [
+        "The undergraduate admissions page is not clearly tied to the 2026/2027 session. A 2025/2026 notice is available but should not be presented as current-session eligibility.",
+        "The website states 20 undergraduate programmes across three faculties, but the complete current list and department mapping have not yet been extracted.",
+        "The current Vice-Chancellor's profile and current admission workflow should be checked before publishing.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The current VC is listed as Prof Mahfouz Adedimeji on the official principal officers page; founder/president is Prof Leonard Wantchekon.",
+        "Programme count, department count and JAMB entry information in the official FAQ are explicitly described as 2024 data; revalidate against current 2026/2027 programme/admissions pages before publishing as current.",
+        "The official site reports a 2026 second matriculation and 2025/2026 VC welcome; current 2026/2027 applicant requirements and portal flow remain to be extracted."
+      ]
     },
     {
       "institutionId": "814bd683-3b83-4c93-9dd2-80d6f5ea50f6",
@@ -611,11 +924,32 @@
       "ownership": "private",
       "yearEstablished": 2007,
       "officialWebsite": "https://aust.edu.ng/",
-      "leadershipStatus": "not_verified",
-      "academicStructureStatus": "not_researched",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "aust-admissions-2026-27",
+        "aust-programmes-approved-2026-27",
+        "nuc-private-universities-2026",
+        "aust-new-programmes-2026",
+        "aust-programmes-2026-27",
+        "aust-president-2026"
+      ],
+      "notes": [
+        "The ten programmes listed are newly approved for 2026/2027 and do not constitute the complete AUST programme catalogue.",
+        "Current VC/Chancellor identities were not verified from a current AUST institutional leadership page in this pass.",
+        "Programme-specific JAMB subject combinations and cut-offs remain to be checked against the exact course and current JAMB IBASS data.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "AUST current official news identifies Prof Azikiwe Peter Onwualu as President. A CVC directory lists a separate VC name; do not conflate President and Vice-Chancellor without current university confirmation.",
+        "NUC approval notice confirms ten new programmes for 2026/2027. Programme requirements, subject combinations and cut-offs still need course-by-course extraction.",
+        "The admissions portal lists a broader programme set than the NUC October 2026 announcement; confirm resource verification/approval for every programme before publishing."
+      ]
     },
     {
       "institutionId": "d582bec5-d9f3-4b7d-a53b-12581dac0175",
@@ -624,11 +958,35 @@
       "ownership": "federal",
       "yearEstablished": 1962,
       "officialWebsite": "https://abu.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "not_researched",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
+      "admissionRequirementsStatus": "partial_admission_requirements_verified",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "abu-history",
+        "abu-principal-officers",
+        "abu-undergraduate-programmes",
+        "nuc-federal-universities",
+        "abu-home-2026",
+        "abu-faculties-2026",
+        "abu-vc-2025",
+        "abu-campus-2023",
+        "abu-handbook-2025-26"
+      ],
+      "notes": [
+        "The official undergraduate catalogue initially displayed 114 undergraduate records, but the 20-record first page is only a partial extraction.",
+        "A current 2026/2027 admission notice and official application portal were not captured in this pass.",
+        "Course-specific subject combinations and current session cut-offs remain to be matched against JAMB IBASS and the university's current admission notice.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official 2025/2026 handbook is historical; do not use its 180/200 score range as 2026/2027 admission guidance.",
+        "The official homepage and faculty directory give institution-wide counts; detailed department-to-programme mappings still need extraction.",
+        "Exact current 2026/2027 admission portal workflow and programme-specific JAMB IBASS combinations remain pending."
+      ]
     },
     {
       "institutionId": "608c6ef3-3e31-411e-8f3b-b931ae570779",
@@ -636,12 +994,30 @@
       "inventoryOrder": 19,
       "ownership": "private",
       "yearEstablished": 2021,
-      "officialWebsite": null,
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
+      "officialWebsite": "https://www.apu.edu.ng/",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
       "academicStructureStatus": "not_researched",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "nuc-20-private-2021",
+        "apu-applicant-portal"
+      ],
+      "notes": [
+        "The NUC lists the university as a private institution established in 2021 and lists Professor Adebola Mahfouz Adedimeji as Vice-Chancellor.",
+        "A third-party hosted school portal was found, but no canonical institution-owned website or official applicant portal was verified. It is not imported or recommended.",
+        "Official programme list, faculty/department hierarchy, current admissions requirements and current leadership page need direct institutional confirmation.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Current Vice-Chancellor and full management team not verified from an institution-owned leadership page.",
+        "Programme options are loaded dynamically; exact active degree catalogue and NUC accreditation status by programme need confirmation.",
+        "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements."
+      ]
     },
     {
       "institutionId": "e7d9f2a1-d79a-42c0-be70-252dc0b48023",
@@ -650,11 +1026,33 @@
       "ownership": "federal",
       "yearEstablished": 2018,
       "officialWebsite": "https://afit.edu.ng/",
-      "leadershipStatus": "not_verified",
-      "academicStructureStatus": "not_researched",
+      "leadershipStatus": "leadership_record_present_source_quality_noted",
+      "academicStructureStatus": "partial_academic_structure_verified",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "afit-history",
+        "afit-commandant-2025",
+        "afit-undergraduate-admissions-2026-27",
+        "nuc-federal-universities",
+        "afit-2026-27-admission",
+        "afit-commandant-2026",
+        "afit-admission-requirements"
+      ],
+      "notes": [
+        "The NUC registry year (2018) reflects the current institutional listing, while AFIT's own history traces its origins to 1977 and institute-of-technology status to 2008; keep these dates semantically separate.",
+        "The official undergraduate page summarises Aerospace Engineering and allied disciplines, but the complete programme and department list has not yet been extracted.",
+        "Course-level 2026/2027 cut-offs and JAMB IBASS subject combinations remain to be collected.",
+        "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
+        "Official admission and student portal URLs require verification from the institution's own website.",
+        "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The 2026/2027 admission notice lists degree and ND programmes and thresholds; HND/pre-HND options are also present but need separate entry-route mapping.",
+        "Programme-specific O'Level subject requirements and JAMB IBASS combinations remain to be transcribed.",
+        "The published application window is 18 May–20 July 2026; this date range has passed as of 17 November 2026. Do not label the portal open without a fresh extension notice."
+      ]
     },
     {
       "institutionId": "32a9cd29-701f-42d0-8a5e-7fc11be12b9b",
@@ -1700,8 +2098,8 @@
   "lastUpdated": "2026-11-17",
   "progress": {
     "institutionsInGroup": 100,
-    "primarySourceResearchUpdated": 10,
-    "remainingInGroupForDeepResearch": 90,
-    "importantNote": "Ten institutions have received an initial primary-source research pass. This is partial coverage, not completion of the 100-institution group."
+    "primarySourceResearchUpdated": 20,
+    "remainingInGroupForDeepResearch": 80,
+    "importantNote": "Twenty institutions have received an initial primary-source research pass. This is partial coverage, not completion of the 100-institution group."
   }
 }
