@@ -20,6 +20,7 @@ create or replace function public.institution_import_bump(p_summary jsonb, p_buc
 returns jsonb
 language sql
 immutable
+set search_path = pg_catalog
 as $bump$
   select jsonb_set(
     p_summary,
