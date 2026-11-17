@@ -7,7 +7,7 @@
     "unknownValuesAreNull": true,
     "doNotInferProgrammeCutoffs": true,
     "sessionSpecific": true,
-    "note": "This is an evidence-backed research batch for review and import. It has not been inserted into production. Institution identity is matched by existing Supabase UUID; profile verification is separate from the legacy institutions.is_verified flag."
+    "note": "Batch includes institution-level source research, but only explicitly verified fields should be published. The legacy institutions.is_verified flag does not validate this content. Records can remain partially researched even when NUC recognition and identity are verified."
   },
   "sources": [
     {
@@ -365,6 +365,415 @@
         "department-level official links"
       ],
       "caveat": "Navigation is a discovery index, not a complete current academic structure. Verify each unit page and active degree programme before publication."
+    },
+    {
+      "sourceKey": "nuc-state-universities-2026",
+      "name": "National Universities Commission - State Universities Directory",
+      "url": "https://www.nuc.edu.ng/nigerian-univerisities/state-univerisity/",
+      "authority": "National Universities Commission",
+      "sourceType": "official",
+      "supports": [
+        "state university recognition",
+        "state ownership",
+        "listed institutional year",
+        "directory-listed vice-chancellors and official websites where populated"
+      ],
+      "caveat": "A regulatory directory snapshot; some leadership and website cells may lag institution notices. Use institution-level pages to reconfirm office holders."
+    },
+    {
+      "sourceKey": "nuc-private-universities-2026",
+      "name": "National Universities Commission - Private Universities Directory",
+      "url": "https://www.nuc.edu.ng/nigerian-univerisities/private-univeristies/",
+      "authority": "National Universities Commission",
+      "sourceType": "official",
+      "supports": [
+        "private university recognition",
+        "listed institutional year",
+        "directory-listed leadership and websites where populated"
+      ],
+      "caveat": "A regulatory directory snapshot; blank website or leadership fields mean not supplied in the directory and should not be guessed."
+    },
+    {
+      "sourceKey": "nuc-durojaiye-provisional-licence-2026",
+      "name": "NUC - Provisional licence issued to Abdulfatai/Abdulfattah Durojaiye University",
+      "url": "https://www.nuc.edu.ng/nuc-issues-provisional-licence-to-abdulfatai-durojaiye-university-abeokuta/",
+      "authority": "National Universities Commission",
+      "sourceType": "official",
+      "supports": [
+        "2026 provisional licence",
+        "Abeokuta location",
+        "proposed 13 programmes awaiting resource verification"
+      ],
+      "caveat": "NUC's news headline spells the proprietor's name as Abdulfatai while its current Nigerian University System directory spells the institution Abdulfattah Durojaiye University. NUC said resource verification of 13 proposed programmes was still a next step; do not imply that all programmes had begun."
+    },
+    {
+      "sourceKey": "akum-administration",
+      "name": "Abdulkadir Kure University - Administration",
+      "url": "https://www.akum.edu.ng/administration",
+      "authority": "Abdulkadir Kure University",
+      "sourceType": "official",
+      "supports": [
+        "Vice-Chancellor identity",
+        "Deputy Vice-Chancellor identity",
+        "university leadership"
+      ],
+      "caveat": "The official page was indexed, but direct opening returned 403 during this check."
+    },
+    {
+      "sourceKey": "absu-student-portal",
+      "name": "Abia State University - Official Web Portal",
+      "url": "https://www.portal.abiastateuniversity.edu.ng/",
+      "authority": "Abia State University",
+      "sourceType": "official",
+      "supports": [
+        "student portal entry point",
+        "prospective student application navigation",
+        "admission status and post-offer processes"
+      ],
+      "caveat": "The opened page primarily exposes applicant, admission-status and post-offer workflows; do not treat it as a current-session screening announcement."
+    },
+    {
+      "sourceKey": "atbu-about",
+      "name": "Abubakar Tafawa Balewa University - About and History",
+      "url": "https://atbu.edu.ng/about/",
+      "authority": "Abubakar Tafawa Balewa University",
+      "sourceType": "official",
+      "supports": [
+        "institution history",
+        "1980 establishment as Federal University of Technology Bauchi",
+        "1988 restoration of autonomous status",
+        "six-school academic structure"
+      ],
+      "caveat": "A separate ATBU URL returned unrelated spam/shop content during this research pass. The university domain needs a security and content-integrity review before its links are promoted in student-facing guidance."
+    },
+    {
+      "sourceKey": "achievers-management",
+      "name": "Achievers University - University Management",
+      "url": "https://achievers.edu.ng/university-management/",
+      "authority": "Achievers University",
+      "sourceType": "official",
+      "supports": [
+        "current Vice-Chancellor",
+        "principal officers",
+        "leadership succession"
+      ],
+      "caveat": "Page was indexed by search but blocked by an anti-bot verification page when opened directly."
+    },
+    {
+      "sourceKey": "achievers-admissions-2026-27",
+      "name": "Achievers University - 2026/2027 Admissions Portal",
+      "url": "https://admission.achievers.edu.ng/",
+      "authority": "Achievers University",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 admission notice",
+        "prospectus and degree programme navigation",
+        "admissions application portal"
+      ],
+      "caveat": "Portal was indexed as current 2026/2027 but blocked by anti-bot verification on direct open."
+    },
+    {
+      "sourceKey": "adsu-about",
+      "name": "Adamawa State University - About the University",
+      "url": "https://adsu.edu.ng/about/",
+      "authority": "Adamawa State University",
+      "sourceType": "official",
+      "supports": [
+        "2002 institutional inception",
+        "recent Abubakar Barde Campus expansion",
+        "campus-level faculty allocation"
+      ],
+      "caveat": "The page mentions two campuses but does not establish a fully reconciled total campus count."
+    },
+    {
+      "sourceKey": "adsu-vice-chancellor",
+      "name": "Adamawa State University - Vice-Chancellor",
+      "url": "https://adsu.edu.ng/vice-chancellor/",
+      "authority": "Adamawa State University",
+      "sourceType": "official",
+      "supports": [
+        "Vice-Chancellor identity and welcome message"
+      ]
+    },
+    {
+      "sourceKey": "aaua-vice-chancellor",
+      "name": "Adekunle Ajasin University - Vice-Chancellor's Welcome Message",
+      "url": "https://aaua.edu.ng/vice-chancellor/vcs-welcome-message",
+      "authority": "Adekunle Ajasin University",
+      "sourceType": "official",
+      "supports": [
+        "Vice-Chancellor identity",
+        "current administration priorities"
+      ],
+      "caveat": "The page was indexed but direct opening timed out. The main university domain also exposed unrelated spam outbound links during this check; security review is required before promoting it."
+    },
+    {
+      "sourceKey": "adeleke-about",
+      "name": "Adeleke University - About the University",
+      "url": "https://adelekeuniversity.edu.ng/about-au/",
+      "authority": "Adeleke University",
+      "sourceType": "official",
+      "supports": [
+        "2011 establishment",
+        "private faith-based institutional overview",
+        "founder and history"
+      ],
+      "caveat": "Page was indexed but direct opening was blocked by an anti-bot verification page."
+    },
+    {
+      "sourceKey": "adeleke-management",
+      "name": "Adeleke University - Management",
+      "url": "https://adelekeuniversity.edu.ng/management/",
+      "authority": "Adeleke University",
+      "sourceType": "official",
+      "supports": [
+        "Chancellor",
+        "Pro-Chancellor",
+        "President/Vice-Chancellor",
+        "Deputy Vice-Chancellor and Registrar"
+      ],
+      "caveat": "Page was indexed but direct opening was blocked by an anti-bot verification page."
+    },
+    {
+      "sourceKey": "afued-home",
+      "name": "Adeyemi Federal University of Education - Official Website",
+      "url": "https://afued.edu.ng/index.php",
+      "authority": "Adeyemi Federal University of Education",
+      "sourceType": "official",
+      "supports": [
+        "current Vice-Chancellor on the main website",
+        "institution mission and vision",
+        "five faculty navigation labels"
+      ]
+    },
+    {
+      "sourceKey": "afued-vice-chancellor",
+      "name": "Adeyemi Federal University of Education - Vice-Chancellor's Office",
+      "url": "https://afued.edu.ng/vco.php",
+      "authority": "Adeyemi Federal University of Education",
+      "sourceType": "official",
+      "supports": [
+        "Vice-Chancellor identity and office contact"
+      ],
+      "caveat": "A separate legacy www.afued.edu.ng page showed a different VC name. This record uses the current non-www main domain homepage and its linked office page; leadership naming should be checked with the Registry before publication."
+    },
+    {
+      "sourceKey": "afued-undergraduate-portal",
+      "name": "Adeyemi Federal University of Education - Undergraduate Application Portal",
+      "url": "https://portal.afued.edu.ng/",
+      "authority": "Adeyemi Federal University of Education",
+      "sourceType": "official",
+      "supports": [
+        "undergraduate screening status",
+        "fresh-student admission and registration navigation"
+      ],
+      "caveat": "The portal currently reports undergraduate Post-UTME screening closed; the next session's application opening has not been established."
+    },
+    {
+      "sourceKey": "abuad-home",
+      "name": "Afe Babalola University - Official Website and Applicant Navigation",
+      "url": "https://www.abuad.edu.ng/",
+      "authority": "Afe Babalola University",
+      "sourceType": "official",
+      "supports": [
+        "official applicant, student and learning portal links",
+        "college structure",
+        "institution identity"
+      ]
+    },
+    {
+      "sourceKey": "abuad-admissions-2026-27",
+      "name": "Afe Babalola University - 2026/2027 Admission Exercise",
+      "url": "https://www.abuad.edu.ng/admission-exercise-2026-2027/",
+      "authority": "Afe Babalola University",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 entry routes",
+        "undergraduate, pre-degree, diploma, foundation and other admissions",
+        "current college and programme list",
+        "UTME and Post-UTME screening framework"
+      ],
+      "caveat": "The official notice says placement depends on UTME, Post-UTME, programme O'Level requirements and available places. It does not establish a universal course cut-off."
+    },
+    {
+      "sourceKey": "abuad-vice-chancellor-2026",
+      "name": "Afe Babalola University - Office of the Vice-Chancellor, September 2026 notice",
+      "url": "https://vc.abuad.edu.ng/abuad-vice-chancellor-charges-new-students-to-aim-for-excellence/",
+      "authority": "Afe Babalola University",
+      "sourceType": "official",
+      "supports": [
+        "current Vice-Chancellor identity",
+        "2026/2027 academic session"
+      ]
+    },
+    {
+      "sourceKey": "aaau-home",
+      "name": "African Aviation and Aerospace University - Official Website",
+      "url": "https://aaau.edu.ng/",
+      "authority": "African Aviation and Aerospace University",
+      "sourceType": "official",
+      "supports": [
+        "undergraduate programme list",
+        "current academic calendar",
+        "application portal link"
+      ]
+    },
+    {
+      "sourceKey": "aaau-leadership",
+      "name": "African Aviation and Aerospace University - University Leadership",
+      "url": "https://aaau.edu.ng/about-us/university-leadership/",
+      "authority": "African Aviation and Aerospace University",
+      "sourceType": "official",
+      "supports": [
+        "Acting Vice-Chancellor identity",
+        "management team and principal officer titles"
+      ]
+    },
+    {
+      "sourceKey": "aaau-undergraduate-programmes",
+      "name": "African Aviation and Aerospace University - Undergraduate Programmes",
+      "url": "https://aaau.edu.ng/undergraduate-programme/",
+      "authority": "African Aviation and Aerospace University",
+      "sourceType": "official",
+      "supports": [
+        "Aviation Business programme",
+        "programme-specific admissions material"
+      ],
+      "caveat": "The page's indexed UTME minimum is explicitly for the 2024 UTME and must not be reused as a 2026/2027 benchmark."
+    },
+    {
+      "sourceKey": "aaau-admission-portal",
+      "name": "African Aviation and Aerospace University - Application Portal",
+      "url": "https://applicant.safapply.com/aaau",
+      "authority": "African Aviation and Aerospace University",
+      "sourceType": "official_linked_portal",
+      "supports": [
+        "application portal linked directly from the university website"
+      ],
+      "caveat": "The portal requires JavaScript; programme requirements should be checked in the live application flow."
+    },
+    {
+      "sourceKey": "ase-home",
+      "name": "African School of Economics - Official Website",
+      "url": "https://ase.edu.ng/",
+      "authority": "African School of Economics",
+      "sourceType": "official",
+      "supports": [
+        "NUC licence in 2024",
+        "Abuja contact address",
+        "20 undergraduate programmes across three faculties as stated on the current homepage",
+        "official portal navigation"
+      ]
+    },
+    {
+      "sourceKey": "ase-undergraduate-admissions",
+      "name": "African School of Economics - Undergraduate Admissions",
+      "url": "https://ase.edu.ng/undergraduate-admissions/",
+      "authority": "African School of Economics",
+      "sourceType": "official",
+      "supports": [
+        "general undergraduate admissions document checklist and described process"
+      ],
+      "caveat": "This admissions page is not clearly session-specific and its content includes legacy dates. Do not use its general wording as the 2026/2027 requirements or cut-off."
+    },
+    {
+      "sourceKey": "aust-admissions-2026-27",
+      "name": "African University of Science and Technology - 2026/2027 Admissions Portal",
+      "url": "https://admissions.aust.edu.ng/",
+      "authority": "African University of Science and Technology",
+      "sourceType": "official",
+      "supports": [
+        "2026/2027 application availability",
+        "bachelor's, postgraduate and pre-degree application pathways"
+      ],
+      "caveat": "The portal's indexed overview is current-session, but programme-specific eligibility and subject combinations must be read from the selected programme page."
+    },
+    {
+      "sourceKey": "aust-programmes-approved-2026-27",
+      "name": "African University of Science and Technology - NUC approval of ten new undergraduate programmes",
+      "url": "https://info.aust.edu.ng/2026/10/07/nuc-approves-ten-new-undergraduate-programmes-for-aust/",
+      "authority": "African University of Science and Technology",
+      "sourceType": "official",
+      "supports": [
+        "ten undergraduate programmes approved for commencement in 2026/2027",
+        "programme availability at Main Campus"
+      ],
+      "caveat": "The notice describes ten newly approved programmes; it is not a complete list of every AUST programme."
+    },
+    {
+      "sourceKey": "abu-history",
+      "name": "Ahmadu Bello University - History",
+      "url": "https://abu.edu.ng/history/",
+      "authority": "Ahmadu Bello University",
+      "sourceType": "official",
+      "supports": [
+        "4 October 1962 establishment",
+        "three main campuses: Samaru, Kongo and School of Basic Studies Funtua",
+        "historical institutional mission and development"
+      ]
+    },
+    {
+      "sourceKey": "abu-principal-officers",
+      "name": "Ahmadu Bello University - Principal Officers",
+      "url": "https://abu.edu.ng/principal-officers/",
+      "authority": "Ahmadu Bello University",
+      "sourceType": "official",
+      "supports": [
+        "Vice-Chancellor Professor Adamu Ahmed",
+        "current principal officer directory"
+      ],
+      "caveat": "The directory is the institution's published list; verify periodically for leadership changes."
+    },
+    {
+      "sourceKey": "abu-undergraduate-programmes",
+      "name": "Ahmadu Bello University - Undergraduate Programme Catalogue",
+      "url": "https://programmes.abu.edu.ng/programmes_list.php?page=list&tab=6",
+      "authority": "Ahmadu Bello University",
+      "sourceType": "official",
+      "supports": [
+        "programme names",
+        "faculty and department mapping",
+        "duration and delivery mode for listed undergraduate programmes"
+      ],
+      "caveat": "The catalogue shows a paginated list; the initial view contains 20 of 114 undergraduate records. Full catalogue extraction is still pending."
+    },
+    {
+      "sourceKey": "afit-history",
+      "name": "Air Force Institute of Technology - Institutional History",
+      "url": "https://afit.edu.ng/home/amp/about-us/",
+      "authority": "Air Force Institute of Technology",
+      "sourceType": "official",
+      "supports": [
+        "1977 institutional roots",
+        "1979 and 2000 training-school reorganisations",
+        "2004 ND upgrade",
+        "2008 institute-of-technology status"
+      ]
+    },
+    {
+      "sourceKey": "afit-commandant-2025",
+      "name": "Air Force Institute of Technology - Commandant",
+      "url": "https://afit.edu.ng/home/the-commandant/",
+      "authority": "Air Force Institute of Technology",
+      "sourceType": "official",
+      "supports": [
+        "current Commandant profile",
+        "Air Vice Marshal Adeniran Kolade Ademuwagun",
+        "14th Commandant appointment"
+      ],
+      "caveat": "The official handover notice says he took over on 3 November 2025. Confirm current occupancy again at the next refresh."
+    },
+    {
+      "sourceKey": "afit-undergraduate-admissions-2026-27",
+      "name": "Air Force Institute of Technology - 2026/2027 Undergraduate Admission Portal",
+      "url": "https://degree.afit.edu.ng/portal/public/login?action=check_eligibility",
+      "authority": "Air Force Institute of Technology",
+      "sourceType": "official_linked_portal",
+      "supports": [
+        "2026/2027 degree screening portal",
+        "candidate eligibility check",
+        "JAMB first-choice/change-of-institution refresh guidance"
+      ]
     }
   ],
   "institutions": [
@@ -1173,6 +1582,1201 @@
         "The current direct URL behind the Student's Portal - NEW link was not resolved; only the official portal hub is stored.",
         "Campus names are published, but campus addresses and programme-to-campus assignments remain unresearched.",
         "The official institutional history page contains inconsistent predecessor dates (1981 and 1983); the 1991 federal conversion and 1991/1992 academic commencement are the facts used for the current institution profile."
+      ]
+    },
+    {
+      "institutionId": "337cecd3-ed57-46f6-b81c-33ff9a971653",
+      "canonicalName": "Abdulfattah Durojaiye University",
+      "acronym": null,
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2026,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Abeokuta, Ogun State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "status": "provisional_licence_resource_verification_stage_in_NUC_notice",
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected",
+          "note": "NUC's 30 July 2026 notice said resource verification of the proposed 13 programmes was the next step. Do not present any programme or intake as active without a later NUC or institutional update."
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC's current NUS list spells the name Abdulfattah Durojaiye University, while the NUC provisional-licence news headline spells it Abdulfatai Durojaiye University; preserve both as source variants until the Commission clarifies.",
+        "NUC's July 2026 notice said resource verification of 13 proposed academic programmes was still pending at that time.",
+        "No official institution website, current leadership, admissions portal, operational campus details or programme list was verified in this pass."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "nuc-durojaiye-provisional-licence-2026"
+      ]
+    },
+    {
+      "institutionId": "afa509bc-fb6a-4dfb-ba8c-b88d5601038e",
+      "canonicalName": "Abdulkadir Kure University",
+      "acronym": "AKUM",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": "state",
+      "officialWebsite": "https://www.akum.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2023,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Minna, Niger State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Mohammed Aliyu Paiko",
+          "verificationStatus": "verified_from_current_institution_administration_page",
+          "sourceKey": "akum-administration",
+          "sourceUrl": "https://www.akum.edu.ng/administration",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Current institutional history, mission/vision, campus count and complete faculty/department/programme catalogue have not been transcribed.",
+        "Current session Post-UTME/Direct Entry requirements, cut-offs and programme-specific JAMB combinations were not verified.",
+        "Official administration page was indexed but direct open returned 403."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-state-universities-2026",
+        "akum-administration"
+      ]
+    },
+    {
+      "institutionId": "940ea617-ba4c-4fca-94fd-b16ae2e8bf31",
+      "canonicalName": "Abdulrasaq Abubakar Toyin University",
+      "acronym": null,
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2025,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Oke-Agba, Kwara State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The current NUC NUS table uses Oke-Agba, while the NUC private-university directory uses Oke-Ogba, Ganmo, Ilorin. The current record keeps the NUS spelling and records the place-name discrepancy.",
+        "An AATU-branded 2026/2027 website was found on a Vercel-hosted domain, but the university's own canonical domain was not confirmed; its admissions, faculties and programme claims have not been imported as official facts.",
+        "Leadership, exact official portal URLs, current 2026/2027 approved programme list and programme-specific JAMB IBASS combinations need confirmation from the university/NUC."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026"
+      ]
+    },
+    {
+      "institutionId": "082933fb-e3f5-4e7b-818e-53392a85c336",
+      "canonicalName": "Abdulsalami Abubakar University of Agriculture and Climate Action",
+      "acronym": null,
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": "state",
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2025,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Mokwa, Niger State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The current NUC NUS list spells the name Abdulsalami Abubakar University; the older NUC state directory uses Abdulsalam Abubakar University. Preserve this naming discrepancy for Registry review.",
+        "No official website, current leadership, operational status, active admission portal or approved programme list was verified in this pass."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-state-universities-2026"
+      ]
+    },
+    {
+      "institutionId": "d6910190-54a4-4c72-993d-c67ac72594c5",
+      "canonicalName": "Abia State University",
+      "acronym": "ABSU",
+      "state": "Abia",
+      "institutionType": "university",
+      "ownership": "state",
+      "officialWebsite": "https://www.abiastateuniversity.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": "https://www.portal.abiastateuniversity.edu.ng/",
+      "profile": {
+        "yearFounded": 1981,
+        "historySummary": "The National Universities Commission records Abia State University as established in 1981. The university's public portal provides applicant and post-offer student workflows.",
+        "mission": null,
+        "vision": null,
+        "location": "Uturu, Abia State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Onyemachi M. Ogbulu",
+          "verificationStatus": "listed_in_NUC_state_universities_directory",
+          "sourceKey": "nuc-state-universities-2026",
+          "sourceUrl": "https://www.nuc.edu.ng/nigerian-univerisities/state-univerisity/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "Current-session screening notice and exact 2026/2027 application portal route have not been verified.",
+        "Full school/college/faculty/department/programme hierarchy remains to be extracted.",
+        "Course-specific cut-offs and JAMB subject combinations must be checked against JAMB IBASS."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-state-universities-2026",
+        "absu-student-portal"
+      ]
+    },
+    {
+      "institutionId": "6a75a5e3-81d8-43fe-b951-a5b031447339",
+      "canonicalName": "Abubakar Tafawa Balewa University",
+      "acronym": "ATBU",
+      "state": "Bauchi",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": "https://atbu.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 1980,
+        "historySummary": "The university's official About page says it was established in 1980 as the Federal University of Technology, Bauchi. It was merged with Ahmadu Bello University in 1984, regained autonomous status in 1988 and adopted the name Abubakar Tafawa Balewa University. The current NUC NUS index displays 1988, so the original establishment and restoration-of-autonomy dates are kept distinct.",
+        "mission": null,
+        "vision": null,
+        "location": "Bauchi, Bauchi State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The current Vice-Chancellor was not promoted into this batch because an ATBU page returned unrelated spam/shop content during source inspection; the official domain requires a security/content-integrity review.",
+        "Do not display ATBU domain links to students until the content-integrity problem is checked.",
+        "No current-session programme-specific cut-offs or subject combinations were collected."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-federal-universities",
+        "atbu-about"
+      ]
+    },
+    {
+      "institutionId": "cdf774d4-dae8-493d-93c5-8d23c6ec501c",
+      "canonicalName": "Achievers University",
+      "acronym": "AU",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": "https://achievers.edu.ng/",
+      "admissionPortal": "https://admission.achievers.edu.ng/",
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2007,
+        "historySummary": "Achievers University is a private university in Owo, Ondo State. Its official management page records the university's leadership succession and states that Professor Omolola O. Irinoye became substantive Vice-Chancellor on 11 March 2024.",
+        "mission": null,
+        "vision": null,
+        "location": "Owo, Ondo State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Omolola O. Irinoye",
+          "verificationStatus": "verified_from_current_institution_management_page",
+          "sourceKey": "achievers-management",
+          "sourceUrl": "https://achievers.edu.ng/university-management/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "applicationUrl": "https://admission.achievers.edu.ng/",
+            "assessment": [
+              "online_application",
+              "screening"
+            ],
+            "sourceKey": "achievers-admissions-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://admission.achievers.edu.ng/",
+            "assessment": [
+              "online_application",
+              "document_review"
+            ],
+            "sourceKey": "achievers-admissions-2026-27"
+          }
+        ],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The 2026/2027 admission portal is live, but programme-by-programme requirements and cut-offs have not yet been extracted.",
+        "Full faculty/department/programme catalogue and JAMB IBASS subject combinations remain pending.",
+        "The official management and admission pages were indexed but were protected by anti-bot checks when opened directly."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "achievers-management",
+        "achievers-admissions-2026-27"
+      ]
+    },
+    {
+      "institutionId": "c150e96e-c2a1-4da3-b995-480ee5a4819c",
+      "canonicalName": "Adamawa State University",
+      "acronym": "ADSU",
+      "state": "Adamawa",
+      "institutionType": "university",
+      "ownership": "state",
+      "officialWebsite": "https://adsu.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2002,
+        "historySummary": "Adamawa State University states that it began in 2002. The university also identifies an expansion to the Abubakar Barde Campus, which it says houses the Faculties of Agriculture and Social & Management Sciences.",
+        "mission": null,
+        "vision": null,
+        "location": "Mubi, Adamawa State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Augustine Clement",
+          "verificationStatus": "verified_from_current_institution_vice_chancellor_page",
+          "sourceKey": "adsu-vice-chancellor",
+          "sourceUrl": "https://adsu.edu.ng/vice-chancellor/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "sourceKey": "adsu-about",
+        "sourceUrl": "https://adsu.edu.ng/about/",
+        "status": "partial_navigation_snapshot",
+        "items": [
+          "Administration and Management Sciences",
+          "Agriculture",
+          "Arts",
+          "Education"
+        ]
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The university page mentions Mubi and Abubakar Barde campuses but this pass did not establish the complete current campus count or all programme-to-campus mappings.",
+        "Faculty and department navigation extraction is incomplete.",
+        "No current-session subject combinations or programme cut-offs have been imported."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-state-universities-2026",
+        "adsu-about",
+        "adsu-vice-chancellor"
+      ]
+    },
+    {
+      "institutionId": "4173759b-d3c9-4b75-8f86-cf8f01d9559c",
+      "canonicalName": "Adeche Momoh University",
+      "acronym": null,
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2026,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Igarra, Edo State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The NUC Nigerian University System lists the institution as a private university established in 2026.",
+        "No official institutional website, current leadership, launch status, campus, admission portal or approved programme information was verified in this pass."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026"
+      ]
+    },
+    {
+      "institutionId": "73c46ac6-e7d1-4d77-84b8-eac47435ea1d",
+      "canonicalName": "Adekunle Ajasin University",
+      "acronym": "AAUA",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": "state",
+      "officialWebsite": "https://aaua.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 1999,
+        "historySummary": "The university's official history describes two phases, beginning as Obafemi Awolowo University in March 1982 under the old Ondo State Government. The NUC lists Adekunle Ajasin University as established in 1999, reflecting its current institutional identity.",
+        "mission": null,
+        "vision": null,
+        "location": "Akungba-Akoko, Ondo State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Tomola Marshal Obamuyi",
+          "verificationStatus": "verified_from_current_institution_vice_chancellor_message",
+          "sourceKey": "aaua-vice-chancellor",
+          "sourceUrl": "https://aaua.edu.ng/vice-chancellor/vcs-welcome-message",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The main official domain exposed unrelated spam outbound links during inspection and needs a security/content-integrity review before it is promoted to students.",
+        "Current-session admissions notice and live official application portal have not been established in this batch.",
+        "Full course-level subject combinations and departmental cut-offs remain to be researched."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-state-universities-2026",
+        "aaua-vice-chancellor"
+      ]
+    },
+    {
+      "institutionId": "0ca1ee1a-6003-4840-8cfa-8a806653fda3",
+      "canonicalName": "Adeleke University",
+      "acronym": "AU",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": "https://adelekeuniversity.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2011,
+        "historySummary": "Adeleke University states that it was founded in 2011 by Dr. Adedeji Adeleke through the Springtime Development Foundation. It describes itself as a private, faith-based university in Ede, Osun State.",
+        "mission": null,
+        "vision": null,
+        "location": "Ede, Osun State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Solomon Ajayi Adebola",
+          "verificationStatus": "verified_from_current_institution_management_page",
+          "sourceKey": "adeleke-management",
+          "sourceUrl": "https://adelekeuniversity.edu.ng/management/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": "Dr. Ibekwe C. Egbuta",
+        "status": "listed_on_current_institution_management_page",
+        "sourceKey": "adeleke-management"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The current official site displayed a notice that admission into Medicine & Surgery and Law was closed; the active status of other programmes must be confirmed by programme and session.",
+        "The 2026/2027 entry notice and actual applicant portal target were not verified in this pass.",
+        "Course-by-course JAMB IBASS combinations and institutional cut-offs are pending."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "adeleke-about",
+        "adeleke-management"
+      ]
+    },
+    {
+      "institutionId": "7a74e01e-c57f-4117-8147-8c16cec72381",
+      "canonicalName": "Adeyemi Federal University of Education",
+      "acronym": "AFUED",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": "https://afued.edu.ng/",
+      "admissionPortal": "https://portal.afued.edu.ng/",
+      "studentPortal": "https://portal.afued.edu.ng/",
+      "profile": {
+        "yearFounded": 2023,
+        "historySummary": "The NUC Nigerian University System records the federal university identity from 2023. The current university website locates the institution at Ondo-Ore Road, Ondo, and describes its mission around teacher education and the professionalisation of teaching.",
+        "mission": null,
+        "vision": null,
+        "location": "Ondo, Ondo State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Bayode Isaiah Popoola",
+          "verificationStatus": "published_on_current_main_institution_homepage",
+          "sourceKey": "afued-home",
+          "sourceUrl": "https://afued.edu.ng/index.php",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The current undergraduate Post-UTME screening portal reports applications closed; the next active screening period was not published in the retrieved snapshot.",
+        "The history page was not fully transcribed; distinguish the predecessor college's legacy date from the federal university status date.",
+        "A separate legacy www subdomain page displays a different Vice-Chancellor name; the current main domain names Professor Bayode Isaiah Popoola. The Registry should resolve the discrepancy before public display."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "afued-home",
+        "afued-vice-chancellor",
+        "afued-undergraduate-portal"
+      ]
+    },
+    {
+      "institutionId": "8d0fda97-70f2-4873-9298-5b3b106baf23",
+      "canonicalName": "Admiralty University",
+      "acronym": "ADUN",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2023,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Ibusa, Delta State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The current NUC Nigerian University System lists Admiralty University as a federal university established in 2023. A CVCNU profile describes it as founded in 2017 and private, which conflicts with the NUC's current registry; the NUC listing is used pending institutional clarification.",
+        "No current official university domain, leadership page, admissions portal, programme catalogue or subject combination source was verified in this pass."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ac3bc3c5-c59c-4c3d-911c-eac82e016fa2",
+      "canonicalName": "Afe Babalola University",
+      "acronym": "ABUAD",
+      "state": "Ekiti",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": "https://www.abuad.edu.ng/",
+      "admissionPortal": "https://admissions.abuad.edu.ng/WelcomeHome",
+      "studentPortal": "https://portal.abuad.edu.ng/",
+      "profile": {
+        "yearFounded": 2007,
+        "historySummary": "The NUC lists Afe Babalola University as established in 2007. The university's 2026/2027 admission notice describes entry into undergraduate, pre-degree, diploma and foundation programmes and identifies its colleges across medicine and health sciences, pharmacy, law, engineering, sciences, and social and management sciences.",
+        "mission": null,
+        "vision": null,
+        "location": "Ado-Ekiti, Ekiti State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor E. Smaranda Olarinde",
+          "verificationStatus": "verified_from_September_2026_institution_notice",
+          "sourceKey": "abuad-vice-chancellor-2026",
+          "sourceUrl": "https://vc.abuad.edu.ng/abuad-vice-chancellor-charges-new-students-to-aim-for-excellence/",
+          "checkedAt": "2026-11-17"
+        },
+        {
+          "role": "chancellor",
+          "name": "Aare Afe Emmanuel Babalola",
+          "verificationStatus": "named_as_founder_and_chancellor_in_2026_institution_admission_notice",
+          "sourceKey": "abuad-admissions-2026-27",
+          "sourceUrl": "https://www.abuad.edu.ng/admission-exercise-2026-2027/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": "Aare Afe Emmanuel Babalola",
+        "status": "verified_as_named_in_2026_institution_notice",
+        "sourceKey": "abuad-admissions-2026-27"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "assessment": [
+              "UTME",
+              "Post-UTME screening"
+            ],
+            "applicationUrl": "https://admissions.abuad.edu.ng/WelcomeHome",
+            "sourceKey": "abuad-admissions-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "assessment": [
+              "document and programme requirement review"
+            ],
+            "applicationUrl": "https://admissions.abuad.edu.ng/WelcomeHome",
+            "sourceKey": "abuad-admissions-2026-27"
+          }
+        ],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected",
+          "note": "The 2026/2027 notice does not state one universal cut-off; it says placement depends on UTME, Post-UTME performance, programme O'Level requirements and available programme spaces."
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The official applicant link was found on the main university site, but the target returned a 520 gateway error during this check; portal availability should be checked before displaying it as active.",
+        "The 2026/2027 prospectus contains detailed programmes, but full subject combinations, O'Level variants and course-level cut-offs have not yet been extracted.",
+        "Programme-specific JAMB IBASS cross-check remains pending."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "abuad-home",
+        "abuad-admissions-2026-27",
+        "abuad-vice-chancellor-2026"
+      ]
+    },
+    {
+      "institutionId": "f6e79568-cbb1-414c-947b-2835caed7c79",
+      "canonicalName": "African Aviation and Aerospace University",
+      "acronym": "AAAU",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": "https://aaau.edu.ng/",
+      "admissionPortal": "https://applicant.safapply.com/aaau",
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2023,
+        "historySummary": "The NUC Nigerian University System lists AAAU as a federal university established in 2023. The institution describes its focus as aviation, aerospace and environmental sciences education.",
+        "mission": null,
+        "vision": null,
+        "location": "Abuja, FCT, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "acting_vice_chancellor",
+          "name": "Dr. Mustapha Sheikh Abdullahi",
+          "verificationStatus": "verified_from_current_institution_leadership_page",
+          "sourceKey": "aaau-leadership",
+          "sourceUrl": "https://aaau.edu.ng/about-us/university-leadership/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "applicationUrl": "https://applicant.safapply.com/aaau",
+            "assessment": [
+              "online_application",
+              "programme screening"
+            ],
+            "sourceKey": "aaau-admission-portal"
+          }
+        ],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The undergraduate programme page also contains a 180 UTME threshold explicitly tied to the 2024 UTME; it is deliberately excluded from the 2026/2027 admission data.",
+        "The current 2026/2027 programme-specific subject combinations, O'Level mappings and cut-offs have not been verified.",
+        "The current official website identifies an Acting Vice-Chancellor; confirm when a substantive appointment is announced."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "aaau-home",
+        "aaau-leadership",
+        "aaau-undergraduate-programmes",
+        "aaau-admission-portal"
+      ]
+    },
+    {
+      "institutionId": "e3054006-c3de-4522-aef8-3098559df8ac",
+      "canonicalName": "African School of Economics",
+      "acronym": "ASE",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": "https://ase.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": "https://portal.ase.edu.ng/",
+      "profile": {
+        "yearFounded": 2024,
+        "historySummary": "The African School of Economics states that it received a Nigerian NUC licence in 2024. Its current homepage describes 20 undergraduate programmes across three faculties and provides an Abuja contact address.",
+        "mission": null,
+        "vision": null,
+        "location": "Gudu District, Abuja, FCT, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The undergraduate admissions page is not clearly tied to the 2026/2027 session. A 2025/2026 notice is available but should not be presented as current-session eligibility.",
+        "The website states 20 undergraduate programmes across three faculties, but the complete current list and department mapping have not yet been extracted.",
+        "The current Vice-Chancellor's profile and current admission workflow should be checked before publishing."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "ase-home",
+        "ase-undergraduate-admissions"
+      ]
+    },
+    {
+      "institutionId": "814bd683-3b83-4c93-9dd2-80d6f5ea50f6",
+      "canonicalName": "African University of Science & Technology",
+      "acronym": "AUST",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": "https://aust.edu.ng/",
+      "admissionPortal": "https://admissions.aust.edu.ng/",
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2007,
+        "historySummary": "AUST states that it was founded in 2007 as one of the Nelson Mandela Institutes, with a mandate focused on science, technology, energy and materials. The NUC lists it as a private university established in 2007.",
+        "mission": null,
+        "vision": null,
+        "location": "Abuja, FCT, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "assessment": [
+              "JAMB E-facility first-choice selection",
+              "AUST online screening"
+            ],
+            "sourceKey": "aust-admissions-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "assessment": [
+              "direct application and admissions-office review"
+            ],
+            "sourceKey": "aust-admissions-2026-27"
+          }
+        ],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The ten programmes listed are newly approved for 2026/2027 and do not constitute the complete AUST programme catalogue.",
+        "Current VC/Chancellor identities were not verified from a current AUST institutional leadership page in this pass.",
+        "Programme-specific JAMB subject combinations and cut-offs remain to be checked against the exact course and current JAMB IBASS data."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "aust-admissions-2026-27",
+        "aust-programmes-approved-2026-27"
+      ]
+    },
+    {
+      "institutionId": "d582bec5-d9f3-4b7d-a53b-12581dac0175",
+      "canonicalName": "Ahmadu Bello University",
+      "acronym": "ABU",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": "https://abu.edu.ng/",
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 1962,
+        "historySummary": "Ahmadu Bello University was established on 4 October 1962 as the University of Northern Nigeria. Its official history identifies three main campuses: Samaru and Kongo in Zaria, and the School of Basic Studies in Funtua.",
+        "mission": null,
+        "vision": null,
+        "location": "Zaria, Kaduna State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Adamu Ahmed",
+          "verificationStatus": "published_on_current_institution_principal_officers_page",
+          "sourceKey": "abu-principal-officers",
+          "sourceUrl": "https://abu.edu.ng/principal-officers/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The official undergraduate catalogue initially displayed 114 undergraduate records, but the 20-record first page is only a partial extraction.",
+        "A current 2026/2027 admission notice and official application portal were not captured in this pass.",
+        "Course-specific subject combinations and current session cut-offs remain to be matched against JAMB IBASS and the university's current admission notice."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "abu-history",
+        "abu-principal-officers",
+        "abu-undergraduate-programmes"
+      ]
+    },
+    {
+      "institutionId": "608c6ef3-3e31-411e-8f3b-b931ae570779",
+      "canonicalName": "Ahman Pategi University",
+      "acronym": null,
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": "private",
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2021,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": "Patigi, Kwara State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Adebola Mahfouz Adedimeji",
+          "verificationStatus": "listed_in_NUC_private_universities_directory",
+          "sourceKey": "nuc-private-universities-2026",
+          "sourceUrl": "https://www.nuc.edu.ng/nigerian-univerisities/private-univeristies/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": [],
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The NUC lists the university as a private institution established in 2021 and lists Professor Adebola Mahfouz Adedimeji as Vice-Chancellor.",
+        "A third-party hosted school portal was found, but no canonical institution-owned website or official applicant portal was verified. It is not imported or recommended.",
+        "Official programme list, faculty/department hierarchy, current admissions requirements and current leadership page need direct institutional confirmation."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "nuc-20-private-2021"
+      ]
+    },
+    {
+      "institutionId": "e7d9f2a1-d79a-42c0-be70-252dc0b48023",
+      "canonicalName": "Air Force Institute of Technology",
+      "acronym": "AFIT",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": "federal",
+      "officialWebsite": "https://afit.edu.ng/",
+      "admissionPortal": "https://degree.afit.edu.ng/portal/public/login?action=check_eligibility",
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": 2018,
+        "historySummary": "The NUC's current NUS index lists AFIT as established in 2018. AFIT's institutional history traces its roots to the NAF Technical and Supply School established in Kaduna in 1977; it became the Air Force Institute of Technology on 12 March 2008.",
+        "mission": null,
+        "vision": null,
+        "location": "Nigerian Air Force Base, Kaduna, Kaduna State, Nigeria",
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [
+        {
+          "role": "commandant",
+          "name": "Air Vice Marshal Adeniran Kolade Ademuwagun",
+          "verificationStatus": "verified_from_official_3_November_2025_handover_notice_and_commandant_profile",
+          "sourceKey": "afit-commandant-2025",
+          "sourceUrl": "https://afit.edu.ng/home/the-commandant/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "applicationUrl": "https://degree.afit.edu.ng/portal/public/login?action=check_eligibility",
+            "assessment": [
+              "online eligibility verification",
+              "undergraduate screening"
+            ],
+            "sourceKey": "afit-undergraduate-admissions-2026-27"
+          }
+        ],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "The NUC registry year (2018) reflects the current institutional listing, while AFIT's own history traces its origins to 1977 and institute-of-technology status to 2008; keep these dates semantically separate.",
+        "The official undergraduate page summarises Aerospace Engineering and allied disciplines, but the complete programme and department list has not yet been extracted.",
+        "Course-level 2026/2027 cut-offs and JAMB IBASS subject combinations remain to be collected."
+      ],
+      "verificationStatus": "partially_researched",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026",
+        "afit-history",
+        "afit-commandant-2025",
+        "afit-undergraduate-admissions-2026-27"
       ]
     }
   ],
