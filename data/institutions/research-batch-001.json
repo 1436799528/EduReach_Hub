@@ -17170,6 +17170,1275 @@
       "sourceKeys": [
         "nuc-nus-2026"
       ]
+    },
+    {
+      "institutionId": "95973447-9429-487b-90e8-39567bf85490",
+      "canonicalName": "University of Ibadan, Ibadan",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f7cf93ab-6b14-4e0b-a423-1b5562593ba4",
+      "canonicalName": "University of Ilesa",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d6af6d54-32d4-495d-aa6e-dc35ac417801",
+      "canonicalName": "University of Ilorin, Ilorin",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "31a1b929-10c2-4141-ad92-22a23763727e",
+      "canonicalName": "University of Innovation, Science & Technology, Omuma",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "62812323-3f89-41b9-a689-f64ce20f69d2",
+      "canonicalName": "University of Jos, Jos",
+      "state": "Plateau",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "dfccdb64-8d35-4e99-b68a-56a2129a6448",
+      "canonicalName": "University of Lagos, Lagos",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5b81502d-6122-43a3-afa3-dd384a4b4573",
+      "canonicalName": "University of Maiduguri, Maiduguri",
+      "state": "Borno",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ba387435-c20f-47b8-9085-d3a5f6ca5760",
+      "canonicalName": "University of Maritime Studies, Oron",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "aee34a32-eaf4-4647-b588-9da772edc5ff",
+      "canonicalName": "University of Mkar, Mkar",
+      "state": "Benue",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0277cfbf-97c2-4f56-aecf-843ea1b51df6",
+      "canonicalName": "University of Nigeria, Nsukka",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d1f7de2d-bec3-4d7f-abd1-feafe5bbb0c4",
+      "canonicalName": "University of Offa, Offa",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "829cf2d2-f242-479c-a63f-47aabf161cef",
+      "canonicalName": "University of Port-Harcourt, Port-Harcourt",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "e5604fd5-779b-4e03-b877-c05dd452e473",
+      "canonicalName": "University of Science and Technology, Ozoro",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "6c0ef289-8417-4c58-9fc7-66cc71809d11",
+      "canonicalName": "University on the Niger, Umunya",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ed86c762-30f2-43ec-84bb-e0f7d5ad09f4",
+      "canonicalName": "Usmanu Danfodiyo University, Sokoto",
+      "state": "Sokoto",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "34d66245-e789-4db3-9153-c7fb088c5f2e",
+      "canonicalName": "Venite University, Iloro-Ekiti",
+      "state": "Ekiti",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c382e2a9-4f83-44e0-8319-15dd08d42639",
+      "canonicalName": "Veritas University, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8f9d62ab-6a71-4ece-95ca-43122dfb57a0",
+      "canonicalName": "Vision University, Ikogbo",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ba73e6c9-9678-4939-a53a-e70a53b050e9",
+      "canonicalName": "Wellspring University, Evbuobanosa",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7b1f15ab-f132-476d-843a-71ec40bccac7",
+      "canonicalName": "Wesley University of Science & Technology",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5e42d427-262a-4987-9f13-11be184378b8",
+      "canonicalName": "West Midland Open University, Ibadan",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9a61d283-823d-4c93-83aa-17d4898e7339",
+      "canonicalName": "Western Delta University, Oghara",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a6cc4eb1-8fcf-463e-bdf0-73b8dafda9ae",
+      "canonicalName": "Westland University, Iwo",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "220a2e1c-a12b-43f4-ba63-4014a2a0dabc",
+      "canonicalName": "Wigwe University, Isiokpo",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d7044388-bca4-4038-a607-210c16d63a20",
+      "canonicalName": "Yobe State University, Damaturu",
+      "state": "Yobe",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "e9f5b39c-0161-4a00-b530-6677c7650a95",
+      "canonicalName": "Yusuf Maitama Sule Federal University of Education, Kano",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "68b7ad51-784b-46bc-85fa-0a265246713c",
+      "canonicalName": "Zamfara State University, Talata-Mafara",
+      "state": "Zamfara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System listing checked for institutional identity; legacy inventory name may require canonical-name reconciliation against the current NUC name.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS subject combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
     }
   ],
   "nationalAdmissionPolicy": {
