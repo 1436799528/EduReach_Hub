@@ -41,11 +41,8 @@ test('every recorded decision is one of the four honest outcomes', () => {
 test('a claim without a source cannot be verified', () => {
   assert.match(page, /if \(status === 'verified' && !row\.source_url\)/, 'the guard exists');
   assert.match(page, /[Nn]othing to check it against/, 'the refusal is explained');
-  assert.match(
-    page,
-    /disabled=\{busyId === row\.id \|\| \(decision\.status === 'verified' && !row\.source_url\)\}/,
-    'the button is disabled rather than silently refusing',
-  );
+  assert.match(page, /const cannotVerify = choice\.status === 'verified' && !row\.source_url;/, 'the guard decides per row');
+  assert.match(page, /disabled=\{busyId === row\.id \|\| cannotVerify\}/, 'the button is disabled rather than silently refusing');
   assert.match(page, /No source URL recorded/, 'the row says which fact is missing its source');
 });
 

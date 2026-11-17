@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Check, Clock, ExternalLink, RefreshCw, XCircle } from 'lucide-react';
 import { userFacingError } from '../lib/errors';
 import {
   fetchInstitutionReviewQueue,
@@ -8,7 +7,7 @@ import {
   type InstitutionEvidenceRow,
   type InstitutionReviewQueue,
 } from '../src/lib/api';
-import { AdminEmptyState, AdminPageReport } from '../src/components/admin/AdminKit';
+import { AdminEmptyState } from '../src/components/admin/AdminKit';
 
 /**
  * Institution intelligence review queue (BASE-3).
@@ -29,16 +28,28 @@ import { AdminEmptyState, AdminPageReport } from '../src/components/admin/AdminK
  * all, and the page says so instead of offering the button as if it were fine.
  */
 
+// The four outcomes are words, not icons: a glyph next to "Disputed" invites a
+// glance-decision, and this queue is the one place where a wrong click publishes
+// a wrong threshold. It also keeps the page's chunk small (PERF-1 total-JS budget).
 const DECISIONS: Array<{
   status: InstitutionEvidenceRow['verification_status'];
   label: string;
   hint: string;
-  icon: typeof Check;
 }> = [
-  { status: 'verified', label: 'Verified', hint: 'The source states this for the session shown.', icon: Check },
-  { status: 'disputed', label: 'Disputed', hint: 'The source contradicts it, or sources disagree.', icon: AlertTriangle },
-  { status: 'outdated', label: 'Outdated', hint: 'True for an earlier session, not this one.', icon: Clock },
-  { status: 'unpublished_by_institution', label: 'Withdrawn', hint: 'The institution has taken it down.', icon: XCircle },
+  { status: 'verified', label: 'Verified', hint: 'The source states this for the session shown.' },
+  { status: 'disputed', label: 'Disputed', hint: 'The source contradicts it, or sources disagree.' },
+  { status: 'outdated', label: 'Outdated', hint: 'True for an earlier session, not this one.' },
+  { status: 'unpublished_by_institution', label: 'Withdrawn', hint: 'The institution has taken it down.' },
+];
+
+const COVERAGE: Array<[string, (row: InstitutionCompletenessRow) => string | number]> = [
+  ['Offices', (row) => row.current_offices],
+  ['Campuses', (row) => row.verified_campuses],
+  ['Units', (row) => row.verified_units],
+  ['Offerings', (row) => row.published_offerings + (row.offerings_in_review > 0 ? ` (${row.offerings_in_review} in review)` : '')],
+  ['Benchmarks', (row) => row.published_benchmarks],
+  ['Guides', (row) => row.published_guides],
+  ['Facts to review', (row) => row.facts_awaiting_review],
 ];
 
 function claimedText(value: unknown): string {
@@ -55,6 +66,7 @@ export default function AdminInstitutionIntelligencePage() {
   const [message, setMessage] = useState('');
   const [busyId, setBusyId] = useState('');
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [choices, setChoices] = useState<Record<string, InstitutionEvidenceRow['verification_status']>>({});
   const [stateFilter, setStateFilter] = useState('');
 
   async function load() {
@@ -88,7 +100,7 @@ export default function AdminInstitutionIntelligencePage() {
     if (!stateFilter) return true;
     return completeness.find((item) => item.institution_id === row.institution_id)?.state === stateFilter;
   });
-  const unresearched = completeness.filter((row) => !row.profile_status && row.facts_awaiting_review === 0).length;
+  const sorted = [...completeness].sort((a, b) => (b.facts_awaiting_review - a.facts_awaiting_review) || a.school_name.localeCompare(b.school_name));
 
   async function decide(row: InstitutionEvidenceRow, status: InstitutionEvidenceRow['verification_status']) {
     const note = (notes[row.id] ?? '').trim();
@@ -130,27 +142,13 @@ export default function AdminInstitutionIntelligencePage() {
         </div>
         <div className="admin-header-actions">
           <button type="button" className="admin-btn" onClick={() => void load()} disabled={loading} aria-busy={loading}>
-            <RefreshCw size={16} /> {loading ? 'Refreshing…' : 'Refresh'}
+            {loading ? 'Refreshing…' : 'Refresh'}
           </button>
         </div>
       </div>
 
       {error && <div className="admin-card" role="alert" style={{ padding: '14px 18px' }}><span>{error}</span></div>}
       {message && <div className="admin-card" role="status" style={{ padding: '14px 18px', borderLeft: '4px solid var(--admin-green)' }}><span>{message}</span></div>}
-
-      {queue && (
-        <AdminPageReport
-          title="Review queue"
-          subtitle="Counts come from the rows on this page; nothing is extrapolated."
-          items={[
-            { label: 'Facts awaiting review', value: awaiting.length.toLocaleString() },
-            { label: 'Offerings in review', value: queue.offeringsInReview.length.toLocaleString() },
-            { label: 'Benchmarks in review', value: queue.benchmarksInReview.length.toLocaleString() },
-            { label: 'Institutions with no research', value: unresearched.toLocaleString(), detail: 'zero published fields' },
-          ]}
-          note="A fact becomes public only when its own row is verified and its parent record is published; an empty public section means “not published yet”, never “does not exist”."
-        />
-      )}
 
       <section className="admin-card" style={{ padding: 18, marginBottom: 18 }}>
         <div className="admin-card-header">
@@ -179,67 +177,79 @@ export default function AdminInstitutionIntelligencePage() {
 
         {rows.length > 0 && (
           <div className="admin-stack">
-            {rows.map((row) => (
-              <article key={row.id} className="admin-card" style={{ padding: 16 }}>
-                <div className="admin-card-header">
-                  <div>
-                    <h2 style={{ margin: 0 }}>{nameById.get(row.institution_id) ?? row.institution_id}</h2>
-                    <p className="muted" style={{ margin: '4px 0' }}>
-                      {row.entity_type} · {row.field_key}
-                      {row.applicable_session ? ` · ${row.applicable_session}` : ' · no session recorded'}
-                    </p>
+            {rows.map((row) => {
+              const choice = DECISIONS.find((entry) => entry.status === (choices[row.id] ?? 'verified'))!;
+              const cannotVerify = choice.status === 'verified' && !row.source_url;
+              return (
+                <article key={row.id} className="admin-card" style={{ padding: 16 }}>
+                  <div className="admin-card-header">
+                    <div>
+                      <h2 style={{ margin: 0 }}>{nameById.get(row.institution_id) ?? row.institution_id}</h2>
+                      <p className="muted" style={{ margin: '4px 0' }}>
+                        {row.entity_type} · {row.field_key}
+                        {row.applicable_session ? ` · ${row.applicable_session}` : ' · no session recorded'}
+                      </p>
+                    </div>
+                    <span className="admin-pill">{row.verification_status.replace(/_/g, ' ')}</span>
                   </div>
-                  <span className="admin-pill">{row.verification_status.replace(/_/g, ' ')}</span>
-                </div>
 
-                <div className="admin-field-row">
-                  <div className="admin-field">
-                    <span>Claimed value</span>
-                    <strong>{claimedText(row.claimed_value)}</strong>
+                  <div className="admin-field-row">
+                    <div className="admin-field">
+                      <span>Claimed value</span>
+                      <strong>{claimedText(row.claimed_value)}</strong>
+                    </div>
+                    <div className="admin-field">
+                      <span>Source</span>
+                      {row.source_url
+                        ? <a href={row.source_url} target="_blank" rel="noreferrer noopener">{row.source_url}</a>
+                        : <span className="danger-text">No source URL recorded — this cannot be verified.</span>}
+                    </div>
                   </div>
-                  <div className="admin-field">
-                    <span>Source</span>
-                    {row.source_url ? (
-                      <a href={row.source_url} target="_blank" rel="noreferrer noopener">
-                        {row.source_url} <ExternalLink size={12} aria-hidden="true" />
-                      </a>
-                    ) : (
-                      <span className="danger-text">No source URL recorded — this cannot be verified.</span>
-                    )}
+
+                  <div className="admin-field-row">
+                    <label className="admin-field">
+                      <span>Decision</span>
+                      <select
+                        className="admin-select"
+                        value={choice.status}
+                        onChange={(event) => {
+                          const status = event.target.value as InstitutionEvidenceRow['verification_status'];
+                          setChoices((current) => ({ ...current, [row.id]: status }));
+                        }}
+                      >
+                        {DECISIONS.map((decision) => (
+                          <option key={decision.status} value={decision.status}>{decision.label} — {decision.hint}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="admin-field" style={{ flex: 2 }}>
+                      <span>Review note (required unless verified)</span>
+                      <input
+                        className="admin-input"
+                        type="text"
+                        value={notes[row.id] ?? ''}
+                        onChange={(event) => setNotes((current) => ({ ...current, [row.id]: event.target.value }))}
+                        placeholder="What did the source actually say?"
+                        maxLength={400}
+                      />
+                    </label>
                   </div>
-                </div>
 
-                <div className="admin-action-row">
-                  <label className="admin-field" style={{ flex: 1 }}>
-                    <span>Review note {row.entity_type === 'institution_profile' ? '(required unless verified)' : '(required unless verified)'}</span>
-                    <input
-                      className="admin-input"
-                      type="text"
-                      value={notes[row.id] ?? ''}
-                      onChange={(event) => setNotes((current) => ({ ...current, [row.id]: event.target.value }))}
-                      placeholder="What did the source actually say?"
-                      maxLength={400}
-                    />
-                  </label>
-                </div>
-
-                <div className="admin-news-editor-actions">
-                  {DECISIONS.map((decision) => (
+                  <div className="admin-news-editor-actions">
                     <button
-                      key={decision.status}
                       type="button"
                       className="admin-btn"
-                      onClick={() => void decide(row, decision.status)}
-                      disabled={busyId === row.id || (decision.status === 'verified' && !row.source_url)}
+                      onClick={() => void decide(row, choice.status)}
+                      disabled={busyId === row.id || cannotVerify}
                       aria-busy={busyId === row.id}
-                      title={decision.status === 'verified' && !row.source_url ? 'Add a source URL before verifying.' : decision.hint}
+                      title={cannotVerify ? 'Add a source URL before verifying.' : choice.hint}
                     >
-                      <decision.icon size={15} aria-hidden="true" /> {decision.label}
+                      Record {choice.label.toLowerCase()}
                     </button>
-                  ))}
-                </div>
-              </article>
-            ))}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
@@ -266,32 +276,18 @@ export default function AdminInstitutionIntelligencePage() {
                   <th scope="col">Institution</th>
                   <th scope="col">State</th>
                   <th scope="col">Profile</th>
-                  <th scope="col">Offices</th>
-                  <th scope="col">Campuses</th>
-                  <th scope="col">Units</th>
-                  <th scope="col">Offerings</th>
-                  <th scope="col">Benchmarks</th>
-                  <th scope="col">Guides</th>
-                  <th scope="col">Facts to review</th>
+                  {COVERAGE.map(([label]) => <th key={label} scope="col">{label}</th>)}
                 </tr>
               </thead>
               <tbody>
-                {[...completeness]
-                  .sort((a, b) => (b.facts_awaiting_review - a.facts_awaiting_review) || a.school_name.localeCompare(b.school_name))
-                  .map((row) => (
-                    <tr key={row.institution_id}>
-                      <th scope="row">{row.school_name}</th>
-                      <td>{row.state ?? '—'}</td>
-                      <td>{row.profile_status ?? 'not researched'}</td>
-                      <td>{row.current_offices}</td>
-                      <td>{row.verified_campuses}</td>
-                      <td>{row.verified_units}</td>
-                      <td>{row.published_offerings}{row.offerings_in_review > 0 ? ` (${row.offerings_in_review} in review)` : ''}</td>
-                      <td>{row.published_benchmarks}</td>
-                      <td>{row.published_guides}</td>
-                      <td>{row.facts_awaiting_review}</td>
-                    </tr>
-                  ))}
+                {sorted.map((row) => (
+                  <tr key={row.institution_id}>
+                    <th scope="row">{row.school_name}</th>
+                    <td>{row.state ?? '—'}</td>
+                    <td>{row.profile_status ?? 'not researched'}</td>
+                    {COVERAGE.map(([label, value]) => <td key={label}>{value(row)}</td>)}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

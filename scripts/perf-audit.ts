@@ -99,7 +99,15 @@ export const BUDGETS = {
   // shell. The first-load critical path is unchanged at 205.5 KB, so this is a
   // route-chunk cost, not a first-paint one. Raised 366 -> 369 with 2 KB slack
   // rather than leaving a gate that fails on the change that introduced it.
-  totalJsGzip: 369 * 1024,
+  // BASE-3 measured 370.4 KB across 63 chunks after the institution-intelligence
+  // review console (/admin/institution-intelligence). The page is one lazy,
+  // staff-only route chunk of ~2.9 KB gzip: no student or visitor request loads
+  // it, and the first-load critical path above is unchanged. The page was already
+  // trimmed to fit (icons removed, the metrics card folded into the header count)
+  // before this number was raised, so the cap moves by the measured cost plus
+  // 1.6 KB of headroom rather than leaving a gate that fails on the change that
+  // introduced it.
+  totalJsGzip: 372 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that
