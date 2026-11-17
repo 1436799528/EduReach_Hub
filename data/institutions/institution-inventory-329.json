@@ -1103,7 +1103,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ondo",
@@ -1115,7 +1115,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kano",
@@ -1127,7 +1127,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Oyo",
@@ -1139,7 +1139,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Enugu",
@@ -1151,7 +1151,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Enugu",
@@ -1163,7 +1163,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "FCT Abuja",
@@ -1175,7 +1175,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "FCT Abuja",
@@ -1187,7 +1187,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ebonyi",
@@ -1199,7 +1199,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ebonyi",
@@ -1211,7 +1211,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Osun",
@@ -1223,7 +1223,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Akwa Ibom",
@@ -1235,7 +1235,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Oyo",
@@ -1247,7 +1247,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ogun",
@@ -1259,7 +1259,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Bayelsa",
@@ -1271,7 +1271,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Adamawa",
@@ -1283,7 +1283,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kebbi",
@@ -1295,7 +1295,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Enugu",
@@ -1307,7 +1307,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kaduna",
@@ -1319,7 +1319,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Niger",
@@ -1331,7 +1331,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Plateau",
@@ -1343,7 +1343,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kaduna",
@@ -1355,7 +1355,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Rivers",
@@ -1367,7 +1367,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Zamfara",
@@ -1379,7 +1379,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Bauchi",
@@ -1391,7 +1391,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Katsina",
@@ -1403,7 +1403,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Osun",
@@ -1415,7 +1415,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Delta",
@@ -1427,7 +1427,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Benue",
@@ -1439,7 +1439,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ogun",
@@ -1451,7 +1451,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Delta",
@@ -1463,7 +1463,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Lagos",
@@ -1475,7 +1475,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kano",
@@ -1487,7 +1487,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ekiti",
@@ -1499,7 +1499,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Akwa Ibom",
@@ -1511,7 +1511,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ondo",
@@ -1523,7 +1523,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Jigawa",
@@ -1535,7 +1535,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Niger",
@@ -1547,7 +1547,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Imo",
@@ -1559,7 +1559,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Katsina",
@@ -1571,7 +1571,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kebbi",
@@ -1583,7 +1583,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Jigawa",
@@ -1595,7 +1595,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Katsina",
@@ -1607,7 +1607,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Yobe",
@@ -1619,7 +1619,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Zamfara",
@@ -1631,7 +1631,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Gombe",
@@ -1643,7 +1643,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Nasarawa",
@@ -1655,7 +1655,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kogi",
@@ -1667,7 +1667,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Bayelsa",
@@ -1679,7 +1679,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ekiti",
@@ -1691,7 +1691,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Taraba",
@@ -1703,7 +1703,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Oyo",
@@ -1715,7 +1715,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Osun",
@@ -1727,7 +1727,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kaduna",
@@ -1739,7 +1739,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ogun",
@@ -1751,7 +1751,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Edo",
@@ -1763,7 +1763,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Delta",
@@ -1775,7 +1775,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Enugu",
@@ -1787,7 +1787,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Gombe",
@@ -1799,7 +1799,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Kaduna",
@@ -1811,7 +1811,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Taraba",
@@ -1823,7 +1823,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Abia",
@@ -1835,7 +1835,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ogun",
@@ -1847,7 +1847,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Cross River",
@@ -1859,7 +1859,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Bayelsa",
@@ -1871,7 +1871,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Imo",
@@ -1883,7 +1883,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ekiti",
@@ -1895,7 +1895,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Ekiti",
@@ -1907,7 +1907,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Zamfara",
@@ -1919,7 +1919,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Niger",
@@ -1931,7 +1931,7 @@
       "studentPortalUrl": null,
       "admissionPortalUrl": null,
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "identity_research_queued"
     },
     {
       "state": "Sokoto",
