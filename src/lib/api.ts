@@ -2006,6 +2006,42 @@ export async function revokeAdminBankCandidate(examId: string, candidateId: stri
 }
 
 // ------------------------------------------------------- institution intelligence
+//
+// Three audiences share one server module, and this section mirrors that:
+//
+//   * a visitor reads `GET /api/institutions/:id/intelligence`, which only ever
+//     contains verified AND published rows;
+//   * an administrator reads the review queue and edits every record, verified
+//     or not, through structured section forms — nothing is hidden from the
+//     editor just because it is not fit for the public page;
+//   * a signed-in student reads and writes their own admission goal.
+//
+// Every admin helper is authorised on the server (the client check is a
+// convenience, never the gate) and every response is uncached.
+
+export type InstitutionVerificationStatus =
+  | 'unresearched'
+  | 'discovered'
+  | 'in_review'
+  | 'verified'
+  | 'disputed'
+  | 'outdated'
+  | 'unpublished_by_institution';
+
+export type InstitutionPublicationStatus = 'draft' | 'in_review' | 'published' | 'archived';
+
+/** The five settable profile sections. The rest of the ten UI sections are lists. */
+export type InstitutionProfileSection = 'identity' | 'history' | 'portals' | 'images' | 'verification';
+
+export type InstitutionReviewCheckState = 'ok' | 'review' | 'missing';
+
+/** One restrained indicator: ✓ / ⚠ Review / ⚠ Missing, with a sentence of detail. */
+export interface InstitutionReviewCheck {
+  key: string;
+  label: string;
+  state: InstitutionReviewCheckState;
+  detail: string;
+}
 
 export interface InstitutionEvidenceRow {
   id: string;
@@ -2016,11 +2052,19 @@ export interface InstitutionEvidenceRow {
   claimed_value: unknown;
   source_url: string | null;
   applicable_session: string | null;
-  verification_status: 'discovered' | 'in_review' | 'verified' | 'disputed' | 'outdated' | 'unpublished_by_institution';
+  verification_status: Exclude<InstitutionVerificationStatus, 'unresearched'>;
   checked_at: string | null;
   review_note: string | null;
   created_at: string;
 }
+
+/** The same rule the evidence editor offers: four blunt outcomes, no guess. */
+export const INSTITUTION_EVIDENCE_DECISIONS: Array<InstitutionEvidenceRow['verification_status']> = [
+  'verified',
+  'disputed',
+  'outdated',
+  'unpublished_by_institution',
+];
 
 export interface InstitutionCompletenessRow {
   institution_id: string;
@@ -2037,18 +2081,80 @@ export interface InstitutionCompletenessRow {
   facts_awaiting_review: number;
 }
 
+/** One row per institution in the review centre. Every count is honest, including zero. */
+export interface InstitutionReviewRow {
+  institution_id: string;
+  school_name: string;
+  acronym: string | null;
+  state: string | null;
+  institution_type: string | null;
+  official_name: string | null;
+  publication_status: InstitutionPublicationStatus | null;
+  verification_status: InstitutionVerificationStatus;
+  last_checked_at: string | null;
+  reviewed_by: string | null;
+  logo_url: string | null;
+  hero_image_url: string | null;
+  overview: string | null;
+  official_website_url: string | null;
+  directory_website_url: string | null;
+  admission_portal_url: string | null;
+  student_portal_url: string | null;
+  postgraduate_portal_url: string | null;
+  academic_units: number;
+  academic_units_unverified: number;
+  programme_offerings: number;
+  programme_offerings_unverified: number;
+  published_offerings: number;
+  admission_routes: number;
+  admission_routes_with_dates: number;
+  programme_requirements: number;
+  programme_requirements_with_subjects: number;
+  source_records: number;
+  evidence_rows: number;
+  evidence_awaiting_review: number;
+  evidence_last_checked_at: string | null;
+  admission_sessions: string[];
+  latest_session: string | null;
+  has_official_website: boolean;
+  has_logo: boolean;
+  has_hero_image: boolean;
+  has_portal: boolean;
+  /** Present on the filtered list response. */
+  checks?: InstitutionReviewCheck[];
+}
+
+export interface InstitutionReviewSummary {
+  institutionsAwaitingReview: number;
+  programmeRecordsAwaitingVerification: number;
+  academicUnits: number;
+  sourceRecords: number;
+  publishedInstitutions: number;
+  institutionsInCatalogue: number;
+}
+
+export interface InstitutionReviewFilterOptions {
+  states: string[];
+  institutionTypes: string[];
+  sessions: string[];
+}
+
 export interface InstitutionReviewQueue {
   awaitingReview: InstitutionEvidenceRow[];
   offeringsInReview: Array<{ id: string; institution_id: string; programme_name: string; admission_session: string; publication_status: string; verification_status: string }>;
   benchmarksInReview: Array<{ id: string; institution_id: string; benchmark_type: string; benchmark_label: string | null; benchmark_value: number; score_scale_max: number | null; admission_session: string; verification_status: string }>;
   guidesInReview: Array<{ id: string; institution_id: string; guide_type: string; title: string; admission_session: string | null; verification_status: string }>;
   completeness: InstitutionCompletenessRow[];
+  summary: InstitutionReviewSummary;
+  institutions: InstitutionReviewRow[];
+  filterOptions: InstitutionReviewFilterOptions;
+  checkedAt: string;
 }
 
 /**
  * The review queue is one read of every unreviewed fact plus the per-institution
- * completeness roll-up. Nothing here decides anything: each row still needs an
- * explicit decision from a staff member with `institution.update`.
+ * roll-up. Nothing here decides anything: each row still needs an explicit
+ * decision from a staff member with `institution.update`.
  */
 export async function fetchInstitutionReviewQueue(): Promise<InstitutionReviewQueue> {
   return adminApiFetch<InstitutionReviewQueue>('/api/admin/institution-intelligence/review');
@@ -2056,7 +2162,8 @@ export async function fetchInstitutionReviewQueue(): Promise<InstitutionReviewQu
 
 /**
  * Record one decision on one evidence row. `status` is one of the four
- * reviewable outcomes; there is no "guess" outcome and no default.
+ * reviewable outcomes; there is no "guess" outcome and no default. A source that
+ * is replaced is kept in the evidence row's history — see the server module.
  */
 export async function reviewInstitutionEvidence(
   evidenceId: string,
@@ -2068,6 +2175,415 @@ export async function reviewInstitutionEvidence(
     { method: 'PATCH', body: JSON.stringify({ status, note }) },
   );
   return body.item;
+}
+
+/**
+ * The evidence editor's other two verbs: replace the source, or add a note.
+ * Neither deletes the previous source — the server keeps the claim row and its
+ * history, so a correction never erases what was believed before.
+ */
+export async function updateInstitutionEvidence(
+  evidenceId: string,
+  patch: { status?: InstitutionEvidenceRow['verification_status']; note?: string | null; sourceUrl?: string | null },
+): Promise<InstitutionEvidenceRow> {
+  const body = await adminApiFetch<{ item: InstitutionEvidenceRow }>(
+    `/api/admin/institution-intelligence/evidence/${encodeURIComponent(evidenceId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({
+        ...(patch.status ? { status: patch.status } : {}),
+        ...(patch.note !== undefined ? { note: patch.note } : {}),
+        ...(patch.sourceUrl !== undefined ? { source_url: patch.sourceUrl } : {}),
+      }),
+    },
+  );
+  return body.item;
+}
+
+export interface InstitutionReviewFilters {
+  search?: string;
+  state?: string;
+  type?: string;
+  verification?: string;
+  publication?: string;
+  session?: string;
+  /** `any`, or a checklist key such as `programmes`. */
+  missing?: string;
+  /** `verified` (evidence recorded) or `missing` (facts still awaiting review). */
+  source?: string;
+}
+
+export function institutionReviewFilterQuery(filters: InstitutionReviewFilters = {}): string {
+  const params = new URLSearchParams();
+  const keys: Array<[keyof InstitutionReviewFilters, string]> = [
+    ['search', 'search'], ['state', 'state'], ['type', 'type'], ['verification', 'verification'],
+    ['publication', 'publication'], ['session', 'session'], ['missing', 'missing'], ['source', 'source'],
+  ];
+  for (const [key, param] of keys) {
+    const value = filters[key];
+    if (typeof value === 'string' && value.trim()) params.set(param, value.trim());
+  }
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
+/**
+ * The filtered institution list. Filtering happens on the server so the browser
+ * never receives the whole catalogue to sift through, and the response carries
+ * the checklist for each row it returns.
+ */
+export async function fetchInstitutionReviewList(
+  filters: InstitutionReviewFilters = {},
+): Promise<{ institutions: InstitutionReviewRow[]; options: InstitutionReviewFilterOptions; total: number }> {
+  return adminApiFetch(`/api/admin/institution-intelligence/institutions${institutionReviewFilterQuery(filters)}`);
+}
+
+export interface InstitutionAdminProfile {
+  institution_id: string;
+  official_name: string | null;
+  ownership: string | null;
+  institution_category: string | null;
+  year_established: number | null;
+  history_summary: string | null;
+  overview: string | null;
+  mission: string | null;
+  vision: string | null;
+  mandate: string | null;
+  postal_address: string | null;
+  city: string | null;
+  country: string | null;
+  logo_url: string | null;
+  hero_image_url: string | null;
+  official_website_url: string | null;
+  admission_portal_url: string | null;
+  student_portal_url: string | null;
+  postgraduate_portal_url: string | null;
+  profile_status: string | null;
+  publication_status: InstitutionPublicationStatus | null;
+  verification_status: InstitutionVerificationStatus | null;
+  profile_verified_at: string | null;
+  source_id: string | null;
+  source_url: string | null;
+  review_note: string | null;
+  reviewed_by: string | null;
+  last_checked_at: string | null;
+}
+
+export interface InstitutionAdminUnit {
+  id: string;
+  parent_unit_id: string | null;
+  unit_type: string;
+  unit_name: string;
+  slug: string;
+  description: string | null;
+  website_url: string | null;
+  is_active: boolean;
+  verification_status: string;
+  source_id: string | null;
+  source_url: string | null;
+  review_note: string | null;
+  reviewed_by: string | null;
+  last_checked_at: string | null;
+}
+
+export interface InstitutionAdminProgramme {
+  id: string;
+  academic_unit_id: string | null;
+  programme_code: string | null;
+  programme_name: string;
+  degree_title: string | null;
+  award_level: string | null;
+  duration_years: number | null;
+  admission_session: string | null;
+  is_active: boolean;
+  publication_status: string;
+  verification_status: string;
+  source_id: string | null;
+  source_url: string | null;
+  review_note: string | null;
+  reviewed_by: string | null;
+  last_checked_at: string | null;
+  updated_at?: string;
+}
+
+export interface InstitutionAdminRequirement {
+  id: string;
+  programme_offering_id: string;
+  admission_session: string;
+  entry_mode: string;
+  utme_subjects: string[] | null;
+  o_level_requirements: unknown;
+  a_level_requirements: unknown;
+  other_requirements: unknown;
+  minimum_utme_score: number | null;
+  minimum_utme_scale: number | null;
+  first_choice_required: boolean | null;
+  notes: string | null;
+  publication_status: string;
+  verification_status: string;
+  source_url: string | null;
+  review_note: string | null;
+}
+
+export interface InstitutionAdminRoute {
+  id: string;
+  admission_session: string;
+  entry_mode: string;
+  assessment_methods: string[] | null;
+  first_choice_required: boolean | null;
+  change_of_institution_allowed: boolean | null;
+  application_url: string | null;
+  opens_on: string | null;
+  closes_on: string | null;
+  eligibility_notes: string | null;
+  publication_status: string;
+  verification_status: string;
+  source_url: string | null;
+  review_note: string | null;
+}
+
+export interface InstitutionAdminGuide {
+  id: string;
+  guide_type: string;
+  title: string;
+  admission_session: string | null;
+  portal_url: string | null;
+  summary: string | null;
+  safety_note: string | null;
+  publication_status: string;
+  verification_status: string;
+  source_url: string | null;
+  review_note: string | null;
+}
+
+export interface InstitutionAdminEvidence extends InstitutionEvidenceRow {
+  source_id: string | null;
+  checked_by: string | null;
+  source_published_at: string | null;
+}
+
+export interface InstitutionSource {
+  id: string;
+  name: string;
+  url: string | null;
+  authority: string | null;
+  source_type: string | null;
+  created_at?: string;
+}
+
+export interface InstitutionAdminDetail {
+  institution: {
+    id: string;
+    school_name: string;
+    acronym: string | null;
+    state: string | null;
+    institution_type: string | null;
+    website_url: string | null;
+    admission_portal_url: string | null;
+    student_portal_url: string | null;
+    post_utme_available: boolean | null;
+    is_verified: boolean | null;
+  };
+  profile: InstitutionAdminProfile | null;
+  units: InstitutionAdminUnit[];
+  offerings: InstitutionAdminProgramme[];
+  requirements: InstitutionAdminRequirement[];
+  admissionRoutes: InstitutionAdminRoute[];
+  portalGuides: InstitutionAdminGuide[];
+  evidence: InstitutionAdminEvidence[];
+  sources: InstitutionSource[];
+  reviewers: Record<string, string>;
+  sessions: string[];
+  checklist: InstitutionReviewCheck[];
+  gate: { rule: string; profile: { ok: boolean; error?: string } };
+}
+
+/** Everything an editor needs for one institution, in one response. */
+export async function fetchInstitutionReviewDetail(institutionId: string): Promise<InstitutionAdminDetail> {
+  return adminApiFetch(`/api/admin/institution-intelligence/institutions/${encodeURIComponent(institutionId)}`);
+}
+
+/** Save one profile section. Sending one section never rewrites the other nine. */
+export async function saveInstitutionProfileSection(
+  institutionId: string,
+  section: InstitutionProfileSection,
+  values: Record<string, unknown>,
+): Promise<{ profile: InstitutionAdminProfile; verification_status: string; publication_status: string; savedAt: string }> {
+  return adminApiFetch(`/api/admin/institution-intelligence/institutions/${encodeURIComponent(institutionId)}/profile`, {
+    method: 'PATCH',
+    body: JSON.stringify({ section, values }),
+  });
+}
+
+export async function createInstitutionUnit(
+  institutionId: string,
+  values: Record<string, unknown>,
+): Promise<InstitutionAdminUnit> {
+  const body = await adminApiFetch<{ unit: InstitutionAdminUnit }>(
+    `/api/admin/institution-intelligence/institutions/${encodeURIComponent(institutionId)}/units`,
+    { method: 'POST', body: JSON.stringify(values) },
+  );
+  return body.unit;
+}
+
+export async function updateInstitutionUnit(unitId: string, values: Record<string, unknown>): Promise<InstitutionAdminUnit> {
+  const body = await adminApiFetch<{ unit: InstitutionAdminUnit }>(
+    `/api/admin/institution-intelligence/units/${encodeURIComponent(unitId)}`,
+    { method: 'PATCH', body: JSON.stringify(values) },
+  );
+  return body.unit;
+}
+
+export async function createInstitutionProgramme(
+  institutionId: string,
+  values: Record<string, unknown>,
+): Promise<InstitutionAdminProgramme> {
+  const body = await adminApiFetch<{ offering: InstitutionAdminProgramme }>(
+    `/api/admin/institution-intelligence/institutions/${encodeURIComponent(institutionId)}/programmes`,
+    { method: 'POST', body: JSON.stringify(values) },
+  );
+  return body.offering;
+}
+
+/** One programme, one save: fixing a code never rewrites the whole institution. */
+export async function updateInstitutionProgramme(
+  offeringId: string,
+  values: Record<string, unknown>,
+): Promise<InstitutionAdminProgramme> {
+  const body = await adminApiFetch<{ offering: InstitutionAdminProgramme }>(
+    `/api/admin/institution-intelligence/programmes/${encodeURIComponent(offeringId)}`,
+    { method: 'PATCH', body: JSON.stringify(values) },
+  );
+  return body.offering;
+}
+
+export async function updateInstitutionAdmissionRoute(
+  routeId: string,
+  values: Record<string, unknown>,
+): Promise<InstitutionAdminRoute> {
+  const body = await adminApiFetch<{ route: InstitutionAdminRoute }>(
+    `/api/admin/institution-intelligence/routes/${encodeURIComponent(routeId)}`,
+    { method: 'PATCH', body: JSON.stringify(values) },
+  );
+  return body.route;
+}
+
+export async function updateInstitutionRequirement(
+  requirementId: string,
+  values: Record<string, unknown>,
+): Promise<InstitutionAdminRequirement> {
+  const body = await adminApiFetch<{ requirement: InstitutionAdminRequirement }>(
+    `/api/admin/institution-intelligence/requirements/${encodeURIComponent(requirementId)}`,
+    { method: 'PATCH', body: JSON.stringify(values) },
+  );
+  return body.requirement;
+}
+
+export interface InstitutionCacheStats {
+  cache: {
+    hits: number;
+    staleHits: number;
+    misses: number;
+    loads: number;
+    coalesced: number;
+    revalidations: number;
+    failures: number;
+    invalidations: number;
+    size: number;
+  };
+  policy: string;
+  note: string;
+}
+
+/** Process-local cache counters. The CDN keeps its own hit rate. */
+export async function fetchInstitutionCacheStats(): Promise<InstitutionCacheStats> {
+  return adminApiFetch('/api/admin/institution-intelligence/cache');
+}
+
+/**
+ * A publication-gate refusal (409) is an editorial answer, not a crash: the UI
+ * says "verify the facts first" and keeps the editor's input.
+ */
+export function isInstitutionGateError(error: unknown): boolean {
+  return error instanceof EduReachError && error.status === 409;
+}
+
+export interface StudentAdmissionGoal {
+  id: string;
+  institution_id: string;
+  programme_offering_id: string;
+  target_exam: string;
+  entry_mode: string;
+  admission_session: string;
+  student_target_aggregate: number | null;
+  target_score_note: string | null;
+  status: string;
+  updated_at: string;
+}
+
+export interface StudentAdmissionGoalPayload {
+  goal: StudentAdmissionGoal | null;
+  institution: { id: string } | null;
+  offering: {
+    id: string;
+    institution_id: string;
+    programme_name: string;
+    degree_title: string | null;
+    admission_session: string | null;
+    publication_status: string;
+    verification_status: string;
+  } | null;
+  requirement: {
+    id: string;
+    utme_subjects: string[] | null;
+    o_level_requirements: unknown;
+    a_level_requirements: unknown;
+    minimum_utme_score: number | null;
+    minimum_utme_scale: number | null;
+    first_choice_required: boolean | null;
+    notes: string | null;
+    publication_status: string;
+    verification_status: string;
+  } | null;
+  attempts: Array<{ attempt_id: string; match_status: string; practice_score: number | null; practice_score_scale: number | null; linked_at?: string }>;
+  progress: unknown;
+}
+
+async function studentApiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Sign in to use your admission goal.');
+  return jsonFetch<T>(path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...headers, ...(init.headers || {}) },
+  });
+}
+
+/** The student's own goal. Private: the server sends `private, no-store`. */
+export async function fetchStudentAdmissionGoal(): Promise<StudentAdmissionGoalPayload> {
+  return studentApiFetch<StudentAdmissionGoalPayload>('/api/student/admission-goal');
+}
+
+export async function saveStudentAdmissionGoal(input: {
+  institutionId: string;
+  programmeOfferingId: string;
+  admissionSession: string;
+  entryMode?: string;
+  targetExam?: string;
+  targetPercent?: number | null;
+  note?: string | null;
+}): Promise<StudentAdmissionGoal> {
+  const body = await studentApiFetch<{ goal: StudentAdmissionGoal }>('/api/student/admission-goal', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  return body.goal;
+}
+
+/** Link one submitted practice attempt. Ownership is checked on the server. */
+export async function linkAdmissionGoalAttempt(
+  attemptId: string,
+): Promise<{ attempt_id: string; match_status: string; practice_score: number | null; practice_score_scale: number | null }> {
+  return studentApiFetch(`/api/student/admission-goal/attempts/${encodeURIComponent(attemptId)}`, { method: 'POST' });
 }
 
 export interface InstitutionIntelligence {
