@@ -3783,15 +3783,15 @@
     },
     {
       "state": "Akwa Ibom",
-      "acronym": null,
+      "acronym": "UNIUYO",
       "schoolName": "University of Uyo, Uyo",
-      "websiteUrl": null,
+      "websiteUrl": "https://uniuyo.edu.ng/",
       "institutionId": "52f12019-b0a8-4bad-ad7b-768d6ac6e099",
       "institutionType": "university",
-      "studentPortalUrl": null,
-      "admissionPortalUrl": null,
+      "studentPortalUrl": "https://eportals.uniuyo.edu.ng/",
+      "admissionPortalUrl": "https://admissions.uniuyo.edu.ng/",
       "legacyIsVerifiedFlag": true,
-      "profileResearchStatus": "unresearched"
+      "profileResearchStatus": "partially_researched"
     },
     {
       "state": "Anambra",
