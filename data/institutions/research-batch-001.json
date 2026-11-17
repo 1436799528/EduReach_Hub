@@ -837,5 +837,50 @@
         "The published catchment/ELDS interpretation should be confirmed against the approved cut-off document and each student's official state/category eligibility."
       ]
     }
-  ]
+  ],
+  "nationalAdmissionPolicy": {
+    "authority": "Joint Admissions and Matriculation Board",
+    "policyCycle": "2026",
+    "sourceKey": "jamb-2026-policy",
+    "minimumTolerableScores": [
+      {
+        "institutionCategory": "university",
+        "score": 150,
+        "scaleMaximum": 400
+      },
+      {
+        "institutionCategory": "college_of_nursing",
+        "score": 150,
+        "scaleMaximum": 400
+      },
+      {
+        "institutionCategory": "polytechnic",
+        "score": 100,
+        "scaleMaximum": 400
+      },
+      {
+        "institutionCategory": "monotechnic",
+        "score": 100,
+        "scaleMaximum": 400
+      },
+      {
+        "institutionCategory": "college_of_agriculture",
+        "score": 100,
+        "scaleMaximum": 400
+      },
+      {
+        "institutionCategory": "college_of_education",
+        "score": 100,
+        "scaleMaximum": 400
+      },
+      {
+        "institutionCategory": "innovation_enterprise_institute",
+        "score": 100,
+        "scaleMaximum": 400
+      }
+    ],
+    "minimumAdmissionAge": 16,
+    "verificationStatus": "verified_from_jamb_2026_policy_notice",
+    "notes": "National tolerable minimums only. Institutions and programmes may publish higher eligibility thresholds. These figures are not departmental cut-offs, do not guarantee admission, and must not override programme-specific JAMB IBASS eligibility."
+  }
 }
