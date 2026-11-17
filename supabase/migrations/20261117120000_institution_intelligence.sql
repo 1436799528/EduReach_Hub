@@ -124,8 +124,11 @@ create table if not exists public.institution_profiles (
   admission_portal_url text,
   student_portal_url text,
   postgraduate_portal_url text,
-  profile_status text not null default 'draft'
-    check (profile_status in ('draft','in_review','published','archived')),
+  -- Preserve the hosted legacy research-completeness field. Publication is
+  -- represented independently so old values can never accidentally publish.
+  profile_status text not null default 'partial',
+  publication_status text not null default 'draft'
+    check (publication_status in ('draft','in_review','published','archived')),
   verification_status text not null default 'unresearched'
     check (verification_status in ('unresearched','discovered','in_review','verified','unpublished_by_institution','disputed','outdated')),
   profile_verified_at timestamptz,
@@ -137,6 +140,35 @@ create table if not exists public.institution_profiles (
   check (latitude is null or latitude between -90 and 90),
   check (longitude is null or longitude between -180 and 180)
 );
+
+-- Hosted production already has a legacy institution_profiles table.
+-- CREATE TABLE IF NOT EXISTS does not add columns to it, so extend it
+-- explicitly. All legacy fields and values are retained. Publication starts
+-- at draft for every existing row; no legacy record becomes public by default.
+alter table public.institution_profiles
+  add column if not exists official_name text,
+  add column if not exists institution_category text,
+  add column if not exists overview text,
+  add column if not exists mandate text,
+  add column if not exists postal_address text,
+  add column if not exists city text,
+  add column if not exists country text not null default 'Nigeria',
+  add column if not exists latitude numeric(9,6),
+  add column if not exists longitude numeric(9,6),
+  add column if not exists logo_url text,
+  add column if not exists hero_image_url text,
+  add column if not exists official_website_url text,
+  add column if not exists admission_portal_url text,
+  add column if not exists student_portal_url text,
+  add column if not exists postgraduate_portal_url text,
+  add column if not exists publication_status text not null default 'draft',
+  add column if not exists profile_verified_at timestamptz,
+  add column if not exists source_id uuid references public.edureach_sources(id) on delete set null,
+  add column if not exists source_url text;
+
+-- Keep the publication gate closed for pre-existing records.
+alter table public.institution_profiles
+  alter column publication_status set default 'draft';
 
 -- ---------------------------------------------------------------------------
 -- 3. Leadership: effective-dated offices, acting markers, one current holder
@@ -682,7 +714,7 @@ create policy institution_aliases_public_read on public.institution_aliases
 drop policy if exists institution_profiles_public_read on public.institution_profiles;
 create policy institution_profiles_public_read on public.institution_profiles
   for select to anon, authenticated
-  using (profile_status = 'published' and verification_status = 'verified');
+  using (publication_status = 'published' and verification_status = 'verified');
 
 drop policy if exists institution_leadership_public_read on public.institution_leadership;
 create policy institution_leadership_public_read on public.institution_leadership
