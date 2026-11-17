@@ -31,7 +31,7 @@ Consequences that shaped the design:
   `national_programme_code`, and `programme_id` stays nullable with **no FK**: a
   reconciliation job compares rows instead of the database refusing an insert.
 
-## 2. Schema (migration `20261117120000_institution_intelligence.sql`)
+## 2. Schema (migration `20261117093002_institution_intelligence.sql`)
 
 Sixteen tables plus one view, all additive. The migration explicitly extends the hosted legacy `institution_profiles` table; `CREATE TABLE IF NOT EXISTS` alone does not upgrade an existing table. Legacy `edureach_sources` was created
 back in the prototype and exists in production; the migration creates it only when
@@ -74,7 +74,7 @@ Design points worth keeping:
   through `public.is_staff(auth.uid())`; `authenticated` never receives broad write
   grants (`scripts/rls-posture.ts` fails the build otherwise).
 
-Migration `20261117121000_institution_import_function.sql` adds
+Migration `20261117093004_institution_import_function.sql` adds
 `public.institution_import_apply(p_payload jsonb, p_dry_run boolean default true)`:
 one transaction, all-or-nothing, returning per-table insert/update/skip counts and
 rejections. A dry run raises the sentinel `P0001 __INSTITUTION_IMPORT_DRY_RUN__` and
@@ -159,7 +159,7 @@ suites.
 
 ## 7. Rollout order
 
-1. Apply `20261117120000` then `20261117121000` to a non-production database
+1. Apply `20261117093002` then `20261117093004` to a non-production database
    (`supabase db push` or the CI replay).
 2. `npm run institutions:import` (dry run) → `INSTITUTION_IMPORT_ENV=staging … --apply`.
 3. Review in `/admin/institution-intelligence`; publish per field.
