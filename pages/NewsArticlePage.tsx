@@ -1,5 +1,5 @@
 import { userFacingError } from '../lib/errors';
-import { ArrowLeft, CheckCircle2, ExternalLink, Newspaper, Share2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Share2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import { fetchNews, fetchNewsItem, trackEvent, type NewsItem } from '../src/lib/api';
@@ -9,6 +9,7 @@ import { applySeo, seoForArticle } from '../src/lib/seoMeta';
 import { formatNewsDate, NewsRow } from '../src/components/NewsSections';
 import { SkeletonArticle } from '../src/components/Skeleton';
 import PublicPdfList from '../src/components/PublicPdfList';
+import OptimizedImage from '../src/components/OptimizedImage';
 
 function safeContentUrl(value: string | null) {
   const raw = String(value || '').trim();
@@ -103,7 +104,6 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
     return () => { active = false; };
   }, [item]);
 
-  const safeImageUrl = safeContentUrl(item?.image_url || null);
   const safeSourceUrl = safeContentUrl(item?.source_url || null);
   const tags = useMemo(() => item?.tags || [], [item]);
 
@@ -136,27 +136,20 @@ export default function NewsArticlePage({ slug }: { slug: string }) {
 
               <h1>{item.title}</h1>
               {item.summary && <p className="hub-article-lead">{item.summary}</p>}
-              {safeImageUrl ? (
-                <img
-                  className="er-news-hero"
-                  src={safeImageUrl}
-                  alt={item.title}
-                  fetchPriority="high"
-                  decoding="async"
-                  onError={(event) => {
-                    const element = event.currentTarget;
-                    element.onerror = null;
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'er-news-hero er-news-noimage er-news-noimage-hero';
-                    element.replaceWith(placeholder);
-                  }}
-                />
-              ) : (
-                <div className="er-news-hero er-news-noimage er-news-noimage-hero" aria-hidden="true">
-                  <Newspaper size={22} />
-                  <small>{newsCategoryLabel(item.category)}</small>
-                </div>
-              )}
+              {/* The hero is the one eager image on the page: it is above the
+                  fold, so it loads at high priority, and it keeps a 16:9 frame
+                  even when the photograph never arrives. */}
+              <OptimizedImage
+                src={item.image_url}
+                alt={item.title}
+                width={960}
+                height={540}
+                layout="article"
+                priority
+                className="er-news-hero"
+                placeholderLabel={`${newsCategoryLabel(item.category)} · no photo on file`}
+                attribution={item.source_name || undefined}
+              />
 
               <div className="hub-article-body">
                 {looksLikeHtml(item.body)

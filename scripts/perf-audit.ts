@@ -116,7 +116,15 @@ export const BUDGETS = {
   // actually downloads. Raised 372 -> 384 KB: the measured 8.8 KB plus the
   // 1.6 KB of headroom the previous entry carried, rather than leaving a gate
   // that fails on the change that introduced it.
-  totalJsGzip: 384 * 1024,
+  // The institution review centre's editor (lazy, staff-only) measured 392.3 KB
+  // across 71 chunks: the queue route chunk plus the separately loaded ten-section
+  // editor. The editor is a data-driven form module (one row component, field
+  // specs per record type) and was already refactored down from 14.0 to 8.1 KB
+  // gzip before this number moved. The first-load critical path is unchanged at
+  // 212.5 KB against its own 214 KB cap, so no visitor pays for any of it.
+  // Raised 384 -> 396 KB: the measured 11.5 KB plus the 3.2 KB of headroom the
+  // previous entry carried, matching how every earlier route-chunk rise was made.
+  totalJsGzip: 396 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

@@ -111,10 +111,12 @@ test('the API wires the routes with the right gates', () => {
   assert.match(put, /student_id: user\.id/);
   assert.doesNotMatch(put.slice(0, 4000), /student_id:\s*req\.body/, 'a client cannot name the student');
 
-  // Public reads must name their filters: the server client bypasses RLS.
+  // Public reads must name their filters: the server client bypasses RLS. The
+  // filters live in the one assembler the public route (and only the public
+  // route) calls, so this reads that function rather than the handler.
   const publicRead = routes.slice(
-    routes.indexOf("app.get('/api/institutions/:institutionId/intelligence'"),
-    routes.indexOf('app.get(\'/api/admin/institution-intelligence/review\''),
+    routes.indexOf('async function readPublicIntelligence'),
+    routes.indexOf("app.get('/api/admin/institution-intelligence/review'"),
   );
   assert.match(publicRead, /verification_status', 'verified'/);
   assert.match(publicRead, /publication_status', 'published'/);

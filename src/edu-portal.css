@@ -1004,108 +1004,93 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-exam-material span { color: #5e6c82; font-size: 12px; line-height: 1.5; }
 .er-exam-material em { margin-top: auto; padding-top: 4px; color: #1E40AF; font-size: 11.5px; font-style: normal; font-weight: 620; }
 
-/* NEWS-1 — the coloured news card is back.
+/* NEWS-3 — one calm card for every story.
  *
- * UI-7 replaced the original gradient card with a white 1:1 square. On a phone
- * that square squeezed a 13px headline under a half-height image, so the board
- * read as a grid of shrunken placeholders. This restores the EduReach card the
- * rest of the product uses: a gradient surface chosen by category, white type
- * that clears 4.5:1 on the lightest pixel of that gradient, and the article's
- * own image at the top. Colours live here, never in the component.
+ * NEWS-1 answered the white square by painting eight gradients, one per
+ * category. That made the board a rainbow: a page of eight hues reads as noise,
+ * and the colour carried no information a reader could use. The card is now a
+ * single neutral surface — white, thin border, dark type — and the article's own
+ * photograph is the only colour on it. Hierarchy does the work instead:
+ * image → category · date → headline → summary → source.
  *
- * Tone pairs: light stop → dark stop. White text on the light stop measures
- * 4.69:1 or better; secondary text (#e8eefc) measures 4.55:1 or better.
- */
-/* Four cards across on a desktop board, wrapping at every breakpoint. The
-   phone behaviour is below: one card per screen, snapped. */
+ * Cards stay clickable as one target; the arrow is the affordance, the copy is
+ * the content. Nothing here depends on grid position. */
 .er-news-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 14px;
+  gap: 16px;
   align-items: stretch;
   overflow: visible;
 }
 .er-news-card {
-  --er-news-gradient: linear-gradient(150deg, #2459c8 0%, #173d91 100%);
   display: flex;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  border: 0;
-  border-radius: 16px;
-  background: var(--er-news-gradient);
-  color: #fff;
+  border: 1px solid var(--er-border, #E2E8F0);
+  border-radius: 14px;
+  background: var(--er-surface, #fff);
+  color: var(--er-text-primary, #131B2E);
   text-decoration: none;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
-  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
 }
-.er-news-tone-indigo { --er-news-gradient: linear-gradient(150deg, #2459c8 0%, #173d91 100%); }
-.er-news-tone-blue { --er-news-gradient: linear-gradient(150deg, #1556c5 0%, #0c367f 100%); }
-.er-news-tone-teal { --er-news-gradient: linear-gradient(150deg, #08796e 0%, #07564f 100%); }
-.er-news-tone-cyan { --er-news-gradient: linear-gradient(150deg, #08706d 0%, #04413f 100%); }
-.er-news-tone-violet { --er-news-gradient: linear-gradient(150deg, #4a38c8 0%, #35248e 100%); }
-.er-news-tone-plum { --er-news-gradient: linear-gradient(150deg, #6246c5 0%, #473295 100%); }
-.er-news-tone-rose { --er-news-gradient: linear-gradient(150deg, #aa164d 0%, #7c0f38 100%); }
-.er-news-tone-amber { --er-news-gradient: linear-gradient(150deg, #b3400a 0%, #8f3d0a 100%); }
 .er-news-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, .22);
-  filter: saturate(1.06);
+  border-color: #c9d3e0;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .10);
 }
-.er-news-card:focus-visible { outline: 3px solid #0f172a; outline-offset: 3px; }
-/* The card is a gradient, not a white box: keep the shared card reset from
-   re-painting it and keep the image from bleeding colour into the copy. */
+.er-news-card:focus-visible { outline: 3px solid var(--er-primary, #1c4f8f); outline-offset: 3px; }
+
+/* The media frame keeps a stable shape so the feed cannot jump as images load.
+   The photograph is the only thing inside it; the placeholder is the same
+   neutral panel as the no-image state. */
 .er-news-card .er-news-card-media {
   display: block;
   flex: none;
   width: 100%;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: rgba(255, 255, 255, .14);
+  background: var(--er-surface-soft, #F4F6F5);
 }
-.er-news-card-media .er-news-photo {
+.er-news-card-media .er-image,
+.er-news-card-media .er-image-placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+.er-news-card-media .er-news-photo,
+.er-news-card-media .er-image img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.er-news-card-media .er-news-noimage {
-  display: grid;
-  place-content: center;
-  gap: 6px;
-  width: 100%;
-  height: 100%;
-  padding: 14px;
-  color: #e8eefc;
-  text-align: center;
-}
-.er-news-card-media .er-news-noimage small {
-  font-size: 10.5px;
-  font-weight: 560;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: #e8eefc;
-}
+
 .er-news-card .er-news-card-body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 7px;
-  padding: 14px 15px 16px;
-  color: #fff;
+  gap: 6px;
+  padding: 13px 15px 15px;
 }
-.er-news-card .er-news-card-body > small {
-  color: #e8eefc;
-  font-size: 10.5px;
+/* Category · date: one quiet line, not a badge wall. */
+.er-news-card .er-news-card-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 11px;
   font-weight: 560;
-  letter-spacing: .03em;
-  line-height: 1.45;
+  letter-spacing: .02em;
+  line-height: 1.4;
 }
 .er-news-card .er-news-card-body > strong {
   display: -webkit-box;
   overflow: hidden;
-  color: #fff;
-  font-size: 15px;
+  color: var(--er-text-primary, #131B2E);
+  font-size: 15.5px;
   font-weight: 620;
   line-height: 1.36;
   letter-spacing: -.01em;
@@ -1115,8 +1100,8 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-news-card .er-news-card-summary {
   display: -webkit-box;
   overflow: hidden;
-  color: #e8eefc;
-  font-size: 12px;
+  color: var(--er-text-secondary, #475467);
+  font-size: 12.5px;
   line-height: 1.5;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1127,57 +1112,112 @@ body.er-exam-mode{padding-bottom:0!important}
   justify-content: space-between;
   gap: 8px;
   margin-top: auto;
-  padding-top: 8px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 620;
+  padding-top: 9px;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 11.5px;
+  font-weight: 500;
 }
-.er-news-card .er-news-card-foot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.er-news-card .er-news-card-foot svg { flex: none; }
-/* A freshness warning has to stay legible on the gradient. */
+.er-news-card .er-news-card-foot > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.er-news-card .er-news-card-read {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--er-primary, #1c4f8f);
+  font-weight: 560;
+}
+.er-news-card .er-news-card-read svg { flex: none; }
+/* Freshness is information, so it is a readable line, not a warning sticker. */
 .er-news-card.is-stale .er-news-freshness,
 .er-news-card.is-unverified .er-news-freshness,
 .er-news-card .er-news-freshness.is-warning {
-  color: #fff;
-  border-color: rgba(255, 255, 255, .5);
-  background: rgba(15, 23, 42, .28);
+  align-self: flex-start;
+  color: #7a3f13;
+  background: #fdf3e7;
+  border-color: #f0dcc2;
 }
 
 /* The featured pair uses the same surface, one step taller. */
+.er-featured-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .er-featured-card {
-  --er-news-gradient: linear-gradient(150deg, #2459c8 0%, #173d91 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 0;
-  border-radius: 16px;
-  background: var(--er-news-gradient);
-  color: #fff;
+  border: 1px solid var(--er-border, #E2E8F0);
+  border-radius: 14px;
+  background: var(--er-surface, #fff);
+  color: var(--er-text-primary, #131B2E);
   text-decoration: none;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
   transition: transform .16s ease, box-shadow .16s ease;
 }
-.er-featured-card:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(15, 23, 42, .22); }
-.er-featured-card:focus-visible { outline: 3px solid #0f172a; outline-offset: 3px; }
+.er-featured-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15, 23, 42, .10); }
+.er-featured-card:focus-visible { outline: 3px solid var(--er-primary, #1c4f8f); outline-offset: 3px; }
 .er-featured-media {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: rgba(255, 255, 255, .14);
+  background: var(--er-surface-soft, #F4F6F5);
 }
-.er-featured-media .er-news-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
-.er-featured-media .er-news-noimage { width: 100%; height: 100%; display: grid; place-content: center; gap: 6px; color: #e8eefc; text-align: center; }
+.er-featured-media .er-image,
+.er-featured-media .er-image-placeholder { display: block; width: 100%; height: 100%; margin: 0; }
+.er-featured-media .er-news-photo,
+.er-featured-media .er-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .er-featured-body { display: block; padding: 14px 16px 16px; }
-.er-featured-body > small { display: block; color: #e8eefc; font-size: 10.5px; font-weight: 560; letter-spacing: .04em; text-transform: uppercase; }
-.er-featured-body > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: 5px; color: #fff; font-size: 17px; font-weight: 620; line-height: 1.33; letter-spacing: -.01em; }
-.er-featured-excerpt { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 6px; color: #e8eefc !important; font-size: 12.5px !important; line-height: 1.5 !important; font-weight: 400; text-transform: none !important; letter-spacing: 0 !important; }
+.er-featured-body > small { display: block; color: var(--er-text-muted, #5e6c82); font-size: 11px; font-weight: 560; letter-spacing: .02em; }
+.er-featured-body > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin-top: 5px; color: var(--er-text-primary, #131B2E); font-size: 17px; font-weight: 620; line-height: 1.33; letter-spacing: -.01em; }
+.er-featured-excerpt { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 6px; color: var(--er-text-secondary, #475467) !important; font-size: 12.5px !important; line-height: 1.5 !important; font-weight: 400; text-transform: none !important; letter-spacing: 0 !important; }
 
-/* A phone gets one card per screen, edge to edge, snapping as it scrolls —
-   two 160px squares side by side is what made the board feel shrunken. */
-/* The rail layout drops the news container to full width on a phone, which left
-   the board touching both edges. Cards keep a 14px gutter, and the scroller
-   above snaps inside it. */
+/* IMG-1 — the shared image component.
+ *
+ * A missing, refused or broken image is a neutral drawing plus an optional
+ * label. It is not a stock photograph of a different campus, and it is never a
+ * borrower of another institution's identity. */
+.er-image,
+.er-image-placeholder {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  background: var(--er-surface-soft, #F4F6F5);
+}
+.er-image picture { display: block; width: 100%; height: 100%; }
+.er-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.er-image-placeholder {
+  display: grid;
+  place-content: center;
+  gap: 6px;
+  justify-items: center;
+  color: var(--er-text-muted, #5e6c82);
+  text-align: center;
+}
+.er-image-placeholder img { display: block; width: 100%; height: 100%; object-fit: contain; opacity: .9; }
+.er-image-placeholder small {
+  max-width: 90%;
+  font-size: 10.5px;
+  font-weight: 560;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.er-image-attribution {
+  display: block;
+  padding: 4px 6px;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 10.5px;
+  line-height: 1.3;
+  background: rgba(255, 255, 255, .86);
+}
+.er-image-attribution::before { content: "Image: "; }
+.er-image .er-image-attribution { position: absolute; inset: auto 0 0 0; }
+
+/* A phone gets one card per screen, edge to edge, snapping as it scrolls — two
+   160px squares side by side is what made the board feel shrunken. */
 @media (max-width: 620px) {
   .hub-layout-content > .hub-page .hub-container { padding-inline: 14px; }
 }
@@ -1204,7 +1244,7 @@ body.er-exam-mode{padding-bottom:0!important}
     scroll-snap-stop: always;
   }
   .er-news-card .er-news-card-media { aspect-ratio: 16 / 9; }
-  .er-news-card .er-news-card-body > strong { font-size: 16px; -webkit-line-clamp: 4; }
+  .er-news-card .er-news-card-body > strong { font-size: 16.5px; -webkit-line-clamp: 4; }
   .er-news-card .er-news-card-summary { -webkit-line-clamp: 3; }
   .er-featured-grid { grid-template-columns: 1fr; gap: 12px; }
   .er-featured-card .er-featured-body > strong { font-size: 18px; }

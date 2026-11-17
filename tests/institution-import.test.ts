@@ -43,6 +43,7 @@ function sqlText(value: unknown): string {
 }
 
 let db: PGlite;
+let baseline: { profiles: number; sources: number };
 
 async function apply(payload: unknown, dryRun: boolean) {
   const { rows } = await db.query<{ result: any }>(
@@ -74,6 +75,13 @@ before(async () => {
     values ${rows}
     on conflict (id) do nothing;
   `);
+  // The catalogue migration seeds the whole registry, so "nothing was written"
+  // is measured against what the database held before the apply, not against 0.
+  const { rows: baselineRows } = await db.query<{ profiles: number; sources: number }>(
+    `select (select count(*)::int from public.institution_profiles) as profiles,
+            (select count(*)::int from public.edureach_sources) as sources`,
+  );
+  baseline = baselineRows[0];
 });
 
 after(async () => { await db.close(); });
@@ -160,10 +168,11 @@ test('a dry run writes nothing and reports what an apply would do', async () => 
   assert.equal(summary.dryRun, true);
   assert.ok(total(summary.inserted) > 20, `expected a substantial insert plan, got ${JSON.stringify(summary.inserted)}`);
 
-  const { rows } = await db.query<{ n: number }>('select count(*)::int as n from public.institution_profiles');
-  assert.equal(rows[0].n, 0, 'the sentinel block rolled back every write');
-  const { rows: sources } = await db.query<{ n: number }>('select count(*)::int as n from public.edureach_sources');
-  assert.equal(sources[0].n, 0, 'sources written during the dry run were rolled back too');
+  const { rows } = await db.query<{ profiles: number; sources: number }>(
+    `select (select count(*)::int from public.institution_profiles) as profiles,
+            (select count(*)::int from public.edureach_sources) as sources`,
+  );
+  assert.deepEqual(rows[0], baseline, 'the sentinel block rolled back every write, sources included');
 });
 
 test('an apply lands every row in review, never published', async () => {
@@ -172,10 +181,18 @@ test('an apply lands every row in review, never published', async () => {
   assert.equal(summary.dryRun, false);
   assert.ok(total(summary.inserted) > 20);
 
+  const imported = payload!.profiles.map((profile: any) => `'${profile.institutionId}'`).join(',');
   const { rows } = await db.query<{ verification_status: string; publication_status: string }>(
-    'select verification_status, publication_status from public.institution_profiles',
+    `select verification_status, publication_status from public.institution_profiles where institution_id in (${imported})`,
   );
+  assert.equal(rows.length, payload!.profiles.length, 'every imported institution has a profile row');
   assert.deepEqual(rows.every((row) => row.verification_status === 'in_review' && row.publication_status === 'in_review'), true);
+
+  // And no profile anywhere — seeded or imported — is public before review.
+  const { rows: published } = await db.query<{ n: number }>(
+    "select count(*)::int as n from public.institution_profiles where publication_status = 'published' or verification_status = 'verified'",
+  );
+  assert.equal(published[0].n, 0, 'an import never publishes and never verifies');
 
   const { rows: offerings } = await db.query<{ publication_status: string; verification_status: string }>(
     'select publication_status, verification_status from public.institution_programme_offerings',
@@ -192,7 +209,7 @@ test('an apply lands every row in review, never published', async () => {
   await db.exec('set role anon');
   try {
     const { rows: publicProfiles } = await db.query<{ n: number }>('select count(*)::int as n from public.institution_profiles');
-    assert.equal(publicProfiles[0].n, 0, 'in_review research is invisible to a visitor');
+    assert.equal(publicProfiles[0].n, 0, 'in_review research is invisible to a visitor, and so are registry drafts');
   } finally {
     await db.exec('reset role');
   }

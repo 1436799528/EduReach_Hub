@@ -103,21 +103,87 @@ Sciences, Sciences) — the importer refuses to infer "faculty" from a name.
 
 ## 4. API and console
 
-`src/server/institutionIntelligence.ts`:
+`src/server/institutionIntelligence.ts` is the single institution API. Every
+public list names its own filters because the server uses the service role and
+RLS does not apply to it; every admin response is `Cache-Control: private, no-store`.
 
 | Route | Gate | Behaviour |
 | --- | --- | --- |
-| `GET /api/institutions/:id/intelligence` | none | public; **filters `verified` + `published` itself** because the server uses the service role and RLS does not apply to it |
-| `GET /api/admin/institution-intelligence/review` | `institution.read` | unreviewed evidence, offerings/benchmarks/guides in review, completeness roll-up |
-| `PATCH /api/admin/institution-intelligence/evidence/:id` | `institution.update` | records one of four decisions plus a note, audited with the actor |
-| `GET`/`PUT /api/student/admission-goal` | `dashboard.access` | one goal per student, always keyed by session identity |
+| `GET /api/institutions/:id/intelligence` | none | public; assembled once, cached (below), **filters `verified` + `published` per table itself** |
+| `GET /api/admin/institution-intelligence/review` | `institution.read` | evidence awaiting review, offerings/benchmarks/guides in review, completeness roll-up, headline summary, filter options |
+| `GET /api/admin/institution-intelligence/institutions` | `institution.read` | the filtered institution list, one row per institution with its checklist |
+| `GET /api/admin/institution-intelligence/institutions/:id` | `institution.read` | everything an editor needs for one institution in one response (profile, units, programmes, routes, requirements, guides, evidence, sources, reviewers, checklist, gate state) |
+| `GET /api/admin/institution-intelligence/cache` | `institution.read` | process-local cache counters and the response policy |
+| `PATCH …/institutions/:id/profile` | `institution.update` | one section at a time (`identity`, `history`, `portals`, `images`, `verification`); identity also patches the directory row; only the changed fields are written |
+| `POST …/institutions/:id/units`, `PATCH …/units/:id` | `institution.update` | one academic unit per save, with parent/type/slug collision checks |
+| `POST …/institutions/:id/programmes`, `PATCH …/programmes/:id` | `institution.update` | one programme per save, with its own verification and publication |
+| `PATCH …/routes/:id` | `institution.update` | one admission route; a closing date cannot precede an opening date |
+| `PATCH …/requirements/:id` | `institution.update` | one requirement set; a minimum score cannot exceed its scale |
+| `PATCH …/evidence/:id` | `institution.update` | a decision, a note, or a replacement source — never a deletion |
+| `GET`/`PUT /api/student/admission-goal` | `dashboard.access` | one goal per student, keyed by session identity |
 | `POST /api/student/admission-goal/attempts/:id` | `dashboard.access` | links a submitted attempt, ownership enforced by the query |
 
+`src/server/institutionAdmin.ts` holds the pure rules the handlers call:
+`publicationGate`, the seven verification states, the four publication states,
+the section allowlists, the unit/route/requirement validators, the checklist and
+the queue filters. They are tested directly in
+`tests/institution-admin-rules.test.ts`.
+
+### 4a. The publication gate is enforced twice
+
+`publication_status = 'published'` requires `verification_status = 'verified'`.
+Verification is a statement about evidence; publication is a statement about who
+may see it, and the second is refused until the first is true.
+
+1. **In the API** — `publicationGate()` returns `409 { gate: true }` with a
+   sentence naming the blocking status.
+2. **In the database** — `20261118120000_institution_review_gate.sql` adds
+   `public.enforce_institution_publication_gate()`, a `before insert or update`
+   trigger on the seven tables that have a publication axis: profiles, programme
+   offerings, admission routes, programme requirements, admission benchmarks,
+   portal guides and national policies. It raises `check_violation`.
+
+The trigger body reads the row as `jsonb` rather than a typed field, so it is a
+no-op on tables with no publication axis. Academic units, leadership, campuses
+and aliases are public exactly when verified — there is no second decision to
+gate, and a typed body there would have broken every unit write.
+
+### 4b. Cache
+
+| Response | Policy |
+| --- | --- |
+| public institution intelligence | `public, max-age=60, s-maxage=300, stale-while-revalidate=600` |
+| every admin read/write, every student read/write | `private, no-store` |
+
+`src/server/publicCache.ts` provides the assembly cache: one keyed entry per
+institution (`institution:{id}:intelligence`), single-flight loading so a cold
+cache cannot stampede the database, and stale-while-revalidate inside a ten
+minute window. A payload with no published profile is deliberately **not**
+stored, so an empty public page cannot outlive the publish that fills it. Any
+edit that changes the public page (profile section, unit, programme, route,
+requirement, evidence decision) calls `invalidateInstitutionCache(id)`.
+
+### 4c. Console
+
 `pages/AdminInstitutionIntelligencePage.tsx` (`/admin/institution-intelligence`,
-capability `institution.read`) is the review queue. It shows the source link before
-the claim, disables **Verified** when a row has no source URL, requires a written
-note for every negative decision, and labels the coverage table as a gap list
-rather than a score.
+capability `institution.read`) is the review centre:
+
+- headline counts for the batch, computed from the rows (zeros are shown as zeros);
+- filters for search, institution, state, type, verification, publication,
+  admission session, missing information and source availability, applied on the
+  server;
+- restrained per-section indicators (✓ / ⚠ Review / ⚠ Missing) on each row and in
+  the editor header — no warning banners, no score;
+- the evidence queue, which disables **Verified** when a row has no source URL and
+  requires a written note for every negative decision;
+- the coverage table, labelled as a gap list rather than a score.
+
+`src/components/admin/InstitutionReviewEditor.tsx` (lazy-loaded, staff-only) is the
+ten-section editor: identity, history/overview/mandate, website and portals,
+images, academic units (Faculty → Department → Programme), programmes, admission
+routes, entry requirements, sources and evidence, verification and publication.
+Each section saves on its own, each programme and unit is edited as its own row,
+and the forms are structured fields — there is no raw JSON anywhere in the UI.
 
 ## 5. The honesty contract
 
@@ -134,19 +200,38 @@ rather than a score.
   category, so a 200 on a 0–400 scale can never be read as a 0–100 aggregate.
 
 Tests: `tests/admission-goal.test.ts` (8), `tests/institution-review-ui.test.ts` (7),
+`tests/institution-admin-rules.test.ts` (14), `tests/institution-review-server.test.ts`
+(11, real handlers against a contract stub), `tests/institution-review-gate.test.ts`
+(8, PostgreSQL via PGlite), `tests/public-cache.test.ts` (10),
 `tests/institution-import.test.ts` (12), `tests/institution-intelligence-schema.test.ts`
-(12), plus the existing `migrations`, `rls-posture`, `schema` and `migration-checklist`
-suites.
+(12), `tests/institution-catalogue-seed.test.ts` (9, the registry load and its
+idempotence), plus the existing `migrations`, `rls-posture`, `schema` and
+`migration-checklist` suites.
 
 ## 6. Known gaps
 
-- **Coverage is 2 of 329 institutions.** 327 have no researched facts; the review
-  queue is therefore nearly empty and the coverage table is nearly all zeros. That
-  is the honest state, not a defect.
+- **The catalogue is loaded; the research is not.** A database built from this
+  repository now holds all **328** universities (`public.institutions`), a
+  `draft`/`discovered` profile for each with ownership, year established and the
+  published website, **262** registry vice chancellors, and the Commission's three
+  pages as sources — generated by
+  `supabase/migrations/20261119120000_institution_catalogue_registry.sql`
+  (`npm run institutions:catalogue`) from
+  [`docs/data/NIGERIAN-UNIVERSITY-REGISTRY-2026-11.md`](../data/NIGERIAN-UNIVERSITY-REGISTRY-2026-11.md).
+  Nothing in it is published: a fact the regulator publishes is `discovered`, and
+  the gate refuses those. The 13 uncertain websites (12 former-name domains, one
+  http-only address) are kept in the gated profile and left out of the public
+  directory column. Admission detail — portals, programmes, requirements,
+  cut-offs — is still researched for 2 institutions only, and the 327-row
+  research batch has not been applied to a hosted database.
 - **Student-facing goal UI is not built.** The API and the honesty layer exist and
   are tested; the dashboard has a card, not a goal editor.
-- **No institution has been imported anywhere yet.** The dry run is green; the
-  apply step needs a non-production database with both migrations applied first.
+- **No researched batch has been applied to a hosted database.** Both dry runs
+  are green and reproducible (`npm run institutions:import -- --dry-run`); the
+  apply step needs a non-production database with the intelligence migrations
+  applied first. The registry facts above reach a database through the migration,
+  not through the importer, so they need no apply step — but they are still
+  `discovered` and still unpublished.
 - **JAMB IBASS combinations cannot be scraped.** `ibass.jamb.gov.ng` and the
   eligibility checker are form-driven; subject combinations must be captured as
   evidence per institution, programme and cycle.
@@ -156,6 +241,21 @@ suites.
 - **`cutoff_marks` and `institution_course_offerings` remain empty in production**
   and are deliberately untouched: they are unreviewed legacy surfaces, and the new
   tables supersede them rather than migrate their contents.
+- **The public institution payload carries no images.** `logo_url` and
+  `hero_image_url` exist on the admin profile view only
+  (`src/lib/institutions/{types,repository}.ts`). The review editor previews both
+  through the shared image component, but a public profile cannot show a logo
+  until the public payload gains the fields and a publication rule for them —
+  an API change, not a component change, so it was not folded into this stage.
+- **News cards and the article hero moved to the shared image pipeline** (see
+  [`docs/features/NEWS-3-NEUTRAL-CARDS.md`](NEWS-3-NEUTRAL-CARDS.md)); the other
+  16 raster `<img>` sites still build their own markup. They each declare a
+  loading strategy, which is what the perf audit checks, but they do not get the
+  CDN's AVIF/WebP variants yet.
+- **Performance is build-time only.** Budgets and the current measurements are in
+  [`docs/operations/PERFORMANCE.md`](../operations/PERFORMANCE.md); no field
+  (Core Web Vitals) data has been collected, because no browser runs in this
+  sandbox.
 
 ## 7. Staging verification (2026-11-17)
 
@@ -172,10 +272,21 @@ rolled back. Counts before and after remained 0 sources and 0 profiles. This
 proves the function accepts the profile payload shape without committing it.
 No other research entities were imported.
 
+The review centre (stage 1–3 of this round) is written and rehearsed locally, not
+deployed: `20261118120000_institution_review_gate.sql` has been replayed against a
+fresh PGlite database by `npm test` and by `tests/institution-review-gate.test.ts`,
+but it has **not** been applied to staging or production. `INSTITUTION_INTELLIGENCE_DEPLOYED.applied`
+therefore stays `false`, and no institution, programme, unit or fact has been
+published anywhere.
+
 ## 8. Rollout order
 
-1. Apply `20261117120000` then `20261117121000` to a non-production database
-   (`supabase db push` or the CI replay).
+1. Apply `20261117120000`, `20261117121000`, then `20261118120000` to a
+   non-production database (`supabase db push` or the CI replay). The third file
+   is additive: review columns, the publication-gate triggers on seven tables,
+   six review indexes and the `security_invoker` `institution_review_overview`
+   view (granted to `service_role` only). It adds no policy and changes no status
+   value.
 2. `npm run institutions:import` (dry run) → `INSTITUTION_IMPORT_ENV=staging … --apply`.
 3. Review in `/admin/institution-intelligence`; publish per field.
 4. Only then repeat against production, with the migrations applied first and the

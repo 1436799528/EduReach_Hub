@@ -243,7 +243,10 @@ test('legacy profile completeness state is separate from publication state', asy
 
 test('the completeness view counts only reviewed rows', async () => {
   const { rows } = await db.query<{ school_name: string; profile_status: string | null; published_offerings: number; facts_awaiting_review: number }>(
-    'select school_name, profile_status, published_offerings, facts_awaiting_review from public.institution_intelligence_completeness order by school_name',
+    `select school_name, profile_status, published_offerings, facts_awaiting_review
+       from public.institution_intelligence_completeness
+      where school_name like 'Synthetic University%'
+      order by school_name`,
   );
   assert.equal(rows.length, 2, 'every institution appears, researched or not');
   assert.deepEqual(rows[0], {

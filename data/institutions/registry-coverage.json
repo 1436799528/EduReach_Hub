@@ -1,0 +1,3617 @@
+{
+  "schemaVersion": "institution-registry-coverage-v1",
+  "generatedAt": "2026-11-17",
+  "registry": {
+    "federal": 77,
+    "state": 69,
+    "private": 182,
+    "total": 328
+  },
+  "inventory": {
+    "total": 329
+  },
+  "matched": [
+    {
+      "institutionId": "6a75a5e3-81d8-43fe-b951-a5b031447339",
+      "inventoryName": "Abubakar Tafawa Balewa University, Bauchi",
+      "registryName": "Abubakar Tafawa Balewa University, Bauchi",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1988,
+      "website": "https://www.atbu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d582bec5-d9f3-4b7d-a53b-12581dac0175",
+      "inventoryName": "Ahmadu Bello University, Zaria",
+      "registryName": "Ahmadu Bello University, Zaria",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1962,
+      "website": "https://www.abu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "8fec2f14-5e7b-46f6-8342-e6269fd622a4",
+      "inventoryName": "Bayero University, Kano",
+      "registryName": "Bayero University, Kano",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1975,
+      "website": "https://www.buk.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "060d8fb7-fa02-4038-952e-0f481b1ec1c2",
+      "inventoryName": "Federal University, Gashua",
+      "registryName": "Federal University Gashua, Yobe",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2013,
+      "website": "https://www.fugashua.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "bfa7357b-3e08-4181-a63c-82e08a4e15f5",
+      "inventoryName": "Federal University of Petroleum Resources, Effurun",
+      "registryName": "Federal University of Petroleum Resources, Effurun",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "https://www.fupre.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "ed25c06d-981b-452d-a80b-9a6c92cfaa71",
+      "inventoryName": "Federal University of Technology, Akure",
+      "registryName": "Federal University of Technology, Akure",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1981,
+      "website": "https://www.futa.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "5fa39e65-48eb-4cfb-a6d4-75202e3f6ab6",
+      "inventoryName": "Federal University of Technology, Minna",
+      "registryName": "Federal University of Technology, Minna",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1982,
+      "website": "https://www.futminna.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "2552d5b7-34b8-42e3-a38e-0e6055399575",
+      "inventoryName": "Federal University of Technology, Owerri",
+      "registryName": "Federal University of Technology, Owerri",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1980,
+      "website": "https://www.futo.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "66425cb8-ab20-4edb-ba3e-7673499a976d",
+      "inventoryName": "Federal University, Dutse",
+      "registryName": "Federal University, Dutse, Jigawa State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fud.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "8deddfbc-eecd-4a1b-9be0-04aa3934e873",
+      "inventoryName": "Federal University, Dutsin-Ma",
+      "registryName": "Federal University, Dutsin-Ma, Katsina",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fudutsinma.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "872252b7-9f0b-4bad-b712-f93d196cc27f",
+      "inventoryName": "Federal University, Kashere",
+      "registryName": "Federal University, Kashere, Gombe State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fukashere.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "9168037b-ea7c-4f91-bf1d-b71ffd570652",
+      "inventoryName": "Federal University, Lafia",
+      "registryName": "Federal University, Lafia, Nasarawa State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fulafia.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "00d0cd95-7e47-46f8-88c9-7736b2f291e2",
+      "inventoryName": "Federal University, Lokoja",
+      "registryName": "Federal University, Lokoja, Kogi State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fulokoja.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "caf0ebd2-59f3-478a-a3d4-02db121382b0",
+      "inventoryName": "Alex Ekwueme Federal University, Ndufu Alike",
+      "registryName": "Alex Ekwueme University, Ndufu-Alike, Ebonyi State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.funai.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "d9975d6b-36e7-46c3-a474-23b76b3c2a47",
+      "inventoryName": "Federal University, Otuoke",
+      "registryName": "Federal University, Otuoke, Bayelsa",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fuotuoke.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "1fe33665-fdc2-43c4-9385-b90dcae310a0",
+      "inventoryName": "Federal University, Oye-Ekiti",
+      "registryName": "Federal University, Oye-Ekiti, Ekiti State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fuoye.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "7eef5c6e-3add-428e-accb-5bbe829a9540",
+      "inventoryName": "Federal University, Wukari",
+      "registryName": "Federal University, Wukari, Taraba State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.fuwukari.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "8d5fa3e5-da08-4f74-990d-f713bd6a369b",
+      "inventoryName": "Federal University, Birnin-Kebbi",
+      "registryName": "Federal University, Birnin Kebbi",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2013,
+      "website": "https://www.fubk.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f8b0e066-8f34-40e5-a6f1-583862fc3123",
+      "inventoryName": "Federal University, Gusau",
+      "registryName": "Federal University, Gusau Zamfara",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2013,
+      "website": "https://www.fugusau.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "901abd0c-66de-4484-91e0-b8e59f5ef390",
+      "inventoryName": "Michael Okpara University of Agriculture, Umudike",
+      "registryName": "Michael Okpara University of Agricultural Umudike",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 1992,
+      "website": "https://www.mouau.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b8be85c2-246a-4d42-b8af-0fff94ebf855",
+      "inventoryName": "Modibbo Adama University, Yola",
+      "registryName": "Modibbo Adama University of Technology, Yola",
+      "ownership": "federal",
+      "matchedOn": "core_name",
+      "yearEstablished": 1981,
+      "website": "https://www.mautech.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "476cb995-d1e5-4349-9bf4-d8e5183ed562",
+      "inventoryName": "National Open University of Nigeria, Abuja",
+      "registryName": "National Open University of Nigeria, Abuja",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2002,
+      "website": "https://www.nou.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "082f69d9-e590-4a3f-b9ba-bc50d19d9b10",
+      "inventoryName": "The Nigeria Police Academy, Wudil",
+      "registryName": "Nigeria Police Academy Wudil",
+      "ownership": "federal",
+      "matchedOn": "core_name",
+      "yearEstablished": 2013,
+      "website": "https://polac.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "44219824-5372-4dd6-928b-e36112d48637",
+      "inventoryName": "Nigerian Defence Academy, Kaduna",
+      "registryName": "Nigerian Defence Academy Kaduna",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1985,
+      "website": "https://www.nda.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "7ccd2609-7d44-4a2e-b5f4-05a1b57a64eb",
+      "inventoryName": "Nnamdi Azikiwe University, Awka",
+      "registryName": "Nnamdi Azikiwe University, Awka",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1992,
+      "website": "https://www.unizik.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "e09c2839-6eca-40d9-a42c-0a7e09a2f111",
+      "inventoryName": "Obafemi Awolowo University, Ile-Ife",
+      "registryName": "Obafemi Awolowo University,Ile-Ife",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1962,
+      "website": "https://www.oauife.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "9b164365-d366-4ff7-a432-b6713a89cea0",
+      "inventoryName": "University of Abuja, Abuja",
+      "registryName": "University of Abuja, Gwagwalada",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1988,
+      "website": "https://www.uniabuja.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f0cbbb03-039a-4dca-a1b7-32062cd226f5",
+      "inventoryName": "Federal University of Agriculture, Abeokuta",
+      "registryName": "Federal University of Agriculture, Abeokuta",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1988,
+      "website": "https://www.unaab.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f7cc6da0-267b-48f5-8dfe-7ee6413379c4",
+      "inventoryName": "Joseph Sarwuan Tarka University, Makurdi",
+      "registryName": "Joseph Sarwuan Tarka University, Makurdi",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1988,
+      "website": "https://www.uam.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "991f3a9b-3a75-4387-ae85-b549fa9f518d",
+      "inventoryName": "University of Benin, Benin City",
+      "registryName": "University of Benin",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1970,
+      "website": "https://www.uniben.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1e7e9cdd-b6aa-42d1-b9fc-76f8d6a55ddc",
+      "inventoryName": "University of Calabar",
+      "registryName": "University of Calabar",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1975,
+      "website": "https://www.unical.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "95973447-9429-487b-90e8-39567bf85490",
+      "inventoryName": "University of Ibadan, Ibadan",
+      "registryName": "University of Ibadan",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1948,
+      "website": "https://www.ui.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d6af6d54-32d4-495d-aa6e-dc35ac417801",
+      "inventoryName": "University of Ilorin, Ilorin",
+      "registryName": "University of Ilorin",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1975,
+      "website": "https://www.unilorin.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "62812323-3f89-41b9-a689-f64ce20f69d2",
+      "inventoryName": "University of Jos, Jos",
+      "registryName": "University of Jos",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1975,
+      "website": "https://www.unijos.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "dfccdb64-8d35-4e99-b68a-56a2129a6448",
+      "inventoryName": "University of Lagos, Lagos",
+      "registryName": "University of Lagos",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 1962,
+      "website": "https://www.unilag.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "5b81502d-6122-43a3-afa3-dd384a4b4573",
+      "inventoryName": "University of Maiduguri, Maiduguri",
+      "registryName": "University of Maiduguri",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1975,
+      "website": "https://www.unimaid.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "0277cfbf-97c2-4f56-aecf-843ea1b51df6",
+      "inventoryName": "University of Nigeria, Nsukka",
+      "registryName": "University of Nigeria, Nsukka",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1960,
+      "website": "https://www.unn.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "829cf2d2-f242-479c-a63f-47aabf161cef",
+      "inventoryName": "University of Port-Harcourt, Port-Harcourt",
+      "registryName": "University of Port-Harcourt",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 1975,
+      "website": "https://www.uniport.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "52f12019-b0a8-4bad-ad7b-768d6ac6e099",
+      "inventoryName": "University of Uyo, Uyo",
+      "registryName": "University of Uyo",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1991,
+      "website": "https://www.uniuyo.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "ed86c762-30f2-43ec-84bb-e0f7d5ad09f4",
+      "inventoryName": "Usmanu Danfodiyo University, Sokoto",
+      "registryName": "Usumanu Danfodiyo University",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1975,
+      "website": "https://www.udusok.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "ae9483ac-6390-45c4-b7d8-19e8f79a2ac0",
+      "inventoryName": "Nigeria Maritime University, Okerenkoko",
+      "registryName": "Nigerian Maritime University Okerenkoko, Delta State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2018,
+      "website": "https://www.nmu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "e7d9f2a1-d79a-42c0-be70-252dc0b48023",
+      "inventoryName": "Air Force Institute of Technology, Kaduna",
+      "registryName": "Air Force Institute of Technology, Kaduna",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2018,
+      "website": "https://afit.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1fa2ec65-5268-4e0b-84f9-861aaa2c7a2e",
+      "inventoryName": "Nigerian Army University, Biu",
+      "registryName": "Nigerian Army University Biu",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2018,
+      "website": "https://naub.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "e503b3d9-28dc-47a5-aa6f-1b50000eeb36",
+      "inventoryName": "Federal University of Health Sciences, Otukpo",
+      "registryName": "Federal University of Health Sciences, Otukpo, Benue State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2020,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ddaff2bd-c68b-4fef-9070-54a9eda425ab",
+      "inventoryName": "Federal University of Agriculture, Zuru",
+      "registryName": "Federal University of Agriculture, Zuru, Kebbi State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2020,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3be1a89d-3af8-42e6-9872-3b44df69dff8",
+      "inventoryName": "Federal University of Technology, Babura",
+      "registryName": "Federal University of Technology, Babura, Jigawa State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "731f7b15-8931-4168-a7fa-b689ec0f9c70",
+      "inventoryName": "Federal University of Technology Ikot Abasi",
+      "registryName": "Federal University of Technology, Ikot Abasi, Akwa Ibom State",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "562cc2ce-f11e-4ed7-9b43-042fa94f9c02",
+      "inventoryName": "Federal University of Health Sciences, Azare",
+      "registryName": "Federal University of Health Sciences, Azare, Bauchi State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a413c221-219a-4120-a187-d4dc9586f1e6",
+      "inventoryName": "Federal University of Health Sciences, Ila Orangun",
+      "registryName": "Federal University of Health Sciences, Ila Orangun, Osun State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "31485818-a4b3-4d9d-9e66-9bd6215991e6",
+      "inventoryName": "King David Umahi University of Medical Sciences, Uburu",
+      "registryName": "David Nweze Umahi Federal University of Medical Sciences, Uburu",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2022,
+      "website": "https://kdums.edu.ng/",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "8d0fda97-70f2-4873-9298-5b3b106baf23",
+      "inventoryName": "Admiralty University, Ibusa",
+      "registryName": "Admiralty University Ibusa, Delta State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": "https://adun.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1d2148d2-ca8d-485b-b173-5e431c1f3a07",
+      "inventoryName": "Federal University of Transportation, Daura",
+      "registryName": "Federal University of Transportation Daura, Katsina",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": "https://www.futd.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "f6e79568-cbb1-414c-947b-2835caed7c79",
+      "inventoryName": "African Aviation and Aerospace University, Abuja",
+      "registryName": "African Aviation and Aerospace University",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": "https://aaau.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "f91f6c71-5959-438d-a8f9-861ac539b2e0",
+      "inventoryName": "National University of Science and Technology, Abuja",
+      "registryName": "National University of Science and Technology, Abuja",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "6fd1425f-3829-4120-8710-cac192297249",
+      "inventoryName": "Federal University of Agriculture, Bassam-Bari",
+      "registryName": "Federal University of Agriculture Bassam-Biri, Bayelsa",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ce43ae2c-e875-4da4-9867-18441755435a",
+      "inventoryName": "Federal University of Health Sciences, Kwale",
+      "registryName": "Federal University of Health Sciences Kwale, Delta State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "38e5b6fc-017d-4045-acd0-f0f311a0de4a",
+      "inventoryName": "Federal University of Health Sciences, Funtua",
+      "registryName": "Federal University of Health Sciences, Katsina",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "4414c55d-8802-477e-957f-3ccb4fccd0ed",
+      "inventoryName": "Federal University of Agriculture, Mubi",
+      "registryName": "Federal University of Agriculture, Mubi",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d77c4b72-c813-4ad7-961d-015a85be65c4",
+      "inventoryName": "Federal University of Education, Zaria",
+      "registryName": "Federal University of Education, Zaria, Kaduna State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d21a8d7e-0050-4968-8b4d-905b977b9bbb",
+      "inventoryName": "Alvan Ikoku Federal University of Education, Owerri",
+      "registryName": "Alvan Ikoku Federal University of Education, Owerri, Imo State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "e9f5b39c-0161-4a00-b530-6677c7650a95",
+      "inventoryName": "Yusuf Maitama Sule Federal University of Education, Kano",
+      "registryName": "Yusuf Maitama Sule Federal University of Education, Kano",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "7a74e01e-c57f-4117-8147-8c16cec72381",
+      "inventoryName": "Adeyemi Federal University of Education, Akure",
+      "registryName": "Adeyemi Federal University of Education, Ondo",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "9ff36003-0537-4b4d-9021-8501d7118540",
+      "inventoryName": "Federal University of Allied Health Sciences, Enugu",
+      "registryName": "Federal University of Allied Health Sciences, Enugu",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2024,
+      "website": "https://fuahse.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "abc76365-b7ee-45a6-b2d0-43f2c1c0e903",
+      "inventoryName": "Federal University of Medicine and Medical Sciences, Abeokuta",
+      "registryName": "Federal University of Medicine and Medical Sciences, Abeokuta",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": "https://fummsa.net",
+      "flags": []
+    },
+    {
+      "institutionId": "22533318-18e1-4d4d-a4a3-b6ba783e4dda",
+      "inventoryName": "Federal University of Education, Pankshin",
+      "registryName": "Federal University of Education Pankshin, Plateau State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "44ba68af-8f8b-45a7-85da-3db789517a24",
+      "inventoryName": "Federal University of Education, Kantagora",
+      "registryName": "Federal University of Education Kontagora, Niger State",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ba387435-c20f-47b8-9085-d3a5f6ca5760",
+      "inventoryName": "University of Maritime Studies, Oron",
+      "registryName": "University of Maritime Studies, Oron, Akwa Ibom State",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2024,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "f1acaea6-22ef-4689-97a5-9bc0d2364530",
+      "inventoryName": "Federal University of Environment and Technology, Tai Town",
+      "registryName": "Federal University of Environment and Technology, Tai Town, Ogoniland, Rivers State",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "2579402f-45ba-4c96-b770-51e66086bb40",
+      "inventoryName": "Federal University of Applied Sciences, Kachia",
+      "registryName": "Federal University of Applied Sciences, Kachia, Kaduna State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "4db43060-0aaa-4fd0-969e-a5b19e8968a4",
+      "inventoryName": "Tai Solarin Federal University of Education, Ijagun",
+      "registryName": "Tai Solarin Federal University of Education, Ijagun, Ijebu Ode",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "f20ca3a8-1a2b-4d75-9a04-9b9a412da9e7",
+      "inventoryName": "Federal University of Agriculture and Developmental Studies, Iragbiji",
+      "registryName": "Federal University of Agriculture and Developmental Studies, Iragbuji, Osun State",
+      "ownership": "federal",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "68b6c668-50c3-43b2-b69c-a6bc8c2e9520",
+      "inventoryName": "Federal University of Technology and Environmental Studies, Iyin-Ekiti",
+      "registryName": "Federal University of Technology and Environmental Studies, Iyin-Ekiti, Ekiti State.",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "884e7d54-bedb-41ea-864c-a41f8049a682",
+      "inventoryName": "Federal University of Agriculture and Technology, Okeho",
+      "registryName": "Federal University of Agriculture and Technology Okeho, Oyo State",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "845af8ad-76c3-430a-94e9-d20b6704665f",
+      "inventoryName": "Federal University of Health Science and Technology, Tsafe",
+      "registryName": "Federal University of Health Science and Technology, Tsafe",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "efa3e518-a54e-4cc2-a126-f6e3f865b9e7",
+      "inventoryName": "Federal University of Agriculture and Technology Obio-Akpa",
+      "registryName": "Federal University of Agriculture and Technology Obio-Akpa Akwa Ibom State",
+      "ownership": "federal",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3dceafed-26c2-4314-9ba4-8c0edb9432a9",
+      "inventoryName": "Federal University of Science and Technology, Epe",
+      "registryName": "Federal University of Science and Technology, Epe",
+      "ownership": "federal",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d6c1cb69-7928-41c1-85c5-d28990d12443",
+      "inventoryName": "Federal University of Science and Technology, Kabo",
+      "registryName": "Federal University of Science and Technology, Kabo, Kano",
+      "ownership": "federal",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": "https://fustkabo.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "977facd4-4239-48cd-9b9b-cdb8aa67c9d2",
+      "inventoryName": "Rivers State University of Science & Technology, Port Harcourt",
+      "registryName": "Rivers State University",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1979,
+      "website": "https://www.rsu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "19856fe1-39c6-4b04-8c50-e557b256f3ec",
+      "inventoryName": "Ambrose Alli University, Ekpoma",
+      "registryName": "Ambrose Alli University, Ekpoma",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1980,
+      "website": "https://www.aauekpoma.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d6910190-54a4-4c72-993d-c67ac72594c5",
+      "inventoryName": "Abia State University, Uturu",
+      "registryName": "Abia State University, Uturu",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1981,
+      "website": "https://www.abiastateuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d9134804-bc50-4083-a27e-fedd85f10da3",
+      "inventoryName": "Ekiti State University, Ado-Ekiti",
+      "registryName": "Ekiti State University",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1982,
+      "website": "https://www.eksu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "8874912c-cd58-4d4d-9db0-1d880a6e6995",
+      "inventoryName": "Enugu State University of Science & Technology, Enugu",
+      "registryName": "Enugu State University of Science and Technology, Enugu",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1982,
+      "website": "https://www.esut.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "20dd6957-8290-4048-8c17-c83cfa6cabfb",
+      "inventoryName": "Olabisi Onabanjo University, Ago-Iwoye",
+      "registryName": "Olabisi Onabanjo University, Ago Iwoye",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1982,
+      "website": "https://www.oouagoiwoye.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b37f857f-7dca-4cde-be31-c975e79ef3bb",
+      "inventoryName": "Lagos State University, Ojo",
+      "registryName": "Lagos State University, Ojo",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1983,
+      "website": "https://www.lasu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "c8d60229-64d5-4521-9f31-c64179f949d0",
+      "inventoryName": "Ladoke Akintola University of Technology, Ogbomoso",
+      "registryName": "Ladoke Akintola University of Technology, Ogbomoso",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1990,
+      "website": "https://www.lautech.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "554bc31d-e2c0-46df-a6d8-9c0eb180150f",
+      "inventoryName": "Rv Fr. Moses Orshio Adasu University, Makurdi",
+      "registryName": "Rev. Fr. Moses Orshio Adasu (Formerly, Benue State University), Makurdi",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 1992,
+      "website": "https://www.bsum.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "eda71738-fa45-4f71-b861-43fdd351cbb7",
+      "inventoryName": "Delta State University, Abraka",
+      "registryName": "Delta State University Abraka",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1992,
+      "website": "https://www.delsu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "adb22f3b-5058-44d1-89f4-54c08d42e81d",
+      "inventoryName": "Imo State University, Owerri",
+      "registryName": "Imo State University, Owerri",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1992,
+      "website": "https://www.imsu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "73c46ac6-e7d1-4d77-84b8-eac47435ea1d",
+      "inventoryName": "Adekunle Ajasin University, Akungba-Akoko",
+      "registryName": "Adekunle Ajasin University, Akungba",
+      "ownership": "state",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 1999,
+      "website": "https://www.aaua.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f84f334d-f019-4582-85e6-1d08a2668527",
+      "inventoryName": "Prince Abubakar Audu University, Anyigba",
+      "registryName": "Prince Abubakar Audu University Anyigba",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1999,
+      "website": "https://www.ksu.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "ca1d676b-9322-4c81-a05c-1d8cf87a0d70",
+      "inventoryName": "Chukwuemeka Odumegwu Ojukwu University, Uli",
+      "registryName": "Chukwuemeka Odumegwu Ojukwu University, Uli",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2000,
+      "website": "https://coou.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "ac37f1ca-6374-4425-bec0-4fa058da1da2",
+      "inventoryName": "Ebonyi State University, Abakaliki",
+      "registryName": "Ebonyi State University, Abakaliki",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2000,
+      "website": "https://www.ebsu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "51c9da9a-6c8e-451f-b3af-5a9e60c38a26",
+      "inventoryName": "Aliko Dangote University of Science & Technology, Wudil",
+      "registryName": "Aliko Dangote university of Science & Technology, Wudil",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2000,
+      "website": "https://www.kust.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "7d4921a6-21a1-4f30-aefc-06b0dad43689",
+      "inventoryName": "Niger-Delta University, Yenagoa",
+      "registryName": "Niger Delta University Yenagoa",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2000,
+      "website": "https://www.ndu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "c150e96e-c2a1-4da3-b995-480ee5a4819c",
+      "inventoryName": "Adamawa State University, Mubi",
+      "registryName": "Adamawa State University Mubi",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2002,
+      "website": "https://www.adsu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "755f7619-22a3-4a12-8835-b1144659d045",
+      "inventoryName": "Nasarawa State University, Keffi",
+      "registryName": "Nasarawa State University Keffi",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2002,
+      "website": "https://www.nsuk.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "eb6e1c7b-bbc7-4eca-bfa7-f1dc302dfbbb",
+      "inventoryName": "Cross River University of Technology, Calabar",
+      "registryName": "University of Cross River State, Calabar",
+      "ownership": "state",
+      "matchedOn": "core_name",
+      "yearEstablished": 2004,
+      "website": "https://www.crutech.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "cf310659-5d12-4abd-ab8e-2c61cd0873a6",
+      "inventoryName": "Gombe State University, Gombe",
+      "registryName": "Gombe State Univeristy, Gombe",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2004,
+      "website": "https://www.gsu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f5461ce3-9056-45fc-b6b0-3bec62fa3c1f",
+      "inventoryName": "Kaduna State University, Kaduna",
+      "registryName": "Kaduna State University, Kaduna",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2004,
+      "website": "https://www.kasu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "09d7b948-ca4c-4231-bf35-fd92213db166",
+      "inventoryName": "Ibrahim Badamasi Babangida University, Lapai",
+      "registryName": "Ibrahim Badamasi Babangida University, Lapai",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.ibbu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1de7f309-fb8a-4bde-8486-55839297d374",
+      "inventoryName": "Plateau State University, Bokkos",
+      "registryName": "Plateau State University Bokkos",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.plasu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d7044388-bca4-4038-a607-210c16d63a20",
+      "inventoryName": "Yobe State University, Damaturu",
+      "registryName": "Yobe State University, Damaturu",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2006,
+      "website": "https://www.ysu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "6b36c027-baba-4eb6-843d-35940146afdf",
+      "inventoryName": "Kebbi State University of Science and Technology, Aliero",
+      "registryName": "Kebbi State University of Science and Technology, Aliero",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2006,
+      "website": "https://www.ksusta.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f508df34-ae52-43aa-935a-5ef9c0148a74",
+      "inventoryName": "Umaru Musa Yar'Adua University, Katsina",
+      "registryName": "Umar Musa Yar' Adua University Katsina",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2006,
+      "website": "https://www.umyu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1bb9b5da-f58b-4ef1-9d82-3a96bab817ec",
+      "inventoryName": "Osun State University, Osogbo",
+      "registryName": "Osun State University Osogbo",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2006,
+      "website": "https://www.uniosun.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "8ec98e6a-0e67-43c9-8b71-ae7a96c338c0",
+      "inventoryName": "Olusegun Agagu University of Science and Technology, Okitipupa",
+      "registryName": "Olusegun Agagu University of Sc. & Tech., Okitipupa, Ondo",
+      "ownership": "state",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2008,
+      "website": "https://www.osustech.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "7e34dddc-c63b-46cd-9aee-013214175664",
+      "inventoryName": "Taraba State University, Jalingo",
+      "registryName": "Taraba State University, Jalingo",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2008,
+      "website": "https://www.tsuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "91956498-fbdb-46f2-92c0-fe8ec9d2b741",
+      "inventoryName": "Kwara State University, Ilorin",
+      "registryName": "Kwara State University, Ilorin",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2009,
+      "website": "https://www.kwasu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b5c23a2e-90dc-41cc-bf23-6aa3ad690bbb",
+      "inventoryName": "Sokoto State University, Sokoto",
+      "registryName": "Sokoto State University",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2009,
+      "website": "https://www.ssu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "a22bb5a1-cb65-45e2-9501-f02a683365f3",
+      "inventoryName": "Akwa Ibom State University, Ikot Akpaden",
+      "registryName": "Akwa Ibom State University, Ikot Akpaden",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2010,
+      "website": "https://www.aksu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "84abd3ad-0441-4b3a-9b11-08f1aac6c490",
+      "inventoryName": "Ignatius Ajuru University of Education, Rumuolumeni",
+      "registryName": "Ignatius Ajuru University of Education,Rumuolumeni",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2010,
+      "website": "https://www.iaue.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "6813309d-b2fe-4dad-ae9e-231ac8343a97",
+      "inventoryName": "Sa'adu Zungur University, Gadau",
+      "registryName": "Bauchi State University, Gadau",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2011,
+      "website": "https://www.basug.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "4977227d-6bad-44bc-abc1-69c68ee8b25a",
+      "inventoryName": "Northwest University, Kano",
+      "registryName": "Northwest University Kano",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2012,
+      "website": "https://www.nwu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "ed93e671-37a3-4e49-872e-ef05ecddd957",
+      "inventoryName": "First Technical University, Ibadan",
+      "registryName": "First Technical University Ibadan",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2012,
+      "website": "https://tech-u.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "ee34d878-4c23-4d4e-a790-cc9c451e538c",
+      "inventoryName": "Sule Lamido University, Kafin Hausa",
+      "registryName": "Sule Lamido University, Kafin Hausa, Jigawa",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2013,
+      "website": "https://www.slu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f79c4f1b-9bd6-4884-8929-d1c2f7808c94",
+      "inventoryName": "Ondo State University of Medical Sciences",
+      "registryName": "University of Medical Sciences, Ondo City, Ondo State",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2015,
+      "website": "https://www.unimed.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "76fdb38d-7294-4476-b6e2-cdc51635b3fc",
+      "inventoryName": "Edo University, Iyamho",
+      "registryName": "Edo State University, Iyamho",
+      "ownership": "state",
+      "matchedOn": "core_name",
+      "yearEstablished": 2016,
+      "website": "https://www.edouniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "c2c728db-9f44-410b-9804-8faa0fc9c31c",
+      "inventoryName": "Kingsley Ozumba Mbadiwe University",
+      "registryName": "Kingsley Ozumba Mbadiwe University Ogboko, Imo State",
+      "ownership": "state",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2016,
+      "website": "https://www.komu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "c86d0faf-7f6e-4d9b-aa1a-047da30bccfe",
+      "inventoryName": "University of Africa, Toru-Orua",
+      "registryName": "University of Africa Toru Orua, Bayelsa State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.uat.edu.ng/public/",
+      "flags": []
+    },
+    {
+      "institutionId": "f91e938d-d567-4019-a0ac-4ff0e17eeafd",
+      "inventoryName": "Borno State University",
+      "registryName": "Kashim Ibrahim ( formerly Bornu State) University, Maiduguri",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2016,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "5a4e6936-c3e7-4ce7-bc5d-57a0963beb10",
+      "inventoryName": "Moshood Abiola University of Science and Technology, Abeokuta",
+      "registryName": "Moshood Abiola University of Science and Technology Abeokuta",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2017,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "68b7ad51-784b-46bc-85fa-0a265246713c",
+      "inventoryName": "Zamfara State University, Talata-Mafara",
+      "registryName": "Zamfara State University",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2018,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "c0afd9a3-18c7-4e08-bb60-8aa0aab4f639",
+      "inventoryName": "Bayelsa Medical University, Yenagoa",
+      "registryName": "Bayelsa Medical University",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2019,
+      "website": "https://bmu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "160dba7e-ca20-4053-8546-0a3552481ef8",
+      "inventoryName": "University of Agriculture and Environmental Sciences, Umuagwo",
+      "registryName": "University of Agriculture and Environmental Sciences Umuagwo, Imo State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2019,
+      "website": "https://www.uaes.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "42f6852f-5a1c-4576-a17e-946b4f034d98",
+      "inventoryName": "Confluence University of Science and Technology, Osara",
+      "registryName": "Confluence University of Science and Technology Osara, Kogi",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2020,
+      "website": "https://custech.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "36e2f1dd-b2e8-465e-9760-8b5de777b38d",
+      "inventoryName": "Bamidele Olumilua University of Education Science and Technology, Ikere",
+      "registryName": "Bamidele Olumilua University of Science and Technology Ikere, Ekiti State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2020,
+      "website": "https://bouesti.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "9b014839-ce1d-4bc2-a684-f8430afeec37",
+      "inventoryName": "University of Delta, Agbor",
+      "registryName": "University of Delta, Agbor",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2021,
+      "website": "https://unidel.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "e5604fd5-779b-4e03-b877-c05dd452e473",
+      "inventoryName": "University of Science and Technology, Ozoro",
+      "registryName": "Delta University of Science and Technology, Ozoro",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2021,
+      "website": "https://dsust.edu.ng/",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "aa20322a-cdfc-4447-87aa-20939fcaa4fd",
+      "inventoryName": "Dennis Osadebey University, Asaba",
+      "registryName": "Dennis Osadebe University, Asaba",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2021,
+      "website": "https://www.dou.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "99c705e8-ce03-4471-893f-563de8902605",
+      "inventoryName": "Lagos University of Education, Oto/Ijanikin",
+      "registryName": "Lagos State University of Education, Ijanikin",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3697b5cc-8a6c-45a3-b624-4ceb4fc0d19c",
+      "inventoryName": "Lagos University of Science and Technology, Ikorodu",
+      "registryName": "Lagos State University of Science and Technology Ikorodu",
+      "ownership": "state",
+      "matchedOn": "core_name",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "64daffa6-86d4-4251-a9f3-f5e70bb25204",
+      "inventoryName": "Shehu Shagari University of Education, Sokoto",
+      "registryName": "Shehu Shagari University of Education, Sokoto",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "97fddb65-5779-40f6-bad2-b5cfa31a9eb9",
+      "inventoryName": "Enugu State University of Medical and Applied Sciences, Igbo-Eno",
+      "registryName": "State University of Medical and Applied Sciences, Igbo-Eno, Enugu",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "f7cf93ab-6b14-4e0b-a423-1b5562593ba4",
+      "inventoryName": "University of Ilesa",
+      "registryName": "University of Ilesa, Osun State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "10057048-673c-44b3-9d62-c6444a53f612",
+      "inventoryName": "Emmanuel Alayande University of Education, Oyo",
+      "registryName": "Emanuel Alayande University of Education Oyo",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "0a90bab1-3383-47ac-b285-fe846f8695bf",
+      "inventoryName": "Kogi State University, Kabba",
+      "registryName": "Kogi State University, Kabba",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "afa509bc-fb6a-4dfb-ba8c-b88d5601038e",
+      "inventoryName": "Abdulkadir Kure University, Minna",
+      "registryName": "AbdulKadir Kure University, Minna Niger State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ddf32a6b-1143-44e0-940e-20749b8bb53b",
+      "inventoryName": "Kwara State University of Education, Ilorin",
+      "registryName": "Kwara State University of Education, Ilorin, Kwara State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2024,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "082933fb-e3f5-4e7b-818e-53392a85c336",
+      "inventoryName": "Abdulsalami Abubakar University of Agriculture and Climate Action, Mokwa",
+      "registryName": "Abdulsalam Abubakar University of Agriculture and Climate Action, Mokwa, Niger State",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "71020ab9-ba11-4b88-ad77-6b7dde272ed2",
+      "inventoryName": "Ebonyi State University of ICT, Science and Technology, Oferekpe",
+      "registryName": "Ebonyi State University of ICT, Science and Technology, Oferekpe, Ebonyi State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "42fdee56-1c32-4c68-8634-98bf36cf58bd",
+      "inventoryName": "Cross River University of Education and Entrepreneurship, Akampa",
+      "registryName": "Cross River University of Education and Entrepeneurship, Akampa, Cross River State",
+      "ownership": "state",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "0ddadc20-399f-40d9-a419-43ceef22f001",
+      "inventoryName": "Benue State University of Agriculture, Science and Technology, Ihugh",
+      "registryName": "Benue State University of Agriculture Science and Technology, Ihugh.",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "83adabe1-71c2-4386-bf47-25d663629f3f",
+      "inventoryName": "Ebonyi State University of Aeronautics and Aerospace Engineering, Ezza",
+      "registryName": "University of Aeronautics and Aerospace Engineering Ezza, Ebonyi State",
+      "ownership": "state",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "31a1b929-10c2-4141-ad92-22a23763727e",
+      "inventoryName": "University of Innovation, Science & Technology, Omuma",
+      "registryName": "University of Innovation, Science and Technology, Omuma, Imo State",
+      "ownership": "state",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3cf8b74b-dbbc-47ec-8c06-7e344d54a3d2",
+      "inventoryName": "Taraba State University of Tropical Agriculture, Science, Technology and Climate Action, Gembu",
+      "registryName": "Taraba State University of Tropical Agriculture, Science, Technology and Climate Action, Gembu",
+      "ownership": "state",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "2dbc868b-0f03-4727-ba4b-1642478d629f",
+      "inventoryName": "Jigawa State University of Allied and Medical Science",
+      "registryName": "Jigawa State University of Medical and Allied Health Sciences, Majia",
+      "ownership": "state",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a5a80e72-f331-4f03-8088-9a85956cd3a5",
+      "inventoryName": "Babcock University, Ilishan-Remo",
+      "registryName": "Babcock University,Ilishan-Remo",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1999,
+      "website": "https://www.babcock.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "34e34af1-b524-4e1c-ae7c-2f934bdf843f",
+      "inventoryName": "Igbinedion University, Okada",
+      "registryName": "Igbinedion University Okada",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1999,
+      "website": "https://www.iuokada.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "2776d912-7d5c-4ecc-9be0-a1a6dd80100f",
+      "inventoryName": "Madonna University, Okija",
+      "registryName": "Madonna University, Okija",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 1999,
+      "website": "https://www.madonnauniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "9e96b97a-6be5-4a41-943a-1939f1b7703b",
+      "inventoryName": "Bowen University, Iwo",
+      "registryName": "Bowen University, Iwo",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2001,
+      "website": "https://www.bowen.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "c2a7c867-889d-4ba9-a0c7-d40e9d3dd58e",
+      "inventoryName": "Benson Idahosa University, Benin City",
+      "registryName": "Benson Idahosa University, Benin City",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2002,
+      "website": "https://www.biu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "7db2018f-a0a7-41d9-8dde-0beb268f1ed2",
+      "inventoryName": "Covenant University, Otta",
+      "registryName": "Covenant University Ota",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2002,
+      "website": "https://www.covenantuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "ea3f1865-12aa-4de5-a8e8-727e5ca988b3",
+      "inventoryName": "Pan-Atlantic University, Lagos",
+      "registryName": "Pan-Atlantic University, Lagos",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2002,
+      "website": "https://www.pau.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "562718a7-af40-4762-9a5a-7c573662efc0",
+      "inventoryName": "American University of Nigeria, Yola",
+      "registryName": "American University of Nigeria, Yola",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2003,
+      "website": "https://www.aun.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "32a9cd29-701f-42d0-8a5e-7fc11be12b9b",
+      "inventoryName": "Ajayi Crowther University, Ibadan",
+      "registryName": "Ajayi Crowther University, Ibadan",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.acu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b82596fa-4f97-4f65-9786-b6270d2ab402",
+      "inventoryName": "Al-Hikmah University, Ilorin",
+      "registryName": "Al-Hikmah University, Ilorin",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.alhikmah.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "340e7568-40e4-4b5e-9c9e-be9e0c740d14",
+      "inventoryName": "Al-Qalam University, Katsina",
+      "registryName": "Al-Qalam University, Katsina",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.auk.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d9315e95-a440-46e6-8b4e-15f7ec476d05",
+      "inventoryName": "Bells University of Technology, Otta",
+      "registryName": "Bells University of Technology, Otta",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.bellsuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "6d1e4c8d-99ed-4714-a015-64aab00db4dc",
+      "inventoryName": "Bingham University, New-Karu",
+      "registryName": "Bingham University, New Karu",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.binghamuni.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b3678d09-c913-443a-81c9-bddd122fa8c3",
+      "inventoryName": "Caritas University, Enugu",
+      "registryName": "Caritas University, Enugu",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.caritasuni.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "d3725bff-d5dd-4002-828b-94acd9273b99",
+      "inventoryName": "Crawford University, Igbesa",
+      "registryName": "Crawford University Igbesa",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.crawforduniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "835b2eab-e704-4295-a039-c97e7aaa5388",
+      "inventoryName": "Crescent University, Abeokuta",
+      "registryName": "Crescent University",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2005,
+      "website": "https://www.crescent-university.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "230185e7-8a5e-4470-abb0-69f2da11856e",
+      "inventoryName": "Kwararafa University, Wukari",
+      "registryName": "Kwararafa University, Wukari",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.kwararafauniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "0aec6c11-1da2-478d-bcee-db9e59224f7f",
+      "inventoryName": "Lead City University, Ibadan",
+      "registryName": "Lead City University, Ibadan",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.lcu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "9af4baa5-9e51-4ccf-87a8-0c6b36fcdac0",
+      "inventoryName": "Novena University, Ogume",
+      "registryName": "Novena University, Ogume",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.novenauniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "ba5c4087-1dff-45ef-865c-0408322e7adf",
+      "inventoryName": "Redeemer's University, Mowe",
+      "registryName": "Redeemer's University, Ede",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2005,
+      "website": "https://www.run.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "eb88f57d-a63a-48e3-841b-578db33de716",
+      "inventoryName": "Renaissance University, Enugu",
+      "registryName": "Renaissance University, Enugu",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.rnu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "aee34a32-eaf4-4647-b588-9da772edc5ff",
+      "inventoryName": "University of Mkar, Mkar",
+      "registryName": "University of Mkar, Mkar",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2005,
+      "website": "https://www.unimkar.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "4dd65fdd-befc-479c-8878-329f6769fd88",
+      "inventoryName": "Joseph Ayo Babalola University, Ikeji-Arakeji",
+      "registryName": "Joseph Ayo Babalola University, Ikeji-Arakeji",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2006,
+      "website": "https://www.jabu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "cdf774d4-dae8-493d-93c5-8d23c6ec501c",
+      "inventoryName": "Achievers University, Owo",
+      "registryName": "Achievers University, Owo",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "https://www.achievers.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "5722a093-df07-468d-ad58-597e91a859cb",
+      "inventoryName": "Caleb University, Imota",
+      "registryName": "Caleb University, Lagos",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2007,
+      "website": "https://www.calebuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "904f4a75-e1d0-400d-a0dc-c323120a6aad",
+      "inventoryName": "Fountain University, Oshogbo",
+      "registryName": "Fountain Unveristy, Oshogbo",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2007,
+      "website": "https://www.fuo.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "814bd683-3b83-4c93-9dd2-80d6f5ea50f6",
+      "inventoryName": "African University of Science & Technology, Abuja",
+      "registryName": "African University of Science and Technology, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "http://aust.edu.ng/",
+      "flags": [
+        "website_not_https"
+      ]
+    },
+    {
+      "institutionId": "e244dba0-aa52-407d-8b91-65625f7bec6d",
+      "inventoryName": "Obong University, Obong Ntak",
+      "registryName": "Obong University, Obong Ntak",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "https://www.obonguniversity.net",
+      "flags": []
+    },
+    {
+      "institutionId": "0766bab5-2454-43d2-99b9-12d703046e04",
+      "inventoryName": "Salem University, Lokoja",
+      "registryName": "Salem University, Lokoja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "https://www.salemuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "f1933f80-1ba9-4f86-ab7a-6156be220eab",
+      "inventoryName": "Tansian University, Umunya",
+      "registryName": "Tansian University, Umunya",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "https://tansianuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "c382e2a9-4f83-44e0-8319-15dd08d42639",
+      "inventoryName": "Veritas University, Abuja",
+      "registryName": "Veritas University, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2007,
+      "website": "https://www.veritas.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "7b1f15ab-f132-476d-843a-71ec40bccac7",
+      "inventoryName": "Wesley University of Science & Technology",
+      "registryName": "Wesley University Ondo",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2007,
+      "website": "https://www.wesleyuni.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "9a61d283-823d-4c93-83aa-17d4898e7339",
+      "inventoryName": "Western Delta University, Oghara",
+      "registryName": "Western Delta University, Oghara Delta State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2007,
+      "website": "https://wdu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "ac3bc3c5-c59c-4c3d-911c-eac82e016fa2",
+      "inventoryName": "Afe Babalola University, Ado-Ekiti",
+      "registryName": "Afe Babalola University, Ado-Ekiti - Ekiti State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2009,
+      "website": "https://www.abuad.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "248912ac-393c-483a-a229-66f9790abf14",
+      "inventoryName": "Godfrey Okoye University, Enugu",
+      "registryName": "Godfrey Okoye University, Ugwuomu-Nike - Enugu State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2009,
+      "website": "https://www.gouni.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d0af643c-0034-4850-b22f-12adb3973580",
+      "inventoryName": "Nile University of Nigeria, Abuja",
+      "registryName": "Nile University of Nigeria, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2009,
+      "website": "https://www.nileuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "a1bd5182-e845-48e0-9dda-899c020f4f04",
+      "inventoryName": "Oduduwa University, Ipetumodu",
+      "registryName": "Oduduwa University, Ipetumodu - Osun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2009,
+      "website": "https://www.oduduwauniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "be24b7f5-4c8b-46da-a9d6-6f9fabe7607b",
+      "inventoryName": "Paul University, Awka",
+      "registryName": "Paul University, Awka - Anambra State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2009,
+      "website": "https://www.pauluniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "3adf210e-6d6d-437a-8023-bb9a3a66b184",
+      "inventoryName": "Rhema University, Obeama-Asa",
+      "registryName": "Rhema University, Obeama-Asa - Rivers State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2009,
+      "website": "https://www.rhemauniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "ba73e6c9-9678-4939-a53a-e70a53b050e9",
+      "inventoryName": "Wellspring University, Evbuobanosa",
+      "registryName": "Wellspring University, Evbuobanosa - Edo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2009,
+      "website": "https://www.wellspringuniversity.net",
+      "flags": []
+    },
+    {
+      "institutionId": "0ca1ee1a-6003-4840-8cfa-8a806653fda3",
+      "inventoryName": "Adeleke University, Ede",
+      "registryName": "Adeleke University, Ede",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2011,
+      "website": "https://www.adelekeuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1fc72a03-794f-4c27-8e7b-c9678e47e397",
+      "inventoryName": "Baze University, Abuja",
+      "registryName": "Baze University",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.bazeuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "5d3b8cc2-30ef-4236-ae21-64c911bb51e5",
+      "inventoryName": "Landmark University, Omu-Aran",
+      "registryName": "Landmark University, Omu-Aran.",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2011,
+      "website": "https://www.lmu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "61b22d60-5ef9-4642-b18a-7c3f36ba3947",
+      "inventoryName": "Glorious Vision University, Ogwa",
+      "registryName": "Glorious Vision University, Ogwa, Edo State.",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2011,
+      "website": "https://www.sau.edu.ng",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "15214907-e367-4af3-9e6f-b601cb5c9bd0",
+      "inventoryName": "Elizade University, Ilara-Mokin",
+      "registryName": "Elizade University, Ilara-Mokin",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2012,
+      "website": "https://www.elizadeuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "0a85612e-ef68-490e-af15-bde7e44b9c19",
+      "inventoryName": "Evangel University, Akaeze",
+      "registryName": "Evangel University, Akaeze",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2012,
+      "website": "https://www.evangeluniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "4e908750-9eb7-43e6-a00b-106cf848be04",
+      "inventoryName": "Gregory University, Uturu",
+      "registryName": "Gregory University, Uturu",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2012,
+      "website": "https://www.gregoryuniversity.com",
+      "flags": []
+    },
+    {
+      "institutionId": "c08a53e7-02a1-450d-b13e-91cd5a0e93c3",
+      "inventoryName": "McPherson University, Seriki Sotayo",
+      "registryName": "Mcpherson University, Seriki Sotayo, Ajebo",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2012,
+      "website": "https://www.mcu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "da6bb2ec-4f72-48e6-9e79-e0a717a94433",
+      "inventoryName": "Southwestern University, Oku Owa",
+      "registryName": "Southwestern University, Oku Owa",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2012,
+      "website": "https://www.southwesternuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "029504a6-5de8-4d21-80d5-992eb599a470",
+      "inventoryName": "Augustine University, Ilara",
+      "registryName": "Augustine University",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2015,
+      "website": "https://www.augustineuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "7c4763d1-81dd-41ae-8cd9-eb57b889b64a",
+      "inventoryName": "Chrisland University, Owode",
+      "registryName": "Chrisland University",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2015,
+      "website": "https://www.chrislanduniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "e96f3998-044a-46ff-9f12-4941ac42452a",
+      "inventoryName": "Edwin Clark University, Kiagbodo",
+      "registryName": "Edwin Clark University, Kaigbodo",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2015,
+      "website": "https://www.edwinclarkuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "c89b513e-df65-4f2b-ab49-14da4fb71946",
+      "inventoryName": "Hallmark University, Ijebu-Itele",
+      "registryName": "Hallmark University, Ijebi Itele, Ogun",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2015,
+      "website": "https://www.hallmark.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "5a9f2e5f-a99c-432a-8a92-c92c49788e71",
+      "inventoryName": "Hezekiah University, Umudi",
+      "registryName": "Hezekiah University, Umudi",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2015,
+      "website": "https://hezekiah.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "934fb37a-16bd-4e1e-92c0-6cd95af36ffc",
+      "inventoryName": "Kings University, Ode-Omu",
+      "registryName": "Kings University, Ode Omu",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2015,
+      "website": "https://www.kingsuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "3cea708a-a23e-4c79-97f4-c8d76d06c747",
+      "inventoryName": "Michael & Cecilia Ibru University, Owhode",
+      "registryName": "Micheal & Cecilia Ibru University",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2015,
+      "website": "https://mciu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "5c9dfac1-2856-4005-9574-dbdb83add2dc",
+      "inventoryName": "Mountain Top University, Makogi",
+      "registryName": "Mountain Top University",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2015,
+      "website": "https://www.mtu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "6340b65e-a551-48c1-bffd-518a7d8b05f5",
+      "inventoryName": "Ritman University, Ikot Ekpene",
+      "registryName": "Ritman University, Ikot Ekpene, Akwa Ibom",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2015,
+      "website": "https://www.ritmanuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "0425f0c7-6912-4ac4-95cb-b4069c369b3a",
+      "inventoryName": "Summit University, Offa",
+      "registryName": "Summit University, Offa",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2015,
+      "website": "https://www.summituniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b9dbc7e7-6ffe-4653-be7e-fcf81d109988",
+      "inventoryName": "Christopher University, Mowe",
+      "registryName": "Christopher University Mowe",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2015,
+      "website": "https://www.christopheruniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "b25573f3-f32e-4465-9125-1f1048d20e45",
+      "inventoryName": "Kola Daisi University, Ibadan",
+      "registryName": "Kola Daisi University Ibadan, Oyo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.koladaisiuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "2bfbbeac-2d2b-4f25-908d-babaea3e81d0",
+      "inventoryName": "Anchor University, Ayobo",
+      "registryName": "Anchor University Ayobo Lagos State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.aul.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "1401e847-0ef8-46b8-a344-c099d8959b66",
+      "inventoryName": "Dominican University, Ibadan",
+      "registryName": "Dominican University Ibadan Oyo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.dui.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "676f2bc6-bddb-497f-95d6-8ebe736c4846",
+      "inventoryName": "Legacy University, Okija",
+      "registryName": "Legacy University, Okija Anambra State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.legacyuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "1e5b71fb-5ebd-41d2-82cf-6f3303cceabc",
+      "inventoryName": "Arthur Jarvis University, Akpabuyo",
+      "registryName": "Arthur Javis University Akpoyubo Cross river State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2016,
+      "website": "https://www.arthurjarvisuniversity.edu.ng/",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "ae35db24-d450-4ebd-8119-01c08fc36470",
+      "inventoryName": "Ojaja University, Eiyenkorin",
+      "registryName": "Ojaja University Eiyenkorin, Kwara State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.crownhilluniversity.edu.ng/",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "1c8c2820-15d8-4a1a-874b-73c8623a2f3a",
+      "inventoryName": "Coal City University, Enugu",
+      "registryName": "Coal City University Enugu State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2016,
+      "website": "https://www.ccu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "1356f728-7f82-4240-9dad-cdd66186275d",
+      "inventoryName": "Clifford University, Owerrinta",
+      "registryName": "Clifford University Owerrinta Abia State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2016,
+      "website": "https://www.clifforduni.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "d792735e-f3dd-41e4-a75c-c07f980a106c",
+      "inventoryName": "Spiritan University, Nneochi",
+      "registryName": "Spiritan University, Nneochi Abia State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2017,
+      "website": "https://www.spiritanuniversity.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "b02ccd01-5820-47c9-80ad-7a619af5c0da",
+      "inventoryName": "Precious Cornerstone University, Ibadan",
+      "registryName": "Precious Cornerstone University, Oyo",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2017,
+      "website": "https://www.pcu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "8fd5f901-89d7-4a88-afc8-37b2d8b9b4a6",
+      "inventoryName": "PAMO University of Medical Sciences, Port-Harcourt",
+      "registryName": "PAMO University of Medical Sciences, Portharcourt",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2017,
+      "website": "https://www.pums.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "c64590f2-e814-416e-a2f1-23cd67dd9ebf",
+      "inventoryName": "Atiba University, Oyo",
+      "registryName": "Atiba University Oyo",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2017,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "c41bf9d8-d27c-4681-aba3-3561c398bf9f",
+      "inventoryName": "Eko University of Medical Sciences, Ijanikin",
+      "registryName": "Eko University of Medical and Health Sciences Ijanikin, Lagos",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2017,
+      "website": "https://www.ekounivmed.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "1d8e57b4-0c77-4f6a-b958-f23319df9987",
+      "inventoryName": "Skyline University Nigeria, Kano",
+      "registryName": "Skyline University, Kano",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2018,
+      "website": "https://www.sun.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "cf1b3803-1c93-45d3-afbe-c97d8536c26a",
+      "inventoryName": "Greenfield University, Kaduna",
+      "registryName": "Greenfield University, Kaduna",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2019,
+      "website": "https://www.gfu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "d85098c4-c308-4f73-b476-612f0ad5d101",
+      "inventoryName": "Dominion University, Ibadan",
+      "registryName": "Dominion University Ibadan, Oyo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2019,
+      "website": "https://www.dominionuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "554745b6-0842-4403-82e0-eb3529d71841",
+      "inventoryName": "Trinity University, Laloko",
+      "registryName": "Trinity University Ogun State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2019,
+      "website": "https://www.trinityuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "a6cc4eb1-8fcf-463e-bdf0-73b8dafda9ae",
+      "inventoryName": "Westland University, Iwo",
+      "registryName": "Westland University Iwo, Osun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2019,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "f8af2b1a-1b64-4c75-84df-9c2dca2536d6",
+      "inventoryName": "Topfaith University, Mkpatak",
+      "registryName": "Topfaith University, Mkpatak, Akwa Ibom State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "fcb490d2-6beb-4863-b4ec-d0a5f5ca0691",
+      "inventoryName": "Thomas Adewumi University, Oko-Irese",
+      "registryName": "Thomas Adewumi University, Oko-Irese, Kwara State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": "https://www.tau.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "34d44710-1659-4059-9601-257699d65c57",
+      "inventoryName": "Maranatha University, Lekki",
+      "registryName": "Maranatha University, Lagos",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3c90bcce-be12-4219-a64f-dcf33cd7eddb",
+      "inventoryName": "Ave-Maria University, Piyanko",
+      "registryName": "Ave Maria University, Piyanko, Nasarawa State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "c2eb83a3-ea26-43ce-b32b-1505bd0a16d9",
+      "inventoryName": "Al-Istiqama University, Sumaila",
+      "registryName": "Al-Istiqama University, Sumaila, Kano State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "038f6812-2806-4235-afd7-4ca6722bb46c",
+      "inventoryName": "Mudiame University, Irrua",
+      "registryName": "Mudiame University, Irrua, Edo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "0ebf3431-cce8-46cc-a7a5-ab765d1f3c5b",
+      "inventoryName": "Havilla University, Nde-Ikom",
+      "registryName": "Havilla University, Nde-Ikom, Cross River State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2021,
+      "website": "https://havillauniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "91b6d714-7454-4008-a456-641588738ec1",
+      "inventoryName": "Claretian University of Nigeria, Nekede",
+      "registryName": "Claretian University of Nigeria, Nekede, Imo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "b5b5dad4-cf93-4fa8-acca-0150a90d906a",
+      "inventoryName": "Karl-Kumm University, Vom",
+      "registryName": "Karl-Kumm University, Vom, Plateau State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "513dad28-15b5-44a0-8f1f-326ca48888b2",
+      "inventoryName": "James Hope University, Lekki",
+      "registryName": "James Hope University, Lagos, Lagos State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2021,
+      "website": "https://www.jhu.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "95f3c869-bce7-45ec-8fef-86cfcd00c711",
+      "inventoryName": "Maryam Abacha American University of Nigeria, Kano",
+      "registryName": "Maryam Abacha American University of Nigeria, Kano State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2021,
+      "website": "https://www.maaun.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "de1f9fc7-d1e1-4360-a5fd-bad41a479f29",
+      "inventoryName": "Capital City University, Kano",
+      "registryName": "Capital City University, Kano State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2021,
+      "website": "https://www.ccuk.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "608c6ef3-3e31-411e-8f3b-b931ae570779",
+      "inventoryName": "Ahman Pategi University, Patigi",
+      "registryName": "Ahman Pategi University, Kwara State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d1f7de2d-bec3-4d7f-abd1-feafe5bbb0c4",
+      "inventoryName": "University of Offa, Offa",
+      "registryName": "University of Offa, Kwara State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "546228d3-3782-4069-87d6-505ed150a4af",
+      "inventoryName": "Mewar University, Masaka",
+      "registryName": "Mewar International University, Masaka, Nasarawa State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2021,
+      "website": "https://www.miu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "f7a573e6-be20-4761-a964-f4e7096d8820",
+      "inventoryName": "Edusoko University, Bida",
+      "registryName": "Edusoko University, Bida, Niger State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "71b6432b-7971-4ab8-94a3-846c997f981a",
+      "inventoryName": "Philomath University, Kuje",
+      "registryName": "Philomath University, Kuje, Abuja",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "941b83c3-f2f7-4cc0-828f-576ad3dbf397",
+      "inventoryName": "ANAN University, Kwall",
+      "registryName": "Anan University, Kwall, Plateau State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2021,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3b00deff-c80c-49e4-a9f0-553a36045cef",
+      "inventoryName": "North Eastern University, Gombe",
+      "registryName": "North Eastern University, Gombe",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2022,
+      "website": "https://pru.edu.ng/",
+      "flags": [
+        "website_domain_not_abbreviation"
+      ]
+    },
+    {
+      "institutionId": "4f3a6d8b-afda-4bb9-979f-b5e64149c19a",
+      "inventoryName": "Al-Ansar University, Maiduguri",
+      "registryName": "Al-Ansar University, Maiduguri, Borno",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "6e1eaa2e-be9a-47bb-bf67-182cb94453f6",
+      "inventoryName": "Margaret Lawrence University, Galilee",
+      "registryName": "Margaret Lawrence University, Umunede, Delta State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3fba17fd-0dbc-461a-a708-200eae85d6ec",
+      "inventoryName": "Khalifa Isiyaku Rabiu University, Kano",
+      "registryName": "Khalifa Isiyaku Rabiu University, Kano",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "f6b674f5-4eea-4ebb-ba61-68aa11f85324",
+      "inventoryName": "Sports University, Idumuje-Ugboko",
+      "registryName": "Sports University, Idumuje, Ugboko, Delta State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a8da8d42-fc6c-4746-aa4b-fcaa63b8faa9",
+      "inventoryName": "Baba-Ahmed University, Kano",
+      "registryName": "Baba Ahmed University, Kano State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "2ee98578-63f8-45c3-b213-0ea187ab89c7",
+      "inventoryName": "Saisa University of Medical Sciences and Technology, Sokoto",
+      "registryName": "Saisa University of Medical Sciences and Technology, Sokoto State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "e3dd6ea1-a953-4228-9544-dea911967828",
+      "inventoryName": "Nigerian British University, Asa",
+      "registryName": "Nigerian British University, Asa, Abia State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": "https://nbu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "7cb4501b-2c20-466e-b62f-e49c2a29701f",
+      "inventoryName": "Peter University, Achina-Onneh",
+      "registryName": "Peter University, Achina-Onneh Anambra State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "c3184eb2-753c-410b-a15d-ebdbbbead0c4",
+      "inventoryName": "Newgate University, Minna",
+      "registryName": "Newgate University, MInna, Niger State.",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3b729849-b036-4453-b672-8ba8be641576",
+      "inventoryName": "European University of Nigeria, Abuja",
+      "registryName": "European University of Nigeria, Duboyi, FCT",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2022,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "745d1a4d-30b0-4892-9ebe-ef468bb5fb17",
+      "inventoryName": "Northwest University, Sokoto",
+      "registryName": "NorthWest University Sokoto State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2022,
+      "website": "https://nwus.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "c400d0cb-1c86-4376-bf20-fe242577266a",
+      "inventoryName": "Rayhaan University, Birnin Kebbi",
+      "registryName": "Rayhaan University, Kebbi",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "11e2ffeb-c692-4ec1-a660-442dc0912c93",
+      "inventoryName": "Muhammad Kamalud-Deen University, Ilorin",
+      "registryName": "Muhammad Kamalud University Kwara",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "58e2617f-fcdf-4443-b20c-53f7ce1a2836",
+      "inventoryName": "Sam Maris University, Supare",
+      "registryName": "Sam Maris University, Ondo",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "930fc92f-a2d2-4ccb-929a-0b7a53fb11e4",
+      "inventoryName": "Aletheia University, Ago-Iwoye",
+      "registryName": "Aletheia University, Ago-Iwoye Ogun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d7a4e40f-e03a-469f-9492-e3c6fa1f31b1",
+      "inventoryName": "Lux Mundi University, Umuahia",
+      "registryName": "Lux Mundi University Umuahia, Abia State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "66dee891-43d3-4087-af5d-4de12f2090e2",
+      "inventoryName": "Maduka University, Ekwegbe-Nsukka",
+      "registryName": "Maduka University, Ekwegbe, Enugu State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "20e729d7-33f7-4605-af4c-69e1a62cd30b",
+      "inventoryName": "Peaceland University, Enugu",
+      "registryName": "PeaceLand University, Enugu State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "7fe622e9-ac98-4db8-94bc-e9b4f6f750e7",
+      "inventoryName": "Amadeus University, Amizi",
+      "registryName": "Amadeus University, Amizi, Abia State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "8f9d62ab-6a71-4ece-95ca-43122dfb57a0",
+      "inventoryName": "Vision University, Ikogbo",
+      "registryName": "Vision University, Ikogbo, Ogun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "1fe3df06-f185-4677-9e55-4b26348f2263",
+      "inventoryName": "Azman University, Kano",
+      "registryName": "Azman University, Kano State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "c39c93d9-4292-4929-9812-1a5cde284607",
+      "inventoryName": "Huda University, Gusau",
+      "registryName": "Huda University, Gusau, Zamafara State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ce6cc1f7-f7b8-4f65-9c6f-11319acc7335",
+      "inventoryName": "Franco British International University, Kaduna",
+      "registryName": "Franco British International University, Kaduna State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2023,
+      "website": "https://fbiu.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "0039147a-ecb5-4a7a-9082-d80be609e6cb",
+      "inventoryName": "Canadian University of Nigeria, Abuja",
+      "registryName": "Canadian University of Nigeria, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "b6df62f0-0c32-42bb-a710-36064b3b4fec",
+      "inventoryName": "Gerar University of Medical Sciences, Imope-Ijebu",
+      "registryName": "Gerar University of Medical Science Imope Ijebu, Ogun State.",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "048b536d-2749-4dcb-880e-689590246055",
+      "inventoryName": "British Canadian University, Obudu",
+      "registryName": "British Canadian University, Obufu Cross River State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d875d62c-4df8-4ef1-8b5d-b4285b3ce9a4",
+      "inventoryName": "Hensard University, Toru-Orua",
+      "registryName": "Hensard University, Toru-Orua, Sagbama, Bayelsa State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "81a1b1e9-ada4-47f0-a154-87eecf0345ff",
+      "inventoryName": "Amaj University, Abuja",
+      "registryName": "Amaj University, Kwali, Abuja",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "30b5d050-e344-4a8a-873b-78ea46b46bd3",
+      "inventoryName": "Phoenix University, Agwada",
+      "registryName": "Phoenix University, Agwada, Nasarawa State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "220a2e1c-a12b-43f4-ba63-4014a2a0dabc",
+      "inventoryName": "Wigwe University, Isiokpo",
+      "registryName": "Wigwe University, Isiokpo Rivers State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": "https://www.wigweuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "524c5feb-b7e9-41e3-944b-a8dd42ee3ef4",
+      "inventoryName": "Hillside University of Science and Technology, Okemesi Ekiti",
+      "registryName": "Hillside University of Science and Technology, Okemisi, Ekiti State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": "https://www.hust.edu.ng",
+      "flags": []
+    },
+    {
+      "institutionId": "6c0ef289-8417-4c58-9fc7-66cc71809d11",
+      "inventoryName": "University on the Niger, Umunya",
+      "registryName": "University on the Niger, Umunya, Anambra state",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a7c3c010-02f0-44fc-9657-d87e0b781e58",
+      "inventoryName": "Elrazi University of Medical Sciences, Kano",
+      "registryName": "Elrazi Medical University Yargaya University, Kano State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "34d66245-e789-4db3-9153-c7fb088c5f2e",
+      "inventoryName": "Venite University, Iloro-Ekiti",
+      "registryName": "Venite University, Iloro-Ekiti, Ekiti State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "7bd1f7fd-286a-4be0-9d5f-ab0a0eeb0afc",
+      "inventoryName": "Shanahan University, Onitsha",
+      "registryName": "Shanahan University Onitsha, Anambra State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "1c7505a6-052b-4207-b97c-86e8c6914ccf",
+      "inventoryName": "The Duke Medical University Calabar",
+      "registryName": "The Duke Medical University, Calabar, Cross River State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ab23233b-94c1-4889-922c-043ce5f9d3ea",
+      "inventoryName": "Mercy Medical University, Iwara-Iwo",
+      "registryName": "Mercy Medical University, Iwo, Ogun State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "0f09efb3-d706-4633-9204-883db35d9c6a",
+      "inventoryName": "Cosmopolitan University, Abuja",
+      "registryName": "Cosmopolitan University Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "925f4d53-794a-40ce-bac3-83c964227ff9",
+      "inventoryName": "Miva Open University, Abuja",
+      "registryName": "Miva Open University, Abuja FCT",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": "https://miva.university/",
+      "flags": []
+    },
+    {
+      "institutionId": "535e71c1-a4e5-46bd-b3b5-92158af3ee43",
+      "inventoryName": "Iconic Open University, Sokoto",
+      "registryName": "Iconic Open University, Sokoto State.",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "5e42d427-262a-4987-9f13-11be184378b8",
+      "inventoryName": "West Midland Open University, Ibadan",
+      "registryName": "West Midlands Open University, Ibadan, Oyo State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "481e4f42-65a8-460e-89dc-e3b291f8bf81",
+      "inventoryName": "Al-Muhibbah Open University, Abuja",
+      "registryName": "Al-Muhibbah Open University, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d6017dcd-9f1e-41f1-aa8c-daacc33ddd3f",
+      "inventoryName": "El-Amin University, Niger State",
+      "registryName": "El-Amin University, Minna, Niger State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "ddeb513f-60fb-46d7-ba1b-5fa0e9068f2b",
+      "inventoryName": "College of Petroleum and Energy Studies, Kaduna",
+      "registryName": "College of Petroleum and Energy Studies, Kaduna State",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "c98e2af5-2adb-4f40-bbb4-80676c497088",
+      "inventoryName": "Jewel University, Gombe",
+      "registryName": "Jewel University, Gombe state",
+      "ownership": "private",
+      "matchedOn": "core_name",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a1fd2e96-d278-41e6-937f-d9571f83bef7",
+      "inventoryName": "Prime University, Abuja",
+      "registryName": "Prime University, Kuje, FCT Abuja",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "0f5d5559-c0de-43c8-ab25-6b2121580f3c",
+      "inventoryName": "Nigerian University of Technology and Management, Apapa",
+      "registryName": "Nigerian University of Technology and Management, Apapa, Lagos State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "359b37ac-4e10-435f-b318-d9d8b465e8c3",
+      "inventoryName": "Al-Bayan University, Ankpa",
+      "registryName": "Al-Bayan University, Ankpa, Kogi State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2023,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "8ac9ea94-bd45-4540-9d11-4820ee3c9efe",
+      "inventoryName": "Lighthouse University, Evbuobanosa",
+      "registryName": "Lighthouse University, Evbobanosa, Edo State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2024,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "3e0658c4-cc63-45ad-94d4-4837b59d2451",
+      "inventoryName": "New City University, Ayetoro",
+      "registryName": "New City University, Ayetoro, Ogun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "b54bc286-df27-44d1-b3a7-5d9381daab19",
+      "inventoryName": "University of Fortune, Igbotako",
+      "registryName": "University of Fortune, Igbotako, Ondo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "d5dfe98e-a022-4c26-97c3-a7dbc4d7d477",
+      "inventoryName": "Eranova University, Abuja",
+      "registryName": "Eranova University, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2025,
+      "website": "https://eranova.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "a70c3c39-7855-49b6-bfaf-e17888b81682",
+      "inventoryName": "Minaret University, Ikirun",
+      "registryName": "Minaret University, Ikirun, Osun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "940ea617-ba4c-4fca-94fd-b16ae2e8bf31",
+      "inventoryName": "Abdulrasaq Abubakar Toyin University, Oke-Agba",
+      "registryName": "Abdulrasaq Abubakar Toyin University, Oke-Ogba, Ganmo, Ilorin, Kwara State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "fe5d34ab-5936-4e37-9448-2e784c00a714",
+      "inventoryName": "Southern Atlantic University, Uyo",
+      "registryName": "Southern Atlantic University, Uyo, Akwa Ibom State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "2ef0b901-b6d1-4a3c-b75a-3aa45ed20099",
+      "inventoryName": "Lens University, Ilemona",
+      "registryName": "Lens University, Ilemona, Kwara State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "5c419401-5444-4561-8d8d-c2b5d15f65ec",
+      "inventoryName": "Monarch University, Iyesi-Ota",
+      "registryName": "Monarch University, Iyesi-Ota, Ogun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "10f0c0eb-1ccd-4c4b-ae6f-aed5ed66ba5e",
+      "inventoryName": "Tonnie Iredia University of Communication, Benin City",
+      "registryName": "Tonine Iredia University of Communication, Benin City, Edo State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a8576d07-3ac2-4b34-a8fd-d3d457ac9093",
+      "inventoryName": "Isaac Balami University of Aeronautics and Management",
+      "registryName": "Isaac Balami University of Aeronautics and Management, Lagos State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "00a5d148-097a-4e40-b7e8-d18c6ec799fe",
+      "inventoryName": "Kevin Eze University, Mgbowo",
+      "registryName": "Kevin Eze University, Mgbowo, Enugu State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "7e2ff72b-2752-4a2a-83f8-c8f7a2f3da4f",
+      "inventoryName": "Tazkiyah University, Kaduna",
+      "registryName": "Tazkiyah University, Kaduna, Kaduna State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a48c21eb-8810-49bc-80d9-626ee47364f9",
+      "inventoryName": "Leadership University, Abuja",
+      "registryName": "Leadership University, Abuja, FCT",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "5e7654d4-754b-454a-92c1-5c9e699636b5",
+      "inventoryName": "Jimoh Babalola University, Ilorin",
+      "registryName": "Jimoh Babalola University, Ilorin, Kwara State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "fa56a155-2210-4856-a783-3e27f55cb402",
+      "inventoryName": "Bridget University Mbaise",
+      "registryName": "Bridget University Mbaise, Okirika-Nweke, Imo State",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "9f11ac22-ba14-46f2-b2ca-69630e9cde04",
+      "inventoryName": "Greenland University, Jalingo",
+      "registryName": "Greenland University, Jalingo, Taraba State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "50a83a78-5c84-413f-ac99-4755cbbc6a46",
+      "inventoryName": "JEFAP University, Suleja",
+      "registryName": "JEFAP University, Suleja, Niger State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "782cad2b-a4ae-468e-b1cb-19713ebf94d3",
+      "inventoryName": "Azione Verde University, Amaigbo",
+      "registryName": "Azione Verde University, Amaigbo, Imo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "b86dc085-2fb8-4764-a2de-349a8229bf91",
+      "inventoryName": "Unique Open University, Ojo",
+      "registryName": "Unique Open University, Ojo, Lagos State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "351203e2-83b9-4abb-9349-3c4dfc934879",
+      "inventoryName": "American Open University, Abeokuta",
+      "registryName": "American Open University, Abeokuta, Ogun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2025,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "77d81302-d91b-4122-8e06-b9442bfbb874",
+      "inventoryName": "Millennium Crest University, Ikare-Akoko",
+      "registryName": "Millenium Crest University, Ikare Akoko, Ondo State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "337cecd3-ed57-46f6-b81c-33ff9a971653",
+      "inventoryName": "Abdulfattah Durojaiye University, Abeokuta",
+      "registryName": "Abdulfattah Durojaiye University, Abeokuta Ogun State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "84e21a5f-827d-4c26-9103-0a70c3626626",
+      "inventoryName": "Euston University, Abakaliki",
+      "registryName": "Euston University, Abakaliki, Ebonyi State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "4173759b-d3c9-4b75-8f86-cf8f01d9559c",
+      "inventoryName": "Adeche Momoh University, Igarra",
+      "registryName": "Adeche Momoh University, Igarra, Edo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "baad4f6d-1bab-4c2a-b9a9-1d6ba975b3df",
+      "inventoryName": "Sani Bello University, Kontagora",
+      "registryName": "Sani Bello University, Kontagora Niger State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "1219894e-8d58-4909-9af4-6d4cb52fba41",
+      "inventoryName": "Godday Erewa University, Sapele",
+      "registryName": "Godday Erewa University, Sapele, Delta State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "9240f4ce-5d3d-4dfb-a37f-eed7bb9e1283",
+      "inventoryName": "Owolabi University, Oke-Ila Orangun",
+      "registryName": "Owolabi University, Oke Ila Orangun",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "418c88b5-b347-4cce-a450-3b0d87b09011",
+      "inventoryName": "Regnum Medical University, Lagos",
+      "registryName": "Regnum Medical University, Anthony, Lagos State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "e24cf7b5-a38d-4fc1-9fe2-312c00ed6c29",
+      "inventoryName": "City University, Abuja",
+      "registryName": "City University Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2026,
+      "website": "https://www.cityuniversity.edu.ng/",
+      "flags": []
+    },
+    {
+      "institutionId": "54004a99-4a8b-490c-8098-7d4bc006dda1",
+      "inventoryName": "Transatlantic University of Medicine and Health Sciences, Umuchukwu",
+      "registryName": "Transatlantic University of Medine and Health Sciences, Umuchukwu, Anambra State",
+      "ownership": "private",
+      "matchedOn": "curated_alias",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "98792dd8-02a1-426b-8609-4de4db35f0aa",
+      "inventoryName": "Maria Assumpta University, Owerri",
+      "registryName": "Maria Assumpta University Owerri, Imo State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "f3bde218-0e54-4060-8af8-c9a99ce8ed4a",
+      "inventoryName": "High-Flyers University, Ikere-Ekiti",
+      "registryName": "High Flyers University, Ikere-Ekiti, Ekiti State",
+      "ownership": "private",
+      "matchedOn": "state_stripped",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "a5f730ef-565d-4468-8171-896fda9045ae",
+      "inventoryName": "Ummah University of Nigeria, Abuja",
+      "registryName": "Ummah University of Nigeria, Abuja",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "4bc42629-ab2d-47b7-abcc-f3903284b45d",
+      "inventoryName": "Pearl University, Calabar",
+      "registryName": "Pearl University, Calabar, Cross river",
+      "ownership": "private",
+      "matchedOn": "name_prefix",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    },
+    {
+      "institutionId": "98fa2b87-4425-43fe-983a-a9974a7e20ac",
+      "inventoryName": "Omega University, Kaduna",
+      "registryName": "Omega University Kaduna",
+      "ownership": "private",
+      "matchedOn": "exact_name",
+      "yearEstablished": 2026,
+      "website": null,
+      "flags": [
+        "website_not_published"
+      ]
+    }
+  ],
+  "registryOnly": [
+    {
+      "name": "African University of Economics, FCT, Abuja",
+      "ownership": "private",
+      "yearEstablished": 2024,
+      "website": null
+    }
+  ],
+  "inventoryOnly": [
+    {
+      "institutionId": "e3054006-c3de-4522-aef8-3098559df8ac",
+      "schoolName": "African School of Economics, Abuja",
+      "state": "FCT Abuja"
+    },
+    {
+      "institutionId": "255e4ba4-b75f-48b1-8ed1-00a7fcb8a967",
+      "schoolName": "University of Calabar, Calabar",
+      "state": "Cross River"
+    }
+  ],
+  "ambiguous": [],
+  "totals": {
+    "matched": 327,
+    "registryOnly": 1,
+    "inventoryOnly": 2,
+    "ambiguous": 0,
+    "websitesPublished": 190,
+    "websitesHttps": 189,
+    "websitesMismatchedHost": 12,
+    "viceChancellorsPublished": 263,
+    "yearsPublished": 328
+  }
+}

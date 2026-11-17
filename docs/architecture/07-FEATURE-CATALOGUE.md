@@ -13,7 +13,7 @@ Status legend: ✅ built · 🟡 partial · 🔴 specified, not built · ⚪ out
 | AUTH-2 | Account suspension | `/api/admin/users/:id/ban`, `/unban` | ✅ | Server-side, audit-logged |
 | PROF-1 | Academic profile (institution, faculty, department, level, matric) | `pages/ProfileCompletionPage.tsx`, `profiles` | ✅ | Collects only what services and personalisation use |
 | DASH-1 | Student workspace with four tabs | `pages/StudentDashboardV2.tsx` | ✅ | Overview, My Requests, My CBT, Tools & Saved |
-| NEWS-1 | Public news feed and article page | `/news`, `/news/:slug`, `src/lib/api.ts` | ✅ | Provenance + freshness surfaced |
+| NEWS-1 / NEWS-3 | Public news feed and article page | `/news`, `/news/:slug`, `src/lib/api.ts`, `src/components/NewsSections.tsx` | ✅ | Neutral card, provenance + freshness surfaced |
 | NEWS-2 | Newsroom CMS | `/admin/news`, `AdminRichTextEditor` | ✅ | Drafts, preview, quality gate, image upload |
 | NEWS-3 | Ingestion pipeline + review queue | `src/server/newsroom/*`, `AdminNewsroomQueue` | ✅ | PR #11: discovery → dedupe → gate → publish/queue |
 | NEWS-4 | Provenance, freshness and expiry | migration `20260930120000`, `expire_stale_news()` | ✅ | Expired content leaves the feed, stays linkable |

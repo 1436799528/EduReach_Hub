@@ -11,6 +11,16 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Site images that are not content-hashed (the neutral placeholder, article
+# photographs served from the origin). They can be replaced, so they are not
+# immutable; a day of reuse plus a week of stale-while-revalidate is enough.
+/images/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  X-Content-Type-Options: nosniff
+
+/news/photos/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
 
