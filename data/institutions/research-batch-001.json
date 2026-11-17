@@ -12868,6 +12868,3296 @@
       "sourceKeys": [
         "nuc-nus-2026"
       ]
+    },
+    {
+      "institutionId": "4977227d-6bad-44bc-abc1-69c68ee8b25a",
+      "canonicalName": "Northwest University, Kano",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "745d1a4d-30b0-4892-9ebe-ef468bb5fb17",
+      "canonicalName": "Northwest University, Sokoto",
+      "state": "Sokoto",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9af4baa5-9e51-4ccf-87a8-0c6b36fcdac0",
+      "canonicalName": "Novena University, Ogume",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "e09c2839-6eca-40d9-a42c-0a7e09a2f111",
+      "canonicalName": "Obafemi Awolowo University, Ile-Ife",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "e244dba0-aa52-407d-8b91-65625f7bec6d",
+      "canonicalName": "Obong University, Obong Ntak",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a1bd5182-e845-48e0-9dda-899c020f4f04",
+      "canonicalName": "Oduduwa University, Ipetumodu",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ae35db24-d450-4ebd-8119-01c08fc36470",
+      "canonicalName": "Ojaja University, Eiyenkorin",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "20dd6957-8290-4048-8c17-c83cfa6cabfb",
+      "canonicalName": "Olabisi Onabanjo University, Ago-Iwoye",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8ec98e6a-0e67-43c9-8b71-ae7a96c338c0",
+      "canonicalName": "Olusegun Agagu University of Science and Technology, Okitipupa",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "98fa2b87-4425-43fe-983a-a9974a7e20ac",
+      "canonicalName": "Omega University, Kaduna",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f79c4f1b-9bd6-4884-8929-d1c2f7808c94",
+      "canonicalName": "Ondo State University of Medical Sciences",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1bb9b5da-f58b-4ef1-9d82-3a96bab817ec",
+      "canonicalName": "Osun State University, Osogbo",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9240f4ce-5d3d-4dfb-a37f-eed7bb9e1283",
+      "canonicalName": "Owolabi University, Oke-Ila Orangun",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8fd5f901-89d7-4a88-afc8-37b2d8b9b4a6",
+      "canonicalName": "PAMO University of Medical Sciences, Port-Harcourt",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ea3f1865-12aa-4de5-a8e8-727e5ca988b3",
+      "canonicalName": "Pan-Atlantic University, Lagos",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "be24b7f5-4c8b-46da-a9d6-6f9fabe7607b",
+      "canonicalName": "Paul University, Awka",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "20e729d7-33f7-4605-af4c-69e1a62cd30b",
+      "canonicalName": "Peaceland University, Enugu",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "4bc42629-ab2d-47b7-abcc-f3903284b45d",
+      "canonicalName": "Pearl University, Calabar",
+      "state": "Cross River",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7cb4501b-2c20-466e-b62f-e49c2a29701f",
+      "canonicalName": "Peter University, Achina-Onneh",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "71b6432b-7971-4ab8-94a3-846c997f981a",
+      "canonicalName": "Philomath University, Kuje",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "30b5d050-e344-4a8a-873b-78ea46b46bd3",
+      "canonicalName": "Phoenix University, Agwada",
+      "state": "Nasarawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1de7f309-fb8a-4bde-8486-55839297d374",
+      "canonicalName": "Plateau State University, Bokkos",
+      "state": "Plateau",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b02ccd01-5820-47c9-80ad-7a619af5c0da",
+      "canonicalName": "Precious Cornerstone University, Ibadan",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a1fd2e96-d278-41e6-937f-d9571f83bef7",
+      "canonicalName": "Prime University, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f84f334d-f019-4582-85e6-1d08a2668527",
+      "canonicalName": "Prince Abubakar Audu University, Anyigba",
+      "state": "Kogi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c400d0cb-1c86-4376-bf20-fe242577266a",
+      "canonicalName": "Rayhaan University, Birnin Kebbi",
+      "state": "Kebbi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ba5c4087-1dff-45ef-865c-0408322e7adf",
+      "canonicalName": "Redeemer's University, Mowe",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "418c88b5-b347-4cce-a450-3b0d87b09011",
+      "canonicalName": "Regnum Medical University, Lagos",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "eb88f57d-a63a-48e3-841b-578db33de716",
+      "canonicalName": "Renaissance University, Enugu",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3adf210e-6d6d-437a-8023-bb9a3a66b184",
+      "canonicalName": "Rhema University, Obeama-Asa",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "6340b65e-a551-48c1-bffd-518a7d8b05f5",
+      "canonicalName": "Ritman University, Ikot Ekpene",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "977facd4-4239-48cd-9b9b-cdb8aa67c9d2",
+      "canonicalName": "Rivers State University of Science & Technology, Port Harcourt",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "554bc31d-e2c0-46df-a6d8-9c0eb180150f",
+      "canonicalName": "Rv Fr. Moses Orshio Adasu University, Makurdi",
+      "state": "Benue",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "6813309d-b2fe-4dad-ae9e-231ac8343a97",
+      "canonicalName": "Sa'adu Zungur University, Gadau",
+      "state": "Bauchi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "2ee98578-63f8-45c3-b213-0ea187ab89c7",
+      "canonicalName": "Saisa University of Medical Sciences and Technology, Sokoto",
+      "state": "Sokoto",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0766bab5-2454-43d2-99b9-12d703046e04",
+      "canonicalName": "Salem University, Lokoja",
+      "state": "Kogi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "58e2617f-fcdf-4443-b20c-53f7ce1a2836",
+      "canonicalName": "Sam Maris University, Supare",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "baad4f6d-1bab-4c2a-b9a9-1d6ba975b3df",
+      "canonicalName": "Sani Bello University, Kontagora",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7bd1f7fd-286a-4be0-9d5f-ab0a0eeb0afc",
+      "canonicalName": "Shanahan University, Onitsha",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "64daffa6-86d4-4251-a9f3-f5e70bb25204",
+      "canonicalName": "Shehu Shagari University of Education, Sokoto",
+      "state": "Sokoto",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1d8e57b4-0c77-4f6a-b958-f23319df9987",
+      "canonicalName": "Skyline University Nigeria, Kano",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b5c23a2e-90dc-41cc-bf23-6aa3ad690bbb",
+      "canonicalName": "Sokoto State University, Sokoto",
+      "state": "Sokoto",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "fe5d34ab-5936-4e37-9448-2e784c00a714",
+      "canonicalName": "Southern Atlantic University, Uyo",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "da6bb2ec-4f72-48e6-9e79-e0a717a94433",
+      "canonicalName": "Southwestern University, Oku Owa",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d792735e-f3dd-41e4-a75c-c07f980a106c",
+      "canonicalName": "Spiritan University, Nneochi",
+      "state": "Abia",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f6b674f5-4eea-4ebb-ba61-68aa11f85324",
+      "canonicalName": "Sports University, Idumuje-Ugboko",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ee34d878-4c23-4d4e-a790-cc9c451e538c",
+      "canonicalName": "Sule Lamido University, Kafin Hausa",
+      "state": "Jigawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0425f0c7-6912-4ac4-95cb-b4069c369b3a",
+      "canonicalName": "Summit University, Offa",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "4db43060-0aaa-4fd0-969e-a5b19e8968a4",
+      "canonicalName": "Tai Solarin Federal University of Education, Ijagun",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f1933f80-1ba9-4f86-ab7a-6156be220eab",
+      "canonicalName": "Tansian University, Umunya",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3cf8b74b-dbbc-47ec-8c06-7e344d54a3d2",
+      "canonicalName": "Taraba State University of Tropical Agriculture, Science, Technology and Climate Action, Gembu",
+      "state": "Taraba",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7e34dddc-c63b-46cd-9aee-013214175664",
+      "canonicalName": "Taraba State University, Jalingo",
+      "state": "Taraba",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7e2ff72b-2752-4a2a-83f8-c8f7a2f3da4f",
+      "canonicalName": "Tazkiyah University, Kaduna",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1c7505a6-052b-4207-b97c-86e8c6914ccf",
+      "canonicalName": "The Duke Medical University Calabar",
+      "state": "Cross River",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "082f69d9-e590-4a3f-b9ba-bc50d19d9b10",
+      "canonicalName": "The Nigeria Police Academy, Wudil",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "fcb490d2-6beb-4863-b4ec-d0a5f5ca0691",
+      "canonicalName": "Thomas Adewumi University, Oko-Irese",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "10f0c0eb-1ccd-4c4b-ae6f-aed5ed66ba5e",
+      "canonicalName": "Tonnie Iredia University of Communication, Benin City",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f8af2b1a-1b64-4c75-84df-9c2dca2536d6",
+      "canonicalName": "Topfaith University, Mkpatak",
+      "state": "Akwa Ibom",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "54004a99-4a8b-490c-8098-7d4bc006dda1",
+      "canonicalName": "Transatlantic University of Medicine and Health Sciences, Umuchukwu",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "554745b6-0842-4403-82e0-eb3529d71841",
+      "canonicalName": "Trinity University, Laloko",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f508df34-ae52-43aa-935a-5ef9c0148a74",
+      "canonicalName": "Umaru Musa Yar'Adua University, Katsina",
+      "state": "Katsina",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a5f730ef-565d-4468-8171-896fda9045ae",
+      "canonicalName": "Ummah University of Nigeria, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b86dc085-2fb8-4764-a2de-349a8229bf91",
+      "canonicalName": "Unique Open University, Ojo",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9b164365-d366-4ff7-a432-b6713a89cea0",
+      "canonicalName": "University of Abuja, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c86d0faf-7f6e-4d9b-aa1a-047da30bccfe",
+      "canonicalName": "University of Africa, Toru-Orua",
+      "state": "Bayelsa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "160dba7e-ca20-4053-8546-0a3552481ef8",
+      "canonicalName": "University of Agriculture and Environmental Sciences, Umuagwo",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "991f3a9b-3a75-4387-ae85-b549fa9f518d",
+      "canonicalName": "University of Benin, Benin City",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "255e4ba4-b75f-48b1-8ed1-00a7fcb8a967",
+      "canonicalName": "University of Calabar, Calabar",
+      "state": "Cross River",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "9b014839-ce1d-4bc2-a684-f8430afeec37",
+      "canonicalName": "University of Delta, Agbor",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b54bc286-df27-44d1-b3a7-5d9381daab19",
+      "canonicalName": "University of Fortune, Igbotako",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC Nigerian University System registry used as the authoritative identity reference; exact name/record reconciliation is still required where directory naming differs.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
     }
   ],
   "nationalAdmissionPolicy": {
