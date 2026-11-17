@@ -17,7 +17,7 @@ import { MIGRATIONS_DIR, applyMigrations } from '../scripts/replay';
 //   * a national minimum is not a programme cut-off;
 //   * a student can read and write only their own admission goal.
 
-const NEW_MIGRATION = '20261117093002_institution_intelligence.sql';
+const NEW_MIGRATION = '20261117120000_institution_intelligence.sql';
 const INST_A = '11111111-1111-4111-8111-111111111111';
 const INST_B = '22222222-2222-4222-8222-222222222222';
 const SOURCE = '33333333-3333-4333-8333-333333333333';
