@@ -1,0 +1,229 @@
+{
+  "inventoryTotal": 329,
+  "statesCovered": 37,
+  "researched": 2,
+  "unresearched": 327,
+  "byBatch": [
+    {
+      "batch": "research-batch-001.json",
+      "researchDate": "2026-11-16",
+      "institutions": 2,
+      "sources": 17
+    }
+  ],
+  "fieldCoverage": {
+    "profile": 2,
+    "officialWebsite": 2,
+    "admissionPortal": 2,
+    "studentPortal": 2,
+    "leadership": 2,
+    "academicUnits": 2,
+    "admissionRoutes": 2,
+    "programmeRequirements": 1,
+    "benchmarks": 2,
+    "programmeCutoffs": 0,
+    "portalGuides": 2
+  },
+  "duplicateCandidates": [
+    {
+      "canonicalName": "university of calabar",
+      "matches": [
+        "University of Calabar",
+        "University of Calabar, Calabar"
+      ]
+    }
+  ],
+  "perState": [
+    {
+      "state": "Ogun",
+      "total": 26,
+      "researched": 0
+    },
+    {
+      "state": "FCT Abuja",
+      "total": 21,
+      "researched": 0
+    },
+    {
+      "state": "Lagos",
+      "total": 16,
+      "researched": 0
+    },
+    {
+      "state": "Delta",
+      "total": 15,
+      "researched": 0
+    },
+    {
+      "state": "Kwara",
+      "total": 14,
+      "researched": 0
+    },
+    {
+      "state": "Osun",
+      "total": 14,
+      "researched": 1
+    },
+    {
+      "state": "Kano",
+      "total": 14,
+      "researched": 0
+    },
+    {
+      "state": "Oyo",
+      "total": 13,
+      "researched": 0
+    },
+    {
+      "state": "Ondo",
+      "total": 11,
+      "researched": 0
+    },
+    {
+      "state": "Edo",
+      "total": 11,
+      "researched": 0
+    },
+    {
+      "state": "Kaduna",
+      "total": 11,
+      "researched": 0
+    },
+    {
+      "state": "Imo",
+      "total": 11,
+      "researched": 0
+    },
+    {
+      "state": "Enugu",
+      "total": 11,
+      "researched": 0
+    },
+    {
+      "state": "Niger",
+      "total": 10,
+      "researched": 0
+    },
+    {
+      "state": "Anambra",
+      "total": 10,
+      "researched": 0
+    },
+    {
+      "state": "Akwa Ibom",
+      "total": 9,
+      "researched": 0
+    },
+    {
+      "state": "Cross River",
+      "total": 9,
+      "researched": 1
+    },
+    {
+      "state": "Abia",
+      "total": 8,
+      "researched": 0
+    },
+    {
+      "state": "Ekiti",
+      "total": 8,
+      "researched": 0
+    },
+    {
+      "state": "Ebonyi",
+      "total": 7,
+      "researched": 0
+    },
+    {
+      "state": "Rivers",
+      "total": 7,
+      "researched": 0
+    },
+    {
+      "state": "Kogi",
+      "total": 6,
+      "researched": 0
+    },
+    {
+      "state": "Nasarawa",
+      "total": 6,
+      "researched": 0
+    },
+    {
+      "state": "Bayelsa",
+      "total": 6,
+      "researched": 0
+    },
+    {
+      "state": "Sokoto",
+      "total": 6,
+      "researched": 0
+    },
+    {
+      "state": "Katsina",
+      "total": 5,
+      "researched": 0
+    },
+    {
+      "state": "Plateau",
+      "total": 5,
+      "researched": 0
+    },
+    {
+      "state": "Benue",
+      "total": 5,
+      "researched": 0
+    },
+    {
+      "state": "Taraba",
+      "total": 5,
+      "researched": 0
+    },
+    {
+      "state": "Adamawa",
+      "total": 4,
+      "researched": 0
+    },
+    {
+      "state": "Borno",
+      "total": 4,
+      "researched": 0
+    },
+    {
+      "state": "Kebbi",
+      "total": 4,
+      "researched": 0
+    },
+    {
+      "state": "Zamfara",
+      "total": 4,
+      "researched": 0
+    },
+    {
+      "state": "Jigawa",
+      "total": 4,
+      "researched": 0
+    },
+    {
+      "state": "Gombe",
+      "total": 4,
+      "researched": 0
+    },
+    {
+      "state": "Bauchi",
+      "total": 3,
+      "researched": 0
+    },
+    {
+      "state": "Yobe",
+      "total": 2,
+      "researched": 0
+    }
+  ],
+  "caveats": [
+    "Researched means a sourced record exists in a batch file. It does not mean verified: verification happens in the database after an admin review.",
+    "No institution is complete. 15 fields are researched per institution at most, and programme-level cut-offs remain unpublished_by_institution unless the institution published them.",
+    "A missing value is recorded as missing (null / unpublished_by_institution), never as zero.",
+    "The inventory has 329 rows; the NUC registry lists 328 universities. The difference is an unresolved duplicate (see duplicateCandidates) and is not a research gap."
+  ]
+}

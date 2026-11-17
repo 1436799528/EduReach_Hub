@@ -256,7 +256,9 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261113120000', 'repair_profile_write_policy', '20261113120000_repair_profile_write_policy.sql', 'unique'),
     ('20261113140000', 'avatar_storage', '20261113140000_avatar_storage.sql', 'unique'),
     ('20261114110000', 'cbt_bank_security_boundary', '20261114110000_cbt_bank_security_boundary.sql', 'unique'),
-    ('20261114120000', 'cbt_v2_finalize_gateway', '20261114120000_cbt_v2_finalize_gateway.sql', 'unique')
+    ('20261114120000', 'cbt_v2_finalize_gateway', '20261114120000_cbt_v2_finalize_gateway.sql', 'unique'),
+    ('20261117120000', 'institution_intelligence', '20261117120000_institution_intelligence.sql', 'unique'),
+    ('20261117121000', 'institution_import_function', '20261117121000_institution_import_function.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -372,6 +374,8 @@ with expected(version, migration) as (
     ,('20261113140000', '20261113140000_avatar_storage.sql')
     ,('20261114110000', '20261114110000_cbt_bank_security_boundary.sql')
     ,('20261114120000', '20261114120000_cbt_v2_finalize_gateway.sql')
+    ,('20261117120000', '20261117120000_institution_intelligence.sql')
+    ,('20261117121000', '20261117121000_institution_import_function.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
