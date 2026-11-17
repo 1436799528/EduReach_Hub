@@ -73,7 +73,7 @@ test('a profile cannot be published while it is unverified', async () => {
   assert.match(message, /discovered/, 'the refusal names the status that blocked it');
 
   const { rows } = await db.query<{ publication_status: string; verification_status: string }>(
-    'select publication_status, verification_status from public.institution_profiles',
+    `select publication_status, verification_status from public.institution_profiles where institution_id = '${INST}'`,
   );
   assert.deepEqual(rows[0], { publication_status: 'draft', verification_status: 'discovered' }, 'the refused update changed nothing');
 });
@@ -155,7 +155,8 @@ test('unpublishing and archiving are never blocked by the gate', async () => {
 test('the review overview is one query, inverted for staff only, and never anonymous', async () => {
   const { rows } = await db.query<{
     institution_id: string; programme_offerings: number; academic_units: number; published_offerings: number; evidence_rows: number;
-  }>('select institution_id, programme_offerings, academic_units, published_offerings, evidence_rows from public.institution_review_overview');
+  }>(`select institution_id, programme_offerings, academic_units, published_offerings, evidence_rows
+       from public.institution_review_overview where institution_id = '${INST}'`);
   assert.equal(rows.length, 1, 'one row per institution');
   assert.equal(rows[0].institution_id, INST);
   assert.equal(rows[0].programme_offerings, 2, 'every programme is counted, published or not');

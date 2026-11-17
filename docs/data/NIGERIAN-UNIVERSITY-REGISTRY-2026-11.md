@@ -46,7 +46,12 @@ That is the honest boundary of this source. It answers "who is recognised, who
 owns them, since when, and which site is theirs". It does not answer "what do
 they require", and no attempt was made to derive one from the other.
 
-## 3. Findings worth acting on
+## 3. Findings worth acting on — and what was done about each
+
+Every finding below now ends in an action: a row in the catalogue, an evidence
+record, or a data rule that keeps the unsafe value off a public page. The two
+that remain open (a merge, and a confirmation per website) are open because they
+need a person, not because they were dropped.
 
 1. **The inventory holds the institution twice.** `University of Calabar`
    (`1e7e9cdd…`, with website and admission portal) and `University of Calabar,
@@ -54,15 +59,33 @@ they require", and no attempt was made to derive one from the other.
    329-vs-328 discrepancy the inventory file already flagged
    (`reconciliation.discrepancy: 1`). It needs a reviewed merge — one of the two
    rows carries real portal research, so neither can simply be deleted.
+
+   *Done:* the pair is already resolved in the read path
+   (`src/lib/institutions/aliases.ts` → `KNOWN_IDENTITY_ALIASES`): only the
+   canonical row is listed, both ids and both slugs resolve to it, and both rows
+   stay in the database. This round adds the relationship where the console can
+   see it — an `institution_aliases` row of type `duplicate_candidate` — so the
+   merge is a reviewed operation with evidence attached. Nothing is deleted or
+   merged by a migration: the canonical row carries 68 dependent rows.
 2. **One inventory row is not on the Commission's list.** `African School of
    Economics, Abuja` (`e3054006…`) is in our directory with a website and a
    student portal, but no federal, state or private list carries it. Either it is
    recognised under another name or it is not a university; either way the row
    needs research before it is shown as one.
+
+   *Done:* the row now carries a `registry_presence` evidence record with
+   verification status `disputed`, naming the Commission page that does not list
+   it and the date checked (2026-11-17). The row is neither removed nor
+   presented as confirmed; the console can see exactly why it is unresolved.
 3. **One registry row is missing from our inventory.** `African University of
    Economics, FCT, Abuja` — private, established 2024, no website published by
    the Commission. The importer cannot place it, so it is reported and skipped
    rather than guessed at.
+
+   *Done:* it is now inserted into `public.institutions` by the catalogue
+   migration — name, state (FCT Abuja), type and slug only; no website, acronym,
+   ownership or year is invented. A database built from this repository holds
+   328 universities, not 327.
 4. **Twelve published domains do not spell the current name.** Most are
    former-name domains, which is normal and legal: `North Eastern University,
    Gombe` → `pru.edu.ng` (Pen Resource University), `Glorious Vision University`
@@ -72,10 +95,22 @@ they require", and no attempt was made to derive one from the other.
    as published and **flagged**, because a domain is evidence of a website, not
    of which institution owns it. Each needs one click of confirmation before it
    is used for admissions traffic.
+
+   *Done:* the addresses stay in the gated `institution_profiles` row and are
+   deliberately kept out of `public.institutions.website_url`, which is what the
+   public directory reads. The generator
+   (`scripts/institutions/buildCatalogueMigration.ts` → `publicWebsiteFor`) only
+   lets an `https` address through, and only when the domain is not flagged,
+   so 177 of the 190 published websites are public and the 13 uncertain ones are
+   not. Confirmation per site is still the remaining work.
 5. **One address is not https.** `African University of Science and Technology,
    Abuja` publishes `http://aust.edu.ng/`. It is stored exactly as published and
    flagged; the public pages will not link a mixed-content address, so this row
    stays without a working website until an https address is confirmed.
+
+   *Done:* recorded in the profile, excluded from the public column by the same
+   rule as the former-name domains. The institution still has a page; it simply
+   has no outbound website link.
 6. **The Commission's spelling is not our spelling.** 58 institutions appear
    under a different name in our directory — `Umar Musa Yar' Adua University
    Katsina` vs `Umaru Musa Yar'Adua University, Katsina`, `Ekiti State
@@ -83,6 +118,38 @@ they require", and no attempt was made to derive one from the other.
    Gadau` vs `Sa'adu Zungur University, Gadau` (a rename). All 58 are in an
    explicit, reviewable table (`NAME_ALIASES`) rather than being resolved by a
    fuzzy matcher; anything not in that table is *reported*, never matched.
+
+   *Done:* the table is unchanged and remains the only way a spelling is
+   crossed. The migration matches catalogue rows on the inventory name, so each
+   pair is joined once, on the record a reviewer approved.
+
+## 3a. The catalogue load
+
+The registry is now in the database, not only in `data/`. One generated
+migration, `supabase/migrations/20261119120000_institution_catalogue_registry.sql`
+(`npm run institutions:catalogue`), writes:
+
+| what | rows | state |
+| --- | --- | --- |
+| `public.institutions` | 328 (327 existing names matched, 1 added) | `is_verified = false` — a registry row is not a verified institution |
+| `public.institution_profiles` | 328 | `publication_status = 'draft'`, `verification_status = 'discovered'` |
+| `public.institution_leadership` | 262 | `verification_status = 'discovered'`, one current vice chancellor each |
+| `public.edureach_sources` | 3 | the Commission's federal, state and private pages |
+| `institution_aliases` / `institution_fact_evidence` | 2 | the §3 decisions, as evidence |
+
+It is idempotent and non-destructive: it inserts an institution only when the
+name is absent, fills a profile field only when it is empty, touches no profile
+that is in review or verified, replaces no researched office holder, and deletes
+nothing. Re-running it changes no row. `tests/institution-catalogue-seed.test.ts`
+proves each of those properties against a real PostgreSQL engine, and
+`tests/institution-import.test.ts` proves a research import still lands in
+review and publishes nothing on top of it.
+
+What this does **not** do is flip `INSTITUTION_INTELLIGENCE_DEPLOYED.applied`.
+The public directory still reads `public.institutions` only; the profile,
+leadership and evidence tables are written here but not yet read by the app,
+because the migration that creates them has not been verified against the hosted
+project.
 
 ## 4. Results
 
@@ -135,5 +202,7 @@ with the source for every cell.
    of it registry data. JAMB IBASS is the only source for combinations and it is
    form-driven, so it stays a per-institution research job.
 4. **Fees, hostel, accreditation dates, academic calendar.**
-5. **The three reconciliation decisions in §3** (merge the Calabar duplicate,
-   resolve the African School of Economics row, add the 2024 FCT university).
+5. **Two decisions a migration cannot make:** merge the Calabar pair for real
+   (it is recorded and priced; the read path already hides the duplicate), and
+   confirm the 13 websites the Commission publishes on domains we cannot tie to
+   the current name. The 2024 FCT university is added.

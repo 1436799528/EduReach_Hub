@@ -259,7 +259,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261114120000', 'cbt_v2_finalize_gateway', '20261114120000_cbt_v2_finalize_gateway.sql', 'unique'),
     ('20261117120000', 'institution_intelligence', '20261117120000_institution_intelligence.sql', 'unique'),
     ('20261117121000', 'institution_import_function', '20261117121000_institution_import_function.sql', 'unique'),
-    ('20261118120000', 'institution_review_gate', '20261118120000_institution_review_gate.sql', 'unique')
+    ('20261118120000', 'institution_review_gate', '20261118120000_institution_review_gate.sql', 'unique'),
+    ('20261119120000', 'institution_catalogue_registry', '20261119120000_institution_catalogue_registry.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -378,6 +379,7 @@ with expected(version, migration) as (
     ,('20261117120000', '20261117120000_institution_intelligence.sql')
     ,('20261117121000', '20261117121000_institution_import_function.sql')
     ,('20261118120000', '20261118120000_institution_review_gate.sql')
+    ,('20261119120000', '20261119120000_institution_catalogue_registry.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
