@@ -1,6 +1,6 @@
 # Backup, restore and rollback
 
-**Owner:** EduReach maintainer (single-operator project) · **Last reviewed:** 2026-10-03
+**Owner:** EduReach maintainer (single-operator project) · **Last reviewed:** 2026-11-17
 **Status of the procedure:** documented and rehearsed — see §6 for exactly what has
 and has not been exercised.
 
@@ -254,6 +254,7 @@ has not been done.
 | Date | Item | Result | Evidence |
 | --- | --- | --- | --- |
 | 2026-10-03 | Schema + data round trip (rehearsal) | **pass** | `npm run backup:rehearsal` → 52 migrations, 5,055 KB, 37 tables / 47 policies identical after restore |
+| 2026-11-17 | CI schema + data round trip (PGlite rehearsal) | **pass** | `npm run backup:rehearsal` → 52 migrations, 69 tables, 885 columns, 93 policies, 69 tables with RLS identical after restore; production restore remains untested |
 | 2026-10-03 | Supabase plan backup configuration | **NOT VERIFIED** | needs dashboard access (§3) |
 | 2026-10-03 | RPO / RTO chosen | **NOT DECIDED** | business decision (§2) |
 | 2026-10-03 | Storage bucket export | **NOT DONE** | needs credentials (§4.3) |
