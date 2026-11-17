@@ -1244,11 +1244,12 @@
       "ownership": "private",
       "yearEstablished": 2005,
       "officialWebsite": "https://acu.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "verified_from_institution_vc_page",
+      "academicStructureStatus": "2026_2027_catalogue_verified_with_new_programmes",
+      "admissionRequirementsStatus": "partial_current_admission_requirements",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "a22bb5a1-cb65-45e2-9501-f02a683365f3",
@@ -1257,11 +1258,12 @@
       "ownership": "state",
       "yearEstablished": 2010,
       "officialWebsite": "https://aksu.edu.ng/web/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "verified_current_vc_page",
+      "academicStructureStatus": "faculty_and_campus_structure_partial",
+      "admissionRequirementsStatus": "2026_2027_screening_notice_verified",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "4f3a6d8b-afda-4bb9-979f-b5e64149c19a",
@@ -1270,11 +1272,12 @@
       "ownership": "private",
       "yearEstablished": 2022,
       "officialWebsite": "https://www.aum.edu.ng/",
-      "leadershipStatus": "not_verified",
-      "academicStructureStatus": "partial_items_exist",
+      "leadershipStatus": "acting_vc_appointment_verified",
+      "academicStructureStatus": "college_structure_partial",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "359b37ac-4e10-435f-b318-d9d8b465e8c3",
@@ -1287,7 +1290,8 @@
       "academicStructureStatus": "not_researched",
       "admissionRequirementsStatus": "not_researched",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "b82596fa-4f97-4f65-9786-b6270d2ab402",
@@ -1296,11 +1300,12 @@
       "ownership": "private",
       "yearEstablished": 2005,
       "officialWebsite": "https://alhikmahuniversity.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "leadership_source_historical_not_current",
+      "academicStructureStatus": "programme_catalogue_verified",
+      "admissionRequirementsStatus": "general_requirements_partial",
       "programmeCutoffsStatus": "not_collected_for_2026_2027",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "c2eb83a3-ea26-43ce-b32b-1505bd0a16d9",
@@ -1309,11 +1314,12 @@
       "ownership": "private",
       "yearEstablished": 2021,
       "officialWebsite": "https://mis.ausumaila.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "verified_current_institution_leadership_page",
+      "academicStructureStatus": "faculty_structure_partial",
+      "admissionRequirementsStatus": "2026_2027_general_threshold_verified",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "481e4f42-65a8-460e-89dc-e3b291f8bf81",
@@ -1322,11 +1328,12 @@
       "ownership": "private",
       "yearEstablished": 2023,
       "officialWebsite": "https://aou.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "verified_current_institution_leadership_page",
+      "academicStructureStatus": "programme_catalogue_partial",
+      "admissionRequirementsStatus": "2026_2027_admission_pathways_verified",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "340e7568-40e4-4b5e-9c9e-be9e0c740d14",
@@ -1335,11 +1342,12 @@
       "ownership": "private",
       "yearEstablished": 2005,
       "officialWebsite": "https://auk.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
+      "leadershipStatus": "secondary_sector_profile_only",
       "academicStructureStatus": "not_researched",
-      "admissionRequirementsStatus": "not_researched",
+      "admissionRequirementsStatus": "application_route_only",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "930fc92f-a2d2-4ccb-929a-0b7a53fb11e4",
@@ -1348,11 +1356,12 @@
       "ownership": "private",
       "yearEstablished": 2023,
       "officialWebsite": "https://aletheiauniversity.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "verified_institution_leadership_page",
+      "academicStructureStatus": "college_structure_partial",
+      "admissionRequirementsStatus": "2026_2027_admissions_advertised",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "caf0ebd2-59f3-478a-a3d4-02db121382b0",
@@ -1361,11 +1370,12 @@
       "ownership": "federal",
       "yearEstablished": 2011,
       "officialWebsite": "https://funai.edu.ng/",
-      "leadershipStatus": "candidate_record_exists_needs_current_source",
-      "academicStructureStatus": "partial_items_exist",
-      "admissionRequirementsStatus": "not_researched",
+      "leadershipStatus": "verified_current_vc_handover_and_institution_news",
+      "academicStructureStatus": "faculty_directory_partial",
+      "admissionRequirementsStatus": "2026_2027_programme_specific_screening_scores_published",
       "programmeCutoffsStatus": "not_collected",
-      "status": "baseline_registry_reconciled_deep_research_pending"
+      "status": "primary_source_research_partial",
+      "checkedAt": "2026-11-17"
     },
     {
       "institutionId": "51c9da9a-6c8e-451f-b3af-5a9e60c38a26",
@@ -2281,8 +2291,8 @@
   "lastUpdated": "2026-11-17",
   "progress": {
     "institutionsInGroup": 100,
-    "primarySourceResearchUpdated": 20,
-    "remainingInGroupForDeepResearch": 80,
-    "importantNote": "Twenty institutions have received an initial primary-source research pass. This is partial coverage, not completion of the 100-institution group."
+    "primarySourceResearchUpdated": 30,
+    "remainingInGroupForDeepResearch": 70,
+    "importantNote": "Thirty institutions have received a primary-source research pass. Coverage remains partial: some fields (especially programme-specific requirements, JAMB IBASS matches and current cutoffs) are still uncollected."
   }
 }
