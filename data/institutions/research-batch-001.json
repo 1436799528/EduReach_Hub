@@ -3287,11 +3287,11 @@
       "institutionType": "university",
       "ownership": "private",
       "officialWebsite": "https://adelekeuniversity.edu.ng/",
-      "admissionPortal": null,
+      "admissionPortal": "https://umis.adelekeuniversity.edu.ng/adeleke/a_application.jsp",
       "studentPortal": null,
       "profile": {
         "yearFounded": 2011,
-        "historySummary": "Adeleke University states that it was founded in 2011 by Dr. Adedeji Adeleke through the Springtime Development Foundation. It describes itself as a private, faith-based university in Ede, Osun State.",
+        "historySummary": "Adeleke University is a private university in Ede, Osun State. Its official site publishes undergraduate programmes across arts, business and social sciences, engineering, science, basic medical sciences, law, medicine and pharmacy.",
         "mission": null,
         "vision": null,
         "location": "Ede, Osun State, Nigeria",
@@ -3303,30 +3303,160 @@
           "role": "vice_chancellor",
           "name": "Professor Solomon Ajayi Adebola",
           "verificationStatus": "verified_from_current_institution_management_page",
-          "sourceKey": "adeleke-management",
+          "sourceKey": "adeleke-management-2026",
+          "sourceUrl": "https://adelekeuniversity.edu.ng/management/",
+          "checkedAt": "2026-11-17"
+        },
+        {
+          "role": "chancellor",
+          "name": "Dr. Ibekwe C. Egbuta",
+          "verificationStatus": "verified_from_current_institution_management_page",
+          "sourceKey": "adeleke-management-2026",
           "sourceUrl": "https://adelekeuniversity.edu.ng/management/",
           "checkedAt": "2026-11-17"
         }
       ],
       "chancellor": {
         "name": "Dr. Ibekwe C. Egbuta",
-        "status": "listed_on_current_institution_management_page",
-        "sourceKey": "adeleke-management"
+        "status": "verified_from_current_institution_management_page",
+        "sourceKey": "adeleke-management-2026"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "faculty_and_programme_directory_partial",
+        "items": [
+          "College of Medicine",
+          "College of Pharmacy",
+          "Faculty of Basic Medical Sciences",
+          "Faculty of Arts",
+          "Faculty of Sciences",
+          "Faculty of Engineering",
+          "Faculty of Business and Social Sciences",
+          "Faculty of Law"
+        ],
+        "programmes": [
+          "Medicine and Surgery (MBBS)",
+          "Doctor of Pharmacy",
+          "Physiology",
+          "Public Health",
+          "Medical Laboratory Science",
+          "Nursing",
+          "Anatomy",
+          "Health Information Management",
+          "Religious Studies",
+          "History and International Studies",
+          "Language and Literary Studies",
+          "Computer Science",
+          "Microbiology",
+          "Food Science and Nutrition",
+          "Biological Science",
+          "Mathematics",
+          "Physics",
+          "Electrical and Electronics Engineering",
+          "Computer Engineering",
+          "Mechanical Engineering",
+          "Civil Engineering",
+          "Chemical Engineering",
+          "Accounting",
+          "Business Administration",
+          "Mass Communication",
+          "Office and Information Management",
+          "Public Administration",
+          "Economics",
+          "Library and Information Science",
+          "Political Science",
+          "Finance",
+          "Law"
+        ],
+        "sourceKey": "adeleke-programmes-2026"
       },
       "admission": {
-        "session": null,
-        "routes": [],
-        "benchmarks": [],
-        "programmeRequirements": [],
+        "session": "2026/2027",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "applicationUrl": "https://umis.adelekeuniversity.edu.ng/adeleke/a_application.jsp",
+            "assessment": [
+              "online_application",
+              "post_utme_screening_for_selected_programmes"
+            ],
+            "firstChoiceRequired": false,
+            "sourceKey": "adeleke-application-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://umis.adelekeuniversity.edu.ng/adeleke/a_application.jsp",
+            "assessment": [
+              "online_application",
+              "document_review"
+            ],
+            "firstChoiceRequired": false,
+            "sourceKey": "adeleke-application-2026-27"
+          }
+        ],
+        "benchmarks": [
+          {
+            "benchmarkType": "general_utme_minimum",
+            "value": 150,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "status": "published",
+            "sourceKey": "adeleke-application-2026-27",
+            "note": "The university states 150+ for all programmes except Nursing, Medicine and Surgery, Pharmacy, Law and Medical Laboratory Science; separate minima for the exceptions must be verified."
+          },
+          {
+            "benchmarkType": "programme_cutoff",
+            "programmeName": "Medicine and Surgery (MBBS)",
+            "value": 220,
+            "scaleMaximum": 400,
+            "session": "programme portal current snapshot",
+            "status": "displayed_in_UMIS_programme_listing_session_label_not_visible",
+            "sourceKey": "adeleke-umis-programmes"
+          },
+          {
+            "benchmarkType": "programme_cutoff",
+            "programmeName": "Doctor of Pharmacy",
+            "value": 200,
+            "scaleMaximum": 400,
+            "session": "programme portal current snapshot",
+            "status": "displayed_in_UMIS_programme_listing_session_label_not_visible",
+            "sourceKey": "adeleke-umis-programmes"
+          }
+        ],
+        "programmeRequirements": [
+          {
+            "programmeName": null,
+            "entryMode": "UTME",
+            "oLevel": {
+              "minimumCredits": 5,
+              "requiredSubjects": [
+                "Programme-relevant O'Level credits; programme-specific mapping required"
+              ]
+            },
+            "minimumUtmeScore": 150,
+            "sourceKey": "adeleke-application-2026-27",
+            "verificationStatus": "general_threshold_only_exceptions_apply"
+          }
+        ],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "partial_cutoff_values_found_session_not_explicit",
+          "note": "UMIS programme listing displays 220 for MBBS and 200 for PharmD; the session label is not visible in the extracted page. Do not treat these as 2026/2027 departmental cut-offs without confirmation."
         }
       },
-      "portalGuides": [],
+      "portalGuides": [
+        {
+          "portal": "admissions",
+          "session": "2026/2027",
+          "steps": [
+            "Open the university's official How to Apply page.",
+            "Follow the UMIS application link.",
+            "Complete applicant registration and select the intended programme and entry mode.",
+            "Follow programme-specific screening instructions; the university says screening will be scheduled separately for Nursing, Medicine and Surgery, Pharmacy, Law and Medical Laboratory Science.",
+            "Confirm all submission and payment instructions on the official portal."
+          ],
+          "sourceKey": "adeleke-application-2026-27",
+          "verificationStatus": "official_instructions_partially_transcribed"
+        }
+      ],
       "knownGaps": [
         "The current official site displayed a notice that admission into Medicine & Surgery and Law was closed; the active status of other programmes must be confirmed by programme and session.",
         "The 2026/2027 entry notice and actual applicant portal target were not verified in this pass.",
@@ -3334,7 +3464,10 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "UMIS programme listing shows programme cut-off numbers but the session label is not explicit in the extracted view; do not publish as current-session thresholds without verification.",
+        "General 150 UTME threshold explicitly excludes Nursing, MBBS, Pharmacy, Law and MLS; exact minima and programme-specific subject combinations for these exceptions remain to be confirmed.",
+        "The official notice says admission into Medicine and Law is closed in a separate current homepage banner; check the live programme status before displaying availability."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -3342,9 +3475,14 @@
         "nuc-nus-2026",
         "nuc-private-universities-2026",
         "adeleke-about",
-        "adeleke-management"
+        "adeleke-management",
+        "adeleke-home-2026",
+        "adeleke-programmes-2026",
+        "adeleke-management-2026",
+        "adeleke-application-2026-27",
+        "adeleke-umis-programmes"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3354,14 +3492,14 @@
       "state": "Ondo",
       "institutionType": "university",
       "ownership": "federal",
-      "officialWebsite": "https://afued.edu.ng/",
+      "officialWebsite": "https://www.afued.edu.ng/",
       "admissionPortal": "https://portal.afued.edu.ng/",
       "studentPortal": "https://portal.afued.edu.ng/",
       "profile": {
         "yearFounded": 2023,
         "historySummary": "The NUC Nigerian University System records the federal university identity from 2023. The current university website locates the institution at Ondo-Ore Road, Ondo, and describes its mission around teacher education and the professionalisation of teaching.",
-        "mission": null,
-        "vision": null,
+        "mission": "To be a model institution in Nigeria for the pursuit of academic excellence through teaching, learning and research for the professionalisation of teaching to meet global standards.",
+        "vision": "To create a conducive atmosphere for teaching, learning, research and community activities, producing competent graduates for the teaching profession.",
         "location": "Ondo, Ondo State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
@@ -3370,9 +3508,9 @@
         {
           "role": "vice_chancellor",
           "name": "Professor Bayode Isaiah Popoola",
-          "verificationStatus": "published_on_current_main_institution_homepage",
-          "sourceKey": "afued-home",
-          "sourceUrl": "https://afued.edu.ng/index.php",
+          "verificationStatus": "verified_from_current_institution_welcome_and_assumption_notice",
+          "sourceKey": "afued-vc-2026",
+          "sourceUrl": "https://afued.edu.ng/view_news.php?id=8",
           "checkedAt": "2026-11-17"
         }
       ],
@@ -3381,16 +3519,18 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "directory_available_not_yet_extracted",
+        "items": [],
+        "note": "Official site exposes undergraduate, postgraduate and college-of-technology programme sections; detailed faculty/department list still to be extracted."
       },
       "admission": {
-        "session": null,
+        "session": "2026/2027",
         "routes": [],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "not_collected",
+          "note": "The official site surfaced a 2026/2027 admission notice, but programme-specific requirements and thresholds were not transcribed in this pass."
         }
       },
       "portalGuides": [],
@@ -3401,7 +3541,9 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official homepage and VC assumption notice support Prof Bayode Isaiah Popoola as substantive Vice-Chancellor. A separate /vco.php page still shows former acting VC Prof Samuel Akintunde; treat it as stale and do not use it.",
+        "The 2026/2027 admission notice needs detailed extraction of programmes, entry requirements and application workflow."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -3409,9 +3551,12 @@
         "nuc-nus-2026",
         "afued-home",
         "afued-vice-chancellor",
-        "afued-undergraduate-portal"
+        "afued-undergraduate-portal",
+        "nuc-federal-universities",
+        "afued-home-2026",
+        "afued-vc-2026"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3420,12 +3565,12 @@
       "acronym": "ADUN",
       "state": "Delta",
       "institutionType": "university",
-      "ownership": "federal",
-      "officialWebsite": null,
+      "ownership": "private",
+      "officialWebsite": "https://adun.edu.ng/",
       "admissionPortal": null,
       "studentPortal": null,
       "profile": {
-        "yearFounded": 2023,
+        "yearFounded": 2017,
         "historySummary": null,
         "mission": null,
         "vision": null,
@@ -3433,12 +3578,46 @@
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Paul Omojo Omaji",
+          "verificationStatus": "listed_by_committee_of_vice_chancellors_not_yet_confirmed_on_institution_page",
+          "sourceKey": "admiralty-cvc-vc",
+          "sourceUrl": "https://cvcnigeria.org/university-details/?uni=163",
+          "checkedAt": "2026-11-17"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
-      "academicUnits": [],
+      "academicUnits": {
+        "status": "historical_nuc_programme_accreditation_reference_only",
+        "items": [
+          "Administration",
+          "Arts",
+          "Computing",
+          "Science",
+          "Social Science"
+        ],
+        "programmes": [
+          "Accounting",
+          "Business Administration",
+          "English Language",
+          "History and International Studies",
+          "Computer Science",
+          "Cyber Security",
+          "Forensic Science",
+          "Software Engineering",
+          "Biology",
+          "Economics",
+          "International Relations",
+          "Tourism Studies"
+        ],
+        "sourceKey": "nuc-accreditation-2022",
+        "note": "Programmes are transcribed from NUC's accreditation result as at January 2022; this is not a current 2026/2027 active programme catalogue."
+      },
       "admission": {
         "session": null,
         "routes": [],
@@ -3455,14 +3634,19 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The Vice-Chancellor name is sourced from CVCNU, not a current institution-owned leadership page; current appointment/tenure needs direct confirmation.",
+        "NUC accreditation result is historical (as at January 2022); it must not be used as a current programme or accreditation-status claim.",
+        "Current 2026/2027 admission notice, official application workflow, campuses, current academic units and programme-specific requirements remain unverified."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
-        "nuc-nus-2026"
+        "nuc-nus-2026",
+        "nuc-private-universities-2026",
+        "admiralty-cvc-vc"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3473,11 +3657,11 @@
       "institutionType": "university",
       "ownership": "private",
       "officialWebsite": "https://www.abuad.edu.ng/",
-      "admissionPortal": "https://admissions.abuad.edu.ng/WelcomeHome",
+      "admissionPortal": "https://admissions.abuad.edu.ng/",
       "studentPortal": "https://portal.abuad.edu.ng/",
       "profile": {
-        "yearFounded": 2007,
-        "historySummary": "The NUC lists Afe Babalola University as established in 2007. The university's 2026/2027 admission notice describes entry into undergraduate, pre-degree, diploma and foundation programmes and identifies its colleges across medicine and health sciences, pharmacy, law, engineering, sciences, and social and management sciences.",
+        "yearFounded": 2009,
+        "historySummary": "Afe Babalola University opened for academic activities on 4 January 2010, initially with three foundational colleges. The institution operates a collegiate structure.",
         "mission": null,
         "vision": null,
         "location": "Ado-Ekiti, Ekiti State, Nigeria",
@@ -3488,55 +3672,65 @@
         {
           "role": "vice_chancellor",
           "name": "Professor E. Smaranda Olarinde",
-          "verificationStatus": "verified_from_September_2026_institution_notice",
-          "sourceKey": "abuad-vice-chancellor-2026",
-          "sourceUrl": "https://vc.abuad.edu.ng/abuad-vice-chancellor-charges-new-students-to-aim-for-excellence/",
+          "verificationStatus": "verified_from_current_institution_vc_office_and_2026_news",
+          "sourceKey": "abuad-vc-2026",
+          "sourceUrl": "https://vc.abuad.edu.ng/",
           "checkedAt": "2026-11-17"
         },
         {
           "role": "chancellor",
           "name": "Aare Afe Emmanuel Babalola",
-          "verificationStatus": "named_as_founder_and_chancellor_in_2026_institution_admission_notice",
-          "sourceKey": "abuad-admissions-2026-27",
+          "verificationStatus": "verified_from_institution_2026_vc_statement",
+          "sourceKey": "abuad-admission-2026-27",
           "sourceUrl": "https://www.abuad.edu.ng/admission-exercise-2026-2027/",
           "checkedAt": "2026-11-17"
         }
       ],
       "chancellor": {
         "name": "Aare Afe Emmanuel Babalola",
-        "status": "verified_as_named_in_2026_institution_notice",
-        "sourceKey": "abuad-admissions-2026-27"
+        "status": "verified_from_current_institution_statement",
+        "sourceKey": "abuad-admission-2026-27"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "college_directory_verified",
+        "items": [
+          "College of Law",
+          "College of Pharmacy",
+          "College of Engineering",
+          "College of Sciences",
+          "College of Social and Management Sciences",
+          "College of Medicine and Health Sciences",
+          "College of Postgraduate Studies"
+        ],
+        "sourceKey": "abuad-colleges"
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
             "entryMode": "UTME",
+            "applicationUrl": "https://admissions.abuad.edu.ng/",
             "assessment": [
-              "UTME",
-              "Post-UTME screening"
+              "online_application",
+              "screening"
             ],
-            "applicationUrl": "https://admissions.abuad.edu.ng/WelcomeHome",
-            "sourceKey": "abuad-admissions-2026-27"
+            "sourceKey": "abuad-admission-2026-27"
           },
           {
             "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://admissions.abuad.edu.ng/",
             "assessment": [
-              "document and programme requirement review"
+              "online_application",
+              "document_review"
             ],
-            "applicationUrl": "https://admissions.abuad.edu.ng/WelcomeHome",
-            "sourceKey": "abuad-admissions-2026-27"
+            "sourceKey": "abuad-admission-2026-27"
           }
         ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected",
-          "note": "The 2026/2027 notice does not state one universal cut-off; it says placement depends on UTME, Post-UTME performance, programme O'Level requirements and available programme spaces."
+          "note": "The 2026/2027 notice lists undergraduate programmes but this pass did not extract course-specific UTME and O'Level requirements."
         }
       },
       "portalGuides": [],
@@ -3547,7 +3741,9 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Official 2026/2027 admission notice and college structure are captured; programme-by-programme eligibility, JAMB subject combinations and departmental cut-offs remain to be extracted.",
+        "Do not infer minimum UTME score or programme-specific cut-off from the general admission exercise page."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -3555,9 +3751,13 @@
         "nuc-nus-2026",
         "abuad-home",
         "abuad-admissions-2026-27",
-        "abuad-vice-chancellor-2026"
+        "abuad-vice-chancellor-2026",
+        "nuc-private-universities-2026",
+        "abuad-vc-2026",
+        "abuad-admission-2026-27",
+        "abuad-colleges"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3572,7 +3772,7 @@
       "studentPortal": null,
       "profile": {
         "yearFounded": 2023,
-        "historySummary": "The NUC Nigerian University System lists AAAU as a federal university established in 2023. The institution describes its focus as aviation, aerospace and environmental sciences education.",
+        "historySummary": "African Aviation and Aerospace University is a specialised federal university in Abuja focused on aviation, aerospace and related disciplines.",
         "mission": null,
         "vision": null,
         "location": "Abuja, FCT, Nigeria",
@@ -3582,9 +3782,9 @@
       "leadership": [
         {
           "role": "acting_vice_chancellor",
-          "name": "Dr. Mustapha Sheikh Abdullahi",
+          "name": "Mustapha Sheikh Abdullahi",
           "verificationStatus": "verified_from_current_institution_leadership_page",
-          "sourceKey": "aaau-leadership",
+          "sourceKey": "aaau-leadership-2026",
           "sourceUrl": "https://aaau.edu.ng/about-us/university-leadership/",
           "checkedAt": "2026-11-17"
         }
@@ -3594,26 +3794,42 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "undergraduate_programme_directory_partial",
+        "items": [
+          "Aviation Business"
+        ],
+        "otherAdvertisedProgrammes": [
+          "Meteorology",
+          "Environmental Science"
+        ],
+        "sourceKey": "aaau-home-2026-27",
+        "note": "Current homepage advertises Aviation Business. Other programme pages exist but their current session availability and approval status need verification."
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
             "entryMode": "UTME",
-            "applicationUrl": "https://applicant.safapply.com/aaau",
+            "applicationUrl": "https://aaau.edu.ng/",
             "assessment": [
-              "online_application",
-              "programme screening"
+              "online_application"
             ],
-            "sourceKey": "aaau-admission-portal"
+            "sourceKey": "aaau-home-2026-27"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://aaau.edu.ng/",
+            "assessment": [
+              "online_application"
+            ],
+            "sourceKey": "aaau-home-2026-27"
           }
         ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "not_collected",
+          "note": "Aviation Business programme page contains older UTME criteria and inconsistent course content; no current-session threshold or subject combination imported."
         }
       },
       "portalGuides": [],
@@ -3624,7 +3840,10 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official leadership page identifies Mustapha Sheikh Abdullahi as Acting Vice-Chancellor.",
+        "The B.Sc Aviation Business page contains legacy course content references and older 140/180 thresholds; treat admission criteria as stale pending a 2026/2027 programme-specific notice.",
+        "The current homepage shows a 2026/2027 academic calendar but the complete undergraduate catalogue and live application endpoint need further extraction."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -3633,9 +3852,13 @@
         "aaau-home",
         "aaau-leadership",
         "aaau-undergraduate-programmes",
-        "aaau-admission-portal"
+        "aaau-admission-portal",
+        "nuc-federal-universities",
+        "aaau-leadership-2026",
+        "aaau-home-2026-27",
+        "aaau-aviation-business"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3650,25 +3873,60 @@
       "studentPortal": "https://portal.ase.edu.ng/",
       "profile": {
         "yearFounded": 2024,
-        "historySummary": "The African School of Economics states that it received a Nigerian NUC licence in 2024. Its current homepage describes 20 undergraduate programmes across three faculties and provides an Abuja contact address.",
+        "historySummary": "African School of Economics is a Pan-African private university licensed by the NUC in 2024. Its official website describes undergraduate programmes across three faculties.",
         "mission": null,
         "vision": null,
         "location": "Gudu District, Abuja, FCT, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "vice_chancellor",
+          "name": "Professor Mahfouz Adedimeji",
+          "verificationStatus": "verified_from_institution_principal_officers_page",
+          "sourceKey": "ase-principal-officers",
+          "sourceUrl": "https://ase.edu.ng/principal-officers/",
+          "checkedAt": "2026-11-17"
+        },
+        {
+          "role": "president_founder",
+          "name": "Professor Leonard Wantchekon",
+          "verificationStatus": "verified_from_institution_management_team_page",
+          "sourceKey": "ase-faq-2024",
+          "sourceUrl": "https://ase.edu.ng/management-team/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "three_faculties_and_programme_count_published",
+        "items": [
+          "Faculty of Arts, Management and Social Sciences",
+          "Faculty of Science and Computing",
+          "Faculty of Agriculture, Environmental and Allied Health Sciences"
+        ],
+        "programmeCount": 20,
+        "departmentCount": 14,
+        "sourceKey": "ase-home-2026",
+        "note": "The 20 programme and 14 department totals are published in the official FAQ and may reflect its 2024 data snapshot."
       },
       "admission": {
         "session": null,
-        "routes": [],
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "firstChoiceRequired": null,
+            "assessment": [
+              "JAMB_route",
+              "institution_post_utme_process"
+            ],
+            "sourceKey": "ase-faq-2024"
+          }
+        ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
@@ -3683,16 +3941,23 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The current VC is listed as Prof Mahfouz Adedimeji on the official principal officers page; founder/president is Prof Leonard Wantchekon.",
+        "Programme count, department count and JAMB entry information in the official FAQ are explicitly described as 2024 data; revalidate against current 2026/2027 programme/admissions pages before publishing as current.",
+        "The official site reports a 2026 second matriculation and 2025/2026 VC welcome; current 2026/2027 applicant requirements and portal flow remain to be extracted."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "nuc-nus-2026",
         "ase-home",
-        "ase-undergraduate-admissions"
+        "ase-undergraduate-admissions",
+        "nuc-private-universities-2026",
+        "ase-principal-officers",
+        "ase-home-2026",
+        "ase-faq-2024"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3707,37 +3972,79 @@
       "studentPortal": null,
       "profile": {
         "yearFounded": 2007,
-        "historySummary": "AUST states that it was founded in 2007 as one of the Nelson Mandela Institutes, with a mandate focused on science, technology, energy and materials. The NUC lists it as a private university established in 2007.",
+        "historySummary": "African University of Science and Technology is a private research university in Abuja. NUC approved ten additional full-time undergraduate programmes effective from the 2026/2027 academic session following resource verification.",
         "mission": null,
         "vision": null,
         "location": "Abuja, FCT, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
-      "leadership": [],
+      "leadership": [
+        {
+          "role": "president",
+          "name": "Professor Azikiwe Peter Onwualu",
+          "verificationStatus": "verified_from_current_institution_news",
+          "sourceKey": "aust-president-2026",
+          "sourceUrl": "https://info.aust.edu.ng/2026/11/10/aust-welcomes-new-students-at-2026-2027-orientation-programme/",
+          "checkedAt": "2026-11-17"
+        }
+      ],
       "chancellor": {
         "name": null,
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "programme_catalogue_partially_verified",
+        "items": [
+          "School of Computing and Information Technology",
+          "School of Engineering",
+          "School of Administration, Business and Management Sciences",
+          "School of Applied Sciences"
+        ],
+        "programmes": [
+          "Architecture",
+          "Economics",
+          "Banking and Finance",
+          "Cyber Security",
+          "Data Science",
+          "Artificial Intelligence",
+          "Information Systems",
+          "Medical Laboratory Science",
+          "Computer Engineering",
+          "Industrial Chemistry",
+          "Accounting",
+          "Business Administration",
+          "Civil Engineering",
+          "Materials and Metallurgical Engineering",
+          "Mechanical Engineering",
+          "Petroleum and Energy Resources Engineering"
+        ],
+        "sourceKey": "aust-new-programmes-2026",
+        "note": "Ten programmes are explicitly identified as NUC-approved for 2026/2027. Additional programmes are listed in the current admissions portal; map exact school and approval status per programme before publication."
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
             "entryMode": "UTME",
+            "applicationUrl": "https://admissions.aust.edu.ng/",
             "assessment": [
-              "JAMB E-facility first-choice selection",
-              "AUST online screening"
+              "JAMB_first_choice_for_first_year",
+              "online_application",
+              "document_upload",
+              "application_fee",
+              "status_tracking"
             ],
             "sourceKey": "aust-admissions-2026-27"
           },
           {
             "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://admissions.aust.edu.ng/",
             "assessment": [
-              "direct application and admissions-office review"
+              "online_application",
+              "document_upload",
+              "application_fee",
+              "status_tracking"
             ],
             "sourceKey": "aust-admissions-2026-27"
           }
@@ -3745,10 +4052,25 @@
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "not_collected",
+          "note": "The current portal lists programmes and application steps but this pass did not extract programme-specific UTME thresholds or O'Level subject combinations."
         }
       },
-      "portalGuides": [],
+      "portalGuides": [
+        {
+          "portal": "admissions",
+          "session": "2026/2027",
+          "steps": [
+            "Open the AUST admissions portal.",
+            "Choose the intended programme and entry category.",
+            "Create an applicant account.",
+            "Complete the application, upload required documents and pay the application fee.",
+            "Submit the application and track its status online."
+          ],
+          "sourceKey": "aust-admissions-2026-27",
+          "verificationStatus": "verified_from_current_portal"
+        }
+      ],
       "knownGaps": [
         "The ten programmes listed are newly approved for 2026/2027 and do not constitute the complete AUST programme catalogue.",
         "Current VC/Chancellor identities were not verified from a current AUST institutional leadership page in this pass.",
@@ -3756,16 +4078,23 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "AUST current official news identifies Prof Azikiwe Peter Onwualu as President. A CVC directory lists a separate VC name; do not conflate President and Vice-Chancellor without current university confirmation.",
+        "NUC approval notice confirms ten new programmes for 2026/2027. Programme requirements, subject combinations and cut-offs still need course-by-course extraction.",
+        "The admissions portal lists a broader programme set than the NUC October 2026 announcement; confirm resource verification/approval for every programme before publishing."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "nuc-nus-2026",
         "aust-admissions-2026-27",
-        "aust-programmes-approved-2026-27"
+        "aust-programmes-approved-2026-27",
+        "nuc-private-universities-2026",
+        "aust-new-programmes-2026",
+        "aust-programmes-2026-27",
+        "aust-president-2026"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3780,7 +4109,7 @@
       "studentPortal": null,
       "profile": {
         "yearFounded": 1962,
-        "historySummary": "Ahmadu Bello University was established on 4 October 1962 as the University of Northern Nigeria. Its official history identifies three main campuses: Samaru and Kongo in Zaria, and the School of Basic Studies in Funtua.",
+        "historySummary": "Ahmadu Bello University was established in 1962. Its official website currently reports 18 faculties, 110 departments and 98 undergraduate programmes; the homepage figures are institution-published statistics.",
         "mission": null,
         "vision": null,
         "location": "Zaria, Kaduna State, Nigeria",
@@ -3791,27 +4120,116 @@
         {
           "role": "vice_chancellor",
           "name": "Professor Adamu Ahmed",
-          "verificationStatus": "published_on_current_institution_principal_officers_page",
-          "sourceKey": "abu-principal-officers",
-          "sourceUrl": "https://abu.edu.ng/principal-officers/",
+          "verificationStatus": "verified_from_institution_appointment_and_current_2026_news",
+          "sourceKey": "abu-vc-2025",
+          "sourceUrl": "https://abu.edu.ng/prof-adamu-ahmed-takes-over-from-prof-kabiru-bala-as-abus-13th-vice-chancellor/",
+          "checkedAt": "2026-11-17"
+        },
+        {
+          "role": "chancellor",
+          "name": "Nnaemeka Alfred Ugochukwu Achebe",
+          "verificationStatus": "listed_in_2025_2026_undergraduate_handbook",
+          "sourceKey": "abu-handbook-2025-26",
+          "sourceUrl": "https://abu.edu.ng/wp-content/uploads/2026/06/ABU-Student-Handbook-for-the-2025-2026-Session.pdf",
           "checkedAt": "2026-11-17"
         }
       ],
       "chancellor": {
-        "name": null,
-        "status": "not_researched"
+        "name": "Nnaemeka Alfred Ugochukwu Achebe",
+        "status": "listed_in_2025_2026_undergraduate_handbook",
+        "sourceKey": "abu-handbook-2025-26"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "faculty_directory_verified",
+        "items": [
+          "Management Sciences",
+          "Administration",
+          "Agriculture",
+          "Allied Health Sciences",
+          "Arts",
+          "Basic Clinical Sciences",
+          "Basic Medical Sciences",
+          "Dental Surgery",
+          "Clinical Sciences",
+          "Education",
+          "Engineering",
+          "Environmental Design",
+          "Law",
+          "Life Sciences",
+          "Physical Sciences",
+          "Pharmacy",
+          "Social Sciences",
+          "Veterinary Medicine"
+        ],
+        "facultyCount": 18,
+        "departmentCount": 110,
+        "undergraduateProgrammeCount": 98,
+        "campuses": [
+          {
+            "name": "Samaru Main Campus",
+            "location": "Zaria, Kaduna State, Nigeria"
+          },
+          {
+            "name": "Kongo Campus",
+            "location": "Zaria, Kaduna State, Nigeria"
+          }
+        ],
+        "sourceKeys": [
+          "abu-home-2026",
+          "abu-faculties-2026",
+          "abu-campus-2023"
+        ]
       },
       "admission": {
-        "session": null,
-        "routes": [],
-        "benchmarks": [],
-        "programmeRequirements": [],
+        "session": "2025/2026",
+        "routes": [
+          {
+            "entryMode": "UTME",
+            "firstChoiceRequired": null,
+            "assessment": [
+              "JAMB_UTME",
+              "programme_specific_entry_requirements"
+            ],
+            "sourceKey": "abu-handbook-2025-26"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "assessment": [
+              "JAMB_direct_entry",
+              "programme_specific_entry_requirements"
+            ],
+            "sourceKey": "abu-handbook-2025-26"
+          }
+        ],
+        "benchmarks": [
+          {
+            "benchmarkType": "historical_programme_dependent_utme_minimum",
+            "value": null,
+            "scaleMaximum": 400,
+            "session": "2025/2026",
+            "status": "official_handbook_says_minimum_180_or_200_depending_on_programme",
+            "sourceKey": "abu-handbook-2025-26",
+            "note": "The handbook specifies 180 or 200 depending on programme; it does not support one universal threshold. Do not carry this into 2026/2027."
+          }
+        ],
+        "programmeRequirements": [
+          {
+            "programmeName": null,
+            "entryMode": "UTME",
+            "oLevel": {
+              "minimumCredits": 5,
+              "requiredSubjects": [
+                "Five relevant credits; English Language required for Arts, Business Administration, Education (Arts), Law and Social Sciences; Mathematics required for Agriculture, Engineering, Medical Sciences and other science-based courses"
+              ],
+              "maximumSittings": 2
+            },
+            "sourceKey": "abu-handbook-2025-26",
+            "verificationStatus": "historical_2025_2026_handbook_general_requirement"
+          }
+        ],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "not_collected",
+          "note": "No current 2026/2027 programme-specific cut-offs verified."
         }
       },
       "portalGuides": [],
@@ -3822,7 +4240,10 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The official 2025/2026 handbook is historical; do not use its 180/200 score range as 2026/2027 admission guidance.",
+        "The official homepage and faculty directory give institution-wide counts; detailed department-to-programme mappings still need extraction.",
+        "Exact current 2026/2027 admission portal workflow and programme-specific JAMB IBASS combinations remain pending."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -3830,9 +4251,15 @@
         "nuc-nus-2026",
         "abu-history",
         "abu-principal-officers",
-        "abu-undergraduate-programmes"
+        "abu-undergraduate-programmes",
+        "nuc-federal-universities",
+        "abu-home-2026",
+        "abu-faculties-2026",
+        "abu-vc-2025",
+        "abu-campus-2023",
+        "abu-handbook-2025-26"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3842,12 +4269,12 @@
       "state": "Kwara",
       "institutionType": "university",
       "ownership": "private",
-      "officialWebsite": null,
-      "admissionPortal": null,
+      "officialWebsite": "https://www.apu.edu.ng/",
+      "admissionPortal": "https://www.portal.apu.edu.ng/applicant/register",
       "studentPortal": null,
       "profile": {
         "yearFounded": 2021,
-        "historySummary": null,
+        "historySummary": "Ahman Pategi University is a private university in Patigi, Kwara State. Its official applicant portal provides an online registration form with programme, entry-mode, study-mode and programme-centre selectors.",
         "mission": null,
         "vision": null,
         "location": "Patigi, Kwara State, Nigeria",
@@ -3868,17 +4295,44 @@
         "name": null,
         "status": "not_researched"
       },
-      "academicUnits": [],
+      "academicUnits": {
+        "status": "programme_selectors_present_catalogue_not_extracted",
+        "items": [],
+        "note": "The applicant portal dynamically loads programme options; no complete static programme list was verified in this pass."
+      },
       "admission": {
         "session": null,
-        "routes": [],
+        "routes": [
+          {
+            "entryMode": "UTME_or_direct_entry_as_portal_options",
+            "applicationUrl": "https://www.portal.apu.edu.ng/applicant/register",
+            "assessment": [
+              "online_applicant_registration",
+              "programme_and_entry_mode_selection",
+              "document_upload"
+            ],
+            "sourceKey": "apu-applicant-portal"
+          }
+        ],
         "benchmarks": [],
         "programmeRequirements": [],
         "programmeCutoffs": {
           "status": "not_collected"
         }
       },
-      "portalGuides": [],
+      "portalGuides": [
+        {
+          "portal": "admissions",
+          "steps": [
+            "Open the official applicant registration portal.",
+            "Prepare an active email address, personal and educational details, passport photograph, signature and scanned certificates.",
+            "Complete applicant details and choose the available programme, mode of entry, mode of study and programme centre.",
+            "Submit the registration form and follow the portal's next instructions."
+          ],
+          "sourceKey": "apu-applicant-portal",
+          "verificationStatus": "portal_form_fields_and_document_checklist_verified"
+        }
+      ],
       "knownGaps": [
         "The NUC lists the university as a private institution established in 2021 and lists Professor Adebola Mahfouz Adedimeji as Vice-Chancellor.",
         "A third-party hosted school portal was found, but no canonical institution-owned website or official applicant portal was verified. It is not imported or recommended.",
@@ -3886,16 +4340,20 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "Current Vice-Chancellor and full management team not verified from an institution-owned leadership page.",
+        "Programme options are loaded dynamically; exact active degree catalogue and NUC accreditation status by programme need confirmation.",
+        "The portal page does not provide current-session UTME cut-offs or complete programme-specific O'Level/JAMB subject requirements."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
       "sourceKeys": [
         "nuc-nus-2026",
         "nuc-private-universities-2026",
-        "nuc-20-private-2021"
+        "nuc-20-private-2021",
+        "apu-applicant-portal"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
@@ -3906,14 +4364,14 @@
       "institutionType": "university",
       "ownership": "federal",
       "officialWebsite": "https://afit.edu.ng/",
-      "admissionPortal": "https://degree.afit.edu.ng/portal/public/login?action=check_eligibility",
+      "admissionPortal": "https://portal.afit.edu.ng/",
       "studentPortal": null,
       "profile": {
         "yearFounded": 2018,
         "historySummary": "The NUC's current NUS index lists AFIT as established in 2018. AFIT's institutional history traces its roots to the NAF Technical and Supply School established in Kaduna in 1977; it became the Air Force Institute of Technology on 12 March 2008.",
         "mission": null,
         "vision": null,
-        "location": "Nigerian Air Force Base, Kaduna, Kaduna State, Nigeria",
+        "location": "Kaduna, Kaduna State, Nigeria",
         "campusCount": null,
         "campusCountStatus": "not_researched"
       },
@@ -3921,8 +4379,8 @@
         {
           "role": "commandant",
           "name": "Air Vice Marshal Adeniran Kolade Ademuwagun",
-          "verificationStatus": "verified_from_official_3_November_2025_handover_notice_and_commandant_profile",
-          "sourceKey": "afit-commandant-2025",
+          "verificationStatus": "verified_from_current_institution_commandant_profile",
+          "sourceKey": "afit-commandant-2026",
           "sourceUrl": "https://afit.edu.ng/home/the-commandant/",
           "checkedAt": "2026-11-17"
         }
@@ -3932,29 +4390,101 @@
         "status": "not_researched"
       },
       "academicUnits": {
-        "status": "not_researched",
-        "items": []
+        "status": "2026_2027_admission_programmes_verified",
+        "items": [
+          "Aerospace Engineering",
+          "Automotive Engineering",
+          "Mechanical Engineering",
+          "Mechatronics Engineering",
+          "Metallurgical and Materials Engineering",
+          "Civil Engineering",
+          "Electrical/Electronics Engineering",
+          "Information and Communication Technology",
+          "Telecommunication Engineering",
+          "Chemistry",
+          "Mathematics",
+          "Statistics",
+          "Physics",
+          "Physics with Electronics",
+          "Computer Science",
+          "Cyber Security",
+          "Accounting",
+          "Business Administration",
+          "Economics",
+          "International Relations",
+          "ND Aircraft Engineering Technology",
+          "ND Civil Engineering Technology",
+          "ND Electrical/Electronics Engineering Technology",
+          "ND Mechanical Engineering Technology",
+          "ND Business Administration and Management"
+        ],
+        "sourceKey": "afit-2026-27-admission"
       },
       "admission": {
         "session": "2026/2027",
         "routes": [
           {
             "entryMode": "UTME",
-            "applicationUrl": "https://degree.afit.edu.ng/portal/public/login?action=check_eligibility",
+            "applicationUrl": "https://portal.afit.edu.ng/",
             "assessment": [
-              "online eligibility verification",
-              "undergraduate screening"
+              "online_post_utme_screening"
             ],
-            "sourceKey": "afit-undergraduate-admissions-2026-27"
+            "firstChoiceRequired": true,
+            "changeOfInstitutionAllowed": true,
+            "sourceKey": "afit-2026-27-admission"
+          },
+          {
+            "entryMode": "DIRECT_ENTRY",
+            "applicationUrl": "https://portal.afit.edu.ng/",
+            "assessment": [
+              "online_application",
+              "document_review"
+            ],
+            "firstChoiceRequired": true,
+            "sourceKey": "afit-2026-27-admission"
           }
         ],
-        "benchmarks": [],
+        "benchmarks": [
+          {
+            "benchmarkType": "institution_utme_screening_eligibility",
+            "programmeName": "Degree programmes (B.Sc./B.Eng.)",
+            "value": 200,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "status": "verified_from_institution_admission_notice",
+            "sourceKey": "afit-2026-27-admission"
+          },
+          {
+            "benchmarkType": "institution_utme_screening_eligibility",
+            "programmeName": "National Diploma programmes",
+            "value": 160,
+            "scaleMaximum": 400,
+            "session": "2026/2027",
+            "status": "verified_from_institution_admission_notice",
+            "sourceKey": "afit-2026-27-admission"
+          }
+        ],
         "programmeRequirements": [],
         "programmeCutoffs": {
-          "status": "not_collected"
+          "status": "not_collected",
+          "note": "The 200 and 160 values are eligibility thresholds for degree and ND screening respectively, not departmental cut-offs."
         }
       },
-      "portalGuides": [],
+      "portalGuides": [
+        {
+          "portal": "admissions",
+          "session": "2026/2027",
+          "steps": [
+            "Obtain the JAMB form and select AFIT as first choice.",
+            "Open the official AFIT application portal.",
+            "For first login, use the JAMB registration number in the username/password format stated by AFIT.",
+            "Complete the Post-UTME/Direct Entry application and upload required documents.",
+            "Submit and follow the portal instructions for screening and subsequent admission status."
+          ],
+          "sourceKey": "afit-admission-requirements",
+          "verificationStatus": "official_portal_instructions_verified"
+        }
+      ],
       "knownGaps": [
         "The NUC registry year (2018) reflects the current institutional listing, while AFIT's own history traces its origins to 1977 and institute-of-technology status to 2008; keep these dates semantically separate.",
         "The official undergraduate page summarises Aerospace Engineering and allied disciplines, but the complete programme and department list has not yet been extracted.",
@@ -3962,7 +4492,10 @@
         "Leadership names and tenure require current institution-owned source verification; do not reuse stale NUC directory names as current office holders.",
         "Official admission and student portal URLs require verification from the institution's own website.",
         "Campuses, current academic units, institution-specific programme offerings, session-specific entry requirements and programme cut-offs remain subject to deeper primary-source research.",
-        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS."
+        "JAMB subject combinations must be checked per institution, programme and entry mode in JAMB IBASS.",
+        "The 2026/2027 admission notice lists degree and ND programmes and thresholds; HND/pre-HND options are also present but need separate entry-route mapping.",
+        "Programme-specific O'Level subject requirements and JAMB IBASS combinations remain to be transcribed.",
+        "The published application window is 18 May–20 July 2026; this date range has passed as of 17 November 2026. Do not label the portal open without a fresh extension notice."
       ],
       "verificationStatus": "partially_researched",
       "checkedAt": "2026-11-17",
@@ -3970,9 +4503,13 @@
         "nuc-nus-2026",
         "afit-history",
         "afit-commandant-2025",
-        "afit-undergraduate-admissions-2026-27"
+        "afit-undergraduate-admissions-2026-27",
+        "nuc-federal-universities",
+        "afit-2026-27-admission",
+        "afit-commandant-2026",
+        "afit-admission-requirements"
       ],
-      "phase2ResearchStatus": "group_001_registry_identity_and_baseline",
+      "phase2ResearchStatus": "primary_source_research_partial",
       "phase2CheckedAt": "2026-11-17"
     },
     {
