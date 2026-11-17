@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   Camera,
   Check,
@@ -29,6 +29,14 @@ import { useAuth } from '../src/lib/auth';
 import { navigateInApp } from '../src/lib/navigation';
 import { saveStudentProfile, type ProfileWriteClient, type StudentProfilePayload } from '../src/lib/profileSave';
 import { generatePublicProfileSlug } from '../src/lib/publicProfile';
+import { fetchInstitutionDirectory } from '../src/lib/institutions/repository';
+import {
+  institutionIdWrite,
+  matchProfileInstitution,
+  readInstitutionSelection,
+  rememberInstitutionSelection,
+} from '../src/lib/institutions/profileInstitution';
+import type { InstitutionSummary } from '../src/lib/institutions/types';
 import { publicProfileUrl } from '../src/lib/publicProfileClient';
 import {
   academicSessions,
@@ -74,6 +82,12 @@ export default function ProfileCompletionPage() {
 
   // 10-17. Academic details. Empty defaults keep an incomplete profile visibly incomplete.
   const [school, setSchool] = useState('');
+  // The canonical `institutions.id` behind the student's choice. Retained so
+  // that once the intelligence data lands the choice resolves to one stable
+  // institution row instead of a string comparison. The free-text `school`
+  // column remains what is saved, and is never overwritten by this.
+  const [institutionId, setInstitutionId] = useState<string | null>(null);
+  const [directory, setDirectory] = useState<InstitutionSummary[]>([]);
   const [customSchool, setCustomSchool] = useState('');
   const [courseProgramme, setCourseProgramme] = useState('');
   const [customCourseProgramme, setCustomCourseProgramme] = useState('');
@@ -114,6 +128,64 @@ export default function ProfileCompletionPage() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileCompleted, setProfileCompleted] = useState(false);
   const editMode = new URLSearchParams(window.location.search).get('edit') === '1';
+
+  /**
+   * The live institution directory.
+   *
+   * Loaded once, read-only. A student who picks from it keeps a canonical id
+   * alongside the free-text `school` value they have always had.
+   */
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let active = true;
+    void fetchInstitutionDirectory()
+      .then((rows) => {
+        if (!active) return;
+        setDirectory(rows);
+      })
+      .catch(() => {
+        // A failed directory read must not block the form: the maintained
+        // starter list stays available and nothing is invented in its place.
+        if (active) setDirectory([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const knownSchoolNames = useMemo(
+    () => new Set([...commonInstitutions, ...directory.map((institution) => institution.name)]),
+    [directory],
+  );
+
+  /**
+   * Record the canonical institution behind a school name.
+   *
+   * Never rewrites `school`. A name that is not in the directory keeps its
+   * free-text value and simply has no canonical id.
+   */
+  const retainInstitutionFor = (schoolName: string) => {
+    if (!userId) return;
+    const matched = matchProfileInstitution(directory, schoolName);
+    if (!matched) return;
+    setInstitutionId(matched.institutionId);
+    rememberInstitutionSelection(userId, matched);
+  };
+
+  useEffect(() => {
+    if (!userId || !directory.length) return;
+    const remembered = readInstitutionSelection(userId);
+    if (remembered) setInstitutionId((current) => current ?? remembered.institutionId);
+  }, [userId, directory.length]);
+
+  // A school name that arrives from a saved profile is matched against the
+  // directory once it is available, so an existing choice gains a canonical id
+  // without the value the student typed being touched.
+  useEffect(() => {
+    if (!userId || !directory.length || institutionId) return;
+    if (!school || school.includes('Other')) return;
+    retainInstitutionFor(school);
+  }, [userId, directory.length, school, institutionId]);
   const profileMissingLabels = [
     ['Institution', school.includes('Other') ? customSchool : school],
     ['Course / programme', courseProgramme || customCourseProgramme],
@@ -135,7 +207,7 @@ export default function ProfileCompletionPage() {
         if (stored.email) setUserEmail(stored.email);
         if (stored.phone) setPhone(stored.phone);
         if (stored.school) {
-          if (commonInstitutions.includes(stored.school)) setSchool(stored.school);
+          if (knownSchoolNames.has(stored.school)) setSchool(stored.school);
           else {
             setSchool('Other Nigerian University / Polytechnic');
             setCustomSchool(stored.school);
@@ -203,7 +275,7 @@ export default function ProfileCompletionPage() {
               if (profile.full_name) setUserName(profile.full_name);
               if (profile.phone) setPhone(profile.phone);
               if (profile.school) {
-                if (commonInstitutions.includes(profile.school)) setSchool(profile.school);
+                if (knownSchoolNames.has(profile.school)) setSchool(profile.school);
                 else {
                   setSchool('Other Nigerian University / Polytechnic');
                   setCustomSchool(profile.school);
@@ -509,6 +581,15 @@ export default function ProfileCompletionPage() {
       },
       avatar_url: finalAvatar || null,
       profile_completed: true,
+      // The canonical institution id travels with the save only once
+      // `profiles.institution_id` is deployed. Until then this spreads an
+      // empty object, so the write stays valid SQL and the free-text `school`
+      // column keeps carrying the value.
+      ...institutionIdWrite(
+        institutionId
+          ? { institutionId, institutionName: finalSchool, source: 'directory', selectedAt: new Date().toISOString() }
+          : readInstitutionSelection(userId),
+      ),
     };
 
     const finish = (detail: string) => {
@@ -952,7 +1033,10 @@ export default function ProfileCompletionPage() {
                   <select
                     value={school}
                     aria-label="Institution or school"
-                    onChange={(e) => setSchool(e.target.value)}
+                    onChange={(e) => {
+                      setSchool(e.target.value);
+                      retainInstitutionFor(e.target.value);
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -966,11 +1050,25 @@ export default function ProfileCompletionPage() {
                     }}
                   >
                     <option value="">Choose an institution</option>
-                    {commonInstitutions.map((inst) => (
-                      <option key={inst} value={inst}>
-                        {inst}
-                      </option>
-                    ))}
+                    <optgroup label="Common institutions">
+                      {commonInstitutions.map((inst) => (
+                        <option key={inst} value={inst}>
+                          {inst}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {/* The live directory, so a student can pick the exact
+                        institution row EduReach maintains. */}
+                    {directory.length > 0 && (
+                      <optgroup label="Full institution directory">
+                        {directory.map((institution) => (
+                          <option key={institution.id} value={institution.name}>
+                            {institution.name}
+                            {institution.state ? ` — ${institution.state}` : ''}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   {school.includes('Other') && (
                     <input

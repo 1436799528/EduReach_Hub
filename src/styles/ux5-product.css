@@ -621,8 +621,19 @@
   }
 }
 
-/* Exam cards: one neutral surface, exam identity in the badge and the mark.
-   Four unrelated pastel backgrounds made the choice look like four products. */
+/* Exam cards: the four CBT simulator tiles keep the MySchool-inspired exam
+   gradients defined by `.ms-top-tile` in `src/myschool-clean.css`. UX-5 had
+   flattened them to one neutral surface; this restores the four, and only for
+   the simulator cards rendered by `src/components/ExamSimulatorGrid.tsx`.
+
+   Colour is bound to the bank's canonical exam type — `.er-sim-<type>` and
+   `data-exam-type`, both emitted by `simulatorExamType()` — never to the card's
+   position in the grid, so filtering or re-ordering the catalogue cannot
+   repaint a bank. A bank outside the four keeps the neutral surface.
+
+   White type is measured on the LIGHTEST stop of each pair:
+   #1d6585 6.45:1 · #16803f 5.01:1 · #6d28d9 7.10:1 · #c2410c 5.18:1.
+   `tests/simulator-gradients.test.ts` recomputes those ratios. */
 .er-sim-card,
 .er-sim-jamb,
 .er-sim-waec,
@@ -631,6 +642,105 @@
   background: var(--er-surface) !important;
   border-color: var(--er-border) !important;
   color: var(--er-text-primary);
+}
+
+.er-sim-card.er-sim-jamb,
+.er-sim-card[data-exam-type='jamb'] {
+  background: linear-gradient(115deg, #123f5a, #1d6585) !important;
+  border-color: transparent !important;
+  color: #ffffff;
+}
+
+.er-sim-card.er-sim-waec,
+.er-sim-card[data-exam-type='waec'] {
+  background: linear-gradient(115deg, #14532d, #16803f) !important;
+  border-color: transparent !important;
+  color: #ffffff;
+}
+
+.er-sim-card.er-sim-neco,
+.er-sim-card[data-exam-type='neco'] {
+  background: linear-gradient(115deg, #4c1d95, #6d28d9) !important;
+  border-color: transparent !important;
+  color: #ffffff;
+}
+
+.er-sim-card.er-sim-post-utme,
+.er-sim-card[data-exam-type='post-utme'] {
+  background: linear-gradient(115deg, #7c2d12, #c2410c) !important;
+  border-color: transparent !important;
+  color: #ffffff;
+}
+
+/* The MySchool tile treatment: a quiet diagonal sheen over the gradient. It
+   replaces the 3px primary edge bar, which read as a stripe on a filled card. */
+.er-sim-card[data-exam-type]::before,
+.er-sim-card.er-sim-jamb::before,
+.er-sim-card.er-sim-waec::before,
+.er-sim-card.er-sim-neco::before,
+.er-sim-card.er-sim-post-utme::before {
+  inset: 0;
+  width: auto;
+  pointer-events: none;
+  background: linear-gradient(105deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, 0) 58%, rgba(255, 255, 255, .14));
+  opacity: 1;
+}
+
+/* Type, badge, metadata and arrow stay on white so they read on the fill. */
+.er-sim-card[data-exam-type] .er-sim-body > strong,
+.er-sim-card.er-sim-jamb .er-sim-body > strong,
+.er-sim-card.er-sim-waec .er-sim-body > strong,
+.er-sim-card.er-sim-neco .er-sim-body > strong,
+.er-sim-card.er-sim-post-utme .er-sim-body > strong {
+  color: #ffffff !important;
+}
+
+.er-sim-card[data-exam-type] .er-sim-body > small,
+.er-sim-card.er-sim-jamb .er-sim-body > small,
+.er-sim-card.er-sim-waec .er-sim-body > small,
+.er-sim-card.er-sim-neco .er-sim-body > small,
+.er-sim-card.er-sim-post-utme .er-sim-body > small {
+  color: rgba(255, 255, 255, .88) !important;
+}
+
+.er-sim-card[data-exam-type] .er-sim-badge,
+.er-sim-card.er-sim-jamb .er-sim-badge,
+.er-sim-card.er-sim-waec .er-sim-badge,
+.er-sim-card.er-sim-neco .er-sim-badge,
+.er-sim-card.er-sim-post-utme .er-sim-badge {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, .34) !important;
+  background: rgba(255, 255, 255, .16) !important;
+}
+
+.er-sim-card[data-exam-type] .er-sim-foot,
+.er-sim-card.er-sim-jamb .er-sim-foot,
+.er-sim-card.er-sim-waec .er-sim-foot,
+.er-sim-card.er-sim-neco .er-sim-foot,
+.er-sim-card.er-sim-post-utme .er-sim-foot {
+  border-top-color: rgba(255, 255, 255, .26) !important;
+  color: rgba(255, 255, 255, .9) !important;
+}
+
+.er-sim-card[data-exam-type] .er-sim-foot .er-card-arrow,
+.er-sim-card.er-sim-jamb .er-sim-foot .er-card-arrow,
+.er-sim-card.er-sim-waec .er-sim-foot .er-card-arrow,
+.er-sim-card.er-sim-neco .er-sim-foot .er-card-arrow,
+.er-sim-card.er-sim-post-utme .er-sim-foot .er-card-arrow {
+  color: #ffffff;
+}
+
+/* The brand mark sits on a translucent light plate so an emblem with its own
+   transparent background is never lost against the fill. The ring is a shadow,
+   so the card's measured layout does not move. */
+.er-sim-card[data-exam-type] .er-sim-top img,
+.er-sim-card.er-sim-jamb .er-sim-top img,
+.er-sim-card.er-sim-waec .er-sim-top img,
+.er-sim-card.er-sim-neco .er-sim-top img,
+.er-sim-card.er-sim-post-utme .er-sim-top img {
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .92);
+  border-radius: 9px;
 }
 
 .er-sim-card {
@@ -1856,4 +1966,381 @@
   .er-home-news-grid .er-news-card-media { aspect-ratio: 16 / 9; }
   .er-home-news-grid .er-news-card-summary { display: -webkit-box !important; -webkit-line-clamp: 2; }
   .er-home-news-grid .er-news-card-body > strong { font-size: 16px; -webkit-line-clamp: 4; }
+}
+
+/* --------------------------------------------------------------------------
+   Institution intelligence — trust marks, the profile and the finder.
+
+   One restrained badge system for the whole institution surface: a small
+   pill, one icon, a short label and, when it exists, the date the fact was
+   checked. Colours come from the existing semantic tokens, so "verified"
+   reads as success and "not yet imported" reads as neutral — a green tick is
+   never used just because a database row exists.
+   -------------------------------------------------------------------------- */
+
+.er-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.er-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--er-border);
+  background: var(--er-surface-soft);
+  color: var(--er-text-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.er-trust svg { flex: none; }
+
+.er-trust--verified {
+  border-color: var(--er-status-success-border);
+  background: var(--er-status-success-bg);
+  color: var(--er-status-success);
+}
+
+/* "Awaiting verification" and "not yet imported" are different facts and get
+   different words; both stay neutral so neither looks like a confirmation. */
+.er-trust--pending {
+  border-color: var(--er-status-warning-border);
+  background: var(--er-status-warning-bg);
+  color: var(--er-status-warning);
+}
+
+.er-trust--missing {
+  border-color: var(--er-border);
+  background: var(--er-surface-soft);
+  color: var(--er-text-muted);
+}
+
+.er-trust--unavailable {
+  border-color: var(--er-status-error-border);
+  background: var(--er-status-error-bg);
+  color: var(--er-status-error);
+}
+
+.er-trust--session {
+  border-color: var(--er-primary-soft-border);
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+}
+
+.er-trust-date { opacity: .78; font-weight: 500; }
+
+.er-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--er-primary);
+  text-decoration: none;
+}
+
+.er-source-link:hover { text-decoration: underline; }
+.er-source-date { color: var(--er-text-muted); font-weight: 500; }
+
+.er-section-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--er-text-muted);
+}
+
+/* --- profile ------------------------------------------------------------ */
+
+.er-profile { display: grid; gap: 18px; }
+
+.er-profile-section,
+.er-profile-pending {
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+  padding: 16px 18px;
+}
+
+.er-profile-pending { background: var(--er-surface-soft); }
+
+.er-profile-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+  color: var(--er-text-primary);
+}
+
+.er-profile-section-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+  flex: none;
+}
+
+.er-profile-section-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--er-text-muted);
+}
+
+.er-profile-session-bar {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--er-border);
+  border-radius: var(--er-radius-md);
+  background: var(--er-surface);
+}
+
+.er-profile-session-label { font-size: 12px; font-weight: 600; color: var(--er-text-primary); }
+
+.er-profile-session-select {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--er-secondary-border);
+  border-radius: 8px;
+  background: var(--er-surface);
+  color: var(--er-text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+
+.er-profile-session-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--er-text-muted);
+}
+
+.er-profile-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px 18px;
+  margin: 0 0 10px;
+}
+
+.er-profile-fact dt { font-size: 11px; color: var(--er-text-muted); }
+.er-profile-fact dd { margin: 2px 0 0; font-size: 13px; font-weight: 600; color: var(--er-text-primary); }
+
+.er-profile-prose { margin: 6px 0 0; font-size: 13px; line-height: 1.65; color: var(--er-text-secondary); }
+.er-profile-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--er-text-muted); }
+
+.er-profile-warning {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--er-status-warning-border);
+  background: var(--er-status-warning-bg);
+  color: var(--er-status-warning);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.er-profile-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+.er-profile-row {
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--er-border);
+  border-radius: 10px;
+  background: var(--er-surface);
+}
+
+.er-profile-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.er-profile-row-head strong { font-size: 13.5px; font-weight: 650; color: var(--er-text-primary); }
+
+.er-profile-score {
+  padding: 2px 7px;
+  border-radius: 7px;
+  background: var(--er-primary-soft);
+  color: var(--er-primary);
+  font-size: 12px;
+  font-weight: 680;
+  font-variant-numeric: tabular-nums;
+}
+
+.er-profile-meta { font-size: 11.5px; line-height: 1.5; color: var(--er-text-muted); }
+
+.er-profile-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
+
+.er-profile-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--er-border);
+  border-radius: 8px;
+  background: var(--er-surface-soft);
+  font-size: 12px;
+  color: var(--er-text-primary);
+}
+
+.er-profile-chip-type {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--er-text-muted);
+}
+
+.er-profile-bullets { margin: 4px 0 0; padding-left: 18px; }
+.er-profile-bullets li { font-size: 12.5px; line-height: 1.6; color: var(--er-text-secondary); }
+
+.er-profile-steps { display: grid; gap: 10px; margin: 8px 0 0; padding-left: 20px; }
+.er-profile-steps li { display: grid; gap: 2px; }
+.er-profile-steps strong { font-size: 12.5px; color: var(--er-text-primary); }
+
+.er-profile-pending-list { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.er-profile-pending-list li { display: grid; gap: 2px; }
+.er-profile-pending-list strong { font-size: 12.5px; color: var(--er-text-primary); }
+.er-profile-pending-list .er-section-note { margin: 0; }
+
+.er-subject-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0; padding: 0; list-style: none; }
+
+.er-subject-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid var(--er-border);
+  border-radius: 999px;
+  background: var(--er-surface-soft);
+  font-size: 12px;
+  color: var(--er-text-primary);
+}
+
+.er-subject-flag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--er-primary);
+}
+
+/* --- finder ------------------------------------------------------------- */
+
+/* The result card is a div, not an anchor, because it carries a second link:
+   the institution's official website. Nesting anchors is invalid, so the
+   title link is stretched over the card with a pseudo-element and the website
+   link sits above it. One interaction target per card, visually unchanged. */
+.school-finder-result-card {
+  position: relative;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.school-finder-result-card:hover {
+  border-color: #b14933;
+  box-shadow: 0 4px 14px rgba(200, 88, 65, .12);
+}
+
+.school-finder-result-card:focus-within {
+  outline: 2px solid #b14933;
+  outline-offset: 2px;
+}
+
+.school-finder-result-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.school-finder-result-title-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.school-finder-result-card:hover .school-finder-result-title-link { text-decoration: underline; }
+
+/* The official-site link must stay clickable through the stretched overlay. */
+.school-finder-website,
+.school-finder-result-card .er-finder-website {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* The ownership pill is only ever rendered with a researched value, so a
+   directory that has no ownership data shows no pill at all rather than a
+   default category. */
+.er-ownership-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--er-secondary-border);
+  background: var(--er-surface-soft);
+  color: var(--er-text-secondary);
+  font-size: 10px;
+  font-weight: 680;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.er-finder-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.er-finder-filters select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--er-secondary-border);
+  border-radius: 9px;
+  background: var(--er-surface);
+  color: var(--er-text-primary);
+  font: inherit;
+  font-size: 13px;
+  padding: 0 10px;
+}
+
+.er-finder-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.er-finder-website {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--er-primary);
+  text-decoration: none;
+}
+
+.er-finder-website:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .er-profile-section,
+  .er-profile-pending { padding: 13px 14px; }
+  .er-profile-session-bar { grid-template-columns: minmax(0, 1fr); }
+  .er-profile-facts { grid-template-columns: minmax(0, 1fr); }
 }
