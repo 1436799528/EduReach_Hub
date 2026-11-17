@@ -157,7 +157,22 @@ suites.
   and are deliberately untouched: they are unreviewed legacy surfaces, and the new
   tables supersede them rather than migrate their contents.
 
-## 7. Rollout order
+## 7. Staging verification (2026-11-17)
+
+The dedicated non-production staging project has both migrations applied. Its
+migration ledger versions match the repository filenames. The public institution
+directory baseline (329 identity rows and basic portal metadata) was copied from
+production with `is_verified=false`; no research profiles, sources, admission
+facts, user data or media were copied.
+
+A transactional importer smoke test used the first research batch's 17 source
+records and two institution profile records in dry-run mode. The database
+reported 17 source inserts and 2 profile inserts, zero rejections, and then
+rolled back. Counts before and after remained 0 sources and 0 profiles. This
+proves the function accepts the profile payload shape without committing it.
+No other research entities were imported.
+
+## 8. Rollout order
 
 1. Apply `20261117093002` then `20261117093004` to a non-production database
    (`supabase db push` or the CI replay).
