@@ -9578,6 +9578,3296 @@
       "sourceKeys": [
         "nuc-nus-2026"
       ]
+    },
+    {
+      "institutionId": "535e71c1-a4e5-46bd-b3b5-92158af3ee43",
+      "canonicalName": "Iconic Open University, Sokoto",
+      "state": "Sokoto",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "34e34af1-b524-4e1c-ae7c-2f934bdf843f",
+      "canonicalName": "Igbinedion University, Okada",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "84abd3ad-0441-4b3a-9b11-08f1aac6c490",
+      "canonicalName": "Ignatius Ajuru University of Education, Rumuolumeni",
+      "state": "Rivers",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "adb22f3b-5058-44d1-89f4-54c08d42e81d",
+      "canonicalName": "Imo State University, Owerri",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a8576d07-3ac2-4b34-a8fd-d3d457ac9093",
+      "canonicalName": "Isaac Balami University of Aeronautics and Management",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "513dad28-15b5-44a0-8f1f-326ca48888b2",
+      "canonicalName": "James Hope University, Lekki",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "50a83a78-5c84-413f-ac99-4755cbbc6a46",
+      "canonicalName": "JEFAP University, Suleja",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c98e2af5-2adb-4f40-bbb4-80676c497088",
+      "canonicalName": "Jewel University, Gombe",
+      "state": "Gombe",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "2dbc868b-0f03-4727-ba4b-1642478d629f",
+      "canonicalName": "Jigawa State University of Allied and Medical Science",
+      "state": "Jigawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5e7654d4-754b-454a-92c1-5c9e699636b5",
+      "canonicalName": "Jimoh Babalola University, Ilorin",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "4dd65fdd-befc-479c-8878-329f6769fd88",
+      "canonicalName": "Joseph Ayo Babalola University, Ikeji-Arakeji",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f7cc6da0-267b-48f5-8dfe-7ee6413379c4",
+      "canonicalName": "Joseph Sarwuan Tarka University, Makurdi",
+      "state": "Benue",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f5461ce3-9056-45fc-b6b0-3bec62fa3c1f",
+      "canonicalName": "Kaduna State University, Kaduna",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b5b5dad4-cf93-4fa8-acca-0150a90d906a",
+      "canonicalName": "Karl-Kumm University, Vom",
+      "state": "Plateau",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "6b36c027-baba-4eb6-843d-35940146afdf",
+      "canonicalName": "Kebbi State University of Science and Technology, Aliero",
+      "state": "Kebbi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "00a5d148-097a-4e40-b7e8-d18c6ec799fe",
+      "canonicalName": "Kevin Eze University, Mgbowo",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3fba17fd-0dbc-461a-a708-200eae85d6ec",
+      "canonicalName": "Khalifa Isiyaku Rabiu University, Kano",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "31485818-a4b3-4d9d-9e66-9bd6215991e6",
+      "canonicalName": "King David Umahi University of Medical Sciences, Uburu",
+      "state": "Ebonyi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "934fb37a-16bd-4e1e-92c0-6cd95af36ffc",
+      "canonicalName": "Kings University, Ode-Omu",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c2c728db-9f44-410b-9804-8faa0fc9c31c",
+      "canonicalName": "Kingsley Ozumba Mbadiwe University",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0a90bab1-3383-47ac-b285-fe846f8695bf",
+      "canonicalName": "Kogi State University, Kabba",
+      "state": "Kogi",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b25573f3-f32e-4465-9125-1f1048d20e45",
+      "canonicalName": "Kola Daisi University, Ibadan",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ddf32a6b-1143-44e0-940e-20749b8bb53b",
+      "canonicalName": "Kwara State University of Education, Ilorin",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "91956498-fbdb-46f2-92c0-fe8ec9d2b741",
+      "canonicalName": "Kwara State University, Ilorin",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "230185e7-8a5e-4470-abb0-69f2da11856e",
+      "canonicalName": "Kwararafa University, Wukari",
+      "state": "Taraba",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c8d60229-64d5-4521-9f31-c64179f949d0",
+      "canonicalName": "Ladoke Akintola University of Technology, Ogbomoso",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b37f857f-7dca-4cde-be31-c975e79ef3bb",
+      "canonicalName": "Lagos State University, Ojo",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "99c705e8-ce03-4471-893f-563de8902605",
+      "canonicalName": "Lagos University of Education, Oto/Ijanikin",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3697b5cc-8a6c-45a3-b624-4ceb4fc0d19c",
+      "canonicalName": "Lagos University of Science and Technology, Ikorodu",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5d3b8cc2-30ef-4236-ae21-64c911bb51e5",
+      "canonicalName": "Landmark University, Omu-Aran",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0aec6c11-1da2-478d-bcee-db9e59224f7f",
+      "canonicalName": "Lead City University, Ibadan",
+      "state": "Oyo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a48c21eb-8810-49bc-80d9-626ee47364f9",
+      "canonicalName": "Leadership University, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "676f2bc6-bddb-497f-95d6-8ebe736c4846",
+      "canonicalName": "Legacy University, Okija",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "2ef0b901-b6d1-4a3c-b75a-3aa45ed20099",
+      "canonicalName": "Lens University, Ilemona",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "8ac9ea94-bd45-4540-9d11-4820ee3c9efe",
+      "canonicalName": "Lighthouse University, Evbuobanosa",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d7a4e40f-e03a-469f-9492-e3c6fa1f31b1",
+      "canonicalName": "Lux Mundi University, Umuahia",
+      "state": "Abia",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "2776d912-7d5c-4ecc-9be0-a1a6dd80100f",
+      "canonicalName": "Madonna University, Okija",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "66dee891-43d3-4087-af5d-4de12f2090e2",
+      "canonicalName": "Maduka University, Ekwegbe-Nsukka",
+      "state": "Enugu",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "34d44710-1659-4059-9601-257699d65c57",
+      "canonicalName": "Maranatha University, Lekki",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "6e1eaa2e-be9a-47bb-bf67-182cb94453f6",
+      "canonicalName": "Margaret Lawrence University, Galilee",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "98792dd8-02a1-426b-8609-4de4db35f0aa",
+      "canonicalName": "Maria Assumpta University, Owerri",
+      "state": "Imo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "95f3c869-bce7-45ec-8fef-86cfcd00c711",
+      "canonicalName": "Maryam Abacha American University of Nigeria, Kano",
+      "state": "Kano",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c08a53e7-02a1-450d-b13e-91cd5a0e93c3",
+      "canonicalName": "McPherson University, Seriki Sotayo",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ab23233b-94c1-4889-922c-043ce5f9d3ea",
+      "canonicalName": "Mercy Medical University, Iwara-Iwo",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "546228d3-3782-4069-87d6-505ed150a4af",
+      "canonicalName": "Mewar University, Masaka",
+      "state": "Nasarawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3cea708a-a23e-4c79-97f4-c8d76d06c747",
+      "canonicalName": "Michael & Cecilia Ibru University, Owhode",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "901abd0c-66de-4484-91e0-b8e59f5ef390",
+      "canonicalName": "Michael Okpara University of Agriculture, Umudike",
+      "state": "Abia",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "77d81302-d91b-4122-8e06-b9442bfbb874",
+      "canonicalName": "Millennium Crest University, Ikare-Akoko",
+      "state": "Ondo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "a70c3c39-7855-49b6-bfaf-e17888b81682",
+      "canonicalName": "Minaret University, Ikirun",
+      "state": "Osun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "925f4d53-794a-40ce-bac3-83c964227ff9",
+      "canonicalName": "Miva Open University, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "b8be85c2-246a-4d42-b8af-0fff94ebf855",
+      "canonicalName": "Modibbo Adama University, Yola",
+      "state": "Adamawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5c419401-5444-4561-8d8d-c2b5d15f65ec",
+      "canonicalName": "Monarch University, Iyesi-Ota",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5a4e6936-c3e7-4ce7-bc5d-57a0963beb10",
+      "canonicalName": "Moshood Abiola University of Science and Technology, Abeokuta",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "5c9dfac1-2856-4005-9574-dbdb83add2dc",
+      "canonicalName": "Mountain Top University, Makogi",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "038f6812-2806-4235-afd7-4ca6722bb46c",
+      "canonicalName": "Mudiame University, Irrua",
+      "state": "Edo",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "11e2ffeb-c692-4ec1-a660-442dc0912c93",
+      "canonicalName": "Muhammad Kamalud-Deen University, Ilorin",
+      "state": "Kwara",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "755f7619-22a3-4a12-8835-b1144659d045",
+      "canonicalName": "Nasarawa State University, Keffi",
+      "state": "Nasarawa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "476cb995-d1e5-4349-9bf4-d8e5183ed562",
+      "canonicalName": "National Open University of Nigeria, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "f91f6c71-5959-438d-a8f9-861ac539b2e0",
+      "canonicalName": "National University of Science and Technology, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3e0658c4-cc63-45ad-94d4-4837b59d2451",
+      "canonicalName": "New City University, Ayetoro",
+      "state": "Ogun",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "c3184eb2-753c-410b-a15d-ebdbbbead0c4",
+      "canonicalName": "Newgate University, Minna",
+      "state": "Niger",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7d4921a6-21a1-4f30-aefc-06b0dad43689",
+      "canonicalName": "Niger-Delta University, Yenagoa",
+      "state": "Bayelsa",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "ae9483ac-6390-45c4-b7d8-19e8f79a2ac0",
+      "canonicalName": "Nigeria Maritime University, Okerenkoko",
+      "state": "Delta",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "1fa2ec65-5268-4e0b-84f9-861aaa2c7a2e",
+      "canonicalName": "Nigerian Army University, Biu",
+      "state": "Borno",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "e3dd6ea1-a953-4228-9544-dea911967828",
+      "canonicalName": "Nigerian British University, Asa",
+      "state": "Abia",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "44219824-5372-4dd6-928b-e36112d48637",
+      "canonicalName": "Nigerian Defence Academy, Kaduna",
+      "state": "Kaduna",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "0f5d5559-c0de-43c8-ab25-6b2121580f3c",
+      "canonicalName": "Nigerian University of Technology and Management, Apapa",
+      "state": "Lagos",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "d0af643c-0034-4850-b22f-12adb3973580",
+      "canonicalName": "Nile University of Nigeria, Abuja",
+      "state": "FCT Abuja",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "7ccd2609-7d44-4a2e-b5f4-05a1b57a64eb",
+      "canonicalName": "Nnamdi Azikiwe University, Awka",
+      "state": "Anambra",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
+    },
+    {
+      "institutionId": "3b00deff-c80c-49e4-a9f0-553a36045cef",
+      "canonicalName": "North Eastern University, Gombe",
+      "state": "Gombe",
+      "institutionType": "university",
+      "ownership": null,
+      "officialWebsite": null,
+      "admissionPortal": null,
+      "studentPortal": null,
+      "profile": {
+        "yearFounded": null,
+        "historySummary": null,
+        "mission": null,
+        "vision": null,
+        "location": null,
+        "campusCount": null,
+        "campusCountStatus": "not_researched"
+      },
+      "leadership": [],
+      "chancellor": {
+        "name": null,
+        "status": "not_researched"
+      },
+      "academicUnits": {
+        "status": "not_researched",
+        "items": []
+      },
+      "admission": {
+        "session": null,
+        "routes": [],
+        "benchmarks": [],
+        "programmeRequirements": [],
+        "programmeCutoffs": {
+          "status": "not_collected"
+        }
+      },
+      "portalGuides": [],
+      "knownGaps": [
+        "NUC registry identity cross-check completed; ownership/year metadata and official institutional website still need institution-level field extraction where not matched.",
+        "Leadership, campuses, academic units, programme catalogue, session-specific admission thresholds, programme requirements, JAMB IBASS combinations and portal workflows remain unresearched."
+      ],
+      "verificationStatus": "identity_verified_profile_pending",
+      "checkedAt": "2026-11-17",
+      "sourceKeys": [
+        "nuc-nus-2026"
+      ]
     }
   ],
   "nationalAdmissionPolicy": {
