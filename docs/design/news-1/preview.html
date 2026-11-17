@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NEWS-1 — news card preview</title>
+<!-- Real stylesheets, no copies: what you see here is what ships. -->
+<link rel="stylesheet" href="../../../src/hub.css" />
+<link rel="stylesheet" href="../../../src/styles/theme.css" />
+<link rel="stylesheet" href="../../../src/edu-portal.css" />
+<link rel="stylesheet" href="../../../src/styles/type-system.css" />
+<link rel="stylesheet" href="../../../src/styles/ux5-product.css" />
+<link rel="stylesheet" href="../../../src/styles/a11y.css" />
+<style>
+  body { margin: 0; background: #f7f9fb; font-family: var(--er-font-sans, system-ui, sans-serif); color: #0f172a; }
+  .frame { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 22px 0 50px; }
+  .note { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: #475569; }
+  h1 { font-size: 21px; margin: 0 0 6px; }
+  .er-news-photo { display: block; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <h1>News card — NEWS-1 preview</h1>
+  <p class="note">
+    Real component markup against the real stylesheets. Narrow the window below 640px:
+    the feed becomes one card per screen with scroll snapping. Images here are inline
+    colour blocks so the page works from any folder.
+  </p>
+
+  <section class="er-section">
+    <h2 style="font-size:15px;margin:0 0 10px">Latest stories</h2>
+    <div class="er-news-card-grid">
+      <a class="er-news-card is-current er-news-tone-indigo" href="#jamb">
+        <span class="er-news-card-media"><span class="er-news-photo" aria-hidden="true" style="width:100%;height:100%;display:block;background:linear-gradient(135deg,#c7d7ee,#8fb0d9)"></span></span>
+        <span class="er-news-card-body">
+          <small>JAMB &amp; UTME · 16 November 2026</small>
+          <strong>JAMB opens the 2027 UTME profile creation window for first-time candidates</strong>
+          <span class="er-news-card-summary">Candidates create a profile before they can buy a PIN; the board repeats that no agent can do it for you.</span>
+          <span class="er-news-card-foot"><span>JAMB</span><span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+
+      <a class="er-news-card is-current er-news-tone-amber" href="#funding">
+        <span class="er-news-card-media"><span class="er-news-photo" aria-hidden="true" style="width:100%;height:100%;display:block;background:linear-gradient(135deg,#f3dcc4,#d8b18a)"></span></span>
+        <span class="er-news-card-body">
+          <small>Scholarships &amp; Funding · 15 November 2026</small>
+          <strong>NELFUND publishes the institutional list for the next student loan cycle</strong>
+          <span class="er-news-card-summary">Students apply through their own institution's portal; EduReach does not collect loan applications.</span>
+          <span class="er-news-card-foot"><span>NELFUND</span><span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+
+      <a class="er-news-card is-current er-news-tone-teal" href="#neco">
+        <span class="er-news-card-media"><span class="er-news-noimage" aria-hidden="true"><span>no image</span><small>NECO</small></span></span>
+        <span class="er-news-card-body">
+          <small>NECO · 14 November 2026</small>
+          <strong>NECO releases the timetable for the November/December SSCE</strong>
+          <span class="er-news-card-summary">A story without a picture gets the labelled panel, never a borrowed stock photo.</span>
+          <span class="er-news-card-foot"><span>NECO</span><span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+
+      <a class="er-news-card is-stale er-news-tone-rose" href="#results">
+        <span class="er-news-card-media"><span class="er-news-photo" aria-hidden="true" style="width:100%;height:100%;display:block;background:linear-gradient(135deg,#efc9d3,#cf94a6)"></span></span>
+        <span class="er-news-card-body">
+          <small>Examination Updates · 2 November 2026</small>
+          <strong>WAEC withholds results for centres flagged in the 2026 diet</strong>
+          <span class="er-news-freshness is-warning">Check before you rely on this</span>
+          <span class="er-news-card-foot"><span>WAEC</span><span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <section class="er-section" style="margin-top:26px">
+    <h2 style="font-size:15px;margin:0 0 10px">Featured pair</h2>
+    <div class="er-featured-grid">
+      <a class="er-featured-card er-news-tone-blue" href="#a">
+        <span class="er-featured-media"><span class="er-news-photo" aria-hidden="true" style="width:100%;height:100%;display:block;background:linear-gradient(135deg,#c9d8f2,#93aede)"></span></span>
+        <span class="er-featured-body">
+          <small>WAEC · 16 November 2026</small>
+          <strong>What changes for candidates resitting the SSCE in 2027</strong>
+          <small class="er-featured-excerpt">The board separates registration windows from result collection; both dates are on the official portal.</small>
+        </span>
+      </a>
+      <a class="er-featured-card er-news-tone-plum" href="#b">
+        <span class="er-featured-media"><span class="er-news-noimage" aria-hidden="true"><span>no image</span><small>Admissions</small></span></span>
+        <span class="er-featured-body">
+          <small>Admissions · 15 November 2026</small>
+          <strong>Screening portals open, and the thresholds are published per programme</strong>
+          <small class="er-featured-excerpt">EduReach shows a threshold only with its source, its session and the scale it was published on.</small>
+        </span>
+      </a>
+    </div>
+  </section>
+</div>
+</body>
+</html>

@@ -3,6 +3,7 @@ import type { NewsItem } from '../lib/api';
 import { newsCategoryLabel } from '../data/newsCategories';
 import { freshnessDate, newsFreshness } from '../lib/newsFreshness';
 import { identityClassFor } from './CardIdentityMark';
+import { newsToneClass } from '../lib/newsTone';
 
 export { newsCategoryLabel };
 
@@ -96,11 +97,15 @@ export function NewsRow({ item }: { item: NewsItem }) {
   );
 }
 
-/** Four-column news card: image, category/date, headline, excerpt. */
+/** Four-column news card: image, category/date, headline, excerpt.
+ *
+ * The card keeps the coloured gradient surface the rest of EduReach uses (its
+ * tone comes from `newsToneClass`, never from row order) and always leads with
+ * the article's own image. */
 export function NewsCard({ item }: { item: NewsItem }) {
   const freshness = newsFreshness(item);
   return (
-    <a className={`er-news-card is-${freshness.state}`} href={articleHref(item)}>
+    <a className={`er-news-card is-${freshness.state} ${newsToneClass(item.category)}`} href={articleHref(item)}>
       <span className="er-news-card-media"><NewsImage item={item} className="er-news-photo" /></span>
       <span className="er-news-card-body">
         <small>{newsCategoryLabel(item.category)} · {formatNewsDate(item.published_at)}</small>
@@ -129,7 +134,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
   return (
     <div className="er-featured-grid">
       {list.map((item) => (
-        <a key={item.id} className="er-featured-card" href={articleHref(item)}>
+        <a key={item.id} className={`er-featured-card ${newsToneClass(item.category)}`} href={articleHref(item)}>
           <span className="er-featured-media"><NewsImage item={item} className="er-news-photo" /></span>
           <span className="er-featured-body">
             <small>

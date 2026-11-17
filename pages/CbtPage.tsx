@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
-import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import FilterPills from '../src/components/FilterPills';
 import SectionHead from '../src/components/SectionHead';
@@ -128,13 +127,13 @@ export default function CbtPage() {
             </div>
           </div>
 
+          {/* The white simulator tiles are gone. They duplicated the coloured
+              bank cards below (same exams, same banks, a second trip through
+              the catalogue) and on a phone they pushed the actual subject
+              choice off the first screen. The coloured cards carry the exam's
+              identity, its mark and the exact bank id, so one list is enough. */}
           <section className="er-section" style={{ marginTop: 0 }}>
-            <SectionHead title="Choose an exam simulator" />
-            <ExamSimulatorGrid variant="start" />
-          </section>
-
-          <section className="er-section">
-            <SectionHead title="Browse specific question banks" />
+            <SectionHead title="Choose a question bank" />
             <div style={{ marginBottom: '18px' }}>
               <FilterPills options={modes} active={mode} onChange={changeMode} ariaLabel="Exam categories" />
             </div>

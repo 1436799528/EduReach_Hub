@@ -93,6 +93,11 @@ Full detail: [`design-system.md`](../design/ux-5/design-system.md).
 - **Icons:** Lucide only, 14–18 px in text; no emoji or mixed families.
 - **Cards:** existing white surface, 1 px neutral border, 12–16 px radius,
   existing shadow; no gradients, coloured cards or new elevation.
+  **Exception (NEWS-1):** the news card is a coloured gradient with white type
+  and a photographic header. This rule produced the white 1:1 square that made
+  the board read as shrunken placeholders on a phone, so it was reversed for that
+  one surface. See [`docs/features/NEWS-1-GRADIENT-CARDS.md`](../features/NEWS-1-GRADIENT-CARDS.md);
+  simulators, services and scholarships remain white squares.
 - **Motion:** functional, 120–160 ms; reduced-motion honoured.
 
 ## 5. Flows and information architecture

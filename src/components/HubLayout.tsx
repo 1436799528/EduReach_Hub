@@ -120,6 +120,7 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
       <ConnectionBanner />
       {/* CLEAN MAIN HEADER */}
       <header
+        className="hub-header"
         style={{
           background: '#ffffff',
           borderBottom: '1px solid #e2e8f0',
@@ -130,7 +131,7 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
         }}
       >
         <div
-          className="hub-container"
+          className="hub-container hub-header-row"
           style={{
             display: 'flex',
             alignItems: 'center',
