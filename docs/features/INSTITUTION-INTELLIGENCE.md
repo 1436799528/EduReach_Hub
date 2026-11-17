@@ -33,7 +33,7 @@ Consequences that shaped the design:
 
 ## 2. Schema (migration `20261117120000_institution_intelligence.sql`)
 
-Sixteen tables plus one view, all additive. Legacy `edureach_sources` was created
+Sixteen tables plus one view, all additive. The migration explicitly extends the hosted legacy `institution_profiles` table; `CREATE TABLE IF NOT EXISTS` alone does not upgrade an existing table. Legacy `edureach_sources` was created
 back in the prototype and exists in production; the migration creates it only when
 absent, inside a `do` block guarded by `to_regclass`, so replaying on production
 leaves it and its policies untouched.
@@ -55,9 +55,7 @@ leaves it and its policies untouched.
 
 Design points worth keeping:
 
-- **Every published table carries `verification_status` and
-  `publication_status` separately.** "Someone checked it" and "we chose to show
-  it" are different editorial acts.
+- **Verification and publication are separate editorial acts.** The legacy `institution_profiles.profile_status` completeness field is preserved, while the new `publication_status` controls visibility. Existing rows default to `draft`.
 - **Benchmarks carry their own scale** (`benchmark_value`, `score_scale_min`,
   `score_scale_max`, `value_unit`) and never share a column with a UTME score.
   Aggregates are 0–100, UTME scores 0–400, and the schema will happily store both
@@ -159,7 +157,22 @@ suites.
   and are deliberately untouched: they are unreviewed legacy surfaces, and the new
   tables supersede them rather than migrate their contents.
 
-## 7. Rollout order
+## 7. Staging verification (2026-11-17)
+
+The dedicated non-production staging project has both migrations applied. Its
+Supabase recorded execution-time versions `20261117093002` and `20261117093004` in its staging ledger. The canonical repository filenames remain `20261117120000` and `20261117121000` so the project migration checklist and production release tooling retain their established ordering. The migration DDL is idempotent; a later repository-driven staging push may replay it safely. The public institution
+directory baseline (329 identity rows and basic portal metadata) was copied from
+production with `is_verified=false`; no research profiles, sources, admission
+facts, user data or media were copied.
+
+A transactional importer smoke test used the first research batch's 17 source
+records and two institution profile records in dry-run mode. The database
+reported 17 source inserts and 2 profile inserts, zero rejections, and then
+rolled back. Counts before and after remained 0 sources and 0 profiles. This
+proves the function accepts the profile payload shape without committing it.
+No other research entities were imported.
+
+## 8. Rollout order
 
 1. Apply `20261117120000` then `20261117121000` to a non-production database
    (`supabase db push` or the CI replay).

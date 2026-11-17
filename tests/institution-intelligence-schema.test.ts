@@ -67,7 +67,7 @@ before(async () => {
     insert into public.edureach_sources (id, name, url, authority, source_type)
     values ('${SOURCE}', 'Synthetic University A official site', 'https://example.edu.ng/', 'Synthetic University A', 'official');
     insert into public.institution_profiles
-      (institution_id, official_name, ownership, institution_category, year_established, profile_status, verification_status, source_url)
+      (institution_id, official_name, ownership, institution_category, year_established, publication_status, verification_status, source_url)
     values ('${INST_A}', 'Synthetic University A', 'federal', 'university', 1975, 'published', 'verified', 'https://example.edu.ng/about'),
            ('${INST_B}', 'Synthetic University B', 'state', 'university', 1999, 'in_review', 'in_review', 'https://example.edu.ng/about');
     insert into public.institution_programme_offerings
@@ -224,6 +224,21 @@ test('a projection cannot be stored without a named model', async () => {
     insert into public.student_admission_goal_attempts (goal_id, student_id, attempt_id, match_status, projection_model, projection_value)
     select id, '${STUDENT}', '${secondAttempt}', 'matched', 'documented-model-v1', 268 from public.student_admission_goals where student_id = '${STUDENT}';
   `);
+});
+
+test('legacy profile completeness state is separate from publication state', async () => {
+  const { rows } = await db.query<{ column_name: string }>(
+    `select column_name from information_schema.columns
+     where table_schema = 'public' and table_name = 'institution_profiles'`,
+  );
+  const columns = new Set(rows.map((row) => row.column_name));
+  assert.ok(columns.has('profile_status'), 'legacy profile_status remains available');
+  assert.ok(columns.has('publication_status'), 'publication_status is a separate gate');
+  const { rows: states } = await db.query<{ publication_status: string }>(
+    `select publication_status from public.institution_profiles
+     where institution_id = '${INST_A}'`,
+  );
+  assert.equal(states[0].publication_status, 'published');
 });
 
 test('the completeness view counts only reviewed rows', async () => {

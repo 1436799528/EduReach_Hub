@@ -20,6 +20,7 @@ create or replace function public.institution_import_bump(p_summary jsonb, p_buc
 returns jsonb
 language sql
 immutable
+set search_path = pg_catalog
 as $bump$
   select jsonb_set(
     p_summary,
@@ -111,7 +112,7 @@ begin
         institution_id, official_name, ownership, institution_category, year_established,
         history_summary, overview, mission, vision, mandate, postal_address, city,
         official_website_url, admission_portal_url, student_portal_url, postgraduate_portal_url,
-        logo_url, hero_image_url, profile_status, verification_status, source_id, source_url
+        logo_url, hero_image_url, publication_status, verification_status, source_id, source_url
       ) values (
         v_institution, v_item->>'officialName', nullif(v_item->>'ownership',''),
         nullif(v_item->>'institutionCategory',''), nullif(v_item->>'yearEstablished','')::smallint,
@@ -141,7 +142,7 @@ begin
         postgraduate_portal_url = excluded.postgraduate_portal_url,
         logo_url = excluded.logo_url,
         hero_image_url = excluded.hero_image_url,
-        profile_status = 'in_review',
+        publication_status = 'in_review',
         verification_status = 'in_review',
         source_id = excluded.source_id,
         source_url = excluded.source_url;

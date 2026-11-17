@@ -60,8 +60,8 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
 
       const [profile, leadership, campuses, units, offerings, routes, guides, policies] = await Promise.all([
         supabase.from('institution_profiles')
-          .select('institution_id,official_name,ownership,institution_category,year_established,history_summary,overview,mission,vision,mandate,postal_address,city,logo_url,hero_image_url,official_website_url,admission_portal_url,student_portal_url,postgraduate_portal_url,profile_status,verification_status')
-          .eq('institution_id', institutionId).eq('profile_status', 'published').eq('verification_status', 'verified').maybeSingle(),
+          .select('institution_id,official_name,ownership,institution_category,year_established,history_summary,overview,mission,vision,mandate,postal_address,city,logo_url,hero_image_url,official_website_url,admission_portal_url,student_portal_url,postgraduate_portal_url,publication_status,verification_status')
+          .eq('institution_id', institutionId).eq('publication_status', 'published').eq('verification_status', 'verified').maybeSingle(),
         supabase.from('institution_leadership')
           .select('office_key,office_title,full_name,acting_status,starts_on,is_current,verification_status')
           .eq('institution_id', institutionId).eq('is_current', true).eq('verification_status', 'verified'),
