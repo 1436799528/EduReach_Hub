@@ -278,6 +278,64 @@ registerRestrictedBankAdminRoutes(app, {
 // cached for a minute; writes are capability-gated and audited.
 registerSiteContentRoutes(app, { requireCapability, getSupabase: getServerSupabase, recordAudit });
 
+/**
+ * Temporary pre-launch email signup path.
+ *
+ * When EDUREACH_PRELAUNCH_AUTH=true, create email accounts with confirmation
+ * already marked complete so testers can sign up and enter the app without an
+ * email link/code. This route must be disabled before public launch.
+ */
+app.post('/api/auth/prelaunch-signup', rateLimitFor(RATE_LIMIT_RULES.prelaunchSignup), async (req, res) => {
+  if (process.env.EDUREACH_PRELAUNCH_AUTH !== 'true') {
+    return res.status(404).json({ error: 'Pre-launch signup is disabled.' });
+  }
+
+  try {
+    const body = (req.body ?? {}) as {
+      email?: unknown;
+      password?: unknown;
+      user_metadata?: Record<string, unknown>;
+    };
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+
+    if (!email || !email.includes('@') || email.length > 254) {
+      return res.status(400).json({ error: 'Enter a valid email address.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    }
+
+    const metadata = body.user_metadata && typeof body.user_metadata === 'object'
+      ? body.user_metadata
+      : {};
+
+    const { data, error } = await getServerSupabase().auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: metadata,
+    });
+
+    if (error) {
+      const message = /already.*registered|already.*exists|duplicate/i.test(error.message)
+        ? 'An account with this email already exists. Sign in instead.'
+        : 'Unable to create your EduReach account right now.';
+      return res.status(400).json({ error: message });
+    }
+
+    return res.status(201).json({
+      user: {
+        id: data.user?.id,
+        email: data.user?.email,
+      },
+    });
+  } catch (error) {
+    console.error('Pre-launch signup error:', error);
+    return res.status(503).json({ error: 'Unable to create your EduReach account right now.' });
+  }
+});
+
 app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), async (req, res) => {
   try {
     const configuredEmail = String(process.env.EDUREACH_ADMIN_BOOTSTRAP_EMAIL || '').trim().toLowerCase();
