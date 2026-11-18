@@ -395,7 +395,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
         // Pre-launch mode: the server can create already-confirmed accounts so
         // testers do not need an email link/code before launch. The server route
-        // is explicitly disabled unless EDUREACH_PRELAUNCH_AUTH=true.
+        // is disabled only when EDUREACH_PRELAUNCH_AUTH=false.
         const prelaunchResponse = await fetch(apiUrl('/api/auth/prelaunch-signup'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
