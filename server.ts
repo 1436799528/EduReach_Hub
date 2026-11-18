@@ -286,7 +286,9 @@ registerSiteContentRoutes(app, { requireCapability, getSupabase: getServerSupaba
  * email link/code. This route must be disabled before public launch.
  */
 app.post('/api/auth/prelaunch-signup', rateLimitFor(RATE_LIMIT_RULES.prelaunchSignup), async (req, res) => {
-  if (process.env.EDUREACH_PRELAUNCH_AUTH !== 'true') {
+  // Pre-launch is enabled by default for the current development phase; set
+  // EDUREACH_PRELAUNCH_AUTH=false before the public launch.
+  if (process.env.EDUREACH_PRELAUNCH_AUTH === 'false') {
     return res.status(404).json({ error: 'Pre-launch signup is disabled.' });
   }
 
