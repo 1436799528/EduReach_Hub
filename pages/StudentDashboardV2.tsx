@@ -40,6 +40,7 @@ import SkipLink from '../src/components/a11y/SkipLink';
 import SiteFooter from '../src/components/SiteFooter';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
+import { isStaffRole, resolveAppRole } from '../src/lib/capabilities';
 import { useAuth } from '../src/lib/auth';
 import { navigateInApp } from '../src/lib/navigation';
 import { pageTitleFor } from '../src/lib/pageMeta';
@@ -360,13 +361,6 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       ]);
       if (!active) return;
 
-      let adminSession = false;
-      try {
-        const adminResponse = await fetch(apiUrl('/api/admin/session'), { headers: { Authorization: `Bearer ${session.access_token}` } });
-        adminSession = adminResponse.ok;
-      } catch {
-        adminSession = false;
-      }
       // `user_metadata` is writable by the account holder, so it must never be
       // read for a role - not even for this label. `app_metadata` is written only
       // by the auth admin API and the console shell (pages/AdminLayout.tsx)
@@ -375,12 +369,27 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       // admin call is authorized server-side.
       const metadataRole = String(user.app_metadata?.role || '').toLowerCase();
       const profileRole = String(profileResult.data?.role || metadataRole || '').toLowerCase();
+      const profileIsStaff = isStaffRole(resolveAppRole(profileRole));
+      if (!active) return;
+
+      // A normal student dashboard does not need to call a staff-gated endpoint
+      // just to receive an expected 403. Only profiles that can resolve to a
+      // staff role ask the server to confirm the console session.
+      let adminSession = false;
+      if (profileIsStaff) {
+        try {
+          const adminResponse = await fetch(apiUrl('/api/admin/session'), { headers: { Authorization: `Bearer ${session.access_token}` } });
+          adminSession = adminResponse.ok;
+        } catch {
+          adminSession = false;
+        }
+      }
       if (!active) return;
 
       setIsLocalMode(false);
       setUserId(user.id);
       setEmail(user.email || '');
-      setIsAdminUser(adminSession || ['admin', 'super_admin', 'moderator'].includes(profileRole));
+      setIsAdminUser(adminSession || profileIsStaff);
       if (profileResult.data) {
         setProfile(profileResult.data as Profile);
         setMfaEnabled(Boolean(profileResult.data.mfa_enabled));

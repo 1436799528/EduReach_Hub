@@ -136,6 +136,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   // email/phone sign-in also ends here because both set the auth event first.
   useEffect(() => {
     if (isLoading || !isAuthenticated || !user) return;
+    // A deliberate visit to /register is not an auth return. Without this guard
+    // an existing session redirects to the dashboard before a new email can be
+    // submitted, and the dashboard's staff probe then looks like an admin check
+    // during signup. The signup form already records terms and navigates when
+    // the new account is ready.
+    if (currentMode === 'signup') return;
     if (settlingReturn.current) return;
     settlingReturn.current = true;
     let active = true;
@@ -152,7 +158,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       navigateInApp(getSafeNextPath());
     })().finally(() => { settlingReturn.current = false; });
     return () => { active = false; };
-  }, [isAuthenticated, isLoading, user?.id]);
+  }, [isAuthenticated, isLoading, user?.id, currentMode]);
 
   function changeMode(next: Mode) {
     setCurrentMode(next);
