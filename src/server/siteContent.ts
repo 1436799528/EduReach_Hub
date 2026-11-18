@@ -167,6 +167,17 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
   // Public: what the footer and the policy pages read.
   // -------------------------------------------------------------------------
   app.get('/api/site-content', async (_req, res) => {
+    // A preview/CI server may intentionally have no Supabase credentials.
+    // Return the empty published payload instead of a 503 so the public shell
+    // can use its shipped fallback without creating a browser network error.
+    const hasBackend = Boolean(
+      process.env.VITE_SUPABASE_URL
+      && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY),
+    );
+    if (!hasBackend) {
+      return res.json({ settings: {}, pages: [] });
+    }
+
     try {
       const supabase = deps.getSupabase();
       const [settingsResult, pagesResult] = await Promise.all([
