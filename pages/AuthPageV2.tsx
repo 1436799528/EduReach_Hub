@@ -393,6 +393,43 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           throw new Error('EduReach account registration is not available until the live account service is configured.');
         }
 
+        // Pre-launch mode: the server can create already-confirmed accounts so
+        // testers do not need an email link/code before launch. The server route
+        // is explicitly disabled unless EDUREACH_PRELAUNCH_AUTH=true.
+        const prelaunchResponse = await fetch(apiUrl('/api/auth/prelaunch-signup'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+            user_metadata: signupMetadata(),
+          }),
+        });
+
+        if (prelaunchResponse.status === 201) {
+          const { error: prelaunchSignInError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+          if (prelaunchSignInError) throw prelaunchSignInError;
+          notifyAuthChanged();
+          navigateInApp(getSafeNextPath());
+          return;
+        }
+
+        // Normal launch mode: preserve Supabase's standard email-confirmation flow.
+        // A 404 means the temporary pre-launch route is disabled.
+        if (prelaunchResponse.status !== 404) {
+          let prelaunchError = 'Unable to create your EduReach account right now.';
+          try {
+            const payload = await prelaunchResponse.json() as { error?: string };
+            if (payload.error) prelaunchError = payload.error;
+          } catch {
+            // Keep the generic message if the response is not JSON.
+          }
+          throw new Error(prelaunchError);
+        }
+
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
