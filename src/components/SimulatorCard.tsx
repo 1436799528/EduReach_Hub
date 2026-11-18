@@ -6,9 +6,11 @@ import type { SimulatorCardModel } from '../data/simulators';
  *
  * The homepage, the public Practice page and the authenticated CBT tab all
  * render this component, so the three surfaces cannot drift apart. The card's
- * architecture (logo plate, examination label, title, description, meta row and
- * a single thin arrow) is fixed here; the only thing an examination changes is
- * its faint tint, applied by `data-exam-type` in `src/styles/ux5-product.css`.
+ * architecture (fixed logo frame, examination label, title, description, meta
+ * row and a single thin arrow) is fixed here; the only thing an examination
+ * changes is its faint tint, applied by `data-exam-type` in
+ * `src/styles/ux5-product.css`. The frame lets the emblem zoom on hover without
+ * changing the card's footprint.
  *
  * Colour follows the examination, never the card's position, which is why the
  * tint is expressed as a data attribute rather than a generated style.
@@ -23,14 +25,18 @@ export default function SimulatorCard({ simulator }: { simulator: SimulatorCardM
   const content = (
     <>
       <span className="er-sim-top">
-        <img
-          src={simulator.logo}
-          alt=""
-          width={40}
-          height={40}
-          loading="lazy"
-          decoding="async"
-        />
+        {/* Fixed frame: the emblem can press outward on hover without ever
+            changing the card's footprint. */}
+        <span className="er-sim-mark" aria-hidden="true">
+          <img
+            src={simulator.logo}
+            alt=""
+            width={40}
+            height={40}
+            loading="lazy"
+            decoding="async"
+          />
+        </span>
         <span className="er-sim-badge">{simulator.label}</span>
       </span>
       <span className="er-sim-body">

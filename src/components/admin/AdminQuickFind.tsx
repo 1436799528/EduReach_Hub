@@ -19,6 +19,11 @@ export default function AdminQuickFind({ items }: { items: AdminQuickFindItem[] 
   const id = useId();
   const listId = `admin-quickfind-${id}`;
   const rootRef = useRef<HTMLFormElement>(null);
+  // The finder is a visible accelerator, not a hidden command palette. The
+  // label advertises the platform spelling of the same global shortcut.
+  const shortcutLabel = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+    ? '⌘K'
+    : 'Ctrl K';
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -160,6 +165,7 @@ export default function AdminQuickFind({ items }: { items: AdminQuickFindItem[] 
         value={query}
         placeholder="Find a page"
         aria-label="Find an admin page"
+        aria-keyshortcuts="Control+K Meta+K"
         role="combobox"
         aria-expanded={showPanel}
         aria-controls={showPanel ? listId : undefined}
@@ -174,6 +180,7 @@ export default function AdminQuickFind({ items }: { items: AdminQuickFindItem[] 
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
       />
+      <kbd className="admin-quickfind-shortcut" aria-hidden="true">{shortcutLabel}</kbd>
       {showPanel && (
         <div className="admin-quickfind-pop">
           {needle && !flat.length ? (

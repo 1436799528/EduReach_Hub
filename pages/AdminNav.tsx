@@ -14,7 +14,20 @@ export function useNavigate() {
  * away rather than changed section. Writing the history entry here keeps the
  * shell mounted and makes the active state update in the same render.
  */
-export function NavLink({ href, icon, children, onNavigate }: { href: string; icon: ReactNode; children: ReactNode; onNavigate?: () => void }) {
+export function NavLink({
+  href,
+  icon,
+  children,
+  onNavigate,
+  variant = 'sidebar',
+}: {
+  href: string;
+  icon: ReactNode;
+  children: ReactNode;
+  onNavigate?: () => void;
+  /** The same destination can appear in the desktop sidebar or the phone tabs. */
+  variant?: 'sidebar' | 'mobile';
+}) {
   const active = window.location.pathname === href;
   const follow = (event: MouseEvent<HTMLAnchorElement>) => {
     // Let modified clicks open a new tab/window as the browser intended.
@@ -26,14 +39,15 @@ export function NavLink({ href, icon, children, onNavigate }: { href: string; ic
     onNavigate?.();
     navigateInApp(href);
   };
+  const mobile = variant === 'mobile';
   return (
     <a
-      className={`admin-nav-link ${active ? 'active' : ''}`}
+      className={mobile ? `admin-mobile-tab ${active ? 'active' : ''}` : `admin-nav-link ${active ? 'active' : ''}`}
       href={href}
       aria-current={active ? 'page' : undefined}
       onClick={follow}
     >
-      <span className="admin-nav-icon">{icon}</span>
+      <span className={mobile ? 'admin-mobile-tab-icon' : 'admin-nav-icon'}>{icon}</span>
       <span>{children}</span>
     </a>
   );

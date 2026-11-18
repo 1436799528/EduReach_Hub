@@ -751,14 +751,31 @@
   margin-top: var(--er-space-5);
 }
 
+/* One compact geometry on every surface. The legacy square ratio belonged to
+   an older two-up mobile layout; leaving it in the cascade made a phone render
+   four 358px squares instead of four rows. The final card system opts out once,
+   here, and owns its height, spacing, edge and elevation. */
 .er-sim-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--er-space-3);
   overflow: hidden;
+  aspect-ratio: auto;
+  /* One fixed row height keeps home, Practice and the dashboard identical and
+     lets the skeleton reserve exactly the same footprint. */
+  height: 219px;
   min-height: 148px;
   padding: var(--er-space-4);
+  border: 1px solid var(--er-sim-border);
   border-radius: var(--er-radius-md);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  /* A tight contact shadow plus a soft ambient one reads as depth without
+     turning the compact surface into a floating slab. */
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 24px rgba(15, 23, 42, .025);
+  text-decoration: none;
+  transform: translateY(0);
+  transition: border-color 200ms ease-out, box-shadow 200ms ease-out, transform 200ms ease-out;
 }
 
 .er-sim-card::before {
@@ -768,20 +785,70 @@
   width: 3px;
   background: var(--er-sim-accent);
   opacity: 0;
-  transition: opacity .15s ease;
+  transition: opacity 200ms ease-out;
 }
 
-/* The hover is a slightly stronger edge and a soft lift — no colour change and
-   no heavy shadow, so the card still reads as the same surface. */
-.er-sim-card:hover {
+/* Hover lifts the card 8px over 200ms and deepens both shadows. It never scales
+   the card: a transform keeps the grid footprint fixed, while a scale would
+   push against neighbouring cards. Pointer-only so a tap cannot leave the
+   lifted state stuck on a phone. */
+@media (hover: hover) and (pointer: fine) {
+  .er-sim-card:hover {
+    border-color: var(--er-sim-accent) !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .10), 0 18px 36px rgba(15, 23, 42, .10);
+    transform: translateY(-8px);
+  }
+
+  .er-sim-card:hover::before {
+    opacity: 1;
+  }
+
+  .er-sim-card:hover .er-sim-mark img {
+    transform: scale(1.05);
+  }
+
+  .er-sim-card:hover .er-sim-foot > span:first-child,
+  .er-sim-card:hover .er-sim-foot .er-card-arrow {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  .er-sim-card:hover .er-sim-foot .er-card-arrow {
+    transform: translate(3px, 0);
+  }
+}
+
+/* Keyboard users receive the same affordance as a pointer hover. */
+.er-sim-card:focus-visible {
   border-color: var(--er-sim-accent) !important;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
-  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, .10), 0 18px 36px rgba(15, 23, 42, .10);
+  transform: translateY(-8px);
 }
 
-.er-sim-card:hover::before,
 .er-sim-card:focus-visible::before {
   opacity: 1;
+}
+
+.er-sim-card:focus-visible .er-sim-mark img {
+  transform: scale(1.05);
+}
+
+.er-sim-card:focus-visible .er-sim-foot > span:first-child,
+.er-sim-card:focus-visible .er-sim-foot .er-card-arrow {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+.er-sim-card[aria-disabled='true']:hover,
+.er-sim-card[aria-disabled='true']:focus-visible {
+  border-color: var(--er-sim-border) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 24px rgba(15, 23, 42, .025);
+  transform: none;
+}
+
+.er-sim-card[aria-disabled='true']:hover::before,
+.er-sim-card[aria-disabled='true']:focus-visible::before {
+  opacity: 0;
 }
 
 .er-sim-body > strong {
@@ -792,6 +859,11 @@
 }
 
 .er-sim-body > small {
+  flex: 0 1 auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
   color: var(--er-text-secondary) !important;
   font-size: var(--er-type-meta) !important;
   line-height: 1.45;
@@ -808,18 +880,71 @@
 }
 
 .er-sim-foot {
+  margin-top: auto;
   border-top-color: var(--er-sim-border) !important;
   color: var(--er-text-secondary) !important;
   font-size: var(--er-type-meta) !important;
 }
 
-.er-sim-foot .er-card-arrow {
-  color: var(--er-sim-accent);
+/* A catalogue description and bank count must fit the standard card instead
+   of making one tile taller than its neighbours. */
+.er-sim-foot > span:first-child {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-/* A light tint needs no white plate behind the brand mark. */
-.er-sim-top img {
-  border-radius: 8px;
+.er-sim-foot .er-card-arrow {
+  flex: none;
+}
+
+/* The footer is the card's action row. Its two quiet parts arrive 60ms apart,
+   anchored below the title rather than floating over it. */
+.er-sim-foot > span:first-child,
+.er-sim-foot .er-card-arrow {
+  /* 90% keeps the small metadata above AA on every exam tint while still
+     allowing a quiet reveal on hover. */
+  opacity: .9;
+  transform: translateY(3px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.er-sim-foot .er-card-arrow {
+  color: var(--er-sim-accent);
+  transition-delay: 60ms;
+}
+
+/* Fixed glass frame: the official emblem presses outward to 1.05 while the
+   card and the 40px plate keep their exact dimensions. */
+.er-sim-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .68);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .06);
+}
+
+.er-sim-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+  transform: scale(1);
+  transition: transform 200ms ease-out;
+}
+
+/* The catalogue skeleton holds the same desktop card height as the finished
+   four-up row, so the section does not jump when the banks arrive. */
+.er-sim-grid .er-skeleton-tile {
+  height: 219px;
+  min-height: 219px;
 }
 
 /* On phones the horizontal card rail hid three of the four exams. A compact
@@ -838,7 +963,10 @@
   .er-sim-card {
     flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
     gap: var(--er-space-3);
+    aspect-ratio: auto;
+    height: 84px;
     min-height: 84px;
     padding: 12px 14px 12px 16px;
     scroll-snap-align: none;
@@ -851,9 +979,14 @@
     gap: 6px;
   }
 
-  .er-sim-top img {
+  .er-sim-mark {
     width: 32px;
     height: 32px;
+  }
+
+  .er-sim-mark img {
+    width: 100%;
+    height: 100%;
   }
 
   /* The title already names the exam; the badge would repeat it. */
@@ -891,8 +1024,48 @@
     display: none;
   }
 
-  /* The skeleton used to reserve 734 px for the old horizontal rail, which
-     left an empty screen under the four compact rows. */
+  /* A one-affordance row keeps its arrow fully visible, without the desktop
+     hover reveal. */
+  .er-sim-foot .er-card-arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The placeholder must be the same compact row as the card it replaces, not
+     the square tile left behind by the old two-up phone layout. Only its logo
+     and title shimmer remain; the desktop description and footer bars are
+     hidden rather than forcing the row to grow. */
+  .er-sim-grid .er-skeleton-tile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--er-space-3);
+    height: 84px;
+    min-height: 84px;
+    padding: 12px 16px;
+    border-radius: var(--er-radius-md);
+    aspect-ratio: auto;
+    overflow: hidden;
+  }
+
+  .er-sim-grid .er-skeleton-tile > :nth-child(n + 3) {
+    display: none;
+  }
+
+  .er-sim-grid .er-skeleton-tile > .er-skel-thumb {
+    flex: none;
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .er-sim-grid .er-skeleton-tile > .er-skel-line {
+    flex: 0 1 140px;
+    width: min(46%, 140px) !important;
+    height: 16px !important;
+    margin: 0;
+  }
+
+  /* Four 84px rows plus three 8px gaps; no 734px empty rail. */
   .er-late-region--simulators {
     --er-late-min: 360px;
   }
@@ -1305,7 +1478,6 @@
   .hub-outline-btn,
   .dash-btn,
   .admin-btn,
-  .er-sim-card,
   .er-mini-link {
     min-height: var(--er-tap-target);
   }
@@ -1481,6 +1653,24 @@
 @media (prefers-reduced-motion: reduce) {
   .er-sim-card:hover {
     transform: none;
+  }
+
+  .er-sim-card:focus-visible {
+    transform: none;
+  }
+
+  .er-sim-mark img,
+  .er-sim-foot > span:first-child,
+  .er-sim-foot .er-card-arrow,
+  .er-sim-card:hover .er-sim-mark img,
+  .er-sim-card:focus-visible .er-sim-mark img,
+  .er-sim-card:hover .er-sim-foot > span:first-child,
+  .er-sim-card:hover .er-sim-foot .er-card-arrow,
+  .er-sim-card:focus-visible .er-sim-foot > span:first-child,
+  .er-sim-card:focus-visible .er-sim-foot .er-card-arrow {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 

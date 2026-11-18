@@ -57,6 +57,7 @@ test('an available simulator renders as a link into its own workflow', () => {
   assert.ok(link!.className.includes('er-sim-jamb'), 'and the legacy class still matches');
   assert.match(container.textContent ?? '', /JAMB UTME/, 'the simulator is named');
   assert.match(container.textContent ?? '', /Timed practice · 1 question bank/, 'the card states what is behind it');
+  assert.ok(container.querySelector('.er-sim-mark img'), 'the emblem sits in its fixed frame');
   assert.ok(container.querySelector('.er-card-arrow'), 'the only action is the thin arrow');
   assert.equal(container.querySelector('[aria-disabled]'), null, 'an available card is not marked disabled');
 
