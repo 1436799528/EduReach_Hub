@@ -29,6 +29,7 @@ import {
 import { markPendingTermsAcceptance, readTermsAcceptance, settlePendingTermsAcceptance } from '../src/lib/legalConsent';
 import { navigateInApp } from '../src/lib/navigation';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
+import { EMAIL_VERIFICATION_ENABLED } from '../src/lib/emailVerification';
 import { InlineNotice } from '../src/components/AsyncState';
 import BrandLogo from '../src/components/BrandLogo';
 import OtpInput from '../src/components/OtpInput';
@@ -74,7 +75,7 @@ function goBack() {
 
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [currentMode, setCurrentMode] = useState<Mode>(mode);
+  const [currentMode, setCurrentMode] = useState<Mode>(mode === 'verify' && !EMAIL_VERIFICATION_ENABLED ? 'signin' : mode);
   const [contactMethod, setContactMethod] = useState<ContactMethod>('email');
   const [accountType, setAccountType] = useState<'student' | 'parent' | 'teacher'>('student');
   const [firstName, setFirstName] = useState('');
@@ -405,9 +406,22 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           navigateInApp(getSafeNextPath());
           return;
         }
-        setVerifyEmailSent(email.trim());
-        setCurrentMode('verify');
-        setMessage('Open the verification email we sent, or enter its code below.');
+        if (EMAIL_VERIFICATION_ENABLED) {
+          setVerifyEmailSent(email.trim());
+          setCurrentMode('verify');
+          setMessage('Open the verification email we sent, or enter its code below.');
+          return;
+        }
+        // Temporary pre-launch mode: Supabase auto-confirms new email accounts,
+        // so finish sign-up by signing the tester in immediately. Banks are
+        // resolved only when they open the chosen simulator.
+        const { error: autoSignInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (autoSignInError) throw new Error('Your account was created, but automatic sign-in failed. Please sign in to continue.');
+        notifyAuthChanged();
+        navigateInApp(getSafeNextPath());
         return;
       }
 
@@ -525,7 +539,11 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
 
               <header className="auth-card-heading">
                 <h1 id="auth-title">{pageTitle}</h1>
-                {currentMode !== 'signup' && (
+                {currentMode === 'signup' ? (
+                  EMAIL_VERIFICATION_ENABLED ? null : (
+                    <p>Test accounts are ready immediately; email confirmation is temporarily off.</p>
+                  )
+                ) : (
                   <p>
                     {currentMode === 'signin'
                       ? 'Sign in to continue to your saved services and practice.'

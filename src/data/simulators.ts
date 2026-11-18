@@ -223,6 +223,32 @@ export function simulatorStartHref(mode: string, examId?: string): string {
   return examId ? `/cbt/practice?exam=${encodeURIComponent(examId)}` : '/cbt';
 }
 
+/**
+ * Built-in homepage discovery cards.
+ *
+ * The public home page shows the four exam families immediately so testers can
+ * see and open every simulator without waiting for the question-bank catalogue.
+ * The destination setup page resolves the published bank only after a click.
+ * Practice and the dashboard keep using the authoritative catalogue through
+ * `buildSimulatorCards()`.
+ */
+export const BUILTIN_SIMULATOR_CARDS: SimulatorCardModel[] = SIMULATOR_EXAM_TYPES.map((examType) => {
+  const profile = PROFILES[examType];
+  return {
+    key: examType,
+    examType,
+    label: profile.label,
+    title: profile.title,
+    description: profile.description,
+    logo: profile.logo,
+    href: simulatorStartHref(examType),
+    meta: 'Timed practice',
+    available: true,
+    bankCount: 0,
+    questionCount: null,
+  };
+});
+
 /** Public copy shared by every surface that hosts the simulator grid. */
 export const SIMULATOR_HUB_COPY = {
   practice: {
