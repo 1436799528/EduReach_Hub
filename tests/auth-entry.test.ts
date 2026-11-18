@@ -104,3 +104,41 @@ test('the welcome heading is centred and follows the logo palette', () => {
   assert.match(css, /--auth-brand:var\(--er-primary/);
   assert.match(css, /--auth-blue-ink/);
 });
+
+test('a fresh email signup is not hijacked by an existing session or admin checks', () => {
+  const page = read('pages/AuthPageV2.tsx');
+  assert.match(page, /if \(currentMode === 'signup'\) return;/, 'a deliberate /register visit stays available while signed in');
+  assert.match(page, /\[isAuthenticated, isLoading, user\?\.id, currentMode\]/, 'the return effect follows mode changes');
+  assert.match(page, /mode === 'verify' && !EMAIL_VERIFICATION_ENABLED \? 'signin' : mode/, 'direct verification links still open sign-in while verification is off');
+  assert.match(page, /await bootstrapAdmin\(\);/, 'sign-in admin bootstrap is preserved');
+  assert.match(page, /isAdmin \? '\/admin' : getSafeNextPath\(\)/, 'staff sign-in routing is preserved');
+
+  const submitStart = page.indexOf('async function submit(');
+  const signupStart = page.indexOf("if (currentMode === 'signup') {", submitStart);
+  const signinStart = page.indexOf("if (currentMode === 'signin') {", signupStart);
+  assert.ok(submitStart > 0 && signupStart > submitStart && signinStart > signupStart, 'signup and sign-in branches are separate');
+  const signupBlock = page.slice(signupStart, signinStart);
+  assert.match(signupBlock, /supabase\.auth\.signUp\(/, 'new emails are created by Supabase Auth');
+  assert.match(signupBlock, /signInWithPassword\(/, 'a new email without an immediate session is signed in');
+  assert.match(signupBlock, /navigateInApp\(getSafeNextPath\(\)\)/, 'the new user reaches the app');
+  assert.match(signupBlock, /if \(EMAIL_VERIFICATION_ENABLED\)/, 'the verification branch remains behind the off-by-default switch');
+  assert.doesNotMatch(signupBlock, /bootstrapAdmin|admin\/session/, 'signup does not probe or bootstrap admin access');
+
+  const flag = read('src/lib/emailVerification.ts');
+  assert.match(flag, /VITE_EMAIL_VERIFICATION_ENABLED === 'true'/);
+  assert.equal(flag.includes('= true'), false, 'verification stays off unless explicitly re-enabled');
+  assert.match(read('.env.example'), /VITE_EMAIL_VERIFICATION_ENABLED=false/);
+  assert.match(read('.env.production.example'), /VITE_EMAIL_VERIFICATION_ENABLED=false/);
+});
+
+test('student dashboards do not call the staff-gated session endpoint', () => {
+  const dashboard = read('pages/StudentDashboardV2.tsx');
+  assert.match(dashboard, /import \{ isStaffRole, resolveAppRole \} from '\.\.\/src\/lib\/capabilities';/);
+  assert.match(dashboard, /const profileIsStaff = isStaffRole\(resolveAppRole\(profileRole\)\);/);
+  assert.match(dashboard, /setIsAdminUser\(adminSession \|\| profileIsStaff\)/);
+
+  const gate = dashboard.indexOf('if (profileIsStaff) {');
+  const probe = dashboard.indexOf("fetch(apiUrl('/api/admin/session')", gate);
+  const afterProbe = dashboard.indexOf('setIsLocalMode(false);', probe);
+  assert.ok(gate > 0 && probe > gate && afterProbe > probe, 'the admin-session request is inside the staff-only branch');
+});
