@@ -178,6 +178,7 @@ export function createRateLimiter(
  */
 export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {
   adminBootstrap: { name: 'admin-bootstrap', limit: 5, windowSeconds: 900, durable: true },
+  prelaunchSignup: { name: 'prelaunch-signup', limit: 20, windowSeconds: 600, durable: true },
   guestCbtSubmit: { name: 'guest-cbt-submit', limit: 30, windowSeconds: 600, durable: true },
   // CBT-2: creating a configured attempt is a database write with a frozen
   // paper, so it is counted across instances like the other expensive routes.
