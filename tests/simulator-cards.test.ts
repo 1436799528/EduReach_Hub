@@ -274,3 +274,18 @@ test('an exam hub deep link opens Practice on that examination', () => {
   }
   assert.doesNotMatch(hub, /Question Banks', href: '\/cbt\?mode=/, 'the old unfiltered bank wording is gone');
 });
+
+test('homepage shows built-in cards and borrows the Services phone card setup', () => {
+  const home = read('pages/HubHomePage.tsx');
+  assert.match(home, /BUILTIN_SIMULATOR_CARDS/, 'the homepage supplies four built-in discovery cards');
+  assert.match(home, /deferCatalogue/, 'the homepage defers bank data until a card is opened');
+  assert.match(home, /er-home-simulators/, 'the service-card treatment is scoped to the homepage section');
+  assert.match(grid, /initialCards\?: readonly SimulatorCardModel\[\]/);
+  assert.match(grid, /showBuiltInCards/);
+  assert.match(data, /export const BUILTIN_SIMULATOR_CARDS/);
+  assert.match(product, /\.er-home-simulators \.er-sim-grid \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(product, /\.er-home-simulators \.er-sim-card \{[\s\S]*?aspect-ratio: 1 \/ 1/);
+  assert.match(product, /\.er-home-simulators \.er-sim-body > small \{[\s\S]*?display: -webkit-box !important/);
+  assert.match(product, /\.er-home-simulators \.er-sim-foot > span:first-child \{[\s\S]*?display: block !important/);
+  assert.match(product, /@media \(max-width: 620px\)[\s\S]*?\.hub-side-rail \{ display: none !important; \}/);
+});

@@ -123,7 +123,8 @@ test('the practice page is one simulator hub, not a second card system', () => {
   // the homepage and the dashboard CBT tab use.
   assert.match(cbtPage, /<ExamSimulatorGrid[^>]*showFilters/, 'one shared simulator grid is the way in');
   assert.doesNotMatch(cbtPage, /er-bank-card|setupPathForExam|Choose a question bank/, 'the duplicate bank list is gone');
-  assert.match(read('pages/HubHomePage.tsx'), /<ExamSimulatorGrid \/>/, 'the home page uses the same component');
+  assert.match(read('pages/HubHomePage.tsx'), /<ExamSimulatorGrid\b/, 'the home page uses the same component');
+  assert.match(read('pages/HubHomePage.tsx'), /BUILTIN_SIMULATOR_CARDS/, 'with built-in discovery cards visible immediately');
   assert.match(read('src/components/ExamSimulatorGrid.tsx'), /<SimulatorCard key=\{simulator\.key\}/, 'and the same card');
 });
 

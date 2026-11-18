@@ -14,6 +14,7 @@ import {
 import HubLayout from '../src/components/HubLayout';
 import SectionHead from '../src/components/SectionHead';
 import ExamSimulatorGrid from '../src/components/ExamSimulatorGrid';
+import { BUILTIN_SIMULATOR_CARDS } from '../src/data/simulators';
 import SiteSearch from '../src/components/LazySiteSearch';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { useAuth } from '../src/lib/auth';
@@ -81,9 +82,9 @@ export default function HubHomePage() {
             </div>
           </section>
 
-          <section className="er-section" aria-label="Choose your exam">
+          <section className="er-section er-home-simulators" aria-label="Choose your exam">
             <SectionHead title="Choose your exam" />
-            <ExamSimulatorGrid />
+            <ExamSimulatorGrid initialCards={BUILTIN_SIMULATOR_CARDS} deferCatalogue />
           </section>
 
           <section className="er-section" aria-label="Study tools">

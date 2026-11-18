@@ -36,6 +36,8 @@ export default function ExamSimulatorGrid({
   emptyMessage = 'No active public question banks are connected right now. Browse past questions while the bank catalogue is updated.',
   initialFilter = 'ALL',
   onFilterChange,
+  initialCards,
+  deferCatalogue = false,
 }: {
   showFilters?: boolean;
   emptyMessage?: string;
@@ -43,14 +45,19 @@ export default function ExamSimulatorGrid({
   initialFilter?: string;
   /** Lets the host page keep the address bar in step with the chosen filter. */
   onFilterChange?: (id: string) => void;
+  /** Built-in discovery cards shown immediately while bank data is deferred. */
+  initialCards?: readonly SimulatorCardModel[];
+  /** Skip the catalogue request; the destination loads bank data when opened. */
+  deferCatalogue?: boolean;
 }) {
+  const showBuiltInCards = deferCatalogue && Boolean(initialCards?.length);
   const [exams, setExams] = useState<CbtExamSummary[]>([]);
   const [error, setError] = useState<unknown>(null);
   // Whether the catalogue has answered at all. Until it has, the section shows
   // placeholders: claiming "no question banks have been published" while the
   // request is still in flight is both wrong and a layout jump when the cards
-  // arrive.
-  const [settled, setSettled] = useState(false);
+  // arrive. Built-in discovery cards are already settled on first paint.
+  const [settled, setSettled] = useState(showBuiltInCards);
   const [attempt, setAttempt] = useState(0);
   // Exam hubs link here as /cbt?mode=jamb; the filter opens on that exam rather
   // than asking the visitor to find it again in the pill row.
@@ -62,6 +69,7 @@ export default function ExamSimulatorGrid({
   const phase = usePendingPhase(!settled && error === null);
 
   useEffect(() => {
+    if (showBuiltInCards) return;
     let active = true;
     setError(null);
     setSettled(false);
@@ -79,9 +87,12 @@ export default function ExamSimulatorGrid({
       .catch((value) => active && setError(value))
       .finally(() => { if (active) setSettled(true); });
     return () => { active = false; };
-  }, [attempt]);
+  }, [attempt, showBuiltInCards]);
 
-  const cards = useMemo<SimulatorCardModel[]>(() => buildSimulatorCards(exams), [exams]);
+  const cards = useMemo<SimulatorCardModel[]>(
+    () => showBuiltInCards ? [...(initialCards || [])] : buildSimulatorCards(exams),
+    [showBuiltInCards, initialCards, exams],
+  );
   const filters = useMemo(() => simulatorFilters(cards), [cards]);
   const visible = useMemo(() => filterSimulatorCards(cards, activeFilter), [cards, activeFilter]);
 

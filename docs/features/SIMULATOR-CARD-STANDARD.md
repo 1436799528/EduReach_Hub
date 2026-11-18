@@ -13,10 +13,15 @@ and on desktop it stretched the 148px card into a square.
 
 | State | Desktop (≥641px) | Phone (≤640px) |
 |---|---|---|
-| Grid | 4 / 3 columns from `edu-portal.css` | 1 column, no sideways rail |
-| Card | fixed `219px` row (`min-height: 148px`), `aspect-ratio: auto` | fixed `84px` row, `aspect-ratio: auto` |
-| Content | logo + badge, title, description, bottom meta/arrow | 32px logo, title, one arrow |
-| Skeleton | 219px tile, matching the finished card row | 84px row; no square placeholder |
+| Grid | 4 / 3 columns from `edu-portal.css` | 1 column on Practice/dashboard; 2 columns on the homepage |
+| Card | fixed `219px` row (`min-height: 148px`), `aspect-ratio: auto` | fixed `84px` row on Practice/dashboard; homepage uses `1 / 1` service-style cards |
+| Content | logo + badge, title, description, bottom meta/arrow | 32px logo, title, one arrow on Practice/dashboard; homepage restores the short description and action line |
+| Skeleton | 219px tile, matching the finished card row | 84px row on Practice/dashboard; the homepage has no skeleton because four built-in cards render immediately |
+
+The homepage is an intentional, narrowly scoped mobile exception requested after
+this standard: it borrows the Services page's two-up square card anatomy at
+`≤640px` only. It does not change Practice, the dashboard, desktop geometry,
+hover motion or the shared `SimulatorCard` component.
 
 The surface keeps its hairline border, faint exam tint, 16px padding, 12px
 radius, readable title hierarchy and layered contact/ambient shadows. Those

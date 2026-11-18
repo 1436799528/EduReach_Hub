@@ -1071,8 +1071,11 @@
   }
 }
 
-/* A one-line empty state must not reserve the height of the four-card feed. */
-.er-late-region--feed:has(> .er-empty) {
+/* Empty and error states must not reserve the height of a full feed skeleton. */
+.er-late-region--feed:has(> .er-empty),
+.er-late-region--feed-page:has(> .hub-empty),
+.er-late-region--feed-page:has(> .hub-form-error),
+.er-late-region--simulators:has(> .er-empty) {
   --er-late-min: 0;
 }
 
@@ -2550,4 +2553,124 @@
   .er-profile-pending { padding: 13px 14px; }
   .er-profile-session-bar { grid-template-columns: minmax(0, 1fr); }
   .er-profile-facts { grid-template-columns: minmax(0, 1fr); }
+}
+
+
+/* Homepage simulators borrow the Services page's phone card anatomy.
+   Scope is deliberately narrow: only the homepage, only <=640px. Practice and
+   the dashboard keep the compact 84px rows from the shared card standard. */
+@media (max-width: 640px) {
+  .er-home-simulators .er-late-region--simulators { --er-late-min: 0; }
+  .er-home-simulators .er-sim-grid {
+    display: grid !important;
+    grid-auto-flow: row !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .er-home-simulators .er-sim-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    min-height: 132px !important;
+    padding: 16px !important;
+    overflow: hidden;
+  }
+  .er-home-simulators .er-sim-card:focus-visible { transform: none !important; }
+  .er-home-simulators .er-sim-top { order: 0; flex: none; flex-direction: row; gap: 6px; }
+  .er-home-simulators .er-sim-mark {
+    width: 32px; height: 32px; background: transparent; box-shadow: none;
+  }
+  .er-home-simulators .er-sim-badge {
+    display: inline-flex !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--er-sim-accent) !important;
+    font-size: 9.5px !important;
+    font-weight: 650;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .er-home-simulators .er-sim-body {
+    order: 1;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    gap: 4px !important;
+  }
+  .er-home-simulators .er-sim-body > strong {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 14px !important;
+    line-height: 1.25;
+  }
+  .er-home-simulators .er-sim-body > small {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 0 0 auto !important;
+    max-height: 30px;
+    font-size: 11px !important;
+    line-height: 1.35;
+  }
+  .er-home-simulators .er-sim-foot {
+    order: 2;
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+    flex: none !important;
+    width: 100%;
+    min-height: 16px;
+    margin-top: auto !important;
+    padding-top: 4px !important;
+    border-top: 1px solid var(--er-sim-border) !important;
+    color: #b14933 !important;
+    font-size: 9px !important;
+    line-height: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .er-home-simulators .er-sim-foot > span:first-child {
+    display: block !important;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #b14933 !important;
+    font-size: 9px !important;
+    line-height: 12px;
+    font-weight: 600;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .er-home-simulators .er-sim-foot .er-card-arrow {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 12px;
+    height: 12px;
+    opacity: 1 !important;
+    transform: none !important;
+    color: #b14933 !important;
+  }
+  .er-home-simulators .er-sim-foot .er-card-arrow svg { width: 11px; height: 11px; }
+  .er-home-simulators .er-sim-grid .er-skeleton-tile { display: none !important; }
+}
+
+/* The news side rail is desktop-only. On phones its stacked sections duplicated
+   the bottom navigation and sat behind it; other public pages have no rail. */
+@media (max-width: 620px) {
+  .hub-side-rail { display: none !important; }
 }
