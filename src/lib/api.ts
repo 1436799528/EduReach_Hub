@@ -218,18 +218,12 @@ export async function fetchUpcoming(): Promise<UpcomingItem[]> {
 }
 
 export async function fetchCbtExams(): Promise<CbtExamSummary[]> {
-  // Without a backend there is no bank to describe. Returning invented
-  // "preview" exams here used to produce cards that could never start, because
-  // the questions they referenced no longer exist anywhere.
-  if (!isSupabaseConfigured) return [];
-
-  const { data, error } = await supabase
-    .from('cbt_exams')
-    .select('id,title,exam_body,subject,description,duration_minutes,institution_id')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
-  if (error) throw new Error(userFacingError(error));
-  return data || [];
+  // The public catalogue is served by the API boundary, not by a direct
+  // browser read of cbt_exams. This keeps the bank-security policy in one
+  // place and lets preview/E2E environments replace the catalogue response
+  // without needing real Supabase credentials.
+  const body = await jsonFetch<{ items?: CbtExamSummary[] }>('/api/cbt/exams');
+  return body.items || [];
 }
 
 
