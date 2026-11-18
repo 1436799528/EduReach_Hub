@@ -524,12 +524,17 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 }
 .admin-top-links a:hover,
 .admin-top-links a[aria-current="page"] { background: var(--er-primary-soft); color: var(--er-primary); }
-.admin-breadcrumb { display: flex; align-items: center; gap: 9px; min-width: 0; color: var(--admin-muted); font-size: 12px; }
-.admin-breadcrumb strong { overflow: hidden; color: var(--admin-navy); text-overflow: ellipsis; white-space: nowrap; }
+/* Admin routes are only two levels deep, so this is a page context label,
+   not a breadcrumb trail. The active sidebar item supplies the hierarchy. */
+.admin-page-context { display: flex; align-items: center; min-width: 0; color: var(--admin-muted); font-size: 12px; }
+.admin-page-context strong { overflow: hidden; color: var(--admin-navy); font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
 .admin-topbar-user { max-width: 180px; overflow: hidden; color: var(--admin-text); font-size: 12px; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
 .admin-menu-toggle { display: none; }
 .admin-drawer-backdrop { display: none; }
 .admin-drawer-close { display: none; }
+/* Navigation is platform-matched: desktop keeps the persistent sidebar;
+   phones get 3–4 primary tabs plus a secondary More disclosure. */
+.admin-mobile-tabs { display: none; }
 
 .admin-health-pill {
   flex: 0 0 auto;
@@ -631,30 +636,57 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   .admin-nav-link { width: 100%; min-height: 44px; margin: 3px 0; white-space: normal; }
   .admin-topbar {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
-    grid-template-areas:
-      "menu breadcrumb status"
-      "links links links";
-    gap: 4px 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "context status";
+    gap: 10px;
     min-height: 0;
-    padding: 6px 12px 8px;
+    padding: 8px 12px;
   }
-  .admin-menu-toggle {
-    grid-area: menu;
-    width: 44px;
-    height: 44px;
-    display: inline-grid;
-    place-items: center;
-    border: 1px solid var(--admin-border);
-    border-radius: var(--er-radius-sm);
-    background: var(--admin-surface);
-    color: var(--admin-navy);
-  }
-  .admin-breadcrumb { grid-area: breadcrumb; }
-  .admin-health-pill { grid-area: status; }
-  .admin-top-links { grid-area: links; justify-content: flex-start; }
+  /* The More tab is the phone's hamburger. Keeping a second one in the topbar
+     would duplicate the trigger and push primary destinations into a second
+     header row; both are hidden here in favour of the bottom bar. */
+  .admin-menu-toggle,
+  .admin-top-links,
   .admin-topbar-user { display: none; }
-  .admin-main { padding: 18px 14px; }
+  .admin-page-context { grid-area: context; }
+  .admin-health-pill { grid-area: status; }
+  .admin-main { padding: 18px 14px calc(78px + env(safe-area-inset-bottom)); }
+  .admin-mobile-tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: flex;
+    align-items: stretch;
+    height: calc(62px + env(safe-area-inset-bottom));
+    padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, .98);
+    box-shadow: 0 -3px 12px rgba(15, 23, 42, .08);
+  }
+  .admin-mobile-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--admin-muted);
+    font: 560 11px var(--er-font-sans);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .admin-mobile-tab > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .admin-mobile-tab-icon { display: inline-grid; place-items: center; color: #667085; }
+  .admin-mobile-tab.active { background: var(--er-primary-soft); color: var(--er-primary); }
+  .admin-mobile-tab.active .admin-mobile-tab-icon { color: var(--er-primary); }
+  .admin-mobile-tab:focus-visible { outline: 2px solid var(--color-focus, #1E40AF); outline-offset: -2px; }
   .admin-sidebar-footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px 14px; }
   .admin-sidebar-footer .admin-health-card { display: block; grid-column: 1 / -1; }
   .admin-sidebar-footer .admin-user-email { grid-column: 1 / -1; margin: 0; min-width: 0; }
@@ -831,8 +863,9 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-report-period { color: #667085; font-size: 11px; }
 
 @media (max-width: 760px) {
-  .admin-main { padding: 18px 16px 28px; }
-  .admin-topbar { padding: 0 14px; gap: 10px; }
+  /* Keep the fixed phone tabs clear of the footer at the narrower breakpoint too. */
+  .admin-main { padding: 18px 16px calc(78px + env(safe-area-inset-bottom)); }
+  .admin-topbar { padding: 8px 14px; gap: 10px; }
   .admin-page-header { flex-direction: column; gap: 12px; }
   .admin-header-actions { width: 100%; justify-content: space-between; }
   .admin-summary-item { padding: 12px; }
@@ -855,6 +888,19 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .admin-quickfind:focus-within { border-color: var(--er-primary); background: #fff; box-shadow: 0 0 0 2px rgba(30, 64, 175, .12); }
 .admin-quickfind input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #101828; font: 500 12px var(--er-font-sans); }
 .admin-quickfind input::placeholder { color: #475467; opacity: 1; }
+.admin-quickfind-shortcut {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border: 1px solid var(--admin-border);
+  border-radius: 5px;
+  background: #f8fafc;
+  color: #667085;
+  font: 600 10px/1.4 var(--er-font-sans);
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .admin-quickfind-shortcut { display: none; }
+}
 .admin-quickfind-pop {
   position: absolute;
   top: calc(100% + 6px);

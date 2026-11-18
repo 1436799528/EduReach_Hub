@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import '../src/admin.css';
 import '../src/admin-analytics.css';
 import {
@@ -181,6 +181,31 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin/pdf-bank', label: 'PDF Bank', icon: <FileText size={15} />, capability: 'data.read' },
 ];
 
+/**
+ * The phone bar shows the first three or four destinations this role can open.
+ * It is ordered across the console's main jobs, then capability-filtered by the
+ * same nav list as the sidebar. More opens the complete hierarchy; it is never
+ * the only way to a primary destination.
+ */
+const ADMIN_MOBILE_PRIMARY: ReadonlyArray<{ href: string; label: string }> = [
+  { href: '/admin', label: 'Overview' },
+  { href: '/admin/queue', label: 'Requests' },
+  { href: '/admin/cbt', label: 'CBT' },
+  { href: '/admin/news', label: 'News' },
+  { href: '/admin/services', label: 'Services' },
+  { href: '/admin/users', label: 'People' },
+  { href: '/admin/analytics', label: 'Reports' },
+  { href: '/admin/content', label: 'Dates' },
+  { href: '/admin/opportunities', label: 'Grants' },
+  { href: '/admin/site', label: 'Site' },
+  { href: '/admin/schools', label: 'Schools' },
+  { href: '/admin/banks', label: 'Banks' },
+  { href: '/admin/question-imports', label: 'Import' },
+  { href: '/admin/institution-intelligence', label: 'Insights' },
+  { href: '/admin/content-manager', label: 'Data' },
+  { href: '/admin/pdf-bank', label: 'PDFs' },
+];
+
 /** Path changes go through history/popstate in this app, so track them. */
 function useCurrentAdminPath(): string {
   const [path, setPath] = useState(() => window.location.pathname);
@@ -217,12 +242,49 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = useCurrentAdminPath();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const sidebarRef = useModalDialog<HTMLElement>(mobileNavOpen, () => setMobileNavOpen(false));
+  const pendingQuickFindFocus = useRef(false);
   const cached = sessionCache && Date.now() - sessionCache.verifiedAt < SESSION_CACHE_TTL_MS ? sessionCache : null;
   const [checking, setChecking] = useState(!cached);
   const [session, setSession] = useState<AdminSession | null>(cached?.session || null);
   const [backend, setBackend] = useState(cached?.backend || 'Checking…');
 
   useEffect(() => { setMobileNavOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    const focusSidebarFinder = () => document.querySelector<HTMLInputElement>('.admin-sidebar-search .admin-quickfind input')?.focus();
+    const openQuickFind = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat || event.altKey || event.shiftKey) return;
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k') return;
+      event.preventDefault();
+      const compact = window.matchMedia('(max-width: 900px)').matches;
+      const drawer = window.matchMedia('(max-width: 780px)').matches;
+      if (drawer) {
+        if (!mobileNavOpen) {
+          // Let the focus-managed drawer mount, then focus its visible finder.
+          pendingQuickFindFocus.current = true;
+          setMobileNavOpen(true);
+        } else {
+          window.requestAnimationFrame(focusSidebarFinder);
+        }
+        return;
+      }
+      const selector = compact
+        ? '.admin-sidebar-search .admin-quickfind input'
+        : '.admin-topbar > .admin-quickfind input';
+      window.requestAnimationFrame(() => document.querySelector<HTMLInputElement>(selector)?.focus());
+    };
+    document.addEventListener('keydown', openQuickFind);
+    return () => document.removeEventListener('keydown', openQuickFind);
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
+    if (!mobileNavOpen || !pendingQuickFindFocus.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>('.admin-sidebar-search .admin-quickfind input')?.focus();
+      pendingQuickFindFocus.current = false;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileNavOpen]);
 
   useEffect(() => {
     let active = true;
@@ -303,6 +365,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const navItems = ADMIN_CONSOLE_NAV.filter((item) => item.kind === 'group' || item.capability === null || hasCapability(session, item.capability));
   const activeSection = ADMIN_CONSOLE_NAV.find((item) => item.kind === 'link' && item.href === pathname);
   const quickFindItems = navItems.flatMap((item) => (item.kind === 'link' ? [{ href: item.href, label: item.label }] : []));
+  const mobilePrimary = ADMIN_MOBILE_PRIMARY
+    .map(({ href, label }) => {
+      const entry = navItems.find((item) => item.kind === 'link' && item.href === href);
+      return entry?.kind === 'link' ? { href, label, icon: entry.icon } : null;
+    })
+    .filter((item): item is { href: string; label: string; icon: ReactNode } => item !== null)
+    .slice(0, 4);
   const healthLabel = health.state === 'ok'
     ? `API reachable${health.latencyMs !== null ? ` in ${health.latencyMs} milliseconds` : ''}`
     : health.state === 'down' ? 'API unreachable' : 'Checking API health';
@@ -312,7 +381,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     {mobileNavOpen && <button type="button" className="admin-drawer-backdrop" aria-label="Close admin navigation" onClick={() => setMobileNavOpen(false)} />}
     <aside
       ref={sidebarRef}
-      id="admin-navigation"
+      id="admin-navigation-drawer"
       className={`admin-sidebar ${mobileNavOpen ? 'is-open' : ''}`}
       tabIndex={-1}
       role={mobileNavOpen ? 'dialog' : undefined}
@@ -355,14 +424,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <button
           type="button"
           className="admin-menu-toggle"
-          aria-controls="admin-navigation"
+          aria-controls="admin-navigation-drawer"
           aria-expanded={mobileNavOpen}
           aria-label={mobileNavOpen ? 'Close admin menu' : 'Open admin menu'}
           onClick={() => setMobileNavOpen((open) => !open)}
         >
           {mobileNavOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
         </button>
-        <div className="admin-breadcrumb"><span>Admin</span><span aria-hidden="true">/</span><strong>{activeSection?.kind === 'link' ? activeSection.label : 'Overview'}</strong></div>
+        <div className="admin-page-context"><strong>{activeSection?.kind === 'link' ? activeSection.label : 'Overview'}</strong></div>
         <AdminQuickFind items={quickFindItems} />
         <nav className="admin-top-links" aria-label="Admin shortcuts">
           <a href="/admin" aria-current={pathname === '/admin' ? 'page' : undefined}>Overview</a>
@@ -385,5 +454,31 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <SiteFooter />
       </main>
     </div>
+    {/* Mobile: 3–4 capability-aware primary destinations stay within thumb
+        reach. More is secondary; it discloses the full hierarchical drawer. */}
+    <nav className="admin-mobile-tabs" aria-label="Admin primary">
+      {mobilePrimary.map((item) => (
+        <NavLink
+          key={item.href}
+          href={item.href}
+          icon={item.icon}
+          variant="mobile"
+          onNavigate={() => setMobileNavOpen(false)}
+        >
+          {item.label}
+        </NavLink>
+      ))}
+      <button
+        type="button"
+        className={`admin-mobile-tab ${mobileNavOpen ? 'active' : ''}`}
+        aria-controls="admin-navigation-drawer"
+        aria-expanded={mobileNavOpen}
+        aria-label="More admin sections"
+        onClick={() => setMobileNavOpen(true)}
+      >
+        <span className="admin-mobile-tab-icon"><Menu size={18} aria-hidden="true" /></span>
+        <span>More</span>
+      </button>
+    </nav>
   </div>;
 }

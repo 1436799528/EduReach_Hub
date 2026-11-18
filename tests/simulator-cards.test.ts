@@ -178,6 +178,47 @@ test('the card keeps its own layout, link and interaction', () => {
   assert.match(product, /prefers-reduced-motion[\s\S]*?\.er-sim-card:hover \{\s*transform: none/, 'motion stays optional');
 });
 
+test('one compact geometry replaces the old square cards', () => {
+  const base = rules(product).find(([selector]) => selector === '.er-sim-card');
+  assert.ok(base, 'the desktop card has one base rule');
+  assert.match(base![1], /aspect-ratio: auto/, 'the retired square ratio cannot set the height');
+  assert.match(base![1], /min-height: 148px/, 'the desktop card keeps its compact floor');
+  assert.match(base![1], /height: 219px/, 'every desktop surface uses the same fixed row height');
+  assert.match(base![1], /justify-content: flex-start/, 'content is aligned, not spread by a legacy rule');
+
+  const mobile = /@media \(max-width: 640px\) \{\s*\.er-sim-grid[\s\S]*?\.er-sim-card \{([^}]*)\}/.exec(product);
+  assert.ok(mobile, 'the phone card has its own contract');
+  assert.match(mobile![1], /aspect-ratio: auto/, 'a phone row is never a square');
+  assert.match(mobile![1], /height: 84px/, 'and stays one fixed compact row');
+  assert.match(mobile![1], /min-height: 84px/, 'with the same touch-sized floor');
+  assert.match(mobile![1], /flex-direction: row/, 'logo, title and arrow share the row');
+  const phoneSkeleton = /\.er-sim-grid \.er-skeleton-tile \{([^}]*)\}/.exec(
+    product.slice(product.indexOf('@media (max-width: 640px) {\n  .er-sim-grid')),
+  );
+  assert.ok(phoneSkeleton, 'the phone placeholder has its own rule');
+  assert.match(phoneSkeleton![1], /height: 84px/, 'the loading placeholder reserves the same compact row');
+  assert.match(phoneSkeleton![1], /aspect-ratio: auto/, 'and drops the old square tile');
+  const desktopSkeleton = /\.er-sim-grid \.er-skeleton-tile \{([^}]*)\}/.exec(product);
+  assert.ok(desktopSkeleton, 'the desktop placeholder has its own rule');
+  assert.match(desktopSkeleton![1], /height: 219px/, 'desktop placeholder matches the finished card');
+});
+
+test('the card hover animates content, not the grid footprint', () => {
+  const hover = rules(product).find(([selector]) => selector === '.er-sim-card:hover');
+  assert.ok(hover, 'the hover state is defined once');
+  assert.match(hover![1], /transform: translateY\(-8px\)/, 'the card lifts 8px');
+  assert.doesNotMatch(hover![1], /scale\(/, 'the whole card never scales');
+
+  const base = rules(product).find(([selector]) => selector === '.er-sim-card');
+  assert.match(base![1], /transition: border-color 200ms ease-out/, 'the lift uses one 200ms beat');
+  assert.match(base![1], /box-shadow: 0 1px 2px[^;]*,\s*0 8px 24px/, 'two shadows define the resting surface');
+  assert.match(card, /className="er-sim-mark"/, 'the emblem has a fixed frame');
+  assert.match(product, /\.er-sim-mark \{[\s\S]*?overflow: hidden/, 'the emblem frame clips the zoom');
+  assert.match(product, /\.er-sim-card:hover \.er-sim-mark img \{\s*transform: scale\(1\.05\)/, 'only the image presses outward');
+  assert.match(product, /transition-delay: 60ms/, 'the revealed arrow follows the metadata by 60ms');
+  assert.match(product, /@media \(hover: hover\) and \(pointer: fine\)/, 'hover state stays off touch screens');
+});
+
 test('the hover is restrained and the border is hairline', () => {
   const hover = rules(product).find(([selector]) => selector === '.er-sim-card:hover');
   assert.ok(hover, 'the hover state is defined once');

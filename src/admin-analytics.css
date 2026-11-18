@@ -79,8 +79,8 @@
   border-bottom: 1px solid var(--admin-border);
   backdrop-filter: blur(10px);
 }
-.admin-breadcrumb { color: #5f6f76; font-size: 12px; font-weight: 500; }
-.admin-breadcrumb strong { color: #344054; font-weight: 560; }
+.admin-page-context { color: #5f6f76; font-size: 12px; font-weight: 500; }
+.admin-page-context strong { color: #344054; font-weight: 560; }
 .admin-top-links a {
   border-radius: 9px;
   color: #475467;
@@ -380,7 +380,8 @@
 @media (max-width: 780px) {
   .admin-sidebar { width: min(320px, 86vw); }
   .admin-topbar-user { display: none !important; }
-  .admin-main { padding: 18px 14px 30px; }
+  /* Imported after admin.css: keep the phone's fixed primary tabs clear. */
+  .admin-main { padding: 18px 14px calc(78px + env(safe-area-inset-bottom)); }
   .admin-page-header h1 { font-size: 24px; }
   .admin-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .admin-summary-item { padding: 14px; }
