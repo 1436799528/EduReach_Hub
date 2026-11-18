@@ -4,9 +4,8 @@ import { ErrorState } from './AsyncState';
 import { SkeletonTiles } from './Skeleton';
 import WaveLoader from './WaveLoader';
 import FilterPills from './FilterPills';
-import { fetchCbtExams, fetchCbtExamsWithAvailability, type CbtExamSummary } from '../lib/api';
+import { fetchCbtExams, type CbtExamSummary } from '../lib/api';
 import { usePendingPhase } from '../lib/usePendingPhase';
-import { isSupabaseConfigured } from '../lib/supabase';
 import {
   buildSimulatorCards,
   filterSimulatorCards,
@@ -68,9 +67,7 @@ export default function ExamSimulatorGrid({
     // The server catalogue is authoritative for both the bank and its question
     // availability. It works without exposing privileged bank reads to the
     // browser. The local preview has no published catalogue and says so.
-    const request = isSupabaseConfigured
-      ? fetchCbtExamsWithAvailability()
-      : fetchCbtExams();
+    const request = fetchCbtExams();
     void request
       .then((items) => {
         if (!active) return;
