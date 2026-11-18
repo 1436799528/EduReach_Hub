@@ -8,7 +8,6 @@
  */
 
 import { apiUrl } from './apiBase';
-import { isSupabaseConfigured } from './supabase';
 import { mergeSiteContent, type SiteContentPayload } from './siteContentModel';
 
 export type SiteContentSource = 'live' | 'fallback';
@@ -38,14 +37,6 @@ export function resetSiteContentCache(): void {
 }
 
 export async function loadSiteContent({ force = false }: { force?: boolean } = {}): Promise<LoadedSiteContent> {
-  if (!isSupabaseConfigured) {
-    // Local/CI previews deliberately have no live Supabase credentials. Do not
-    // call the server just to receive a predictable 503; the shipped content
-    // is already the documented fallback for this environment.
-    const fallback = cache ?? { content: mergeSiteContent(null), source: 'fallback' as const, fetchedAt: Date.now(), status: 'error' as const };
-    cache = fallback;
-    return fallback;
-  }
   if (!force && cache && Date.now() - cache.fetchedAt! < TTL_MS) return cache;
   if (!force && inflight) return inflight;
 
