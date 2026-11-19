@@ -19,7 +19,8 @@ const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 // A red gate must say what broke (see tests/e2e/report.ts). The per-page axe
 // tests stay quiet because the aggregate report below is more useful.
-test.afterEach(async (_fixtures, testInfo) => {
+// eslint-disable-next-line no-empty-pattern -- Playwright requires the first parameter to be a destructured fixtures object
+test.afterEach(async ({}, testInfo) => {
   if (testInfo.title.startsWith('axe:')) return;
   annotateFailure(testInfo);
 });

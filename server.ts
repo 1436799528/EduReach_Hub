@@ -3155,11 +3155,11 @@ app.post(
   async (req, res) => {
     try {
       const adminUser = (req as AuthorizedRequest).adminUser!;
-      // eslint-disable-next-line no-control-regex -- control characters are exactly what is being stripped from a filename
       const filenameRaw =
         String(req.body?.filename || '')
           .split(/[\\/]/)
           .pop()
+          // eslint-disable-next-line no-control-regex -- control characters are exactly what is being stripped from a filename
           ?.replace(/[\x00-\x1f\x7f]/g, '')
           .trim() || '';
       const filename = filenameRaw.slice(-180);
