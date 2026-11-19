@@ -176,6 +176,15 @@ backend.get('/rest/v1/exam_questions', (req, res) => {
     return res.json(Array.from({ length: Math.max(0, Math.min(limit, 121 - offset)) }, (_, i) => ({ id: `q-${offset + i + 1}`, position: offset + i + 1 })));
   }
   if (cbtQuestionsMissing) return res.json([]);
+  const wantsObject = String(req.header('accept') || '').includes('vnd.pgrst.object');
+  // A single-row lookup by id (the regrade tool reads one question) is answered
+  // with that question or with no row, never with the whole bank.
+  if (String(req.query.id || '').startsWith('eq.')) {
+    const requested = String(req.query.id).slice(3);
+    if (requested.includes('c1111111')) return wantsObject ? res.json(null) : res.json([]);
+    const row = { id: requested, exam_id: 'exam-1', subject: 'Mathematics', position: 4, correct_option: regradeKey, question_text: 'Synthetic question' };
+    return res.json(wantsObject ? row : [row]);
+  }
   return res.json([{ id: 'b1111111-1111-4111-8111-111111111111', subject: ' Test ', question_text: 'Question', option_a: 'A', option_b: 'B', option_c: 'C', option_d: 'D' }]);
 });
 let importReady = false;
@@ -244,6 +253,31 @@ bankRpc('cbt_bank_admin_assign', () => null);
 backend.post('/rest/v1/rpc/admin_audit_log', (req, res) => {
   recorded.push(`RPC admin_audit_log ${JSON.stringify(req.body)}`);
   return res.json(null);
+});
+// Answer-key regrade: the stub mirrors the SQL contract — the verdicts come
+// from the stored answer compared with the current key, and an apply that finds
+// nothing to move reports zero changes (which is what makes it idempotent).
+let regradeKey = 'B';
+let regradedFrom = 'B';
+let regradeAnswers = [{ attemptId: 'd1111111-1111-4111-8111-111111111111', userId: 'user-student', selected: 'B' }, { attemptId: 'd2222222-2222-4222-8222-222222222222', userId: 'user-service_admin', selected: 'A' }];
+backend.post('/rest/v1/rpc/cbt_regrade_question', (req, res) => {
+  recorded.push(`RPC cbt_regrade_question ${JSON.stringify(req.body)}`);
+  const apply = req.body?.p_apply === true;
+  const attempts = regradeAnswers
+    .map((row) => {
+      const wasCorrect = row.selected === regradedFrom;
+      const isCorrect = row.selected === regradeKey;
+      if (wasCorrect === isCorrect) return null;
+      const before = { score: wasCorrect ? 100 : 0, correctAnswers: wasCorrect ? 1 : 0, isCorrect: wasCorrect };
+      const after = { score: isCorrect ? 100 : 0, correctAnswers: isCorrect ? 1 : 0, isCorrect };
+      return { attemptId: row.attemptId, userId: row.userId, protocol: 'legacy', changed: true, before, after };
+    })
+    .filter(Boolean);
+  return res.json({
+    applied: apply, questionId: req.body?.p_question, examId: 'exam-1', correctOption: regradeKey,
+    grader: 'regrade-1', scanned: regradeAnswers.length, changed: attempts.length,
+    unchanged: regradeAnswers.length - attempts.length, truncated: false, attempts,
+  });
 });
 backend.get('/rest/v1/cbt_exams', (req, res) => {
   recorded.push('GET cbt_exams');
@@ -1510,4 +1544,113 @@ test('role labels have one shared source and public roles stay coarse', () => {
   assert.doesNotMatch(profile, /ROLE_CAPABILITIES|capabilitiesForRole/, 'public role labels do not expose the permission matrix');
   assert.equal(resolveAppRole('campus_agent'), 'student');
   assert.equal(resolveAppRole('moderator'), 'super_admin');
+});
+
+// ---------------------------------------------------------------------------
+// answer-key regrade (working guide 5.5 Step 7)
+// ---------------------------------------------------------------------------
+
+// The one question the regrade stub knows about. A corrected key is simulated
+// by moving `regradeKey` away from the key two students were graded against.
+const REGRADE_QUESTION = 'b1111111-1111-4111-8111-111111111111';
+const regradePath = `/api/admin/cbt/questions/${REGRADE_QUESTION}/regrade`;
+
+test('a regrade is refused to anonymous callers, students and unrelated staff', async () => {
+  const anonymous = await call(regradePath);
+  assert.equal(anonymous.status, 401);
+  for (const account of ['student', 'service_admin']) {
+    const preview = await call(regradePath, account);
+    assert.equal(preview.status, 403, `${account} must not preview a regrade`);
+    const apply = await call(regradePath, account, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({}) });
+    assert.equal(apply.status, 403, `${account} must not apply a regrade`);
+    assert.equal(JSON.stringify(apply.body).includes('cbt.manage'), false, 'the refusal must not name the missing capability');
+  }
+});
+
+test('a preview shows what a corrected key would move and writes nothing', async () => {
+  regradeKey = 'A';
+  recorded.length = 0;
+  const response = await call(regradePath, 'content_editor');
+  assert.equal(response.status, 200);
+  const result = response.body.result as { applied: boolean; scanned: number; changed: number; correctOption: string };
+  assert.equal(result.applied, false);
+  assert.equal(result.scanned, 2);
+  assert.equal(result.changed, 2, 'both students were graded against the old key');
+  assert.match(String(response.body.headline), /2 of 2 submitted attempts would change/);
+  assert.ok(recorded.some((entry) => entry.startsWith('RPC cbt_regrade_question') && entry.includes('"p_apply":false')));
+  assert.equal(recorded.some((entry) => entry.startsWith('RPC admin_audit_log')), false, 'a preview is not an action');
+  regradeKey = 'B';
+});
+
+test('applying a regrade records who changed which attempts, before and after', async () => {
+  regradeKey = 'A';
+  recorded.length = 0;
+  const response = await call(regradePath, 'content_editor', {
+    method: 'POST', headers: jsonHeaders, body: JSON.stringify({ expectedCorrectOption: 'A' }),
+  });
+  assert.equal(response.status, 200);
+  const result = response.body.result as { applied: boolean; changed: number; attempts: Array<Record<string, unknown>> };
+  assert.equal(result.applied, true);
+  assert.equal(result.changed, 2);
+  assert.match(String(response.body.headline), /Regraded 2 of 2 submitted attempts/);
+
+  const call_ = recorded.find((entry) => entry.startsWith('RPC cbt_regrade_question'));
+  assert.ok(call_);
+  assert.equal(call_!.includes('"p_apply":true'), true);
+  assert.equal(call_!.includes('expectedCorrectOption'), false, 'the confirmation is not forwarded to the grader');
+
+  const audit = recorded.find((entry) => entry.startsWith('RPC admin_audit_log'));
+  assert.ok(audit, 'an applied regrade must be audited');
+  assert.match(audit!, /cbt_question_regrade/);
+  assert.match(audit!, /exam_question/);
+  assert.match(audit!, new RegExp(REGRADE_QUESTION));
+  assert.match(audit!, /"changed":2/);
+  assert.match(audit!, /"before":\{"score":100/);
+  assert.match(audit!, /"after":\{"score":0/);
+  assert.match(audit!, /"result":"success"/);
+  regradeKey = 'B';
+});
+
+test('re-running the same regrade changes nothing', async () => {
+  // The stored results already match the current key: the second run is a
+  // no-op, which is the idempotency contract — it recomputes, it never adds.
+  regradeKey = 'A';
+  regradedFrom = 'A';
+  try {
+    recorded.length = 0;
+    const response = await call(regradePath, 'content_editor', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({}) });
+    assert.equal(response.status, 200);
+    assert.equal((response.body.result as { changed: number }).changed, 0);
+    assert.match(String(response.body.headline), /Nothing to change: 2 submitted attempts already match this key/);
+    const audit = recorded.find((entry) => entry.startsWith('RPC admin_audit_log'));
+    assert.ok(audit, 'a no-op run is still recorded, so "we checked" is in the trail');
+    assert.match(audit!, /"changed":0/);
+  } finally {
+    regradedFrom = 'B';
+    regradeKey = 'B';
+  }
+});
+
+test('a key that moved again since the review is refused instead of applied', async () => {
+  regradeKey = 'A';
+  recorded.length = 0;
+  try {
+    const response = await call(regradePath, 'content_editor', {
+      method: 'POST', headers: jsonHeaders, body: JSON.stringify({ expectedCorrectOption: 'B' }),
+    });
+    assert.equal(response.status, 409);
+    assert.match(String(response.body.error), /changed since you reviewed it/);
+    assert.equal(recorded.some((entry) => entry.startsWith('RPC cbt_regrade_question')), false, 'nothing may be regraded against a key nobody confirmed');
+  } finally { regradeKey = 'B'; }
+});
+
+test('an invalid, unknown or non-UUID question never reaches the grader', async () => {
+  recorded.length = 0;
+  const invalid = await call('/api/admin/cbt/questions/not-a-uuid/regrade', 'content_editor');
+  assert.equal(invalid.status, 400);
+  const missing = await call('/api/admin/cbt/questions/c1111111-1111-4111-8111-111111111111/regrade', 'content_editor');
+  assert.equal(missing.status, 404);
+  const missingApply = await call('/api/admin/cbt/questions/c1111111-1111-4111-8111-111111111111/regrade', 'content_editor', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({}) });
+  assert.equal(missingApply.status, 404);
+  assert.equal(recorded.some((entry) => entry.startsWith('RPC cbt_regrade_question')), false);
 });

@@ -10,6 +10,9 @@ Core domains:
 - exam_questions: protected question bank; answer keys are server-side.
 - cbt_attempts: student attempts, timing and the zero-based current question used for signed-in resume.
 - cbt_answers: active/submitted answers used for progress and result scoring.
+  `is_correct` is derived at submit and can be re-derived by `cbt_regrade_question`
+  (service-role only) after an answer key is corrected; `selected_option` is never
+  rewritten by a regrade.
 - question_reports: student reports about a question (wrong answer, typo, image, other),
   owner-scoped for read and insert, triaged through the admin API. `exam_questions`
   carries `open_report_count` and an advisory `report_flagged_at` (three open reports),

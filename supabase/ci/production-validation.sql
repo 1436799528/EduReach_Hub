@@ -261,7 +261,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261117121000', 'institution_import_function', '20261117121000_institution_import_function.sql', 'unique'),
     ('20261118120000', 'institution_review_gate', '20261118120000_institution_review_gate.sql', 'unique'),
     ('20261119120000', 'institution_catalogue_registry', '20261119120000_institution_catalogue_registry.sql', 'unique'),
-    ('20261119130000', 'question_reports', '20261119130000_question_reports.sql', 'unique')
+    ('20261119130000', 'question_reports', '20261119130000_question_reports.sql', 'unique'),
+    ('20261120090000', 'cbt_regrade', '20261120090000_cbt_regrade.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -441,7 +442,12 @@ with expected(version, migration) as (
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'site_page_revisions')
   union all
-  select 'public.question_reports', '20261119130000_question_reports.sql'
+  select 'public.cbt_regrade_question(uuid,boolean)' as object,
+         '20261120090000_cbt_regrade.sql' as migration
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'cbt_regrade_question')
+  union all
+    select 'public.question_reports', '20261119130000_question_reports.sql'
   where not exists (select 1 from information_schema.tables
                     where table_schema = 'public' and table_name = 'question_reports')
   union all

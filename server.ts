@@ -25,6 +25,7 @@ import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError 
 import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { cleanReportDetail, isQuestionReportCategory, isQuestionReportStatus } from './src/server/questionReports';
+import { checkExpectedKey, parseRegradeOutcome, regradeAuditMetadata, regradeHeadline } from './src/server/cbtRegrade';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
 import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, crawlerCacheHeaders, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
@@ -923,6 +924,134 @@ app.delete('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage
   } catch (error) {
     console.error('Admin CBT question delete error:', error);
     res.status(500).json({ error: 'Unable to remove CBT question.' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Answer-key regrade (working guide 5.5 Step 7)
+//
+// When a reviewer corrects a wrong answer key, every student who already
+// submitted a paper containing that question was graded against the old key.
+// The regrade tool re-derives those results from what the database already
+// holds: the student's stored `selected_option`, compared with the question's
+// current `correct_option`. No score and no answer is taken from the request.
+//
+// Recompute, not delta, is what makes it idempotent: run it twice and the
+// second run finds nothing to change. The preview (GET) and the apply (POST)
+// run the same database function, so an operator cannot be shown one number and
+// apply another.
+// ---------------------------------------------------------------------------
+
+type RegradeSubject = {
+  id: string;
+  exam_id: string;
+  subject: string | null;
+  position: number | null;
+  correct_option: string | null;
+  question_text: string | null;
+};
+
+async function readRegradeSubject(supabase: SupabaseClient, questionId: string) {
+  const { data, error } = await supabase
+    .from('exam_questions')
+    .select('id,exam_id,subject,position,correct_option,question_text')
+    .eq('id', questionId)
+    .maybeSingle();
+  if (error) return { failure: 'Unable to read this question.' as const };
+  if (!data) return { missing: true as const };
+  return { question: data as RegradeSubject };
+}
+
+app.get('/api/admin/cbt/questions/:questionId/regrade', requireCapability('cbt.read'), async (req, res) => {
+  try {
+    if (!CBT_V2_UUID.test(req.params.questionId)) return res.status(400).json({ error: 'Invalid CBT question.' });
+    const supabase = getServerSupabase();
+    const subject = await readRegradeSubject(supabase, req.params.questionId);
+    if ('failure' in subject) return res.status(503).json({ error: subject.failure });
+    if ('missing' in subject) return res.status(404).json({ error: 'Question not found.' });
+
+    const { data, error } = await supabase.rpc('cbt_regrade_question', {
+      p_question: req.params.questionId,
+      p_apply: false,
+    });
+    if (error) throw error;
+    const result = parseRegradeOutcome(data);
+    if (!result) return res.status(503).json({ error: 'Unable to preview this regrade.' });
+
+    res.json({
+      result,
+      headline: regradeHeadline(result),
+      question: {
+        id: subject.question.id,
+        exam_id: subject.question.exam_id,
+        subject: subject.question.subject,
+        position: subject.question.position,
+        correct_option: subject.question.correct_option,
+        question_text: subject.question.question_text,
+      },
+    });
+  } catch (error) {
+    console.error('CBT regrade preview error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to preview this regrade.';
+    res.status(httpStatusForErrorMessage(message)).json({
+      error: publicErrorMessage(message, 'Unable to preview this regrade.'),
+    });
+  }
+});
+
+app.post('/api/admin/cbt/questions/:questionId/regrade', requireCapability('cbt.manage'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    if (!CBT_V2_UUID.test(req.params.questionId)) return res.status(400).json({ error: 'Invalid CBT question.' });
+    const supabase = getServerSupabase();
+    const subject = await readRegradeSubject(supabase, req.params.questionId);
+    if ('failure' in subject) return res.status(503).json({ error: subject.failure });
+    if ('missing' in subject) return res.status(404).json({ error: 'Question not found.' });
+
+    // The operator states the key they believe is stored. If another reviewer
+    // corrected it again in the meantime, the regrade is refused rather than
+    // applied to a key nobody has looked at.
+    const confirmation = checkExpectedKey(req.body?.expectedCorrectOption, subject.question.correct_option);
+    if (!confirmation.ok) return res.status(confirmation.error.startsWith('Confirm') ? 400 : 409).json({ error: confirmation.error });
+
+    const { data, error } = await supabase.rpc('cbt_regrade_question', {
+      p_question: req.params.questionId,
+      p_apply: true,
+    });
+    if (error) throw error;
+    const result = parseRegradeOutcome(data);
+    if (!result) return res.status(503).json({ error: 'Unable to regrade these attempts.' });
+
+    // One audit entry per run: who ran it, which question and key, every
+    // affected attempt with its before/after, and when. A run that changed
+    // nothing is still recorded — "we checked and the key was already right" is
+    // part of the trail.
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'cbt_question_regrade',
+      resourceType: 'exam_question',
+      resourceId: subject.question.id,
+      metadata: regradeAuditMetadata(result),
+    });
+
+    res.json({
+      result,
+      headline: regradeHeadline(result),
+      question: {
+        id: subject.question.id,
+        exam_id: subject.question.exam_id,
+        subject: subject.question.subject,
+        position: subject.question.position,
+        correct_option: subject.question.correct_option,
+        question_text: subject.question.question_text,
+      },
+    });
+  } catch (error) {
+    console.error('CBT regrade error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to regrade these attempts.';
+    res.status(httpStatusForErrorMessage(message)).json({
+      error: publicErrorMessage(message, 'Unable to regrade these attempts.'),
+    });
   }
 });
 

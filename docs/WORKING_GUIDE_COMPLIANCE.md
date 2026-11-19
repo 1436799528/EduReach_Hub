@@ -86,7 +86,7 @@ Last full pass: 19 November 2026 (branch `arena/ccd0b3f2-edureach-hub`, PR #65).
 | 5.3 Report-a-question loop (Step I) | ✅ | `question_reports` + migration `20261119130000`, `POST /api/cbt/questions/:id/report`, admin triage `GET/PATCH /api/admin/question-reports`, control on the review screen. Flag at three open reports is advisory (hiding is not implemented). Contract: `docs/features/CONTENT-REPORT-1.md`; tests: `tests/question-reports.test.ts` | Auto-hide of flagged questions still needs a decision |
 | 5.4 Practice mode with per-answer feedback, server-selected, saved | ✅ | `tests/cbt-modes.test.ts`, `cbt-experience`, practice rules migrations | — |
 | 5.5 Engine: start, save, resume, submit, auto-submit, grading, concurrency, observability | ✅ | Protocol v2 endpoints in `server.ts`; auto-submit and lazy finalisation; grading tests; session gateway. **Production cannot run v2 until `cbt_attempts.protocol` exists there** | Production migration is the known blocker |
-| 5.5 Regrade tool after an answer-key fix | ✗ | No regrade path in code or scripts | **Approval item E** |
+| 5.5 Regrade tool after an answer-key fix | ✅ | `cbt_regrade_question` recomputes submitted attempts from the stored answer and the corrected key; `GET`/`POST /api/admin/cbt/questions/:id/regrade` (`cbt.read` preview, `cbt.manage` apply); idempotent by recompute, audited with before/after; admin UI control on each question card. See `docs/features/CBT-REGRADE-1.md` | Students are not notified automatically — no notification policy exists yet |
 | 5.6 Simulator UI: lean route, state machine, timer correction, sync queue, grid, submit, resume, every state | ✅ | IndexedDB journal + queue, drift-corrected timer, visibility resync, `never replaces the page` offline test | — |
 | 5.7 Results, review, progress (stored summaries, weak topics) | ✅ | `tests/dashboard-*` family, result and review routes in `docs/ROUTES.md`; report-a-problem from the review screen (CONTENT-REPORT-1) | — |
 | 5.8 Payments and plans | ◐ | Paystack environment names exist; no checkout, webhook or subscription gating found in code | Out of the current MVP scope unless the owner says otherwise |
@@ -152,7 +152,7 @@ Process, not code. Depends on Stage 8 observability (item C).
 
 ---
 
-## Approval items (nothing here is started)
+## Approval items (open ones are not started)
 
 | # | Proposal | Why the guide requires it | Effect if added | Essential? |
 |---|---|---|---|---|
@@ -160,7 +160,7 @@ Process, not code. Depends on Stage 8 observability (item C).
 | B | Netlify deploy previews per PR | 4.5 step 8 | Config-only; gives reviewers a live build per PR | Optional |
 | C | Error tracking + uptime/metrics wiring | 4.9, 8.7 | Needs an external service and a small integration; no student-facing change | Essential before launch |
 | D | ~~Question reporting loop~~ | 5.3 step I, 5.7 | **Approved and implemented 19 Nov 2026** — see CONTENT-REPORT-1 | Done |
-| E | Regrade tool for a corrected answer key | 5.5 step 7 | Admin-only endpoint + audit entry; touches results | Essential |
+| E | ~~Regrade tool for a corrected answer key~~ | 5.5 step 7 | **Approved and implemented 19 Nov 2026** — see `docs/features/CBT-REGRADE-1.md` | Done |
 | F | Content sampling-audit tool and recorded error rate | 6.5 | Script + a place to record outcomes | Recommended |
 
 Until these are approved, the work in this phase stays inside what the guide

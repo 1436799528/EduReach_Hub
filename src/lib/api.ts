@@ -748,6 +748,33 @@ export async function adminApiFetch<T>(path: string, init: RequestInit = {}): Pr
   });
 }
 
+/** Answer-key regrade (working guide 5.5 Step 7). */
+export type CbtRegradeVerdict = { score: number | null; correctAnswers: number; isCorrect: boolean };
+export type CbtRegradeChange = { attemptId: string; userId: string; protocol: string; changed: boolean; before: CbtRegradeVerdict; after: CbtRegradeVerdict };
+export type CbtRegradeResult = {
+  applied: boolean; questionId: string; examId: string; correctOption: 'A' | 'B' | 'C' | 'D';
+  grader: string; scanned: number; changed: number; unchanged: number; truncated: boolean;
+  attempts: CbtRegradeChange[];
+};
+export type CbtRegradeResponse = {
+  result: CbtRegradeResult;
+  headline: string;
+  question: { id: string; exam_id: string; subject: string | null; position: number | null; correct_option: string | null; question_text: string | null };
+};
+
+/** Preview only (capability cbt.read): writes nothing. */
+export async function previewCbtQuestionRegrade(questionId: string): Promise<CbtRegradeResponse> {
+  return await adminApiFetch<CbtRegradeResponse>(`/api/admin/cbt/questions/${encodeURIComponent(questionId)}/regrade`);
+}
+
+/** Apply (capability cbt.manage). Idempotent: a second call changes nothing. */
+export async function regradeCbtQuestion(questionId: string, expectedCorrectOption?: 'A' | 'B' | 'C' | 'D'): Promise<CbtRegradeResponse> {
+  return await adminApiFetch<CbtRegradeResponse>(`/api/admin/cbt/questions/${encodeURIComponent(questionId)}/regrade`, {
+    method: 'POST',
+    body: JSON.stringify(expectedCorrectOption ? { expectedCorrectOption } : {}),
+  });
+}
+
 export async function bootstrapAdmin(): Promise<void> {
   const headers = await authHeaders();
   if (!headers.Authorization) throw new Error('Sign in with the configured administrator account first.');
