@@ -23,7 +23,17 @@ const port = await new Promise((resolvePort, reject) => {
     server.close(() => resolvePort(address.port));
   });
 });
-const instance = new EmbeddedPostgres({ databaseDir: join(dir, 'db'), user: 'postgres', password: randomBytes(24).toString('hex'), port, persistent: true, autoRehydrateSymlinks: true, postgresFlags: ['-h', '127.0.0.1'], onLog: () => {}, onError: () => {} });
+const instance = new EmbeddedPostgres({
+  databaseDir: join(dir, 'db'),
+  user: 'postgres',
+  password: randomBytes(24).toString('hex'),
+  port,
+  persistent: true,
+  autoRehydrateSymlinks: true,
+  postgresFlags: ['-h', '127.0.0.1'],
+  onLog: () => {},
+  onError: () => {},
+});
 const clients = [];
 let started = false;
 try {
@@ -38,28 +48,41 @@ try {
   const [admin, first, second] = clients;
   await admin.query(await readFile(join(root, 'supabase/ci/platform-shims.sql'), 'utf8'));
   const migrationDir = join(root, 'supabase/migrations');
-  const files = (await readdir(migrationDir)).filter(file => file.endsWith('.sql')).sort();
+  const files = (await readdir(migrationDir)).filter((file) => file.endsWith('.sql')).sort();
   for (const file of files) {
-    try { await admin.query(await readFile(join(migrationDir, file), 'utf8')); }
-    catch (error) { throw new Error(`Synthetic replay failed at ${file}: ${error.message}`); }
+    try {
+      await admin.query(await readFile(join(migrationDir, file), 'utf8'));
+    } catch (error) {
+      throw new Error(`Synthetic replay failed at ${file}: ${error.message}`, { cause: error });
+    }
   }
   const student = 'a1111111-1111-4111-8111-111111111111';
-  await admin.query("insert into auth.users (id,email,raw_user_meta_data) values ($1,'race@synthetic.test','{}')", [student]);
-  const service = (await admin.query('select service_key from public.service_catalog where active is true order by id limit 1')).rows[0]?.service_key;
+  await admin.query("insert into auth.users (id,email,raw_user_meta_data) values ($1,'race@synthetic.test','{}')", [
+    student,
+  ]);
+  const service = (
+    await admin.query('select service_key from public.service_catalog where active is true order by id limit 1')
+  ).rows[0]?.service_key;
   assert.ok(service);
   for (const client of [first, second]) {
     await client.query('set role authenticated');
     await client.query("select set_config('request.jwt.claim.sub', $1, false)", [student]);
     await client.query("set statement_timeout = '10s'");
   }
-  const invoke = (client, key, body) => client.query('select * from public.submit_service_request_idempotent($1,$2::jsonb,$3::uuid,$4::uuid,false)', [service, JSON.stringify(body), key, student]);
+  const invoke = (client, key, body) =>
+    client.query('select * from public.submit_service_request_idempotent($1,$2::jsonb,$3::uuid,$4::uuid,false)', [
+      service,
+      JSON.stringify(body),
+      key,
+      student,
+    ]);
   const secondPid = second.processID;
   async function waitForBlockedTransaction() {
     const deadline = Date.now() + 5000;
     do {
       const result = await admin.query('select wait_event_type from pg_stat_activity where pid=$1', [secondPid]);
       if (result.rows[0]?.wait_event_type === 'Lock') return;
-      await new Promise(done => setTimeout(done, 20));
+      await new Promise((done) => setTimeout(done, 20));
     } while (Date.now() < deadline);
     throw new Error('The competing session did not block on the uncommitted transaction');
   }
@@ -74,8 +97,10 @@ try {
     const a = (await invoke(first, scenario.key, original)).rows[0];
     // Attach a rejection handler immediately so mismatch does not become an
     // unhandled rejection before the first transaction is committed.
-    const bResult = invoke(second, scenario.key, scenario.mismatch ? { notes: 'different' } : original)
-      .then(value => ({ value }), error => ({ error }));
+    const bResult = invoke(second, scenario.key, scenario.mismatch ? { notes: 'different' } : original).then(
+      (value) => ({ value }),
+      (error) => ({ error }),
+    );
     await waitForBlockedTransaction();
     await first.query(scenario.commit ? 'commit' : 'rollback');
     const b = await bResult;
@@ -86,24 +111,40 @@ try {
       assert.equal(b.value.rows[0].reference_code === a.reference_code, scenario.commit);
       assert.equal(b.value.rows[0].id === a.id, scenario.commit);
     }
-    const count = await admin.query('select count(*)::int as count from public.service_requests where user_id=$1 and submission_key=$2', [student, scenario.key]);
+    const count = await admin.query(
+      'select count(*)::int as count from public.service_requests where user_id=$1 and submission_key=$2',
+      [student, scenario.key],
+    );
     assert.equal(count.rows[0].count, 1, 'exactly one committed row per key');
-    console.log(`ok ${scenario.commit ? 'commit' : 'rollback'}${scenario.mismatch ? ' with mismatched payload' : ''}: competing session blocked; one committed row`);
+    console.log(
+      `ok ${scenario.commit ? 'commit' : 'rollback'}${scenario.mismatch ? ' with mismatched payload' : ''}: competing session blocked; one committed row`,
+    );
   }
   const pendingKey = 'c4444444-4444-4444-8444-444444444444';
   const pendingDetails = { notes: 'synthetic in-flight check' };
   await first.query('begin');
   const uncommitted = (await invoke(first, pendingKey, pendingDetails)).rows[0];
-  const check = () => second.query('select * from public.submit_service_request_idempotent($1,$2::jsonb,$3::uuid,$4::uuid,true)', [service, JSON.stringify(pendingDetails), pendingKey, student]);
+  const check = () =>
+    second.query('select * from public.submit_service_request_idempotent($1,$2::jsonb,$3::uuid,$4::uuid,true)', [
+      service,
+      JSON.stringify(pendingDetails),
+      pendingKey,
+      student,
+    ]);
   assert.equal((await check()).rows.length, 0, 'uncommitted rows remain unconfirmed and are not inserted by a check');
   await first.query('commit');
   assert.equal((await check()).rows[0].id, uncommitted.id, 'the same check can recover after commit');
-  const pendingCount = await admin.query('select count(*)::int as count from public.service_requests where user_id=$1 and submission_key=$2', [student, pendingKey]);
+  const pendingCount = await admin.query(
+    'select count(*)::int as count from public.service_requests where user_id=$1 and submission_key=$2',
+    [student, pendingKey],
+  );
   assert.equal(pendingCount.rows[0].count, 1);
   console.log('ok check-only: uncommitted row unconfirmed, committed row recovered, no extra insert');
-  console.log(`Passed using disposable local PostgreSQL after ${files.length} synthetic migrations. Hosted Auth/PostgREST not exercised.`);
+  console.log(
+    `Passed using disposable local PostgreSQL after ${files.length} synthetic migrations. Hosted Auth/PostgREST not exercised.`,
+  );
 } finally {
-  await Promise.allSettled(clients.map(client => client.end()));
+  await Promise.allSettled(clients.map((client) => client.end()));
   if (started) await instance.stop();
   await rm(dir, { recursive: true, force: true });
 }

@@ -74,24 +74,49 @@ function parseArgs(argv) {
       return value;
     };
     switch (token) {
-      case '--base-url': args.baseUrl = next(); break;
-      case '--scenario': args.scenario = next(); break;
-      case '--vus': args.vus = Number(next()); break;
-      case '--duration': args.duration = Number(next()); break;
-      case '--think-time-ms': args.thinkTimeMs = Number(next()); break;
-      case '--p95': args.p95 = Number(next()); break;
-      case '--p99': args.p99 = Number(next()); break;
-      case '--max-error-rate': args.maxErrorRate = Number(next()); break;
-      case '--allow-remote': args.allowRemote = true; break;
-      case '--json': args.json = true; break;
-      case '--help': args.help = true; break;
-      default: throw new Error(`Unknown argument: ${token}`);
+      case '--base-url':
+        args.baseUrl = next();
+        break;
+      case '--scenario':
+        args.scenario = next();
+        break;
+      case '--vus':
+        args.vus = Number(next());
+        break;
+      case '--duration':
+        args.duration = Number(next());
+        break;
+      case '--think-time-ms':
+        args.thinkTimeMs = Number(next());
+        break;
+      case '--p95':
+        args.p95 = Number(next());
+        break;
+      case '--p99':
+        args.p99 = Number(next());
+        break;
+      case '--max-error-rate':
+        args.maxErrorRate = Number(next());
+        break;
+      case '--allow-remote':
+        args.allowRemote = true;
+        break;
+      case '--json':
+        args.json = true;
+        break;
+      case '--help':
+        args.help = true;
+        break;
+      default:
+        throw new Error(`Unknown argument: ${token}`);
     }
   }
-  if (!WEIGHTS[args.scenario]) throw new Error(`Unknown scenario "${args.scenario}". Use one of: ${Object.keys(WEIGHTS).join(', ')}.`);
+  if (!WEIGHTS[args.scenario])
+    throw new Error(`Unknown scenario "${args.scenario}". Use one of: ${Object.keys(WEIGHTS).join(', ')}.`);
   if (!Number.isFinite(args.vus) || args.vus < 1) throw new Error('--vus must be a positive integer.');
   if (!Number.isFinite(args.duration) || args.duration < 1) throw new Error('--duration must be at least 1 second.');
-  if (!Number.isFinite(args.thinkTimeMs) || args.thinkTimeMs < 0) throw new Error('--think-time-ms must be zero or more.');
+  if (!Number.isFinite(args.thinkTimeMs) || args.thinkTimeMs < 0)
+    throw new Error('--think-time-ms must be zero or more.');
   return args;
 }
 
@@ -117,29 +142,37 @@ function makeClient(baseUrl, sockets) {
       const target = path.startsWith('http') ? path : origin + path;
       return new Promise((resolve, reject) => {
         const started = performance.now();
-        const request = transport.get(target, {
-          agent,
-          headers: { accept: '*/*', 'accept-encoding': 'identity', 'user-agent': 'edureach-load-probe' },
-        }, (response) => {
-          let length = 0;
-          const chunks = [];
-          response.on('data', (chunk) => {
-            length += chunk.length;
-            if (options.text && chunks.length < 200) chunks.push(chunk);
-          });
-          response.on('end', () => resolve({
-            status: response.statusCode || 0,
-            ms: performance.now() - started,
-            bytes: length,
-            text: options.text ? Buffer.concat(chunks).toString('utf8') : undefined,
-          }));
-          response.on('error', reject);
-        });
+        const request = transport.get(
+          target,
+          {
+            agent,
+            headers: { accept: '*/*', 'accept-encoding': 'identity', 'user-agent': 'edureach-load-probe' },
+          },
+          (response) => {
+            let length = 0;
+            const chunks = [];
+            response.on('data', (chunk) => {
+              length += chunk.length;
+              if (options.text && chunks.length < 200) chunks.push(chunk);
+            });
+            response.on('end', () =>
+              resolve({
+                status: response.statusCode || 0,
+                ms: performance.now() - started,
+                bytes: length,
+                text: options.text ? Buffer.concat(chunks).toString('utf8') : undefined,
+              }),
+            );
+            response.on('error', reject);
+          },
+        );
         request.setTimeout(30_000, () => request.destroy(new Error('client timeout after 30000 ms')));
         request.on('error', reject);
       });
     },
-    close() { agent.destroy(); },
+    close() {
+      agent.destroy();
+    },
   };
 }
 
@@ -167,7 +200,9 @@ function pick(plan) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log('Usage: node scripts/load/load-probe.mjs [--base-url URL] [--scenario public|api] [--vus N] [--duration S] [--think-time-ms N]');
+    console.log(
+      'Usage: node scripts/load/load-probe.mjs [--base-url URL] [--scenario public|api] [--vus N] [--duration S] [--think-time-ms N]',
+    );
     console.log('       [--p95 MS] [--p99 MS] [--max-error-rate 0..1] [--allow-remote] [--json]');
     return 0;
   }
@@ -175,7 +210,9 @@ async function main() {
   const url = new URL(args.baseUrl);
   if (!isLoopback(url.hostname) && !args.allowRemote) {
     console.error(`Refusing to load-test ${url.hostname}: only loopback targets are allowed without --allow-remote.`);
-    console.error('The audit brief forbids uncontrolled tests against the production site; point this at a staging host you own and approve first.');
+    console.error(
+      'The audit brief forbids uncontrolled tests against the production site; point this at a staging host you own and approve first.',
+    );
     return 2;
   }
 
@@ -208,10 +245,11 @@ async function main() {
   // generator's appetite, not a student's session, and every published
   // "users supported" figure becomes a fiction. Jitter keeps the workers from
   // marching in lockstep and creating a synthetic burst every cycle.
-  const pause = () => new Promise((resolve) => {
-    const jitter = (Math.random() * 0.6) - 0.3;
-    setTimeout(resolve, Math.max(0, args.thinkTimeMs * (1 + jitter)));
-  });
+  const pause = () =>
+    new Promise((resolve) => {
+      const jitter = Math.random() * 0.6 - 0.3;
+      setTimeout(resolve, Math.max(0, args.thinkTimeMs * (1 + jitter)));
+    });
 
   const worker = async () => {
     while (performance.now() < deadline) {
@@ -231,7 +269,7 @@ async function main() {
           errors += 1;
           bucket.errors += 1;
         }
-      } catch (error) {
+      } catch {
         requests += 1;
         errors += 1;
         const bucket = perStep.get(step.path);
@@ -265,11 +303,21 @@ async function main() {
     },
     statuses: Object.fromEntries([...statuses.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0])))),
     payload_mb: round(bytes / 1024 / 1024, 2),
-    per_step: Object.fromEntries([...perStep.entries()].map(([path, bucket]) => [path, {
-      requests: bucket.count,
-      errors: bucket.errors,
-      p95_ms: round(percentile(bucket.ms.sort((a, b) => a - b), 0.95)),
-    }])),
+    per_step: Object.fromEntries(
+      [...perStep.entries()].map(([path, bucket]) => [
+        path,
+        {
+          requests: bucket.count,
+          errors: bucket.errors,
+          p95_ms: round(
+            percentile(
+              bucket.ms.sort((a, b) => a - b),
+              0.95,
+            ),
+          ),
+        },
+      ]),
+    ),
     thresholds: { p95: args.p95, p99: args.p99, max_error_rate: args.maxErrorRate },
   };
   summary.verdict = {
@@ -283,14 +331,22 @@ async function main() {
     console.log(JSON.stringify(summary, null, 2));
   } else {
     console.log(`target      ${summary.target}`);
-    console.log(`scenario    ${summary.scenario}   vus ${summary.vus}   think ${summary.think_time_ms} ms   ${summary.duration_s}s`);
+    console.log(
+      `scenario    ${summary.scenario}   vus ${summary.vus}   think ${summary.think_time_ms} ms   ${summary.duration_s}s`,
+    );
     console.log(`requests    ${summary.requests}   ${summary.requests_per_second}/s   ${summary.payload_mb} MB`);
-    console.log(`latency     p50 ${summary.latency_ms.p50} ms   p95 ${summary.latency_ms.p95} ms   p99 ${summary.latency_ms.p99} ms   max ${summary.latency_ms.max} ms`);
+    console.log(
+      `latency     p50 ${summary.latency_ms.p50} ms   p95 ${summary.latency_ms.p95} ms   p99 ${summary.latency_ms.p99} ms   max ${summary.latency_ms.max} ms`,
+    );
     console.log(`errors      ${(summary.error_rate * 100).toFixed(2)}%   ${JSON.stringify(summary.statuses)}`);
     for (const [path, bucket] of Object.entries(summary.per_step)) {
-      console.log(`  ${path.padEnd(24)} ${String(bucket.requests).padStart(7)} req  ${String(bucket.errors).padStart(6)} err  p95 ${bucket.p95_ms} ms`);
+      console.log(
+        `  ${path.padEnd(24)} ${String(bucket.requests).padStart(7)} req  ${String(bucket.errors).padStart(6)} err  p95 ${bucket.p95_ms} ms`,
+      );
     }
-    const verdict = Object.entries(summary.verdict).map(([key, value]) => `${key}=${value}`).join('  ');
+    const verdict = Object.entries(summary.verdict)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('  ');
     console.log(`thresholds  ${verdict}   -> ${summary.passed ? 'PASS' : 'FAIL'}`);
   }
 
@@ -298,7 +354,9 @@ async function main() {
 }
 
 main()
-  .then((code) => { process.exitCode = code; })
+  .then((code) => {
+    process.exitCode = code;
+  })
   .catch((error) => {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;

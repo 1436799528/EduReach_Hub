@@ -24,7 +24,10 @@ export interface SitemapEntry {
   priority?: number;
 }
 
-export interface SitemapQuery extends PromiseLike<{ data: Record<string, unknown>[] | null; error: { message?: string } | null }> {
+export interface SitemapQuery extends PromiseLike<{
+  data: Record<string, unknown>[] | null;
+  error: { message?: string } | null;
+}> {
   select(columns: string): SitemapQuery;
   eq(column: string, value: unknown): SitemapQuery;
   order(column: string, options?: { ascending?: boolean }): SitemapQuery;
@@ -105,8 +108,16 @@ const PLACEHOLDER_EXACT_PATHS = new Set(['/nabteb', '/tools', '/support', '/admi
  * caught by accident.
  */
 export function isNonIndexablePath(pathname: string): boolean {
-  const path = String(pathname || '/').split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
-  if (path === '/api' || DISALLOWED_PATHS.some((prefix) => path === prefix.replace(/\/$/, '') || path.startsWith(prefix))) return true;
+  const path =
+    String(pathname || '/')
+      .split('?')[0]
+      .split('#')[0]
+      .replace(/\/+$/, '') || '/';
+  if (
+    path === '/api' ||
+    DISALLOWED_PATHS.some((prefix) => path === prefix.replace(/\/$/, '') || path.startsWith(prefix))
+  )
+    return true;
   if (PLACEHOLDER_EXACT_PATHS.has(path) || path.startsWith('/admission/')) return true;
   const service = /^\/services\/([^/]+)$/.exec(path);
   if (service) return !isLiveServiceSlug(service[1]);
@@ -125,7 +136,9 @@ export function resolveSiteOrigin(request: {
   protocol?: string;
   get?: (name: string) => string | undefined;
 }): string {
-  const configured = String(process.env.EDUREACH_SITE_URL || '').trim().replace(/\/+$/, '');
+  const configured = String(process.env.EDUREACH_SITE_URL || '')
+    .trim()
+    .replace(/\/+$/, '');
   if (configured) return configured;
 
   const header = (name: string): string => {

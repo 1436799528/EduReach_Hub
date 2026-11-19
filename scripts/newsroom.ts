@@ -51,25 +51,39 @@ async function checkSources(): Promise<void> {
     if (result.ok) {
       if (looksLikeFeed(result)) {
         const parsed = result.text.trimStart().startsWith('{')
-          ? parseJsonFeed((() => { try { return JSON.parse(result.text); } catch { return null; } })(), target)
+          ? parseJsonFeed(
+              (() => {
+                try {
+                  return JSON.parse(result.text);
+                } catch {
+                  return null;
+                }
+              })(),
+              target,
+            )
           : parseFeed(result.text, target);
         items = parsed.length;
       }
     }
     const duration = Date.now() - started;
-    const status = result.ok ? (items > 0 || !source.feedUrl ? 'ok' : 'empty-feed') : (result.error || 'failed');
+    const status = result.ok ? (items > 0 || !source.feedUrl ? 'ok' : 'empty-feed') : result.error || 'failed';
     if (!result.ok) failures.push(`${source.sourceKey}: ${result.error}`);
 
-    console.log(`${pad(source.sourceKey, 32)}${pad(String(source.tier), 5)}${pad(source.feedUrl ? 'rss' : 'html', 10)}${pad(String(status).slice(0, 9), 10)}${pad(String(items), 7)}${duration}`);
+    console.log(
+      `${pad(source.sourceKey, 32)}${pad(String(source.tier), 5)}${pad(source.feedUrl ? 'rss' : 'html', 10)}${pad(String(status).slice(0, 9), 10)}${pad(String(items), 7)}${duration}`,
+    );
 
     if (client) {
       try {
-        await client.from('news_sources').update({
-          last_checked_at: new Date().toISOString(),
-          last_status: result.ok ? `ok:${items}` : String(result.error || 'failed'),
-          last_error: result.ok ? null : String(result.error || 'failed'),
-          updated_at: new Date().toISOString(),
-        }).eq('source_key', source.sourceKey);
+        await client
+          .from('news_sources')
+          .update({
+            last_checked_at: new Date().toISOString(),
+            last_status: result.ok ? `ok:${items}` : String(result.error || 'failed'),
+            last_error: result.ok ? null : String(result.error || 'failed'),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('source_key', source.sourceKey);
       } catch {
         // The registry table may not exist yet; the report above is still useful.
       }
@@ -141,7 +155,8 @@ async function main(): Promise<void> {
   const review = report.decisions.filter((decision) => decision.status === 'needs_review');
   if (review.length) {
     console.log('\nQueued for review:');
-    for (const decision of review.slice(0, 20)) console.log(`  ? [${decision.category}] ${decision.title} (${decision.reason})`);
+    for (const decision of review.slice(0, 20))
+      console.log(`  ? [${decision.category}] ${decision.title} (${decision.reason})`);
   }
 
   if (report.errors.length) {

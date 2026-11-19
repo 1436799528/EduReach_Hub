@@ -34,11 +34,9 @@ function runtimeEnv(): RunEnvironment {
 }
 
 async function runMaintenance(env: RunEnvironment): Promise<void> {
-  const supabase = createClient(
-    env.VITE_SUPABASE_URL!,
-    env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
+  const supabase = createClient(env.VITE_SUPABASE_URL!, env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SECRET_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 
   const jobs = [
     {
@@ -67,17 +65,19 @@ async function runMaintenance(env: RunEnvironment): Promise<void> {
     },
   ];
 
-  await Promise.all(jobs.map(async ({ name, run }) => {
-    const startedAt = new Date();
-    try {
-      const detail = await run();
-      await recordJobRun(supabase, name, { status: 'succeeded', startedAt, detail });
-      console.log(`EduReach daily maintenance [${name}]: succeeded`, detail);
-    } catch (error) {
-      await recordJobRun(supabase, name, { status: 'failed', startedAt, error });
-      console.error(`EduReach daily maintenance [${name}] failed:`, error);
-    }
-  }));
+  await Promise.all(
+    jobs.map(async ({ name, run }) => {
+      const startedAt = new Date();
+      try {
+        const detail = await run();
+        await recordJobRun(supabase, name, { status: 'succeeded', startedAt, detail });
+        console.log(`EduReach daily maintenance [${name}]: succeeded`, detail);
+      } catch (error) {
+        await recordJobRun(supabase, name, { status: 'failed', startedAt, error });
+        console.error(`EduReach daily maintenance [${name}] failed:`, error);
+      }
+    }),
+  );
 }
 
 export default async () => {

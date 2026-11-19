@@ -148,13 +148,22 @@ export interface StagingGuardVerdict {
 export function stagingGuard(verdict: ProjectVerdict, expectedReference: string | null): StagingGuardVerdict {
   if (verdict.kind === 'ambiguous') {
     const [client, server] = verdict.conflict ?? ['(unknown)', '(unknown)'];
-    return { ok: false, reason: `Two different projects are configured (${client} and ${server}). Remove one so the target is unambiguous.` };
+    return {
+      ok: false,
+      reason: `Two different projects are configured (${client} and ${server}). Remove one so the target is unambiguous.`,
+    };
   }
   if (verdict.kind === 'unconfigured' || !verdict.reference) {
-    return { ok: false, reason: 'No Supabase project is configured, so there is no verified target. Set VITE_SUPABASE_URL and try again.' };
+    return {
+      ok: false,
+      reason: 'No Supabase project is configured, so there is no verified target. Set VITE_SUPABASE_URL and try again.',
+    };
   }
   if (verdict.kind === 'production') {
-    return { ok: false, reason: `${verdict.reference} is the documented PRODUCTION project. Staging steps must never run against it.` };
+    return {
+      ok: false,
+      reason: `${verdict.reference} is the documented PRODUCTION project. Staging steps must never run against it.`,
+    };
   }
   if (!expectedReference) {
     return {
@@ -175,8 +184,9 @@ export function stagingGuard(verdict: ProjectVerdict, expectedReference: string 
   // than it is.
   return {
     ok: true,
-    reason: `Target ${verdict.reference} is configured, unambiguous, not the documented production project, and was named explicitly. `
-      + 'That the project is disposable is your assertion: this script cannot verify it.',
+    reason:
+      `Target ${verdict.reference} is configured, unambiguous, not the documented production project, and was named explicitly. ` +
+      'That the project is disposable is your assertion: this script cannot verify it.',
   };
 }
 
@@ -204,18 +214,23 @@ export function describeProject(env: NodeJS.ProcessEnv = process.env): ProjectVe
 
 async function main(): Promise<void> {
   const verdict = describeProject();
-  const label = verdict.kind === 'production'
-    ? 'PRODUCTION'
-    : verdict.kind === 'staging-or-other' ? 'staging or another project'
-      : verdict.kind === 'ambiguous' ? `AMBIGUOUS (${verdict.conflict?.[0]} vs ${verdict.conflict?.[1]})`
-        : 'not configured';
+  const label =
+    verdict.kind === 'production'
+      ? 'PRODUCTION'
+      : verdict.kind === 'staging-or-other'
+        ? 'staging or another project'
+        : verdict.kind === 'ambiguous'
+          ? `AMBIGUOUS (${verdict.conflict?.[0]} vs ${verdict.conflict?.[1]})`
+          : 'not configured';
 
   console.log('EduReach project check\n');
   console.log(`  project reference: ${verdict.reference ?? '(none configured)'}`);
   console.log(`  classification:    ${label}`);
-  console.log(`  keys present:      url ${process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL ? 'yes' : 'no'},`
-    + ` publishable ${process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY ? 'yes' : 'no'},`
-    + ` service-role ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY ? 'yes' : 'no'}`);
+  console.log(
+    `  keys present:      url ${process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL ? 'yes' : 'no'},` +
+      ` publishable ${process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY ? 'yes' : 'no'},` +
+      ` service-role ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY ? 'yes' : 'no'}`,
+  );
 
   if (process.argv.includes('--probe')) {
     const url = probeUrl();

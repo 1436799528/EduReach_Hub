@@ -8,7 +8,11 @@ export function hasPrivilegedClientValue(env: Record<string, unknown>): boolean 
     if (!name.startsWith('VITE_') || typeof value !== 'string' || !value.trim()) return false;
     // A secret-looking variable name is unsafe even if its value uses an
     // unknown key format. All VITE_ variables are exposed, not just those used.
-    if (/_(?:SECRET(?:_KEY)?|SERVICE_ROLE(?:_KEY)?|PRIVATE_KEY)$/i.test(name) || /^VITE_SUPABASE_SERVICE_KEY$/i.test(name)) return true;
+    if (
+      /_(?:SECRET(?:_KEY)?|SERVICE_ROLE(?:_KEY)?|PRIVATE_KEY)$/i.test(name) ||
+      /^VITE_SUPABASE_SERVICE_KEY$/i.test(name)
+    )
+      return true;
     // Values may contain a secret within a URL or JSON rather than being a
     // bare key. Never include the value (or a matching fragment) in an error.
     if (value.includes('sb_secret_') || isPrivilegedKey(value)) return true;

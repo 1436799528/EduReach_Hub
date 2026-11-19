@@ -9,7 +9,8 @@
 
 import { crawlDelayMs, isPathAllowed, parseRobots, type RobotsPolicy } from './robots';
 
-export const DEFAULT_USER_AGENT = 'EduReach-Newsroom/1.0 (+https://github.com/1436799528/EduReach_Hub; student news aggregation; contact: editorial@edureach.example)';
+export const DEFAULT_USER_AGENT =
+  'EduReach-Newsroom/1.0 (+https://github.com/1436799528/EduReach_Hub; student news aggregation; contact: editorial@edureach.example)';
 export const DEFAULT_TIMEOUT_MS = 8000;
 export const DEFAULT_MAX_BYTES = 700_000;
 
@@ -44,14 +45,24 @@ export async function fetchText(url: string, options: FetchOptions = {}): Promis
       redirect: 'follow',
       headers: {
         'User-Agent': options.userAgent ?? DEFAULT_USER_AGENT,
-        Accept: options.accept ?? 'text/html,application/xhtml+xml,application/xml,application/rss+xml,application/feed+json;q=0.9,*/*;q=0.5',
+        Accept:
+          options.accept ??
+          'text/html,application/xhtml+xml,application/xml,application/rss+xml,application/feed+json;q=0.9,*/*;q=0.5',
         'Accept-Language': 'en-NG,en;q=0.9',
       },
     });
 
     const contentType = response.headers?.get?.('content-type') || '';
     if (!response.ok) {
-      return { ok: false, status: response.status, text: '', contentType, finalUrl: url, error: `HTTP ${response.status}`, bytes: 0 };
+      return {
+        ok: false,
+        status: response.status,
+        text: '',
+        contentType,
+        finalUrl: url,
+        error: `HTTP ${response.status}`,
+        bytes: 0,
+      };
     }
 
     // Enforce the limit while reading the response, not after buffering an
@@ -204,11 +215,21 @@ export async function politeFetch(
   context: { robots: RobotsCache; throttle: HostThrottle; userAgent: string; fetchImpl?: typeof fetch },
 ): Promise<FetchTextResult & { skipped?: string }> {
   const host = hostOfUrl(url);
-  if (!host) return { ok: false, status: null, text: '', contentType: '', finalUrl: url, error: 'invalid URL', bytes: 0 };
+  if (!host)
+    return { ok: false, status: null, text: '', contentType: '', finalUrl: url, error: 'invalid URL', bytes: 0 };
 
   const permission = await context.robots.isAllowed(url);
   if (!permission.allowed) {
-    return { ok: false, status: null, text: '', contentType: '', finalUrl: url, error: permission.reason, bytes: 0, skipped: permission.reason };
+    return {
+      ok: false,
+      status: null,
+      text: '',
+      contentType: '',
+      finalUrl: url,
+      error: permission.reason,
+      bytes: 0,
+      skipped: permission.reason,
+    };
   }
 
   await context.throttle.wait(host, permission.delayMs);

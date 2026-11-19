@@ -45,14 +45,21 @@ function readJson<T>(path: string): T {
 }
 
 function normalize(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 }
 
-const inventory = readJson<InventoryRow[] | { institutions: InventoryRow[] }>(join(DATA_DIR, 'institution-inventory-329.json'));
+const inventory = readJson<InventoryRow[] | { institutions: InventoryRow[] }>(
+  join(DATA_DIR, 'institution-inventory-329.json'),
+);
 const rows: InventoryRow[] = Array.isArray(inventory) ? inventory : inventory.institutions;
 const nameOf = (row: InventoryRow) => row.canonicalName ?? row.canonicicalName ?? row.schoolName ?? '(unnamed)';
 
-const batchFiles = readdirSync(DATA_DIR).filter((file) => /^research-batch-\d+\.json$/.test(file)).sort();
+const batchFiles = readdirSync(DATA_DIR)
+  .filter((file) => /^research-batch-\d+\.json$/.test(file))
+  .sort();
 const batches = batchFiles.map((file) => ({ file, data: readJson<any>(join(DATA_DIR, file)) }));
 
 const researched = new Map<string, { batch: string; record: any }>();
@@ -64,9 +71,17 @@ for (const { file, data } of batches) {
 }
 
 const fieldCoverage: Record<string, number> = {
-  profile: 0, officialWebsite: 0, admissionPortal: 0, studentPortal: 0,
-  leadership: 0, academicUnits: 0, admissionRoutes: 0,
-  programmeRequirements: 0, benchmarks: 0, programmeCutoffs: 0, portalGuides: 0,
+  profile: 0,
+  officialWebsite: 0,
+  admissionPortal: 0,
+  studentPortal: 0,
+  leadership: 0,
+  academicUnits: 0,
+  admissionRoutes: 0,
+  programmeRequirements: 0,
+  benchmarks: 0,
+  programmeCutoffs: 0,
+  portalGuides: 0,
 };
 
 for (const { record } of researched.values()) {
@@ -79,7 +94,11 @@ for (const { record } of researched.values()) {
   if ((record.academicUnits?.items ?? []).length) fieldCoverage.academicUnits += 1;
   if ((admission.routes ?? []).length) fieldCoverage.admissionRoutes += 1;
   if ((admission.programmeRequirements ?? []).length) fieldCoverage.programmeRequirements += 1;
-  if ((admission.benchmarks ?? []).length || (admission.programmeMinimumUtmeScores ?? []).length || (admission.aggregateCutoffs?.records ?? []).length) {
+  if (
+    (admission.benchmarks ?? []).length ||
+    (admission.programmeMinimumUtmeScores ?? []).length ||
+    (admission.aggregateCutoffs?.records ?? []).length
+  ) {
     fieldCoverage.benchmarks += 1;
   }
   if ((admission.programmeCutoffs?.records ?? []).length) fieldCoverage.programmeCutoffs += 1;
@@ -158,13 +177,17 @@ ${coverage.byBatch.map((batch) => `| ${batch.batch} | ${batch.researchDate} | ${
 
 | Field | Count |
 | :--- | ---: |
-${Object.entries(coverage.fieldCoverage).map(([field, count]) => `| ${field} | ${count} |`).join('\n')}
+${Object.entries(coverage.fieldCoverage)
+  .map(([field, count]) => `| ${field} | ${count} |`)
+  .join('\n')}
 
 ## Duplicate candidates (reported, never merged automatically)
 
-${coverage.duplicateCandidates.length
-  ? coverage.duplicateCandidates.map((item) => `- ${item.matches.join('  ⇄  ')}`).join('\n')
-  : '- none detected'}
+${
+  coverage.duplicateCandidates.length
+    ? coverage.duplicateCandidates.map((item) => `- ${item.matches.join('  ⇄  ')}`).join('\n')
+    : '- none detected'
+}
 
 ## Per state
 
@@ -186,5 +209,7 @@ const jsonPath = arg('json') ?? 'data/institutions/coverage-report.json';
 const mdPath = arg('out') ?? 'docs/data/INSTITUTION-COVERAGE.md';
 writeFileSync(join(REPO_ROOT, jsonPath), `${JSON.stringify(coverage, null, 2)}\n`);
 writeFileSync(join(REPO_ROOT, mdPath), markdown);
-console.log(`inventory ${coverage.inventoryTotal}, researched ${coverage.researched}, unresearched ${coverage.unresearched}`);
+console.log(
+  `inventory ${coverage.inventoryTotal}, researched ${coverage.researched}, unresearched ${coverage.unresearched}`,
+);
 console.log(`wrote ${jsonPath} and ${mdPath}`);

@@ -94,7 +94,10 @@ const OFFICE_KEYS: Record<string, { key: string; title: string }> = {
   vice_chancellor: { key: 'vice_chancellor', title: 'Vice-Chancellor' },
   deputy_vice_chancellor: { key: 'deputy_vice_chancellor', title: 'Deputy Vice-Chancellor' },
   deputy_vice_chancellor_academics: { key: 'deputy_vice_chancellor', title: 'Deputy Vice-Chancellor (Academics)' },
-  deputy_vice_chancellor_administration: { key: 'deputy_vice_chancellor', title: 'Deputy Vice-Chancellor (Administration)' },
+  deputy_vice_chancellor_administration: {
+    key: 'deputy_vice_chancellor',
+    title: 'Deputy Vice-Chancellor (Administration)',
+  },
   rector: { key: 'rector', title: 'Rector' },
   provost: { key: 'provost', title: 'Provost' },
   president: { key: 'president', title: 'President' },
@@ -105,17 +108,36 @@ const OFFICE_KEYS: Record<string, { key: string; title: string }> = {
 };
 
 const OWNERSHIP: Record<string, string> = {
-  federal: 'federal', state: 'state', private: 'private', other: 'other', unknown: 'unknown',
+  federal: 'federal',
+  state: 'state',
+  private: 'private',
+  other: 'other',
+  unknown: 'unknown',
 };
 
 const CATEGORY: Record<string, string> = {
-  university: 'university', polytechnic: 'polytechnic', monotechnic: 'monotechnic',
-  college_of_education: 'college_of_education', college_of_agriculture: 'college_of_agriculture',
-  college_of_nursing: 'college_of_nursing', innovation_enterprise_institute: 'innovation_enterprise_institute',
+  university: 'university',
+  polytechnic: 'polytechnic',
+  monotechnic: 'monotechnic',
+  college_of_education: 'college_of_education',
+  college_of_agriculture: 'college_of_agriculture',
+  college_of_nursing: 'college_of_nursing',
+  innovation_enterprise_institute: 'innovation_enterprise_institute',
   other: 'other',
 };
 
-const ENTRY_MODES = new Set(['UTME', 'DIRECT_ENTRY', 'JUPEB', 'IJMB', 'PRE_DEGREE', 'DIPLOMA', 'ND', 'HND', 'TRANSFER', 'OTHER']);
+const ENTRY_MODES = new Set([
+  'UTME',
+  'DIRECT_ENTRY',
+  'JUPEB',
+  'IJMB',
+  'PRE_DEGREE',
+  'DIPLOMA',
+  'ND',
+  'HND',
+  'TRANSFER',
+  'OTHER',
+]);
 
 const GUIDE_TYPES: Record<string, string> = {
   admissions: 'admissions',
@@ -172,8 +194,16 @@ export function transformBatch(
 ): TransformResult {
   const issues: ValidationIssue[] = [];
   const counts: Record<string, number> = {
-    sources: 0, profiles: 0, leadership: 0, academicUnits: 0, offerings: 0,
-    routes: 0, requirements: 0, benchmarks: 0, guides: 0, nationalPolicies: 0,
+    sources: 0,
+    profiles: 0,
+    leadership: 0,
+    academicUnits: 0,
+    offerings: 0,
+    routes: 0,
+    requirements: 0,
+    benchmarks: 0,
+    guides: 0,
+    nationalPolicies: 0,
   };
 
   let unresolvedInstitution = false;
@@ -189,7 +219,11 @@ export function transformBatch(
   );
   for (const source of batch.sources ?? []) {
     if (!HTTPS.test(String(source.url ?? ''))) {
-      issues.push({ entity: 'edureach_sources', key: String(source.sourceKey ?? '?'), reason: 'source url must be https' });
+      issues.push({
+        entity: 'edureach_sources',
+        key: String(source.sourceKey ?? '?'),
+        reason: 'source url must be https',
+      });
     }
   }
   counts.sources = (batch.sources ?? []).length;
@@ -201,18 +235,35 @@ export function transformBatch(
    */
   const sourceKeyForUrl = (url: unknown): string | null => {
     if (!url) return null;
-    const normalize = (value: unknown) => String(value ?? '').toLowerCase().replace(/\/$/, '');
+    const normalize = (value: unknown) =>
+      String(value ?? '')
+        .toLowerCase()
+        .replace(/\/$/, '');
     const target = normalize(url);
     for (const [key, source] of sourceByKey) {
       if (normalize(source.url) === target) return key;
     }
     let host = '';
-    try { host = new URL(String(url)).hostname.replace(/^www\./, ''); } catch { return null; }
+    try {
+      host = new URL(String(url)).hostname.replace(/^www\./, '');
+    } catch {
+      return null;
+    }
     const onHost = [...sourceByKey.entries()].filter(([, source]) => {
-      try { return new URL(String(source.url)).hostname.replace(/^www\./, '') === host; } catch { return false; }
+      try {
+        return new URL(String(source.url)).hostname.replace(/^www\./, '') === host;
+      } catch {
+        return false;
+      }
     });
     const landing = onHost.find(([, source]) => {
-      try { return ['', '/', '/home.php', '/index.php', '/about', '/about.php'].includes(new URL(String(source.url)).pathname); } catch { return false; }
+      try {
+        return ['', '/', '/home.php', '/index.php', '/about', '/about.php'].includes(
+          new URL(String(source.url)).pathname,
+        );
+      } catch {
+        return false;
+      }
     });
     return (landing ?? onHost[0])?.[0] ?? null;
   };
@@ -241,9 +292,10 @@ export function transformBatch(
       issues.push({
         entity,
         key,
-        reason: matches.length === 0
-          ? `no catalogue row is named "${name}"`
-          : `${matches.length} catalogue rows are named "${name}"; reconcile them before importing`,
+        reason:
+          matches.length === 0
+            ? `no catalogue row is named "${name}"`
+            : `${matches.length} catalogue rows are named "${name}"; reconcile them before importing`,
       });
       return null;
     }
@@ -275,7 +327,11 @@ export function transformBatch(
   };
 
   for (const institution of batch.institutions ?? []) {
-    const entry = resolveInstitution(institution.institutionId, 'institutions', String(institution.canonicalName ?? '?'));
+    const entry = resolveInstitution(
+      institution.institutionId,
+      'institutions',
+      String(institution.canonicalName ?? '?'),
+    );
     if (!entry) continue;
     const institutionId = entry.institutionId;
     const label = entry.canonicalName;
@@ -283,10 +339,10 @@ export function transformBatch(
 
     // ---------------------------------------------------------------- profile
     const profileSource = sourceId(
-      institution.profileSourceKey
-        ?? institution.sources?.profile
-        ?? sourceKeyForUrl(institution.officialWebsite)
-        ?? sourceKeyForUrl(profile.aboutUrl),
+      institution.profileSourceKey ??
+        institution.sources?.profile ??
+        sourceKeyForUrl(institution.officialWebsite) ??
+        sourceKeyForUrl(profile.aboutUrl),
       'institution_profiles',
       label,
     );
@@ -317,7 +373,11 @@ export function transformBatch(
     for (const person of leadership) {
       const office = OFFICE_KEYS[String(person.role ?? '')];
       if (!office) {
-        issues.push({ entity: 'institution_leadership', key: `${label}:${person.role}`, reason: 'unrecognised office role' });
+        issues.push({
+          entity: 'institution_leadership',
+          key: `${label}:${person.role}`,
+          reason: 'unrecognised office role',
+        });
         continue;
       }
       if (!person.name) {
@@ -345,13 +405,19 @@ export function transformBatch(
     for (const rawName of units.items ?? []) {
       const name = String(rawName).trim();
       const prefix = /^(faculty of|college of|school of|institute of|centre for|department of)\b/i.exec(name);
-      const unitType = !prefix ? null
-        : /^faculty/i.test(prefix[1]) ? 'faculty'
-        : /^college/i.test(prefix[1]) ? 'college'
-        : /^school/i.test(prefix[1]) ? 'school'
-        : /^institute/i.test(prefix[1]) ? 'institute'
-        : /^centre/i.test(prefix[1]) ? 'centre'
-        : 'department';
+      const unitType = !prefix
+        ? null
+        : /^faculty/i.test(prefix[1])
+          ? 'faculty'
+          : /^college/i.test(prefix[1])
+            ? 'college'
+            : /^school/i.test(prefix[1])
+              ? 'school'
+              : /^institute/i.test(prefix[1])
+                ? 'institute'
+                : /^centre/i.test(prefix[1])
+                  ? 'centre'
+                  : 'department';
       if (!unitType) {
         // A grouping that the source does not classify is not promoted into a
         // faculty. It is reported so a researcher can confirm the nomenclature.
@@ -362,7 +428,7 @@ export function transformBatch(
         });
         continue;
       }
-      const url = sourceId(units.sourceKey, 'institution_academic_units', name) ?? (units.sourceUrl ?? null);
+      const url = sourceId(units.sourceKey, 'institution_academic_units', name) ?? units.sourceUrl ?? null;
       if (!url) continue;
       payload.academicUnits.push({ institutionId, unitType, unitName: name, sourceUrl: url });
       counts.academicUnits += 1;
@@ -379,25 +445,37 @@ export function transformBatch(
      * appears, the session is validated exactly as before.
      */
     const claimsAdmission = Boolean(
-      (admission.routes ?? []).length
-      || (admission.programmeRequirements ?? []).length
-      || (admission.benchmarks ?? []).length
-      || (admission.programmeMinimumUtmeScores ?? []).length
-      || (admission.aggregateCutoffs?.records ?? []).length,
+      (admission.routes ?? []).length ||
+      (admission.programmeRequirements ?? []).length ||
+      (admission.benchmarks ?? []).length ||
+      (admission.programmeMinimumUtmeScores ?? []).length ||
+      (admission.aggregateCutoffs?.records ?? []).length,
     );
     if (claimsAdmission && !isSession(session)) {
-      issues.push({ entity: 'institution_admission_routes', key: label, reason: `session "${String(session)}" is not YYYY/YYYY` });
+      issues.push({
+        entity: 'institution_admission_routes',
+        key: label,
+        reason: `session "${String(session)}" is not YYYY/YYYY`,
+      });
     }
     for (const route of admission.routes ?? []) {
       const entryMode = String(route.entryMode ?? '').toUpperCase();
       if (!ENTRY_MODES.has(entryMode)) {
-        issues.push({ entity: 'institution_admission_routes', key: `${label}:${route.entryMode}`, reason: 'unrecognised entry mode' });
+        issues.push({
+          entity: 'institution_admission_routes',
+          key: `${label}:${route.entryMode}`,
+          reason: 'unrecognised entry mode',
+        });
         continue;
       }
       if (!isSession(session)) continue;
       const url = route.sourceKey
         ? sourceId(route.sourceKey, 'institution_admission_routes', `${label}:${entryMode}`)
-        : sourceId(institution.sources?.admissions ?? route.sourceKey, 'institution_admission_routes', `${label}:${entryMode}`);
+        : sourceId(
+            institution.sources?.admissions ?? route.sourceKey,
+            'institution_admission_routes',
+            `${label}:${entryMode}`,
+          );
       if (!url) continue;
       payload.routes.push({
         institutionId,
@@ -429,11 +507,19 @@ export function transformBatch(
 
     // ---------------------------------------------------------- requirements
     for (const requirement of admission.programmeRequirements ?? []) {
-      const url = sourceId(requirement.sourceKey, 'institution_programme_requirements', String(requirement.programmeName));
+      const url = sourceId(
+        requirement.sourceKey,
+        'institution_programme_requirements',
+        String(requirement.programmeName),
+      );
       if (!url || !isSession(session)) continue;
       const entryMode = String(requirement.entryMode ?? '').toUpperCase();
       if (!ENTRY_MODES.has(entryMode)) {
-        issues.push({ entity: 'institution_programme_requirements', key: String(requirement.programmeName), reason: 'unrecognised entry mode' });
+        issues.push({
+          entity: 'institution_programme_requirements',
+          key: String(requirement.programmeName),
+          reason: 'unrecognised entry mode',
+        });
         continue;
       }
       payload.requirements.push({
@@ -457,20 +543,32 @@ export function transformBatch(
     const pushBenchmark = (raw: any, origin: string) => {
       const type = BENCHMARK_TYPES[String(raw.benchmarkType ?? '')];
       if (!type) {
-        issues.push({ entity: 'institution_admission_benchmarks', key: `${label}:${origin}`, reason: `unrecognised benchmark type "${String(raw.benchmarkType)}"` });
+        issues.push({
+          entity: 'institution_admission_benchmarks',
+          key: `${label}:${origin}`,
+          reason: `unrecognised benchmark type "${String(raw.benchmarkType)}"`,
+        });
         return;
       }
       const scaleMax = Number(raw.scaleMaximum ?? raw.scoreScaleMaximum ?? 400);
       const scaleMin = Number(raw.scaleMinimum ?? 0);
       const value = Number(raw.value ?? raw.score);
       if (!Number.isFinite(value) || !Number.isFinite(scaleMax) || value > scaleMax || value < scaleMin) {
-        issues.push({ entity: 'institution_admission_benchmarks', key: `${label}:${origin}`, reason: `value ${raw.value ?? raw.score} is outside its ${scaleMin}-${scaleMax} scale` });
+        issues.push({
+          entity: 'institution_admission_benchmarks',
+          key: `${label}:${origin}`,
+          reason: `value ${raw.value ?? raw.score} is outside its ${scaleMin}-${scaleMax} scale`,
+        });
         return;
       }
       const url = sourceId(raw.sourceKey, 'institution_admission_benchmarks', `${label}:${origin}`);
       if (!url) return;
       if (!isSession(raw.session ?? session)) {
-        issues.push({ entity: 'institution_admission_benchmarks', key: `${label}:${origin}`, reason: 'benchmark session is not YYYY/YYYY' });
+        issues.push({
+          entity: 'institution_admission_benchmarks',
+          key: `${label}:${origin}`,
+          reason: 'benchmark session is not YYYY/YYYY',
+        });
         return;
       }
       payload.benchmarks.push({
@@ -491,24 +589,29 @@ export function transformBatch(
       counts.benchmarks += 1;
     };
 
-    for (const benchmark of admission.benchmarks ?? []) pushBenchmark({ ...benchmark, session: benchmark.session ?? session }, 'published threshold');
+    for (const benchmark of admission.benchmarks ?? [])
+      pushBenchmark({ ...benchmark, session: benchmark.session ?? session }, 'published threshold');
 
-    const admissionSourceKey = institution.sources?.admissions
-      ?? sourceKeyForUrl(institution.admissionPortal)
-      ?? sourceKeyForUrl(institution.officialWebsite);
+    const admissionSourceKey =
+      institution.sources?.admissions ??
+      sourceKeyForUrl(institution.admissionPortal) ??
+      sourceKeyForUrl(institution.officialWebsite);
 
     for (const item of admission.programmeMinimumUtmeScores ?? []) {
       if (!item.programme) continue;
-      pushBenchmark({
-        benchmarkType: 'programme_utme_minimum',
-        programmeName: item.programme,
-        value: item.score,
-        scaleMaximum: item.scaleMaximum ?? 400,
-        session,
-        category: 'general',
-        sourceKey: item.sourceKey ?? admissionSourceKey,
-        label: `UTME minimum (${item.programme})`,
-      }, 'programme minimum');
+      pushBenchmark(
+        {
+          benchmarkType: 'programme_utme_minimum',
+          programmeName: item.programme,
+          value: item.score,
+          scaleMaximum: item.scaleMaximum ?? 400,
+          session,
+          category: 'general',
+          sourceKey: item.sourceKey ?? admissionSourceKey,
+          label: `UTME minimum (${item.programme})`,
+        },
+        'programme minimum',
+      );
     }
 
     const aggregates = admission.aggregateCutoffs;
@@ -518,17 +621,20 @@ export function transformBatch(
           const score = record[category];
           if (score === null || score === undefined) continue;
           const isState = category !== 'merit';
-          pushBenchmark({
-            benchmarkType: aggregates.benchmarkType ?? 'screening_aggregate',
-            programmeName: record.programme,
-            value: score,
-            scaleMaximum: aggregates.scoreScaleMaximum ?? 100,
-            session: aggregates.session ?? session,
-            category: isState ? 'state_catchment' : 'merit',
-            stateCategory: isState ? category : null,
-            sourceKey: aggregates.sourceKey,
-            label: `${isState ? category : 'Merit'} screening aggregate`,
-          }, `${record.programme}:${category}`);
+          pushBenchmark(
+            {
+              benchmarkType: aggregates.benchmarkType ?? 'screening_aggregate',
+              programmeName: record.programme,
+              value: score,
+              scaleMaximum: aggregates.scoreScaleMaximum ?? 100,
+              session: aggregates.session ?? session,
+              category: isState ? 'state_catchment' : 'merit',
+              stateCategory: isState ? category : null,
+              sourceKey: aggregates.sourceKey,
+              label: `${isState ? category : 'Merit'} screening aggregate`,
+            },
+            `${record.programme}:${category}`,
+          );
         }
       }
     }
@@ -537,7 +643,11 @@ export function transformBatch(
     for (const guide of institution.portalGuides ?? []) {
       const guideType = GUIDE_TYPES[String(guide.portal ?? 'other')];
       if (!guideType) {
-        issues.push({ entity: 'institution_portal_guides', key: `${label}:${guide.portal}`, reason: 'unrecognised guide type' });
+        issues.push({
+          entity: 'institution_portal_guides',
+          key: `${label}:${guide.portal}`,
+          reason: 'unrecognised guide type',
+        });
         continue;
       }
       const url = sourceId(guide.sourceKey, 'institution_portal_guides', `${label}:${guide.portal}`);

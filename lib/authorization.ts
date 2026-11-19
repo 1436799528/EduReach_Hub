@@ -61,7 +61,11 @@ export function can(user: UserPayload | null | undefined, capability: Capability
 }
 
 /** Convenience for handlers that already loaded the row. */
-export function assertOwnership(user: UserPayload | null | undefined, capability: Capability, ownerId: string | null | undefined): boolean {
+export function assertOwnership(
+  user: UserPayload | null | undefined,
+  capability: Capability,
+  ownerId: string | null | undefined,
+): boolean {
   return can(user, capability, { ownerId });
 }
 
@@ -146,13 +150,15 @@ export async function recordAudit(
   },
 ): Promise<void> {
   try {
-    const { error } = await Promise.resolve(supabase.rpc('admin_audit_log', {
-      p_admin_user_id: entry.actorId,
-      p_action: entry.action,
-      p_entity_type: entry.resourceType,
-      p_entity_id: entry.resourceId ?? null,
-      p_metadata: { ...(entry.metadata || {}), result: entry.result || 'success' },
-    }));
+    const { error } = await Promise.resolve(
+      supabase.rpc('admin_audit_log', {
+        p_admin_user_id: entry.actorId,
+        p_action: entry.action,
+        p_entity_type: entry.resourceType,
+        p_entity_id: entry.resourceId ?? null,
+        p_metadata: { ...(entry.metadata || {}), result: entry.result || 'success' },
+      }),
+    );
     if (error) console.error('Audit log write failed:', error);
   } catch (error) {
     console.error('Audit log write failed:', error);

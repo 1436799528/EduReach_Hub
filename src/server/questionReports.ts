@@ -42,6 +42,7 @@ export function cleanReportDetail(value: unknown): string | null | 'invalid' {
   if (value === undefined || value === null) return null;
   if (typeof value !== 'string') return 'invalid';
   const cleaned = value
+    // eslint-disable-next-line no-control-regex -- control characters are replaced, not matched for meaning
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

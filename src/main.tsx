@@ -28,7 +28,6 @@ import './styles/ux5-product.css';
 import './styles/ux9-microinteractions.css';
 import './styles/a11y.css';
 
-
 // P2-2: a route that throws inside React is caught by the boundary, but a
 // rejected promise or a script-level error outside it had nowhere to go. Both
 // are installed once, here, and only in a production build.

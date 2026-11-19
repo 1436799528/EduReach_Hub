@@ -20,7 +20,11 @@ export function evaluateClientEnv(env: Record<string, string | undefined>): Clie
   const explicit = env.EDUREACH_REQUIRE_CLIENT_ENV === '1';
   const privilegedClientValue = hasPrivilegedClientValue(env);
   const enforced = productionContext || explicit || privilegedClientValue;
-  const reason = explicit ? 'EDUREACH_REQUIRE_CLIENT_ENV=1' : productionContext ? 'Vercel production build' : 'not a production build';
+  const reason = explicit
+    ? 'EDUREACH_REQUIRE_CLIENT_ENV=1'
+    : productionContext
+      ? 'Vercel production build'
+      : 'not a production build';
   return { ok: missing.length === 0 && !privilegedClientValue, missing, enforced, reason, privilegedClientValue };
 }
 
@@ -28,7 +32,9 @@ function main(): void {
   const verdict = evaluateClientEnv(process.env);
   const configured = CLIENT_VARS.join(' + ') + ' (or VITE_SUPABASE_ANON_KEY)';
   if (verdict.privilegedClientValue) {
-    console.error('FAIL privileged Supabase key in client-exposed configuration. Remove it from VITE_ variables before building.');
+    console.error(
+      'FAIL privileged Supabase key in client-exposed configuration. Remove it from VITE_ variables before building.',
+    );
     process.exitCode = 1;
     return;
   }
@@ -38,11 +44,23 @@ function main(): void {
   }
   const details = 'Missing: ' + verdict.missing.join(', ');
   if (verdict.enforced) {
-    console.error('FAIL client Supabase contract is unmet (' + verdict.reason + '). ' + details + '. Production builds must not deploy without browser Supabase configuration.');
+    console.error(
+      'FAIL client Supabase contract is unmet (' +
+        verdict.reason +
+        '). ' +
+        details +
+        '. Production builds must not deploy without browser Supabase configuration.',
+    );
     process.exitCode = 1;
     return;
   }
-  console.warn('WARN client Supabase contract is unmet (' + verdict.reason + '). ' + details + '. This local build uses fallbacks; visitor submissions will not persist.');
+  console.warn(
+    'WARN client Supabase contract is unmet (' +
+      verdict.reason +
+      '). ' +
+      details +
+      '. This local build uses fallbacks; visitor submissions will not persist.',
+  );
 }
 
 if (process.argv[1] && process.argv[1].endsWith('client-env-check.ts')) main();

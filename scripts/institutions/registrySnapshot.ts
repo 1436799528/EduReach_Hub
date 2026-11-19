@@ -57,7 +57,7 @@ export const AUTHORITIES = [
     sourceKey: 'nuc-nus-federal',
     name: 'National Universities Commission — Federal Universities',
     url: 'https://www.nuc.edu.ng/nigerian-univerisities/federal-univeristies/',
-    note: 'Table of 77 federal universities with vice chancellor, website and year established. Read in full through the site\'s REST endpoint (wp-json/wp/v2/pages?slug=federal-univeristies), because the rendered page paginates at 20 rows.',
+    note: "Table of 77 federal universities with vice chancellor, website and year established. Read in full through the site's REST endpoint (wp-json/wp/v2/pages?slug=federal-univeristies), because the rendered page paginates at 20 rows.",
   },
   {
     sourceKey: 'nuc-nus-state',
@@ -81,19 +81,78 @@ export const AUTHORITIES = [
 
 /** Words that name a category rather than an institution. */
 const GENERIC = new Set([
-  'university', 'universities', 'of', 'the', 'nigeria', 'nigerian', 'federal', 'state',
-  'private', 'technology', 'technologies', 'science', 'sciences', 'and', 'for', 'in',
-  'college', 'education', 'open', 'medical', 'health', 'agriculture', 'polytechnic',
-  'institute', 'a', 'an', 'at', 'study', 'studies',
+  'university',
+  'universities',
+  'of',
+  'the',
+  'nigeria',
+  'nigerian',
+  'federal',
+  'state',
+  'private',
+  'technology',
+  'technologies',
+  'science',
+  'sciences',
+  'and',
+  'for',
+  'in',
+  'college',
+  'education',
+  'open',
+  'medical',
+  'health',
+  'agriculture',
+  'polytechnic',
+  'institute',
+  'a',
+  'an',
+  'at',
+  'study',
+  'studies',
 ]);
 
 /** The 36 states plus the FCT, used to strip a location suffix before matching. */
 export const STATES = [
-  'abia', 'adamawa', 'akwa ibom', 'anambra', 'bauchi', 'bayelsa', 'benue', 'borno',
-  'cross river', 'delta', 'ebonyi', 'edo', 'ekiti', 'enugu', 'gombe', 'imo', 'jigawa',
-  'kaduna', 'kano', 'katsina', 'kebbi', 'kogi', 'kwara', 'lagos', 'nasarawa', 'niger',
-  'ogun', 'ondo', 'osun', 'oyo', 'plateau', 'rivers', 'sokoto', 'taraba', 'yobe',
-  'zamfara', 'fct', 'abuja', 'fct abuja',
+  'abia',
+  'adamawa',
+  'akwa ibom',
+  'anambra',
+  'bauchi',
+  'bayelsa',
+  'benue',
+  'borno',
+  'cross river',
+  'delta',
+  'ebonyi',
+  'edo',
+  'ekiti',
+  'enugu',
+  'gombe',
+  'imo',
+  'jigawa',
+  'kaduna',
+  'kano',
+  'katsina',
+  'kebbi',
+  'kogi',
+  'kwara',
+  'lagos',
+  'nasarawa',
+  'niger',
+  'ogun',
+  'ondo',
+  'osun',
+  'oyo',
+  'plateau',
+  'rivers',
+  'sokoto',
+  'taraba',
+  'yobe',
+  'zamfara',
+  'fct',
+  'abuja',
+  'fct abuja',
 ];
 
 const fold = (value: string): string =>
@@ -118,7 +177,10 @@ export function nameKey(value: string): string {
  * would erase the only identifying word in half the registry.
  */
 export function coreKey(value: string): string {
-  return fold(value).split(' ').filter((word) => word && !GENERIC.has(word)).join(' ');
+  return fold(value)
+    .split(' ')
+    .filter((word) => word && !GENERIC.has(word))
+    .join(' ');
 }
 
 /** The same key with a trailing state name removed, for `…, Nasarawa State` forms. */
@@ -143,7 +205,10 @@ export function withoutState(value: string): string {
  * North Eastern University. Those are flagged for a human, never rewritten.
  */
 function isAbbreviation(label: string, name: string): boolean {
-  const letters = name.normalize('NFKD').toLowerCase().replace(/[^a-z]/g, '');
+  const letters = name
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
   const flat = label.replace(/[^a-z]/g, '');
   if (flat.length < 3) return true;
   let index = 0;
@@ -245,7 +310,14 @@ export interface CoverageReport {
     inventoryName: string;
     registryName: string;
     ownership: Ownership;
-    matchedOn: 'institution_id' | 'curated_alias' | 'exact_name' | 'core_name' | 'state_stripped' | 'name_prefix' | 'token_containment';
+    matchedOn:
+      | 'institution_id'
+      | 'curated_alias'
+      | 'exact_name'
+      | 'core_name'
+      | 'state_stripped'
+      | 'name_prefix'
+      | 'token_containment';
     yearEstablished: number | null;
     website: string | null;
     flags: string[];
@@ -269,7 +341,6 @@ export interface CoverageReport {
   };
 }
 
-
 /**
  * Reviewed name variants: our inventory's spelling on the left, the Commission's
  * on the right. Every pair below was read by eye against both lists; a variant
@@ -280,64 +351,73 @@ export interface CoverageReport {
  * rather than a fuzzy match nobody can audit.
  */
 export const NAME_ALIASES: Record<string, string> = {
-  "University of Abuja, Abuja": "University of Abuja, Gwagwalada",
-  "University of Benin, Benin City": "University of Benin",
-  "University of Ibadan, Ibadan": "University of Ibadan",
-  "University of Ilorin, Ilorin": "University of Ilorin",
-  "University of Jos, Jos": "University of Jos",
-  "University of Maiduguri, Maiduguri": "University of Maiduguri",
-  "University of Uyo, Uyo": "University of Uyo",
-  "Usmanu Danfodiyo University, Sokoto": "Usumanu Danfodiyo University",
-  "King David Umahi University of Medical Sciences, Uburu": "David Nweze Umahi Federal University of Medical Sciences, Uburu",
-  "Federal University of Agriculture, Bassam-Bari": "Federal University of Agriculture Bassam-Biri, Bayelsa",
-  "Federal University of Health Sciences, Funtua": "Federal University of Health Sciences, Katsina",
-  "Adeyemi Federal University of Education, Akure": "Adeyemi Federal University of Education, Ondo",
-  "Federal University of Education, Kantagora": "Federal University of Education Kontagora, Niger State",
-  "Federal University of Agriculture and Developmental Studies, Iragbiji": "Federal University of Agriculture and Developmental Studies, Iragbuji, Osun State",
-  "Rivers State University of Science & Technology, Port Harcourt": "Rivers State University",
-  "Ekiti State University, Ado-Ekiti": "Ekiti State University",
-  "Rv Fr. Moses Orshio Adasu University, Makurdi": "Rev. Fr. Moses Orshio Adasu (Formerly, Benue State University), Makurdi",
-  "Gombe State University, Gombe": "Gombe State Univeristy, Gombe",
+  'University of Abuja, Abuja': 'University of Abuja, Gwagwalada',
+  'University of Benin, Benin City': 'University of Benin',
+  'University of Ibadan, Ibadan': 'University of Ibadan',
+  'University of Ilorin, Ilorin': 'University of Ilorin',
+  'University of Jos, Jos': 'University of Jos',
+  'University of Maiduguri, Maiduguri': 'University of Maiduguri',
+  'University of Uyo, Uyo': 'University of Uyo',
+  'Usmanu Danfodiyo University, Sokoto': 'Usumanu Danfodiyo University',
+  'King David Umahi University of Medical Sciences, Uburu':
+    'David Nweze Umahi Federal University of Medical Sciences, Uburu',
+  'Federal University of Agriculture, Bassam-Bari': 'Federal University of Agriculture Bassam-Biri, Bayelsa',
+  'Federal University of Health Sciences, Funtua': 'Federal University of Health Sciences, Katsina',
+  'Adeyemi Federal University of Education, Akure': 'Adeyemi Federal University of Education, Ondo',
+  'Federal University of Education, Kantagora': 'Federal University of Education Kontagora, Niger State',
+  'Federal University of Agriculture and Developmental Studies, Iragbiji':
+    'Federal University of Agriculture and Developmental Studies, Iragbuji, Osun State',
+  'Rivers State University of Science & Technology, Port Harcourt': 'Rivers State University',
+  'Ekiti State University, Ado-Ekiti': 'Ekiti State University',
+  'Rv Fr. Moses Orshio Adasu University, Makurdi':
+    'Rev. Fr. Moses Orshio Adasu (Formerly, Benue State University), Makurdi',
+  'Gombe State University, Gombe': 'Gombe State Univeristy, Gombe',
   "Umaru Musa Yar'Adua University, Katsina": "Umar Musa Yar' Adua University Katsina",
-  "Sa'adu Zungur University, Gadau": "Bauchi State University, Gadau",
-  "Ondo State University of Medical Sciences": "University of Medical Sciences, Ondo City, Ondo State",
-  "Borno State University": "Kashim Ibrahim ( formerly Bornu State) University, Maiduguri",
-  "Zamfara State University, Talata-Mafara": "Zamfara State University",
-  "Bayelsa Medical University, Yenagoa": "Bayelsa Medical University",
-  "University of Science and Technology, Ozoro": "Delta University of Science and Technology, Ozoro",
-  "Dennis Osadebey University, Asaba": "Dennis Osadebe University, Asaba",
-  "Lagos University of Education, Oto/Ijanikin": "Lagos State University of Education, Ijanikin",
-  "Enugu State University of Medical and Applied Sciences, Igbo-Eno": "State University of Medical and Applied Sciences, Igbo-Eno, Enugu",
-  "Emmanuel Alayande University of Education, Oyo": "Emanuel Alayande University of Education Oyo",
-  "Abdulsalami Abubakar University of Agriculture and Climate Action, Mokwa": "Abdulsalam Abubakar University of Agriculture and Climate Action, Mokwa, Niger State",
-  "Ebonyi State University of Aeronautics and Aerospace Engineering, Ezza": "University of Aeronautics and Aerospace Engineering Ezza, Ebonyi State",
-  "Covenant University, Otta": "Covenant University Ota",
-  "Crescent University, Abeokuta": "Crescent University",
-  "Caleb University, Imota": "Caleb University, Lagos",
-  "Fountain University, Oshogbo": "Fountain Unveristy, Oshogbo",
-  "Augustine University, Ilara": "Augustine University",
-  "Chrisland University, Owode": "Chrisland University",
-  "Hallmark University, Ijebu-Itele": "Hallmark University, Ijebi Itele, Ogun",
-  "Michael & Cecilia Ibru University, Owhode": "Micheal & Cecilia Ibru University",
-  "Arthur Jarvis University, Akpabuyo": "Arthur Javis University Akpoyubo Cross river State",
-  "PAMO University of Medical Sciences, Port-Harcourt": "PAMO University of Medical Sciences, Portharcourt",
-  "Trinity University, Laloko": "Trinity University Ogun State",
-  "Maranatha University, Lekki": "Maranatha University, Lagos",
-  "University of Offa, Offa": "University of Offa, Kwara State",
-  "Mewar University, Masaka": "Mewar International University, Masaka, Nasarawa State",
-  "European University of Nigeria, Abuja": "European University of Nigeria, Duboyi, FCT",
-  "Rayhaan University, Birnin Kebbi": "Rayhaan University, Kebbi",
-  "Amaj University, Abuja": "Amaj University, Kwali, Abuja",
-  "Hillside University of Science and Technology, Okemesi Ekiti": "Hillside University of Science and Technology, Okemisi, Ekiti State",
-  "Elrazi University of Medical Sciences, Kano": "Elrazi Medical University Yargaya University, Kano State",
-  "Mercy Medical University, Iwara-Iwo": "Mercy Medical University, Iwo, Ogun State",
-  "West Midland Open University, Ibadan": "West Midlands Open University, Ibadan, Oyo State",
-  "Prime University, Abuja": "Prime University, Kuje, FCT Abuja",
-  "Lighthouse University, Evbuobanosa": "Lighthouse University, Evbobanosa, Edo State",
-  "Tonnie Iredia University of Communication, Benin City": "Tonine Iredia University of Communication, Benin City, Edo State",
-  "Millennium Crest University, Ikare-Akoko": "Millenium Crest University, Ikare Akoko, Ondo State",
-  "Regnum Medical University, Lagos": "Regnum Medical University, Anthony, Lagos State",
-  "Transatlantic University of Medicine and Health Sciences, Umuchukwu": "Transatlantic University of Medine and Health Sciences, Umuchukwu, Anambra State",
+  "Sa'adu Zungur University, Gadau": 'Bauchi State University, Gadau',
+  'Ondo State University of Medical Sciences': 'University of Medical Sciences, Ondo City, Ondo State',
+  'Borno State University': 'Kashim Ibrahim ( formerly Bornu State) University, Maiduguri',
+  'Zamfara State University, Talata-Mafara': 'Zamfara State University',
+  'Bayelsa Medical University, Yenagoa': 'Bayelsa Medical University',
+  'University of Science and Technology, Ozoro': 'Delta University of Science and Technology, Ozoro',
+  'Dennis Osadebey University, Asaba': 'Dennis Osadebe University, Asaba',
+  'Lagos University of Education, Oto/Ijanikin': 'Lagos State University of Education, Ijanikin',
+  'Enugu State University of Medical and Applied Sciences, Igbo-Eno':
+    'State University of Medical and Applied Sciences, Igbo-Eno, Enugu',
+  'Emmanuel Alayande University of Education, Oyo': 'Emanuel Alayande University of Education Oyo',
+  'Abdulsalami Abubakar University of Agriculture and Climate Action, Mokwa':
+    'Abdulsalam Abubakar University of Agriculture and Climate Action, Mokwa, Niger State',
+  'Ebonyi State University of Aeronautics and Aerospace Engineering, Ezza':
+    'University of Aeronautics and Aerospace Engineering Ezza, Ebonyi State',
+  'Covenant University, Otta': 'Covenant University Ota',
+  'Crescent University, Abeokuta': 'Crescent University',
+  'Caleb University, Imota': 'Caleb University, Lagos',
+  'Fountain University, Oshogbo': 'Fountain Unveristy, Oshogbo',
+  'Augustine University, Ilara': 'Augustine University',
+  'Chrisland University, Owode': 'Chrisland University',
+  'Hallmark University, Ijebu-Itele': 'Hallmark University, Ijebi Itele, Ogun',
+  'Michael & Cecilia Ibru University, Owhode': 'Micheal & Cecilia Ibru University',
+  'Arthur Jarvis University, Akpabuyo': 'Arthur Javis University Akpoyubo Cross river State',
+  'PAMO University of Medical Sciences, Port-Harcourt': 'PAMO University of Medical Sciences, Portharcourt',
+  'Trinity University, Laloko': 'Trinity University Ogun State',
+  'Maranatha University, Lekki': 'Maranatha University, Lagos',
+  'University of Offa, Offa': 'University of Offa, Kwara State',
+  'Mewar University, Masaka': 'Mewar International University, Masaka, Nasarawa State',
+  'European University of Nigeria, Abuja': 'European University of Nigeria, Duboyi, FCT',
+  'Rayhaan University, Birnin Kebbi': 'Rayhaan University, Kebbi',
+  'Amaj University, Abuja': 'Amaj University, Kwali, Abuja',
+  'Hillside University of Science and Technology, Okemesi Ekiti':
+    'Hillside University of Science and Technology, Okemisi, Ekiti State',
+  'Elrazi University of Medical Sciences, Kano': 'Elrazi Medical University Yargaya University, Kano State',
+  'Mercy Medical University, Iwara-Iwo': 'Mercy Medical University, Iwo, Ogun State',
+  'West Midland Open University, Ibadan': 'West Midlands Open University, Ibadan, Oyo State',
+  'Prime University, Abuja': 'Prime University, Kuje, FCT Abuja',
+  'Lighthouse University, Evbuobanosa': 'Lighthouse University, Evbobanosa, Edo State',
+  'Tonnie Iredia University of Communication, Benin City':
+    'Tonine Iredia University of Communication, Benin City, Edo State',
+  'Millennium Crest University, Ikare-Akoko': 'Millenium Crest University, Ikare Akoko, Ondo State',
+  'Regnum Medical University, Lagos': 'Regnum Medical University, Anthony, Lagos State',
+  'Transatlantic University of Medicine and Health Sciences, Umuchukwu':
+    'Transatlantic University of Medine and Health Sciences, Umuchukwu, Anambra State',
 };
 
 type Directory = InventoryRow[];
@@ -373,7 +453,15 @@ export function matchRegistry(registry: RegistryRow[], directory: Directory): Co
   const available = (rows: InventoryRow[] | undefined) =>
     (rows ?? []).filter((entry) => !taken.has(entry.institutionId));
 
-  const record = (name: string, ownership: Ownership, year: number | null, website: string | null, flags: string[], entry: InventoryRow, how: CoverageReport['matched'][number]['matchedOn']) => {
+  const record = (
+    name: string,
+    ownership: Ownership,
+    year: number | null,
+    website: string | null,
+    flags: string[],
+    entry: InventoryRow,
+    how: CoverageReport['matched'][number]['matchedOn'],
+  ) => {
     taken.add(entry.institutionId);
     matched.push({
       institutionId: entry.institutionId,
@@ -493,18 +581,29 @@ export function matchRegistry(registry: RegistryRow[], directory: Directory): Co
 function main(): void {
   const inventory = JSON.parse(
     readFileSync(join(ROOT, 'data', 'institutions', 'institution-inventory-329.json'), 'utf8'),
-  ) as { institutions: Array<{ institutionId: string; schoolName: string; state: string | null; websiteUrl: string | null }> };
+  ) as {
+    institutions: Array<{ institutionId: string; schoolName: string; state: string | null; websiteUrl: string | null }>;
+  };
 
   const snapshot = buildSnapshot();
-  writeFileSync(join(ROOT, 'data', 'institutions', 'nuc-registry-2026-11-17.json'), `${JSON.stringify(snapshot, null, 2)}\n`);
+  writeFileSync(
+    join(ROOT, 'data', 'institutions', 'nuc-registry-2026-11-17.json'),
+    `${JSON.stringify(snapshot, null, 2)}\n`,
+  );
 
   const coverage = matchRegistry(snapshot.records, inventory.institutions);
   writeFileSync(join(ROOT, 'data', 'institutions', 'registry-coverage.json'), `${JSON.stringify(coverage, null, 2)}\n`);
 
-  console.log(`registry: ${snapshot.counts.total} (${snapshot.counts.federal} federal, ${snapshot.counts.state} state, ${snapshot.counts.private} private)`);
+  console.log(
+    `registry: ${snapshot.counts.total} (${snapshot.counts.federal} federal, ${snapshot.counts.state} state, ${snapshot.counts.private} private)`,
+  );
   console.log(`matched ${coverage.totals.matched} of ${inventory.institutions.length} inventory rows`);
-  console.log(`registry-only ${coverage.totals.registryOnly}, inventory-only ${coverage.totals.inventoryOnly}, ambiguous ${coverage.totals.ambiguous}`);
-  console.log(`websites ${coverage.totals.websitesPublished} (https ${coverage.totals.websitesHttps}, host mismatch ${coverage.totals.websitesMismatchedHost})`);
+  console.log(
+    `registry-only ${coverage.totals.registryOnly}, inventory-only ${coverage.totals.inventoryOnly}, ambiguous ${coverage.totals.ambiguous}`,
+  );
+  console.log(
+    `websites ${coverage.totals.websitesPublished} (https ${coverage.totals.websitesHttps}, host mismatch ${coverage.totals.websitesMismatchedHost})`,
+  );
 }
 
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) main();

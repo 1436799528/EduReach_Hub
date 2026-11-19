@@ -156,16 +156,13 @@ function numberOrNull(value: unknown, min: number, max: number, label: string): 
 function dateOrNull(value: unknown, label: string): Validation<string | null> {
   if (value === null || value === undefined || value === '') return { ok: true, value: null };
   const raw = String(value).trim();
-  if (!DATE.test(raw) || Number.isNaN(Date.parse(raw))) return { ok: false, error: `${label} must be a date (YYYY-MM-DD).` };
+  if (!DATE.test(raw) || Number.isNaN(Date.parse(raw)))
+    return { ok: false, error: `${label} must be a date (YYYY-MM-DD).` };
   return { ok: true, value: raw };
 }
 
 function stringList(value: unknown, maxItems: number, maxLength: number, label: string): Validation<string[]> {
-  const input = Array.isArray(value)
-    ? value
-    : typeof value === 'string'
-      ? value.split(',')
-      : null;
+  const input = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : null;
   if (!input) return { ok: false, error: `${label} must be a list.` };
   const list: string[] = [];
   for (const entry of input) {
@@ -185,9 +182,10 @@ export function mergeLevelRequirements(
   label: string,
 ): Validation<Record<string, unknown> | undefined> {
   if (patch === undefined) return { ok: true, value: undefined };
-  const base = current && typeof current === 'object' && !Array.isArray(current)
-    ? { ...(current as Record<string, unknown>) }
-    : {};
+  const base =
+    current && typeof current === 'object' && !Array.isArray(current)
+      ? { ...(current as Record<string, unknown>) }
+      : {};
   if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
     return { ok: false, error: `${label} must be an object with credits and subjects.` };
   }
@@ -219,7 +217,15 @@ export function mergeLevelRequirements(
 /* -------------------------------------------------------------------------- */
 
 const PROFILE_FIELDS: Record<ProfileSection, readonly string[]> = {
-  identity: ['official_name', 'ownership', 'institution_category', 'year_established', 'city', 'postal_address', 'country'],
+  identity: [
+    'official_name',
+    'ownership',
+    'institution_category',
+    'year_established',
+    'city',
+    'postal_address',
+    'country',
+  ],
   history: ['history_summary', 'overview', 'mission', 'vision', 'mandate'],
   portals: ['official_website_url', 'admission_portal_url', 'student_portal_url', 'postgraduate_portal_url'],
   images: ['logo_url', 'hero_image_url'],
@@ -231,8 +237,14 @@ const DIRECTORY_FIELDS = ['school_name', 'acronym', 'state', 'institution_type',
 
 const OWNERSHIPS = ['federal', 'state', 'private', 'other', 'unknown'] as const;
 const CATEGORIES = [
-  'university', 'polytechnic', 'monotechnic', 'college_of_education', 'college_of_agriculture',
-  'college_of_nursing', 'innovation_enterprise_institute', 'other',
+  'university',
+  'polytechnic',
+  'monotechnic',
+  'college_of_education',
+  'college_of_agriculture',
+  'college_of_nursing',
+  'innovation_enterprise_institute',
+  'other',
 ] as const;
 
 export interface ProfilePatchResult {
@@ -260,16 +272,20 @@ export function validateProfileSection(
     return { ok: false, error: 'Send the section as an object of fields.' };
   }
   const input = body as Record<string, unknown>;
-  const allowed = section === 'identity'
-    ? [...PROFILE_FIELDS.identity, ...DIRECTORY_FIELDS]
-    : PROFILE_FIELDS[section as ProfileSection];
+  const allowed =
+    section === 'identity'
+      ? [...PROFILE_FIELDS.identity, ...DIRECTORY_FIELDS]
+      : PROFILE_FIELDS[section as ProfileSection];
   // Directory columns are not "unknown" outside identity: they have a home, and
   // the message below says where it is. Everything else is a typo or a field the
   // form does not own.
-  const directoryHere = section === 'identity' ? [] : DIRECTORY_FIELDS as readonly string[];
+  const directoryHere = section === 'identity' ? [] : (DIRECTORY_FIELDS as readonly string[]);
   const unknown = Object.keys(input).filter((key) => !allowed.includes(key) && !directoryHere.includes(key));
   if (unknown.length) {
-    return { ok: false, error: `Unknown field${unknown.length === 1 ? '' : 's'} for ${section}: ${unknown.join(', ')}.` };
+    return {
+      ok: false,
+      error: `Unknown field${unknown.length === 1 ? '' : 's'} for ${section}: ${unknown.join(', ')}.`,
+    };
   }
   if (!Object.keys(input).length) return { ok: false, error: 'No fields to save.' };
 
@@ -304,18 +320,32 @@ export function validateProfileSection(
         profile.year_established = value.value;
         break;
       }
-      case 'city': profile.city = text(raw, 120); break;
-      case 'postal_address': profile.postal_address = text(raw, 600); break;
+      case 'city':
+        profile.city = text(raw, 120);
+        break;
+      case 'postal_address':
+        profile.postal_address = text(raw, 600);
+        break;
       case 'country': {
         const value = text(raw, 80) ?? 'Nigeria';
         profile.country = value;
         break;
       }
-      case 'history_summary': profile.history_summary = text(raw, 8000); break;
-      case 'overview': profile.overview = text(raw, 6000); break;
-      case 'mission': profile.mission = text(raw, 4000); break;
-      case 'vision': profile.vision = text(raw, 4000); break;
-      case 'mandate': profile.mandate = text(raw, 4000); break;
+      case 'history_summary':
+        profile.history_summary = text(raw, 8000);
+        break;
+      case 'overview':
+        profile.overview = text(raw, 6000);
+        break;
+      case 'mission':
+        profile.mission = text(raw, 4000);
+        break;
+      case 'vision':
+        profile.vision = text(raw, 4000);
+        break;
+      case 'mandate':
+        profile.mandate = text(raw, 4000);
+        break;
       case 'official_website_url':
       case 'admission_portal_url':
       case 'student_portal_url':
@@ -332,7 +362,9 @@ export function validateProfileSection(
         profile[key] = value.value;
         break;
       }
-      case 'review_note': profile.review_note = text(raw, 2000); break;
+      case 'review_note':
+        profile.review_note = text(raw, 2000);
+        break;
       case 'source_url': {
         const value = cleanUrl(raw, 'Source URL');
         if (!value.ok) return { ok: false, error: value.error };
@@ -349,7 +381,8 @@ export function validateProfileSection(
         profile.publication_status = raw;
         break;
       }
-      default: break;
+      default:
+        break;
     }
   }
 
@@ -373,10 +406,12 @@ export function validateProfileSection(
     return { ok: false, error: 'Institution name, acronym, state and type are edited in the identity section.' };
   }
 
-  const verification = (profile.verification_status as VerificationStatus | undefined)
-    ?? (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
-  const publication = (profile.publication_status as PublicationStatus | undefined)
-    ?? (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
+  const verification =
+    (profile.verification_status as VerificationStatus | undefined) ??
+    (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
+  const publication =
+    (profile.publication_status as PublicationStatus | undefined) ??
+    (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
   const gate = publicationGate(verification, publication);
   if (!gate.ok) return { ok: false, error: gate.error, gate: true };
 
@@ -388,7 +423,18 @@ export function validateProfileSection(
 /* -------------------------------------------------------------------------- */
 
 const UNIT_TYPES = ['faculty', 'college', 'school', 'institute', 'centre', 'department', 'division', 'other'] as const;
-const ENTRY_MODES = ['UTME', 'DIRECT_ENTRY', 'JUPEB', 'IJMB', 'PRE_DEGREE', 'DIPLOMA', 'ND', 'HND', 'TRANSFER', 'OTHER'] as const;
+const ENTRY_MODES = [
+  'UTME',
+  'DIRECT_ENTRY',
+  'JUPEB',
+  'IJMB',
+  'PRE_DEGREE',
+  'DIPLOMA',
+  'ND',
+  'HND',
+  'TRANSFER',
+  'OTHER',
+] as const;
 
 export interface OfferingState {
   id?: string;
@@ -405,12 +451,22 @@ export interface ProgrammePatch {
 }
 
 export function validateProgrammePatch(body: unknown, current: OfferingState): Validation<ProgrammePatch> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'Send the programme fields as an object.' };
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    return { ok: false, error: 'Send the programme fields as an object.' };
   const input = body as Record<string, unknown>;
   const allowed = [
-    'programme_name', 'programme_code', 'academic_unit_id', 'degree_title', 'award_level',
-    'duration_years', 'admission_session', 'is_active', 'verification_status',
-    'publication_status', 'source_url', 'review_note',
+    'programme_name',
+    'programme_code',
+    'academic_unit_id',
+    'degree_title',
+    'award_level',
+    'duration_years',
+    'admission_session',
+    'is_active',
+    'verification_status',
+    'publication_status',
+    'source_url',
+    'review_note',
   ];
   const unknown = Object.keys(input).filter((key) => !allowed.includes(key));
   if (unknown.length) return { ok: false, error: `Unknown programme field: ${unknown.join(', ')}.` };
@@ -425,9 +481,15 @@ export function validateProgrammePatch(body: unknown, current: OfferingState): V
         values.programme_name = value.value;
         break;
       }
-      case 'programme_code': values.programme_code = text(raw, 60); break;
-      case 'degree_title': values.degree_title = text(raw, 200); break;
-      case 'award_level': values.award_level = text(raw, 80); break;
+      case 'programme_code':
+        values.programme_code = text(raw, 60);
+        break;
+      case 'degree_title':
+        values.degree_title = text(raw, 200);
+        break;
+      case 'award_level':
+        values.award_level = text(raw, 80);
+        break;
       case 'academic_unit_id': {
         if (raw !== null && raw !== '' && !isUuid(raw)) return { ok: false, error: 'Choose a valid academic unit.' };
         values.academic_unit_id = raw === '' ? null : raw;
@@ -467,15 +529,20 @@ export function validateProgrammePatch(body: unknown, current: OfferingState): V
         values.source_url = value.value;
         break;
       }
-      case 'review_note': values.review_note = text(raw, 2000); break;
-      default: break;
+      case 'review_note':
+        values.review_note = text(raw, 2000);
+        break;
+      default:
+        break;
     }
   }
 
-  const verification = (values.verification_status as VerificationStatus | undefined)
-    ?? (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
-  const publication = (values.publication_status as PublicationStatus | undefined)
-    ?? (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
+  const verification =
+    (values.verification_status as VerificationStatus | undefined) ??
+    (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
+  const publication =
+    (values.publication_status as PublicationStatus | undefined) ??
+    (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
   const gate = publicationGate(verification, publication);
   if (!gate.ok) return { ok: false, error: gate.error, gate: true };
 
@@ -504,9 +571,20 @@ export function validateUnitPatch(
   current: UnitState,
   siblings: Array<{ id: string; unit_type: string; slug: string; parent_unit_id: string | null }>,
 ): Validation<Record<string, unknown>> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'Send the academic unit fields as an object.' };
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    return { ok: false, error: 'Send the academic unit fields as an object.' };
   const input = body as Record<string, unknown>;
-  const allowed = ['unit_type', 'unit_name', 'parent_unit_id', 'description', 'website_url', 'is_active', 'verification_status', 'source_url', 'review_note'];
+  const allowed = [
+    'unit_type',
+    'unit_name',
+    'parent_unit_id',
+    'description',
+    'website_url',
+    'is_active',
+    'verification_status',
+    'source_url',
+    'review_note',
+  ];
   const unknown = Object.keys(input).filter((key) => !allowed.includes(key));
   if (unknown.length) return { ok: false, error: `Unknown academic unit field: ${unknown.join(', ')}.` };
   if (!Object.keys(input).length) return { ok: false, error: 'No fields to save.' };
@@ -515,7 +593,8 @@ export function validateUnitPatch(
   for (const [key, raw] of Object.entries(input)) {
     switch (key) {
       case 'unit_type': {
-        if (!(UNIT_TYPES as readonly string[]).includes(String(raw))) return { ok: false, error: 'Choose a known unit type.' };
+        if (!(UNIT_TYPES as readonly string[]).includes(String(raw)))
+          return { ok: false, error: 'Choose a known unit type.' };
         values.unit_type = String(raw);
         break;
       }
@@ -532,7 +611,9 @@ export function validateUnitPatch(
         values.parent_unit_id = raw === '' ? null : raw;
         break;
       }
-      case 'description': values.description = text(raw, 2000); break;
+      case 'description':
+        values.description = text(raw, 2000);
+        break;
       case 'website_url': {
         const value = cleanUrl(raw, 'Website URL');
         if (!value.ok) return { ok: false, error: value.error };
@@ -555,34 +636,66 @@ export function validateUnitPatch(
         values.source_url = value.value;
         break;
       }
-      case 'review_note': values.review_note = text(raw, 2000); break;
-      default: break;
+      case 'review_note':
+        values.review_note = text(raw, 2000);
+        break;
+      default:
+        break;
     }
   }
 
   // The hierarchy is real: a unit's position is (parent, type, slug), and the
   // database has a unique index for it. Say so here in words an editor can act on.
-  const effectiveParent = 'parent_unit_id' in values ? values.parent_unit_id as string | null : current.id
-    ? siblings.find((unit) => unit.id === current.id)?.parent_unit_id ?? null
-    : null;
+  const effectiveParent =
+    'parent_unit_id' in values
+      ? (values.parent_unit_id as string | null)
+      : current.id
+        ? (siblings.find((unit) => unit.id === current.id)?.parent_unit_id ?? null)
+        : null;
   const effectiveType = String(values.unit_type ?? current.unit_type ?? '');
   const effectiveSlug = String(values.slug ?? (current as { slug?: string }).slug ?? '');
-  const clash = siblings.find((unit) => unit.id !== current.id
-    && unit.unit_type === effectiveType
-    && unit.slug === effectiveSlug
-    && (unit.parent_unit_id ?? null) === (effectiveParent ?? null));
-  if (clash) return { ok: false, error: 'Another unit already has that name under the same parent. Rename it or choose a different parent.' };
+  const clash = siblings.find(
+    (unit) =>
+      unit.id !== current.id &&
+      unit.unit_type === effectiveType &&
+      unit.slug === effectiveSlug &&
+      (unit.parent_unit_id ?? null) === (effectiveParent ?? null),
+  );
+  if (clash)
+    return {
+      ok: false,
+      error: 'Another unit already has that name under the same parent. Rename it or choose a different parent.',
+    };
 
   return { ok: true, value: values };
 }
 
-export function validateRoutePatch(body: unknown, current: { opens_on?: string | null; closes_on?: string | null; verification_status?: string | null; publication_status?: string | null }): Validation<{ values: Record<string, unknown>; verification: VerificationStatus; publication: PublicationStatus }> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'Send the admission route fields as an object.' };
+export function validateRoutePatch(
+  body: unknown,
+  current: {
+    opens_on?: string | null;
+    closes_on?: string | null;
+    verification_status?: string | null;
+    publication_status?: string | null;
+  },
+): Validation<{ values: Record<string, unknown>; verification: VerificationStatus; publication: PublicationStatus }> {
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    return { ok: false, error: 'Send the admission route fields as an object.' };
   const input = body as Record<string, unknown>;
   const allowed = [
-    'admission_session', 'entry_mode', 'assessment_methods', 'first_choice_required',
-    'change_of_institution_allowed', 'application_url', 'opens_on', 'closes_on',
-    'eligibility_notes', 'verification_status', 'publication_status', 'source_url', 'review_note',
+    'admission_session',
+    'entry_mode',
+    'assessment_methods',
+    'first_choice_required',
+    'change_of_institution_allowed',
+    'application_url',
+    'opens_on',
+    'closes_on',
+    'eligibility_notes',
+    'verification_status',
+    'publication_status',
+    'source_url',
+    'review_note',
   ];
   const unknown = Object.keys(input).filter((key) => !allowed.includes(key));
   if (unknown.length) return { ok: false, error: `Unknown admission route field: ${unknown.join(', ')}.` };
@@ -597,7 +710,8 @@ export function validateRoutePatch(body: unknown, current: { opens_on?: string |
         break;
       }
       case 'entry_mode': {
-        if (!(ENTRY_MODES as readonly string[]).includes(String(raw))) return { ok: false, error: 'Choose a known entry mode.' };
+        if (!(ENTRY_MODES as readonly string[]).includes(String(raw)))
+          return { ok: false, error: 'Choose a known entry mode.' };
         values.entry_mode = String(raw);
         break;
       }
@@ -627,7 +741,9 @@ export function validateRoutePatch(body: unknown, current: { opens_on?: string |
         values[key] = value.value;
         break;
       }
-      case 'eligibility_notes': values.eligibility_notes = text(raw, 4000); break;
+      case 'eligibility_notes':
+        values.eligibility_notes = text(raw, 4000);
+        break;
       case 'verification_status': {
         if (!isVerificationStatus(raw)) return { ok: false, error: 'Choose a known verification status.' };
         values.verification_status = raw;
@@ -644,19 +760,25 @@ export function validateRoutePatch(body: unknown, current: { opens_on?: string |
         values.source_url = value.value;
         break;
       }
-      case 'review_note': values.review_note = text(raw, 2000); break;
-      default: break;
+      case 'review_note':
+        values.review_note = text(raw, 2000);
+        break;
+      default:
+        break;
     }
   }
 
-  const opens = 'opens_on' in values ? values.opens_on as string | null : current.opens_on ?? null;
-  const closes = 'closes_on' in values ? values.closes_on as string | null : current.closes_on ?? null;
-  if (opens && closes && closes < opens) return { ok: false, error: 'The closing date cannot be before the opening date.' };
+  const opens = 'opens_on' in values ? (values.opens_on as string | null) : (current.opens_on ?? null);
+  const closes = 'closes_on' in values ? (values.closes_on as string | null) : (current.closes_on ?? null);
+  if (opens && closes && closes < opens)
+    return { ok: false, error: 'The closing date cannot be before the opening date.' };
 
-  const verification = (values.verification_status as VerificationStatus | undefined)
-    ?? (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
-  const publication = (values.publication_status as PublicationStatus | undefined)
-    ?? (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
+  const verification =
+    (values.verification_status as VerificationStatus | undefined) ??
+    (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
+  const publication =
+    (values.publication_status as PublicationStatus | undefined) ??
+    (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
   const gate = publicationGate(verification, publication);
   if (!gate.ok) return { ok: false, error: gate.error, gate: true };
 
@@ -678,12 +800,23 @@ export function validateRequirementPatch(
   body: unknown,
   current: RequirementState,
 ): Validation<{ values: Record<string, unknown>; verification: VerificationStatus; publication: PublicationStatus }> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'Send the requirement fields as an object.' };
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    return { ok: false, error: 'Send the requirement fields as an object.' };
   const input = body as Record<string, unknown>;
   const allowed = [
-    'admission_session', 'entry_mode', 'utme_subjects', 'o_level', 'a_level',
-    'minimum_utme_score', 'minimum_utme_scale', 'first_choice_required', 'notes',
-    'verification_status', 'publication_status', 'source_url', 'review_note',
+    'admission_session',
+    'entry_mode',
+    'utme_subjects',
+    'o_level',
+    'a_level',
+    'minimum_utme_score',
+    'minimum_utme_scale',
+    'first_choice_required',
+    'notes',
+    'verification_status',
+    'publication_status',
+    'source_url',
+    'review_note',
   ];
   const unknown = Object.keys(input).filter((key) => !allowed.includes(key));
   if (unknown.length) return { ok: false, error: `Unknown requirement field: ${unknown.join(', ')}.` };
@@ -698,7 +831,8 @@ export function validateRequirementPatch(
         break;
       }
       case 'entry_mode': {
-        if (!(ENTRY_MODES as readonly string[]).includes(String(raw))) return { ok: false, error: 'Choose a known entry mode.' };
+        if (!(ENTRY_MODES as readonly string[]).includes(String(raw)))
+          return { ok: false, error: 'Choose a known entry mode.' };
         values.entry_mode = String(raw);
         break;
       }
@@ -721,9 +855,8 @@ export function validateRequirementPatch(
         break;
       }
       case 'minimum_utme_score': {
-        const scale = 'minimum_utme_scale' in input
-          ? Number(input.minimum_utme_scale)
-          : Number(current.minimum_utme_scale ?? 400);
+        const scale =
+          'minimum_utme_scale' in input ? Number(input.minimum_utme_scale) : Number(current.minimum_utme_scale ?? 400);
         const value = numberOrNull(raw, 0, Number.isFinite(scale) ? scale : 400, 'Minimum UTME score');
         if (!value.ok) return { ok: false, error: value.error };
         values.minimum_utme_score = value.value;
@@ -732,7 +865,8 @@ export function validateRequirementPatch(
       case 'minimum_utme_scale': {
         const value = numberOrNull(raw, 1, 1000, 'UTME scale');
         if (!value.ok) return { ok: false, error: value.error };
-        if (value.value === null) return { ok: false, error: 'The UTME scale is required when a minimum score is recorded.' };
+        if (value.value === null)
+          return { ok: false, error: 'The UTME scale is required when a minimum score is recorded.' };
         values.minimum_utme_scale = value.value;
         break;
       }
@@ -742,7 +876,9 @@ export function validateRequirementPatch(
         values.first_choice_required = value.value;
         break;
       }
-      case 'notes': values.notes = text(raw, 4000); break;
+      case 'notes':
+        values.notes = text(raw, 4000);
+        break;
       case 'verification_status': {
         if (!isVerificationStatus(raw)) return { ok: false, error: 'Choose a known verification status.' };
         values.verification_status = raw;
@@ -759,21 +895,30 @@ export function validateRequirementPatch(
         values.source_url = value.value;
         break;
       }
-      case 'review_note': values.review_note = text(raw, 2000); break;
-      default: break;
+      case 'review_note':
+        values.review_note = text(raw, 2000);
+        break;
+      default:
+        break;
     }
   }
 
-  const score = 'minimum_utme_score' in values ? values.minimum_utme_score as number | null : (current as { minimum_utme_score?: number | null }).minimum_utme_score ?? null;
-  const scale = 'minimum_utme_scale' in values ? values.minimum_utme_scale as number | null : current.minimum_utme_scale ?? 400;
+  const score =
+    'minimum_utme_score' in values
+      ? (values.minimum_utme_score as number | null)
+      : ((current as { minimum_utme_score?: number | null }).minimum_utme_score ?? null);
+  const scale =
+    'minimum_utme_scale' in values ? (values.minimum_utme_scale as number | null) : (current.minimum_utme_scale ?? 400);
   if (score !== null && scale !== null && score > scale) {
     return { ok: false, error: 'The minimum UTME score cannot be higher than the scale it is recorded on.' };
   }
 
-  const verification = (values.verification_status as VerificationStatus | undefined)
-    ?? (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
-  const publication = (values.publication_status as PublicationStatus | undefined)
-    ?? (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
+  const verification =
+    (values.verification_status as VerificationStatus | undefined) ??
+    (isVerificationStatus(current.verification_status) ? current.verification_status : 'unresearched');
+  const publication =
+    (values.publication_status as PublicationStatus | undefined) ??
+    (isPublicationStatus(current.publication_status) ? current.publication_status : 'draft');
   const gate = publicationGate(verification, publication);
   if (!gate.ok) return { ok: false, error: gate.error, gate: true };
 
@@ -788,7 +933,8 @@ export function validateEvidencePatch(
   body: unknown,
   current: { source_url?: string | null },
 ): Validation<{ status?: EvidenceDecision; note?: string | null; source_url?: string | null }> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'Send the review as an object.' };
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    return { ok: false, error: 'Send the review as an object.' };
   const input = body as Record<string, unknown>;
   const allowed = ['status', 'note', 'source_url'];
   const unknown = Object.keys(input).filter((key) => !allowed.includes(key));
@@ -812,7 +958,11 @@ export function validateEvidencePatch(
 
   const effectiveSource = 'source_url' in result ? result.source_url : current.source_url;
   if (status === 'verified' && !effectiveSource) {
-    return { ok: false, error: 'This claim has no source URL, so there is nothing to check it against. Record a source, or mark it disputed and say what is missing.' };
+    return {
+      ok: false,
+      error:
+        'This claim has no source URL, so there is nothing to check it against. Record a source, or mark it disputed and say what is missing.',
+    };
   }
   if (status && status !== 'verified' && !result.note) {
     return { ok: false, error: 'A disputed, outdated or withdrawn claim needs a written reason on record.' };
@@ -828,7 +978,16 @@ export function validateEvidencePatch(
 export type CheckState = 'ok' | 'review' | 'missing';
 
 export interface ReviewCheck {
-  key: 'profile' | 'website' | 'units' | 'programmes' | 'admissionDates' | 'utmeRequirements' | 'campusImage' | 'logo' | 'portal';
+  key:
+    | 'profile'
+    | 'website'
+    | 'units'
+    | 'programmes'
+    | 'admissionDates'
+    | 'utmeRequirements'
+    | 'campusImage'
+    | 'logo'
+    | 'portal';
   label: string;
   state: CheckState;
   detail: string;
@@ -842,7 +1001,11 @@ export interface ReviewSignals {
     publication_status?: string | null;
     official_website_url?: string | null;
   } | null;
-  institution: { website_url?: string | null; admission_portal_url?: string | null; student_portal_url?: string | null };
+  institution: {
+    website_url?: string | null;
+    admission_portal_url?: string | null;
+    student_portal_url?: string | null;
+  };
   counts: {
     units: number;
     unitsUnverified: number;
@@ -866,8 +1029,12 @@ export function reviewChecklist(input: ReviewSignals): ReviewCheck[] {
   const profile = input.profile;
   const profileState: CheckState = profile?.official_name ? 'ok' : profile ? 'review' : 'missing';
   const websiteUrl = profile?.official_website_url || input.institution.website_url;
-  const portal = input.portalUrls.admission || input.portalUrls.student || input.portalUrls.postgraduate
-    || input.institution.admission_portal_url || input.institution.student_portal_url;
+  const portal =
+    input.portalUrls.admission ||
+    input.portalUrls.student ||
+    input.portalUrls.postgraduate ||
+    input.institution.admission_portal_url ||
+    input.institution.student_portal_url;
 
   const countState = (total: number, unverified: number): CheckState => {
     if (!total) return 'missing';
@@ -879,16 +1046,68 @@ export function reviewChecklist(input: ReviewSignals): ReviewCheck[] {
       key: 'profile',
       label: 'Profile',
       state: profileState,
-      detail: profile ? (profile.official_name ? `${humanStatus(profile.verification_status)} · ${humanStatus(profile.publication_status)}` : 'Profile started; identity fields incomplete') : 'Not researched yet',
+      detail: profile
+        ? profile.official_name
+          ? `${humanStatus(profile.verification_status)} · ${humanStatus(profile.publication_status)}`
+          : 'Profile started; identity fields incomplete'
+        : 'Not researched yet',
     },
-    { key: 'website', label: 'Official website', state: websiteUrl ? 'ok' : 'missing', detail: websiteUrl ? 'Recorded' : 'No official website recorded' },
-    { key: 'units', label: 'Academic units', state: countState(input.counts.units, input.counts.unitsUnverified), detail: `${input.counts.units} unit${input.counts.units === 1 ? '' : 's'}${input.counts.unitsUnverified ? `, ${input.counts.unitsUnverified} awaiting verification` : ''}` },
-    { key: 'programmes', label: 'Programmes', state: countState(input.counts.offerings, input.counts.offeringsUnverified), detail: `${input.counts.offerings} programme record${input.counts.offerings === 1 ? '' : 's'}${input.counts.offeringsUnverified ? `, ${input.counts.offeringsUnverified} awaiting verification` : ''}` },
-    { key: 'admissionDates', label: 'Admission dates', state: input.counts.routesWithDates ? 'ok' : input.counts.routes ? 'review' : 'missing', detail: input.counts.routesWithDates ? `${input.counts.routesWithDates} route(s) with dates` : input.counts.routes ? 'Routes recorded without dates — review' : 'No admission route recorded' },
-    { key: 'utmeRequirements', label: 'UTME requirements', state: input.counts.requirementsWithSubjects ? 'ok' : input.counts.requirements ? 'review' : 'missing', detail: input.counts.requirementsWithSubjects ? `${input.counts.requirementsWithSubjects} requirement set(s) with subjects` : input.counts.requirements ? 'Requirement rows recorded without subject combinations' : 'Awaiting verification' },
-    { key: 'campusImage', label: 'Campus image', state: input.profileImages.hero_image_url ? 'ok' : 'missing', detail: input.profileImages.hero_image_url ? 'Recorded' : 'No campus image recorded' },
-    { key: 'logo', label: 'Logo', state: input.profileImages.logo_url ? 'ok' : 'missing', detail: input.profileImages.logo_url ? 'Recorded' : 'No logo recorded' },
-    { key: 'portal', label: 'Portal', state: portal ? 'ok' : 'missing', detail: portal ? 'Recorded' : 'No portal URL recorded' },
+    {
+      key: 'website',
+      label: 'Official website',
+      state: websiteUrl ? 'ok' : 'missing',
+      detail: websiteUrl ? 'Recorded' : 'No official website recorded',
+    },
+    {
+      key: 'units',
+      label: 'Academic units',
+      state: countState(input.counts.units, input.counts.unitsUnverified),
+      detail: `${input.counts.units} unit${input.counts.units === 1 ? '' : 's'}${input.counts.unitsUnverified ? `, ${input.counts.unitsUnverified} awaiting verification` : ''}`,
+    },
+    {
+      key: 'programmes',
+      label: 'Programmes',
+      state: countState(input.counts.offerings, input.counts.offeringsUnverified),
+      detail: `${input.counts.offerings} programme record${input.counts.offerings === 1 ? '' : 's'}${input.counts.offeringsUnverified ? `, ${input.counts.offeringsUnverified} awaiting verification` : ''}`,
+    },
+    {
+      key: 'admissionDates',
+      label: 'Admission dates',
+      state: input.counts.routesWithDates ? 'ok' : input.counts.routes ? 'review' : 'missing',
+      detail: input.counts.routesWithDates
+        ? `${input.counts.routesWithDates} route(s) with dates`
+        : input.counts.routes
+          ? 'Routes recorded without dates — review'
+          : 'No admission route recorded',
+    },
+    {
+      key: 'utmeRequirements',
+      label: 'UTME requirements',
+      state: input.counts.requirementsWithSubjects ? 'ok' : input.counts.requirements ? 'review' : 'missing',
+      detail: input.counts.requirementsWithSubjects
+        ? `${input.counts.requirementsWithSubjects} requirement set(s) with subjects`
+        : input.counts.requirements
+          ? 'Requirement rows recorded without subject combinations'
+          : 'Awaiting verification',
+    },
+    {
+      key: 'campusImage',
+      label: 'Campus image',
+      state: input.profileImages.hero_image_url ? 'ok' : 'missing',
+      detail: input.profileImages.hero_image_url ? 'Recorded' : 'No campus image recorded',
+    },
+    {
+      key: 'logo',
+      label: 'Logo',
+      state: input.profileImages.logo_url ? 'ok' : 'missing',
+      detail: input.profileImages.logo_url ? 'Recorded' : 'No logo recorded',
+    },
+    {
+      key: 'portal',
+      label: 'Portal',
+      state: portal ? 'ok' : 'missing',
+      detail: portal ? 'Recorded' : 'No portal URL recorded',
+    },
   ];
 }
 
@@ -946,12 +1165,19 @@ export interface ReviewFilters {
 /** One row per institution; every count is honest, including zero. */
 export function reviewChecklistForRow(row: ReviewOverviewRow): ReviewCheck[] {
   return reviewChecklist({
-    profile: row.official_name || row.verification_status !== 'unresearched' ? {
-      official_name: row.official_name,
-      verification_status: row.verification_status,
-      publication_status: row.publication_status,
-    } : null,
-    institution: { website_url: row.directory_website_url, admission_portal_url: row.admission_portal_url, student_portal_url: row.student_portal_url },
+    profile:
+      row.official_name || row.verification_status !== 'unresearched'
+        ? {
+            official_name: row.official_name,
+            verification_status: row.verification_status,
+            publication_status: row.publication_status,
+          }
+        : null,
+    institution: {
+      website_url: row.directory_website_url,
+      admission_portal_url: row.admission_portal_url,
+      student_portal_url: row.student_portal_url,
+    },
     counts: {
       units: row.academic_units,
       unitsUnverified: row.academic_units_unverified,
@@ -976,16 +1202,17 @@ export function reviewChecklistForRow(row: ReviewOverviewRow): ReviewCheck[] {
  * `missing` (`any` = at least one missing check, or a checklist key name).
  * `source` is `verified` (every reviewed row has a source) or `missing`.
  */
-export function filterReviewRows(
-  rows: ReviewOverviewRow[],
-  filters: ReviewFilters,
-): ReviewOverviewRow[] {
-  const search = String(filters.search || '').trim().toLowerCase();
+export function filterReviewRows(rows: ReviewOverviewRow[], filters: ReviewFilters): ReviewOverviewRow[] {
+  const search = String(filters.search || '')
+    .trim()
+    .toLowerCase();
   const missing = String(filters.missing || '').trim();
   return rows.filter((row) => {
     if (search) {
       const haystack = [row.school_name, row.official_name, row.acronym, row.state]
-        .filter(Boolean).join(' ').toLowerCase();
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
       if (!haystack.includes(search)) return false;
     }
     if (filters.state && row.state !== filters.state) return false;
@@ -1020,11 +1247,12 @@ export interface ReviewSummary {
 
 export function summarizeReview(rows: ReviewOverviewRow[], sourceRecords: number): ReviewSummary {
   return {
-    institutionsAwaitingReview: rows.filter((row) =>
-      row.verification_status !== 'verified'
-      || row.evidence_awaiting_review > 0
-      || row.programme_offerings_unverified > 0
-      || row.academic_units_unverified > 0
+    institutionsAwaitingReview: rows.filter(
+      (row) =>
+        row.verification_status !== 'verified' ||
+        row.evidence_awaiting_review > 0 ||
+        row.programme_offerings_unverified > 0 ||
+        row.academic_units_unverified > 0,
     ).length,
     programmeRecordsAwaitingVerification: rows.reduce((total, row) => total + row.programme_offerings_unverified, 0),
     academicUnits: rows.reduce((total, row) => total + row.academic_units, 0),
@@ -1041,6 +1269,8 @@ export function filterOptions(rows: ReviewOverviewRow[]) {
   return {
     states: unique(rows.map((row) => row.state)),
     institutionTypes: unique(rows.map((row) => row.institution_type)),
-    sessions: unique(rows.flatMap((row) => row.admission_sessions || [])).sort().reverse(),
+    sessions: unique(rows.flatMap((row) => row.admission_sessions || []))
+      .sort()
+      .reverse(),
   };
 }

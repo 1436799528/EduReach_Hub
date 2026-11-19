@@ -66,14 +66,21 @@ async function main(): Promise<number> {
   const outPath = arg('out');
 
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY || '';
   if (!url || !key) {
-    console.error('BLOCKED: SUPABASE_URL and a service role key are required (the dry run executes the same transaction and rolls it back).');
+    console.error(
+      'BLOCKED: SUPABASE_URL and a service role key are required (the dry run executes the same transaction and rolls it back).',
+    );
     return 1;
   }
 
   const ref = (() => {
-    try { return new URL(url).hostname.split('.')[0]; } catch { return ''; }
+    try {
+      return new URL(url).hostname.split('.')[0];
+    } catch {
+      return '';
+    }
   })();
   if (ref === PRODUCTION_REF) {
     console.error(`REFUSED: ${ref} is the production project. This importer never writes to production.`);
@@ -100,7 +107,12 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const batchId = `${String(batch.researchDate ?? 'undated')}-${batchPath.split('/').pop()?.replace(/\.json$/, '') ?? 'batch'}`;
+  const batchId = `${String(batch.researchDate ?? 'undated')}-${
+    batchPath
+      .split('/')
+      .pop()
+      ?.replace(/\.json$/, '') ?? 'batch'
+  }`;
   const { payload, issues, counts } = transformBatch(batch, directory, { batchId });
 
   const unresolved = issues.filter((issue) => /catalogue row|reconcile them|no institutionId/.test(issue.reason));
@@ -141,8 +153,8 @@ async function main(): Promise<number> {
   const rejected = Array.isArray(data?.rejected) ? data.rejected.length : 0;
   console.log(
     `\n${apply ? 'APPLIED' : 'DRY RUN'} — inserted ${sum(data?.inserted)} / updated ${sum(data?.updated)} / ` +
-    `skipped ${sum(data?.skipped)} / skipped-verified ${sum(data?.skipped_verified)} / rejected ${rejected}. ` +
-    'All rows are in_review until an admin publishes them.',
+      `skipped ${sum(data?.skipped)} / skipped-verified ${sum(data?.skipped_verified)} / rejected ${rejected}. ` +
+      'All rows are in_review until an admin publishes them.',
   );
   return 0;
 }
@@ -151,7 +163,9 @@ function sum(bucket: Record<string, number> | undefined): number {
   return Object.values(bucket ?? {}).reduce((total, value) => total + Number(value ?? 0), 0);
 }
 
-main().then((code) => process.exit(code)).catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .then((code) => process.exit(code))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

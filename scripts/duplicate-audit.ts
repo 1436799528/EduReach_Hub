@@ -27,9 +27,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_SECRET_KEY ||
-  process.env.SUPABASE_SERVICE_KEY;
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY;
 
 function normalize(text: string): string {
   return text.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -66,10 +64,14 @@ async function run() {
   }
 
   const exactGroups = [...byNorm.entries()].filter(([, list]) => list.length > 1);
-  console.log(`Questions examined for exact duplicates: ${data?.length} (query cap: 20,000; larger banks may be truncated)`);
+  console.log(
+    `Questions examined for exact duplicates: ${data?.length} (query cap: 20,000; larger banks may be truncated)`,
+  );
   console.log(`Exact duplicate groups (normalized text identical): ${exactGroups.length}`);
   for (const [norm, list] of exactGroups.slice(0, 20)) {
-    console.log(`  - "${norm.slice(0, 80)}" ×${list.length} [${list.map((r) => `${r.exam_id}:${r.subject}`).join(', ')}]`);
+    console.log(
+      `  - "${norm.slice(0, 80)}" ×${list.length} [${list.map((r) => `${r.exam_id}:${r.subject}`).join(', ')}]`,
+    );
   }
   if (exactGroups.length > 20) console.log(`  ... and ${exactGroups.length - 20} more exact groups`);
 
@@ -89,10 +91,17 @@ async function run() {
       const inter = [...setA].filter((x) => setB.has(x)).length;
       const union = new Set([...setA, ...setB]).size;
       const jaccard = union ? inter / union : 0;
-      if (jaccard >= 0.85) candidates.push({ a: rows[i].question_text.slice(0, 60), b: rows[j].question_text.slice(0, 60), similarity: jaccard });
+      if (jaccard >= 0.85)
+        candidates.push({
+          a: rows[i].question_text.slice(0, 60),
+          b: rows[j].question_text.slice(0, 60),
+          similarity: jaccard,
+        });
     }
   }
-  console.log(`Near-duplicate SAMPLE only (token Jaccard >= 0.85; first 200 rows / at most 19,900 pairs): ${candidates.length} candidates`);
+  console.log(
+    `Near-duplicate SAMPLE only (token Jaccard >= 0.85; first 200 rows / at most 19,900 pairs): ${candidates.length} candidates`,
+  );
   for (const c of candidates.slice(0, 10)) {
     console.log(`  ~ ${c.similarity.toFixed(2)} "${c.a}" ↔ "${c.b}"`);
   }

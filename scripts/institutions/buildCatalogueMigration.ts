@@ -90,7 +90,10 @@ const SOURCE_KEY: Record<Ownership, SourceKey> = {
 };
 
 export function slugFor(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 const sqlText = (value: string | null | undefined): string =>
@@ -107,7 +110,9 @@ export function publicWebsiteFor(row: { website: string | null; flags: string[] 
 }
 
 export function buildCatalogueRows(): CatalogueRow[] {
-  const snapshot = JSON.parse(readFileSync(join(DATA, 'nuc-registry-2026-11-17.json'), 'utf8')) as { records: SnapshotRow[] };
+  const snapshot = JSON.parse(readFileSync(join(DATA, 'nuc-registry-2026-11-17.json'), 'utf8')) as {
+    records: SnapshotRow[];
+  };
   const coverage = JSON.parse(readFileSync(join(DATA, 'registry-coverage.json'), 'utf8')) as Coverage;
   const inventory = JSON.parse(readFileSync(join(DATA, 'institution-inventory-329.json'), 'utf8')) as Inventory;
 
@@ -189,35 +194,44 @@ export function buildMigration(rows: CatalogueRow[]): string {
   const sourceUrl = new Map(AUTHORITIES.map((authority) => [authority.sourceKey, authority.url] as const));
 
   const institutionValues = rows
-    .map((row) => `  (${[
-      sqlText(row.catalogueName),
-      sqlText(row.acronym),
-      sqlText(row.state),
-      "'university'",
-      sqlText(row.publicWebsite),
-      sqlText(row.slug),
-    ].join(', ')})`)
+    .map(
+      (row) =>
+        `  (${[
+          sqlText(row.catalogueName),
+          sqlText(row.acronym),
+          sqlText(row.state),
+          "'university'",
+          sqlText(row.publicWebsite),
+          sqlText(row.slug),
+        ].join(', ')})`,
+    )
     .join(',\n');
 
   const profileValues = rows
-    .map((row) => `  (${[
-      sqlText(row.catalogueName),
-      sqlText(row.registryName),
-      sqlText(row.ownership),
-      sqlNumber(row.yearEstablished),
-      sqlText(row.website),
-      sqlText(sourceUrl.get(row.sourceKey) ?? null),
-    ].join(', ')})`)
+    .map(
+      (row) =>
+        `  (${[
+          sqlText(row.catalogueName),
+          sqlText(row.registryName),
+          sqlText(row.ownership),
+          sqlNumber(row.yearEstablished),
+          sqlText(row.website),
+          sqlText(sourceUrl.get(row.sourceKey) ?? null),
+        ].join(', ')})`,
+    )
     .join(',\n');
 
   const leadershipValues = rows
     .filter((row) => row.viceChancellor)
-    .map((row) => `  (${[
-      sqlText(row.catalogueName),
-      sqlText(row.viceChancellor),
-      sqlText(row.acting ? 'acting' : 'substantive'),
-      sqlText(sourceUrl.get(row.sourceKey) ?? null),
-    ].join(', ')})`)
+    .map(
+      (row) =>
+        `  (${[
+          sqlText(row.catalogueName),
+          sqlText(row.viceChancellor),
+          sqlText(row.acting ? 'acting' : 'substantive'),
+          sqlText(sourceUrl.get(row.sourceKey) ?? null),
+        ].join(', ')})`,
+    )
     .join(',\n');
 
   const publications = {
@@ -356,7 +370,9 @@ function main(): void {
   const published = rows.filter((row) => row.publicWebsite).length;
   console.log(`wrote ${MIGRATION_FILE}`);
   console.log(`  ${rows.length} institutions (${rows.filter((row) => row.isNew).length} new)`);
-  console.log(`  ${rows.filter((row) => row.website).length} registry websites, ${published} safe for the public column`);
+  console.log(
+    `  ${rows.filter((row) => row.website).length} registry websites, ${published} safe for the public column`,
+  );
   console.log(`  ${rows.filter((row) => row.viceChancellor).length} leadership rows`);
 }
 

@@ -8,11 +8,62 @@
 
 /** Words that carry no dedupe signal in a headline. */
 const STOP_WORDS = new Set([
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'but', 'by', 'for', 'from',
-  'has', 'have', 'he', 'her', 'his', 'in', 'into', 'is', 'it', 'its', 'of', 'on',
-  'or', 'our', 'she', 'that', 'the', 'their', 'they', 'this', 'to', 'was', 'were',
-  'will', 'with', 'you', 'your', 'we', 'us', 'not', 'no', 'than', 'then', 'over',
-  'after', 'before', 'about', 'up', 'out', 'all', 'any', 'can', 'may', 'more',
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'been',
+  'but',
+  'by',
+  'for',
+  'from',
+  'has',
+  'have',
+  'he',
+  'her',
+  'his',
+  'in',
+  'into',
+  'is',
+  'it',
+  'its',
+  'of',
+  'on',
+  'or',
+  'our',
+  'she',
+  'that',
+  'the',
+  'their',
+  'they',
+  'this',
+  'to',
+  'was',
+  'were',
+  'will',
+  'with',
+  'you',
+  'your',
+  'we',
+  'us',
+  'not',
+  'no',
+  'than',
+  'then',
+  'over',
+  'after',
+  'before',
+  'about',
+  'up',
+  'out',
+  'all',
+  'any',
+  'can',
+  'may',
+  'more',
 ]);
 
 /** Query parameters that never change which resource a URL points at. */
@@ -31,9 +82,25 @@ const TRACKING_PARAMS = [
 ];
 
 const HTML_ENTITY_MAP: Record<string, string> = {
-  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ndash: '–',
-  mdash: '—', rsquo: '’', lsquo: '‘', ldquo: '“', rdquo: '”', hellip: '…',
-  eacute: 'é', egrave: 'è', pound: '£', euro: '€', times: '×', bull: '•',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  ndash: '–',
+  mdash: '—',
+  rsquo: '’',
+  lsquo: '‘',
+  ldquo: '“',
+  rdquo: '”',
+  hellip: '…',
+  eacute: 'é',
+  egrave: 'è',
+  pound: '£',
+  euro: '€',
+  times: '×',
+  bull: '•',
 };
 
 export function decodeHtmlEntities(value: string): string {
@@ -65,7 +132,9 @@ export function stripHtml(value: string): string {
 }
 
 export function normalizeWhitespace(value: string): string {
-  return String(value || '').replace(/\s+/g, ' ').trim();
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** Plain text ready for storage: entities decoded, tags dropped, spaced. */

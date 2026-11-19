@@ -140,7 +140,8 @@ export function checkExpectedKey(expected: unknown, current: unknown): { ok: tru
   if (expected.toUpperCase() !== current.toUpperCase()) {
     return {
       ok: false,
-      error: 'The stored answer key has changed since you reviewed it. Reload the question and check it before regrading.',
+      error:
+        'The stored answer key has changed since you reviewed it. Reload the question and check it before regrading.',
     };
   }
   return { ok: true };

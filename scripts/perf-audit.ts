@@ -146,7 +146,10 @@ export const BUDGETS = {
 const IMG_LOADING_ALLOWLIST = new Map<string, string>([
   ['pages/ExamSetupPage.tsx', 'setup hero emblem: 48×48, explicit dimensions, above the fold'],
   ['pages/ProfileCompletionPage.tsx', 'account avatar: 64×64 box fixed in CSS, above the fold'],
-  ['pages/StudentDashboardV2.tsx', "dashboard avatar: fixed box, above the fold, a remote URL that is the student's own"],
+  [
+    'pages/StudentDashboardV2.tsx',
+    "dashboard avatar: fixed box, above the fold, a remote URL that is the student's own",
+  ],
   ['src/components/BrandLogo.tsx', 'the brand mark itself, an SVG pulled from /logo; SVG needs no decode step'],
 ]);
 
@@ -196,7 +199,9 @@ export function readPerfInput(root: string): PerfInput {
 }
 
 /** Every `<img>` in the JSX sources, with the attributes written on it. */
-export function imgElements(sources: Map<string, string>): Array<{ file: string; line: number; attributes: string[]; srcIsSvgOrData: boolean }> {
+export function imgElements(
+  sources: Map<string, string>,
+): Array<{ file: string; line: number; attributes: string[]; srcIsSvgOrData: boolean }> {
   const found: Array<{ file: string; line: number; attributes: string[]; srcIsSvgOrData: boolean }> = [];
   for (const [file, text] of sources) {
     const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -207,16 +212,18 @@ export function imgElements(sources: Map<string, string>): Array<{ file: string;
           .filter((property): property is ts.JsxAttribute => ts.isJsxAttribute(property))
           .map((property) => property.name.getText(source));
         const src = opening.attributes.properties.find(
-          (property): property is ts.JsxAttribute => ts.isJsxAttribute(property) && property.name.getText(source) === 'src',
+          (property): property is ts.JsxAttribute =>
+            ts.isJsxAttribute(property) && property.name.getText(source) === 'src',
         );
         // `src={...}` may be a string, a template literal, or a prop. A literal
         // is read directly; anything else is judged on its source text, which is
         // enough to recognise an inline SVG data URL. Whatever is left is treated
         // as a raster image and must declare a loading strategy (or be allowlisted).
         const value = src?.initializer;
-        const literal = value && (ts.isStringLiteral(value) || ts.isNoSubstitutionTemplateLiteral(value))
-          ? value.text
-          : value?.getText(source) ?? '';
+        const literal =
+          value && (ts.isStringLiteral(value) || ts.isNoSubstitutionTemplateLiteral(value))
+            ? value.text
+            : (value?.getText(source) ?? '');
         found.push({
           file,
           line: source.getLineAndCharacterOfPosition(opening.getStart(source)).line + 1,
@@ -242,7 +249,9 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
   // chunks, and filesystem order must never decide which one gets budgeted.
   const entrySource = input.indexHtml.match(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i)?.[1];
   const entryName = entrySource?.split('/').pop()?.split(/[?#]/)[0];
-  const indexFiles = [...input.assets.values()].filter((file) => /^index-.*\.js$/.test(file.path.split('/').pop() ?? ''));
+  const indexFiles = [...input.assets.values()].filter((file) =>
+    /^index-.*\.js$/.test(file.path.split('/').pop() ?? ''),
+  );
   const entry = entryName ? input.assets.get(entryName) : indexFiles.length === 1 ? indexFiles[0] : undefined;
   const supabase = byName(/^supabase-.*\.js$/);
   const react = byName(/^react-.*\.js$/);
@@ -278,7 +287,8 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
       measured: KB(supabase.gzip),
       budget: `≤ ${KB(BUDGETS.supabaseChunkGzip)}`,
       ok: supabase.gzip <= BUDGETS.supabaseChunkGzip,
-      detail: 'loaded on every page because AuthProvider resolves the session in the shell — a deliberate cost, budgeted so it cannot grow unnoticed',
+      detail:
+        'loaded on every page because AuthProvider resolves the session in the shell — a deliberate cost, budgeted so it cannot grow unnoticed',
     });
   }
 
@@ -302,7 +312,12 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
     if (!file.path.endsWith('.js')) return;
     const source = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
     for (const statement of source.statements) {
-      if ((!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) || !statement.moduleSpecifier || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
+      if (
+        (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) ||
+        !statement.moduleSpecifier ||
+        !ts.isStringLiteral(statement.moduleSpecifier)
+      )
+        continue;
       const specifier = statement.moduleSpecifier.text;
       if (!specifier.startsWith('.')) continue;
       const target = posix.normalize(posix.join(posix.dirname(file.path), specifier));
@@ -319,7 +334,9 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
     measured: KB(critical),
     budget: `≤ ${KB(BUDGETS.criticalPathGzip)}`,
     ok: critical <= BUDGETS.criticalPathGzip && missingImports.size === 0,
-    detail: missingImports.size ? `missing static chunks: ${[...missingImports].join(', ')}` : `${criticalFiles.size} entry, vendor, CSS and transitive static chunks; excludes dynamic routes`,
+    detail: missingImports.size
+      ? `missing static chunks: ${[...missingImports].join(', ')}`
+      : `${criticalFiles.size} entry, vendor, CSS and transitive static chunks; excludes dynamic routes`,
   });
 
   const totalJs = sumGzip(allJs);
@@ -357,7 +374,9 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
   const fontLink = /<link[^>]+rel="stylesheet"[^>]+fonts\.googleapis\.com[^>]*>/.test(input.indexHtml);
   const variableRange = /family=Inter:wght@[^"'&]*\.\.[^"'&]*/.test(input.indexHtml);
   const swap = /display=swap/.test(input.indexHtml);
-  const cssImports = [...input.assets.values()].filter((file) => file.path.endsWith('.css')).flatMap((file) => file.text.match(/@import[^;]+;/g) ?? []);
+  const cssImports = [...input.assets.values()]
+    .filter((file) => file.path.endsWith('.css'))
+    .flatMap((file) => file.text.match(/@import[^;]+;/g) ?? []);
   checks.push({
     id: 'font-chain',
     label: 'font chain',
@@ -394,7 +413,10 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
     budget: 'every raster <img> declares one, or is on the allowlist with a reason',
     ok: undecided.length === 0,
     detail: undecided.length
-      ? `${undecided.slice(0, 3).map((img) => `${img.file}:${img.line}`).join(', ')} — add loading="lazy" below the fold or fetchPriority="high" above it`
+      ? `${undecided
+          .slice(0, 3)
+          .map((img) => `${img.file}:${img.line}`)
+          .join(', ')} — add loading="lazy" below the fold or fetchPriority="high" above it`
       : `${IMG_LOADING_ALLOWLIST.size} eager image(s) allowlisted: ${[...IMG_LOADING_ALLOWLIST.keys()].map((key) => key.split('/').pop()).join(', ')}`,
   });
 
@@ -404,7 +426,10 @@ export function auditPerf(input: PerfInput): PerfCheck[] {
 function table(checks: PerfCheck[]): string {
   const width = Math.max(...checks.map((check) => check.label.length));
   return checks
-    .map((check) => `${check.ok ? 'ok  ' : 'FAIL'} ${check.label.padEnd(width)}  ${check.measured.padEnd(34)} ${check.budget}${check.detail ? `\n     ↳ ${check.detail}` : ''}`)
+    .map(
+      (check) =>
+        `${check.ok ? 'ok  ' : 'FAIL'} ${check.label.padEnd(width)}  ${check.measured.padEnd(34)} ${check.budget}${check.detail ? `\n     ↳ ${check.detail}` : ''}`,
+    )
     .join('\n');
 }
 
@@ -415,7 +440,9 @@ function main(): void {
     process.exit(1);
   }
   const checks = auditPerf(readPerfInput(root));
-  console.log(`PERF-1 performance budget — ${checks.filter((check) => check.ok).length}/${checks.length} checks pass\n`);
+  console.log(
+    `PERF-1 performance budget — ${checks.filter((check) => check.ok).length}/${checks.length} checks pass\n`,
+  );
   console.log(table(checks));
   const failed = checks.filter((check) => !check.ok);
   if (failed.length) {

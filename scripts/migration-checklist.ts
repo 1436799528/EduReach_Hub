@@ -94,7 +94,17 @@ export const UNRESOLVED_MIGRATIONS: readonly UnresolvedMigration[] = [
 const UNRESOLVED_BY_FILE = new Map(UNRESOLVED_MIGRATIONS.map((entry) => [entry.file, entry]));
 
 export interface ChecklistProblem {
-  kind: 'missing-from-checklist' | 'checklist-entry-without-file' | 'duplicate-version' | 'name-mismatch' | 'malformed-filename' | 'missing-block' | 'duplicate-checklist-entry' | 'kind-mismatch' | 'unresolved-entry-without-evidence' | 'stale-unresolved-entry';
+  kind:
+    | 'missing-from-checklist'
+    | 'checklist-entry-without-file'
+    | 'duplicate-version'
+    | 'name-mismatch'
+    | 'malformed-filename'
+    | 'missing-block'
+    | 'duplicate-checklist-entry'
+    | 'kind-mismatch'
+    | 'unresolved-entry-without-evidence'
+    | 'stale-unresolved-entry';
   detail: string;
   file?: string;
 }
@@ -162,7 +172,9 @@ export function parseChecklist(sql: string): RepoMigration[] | null {
   const block = checklistBlock(sql);
   if (block === null) return null;
   const entries: RepoMigration[] = [];
-  for (const match of block.matchAll(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'(unique|shared|unresolved)'\s*\)/g)) {
+  for (const match of block.matchAll(
+    /\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'(unique|shared|unresolved)'\s*\)/g,
+  )) {
     entries.push({ version: match[1], name: match[2], file: match[3], kind: match[4] as MigrationKind });
   }
   return entries;
@@ -173,7 +185,9 @@ export function malformedChecklistRows(sql: string): string[] {
   const block = checklistBlock(sql);
   if (block === null) return [];
   const wellFormed = new Set<string>();
-  for (const match of block.matchAll(/\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'(?:unique|shared|unresolved)'\s*\)/g)) {
+  for (const match of block.matchAll(
+    /\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'(?:unique|shared|unresolved)'\s*\)/g,
+  )) {
     wellFormed.add(match[0]);
   }
   return [...block.matchAll(/\(\s*'[^']*'\s*,\s*'[^']*'\s*,\s*'[^']*'(?:\s*,\s*'[^']*')?\s*\)/g)]
@@ -198,7 +212,8 @@ export function renderChecklistRows(migrations: RepoMigration[]): string {
 export function withChecklist(sql: string, migrations: RepoMigration[]): string {
   const begin = sql.indexOf(CHECKLIST_BEGIN);
   const end = sql.indexOf(CHECKLIST_END, begin);
-  if (begin < 0 || end < 0) throw new Error(`production-validation.sql has no ${CHECKLIST_BEGIN} … ${CHECKLIST_END} block`);
+  if (begin < 0 || end < 0)
+    throw new Error(`production-validation.sql has no ${CHECKLIST_BEGIN} … ${CHECKLIST_END} block`);
   return `${sql.slice(0, begin + CHECKLIST_BEGIN.length)}\n${renderChecklistRows(migrations)}\n${sql.slice(end)}`;
 }
 
@@ -215,7 +230,10 @@ export function auditChecklist(
   const problems: ChecklistProblem[] = [];
 
   if (checklist === null) {
-    problems.push({ kind: 'missing-block', detail: `the checklist block is missing; run \`npm run migrations:checklist -- --write\`` });
+    problems.push({
+      kind: 'missing-block',
+      detail: `the checklist block is missing; run \`npm run migrations:checklist -- --write\``,
+    });
     return problems;
   }
 
@@ -227,7 +245,11 @@ export function auditChecklist(
     else malformed.push(file);
   }
   for (const file of malformed) {
-    problems.push({ kind: 'malformed-filename', detail: `${file} does not start with an 8- or 14-digit version`, file });
+    problems.push({
+      kind: 'malformed-filename',
+      detail: `${file} does not start with an 8- or 14-digit version`,
+      file,
+    });
   }
 
   const byFile = new Map(checklist.map((entry) => [entry.file, entry]));
@@ -284,7 +306,11 @@ export function auditChecklist(
   const seen = new Set<string>();
   for (const entry of checklist) {
     if (seen.has(entry.file)) {
-      problems.push({ kind: 'duplicate-checklist-entry', detail: `${entry.file} appears more than once in the checklist`, file: entry.file });
+      problems.push({
+        kind: 'duplicate-checklist-entry',
+        detail: `${entry.file} appears more than once in the checklist`,
+        file: entry.file,
+      });
     }
     seen.add(entry.file);
   }
@@ -294,9 +320,12 @@ export function auditChecklist(
   // version would let one ledger row vouch for several files. Recompute the kind
   // from the repository and the documented evidence, and require the generated
   // block to agree.
-  const expectedKinds = new Map(classifyMigrations(
-    repo.map(({ version, name, file }) => ({ version, name, file })),
-  ).map((migration) => [migration.file, migration.kind]));
+  const expectedKinds = new Map(
+    classifyMigrations(repo.map(({ version, name, file }) => ({ version, name, file }))).map((migration) => [
+      migration.file,
+      migration.kind,
+    ]),
+  );
 
   for (const entry of checklist) {
     const expected = expectedKinds.get(entry.file);
@@ -353,7 +382,10 @@ function main(): void {
 
   const problems = auditChecklist(migrationFilesInRepo(root), parseChecklist(sql));
   for (const row of malformedChecklistRows(sql)) {
-    problems.push({ kind: 'missing-from-checklist', detail: `the checklist row ${row} is not a four-column (version, name, file, kind) entry — run \`npm run migrations:checklist -- --write\`` });
+    problems.push({
+      kind: 'missing-from-checklist',
+      detail: `the checklist row ${row} is not a four-column (version, name, file, kind) entry — run \`npm run migrations:checklist -- --write\``,
+    });
   }
   const checked = migrations.length;
   if (problems.length) {
@@ -362,7 +394,9 @@ function main(): void {
     process.exitCode = 1;
     return;
   }
-  console.log(`MIGRATIONS: all ${checked} migrations in ${MIGRATIONS_DIR} are listed in the checklist (${VALIDATION_SQL})`);
+  console.log(
+    `MIGRATIONS: all ${checked} migrations in ${MIGRATIONS_DIR} are listed in the checklist (${VALIDATION_SQL})`,
+  );
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

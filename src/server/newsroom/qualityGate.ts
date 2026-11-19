@@ -64,13 +64,28 @@ const DEFAULTS: Required<QualityOptions> = {
 };
 
 const PLACEHOLDER_TITLES = [
-  'untitled', 'latest news', 'news', 'read more', 'click here', 'home',
-  'page not found', '404', 'advertisement', 'sponsored post', 'no title',
+  'untitled',
+  'latest news',
+  'news',
+  'read more',
+  'click here',
+  'home',
+  'page not found',
+  '404',
+  'advertisement',
+  'sponsored post',
+  'no title',
 ];
 
 const BLOCKED_PHRASES = [
-  'click here to win', 'free recharge', 'betting tips', 'casino', 'viagra',
-  'sponsored content', 'advertorial', 'promo code',
+  'click here to win',
+  'free recharge',
+  'betting tips',
+  'casino',
+  'viagra',
+  'sponsored content',
+  'advertorial',
+  'promo code',
 ];
 
 const MAINTAINED_CATEGORIES = new Set(newsCategories.map((category) => category.slug));
@@ -127,7 +142,9 @@ export function runQualityGate(input: QualityInput, options: QualityOptions = {}
   const title = String(input.title || '').trim();
   const excerpt = String(input.excerpt || '').trim();
   const body = String(input.body || '').trim();
-  const category = String(input.category || '').trim().toLowerCase();
+  const category = String(input.category || '')
+    .trim()
+    .toLowerCase();
   const sourceUrl = String(input.sourceUrl || '').trim();
 
   // Who reported this?

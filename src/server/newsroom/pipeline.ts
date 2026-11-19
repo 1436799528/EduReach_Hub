@@ -126,10 +126,13 @@ const CATEGORY_ADVISORY: Record<string, string> = {
   waec: 'Check the official WAEC Nigeria portal or your school exam officer for confirmation.',
   neco: 'Confirm dates and requirements through the official NECO portal or your school.',
   nabteb: 'Confirm dates and requirements through the official NABTEB portal or your centre.',
-  nelfund: 'Applications and disbursements are handled on the official NELFUND portal. EduReach is an independent student-support platform and does not process loan applications.',
-  admissions: 'Admission lists and cut-off marks are published by each institution. Verify on the school portal before paying anyone.',
+  nelfund:
+    'Applications and disbursements are handled on the official NELFUND portal. EduReach is an independent student-support platform and does not process loan applications.',
+  admissions:
+    'Admission lists and cut-off marks are published by each institution. Verify on the school portal before paying anyone.',
   'post-utme': 'Screening dates and requirements are set by each institution. Verify on the school portal.',
-  scholarships: 'Scholarship and grant applications are free unless the official notice says otherwise. Never pay a third party to submit an application.',
+  scholarships:
+    'Scholarship and grant applications are free unless the official notice says otherwise. Never pay a third party to submit an application.',
   universities: 'Verify programme accreditation and admission requirements with the institution.',
   polytechnics: 'Verify programme accreditation and admission requirements with the institution.',
   'colleges-of-education': 'Verify programme accreditation and admission requirements with the institution.',
@@ -160,10 +163,7 @@ export function buildArticleBody(input: {
   return parts.join('\n\n').trim();
 }
 
-export function passesSourceFilters(
-  item: ParsedItem,
-  source: SourceDefinition,
-): { passed: boolean; reason?: string } {
+export function passesSourceFilters(item: ParsedItem, source: SourceDefinition): { passed: boolean; reason?: string } {
   const url = item.url;
   const path = (() => {
     try {
@@ -221,10 +221,7 @@ interface PreparedCandidate {
 }
 
 /** Loads the dedupe index from existing articles and recent candidates. */
-export async function loadDedupeIndex(
-  supabase: NewsroomSupabase,
-  lookbackDays: number,
-): Promise<IndexEntry[]> {
+export async function loadDedupeIndex(supabase: NewsroomSupabase, lookbackDays: number): Promise<IndexEntry[]> {
   const since = new Date(Date.now() - lookbackDays * 86_400_000).toISOString();
   const entries: IndexEntry[] = [];
 
@@ -238,15 +235,17 @@ export async function loadDedupeIndex(
 
   for (const row of articles || []) {
     const canonical = canonicalUrl(String(row.source_url || '')) || `article:${row.id}`;
-    entries.push(buildIndexEntry({
-      id: row.id,
-      origin: 'article',
-      title: String(row.title || ''),
-      canonicalUrl: canonical,
-      excerpt: row.excerpt ? String(row.excerpt) : null,
-      sourceKey: String(row.source_key || 'legacy'),
-      sourcePublishedAt: row.source_published_at ? String(row.source_published_at) : null,
-    }));
+    entries.push(
+      buildIndexEntry({
+        id: row.id,
+        origin: 'article',
+        title: String(row.title || ''),
+        canonicalUrl: canonical,
+        excerpt: row.excerpt ? String(row.excerpt) : null,
+        sourceKey: String(row.source_key || 'legacy'),
+        sourcePublishedAt: row.source_published_at ? String(row.source_published_at) : null,
+      }),
+    );
   }
 
   const { data: candidates, error: candidateError } = await supabase
@@ -260,15 +259,17 @@ export async function loadDedupeIndex(
   // candidates known" rather than failing the run.
   if (!candidateError) {
     for (const row of candidates || []) {
-      entries.push(buildIndexEntry({
-        id: row.id,
-        origin: 'candidate',
-        title: String(row.title || ''),
-        canonicalUrl: String(row.canonical_url || ''),
-        excerpt: row.excerpt ? String(row.excerpt) : null,
-        sourceKey: String(row.source_key || ''),
-        sourcePublishedAt: row.source_published_at ? String(row.source_published_at) : null,
-      }));
+      entries.push(
+        buildIndexEntry({
+          id: row.id,
+          origin: 'candidate',
+          title: String(row.title || ''),
+          canonicalUrl: String(row.canonical_url || ''),
+          excerpt: row.excerpt ? String(row.excerpt) : null,
+          sourceKey: String(row.source_key || ''),
+          sourcePublishedAt: row.source_published_at ? String(row.source_published_at) : null,
+        }),
+      );
     }
   }
 
@@ -290,7 +291,10 @@ export async function syncSourceRegistry(
   if (error) throw error;
 
   const existing = new Map<string, Record<string, unknown>>(
-    (rows || []).map((row: Record<string, unknown>): [string, Record<string, unknown>] => [String(row.source_key), row]),
+    (rows || []).map((row: Record<string, unknown>): [string, Record<string, unknown>] => [
+      String(row.source_key),
+      row,
+    ]),
   );
   const merged: SourceDefinition[] = [];
   const nowIso = new Date().toISOString();
@@ -332,7 +336,10 @@ export async function syncSourceRegistry(
       patch.is_active = definition.isActive !== false;
       if (definition.notes) patch.notes = definition.notes;
     }
-    const { error: updateError } = await supabase.from('news_sources').update(patch).eq('source_key', definition.sourceKey);
+    const { error: updateError } = await supabase
+      .from('news_sources')
+      .update(patch)
+      .eq('source_key', definition.sourceKey);
     if (updateError) throw updateError;
 
     merged.push(sourceFromRegistryRow({ ...row, ...patch }));
@@ -398,7 +405,14 @@ async function discoverForSource(
 async function itemsFromHtml(
   html: string,
   pageUrl: string,
-  context: { robots: RobotsCache; throttle: HostThrottle; userAgent: string; fetchImpl?: typeof fetch; maxItems: number; maxPageFetches: number },
+  context: {
+    robots: RobotsCache;
+    throttle: HostThrottle;
+    userAgent: string;
+    fetchImpl?: typeof fetch;
+    maxItems: number;
+    maxPageFetches: number;
+  },
 ): Promise<ParsedItem[]> {
   const links = discoverArticleLinks(html, pageUrl, context.maxPageFetches);
   const items: ParsedItem[] = [];
@@ -409,7 +423,7 @@ async function itemsFromHtml(
     if (!page.skipped && !page.ok) continue;
     if (!page.ok) continue;
     const meta = extractPageMeta(page.text, link);
-    const title = meta.title || normalizeWhitespace((page.text.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || ''));
+    const title = meta.title || normalizeWhitespace(page.text.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '');
     if (!title) continue;
     items.push({
       title: toPlainText(title, 200),
@@ -425,10 +439,7 @@ async function itemsFromHtml(
   return items;
 }
 
-export async function runIngestion(
-  supabase: NewsroomSupabase,
-  options: IngestOptions = {},
-): Promise<IngestReport> {
+export async function runIngestion(supabase: NewsroomSupabase, options: IngestOptions = {}): Promise<IngestReport> {
   const settings = { ...DEFAULTS, ...options };
   const now = options.now ?? (() => new Date());
   const startedAt = now().toISOString();
@@ -445,10 +456,14 @@ export async function runIngestion(
   let runId: string | null = null;
 
   if (!options.dryRun) {
-    const { data, error } = await supabase.from('news_ingest_runs').insert({
-      triggered_by: options.triggeredBy ?? 'schedule',
-      dry_run: false,
-    }).select('id').single();
+    const { data, error } = await supabase
+      .from('news_ingest_runs')
+      .insert({
+        triggered_by: options.triggeredBy ?? 'schedule',
+        dry_run: false,
+      })
+      .select('id')
+      .single();
     if (error) throw error;
     runId = data?.id ?? null;
   }
@@ -486,14 +501,18 @@ export async function runIngestion(
       if (!source) continue;
       const sourceStarted = Date.now();
       try {
-        const items = await discoverForSource(source, {
-          robots: context.robots,
-          throttle: context.throttle,
-          userAgent: context.userAgent,
-          fetchImpl: options.fetchImpl,
-          maxItems: settings.maxItemsPerSource,
-          maxPageFetches: settings.maxPageFetchesPerSource,
-        }, log);
+        const items = await discoverForSource(
+          source,
+          {
+            robots: context.robots,
+            throttle: context.throttle,
+            userAgent: context.userAgent,
+            fetchImpl: options.fetchImpl,
+            maxItems: settings.maxItemsPerSource,
+            maxPageFetches: settings.maxPageFetchesPerSource,
+          },
+          log,
+        );
         collected.push(...items.map((item) => ({ source, item })));
         perSource.push({
           sourceKey: source.sourceKey,
@@ -525,14 +544,16 @@ export async function runIngestion(
   const decisions: IngestDecision[] = [];
   const seenThisRun = new Set<string>();
 
-  const knownSlugs = options.dryRun ? new Set<string>() : await (async () => {
-    try {
-      const { data } = await supabase.from('news_articles').select('slug').limit(2000);
-      return new Set<string>((data || []).map((row: Record<string, unknown>) => String(row.slug)));
-    } catch {
-      return new Set<string>();
-    }
-  })();
+  const knownSlugs = options.dryRun
+    ? new Set<string>()
+    : await (async () => {
+        try {
+          const { data } = await supabase.from('news_articles').select('slug').limit(2000);
+          return new Set<string>((data || []).map((row: Record<string, unknown>) => String(row.slug)));
+        } catch {
+          return new Set<string>();
+        }
+      })();
 
   for (const { source, item } of collected.slice(0, settings.maxCandidates)) {
     const record = (status: IngestDecision['status'], reason: string, category = 'general') => {
@@ -556,16 +577,19 @@ export async function runIngestion(
     }
     seenThisRun.add(canonical);
 
-    const classification = classify({
-      title: item.title,
-      excerpt: item.excerpt,
-      sourceTier: source.tier,
-      trustScore: source.trustScore,
-      categoryHint: source.categoryHint,
-    }, {
-      relevanceThreshold: options.relevanceThreshold,
-      autoPublishThreshold: options.autoPublishThreshold,
-    });
+    const classification = classify(
+      {
+        title: item.title,
+        excerpt: item.excerpt,
+        sourceTier: source.tier,
+        trustScore: source.trustScore,
+        categoryHint: source.categoryHint,
+      },
+      {
+        relevanceThreshold: options.relevanceThreshold,
+        autoPublishThreshold: options.autoPublishThreshold,
+      },
+    );
 
     if (!classification.relevant) {
       record('rejected', `low_relevance:${classification.score}`, classification.category);
@@ -643,7 +667,10 @@ export async function runIngestion(
       category: classification.category,
       relevance: classification.score,
       qualityScore: gate.score,
-      qualityFlags: [...gate.flags, ...(match ? [{ code: 'possible_duplicate', level: 'warning', message: describeMatch(match) }] : [])],
+      qualityFlags: [
+        ...gate.flags,
+        ...(match ? [{ code: 'possible_duplicate', level: 'warning', message: describeMatch(match) }] : []),
+      ],
       excerpt,
       body,
       status,
@@ -661,7 +688,7 @@ export async function runIngestion(
   let published = 0;
   let needsReview = 0;
   let duplicates = decisions.filter((decision) => decision.status === 'duplicate').length;
-  let rejected = decisions.filter((decision) => decision.status === 'rejected').length;
+  const rejected = decisions.filter((decision) => decision.status === 'rejected').length;
 
   if (!options.dryRun && prepared.length) {
     const insertedIds = new Map<PreparedCandidate, string>();
@@ -739,7 +766,8 @@ export async function runIngestion(
           if (String(error.code) === '23505') {
             duplicates += 1;
             if (candidateId) {
-              await supabase.from('news_ingest_candidates')
+              await supabase
+                .from('news_ingest_candidates')
                 .update({ status: 'duplicate', rejection_reason: 'dedupe_key_conflict', updated_at: nowIso })
                 .eq('id', candidateId);
             }
@@ -747,7 +775,8 @@ export async function runIngestion(
           }
           errors.push(`article insert failed for "${entry.item.title.slice(0, 60)}": ${error.message}`);
           if (candidateId) {
-            await supabase.from('news_ingest_candidates')
+            await supabase
+              .from('news_ingest_candidates')
               .update({ status: 'failed', rejection_reason: error.message, updated_at: nowIso })
               .eq('id', candidateId);
           }
@@ -756,7 +785,8 @@ export async function runIngestion(
 
         published += 1;
         if (candidateId) {
-          await supabase.from('news_ingest_candidates')
+          await supabase
+            .from('news_ingest_candidates')
             .update({ status: 'published', article_id: data?.id ?? null, updated_at: nowIso })
             .eq('id', candidateId);
         }
@@ -765,7 +795,8 @@ export async function runIngestion(
 
       needsReview += 1;
       if (candidateId) {
-        await supabase.from('news_ingest_candidates')
+        await supabase
+          .from('news_ingest_candidates')
           .update({
             status: 'needs_review',
             review_notes: entry.reviewNotes || entry.reason,
@@ -850,24 +881,27 @@ export async function runIngestion(
   };
 
   if (!options.dryRun && runId) {
-    const { error } = await supabase.from('news_ingest_runs').update({
-      finished_at: finishedAt,
-      status: errors.length === 0 ? 'succeeded' : errors.length >= 3 ? 'failed' : 'partial',
-      sources_checked: report.sourcesChecked,
-      sources_failed: report.sourcesFailed,
-      candidates_found: report.candidatesFound,
-      duplicates: report.duplicates,
-      rejected: report.rejected,
-      needs_review: report.needsReview,
-      published: report.published,
-      images_repaired: report.imagesRepaired,
-      expired: report.expired,
-      report: {
-        perSource: report.perSource,
-        errors: report.errors.slice(0, 20),
-        newsroom: report.decisions.slice(0, 100),
-      },
-    }).eq('id', runId);
+    const { error } = await supabase
+      .from('news_ingest_runs')
+      .update({
+        finished_at: finishedAt,
+        status: errors.length === 0 ? 'succeeded' : errors.length >= 3 ? 'failed' : 'partial',
+        sources_checked: report.sourcesChecked,
+        sources_failed: report.sourcesFailed,
+        candidates_found: report.candidatesFound,
+        duplicates: report.duplicates,
+        rejected: report.rejected,
+        needs_review: report.needsReview,
+        published: report.published,
+        images_repaired: report.imagesRepaired,
+        expired: report.expired,
+        report: {
+          perSource: report.perSource,
+          errors: report.errors.slice(0, 20),
+          newsroom: report.decisions.slice(0, 100),
+        },
+      })
+      .eq('id', runId);
     if (error) errors.push(`run report update failed: ${error.message}`);
   }
 

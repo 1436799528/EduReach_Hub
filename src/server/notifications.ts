@@ -95,9 +95,7 @@ export function notificationForStatus(
 
   const service = serviceTitleFor(request);
   const reference = String(request.reference_code || '').trim();
-  const href = reference
-    ? `/dashboard/services?ref=${encodeURIComponent(reference)}`
-    : '/dashboard/services';
+  const href = reference ? `/dashboard/services?ref=${encodeURIComponent(reference)}` : '/dashboard/services';
 
   return {
     title: copy.title,

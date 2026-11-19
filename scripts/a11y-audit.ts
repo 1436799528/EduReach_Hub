@@ -35,21 +35,23 @@ export interface ScanInput {
   files: Map<string, string>;
 }
 
-const SHELLS = [
-  'src/components/HubLayout.tsx',
-  'pages/AdminLayout.tsx',
-  'pages/StudentDashboardV2.tsx',
-];
+const SHELLS = ['src/components/HubLayout.tsx', 'pages/AdminLayout.tsx', 'pages/StudentDashboardV2.tsx'];
 
 /** Files that manage dialog focus themselves instead of via useModalDialog. */
 const DIALOG_FOCUS_ALLOWLIST = new Map<string, string>([
-  ['src/components/HubLayout.tsx', 'mobile drawer: moves focus to its close button, restores the trigger, closes on Escape'],
+  [
+    'src/components/HubLayout.tsx',
+    'mobile drawer: moves focus to its close button, restores the trigger, closes on Escape',
+  ],
   ['src/components/ScientificCalculator.tsx', 'calculator keypad: focuses its own input and closes on Escape'],
 ]);
 
 /** Non-button elements allowed to carry onClick because a real control sits beside them. */
 const CLICK_ALLOWLIST = new Map<string, string>([
-  ['src/components/ScientificCalculator.tsx', 'the calculator screen is a label wrapping its own input, so the click is a native label click'],
+  [
+    'src/components/ScientificCalculator.tsx',
+    'the calculator screen is a label wrapping its own input, so the click is a native label click',
+  ],
 ]);
 
 /**
@@ -66,8 +68,14 @@ const OUTLINE_RESET_ATTRIBUTIONS = new Map<string, string>([
   ['src/admin.css::.admin-select', 'a <select>; the a11y.css ring matches the element'],
   ['src/admin.css::.admin-input', 'an <input>; the a11y.css ring matches the element'],
   ['src/admin.css::.admin-textarea', 'a <textarea>; the a11y.css ring matches the element'],
-  ['src/admin.css::.admin-rte-area', 'a contentEditable [role="textbox"] div; .admin-shell :focus-visible (admin.css) draws its ring'],
-  ['src/edu-portal.css::.er-calc-input', 'the calculator screen input; the a11y.css ring matches the element and out-specifies this reset'],
+  [
+    'src/admin.css::.admin-rte-area',
+    'a contentEditable [role="textbox"] div; .admin-shell :focus-visible (admin.css) draws its ring',
+  ],
+  [
+    'src/edu-portal.css::.er-calc-input',
+    'the calculator screen input; the a11y.css ring matches the element and out-specifies this reset',
+  ],
 ]);
 
 /** Colour the focus ring must reach 3:1 against; kept next to the value it judges. */
@@ -159,9 +167,7 @@ function tagName(tag: ts.JsxOpeningLikeElement): string {
 function rendersMainLandmark(source: ts.SourceFile): boolean {
   let found = false;
   const visit = (node: ts.Node): void => {
-    if (!found
-      && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))
-      && tagName(node) === 'main') {
+    if (!found && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && tagName(node) === 'main') {
       found = true;
     }
     node.forEachChild(visit);
@@ -176,7 +182,8 @@ function attributeText(tag: ts.JsxOpeningLikeElement, name: string): string[] {
   const values: string[] = [];
   const collect = (node: ts.Node): void => {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) values.push(node.text);
-    else if (ts.isTemplateExpression(node)) values.push(node.head.text, ...node.templateSpans.map((span) => span.literal.text));
+    else if (ts.isTemplateExpression(node))
+      values.push(node.head.text, ...node.templateSpans.map((span) => span.literal.text));
     node.forEachChild(collect);
   };
   collect(attr.initializer);
@@ -225,7 +232,8 @@ function hasReadableChildren(tag: ts.JsxOpeningLikeElement, icons: Set<string>):
       // {label} / {`Go`} / {count} — treat dynamic content as content.
       return node.expression !== undefined;
     }
-    if (ts.isJsxElement(node)) return !icons.has(tagName(node.openingElement)) && !icons.has(tagName(node.openingElement));
+    if (ts.isJsxElement(node))
+      return !icons.has(tagName(node.openingElement)) && !icons.has(tagName(node.openingElement));
     if (ts.isJsxSelfClosingElement(node)) return !icons.has(tagName(node));
     if (ts.isJsxFragment(node)) return node.children.some(inspect);
     return false;
@@ -273,14 +281,23 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
           const id = stringAttribute(node, 'id');
           if (!id || !labelled.has(id)) {
             if (!isWrappedInLabel(node)) {
-              report('control-name', node, `<${name}> has no accessible name (aria-label, aria-labelledby, wrapping <label>, or a <label htmlFor> matching its id)`);
+              report(
+                'control-name',
+                node,
+                `<${name}> has no accessible name (aria-label, aria-labelledby, wrapping <label>, or a <label htmlFor> matching its id)`,
+              );
             }
           }
         }
       }
 
       // button-name: icon-only buttons need an explicit name
-      if (name === 'button' && !hasTruthyAttribute(node, 'aria-label') && !hasTruthyAttribute(node, 'aria-labelledby') && !hasReadableChildren(node, icons)) {
+      if (
+        name === 'button' &&
+        !hasTruthyAttribute(node, 'aria-label') &&
+        !hasTruthyAttribute(node, 'aria-labelledby') &&
+        !hasReadableChildren(node, icons)
+      ) {
         report('button-name', node, '<button> has no accessible name (only icons or nothing inside)');
       }
 
@@ -288,7 +305,13 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
       if (name === 'img') {
         if (!hasAttribute(node, 'alt')) report('img-alt', node, '<img> has no alt attribute');
         else if (stringAttribute(node, 'alt') === '') {
-          findings.push({ rule: 'img-empty-alt', severity: 'info', file, line: lineOf(source, node), message: '<img alt=""> — decorative; confirm a visible label sits beside it' });
+          findings.push({
+            rule: 'img-empty-alt',
+            severity: 'info',
+            file,
+            line: lineOf(source, node),
+            message: '<img alt=""> — decorative; confirm a visible label sits beside it',
+          });
         }
       }
 
@@ -299,7 +322,11 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
         if (!hasName) report('dialog-name', node, `role="${role}" has no aria-label or aria-labelledby`);
         const isModal = stringAttribute(node, 'aria-modal') === 'true';
         if (isModal && !usesModalHook && !DIALOG_FOCUS_ALLOWLIST.has(file)) {
-          report('dialog-focus', node, 'aria-modal="true" without focus management — use useModalDialog() or add the file to the allowlist with a reason');
+          report(
+            'dialog-focus',
+            node,
+            'aria-modal="true" without focus management — use useModalDialog() or add the file to the allowlist with a reason',
+          );
         }
       }
 
@@ -311,23 +338,41 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
       // pointer-only click targets
       if (['div', 'span', 'li', 'section', 'article'].includes(name) && hasAttribute(node, 'onClick')) {
         const hasRole = hasTruthyAttribute(node, 'role');
-        const keyboard = hasAttribute(node, 'onKeyDown') || hasAttribute(node, 'onKeyUp') || hasAttribute(node, 'onKeyPress');
+        const keyboard =
+          hasAttribute(node, 'onKeyDown') || hasAttribute(node, 'onKeyUp') || hasAttribute(node, 'onKeyPress');
         const inert = stringAttribute(node, 'aria-hidden') === 'true';
         if (!hasRole && !keyboard && !inert && !CLICK_ALLOWLIST.has(file)) {
-          report('click-keyboard', node, `<${name} onClick> is pointer-only — use a <button>/<a>, or add role + keyboard handling`);
+          report(
+            'click-keyboard',
+            node,
+            `<${name} onClick> is pointer-only — use a <button>/<a>, or add role + keyboard handling`,
+          );
         }
       }
 
       // aria-invalid must point at its message
-      if (hasAttribute(node, 'aria-invalid') && hasTruthyAttribute(node, 'aria-invalid') && !hasTruthyAttribute(node, 'aria-describedby')) {
-        report('aria-invalid-describedby', node, 'aria-invalid without aria-describedby — the error text is not associated with the field');
+      if (
+        hasAttribute(node, 'aria-invalid') &&
+        hasTruthyAttribute(node, 'aria-invalid') &&
+        !hasTruthyAttribute(node, 'aria-describedby')
+      ) {
+        report(
+          'aria-invalid-describedby',
+          node,
+          'aria-invalid without aria-describedby — the error text is not associated with the field',
+        );
       }
     }
 
     // shell contract
     if (SHELLS.includes(file) && ts.isJsxOpeningElement(node) && tagName(node) === 'main') {
       const id = stringAttribute(node, 'id');
-      if (id !== 'main-content') report('shell-main-target', node, `<main> in a shell must carry id="main-content" so the skip link can target it (found ${id ?? 'no id'})`);
+      if (id !== 'main-content')
+        report(
+          'shell-main-target',
+          node,
+          `<main> in a shell must carry id="main-content" so the skip link can target it (found ${id ?? 'no id'})`,
+        );
     }
 
     node.forEachChild(visit);
@@ -335,11 +380,23 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
   visit(source);
 
   if (SHELLS.includes(file) && !/<SkipLink\b/.test(text)) {
-    findings.push({ rule: 'skip-link', severity: 'blocking', file, line: 1, message: 'shell does not render <SkipLink> — there is no bypass mechanism' });
+    findings.push({
+      rule: 'skip-link',
+      severity: 'blocking',
+      file,
+      line: 1,
+      message: 'shell does not render <SkipLink> — there is no bypass mechanism',
+    });
   }
 
   if (SHELLS.includes(file) && !usesModalHook && file === 'src/components/HubLayout.tsx' && !rendersMain) {
-    findings.push({ rule: 'shell-main-target', severity: 'blocking', file, line: 1, message: 'shell renders no <main>' });
+    findings.push({
+      rule: 'shell-main-target',
+      severity: 'blocking',
+      file,
+      line: 1,
+      message: 'shell renders no <main>',
+    });
   }
 
   if (rendersMain && usesHubLayout) {
@@ -348,7 +405,8 @@ function scanFile(file: string, text: string, findings: Finding[]): void {
       severity: 'blocking',
       file,
       line: 1,
-      message: 'page renders its own <main> while also rendering HubLayout, which already renders <main> — two main landmarks on one route',
+      message:
+        'page renders its own <main> while also rendering HubLayout, which already renders <main> — two main landmarks on one route',
     });
   }
 }
@@ -409,7 +467,11 @@ function ringScope(selectorList: string): { elements: Set<string>; attributes: S
 /** Does the last-loaded ring in a11y.css reach this selector? */
 function coveredByRing(selector: string, ring: { elements: Set<string>; attributes: Set<string> }): boolean {
   return expandSelectorWrappers(selector).every((expanded) => {
-    const compound = expanded.split(/[\s>+~]+/).filter(Boolean).at(-1) ?? expanded;
+    const compound =
+      expanded
+        .split(/[\s>+~]+/)
+        .filter(Boolean)
+        .at(-1) ?? expanded;
     const element = compound.match(/^[a-z]+/)?.[0];
     const attributes = (compound.match(/\[[^\]]+\]/g) ?? []).map((attribute) =>
       attribute.replace(/\s+/g, '').replace(/["']/g, "'").toLowerCase(),
@@ -425,7 +487,8 @@ function luminance(hex: string): number {
   const value = hex.replace('#', '');
   const expanded = value.length === 3 ? [...value].map((character) => character + character).join('') : value;
   const [r, g, b] = [0, 2, 4].map((offset) => parseInt(expanded.slice(offset, offset + 2), 16) / 255);
-  const channel = (component: number): number => (component <= 0.03928 ? component / 12.92 : ((component + 0.055) / 1.055) ** 2.4);
+  const channel = (component: number): number =>
+    component <= 0.03928 ? component / 12.92 : ((component + 0.055) / 1.055) ** 2.4;
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
 }
 
@@ -492,7 +555,13 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
   const findings: Finding[] = [];
 
   if (!/<html[^>]*\blang=/.test(indexHtml)) {
-    findings.push({ rule: 'html-lang', severity: 'blocking', file: 'index.html', line: 1, message: '<html> has no lang attribute' });
+    findings.push({
+      rule: 'html-lang',
+      severity: 'blocking',
+      file: 'index.html',
+      line: 1,
+      message: '<html> has no lang attribute',
+    });
   }
 
   // prefers-reduced-motion must neutralise animations globally, not by name:
@@ -501,7 +570,9 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
   for (const css of stylesheets.values()) {
     animationCount += (stripCssComments(css).match(/@keyframes\s+[A-Za-z0-9_-]+/g) ?? []).length;
   }
-  const reducedMotion = [...stylesheets.values()].flatMap((css) => mediaBlocks(css, /prefers-reduced-motion/)).join('\n');
+  const reducedMotion = [...stylesheets.values()]
+    .flatMap((css) => mediaBlocks(css, /prefers-reduced-motion/))
+    .join('\n');
   if (animationCount > 0) {
     const neutralises = /animation-duration:\s*0?\.0*1ms|animation:\s*none|animation-name:\s*none/.test(reducedMotion);
     if (!neutralises) {
@@ -519,17 +590,44 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
   const a11y = stylesheets.get('src/styles/a11y.css');
   let ringSelectorList = '';
   if (!a11y) {
-    findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: 'src/styles/a11y.css is missing — the focus ring has no last-loaded owner' });
+    findings.push({
+      rule: 'focus-ring',
+      severity: 'blocking',
+      file: 'src/styles/a11y.css',
+      line: 1,
+      message: 'src/styles/a11y.css is missing — the focus ring has no last-loaded owner',
+    });
   } else {
-    const ringRules = [...a11y.matchAll(/([^{}]*:focus-visible[^{}]*)\{([^{}]*)\}/g)].map((match) => ({ selector: match[1].trim(), body: match[2] }));
+    const ringRules = [...a11y.matchAll(/([^{}]*:focus-visible[^{}]*)\{([^{}]*)\}/g)].map((match) => ({
+      selector: match[1].trim(),
+      body: match[2],
+    }));
     const focusRules = ringRules.map((rule) => rule.body);
     const indicator = ringRules.find((rule) => /outline:\s*(?!none|0)\S+/.test(rule.body));
     if (focusRules.length === 0) {
-      findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: ':focus-visible rule not found' });
+      findings.push({
+        rule: 'focus-ring',
+        severity: 'blocking',
+        file: 'src/styles/a11y.css',
+        line: 1,
+        message: ':focus-visible rule not found',
+      });
     } else if (!indicator) {
-      findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: ':focus-visible does not set a visible outline' });
+      findings.push({
+        rule: 'focus-ring',
+        severity: 'blocking',
+        file: 'src/styles/a11y.css',
+        line: 1,
+        message: ':focus-visible does not set a visible outline',
+      });
     } else if (/rgba\([^)]*,\s*0?\.\d+\s*\)/.test(indicator.body)) {
-      findings.push({ rule: 'focus-ring', severity: 'blocking', file: 'src/styles/a11y.css', line: 1, message: ':focus-visible uses a translucent colour, which loses the 3:1 indicator contrast' });
+      findings.push({
+        rule: 'focus-ring',
+        severity: 'blocking',
+        file: 'src/styles/a11y.css',
+        line: 1,
+        message: ':focus-visible uses a translucent colour, which loses the 3:1 indicator contrast',
+      });
     } else {
       // The ring that other stylesheets have to answer to, read from the file
       // itself so widening the ring widens the coverage check with it.
@@ -538,7 +636,13 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
     const imports = mainTsx.match(/import\s+'\.\/[^']+\.css';/g) ?? [];
     const last = imports.at(-1);
     if (last !== "import './styles/a11y.css';") {
-      findings.push({ rule: 'focus-ring-order', severity: 'blocking', file: 'src/main.tsx', line: 1, message: `a11y.css must be the last stylesheet import (found ${last ?? 'none'})` });
+      findings.push({
+        rule: 'focus-ring-order',
+        severity: 'blocking',
+        file: 'src/main.tsx',
+        line: 1,
+        message: `a11y.css must be the last stylesheet import (found ${last ?? 'none'})`,
+      });
     }
   }
 
@@ -592,7 +696,13 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
       message: `OUTLINE_RESET_ATTRIBUTIONS lists \`${key.split('::')[1]}\` ("${reason}") but that selector no longer resets the outline — delete the note so it cannot hide a future gap`,
     });
   }
-  findings.push({ rule: 'outline-resets', severity: 'info', file: 'src/**/*.css', line: 1, message: `${outlineResets} outline:none/0 declarations, each attributed to a focus indicator (${attributed.size} by explicit note, the rest by the a11y.css ring or their own :focus-visible)` });
+  findings.push({
+    rule: 'outline-resets',
+    severity: 'info',
+    file: 'src/**/*.css',
+    line: 1,
+    message: `${outlineResets} outline:none/0 declarations, each attributed to a focus indicator (${attributed.size} by explicit note, the rest by the a11y.css ring or their own :focus-visible)`,
+  });
 
   // Contrast, statically. When one rule states both the text colour and the
   // background, the pair is exact — this is the same arithmetic axe runs per
@@ -607,7 +717,9 @@ export function scanStyles(stylesheets: Map<string, string>, indexHtml: string, 
     const css = stripCssComments(rawCss);
     for (const { selector, body, index } of styleRules(css)) {
       const colour = body.match(new RegExp(String.raw`(?:^|;)\s*color\s*:\s*(${hex})`, 'i'));
-      const background = body.match(new RegExp(String.raw`(?:^|;)\s*background(?:-color)?\s*:\s*(${hex})\s*(?:;|$)`, 'i'));
+      const background = body.match(
+        new RegExp(String.raw`(?:^|;)\s*background(?:-color)?\s*:\s*(${hex})\s*(?:;|$)`, 'i'),
+      );
       if (!colour || !background) continue;
       const font = body.match(/font-size\s*:\s*([\d.]+)px/i);
       const weight = body.match(/font-weight\s*:\s*(\d{3}|bold)/i);
@@ -635,7 +747,13 @@ export function scanRepo(root: string): Finding[] {
   const sourceFiles = findSourceFiles(root);
   for (const [file, text] of sourceFiles) scanFile(file, text, findings);
   const stylesheets = findStylesheets(root);
-  findings.push(...scanStyles(stylesheets, readFileSync(join(root, 'index.html'), 'utf8'), readFileSync(join(root, 'src/main.tsx'), 'utf8')));
+  findings.push(
+    ...scanStyles(
+      stylesheets,
+      readFileSync(join(root, 'index.html'), 'utf8'),
+      readFileSync(join(root, 'src/main.tsx'), 'utf8'),
+    ),
+  );
   return findings;
 }
 
