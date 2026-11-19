@@ -13,6 +13,7 @@
 | [operations/STAGING_VERIFICATION_RUNBOOK.md](operations/STAGING_VERIFICATION_RUNBOOK.md) | The ordered, fail-closed procedure for running the outstanding live checks against a disposable project |
 | [operations/ENVIRONMENTS.md](operations/ENVIRONMENTS.md) | Development, staging and production: which Supabase project each uses, env variable names and presence, email-verification setting, database state |
 | [operations/OBSERVABILITY.md](operations/OBSERVABILITY.md) | What is logged and how (event names, levels, request ids, redaction), what health and readiness check, the recommended alert thresholds, and the five places an external service is still required |
+| [operations/MONITORING.md](operations/MONITORING.md) | The monitoring services and their approvals: the uptime probe contract and African-vantage provider comparison with prices, Sentry's privacy configuration and quota caps, the alert rules, the CBT backlog measurement, and how database connections are watched |
 | [SUPABASE_ENVIRONMENT_CAPABILITY.md](SUPABASE_ENVIRONMENT_CAPABILITY.md) | Can this environment test Supabase? Test-by-test verdict: passed, failed or blocked, with the blockers named |
 | [PAGE_QUALITY_GATE.md](PAGE_QUALITY_GATE.md) | Definition of done for a page |
 | [functional-qa-gate.md](functional-qa-gate.md) | Manual pass before a deploy |

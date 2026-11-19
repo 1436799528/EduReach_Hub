@@ -142,6 +142,23 @@ export function setLogSink(replacement: LogSink | null): void {
   sink = replacement || defaultSink;
 }
 
+/**
+ * Optional second consumer of a record.
+ *
+ * The log line is the record of truth and stays the only thing this module
+ * knows how to write. An error tracker wants the same events with the original
+ * exception attached - a stack trace the sanitised line deliberately omits - so
+ * it registers here instead of the logger importing a vendor SDK. Without a
+ * registered forwarder nothing changes.
+ */
+export type LogForwarder = (record: LogRecord, error?: unknown) => void;
+
+let forwarder: LogForwarder | null = null;
+
+export function setLogForwarder(replacement: LogForwarder | null): void {
+  forwarder = replacement;
+}
+
 function platformEnv(): string {
   // `CONTEXT` is Netlify's build/deploy context; `NODE_ENV` is what a
   // self-hosted container sets. Either one naming production is enough.
@@ -157,8 +174,11 @@ function deployRef(): string | undefined {
 /**
  * Emit one structured event. Never throws: a logging failure must not become the
  * second failure of a request.
+ *
+ * `error` is optional and never printed - it is handed to a registered forwarder
+ * so an error tracker can capture the stack while the line stays sanitised.
  */
-export function logEvent(level: LogLevel, event: string, context: Record<string, unknown> = {}): void {
+export function logEvent(level: LogLevel, event: string, context: Record<string, unknown> = {}, error?: unknown): void {
   try {
     const record: LogRecord = {
       ts: new Date().toISOString(),
@@ -171,17 +191,26 @@ export function logEvent(level: LogLevel, event: string, context: Record<string,
     const ref = deployRef();
     if (ref) record.commit = ref;
     sink(record, STDERR_FROM[level] ? 'stderr' : 'stdout');
+    if (forwarder) {
+      try {
+        forwarder(record, error);
+      } catch {
+        // A tracker outage is not a logging outage.
+      }
+    }
   } catch {
     // A logging bug is not an incident. Swallow it.
   }
 }
 
-export const log = {
-  debug: (event: string, context?: Record<string, unknown>) => logEvent('debug', event, context),
-  info: (event: string, context?: Record<string, unknown>) => logEvent('info', event, context),
-  warn: (event: string, context?: Record<string, unknown>) => logEvent('warn', event, context),
-  error: (event: string, context?: Record<string, unknown>) => logEvent('error', event, context),
-  critical: (event: string, context?: Record<string, unknown>) => logEvent('critical', event, context),
+type LogMethod = (event: string, context?: Record<string, unknown>, error?: unknown) => void;
+
+export const log: Record<LogLevel, LogMethod> = {
+  debug: (event, context, error) => logEvent('debug', event, context, error),
+  info: (event, context, error) => logEvent('info', event, context, error),
+  warn: (event, context, error) => logEvent('warn', event, context, error),
+  error: (event, context, error) => logEvent('error', event, context, error),
+  critical: (event, context, error) => logEvent('critical', event, context, error),
 };
 
 // ---------------------------------------------------------------------------

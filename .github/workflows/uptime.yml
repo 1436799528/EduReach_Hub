@@ -1,0 +1,60 @@
+# MONT-3 - interim uptime probe.
+#
+# This is a stopgap, not the monitoring the guide asks for. It exists so that a
+# *deployed* outage is noticed today, with no new account and no recurring cost:
+# a failed run notifies the repository's watchers (on a private repository, the
+# maintainers), which is the "alert the maintainers, never the public" rule.
+#
+# What it cannot do, and why the external service is still required:
+#   - GitHub schedules are best-effort and are delayed under load; several runs
+#     can be dropped, and the job may start minutes late. False "down" and false
+#     "up" are both possible.
+#   - The runner is not in Africa. Guide 8.7 asks for a vantage point that
+#     reflects a Nigerian student's path to the site, which needs an African
+#     probe (see docs/operations/MONITORING.md).
+#   - It reports one failure; it does not confirm an outage from several regions
+#     before alerting, so a single bad minute pages.
+#
+# Readiness is reported but not fatal by default: the deployed project answers
+# 503 for the documented CBT-protocol-schema blocker (KNOWN-1). Set the
+# repository variable UPTIME_READINESS_STRICT=1 once that migration is applied.
+name: Production uptime probe
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: uptime-probe
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Probe liveness and readiness
+        env:
+          PROBE_BASE_URL: ${{ vars.PROBE_BASE_URL || 'https://edureachhub.netlify.app' }}
+          UPTIME_READINESS_STRICT: ${{ vars.UPTIME_READINESS_STRICT || '0' }}
+        run: npx tsx scripts/uptime-check.ts --json | tee uptime.json
+      - name: Summarise
+        if: always()
+        run: |
+          {
+            echo '### Uptime probe'
+            echo '```'
+            npx tsx scripts/uptime-check.ts 2>&1 || true
+            echo '```'
+            echo 'Readiness failures are non-fatal until UPTIME_READINESS_STRICT=1.'
+          } >> "$GITHUB_STEP_SUMMARY"

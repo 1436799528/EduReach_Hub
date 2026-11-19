@@ -182,11 +182,11 @@ export async function recordAudit(
         p_metadata: { ...(entry.metadata || {}), result: entry.result || 'success' },
       }),
     );
-    if (error) log.error('audit.write_failed', { action: entry.action, ...errorFacts(error) });
+    if (error) log.error('audit.write_failed', { action: entry.action, ...errorFacts(error) }, error);
   } catch (error) {
     // The action itself still succeeded; only its audit trail is missing. That
     // is deliberately an error: an admin action with no audit row is a
     // compliance gap, not a cosmetic one.
-    log.error('audit.write_failed', { action: entry.action, ...errorFacts(error) });
+    log.error('audit.write_failed', { action: entry.action, ...errorFacts(error) }, error);
   }
 }

@@ -261,11 +261,13 @@ These are asserted in `tests/job-runs.test.ts`, not asserted in prose:
 6. **Field performance is not collected.** No RUM, no Web Vitals reporting. Lab numbers
    from CI are regression protection only (see `docs/features/PERF-1.md`).
 
-## Alert thresholds (recommended, not wired)
+## Alert thresholds
 
-Nothing here notifies anyone yet. These are the conditions worth paging on, the level
-they already log at, and the smallest signal that detects each. They are the contract an
-alerting integration should implement — not a wish list for new instrumentation.
+These are the conditions worth paging on, the level they already log at, and the smallest
+signal that detects each. The **rules and their destinations** are specified in
+[MONITORING.md](MONITORING.md); the error tracker and uptime probe are approved and
+implemented, and both are inert until a credential is added — no account, no DSN and no
+provider has been created.
 
 | Condition | Signal | Threshold | Severity | Notes |
 |---|---|---|---|---|
@@ -276,7 +278,7 @@ alerting integration should implement — not a wish list for new instrumentatio
 | Submission failures | `cbt.submit_failed` + `cbt.guest_submit_failed` | > 5 in 10 min or > 2 % of submissions | **Page** | A student loses a completed paper |
 | Autosave failures | `cbt.draft_save_failed` | > 5 % of saves over 15 min | **Page** | Silent data loss risk; guide 8.7 |
 | Grading / regrade failures | `cbt.regrade.failed`, `cbt.regrade.preview_failed` | any apply failure | **Page** | Results may be wrong |
-| Grading queue growth | `scheduled_job_status()` `finished_at` age, or unanswered attempts older than 15 min | > 50 attempts, or any > 1 h | **Investigate** | No table yet; see the gap below |
+| Grading backlog | `backlog` in `/api/admin/jobs`: stuck `in_progress` attempts past their deadline, and `submitted` rows with no score | 50 stuck, 60 min old, or any ungraded | **Investigate** | There is no grading queue — the submit RPC grades in-transaction. Implemented in `src/server/operations.ts`, logged as `cbt.backlog_alert` |
 | Question import failing | `question_import.commit_failed` / `upload_failed` | 3 in 30 min | **Investigate** | Admin-only impact |
 | Auth failure burst | `auth.verify_failed` + `http.denied` | > 100 in 5 min from one path | **Investigate** | Also the only early signal of credential probing |
 | Audit write failure | `audit.write_failed` | any | **Investigate** | Compliance gap |
@@ -288,38 +290,26 @@ alerting integration should implement — not a wish list for new instrumentatio
 Deliberately **not** alerted: every 401 that a logged-out browser produces, any single
 `warn`, 404s, rate-limit refusals in normal volume, and any event on a successful path.
 
-### Where an external service is required
+### Destinations: what is approved, implemented and still waiting
 
-The application side stops here. Everything above is emitted, structured, correlated and
-rate-limited; what does not exist is a **destination** and a **decision**. Exactly these
-five pieces need a service, an account and an owner:
+| Piece | Code | Account |
+|---|---|---|
+| **Error aggregation** | **implemented** — `lib/errorTracking.ts`, inert without `SENTRY_DSN`, with the privacy review and the hourly/daily caps in [MONITORING.md](MONITORING.md) | **not created** — a free Developer plan needs an owner's signup |
+| **Uptime checks** | **implemented** — `scripts/uptime-check.ts` and an interim 15-minute GitHub schedule; the probe contract is written down | **not created** — an African vantage point needs a provider (≈$10/month; comparison in MONITORING.md) |
+| **Alert routing** | rules specified against Sentry's `event` tags and the uptime monitors | **not configured** — needs the two accounts above |
+| Log destination / retention | none | **not approved** (paid) |
+| Public status page | none | **not approved** (explicitly maintainers-only) |
+| APM / metrics platform | none (`tracesSampleRate: 0`) | **not approved** |
 
-1. **Log destination.** Netlify keeps function logs for a limited window and offers no
-   alerting. A log drain (or any collector) is needed to retain and query events beyond
-   that window. Nothing in this repository sends them anywhere else.
-2. **Error aggregation.** `http.server_error` and `process.*` are lines, not issues.
-   Grouping them (and de-duplicating the same stack) is a product decision about which
-   tool — none is installed or configured.
-3. **Uptime checks.** `/api/health` and `/api/health/ready` are ready to be polled, but
-   nothing polls them, and the guide asks for a vantage point **from Africa** as well as
-   the default regions. That choice is also a provider choice.
-4. **Alert routing and a status page.** Who is paged, in what channel and at what hour is
-   an operational decision, not a code change. The guide's public status page is part of
-   the same decision.
-5. **Metrics/APM (optional).** Request rate, p95 latency and database connection count
-   (guide 8.7) are derivable from the events but not stored as time series. Adding a
-   metrics backend is a separate, larger commitment than a log drain.
-
-**Do not add any of these without approval** — no account, no SDK, no vendor-specific
-code. The same rule applies to loosening a health check to make a monitor green: a
+The same rule still applies to loosening a health check to make a monitor green: a
 readiness failure is information, not an obstacle.
 
 ### Known instrumentation gaps (smallest fix, not built)
 
 | Gap | Smallest honest fix | Why it is not done now |
 |---|---|---|
-| Grading-queue depth | one `count(*)` over open attempts in the readiness payload or a job-run detail | needs a schema-independent query review; no new table without approval |
-| Database connection count | Supabase dashboard metric, or a `pg_stat_activity` read at the ready endpoint | a privileged read in the health path is a new risk; the dashboard already shows it |
+| ~~Grading-queue depth~~ | **built**: `backlog` in `/api/admin/jobs` (`src/server/operations.ts`) — two counts over `cbt_attempts`, no schema change | — |
+| Database connection count | the provider already draws it: Supabase → Reports → Database (connections, pooler clients); alert at 80 % of the pooler limit for 10 min | an in-app number needs a privileged `pg_stat_activity` RPC or a Management API token — both need approval; see MONITORING.md §5 |
 | Query-level tracing | none | that is an APM decision, not a code change |
 | Field performance / RUM | a consent-gated Web Vitals event through the existing analytics allowlist | product/privacy decision; the allowlist is deliberate |
 

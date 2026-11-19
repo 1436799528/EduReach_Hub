@@ -25,6 +25,8 @@ import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError 
 import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
 import { EventRateLimiter, createReadinessReporter, errorFacts, log, requestIdFor } from './lib/observability';
+import { startErrorTracking, flushErrorTracking } from './lib/errorTracking';
+import { readCbtBacklog } from './src/server/operations';
 import { cleanReportDetail, isQuestionReportCategory, isQuestionReportStatus } from './src/server/questionReports';
 import { checkExpectedKey, parseRegradeOutcome, regradeAuditMetadata, regradeHeadline } from './src/server/cbtRegrade';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
@@ -129,6 +131,10 @@ app.use((_req, res, next) => {
 // contain a search term a student typed, and a raw path can contain an id that
 // makes every line unique. Ids are collapsed to `:id`.
 // ---------------------------------------------------------------------------
+
+// Error aggregation is off unless SENTRY_DSN is set: without it this resolves
+// immediately, the SDK is never imported and nothing leaves the process.
+void startErrorTracking();
 
 const SLOW_REQUEST_MS = Number(process.env.OBS_SLOW_REQUEST_MS || 5000);
 const serverFailureLog = new EventRateLimiter(120, 60_000);
@@ -433,7 +439,24 @@ app.get('/api/admin/jobs', requireCapability('analytics.read'), async (_req, res
     });
     if (error) throw error;
     const health = evaluateJobHealth(data as { sinceHours: number; jobs: Array<Record<string, unknown>> });
-    res.json({ ...(data as Record<string, unknown>), health });
+    // MONT-1: the two measurements that are not job runs. Best-effort - a failed
+    // count is reported as unavailable rather than failing the whole endpoint.
+    const backlog = await readCbtBacklog(supabase);
+    if (backlog.alerts.length > 0) {
+      log.warn('cbt.backlog_alert', {
+        request_id: res.locals?.requestId,
+        alerts: backlog.alerts,
+        stuck_open: backlog.stuck_open,
+        oldest_stuck_minutes: backlog.oldest_stuck_minutes,
+        ungraded_submitted: backlog.ungraded_submitted,
+      });
+    } else if (backlog.unavailable.length > 0) {
+      log.warn('cbt.backlog_unavailable', {
+        request_id: res.locals?.requestId,
+        unavailable: backlog.unavailable,
+      });
+    }
+    res.json({ ...(data as Record<string, unknown>), health, backlog });
   } catch (error) {
     log.error('admin.job_status.failed', {
       request_id: res.locals?.requestId,
@@ -1560,11 +1583,15 @@ app.get('/api/admin/cbt/questions/:questionId/regrade', requireCapability('cbt.r
       },
     });
   } catch (error) {
-    log.error('cbt.regrade.preview_failed', {
-      request_id: res.locals?.requestId,
-      question_id: req.params.questionId,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.regrade.preview_failed',
+      {
+        request_id: res.locals?.requestId,
+        question_id: req.params.questionId,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'Unable to preview this regrade.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to preview this regrade.'),
@@ -1621,11 +1648,15 @@ app.post('/api/admin/cbt/questions/:questionId/regrade', requireCapability('cbt.
       },
     });
   } catch (error) {
-    log.error('cbt.regrade.failed', {
-      request_id: res.locals?.requestId,
-      question_id: req.params.questionId,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.regrade.failed',
+      {
+        request_id: res.locals?.requestId,
+        question_id: req.params.questionId,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'Unable to regrade these attempts.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to regrade these attempts.'),
@@ -4543,11 +4574,15 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
       },
     });
   } catch (error) {
-    log.error('cbt.start_failed', {
-      request_id: res.locals?.requestId,
-      exam_id: req.body?.examId ?? null,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.start_failed',
+      {
+        request_id: res.locals?.requestId,
+        exam_id: req.body?.examId ?? null,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'Unable to start this CBT exam.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -5217,11 +5252,15 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
       })),
     });
   } catch (error) {
-    log.error('cbt.paper_failed', {
-      request_id: res.locals?.requestId,
-      attempt_id: req.params.attemptId,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.paper_failed',
+      {
+        request_id: res.locals?.requestId,
+        attempt_id: req.params.attemptId,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : '';
     if (message === 'Authentication required.' || message === 'Invalid or expired session.')
       return res.status(401).json({ error: publicErrorMessage(message) });
@@ -5260,11 +5299,15 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
       breakdown: row.breakdown || [],
     });
   } catch (error) {
-    log.error('cbt.submit_failed', {
-      request_id: res.locals?.requestId,
-      attempt_id: req.params.attemptId ?? req.body?.attemptId ?? null,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.submit_failed',
+      {
+        request_id: res.locals?.requestId,
+        attempt_id: req.params.attemptId ?? req.body?.attemptId ?? null,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
@@ -5436,11 +5479,15 @@ app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
     if (error) throw error;
     res.json({ saved: true, ...(data as Record<string, unknown>) });
   } catch (error) {
-    log.error('cbt.draft_save_failed', {
-      request_id: res.locals?.requestId,
-      attempt_id: req.params.attemptId,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.draft_save_failed',
+      {
+        request_id: res.locals?.requestId,
+        attempt_id: req.params.attemptId,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'Unable to save your progress.';
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
@@ -5559,11 +5606,15 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
       totalQuestions: row.total_questions,
     });
   } catch (error) {
-    log.error('cbt.start_failed', {
-      request_id: res.locals?.requestId,
-      exam_id: req.body?.examId ?? null,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.start_failed',
+      {
+        request_id: res.locals?.requestId,
+        exam_id: req.body?.examId ?? null,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -5748,11 +5799,15 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
       breakdown,
     });
   } catch (error) {
-    log.error('cbt.guest_submit_failed', {
-      request_id: res.locals?.requestId,
-      exam_id: req.body?.examId ?? null,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.guest_submit_failed',
+      {
+        request_id: res.locals?.requestId,
+        exam_id: req.body?.examId ?? null,
+        ...errorFacts(error),
+      },
+      error,
+    );
     if (error instanceof CbtBankPolicyUnavailable)
       return res.status(503).json({ error: 'CBT service is temporarily unavailable.' });
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
@@ -5791,11 +5846,15 @@ app.post('/api/cbt/submit', async (req, res) => {
       breakdown: row.breakdown || [],
     });
   } catch (error) {
-    log.error('cbt.submit_failed', {
-      request_id: res.locals?.requestId,
-      attempt_id: (req.body as { attemptId?: string } | undefined)?.attemptId ?? null,
-      ...errorFacts(error),
-    });
+    log.error(
+      'cbt.submit_failed',
+      {
+        request_id: res.locals?.requestId,
+        attempt_id: (req.body as { attemptId?: string } | undefined)?.attemptId ?? null,
+        ...errorFacts(error),
+      },
+      error,
+    );
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -6603,12 +6662,16 @@ const apiErrorHandler: express.ErrorRequestHandler = (error, req, res, _next) =>
   // An unhandled exception is the one thing the handler used to hide: it
   // answered 500 with no trace anywhere. It is a `critical` event because it
   // means a route reached a state nobody wrote a handler for.
-  log[status >= 500 ? 'critical' : 'warn']('http.unhandled_exception', {
-    request_id: res.locals?.requestId,
-    route: routeShape(req),
-    status,
-    ...errorFacts(error),
-  });
+  log[status >= 500 ? 'critical' : 'warn'](
+    'http.unhandled_exception',
+    {
+      request_id: res.locals?.requestId,
+      route: routeShape(req),
+      status,
+      ...errorFacts(error),
+    },
+    error,
+  );
   res.status(status).json({
     error:
       status === 413
@@ -6688,7 +6751,7 @@ if (!hostedFunctionRuntime && !cbtLocalTestImport) {
     // context and its message ("refusing a privileged Supabase key", "port in
     // use") is the whole diagnostic. Startup is the one place a free-text line
     // earns its keep, and it never carries configuration values.
-    log.critical('server.start_failed', { port: PORT, ...errorFacts(error) });
+    log.critical('server.start_failed', { port: PORT, ...errorFacts(error) }, error);
     console.error('Unable to start EduReach:', error);
     process.exitCode = 1;
   });
@@ -6708,10 +6771,14 @@ if (!hostedFunctionRuntime && !cbtLocalTestImport) {
  * the runtime's own stderr rather than an HTTP endpoint.
  */
 process.on('uncaughtExceptionMonitor', (error, origin) => {
-  log.critical('process.uncaught_exception', { origin, ...errorFacts(error) });
+  log.critical('process.uncaught_exception', { origin, ...errorFacts(error) }, error);
+  // Fire-and-forget: a monitor hook cannot await, and the process is about to
+  // die. If the tracker has not answered by then the line above still exists.
+  void flushErrorTracking(1500);
 });
 process.on('unhandledRejection', (reason) => {
-  log.critical('process.unhandled_rejection', { ...errorFacts(reason) });
+  log.critical('process.unhandled_rejection', { ...errorFacts(reason) }, reason);
+  void flushErrorTracking(1500);
   // Preserve Node's fatal default instead of turning this handler into a
   // silent catch-all.
   throw reason instanceof Error ? reason : new Error(`Unhandled rejection: ${String(reason)}`);

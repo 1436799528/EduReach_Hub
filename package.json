@@ -40,9 +40,11 @@
     "a11y:audit": "tsx scripts/a11y-audit.ts",
     "backup:rehearsal": "tsx scripts/backup-rehearsal.ts",
     "duplicate:audit": "tsx scripts/duplicate-audit.ts",
-    "smoke": "tsx scripts/smoke-check.ts"
+    "smoke": "tsx scripts/smoke-check.ts",
+    "uptime:check": "tsx scripts/uptime-check.ts"
   },
   "dependencies": {
+    "@sentry/node": "11.15.0",
     "@supabase/supabase-js": "^2.57.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
