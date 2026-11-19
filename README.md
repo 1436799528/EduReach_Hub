@@ -116,6 +116,15 @@ Admin: `/admin`, `/admin/queue`, `/admin/cbt`, `/admin/question-imports`,
 `/admin/news`, `/admin/users`, `/admin/schools`, `/admin/opportunities`,
 `/admin/services`, `/admin/analytics` and the rest of the console.
 
+## How the project is run
+
+[`docs/WORKING_GUIDE.md`](docs/WORKING_GUIDE.md) is the specification — the stages,
+the exam-engine rules and the checklists a change is measured against.
+[`docs/WORKING_GUIDE_COMPLIANCE.md`](docs/WORKING_GUIDE_COMPLIANCE.md) records, for
+each requirement, what the repository does today and what is still outstanding.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers branches, commits, the local checks and
+the rules that are not negotiable.
+
 ## Deployment
 
 Netlify builds with `npm run build`, publishes `dist/`, and routes `/api/*`,
