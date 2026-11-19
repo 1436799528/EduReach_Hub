@@ -43,7 +43,7 @@ export function detectImageEnvironment(): ImageEnvironment {
   try {
     production = Boolean((import.meta as unknown as { env?: { PROD?: boolean } }).env?.PROD);
   } catch {
-    production = false;
+    // `import.meta.env` is absent outside Vite (tests, scripts); not production.
   }
   const hostname = typeof window === 'undefined' ? null : window.location.hostname;
   return { production, hostname };

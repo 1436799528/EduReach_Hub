@@ -174,13 +174,13 @@ export function useCbtPageWriter(accountId: string | undefined, attemptId: strin
         }
       } finally { busy = false; publish(); }
     };
-    channel && (channel.onmessage = event => {
+    if (channel) channel.onmessage = event => {
       const next = event.data as Partial<Lease> | null;
       if (lease && next && (next.sessionId !== lease.sessionId || next.sessionGeneration !== lease.sessionGeneration)) {
         // Notification can only stop sends; it never grants ownership.
         stop('revoked', 'A session takeover was reported in another tab. Unsaved answers remain here for review.');
       }
-    });
+    };
     controller.current = {
       finalize: async () => {
         current();

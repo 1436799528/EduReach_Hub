@@ -92,7 +92,7 @@ async function verifyAdminSession(): Promise<{ session: AdminSession; backend: s
     body = await response.json().catch(() => null) as AdminSessionResponse | null;
   } catch {
     // Network error / timeout - fall through to the profile fallback below.
-    response = null;
+    // `response` keeps its initial null, which is what the fallback tests for.
   }
   if (response?.ok && body?.user) {
     return {

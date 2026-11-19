@@ -146,9 +146,13 @@ test('the service-request status handler notifies the owner after the audit writ
   const source = readFileSync(new URL('../server.ts', import.meta.url), 'utf8');
   assert.match(source, /import \{ notifyServiceRequestStatus \} from '\.\/src\/server\/notifications';/);
   assert.match(source, /select\('id,status,admin_note,user_id,reference_code,service_catalog\(title\),updated_at'\)/);
-  const auditIndex = source.indexOf("p_action: 'status_change', p_entity_type: 'service_request'");
+  // Matched as two fragments, not one line: the audit call is a multi-line
+  // object literal once the server is formatted, and the intent is "this action
+  // on this entity", not "these characters on this line".
+  const auditIndex = source.indexOf("p_action: 'status_change'");
+  const auditEntityIndex = source.indexOf("p_entity_type: 'service_request'", auditIndex);
   const notifyIndex = source.indexOf('await notifyServiceRequestStatus(supabase, {');
-  assert.ok(auditIndex > 0, 'status change must stay audited');
+  assert.ok(auditIndex > 0 && auditEntityIndex > auditIndex, 'status change must stay audited');
   assert.ok(notifyIndex > auditIndex, 'the notification is written after the audit entry');
   // The route stays behind the capability that ROLE-1 introduced.
   const routeIndex = source.indexOf("app.patch('/api/admin/service-requests/:requestId'");

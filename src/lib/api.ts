@@ -1526,13 +1526,9 @@ export async function fetchPastQuestionResources(filter: { exam?: string; subjec
   if (filter.subject) params.set('subject', filter.subject);
   if (filter.institution) params.set('institution', filter.institution);
   const query = params.toString();
-  try {
-    return await jsonFetch<PastQuestionLibrary>(`/api/past-questions/resources${query ? `?${query}` : ''}`);
-  } catch (error) {
-    // A library that cannot answer must say so; an empty list would read as
-    // "no papers exist", which is a different and misleading statement.
-    throw error;
-  }
+  // A library that cannot answer must say so; an empty list would read as
+  // "no papers exist", which is a different and misleading statement.
+  return await jsonFetch<PastQuestionLibrary>(`/api/past-questions/resources${query ? `?${query}` : ''}`);
 }
 
 /* ------------------------------------------------------------------ *

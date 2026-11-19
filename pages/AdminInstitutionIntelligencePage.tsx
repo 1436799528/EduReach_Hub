@@ -136,7 +136,7 @@ export default function AdminInstitutionIntelligencePage() {
     }
   }
 
-  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void load(); }, []);
 
   // Filters run on the server so the browser is not handed the whole catalogue
   // to sift through. The debounce keeps typing from firing a request per key.

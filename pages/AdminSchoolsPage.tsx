@@ -42,7 +42,7 @@ export default function AdminSchoolsPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => void load(query), 250);
     return () => window.clearTimeout(timer);
-  }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [query]);
 
   async function save() {
     if (!form) return;

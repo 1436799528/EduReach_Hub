@@ -43,7 +43,7 @@ const BUDGET = {
   requests: 90,
 };
 
-test.afterEach(async ({}, testInfo) => {
+test.afterEach(async (_fixtures, testInfo) => {
   annotateFailure(testInfo);
 });
 

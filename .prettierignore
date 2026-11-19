@@ -1,0 +1,45 @@
+# Generated and vendored trees.
+node_modules/
+build/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Not ours to format.
+package-lock.json
+
+# SQL migrations and the CI validation script are reviewed as SQL; Prettier has
+# no SQL parser and must not pretend to have an opinion about them.
+supabase/
+
+# Data and generated artefacts. The institution registry snapshots are written by
+# `npm run institutions:*`; reformatting them here would fight the generator and
+# produce a diff on every regeneration.
+data/
+
+# Prose. Documentation is hand-wrapped and reviewed for meaning; Prettier reflows
+# every paragraph, which would bury real changes under re-wrapping noise.
+**/*.md
+
+# ---------------------------------------------------------------------------
+# Staged rollout: not formatted yet, and deliberately so.
+#
+# The application shell (pages, components, client libs) and the stylesheets are
+# asserted on by the test suite as exact source text — around thirty tests read a
+# .tsx/.css file and match a formatted fragment. Reformatting that layer today
+# fails those tests, and repairing them means rewriting working assertions, which
+# is a separate, reviewable change rather than a formatting pass. Prettier covers
+# the server, the tooling and the configuration now; see CONTRIBUTING.md
+# "Formatting" for the follow-up.
+pages/
+src/app/
+src/components/
+src/lib/
+src/data/
+src/*.css
+src/styles/
+tests/
+
+# Shipped static asset with a hand-checked shape.
+public/manifest.json

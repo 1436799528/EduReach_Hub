@@ -114,8 +114,8 @@ export function renderRoute(pathname: string): ReactElement {
     try {
       slug = decodeURIComponent(path.slice('/u/'.length));
     } catch {
-      // Malformed percent-encoding is a bad link, not a crashed app.
-      slug = '';
+      // Malformed percent-encoding is a bad link, not a crashed app; the
+      // default empty slug is what reaches the page.
     }
     return <PublicProfilePage slug={slug} />;
   }

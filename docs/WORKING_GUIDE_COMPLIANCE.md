@@ -65,8 +65,8 @@ Last full pass: 19 November 2026 (branch `arena/ccd0b3f2-edureach-hub`, PR #65).
 | Environments: local, development, staging, production | ◐ | Local and production exist and are documented (`docs/operations/ENVIRONMENTS.md`); staging is deliberately deferred by the owner | Staging when the guide reaches Stage 7 |
 | Containers for identical local services | ◐ | `Dockerfile` builds the production image; there is no `docker compose` for a local Postgres | Optional; approval item |
 | `.env.example` listing every variable | ✅ | `.env.example`, `.env.production.example`; only `*.example` files are tracked | — |
-| Linter and formatter | ◐ | `npm run lint` is `tsc --noEmit`; there is no ESLint/Prettier | **Approval item A** |
-| CI on every PR: install, lint, typecheck, tests, vulnerability scan, build, bundle budget | ✅ | `.github/workflows/production-checks.yml` → `npm run ci`; run 44485828145 green | Lint step depends on item A |
+| Linter and formatter | ✅ | `npm run lint` = ESLint 10 (flat config) over the whole repository: typescript-eslint recommended, Rules of Hooks, `prefer-const`, `eqeqeq`, `no-empty`, `no-useless-*`, `preserve-caught-error`; `npm run format:check` = Prettier 3 over the server, tooling, configuration and workflows. 68 real findings fixed, 4 documented rule exceptions, 0 blanket disables. See `CONTRIBUTING.md` "Lint and formatting" | Formatting of the app shell is staged: ~30 tests match exact source text, so reformatting `pages/`/`src/components/` needs those assertions rewritten first — tracked as a follow-up |
+| CI on every PR: install, lint, typecheck, tests, vulnerability scan, build, bundle budget | ✅ | `.github/workflows/production-checks.yml` → a named "Lint and format check" step, then `npm run ci` (typecheck → lint → format:check → tests → schema/migration audits → build → perf → analytics → Playwright desktop+mobile → perf profile → RLS → a11y → npm audit) | — |
 | Preview deploy per PR | ✗ | Netlify builds `main`; no PR previews | **Approval item B** |
 | Migrations only, never hand edits, tested | ✅ | `supabase/migrations/` + `npm run schema:audit` + `npm run migrations:checklist` + `tests/migrations.test.ts` | — |
 | Test tooling (unit, integration, E2E) | ✅ | 1300 unit tests, 318 Playwright tests on desktop + mobile, real-Postgres migration replay | — |
@@ -156,7 +156,7 @@ Process, not code. Depends on Stage 8 observability (item C).
 
 | # | Proposal | Why the guide requires it | Effect if added | Essential? |
 |---|---|---|---|---|
-| A | Add ESLint + Prettier with a CI check | 4.4 linter/formatter, 4.5 step 2 | New dev dependencies; first run will surface style findings across the codebase, which we fix incrementally (never a mass rewrite) | Recommended |
+| A | ~~Add ESLint + Prettier with a CI check~~ | 4.4 linter/formatter, 4.5 step 2 | **Approved and implemented 19 Nov 2026** — dev dependencies added, 68 findings fixed, CI step wired; see `CONTRIBUTING.md` "Lint and formatting" | Done |
 | B | Netlify deploy previews per PR | 4.5 step 8 | Config-only; gives reviewers a live build per PR | Optional |
 | C | Error tracking + uptime/metrics wiring | 4.9, 8.7 | Needs an external service and a small integration; no student-facing change | Essential before launch |
 | D | ~~Question reporting loop~~ | 5.3 step I, 5.7 | **Approved and implemented 19 Nov 2026** — see CONTENT-REPORT-1 | Done |

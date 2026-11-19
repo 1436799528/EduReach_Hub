@@ -29,7 +29,9 @@ day.
 ## Before you open a pull request
 
 ```bash
-npm run lint        # tsc --noEmit
+npm run typecheck   # tsc --noEmit
+npm run lint        # ESLint, whole repository
+npm run format:check # Prettier, enforced scope (see "Lint and formatting")
 npm test            # unit and integration
 npm run build       # client + server bundle, client env guard
 ```
@@ -37,6 +39,50 @@ npm run build       # client + server bundle, client env guard
 CI runs `npm run ci`, which adds the schema audit, migration checklist, perf
 budget, analytics audit, Playwright on desktop and mobile, RLS and a11y audits,
 and `npm audit`. It must be green before merge.
+
+## Lint and formatting
+
+Two tools, two jobs. ESLint finds defects; Prettier decides layout. Neither is a
+style debate, and neither may be satisfied by disabling a rule without a reason
+written next to it.
+
+```bash
+npm run lint          # eslint .
+npm run lint:fix      # eslint . --fix (safe fixes only)
+npm run format        # prettier --write . (enforced scope)
+npm run format:check  # what CI runs
+```
+
+Both run inside `npm run ci`, and a dedicated CI step runs them first so a lint
+failure is named in seconds rather than buried in a 15-minute job.
+
+**What ESLint enforces.** `@typescript-eslint` recommended (unused code, unsafe
+patterns), `eslint:recommended`, Rules of Hooks, `prefer-const`, `eqeqeq`
+(`== null` only), and `no-empty` (an empty block must say why it is empty).
+`react-hooks/exhaustive-deps` is a warning, not an error: several effects
+deliberately run on a narrower dependency list to avoid render loops, and each of
+those carries a written justification at the call site. Warnings are visible on
+every run and are reviewed, but they do not fail the build.
+
+**Deliberate rule exceptions**, each with its reason in the code:
+
+| Where | Rule | Why |
+| --- | --- | --- |
+| `server.ts`, `src/lib/html-sanitize.ts`, `src/server/questionReports.ts` | `no-control-regex` | The control characters are exactly what is being stripped. |
+| `scripts/rehearse-cbt-real-supabase.mjs` | `no-unsafe-finally` | Every throw in that `finally` is caught by a sibling handler in the same block; none escapes. |
+| `tests/**` | `@typescript-eslint/no-explicit-any` | Test doubles stand in for Supabase and Express shapes; `any` is the point of a fake. |
+| All components | React Compiler rules (`set-state-in-effect`, `refs`, `purity`, `immutability`) | They describe a different component architecture; enabling them would mean rewriting working screens. |
+
+**Formatting scope.** `.prettierrc.json` sets the standard: single quotes, 120
+columns, 2-space indent, trailing commas, LF. `format:check` currently covers the
+server, the tooling, the configuration and the workflows. The application shell
+(`pages/`, `src/components/`, `src/app/`, `src/lib/`), the stylesheets and
+`tests/` are listed in `.prettierignore` for a specific reason: around thirty
+tests read a `.tsx`/`.css` file and match a formatted fragment of it, so
+reformatting that layer fails those tests, and repairing them means rewriting
+working assertions. That is a separate, reviewable change — not something to slip
+into a formatting pass. Until then, run `npm run format` after editing files in
+the enforced scope, and keep new client files consistent with their neighbours.
 
 ## What a change must include
 

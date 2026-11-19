@@ -28,7 +28,7 @@ async function recover(page: Page, dbName: string) {
 
 test('two browser tabs recover one lost response using native Web Locks and IndexedDB', async ({ context }) => {
   await context.route('**/__cbt-recovery.js', route => route.fulfill({ contentType: 'text/javascript', body: bundle }));
-  let revision = 1, sends = 0; const requests: unknown[] = [];
+  const revision = 1; let sends = 0; const requests: unknown[] = [];
   const snapshot = () => ({ protocol: 2, revision, answers: { '1': 2 }, status: 'in_progress', questionIds: [question] });
   await context.route('**/__cbt-recovery/**', route => {
     if (route.request().url().endsWith('/state')) return route.fulfill({ json: snapshot() });

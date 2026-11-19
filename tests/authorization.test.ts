@@ -259,7 +259,7 @@ backend.post('/rest/v1/rpc/admin_audit_log', (req, res) => {
 // nothing to move reports zero changes (which is what makes it idempotent).
 let regradeKey = 'B';
 let regradedFrom = 'B';
-let regradeAnswers = [{ attemptId: 'd1111111-1111-4111-8111-111111111111', userId: 'user-student', selected: 'B' }, { attemptId: 'd2222222-2222-4222-8222-222222222222', userId: 'user-service_admin', selected: 'A' }];
+const regradeAnswers = [{ attemptId: 'd1111111-1111-4111-8111-111111111111', userId: 'user-student', selected: 'B' }, { attemptId: 'd2222222-2222-4222-8222-222222222222', userId: 'user-service_admin', selected: 'A' }];
 backend.post('/rest/v1/rpc/cbt_regrade_question', (req, res) => {
   recorded.push(`RPC cbt_regrade_question ${JSON.stringify(req.body)}`);
   const apply = req.body?.p_apply === true;
@@ -965,7 +965,7 @@ test('bank administration runs as the caller, never the service role, and fails 
       body: JSON.stringify({ visibility: 'restricted', releaseAt: '2030-01-01T00:00:00.000Z' }),
     });
     assert.equal(denied.status, 403, JSON.stringify(denied.body));
-    assert.ok(recorded.some((entry) => entry.startsWith('RPC admin_audit_log') && entry.includes('bank_classify_denied') && entry.includes('\"result\":\"failure\"')), 'the refused classification is recorded as a failure');
+    assert.ok(recorded.some((entry) => entry.startsWith('RPC admin_audit_log') && entry.includes('bank_classify_denied') && entry.includes('"result":"failure"')), 'the refused classification is recorded as a failure');
 
     // A missing reviewed policy change fails closed instead of bypassing it.
     bankRpcOutcome = 'unavailable';
@@ -1043,7 +1043,7 @@ test('question creation maps a provenance refusal to 403 question_provenance_ref
     assert.match(String(response.body.error), /already exists in a restricted bank/i);
     assert.deepEqual(Object.keys(response.body).sort(), ['code', 'error'], 'the body carries nothing else');
     assert.doesNotMatch(JSON.stringify(response.body), provenanceLeaks, 'no question text, fingerprint, marker or database detail');
-    assert.ok(seen.some((entry) => entry.startsWith('RPC admin_audit_log') && entry.includes('question_provenance_refused') && entry.includes('\"result\":\"failure\"') && entry.includes('create')), 'the refused copy is audited');
+    assert.ok(seen.some((entry) => entry.startsWith('RPC admin_audit_log') && entry.includes('question_provenance_refused') && entry.includes('"result":"failure"') && entry.includes('create')), 'the refused copy is audited');
   } finally { provenanceOutcome = 'ok'; }
 });
 
