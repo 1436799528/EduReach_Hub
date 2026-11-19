@@ -19,7 +19,7 @@ import { registerRestrictedBankAdminRoutes } from './src/server/restrictedBanks/
 import { registerInstitutionIntelligenceRoutes } from './src/server/institutionIntelligence';
 import { isProvenanceGuardRefusal, questionProvenanceRefusal } from './src/server/questionProvenance';
 import { SERVICE_REQUEST_TRANSITIONS } from './src/lib/serviceRequestTransitions';
-import { type Capability } from './src/lib/capabilities';
+import { resolveAppRole, type Capability } from './src/lib/capabilities';
 import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
 import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError } from './lib/errors';
 import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
@@ -1985,6 +1985,77 @@ app.post('/api/admin/users/:userId/unban', requireCapability('user.suspend'), as
   } catch (error) {
     console.error('Admin user unban error:', error);
     res.status(500).json({ error: 'Unable to unsuspend the account.' });
+  }
+});
+
+/**
+ * Permanently remove an account from Supabase Auth. This is the destructive
+ * counterpart of suspension: only `user.delete` (the super-admin role) may
+ * call it, self-deletion is refused, and the final active super admin cannot
+ * lock the console by deleting themselves or the last owner. An account with
+ * retained administrative history is refused with a clear alternative rather
+ * than silently deleting audit rows.
+ */
+app.delete('/api/admin/users/:userId', requireCapability('user.delete'), async (req, res) => {
+  const adminUser = (req as AuthorizedRequest).adminUser!;
+  const userId = req.params.userId;
+  let supabase: ReturnType<typeof getServerSupabase> | undefined;
+  try {
+    if (adminUser.id === userId) return res.status(400).json({ error: 'You cannot delete your own account.' });
+    supabase = getServerSupabase();
+    const { data: target, error: readError } = await supabase
+      .from('profiles')
+      .select('id,role,full_name')
+      .eq('id', userId)
+      .maybeSingle();
+    if (readError) throw readError;
+    if (!target) return res.status(404).json({ error: 'Account not found.' });
+
+    const targetRole = resolveAppRole(target.role);
+    if (targetRole === 'super_admin') {
+      // Count legacy `admin`/`moderator` rows too: those accounts still resolve
+      // to super admin and can keep the console recoverable.
+      const { data: adminRows, error: adminReadError } = await supabase
+        .from('profiles')
+        .select('id,role')
+        .in('role', ['super_admin', 'admin', 'moderator']);
+      if (adminReadError) throw adminReadError;
+      const remaining = (adminRows || []).filter((row) => row.id !== userId && resolveAppRole(row.role) === 'super_admin');
+      if (!remaining.length) {
+        return res.status(409).json({ error: 'The last administrator cannot be deleted. Assign another admin first.' });
+      }
+    }
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+    if (deleteError) throw deleteError;
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'user_delete',
+      resourceType: 'auth_user',
+      resourceId: userId,
+      metadata: { role: targetRole, name: String(target.full_name || '').slice(0, 80) },
+      result: 'success',
+    });
+    res.json({ success: true, deletedId: userId });
+  } catch (error) {
+    const detail = String((error as { message?: unknown })?.message ?? '').toLowerCase();
+    if (supabase) {
+      await recordAudit(supabase, {
+        actorId: adminUser.id,
+        action: 'user_delete',
+        resourceType: 'auth_user',
+        resourceId: userId,
+        metadata: { reason: detail.includes('foreign key') || detail.includes('audit') ? 'retained-reference' : 'server-error' },
+        result: 'failure',
+      });
+    }
+    console.error('Admin user delete error:', error);
+    // A retained audit/log reference is a business refusal, not a 500: keeping
+    // the trail matters more than forcing an irreversible delete.
+    if (detail.includes('foreign key') || detail.includes('admin_audit_logs')) {
+      return res.status(409).json({ error: 'This account has retained administrative history. Suspend it instead; EduReach keeps audit records.' });
+    }
+    return res.status(500).json({ error: 'Unable to delete this account.' });
   }
 });
 

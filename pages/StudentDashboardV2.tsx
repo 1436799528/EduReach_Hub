@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlarmClock,
   BarChart3,
@@ -41,12 +41,15 @@ import SiteFooter from '../src/components/SiteFooter';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { localStorageKey, readLocalPreviewValue } from '../src/lib/localPreview';
 import { isStaffRole, resolveAppRole } from '../src/lib/capabilities';
+import { rolePresentation } from '../src/lib/rolePresentation';
 import { useAuth } from '../src/lib/auth';
 import { navigateInApp } from '../src/lib/navigation';
 import { pageTitleFor } from '../src/lib/pageMeta';
 import { needsStudentAction, serviceStatusMeaning } from '../src/lib/serviceLifecycle';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import SiteSearch from '../src/components/LazySiteSearch';
+import { useDrawerDismiss } from '../src/lib/menuA11y';
+import { useModalDialog } from '../src/lib/useModalDialog';
 import { commonInstitutions, institutionCourseContexts } from '../src/data/studentOptions';
 import { cbtAttemptState, dashboardPriorities, summarizeCbtAttempts } from '../src/lib/dashboardPriority';
 import { cbtModeLabel, isScoredSubmission, practiceSuggestion, singleSubjectProgress, submittedSubjectCounts } from '../src/lib/dashboardCbtStats';
@@ -291,6 +294,11 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
   const [securityOpen, setSecurityOpen] = useState(openSettings);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // MOBILE-NAV-2: the student drawer is a real right-side modal drawer, not a
+  // decorative off-canvas list.
+  const mobileNavTriggerRef = useRef<HTMLButtonElement>(null);
+  const sidebarDrawerRef = useModalDialog<HTMLElement>(mobileNavOpen, () => setMobileNavOpen(false));
+  useDrawerDismiss({ open: mobileNavOpen, onClose: () => setMobileNavOpen(false), drawerRef: sidebarDrawerRef });
   const focusedRequestReference = new URLSearchParams(window.location.search).get('ref') || '';
 
   /* ---------------- data ---------------- */
@@ -669,6 +677,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
   const accountLinks = (
     <>
+      <a href="/" className="edureach-nav-item"><Home size={15} /> EduReach home</a>
       <a href="/dashboard/profile" className="edureach-nav-item"><User size={15} /> Profile</a>
       <button type="button" className="edureach-nav-item" onClick={() => { setSecurityOpen(true); setProfileMenuOpen(false); }}>
         <Shield size={15} /> Security &amp; Password
@@ -819,7 +828,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
     <>
       <header className="dash-overview-head">
         <div>
-          <span className="dash-overview-role">Student dashboard</span>
+          <span className="dash-overview-role">{rolePresentation(profile?.role).label} dashboard</span>
           <div className="dash-overview-name">
             <h1>Overview</h1>
           </div>
@@ -1395,7 +1404,9 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
         <div className="edureach-dash-bar">
           <button
             type="button"
+            ref={mobileNavTriggerRef}
             className="edureach-menu-toggle"
+            aria-controls="dashboard-navigation"
             aria-expanded={mobileNavOpen}
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
             onClick={() => setMobileNavOpen((open) => !open)}
@@ -1408,13 +1419,13 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
 
           <div className="edureach-dash-actions">
             <NotificationCenter variant="dashboard" />
-            <a href="/" className="dash-btn dash-btn-secondary dash-hide-mobile">Student site</a>
+            <a href="/" className="dash-btn dash-btn-secondary dash-home-switch"><Home size={14} aria-hidden="true" /> Home</a>
             <div style={{ position: 'relative' }}>
               <button type="button" className="edureach-dash-profile-btn" onClick={() => setProfileMenuOpen((open) => !open)} aria-haspopup="menu" aria-expanded={profileMenuOpen}>
                 <div className="edureach-dash-avatar">{avatar}</div>
                 <span className="edureach-dash-profile-name" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   {firstName}
-                  {emailVerified && <VerifiedBadge />}
+                  {emailVerified && <VerifiedBadge role={profile?.role} />}
                 </span>
               </button>
               {profileMenuOpen && (
@@ -1422,7 +1433,7 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
                   <div className="dash-menu-head">
                     <strong style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {displayName}
-                      {emailVerified && <VerifiedBadge />}
+                      {emailVerified && <VerifiedBadge role={profile?.role} />}
                     </strong>
                     {email && <span>{email}</span>}
                   </div>
@@ -1435,7 +1446,15 @@ export default function StudentDashboardV2({ initialTab = 'dashboard', openSetti
       </header>
 
       <div className="edureach-dash-body">
-        <aside className={`edureach-dash-sidebar ${mobileNavOpen ? 'is-open' : ''}`} aria-label="Dashboard navigation" role={mobileNavOpen ? 'dialog' : undefined} aria-modal={mobileNavOpen ? true : undefined}>
+        <aside
+          ref={sidebarDrawerRef}
+          id="dashboard-navigation"
+          tabIndex={-1}
+          className={`edureach-dash-sidebar ${mobileNavOpen ? 'is-open' : ''}`}
+          aria-label="Dashboard navigation"
+          role={mobileNavOpen ? 'dialog' : undefined}
+          aria-modal={mobileNavOpen ? true : undefined}
+        >
           {NAV.map(({ tab, label, Icon }) => (
             <button key={tab} type="button" className={`edureach-nav-item ${activeTab === tab ? 'active' : ''}`} onClick={() => openTab(tab)} aria-current={activeTab === tab ? 'page' : undefined}>
               <Icon size={15} /> {label}

@@ -16,6 +16,7 @@ import {
   type InstitutionReviewRow,
 } from '../src/lib/api';
 import { AdminEmptyState } from '../src/components/admin/AdminKit';
+import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
 
 // The editor is a form-heavy module. Opening the queue should not pay for it;
 // it loads when an institution is actually opened to edit.
@@ -317,13 +318,19 @@ export default function AdminInstitutionIntelligencePage() {
             </div>
 
             <div className="admin-filter-card" style={{ flexWrap: 'wrap', gap: 8 }}>
-              <input
-                className="admin-input"
-                type="search"
-                aria-label="Search institutions by name, acronym or state"
-                placeholder="Search name, acronym or state"
+              <AdminFilterSearch
                 value={filters.search ?? ''}
-                onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
+                onChange={(value) => setFilters((current) => ({ ...current, search: value }))}
+                label="Search institutions by name, acronym or state"
+                placeholder="Search name, acronym or state"
+                suggestionLabel="Institution intelligence suggestions"
+                items={catalogue.map((row) => ({
+                  id: row.institution_id,
+                  title: row.school_name,
+                  description: [row.acronym, row.state, row.institution_type, row.official_name].filter(Boolean).join(' · '),
+                  category: row.institution_type || 'Institution',
+                  keywords: [row.overview, row.official_website_url, row.verification_status, row.publication_status],
+                }))}
               />
               <select
                 className="admin-select"

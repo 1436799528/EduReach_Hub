@@ -193,6 +193,52 @@
   background: var(--er-surface-soft);
 }
 
+/* HOME↔DASHBOARD: a visible switch rather than a link buried in a menu. */
+.hub-quick-dashboard,
+.er-shell-switch a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--er-tap-target);
+  padding: 7px 11px;
+  border: 1px solid var(--er-border);
+  border-radius: 9px;
+  background: var(--er-surface);
+  color: var(--er-primary);
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hub-quick-dashboard:hover,
+.er-shell-switch a:hover,
+.er-shell-switch a[aria-current="page"] {
+  background: var(--er-primary-soft);
+  border-color: var(--er-primary-soft-border, #bfdbfe);
+}
+.er-shell-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+.er-shell-switch a { width: 100%; }
+
+/* MOBILE-NAV-2: the phone drawer is right-aligned and owns its own scroll. */
+.hub-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.hub-mobile-backdrop > [role="dialog"] {
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.hub-mobile-backdrop .hub-mobile-nav { flex: 1 0 auto; }
+.hub-mobile-backdrop .site-search--drawer { flex: none; }
+
 /* Bottom navigation never sits on top of the last line of content. */
 @media (max-width: 900px) {
   .hub-shell {
@@ -1614,43 +1660,8 @@
   font-size: 13px;
   line-height: 1.3;
 }
-.er-home-news-grid .er-news-card-summary, .er-home-news-grid .er-news-card-foot {
-  display: none;
-}
-
-.er-square-grid .er-opportunity-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: auto;
-}
-.er-square-grid .er-opp-facts {
-  display: none; /* Hide large metadata list in square cards */
-}
 .er-square-grid .er-card-arrow {
   display: none !important;
-}
-.er-square-grid .er-opportunity-card > div:nth-child(2) {
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  min-height: 0 !important;
-  width: 100% !important;
-}
-.er-square-grid .er-opportunity-card h2 {
-  font-size: 14px !important;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.er-square-grid .er-opportunity-card p {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 11.5px !important;
-  line-height: 1.4 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2114,10 +2125,10 @@
    The square card system was scoped to homepage simulators, homepage news,
    services and scholarships. A news card is not a square: it leads with a
    photograph and carries a headline, so the square boundary clipped the first
-   line of the title and left a 160px-wide card on a phone. These rules keep the
-   system for the other three surfaces and take news out of it, then give the
-   feed one card per screen on a phone. The card itself is the neutral surface
-   from NEWS-3, never the gradient NEWS-1 introduced.
+   line of the title. These desktop rules keep the system for the other
+   surfaces and take news out of it; the shared mobile-first standard below
+   now owns phone geometry. The card itself is the neutral surface from
+   NEWS-3, never the gradient NEWS-1 introduced.
    -------------------------------------------------------------------------- */
 
 .er-square-grid > a.er-news-card {
@@ -2147,35 +2158,6 @@
 .er-home-news-grid .er-news-card .er-news-card-body > strong {
   -webkit-line-clamp: 3;
   font-size: 14.5px;
-}
-
-@media (max-width: 640px) {
-  /* Both news feeds become one-card-per-view scrollers. The homepage grid is
-     a `.er-square-grid`, so the layout override has to win over that system. */
-  .er-home-news .er-square-grid {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 12px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    padding: 2px 0 14px !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .er-home-news .er-square-grid::-webkit-scrollbar { display: none; }
-
-  .er-home-news .er-square-grid > .er-news-card {
-    flex: 0 0 100% !important;
-    width: 100% !important;
-    aspect-ratio: auto !important;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-  }
-
-  .er-home-news-grid .er-news-card-media { aspect-ratio: 16 / 9; }
-  .er-home-news-grid .er-news-card-summary { display: -webkit-box !important; -webkit-line-clamp: 2; }
-  .er-home-news-grid .er-news-card-body > strong { font-size: 16px; -webkit-line-clamp: 4; }
 }
 
 /* --------------------------------------------------------------------------
@@ -2674,3 +2656,314 @@
 @media (max-width: 620px) {
   .hub-side-rail { display: none !important; }
 }
+
+/* --------------------------------------------------------------------------
+   MOBILE-FIRST SITE STANDARD
+   One roomy page rhythm and one compact card geometry for news, featured
+   stories and opportunities. The old phone behaviour was either a full-width
+   horizontal scroller (too large to scan) or two 160px squares (too cramped);
+   one readable row per card matches the rest of the site and fits the screen.
+   -------------------------------------------------------------------------- */
+
+.er-comfort-page { padding-top: 28px; padding-bottom: 64px; }
+.er-standard-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  overflow: visible;
+}
+.er-standard-card-grid > a { min-width: 0; max-width: 100%; }
+.er-standard-card-grid > a.er-opportunity-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f172a;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .03);
+}
+.er-standard-card-grid > a.er-opportunity-card.is-expired { opacity: .78; }
+
+@media (max-width: 640px) {
+  .er-comfort-page { padding-top: 18px; padding-bottom: 34px; }
+  .er-comfort-page .hub-container { width: 100%; padding-inline: 14px; }
+  .er-comfort-page .er-section { margin-top: 22px; }
+  .er-comfort-page .hub-section-heading { margin-bottom: 18px; }
+
+  .er-standard-card-grid,
+  .er-standard-card-grid.er-news-card-grid,
+  .er-standard-card-grid.er-square-grid,
+  .er-standard-card-grid.er-featured-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding: 2px 0 0 !important;
+    margin-inline: 0 !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+  }
+
+  .er-standard-card-grid > a.er-news-card,
+  .er-standard-card-grid > a.er-featured-card,
+  .er-standard-card-grid > a.er-opportunity-card {
+    display: grid !important;
+    grid-template-columns: 64px minmax(0, 1fr) 18px;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    flex: initial !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 104px;
+    height: auto !important;
+    aspect-ratio: auto !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--er-border, #e2e8f0) !important;
+    border-radius: 12px !important;
+    background: var(--er-surface, #fff) !important;
+    color: var(--er-text-primary, #131B2E) !important;
+    text-decoration: none !important;
+    scroll-snap-align: none !important;
+  }
+
+  .er-standard-card-grid > a.er-news-card > .er-news-card-media,
+  .er-standard-card-grid > a.er-featured-card > .er-featured-media {
+    display: block !important;
+    flex: none !important;
+    width: 64px !important;
+    height: 64px !important;
+    aspect-ratio: 1 / 1 !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    overflow: hidden !important;
+  }
+  .er-standard-card-grid > a.er-news-card .er-news-card-media .er-image,
+  .er-standard-card-grid > a.er-featured-card .er-featured-media .er-image,
+  .er-standard-card-grid > a.er-news-card .er-news-card-media .er-image img,
+  .er-standard-card-grid > a.er-featured-card .er-featured-media .er-image img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    object-fit: cover !important;
+  }
+
+  .er-standard-card-grid > a.er-news-card > .er-news-card-body,
+  .er-standard-card-grid > a.er-featured-card > .er-featured-body {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    flex: none !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    gap: 3px !important;
+  }
+  .er-standard-card-grid .er-news-card-kicker,
+  .er-standard-card-grid .er-featured-body > small {
+    display: block !important;
+    overflow: hidden !important;
+    color: var(--er-text-muted) !important;
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .er-standard-card-grid .er-news-card-body > strong,
+  .er-standard-card-grid .er-featured-body > strong {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    color: var(--er-text-primary) !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+    line-height: 1.3 !important;
+  }
+  .er-standard-card-grid .er-news-card-summary,
+  .er-standard-card-grid .er-opportunity-card p {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 1 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    color: var(--er-text-secondary) !important;
+    font-size: 11.5px !important;
+    line-height: 1.35 !important;
+  }
+  /* Compact is not a licence to remove facts: source/date, status chips and
+     eligibility stay readable. Long prose alone is clamped; its full value is
+     in the accessible DOM and on the linked detail page. */
+  .er-standard-card-grid .er-news-card-foot {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 4px 8px !important;
+    width: 100% !important;
+    margin-top: 2px !important;
+    color: var(--er-text-muted) !important;
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+  }
+  .er-standard-card-grid .er-news-card-foot .er-news-card-read { color: var(--er-primary, #1d4ed8) !important; }
+  .er-standard-card-grid .er-featured-excerpt {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    color: var(--er-text-secondary) !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+  .er-standard-card-grid .er-opp-facts {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px 8px !important;
+    width: 100% !important;
+    max-height: none !important;
+    margin: 4px 0 0 !important;
+    overflow: visible !important;
+  }
+  .er-standard-card-grid .er-opp-facts > div { display: flex; align-items: baseline; gap: 3px; min-width: 0; }
+  .er-standard-card-grid .er-opp-facts dt,
+  .er-standard-card-grid .er-opp-facts dd {
+    margin: 0 !important;
+    color: var(--er-text-muted) !important;
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+    overflow-wrap: anywhere;
+  }
+  .er-standard-card-grid .er-opp-facts dt { display: inline-flex; align-items: center; font-weight: 700; }
+  .er-standard-card-grid .er-opp-facts dd { min-width: 0; }
+
+  .er-standard-card-grid > a.er-opportunity-card > .hub-news-thumb {
+    width: 64px !important;
+    height: 64px !important;
+    flex: none !important;
+  }
+  .er-standard-card-grid > a.er-opportunity-card > div:nth-child(2) {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    gap: 3px !important;
+  }
+  .er-standard-card-grid .er-opportunity-chips {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 3px 5px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  .er-standard-card-grid .er-opportunity-chips .er-opp-chip { flex: none !important; }
+  .er-standard-card-grid .er-opportunity-card h2 {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.3 !important;
+  }
+  .er-standard-card-grid .er-card-arrow {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    align-self: center !important;
+  }
+
+  /* CBT controls belong in the centre of a phone, not pinned to an edge. */
+  .er-exam-subject-tabs { justify-content: center !important; flex-wrap: wrap; }
+  .er-sim-filters .er-pills { justify-content: center; flex-wrap: wrap; }
+}
+
+/* --------------------------------------------------------------------------
+   ROLE MARKS
+   A student keeps the general green check. Staff roles add a labelled,
+   colour-coded mark after it: admin gold, editorial blue, service teal.
+   -------------------------------------------------------------------------- */
+.er-identity-marks { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+.er-verified { color: var(--er-role-color, var(--er-status-success)); }
+.er-role-chip,
+.er-role-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid var(--er-role-border, #86efac);
+  border-radius: 999px;
+  background: var(--er-role-surface, #f0fdf4);
+  color: var(--er-role-color, #15803d);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+.er-role-badge[data-role="student"] { --er-role-color: #15803d; --er-role-surface: #f0fdf4; --er-role-border: #86efac; }
+.er-role-badge[data-role="super_admin"] { --er-role-color: #8a5a00; --er-role-surface: #fff8e1; --er-role-border: #e0b341; }
+.er-role-badge[data-role="content_editor"] { --er-role-color: #1d4ed8; --er-role-surface: #eff6ff; --er-role-border: #93c5fd; }
+.er-role-badge[data-role="service_admin"] { --er-role-color: #0f766e; --er-role-surface: #f0fdfa; --er-role-border: #5eead4; }
+
+.er-role-matrix { margin-bottom: 16px; }
+.er-role-matrix h2 { margin: 0 0 4px; font-size: 15px; }
+.er-role-matrix > p { margin: 0 0 12px; color: var(--admin-muted); font-size: 12px; }
+.er-role-matrix-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.er-role-matrix-card { padding: 12px; border: 1px solid var(--admin-border); border-radius: 10px; background: #fff; }
+.er-role-matrix-card p { margin: 8px 0 0; color: var(--admin-muted); font-size: 11.5px; line-height: 1.45; }
+
+/* Admin and header page-filter fields share the public suggestion panel. */
+.er-filter-search.admin-filter-search {
+  width: 330px;
+  min-height: 42px;
+  border-color: #d8dde2;
+  border-radius: 12px;
+  background: #fbfcfd;
+}
+.er-filter-search.admin-filter-search input { font: 500 12px var(--er-font-sans); }
+.er-header-filter-search { width: 250px; }
+.er-services-mobile-search { display: none; }
+@media (max-width: 1040px) {
+  .er-header-filter-search { display: none; }
+  .er-services-mobile-search { display: flex; width: 100%; }
+  .er-filter-search.admin-filter-search { width: 100%; }
+}
+@media (max-width: 420px) {
+  .hub-quick-dashboard { display: none; }
+  .dash-home-switch { padding: 6px 8px !important; font-size: 11px !important; }
+}
+.dash-home-switch { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+
+/* HOME↔DASHBOARD: the home screen has its own visible switch; the dashboard
+   header has the matching Home link. Neither route depends on the burger menu. */
+.er-home-dashboard-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: var(--er-tap-target);
+  margin-top: 12px;
+  padding: 9px 13px;
+  border: 1px solid var(--er-primary-soft-border, #bfdbfe);
+  border-radius: 10px;
+  background: var(--er-primary-soft, #edf4fb);
+  color: var(--er-primary);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.er-home-dashboard-switch:hover { border-color: var(--er-primary); background: #e4effb; }
+.er-services-mobile-search .er-filter-search { width: 100%; }

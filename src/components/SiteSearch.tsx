@@ -74,12 +74,15 @@ export default function SiteSearch({
   }, [query, debouncedQuery]);
 
   const isPending = query !== debouncedQuery;
+  // SEARCH-2: even the full results page offers direct suggestions. It shows a
+  // shorter list because its full result cards already sit immediately below.
+  const suggestionsEnabled = true;
+  const suggestionLimit = variant === 'page' ? 4 : 6;
   const visibleItems = isPending && !debouncedQuery.trim()
     ? []
-    : filterSearchItems(catalog, debouncedQuery, 6);
+    : filterSearchItems(catalog, debouncedQuery, suggestionLimit);
   const isLoading = suggestionsLoading || catalogLoading || isPending;
   const hasPartialFailure = suggestionsError || catalogFailed;
-  const suggestionsEnabled = variant !== 'page';
   const suggestionsOpen = suggestionsEnabled && open && query.trim().length > 0;
 
   function updateQuery(value: string) {

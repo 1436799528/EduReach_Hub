@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import VerifiedBadge from '../src/components/VerifiedBadge';
+import { rolePresentation } from '../src/lib/rolePresentation';
 import WaveLoader from '../src/components/WaveLoader';
 import { useToast } from '../src/components/ui/Toast';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
@@ -139,6 +140,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileCompleted, setProfileCompleted] = useState(false);
+  const [accountRole, setAccountRole] = useState('student');
   const editMode = new URLSearchParams(window.location.search).get('edit') === '1';
   // The same page is mounted inside the dashboard's Profile tab, so every
   // internal link stays in whichever shell the student is already in.
@@ -287,6 +289,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
           .then(({ data: profile }) => {
             if (profile) {
               setProfileCompleted(Boolean(profile.profile_completed));
+              if (profile.role) setAccountRole(String(profile.role));
               if (profile.full_name) setUserName(profile.full_name);
               if (profile.phone) setPhone(profile.phone);
               if (profile.school) {
@@ -737,10 +740,10 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                 <div className="profile-identity-copy">
                   <div className="profile-identity-name">
                     <h1>{userName || 'Student'}</h1>
-                    {emailVerified && <VerifiedBadge />}
+                    {emailVerified && <VerifiedBadge role={accountRole} />}
                   </div>
                   <p className="profile-identity-role">
-                    {level ? `${level} student` : 'Student'}
+                    {level ? `${level} ${rolePresentation(accountRole).label.toLowerCase()}` : rolePresentation(accountRole).label}
                     {savedSchool ? ` · ${savedSchool}` : ''}
                   </p>
                   {(savedCourse || savedDepartment) && (

@@ -15,6 +15,7 @@ Before creating a UI element, always ask:
    - `<CardIdentityMark />`: Resolves the appropriate brand emblem or service theme icon.
    - `<ServiceCard />`: Canonical compact service card (whole card is the link).
    - Standard compact service cards consume centralized metadata from `src/data/services.ts`.
+   - Content cards (news, featured stories, scholarships, jobs) use the shared `.er-standard-card-grid`; mobile geometry belongs in the global stylesheet, not inline page styles. Facts stay visible even when prose is clamped.
 4. **Shared Portal Blocks** (Myschool-dense, EduReach-themed; reuse, never duplicate):
    - `<SectionHead />`: Section title + "view all" link.
    - `<ExamSimulatorGrid />`: JAMB/WAEC/NECO/Post-UTME simulator cards (`mode` or `start` variant).
@@ -27,6 +28,9 @@ Before creating a UI element, always ask:
    - Meaningful `aria-label` on icon-only triggers.
    - Semantic tags (`<button>`, `<a>`, `<input>`) instead of unclickable `<div>` listeners.
    - Visible `:focus-visible` outlines.
+   - `FilterSearch` and `AdminFilterSearch` own combobox/listbox semantics, active-descendant tracking and keyboard dismissal; pages supply data and fields, not a second autocomplete implementation.
+   - Drawers use `useModalDialog` + `useDrawerDismiss`, and tab sets use roving `tabIndex` with Arrow/Home/End shortcuts.
+   - Role labels come from `src/lib/rolePresentation.ts`; public pages use the coarse `display_role` allow-list projection.
 
 ## Evaluation Gate
 

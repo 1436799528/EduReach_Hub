@@ -48,7 +48,7 @@ export default function HomeNewsSection() {
           />
         )}
         {!loading && !error && items.length > 0 && (
-          <div className="er-square-grid er-home-news-grid">
+          <div className="er-square-grid er-home-news-grid er-standard-card-grid">
             {items.map((item) => <NewsCard key={item.id} item={item} />)}
           </div>
         )}

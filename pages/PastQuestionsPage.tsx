@@ -6,6 +6,7 @@ import { ErrorState, InlineNotice } from '../src/components/AsyncState';
 import FilterPills from '../src/components/FilterPills';
 import FilterSearch from '../src/components/ui/FilterSearch';
 import { fetchPastQuestionResources, type PastQuestionLibrary } from '../src/lib/api';
+import { matchesSearch } from '../src/lib/searchMatch';
 
 type Filter = 'ALL' | 'JAMB' | 'WAEC' | 'NECO' | 'Post-UTME';
 
@@ -62,14 +63,22 @@ export default function PastQuestionsPage() {
 
   const visibleResources = useMemo(() => {
     const list = library?.items || [];
-    const query = search.trim().toLowerCase();
     return list.filter((resource) => {
-      const matchesFilter = matchesExamFilter(resource.examBody, filter);
-      if (!matchesFilter) return false;
-      if (!query) return true;
-      return `${resource.title} ${resource.subject || ''} ${resource.course || ''} ${resource.year || ''}`.toLowerCase().includes(query);
+      if (!matchesExamFilter(resource.examBody, filter)) return false;
+      return matchesSearch([
+        resource.title, resource.subject, resource.course, String(resource.year ?? ''),
+        resource.examBody, resource.description, resource.sourceName, resource.access,
+      ], search);
     });
   }, [filter, library, search]);
+
+  const resourceSuggestions = useMemo(() => (library?.items || []).map((resource) => ({
+    id: resource.id,
+    title: resource.title,
+    description: [resource.examBody, resource.subject, resource.course, resource.year].filter(Boolean).join(' · '),
+    category: resource.examBody,
+    keywords: [resource.description, resource.sourceName, resource.sourceUrl, resource.state],
+  })), [library]);
 
   useEffect(() => {
     if (!search.trim()) return;
@@ -114,7 +123,7 @@ export default function PastQuestionsPage() {
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '22px 0 64px' }}>
+      <div className="hub-page er-comfort-page">
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact">
             <div>
@@ -132,6 +141,8 @@ export default function PastQuestionsPage() {
               label="Search past questions and materials"
               placeholder="Search school, exam, subject or material"
               clearLabel="Clear past question search"
+              suggestionItems={resourceSuggestions}
+              suggestionLabel="Past question suggestions"
             />
             <div className="er-library-filter-row">
               <span className="er-library-filter-label"><SlidersHorizontal size={15} aria-hidden="true" /> Filter</span>

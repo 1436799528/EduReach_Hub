@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Clock3, Search } from 'lucide-react';
 import { navigateInApp } from '../../lib/navigation';
+import { matchesSearch, normalizeSearchText } from '../../lib/searchMatch';
 
 export type AdminQuickFindItem = { href: string; label: string };
 
@@ -40,12 +41,15 @@ export default function AdminQuickFind({ items }: { items: AdminQuickFindItem[] 
 
   function score(item: AdminQuickFindItem, needle: string): number {
     if (!needle) return 0;
-    const label = item.label.toLowerCase();
+    // SEARCH-2: the same normalisation as public search, so punctuation,
+    // accents and words in a different order cannot hide a page. A substring
+    // anywhere in the label still qualifies before the subsequence fallback.
+    const label = normalizeSearchText(item.label);
     if (label === needle) return 0;
     if (label.startsWith(needle)) return 1;
-    const words = label.split(/\s+/);
+    const words = label.split(' ');
     if (words.some((word) => word.startsWith(needle))) return 2;
-    if (label.includes(needle)) return 3;
+    if (label.includes(needle) || matchesSearch([item.label], needle)) return 3;
     // Subsequence: "anq" finds "Analytics & Questions" without the user
     // remembering the ampersand or the exact words in between.
     let index = 0;
@@ -56,7 +60,7 @@ export default function AdminQuickFind({ items }: { items: AdminQuickFindItem[] 
     return -1;
   }
 
-  const needle = query.trim().toLowerCase();
+  const needle = normalizeSearchText(query);
   const ranked = needle
     ? items
         .map((item) => ({ item, score: score(item, needle) }))

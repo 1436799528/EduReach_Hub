@@ -5,6 +5,7 @@ import {
   FileText,
   GraduationCap,
   Laptop,
+  LayoutDashboard,
   Newspaper,
   Wrench,
   PlayCircle,
@@ -58,6 +59,11 @@ export default function HubHomePage() {
                   ? 'Choose a practice paper or explore the latest updates.'
                   : 'Practise a timed paper or revise by subject. You can start without an account.'}
               </p>
+              <a className="er-home-dashboard-switch" href={isAuthenticated ? '/dashboard' : '/login?next=%2Fdashboard'}>
+                <LayoutDashboard size={15} aria-hidden="true" />
+                {isAuthenticated ? 'Go to dashboard' : 'Sign in to dashboard'}
+                <ArrowRight size={14} aria-hidden="true" />
+              </a>
             </div>
           </header>
 

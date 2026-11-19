@@ -1,7 +1,8 @@
 import { userFacingError } from '../lib/errors';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, ExternalLink, MapPin, School, Search, X } from 'lucide-react';
+import { ArrowRight, ExternalLink, MapPin, School } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
+import FilterSearch from '../src/components/ui/FilterSearch';
 import { TrustBadge } from '../src/components/institutions/TrustBadge';
 import { commonInstitutions } from '../src/data/studentOptions';
 import {
@@ -174,7 +175,19 @@ export default function SchoolFinderPage() {
     }).slice(0, 120);
   }, [directory, filter]);
 
-  const suggestions = filter.term.trim() ? filtered.slice(0, 8) : [];
+  // SEARCH-2: every institution on the page is suggested, including acronym,
+  // alias and state text that does not occur at the start of the name.
+  const institutionSuggestions = useMemo(() => directory.map((institution) => ({
+    id: institution.id,
+    title: institution.name,
+    description: [institution.acronym, institution.state, institution.institutionType].filter(Boolean).join(' · '),
+    category: institution.institutionType || 'Institution',
+    keywords: [
+      institution.ownership,
+      institution.state,
+      ...(institution.aliases || []).map((alias) => alias.name),
+    ],
+  })), [directory]);
   const returnPath = `${window.location.pathname}${window.location.search}`;
 
   const update = useCallback((patch: Partial<InstitutionFilter>) => {
@@ -183,7 +196,7 @@ export default function SchoolFinderPage() {
 
   return (
     <HubLayout>
-      <div className="hub-page school-finder-page">
+      <div className="hub-page school-finder-page er-comfort-page">
         <div className="hub-container school-finder-container">
           <div className="school-finder-head">
             <div>
@@ -194,19 +207,17 @@ export default function SchoolFinderPage() {
           </div>
           <section className="school-finder-search-card" aria-label="School search">
             <div className="school-finder-search-row">
-              <div className="school-finder-search-input">
-                <Search size={18} />
-                <input
-                  autoFocus
-                  value={filter.term}
-                  onChange={(event) => update({ term: event.target.value })}
-                  placeholder="Search school, acronym, alias or state..."
-                  aria-label="Search for a school"
-                />
-                <button type="button" onClick={() => update({ term: '' })} aria-label="Clear school search" disabled={!filter.term}>
-                  <X size={16} />
-                </button>
-              </div>
+              <FilterSearch
+                value={filter.term}
+                onChange={(term) => update({ term })}
+                label="Search for a school"
+                placeholder="Search school, acronym, alias or state..."
+                clearLabel="Clear school search"
+                suggestionItems={institutionSuggestions}
+                suggestionLimit={8}
+                suggestionLabel="School suggestions"
+                autoFocus
+              />
             </div>
             <div className="er-finder-filters">
               <select
@@ -243,24 +254,6 @@ export default function SchoolFinderPage() {
                 ))}
               </select>
             </div>
-            {suggestions.length > 0 && (
-              <div className="school-finder-suggestions" role="listbox" aria-label="School suggestions">
-                {suggestions.map((institution) => (
-                  <button
-                    type="button"
-                    role="option"
-                    key={institution.id}
-                    onClick={() => update({ term: institution.name })}
-                  >
-                    <School size={15} />
-                    <span>
-                      <strong>{institution.name}</strong>
-                      <small>{institution.acronym ? `${institution.acronym} · ` : ''}{institution.state || 'Nigeria'}</small>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
             <div className="school-finder-search-meta">
               {loading
                 ? 'Loading the institution directory…'

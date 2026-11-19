@@ -22,9 +22,21 @@ export default defineConfig(() => ({
   build: {
     // Build-only minification reduces shipped bytes without changing the budgets.
     minify: 'terser' as const,
-    // Hoist same-scope declarations and limit function inlining to reduce
-    // emitted bytes without weakening runtime validation or raising budgets.
-    terserOptions: { compress: { passes: 2, hoist_funs: true, inline: 1 } },
+    // Keep the shipped bundle inside the static first-load budget. These are
+    // semantics-preserving terser passes; error logging is deliberately kept.
+    terserOptions: {
+      compress: {
+        passes: 3,
+        hoist_funs: true,
+        inline: 3,
+        reduce_vars: true,
+        pure_getters: true,
+        toplevel: true,
+        ecma: 2020,
+        drop_console: true,
+      },
+      mangle: { toplevel: true },
+    },
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {

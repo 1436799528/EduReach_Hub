@@ -9,6 +9,7 @@ import {
   type AdminInstitution,
 } from '../src/lib/api';
 import { AdminEmptyState, AdminPageReport, TableSkeleton } from '../src/components/admin/AdminKit';
+import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
 
 // Schools manager: direct CRUD over the `institutions` rows the public
 // School Finder (/schools) reads. Same columns, one source of truth.
@@ -190,7 +191,20 @@ export default function AdminSchoolsPage() {
         )}
 
         <div className="admin-filter-card">
-          <input className="admin-input admin-search" aria-label="Search institutions" placeholder="Search name, acronym or state" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <AdminFilterSearch
+            value={query}
+            onChange={setQuery}
+            label="Search institutions"
+            placeholder="Search name, acronym or state"
+            suggestionLabel="Institution suggestions"
+            items={institutions.map((institution) => ({
+              id: institution.id,
+              title: institution.school_name,
+              description: [institution.acronym, institution.state, institution.institution_type].filter(Boolean).join(' · '),
+              category: institution.institution_type || 'Institution',
+              keywords: [institution.slug, institution.website_url, institution.admission_portal_url, institution.student_portal_url],
+            }))}
+          />
           <span className="admin-filter-count">{loading ? '…' : institutions.length}</span>
         </div>
 

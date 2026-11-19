@@ -29,6 +29,8 @@ import SkipLink from '../src/components/a11y/SkipLink';
 import SiteFooter from '../src/components/SiteFooter';
 import { AdminStatusDot, useAdminHealth } from '../src/components/admin/AdminKit';
 import { useModalDialog } from '../src/lib/useModalDialog';
+import { useDrawerDismiss } from '../src/lib/menuA11y';
+import RoleBadge from '../src/components/RoleBadge';
 import { AdminCapabilityProvider } from '../src/components/admin/Can';
 import AdminQuickFind from '../src/components/admin/AdminQuickFind';
 import { API_BASE_PATH } from '../src/lib/apiBase';
@@ -242,6 +244,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = useCurrentAdminPath();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const sidebarRef = useModalDialog<HTMLElement>(mobileNavOpen, () => setMobileNavOpen(false));
+  // MOBILE-NAV-2: any press outside the right drawer dismisses it, and the
+  // workspace behind it cannot scroll until it closes.
+  useDrawerDismiss({ open: mobileNavOpen, onClose: () => setMobileNavOpen(false), drawerRef: sidebarRef });
   const pendingQuickFindFocus = useRef(false);
   const cached = sessionCache && Date.now() - sessionCache.verifiedAt < SESSION_CACHE_TTL_MS ? sessionCache : null;
   const [checking, setChecking] = useState(!cached);
@@ -415,6 +420,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div><span>Auth source</span><b>{backend}</b></div>
         </div>
         <div className="admin-user-email">{session.email}</div>
+        <div style={{ margin: '0 3px 10px' }}><RoleBadge role={session.role} /></div>
         <button type="button" className="admin-btn secondary" onClick={() => { window.sessionStorage.setItem('edureach-admin-student-view', '1'); navigate('/dashboard?view=student'); }}>View Student Site</button>
         <button type="button" className="admin-logout" onClick={logout}>Terminate Admin Session</button>
       </div>
@@ -448,6 +454,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <span>{health.state === 'ok' ? 'API' : health.state === 'down' ? 'Offline' : 'Checking'}</span>
         </span>
         <span className="admin-topbar-user" title={session.email}>{session.fullName || session.email}</span>
+        <RoleBadge role={session.role} />
       </header>
       <main className="admin-main" id="main-content" tabIndex={-1}>
         <AdminCapabilityProvider value={session}>{children}</AdminCapabilityProvider>

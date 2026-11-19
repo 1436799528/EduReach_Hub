@@ -1,9 +1,20 @@
 import { userFacingError } from '../lib/errors';
 import { useModalDialog } from '../src/lib/useModalDialog';
 import { useEffect, useState } from 'react';
-import { Ban, RefreshCw } from 'lucide-react';
-import { fetchAdminUserActivity, fetchAdminUsers, setUserSuspended, updateAdminUserRole, type AdminUser, type AdminUserActivity } from '../src/lib/api';
+import { Ban, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  deleteAdminUser,
+  fetchAdminUserActivity,
+  fetchAdminUsers,
+  setUserSuspended,
+  updateAdminUserRole,
+  type AdminUser,
+  type AdminUserActivity,
+} from '../src/lib/api';
 import { Can } from '../src/components/admin/Can';
+import FilterSearch from '../src/components/ui/FilterSearch';
+import RoleBadge from '../src/components/RoleBadge';
+import { APP_ROLES, ROLE_PRESENTATIONS } from '../src/lib/rolePresentation';
 import { AdminEmptyState, AdminPageReport, StatusBadge, TableSkeleton } from '../src/components/admin/AdminKit';
 import AdminSortButton from '../src/components/admin/AdminSortButton';
 import { ariaSortFor, nextSortState, sortRows, NO_SORT, type SortState } from '../src/lib/tableSort';
@@ -72,6 +83,18 @@ export default function AdminUsersPage() {
     } finally { setBusyId(null); }
   }
 
+  async function deleteAccount(p: AdminUser) {
+    if (!window.confirm(`Permanently delete ${p.full_name || 'this account'}? Suspend instead if you only want to block access.`)) return;
+    setBusyId(p.id);
+    setError('');
+    try {
+      await deleteAdminUser(p.id);
+      await loadList(query);
+      setMessage('Account deleted.');
+    } catch (e) {
+      setError(userFacingError(e, 'Unable to delete; suspend it instead if history is retained.'));
+    } finally { setBusyId(null); }
+  }
 
   async function load(search: string) {
     setLoading(true);
@@ -97,6 +120,13 @@ export default function AdminUsersPage() {
       value: profiles.length ? `${Math.round(profiles.reduce((sum, profile) => sum + profileCompletion(profile), 0) / profiles.length)}%` : 'Unavailable',
     },
   ];
+  const accountSuggestions = profiles.map((profile) => ({
+    id: profile.id,
+    title: profile.full_name || 'Unnamed student',
+    description: [profile.school, profile.department, profile.matric_number].filter(Boolean).join(' · '),
+    category: profile.role,
+    keywords: [profile.faculty, profile.level, profile.role],
+  }));
   useEffect(() => {
     const timer = window.setTimeout(() => load(query), 250);
     return () => window.clearTimeout(timer);
@@ -111,12 +141,15 @@ export default function AdminUsersPage() {
           </div>
           <div className="admin-header-actions">
             <button type="button" className="admin-btn secondary-dark" onClick={() => void load(query)} disabled={loading} aria-label="Refresh student accounts"><RefreshCw size={14} /></button>
-            <input
-              className="admin-input admin-search"
-              aria-label="Search student accounts"
-              placeholder="Search name, school or matric"
+            <FilterSearch
+              className="admin-filter-search"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={setQuery}
+              label="Search student accounts"
+              placeholder="Search name, school or matric"
+              clearLabel="Clear account search"
+              suggestionItems={accountSuggestions}
+              suggestionLabel="Account suggestions"
             />
           </div>
         </div>
@@ -129,6 +162,18 @@ export default function AdminUsersPage() {
               title="Account reporting"
               items={accountSummary}
             />
+            <div className="admin-card er-role-matrix" aria-label="Role capability alignment">
+              <h2>Role powers</h2>
+              <p>The console and API read the same capability grid; each role sees only its own controls.</p>
+              <div className="er-role-matrix-grid">
+                {APP_ROLES.map((role) => (
+                  <div className="er-role-matrix-card" key={role}>
+                    <RoleBadge role={role} />
+                    <p>{ROLE_PRESENTATIONS[role].description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </>
         )}
 
@@ -169,7 +214,7 @@ export default function AdminUsersPage() {
                       <td data-label="Department">{p.department || '—'}</td>
                       <td data-label="Level">{p.level || '—'}</td>
                       <td data-label="Role">
-                        <span className={`status-badge ${p.role}`}>{p.role}</span>
+                        <RoleBadge role={p.role} />
                         {p.suspended && <div className="muted" style={{ color: 'var(--admin-danger)', fontWeight: 620 }}>Suspended</div>}
                       </td>
                       <td data-label="Profile">
@@ -200,10 +245,22 @@ export default function AdminUsersPage() {
                               disabled={busyId === p.id}
                               onChange={(e) => void changeRole(p, e.target.value)}
                             >
-                              {['student', 'content_editor', 'service_admin', 'super_admin'].map((role) => (
+                              {APP_ROLES.map((role) => (
                                 <option key={role} value={role}>{role}</option>
                               ))}
                             </select>
+                          </Can>
+                          <Can capability="user.delete">
+                            <button
+                              type="button"
+                              className="admin-btn small danger"
+                              disabled={busyId === p.id}
+                              onClick={() => void deleteAccount(p)}
+                              aria-label={`Delete ${p.full_name || p.id}`}
+                              title="Permanently delete this account; the API refuses self-deletion"
+                            >
+                              <Trash2 size={12} aria-hidden="true" /> Delete
+                            </button>
                           </Can>
                         </div>
                       </td>

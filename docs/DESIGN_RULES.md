@@ -25,8 +25,7 @@ EduReach is a high-performance Nigerian student-services and examination support
     the brand accent, a destructive consequence or a decline; amber is a warning;
     neutral is everything else. Never colour a card because it exists.
 12. **Search is a utility.** `SiteSearch` is the only navigation search;
-    `FilterSearch` is the only live page-filter field; server-side lookups that submit a query are not a second filter. White surface, neutral icon,
-    subtle focus, no bright fill.
+    `FilterSearch` is the only live page-filter field; server-side lookups that submit a query are not a second filter. Both search controls offer suggestions drawn from all fields of the rows they cover, with start/middle/end token matching, keyboard support and ARIA combobox semantics. White surface, neutral icon, subtle focus, no bright fill.
 13. **Destructive actions are never one click.** A compact icon opens a
     confirmation; the confirmation carries the seriousness, not a giant red
     button. Failures restore the item.
@@ -38,6 +37,21 @@ EduReach is a high-performance Nigerian student-services and examination support
     answers "how am I doing?" with evidence, then offers navigation.
 16. **A shared link is a designed route.** Public profile data is opt-in and
     allow-listed; contact details, identifiers and results are never included.
+    Only a coarse, labelled `display_role` crosses the boundary.
+17. **Mobile is the default geometry.** Compact cards use one readable column
+    on a phone, not a full-screen snap scroller or a square teaser. Shortening
+    prose is allowed; `display:none` on facts such as dates, eligibility,
+    source, status or verification is not. See
+    `docs/features/MOBILE-FIRST-SITE-STANDARD.md`.
+18. **One drawer contract.** Phone menus are right-side, labelled, focus-managed
+    dialogs with Escape/outside dismissal, body scroll lock and an internally
+    scrollable long list. Visible Home/Dashboard transitions are not hidden
+    behind an unlabelled icon.
+19. **Scrolling tab sets are keyboard sets.** Horizontal subject tabs are
+    centred on phones and use roving `tabIndex` plus Arrow/Home/End keys.
+20. **Destructive identity actions are guarded.** Deleting an account is an
+    owner-only capability, never deletes oneself or the last owner, preserves
+    audit history, and recommends suspension when foreign keys prevent removal.
 
 ## Mandatory Compliance
 

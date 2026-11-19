@@ -298,3 +298,69 @@ test('each navigation layer carries five destinations on a phone', () => {
   // The bar is reachable at tablet widths too, where the dashboard hides its sidebar.
   assert.match(read('src/edu-portal.css'), /@media\(max-width:768px\)\{\s*body:not\(\.er-exam-mode\) \.hub-shell\{padding-bottom/, 'the bar appears while the sidebar is hidden');
 });
+
+test('current-page search fields suggest values from every field on the page', async () => {
+  const { filterSearchSuggestions } = await import('../src/lib/searchMatch');
+  const component = read('src/components/ui/FilterSearch.tsx');
+  const admin = read('src/components/admin/AdminFilterSearch.tsx');
+  const site = read('src/components/SiteSearch.tsx');
+  const paths = [
+    'pages/NewsPage.tsx',
+    'pages/JobsPage.tsx',
+    'pages/ServicesCatalogPage.tsx',
+    'pages/PastQuestionsPage.tsx',
+    'pages/SchoolFinderPage.tsx',
+    'src/components/dashboard/SchoolFinderCard.tsx',
+    'pages/AdminNewsPage.tsx',
+    'pages/AdminSchoolsPage.tsx',
+    'pages/AdminInstitutionIntelligencePage.tsx',
+    'pages/AdminContentManagerPage.tsx',
+    'pages/AdminCbtPage.tsx',
+    'pages/AdminBankSecurityPage.tsx',
+  ];
+  assert.match(component, /role="combobox"/);
+  assert.match(component, /aria-expanded=\{suggestionsOpen\}/);
+  assert.match(component, /role="listbox"/);
+  assert.match(component, /aria-activedescendant/);
+  assert.match(component, /ArrowDown/);
+  assert.match(component, /ArrowUp/);
+  assert.match(component, /event\.key === 'Escape'/);
+  assert.match(component, /visibleSuggestions\[activeIndex\]/, 'Enter submits the active suggestion');
+  assert.match(component, /filterSearchSuggestions\(suggestionItems, value/);
+  assert.match(site, /const suggestionsEnabled = true/, 'page search keeps suggestions too');
+  for (const path of paths) {
+    const source = read(path);
+    assert.match(source, /(?:suggestionItems|items)=\{/, `${path} supplies page-specific suggestions`);
+    assert.match(source, /keywords:/, `${path} indexes its non-title fields`);
+    assert.match(source, /suggestionLabel=/, `${path} names its suggestion set`);
+  }
+  const rows = [
+    { id: 'one', title: 'WAEC news', category: 'Exam', description: 'Registration deadline', keywords: ['published', 'Editor'] },
+    { id: 'two', title: 'Scholarship', category: 'Funding', description: 'Apply before May', keywords: ['draft', 'Admin'] },
+  ];
+  assert.deepEqual(
+    filterSearchSuggestions(rows, 'dead').map((row) => row.id),
+    ['one'],
+    'a partial word inside a non-title field is found',
+  );
+  assert.deepEqual(filterSearchSuggestions(rows, 'may').map((row) => row.id), ['two']);
+  assert.deepEqual(filterSearchSuggestions(rows, 'funding waec').map((row) => row.id), [], 'all tokens must match');
+  assert.match(admin, /<FilterSearch/, 'admin filters inherit the shared combobox');
+  assert.match(admin, /onSubmit\?: \(value: string\) => void/, 'server-backed forms can submit deliberately');
+  assert.match(admin, /suggestionLimit=\{8\}/, 'admin lists offer a longer suggestion set');
+});
+
+test('mobile CBT subject tabs are centred and keyboard-navigable', () => {
+  const page = read('pages/CbtSessionPage.tsx');
+  const css = read('src/styles/ux5-product.css');
+  assert.match(page, /role="tablist"/);
+  assert.match(page, /aria-orientation="horizontal"/);
+  assert.match(page, /tabIndex=\{current \? 0 : -1\}/, 'one roving tab stop');
+  assert.match(page, /case 'ArrowRight'/, 'arrow keys move between subjects');
+  assert.match(page, /case 'Home'/, 'Home jumps to the first subject');
+  assert.match(page, /case 'End'/, 'End jumps to the last subject');
+  assert.match(css, /\.er-exam-subject-tabs \{[\s\S]*?justify-content: center/, 'the row is centred');
+  const home = read('pages/HubHomePage.tsx');
+  assert.match(home, /er-home-dashboard-switch/, 'the public Home has a visible Dashboard switch');
+  assert.match(css, /\.er-home-dashboard-switch/, 'and a compact shared style');
+});

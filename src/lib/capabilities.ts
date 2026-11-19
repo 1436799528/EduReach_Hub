@@ -82,10 +82,13 @@ export const CAPABILITIES = [
   'site.read',
   'site.update',
 
-  // Account administration.
+  // Account administration. Deletion is deliberately separate from suspension
+  // and role assignment: erasing an auth user is irreversible and super-admin
+  // only.
   'user.read',
   'user.suspend',
   'user.manage_roles',
+  'user.delete',
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];

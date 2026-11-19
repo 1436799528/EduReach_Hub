@@ -18,6 +18,7 @@ const read = (path: string): string => readFileSync(join(root, path), 'utf8');
 const tabs = read('src/components/ui/Tabs.tsx');
 const toast = read('src/components/ui/Toast.tsx');
 const menu = read('src/lib/menuA11y.ts');
+const dialog = read('src/lib/useModalDialog.ts');
 const layout = read('src/components/HubLayout.tsx');
 const adminSite = read('pages/AdminSitePage.tsx');
 const auth = read('pages/AuthPageV2.tsx');
@@ -97,10 +98,15 @@ test('both header menus close on an outside press, on Escape, and on focus leavi
   assert.match(interactions, /\.er-menu-item:hover/, 'every row has a hover state');
 });
 
-test('the mobile drawer traps focus and locks the page behind it', () => {
-  assert.match(layout, /document\.body\.style\.overflow = 'hidden'/);
-  assert.match(layout, /event\.key !== 'Tab'/, 'Tab is intercepted at the drawer edge');
-  assert.match(layout, /mobileCloseRef\.current\?\.focus\(\)/, 'focus starts inside the drawer');
+test('the right mobile drawer traps focus, locks the page and closes on an outer press', () => {
+  assert.match(layout, /useModalDialog<HTMLDivElement>\(mobileOpen/, 'one focus-managed dialog owns the drawer');
+  assert.match(layout, /useDrawerDismiss\(\{ open: mobileOpen/, 'outside presses dismiss it');
+  assert.match(menu, /document\.body\.style\.overflow = 'hidden'/, 'the page behind cannot scroll');
+  assert.match(menu, /pointerdown[\s\S]*?click/, 'both pointer and synthetic outer clicks close it');
+  assert.match(dialog, /event\.key !== 'Tab'/, 'Tab is intercepted at the drawer edge');
+  assert.match(dialog, /if \(first\) first\.focus\(\)/, 'focus starts inside the drawer');
+  assert.match(layout, /justifyContent: 'flex-end'/, 'the drawer is pinned to the right');
+  assert.match(layout, /overflowY: 'auto'/, 'long menu content scrolls inside the drawer');
 });
 
 test('toast lifetimes match severity, and a failure never dismisses itself', () => {

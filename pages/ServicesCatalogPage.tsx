@@ -1,5 +1,5 @@
 import { userFacingError } from '../lib/errors';
-import { MessageSquare, Search, X } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import ServiceCard from '../src/components/ServiceCard';
@@ -8,6 +8,8 @@ import SectionHead from '../src/components/SectionHead';
 import { fetchServices, type ServiceItem } from '../src/lib/api';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { SkeletonRows } from '../src/components/Skeleton';
+import FilterSearch from '../src/components/ui/FilterSearch';
+import { matchesSearch } from '../src/lib/searchMatch';
 
 function initialServiceSearch() {
   return new URLSearchParams(window.location.search).get('q') ?? '';
@@ -65,14 +67,19 @@ export default function ServicesCatalogPage() {
 
   const filteredServices = useMemo(() => {
     return services.filter((srv) => {
-      const q = search.trim().toLowerCase();
-      const matchSearch =
-        !q || srv.title.toLowerCase().includes(q) || srv.description.toLowerCase().includes(q);
-      if (!matchSearch) return false;
+      if (!matchesSearch([srv.title, srv.description, srv.category, srv.service_key], search)) return false;
       if (activeFilter === 'ALL') return true;
       return (srv.category?.trim() || 'Services') === activeFilter;
     });
   }, [services, search, activeFilter]);
+
+  const serviceSuggestions = useMemo(() => services.map((srv) => ({
+    id: srv.id || srv.service_key || srv.title,
+    title: srv.title,
+    description: srv.description,
+    category: srv.category || 'Student service',
+    keywords: [srv.service_key, srv.route],
+  })), [services]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -94,28 +101,19 @@ export default function ServicesCatalogPage() {
   return (
     <HubLayout
       customSearch={
-        <div className="site-search site-search--header" role="search">
-          <Search size={16} aria-hidden="true" style={{ color: '#b14933' }} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search services (e.g. NELFUND)..."
-            aria-label="Search services"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              aria-label="Clear search"
-              style={{ border: 0, background: 'none', color: '#5e6c82', cursor: 'pointer', display: 'flex' }}
-            >
-              <X size={15} />
-            </button>
-          )}
-        </div>
+        <FilterSearch
+          className="er-header-filter-search"
+          value={search}
+          onChange={setSearch}
+          label="Search services"
+          placeholder="Search services (e.g. NELFUND)..."
+          clearLabel="Clear service search"
+          suggestionItems={serviceSuggestions}
+          suggestionLabel="Service suggestions"
+        />
       }
     >
-      <div className="hub-page" style={{ padding: '20px 0 60px' }}>
+      <div className="hub-page er-comfort-page">
         <div className="hub-container">
           <div
             style={{
@@ -138,6 +136,20 @@ export default function ServicesCatalogPage() {
               </h1>
             </div>
             <a className="hub-outline-btn" href={`https://wa.me/${EDUREACH_WHATSAPP}?text=${encodeURIComponent('Hello EduReach, I need help choosing a student service.')}`} target="_blank" rel="noopener noreferrer"><MessageSquare size={14} /> Talk to Us</a>
+          </div>
+
+          {/* The header field is desktop-only; the same suggestion-backed field
+              stays reachable in the page body on a phone. */}
+          <div className="er-services-mobile-search" style={{ marginBottom: 14 }}>
+            <FilterSearch
+              value={search}
+              onChange={setSearch}
+              label="Search services on mobile"
+              placeholder="Search services (e.g. NELFUND)..."
+              clearLabel="Clear service search"
+              suggestionItems={serviceSuggestions}
+              suggestionLabel="Service suggestions"
+            />
           </div>
 
           <div

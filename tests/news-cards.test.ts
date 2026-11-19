@@ -15,6 +15,8 @@ const portal = read('src/edu-portal.css');
 const product = read('src/styles/ux5-product.css');
 const sections = read('src/components/NewsSections.tsx');
 const newsPage = read('pages/NewsPage.tsx');
+const homeSection = read('src/components/HomeNewsSection.tsx');
+const jobsPage = read('pages/JobsPage.tsx');
 const articlePage = read('pages/NewsArticlePage.tsx');
 const cbtPage = read('pages/CbtPage.tsx');
 const layout = read('src/components/HubLayout.tsx');
@@ -88,21 +90,26 @@ test('the whole card is the click target, and it says where it goes', () => {
   assert.doesNotMatch(sections, /<button[^>]*er-news-card/, 'a card is a link, not a button');
 });
 
-test('a phone shows one card per screen and snaps as it scrolls', () => {
-  const mobile = /@media \(max-width: 640px\) \{([\s\S]*?)\n\}/.exec(newsBlock)?.[1] ?? '';
-  assert.match(mobile, /\.er-news-card-grid \{\s*display: flex/, 'the grid becomes a scroller');
-  assert.match(mobile, /scroll-snap-type: x mandatory/, 'each card snaps');
-  assert.match(mobile, /\.er-news-card-grid > \.er-news-card \{[^}]*flex: 0 0 100%/, 'one card fills the screen');
-  assert.match(mobile, /scroll-snap-align: start/, 'the snap is to the card start');
-  assert.match(mobile, /\.er-news-card \.er-news-card-media \{ aspect-ratio: 16 \/ 9; \}/, 'the image frame is wider on a phone');
-  assert.match(mobile, /\.er-news-card \.er-news-card-body > strong \{ font-size: 16\.5px/, 'the headline grows rather than shrinks');
-  // The homepage feed uses the same behaviour, and the square card system that
-  // used to force 1:1 is explicitly taken back off news cards.
-  assert.match(product, /\.er-square-grid > a\.er-news-card \{[\s\S]*?aspect-ratio: auto !important/, 'news leaves the square system');
-  assert.match(product, /\.er-square-grid > a\.er-news-card \{[\s\S]*?background: var\(--er-surface/, 'and keeps the neutral surface there too');
-  const homeMobile = product.slice(product.indexOf('@media (max-width: 640px) {', product.indexOf('NEWS-1 / NEWS-3 — news cards leave the square system')));
-  assert.match(homeMobile, /\.er-home-news \.er-square-grid \{[^}]*scroll-snap-type: x mandatory/, 'the home feed snaps too');
-  assert.match(homeMobile, /\.er-home-news \.er-square-grid > \.er-news-card \{[^}]*flex: 0 0 100% !important/, 'and shows one card per screen');
+test('phones use one compact standard card grid instead of oversized scrollers', () => {
+  assert.match(newsPage, /er-news-card-grid er-standard-card-grid/, 'the news feed opts into the shared card grid');
+  assert.match(sections, /er-featured-grid er-standard-card-grid/, 'featured stories use the same geometry');
+  assert.match(homeSection, /er-standard-card-grid/, 'the homepage preview uses the same geometry');
+  assert.match(jobsPage, /className="er-standard-card-grid"/, 'scholarships and jobs use the same geometry');
+  assert.doesNotMatch(jobsPage, /className="er-square-grid"/, 'opportunities leave the old forced-square system');
+
+  const standard = product.slice(product.indexOf('MOBILE-FIRST SITE STANDARD'));
+  assert.ok(standard.length > 0, 'the shared mobile card contract exists after legacy overrides');
+  assert.match(standard, /grid-template-columns: minmax\(0, 1fr\) !important/, 'one readable column fits the phone');
+  assert.match(standard, /scroll-snap-type: none !important/, 'no full-screen card scroller survives');
+  assert.match(standard, /grid-template-columns: 64px minmax\(0, 1fr\) 18px/, 'thumbnail, copy and arrow share a compact row');
+  assert.match(standard, /min-height: 104px/, 'the row is roomy enough to read, not a 160px square');
+  assert.match(standard, /er-opp-facts[\s\S]*?flex-wrap: wrap/, 'eligibility and source facts stay readable');
+  assert.match(standard, /er-opportunity-chips[\s\S]*?flex-wrap: wrap/, 'all status chips can wrap');
+  assert.doesNotMatch(standard, /er-opp-facts \{ display: none|er-news-card-foot[\s\S]{0,120}display: none/, 'compact cards do not hide facts with display:none');
+  assert.match(standard, /\.er-comfort-page/, 'page rhythm is shared rather than compressed per page');
+  // The older news override remains neutral on surface; the new mobile rule is
+  // the last word on geometry.
+  assert.match(product, /\.er-square-grid > a\.er-news-card \{[\s\S]*?background: var\(--er-surface/, 'news keeps its neutral surface');
 });
 
 test('the phone header keeps its brand and its menu on screen', () => {
