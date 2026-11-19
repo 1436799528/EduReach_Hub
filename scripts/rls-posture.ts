@@ -165,6 +165,10 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'Students submit and track their own requests through restricted columns; workflow updates and staff reads use the capability-checked server API.',
   },
   {
+    table: 'question_reports', access: 'owner', anon: NONE, authenticated: ['select', 'insert'], policies: 2, browser: true,
+    why: 'A student files a report and reads their own; the counter columns on exam_questions are revoked from the browser role so a report cannot be used to hide or clear a flag. Triage runs through the capability-checked server API.',
+  },
+  {
     table: 'student_notifications', access: 'owner', anon: NONE, authenticated: OWN_FULL, policies: 1, browser: true,
     why: 'NTF-1 notifications are owner-scoped; the staff-insert policy is additionally constrained to staff roles.',
   },

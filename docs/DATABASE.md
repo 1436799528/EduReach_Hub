@@ -10,6 +10,10 @@ Core domains:
 - exam_questions: protected question bank; answer keys are server-side.
 - cbt_attempts: student attempts, timing and the zero-based current question used for signed-in resume.
 - cbt_answers: active/submitted answers used for progress and result scoring.
+- question_reports: student reports about a question (wrong answer, typo, image, other),
+  owner-scoped for read and insert, triaged through the admin API. `exam_questions`
+  carries `open_report_count` and an advisory `report_flagged_at` (three open reports),
+  both maintained by trigger and not writable from the browser role.
 - news_articles: published news.
 - admin_audit_logs: administrative audit trail.
 

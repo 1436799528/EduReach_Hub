@@ -699,6 +699,34 @@ export async function updateAdminOpportunity(id: string, values: Record<string, 
   return body.item;
 }
 
+export type QuestionReportCategory = 'wrong_answer' | 'typo' | 'image' | 'other';
+
+/**
+ * Report a problem with one question (working guide 5.3 Step I and 5.7).
+ *
+ * The server decides whether the question is one this student was given, and a
+ * repeat of the same report is answered as `already_reported` rather than as a
+ * failure — a student pressing the button twice should not see an error.
+ */
+export async function reportCbtQuestion(
+  questionId: string,
+  category: QuestionReportCategory,
+  detail?: string,
+): Promise<'reported' | 'already_reported'> {
+  if (!CBT_UUID.test(questionId)) throw new Error('That question cannot be reported.');
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Please sign in to report a question.');
+  const body = await jsonFetch<{ status?: string }>(
+    `/api/cbt/questions/${encodeURIComponent(questionId)}/report`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({ category, detail: detail?.trim() ? detail.trim() : null }),
+    },
+  );
+  return body?.status === 'already_reported' ? 'already_reported' : 'reported';
+}
+
 export async function deleteAdminOpportunity(id: string): Promise<void> {
   await adminApiFetch(`/api/admin/opportunities/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }

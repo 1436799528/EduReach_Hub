@@ -124,7 +124,12 @@ export const BUDGETS = {
   // 212.5 KB against its own 214 KB cap, so no visitor pays for any of it.
   // Raised 384 -> 396 KB: the measured 11.5 KB plus the 3.2 KB of headroom the
   // previous entry carried, matching how every earlier route-chunk rise was made.
-  totalJsGzip: 396 * 1024,
+  // Raised 396 -> 398 KB for the question-report control on the review screen
+  // (CONTENT-REPORT-1): the report call, its inline form and the four-category
+  // list measured 396.6 KB across 72 chunks, +0.6 KB. It lives on the result
+  // route, which is lazy, so the first-load critical path is unchanged and still
+  // capped separately at 214 KB.
+  totalJsGzip: 398 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

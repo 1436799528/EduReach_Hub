@@ -185,6 +185,9 @@ export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {
   analyticsEvent: { name: 'analytics-event', limit: 240, windowSeconds: 60 },
   adminUpload: { name: 'admin-upload', limit: 20, windowSeconds: 600, durable: true, keyByUser: true },
   adminImport: { name: 'admin-import', limit: 10, windowSeconds: 600, durable: true, keyByUser: true },
+  // A student reporting problems is legitimate, but a script filing thousands of
+  // reports would bury the triage queue. Counted per account, across instances.
+  cbtReport: { name: 'cbt-report', limit: 20, windowSeconds: 600, durable: true, keyByUser: true },
   adminNewsroomRun: { name: 'admin-newsroom-run', limit: 6, windowSeconds: 3600, durable: true, keyByUser: true },
   apiGeneral: { name: 'api-general', limit: 1200, windowSeconds: 60 },
 };

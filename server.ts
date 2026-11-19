@@ -24,6 +24,7 @@ import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
 import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError } from './lib/errors';
 import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
+import { cleanReportDetail, isQuestionReportCategory, isQuestionReportStatus } from './src/server/questionReports';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
 import { expiresAtFor } from './src/server/newsroom/qualityGate';
 import { buildRobotsTxt, buildSitemapXml, collectSitemapEntries, crawlerCacheHeaders, isNonIndexablePath, resolveSiteOrigin } from './src/server/seo';
@@ -3538,6 +3539,134 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
     res.status(status).json({ error: publicErrorMessage(message, 'CBT submission failed. Please try again.') });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Question reports (working guide 5.3 Step I and 5.7)
+//
+// A student who spots a wrong answer key, a typo or a broken image can say so
+// from the review screen. The report is deliberately small: what kind of
+// problem, and optionally one sentence. It is not a support ticket — the support
+// form already exists — and it never carries the student's answer or any other
+// attempt data.
+//
+// The server is the authority for what a student may report: the question has to
+// be in one of their own frozen papers, so an unknown id cannot be used to probe
+// the bank, and the owner check runs before the insert.
+// ---------------------------------------------------------------------------
+
+app.post('/api/cbt/questions/:questionId/report', rateLimitFor(RATE_LIMIT_RULES.cbtReport), async (req, res) => {
+  try {
+    const { supabase, user } = await requireUser(req, 'cbt.attempt');
+    if (!CBT_V2_UUID.test(req.params.questionId)) return res.status(400).json({ error: 'Invalid question.' });
+
+    const category = req.body?.category;
+    if (!isQuestionReportCategory(category)) {
+      return res.status(400).json({ error: 'Choose what is wrong with this question.' });
+    }
+    const detail = cleanReportDetail(req.body?.detail);
+    if (detail === 'invalid') return res.status(400).json({ error: 'Describe the problem in a sentence.' });
+
+    // The question must belong to a paper this student was actually given.
+    const { data: attempts, error: attemptError } = await supabase
+      .from('cbt_attempts')
+      .select('id')
+      .eq('user_id', user.id)
+      .contains('question_ids', [req.params.questionId])
+      .limit(1);
+    if (attemptError) return res.status(503).json({ error: 'Unable to file this report right now. Please try again.' });
+    if (!attempts?.length) return res.status(404).json({ error: 'That question is not part of your attempts.' });
+
+    const { error: insertError } = await supabase.from('question_reports').insert({
+      question_id: req.params.questionId,
+      attempt_id: attempts[0].id,
+      user_id: user.id,
+      category,
+      detail,
+    });
+    if (insertError) {
+      // One report per student per question per category: a second tap is the
+      // same complaint, not a new one. Report it as already filed rather than as
+      // a failure, so the button can stay honest and quiet.
+      if (insertError.code === '23505') return res.status(200).json({ status: 'already_reported' });
+      return res.status(503).json({ error: 'Unable to file this report right now. Please try again.' });
+    }
+    res.status(201).json({ status: 'reported' });
+  } catch (error) {
+    console.error('Question report API error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to file this report.';
+    res.status(httpStatusForErrorMessage(message)).json({
+      error: publicErrorMessage(message, 'Unable to file this report right now. Please try again.'),
+    });
+  }
+});
+
+/** Triage queue: newest open reports first, with the question they concern. */
+app.get('/api/admin/question-reports', requireCapability('cbt.read'), async (req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const status = String(req.query.status || 'open');
+    if (status !== 'open' && !isQuestionReportStatus(status)) {
+      return res.status(400).json({ error: 'Unknown report status.' });
+    }
+    const { data, error } = await supabase
+      .from('question_reports')
+      .select('id,question_id,category,detail,status,created_at,resolution_note,resolved_at,exam_questions(question_text,option_a,option_b,option_c,option_d,correct_option,explanation,exam_id)')
+      .eq('status', status)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) return res.status(503).json({ error: 'Unable to load question reports.' });
+    res.json({ items: data || [], status });
+  } catch (error) {
+    console.error('Admin question reports error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to load question reports.';
+    res.status(httpStatusForErrorMessage(message)).json({
+      error: publicErrorMessage(message, 'Unable to load question reports.'),
+    });
+  }
+});
+
+/** Move a report through triage. Nothing here edits the question itself. */
+app.patch('/api/admin/question-reports/:reportId', requireCapability('cbt.manage'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const supabase = getServerSupabase();
+    if (!CBT_V2_UUID.test(req.params.reportId)) return res.status(400).json({ error: 'Invalid report.' });
+    const status = req.body?.status;
+    if (!isQuestionReportStatus(status)) {
+      return res.status(400).json({ error: 'Choose triaged, resolved or dismissed.' });
+    }
+    const note = cleanReportDetail(req.body?.note);
+    if (note === 'invalid') return res.status(400).json({ error: 'Describe the outcome in a sentence.' });
+    const closed = status === 'resolved' || status === 'dismissed';
+    const { data, error } = await supabase
+      .from('question_reports')
+      .update({
+        status,
+        resolution_note: note,
+        resolved_by: closed ? adminUser.id : null,
+        resolved_at: closed ? new Date().toISOString() : null,
+      })
+      .eq('id', req.params.reportId)
+      .select('id,question_id,category,status,resolution_note,resolved_at')
+      .maybeSingle();
+    if (error) return res.status(503).json({ error: 'Unable to update this report.' });
+    if (!data) return res.status(404).json({ error: 'Report not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'question_report_' + status,
+      resourceType: 'question_report',
+      resourceId: data.id,
+      metadata: { question_id: data.question_id, category: data.category, note },
+    });
+    res.json({ item: data });
+  } catch (error) {
+    console.error('Admin question report update error:', error);
+    const message = error instanceof Error ? error.message : 'Unable to update this report.';
+    res.status(httpStatusForErrorMessage(message)).json({
+      error: publicErrorMessage(message, 'Unable to update this report.'),
+    });
   }
 });
 
