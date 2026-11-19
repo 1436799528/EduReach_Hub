@@ -40,7 +40,6 @@
     "smoke": "tsx scripts/smoke-check.ts"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^153.0.0",
     "@supabase/supabase-js": "^2.57.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
@@ -53,7 +52,6 @@
     "jszip": "^3.10.2",
     "lucide-react": "^0.546.0",
     "pdf-parse": "^1.1.1",
-    "puppeteer": "^25.17.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "serverless-http": "^4.0.0",
