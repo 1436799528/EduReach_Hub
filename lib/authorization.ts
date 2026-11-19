@@ -23,6 +23,10 @@ import {
   OWNER_SCOPED_CAPABILITIES,
   type Capability,
 } from '../src/lib/capabilities';
+import { EventRateLimiter, errorFacts, log } from './observability';
+
+// Refusals are ordinary traffic in ones and twos and an incident in hundreds.
+const authEventLog = new EventRateLimiter(30, 60_000);
 
 export type AuthorizedRequest = Request & {
   /** Set by the guards below for every authenticated request. */
@@ -61,7 +65,11 @@ export function can(user: UserPayload | null | undefined, capability: Capability
 }
 
 /** Convenience for handlers that already loaded the row. */
-export function assertOwnership(user: UserPayload | null | undefined, capability: Capability, ownerId: string | null | undefined): boolean {
+export function assertOwnership(
+  user: UserPayload | null | undefined,
+  capability: Capability,
+  ownerId: string | null | undefined,
+): boolean {
   return can(user, capability, { ownerId });
 }
 
@@ -70,7 +78,10 @@ async function resolveCaller(token: string | null): Promise<UserPayload | null> 
   try {
     return await verifyJWT(token);
   } catch (error) {
-    console.error('Authorization error:', error);
+    // A token that cannot be verified is not an incident on its own (it is what
+    // an expired session looks like), but a burst of them is. The rate limiter
+    // collapses the burst; the event carries no token and no error message.
+    if (authEventLog.allow('verify_failed')) log.warn('auth.verify_failed', { ...errorFacts(error) });
     return null;
   }
 }
@@ -83,7 +94,23 @@ export async function authenticateRequest(req: Request): Promise<UserPayload | n
   return user;
 }
 
-function deny(res: Response, status: 401 | 403, message: string) {
+/**
+ * Refuse a request, and record that we did.
+ *
+ * The response stays generic - a caller learns nothing about which capability
+ * they lack - but the log says which route was refused and which capability it
+ * wanted, because that is the difference between "a student bookmarked an admin
+ * page" and "someone is probing the console".
+ */
+function deny(res: Response, status: 401 | 403, message: string, requiredCapabilities?: readonly string[]) {
+  const key = `${status}:${requiredCapabilities?.join(',') || 'session'}`;
+  if (authEventLog.allow(key)) {
+    log.warn(status === 401 ? 'auth.refused_unauthenticated' : 'auth.refused_missing_capability', {
+      request_id: (res.locals as Record<string, unknown> | undefined)?.requestId,
+      status,
+      required: requiredCapabilities,
+    });
+  }
   return res.status(status).json({ error: message });
 }
 
@@ -117,7 +144,7 @@ export function requireCapability(...capabilities: Capability[]): RequestHandler
     const user = await resolveCaller(token);
     if (!user) return deny(res, 401, 'Invalid or expired session.');
 
-    if (!hasAnyCapability(user, capabilities)) return deny(res, 403, FORBIDDEN_MESSAGE);
+    if (!hasAnyCapability(user, capabilities)) return deny(res, 403, FORBIDDEN_MESSAGE, capabilities);
 
     const authorized = req as AuthorizedRequest;
     authorized.authUser = user;
@@ -146,15 +173,20 @@ export async function recordAudit(
   },
 ): Promise<void> {
   try {
-    const { error } = await Promise.resolve(supabase.rpc('admin_audit_log', {
-      p_admin_user_id: entry.actorId,
-      p_action: entry.action,
-      p_entity_type: entry.resourceType,
-      p_entity_id: entry.resourceId ?? null,
-      p_metadata: { ...(entry.metadata || {}), result: entry.result || 'success' },
-    }));
-    if (error) console.error('Audit log write failed:', error);
+    const { error } = await Promise.resolve(
+      supabase.rpc('admin_audit_log', {
+        p_admin_user_id: entry.actorId,
+        p_action: entry.action,
+        p_entity_type: entry.resourceType,
+        p_entity_id: entry.resourceId ?? null,
+        p_metadata: { ...(entry.metadata || {}), result: entry.result || 'success' },
+      }),
+    );
+    if (error) log.error('audit.write_failed', { action: entry.action, ...errorFacts(error) }, error);
   } catch (error) {
-    console.error('Audit log write failed:', error);
+    // The action itself still succeeded; only its audit trail is missing. That
+    // is deliberately an error: an admin action with no audit row is a
+    // compliance gap, not a cosmetic one.
+    log.error('audit.write_failed', { action: entry.action, ...errorFacts(error) }, error);
   }
 }

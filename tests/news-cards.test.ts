@@ -77,7 +77,7 @@ test('the type has an order: label, headline, summary, source', () => {
   const foot = rule('.er-news-card .er-news-card-foot');
   assert.match(foot, /margin-top: auto/, 'the source sits on the floor of every card');
   // The markup order matches the reading order.
-  const body = /<span className="er-news-card-body">([\s\S]*?)<\/span>\n    <\/a>/.exec(sections)?.[1] ?? '';
+  const body = /<span className="er-news-card-body">([\s\S]*?)<\/span>\n {4}<\/a>/.exec(sections)?.[1] ?? '';
   assert.ok(body.indexOf('er-news-card-kicker') < body.indexOf('<strong>'), 'label before headline');
   assert.ok(body.indexOf('<strong>') < body.indexOf('er-news-card-summary'), 'headline before summary');
   assert.ok(body.indexOf('er-news-card-summary') < body.indexOf('er-news-card-foot'), 'summary before source');
@@ -115,7 +115,7 @@ test('phones use one compact standard card grid instead of oversized scrollers',
 test('the phone header keeps its brand and its menu on screen', () => {
   assert.match(layout, /className="hub-header"/, 'the header carries a stable hook');
   assert.match(layout, /className="hub-container hub-header-row"/, 'and so does its row');
-  const header = /@media \(max-width: 640px\) \{\n  header\.hub-header \{([\s\S]*?)\n\}/.exec(portal)?.[1] ?? '';
+  const header = /@media \(max-width: 640px\) \{\n {2}header\.hub-header \{([\s\S]*?)\n\}/.exec(portal)?.[1] ?? '';
   assert.ok(header.length > 0, 'the phone header rules exist');
   assert.match(header, /padding-top: env\(safe-area-inset-top/, 'a standalone window keeps the top edge clear');
   assert.match(header, /\.hub-header-row \{[^}]*flex-wrap: nowrap/, 'the row cannot wrap into a second line');

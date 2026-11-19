@@ -11,10 +11,12 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:3100',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? {
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-      args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-    } : {},
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+          args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+        }
+      : {},
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /perf\.spec\.ts/ },
@@ -29,6 +31,14 @@ export default defineConfig({
     command: 'npm start',
     url: 'http://127.0.0.1:3100/api/health',
     reuseExistingServer: false,
-    env: { PORT: '3100', NETLIFY: '', VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '', SUPABASE_SERVICE_ROLE_KEY: '', SUPABASE_SECRET_KEY: '' },
+    env: {
+      PORT: '3100',
+      NETLIFY: '',
+      VITE_SUPABASE_URL: '',
+      VITE_SUPABASE_PUBLISHABLE_KEY: '',
+      VITE_SUPABASE_ANON_KEY: '',
+      SUPABASE_SERVICE_ROLE_KEY: '',
+      SUPABASE_SECRET_KEY: '',
+    },
   },
 });

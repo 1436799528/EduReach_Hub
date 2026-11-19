@@ -177,7 +177,8 @@ test('applySeo writes canonical, social and robot tags and replaces JSON-LD', ()
 
     assert.equal(document.title, 'Education News & Verified Student Updates | EduReach Hub');
     assert.equal(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href'), 'https://edureach.example/news');
-    assert.equal(document.head.querySelector('meta[name="description"]')?.getAttribute('content')?.length! >= 60, true);
+    const description = document.head.querySelector('meta[name="description"]')?.getAttribute('content') ?? '';
+    assert.equal(description.length >= 60, true);
     assert.equal(document.head.querySelector('meta[name="robots"]')?.getAttribute('content'), 'index,follow');
     assert.equal(document.head.querySelector('meta[property="og:url"]')?.getAttribute('content'), 'https://edureach.example/news');
     assert.equal(document.head.querySelector('meta[property="og:title"]')?.getAttribute('content'), document.title);

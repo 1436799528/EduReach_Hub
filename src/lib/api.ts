@@ -699,6 +699,34 @@ export async function updateAdminOpportunity(id: string, values: Record<string, 
   return body.item;
 }
 
+export type QuestionReportCategory = 'wrong_answer' | 'typo' | 'image' | 'other';
+
+/**
+ * Report a problem with one question (working guide 5.3 Step I and 5.7).
+ *
+ * The server decides whether the question is one this student was given, and a
+ * repeat of the same report is answered as `already_reported` rather than as a
+ * failure — a student pressing the button twice should not see an error.
+ */
+export async function reportCbtQuestion(
+  questionId: string,
+  category: QuestionReportCategory,
+  detail?: string,
+): Promise<'reported' | 'already_reported'> {
+  if (!CBT_UUID.test(questionId)) throw new Error('That question cannot be reported.');
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Please sign in to report a question.');
+  const body = await jsonFetch<{ status?: string }>(
+    `/api/cbt/questions/${encodeURIComponent(questionId)}/report`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({ category, detail: detail?.trim() ? detail.trim() : null }),
+    },
+  );
+  return body?.status === 'already_reported' ? 'already_reported' : 'reported';
+}
+
 export async function deleteAdminOpportunity(id: string): Promise<void> {
   await adminApiFetch(`/api/admin/opportunities/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
@@ -717,6 +745,33 @@ export async function adminApiFetch<T>(path: string, init: RequestInit = {}): Pr
   return await jsonFetch<T>(path, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...headers, ...(init.headers || {}) },
+  });
+}
+
+/** Answer-key regrade (working guide 5.5 Step 7). */
+export type CbtRegradeVerdict = { score: number | null; correctAnswers: number; isCorrect: boolean };
+export type CbtRegradeChange = { attemptId: string; userId: string; protocol: string; changed: boolean; before: CbtRegradeVerdict; after: CbtRegradeVerdict };
+export type CbtRegradeResult = {
+  applied: boolean; questionId: string; examId: string; correctOption: 'A' | 'B' | 'C' | 'D';
+  grader: string; scanned: number; changed: number; unchanged: number; truncated: boolean;
+  attempts: CbtRegradeChange[];
+};
+export type CbtRegradeResponse = {
+  result: CbtRegradeResult;
+  headline: string;
+  question: { id: string; exam_id: string; subject: string | null; position: number | null; correct_option: string | null; question_text: string | null };
+};
+
+/** Preview only (capability cbt.read): writes nothing. */
+export async function previewCbtQuestionRegrade(questionId: string): Promise<CbtRegradeResponse> {
+  return await adminApiFetch<CbtRegradeResponse>(`/api/admin/cbt/questions/${encodeURIComponent(questionId)}/regrade`);
+}
+
+/** Apply (capability cbt.manage). Idempotent: a second call changes nothing. */
+export async function regradeCbtQuestion(questionId: string, expectedCorrectOption?: 'A' | 'B' | 'C' | 'D'): Promise<CbtRegradeResponse> {
+  return await adminApiFetch<CbtRegradeResponse>(`/api/admin/cbt/questions/${encodeURIComponent(questionId)}/regrade`, {
+    method: 'POST',
+    body: JSON.stringify(expectedCorrectOption ? { expectedCorrectOption } : {}),
   });
 }
 
@@ -1471,13 +1526,9 @@ export async function fetchPastQuestionResources(filter: { exam?: string; subjec
   if (filter.subject) params.set('subject', filter.subject);
   if (filter.institution) params.set('institution', filter.institution);
   const query = params.toString();
-  try {
-    return await jsonFetch<PastQuestionLibrary>(`/api/past-questions/resources${query ? `?${query}` : ''}`);
-  } catch (error) {
-    // A library that cannot answer must say so; an empty list would read as
-    // "no papers exist", which is a different and misleading statement.
-    throw error;
-  }
+  // A library that cannot answer must say so; an empty list would read as
+  // "no papers exist", which is a different and misleading statement.
+  return await jsonFetch<PastQuestionLibrary>(`/api/past-questions/resources${query ? `?${query}` : ''}`);
 }
 
 /* ------------------------------------------------------------------ *

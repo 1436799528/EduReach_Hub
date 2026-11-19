@@ -78,10 +78,14 @@ const headers = {
 
 export default function () {
   // 1. Start (or resume) an attempt.
-  const start = http.post(`${BASE_URL}/api/cbt/exams/${__ENV.EXAM_ID}/attempts`, JSON.stringify({
-    mode: 'practice',
-    questionCount: QUESTIONS,
-  }), { headers, tags: { step: 'start' } });
+  const start = http.post(
+    `${BASE_URL}/api/cbt/exams/${__ENV.EXAM_ID}/attempts`,
+    JSON.stringify({
+      mode: 'practice',
+      questionCount: QUESTIONS,
+    }),
+    { headers, tags: { step: 'start' } },
+  );
 
   if (start.status === 429) {
     startThrottled.add(1);
@@ -95,8 +99,8 @@ export default function () {
   let attemptId = '';
   try {
     attemptId = (start.json('attemptId') || start.json('attempt_id') || start.json('id') || '').toString();
-  } catch (error) {
-    attemptId = '';
+  } catch {
+    // A body that is not JSON leaves the id empty, and the run stops below.
   }
   if (!attemptId) return;
 
@@ -105,17 +109,25 @@ export default function () {
   check(paper, {
     'paper loads': (res) => res.status === 200,
     'paper is not empty': (res) => {
-      try { return (res.json('questions') || []).length > 0; } catch (error) { return false; }
+      try {
+        return (res.json('questions') || []).length > 0;
+      } catch {
+        return false;
+      }
     },
   });
 
   // 3. Save answers in the same shape the browser sends: position -> 0..3.
   const answers = {};
   for (let index = 0; index < QUESTIONS; index += 1) answers[String(index)] = index % 4;
-  const save = http.patch(`${BASE_URL}/api/cbt/attempts/${attemptId}/draft`, JSON.stringify({
-    answers,
-    questionIndex: QUESTIONS - 1,
-  }), { headers, tags: { step: 'draft' } });
+  const save = http.patch(
+    `${BASE_URL}/api/cbt/attempts/${attemptId}/draft`,
+    JSON.stringify({
+      answers,
+      questionIndex: QUESTIONS - 1,
+    }),
+    { headers, tags: { step: 'draft' } },
+  );
   draftLatency.add(save.timings.duration);
   check(save, { 'draft accepted': (res) => res.status === 200 || res.status === 204 });
 
@@ -141,9 +153,8 @@ export default function () {
     tags: { step: 'submit-retry' },
   });
   const retryOk = check(retry, {
-    'retry is idempotent': (res) => res.status === 200
-      && res.json('score') === firstScore
-      && res.json('totalQuestions') === firstTotal,
+    'retry is idempotent': (res) =>
+      res.status === 200 && res.json('score') === firstScore && res.json('totalQuestions') === firstTotal,
   });
   idempotencyOk.add(retryOk);
   if (!retryOk) mismatch.add(1);

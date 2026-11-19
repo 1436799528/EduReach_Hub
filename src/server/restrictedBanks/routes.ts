@@ -17,6 +17,7 @@
 
 import type { Express, Request, Response } from 'express';
 import type { Capability } from '../../lib/capabilities';
+import { errorFacts, log } from '../../../lib/observability';
 
 type RpcResult = { data?: unknown; error?: { message?: string; code?: string } | null };
 type ScopedClient = {
@@ -67,7 +68,9 @@ function isValidationError(error: SupabaseError): boolean {
 
 /** Human-readable, non-leaking message. Never echo raw SQL or policy details. */
 function userMessage(error: SupabaseError, fallback: string): string {
-  const message = String(error?.message || '').replace(/^.*?ERROR:\s*/i, '').trim();
+  const message = String(error?.message || '')
+    .replace(/^.*?ERROR:\s*/i, '')
+    .trim();
   if (!message || message.length > 240) return fallback;
   return message;
 }
@@ -84,7 +87,8 @@ function isoDate(value: unknown): string | null | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
-const UNAVAILABLE_MESSAGE = 'Bank security management is unavailable until the reviewed bank policy database change is applied. No change was made.';
+const UNAVAILABLE_MESSAGE =
+  'Bank security management is unavailable until the reviewed bank policy database change is applied. No change was made.';
 
 export function registerRestrictedBankAdminRoutes(app: Express, deps: RestrictedBankDeps): void {
   const read = deps.requireCapability('cbt.read');
@@ -98,20 +102,25 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
   }
 
   async function denied(res: Response, action: string, examId: string | null, actorId: string, status = 403) {
-    await deps.recordAudit(deps.getSupabase(), {
-      actorId: actorId || '00000000-0000-0000-0000-000000000000',
-      action,
-      resourceType: 'cbt_bank',
-      resourceId: examId,
-      result: 'failure',
-    }).catch(() => undefined);
+    await deps
+      .recordAudit(deps.getSupabase(), {
+        actorId: actorId || '00000000-0000-0000-0000-000000000000',
+        action,
+        resourceType: 'cbt_bank',
+        resourceId: examId,
+        result: 'failure',
+      })
+      .catch(() => undefined);
     return res.status(status).json({ error: 'You do not have permission to change bank security.' });
   }
 
   // --- Inventory ----------------------------------------------------------
   app.get('/api/admin/cbt/banks', read, async (req, res) => {
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
       const { data, error } = await client.rpc('cbt_bank_admin_inventory');
       if (error) throw error;
@@ -128,8 +137,9 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       });
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
-      if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_inventory_denied', null, String((req as any).adminUser?.id || ''));
-      console.error('Bank inventory failed:', (error as SupabaseError)?.message || 'unknown');
+      if (isPermissionDenied(error as SupabaseError))
+        return denied(res, 'bank_inventory_denied', null, String((req as any).adminUser?.id || ''));
+      log.error('question_banks.inventory_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load question banks.' });
     }
   });
@@ -138,15 +148,19 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     const examId = uuid(req.params.examId);
     if (!examId) return res.status(400).json({ error: 'Choose a valid question bank.' });
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
       const { data, error } = await client.rpc('cbt_bank_admin_candidates', { p_exam: examId });
       if (error) throw error;
       res.json({ items: Array.isArray(data) ? data : [] });
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
-      if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_candidates_denied', examId, String((req as any).adminUser?.id || ''));
-      console.error('Bank candidate list failed:', (error as SupabaseError)?.message || 'unknown');
+      if (isPermissionDenied(error as SupabaseError))
+        return denied(res, 'bank_candidates_denied', examId, String((req as any).adminUser?.id || ''));
+      log.error('question_banks.candidate_list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load candidates for this bank.' });
     }
   });
@@ -155,7 +169,10 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     const examId = uuid(req.params.examId);
     if (!examId) return res.status(400).json({ error: 'Choose a valid question bank.' });
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
       const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
       const { data, error } = await client.rpc('cbt_bank_admin_history', { p_exam: examId, p_limit: limit });
@@ -163,8 +180,9 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       res.json({ items: Array.isArray(data) ? data : [] });
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
-      if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_history_denied', examId, String((req as any).adminUser?.id || ''));
-      console.error('Bank history failed:', (error as SupabaseError)?.message || 'unknown');
+      if (isPermissionDenied(error as SupabaseError))
+        return denied(res, 'bank_history_denied', examId, String((req as any).adminUser?.id || ''));
+      log.error('question_banks.history_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load the bank audit history.' });
     }
   });
@@ -179,7 +197,8 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       // PostgREST filter grammar treats , . ( ) \\ as structure; strip them.
       const safe = search.replace(/[%,_.()\\]/g, '');
       if (!safe) return res.json({ items: [] });
-      const { data, error } = await deps.getSupabase()
+      const { data, error } = await deps
+        .getSupabase()
         .from('profiles')
         .select('id,full_name,matric_number,school')
         .or(`full_name.ilike.%${safe}%,matric_number.ilike.%${safe}%,school.ilike.%${safe}%`)
@@ -188,7 +207,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (error) throw error;
       res.json({ items: data || [] });
     } catch (error) {
-      console.error('Bank candidate search failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.candidate_search_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to search student accounts.' });
     }
   });
@@ -198,7 +217,8 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     const examId = uuid(req.params.examId);
     if (!examId) return res.status(400).json({ error: 'Choose a valid question bank.' });
     const visibility = req.body?.visibility;
-    if (!['public', 'restricted'].includes(visibility)) return res.status(400).json({ error: 'Choose public or restricted.' });
+    if (!['public', 'restricted'].includes(visibility))
+      return res.status(400).json({ error: 'Choose public or restricted.' });
     const releaseAt = isoDate(req.body?.releaseAt);
     if (releaseAt === undefined) return res.status(400).json({ error: 'Enter a valid correction release date.' });
     // Shape checks only: the database still decides whether the release time is
@@ -211,7 +231,10 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     }
     const actorId = String((req as any).adminUser?.id || '');
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
       const { error } = await client.rpc('cbt_bank_classify', {
         p_exam: examId,
@@ -223,7 +246,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_classify_denied', examId, actorId);
-      console.error('Bank classification failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.classification_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to classify this bank.') });
     }
   });
@@ -233,10 +256,14 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     const examId = uuid(req.params.examId);
     if (!examId) return res.status(400).json({ error: 'Choose a valid question bank.' });
     const releaseAt = isoDate(req.body?.releaseAt);
-    if (releaseAt === undefined || releaseAt === null) return res.status(400).json({ error: 'Enter a valid correction release date.' });
+    if (releaseAt === undefined || releaseAt === null)
+      return res.status(400).json({ error: 'Enter a valid correction release date.' });
     const actorId = String((req as any).adminUser?.id || '');
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
       const { error } = await client.rpc('cbt_bank_set_release', { p_exam: examId, p_release_at: releaseAt });
       if (error) throw error;
@@ -244,8 +271,10 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_release_denied', examId, actorId);
-      console.error('Bank release change failed:', (error as SupabaseError)?.message || 'unknown');
-      res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to change the correction release time.') });
+      log.error('question_banks.release_change_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+      res
+        .status(400)
+        .json({ error: userMessage(error as SupabaseError, 'Unable to change the correction release time.') });
     }
   });
 
@@ -256,16 +285,24 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     if (!examId || !candidateId) return res.status(400).json({ error: 'Choose a bank and a student account.' });
     const actorId = String((req as any).adminUser?.id || '');
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
-      const { error } = await client.rpc('cbt_bank_admin_assign', { p_exam: examId, p_candidate: candidateId, p_assign: true });
+      const { error } = await client.rpc('cbt_bank_admin_assign', {
+        p_exam: examId,
+        p_candidate: candidateId,
+        p_assign: true,
+      });
       if (error) throw error;
       res.status(201).json({ ok: true, examId, candidateId, status: 'active' });
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_assign_denied', examId, actorId);
-      if (isValidationError(error as SupabaseError)) return res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to assign this candidate.') });
-      console.error('Bank assignment failed:', (error as SupabaseError)?.message || 'unknown');
+      if (isValidationError(error as SupabaseError))
+        return res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to assign this candidate.') });
+      log.error('question_banks.assignment_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to assign this candidate.' });
     }
   });
@@ -276,16 +313,24 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     if (!examId || !candidateId) return res.status(400).json({ error: 'Choose a bank and a student account.' });
     const actorId = String((req as any).adminUser?.id || '');
     const client = callerClient(req);
-    if (!client) return res.status(503).json({ error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.' });
+    if (!client)
+      return res.status(503).json({
+        error: 'Bank security management is unavailable: the caller-scoped database connection is not configured.',
+      });
     try {
-      const { error } = await client.rpc('cbt_bank_admin_assign', { p_exam: examId, p_candidate: candidateId, p_assign: false });
+      const { error } = await client.rpc('cbt_bank_admin_assign', {
+        p_exam: examId,
+        p_candidate: candidateId,
+        p_assign: false,
+      });
       if (error) throw error;
       res.json({ ok: true, examId, candidateId, status: 'revoked' });
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_revoke_denied', examId, actorId);
-      if (isValidationError(error as SupabaseError)) return res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to revoke this candidate.') });
-      console.error('Bank revocation failed:', (error as SupabaseError)?.message || 'unknown');
+      if (isValidationError(error as SupabaseError))
+        return res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to revoke this candidate.') });
+      log.error('question_banks.revocation_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to revoke this candidate.' });
     }
   });

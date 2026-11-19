@@ -32,14 +32,14 @@ export default function PageBar() {
     try {
       sameOriginReferrer = Boolean(document.referrer && new URL(document.referrer).origin === window.location.origin);
     } catch {
-      sameOriginReferrer = false;
+      // An unparseable referrer means "not same-origin"; keep the default.
     }
 
     let appHistory = false;
     try {
       appHistory = window.sessionStorage.getItem('edureach-app-history') === '1';
     } catch {
-      appHistory = false;
+      // Storage can be blocked; keep the default.
     }
 
     if ((sameOriginReferrer || appHistory) && window.history.length > 1) window.history.back();

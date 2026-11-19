@@ -50,9 +50,8 @@ export function trackEventCalls(sources: Map<string, string>): EmitSite[] {
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'trackEvent') {
         const [first, second] = node.arguments;
-        const event = first && (ts.isStringLiteral(first) || ts.isNoSubstitutionTemplateLiteral(first))
-          ? first.text
-          : '(dynamic)';
+        const event =
+          first && (ts.isStringLiteral(first) || ts.isNoSubstitutionTemplateLiteral(first)) ? first.text : '(dynamic)';
         const keys: string[] = [];
         const options = second && ts.isObjectLiteralExpression(second) ? second : undefined;
         const metadata = options?.properties.find(
@@ -61,7 +60,10 @@ export function trackEventCalls(sources: Map<string, string>): EmitSite[] {
         );
         if (metadata && ts.isObjectLiteralExpression(metadata.initializer)) {
           for (const property of metadata.initializer.properties) {
-            if (ts.isPropertyAssignment(property) && (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))) {
+            if (
+              ts.isPropertyAssignment(property) &&
+              (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))
+            ) {
               keys.push(property.name.getText(source));
             }
           }
@@ -145,10 +147,13 @@ export function auditAnalytics(input: AnalyticsAuditInput, taxonomy: TaxonomyLik
     label: 'every trackEvent call names a declared event',
     measured: `${named.length} call site(s), ${unknown.length} undeclared`,
     ok: unknown.length === 0 && sites.every((site) => site.event !== '(dynamic)'),
-    detail: [
-      ...unknown.map((site) => `${site.file}:${site.line} → ${site.event}`),
-      ...sites.filter((site) => site.event === '(dynamic)').map((site) => `${site.file}:${site.line} → event name is not a literal`),
-    ].join('; ') || undefined,
+    detail:
+      [
+        ...unknown.map((site) => `${site.file}:${site.line} → ${site.event}`),
+        ...sites
+          .filter((site) => site.event === '(dynamic)')
+          .map((site) => `${site.file}:${site.line} → event name is not a literal`),
+      ].join('; ') || undefined,
   });
 
   const emitted = new Set(named.map((site) => site.event));
@@ -162,9 +167,7 @@ export function auditAnalytics(input: AnalyticsAuditInput, taxonomy: TaxonomyLik
   });
 
   const undeclaredKeys = named.flatMap((site) =>
-    site.keys
-      .filter(() => !declared.has(site.event))
-      .map(() => `${site.file}:${site.line}`),
+    site.keys.filter(() => !declared.has(site.event)).map(() => `${site.file}:${site.line}`),
   );
   // Key checking needs the taxonomy's per-event shapes; re-read them from the module export.
   const metadataByEvent = new Map<string, Set<string>>();
@@ -177,7 +180,9 @@ export function auditAnalytics(input: AnalyticsAuditInput, taxonomy: TaxonomyLik
   const badKeys = named.flatMap((site) => {
     const allowed = metadataByEvent.get(site.event);
     if (!allowed) return [];
-    return site.keys.filter((key) => !allowed.has(key)).map((key) => `${site.file}:${site.line} → ${site.event}.${key}`);
+    return site.keys
+      .filter((key) => !allowed.has(key))
+      .map((key) => `${site.file}:${site.line} → ${site.event}.${key}`);
   });
   checks.push({
     id: 'payload-keys-declared',
@@ -187,13 +192,19 @@ export function auditAnalytics(input: AnalyticsAuditInput, taxonomy: TaxonomyLik
     detail: [...badKeys, ...undeclaredKeys].join('; ') || undefined,
   });
 
-  const inlineAllowlist = /\^\s*page_view\s*\$\s*\|/.test(input.serverSource) || /event_name\s*===?\s*'page_view'/.test(input.serverSource);
+  const inlineAllowlist =
+    /\^\s*page_view\s*\$\s*\|/.test(input.serverSource) || /event_name\s*===?\s*'page_view'/.test(input.serverSource);
   checks.push({
     id: 'server-uses-taxonomy',
     label: 'the server validates through the taxonomy, not its own list',
     measured: inlineAllowlist ? 'an inline event list is present in server.ts' : 'one allowlist (the taxonomy)',
-    ok: !inlineAllowlist && /isAnalyticsEvent\(/.test(input.serverSource) && /validateAnalyticsMetadata\(/.test(input.serverSource),
-    detail: inlineAllowlist ? 'server.ts declares event names itself; import them from src/lib/analyticsTaxonomy.ts' : undefined,
+    ok:
+      !inlineAllowlist &&
+      /isAnalyticsEvent\(/.test(input.serverSource) &&
+      /validateAnalyticsMetadata\(/.test(input.serverSource),
+    detail: inlineAllowlist
+      ? 'server.ts declares event names itself; import them from src/lib/analyticsTaxonomy.ts'
+      : undefined,
   });
 
   checks.push({
@@ -212,15 +223,19 @@ export function auditAnalytics(input: AnalyticsAuditInput, taxonomy: TaxonomyLik
     label: 'docs/features/AN-1.md lists exactly the declared events',
     measured: `${documented.length} documented, ${declared.size} declared`,
     ok: missingFromDoc.length === 0 && extraInDoc.length === 0,
-    detail: [
-      missingFromDoc.length ? `missing from the document: ${missingFromDoc.join(', ')}` : '',
-      extraInDoc.length ? `documented but not declared: ${extraInDoc.join(', ')}` : '',
-    ].filter(Boolean).join('; ') || undefined,
+    detail:
+      [
+        missingFromDoc.length ? `missing from the document: ${missingFromDoc.join(', ')}` : '',
+        extraInDoc.length ? `documented but not declared: ${extraInDoc.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join('; ') || undefined,
   });
 
   const migrationDefault = migrationRetentionDefault(input.migrationSource);
   const docWindow = Number(/pruned after \*\*(\d+) days\*\*/.exec(input.featureDoc)?.[1] ?? Number.NaN);
-  const docMentionsWindow = /raw rows are pruned after/i.test(input.featureDoc) || input.featureDoc.includes(`${taxonomy.retentionDays} days`);
+  const docMentionsWindow =
+    /raw rows are pruned after/i.test(input.featureDoc) || input.featureDoc.includes(`${taxonomy.retentionDays} days`);
   const windows = [taxonomy.retentionDays, migrationDefault, docWindow];
   checks.push({
     id: 'retention-agrees',
@@ -278,7 +293,9 @@ export async function main(): Promise<void> {
     if (!check.ok && check.detail) console.log(`     ↳ ${check.detail}`);
   }
   const failures = checks.filter((check) => !check.ok);
-  console.log(`\n${failures.length === 0 ? 'The taxonomy, the call sites, the server and the document agree.' : `${failures.length} check(s) failed.`}`);
+  console.log(
+    `\n${failures.length === 0 ? 'The taxonomy, the call sites, the server and the document agree.' : `${failures.length} check(s) failed.`}`,
+  );
   if (failures.length) process.exitCode = 1;
 }
 

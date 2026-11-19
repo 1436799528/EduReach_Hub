@@ -26,7 +26,9 @@ export function createNewsroomClient(env: RunEnvironment = process.env as RunEnv
   const url = env.VITE_SUPABASE_URL;
   const key = getServerSupabaseKey(env as NodeJS.ProcessEnv);
   if (!url || !key) {
-    throw new Error('Newsroom ingestion requires VITE_SUPABASE_URL and a server Supabase secret key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY).');
+    throw new Error(
+      'Newsroom ingestion requires VITE_SUPABASE_URL and a server Supabase secret key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY).',
+    );
   }
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },

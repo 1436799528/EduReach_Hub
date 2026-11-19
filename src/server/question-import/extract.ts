@@ -63,8 +63,16 @@ export class ExtractionError extends Error {
 }
 
 export const SUPPORTED_EXTENSIONS = [
-  '.pdf', '.txt', '.md', '.markdown', '.csv', '.tsv', '.json',
-  '.docx', '.xlsx', '.zip',
+  '.pdf',
+  '.txt',
+  '.md',
+  '.markdown',
+  '.csv',
+  '.tsv',
+  '.json',
+  '.docx',
+  '.xlsx',
+  '.zip',
 ] as const;
 
 export const UNSUPPORTED_EXTENSIONS: Record<string, string> = {
@@ -101,7 +109,6 @@ export const ZIP_LIMITS = {
  */
 export const ZIP_TOO_LARGE_MESSAGE =
   'The archive expands beyond the 20 MB file / 80 MB total limit. Split it into smaller uploads.';
-
 
 export function extensionOf(filename: string): string {
   const match = /(\.[^.\\/]+)$/.exec(filename.trim());
@@ -149,8 +156,9 @@ export async function extractQuestions(
     case '.zip':
       return extractZip(buffer, limits);
     default: {
-      const message = UNSUPPORTED_EXTENSIONS[extension]
-        || `Files ending in ${extension} are not supported. Upload a PDF, Word (.docx), Excel (.xlsx), CSV, TSV, JSON, text or ZIP file.`;
+      const message =
+        UNSUPPORTED_EXTENSIONS[extension] ||
+        `Files ending in ${extension} are not supported. Upload a PDF, Word (.docx), Excel (.xlsx), CSV, TSV, JSON, text or ZIP file.`;
       throw new ExtractionError('unsupported', message);
     }
   }
@@ -187,7 +195,8 @@ async function extractPdf(buffer: Buffer): Promise<Extraction> {
     );
   }
   const warnings: string[] = [];
-  if (pages > 1) warnings.push(`Read ${pages} PDF pages. Check that questions split across pages were joined correctly.`);
+  if (pages > 1)
+    warnings.push(`Read ${pages} PDF pages. Check that questions split across pages were joined correctly.`);
   return { items: parseProse(text), warnings };
 }
 
@@ -215,8 +224,15 @@ async function extractPdf(buffer: Buffer): Promise<Extraction> {
 /** Is `index` a legal end for a tag name? Stops `<si` matching `<simple`. */
 function atTagBoundary(text: string, index: number): boolean {
   const next = text[index];
-  return next === undefined || next === '>' || next === '/' || next === ' '
-    || next === '\n' || next === '\t' || next === '\r';
+  return (
+    next === undefined ||
+    next === '>' ||
+    next === '/' ||
+    next === ' ' ||
+    next === '\n' ||
+    next === '\t' ||
+    next === '\r'
+  );
 }
 
 /** Index of the next `<name` opening tag at or after `from`, or -1. */
@@ -309,7 +325,10 @@ async function extractDocx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Pro
   if (!main) {
     throw new ExtractionError('corrupt', 'This file is not a Word document: word/document.xml is missing.');
   }
-  const partLimit = Math.min(limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES, limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES);
+  const partLimit = Math.min(
+    limits?.maxEntryBytes ?? MAX_ZIP_ENTRY_BYTES,
+    limits?.maxTotalBytes ?? MAX_ZIP_UNCOMPRESSED_BYTES,
+  );
   const documentXml = await readEntryText(main, 'document body', partLimit);
 
   // Images in a DOCX live beside the text, not inside it. They are counted so
@@ -341,7 +360,9 @@ async function extractDocx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Pro
 
   const warnings: string[] = [];
   if (imageCount > 0) {
-    warnings.push(`${imageCount} image${imageCount === 1 ? '' : 's'} found in the document. Diagrams are not attached to individual questions automatically; keep the source file open while reviewing.`);
+    warnings.push(
+      `${imageCount} image${imageCount === 1 ? '' : 's'} found in the document. Diagrams are not attached to individual questions automatically; keep the source file open while reviewing.`,
+    );
   }
   return { items: parseProse(lines.join('\n')), warnings, expandedBytes: Buffer.byteLength(documentXml, 'utf8') };
 }
@@ -382,9 +403,10 @@ async function extractXlsx(buffer: Buffer, limits?: Partial<ArchiveLimits>): Pro
       items.push({ ...row, sourceIndex: items.length + 1 });
     }
   }
-  if (sheets.length > 1) warnings.push(`Read ${sheets.length} worksheets. Check that every sheet belonged to this paper.`);
-  const expandedBytes = sharedStringsRead.bytes
-    + sheetReads.reduce((total, read) => total + (read.ok ? read.bytes.length : 0), 0);
+  if (sheets.length > 1)
+    warnings.push(`Read ${sheets.length} worksheets. Check that every sheet belonged to this paper.`);
+  const expandedBytes =
+    sharedStringsRead.bytes + sheetReads.reduce((total, read) => total + (read.ok ? read.bytes.length : 0), 0);
   return { items: applyAnswerKeys(items), warnings, expandedBytes };
 }
 
@@ -405,11 +427,16 @@ function decodeEntitiesOnce(value: string): string {
   // (`&#65;`) alone, and pinning that keeps the output identical.
   return value.replace(/&(lt|gt|quot|apos|amp);/g, (_whole, name: string) => {
     switch (name) {
-      case 'lt': return '<';
-      case 'gt': return '>';
-      case 'quot': return '"';
-      case 'apos': return "'";
-      default: return '&';
+      case 'lt':
+        return '<';
+      case 'gt':
+        return '>';
+      case 'quot':
+        return '"';
+      case 'apos':
+        return "'";
+      default:
+        return '&';
     }
   });
 }
@@ -453,9 +480,11 @@ export function parseSharedStringsXml(text: string): string[] {
     if (!span) return values;
     // A self-closing entry still occupies its index: dropping it would shift
     // every later cell reference onto the wrong string.
-    values.push(span.innerStart === span.innerEnd && text[span.open + 3] === '/'
-      ? ''
-      : entryText(text.slice(span.innerStart, span.innerEnd)));
+    values.push(
+      span.innerStart === span.innerEnd && text[span.open + 3] === '/'
+        ? ''
+        : entryText(text.slice(span.innerStart, span.innerEnd)),
+    );
     cursor = span.end;
   }
 }
@@ -474,10 +503,14 @@ function entryText(body: string): string {
   while (cursor < body.length) {
     const tagStart = body.indexOf('<', cursor);
     if (tagStart === -1) break;
-    const name = body.startsWith('<rPh', tagStart) && atTagBoundary(body, tagStart + 4) ? 'rPh'
-      : body.startsWith('<r', tagStart) && atTagBoundary(body, tagStart + 2) ? 'r'
-        : body.startsWith('<t', tagStart) && atTagBoundary(body, tagStart + 2) ? 't'
-          : '';
+    const name =
+      body.startsWith('<rPh', tagStart) && atTagBoundary(body, tagStart + 4)
+        ? 'rPh'
+        : body.startsWith('<r', tagStart) && atTagBoundary(body, tagStart + 2)
+          ? 'r'
+          : body.startsWith('<t', tagStart) && atTagBoundary(body, tagStart + 2)
+            ? 't'
+            : '';
     if (!name) {
       const gt = body.indexOf('>', tagStart);
       cursor = gt === -1 ? body.length : gt + 1;
@@ -536,9 +569,10 @@ export function readSheetRows(sheetXml: string, sharedStrings: string[]): string
       const cellInner = rowInner.slice(cell.innerStart, cell.innerEnd);
       const reference = /r="([A-Z]+\d+)"/.exec(attrs)?.[1] || 'A1';
       const type = /t="([^"]+)"/.exec(attrs)?.[1] || '';
-      const raw = /<v>([\s\S]*?)<\/v>/.exec(cellInner)?.[1]
-        ?? /<is>[\s\S]*?<t(?:\s[^>]*)?>([\s\S]*?)<\/t>[\s\S]*?<\/is>/.exec(cellInner)?.[1]
-        ?? '';
+      const raw =
+        /<v>([\s\S]*?)<\/v>/.exec(cellInner)?.[1] ??
+        /<is>[\s\S]*?<t(?:\s[^>]*)?>([\s\S]*?)<\/t>[\s\S]*?<\/is>/.exec(cellInner)?.[1] ??
+        '';
       let value = decodeXml(raw);
       if (type === 's') value = sharedStrings[Number(raw)] ?? '';
       else if (type === 'b') value = raw === '1' ? 'TRUE' : 'FALSE';
@@ -563,8 +597,12 @@ async function loadZip(buffer: Buffer, label: string): Promise<JSZip> {
   // source names in a review. Apply this to DOCX/XLSX containers as well.
   for (const entry of Object.values(zip.files)) {
     const original = (entry as JSZip.JSZipObject & { unsafeOriginalName?: string }).unsafeOriginalName ?? entry.name;
-    if (original.includes('\\') || original.startsWith('/') || /^[A-Za-z]:/.test(original)
-        || original.split('/').some((part) => part === '..' || part === '.')) {
+    if (
+      original.includes('\\') ||
+      original.startsWith('/') ||
+      /^[A-Za-z]:/.test(original) ||
+      original.split('/').some((part) => part === '..' || part === '.')
+    ) {
       throw new ExtractionError('corrupt', `This ${label} contains an unsafe archive path.`);
     }
   }
@@ -647,8 +685,9 @@ function inflateBounded(compressed: Buffer, limit: number): Buffer {
  */
 function streamEntryBounded(entry: JSZip.JSZipObject, limit: number): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
-    const helper = (entry as unknown as { internalStream: (type: string) => ZipStreamHelper })
-      .internalStream('uint8array');
+    const helper = (entry as unknown as { internalStream: (type: string) => ZipStreamHelper }).internalStream(
+      'uint8array',
+    );
     const chunks: Buffer[] = [];
     let total = 0;
     let settled = false;
@@ -659,7 +698,11 @@ function streamEntryBounded(entry: JSZip.JSZipObject, limit: number): Promise<Bu
       // Stop the worker chain rather than letting it run on for a reader that
       // has already given up. `pause` propagates to the source worker, so no
       // further input is fed to the inflater.
-      try { helper.pause(); } catch { /* already stopped */ }
+      try {
+        helper.pause();
+      } catch {
+        /* already stopped */
+      }
       finish();
     };
 
@@ -718,7 +761,11 @@ export async function readZipEntryBounded(entry: JSZip.JSZipObject, limit: numbe
  * hold a `word/document.xml` that inflates to gigabytes. These parts go through
  * the same bounded reader as archive entries.
  */
-async function readEntryText(entry: JSZip.JSZipObject, what: string, limit: number = MAX_ZIP_ENTRY_BYTES): Promise<string> {
+async function readEntryText(
+  entry: JSZip.JSZipObject,
+  what: string,
+  limit: number = MAX_ZIP_ENTRY_BYTES,
+): Promise<string> {
   try {
     const bytes = await readZipEntryBounded(entry, limit);
     return bytes.toString('utf8');
@@ -729,9 +776,7 @@ async function readEntryText(entry: JSZip.JSZipObject, what: string, limit: numb
 }
 
 /** One entry's outcome, so a caller can warn about a single bad file. */
-export type ArchiveEntryRead =
-  | { name: string; ok: true; bytes: Buffer }
-  | { name: string; ok: false; reason: string };
+export type ArchiveEntryRead = { name: string; ok: true; bytes: Buffer } | { name: string; ok: false; reason: string };
 
 export interface ArchiveLimits {
   /** Ceiling for one decompressed entry. */
@@ -813,20 +858,26 @@ async function extractZip(buffer: Buffer, limits?: Partial<ArchiveLimits>): Prom
   const zip = await loadZip(buffer, 'ZIP archive');
   const entries = Object.values(zip.files).filter((file) => !file.dir && !file.name.startsWith('__MACOSX/'));
   if (entries.length > MAX_ZIP_ENTRIES) {
-    throw new ExtractionError('too_large', `This archive holds ${entries.length} files; at most ${MAX_ZIP_ENTRIES} can be read at once.`);
+    throw new ExtractionError(
+      'too_large',
+      `This archive holds ${entries.length} files; at most ${MAX_ZIP_ENTRIES} can be read at once.`,
+    );
   }
-  const supported = entries
-    .filter((file) => isSupportedUpload(file.name))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const supported = entries.filter((file) => isSupportedUpload(file.name)).sort((a, b) => a.name.localeCompare(b.name));
   if (!supported.length) {
-    throw new ExtractionError('unsupported', 'The archive contains no supported files. Add PDF, Word, Excel, CSV, JSON or text files.');
+    throw new ExtractionError(
+      'unsupported',
+      'The archive contains no supported files. Add PDF, Word, Excel, CSV, JSON or text files.',
+    );
   }
 
   const items: ExtractedItem[] = [];
   const warnings: string[] = [];
   const skipped = entries.filter((file) => !isSupportedUpload(file.name)).map((file) => file.name);
   if (skipped.length) {
-    warnings.push(`Skipped ${skipped.length} unsupported file${skipped.length === 1 ? '' : 's'}: ${skipped.slice(0, 5).join(', ')}${skipped.length > 5 ? '…' : ''}`);
+    warnings.push(
+      `Skipped ${skipped.length} unsupported file${skipped.length === 1 ? '' : 's'}: ${skipped.slice(0, 5).join(', ')}${skipped.length > 5 ? '…' : ''}`,
+    );
   }
   // Nested archives are refused before any decompression is spent on them.
   if (supported.some((entry) => extensionOf(entry.name) === '.zip')) {
@@ -895,13 +946,23 @@ function parseDelimited(text: string, delimiter: ',' | '\t'): string[][] {
   for (let index = 0; index < text.length; index += 1) {
     const char = text[index];
     if (quoted) {
-      if (char === '"' && text[index + 1] === '"') { field += '"'; index += 1; }
-      else if (char === '"') quoted = false;
+      if (char === '"' && text[index + 1] === '"') {
+        field += '"';
+        index += 1;
+      } else if (char === '"') quoted = false;
       else field += char;
       continue;
     }
-    if (char === '"' && field.trim() === '') { quoted = true; field = ''; continue; }
-    if (char === delimiter) { row.push(field); field = ''; continue; }
+    if (char === '"' && field.trim() === '') {
+      quoted = true;
+      field = '';
+      continue;
+    }
+    if (char === delimiter) {
+      row.push(field);
+      field = '';
+      continue;
+    }
     if (char === '\n' || char === '\r') {
       if (char === '\r' && text[index + 1] === '\n') index += 1;
       row.push(field);
@@ -941,14 +1002,20 @@ function columnMapFor(row: string[]): ColumnMap | null {
   // The staging schema can retain only one extra option. Refuse wider tables
   // rather than silently dropping further distractors and publishing altered
   // content; the operator can split or correct the source for review.
-  const namedExtraOption = headers.some(header => /^(?:option|opt)(?:[f-z]|(?:[6-9]|1\d|2[0-6]))$/.test(header));
+  const namedExtraOption = headers.some((header) => /^(?:option|opt)(?:[f-z]|(?:[6-9]|1\d|2[0-6]))$/.test(header));
   // Bare A..E are also supported headers. In that format, a bare F (or
   // later letter) must not be silently discarded as an unrelated column.
-  const bareOptions = headers.filter(header => /^[a-e]$/.test(header)).length;
-  const hasQuestionHeader = headers.some(header => ['question', 'questiontext', 'questionstem', 'text', 'q', 'item'].includes(header));
-  const bareExtraOption = hasQuestionHeader && bareOptions >= 2 && headers.some(header => header !== 'q' && /^[f-z]$/.test(header));
+  const bareOptions = headers.filter((header) => /^[a-e]$/.test(header)).length;
+  const hasQuestionHeader = headers.some((header) =>
+    ['question', 'questiontext', 'questionstem', 'text', 'q', 'item'].includes(header),
+  );
+  const bareExtraOption =
+    hasQuestionHeader && bareOptions >= 2 && headers.some((header) => header !== 'q' && /^[f-z]$/.test(header));
   if (namedExtraOption || bareExtraOption) {
-    throw new ExtractionError('unsupported', 'This table has more than five option columns. Correct it manually before importing.');
+    throw new ExtractionError(
+      'unsupported',
+      'This table has more than five option columns. Correct it manually before importing.',
+    );
   }
   const find = (...names: string[]) => {
     for (const name of names) {
@@ -961,7 +1028,12 @@ function columnMapFor(row: string[]): ColumnMap | null {
   if (question < 0) return null;
   const letterColumns = new Map<ChoiceKey, number>();
   for (const key of ['A', 'B', 'C', 'D', 'E'] as ChoiceKey[]) {
-    const index = find(`option${key.toLowerCase()}`, `opt${key.toLowerCase()}`, key.toLowerCase(), key.toLowerCase() + '1');
+    const index = find(
+      `option${key.toLowerCase()}`,
+      `opt${key.toLowerCase()}`,
+      key.toLowerCase(),
+      key.toLowerCase() + '1',
+    );
     if (index >= 0) letterColumns.set(key, index);
   }
   // Also accept numeric option headers (option1..option5) and assign A..E.
@@ -978,10 +1050,22 @@ function columnMapFor(row: string[]): ColumnMap | null {
   return {
     question,
     options: letterColumns,
-    answer: (() => { const index = find('answer', 'correctanswer', 'correctoption', 'answerkey', 'key', 'ans'); return index >= 0 ? index : null; })(),
-    explanation: (() => { const index = find('explanation', 'solution', 'reason'); return index >= 0 ? index : null; })(),
-    passage: (() => { const index = find('passage', 'context'); return index >= 0 ? index : null; })(),
-    topic: (() => { const index = find('topic', 'syllabustopic', 'subtopic'); return index >= 0 ? index : null; })(),
+    answer: (() => {
+      const index = find('answer', 'correctanswer', 'correctoption', 'answerkey', 'key', 'ans');
+      return index >= 0 ? index : null;
+    })(),
+    explanation: (() => {
+      const index = find('explanation', 'solution', 'reason');
+      return index >= 0 ? index : null;
+    })(),
+    passage: (() => {
+      const index = find('passage', 'context');
+      return index >= 0 ? index : null;
+    })(),
+    topic: (() => {
+      const index = find('topic', 'syllabustopic', 'subtopic');
+      return index >= 0 ? index : null;
+    })(),
   };
 }
 
@@ -991,7 +1075,11 @@ export function parseTableRows(rows: string[][]): ExtractedItem[] {
   let map: ColumnMap | null = null;
   for (let index = 0; index < Math.min(rows.length, 5); index += 1) {
     const candidate = columnMapFor(rows[index]);
-    if (candidate) { headerIndex = index; map = candidate; break; }
+    if (candidate) {
+      headerIndex = index;
+      map = candidate;
+      break;
+    }
   }
   const items: ExtractedItem[] = [];
   if (!map) {
@@ -999,10 +1087,19 @@ export function parseTableRows(rows: string[][]): ExtractedItem[] {
     for (const row of rows) {
       const [question, optionA, optionB, optionC, optionD, answer, explanation] = row;
       if (!question?.trim() || !optionA?.trim() || !optionB?.trim()) continue;
-      items.push(fromParts({
-        questionText: question, optionA, optionB, optionC: optionC || '', optionD: optionD || '',
-        answerText: answer || '', explanation: explanation || '', passage: '', topic: '',
-      }));
+      items.push(
+        fromParts({
+          questionText: question,
+          optionA,
+          optionB,
+          optionC: optionC || '',
+          optionD: optionD || '',
+          answerText: answer || '',
+          explanation: explanation || '',
+          passage: '',
+          topic: '',
+        }),
+      );
     }
     return items;
   }
@@ -1011,16 +1108,22 @@ export function parseTableRows(rows: string[][]): ExtractedItem[] {
     if (!question.trim()) continue;
     const option = (key: ChoiceKey) => {
       const index = map!.options.get(key);
-      return index === undefined ? '' : (row[index] || '');
+      return index === undefined ? '' : row[index] || '';
     };
-    items.push(fromParts({
-      questionText: question,
-      optionA: option('A'), optionB: option('B'), optionC: option('C'), optionD: option('D'), optionE: option('E'),
-      answerText: map.answer === null ? '' : (row[map.answer] || ''),
-      explanation: map.explanation === null ? '' : (row[map.explanation] || ''),
-      passage: map.passage === null ? '' : (row[map.passage] || ''),
-      topic: map.topic === null ? '' : (row[map.topic] || ''),
-    }));
+    items.push(
+      fromParts({
+        questionText: question,
+        optionA: option('A'),
+        optionB: option('B'),
+        optionC: option('C'),
+        optionD: option('D'),
+        optionE: option('E'),
+        answerText: map.answer === null ? '' : row[map.answer] || '',
+        explanation: map.explanation === null ? '' : row[map.explanation] || '',
+        passage: map.passage === null ? '' : row[map.passage] || '',
+        topic: map.topic === null ? '' : row[map.topic] || '',
+      }),
+    );
   }
   return items;
 }
@@ -1037,11 +1140,16 @@ function fromParts(input: {
   passage: string;
   topic: string;
 }): ExtractedItem {
-  const options = [input.optionA, input.optionB, input.optionC, input.optionD, input.optionE || '']
-    .map((option) => String(option || '').replace(/\s+/g, ' ').trim());
+  const options = [input.optionA, input.optionB, input.optionC, input.optionD, input.optionE || ''].map((option) =>
+    String(option || '')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  );
   return {
     sourceIndex: 0,
-    questionText: String(input.questionText || '').replace(/\s+/g, ' ').trim(),
+    questionText: String(input.questionText || '')
+      .replace(/\s+/g, ' ')
+      .trim(),
     optionA: options[0] || '',
     optionB: options[1] || '',
     optionC: options[2] || '',
@@ -1056,7 +1164,9 @@ function fromParts(input: {
 }
 
 function cleanOptional(value: string | null | undefined): string | null {
-  const cleaned = String(value || '').replace(/\s+/g, ' ').trim();
+  const cleaned = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
   return cleaned || null;
 }
 
@@ -1065,7 +1175,9 @@ function answerLetter(value: string, options: string[]): ChoiceKey | null {
   const text = value.trim();
   if (!text) return null;
   const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
-  const matches = options.map((option, index) => normalize(option) === normalize(text) && normalize(option) ? index : -1).filter(index => index >= 0);
+  const matches = options
+    .map((option, index) => (normalize(option) === normalize(text) && normalize(option) ? index : -1))
+    .filter((index) => index >= 0);
   if (matches.length > 1) return null;
   const single = /^\(?([A-Ea-e])\)?[.)]?\s*$/.exec(text);
   if (single) {
@@ -1077,7 +1189,8 @@ function answerLetter(value: string, options: string[]): ChoiceKey | null {
   const labelled = /^\(?([A-Ea-e])\)?[.)\-:]\s+(.+)$/.exec(text);
   if (labelled) {
     const index = labelled[1].toUpperCase().charCodeAt(0) - 65;
-    if (normalize(options[index] || '') && normalize(options[index]) === normalize(labelled[2])) return labelled[1].toUpperCase() as ChoiceKey;
+    if (normalize(options[index] || '') && normalize(options[index]) === normalize(labelled[2]))
+      return labelled[1].toUpperCase() as ChoiceKey;
   }
   return null;
 }
@@ -1091,15 +1204,21 @@ function extractJson(text: string): Extraction {
   try {
     payload = JSON.parse(text);
   } catch {
-    throw new ExtractionError('corrupt', 'This file is not valid JSON. Check for a missing comma or bracket and upload it again.');
+    throw new ExtractionError(
+      'corrupt',
+      'This file is not valid JSON. Check for a missing comma or bracket and upload it again.',
+    );
   }
   const list = Array.isArray(payload)
     ? payload
     : Array.isArray((payload as Record<string, unknown>)?.questions)
-      ? (payload as Record<string, unknown>).questions as unknown[]
+      ? ((payload as Record<string, unknown>).questions as unknown[])
       : [];
   if (!Array.isArray(list) || !list.length) {
-    throw new ExtractionError('empty', 'No questions were found. Provide a JSON array, or an object with a "questions" array.');
+    throw new ExtractionError(
+      'empty',
+      'No questions were found. Provide a JSON array, or an object with a "questions" array.',
+    );
   }
   const items = list.map((entry) => jsonQuestion(entry as Record<string, unknown>)).filter(Boolean) as ExtractedItem[];
   if (!items.length) throw new ExtractionError('empty', 'The JSON did not contain any recognisable questions.');
@@ -1118,7 +1237,7 @@ function jsonQuestion(entry: Record<string, unknown>): ExtractedItem | null {
   const questionText = read('questionText', 'question_text', 'question', 'text', 'stem');
   if (!questionText.trim()) return null;
   const rawOptions = entry.options ?? entry.choices;
-  let options: string[] = [];
+  let options: string[];
   if (Array.isArray(rawOptions)) {
     options = rawOptions.map((option) => {
       if (typeof option === 'string') return option;
@@ -1132,21 +1251,35 @@ function jsonQuestion(entry: Record<string, unknown>): ExtractedItem | null {
     options = ['a', 'b', 'c', 'd', 'e'].map((key) => String((rawOptions as Record<string, unknown>)[key] ?? ''));
   } else {
     options = [
-      read('optionA', 'option_a'), read('optionB', 'option_b'), read('optionC', 'option_c'),
-      read('optionD', 'option_d'), read('optionE', 'option_e'),
+      read('optionA', 'option_a'),
+      read('optionB', 'option_b'),
+      read('optionC', 'option_c'),
+      read('optionD', 'option_d'),
+      read('optionE', 'option_e'),
     ];
   }
   while (options.length && !String(options[options.length - 1] || '').trim()) options.pop();
-  const extraObjectOption = rawOptions && !Array.isArray(rawOptions) && typeof rawOptions === 'object'
-    && Object.keys(rawOptions).some(key => /^[f-z]$/i.test(key) && String((rawOptions as Record<string, unknown>)[key] ?? '').trim());
-  if (options.length > 5 || extraObjectOption || ['optionF', 'option_f'].some(key => read(key))) {
-    throw new ExtractionError('unsupported', 'This question has more than five options. Correct it manually before importing.');
+  const extraObjectOption =
+    rawOptions &&
+    !Array.isArray(rawOptions) &&
+    typeof rawOptions === 'object' &&
+    Object.keys(rawOptions).some(
+      (key) => /^[f-z]$/i.test(key) && String((rawOptions as Record<string, unknown>)[key] ?? '').trim(),
+    );
+  if (options.length > 5 || extraObjectOption || ['optionF', 'option_f'].some((key) => read(key))) {
+    throw new ExtractionError(
+      'unsupported',
+      'This question has more than five options. Correct it manually before importing.',
+    );
   }
   const answer = entry.correctOption ?? entry.correct_option ?? entry.answer ?? entry.correctAnswer ?? entry.key;
   return fromParts({
     questionText,
-    optionA: options[0] || '', optionB: options[1] || '', optionC: options[2] || '',
-    optionD: options[3] || '', optionE: options[4] || '',
+    optionA: options[0] || '',
+    optionB: options[1] || '',
+    optionC: options[2] || '',
+    optionD: options[3] || '',
+    optionE: options[4] || '',
     answerText: typeof answer === 'number' ? String(answer) : String(answer ?? ''),
     explanation: read('explanation', 'solution', 'reason'),
     passage: read('passage', 'context'),
@@ -1162,9 +1295,10 @@ const QUESTION_LINE = /^\s*(?:question\s*)?(\d{1,3})\s*[.)\]:-]\s*(.*)$/i;
 const OPTION_LINE = /^\s*\(?([A-Ea-e])\)?\s*[.)\]:-]\s*(.*)$/;
 const ANSWER_LINE = /^\s*(?:correct\s+)?(?:answer|ans)\s*[:\-–=]\s*\(?([A-Ea-e])\)?\s*[.;]?\s*$/i;
 const EXPLANATION_LINE = /^\s*(?:explanation|solution|reason)\s*[:\-–]\s*(.*)$/i;
-const PASSAGE_LINE = /^\s*(?:passage|comprehension|read the (?:following )?passage|study the (?:following )?passage|the passage below)/i;
+const PASSAGE_LINE =
+  /^\s*(?:passage|comprehension|read the (?:following )?passage|study the (?:following )?passage|the passage below)/i;
 const PASSAGE_RANGE = /questions?\s+(\d{1,3})\s*(?:-|–|to|and)\s*(\d{1,3})\b/i;
-const SECTION_LINE = /^\s*(?:section|part)\s+([A-Z])\b\s*[:.\-]?\s*(.*)$/i;
+const SECTION_LINE = /^\s*(?:section|part)\s+([A-Z])\b\s*[:.-]?\s*(.*)$/i;
 
 function normalizeText(value: string): string {
   return value
@@ -1215,9 +1349,14 @@ function parseProse(input: string): ExtractedItem[] {
       if (match[1] >= 'F') inlineExtra = true;
       if (inlineCount >= 5 && inlineExtra) break;
     }
-    if ((current && current.options.size >= 4 && /^\(?[F-Z]\)?\s*[.)\]:-]\s+/.test(line))
-        || (inlineCount >= 5 && inlineExtra)) {
-      throw new ExtractionError('unsupported', 'This question has more than five options. Correct it manually before importing.');
+    if (
+      (current && current.options.size >= 4 && /^\(?[F-Z]\)?\s*[.)\]:-]\s+/.test(line)) ||
+      (inlineCount >= 5 && inlineExtra)
+    ) {
+      throw new ExtractionError(
+        'unsupported',
+        'This question has more than five options. Correct it manually before importing.',
+      );
     }
     if (/^(?:page\s*)?\d{1,3}(?:\s*(?:of|\/)\s*\d{1,3})?$/i.test(line)) continue;
 
@@ -1274,7 +1413,6 @@ function parseProse(input: string): ExtractedItem[] {
           const passage = pendingPassage.join('\n').trim();
           current.passage = passage;
           pendingPassage = [];
-
         }
         continue;
       }
@@ -1345,9 +1483,7 @@ function parseProse(input: string): ExtractedItem[] {
   for (const draft of drafts) {
     if (draft.passage) {
       const rangeMatch = PASSAGE_RANGE.exec(draft.passage);
-      const count = rangeMatch
-        ? Math.max(1, Number(rangeMatch[2]) - Number(rangeMatch[1]) + 1)
-        : 3;
+      const count = rangeMatch ? Math.max(1, Number(rangeMatch[2]) - Number(rangeMatch[1]) + 1) : 3;
       passageCarry = { text: draft.passage, remaining: count };
     }
     const passage = passageCarry && passageCarry.remaining > 0 ? passageCarry.text : null;
@@ -1378,7 +1514,7 @@ function parseProse(input: string): ExtractedItem[] {
 
 function cleanQuestionText(value: string): string {
   return value
-    .replace(/\s*\((?:answer|ans)\s*[:\-]?\s*[A-E]\)\s*$/i, '')
+    .replace(/\s*\((?:answer|ans)\s*[:-]?\s*[A-E]\)\s*$/i, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -1409,8 +1545,9 @@ function splitAnswerKey(input: string): { lines: string[]; keyed: Map<number, Ch
   const kept: string[] = [];
   for (const line of lines) {
     const pairs = [...line.matchAll(/(?:^|\s)(\d{1,3})\s*[.)\-:]?\s*([A-E])(?=\s|$)/g)];
-    const onlyPairs = pairs.length > 0
-      && line.replace(/(?:^|\s)\d{1,3}\s*[.)\-:]?\s*[A-E](?=\s|$)/g, '').replace(/[\s,;|]+/g, '') === '';
+    const onlyPairs =
+      pairs.length > 0 &&
+      line.replace(/(?:^|\s)\d{1,3}\s*[.)\-:]?\s*[A-E](?=\s|$)/g, '').replace(/[\s,;|]+/g, '') === '';
     if (onlyPairs && (pairs.length >= 2 || /^\s*\d{1,3}\s*[.)\-:]?\s*[A-E]\s*$/.test(line))) {
       for (const pair of pairs) keyed.set(Number(pair[1]), pair[2] as ChoiceKey);
       continue;

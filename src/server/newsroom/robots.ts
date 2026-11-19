@@ -74,7 +74,10 @@ export function parseRobots(text: string): RobotsPolicy {
 
 /** Most specific matching group wins; `*` is the fallback. */
 export function groupFor(policy: RobotsPolicy, userAgent: string): RobotsGroup | null {
-  const ua = String(userAgent || '').toLowerCase().split('/')[0].trim();
+  const ua = String(userAgent || '')
+    .toLowerCase()
+    .split('/')[0]
+    .trim();
   let best: RobotsGroup | null = null;
   let bestLength = -1;
   let fallback: RobotsGroup | null = null;

@@ -119,10 +119,7 @@ export function parseFeed(xml: string, feedUrl: string): ParsedItem[] {
     if (!title || !link) continue;
 
     const description =
-      tagValue(block, 'description') ||
-      tagValue(block, 'summary') ||
-      tagValue(block, 'media:description') ||
-      null;
+      tagValue(block, 'description') || tagValue(block, 'summary') || tagValue(block, 'media:description') || null;
 
     items.push({
       title,
@@ -130,7 +127,10 @@ export function parseFeed(xml: string, feedUrl: string): ParsedItem[] {
       excerpt: description ? toPlainText(description, 600) : null,
       imageUrl: itemImage(block, feedUrl),
       publishedAt: normalizeDate(
-        tagValue(block, 'pubDate') || tagValue(block, 'published') || tagValue(block, 'updated') || tagValue(block, 'dc:date'),
+        tagValue(block, 'pubDate') ||
+          tagValue(block, 'published') ||
+          tagValue(block, 'updated') ||
+          tagValue(block, 'dc:date'),
       ),
       categories: tagValues(block, 'category').slice(0, 6),
       author: tagValue(block, 'dc:creator') || tagValue(block, 'author') || null,
@@ -152,21 +152,22 @@ export function parseJsonFeed(payload: unknown, feedUrl: string): ParsedItem[] {
     const link = absoluteUrl(typeof record.url === 'string' ? record.url : null, feedUrl);
     if (!title || !link) return [];
     const summary = typeof record.summary === 'string' ? record.summary : '';
-    return [{
-      title,
-      url: link,
-      excerpt: summary ? toPlainText(summary, 600) : null,
-      imageUrl: absoluteUrl(typeof record.image === 'string' ? record.image : null, feedUrl) || null,
-      publishedAt: normalizeDate(
-        typeof record.date_published === 'string' ? record.date_published : null,
-      ),
-      categories: Array.isArray(record.tags) ? record.tags.map(String).slice(0, 6) : [],
-      author: null,
-    }];
+    return [
+      {
+        title,
+        url: link,
+        excerpt: summary ? toPlainText(summary, 600) : null,
+        imageUrl: absoluteUrl(typeof record.image === 'string' ? record.image : null, feedUrl) || null,
+        publishedAt: normalizeDate(typeof record.date_published === 'string' ? record.date_published : null),
+        categories: Array.isArray(record.tags) ? record.tags.map(String).slice(0, 6) : [],
+        author: null,
+      },
+    ];
   });
 }
 
-const NON_ARTICLE_PATH = /\/(tag|tags|category|categories|author|authors|page|feed|rss|about|contact|advert|advertis|privacy|terms|subscribe|newsletter|login|signin|signup|search|wp-admin|wp-content|wp-json|comments|shop|cart|account|events?\/page)(\/|$)/i;
+const NON_ARTICLE_PATH =
+  /\/(tag|tags|category|categories|author|authors|page|feed|rss|about|contact|advert|advertis|privacy|terms|subscribe|newsletter|login|signin|signup|search|wp-admin|wp-content|wp-json|comments|shop|cart|account|events?\/page)(\/|$)/i;
 const NON_ARTICLE_EXTENSION = /\.(xml|json|jpg|jpeg|png|gif|svg|webp|pdf|zip|mp3|mp4|css|js)$/i;
 
 /**
@@ -272,6 +273,8 @@ export function extractPageMeta(html: string, pageUrl: string): PageMeta {
 
 /** Rejects responses that are clearly not HTML, regardless of Content-Type. */
 export function looksLikeHtml(body: string): boolean {
-  const head = String(body || '').slice(0, 1500).toLowerCase();
+  const head = String(body || '')
+    .slice(0, 1500)
+    .toLowerCase();
   return head.includes('<html') || head.includes('<!doctype html') || head.includes('<rss') || head.includes('<?xml');
 }

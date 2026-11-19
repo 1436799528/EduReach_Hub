@@ -68,14 +68,13 @@ export function buildRegistryBatch(): { batch: any; plan: any } {
   const coverage = JSON.parse(readFileSync(join(DATA, 'registry-coverage.json'), 'utf8')) as Coverage;
   const inventory = JSON.parse(readFileSync(join(DATA, 'institution-inventory-329.json'), 'utf8')) as Inventory;
 
-  const byPosition = new Map(
-    snapshot.records.map((row) => [`${row.ownership}:${row.position}`, row] as const),
-  );
+  const byPosition = new Map(snapshot.records.map((row) => [`${row.ownership}:${row.position}`, row] as const));
   const registryByName = new Map(snapshot.records.map((row) => [row.name, row] as const));
 
   const institutions = coverage.matched.map((match) => {
-    const row = registryByName.get(match.registryName)
-      ?? [...byPosition.values()].find((entry) => entry.name === match.registryName)!;
+    const row =
+      registryByName.get(match.registryName) ??
+      [...byPosition.values()].find((entry) => entry.name === match.registryName)!;
     return {
       institutionId: match.institutionId,
       canonicalName: match.inventoryName,
@@ -123,10 +122,14 @@ export function buildRegistryBatch(): { batch: any; plan: any } {
           ? ['The Commission left the website cell empty; no domain was inferred from the institution name.']
           : []),
         ...(row.flags.includes('website_not_https')
-          ? ['The Commission publishes an http:// address for this institution; it is recorded as published, and the public page refuses a mixed-content link until an https address is confirmed.']
+          ? [
+              'The Commission publishes an http:// address for this institution; it is recorded as published, and the public page refuses a mixed-content link until an https address is confirmed.',
+            ]
           : []),
         ...(row.flags.includes('website_domain_not_abbreviation')
-          ? ['The published domain does not abbreviate the current name. This is usually the domain kept from an earlier name (for example a renamed state university); confirm which institution the site belongs to before publishing it.']
+          ? [
+              'The published domain does not abbreviate the current name. This is usually the domain kept from an earlier name (for example a renamed state university); confirm which institution the site belongs to before publishing it.',
+            ]
           : []),
       ],
     };
@@ -170,7 +173,7 @@ export function buildRegistryBatch(): { batch: any; plan: any } {
     counts: result.counts,
     issues: result.issues,
     payload: result.payload,
-    note: 'Produced by the importer\'s own transformBatch with no database connection. A real import still needs SUPABASE_URL plus a service role key and a staging project, and every row lands in review, never published.',
+    note: "Produced by the importer's own transformBatch with no database connection. A real import still needs SUPABASE_URL plus a service role key and a staging project, and every row lands in review, never published.",
   };
   return { batch, plan };
 }

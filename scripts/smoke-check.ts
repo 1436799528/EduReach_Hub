@@ -30,12 +30,13 @@ export function evaluateReady(status: number, body: unknown): ReadyVerdict {
   const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
   const state = typeof record.status === 'string' ? record.status : '(no status field)';
   if (status === 200 && state === 'ready') return { ok: true, detail: 'status=ready, http 200' };
-  const checks = record.checks && typeof record.checks === 'object'
-    ? Object.entries(record.checks as Record<string, { ok?: boolean; detail?: string }>)
-        .filter(([, value]) => value && value.ok === false)
-        .map(([key, value]) => `${key}${value?.detail ? ` (${value.detail})` : ''}`)
-        .join('; ')
-    : '';
+  const checks =
+    record.checks && typeof record.checks === 'object'
+      ? Object.entries(record.checks as Record<string, { ok?: boolean; detail?: string }>)
+          .filter(([, value]) => value && value.ok === false)
+          .map(([key, value]) => `${key}${value?.detail ? ` (${value.detail})` : ''}`)
+          .join('; ')
+      : '';
   return {
     ok: false,
     detail: `http ${status}, status=${state}${checks ? `; failing: ${checks}` : ''}`,

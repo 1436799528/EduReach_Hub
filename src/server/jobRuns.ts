@@ -86,11 +86,7 @@ export interface RunOutcome {
   error?: unknown;
 }
 
-export async function recordJobRun(
-  supabase: MinimalClient,
-  jobName: string,
-  outcome: RunOutcome,
-): Promise<boolean> {
+export async function recordJobRun(supabase: MinimalClient, jobName: string, outcome: RunOutcome): Promise<boolean> {
   const finishedAt = new Date();
   const durationMs = Math.max(0, finishedAt.getTime() - outcome.startedAt.getTime());
   try {
@@ -134,9 +130,7 @@ export function evaluateJobHealth(
   const byName = new Map(jobs.map((job) => [String(job.job_name), job]));
 
   const missing = expected.filter((name) => !byName.has(name));
-  const stale = expected
-    .filter((name) => byName.get(name)?.fresh === false)
-    .map((name) => name);
+  const stale = expected.filter((name) => byName.get(name)?.fresh === false).map((name) => name);
   const failing = expected
     .filter((name) => {
       const job = byName.get(name);

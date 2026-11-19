@@ -27,7 +27,6 @@ export interface UserPayload {
   capabilities: Capability[];
 }
 
-
 export function extractBearerToken(authorization?: string | string[]) {
   if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ')) return null;
   const token = authorization.slice('Bearer '.length).trim();

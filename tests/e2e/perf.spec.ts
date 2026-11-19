@@ -43,6 +43,7 @@ const BUDGET = {
   requests: 90,
 };
 
+// eslint-disable-next-line no-empty-pattern -- Playwright requires the first parameter to be a destructured fixtures object
 test.afterEach(async ({}, testInfo) => {
   annotateFailure(testInfo);
 });

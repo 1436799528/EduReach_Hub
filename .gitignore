@@ -18,3 +18,11 @@ test-results/
 
 # Supabase CLI local cache (machine-specific).
 supabase/.temp/
+supabase/.branches/
+
+# Platform CLI state and tool caches. These are created by `netlify dev`,
+# `vercel`, and Vite; none of them belong in the repository.
+.netlify/
+.vercel/
+.vite/
+*.tsbuildinfo

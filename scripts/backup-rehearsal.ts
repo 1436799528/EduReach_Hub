@@ -151,14 +151,18 @@ export async function runBackupRehearsal(): Promise<RehearsalReport> {
   record(
     'representative rows written',
     Object.values(sourceCounts).every((count) => count > 0),
-    Object.entries(sourceCounts).map(([table, count]) => `${table}=${count}`).join(' '),
+    Object.entries(sourceCounts)
+      .map(([table, count]) => `${table}=${count}`)
+      .join(' '),
   );
 
   // Capture what RLS decides before the backup, so the restored copy can be
   // held to the same answer. The seeded paper is published *and* verified, so
   // anon must see exactly one row.
   await source.exec('set role anon');
-  const anonBefore = await source.query<{ n: string }>('select count(*)::text as n from public.past_question_resources');
+  const anonBefore = await source.query<{ n: string }>(
+    'select count(*)::text as n from public.past_question_resources',
+  );
   await source.exec('reset role');
 
   // 3. The backup itself.
@@ -175,7 +179,9 @@ export async function runBackupRehearsal(): Promise<RehearsalReport> {
     record(
       'every seeded row is present after restore',
       sameCounts,
-      sameCounts ? JSON.stringify(restoredCounts) : `before ${JSON.stringify(sourceCounts)} after ${JSON.stringify(restoredCounts)}`,
+      sameCounts
+        ? JSON.stringify(restoredCounts)
+        : `before ${JSON.stringify(sourceCounts)} after ${JSON.stringify(restoredCounts)}`,
     );
 
     // 5. Same schema *and* same security posture.
@@ -193,7 +199,9 @@ export async function runBackupRehearsal(): Promise<RehearsalReport> {
     //    that restores the rows but not the policies is a breach waiting to
     //    happen, and a row-count check alone would call it a success.
     await restored.exec('set role anon');
-    const anonAfter = await restored.query<{ n: string }>('select count(*)::text as n from public.past_question_resources');
+    const anonAfter = await restored.query<{ n: string }>(
+      'select count(*)::text as n from public.past_question_resources',
+    );
     await restored.exec('reset role');
     const sameVisibility = anonAfter.rows[0].n === anonBefore.rows[0].n;
     record(
@@ -206,7 +214,11 @@ export async function runBackupRehearsal(): Promise<RehearsalReport> {
     const slug = await restored.query<{ slug: string }>(
       `select public.news_category_slug('Scholarships & Funding') as slug`,
     );
-    record('database functions survive the restore', slug.rows[0].slug === 'scholarships', `news_category_slug(...) = ${slug.rows[0].slug}`);
+    record(
+      'database functions survive the restore',
+      slug.rows[0].slug === 'scholarships',
+      `news_category_slug(...) = ${slug.rows[0].slug}`,
+    );
   } finally {
     await restored.close();
   }

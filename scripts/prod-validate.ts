@@ -119,9 +119,7 @@ export const PROBED_TABLES = [
  * public (data exposure), and a bucket declared public must not be private (the
  * content it serves would break). See the constants above for the evidence.
  */
-export function checkBuckets(
-  buckets: Array<{ name: string; public: boolean }> | null | undefined,
-): ValidationCheck[] {
+export function checkBuckets(buckets: Array<{ name: string; public: boolean }> | null | undefined): ValidationCheck[] {
   const list = buckets ?? [];
   const names = new Set(list.map((bucket) => bucket.name));
   const missing = EXPECTED_BUCKETS.filter((bucket) => !names.has(bucket));
@@ -139,7 +137,9 @@ export function checkBuckets(
       group: 'storage',
       name: 'no bucket that holds private content is publicly readable',
       state: wronglyPublic.length ? 'fail' : 'pass',
-      detail: wronglyPublic.length ? `public but must not be: ${wronglyPublic.join(', ')}` : `${PRIVATE_BUCKETS.join(', ')} are private`,
+      detail: wronglyPublic.length
+        ? `public but must not be: ${wronglyPublic.join(', ')}`
+        : `${PRIVATE_BUCKETS.join(', ')} are private`,
     },
     {
       group: 'storage',
@@ -155,7 +155,9 @@ export function checkBuckets(
 /** Turn the database's own integrity report into pass/fail checks. */
 export function checkIntegrityReport(report: Record<string, any> | null | undefined): ValidationCheck[] {
   if (!report) {
-    return [{ group: 'data', name: 'content_integrity_report() returned a report', state: 'fail', detail: 'no report' }];
+    return [
+      { group: 'data', name: 'content_integrity_report() returned a report', state: 'fail', detail: 'no report' },
+    ];
   }
   const cbt = report.cbt ?? {};
   const news = report.news ?? {};
@@ -246,8 +248,14 @@ async function main(): Promise<void> {
     const missing: string[] = [];
     if (!url) missing.push('VITE_SUPABASE_URL');
     if (!key) {
-      const present = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY);
-      missing.push(present ? 'a usable server secret key (one is set but it is not a service-role/secret key)' : 'SUPABASE_SERVICE_ROLE_KEY');
+      const present = Boolean(
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY,
+      );
+      missing.push(
+        present
+          ? 'a usable server secret key (one is set but it is not a service-role/secret key)'
+          : 'SUPABASE_SERVICE_ROLE_KEY',
+      );
     }
     checks.push({
       group: 'connectivity',

@@ -73,7 +73,7 @@ The full gate is `npm run ci`:
 typecheck -> test -> schema:audit -> build -> perf:audit -> analytics:audit -> test:e2e -> npm audit
 ```
 
-`npm test` includes `tests/migrations.test.ts`, which applies all 72 migrations in
+`npm test` includes `tests/migrations.test.ts`, which applies every migration in
 order to an in-process PostgreSQL build (PGlite), then asserts the tables,
 functions, columns, RLS state and signup trigger the application depends on. It
 also runs the accessibility and SQL posture checks, so a page or a policy that
@@ -116,6 +116,15 @@ Admin: `/admin`, `/admin/queue`, `/admin/cbt`, `/admin/question-imports`,
 `/admin/news`, `/admin/users`, `/admin/schools`, `/admin/opportunities`,
 `/admin/services`, `/admin/analytics` and the rest of the console.
 
+## How the project is run
+
+[`docs/WORKING_GUIDE.md`](docs/WORKING_GUIDE.md) is the specification — the stages,
+the exam-engine rules and the checklists a change is measured against.
+[`docs/WORKING_GUIDE_COMPLIANCE.md`](docs/WORKING_GUIDE_COMPLIANCE.md) records, for
+each requirement, what the repository does today and what is still outstanding.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers branches, commits, the local checks and
+the rules that are not negotiable.
+
 ## Deployment
 
 Netlify builds with `npm run build`, publishes `dist/`, and routes `/api/*`,
@@ -123,9 +132,11 @@ Netlify builds with `npm run build`, publishes `dist/`, and routes `/api/*`,
 same Express app. The bundled server and its source map go to `build/`, outside
 the publish directory, and must not be published as static assets.
 
-`Dockerfile` builds the same two outputs for a long-running Node host. See
-[docs/DEPLOYMENT_DECISION.md](docs/DEPLOYMENT_DECISION.md) and
-[docs/NETLIFY_PRODUCTION_SETUP.md](docs/NETLIFY_PRODUCTION_SETUP.md).
+`Dockerfile` builds the same two outputs for a long-running Node host. Netlify is
+the only production target. See [docs/DEPLOYMENT_DECISION.md](docs/DEPLOYMENT_DECISION.md),
+[docs/NETLIFY_PRODUCTION_SETUP.md](docs/NETLIFY_PRODUCTION_SETUP.md) and
+[docs/operations/ENVIRONMENTS.md](docs/operations/ENVIRONMENTS.md) for which
+Supabase project each environment uses.
 
 Before a release, `npm run prod:validate` checks variables, connectivity and the
 migration history against a target environment. `npm run backup:rehearsal`

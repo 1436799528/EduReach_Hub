@@ -49,14 +49,12 @@ function fakeClient(options: {
   finalError?: unknown;
 }): { client: ProfileWriteClient; calls: Calls } {
   const calls: Calls = { updatePayloads: [], inserts: [], selected: [], upserts: 0 };
-  let updateCount = 0;
   const client = {
     from(table: string) {
       assert.equal(table, 'profiles');
       return {
         update(values: Record<string, unknown>) {
           calls.updatePayloads.push(values);
-          updateCount += 1;
           const filter = {
             eq(column: string, value: string) {
               assert.equal(column, 'id');

@@ -1,6 +1,6 @@
 import { userFacingError } from '../lib/errors';
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { adminApiFetch, deleteAdminCbtExam, updateAdminCbtExam, fetchAdminInstitutions, type AdminInstitution, type AdminCbtExam } from '../src/lib/api';
+import { adminApiFetch, deleteAdminCbtExam, updateAdminCbtExam, fetchAdminInstitutions, previewCbtQuestionRegrade, regradeCbtQuestion, type AdminInstitution, type AdminCbtExam, type CbtRegradeResponse } from '../src/lib/api';
 import { AdminEmptyState, AdminPageReport } from '../src/components/admin/AdminKit';
 import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
 import { Trash2 } from 'lucide-react';
@@ -13,6 +13,37 @@ const emptyExam: ExamForm = { title: '', exam_body: 'JAMB', institution_id: '', 
 const emptyQuestion: { subject: string; question_text: string; option_a: string; option_b: string; option_c: string; option_d: string; correct_option: 'A'|'B'|'C'|'D'; explanation: string; marks: string; position: string; source_type: Question['source_type']; source_name: string; source_url: string; source_year: string; syllabus_topic: string; difficulty: ''|'easy'|'moderate'|'difficult'; review_status: Question['review_status']; format_verified: boolean } = { subject: 'Use of English', question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'A', explanation: '', marks: '1', position: '1', source_type: 'unverified', source_name: '', source_url: '', source_year: '', syllabus_topic: '', difficulty: '', review_status: 'needs_review', format_verified: false };
 
 type ExamForm = { title: string; exam_body: string; institution_id: string; subject: string; description: string; duration_minutes: string; is_active: boolean; format_status: 'verified'|'partially_verified'|'unverified'; official_guidance_url: string; format_notes: string; guidance_year: string };
+
+type RegradeState = { questionId: string; expectedKey: Question['correct_option']; preview: CbtRegradeResponse | null; busy: boolean; error: string };
+
+/**
+ * Shows what a corrected answer key did to results that have already been
+ * handed in, and only then offers to apply it. A regrade rewrites derived
+ * scores, so the numbers are put in front of the operator before the button.
+ */
+function RegradePanel({ state, onApply, onClose }: { state: RegradeState; onApply: () => void; onClose: () => void }) {
+  const result = state.preview?.result;
+  const changed = result?.changed ?? 0;
+  return <div className="admin-card" role="group" aria-label="Regrade affected attempts">
+    <div className="admin-card-header"><h3>Regrade affected attempts</h3><button type="button" className="admin-text-btn" onClick={onClose}>Close</button></div>
+    {state.error && <p role="alert">{state.error}</p>}
+    {!state.preview && !state.error && <p>Checking submitted attempts that contain this question…</p>}
+    {result && <>
+      <p>{state.preview?.headline}</p>
+      <p className="admin-quality-gate">Current key: {result.correctOption}. Only the attempts listed here are recomputed, from the answers those students stored when they submitted; every other question and every other attempt keeps its result. Nothing is added to a score, so re-running this changes nothing.</p>
+      {result.attempts.length > 0 && <ul className="admin-quality-gate">
+        {result.attempts.slice(0, 20).map((attempt) => <li key={attempt.attemptId}>
+          {attempt.before.score ?? '—'}% → {attempt.after.score ?? '—'}% · {attempt.before.correctAnswers} to {attempt.after.correctAnswers} correct
+        </li>)}
+        {result.attempts.length > 20 && <li>…and {result.attempts.length - 20} more.</li>}
+      </ul>}
+      {result.truncated && <p className="admin-quality-gate">Only the first {result.attempts.length} affected attempts are listed; every affected attempt is still regraded and recorded in the audit log.</p>}
+      <button type="button" className="admin-btn" onClick={onApply} disabled={state.busy || changed === 0 || result.applied} aria-busy={state.busy}>
+        {result.applied ? 'Regraded' : state.busy ? 'Regrading…' : changed === 0 ? 'Nothing to regrade' : `Regrade ${changed} attempt${changed === 1 ? '' : 's'}`}
+      </button>
+    </>}
+  </div>;
+}
 
 export default function AdminCbtPage() {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -37,6 +68,7 @@ export default function AdminCbtPage() {
   const [questionLoadError, setQuestionLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [regrade, setRegrade] = useState<RegradeState | null>(null);
 
   async function loadExams() {
     const body = await adminApiFetch<{ items: Exam[] }>('/api/admin/cbt/exams');
@@ -153,6 +185,33 @@ export default function AdminCbtPage() {
     setShowQuestionForm(true);
   }
 
+  // Answer-key regrade (working guide 5.5 Step 7). The preview is a read-only
+  // call, so a reviewer with cbt.read can see the damage without being able to
+  // change a score; the apply button only appears once the preview has loaded
+  // and says there is something to change.
+  async function openRegrade(question: Question) {
+    setRegrade({ questionId: question.id, expectedKey: question.correct_option, preview: null, busy: false, error: '' });
+    try {
+      const preview = await previewCbtQuestionRegrade(question.id);
+      setRegrade((current) => current && current.questionId === question.id ? { ...current, preview } : current);
+    } catch (e) {
+      setRegrade((current) => current ? { ...current, error: userFacingError(e, 'Unable to check affected attempts.') } : current);
+    }
+  }
+
+  async function applyRegrade() {
+    if (!regrade) return;
+    const { questionId, expectedKey } = regrade;
+    setRegrade({ ...regrade, busy: true, error: '' });
+    try {
+      const applied = await regradeCbtQuestion(questionId, expectedKey);
+      setRegrade((current) => current ? { ...current, busy: false, preview: applied } : current);
+      setMessage(applied.headline);
+    } catch (e) {
+      setRegrade((current) => current ? { ...current, busy: false, error: userFacingError(e, 'Unable to regrade these attempts.') } : current);
+    }
+  }
+
   async function saveQuestion(event: FormEvent) {
     event.preventDefault(); if (!selectedExam) return; setSaving(true); setMessage('');
     try {
@@ -215,6 +274,6 @@ export default function AdminCbtPage() {
       <button className="admin-btn secondary-dark" type="button" onClick={() => { setQuestionFilters(emptyFilters); setAppliedFilters({ ...emptyFilters }); setQuestionPage(1); }}>Clear filters</button>
     </div>}
     {selectedExam && <div className="admin-filter-card" aria-label="Question pages"><button type="button" className="admin-btn secondary-dark" disabled={questionPage === 1 || questionsLoading} onClick={() => setQuestionPage(page => page - 1)}>Previous</button><span aria-live="polite">{questionsLoading ? 'Loading questions…' : `Page ${questionPage} · ${questions.length} shown`}</span><button type="button" className="admin-btn secondary-dark" disabled={!hasMoreQuestions || questionsLoading} onClick={() => setQuestionPage(page => page + 1)}>Next</button></div>}
-    {loading ? <div className="admin-card empty-state">Loading CBT exams…</div> : examsLoadError ? <div className="admin-card" role="alert"><AdminEmptyState title="CBT banks could not be loaded" hint={examsLoadError} /></div> : !exams.length ? <div className="admin-card empty-state">No CBT exams have been created. Create the first exam and add its approved questions. The public CBT page stays empty until then.</div> : questionLoadError ? <div className="admin-card" role="alert"><AdminEmptyState title="Questions could not be loaded" hint={questionLoadError} /></div> : selectedExam && <div className="admin-list">{questions.map((q)=><div className="admin-card admin-question-card" key={q.id}><div className="admin-question-top"><span className="question-tag">Question {q.position}{q.subject ? ` · ${q.subject}` : ''}</span><div><button type="button" className="admin-text-btn" onClick={()=>startQuestion(q)}>Edit</button><button type="button" className="admin-text-btn danger-text" onClick={()=>void archiveQuestion(q.id)}>Remove</button></div></div><h3>{q.question_text}</h3><div className="admin-options"><div>A. {q.option_a}</div><div>B. {q.option_b}</div><div>C. {q.option_c}</div><div>D. {q.option_d}</div></div><small>ID: {q.id} · Correct: <b>{q.correct_option}</b> · {q.marks} mark{q.marks === 1 ? '' : 's'}</small>{q.explanation && <p>Explanation: {q.explanation}</p>}{q.import_id && <p><a href="/admin/question-imports">Imported source: {q.import_id}</a></p>}<p className="admin-quality-gate">Source: {q.source_type?.replaceAll('_', ' ') || 'unverified'}{q.source_year ? ` · ${q.source_year}` : ''} · Review: {q.review_status?.replaceAll('_', ' ') || 'needs review'} · Format {q.format_verified ? 'verified' : 'not verified'}{q.source_url ? <> · <a href={q.source_url} target="_blank" rel="noreferrer">source</a></> : null}</p></div>)}{!questionsLoading && !questions.length && <div className="admin-card empty-state">No questions match this page and its filters. Students can practise unapproved questions as unverified practice material; rejected items are hidden from papers. Approve an item only after checking its source and exam format.</div>}</div>}
+    {loading ? <div className="admin-card empty-state">Loading CBT exams…</div> : examsLoadError ? <div className="admin-card" role="alert"><AdminEmptyState title="CBT banks could not be loaded" hint={examsLoadError} /></div> : !exams.length ? <div className="admin-card empty-state">No CBT exams have been created. Create the first exam and add its approved questions. The public CBT page stays empty until then.</div> : questionLoadError ? <div className="admin-card" role="alert"><AdminEmptyState title="Questions could not be loaded" hint={questionLoadError} /></div> : selectedExam && <div className="admin-list">{questions.map((q)=><div className="admin-card admin-question-card" key={q.id}><div className="admin-question-top"><span className="question-tag">Question {q.position}{q.subject ? ` · ${q.subject}` : ''}</span><div><button type="button" className="admin-text-btn" onClick={()=>void openRegrade(q)}>Regrade</button><button type="button" className="admin-text-btn" onClick={()=>startQuestion(q)}>Edit</button><button type="button" className="admin-text-btn danger-text" onClick={()=>void archiveQuestion(q.id)}>Remove</button></div></div><h3>{q.question_text}</h3><div className="admin-options"><div>A. {q.option_a}</div><div>B. {q.option_b}</div><div>C. {q.option_c}</div><div>D. {q.option_d}</div></div><small>ID: {q.id} · Correct: <b>{q.correct_option}</b> · {q.marks} mark{q.marks === 1 ? '' : 's'}</small>{q.explanation && <p>Explanation: {q.explanation}</p>}{q.import_id && <p><a href="/admin/question-imports">Imported source: {q.import_id}</a></p>}<p className="admin-quality-gate">Source: {q.source_type?.replaceAll('_', ' ') || 'unverified'}{q.source_year ? ` · ${q.source_year}` : ''} · Review: {q.review_status?.replaceAll('_', ' ') || 'needs review'} · Format {q.format_verified ? 'verified' : 'not verified'}{q.source_url ? <> · <a href={q.source_url} target="_blank" rel="noreferrer">source</a></> : null}</p>{regrade && regrade.questionId === q.id && <RegradePanel state={regrade} onApply={() => void applyRegrade()} onClose={() => setRegrade(null)} />}</div>)}{!questionsLoading && !questions.length && <div className="admin-card empty-state">No questions match this page and its filters. Students can practise unapproved questions as unverified practice material; rejected items are hidden from papers. Approve an item only after checking its source and exam format.</div>}</div>}
   </div>;
 }

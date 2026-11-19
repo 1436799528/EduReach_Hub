@@ -16,16 +16,28 @@
 import type { Express, Request, Response } from 'express';
 import { isSafeHttpsUrl, POLICY_SLUGS, type PolicySlug } from '../lib/siteContentModel';
 import type { Capability } from '../lib/capabilities';
+import { errorFacts, log } from '../../lib/observability';
 
 export interface SiteContentDeps {
   requireCapability: (...capabilities: Capability[]) => (req: Request, res: Response, next: () => void) => any;
+  /** Whether a server-side Supabase client can exist at all in this deployment. */
+  isConfigured: () => boolean;
   getSupabase: () => {
     from: (table: string) => any;
-    rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data?: unknown; error?: { message?: string } | null }>;
+    rpc: (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => PromiseLike<{ data?: unknown; error?: { message?: string } | null }>;
   };
   recordAudit: (
     supabase: { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error?: unknown }> },
-    entry: { actorId: string; action: string; resourceType: string; resourceId?: string | null; metadata?: Record<string, unknown> },
+    entry: {
+      actorId: string;
+      action: string;
+      resourceType: string;
+      resourceId?: string | null;
+      metadata?: Record<string, unknown>;
+    },
   ) => Promise<void>;
 }
 
@@ -57,10 +69,12 @@ function cleanText(value: unknown, min: number, max: number): string | null {
  * their embed silently disappeared.
  */
 export function containsUnsafeMarkup(html: string): boolean {
-  return /<\s*(script|iframe|object|embed|style|form|input|textarea|select|button)\b/i.test(html)
-    || /\son[a-z]+\s*=/i.test(html)
-    || /javascript\s*:/i.test(html)
-    || /data\s*:\s*text\/html/i.test(html);
+  return (
+    /<\s*(script|iframe|object|embed|style|form|input|textarea|select|button)\b/i.test(html) ||
+    /\son[a-z]+\s*=/i.test(html) ||
+    /javascript\s*:/i.test(html) ||
+    /data\s*:\s*text\/html/i.test(html)
+  );
 }
 
 export function validateSettings(key: string, raw: unknown): Validated<Record<string, unknown>> {
@@ -86,7 +100,10 @@ export function validateSettings(key: string, raw: unknown): Validated<Record<st
   if (key === 'contact') {
     const whatsapp = String(value.whatsapp ?? '').replace(/[^0-9]/g, '');
     if (whatsapp.length < 8 || whatsapp.length > 15) {
-      return { ok: false, error: 'Enter a WhatsApp number in international format, digits only (for example 2348012345678).' };
+      return {
+        ok: false,
+        error: 'Enter a WhatsApp number in international format, digits only (for example 2348012345678).',
+      };
     }
     const email = typeof value.email === 'string' ? value.email.trim() : '';
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
@@ -131,9 +148,14 @@ export function validatePageInput(raw: unknown): Validated<PageInput> {
   if (summary.length > 300) return { ok: false, error: 'The summary must be 300 characters or fewer.' };
   const body = typeof raw.body === 'string' ? raw.body.replace(/\r\n/g, '\n').trim() : '';
   if (body.length < 20) return { ok: false, error: 'The page body is too short to publish.' };
-  if (body.length > MAX_BODY) return { ok: false, error: 'The page body is too long. Keep it under 40,000 characters.' };
+  if (body.length > MAX_BODY)
+    return { ok: false, error: 'The page body is too long. Keep it under 40,000 characters.' };
   if (containsUnsafeMarkup(body)) {
-    return { ok: false, error: 'Remove scripts, embeds, forms and event handlers from the page body. Use the text editor, not pasted page code.' };
+    return {
+      ok: false,
+      error:
+        'Remove scripts, embeds, forms and event handlers from the page body. Use the text editor, not pasted page code.',
+    };
   }
   const status = raw.status === 'published' ? 'published' : raw.status === 'draft' ? 'draft' : null;
   if (!status) return { ok: false, error: 'Choose draft or published.' };
@@ -167,6 +189,16 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
   // Public: what the footer and the policy pages read.
   // -------------------------------------------------------------------------
   app.get('/api/site-content', async (_req, res) => {
+    // Preview deployments have no server credentials, so there is no
+    // administrator content to read. Answer with the empty catalogue the client
+    // already merges over the copy the site shipped with. Every other public
+    // catalogue takes this same path (`{ items: [] }`, 200); a 503 here made
+    // every page in a preview build load with a failed request in the console.
+    if (!deps.isConfigured()) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ settings: {}, pages: [] });
+      return;
+    }
     try {
       const supabase = deps.getSupabase();
       const [settingsResult, pagesResult] = await Promise.all([
@@ -189,7 +221,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json({ settings, pages });
     } catch (error) {
-      console.error('Site content read error:', error);
+      log.error('site_content.read_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       // Not a 500 the footer cannot use: the client falls back to the copy the
       // site shipped with, and the response says so.
       res.status(503).json({ error: 'Site content is temporarily unavailable.' });
@@ -209,10 +241,14 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       if (settingsResult.error) throw settingsResult.error;
       if (pagesResult.error) throw pagesResult.error;
       const settings: Record<string, unknown> = {};
-      for (const row of (settingsResult.data || []) as Array<{ key: string; value: unknown }>) settings[row.key] = row.value;
+      for (const row of (settingsResult.data || []) as Array<{ key: string; value: unknown }>)
+        settings[row.key] = row.value;
       res.json({ settings, pages: ((pagesResult.data || []) as Array<Record<string, unknown>>).map(pageRowToApi) });
     } catch (error) {
-      console.error('Admin site content read error:', error);
+      log.error('site_content.admin_read_failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(503).json({ error: 'Unable to load site content.' });
     }
   });
@@ -242,7 +278,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
         })),
       });
     } catch (error) {
-      console.error('Site page revisions error:', error);
+      log.error('site_content.page_revisions_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load the revision history.' });
     }
   });
@@ -274,7 +310,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       }
       res.json({ key: data.key, value: data.value, updatedAt: data.updated_at });
     } catch (error) {
-      console.error('Site settings write error:', error);
+      log.error('site_content.settings_write_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to save that setting.' });
     }
   });
@@ -333,7 +369,11 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       });
       // The page is saved even if the snapshot fails; say so in the log rather
       // than telling the editor the save failed when it did not.
-      if (revisionError) console.error('Site page revision snapshot failed:', revisionError);
+      if (revisionError)
+        log.warn('site_content.revision_snapshot_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(revisionError),
+        });
 
       if (adminUser) {
         await deps.recordAudit(supabase, {
@@ -346,7 +386,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       }
       res.json({ page: pageRowToApi(data as Record<string, unknown>) });
     } catch (error) {
-      console.error('Site page write error:', error);
+      log.error('site_content.page_write_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to save that page.' });
     }
   });
@@ -354,74 +394,79 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
   // -------------------------------------------------------------------------
   // Admin: restore a revision (as a new revision - history is never rewritten).
   // -------------------------------------------------------------------------
-  app.post('/api/admin/site-content/pages/:slug/restore/:revision', deps.requireCapability('site.update'), async (req, res) => {
-    const slug = String(req.params.slug || '');
-    const target = Number(req.params.revision);
-    if (!isServedPageSlug(slug)) return res.status(404).json({ error: 'That page does not exist.' });
-    if (!Number.isInteger(target) || target < 1) return res.status(400).json({ error: 'Choose a revision to restore.' });
+  app.post(
+    '/api/admin/site-content/pages/:slug/restore/:revision',
+    deps.requireCapability('site.update'),
+    async (req, res) => {
+      const slug = String(req.params.slug || '');
+      const target = Number(req.params.revision);
+      if (!isServedPageSlug(slug)) return res.status(404).json({ error: 'That page does not exist.' });
+      if (!Number.isInteger(target) || target < 1)
+        return res.status(400).json({ error: 'Choose a revision to restore.' });
 
-    try {
-      const adminUser = (req as Request & { adminUser?: { id: string } }).adminUser;
-      const supabase = deps.getSupabase();
-      const { data: snapshot, error: snapshotError } = await supabase
-        .from('site_page_revisions')
-        .select('revision,title,summary,body,status,review_state')
-        .eq('slug', slug)
-        .eq('revision', target)
-        .maybeSingle();
-      if (snapshotError) throw snapshotError;
-      if (!snapshot) return res.status(404).json({ error: 'That revision does not exist.' });
+      try {
+        const adminUser = (req as Request & { adminUser?: { id: string } }).adminUser;
+        const supabase = deps.getSupabase();
+        const { data: snapshot, error: snapshotError } = await supabase
+          .from('site_page_revisions')
+          .select('revision,title,summary,body,status,review_state')
+          .eq('slug', slug)
+          .eq('revision', target)
+          .maybeSingle();
+        if (snapshotError) throw snapshotError;
+        if (!snapshot) return res.status(404).json({ error: 'That revision does not exist.' });
 
-      const { data: current, error: currentError } = await supabase
-        .from('site_pages')
-        .select('revision')
-        .eq('slug', slug)
-        .maybeSingle();
-      if (currentError) throw currentError;
-      if (!current) return res.status(404).json({ error: 'That page does not exist.' });
+        const { data: current, error: currentError } = await supabase
+          .from('site_pages')
+          .select('revision')
+          .eq('slug', slug)
+          .maybeSingle();
+        if (currentError) throw currentError;
+        if (!current) return res.status(404).json({ error: 'That page does not exist.' });
 
-      const revision = Number(current.revision || 1) + 1;
-      const { data, error } = await supabase
-        .from('site_pages')
-        .update({
+        const revision = Number(current.revision || 1) + 1;
+        const { data, error } = await supabase
+          .from('site_pages')
+          .update({
+            title: snapshot.title,
+            summary: snapshot.summary,
+            body: snapshot.body,
+            status: snapshot.status,
+            review_state: snapshot.review_state,
+            revision,
+            updated_by: adminUser?.id ?? null,
+            published_at: snapshot.status === 'published' ? new Date().toISOString() : null,
+          })
+          .eq('slug', slug)
+          .select(PAGE_COLUMNS)
+          .single();
+        if (error) throw error;
+
+        await supabase.from('site_page_revisions').insert({
+          slug,
+          revision,
           title: snapshot.title,
           summary: snapshot.summary,
           body: snapshot.body,
           status: snapshot.status,
           review_state: snapshot.review_state,
-          revision,
-          updated_by: adminUser?.id ?? null,
-          published_at: snapshot.status === 'published' ? new Date().toISOString() : null,
-        })
-        .eq('slug', slug)
-        .select(PAGE_COLUMNS)
-        .single();
-      if (error) throw error;
-
-      await supabase.from('site_page_revisions').insert({
-        slug,
-        revision,
-        title: snapshot.title,
-        summary: snapshot.summary,
-        body: snapshot.body,
-        status: snapshot.status,
-        review_state: snapshot.review_state,
-        edited_by: adminUser?.id ?? null,
-      });
-
-      if (adminUser) {
-        await deps.recordAudit(supabase, {
-          actorId: adminUser.id,
-          action: 'restore',
-          resourceType: 'site_page',
-          resourceId: slug,
-          metadata: { from_revision: target, revision },
+          edited_by: adminUser?.id ?? null,
         });
+
+        if (adminUser) {
+          await deps.recordAudit(supabase, {
+            actorId: adminUser.id,
+            action: 'restore',
+            resourceType: 'site_page',
+            resourceId: slug,
+            metadata: { from_revision: target, revision },
+          });
+        }
+        res.json({ page: pageRowToApi(data as Record<string, unknown>) });
+      } catch (error) {
+        log.error('site_content.page_restore_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+        res.status(503).json({ error: 'Unable to restore that revision.' });
       }
-      res.json({ page: pageRowToApi(data as Record<string, unknown>) });
-    } catch (error) {
-      console.error('Site page restore error:', error);
-      res.status(503).json({ error: 'Unable to restore that revision.' });
-    }
-  });
+    },
+  );
 }

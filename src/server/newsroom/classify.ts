@@ -69,10 +69,7 @@ function scoreText(text: string, weightMultiplier: number, matched: Set<string>)
   return total;
 }
 
-export function classify(
-  input: ClassificationInput,
-  options: ClassificationOptions = {},
-): Classification {
+export function classify(input: ClassificationInput, options: ClassificationOptions = {}): Classification {
   const relevanceThreshold = options.relevanceThreshold ?? DEFAULT_RELEVANCE_THRESHOLD;
   const autoPublishThreshold = options.autoPublishThreshold ?? DEFAULT_AUTO_PUBLISH_THRESHOLD;
 

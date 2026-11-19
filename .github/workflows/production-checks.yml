@@ -9,9 +9,21 @@ on:
 permissions:
   contents: read
 
+# One gate per ref: a new push cancels the run it supersedes, so a PR never
+# reports a verdict for a commit that has already been replaced.
+concurrency:
+  group: production-checks-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality-gate:
     runs-on: ubuntu-24.04
+    # `npm ci` + the full `npm run ci` chain (typecheck, unit tests, schema audit,
+    # migration checklist, build, perf, analytics, Playwright on desktop and
+    # mobile, perf profile, RLS/a11y audits) takes about 15 minutes on a cold
+    # runner. The ceiling exists so a hung browser cannot hold a merge queue
+    # forever.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +37,11 @@ jobs:
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
+
+      # Lint and format are also part of `npm run ci`; running them first gives a
+      # named failure in seconds instead of a red job 15 minutes into the gate.
+      - name: Lint and format check
+        run: npm run lint && npm run format:check
 
       - name: Run authoritative CI gate
         run: npm run ci

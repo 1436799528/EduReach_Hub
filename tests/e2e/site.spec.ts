@@ -67,35 +67,33 @@ test('search filters services, updates URL and follows its direct result', async
   await page.goForward();
   await expect(page).toHaveURL(/\/nelfund$/);
 });
-test('home keeps student results off the public screen and links simulators to real bank ids', async ({ page }) => {
-  await page.route('**/api/cbt/exams', (route) => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify({
-      items: [{
-        id: 'live-jamb-bank-42',
-        title: 'JAMB UTME Practice Bank',
-        exam_body: 'JAMB',
-        subject: 'Multiple subjects',
-        description: 'A live question bank.',
-        duration_minutes: 120,
-        question_count: 180,
-        subject_count: 4,
-      }],
-    }),
-  }));
+test('home keeps student results off the public screen and links each simulator to its own setup', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Latest news' })).toBeVisible();
   await expect(page.getByText('No current news yet')).toBeVisible();
   await expect(page.getByText(/Papers completed|Average score|Best score|Recent activity/)).toHaveCount(0);
   await expect(page.locator('main').getByText('Results', { exact: true })).toHaveCount(0); // navigation remains global; home content has no result link
-  const bank = page.locator('.er-sim-card').filter({ hasText: 'JAMB UTME Practice Bank' });
-  await expect(bank).toHaveCount(1);
-  await expect(bank).toHaveAttribute('href', '/cbt/setup/jamb?exam=live-jamb-bank-42');
-  await expect(page.locator('.er-sim-card')).toHaveCount(1); // no invented fallback cards
+  // The home grid is the built-in discovery list: one card per examination
+  // family, each routed into that family's setup wizard. It carries no bank id,
+  // because this build has never seen the published catalogue (`fetchCbtExams`
+  // reads Supabase directly and returns nothing without credentials).
+  await expect(page.locator('.er-sim-card')).toHaveCount(4); // no invented fallback cards
+  for (const type of ['jamb', 'waec', 'neco', 'post-utme']) {
+    await expect(page.locator(`.er-sim-card[data-exam-type="${type}"]`)).toHaveAttribute('href', `/cbt/setup/${type}`);
+  }
+  await expect(page.getByText(/Practice Bank/)).toHaveCount(0);
 });
 test('global search suggestions expose and support keyboard selection', async ({ page }) => {
   await page.goto('/');
-  const search = page.getByRole('combobox', { name: 'Search services and study resources' });
+  // The header search is hidden below 1040px; phones open the same component
+  // from the mobile drawer, so the field is reached through that control.
+  // `site-search--header` is display:none below 1040px, where the drawer search
+  // is the only one on the page.
+  const drawerMode = !(await page.locator('.site-search--header').isVisible());
+  if (drawerMode) await page.getByRole('button', { name: 'Open mobile menu' }).click();
+  const search = page.getByRole('combobox', {
+    name: drawerMode ? 'Site search (mobile)' : 'Search services and study resources',
+  });
   await search.fill('nelfund');
   const listbox = page.getByRole('listbox', { name: 'Search suggestions' });
   await expect(listbox).toBeVisible();
@@ -128,10 +126,13 @@ test('mobile forms and navigation meet touch-size and input-size targets', async
   expect(menuBox?.width).toBeGreaterThanOrEqual(44);
   expect(menuBox?.height).toBeGreaterThanOrEqual(44);
 
-  const search = page.locator('main').getByRole('search').getByRole('button', { name: 'Search', exact: true });
-  const searchBox = await search.boundingBox();
-  expect(searchBox?.width).toBeGreaterThanOrEqual(44);
+  // Phones do not render the header search field; the same control lives in the
+  // drawer and keeps its 44px touch target there.
+  await menu.click();
+  const drawerSearch = page.getByRole('search', { name: 'Site search (mobile)' });
+  const searchBox = await drawerSearch.boundingBox();
   expect(searchBox?.height).toBeGreaterThanOrEqual(44);
+  await page.getByRole('button', { name: 'Close menu' }).click();
 
   const bottomNav = page.getByRole('navigation', { name: 'Mobile navigation' });
   await expect(bottomNav).toBeVisible();
@@ -184,23 +185,8 @@ test('unconfigured login fails closed and cannot create a local session', async 
   await page.goto('/dashboard');
   await expect(page).toHaveURL(/\/login\?next=/);
 });
-test('mobile CBT simulator cards stack in one column without overlapping', async ({ page, isMobile }) => {
+test('mobile CBT simulator cards keep a two-column grid without overlapping', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'mobile card geometry applies to the mobile project');
-  await page.route('**/api/cbt/exams', (route) => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify({
-      items: ['JAMB', 'WAEC', 'NECO', 'POST-UTME'].map((exam, index) => ({
-        id: `mobile-bank-${index}`,
-        title: `${exam} Sample Bank`,
-        exam_body: exam,
-        subject: 'Mathematics',
-        description: 'Practice with subject-specific questions.',
-        duration_minutes: 60,
-        question_count: 40,
-        subject_count: 4,
-      })),
-    }),
-  }));
   await page.goto('/');
   const cards = page.locator('.er-sim-card');
   await expect(cards).toHaveCount(4);
@@ -208,10 +194,21 @@ test('mobile CBT simulator cards stack in one column without overlapping', async
     const { left, right, top, bottom } = element.getBoundingClientRect();
     return { left, right, top, bottom };
   }));
-  for (let index = 1; index < boxes.length; index += 1) {
-    expect(Math.abs(boxes[index].left - boxes[0].left)).toBeLessThan(2);
-    expect(boxes[index].top).toBeGreaterThanOrEqual(boxes[index - 1].bottom);
-    expect(boxes[index].right).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+  // Phones use a two-column grid (`src/edu-portal.css`, max-width 640px), so a
+  // row holds two cards of equal width: no overlap, no overflow, and the next
+  // row starts below the previous one.
+  const columnWidth = boxes[0].right - boxes[0].left;
+  const viewportWidth = await page.evaluate(() => window.innerWidth);
+  for (const box of boxes) expect(box.right).toBeLessThanOrEqual(viewportWidth);
+  for (let index = 0; index < boxes.length; index += 1) {
+    expect(Math.abs((boxes[index].right - boxes[index].left) - columnWidth)).toBeLessThan(2);
+    if (index % 2 === 1) {
+      expect(boxes[index].left).toBeGreaterThanOrEqual(boxes[index - 1].right);
+      expect(Math.abs(boxes[index].top - boxes[index - 1].top)).toBeLessThan(2);
+    } else if (index > 0) {
+      expect(Math.abs(boxes[index].left - boxes[0].left)).toBeLessThan(2);
+      expect(boxes[index].top).toBeGreaterThanOrEqual(boxes[index - 1].bottom);
+    }
   }
 });
 test('registration collects account essentials and only asks students for optional study context', async ({ page }) => {

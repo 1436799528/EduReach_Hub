@@ -27,7 +27,9 @@ export async function applyMigrations(db: PGlite): Promise<string[]> {
     try {
       await db.exec(sql);
     } catch (error) {
-      throw new Error(`migration ${file} failed after ${applied.length} applied: ${(error as Error).message}`);
+      throw new Error(`migration ${file} failed after ${applied.length} applied: ${(error as Error).message}`, {
+        cause: error,
+      });
     }
     applied.push(file);
   }

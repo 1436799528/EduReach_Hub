@@ -27,7 +27,7 @@ Cheap, no dependencies touched. Answers only whether the process answers. Use it
 
 ```
 GET /api/health/ready
-→ 200 { "status": "ready", checks: { server, supabase_configured, database }, databaseLatencyMs }
+→ 200 { "status": "ready", checks: { server, supabase_configured, database, cbt_protocol_schema }, database_latency_ms }
 → 503 { "status": "degraded", ... }
 ```
 
@@ -41,6 +41,122 @@ readiness check that runs an expensive query becomes the outage.
 **Neither endpoint leaks database detail.** The failure detail is normalised through
 `userFacingError`, so a connection string, a role name or a SQL fragment never reaches
 a client.
+
+## Structured server events (OBS-2)
+
+Everything the server reports about itself now goes through `lib/observability.ts`.
+Before it, ninety-odd call sites wrote `console.error('Admin news create error:', error)`
+— free text, a raw driver object, no severity a machine could sort on, and no way to
+tell which request produced it.
+
+**One event is one line, one JSON object:**
+
+```json
+{"ts":"2026-11-19T15:02:11.482Z","level":"error","service":"edureach-api",
+ "env":"production","event":"cbt.submit_failed","request_id":"01JABCDEF0123456789",
+ "attempt_id":"5f6c…","error_name":"PostgrestError","error_code":"PGRST202"}
+```
+
+| Field | Meaning |
+|---|---|
+| `ts` | ISO-8601 UTC |
+| `level` | `debug` · `info` · `warn` · `error` · `critical` |
+| `service` / `env` | always `edureach-api`, and `production` or `development` |
+| `event` | dotted, stable, lower snake case — never interpolated with a value |
+| `commit` | deploy reference when the platform provides one (`COMMIT_REF`) |
+| `request_id` | correlation id; the one on the `X-Request-Id` response header |
+| … | event-specific context: ids, counts, durations, `error_name`/`error_code` |
+
+**Levels mean what they say.**
+
+| Level | Use | Stream |
+|---|---|---|
+| `debug` | per-request detail, off by default in practice | stdout |
+| `info` | a lifecycle point worth keeping: startup, a completed background run | stdout |
+| `warn` | recoverable and expected in small numbers: a refusal, a degraded dependency, a slow request | stderr |
+| `error` | a request or job failed and the caller saw an error | stderr |
+| `critical` | the process cannot continue correctly: a boot failure, an uncaught exception | stderr |
+
+`warn` and above go to **stderr** so a platform that separates streams can alert on the
+error stream alone without parsing the request log.
+
+**Event names are a fixed vocabulary.** `area.subject_action`, where the area is
+`http`/`auth`/`cbt`/`admin`/`api`/`question_import`/`question_banks`/`institutions`/
+`site_content`/`newsroom`/`scheduled_job`/`health`/`process`/`server`/`audit`/`sitemap`/
+`ratelimit`/`notifications`. A name never contains an id or a message, so counting them
+is meaningful.
+
+**What is emitted today** (the full list is the `log.*` calls in `server.ts`, `lib/`,
+`src/server/` and `netlify/functions/`; `tests/observability.test.ts` keeps new code on
+this path):
+
+| Area | Events | Fires when |
+|---|---|---|
+| HTTP | `http.server_error`, `http.denied`, `http.slow`, `http.unhandled_exception` | a response finished 5xx, 401/403, took ≥ 5 s (`OBS_SLOW_REQUEST_MS`), or an exception reached the error handler |
+| Auth | `auth.verify_failed`, `auth.refused_unauthenticated`, `auth.refused_missing_capability` | a bearer token did not verify, or a capability guard refused |
+| Health | `health.degraded`, `health.recovered` | readiness changed state, plus a 10-minute reminder while it stays degraded |
+| CBT | `cbt.start_failed`, `cbt.paper_failed`, `cbt.draft_save_failed`, `cbt.submit_failed`, `cbt.guest_submit_failed`, `cbt.abandon_failed`, `cbt.question_report_failed`, `cbt.regrade.failed`, `cbt.regrade.preview_failed`, `cbt.expiry_marking_unavailable`, `cbt.question_provenance_refused` | a simulation, save, submission, grading or report operation failed |
+| Question import | `question_import.{upload,commit,retry,review,item_update,update,delete,list,detail,source,publish,publication,failure}_failed` | any step of the import and publish pipeline |
+| Question banks | `question_banks.{inventory,candidate_list,candidate_search,history,classification,release_change,assignment,revocation}_failed` | restricted-bank administration failed |
+| Institutions | `institutions.{read,list,detail,review_queue,profile_write,academic_unit_create,academic_unit_write,programme_create,programme_write,requirement_write,admission_route_write,evidence_review}_failed`, `institutions.cache_refresh_failed` | intelligence reads, writes, or a stale-cache refresh |
+| Content | `site_content.*`, `app.content_manager_*`, `app.newsroom_*`, `newsroom.refresh_failed`, `sitemap.source_unavailable` | CMS reads/writes, newsroom runs, sitemap sources |
+| Public API | `api.{news,news_article,services,service,upcoming,opportunities,opportunity_detail,past_question_resources,cbt_exams_list,cbt_history,cbt_delete,guest_cbt_question}.failed` | a public read failed |
+| Admin | `admin.<area>.failed` (users, roles, bans, news, calendar, services, service guide, institutions, opportunities, CBT exams and questions, PDFs, uploads, question reports, bootstrap, analytics, job status) | an admin mutation or read failed |
+| Background | `scheduled_job.succeeded`, `scheduled_job.failed`, `newsroom.refresh_completed`, `newsroom.source_failed` | the daily Netlify function |
+| Lifecycle | `server.starting`, `server.listening`, `server.start_failed`, `process.uncaught_exception`, `process.unhandled_rejection` | boot and crash |
+| Audit | `audit.write_failed` | `admin_audit_logs` could not be written — a compliance gap, not a cosmetic one |
+| Meta | `ratelimit.throttled`, `log.suppressed` | a limiter refused a request; a repeat was collapsed and the count reported |
+
+**Noise control.** Refusals, 5xx bursts and readiness polls are ordinary events in ones
+and twos and an incident in hundreds, so `EventRateLimiter` collapses repeats per
+`route`/`status`/`key` and reports the suppressed count when the window reopens
+(`log.suppressed`). A degraded readiness that persists is re-reported once every ten
+minutes, not once per poll.
+
+**Correlation.** Every request gets an id from `requestIdFor`: `x-nf-request-id` if the
+platform sent one (that is what a Netlify log search uses), else `x-request-id`, else
+`x-correlation-id`, else a fresh uuid. An inbound id is only trusted when it matches
+`^[A-Za-z0-9._:-]{8,64}$` — a header must not be able to inject a value into every line
+of a request. The id is echoed on `X-Request-Id`, so a student's screenshot of a failed
+request and the log line carry the same value. Route shapes replace uuids with `:id` so
+cardinality stays bounded.
+
+```bash
+# everything that happened during one request
+netlify logs:function api | grep 01JABCDEF0123456789
+# every failure in the last hour, worst first
+... | jq -c 'select(.level=="error" or .level=="critical") | {ts,event,request_id}'
+```
+
+### What is never logged
+
+The sanitiser is a deny-list on **key names**, applied to every context object, at every
+depth it walks: a key matching `authorization|auth|cookie|token|secret|password|passwd|
+apikey|api_key|service_role|session|jwt|bearer|signature|credential` is replaced with
+`[redacted]` rather than dropped (a silently missing field is how a new leak ships). On
+top of that:
+
+- **Errors are reduced to facts.** `errorFacts` keeps `name`, a short `code` (SQLSTATE /
+  PostgREST) and an HTTP `status`. The message is never logged: that is exactly where a
+  driver quotes a column value, a fetch error carries a URL with a token, and a Postgres
+  error quotes the offending row.
+- **Strings are capped at 300 characters, objects at 24 keys and 2 levels.** Deeper
+  structures become `[object]`/`[array:n]`.
+- **No PII, no answers, no answer keys.** Context carries ids (`attempt_id`, `exam_id`,
+  `question_id`, `import_id`, `user_id` where an operator needs it) and counters —
+  never a name, an email, a question body, a chosen option or a key letter.
+- **The fatal boot line is the one free-text exception.** A process that cannot start
+  has no request context and its message ("refusing a privileged Supabase key", "port in
+  use") is the whole diagnostic; it prints the thrown error and nothing from the
+  environment. `tests/client-secret-build.test.ts` asserts the key value never appears.
+
+### Crash reporting
+
+`process.on('uncaughtExceptionMonitor')` logs `process.uncaught_exception` **without
+changing what Node does next** — the process still dies as it did before. An unhandled
+rejection is logged and then rethrown for the same reason: swallowing it here would keep
+a broken process alive. These two events are the only signal that cannot arrive through
+an HTTP endpoint, so whatever consumes the log must watch stderr rather than poll a URL.
 
 ## Scheduled jobs
 
@@ -107,6 +223,17 @@ These are asserted in `tests/job-runs.test.ts`, not asserted in prose:
 | Notification insert fails | logged, and deliberately does **not** fail the status change |
 | CBT bank unusable | `content_integrity_report()` subject coverage, surfaced by `npm run prod:validate` |
 | Expired news or opportunities still active | `content_integrity_report()`, surfaced by `npm run prod:validate` |
+| Any 5xx, with the route and the request id | `http.server_error` on stderr + `X-Request-Id` on the response |
+| A refused request (401/403) per route | `http.denied`; the capability guard adds `auth.refused_*` |
+| A token that does not verify | `auth.verify_failed` (`warn`, collapsed) |
+| A slow request (≥ 5 s) | `http.slow` with `duration_ms` |
+| A simulation that fails to start / save / submit / grade | `cbt.*_failed` with `attempt_id`, `exam_id` or `question_id` |
+| A regrade preview or apply that fails | `cbt.regrade.preview_failed`, `cbt.regrade.failed` |
+| An import upload, commit or retry that fails | `question_import.*_failed` with `import_id` |
+| An admin mutation that fails | `admin.<area>.failed` with the route's request id |
+| An audit row that could not be written | `audit.write_failed` |
+| A cache refresh behind a healthy-looking response | `institutions.cache_refresh_failed` |
+| The process crashing or failing to boot | `process.uncaught_exception`, `server.start_failed` |
 
 ## What is NOT observable — stated plainly
 
@@ -118,17 +245,73 @@ These are asserted in `tests/job-runs.test.ts`, not asserted in prose:
 2. **The retention prune is not scheduled.** `prune_site_analytics_events()` is
    implemented, tested and has a CLI, and it records its own run — but nothing calls it
    on a timer. Rows older than 90 days remain until something does.
-3. **No APM, no tracing, no error aggregation.** There is no Sentry, no OpenTelemetry,
-   no request tracing. Application errors go to `console.error` and therefore to the
-   platform's log stream. That was a deliberate choice — the mandate was the smallest
-   production-safe layer — but it means debugging a production issue means reading logs.
-4. **No client-side error reporting.** A JavaScript exception in a student's browser is
-   invisible to the operator.
+3. **No APM, no tracing, no error aggregation.** There is no Sentry, no OpenTelemetry and
+   no span per query. Server events are structured and correlated (`request_id`), and
+   they land on the platform's log stream, but **nothing groups them into incidents**:
+   the same error is N lines, not one issue with a count. Debugging still means reading
+   logs — they are now parseable.
+4. **Client-side errors are counted, not inspectable.** `src/lib/errorTelemetry.ts`
+   reports a `client_error` analytics event capped at 10 per session, with the source
+   enum and the error constructor name only — no message, no stack. It is consent-gated
+   and PROD-only, so it is a rate, not a diagnostic. That was a deliberate privacy
+   choice; it does not become a stack trace without a decision.
 5. **No database-level monitoring.** Slow queries, connection exhaustion and lock
    contention are not measured. The readiness probe reports one latency number, which is
    a smoke signal, not a trend.
 6. **Field performance is not collected.** No RUM, no Web Vitals reporting. Lab numbers
    from CI are regression protection only (see `docs/features/PERF-1.md`).
+
+## Alert thresholds
+
+These are the conditions worth paging on, the level they already log at, and the smallest
+signal that detects each. The **rules and their destinations** are specified in
+[MONITORING.md](MONITORING.md); the error tracker and uptime probe are approved and
+implemented, and both are inert until a credential is added — no account, no DSN and no
+provider has been created.
+
+| Condition | Signal | Threshold | Severity | Notes |
+|---|---|---|---|---|
+| Site down | `GET /api/health` not 200 | 2 consecutive failures, 1-min interval | **Page** | Liveness only; do not restart-loop on readiness |
+| Cannot serve requests | `GET /api/health/ready` ≥ 503 | 3 consecutive failures or 5 min | **Page** | Fail-closed check incl. `cbt_protocol_schema`; never loosen it to go green |
+| Error-rate spike | count of `http.server_error` | > 2 % of requests over 5 min, or > 20 in 5 min | **Page** | Absolute floor stops a quiet hour from paging on one error |
+| Unhandled exception / crash | `process.uncaught_exception`, `process.unhandled_rejection`, `server.start_failed` | any | **Page** | stderr only; cannot be polled over HTTP |
+| Submission failures | `cbt.submit_failed` + `cbt.guest_submit_failed` | > 5 in 10 min or > 2 % of submissions | **Page** | A student loses a completed paper |
+| Autosave failures | `cbt.draft_save_failed` | > 5 % of saves over 15 min | **Page** | Silent data loss risk; guide 8.7 |
+| Grading / regrade failures | `cbt.regrade.failed`, `cbt.regrade.preview_failed` | any apply failure | **Page** | Results may be wrong |
+| Grading backlog | `backlog` in `/api/admin/jobs`: stuck `in_progress` attempts past their deadline, and `submitted` rows with no score | 50 stuck, 60 min old, or any ungraded | **Investigate** | There is no grading queue — the submit RPC grades in-transaction. Implemented in `src/server/operations.ts`, logged as `cbt.backlog_alert` |
+| Question import failing | `question_import.commit_failed` / `upload_failed` | 3 in 30 min | **Investigate** | Admin-only impact |
+| Auth failure burst | `auth.verify_failed` + `http.denied` | > 100 in 5 min from one path | **Investigate** | Also the only early signal of credential probing |
+| Audit write failure | `audit.write_failed` | any | **Investigate** | Compliance gap |
+| Readiness degraded | `health.degraded` | any transition | **Investigate** | 503 already covers the customer view |
+| Database latency | `database_latency_ms` from readiness | > 1 000 ms for 10 min | **Investigate** | Smoke signal, not a trend — see gap |
+| Job missed | `/api/admin/jobs` **missing** / **stale** | 2 missed schedules | **Investigate** | Absence has no log line; poll it |
+| Slow requests | `http.slow` | > 10 in 5 min on one route | **Tune** | Not a page on its own |
+
+Deliberately **not** alerted: every 401 that a logged-out browser produces, any single
+`warn`, 404s, rate-limit refusals in normal volume, and any event on a successful path.
+
+### Destinations: what is approved, implemented and still waiting
+
+| Piece | Code | Account |
+|---|---|---|
+| **Error aggregation** | **implemented** — `lib/errorTracking.ts`, inert without `SENTRY_DSN`, with the privacy review and the hourly/daily caps in [MONITORING.md](MONITORING.md) | **not created** — a free Developer plan needs an owner's signup |
+| **Uptime checks** | **implemented** — `scripts/uptime-check.ts` and an interim 15-minute GitHub schedule; the probe contract is written down | **not created** — an African vantage point needs a provider (≈$10/month; comparison in MONITORING.md) |
+| **Alert routing** | rules specified against Sentry's `event` tags and the uptime monitors | **not configured** — needs the two accounts above |
+| Log destination / retention | none | **not approved** (paid) |
+| Public status page | none | **not approved** (explicitly maintainers-only) |
+| APM / metrics platform | none (`tracesSampleRate: 0`) | **not approved** |
+
+The same rule still applies to loosening a health check to make a monitor green: a
+readiness failure is information, not an obstacle.
+
+### Known instrumentation gaps (smallest fix, not built)
+
+| Gap | Smallest honest fix | Why it is not done now |
+|---|---|---|
+| ~~Grading-queue depth~~ | **built**: `backlog` in `/api/admin/jobs` (`src/server/operations.ts`) — two counts over `cbt_attempts`, no schema change | — |
+| Database connection count | the provider already draws it: Supabase → Reports → Database (connections, pooler clients); alert at 80 % of the pooler limit for 10 min | an in-app number needs a privileged `pg_stat_activity` RPC or a Management API token — both need approval; see MONITORING.md §5 |
+| Query-level tracing | none | that is an APM decision, not a code change |
+| Field performance / RUM | a consent-gated Web Vitals event through the existing analytics allowlist | product/privacy decision; the allowlist is deliberate |
 
 ## Extending it
 
@@ -140,6 +323,15 @@ A new scheduled job should:
 3. Put only counters and short identifiers in `detail`. The sanitiser will drop anything
    else, and a dropped field is a hint the payload was wrong.
 
+A new route that can fail should:
+
+1. `log.error('<area>.<subject>_failed', { request_id: res.locals?.requestId, ...errorFacts(error) })`
+   in its catch block — never `console.error`, never `error.message`.
+2. Add the event to the table above and, if it means a customer lost something, to the
+   alert thresholds.
+3. Keep the response generic while the log stays specific: the caller learns "Unable to
+   save that page", the operator learns the route, the request id and the SQLSTATE.
+
 ## Verification status
 
 **Verified here:** the recording module's behaviour under success, refused insert,
@@ -148,6 +340,15 @@ missing/stale/failing/recovered jobs (16 tests in `tests/job-runs.test.ts`). The
 new database objects are executed against real PostgreSQL with inserted rows, including
 the RLS posture check (`tests/migrations.test.ts`).
 
+**Verified here (OBS-2, `tests/observability.test.ts`, `tests/request-correlation.test.ts`):**
+the line format and stream routing, credential-key redaction, string/key/depth bounds,
+`errorFacts` never carrying a message, the correlation-id preference order and its
+refusal of a non-id-shaped header, the collapse-and-report behaviour of the rate limiter,
+the readiness transition/reminder logic, and — against the real Express app — that a 401
+carries the same `X-Request-Id` as its `http.denied` record, that a platform id is
+reused, that a bearer token never appears in a record, and that route shapes contain no
+uuid. A source-scan test keeps new server code off `console.error`.
+
 **Not verified:** that any of this has run in production. There is no deployed origin,
 so no job has ever executed on a schedule and `/api/admin/jobs` has never been called
-against live data.
+against live data, and no log drain has ever consumed these events.

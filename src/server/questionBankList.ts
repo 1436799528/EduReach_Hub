@@ -22,14 +22,23 @@ export function parseQuestionBankFilters(query: Record<string, unknown>): Questi
   if (!/^\d+$/.test(pageText) || !/^\d+$/.test(sizeText)) throw new Error('Invalid pagination.');
   const page = Number(pageText);
   const pageSize = Number(sizeText);
-  if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100 || !Number.isSafeInteger(page * pageSize)) throw new Error('Invalid pagination.');
+  if (
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    !Number.isSafeInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 100 ||
+    !Number.isSafeInteger(page * pageSize)
+  )
+    throw new Error('Invalid pagination.');
   const search = read('search');
   const subject = read('subject');
   const topic = read('topic');
-  if ([search, subject, topic].some(value => value.length > 120)) throw new Error('Question filter is too long.');
+  if ([search, subject, topic].some((value) => value.length > 120)) throw new Error('Question filter is too long.');
   const yearText = read('year');
   const year = yearText ? Number(yearText) : null;
-  if (yearText && (!/^\d{4}$/.test(yearText) || year === null || year < 1954 || year > 2100)) throw new Error('Invalid source year.');
+  if (yearText && (!/^\d{4}$/.test(yearText) || year === null || year < 1954 || year > 2100))
+    throw new Error('Invalid source year.');
   const review = read('review');
   if (!['', 'needs_review', 'approved', 'rejected'].includes(review)) throw new Error('Invalid review status.');
   return { page, pageSize, search, subject, topic, year, review: review as QuestionBankFilters['review'] };

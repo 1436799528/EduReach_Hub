@@ -34,7 +34,10 @@ export interface RateLimitRule {
 
 export interface RateLimitDependencies {
   /** Service-role RPC caller. Returning an error is treated as "no durable limiter". */
-  callRpc?: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  callRpc?: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
   now?: () => number;
   log?: (message: string, meta?: Record<string, unknown>) => void;
 }
@@ -87,11 +90,12 @@ export class MemoryRateLimiter {
  * `x-nf-client-connection-ip`; other proxies use `x-forwarded-for`.
  */
 export function clientKey(req: Request): string {
-  const header = req.header('x-nf-client-connection-ip')
-    || (req.header('x-forwarded-for') || '').split(',')[0]
-    || req.ip
-    || req.socket?.remoteAddress
-    || 'unknown';
+  const header =
+    req.header('x-nf-client-connection-ip') ||
+    (req.header('x-forwarded-for') || '').split(',')[0] ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    'unknown';
   return String(header).trim() || 'unknown';
 }
 
@@ -143,14 +147,18 @@ export function createRateLimiter(
       if (!rule.durable || !dependencies.callRpc) return next();
 
       // Durable check runs after the cheap one so a flood never reaches the DB.
-      dependencies.callRpc('check_rate_limit', {
-        p_bucket: key,
-        p_limit: rule.limit,
-        p_window_seconds: rule.windowSeconds,
-      })
+      dependencies
+        .callRpc('check_rate_limit', {
+          p_bucket: key,
+          p_limit: rule.limit,
+          p_window_seconds: rule.windowSeconds,
+        })
         .then(({ data, error }) => {
           if (error) {
-            log('durable rate limit unavailable; relying on in-process limit', { rule: rule.name, error: error.message });
+            log('durable rate limit unavailable; relying on in-process limit', {
+              rule: rule.name,
+              error: error.message,
+            });
             return next();
           }
           if (data === false) {
@@ -185,6 +193,9 @@ export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {
   analyticsEvent: { name: 'analytics-event', limit: 240, windowSeconds: 60 },
   adminUpload: { name: 'admin-upload', limit: 20, windowSeconds: 600, durable: true, keyByUser: true },
   adminImport: { name: 'admin-import', limit: 10, windowSeconds: 600, durable: true, keyByUser: true },
+  // A student reporting problems is legitimate, but a script filing thousands of
+  // reports would bury the triage queue. Counted per account, across instances.
+  cbtReport: { name: 'cbt-report', limit: 20, windowSeconds: 600, durable: true, keyByUser: true },
   adminNewsroomRun: { name: 'admin-newsroom-run', limit: 6, windowSeconds: 3600, durable: true, keyByUser: true },
   apiGeneral: { name: 'api-general', limit: 1200, windowSeconds: 60 },
 };

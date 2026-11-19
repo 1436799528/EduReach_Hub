@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Download, MoreHorizontal, Printer, RotateCcw, Trash2, X } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import CbtResultSlip from '../src/components/CbtResultSlip';
-import { deleteCbtAttempt, fetchCbtResult, type CbtResultPayload, type CbtResultQuestion, type CbtResultAnswer } from '../src/lib/api';
+import { deleteCbtAttempt, fetchCbtResult, reportCbtQuestion, type CbtResultPayload, type CbtResultQuestion, type CbtResultAnswer, type QuestionReportCategory } from '../src/lib/api';
 import { LoadingState, ErrorState, InlineNotice } from '../src/components/AsyncState';
 import { localStorageKey } from '../src/lib/localPreview';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
@@ -14,6 +14,95 @@ import './CbtResultsPage.css';
 const slipDownloadCss = `
 *{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#172033;font-family:Arial,Helvetica,sans-serif}.er-result-slip{max-width:820px;margin:24px auto;background:#fff;border:1px solid #d8dee8;padding:34px;color:#172033}.er-result-slip-header{display:flex;justify-content:space-between;gap:24px;align-items:center}.er-result-brand{display:flex;align-items:center;gap:12px}.er-result-brand strong{display:block;font-size:24px}.er-result-brand span,.er-result-title-block span,.er-result-student-grid span,.er-result-signature-box span,.er-result-verification-box span{display:block;color:#667085;font-size:11px}.er-result-title-block{text-align:right}.er-result-title-block h2{margin:4px 0 0;font-size:20px}.er-result-rule{height:3px;background:#b14933;margin:24px 0}.er-result-student-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;border-bottom:1px solid #e4e7ec;padding-bottom:20px}.er-result-student-grid strong{display:block;margin-top:4px;font-size:13px}.er-result-performance{margin-top:22px}.er-result-section-heading{display:flex;justify-content:space-between;align-items:baseline}.er-result-section-heading h3{margin:0;font-size:16px}.er-result-section-heading span{font-size:12px;color:#047857}.er-result-subject-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}.er-result-subject-table th,.er-result-subject-table td{text-align:left;padding:10px;border-bottom:1px solid #e4e7ec}.er-result-subject-table th:not(:first-child),.er-result-subject-table td:not(:first-child){text-align:right}.er-result-total-row{display:flex;justify-content:space-between;padding:16px 0;border-bottom:1px solid #e4e7ec;font-size:17px}.er-result-total-row strong{color:#047857}.er-result-counts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;font-size:11px;color:#667085}.er-result-counts b{display:block;color:#172033;font-size:12px;margin-top:3px}.er-result-slip-footer{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:30px}.er-result-signature-box,.er-result-verification-box{border-top:1px solid #98a2b3;padding-top:9px}.er-result-signature-line{height:34px}.er-result-verification-box strong{display:block;margin-top:8px;letter-spacing:.08em;font-size:14px}.er-result-disclaimer{margin:26px 0 0;color:#667085;font-size:10px;line-height:1.5}@media(max-width:640px){.er-result-slip{margin:0;padding:22px}.er-result-slip-header{display:block}.er-result-title-block{text-align:left;margin-top:20px}.er-result-student-grid{grid-template-columns:repeat(2,1fr)}.er-result-counts{grid-template-columns:repeat(2,1fr)}}
 `;
+
+const REPORT_CATEGORIES: Array<{ value: QuestionReportCategory; label: string }> = [
+  { value: 'wrong_answer', label: 'The answer key looks wrong' },
+  { value: 'typo', label: 'Spelling or wording' },
+  { value: 'image', label: 'A diagram is missing or unclear' },
+  { value: 'other', label: 'Something else' },
+];
+
+/**
+ * The student's half of the content-quality loop (working guide 5.3 Step I).
+ *
+ * It sits inside the review card rather than in a modal: the student is looking
+ * at the question they want to complain about, and a modal would cover it. The
+ * control stays collapsed until pressed, so review stays quiet for everyone who
+ * has nothing to report.
+ */
+function ReportQuestionControl({ questionId }: { questionId: string }) {
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState<QuestionReportCategory>('wrong_answer');
+  const [detail, setDetail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState<'reported' | 'already_reported' | null>(null);
+  const [error, setError] = useState('');
+
+  async function submit() {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      const result = await reportCbtQuestion(questionId, category, detail);
+      setOutcome(result);
+      setOpen(false);
+      setDetail('');
+    } catch (caught) {
+      setError(userFacingError(caught, 'Unable to send this report. Please try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (outcome) {
+    return (
+      <p className="er-result-report-done" role="status">
+        {outcome === 'reported'
+          ? 'Thank you. A reviewer will check this question.'
+          : 'You have already reported this question. A reviewer will check it.'}
+      </p>
+    );
+  }
+
+  return (
+    <div className="er-result-report">
+      {!open ? (
+        <button type="button" className="er-result-report-open" onClick={() => setOpen(true)}>
+          Report a problem
+        </button>
+      ) : (
+        <form
+          className="er-result-report-form"
+          onSubmit={(event) => { event.preventDefault(); void submit(); }}
+        >
+          <label>
+            What is wrong?
+            <select value={category} onChange={(event) => setCategory(event.target.value as QuestionReportCategory)}>
+              {REPORT_CATEGORIES.map((option) => (
+                <option value={option.value} key={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Details (optional)
+            <textarea
+              value={detail}
+              maxLength={500}
+              rows={2}
+              placeholder="One sentence is enough."
+              onChange={(event) => setDetail(event.target.value)}
+            />
+          </label>
+          {error && <p className="er-result-report-error" role="alert">{error}</p>}
+          <div className="er-result-report-actions">
+            <button type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send report'}</button>
+            <button type="button" onClick={() => { setOpen(false); setError(''); }} disabled={busy}>Cancel</button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
 
 export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptId?: string } = {}) {
   const { user } = useAuth();
@@ -436,6 +525,7 @@ export default function CbtResultsPage({ attemptId: routeAttemptId }: { attemptI
                           </div>
                           {question.explanation && <p><strong>Explanation:</strong> {question.explanation}</p>}
                           {!keyReleased && <p>You did not attempt this question, so its answer is not shown.</p>}
+                          <ReportQuestionControl questionId={question.id} />
                         </article>
                       );
                     })}

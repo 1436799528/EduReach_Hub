@@ -4,16 +4,21 @@ import { defineConfig } from 'vite';
 import { hasPrivilegedClientValue } from './scripts/client-secret-guard';
 
 export default defineConfig(() => ({
-  plugins: [react(), {
-    name: 'reject-privileged-client-values',
-    // Vite has already loaded the selected mode's env files and applied its
-    // precedence rules here, but has not yet bundled or served client code.
-    configResolved(config) {
-      if (hasPrivilegedClientValue(config.env)) {
-        throw new Error('A privileged Supabase key was found in client-exposed configuration. Remove it from VITE_ variables before starting Vite.');
-      }
+  plugins: [
+    react(),
+    {
+      name: 'reject-privileged-client-values',
+      // Vite has already loaded the selected mode's env files and applied its
+      // precedence rules here, but has not yet bundled or served client code.
+      configResolved(config) {
+        if (hasPrivilegedClientValue(config.env)) {
+          throw new Error(
+            'A privileged Supabase key was found in client-exposed configuration. Remove it from VITE_ variables before starting Vite.',
+          );
+        }
+      },
     },
-  }],
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
@@ -47,7 +52,10 @@ export default defineConfig(() => ({
           if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
           if (id.includes('/node_modules/@supabase/')) return 'supabase';
           if (/\/pages\/Admin[^/]+Page\.tsx$/.test(id)) return 'admin-pages';
-          if (/\/lucide-react\/dist\/esm\/icons\/(check|plus|upload|download|external-link|pencil|eye|lock)\.js$/.test(id)) return 'shared-icons';
+          if (
+            /\/lucide-react\/dist\/esm\/icons\/(check|plus|upload|download|external-link|pencil|eye|lock)\.js$/.test(id)
+          )
+            return 'shared-icons';
         },
       },
     },

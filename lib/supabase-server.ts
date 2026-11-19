@@ -17,7 +17,6 @@ import { getServerSupabaseKey } from './supabase-config';
 
 export const SUPABASE_REQUEST_TIMEOUT_MS = 10_000;
 
-
 /** Fetch with a hard timeout, combined with any caller-provided signal. */
 export function supabaseFetch(
   input: RequestInfo | URL,

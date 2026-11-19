@@ -102,10 +102,7 @@ export function dedupeKeyForCandidate(input: { canonicalUrl: string; title: stri
  * Compares one candidate against everything already known. Returns the
  * strongest match found, or null when the candidate looks genuinely new.
  */
-export function findDuplicate(
-  candidate: IndexEntry,
-  index: IndexEntry[],
-): DuplicateMatch | null {
+export function findDuplicate(candidate: IndexEntry, index: IndexEntry[]): DuplicateMatch | null {
   let best: DuplicateMatch | null = null;
 
   const record = (level: DuplicateLevel, reason: string, score: number, matched: IndexEntry) => {
@@ -130,7 +127,6 @@ export function findDuplicate(
       record('exact', 'content_hash', 1, entry);
       continue;
     }
-
 
     const similarity = jaccard(candidate.tokens, entry.tokens);
     if (similarity >= TITLE_JACCARD_LIKELY) {

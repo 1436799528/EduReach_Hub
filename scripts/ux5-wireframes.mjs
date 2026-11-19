@@ -23,9 +23,10 @@ const PAD = 24;
 // Region shorthand. `tone` encodes hierarchy, `kind` the control type.
 const r = (x, y, w, h, label, kind = 'block', tone = 1) => ({ x, y, w, h, label, kind, tone });
 
-const nav = (mobile = false) => mobile
-  ? [r(0, 0, M, 56, 'Header · logo · menu', 'nav', 2)]
-  : [r(0, 0, W, 64, 'Global header · wordmark · primary nav · search · account', 'nav', 2)];
+const nav = (mobile = false) =>
+  mobile
+    ? [r(0, 0, M, 56, 'Header · logo · menu', 'nav', 2)]
+    : [r(0, 0, W, 64, 'Global header · wordmark · primary nav · search · account', 'nav', 2)];
 
 const mobileBar = (active = 'Home') => [
   r(0, MH - 64, M, 64, `Bottom nav · Home · News · CBT · Services · ${active}`, 'nav', 2),
@@ -33,32 +34,61 @@ const mobileBar = (active = 'Home') => [
 
 const studentScreens = [
   {
-    id: 'home', group: 'Student', title: 'Homepage — decide where to start',
+    id: 'home',
+    group: 'Student',
+    title: 'Homepage — decide where to start',
     intent: 'A first-time visitor identifies the platform and starts a practice paper in one tap.',
     desktop: [
-      ...nav(), r(0, 64, W, 64, 'Search · one field, one submit', 'input', 1),
-      r(64, 144, 760, 264, 'Hero · “Practice the exam you are sitting” · primary CTA “Start CBT practice” · secondary “Past questions”', 'hero', 3),
+      ...nav(),
+      r(0, 64, W, 64, 'Search · one field, one submit', 'input', 1),
+      r(
+        64,
+        144,
+        760,
+        264,
+        'Hero · “Practice the exam you are sitting” · primary CTA “Start CBT practice” · secondary “Past questions”',
+        'hero',
+        3,
+      ),
       r(848, 144, 368, 264, 'Next step for signed-in student · resume unfinished paper', 'card', 2),
       r(64, 440, 1152, 48, 'Section head · Choose your exam', 'head', 2),
-      r(64, 500, 1152, 176, 'Four exam cards · neutral surface, one accent edge · name · bank status · start', 'grid', 1),
+      r(
+        64,
+        500,
+        1152,
+        176,
+        'Four exam cards · neutral surface, one accent edge · name · bank status · start',
+        'grid',
+        1,
+      ),
       r(64, 700, 560, 150, 'Study tools · calculator · CGPA · schools', 'grid', 1),
       r(648, 700, 568, 150, 'Updates · 2 current headlines', 'grid', 1),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 56, 'Search', 'input', 1),
+      ...nav(true),
+      r(16, 72, M - 32, 56, 'Search', 'input', 1),
       r(16, 144, M - 32, 252, 'Hero · headline · primary CTA full width · secondary link', 'hero', 3),
       r(16, 412, M - 32, 88, 'Resume card (signed in only)', 'card', 2),
       r(16, 516, M - 32, 40, 'Choose your exam', 'head', 2),
       r(16, 564, M - 32, 300, 'Exam cards · stacked, compact, 88–104 px each', 'grid', 1),
       ...mobileBar('Home'),
     ],
-    changes: ['Visible page title and purpose', 'One primary action above the fold', 'Neutral exam cards, status instead of decoration', 'No duplicate study-tool tile'],
+    changes: [
+      'Visible page title and purpose',
+      'One primary action above the fold',
+      'Neutral exam cards, status instead of decoration',
+      'No duplicate study-tool tile',
+    ],
   },
   {
-    id: 'dashboard', group: 'Student', title: 'Student dashboard — what to do next',
-    intent: 'A signed-in student sees their next action, their numbers, and recent activity without reading three empty states.',
+    id: 'dashboard',
+    group: 'Student',
+    title: 'Student dashboard — what to do next',
+    intent:
+      'A signed-in student sees their next action, their numbers, and recent activity without reading three empty states.',
     desktop: [
-      ...nav(), r(64, 88, 232, 560, 'Sidebar · Overview · Requests · My CBT · Tools · Academic profile', 'nav', 2),
+      ...nav(),
+      r(64, 88, 232, 560, 'Sidebar · Overview · Requests · My CBT · Tools · Academic profile', 'nav', 2),
       r(320, 88, 896, 88, 'Page head · “Overview” · greeting · primary CTA “Start practice”', 'head', 3),
       r(320, 192, 896, 96, 'Next step panel · one recommended action with reason', 'card', 3),
       r(320, 304, 896, 108, 'Metric strip · Average score · Papers · Open requests · Study streak', 'grid', 2),
@@ -67,20 +97,28 @@ const studentScreens = [
       r(320, 664, 896, 120, 'Getting started checklist (only while profile incomplete)', 'card', 1),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 74, 'Page head · Overview · greeting', 'head', 3),
+      ...nav(true),
+      r(16, 72, M - 32, 74, 'Page head · Overview · greeting', 'head', 3),
       r(16, 160, M - 32, 92, 'Next step panel', 'card', 3),
       r(16, 264, M - 32, 160, 'Metric grid 2×2', 'grid', 2),
       r(16, 440, M - 32, 220, 'Recent CBT list', 'list', 1),
       r(16, 676, M - 32, 96, 'Requests summary', 'list', 1),
       ...mobileBar('Account'),
     ],
-    changes: ['Person name is a greeting, not the page title', 'One recommendation replaces three stacked empty boxes', 'Metrics capped at four'],
+    changes: [
+      'Person name is a greeting, not the page title',
+      'One recommendation replaces three stacked empty boxes',
+      'Metrics capped at four',
+    ],
   },
   {
-    id: 'mycbt', group: 'Student', title: 'My CBT — performance in plain language',
+    id: 'mycbt',
+    group: 'Student',
+    title: 'My CBT — performance in plain language',
     intent: 'A student reads their average, trend and weakest subject, then starts the recommended paper.',
     desktop: [
-      ...nav(), r(64, 88, 232, 560, 'Dashboard sidebar', 'nav', 2),
+      ...nav(),
+      r(64, 88, 232, 560, 'Dashboard sidebar', 'nav', 2),
       r(320, 88, 896, 84, 'Page head · “My CBT” · one-sentence summary · “Start practice”', 'head', 3),
       r(320, 188, 440, 160, 'Primary metric · Average score · papers scored · trend chip', 'card', 3),
       r(776, 188, 440, 160, 'Secondary metrics · best · latest · accuracy', 'grid', 2),
@@ -88,20 +126,29 @@ const studentScreens = [
       r(320, 616, 896, 180, 'Subject breakdown · ranked bars with “practise next” link', 'grid', 1),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 78, 'Page head · My CBT · Start practice', 'head', 3),
+      ...nav(true),
+      r(16, 72, M - 32, 78, 'Page head · My CBT · Start practice', 'head', 3),
       r(16, 164, M - 32, 132, 'Average score card', 'card', 3),
       r(16, 308, M - 32, 180, 'Secondary metrics 2×2', 'grid', 2),
       r(16, 500, M - 32, 190, 'Trend chart', 'chart', 1),
       r(16, 702, M - 32, 180, 'Subject list', 'grid', 1),
       ...mobileBar('Account'),
     ],
-    changes: ['Sentence-case section labels', 'Explanation moved behind “How this is calculated”', 'One primary number'],
+    changes: [
+      'Sentence-case section labels',
+      'Explanation moved behind “How this is calculated”',
+      'One primary number',
+    ],
   },
   {
-    id: 'cbt-setup', group: 'Student', title: 'CBT setup — choose paper with confidence',
-    intent: 'A student understands the rules, picks subjects, sees time and question count, and starts without surprises.',
+    id: 'cbt-setup',
+    group: 'Student',
+    title: 'CBT setup — choose paper with confidence',
+    intent:
+      'A student understands the rules, picks subjects, sees time and question count, and starts without surprises.',
     desktop: [
-      ...nav(), r(64, 88, 1152, 76, 'Page head · exam identity · “JAMB practice” · back link', 'head', 3),
+      ...nav(),
+      r(64, 88, 1152, 76, 'Page head · exam identity · “JAMB practice” · back link', 'head', 3),
       r(64, 184, 760, 132, 'Instruction strip · 3 numbered rules · time · questions · autosave', 'card', 1),
       r(64, 336, 760, 340, 'Subject selection · grouped checkboxes with availability', 'form', 2),
       r(64, 696, 760, 64, 'Validation / bank status line', 'notice', 1),
@@ -109,16 +156,23 @@ const studentScreens = [
       r(848, 588, 368, 140, 'What happens next · result saved · resume rules', 'card', 1),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 76, 'Page head · exam · back', 'head', 3),
+      ...nav(true),
+      r(16, 72, M - 32, 76, 'Page head · exam · back', 'head', 3),
       r(16, 160, M - 32, 92, 'Instruction summary · collapsible', 'card', 1),
       r(16, 264, M - 32, 360, 'Subject selection list', 'form', 2),
       r(0, MH - 128, M, 64, 'Sticky summary · 4 subjects · 120 min', 'card', 3),
       r(0, MH - 64, M, 64, 'Sticky primary action · Start paper', 'cta', 3),
     ],
-    changes: ['Summary is sticky and visible while choosing', 'Bank availability explained before the click', 'Mobile start action within thumb reach'],
+    changes: [
+      'Summary is sticky and visible while choosing',
+      'Bank availability explained before the click',
+      'Mobile start action within thumb reach',
+    ],
   },
   {
-    id: 'exam', group: 'Student', title: 'Examination — calm, single-focus paper',
+    id: 'exam',
+    group: 'Student',
+    title: 'Examination — calm, single-focus paper',
     intent: 'A student answers, navigates and submits without losing time or state.',
     desktop: [
       r(0, 0, W, 64, 'Exam bar · exam · timer · saved indicator · submit', 'nav', 3),
@@ -133,20 +187,28 @@ const studentScreens = [
       r(0, MH - 128, M, 64, 'Question palette drawer handle', 'grid', 1),
       r(0, MH - 64, M, 64, 'Previous · Flag · Next', 'nav', 2),
     ],
-    changes: ['Timer and saved state always visible', 'Options use full tap targets', 'Palette available without leaving the paper'],
+    changes: [
+      'Timer and saved state always visible',
+      'Options use full tap targets',
+      'Palette available without leaving the paper',
+    ],
   },
   {
-    id: 'results', group: 'Student', title: 'Results — understand the outcome',
+    id: 'results',
+    group: 'Student',
+    title: 'Results — understand the outcome',
     intent: 'A student knows their score, what it means, and the next useful step.',
     desktop: [
-      ...nav(), r(64, 88, 1152, 116, 'Result head · exam · date · score ring · band label', 'head', 3),
+      ...nav(),
+      r(64, 88, 1152, 116, 'Result head · exam · date · score ring · band label', 'head', 3),
       r(64, 228, 560, 240, 'Breakdown · correct / wrong / skipped by subject', 'chart', 1),
       r(648, 228, 568, 240, 'What this means · 2 short observations', 'card', 1),
       r(64, 492, 560, 200, 'Answer review list · filter by wrong', 'list', 1),
       r(648, 492, 568, 200, 'Next step · recommended paper, retry, share', 'card', 2),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 150, 'Result head · score ring', 'head', 3),
+      ...nav(true),
+      r(16, 72, M - 32, 150, 'Result head · score ring', 'head', 3),
       r(16, 238, M - 32, 200, 'Subject breakdown', 'chart', 1),
       r(16, 454, M - 32, 120, 'What this means', 'card', 1),
       r(16, 590, M - 32, 150, 'Next step card', 'card', 2),
@@ -155,34 +217,54 @@ const studentScreens = [
     changes: ['One score hierarchy instead of six equal cards', 'Outcome language replaces statistic jargon'],
   },
   {
-    id: 'profile', group: 'Student', title: 'Profile — edit with context',
+    id: 'profile',
+    group: 'Student',
+    title: 'Profile — edit with context',
     intent: 'A student sees completeness, edits grouped information, saves, and sees the saved state.',
     desktop: [
-      ...nav(), r(64, 88, 288, 420, 'Profile card · avatar · name · completeness ring · public link', 'card', 2),
+      ...nav(),
+      r(64, 88, 288, 420, 'Profile card · avatar · name · completeness ring · public link', 'card', 2),
       r(376, 88, 840, 88, 'Page head · “Academic profile” · save state · Save changes', 'head', 3),
       r(376, 192, 840, 520, 'Form groups · Personal · Academic · Contact · Preferences', 'form', 2),
       r(376, 728, 840, 64, 'Sticky save bar · unsaved changes · Cancel · Save', 'cta', 3),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 120, 'Compact identity · avatar · completeness', 'card', 2),
+      ...nav(true),
+      r(16, 72, M - 32, 120, 'Compact identity · avatar · completeness', 'card', 2),
       r(16, 208, M - 32, 60, 'Page head · Academic profile', 'head', 3),
       r(16, 284, M - 32, 440, 'Form groups, one column', 'form', 2),
       r(0, MH - 128, M, 64, 'Sticky unsaved indicator', 'notice', 1),
       r(0, MH - 64, M, 64, 'Sticky Save changes', 'cta', 3),
     ],
-    changes: ['Progress and actions share one header', 'Bottom bar never covers fields (safe-area aware)', 'Groups replace one long card'],
+    changes: [
+      'Progress and actions share one header',
+      'Bottom bar never covers fields (safe-area aware)',
+      'Groups replace one long card',
+    ],
   },
   {
-    id: 'notifications', group: 'Student', title: 'Notifications — status you can act on',
+    id: 'notifications',
+    group: 'Student',
+    title: 'Notifications — status you can act on',
     intent: 'A student scans unread updates and opens the related request or result.',
     desktop: [
-      ...nav(), r(64, 88, 1152, 76, 'Page head · Notifications · mark all read · filter All/Unread', 'head', 3),
-      r(64, 184, 760, 520, 'Notification list · unread dot · title · one-line body · relative time · action', 'list', 1),
+      ...nav(),
+      r(64, 88, 1152, 76, 'Page head · Notifications · mark all read · filter All/Unread', 'head', 3),
+      r(
+        64,
+        184,
+        760,
+        520,
+        'Notification list · unread dot · title · one-line body · relative time · action',
+        'list',
+        1,
+      ),
       r(848, 184, 368, 260, 'Preferences · which events notify me', 'card', 1),
       r(848, 468, 368, 236, 'Quiet state · no new notifications', 'card', 1),
     ],
     mobile: [
-      ...nav(true), r(16, 72, M - 32, 70, 'Page head · Notifications · Mark all read', 'head', 3),
+      ...nav(true),
+      r(16, 72, M - 32, 70, 'Page head · Notifications · Mark all read', 'head', 3),
       r(16, 156, M - 32, 60, 'Filter chips', 'grid', 1),
       r(16, 232, M - 32, 500, 'Notification rows · 88 px each', 'list', 1),
       ...mobileBar('Account'),
@@ -193,7 +275,9 @@ const studentScreens = [
 
 const adminScreens = [
   {
-    id: 'admin-overview', group: 'Admin', title: 'Admin overview — platform state at a glance',
+    id: 'admin-overview',
+    group: 'Admin',
+    title: 'Admin overview — platform state at a glance',
     intent: 'An administrator sees workload, risk and recent activity in one screen.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar · console name · environment · view site · account', 'nav', 2),
@@ -214,7 +298,9 @@ const adminScreens = [
     changes: ['Attention before analytics', 'Grouped navigation with one active section'],
   },
   {
-    id: 'admin-nav', group: 'Admin', title: 'Admin navigation — grouped by job',
+    id: 'admin-nav',
+    group: 'Admin',
+    title: 'Admin navigation — grouped by job',
     intent: 'An administrator finds a section by the job they are doing, not by database table.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -232,7 +318,9 @@ const adminScreens = [
     changes: ['38 flat links become 5 job groups', 'Search within navigation for uncommon sections'],
   },
   {
-    id: 'admin-users', group: 'Admin', title: 'Users — find, inspect, act',
+    id: 'admin-users',
+    group: 'Admin',
+    title: 'Users — find, inspect, act',
     intent: 'An administrator finds a student, understands their state, and takes a safe action.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -253,7 +341,9 @@ const adminScreens = [
     changes: ['Desktop table keeps columns; mobile becomes records', 'Row action opens a drawer instead of a new page'],
   },
   {
-    id: 'admin-questions', group: 'Admin', title: 'Question management — review safely',
+    id: 'admin-questions',
+    group: 'Admin',
+    title: 'Question management — review safely',
     intent: 'An administrator filters questions, inspects one, and edits with provenance visible.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -273,7 +363,9 @@ const adminScreens = [
     changes: ['Editor is a side panel, list keeps place', 'Provenance is visible while editing'],
   },
   {
-    id: 'admin-exams', group: 'Admin', title: 'Examination management — publish with confidence',
+    id: 'admin-exams',
+    group: 'Admin',
+    title: 'Examination management — publish with confidence',
     intent: 'An administrator sees bank health, subject counts and publication state before publishing.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -293,7 +385,9 @@ const adminScreens = [
     changes: ['Publish blockers visible', 'Counts grouped as health, not decoration'],
   },
   {
-    id: 'admin-services', group: 'Admin', title: 'Service requests — work the queue',
+    id: 'admin-services',
+    group: 'Admin',
+    title: 'Service requests — work the queue',
     intent: 'An administrator sees requests needing action, opens one, and changes status with a reason.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -312,7 +406,9 @@ const adminScreens = [
     changes: ['Queue is ordered by need, not newest', 'Status changes require a reason and notify the student'],
   },
   {
-    id: 'admin-content', group: 'Admin', title: 'Content — publish and verify',
+    id: 'admin-content',
+    group: 'Admin',
+    title: 'Content — publish and verify',
     intent: 'An administrator sees what is live, what is scheduled, and what needs review.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -331,7 +427,9 @@ const adminScreens = [
     changes: ['State is a tab, not a column to scan', 'Source and verification are first-class'],
   },
   {
-    id: 'admin-settings', group: 'Admin', title: 'System settings — explain consequences',
+    id: 'admin-settings',
+    group: 'Admin',
+    title: 'System settings — explain consequences',
     intent: 'An administrator changes a setting and understands its blast radius.',
     desktop: [
       r(0, 0, W, 60, 'Admin top bar', 'nav', 2),
@@ -357,9 +455,19 @@ const tones = {
   3: { fill: '#E7EFEA', stroke: '#174A3A', text: '#123C2F' },
 };
 const kindFill = {
-  nav: '#0F172A', head: '#E7EFEA', hero: '#DCE9E2', cta: '#174A3A', table: '#F8FAFC',
-  card: '#FFFFFF', grid: '#FFFFFF', list: '#FFFFFF', chart: '#FFFFFF', form: '#FFFFFF',
-  input: '#FFFFFF', notice: '#FEF3C7', block: '#FFFFFF',
+  nav: '#0F172A',
+  head: '#E7EFEA',
+  hero: '#DCE9E2',
+  cta: '#174A3A',
+  table: '#F8FAFC',
+  card: '#FFFFFF',
+  grid: '#FFFFFF',
+  list: '#FFFFFF',
+  chart: '#FFFFFF',
+  form: '#FFFFFF',
+  input: '#FFFFFF',
+  notice: '#FEF3C7',
+  block: '#FFFFFF',
 };
 
 function esc(s) {
@@ -371,8 +479,10 @@ function wrap(text, max) {
   const lines = [];
   let line = '';
   for (const w of words) {
-    if ((line + ' ' + w).trim().length > max) { if (line) lines.push(line.trim()); line = w; }
-    else line += ' ' + w;
+    if ((line + ' ' + w).trim().length > max) {
+      if (line) lines.push(line.trim());
+      line = w;
+    } else line += ' ' + w;
   }
   if (line.trim()) lines.push(line.trim());
   return lines;
@@ -381,8 +491,9 @@ function wrap(text, max) {
 function drawRegion(region, scale, offsetX, offsetY) {
   const { x, y, w, h, label, kind, tone } = region;
   const lowered = label.toLowerCase();
-  const isNav = kind === 'nav' && tone >= 2 && (lowered.includes('header') || lowered.includes('bar') || lowered.includes('nav'));
-  const fill = kind === 'cta' ? '#174A3A' : (isNav ? '#0F172A' : (kindFill[kind] || tones[tone].fill));
+  const isNav =
+    kind === 'nav' && tone >= 2 && (lowered.includes('header') || lowered.includes('bar') || lowered.includes('nav'));
+  const fill = kind === 'cta' ? '#174A3A' : isNav ? '#0F172A' : kindFill[kind] || tones[tone].fill;
   const stroke = kind === 'cta' ? '#174A3A' : tones[tone].stroke;
   const text = kind === 'cta' || isNav ? '#F8FAFC' : tones[tone].text;
   const X = offsetX + x * scale;
@@ -394,7 +505,13 @@ function drawRegion(region, scale, offsetX, offsetY) {
   return `
   <g>
     <rect x="${X.toFixed(1)}" y="${Y.toFixed(1)}" width="${ww.toFixed(1)}" height="${hh.toFixed(1)}" rx="${kind === 'cta' ? 6 : 4}" fill="${fill}" stroke="${stroke}" stroke-width="1"/>
-    ${lines.slice(0, Math.max(1, Math.floor((hh - 10) / lineH))).map((line, i) => `<text x="${(X + 8).toFixed(1)}" y="${(Y + 16 + i * lineH).toFixed(1)}" font-family="Inter, Arial, sans-serif" font-size="${(8.6).toFixed(1)}" font-weight="${kind === 'head' ? 700 : 500}" fill="${text}">${esc(line)}</text>`).join('')}
+    ${lines
+      .slice(0, Math.max(1, Math.floor((hh - 10) / lineH)))
+      .map(
+        (line, i) =>
+          `<text x="${(X + 8).toFixed(1)}" y="${(Y + 16 + i * lineH).toFixed(1)}" font-family="Inter, Arial, sans-serif" font-size="${(8.6).toFixed(1)}" font-weight="${kind === 'head' ? 700 : 500}" fill="${text}">${esc(line)}</text>`,
+      )
+      .join('')}
   </g>`;
 }
 
@@ -402,10 +519,15 @@ function screenSvg(screen) {
   const scale = 0.55;
   const width = PAD * 2 + W * scale + GAP + M * scale;
   const height = PAD * 2 + 44 + Math.max(H, MH) * scale + 96;
-  const desktop = screen.desktop.map(region => drawRegion(region, scale, PAD, PAD + 44));
+  const desktop = screen.desktop.map((region) => drawRegion(region, scale, PAD, PAD + 44));
   const mobileX = PAD + W * scale + GAP;
-  const mobile = screen.mobile.map(region => drawRegion(region, scale, mobileX, PAD + 44));
-  const annotations = screen.changes.map((c, i) => `<text x="${PAD}" y="${(PAD + 44 + H * scale + 34 + i * 18).toFixed(1)}" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• ${esc(c)}</text>`).join('');
+  const mobile = screen.mobile.map((region) => drawRegion(region, scale, mobileX, PAD + 44));
+  const annotations = screen.changes
+    .map(
+      (c, i) =>
+        `<text x="${PAD}" y="${(PAD + 44 + H * scale + 34 + i * 18).toFixed(1)}" font-family="Inter, Arial, sans-serif" font-size="10.5" fill="#475467">• ${esc(c)}</text>`,
+    )
+    .join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width.toFixed(0)}" height="${height.toFixed(0)}" viewBox="0 0 ${width.toFixed(0)} ${height.toFixed(0)}" role="img" aria-label="Wireframe: ${esc(screen.title)}">
   <rect width="100%" height="100%" fill="#F8FAFC"/>
   <text x="${PAD}" y="${PAD + 8}" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" fill="#0F172A">${esc(screen.title)}</text>
@@ -423,9 +545,17 @@ function screenSvg(screen) {
 const screens = [...studentScreens, ...adminScreens];
 for (const screen of screens) writeFileSync(`${OUT}/${screen.id}.svg`, screenSvg(screen));
 
-const cards = screens.map(s => `<a class="card" href="${s.id}.svg"><span class="tag">${s.group}</span><strong>${esc(s.title)}</strong><p>${esc(s.intent)}</p></a>`).join('\n');
-writeFileSync(`${OUT}/index.html`, `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EduReach UX-5 wireframes</title>
+const cards = screens
+  .map(
+    (s) =>
+      `<a class="card" href="${s.id}.svg"><span class="tag">${s.group}</span><strong>${esc(s.title)}</strong><p>${esc(s.intent)}</p></a>`,
+  )
+  .join('\n');
+writeFileSync(
+  `${OUT}/index.html`,
+  `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EduReach UX-5 wireframes</title>
 <style>body{margin:0;background:#F7F9F8;color:#0F172A;font:15px/1.6 Inter,Arial,sans-serif}header{padding:40px 24px 8px;max-width:1080px;margin:auto}h1{margin:0 0 6px;font-size:30px;letter-spacing:-.02em}header p{margin:0;color:#475467;max-width:720px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;max-width:1080px;margin:24px auto 60px;padding:0 24px}.card{display:block;padding:18px;background:#fff;border:1px solid #E2E8F0;border-radius:12px;color:inherit;text-decoration:none}.card:hover{border-color:#174A3A}.tag{display:inline-block;margin-bottom:8px;padding:2px 8px;border-radius:999px;background:#EDF5F0;color:#174A3A;font-size:11px;font-weight:600}.card strong{display:block;font-size:15px}.card p{margin:6px 0 0;font-size:12.5px;color:#475467}</style>
-<header><h1>EduReach UX-5 wireframes</h1><p>Structural wireframes for the student and administrator applications. Greyscale regions describe hierarchy and placement; they are deliberately not screenshots of the current build.</p></header><div class="grid">${cards}</div></html>`);
+<header><h1>EduReach UX-5 wireframes</h1><p>Structural wireframes for the student and administrator applications. Greyscale regions describe hierarchy and placement; they are deliberately not screenshots of the current build.</p></header><div class="grid">${cards}</div></html>`,
+);
 
 console.log(`Wrote ${screens.length} wireframes to ${OUT}`);

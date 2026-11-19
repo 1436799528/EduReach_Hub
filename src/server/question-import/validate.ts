@@ -20,7 +20,9 @@ export type Validation = {
 const MIN_QUESTION_LENGTH = 8;
 
 function clean(value: string | null | undefined): string {
-  return String(value || '').replace(/\s+/g, ' ').trim();
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /**
@@ -35,8 +37,7 @@ export function validateItem(item: ItemInput, options: { duplicateOf?: string | 
   const blocking: string[] = [];
   const notes: string[] = [];
   const questionText = clean(item.questionText);
-  const choices = [item.optionA, item.optionB, item.optionC, item.optionD]
-    .map((option) => clean(option));
+  const choices = [item.optionA, item.optionB, item.optionC, item.optionD].map((option) => clean(option));
   const extra = clean(item.optionE);
 
   if (!questionText) blocking.push('Question text is missing.');
@@ -74,7 +75,10 @@ export function validateExtracted(item: ExtractedItem): Validation {
 export function normaliseItem(item: ItemInput) {
   // Preserve paragraph breaks when a reviewer edits the stem; use `clean` only
   // for comparisons and validation, not for the content stored in the bank.
-  const preserveText = (value: string | null | undefined) => String(value || '').replace(/\r\n?/g, '\n').trim();
+  const preserveText = (value: string | null | undefined) =>
+    String(value || '')
+      .replace(/\r\n?/g, '\n')
+      .trim();
   return {
     questionText: preserveText(item.questionText),
     optionA: preserveText(item.optionA),

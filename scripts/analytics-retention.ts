@@ -44,8 +44,7 @@ export function buildRetentionPlan(now: Date, retentionDays: number, apply: bool
 }
 
 export type RetentionResult =
-  | { ok: true; deleted: number; cutoff: string; retentionDays: number }
-  | { ok: false; reason: string };
+  { ok: true; deleted: number; cutoff: string; retentionDays: number } | { ok: false; reason: string };
 
 /** Pure: read the RPC's jsonb answer without trusting its shape. */
 export function readRetentionResult(data: unknown): RetentionResult {
@@ -54,14 +53,18 @@ export function readRetentionResult(data: unknown): RetentionResult {
   const deleted = Number(record.deleted);
   const retentionDays = Number(record.retentionDays ?? RETENTION_DAYS);
   const cutoff = typeof record.cutoff === 'string' ? record.cutoff : '';
-  if (!Number.isFinite(deleted) || deleted < 0) return { ok: false, reason: 'the prune function returned no deleted count' };
+  if (!Number.isFinite(deleted) || deleted < 0)
+    return { ok: false, reason: 'the prune function returned no deleted count' };
   return { ok: true, deleted, cutoff, retentionDays };
 }
 
 export type RetentionClient = {
   rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
   from: (table: string) => {
-    select: (columns: string, options: { count: 'exact'; head: true }) => {
+    select: (
+      columns: string,
+      options: { count: 'exact'; head: true },
+    ) => {
       lt: (column: string, value: string) => PromiseLike<{ count: number | null; error: { message: string } | null }>;
     };
   };
@@ -87,7 +90,13 @@ export async function executeRetention(client: RetentionClient, plan: RetentionP
       .select('id', { count: 'exact', head: true })
       .lt('created_at', plan.cutoff);
     if (error) return { ok: false, reason: `the read-only count failed: ${error.message}` };
-    return { ok: true, mode: 'dry-run', wouldDelete: typeof count === 'number' ? count : null, cutoff: plan.cutoff, retentionDays: plan.retentionDays };
+    return {
+      ok: true,
+      mode: 'dry-run',
+      wouldDelete: typeof count === 'number' ? count : null,
+      cutoff: plan.cutoff,
+      retentionDays: plan.retentionDays,
+    };
   }
 
   const { data, error } = await client.rpc('prune_site_analytics_events', { p_retention_days: plan.retentionDays });
@@ -99,7 +108,13 @@ export async function executeRetention(client: RetentionClient, plan: RetentionP
   }
   const result = readRetentionResult(data);
   if (result.ok === false) return { ok: false, reason: result.reason };
-  return { ok: true, mode: 'apply', deleted: result.deleted, cutoff: result.cutoff || plan.cutoff, retentionDays: result.retentionDays };
+  return {
+    ok: true,
+    mode: 'apply',
+    deleted: result.deleted,
+    cutoff: result.cutoff || plan.cutoff,
+    retentionDays: result.retentionDays,
+  };
 }
 
 export function supabaseUrlForRetention(env: NodeJS.ProcessEnv = process.env): string {
@@ -114,7 +129,9 @@ async function main() {
   console.log('AN-1 analytics retention');
   console.log(`  window:  ${plan.retentionDays} days (src/lib/analyticsTaxonomy.ts)`);
   console.log(`  cutoff:  ${plan.cutoff}`);
-  console.log(`  mode:    ${plan.dryRun ? 'dry run — nothing will be deleted' : 'apply — rows older than the cutoff will be deleted'}`);
+  console.log(
+    `  mode:    ${plan.dryRun ? 'dry run — nothing will be deleted' : 'apply — rows older than the cutoff will be deleted'}`,
+  );
 
   const url = supabaseUrlForRetention();
   const key = getServerSupabaseKey();
@@ -138,7 +155,8 @@ async function main() {
     console.error(`  ${outcome.reason}`);
     // OBS-1: a failed apply is recorded so the console can see it. Best effort,
     // and only on --apply: a dry run is not a job execution.
-    if (apply) await recordJobRun(supabase, 'analytics-retention', { status: 'failed', startedAt, error: outcome.reason });
+    if (apply)
+      await recordJobRun(supabase, 'analytics-retention', { status: 'failed', startedAt, error: outcome.reason });
     process.exitCode = 1;
     return;
   }

@@ -19,7 +19,7 @@ test('the class header policy is short-lived, CDN-cached and revalidating', () =
 });
 
 test('a cold read loads once, and a second read is a hit', async () => {
-  let now = 1_000;
+  const now = 1_000;
   let loads = 0;
   const cache = createPublicCache<string>({ ttlMs: 60_000, staleMs: 600_000, now: () => now });
   const load = async () => { loads += 1; return `value-${loads}`; };

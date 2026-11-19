@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/vercel-supabase-direct-uploads
   workflow_dispatch:
 
 jobs:
