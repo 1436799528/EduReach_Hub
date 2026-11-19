@@ -32,6 +32,7 @@ import {
   type ExtractedItem,
 } from './extract';
 import { normaliseItem, questionFingerprint, validateItem } from './validate';
+import { errorFacts, log } from '../../../lib/observability';
 
 const BUCKET = 'past-questions';
 const MAX_BYTES = 20 * 1024 * 1024;
@@ -231,7 +232,7 @@ async function failJob(supabase: Db, importId: string, message: string) {
   try {
     await supabase.rpc('fail_question_import', { p_import_id: importId, p_error: message });
   } catch (error) {
-    console.error('Question import failure could not be recorded:', error instanceof Error ? error.message : 'unknown');
+    log.error('question_import.failure_unrecorded', { ...errorFacts(error) });
   }
 }
 
@@ -339,7 +340,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       if (error) throw error;
       res.json({ items: data || [] });
     } catch (error) {
-      console.error('Question import list failed:', error instanceof Error ? error.message : 'unknown');
+      log.error('question_import.list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load the import history.' });
     }
   });
@@ -481,7 +482,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
         void processImport(created.id, deps);
         res.status(202).json({ item: created });
       } catch (error) {
-        console.error('Question import upload failed:', error instanceof Error ? error.message : 'unknown');
+        log.error('question_import.upload_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(503).json({ error: formatError(error, 'Unable to upload this file.') });
       }
     },
@@ -524,7 +525,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
         },
       });
     } catch (error) {
-      console.error('Question import detail failed:', error instanceof Error ? error.message : 'unknown');
+      log.error('question_import.detail_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load this import.' });
     }
   });
@@ -563,7 +564,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
         void processImport(item.id, deps);
         res.status(202).json({ ok: true });
       } catch (error) {
-        console.error('Question import retry failed:', error instanceof Error ? error.message : 'unknown');
+        log.error('question_import.retry_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(503).json({ error: 'Unable to retry this import.' });
       }
     },
@@ -635,7 +636,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
         return res.status(409).json({ error: 'This question changed during editing. Reload it before saving again.' });
       res.json({ item: updated, blocking: validation.blocking });
     } catch (error) {
-      console.error('Question import item update failed:', error instanceof Error ? error.message : 'unknown');
+      log.error('question_import.item_update_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to save this question.' });
     }
   });
@@ -711,7 +712,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       });
       res.json({ item: updated });
     } catch (error) {
-      console.error('Question import review failed:', error instanceof Error ? error.message : 'unknown');
+      log.error('question_import.review_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to record that review.' });
     }
   });
@@ -770,9 +771,11 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
             // the guard aborts it. The attempt is recorded as a failed copy rather
             // than a policy error. Ids only - never the imported text, a
             // fingerprint, the restricted bank's title or the raw database error.
-            console.warn('Question import publication refused by the provenance guard.', {
+            log.warn('question_import.publication_refused', {
+              request_id: res.locals?.requestId,
               import_id: item.id,
               exam_id: item.exam_id,
+              reason: 'provenance_guard',
             });
             await recordAudit(supabase, {
               actorId,
@@ -803,7 +806,10 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
             // The reviewed provenance change is not applied (or is not exposed).
             // Fail closed without pretending a refusal occurred: the caller gets
             // the generic publication failure and nothing was saved.
-            console.error('Question import publication failed: provenance guard unavailable.');
+            log.error('question_import.publication_failed', {
+              request_id: res.locals?.requestId,
+              reason: 'provenance_guard_unavailable',
+            });
             return res.status(503).json({
               error:
                 'Question publication is unavailable until the question provenance database change is applied. No questions were saved.',
@@ -828,7 +834,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
           /not ready|not being processed|not found|invalid or incomplete/i.test(error.message)
             ? error.message
             : 'Unable to save the approved questions.';
-        console.error('Question import commit failed:', error instanceof Error ? error.message : 'unknown');
+        log.error('question_import.commit_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(409).json({ error: message });
       }
     },
@@ -959,7 +965,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
 
         res.json({ item: updated });
       } catch (error) {
-        console.error('Question import update failed:', error instanceof Error ? error.message : 'unknown');
+        log.error('question_import.update_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(503).json({ error: 'Unable to update this import.' });
       }
     },
@@ -981,7 +987,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       if (signError || !signed?.signedUrl) throw signError || new Error('No URL');
       res.json({ url: signed.signedUrl, filename: item.original_filename, expiresIn: 300 });
     } catch (error) {
-      console.error('Question import source failed:', error instanceof Error ? error.message : 'unknown');
+      log.error('question_import.source_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to create a download link for the original file.' });
     }
   });
@@ -1019,7 +1025,7 @@ export function registerQuestionImportRoutes(app: Express, deps: RouteDeps): voi
       });
       res.status(204).end();
     } catch (error) {
-      console.error('Question import delete failed:', error instanceof Error ? error.message : 'unknown');
+      log.error('question_import.delete_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to delete this import.' });
     }
   });

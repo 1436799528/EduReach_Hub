@@ -47,6 +47,7 @@ import {
   type ReviewOverviewRow,
 } from './institutionAdmin';
 import { createPublicCache, PRIVATE_CACHE_CONTROL, PUBLIC_CACHE_CONTROL } from './publicCache';
+import { errorFacts, log } from '../../lib/observability';
 
 export interface InstitutionIntelligenceDeps {
   // Injected exactly as server.ts defines them; their capability unions are
@@ -265,7 +266,9 @@ export const intelligenceCache = createPublicCache<InstitutionIntelligencePayloa
   ttlMs: 60_000,
   staleMs: 600_000,
   shouldCache: (payload) => Boolean(payload.profile),
-  onError: (error, key) => console.warn('[institution-cache] refresh failed', key, (error as Error)?.message),
+  // A cache refresh that fails serves the stale copy; the event is the only
+  // trace of a database problem behind an otherwise healthy response.
+  onError: (error, key) => log.warn('institutions.cache_refresh_failed', { cache_key: key, ...errorFacts(error) }),
 });
 
 export function invalidateInstitutionCache(institutionId: string): void {
@@ -304,7 +307,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         res.setHeader('Cache-Control', PRIVATE_CACHE_CONTROL);
         return res.status(404).json({ error: 'Institution not found.' });
       }
-      console.error('Institution intelligence read error:', error);
+      log.error('institutions.read_failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       // A temporary database problem must not be cached as an answer.
       res.setHeader('Cache-Control', PRIVATE_CACHE_CONTROL);
       res.status(503).json({ error: 'Institution intelligence is temporarily unavailable.' });
@@ -367,7 +373,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
           checkedAt: new Date().toISOString(),
         });
       } catch (error) {
-        console.error('Institution review queue error:', error);
+        log.error('institutions.review_queue_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         const missingView = /institution_review_overview|schema cache|does not exist/i.test(
           String((error as Error)?.message ?? ''),
         );
@@ -414,7 +423,7 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
           total: rows.length,
         });
       } catch (error) {
-        console.error('Institution list error:', error);
+        log.error('institutions.list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(503).json({ error: 'Unable to load the institution list.' });
       }
     },
@@ -578,7 +587,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
           },
         });
       } catch (error) {
-        console.error('Institution detail error:', error);
+        log.error('institutions.detail_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         res.status(503).json({ error: 'Unable to load this institution for review.' });
       }
     },
@@ -658,7 +670,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
           checklist: null,
         });
       } catch (error) {
-        console.error('Institution profile write error:', error);
+        log.error('institutions.profile_write_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         const gate = /cannot be published|publication gate/i.test(String((error as Error)?.message ?? ''));
         if (gate) return adminGateFailure(res, 'This record cannot be published while it is unverified.');
         res.status(500).json({ error: 'Unable to save that profile section.' });
@@ -713,7 +728,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.status(201).json({ unit: inserted.data });
       } catch (error) {
-        console.error('Academic unit create error:', error);
+        log.error('institutions.academic_unit_create_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         res.status(500).json({ error: 'Unable to add that academic unit.' });
       }
     },
@@ -774,7 +792,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.json({ unit: updated.data });
       } catch (error) {
-        console.error('Academic unit write error:', error);
+        log.error('institutions.academic_unit_write_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         res.status(500).json({ error: 'Unable to save that academic unit.' });
       }
     },
@@ -817,7 +838,7 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.status(201).json({ offering: inserted.data });
       } catch (error) {
-        console.error('Programme create error:', error);
+        log.error('institutions.programme_create_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(500).json({ error: 'Unable to add that programme.' });
       }
     },
@@ -886,7 +907,7 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.json({ offering: updated.data });
       } catch (error) {
-        console.error('Programme write error:', error);
+        log.error('institutions.programme_write_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         const gate = /cannot be published|publication gate/i.test(String((error as Error)?.message ?? ''));
         if (gate) return adminGateFailure(res, 'This programme cannot be published while it is unverified.');
         res.status(500).json({ error: 'Unable to save that programme.' });
@@ -939,7 +960,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.json({ route: updated.data });
       } catch (error) {
-        console.error('Admission route write error:', error);
+        log.error('institutions.admission_route_write_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         const gate = /cannot be published|publication gate/i.test(String((error as Error)?.message ?? ''));
         if (gate) return adminGateFailure(res, 'This admission route cannot be published while it is unverified.');
         res.status(500).json({ error: 'Unable to save that admission route.' });
@@ -999,7 +1023,7 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.json({ requirement: updated.data });
       } catch (error) {
-        console.error('Requirement write error:', error);
+        log.error('institutions.requirement_write_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         const gate = /cannot be published|publication gate/i.test(String((error as Error)?.message ?? ''));
         if (gate) return adminGateFailure(res, 'These requirements cannot be published while they are unverified.');
         res.status(500).json({ error: 'Unable to save those requirements.' });
@@ -1058,7 +1082,10 @@ export function registerInstitutionIntelligenceRoutes(app: Express, deps: Instit
         });
         res.json({ item: updated.data });
       } catch (error) {
-        console.error('Institution evidence review error:', error);
+        log.error('institutions.evidence_review_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(error),
+        });
         res.status(500).json({ error: 'Unable to record that review.' });
       }
     },

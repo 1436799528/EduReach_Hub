@@ -17,6 +17,7 @@
 
 import type { Express, Request, Response } from 'express';
 import type { Capability } from '../../lib/capabilities';
+import { errorFacts, log } from '../../../lib/observability';
 
 type RpcResult = { data?: unknown; error?: { message?: string; code?: string } | null };
 type ScopedClient = {
@@ -138,7 +139,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError))
         return denied(res, 'bank_inventory_denied', null, String((req as any).adminUser?.id || ''));
-      console.error('Bank inventory failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.inventory_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load question banks.' });
     }
   });
@@ -159,7 +160,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError))
         return denied(res, 'bank_candidates_denied', examId, String((req as any).adminUser?.id || ''));
-      console.error('Bank candidate list failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.candidate_list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load candidates for this bank.' });
     }
   });
@@ -181,7 +182,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError))
         return denied(res, 'bank_history_denied', examId, String((req as any).adminUser?.id || ''));
-      console.error('Bank history failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.history_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load the bank audit history.' });
     }
   });
@@ -206,7 +207,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (error) throw error;
       res.json({ items: data || [] });
     } catch (error) {
-      console.error('Bank candidate search failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.candidate_search_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to search student accounts.' });
     }
   });
@@ -245,7 +246,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_classify_denied', examId, actorId);
-      console.error('Bank classification failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.classification_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to classify this bank.') });
     }
   });
@@ -270,7 +271,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
     } catch (error) {
       if (isUnavailable(error as SupabaseError)) return res.status(503).json({ error: UNAVAILABLE_MESSAGE });
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_release_denied', examId, actorId);
-      console.error('Bank release change failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.release_change_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res
         .status(400)
         .json({ error: userMessage(error as SupabaseError, 'Unable to change the correction release time.') });
@@ -301,7 +302,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_assign_denied', examId, actorId);
       if (isValidationError(error as SupabaseError))
         return res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to assign this candidate.') });
-      console.error('Bank assignment failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.assignment_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to assign this candidate.' });
     }
   });
@@ -329,7 +330,7 @@ export function registerRestrictedBankAdminRoutes(app: Express, deps: Restricted
       if (isPermissionDenied(error as SupabaseError)) return denied(res, 'bank_revoke_denied', examId, actorId);
       if (isValidationError(error as SupabaseError))
         return res.status(400).json({ error: userMessage(error as SupabaseError, 'Unable to revoke this candidate.') });
-      console.error('Bank revocation failed:', (error as SupabaseError)?.message || 'unknown');
+      log.error('question_banks.revocation_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to revoke this candidate.' });
     }
   });

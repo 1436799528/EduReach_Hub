@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { runNewsroomRefresh, summarizeRun } from '../../src/server/newsroom/run';
 import { recordJobRun } from '../../src/server/jobRuns';
 import type { RunEnvironment } from '../../src/server/newsroom/run';
+import { errorFacts, log } from '../../lib/observability';
 
 type NetlifyEnv = { get(name: string): string | undefined };
 type NetlifyGlobal = { env: NetlifyEnv };
@@ -71,10 +72,12 @@ async function runMaintenance(env: RunEnvironment): Promise<void> {
       try {
         const detail = await run();
         await recordJobRun(supabase, name, { status: 'succeeded', startedAt, detail });
-        console.log(`EduReach daily maintenance [${name}]: succeeded`, detail);
+        log.info('scheduled_job.succeeded', { job: name, detail });
       } catch (error) {
         await recordJobRun(supabase, name, { status: 'failed', startedAt, error });
-        console.error(`EduReach daily maintenance [${name}] failed:`, error);
+        // `recordJobRun` already stored the failure for `scheduled_job_status()`;
+        // the log line is what an operator watching stderr sees in real time.
+        log.error('scheduled_job.failed', { job: name, ...errorFacts(error) });
       }
     }),
   );
@@ -86,12 +89,15 @@ export default async () => {
     (async () => {
       try {
         const report = await runNewsroomRefresh({ env, triggeredBy: 'schedule' });
-        console.log(`EduReach daily newsroom refresh [${report.runId ?? 'dry-run'}]: ${summarizeRun(report)}`);
+        log.info('newsroom.refresh_completed', {
+          run_id: report.runId ?? null,
+          summary: summarizeRun(report),
+        });
         for (const source of report.perSource.filter((entry) => entry.status === 'failed')) {
-          console.warn(`EduReach source failed: ${source.sourceKey}: ${source.error}`);
+          log.warn('newsroom.source_failed', { run_id: report.runId ?? null, source_key: source.sourceKey });
         }
       } catch (error) {
-        console.error('EduReach daily newsroom refresh failed:', error);
+        log.error('newsroom.refresh_failed', { ...errorFacts(error) });
       }
     })(),
     runMaintenance(env),

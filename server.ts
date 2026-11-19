@@ -24,6 +24,7 @@ import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
 import { httpStatusForErrorMessage, userFacingError as normalizeUserFacingError } from './lib/errors';
 import { getServerSupabaseClient, supabaseFetch } from './lib/supabase-server';
 import { createRateLimiter, RATE_LIMIT_RULES } from './lib/rate-limit';
+import { EventRateLimiter, createReadinessReporter, errorFacts, log, requestIdFor } from './lib/observability';
 import { cleanReportDetail, isQuestionReportCategory, isQuestionReportStatus } from './src/server/questionReports';
 import { checkExpectedKey, parseRegradeOutcome, regradeAuditMetadata, regradeHeadline } from './src/server/cbtRegrade';
 import { runNewsroomRefresh } from './src/server/newsroom/run';
@@ -70,7 +71,9 @@ const rateLimitFor = createRateLimiter({
     const result = await getServerSupabase().rpc(fn, args);
     return { data: result.data, error: result.error ? { message: result.error.message } : null };
   },
-  log: (message, meta) => console.warn(`[rate-limit] ${message}`, meta ? JSON.stringify(meta) : ''),
+  // The limiter already de-duplicates per key; its messages name the policy and
+  // the caller, never the payload.
+  log: (message, meta) => log.warn('ratelimit.throttled', { detail: message, ...(meta || {}) }),
 });
 
 // Legacy path normalisation: bookmarked or hard-coded `/.netlify/functions/api`
@@ -111,6 +114,63 @@ app.use((_req, res, next) => {
   // Server-side indexability. A client-rendered noindex is a hint; this header
   // is what a crawler actually receives for student, admin and tracker routes.
   if (isPrivatePath(_req.path)) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
+// ---------------------------------------------------------------------------
+// OBS-2 - request correlation and failure logging.
+//
+// Every request gets an id (the platform's own when it sends one), and every
+// failure carries it. Only failures are logged, plus the slow tail: logging each
+// successful request would bury the signal in traffic and cost more than it
+// tells anyone.
+//
+// The route shape, not the raw URL, is what goes in the line: a query string can
+// contain a search term a student typed, and a raw path can contain an id that
+// makes every line unique. Ids are collapsed to `:id`.
+// ---------------------------------------------------------------------------
+
+const SLOW_REQUEST_MS = Number(process.env.OBS_SLOW_REQUEST_MS || 5000);
+const serverFailureLog = new EventRateLimiter(120, 60_000);
+const deniedLog = new EventRateLimiter(30, 60_000);
+const UUID_IN_PATH = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+function routeShape(req: express.Request): string {
+  const raw = `${req.method} ${req.baseUrl || ''}${req.path || req.url.split('?')[0] || ''}`;
+  return raw.replace(UUID_IN_PATH, ':id').slice(0, 120);
+}
+
+app.use((req, res, next) => {
+  const requestId = requestIdFor(req.headers as Record<string, unknown>);
+  res.locals.requestId = requestId;
+  res.setHeader('X-Request-Id', requestId);
+  const startedAt = Date.now();
+  res.on('finish', () => {
+    try {
+      const route = routeShape(req);
+      const durationMs = Date.now() - startedAt;
+      if (res.statusCode >= 500) {
+        if (serverFailureLog.allow(`5xx:${route}`)) {
+          log.error('http.server_error', {
+            request_id: requestId,
+            route,
+            status: res.statusCode,
+            duration_ms: durationMs,
+          });
+        }
+      } else if (res.statusCode === 401 || res.statusCode === 403) {
+        // A refused request is expected traffic in ones and twos; a burst is an
+        // incident. Collapsing repeats keeps the burst visible without a flood.
+        if (deniedLog.allow(`${res.statusCode}:${route}`)) {
+          log.warn('http.denied', { request_id: requestId, route, status: res.statusCode, duration_ms: durationMs });
+        }
+      } else if (durationMs >= SLOW_REQUEST_MS) {
+        log.warn('http.slow', { request_id: requestId, route, status: res.statusCode, duration_ms: durationMs });
+      }
+    } catch {
+      // Logging must never break the response.
+    }
+  });
   next();
 });
 
@@ -196,6 +256,8 @@ async function requireUser(req: express.Request, capability: Capability = 'dashb
   };
 }
 
+const reportReadiness = createReadinessReporter();
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'edureach' });
 });
@@ -250,6 +312,15 @@ app.get('/api/health/ready', async (_req, res) => {
   }
 
   const ready = Object.values(checks).every((check) => check.ok);
+  // Readiness is probed by monitors every minute; log the transition, not every
+  // poll, and repeat the degraded state rarely enough to prove it is still true.
+  reportReadiness(
+    ready,
+    Object.entries(checks)
+      .filter(([, check]) => !check.ok)
+      .map(([name]) => name),
+    databaseLatencyMs,
+  );
   res.status(ready ? 200 : 503).json({
     status: ready ? 'ready' : 'degraded',
     checked_at: new Date().toISOString(),
@@ -328,7 +399,10 @@ app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), 
       return res.status(409).json({ error: 'Admin bootstrap is already locked or the account does not match.' });
     res.json({ success: true, role: 'super_admin' });
   } catch (error) {
-    console.error('Admin bootstrap error:', error);
+    log.error('admin.bootstrap.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to bootstrap the first administrator.' });
   }
 });
@@ -361,7 +435,10 @@ app.get('/api/admin/jobs', requireCapability('analytics.read'), async (_req, res
     const health = evaluateJobHealth(data as { sinceHours: number; jobs: Array<Record<string, unknown>> });
     res.json({ ...(data as Record<string, unknown>), health });
   } catch (error) {
-    console.error('Admin job status error:', error);
+    log.error('admin.job_status.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load scheduled job status.' });
   }
 });
@@ -429,7 +506,10 @@ app.get('/api/admin/analytics', requireCapability('analytics.read'), async (req,
       recentUsers: recentUsers.data || [],
     });
   } catch (error) {
-    console.error('Admin analytics error:', error);
+    log.error('admin.analytics.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load administrative analytics.' });
   }
 });
@@ -476,7 +556,10 @@ app.post('/api/analytics/event', rateLimitFor(RATE_LIMIT_RULES.analyticsEvent), 
     if (error) throw error;
     res.status(204).end();
   } catch (error) {
-    console.error('Analytics event error:', error);
+    log.error('app.analytics_event.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(204).end();
   }
 });
@@ -512,7 +595,10 @@ app.get('/api/admin/users', requireCapability('user.read'), async (req, res) => 
     );
     res.json({ items: (data || []).map((row) => ({ ...row, suspended: suspendedIds.has(row.id) })) });
   } catch (error) {
-    console.error('Admin users error:', error);
+    log.error('admin.users.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load student accounts.' });
   }
 });
@@ -557,7 +643,10 @@ app.get('/api/admin/users/:userId/activity', requireCapability('user.read'), asy
       attemptError: attempts.error ? 'CBT history unavailable.' : null,
     });
   } catch (error) {
-    console.error('Admin user activity error:', error);
+    log.error('admin.user_activity.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load the student activity.' });
   }
 });
@@ -588,7 +677,10 @@ app.get('/api/admin/service-requests', requireCapability('service_request.read')
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Admin service queue error:', error);
+    log.error('admin.service_queue.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load service queue.' });
   }
 });
@@ -685,7 +777,10 @@ app.patch('/api/admin/service-requests/:requestId', requireCapability('service_r
     }
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin service status error:', error);
+    log.error('admin.service_status.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({
       error: updateAttempted
         ? 'Unable to confirm the update. Refresh the queue before retrying.'
@@ -706,7 +801,10 @@ app.get('/api/admin/cbt/exams', requireCapability('cbt.read'), async (_req, res)
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Admin CBT exams error:', error);
+    log.error('admin.cbt_exams.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load CBT exams.' });
   }
 });
@@ -804,7 +902,10 @@ app.post('/api/admin/cbt/exams', requireCapability('cbt.manage'), async (req, re
     });
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Admin CBT exam create error:', error);
+    log.error('admin.cbt_exam_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to create CBT exam.' });
   }
 });
@@ -932,7 +1033,10 @@ app.patch('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), async
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin CBT exam update error:', error);
+    log.error('admin.cbt_exam_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to update the CBT exam.' });
   }
 });
@@ -971,7 +1075,10 @@ app.delete('/api/admin/cbt/exams/:examId', requireCapability('cbt.manage'), asyn
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin CBT exam delete error:', error);
+    log.error('admin.cbt_exam_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to delete the CBT exam.' });
   }
 });
@@ -1021,7 +1128,10 @@ app.get('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.read'),
       nextPosition: Number(last.data?.[0]?.position || 0) + 1,
     });
   } catch (error) {
-    console.error('Admin CBT questions error:', error);
+    log.error('admin.cbt_questions.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load CBT questions.' });
   }
 });
@@ -1046,7 +1156,13 @@ async function refuseQuestionProvenance(
 ): Promise<boolean> {
   if (!isProvenanceGuardRefusal(error)) return false;
   const adminUser = (req as AuthorizedRequest).adminUser;
-  console.warn('Question provenance guard refused a write.', { phase, entity_type: entityType, entity_id: entityId });
+  log.warn('cbt.question_provenance_refused', {
+    request_id: res.locals?.requestId,
+    phase,
+    entity_type: entityType,
+    entity_id: entityId,
+    admin_user_id: adminUser?.id ?? null,
+  });
   if (adminUser?.id) {
     try {
       await getServerSupabase().rpc('admin_audit_log', {
@@ -1059,10 +1175,12 @@ async function refuseQuestionProvenance(
     } catch (auditError) {
       // The refusal stands even when the audit write fails; log the failure
       // without the refused content.
-      console.error(
-        'Provenance refusal audit write failed:',
-        auditError instanceof Error ? auditError.message : 'unknown',
-      );
+      log.error('cbt.provenance_audit_failed', {
+        request_id: res.locals?.requestId,
+        phase,
+        entity_type: entityType,
+        ...errorFacts(auditError),
+      });
     }
   }
   res.status(403).json(questionProvenanceRefusal());
@@ -1176,7 +1294,10 @@ app.post('/api/admin/cbt/exams/:examId/questions', requireCapability('cbt.manage
     if (isProvenanceGuardRefusal(error)) {
       if (await refuseQuestionProvenance(req, res, error, 'create', 'cbt_bank', req.params.examId)) return;
     }
-    console.error('Admin CBT question create error:', error);
+    log.error('admin.cbt_question_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     const message =
       error instanceof Error && error.message.includes('duplicate')
         ? 'That question position is already in use.'
@@ -1335,7 +1456,10 @@ app.patch('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage'
       if (await refuseQuestionProvenance(req, res, error, 'update', 'exam_question', req.params.questionId)) return;
     }
     if (res.headersSent) return;
-    console.error('Admin CBT question update error:', error);
+    log.error('admin.cbt_question_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     const message =
       error instanceof Error && error.message.includes('duplicate')
         ? 'That question position is already in use.'
@@ -1364,7 +1488,10 @@ app.delete('/api/admin/cbt/questions/:questionId', requireCapability('cbt.manage
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin CBT question delete error:', error);
+    log.error('admin.cbt_question_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to remove CBT question.' });
   }
 });
@@ -1433,7 +1560,11 @@ app.get('/api/admin/cbt/questions/:questionId/regrade', requireCapability('cbt.r
       },
     });
   } catch (error) {
-    console.error('CBT regrade preview error:', error);
+    log.error('cbt.regrade.preview_failed', {
+      request_id: res.locals?.requestId,
+      question_id: req.params.questionId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to preview this regrade.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to preview this regrade.'),
@@ -1490,7 +1621,11 @@ app.post('/api/admin/cbt/questions/:questionId/regrade', requireCapability('cbt.
       },
     });
   } catch (error) {
-    console.error('CBT regrade error:', error);
+    log.error('cbt.regrade.failed', {
+      request_id: res.locals?.requestId,
+      question_id: req.params.questionId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to regrade these attempts.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to regrade these attempts.'),
@@ -1596,7 +1731,10 @@ app.get('/api/admin/news', requireCapability('news.read'), async (req, res) => {
     const rows = data || [];
     res.json({ items: rows.slice(0, pageSize), page, pageSize, hasMore: rows.length > pageSize });
   } catch (error) {
-    console.error('Admin news list error:', error);
+    log.error('admin.news_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load newsroom articles.' });
   }
 });
@@ -1672,7 +1810,10 @@ app.post('/api/admin/news', requireCapability('news.create'), async (req, res) =
     });
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Admin news create error:', error);
+    log.error('admin.news_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to create this article.' });
   }
 });
@@ -1756,7 +1897,10 @@ app.post('/api/admin/news/restore', requireCapability('news.create'), async (req
     });
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Admin news restore error:', error);
+    log.error('admin.news_restore.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to restore this article.' });
   }
 });
@@ -1867,7 +2011,10 @@ app.patch('/api/admin/news/:articleId', requireCapability('news.update'), async 
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin news update error:', error);
+    log.error('admin.news_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to update this article.' });
   }
 });
@@ -1897,7 +2044,10 @@ app.delete('/api/admin/news/:articleId', requireCapability('news.delete'), async
     });
     res.json({ deleted: true });
   } catch (error) {
-    console.error('Admin news delete error:', error);
+    log.error('admin.news_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to delete this article.' });
   }
 });
@@ -1930,7 +2080,10 @@ app.get('/api/admin/calendar-items', requireCapability('calendar.read'), async (
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Admin calendar list error:', error);
+    log.error('admin.calendar_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load calendar items.' });
   }
 });
@@ -1997,7 +2150,10 @@ app.post('/api/admin/calendar-items', requireCapability('calendar.create'), asyn
     });
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Admin calendar create error:', error);
+    log.error('admin.calendar_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to create the calendar item.' });
   }
 });
@@ -2027,7 +2183,10 @@ app.patch('/api/admin/calendar-items/:itemId', requireCapability('calendar.updat
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin calendar update error:', error);
+    log.error('admin.calendar_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to update the calendar item.' });
   }
 });
@@ -2050,7 +2209,10 @@ app.delete('/api/admin/calendar-items/:itemId', requireCapability('calendar.dele
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin calendar delete error:', error);
+    log.error('admin.calendar_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to delete the calendar item.' });
   }
 });
@@ -2150,7 +2312,10 @@ app.get('/api/admin/institutions', requireCapability('institution.read'), async 
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Admin institutions list error:', error);
+    log.error('admin.institutions_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load institutions.' });
   }
 });
@@ -2178,7 +2343,10 @@ app.post('/api/admin/institutions', requireCapability('institution.create'), asy
     });
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Admin institution create error:', error);
+    log.error('admin.institution_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to create the institution.' });
   }
 });
@@ -2207,7 +2375,10 @@ app.patch('/api/admin/institutions/:institutionId', requireCapability('instituti
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin institution update error:', error);
+    log.error('admin.institution_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to update the institution.' });
   }
 });
@@ -2232,7 +2403,10 @@ app.delete('/api/admin/institutions/:institutionId', requireCapability('institut
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin institution delete error:', error);
+    log.error('admin.institution_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to delete the institution.' });
   }
 });
@@ -2290,7 +2464,10 @@ app.patch('/api/admin/services/:serviceId', requireCapability('service.update'),
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin service update error:', error);
+    log.error('admin.service_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to update the service.' });
   }
 });
@@ -2318,7 +2495,10 @@ app.get('/api/admin/services', requireCapability('service.read'), async (_req, r
       items: (data || []).map((row) => ({ ...row, is_form_service: FORM_SERVICE_KEYS.has(row.service_key) })),
     });
   } catch (error) {
-    console.error('Admin services list error:', error);
+    log.error('admin.services_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load the service catalogue.' });
   }
 });
@@ -2377,7 +2557,10 @@ app.post('/api/admin/services', requireCapability('service.create'), async (req,
     });
     res.status(201).json({ item: { ...data, is_form_service: false } });
   } catch (error) {
-    console.error('Admin service create error:', error);
+    log.error('admin.service_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to create the service.' });
   }
 });
@@ -2408,7 +2591,10 @@ app.delete('/api/admin/services/:serviceId', requireCapability('service.delete')
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin service delete error:', error);
+    log.error('admin.service_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to delete the service.' });
   }
 });
@@ -2516,7 +2702,10 @@ app.get('/api/services/:slug/guide', async (req, res) => {
     if (error) throw error;
     res.json({ guide: data ? guideRowToApi(data) : null });
   } catch (error) {
-    console.error('Service guide error:', error);
+    log.error('app.service_guide.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.json({ guide: null });
   }
 });
@@ -2538,7 +2727,10 @@ app.get('/api/admin/services/:serviceId/guide', requireCapability('service.read'
     if (error) throw error;
     res.json({ guide: data ? guideRowToApi(data) : null, serviceKey: service.service_key });
   } catch (error) {
-    console.error('Admin service guide load error:', error);
+    log.error('admin.service_guide_load.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to load the service guide.' });
   }
 });
@@ -2581,7 +2773,10 @@ app.put('/api/admin/services/:serviceId/guide', requireCapability('service.updat
     });
     res.json({ guide: guideRowToApi(data) });
   } catch (error) {
-    console.error('Admin service guide save error:', error);
+    log.error('admin.service_guide_save.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to save the service guide.' });
   }
 });
@@ -2607,7 +2802,10 @@ app.delete('/api/admin/services/:serviceId/guide', requireCapability('service.up
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin service guide reset error:', error);
+    log.error('admin.service_guide_reset.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to reset the service guide.' });
   }
 });
@@ -2809,7 +3007,10 @@ app.get('/api/opportunities', async (req, res) => {
 
     res.json({ items });
   } catch (error) {
-    console.error('Opportunities API error:', error);
+    log.error('api.opportunities.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Opportunities are temporarily unavailable.' });
   }
 });
@@ -2852,7 +3053,10 @@ app.get('/api/opportunities/:opportunityId', async (req, res) => {
     if (!data) return res.status(404).json({ error: 'Opportunity not found.' });
     res.json({ item: data });
   } catch (error) {
-    console.error('Opportunity detail API error:', error);
+    log.error('api.opportunity_detail.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Opportunity details are temporarily unavailable.' });
   }
 });
@@ -2870,7 +3074,10 @@ app.get('/api/admin/opportunities', requireCapability('opportunity.read'), async
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Admin opportunities list error:', error);
+    log.error('admin.opportunities_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load opportunities.' });
   }
 });
@@ -2896,7 +3103,10 @@ app.post('/api/admin/opportunities', requireCapability('opportunity.create'), as
     });
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Admin opportunity create error:', error);
+    log.error('admin.opportunity_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to create the opportunity.' });
   }
 });
@@ -2923,7 +3133,10 @@ app.patch('/api/admin/opportunities/:opportunityId', requireCapability('opportun
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin opportunity update error:', error);
+    log.error('admin.opportunity_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to update the opportunity.' });
   }
 });
@@ -2948,7 +3161,10 @@ app.delete('/api/admin/opportunities/:opportunityId', requireCapability('opportu
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Admin opportunity delete error:', error);
+    log.error('admin.opportunity_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to delete the opportunity.' });
   }
 });
@@ -2972,7 +3188,10 @@ app.post('/api/admin/users/:userId/ban', requireCapability('user.suspend'), asyn
     });
     res.json({ success: true, suspended: true });
   } catch (error) {
-    console.error('Admin user ban error:', error);
+    log.error('admin.user_ban.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to suspend the account.' });
   }
 });
@@ -2992,7 +3211,10 @@ app.post('/api/admin/users/:userId/unban', requireCapability('user.suspend'), as
     });
     res.json({ success: true, suspended: false });
   } catch (error) {
-    console.error('Admin user unban error:', error);
+    log.error('admin.user_unban.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to unsuspend the account.' });
   }
 });
@@ -3062,7 +3284,10 @@ app.delete('/api/admin/users/:userId', requireCapability('user.delete'), async (
         result: 'failure',
       });
     }
-    console.error('Admin user delete error:', error);
+    log.error('admin.user_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     // A retained audit/log reference is a business refusal, not a 500: keeping
     // the trail matters more than forcing an irreversible delete.
     if (detail.includes('foreign key') || detail.includes('admin_audit_logs')) {
@@ -3120,7 +3345,10 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
     });
     res.json({ user: { id: data.id, role: data.role } });
   } catch (error) {
-    console.error('Admin role change error:', error);
+    log.error('admin.role_change.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: 'Unable to change this account role.' });
   }
 });
@@ -3142,7 +3370,10 @@ app.get('/api/admin/pdf-bank', requireCapability('data.read'), async (_req, res)
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Admin PDF bank list error:', error);
+    log.error('admin.pdf_bank_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load the PDF bank.' });
   }
 });
@@ -3220,7 +3451,10 @@ app.post(
       });
       res.status(201).json({ item: data });
     } catch (error) {
-      console.error('Admin PDF upload error:', error);
+      log.error('admin.pdf_upload.failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(500).json({ error: 'Unable to upload this PDF.' });
     }
   },
@@ -3419,7 +3653,10 @@ app.patch(
       });
       res.json({ item: data });
     } catch (error) {
-      console.error('Admin PDF routing error:', error);
+      log.error('admin.pdf_routing.failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(500).json({ error: 'Unable to route this PDF.' });
     }
   },
@@ -3471,7 +3708,10 @@ app.post(
       });
       res.status(201).json({ url: data.publicUrl, path: objectPath, bytes: buffer.length });
     } catch (error) {
-      console.error('Admin upload error:', error);
+      log.error('admin.upload.failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(500).json({ error: 'Unable to upload the image.' });
     }
   },
@@ -3498,7 +3738,10 @@ app.get('/api/services', async (_req, res) => {
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Services API error:', error);
+    log.error('api.services.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Services are temporarily unavailable.' });
   }
 });
@@ -3518,7 +3761,10 @@ app.get('/api/services/:slug', async (req, res) => {
     if (!data) return res.status(404).json({ error: 'Service not found.' });
     res.json({ item: data });
   } catch (error) {
-    console.error('Service API error:', error);
+    log.error('api.service.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Service is temporarily unavailable.' });
   }
 });
@@ -3569,7 +3815,10 @@ app.get('/api/upcoming', async (_req, res) => {
 
     res.json({ items });
   } catch (error) {
-    console.error('Upcoming API error:', error);
+    log.error('api.upcoming.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Upcoming items are temporarily unavailable.' });
   }
 });
@@ -3664,7 +3913,10 @@ app.get('/api/news', async (_req, res) => {
     if (error) throw error;
     res.json({ items: (data || []).filter(isArticleCurrent).slice(0, 30).map(newsArticleView) });
   } catch (error) {
-    console.error('News API error:', error);
+    log.error('api.news.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
   }
 });
@@ -3696,7 +3948,10 @@ app.get('/api/news/:slug', async (req, res) => {
     // expired so the student is not misled by stale deadlines.
     res.json({ item: newsArticleView(data) });
   } catch (error) {
-    console.error('News article API error:', error);
+    log.error('api.news_article.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'News service is temporarily unavailable.' });
   }
 });
@@ -4021,7 +4276,10 @@ app.get('/api/cbt/exams', async (_req, res) => {
       }),
     });
   } catch (error) {
-    console.error('CBT exams list API error:', error);
+    log.error('api.cbt_exams_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'CBT exams are temporarily unavailable.' });
   }
 });
@@ -4038,11 +4296,15 @@ function isCbtExpiredError(error: { code?: string; message?: string } | null): b
  * Deployment must be migration-first; legacy clients remain compatible.
  */
 async function expireCbtAttempt(rpcSupabase: SupabaseClient, attemptId: string): Promise<void> {
+  // Marking an attempt expired is best-effort: the attempt is already closed by
+  // its owner, so a failure here is a warning about a stale row, not a failed
+  // request. It still needs to be visible - a persistent failure means the
+  // expiry RPC is missing after a deploy.
   try {
     const { error } = await rpcSupabase.rpc('cbt_expire_owned_attempt', { p_attempt_id: attemptId });
-    if (error) console.warn('CBT expiry marking unavailable.');
-  } catch {
-    console.warn('CBT expiry marking unavailable.');
+    if (error) log.warn('cbt.expiry_marking_unavailable', { attempt_id: attemptId, ...errorFacts(error) });
+  } catch (error) {
+    log.warn('cbt.expiry_marking_unavailable', { attempt_id: attemptId, ...errorFacts(error) });
   }
 }
 
@@ -4155,7 +4417,10 @@ app.get('/api/cbt/exams/:examId/subjects', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('CBT subject availability error:', error);
+    log.error('app.cbt_subject_availability.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'CBT subjects are temporarily unavailable.' });
   }
 });
@@ -4278,7 +4543,11 @@ app.post('/api/cbt/exams/:examId/attempts', rateLimitFor(RATE_LIMIT_RULES.cbtSta
       },
     });
   } catch (error) {
-    console.error('CBT start API error:', error);
+    log.error('cbt.start_failed', {
+      request_id: res.locals?.requestId,
+      exam_id: req.body?.examId ?? null,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to start this CBT exam.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -4349,7 +4618,10 @@ app.get('/api/public/profiles/:slug', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     return res.json({ profile: publicProfileResponse(row, emailVerified) });
   } catch (error) {
-    console.error('Public profile read error:', error);
+    log.error('app.public_profile_read.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     return res.status(503).json({ error: 'This profile could not be loaded right now.' });
   }
 });
@@ -4435,7 +4707,10 @@ app.get('/api/public/documents', async (req, res) => {
     );
     res.json({ items });
   } catch (error) {
-    console.error('Public PDF document list error:', error);
+    log.error('app.public_pdf_document_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load these documents right now.' });
   }
 });
@@ -4508,7 +4783,10 @@ app.get('/api/past-questions/resources', async (req, res) => {
       state: items.length ? 'available' : 'not-published',
     });
   } catch (error) {
-    console.error('Past-question resources API error:', error);
+    log.error('api.past_question_resources.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'The resource library is temporarily unavailable.' });
   }
 });
@@ -4939,7 +5217,11 @@ app.get('/api/cbt/attempts/:attemptId/paper', async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error('CBT paper API error:', error);
+    log.error('cbt.paper_failed', {
+      request_id: res.locals?.requestId,
+      attempt_id: req.params.attemptId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : '';
     if (message === 'Authentication required.' || message === 'Invalid or expired session.')
       return res.status(401).json({ error: publicErrorMessage(message) });
@@ -4978,7 +5260,11 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
       breakdown: row.breakdown || [],
     });
   } catch (error) {
-    console.error('CBT submit API error:', error);
+    log.error('cbt.submit_failed', {
+      request_id: res.locals?.requestId,
+      attempt_id: req.params.attemptId ?? req.body?.attemptId ?? null,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
@@ -5038,7 +5324,11 @@ app.post('/api/cbt/questions/:questionId/report', rateLimitFor(RATE_LIMIT_RULES.
     }
     res.status(201).json({ status: 'reported' });
   } catch (error) {
-    console.error('Question report API error:', error);
+    log.error('cbt.question_report_failed', {
+      request_id: res.locals?.requestId,
+      question_id: req.params.questionId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to file this report.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to file this report right now. Please try again.'),
@@ -5065,7 +5355,10 @@ app.get('/api/admin/question-reports', requireCapability('cbt.read'), async (req
     if (error) return res.status(503).json({ error: 'Unable to load question reports.' });
     res.json({ items: data || [], status });
   } catch (error) {
-    console.error('Admin question reports error:', error);
+    log.error('admin.question_reports.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to load question reports.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to load question reports.'),
@@ -5108,7 +5401,10 @@ app.patch('/api/admin/question-reports/:reportId', requireCapability('cbt.manage
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Admin question report update error:', error);
+    log.error('admin.question_report_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to update this report.';
     res.status(httpStatusForErrorMessage(message)).json({
       error: publicErrorMessage(message, 'Unable to update this report.'),
@@ -5140,7 +5436,11 @@ app.patch('/api/cbt/attempts/:attemptId/draft', async (req, res) => {
     if (error) throw error;
     res.json({ saved: true, ...(data as Record<string, unknown>) });
   } catch (error) {
-    console.error('CBT draft API error:', error);
+    log.error('cbt.draft_save_failed', {
+      request_id: res.locals?.requestId,
+      attempt_id: req.params.attemptId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to save your progress.';
     const status = httpStatusForErrorMessage(message);
     if (status === 503) res.setHeader('Retry-After', '10');
@@ -5156,7 +5456,11 @@ app.post('/api/cbt/attempts/:attemptId/abandon', async (req, res) => {
     if (error) throw error;
     res.json({ abandoned: true });
   } catch (error) {
-    console.error('CBT abandon API error:', error);
+    log.error('cbt.abandon_failed', {
+      request_id: res.locals?.requestId,
+      attempt_id: req.params.attemptId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to end this attempt.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -5177,7 +5481,10 @@ app.delete('/api/cbt/attempts/:attemptId', async (req, res) => {
     if (error) throw error;
     res.json({ deleted: Boolean(data) });
   } catch (error) {
-    console.error('CBT delete API error:', error);
+    log.error('api.cbt_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to delete this CBT result.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -5219,7 +5526,10 @@ app.get('/api/cbt/attempts', async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error('CBT history API error:', error);
+    log.error('api.cbt_history.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(401).json({ error: 'Please sign in to see your practice history.' });
   }
 });
@@ -5249,7 +5559,11 @@ app.post('/api/cbt/exams/:examId/start', async (req, res) => {
       totalQuestions: row.total_questions,
     });
   } catch (error) {
-    console.error('CBT start API error:', error);
+    log.error('cbt.start_failed', {
+      request_id: res.locals?.requestId,
+      exam_id: req.body?.examId ?? null,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'Unable to start CBT exam.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -5311,7 +5625,10 @@ app.get('/api/cbt/exams/:examId/guest-questions', async (req, res) => {
       })),
     });
   } catch (error) {
-    console.error('Guest CBT question API error:', error);
+    log.error('api.guest_cbt_question.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : '';
     if (/No questions are available for:/i.test(message)) {
       return res
@@ -5431,7 +5748,11 @@ app.post('/api/cbt/guest-submit', rateLimitFor(RATE_LIMIT_RULES.guestCbtSubmit),
       breakdown,
     });
   } catch (error) {
-    console.error('Guest CBT submit API error:', error);
+    log.error('cbt.guest_submit_failed', {
+      request_id: res.locals?.requestId,
+      exam_id: req.body?.examId ?? null,
+      ...errorFacts(error),
+    });
     if (error instanceof CbtBankPolicyUnavailable)
       return res.status(503).json({ error: 'CBT service is temporarily unavailable.' });
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
@@ -5470,7 +5791,11 @@ app.post('/api/cbt/submit', async (req, res) => {
       breakdown: row.breakdown || [],
     });
   } catch (error) {
-    console.error('CBT submit API error:', error);
+    log.error('cbt.submit_failed', {
+      request_id: res.locals?.requestId,
+      attempt_id: (req.body as { attemptId?: string } | undefined)?.attemptId ?? null,
+      ...errorFacts(error),
+    });
     const message = error instanceof Error ? error.message : 'CBT submission failed.';
     const status = /Authentication|required|session/i.test(message)
       ? 401
@@ -5820,7 +6145,10 @@ app.get('/api/admin/content-manager/data/:resource', requireCapability('data.rea
     if (error) throw error;
     res.json({ rows: data || [] });
   } catch (error) {
-    console.error('Content manager list error:', error);
+    log.error('app.content_manager_list.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load this content section.' });
   }
 });
@@ -5844,7 +6172,10 @@ app.post('/api/admin/content-manager/data/:resource', requireCapability('data.wr
     });
     res.status(201).json({ row: data });
   } catch (error) {
-    console.error('Content manager create error:', error);
+    log.error('app.content_manager_create.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(400).json({ error: publicErrorMessage(error, 'Unable to create record.') });
   }
 });
@@ -5874,7 +6205,10 @@ app.patch('/api/admin/content-manager/data/:resource/:id', requireCapability('da
     });
     res.json({ row: data });
   } catch (error) {
-    console.error('Content manager update error:', error);
+    log.error('app.content_manager_update.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(400).json({ error: publicErrorMessage(error, 'Unable to update record.') });
   }
 });
@@ -5905,7 +6239,10 @@ app.delete('/api/admin/content-manager/data/:resource/:id', requireCapability('d
     });
     res.json({ success: true });
   } catch (error) {
-    console.error('Content manager delete error:', error);
+    log.error('app.content_manager_delete.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(400).json({ error: publicErrorMessage(error, 'Unable to delete record.') });
   }
 });
@@ -5986,7 +6323,10 @@ app.post(
       });
       res.json({ inserted, updated, errors });
     } catch (error) {
-      console.error('Content manager import error:', error);
+      log.error('app.content_manager_import.failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(400).json({ error: publicErrorMessage(error, 'Unable to import data.') });
     }
   },
@@ -6011,7 +6351,10 @@ app.post(
       });
       res.json({ report });
     } catch (error) {
-      console.error('Newsroom ingest error:', error);
+      log.error('app.newsroom_ingest.failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(503).json({ error: publicErrorMessage(error, 'Unable to run the newsroom refresh.') });
     }
   },
@@ -6030,7 +6373,10 @@ app.get('/api/admin/newsroom/runs', requireCapability('news.read'), async (_req,
     if (error) throw error;
     res.json({ items: data || [] });
   } catch (error) {
-    console.error('Newsroom runs error:', error);
+    log.error('app.newsroom_runs.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load newsroom runs. Has the newsroom migration been applied?' });
   }
 });
@@ -6060,7 +6406,10 @@ app.get('/api/admin/newsroom/candidates', requireCapability('news.read'), async 
 
     res.json({ items: data || [], pending_review: count ?? null });
   } catch (error) {
-    console.error('Newsroom candidates error:', error);
+    log.error('app.newsroom_candidates.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to load the review queue. Has the newsroom migration been applied?' });
   }
 });
@@ -6145,7 +6494,10 @@ app.post('/api/admin/newsroom/candidates/:candidateId/approve', requireCapabilit
 
     res.status(201).json({ item: data });
   } catch (error) {
-    console.error('Newsroom approve error:', error);
+    log.error('app.newsroom_approve.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: publicErrorMessage(error, 'Unable to publish this candidate.') });
   }
 });
@@ -6181,7 +6533,10 @@ app.post('/api/admin/newsroom/candidates/:candidateId/reject', requireCapability
     });
     res.json({ item: data });
   } catch (error) {
-    console.error('Newsroom reject error:', error);
+    log.error('app.newsroom_reject.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(500).json({ error: publicErrorMessage(error, 'Unable to reject this candidate.') });
   }
 });
@@ -6193,7 +6548,10 @@ app.get('/api/admin/integrity', requireCapability('data.read'), async (_req, res
     if (error) throw error;
     res.json({ report: data });
   } catch (error) {
-    console.error('Content integrity error:', error);
+    log.error('app.content_integrity.failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
     res.status(503).json({ error: 'Unable to build the integrity report. Has the newsroom migration been applied?' });
   }
 });
@@ -6218,7 +6576,9 @@ async function serveSitemapXml(req: express.Request, res: express.Response) {
   const origin = resolveSiteOrigin(req);
   const client = isServerSupabaseConfigured() ? getServerSupabase() : null;
   const entries = await collectSitemapEntries(client, origin, (source, error) => {
-    console.error(`Sitemap: ${source} entries unavailable:`, error instanceof Error ? error.message : error);
+    // A sitemap with one missing source is still served; crawlers lose one
+    // section of the site until the source recovers.
+    log.error('sitemap.source_unavailable', { source, ...errorFacts(error) });
   });
   res.type('application/xml');
   for (const [name, value] of Object.entries(crawlerCacheHeaders('sitemap'))) res.setHeader(name, value);
@@ -6238,8 +6598,17 @@ app.use('/api', (_req, res) => {
 });
 
 // API failures must remain JSON and must not disclose parser stacks or bodies.
-const apiErrorHandler: express.ErrorRequestHandler = (error, _req, res, _next) => {
+const apiErrorHandler: express.ErrorRequestHandler = (error, req, res, _next) => {
   const status = error?.type === 'entity.too.large' ? 413 : error?.status === 400 ? 400 : 500;
+  // An unhandled exception is the one thing the handler used to hide: it
+  // answered 500 with no trace anywhere. It is a `critical` event because it
+  // means a route reached a state nobody wrote a handler for.
+  log[status >= 500 ? 'critical' : 'warn']('http.unhandled_exception', {
+    request_id: res.locals?.requestId,
+    route: routeShape(req),
+    status,
+    ...errorFacts(error),
+  });
   res.status(status).json({
     error:
       status === 413
@@ -6292,7 +6661,9 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-  app.listen(PORT, '0.0.0.0', () => console.log(`EduReach server running on port ${PORT}`));
+  app.listen(PORT, '0.0.0.0', () =>
+    log.info('server.listening', { port: PORT, mode: process.env.NODE_ENV || 'development' }),
+  );
 }
 
 // The disposable PostgreSQL/HTTP rehearsal imports the real Express app and
@@ -6310,8 +6681,38 @@ const hostedFunctionRuntime = Boolean(
   process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT,
 );
 if (!hostedFunctionRuntime && !cbtLocalTestImport) {
+  log.info('server.starting', { port: PORT, runtime: 'self-hosted' });
   startServer().catch((error) => {
+    // The structured line is the machine-readable summary; the thrown error is
+    // still printed once, because a process that cannot boot has no request
+    // context and its message ("refusing a privileged Supabase key", "port in
+    // use") is the whole diagnostic. Startup is the one place a free-text line
+    // earns its keep, and it never carries configuration values.
+    log.critical('server.start_failed', { port: PORT, ...errorFacts(error) });
     console.error('Unable to start EduReach:', error);
     process.exitCode = 1;
   });
 }
+
+/**
+ * Last-resort crash reporting.
+ *
+ * `uncaughtExceptionMonitor` observes without changing what Node does next, so
+ * the process still dies the way it did before this file existed - the log is
+ * an addition, never a swallow. An unhandled rejection is logged and then
+ * rethrown for the same reason: on modern Node it is a fatal error, and
+ * silently absorbing it here would keep a broken process alive.
+ *
+ * A `critical` line on these two events is the one server-side signal that
+ * cannot come from a request, so it is the one alert rule that has to watch
+ * the runtime's own stderr rather than an HTTP endpoint.
+ */
+process.on('uncaughtExceptionMonitor', (error, origin) => {
+  log.critical('process.uncaught_exception', { origin, ...errorFacts(error) });
+});
+process.on('unhandledRejection', (reason) => {
+  log.critical('process.unhandled_rejection', { ...errorFacts(reason) });
+  // Preserve Node's fatal default instead of turning this handler into a
+  // silent catch-all.
+  throw reason instanceof Error ? reason : new Error(`Unhandled rejection: ${String(reason)}`);
+});

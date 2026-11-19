@@ -90,9 +90,12 @@ test('the header sources declare the same security header set', () => {
   const express = expressHeaders();
   const netlify = netlifyHeaders();
   // Express additionally sets response-specific headers (Cache-Control on /api,
-  // X-Robots-Tag on private paths, Retry-After on a 503); those are not part of
-  // the shared baseline.
-  const expressBaseline = new Set([...express].filter((name) => !['cache-control', 'retry-after', 'x-robots-tag'].includes(name)));
+  // X-Robots-Tag on private paths, Retry-After on a 503, and X-Request-Id, which
+  // must be unique per request and therefore cannot be a static value in
+  // public/_headers); those are not part of the shared baseline.
+  const expressBaseline = new Set(
+    [...express].filter((name) => !['cache-control', 'retry-after', 'x-robots-tag', 'x-request-id'].includes(name)),
+  );
   assert.deepEqual([...expressBaseline].sort(), [...netlify].sort(), 'server.ts and public/_headers have drifted apart');
 });
 

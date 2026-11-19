@@ -16,6 +16,7 @@
 import type { Express, Request, Response } from 'express';
 import { isSafeHttpsUrl, POLICY_SLUGS, type PolicySlug } from '../lib/siteContentModel';
 import type { Capability } from '../lib/capabilities';
+import { errorFacts, log } from '../../lib/observability';
 
 export interface SiteContentDeps {
   requireCapability: (...capabilities: Capability[]) => (req: Request, res: Response, next: () => void) => any;
@@ -220,7 +221,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json({ settings, pages });
     } catch (error) {
-      console.error('Site content read error:', error);
+      log.error('site_content.read_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       // Not a 500 the footer cannot use: the client falls back to the copy the
       // site shipped with, and the response says so.
       res.status(503).json({ error: 'Site content is temporarily unavailable.' });
@@ -244,7 +245,10 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
         settings[row.key] = row.value;
       res.json({ settings, pages: ((pagesResult.data || []) as Array<Record<string, unknown>>).map(pageRowToApi) });
     } catch (error) {
-      console.error('Admin site content read error:', error);
+      log.error('site_content.admin_read_failed', {
+        request_id: res.locals?.requestId,
+        ...errorFacts(error),
+      });
       res.status(503).json({ error: 'Unable to load site content.' });
     }
   });
@@ -274,7 +278,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
         })),
       });
     } catch (error) {
-      console.error('Site page revisions error:', error);
+      log.error('site_content.page_revisions_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to load the revision history.' });
     }
   });
@@ -306,7 +310,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       }
       res.json({ key: data.key, value: data.value, updatedAt: data.updated_at });
     } catch (error) {
-      console.error('Site settings write error:', error);
+      log.error('site_content.settings_write_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to save that setting.' });
     }
   });
@@ -365,7 +369,11 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       });
       // The page is saved even if the snapshot fails; say so in the log rather
       // than telling the editor the save failed when it did not.
-      if (revisionError) console.error('Site page revision snapshot failed:', revisionError);
+      if (revisionError)
+        log.warn('site_content.revision_snapshot_failed', {
+          request_id: res.locals?.requestId,
+          ...errorFacts(revisionError),
+        });
 
       if (adminUser) {
         await deps.recordAudit(supabase, {
@@ -378,7 +386,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
       }
       res.json({ page: pageRowToApi(data as Record<string, unknown>) });
     } catch (error) {
-      console.error('Site page write error:', error);
+      log.error('site_content.page_write_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
       res.status(503).json({ error: 'Unable to save that page.' });
     }
   });
@@ -456,7 +464,7 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
         }
         res.json({ page: pageRowToApi(data as Record<string, unknown>) });
       } catch (error) {
-        console.error('Site page restore error:', error);
+        log.error('site_content.page_restore_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
         res.status(503).json({ error: 'Unable to restore that revision.' });
       }
     },

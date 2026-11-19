@@ -10,6 +10,8 @@
  * testable without a database. See docs/features/NTF-1.md.
  */
 
+import { errorFacts, log } from '../../lib/observability';
+
 export interface ServiceRequestForNotification {
   id: string;
   user_id: string;
@@ -166,12 +168,12 @@ export async function notifyServiceRequestStatus(
       metadata: notification.metadata,
     });
     if (error) {
-      console.error('Service status notification failed:', error);
+      log.error('notifications.service_status_failed', { reason: 'insert_failed', ...errorFacts(error) });
       return { sent: false, reason: 'insert failed' };
     }
     return { sent: true };
   } catch (error) {
-    console.error('Service status notification failed:', error);
+    log.error('notifications.service_status_failed', { reason: 'unexpected_error', ...errorFacts(error) });
     return { sent: false, reason: 'unexpected error' };
   }
 }
