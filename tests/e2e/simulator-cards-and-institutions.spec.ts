@@ -9,20 +9,21 @@ import { annotateFailure } from './report';
  *   * the institution surface — honest empty states, no invented ownership and
  *     no verified tick for data that has not been published.
  *
- * The bank catalogue is mocked because these assertions are about the
- * frontend's behaviour, not about which banks happen to be published today.
- * The institution expectations are written to hold in the unconfigured preview
- * the suite runs in (no Supabase credentials), where the maintained starter
- * list is the directory — so they assert the *absence* of invented facts, which
- * is the property that matters in both modes.
+ * The suite runs against the preview build (no Supabase credentials). Since the
+ * Practice hub became data-driven, the browser reads the bank catalogue from
+ * Supabase directly (`fetchCbtExams` in `src/lib/api.ts`); it no longer calls
+ * `/api/cbt/exams`, so mocking that endpoint cannot reach the app. What the
+ * preview build renders is therefore the documented contract asserted below:
+ * four built-in discovery cards on the home page, each routed into its own
+ * setup wizard and claiming no bank it does not have, and an explicit empty
+ * state on `/cbt` rather than cards that could never start a session.
+ * Catalogue-backed rendering is covered by the unit suites
+ * (`tests/simulator-cards.test.ts`, `tests/simulator-card-render.test.ts`).
+ *
+ * The institution expectations are written to hold in the unconfigured preview,
+ * where the maintained starter list is the directory — so they assert the
+ * *absence* of invented facts, which is the property that matters in both modes.
  */
-
-const BANKS = [
-  { id: 'bank-waec', title: 'WAEC SSCE Practice Bank', exam_body: 'WAEC', subject: 'Mathematics', description: 'A live WAEC bank.', duration_minutes: 60, question_count: 40, subject_count: 4 },
-  { id: 'bank-jamb', title: 'JAMB UTME Practice Bank', exam_body: 'JAMB', subject: 'Multiple subjects', description: 'A live JAMB bank.', duration_minutes: 120, question_count: 180, subject_count: 4 },
-  { id: 'bank-post', title: 'Post-UTME Practice Bank', exam_body: 'POST-UTME', subject: 'General', description: 'A live Post-UTME bank.', duration_minutes: 45, question_count: 30, subject_count: 3 },
-  { id: 'bank-neco', title: 'NECO SSCE Practice Bank', exam_body: 'NECO', subject: 'English Language', description: 'A live NECO bank.', duration_minutes: 60, question_count: 40, subject_count: 4 },
-];
 
 /** The faint surface each examination declares, as the browser reports it. */
 const EXPECTED_TINTS: Record<string, string> = {
@@ -40,9 +41,18 @@ const EXPECTED_INK: Record<string, string> = {
   'post-utme': 'rgb(77, 36, 24)',
 };
 
-async function mockBanks(page: Page, items: typeof BANKS = BANKS) {
-  await page.route('**/api/cbt/exams*', (route) =>
-    route.fulfill({ contentType: 'application/json', body: JSON.stringify({ items }) }),
+/**
+ * The site loads Inter from Google in production. The suite stays offline and
+ * deterministic by answering with an empty stylesheet instead of aborting the
+ * request: an aborted request is logged as a console error, and this file
+ * treats console errors as failures.
+ */
+async function stubFonts(page: Page) {
+  await page.route('https://fonts.googleapis.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/css', body: '' }),
+  );
+  await page.route('https://fonts.gstatic.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'font/woff2', body: '' }),
   );
 }
 
@@ -59,8 +69,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
   });
-  await page.route('https://fonts.googleapis.com/**', (route) => route.abort());
-  await page.route('https://fonts.gstatic.com/**', (route) => route.abort());
+  await stubFonts(page);
   (page as unknown as { runtimeErrors: string[] }).runtimeErrors = errors;
 });
 
@@ -70,7 +79,6 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 test('each simulator card keeps its own faint examination tint', async ({ page }) => {
-  await mockBanks(page);
   await page.goto('/');
 
   await expect(page.locator('.er-sim-card')).toHaveCount(4);
@@ -86,23 +94,26 @@ test('each simulator card keeps its own faint examination tint', async ({ page }
     expect(colour, `${type} uses its readable title ink`).toBe(EXPECTED_INK[type]);
 
     const href = await card.getAttribute('href');
-    expect(href, `${type} still routes into its own simulator`).toBeTruthy();
+    expect(href, `${type} routes into its own simulator`).toBe(`/cbt/setup/${type}`);
   }
 });
 
-test('the tints survive a re-ordered catalogue', async ({ page }) => {
-  await mockBanks(page, [...BANKS].reverse());
+test('a discovery card claims no question bank the catalogue has not returned', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.er-sim-card')).toHaveCount(4);
-  for (const [type, tint] of Object.entries(EXPECTED_TINTS)) {
-    const { background } = await surfaceOf(page, type);
-    expect(background, `${type} is tinted by its exam type, not its position`).toBe(tint);
+  for (const type of Object.keys(EXPECTED_TINTS)) {
+    const card = page.locator(`.er-sim-card[data-exam-type="${type}"]`);
+    // The built-in card names a timed practice session, not a bank, and carries
+    // no bank id: an id here would send the wizard looking for a bank that this
+    // build has never seen.
+    await expect(card).toContainText('Timed practice');
+    await expect(card).not.toContainText(/question bank/i);
+    expect(await card.getAttribute('href'), `${type} carries no invented bank id`).not.toContain('exam=');
   }
 });
 
 test('the simulator cards stay inside a narrow phone viewport', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'phone layout');
-  await mockBanks(page);
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/');
@@ -119,19 +130,20 @@ test('the simulator cards stay inside a narrow phone viewport', async ({ page, i
   }
 });
 
-test('the public Practice page shows the same simulator cards and no history', async ({ page }) => {
-  await mockBanks(page);
+test('the public Practice page explains an empty catalogue instead of inventing cards', async ({ page }) => {
   await page.goto('/cbt');
 
-  await expect(page.locator('.er-sim-card')).toHaveCount(4);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/practice/i);
   // Results, history and statistics belong to the signed-in dashboard.
   await expect(page.getByText(/practice history|your results|average score/i)).toHaveCount(0);
   await expect(page.locator('.er-bank-card')).toHaveCount(0);
+  // No published catalogue in this build: the page says so. Four cards here
+  // would be four setup screens that cannot start a session.
+  await expect(page.locator('.er-sim-card')).toHaveCount(0);
+  await expect(page.getByText('No active public question banks are connected right now.')).toBeVisible();
 });
 
 test('news cards keep their own tone system', async ({ page }) => {
-  await mockBanks(page);
   await page.goto('/news');
   const cards = page.locator('.er-news-card');
   if ((await cards.count()) === 0) {

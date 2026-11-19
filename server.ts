@@ -276,7 +276,12 @@ registerRestrictedBankAdminRoutes(app, {
 
 // Site-wide content: footer, brand, contact and the policy pages. Public read is
 // cached for a minute; writes are capability-gated and audited.
-registerSiteContentRoutes(app, { requireCapability, getSupabase: getServerSupabase, recordAudit });
+registerSiteContentRoutes(app, {
+  requireCapability,
+  getSupabase: getServerSupabase,
+  recordAudit,
+  isConfigured: isServerSupabaseConfigured,
+});
 
 app.post('/api/admin/bootstrap', rateLimitFor(RATE_LIMIT_RULES.adminBootstrap), async (req, res) => {
   try {
@@ -4404,9 +4409,9 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    // Cache policy, kept in step with public/_headers and the Vercel headers
-    // in vercel.json. Express used to serve index.html as `public, max-age=0`
-    // while Netlify sent
+    // Cache policy, kept in step with public/_headers (the Netlify host is the
+    // single production target). Express used to serve index.html as
+    // `public, max-age=0` while Netlify sent
     // `no-store`, so a self-hosted deployment and a Netlify one disagreed about
     // the shell - and a cached shell references chunk filenames that a deploy
     // has already replaced. Content-hashed assets are immutable on

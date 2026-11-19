@@ -5,6 +5,18 @@ import { capabilitiesForRole } from '../../src/lib/capabilities';
 // Isolated browser fixture: no real account, Supabase connection or database.
 // The production build uses the unconfigured Supabase fallback in this suite;
 // API responses and the local auth session below exist only inside this page.
+/**
+ * A returning staff member has already answered the consent panel, which
+ * otherwise covers the bottom tab bar on a first visit to any mobile screen.
+ */
+async function seedConsent(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('edureach-privacy-preferences-v1', JSON.stringify({
+      necessary: true, analytics: false, savedAt: new Date(0).toISOString(), version: 1,
+    }));
+  });
+}
+
 async function mockAdmin(page: Page, options: { analyticsFails?: boolean; capabilities?: string[] } = {}) {
   await page.addInitScript(() => {
     localStorage.setItem('sb-edureach-unconfigured-auth-token', JSON.stringify({
@@ -30,28 +42,43 @@ test('admin shell adapts at narrow, tablet and desktop widths without losing nav
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.setViewportSize({ width: 320, height: 720 });
+  await seedConsent(page);
   await page.goto('/admin');
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
-  const menu = page.getByRole('button', { name: 'Open admin menu' });
+  // Phones navigate from the bottom tab bar. The four primary destinations are
+  // tabs; the secondary ones live in the drawer that the "More admin sections"
+  // tab discloses. The topbar toggle is a desktop-only control and is hidden at
+  // this width, so it must not be the way in.
+  const more = page.getByRole('button', { name: 'More admin sections' });
   const nav = page.getByRole('navigation', { name: 'Administration' });
+  await expect(page.getByRole('button', { name: /admin menu/i })).toBeHidden();
   await expect(nav).toBeHidden();
-  await menu.click();
-  await expect(page.getByRole('button', { name: 'Close admin menu' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(more).toBeVisible();
+  await expect(more).toHaveAttribute('aria-expanded', 'false');
+
+  await more.click();
+  await expect(more).toHaveAttribute('aria-expanded', 'true');
   await expect(nav.getByRole('link', { name: 'Newsroom CMS' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(nav).toBeHidden();
-  await expect(menu).toBeFocused();
-  await menu.click();
+  await expect(more).toHaveAttribute('aria-expanded', 'false');
+  await expect(more).toBeFocused();
+
+  await more.click();
   await nav.getByRole('link', { name: 'Newsroom CMS' }).click();
   await expect(page.getByRole('heading', { name: 'Newsroom CMS' })).toBeVisible();
   await expect(nav).toBeHidden();
-  await menu.click();
+  await more.click();
   await expect(nav.getByRole('link', { name: 'Newsroom CMS' })).toHaveAttribute('aria-current', 'page');
+  await page.keyboard.press('Escape');
+
   for (const width of [320, 768, 1440]) {
     await page.setViewportSize({ width, height: 800 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
+  // Desktop keeps the persistent sidebar and drops both mobile controls.
   await expect(page.getByRole('button', { name: /admin menu/i })).toBeHidden();
+  await expect(more).toBeHidden();
   await expect(nav.getByRole('link', { name: 'Newsroom CMS' })).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -68,11 +95,14 @@ test('dashboard failure does not present invented zero metrics or a clear queue'
 
 test('navigation continues to respect server-provided capabilities', async ({ page }) => {
   await mockAdmin(page, { capabilities: ['news.read'] });
+  await seedConsent(page);
   await page.goto('/admin');
   await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
-  const menu = page.getByRole('button', { name: 'Open admin menu' });
-  if (await menu.isVisible()) await menu.click();
   const nav = page.getByRole('navigation', { name: 'Administration' });
+  // Desktop keeps the sidebar on screen; phones and tablets disclose it from the
+  // "More admin sections" tab.
+  const more = page.getByRole('button', { name: 'More admin sections' });
+  if (!(await nav.isVisible()) && (await more.isVisible())) await more.click();
   await expect(nav.getByRole('link', { name: 'Newsroom CMS' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Student Accounts' })).toHaveCount(0);
 });

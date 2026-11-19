@@ -19,6 +19,8 @@ import type { Capability } from '../lib/capabilities';
 
 export interface SiteContentDeps {
   requireCapability: (...capabilities: Capability[]) => (req: Request, res: Response, next: () => void) => any;
+  /** Whether a server-side Supabase client can exist at all in this deployment. */
+  isConfigured: () => boolean;
   getSupabase: () => {
     from: (table: string) => any;
     rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data?: unknown; error?: { message?: string } | null }>;
@@ -167,6 +169,16 @@ export function registerSiteContentRoutes(app: Express, deps: SiteContentDeps): 
   // Public: what the footer and the policy pages read.
   // -------------------------------------------------------------------------
   app.get('/api/site-content', async (_req, res) => {
+    // Preview deployments have no server credentials, so there is no
+    // administrator content to read. Answer with the empty catalogue the client
+    // already merges over the copy the site shipped with. Every other public
+    // catalogue takes this same path (`{ items: [] }`, 200); a 503 here made
+    // every page in a preview build load with a failed request in the console.
+    if (!deps.isConfigured()) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ settings: {}, pages: [] });
+      return;
+    }
     try {
       const supabase = deps.getSupabase();
       const [settingsResult, pagesResult] = await Promise.all([
