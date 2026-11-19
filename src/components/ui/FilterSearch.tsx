@@ -80,6 +80,8 @@ export default function FilterSearch({
       selectSuggestion(visibleSuggestions[activeIndex]);
       return;
     }
+    setOpen(false);
+    setActiveIndex(-1);
     onSubmit?.(value.trim());
   }
 
@@ -113,7 +115,6 @@ export default function FilterSearch({
       ref={rootRef}
       className={`er-filter-search${className ? ` ${className}` : ''}`}
       role="search"
-      aria-label={label}
       onSubmit={submit}
       style={maxWidth ? { maxWidth } : undefined}
     >
@@ -125,6 +126,13 @@ export default function FilterSearch({
         value={value}
         onChange={(event) => updateValue(event.target.value)}
         onFocus={() => { if (value.trim()) setOpen(true); }}
+        onBlur={(event) => {
+          const next = event.relatedTarget;
+          if (!(next instanceof Node) || !rootRef.current?.contains(next)) {
+            setOpen(false);
+            setActiveIndex(-1);
+          }
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         aria-label={label}

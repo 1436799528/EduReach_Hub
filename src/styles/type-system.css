@@ -608,8 +608,10 @@ a.er-notif-row:hover { background: var(--er-surface-soft); }
   background: var(--er-surface, #fff);
   box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
   color: var(--er-text-primary);
+  /* The empty state and panel gutters must not block the page's own controls. */
+  pointer-events: none;
 }
-.er-filter-suggestion-list { margin: 0; padding: 4px; list-style: none; }
+.er-filter-suggestion-list { margin: 0; padding: 4px; list-style: none; pointer-events: auto; }
 .er-filter-suggestion-list button {
   display: flex;
   width: 100%;

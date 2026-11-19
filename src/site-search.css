@@ -75,8 +75,11 @@
   background: #fff;
   box-shadow: 0 10px 24px rgba(15, 23, 42, .12);
   color: #172033;
+  /* Only the interactive options capture clicks. The rest of the panel lets
+     a click reach a result beneath it, which also closes the popover. */
+  pointer-events: none;
 }
-.site-search-list { margin: 0; padding: 4px; list-style: none; }
+.site-search-list { margin: 0; padding: 4px; list-style: none; pointer-events: auto; }
 .site-search-list button {
   display: flex;
   width: 100%;

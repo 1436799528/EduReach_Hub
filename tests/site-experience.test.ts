@@ -319,9 +319,16 @@ test('current-page search fields suggest values from every field on the page', a
     'pages/AdminBankSecurityPage.tsx',
   ];
   assert.match(component, /role="combobox"/);
+  assert.match(component, /aria-label=\{label\}/, 'the filter input carries the accessible name');
+  assert.doesNotMatch(component, /role="search"\s+aria-label=\{label\}/, 'the landmark does not duplicate the input label');
+  assert.match(component, /onBlur=/, 'focus leaving the field dismisses suggestions');
   assert.match(component, /aria-expanded=\{suggestionsOpen\}/);
   assert.match(component, /role="listbox"/);
   assert.match(component, /aria-activedescendant/);
+  const siteStyles = read('src/site-search.css');
+  const filterStyles = read('src/styles/type-system.css');
+  assert.match(siteStyles, /\.site-search-popover \{[^}]*pointer-events: none/, 'site search panels do not block results beneath them');
+  assert.match(filterStyles, /\.er-filter-suggestions \{[^}]*pointer-events: none/, 'page filter panels do not block controls beneath them');
   assert.match(component, /ArrowDown/);
   assert.match(component, /ArrowUp/);
   assert.match(component, /event\.key === 'Escape'/);
