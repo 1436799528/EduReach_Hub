@@ -123,9 +123,11 @@ Netlify builds with `npm run build`, publishes `dist/`, and routes `/api/*`,
 same Express app. The bundled server and its source map go to `build/`, outside
 the publish directory, and must not be published as static assets.
 
-`Dockerfile` builds the same two outputs for a long-running Node host. See
-[docs/DEPLOYMENT_DECISION.md](docs/DEPLOYMENT_DECISION.md) and
-[docs/NETLIFY_PRODUCTION_SETUP.md](docs/NETLIFY_PRODUCTION_SETUP.md).
+`Dockerfile` builds the same two outputs for a long-running Node host. Netlify is
+the only production target. See [docs/DEPLOYMENT_DECISION.md](docs/DEPLOYMENT_DECISION.md),
+[docs/NETLIFY_PRODUCTION_SETUP.md](docs/NETLIFY_PRODUCTION_SETUP.md) and
+[docs/operations/ENVIRONMENTS.md](docs/operations/ENVIRONMENTS.md) for which
+Supabase project each environment uses.
 
 Before a release, `npm run prod:validate` checks variables, connectivity and the
 migration history against a target environment. `npm run backup:rehearsal`

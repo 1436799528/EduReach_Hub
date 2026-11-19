@@ -1,6 +1,6 @@
 # Deployment architecture — decision record
 
-Status: **Netlify confirmed; repository configuration restored 13 November 2026; the hosted site still needs its build and environment settings before it can publish**
+Status: **Netlify is the single production target. The competing Vercel project was deleted on 19 November 2026 and `vercel.json` was removed from the repository. The published site is still a stale build and production is still missing one CBT column — see "Open items" in `docs/operations/ENVIRONMENTS.md`.**
 Date: 30 September 2026
 Owner: EduReach maintainer
 
@@ -53,9 +53,54 @@ The Vercel project is not a working fallback: its deployment is protected and
 `vercel.json` has no `/api` route, so every API request would be rewritten to
 `index.html`.
 
+## Update — 19 November 2026 (pipeline foundation)
+
+The question this record left open is closed, and the alternative is gone rather
+than merely undocumented:
+
+- **Vercel project `aponijames` deleted** (`prj_VihEWsvtEWonL0SwhSFHpAPVG61i`,
+  team `james-projects-cc0475f0`). It auto-deployed `main` from this repository
+  and could never serve the API: production had `VITE_SUPABASE_URL` and
+  `VITE_SUPABASE_PUBLISHABLE_KEY` but no `SUPABASE_SERVICE_ROLE_KEY`, and it had
+  no `/api` route — every API request was rewritten to `index.html`. Its
+  deployment was also protected by `ssoProtection`, so it was not usable as a
+  public fallback.
+- **`vercel.json` removed.** It existed for that project's header and cache
+  rules. With the project gone the file configured nothing, and keeping it
+  invites a second platform back in. Security headers now ship from exactly two
+  places: `server.ts` for API responses and `public/_headers` for Netlify static
+  responses. `tests/headers.test.ts` still asserts the two are identical
+  (header set, CSP, `connect-src`, cache policy), so the check became stronger
+  per copy by losing a third copy that no longer shipped.
+- A second Vercel project, `edu-reach-hub-qxsw`, is linked to a **different**
+  private repository (`EduReach-Hub`) and was left untouched.
+- Supabase Auth's production redirect allow-list still contains
+  `edureach-hub-backend-…vercel.app` entries. They are harmless but stale;
+  removing them is an operator action in the Supabase dashboard, not a
+  repository change.
+
+What is still not provable from the repository: **the Netlify deploy trigger**.
+No Netlify check or commit status appears on any commit, so whether Netlify
+builds on push to `main`, or on a Git-hook/manual trigger, has to be confirmed in
+the Netlify dashboard. The site itself is live (`/api/health` → `ok`), and its
+published bundle is older than `dist/`, so deploys are not currently following
+`main`.
+
+### What runs where, today
+
+| Concern | Decision |
+|---|---|
+| Production host | Netlify site `aa0aef85-2371-48ec-9569-3dcacb7cfe47` |
+| API | `netlify/functions/api.ts` (Express wrapped by `serverless-http`) |
+| Static | `dist/`, headers from `public/_headers` |
+| Daily newsroom run | `netlify/functions/daily-news-refresh.ts` (`@daily`) |
+| Second platform | none |
+| Rollback | Netlify **Deploys → Publish deploy** on the previous good build |
+| Environments | see `docs/operations/ENVIRONMENTS.md` |
+
 ## What the repository assumes today
 
-| Concern | Netlify (current) | Vercel (alternative) |
+| Concern | Netlify (current) | Vercel (alternative — retired 19 Nov 2026) |
 |---|---|---|
 | Build | `npm run build` → `dist/` | Same command, output `dist/` |
 | API | `netlify.toml` redirect `/api/*` → `/.netlify/functions/api/:splat` | Needs `api/index.ts` (or `vercel.json` rewrites) exporting the Express app |
@@ -88,7 +133,8 @@ because the API and SPA fallback go through Express on the same origin.
 
 ## Recommendation
 
-Keep **Netlify** as the single production target. The scheduled newsroom job,
+Keep **Netlify** as the single production target (done: the other target was
+deleted, see the 19 November update). The scheduled newsroom job,
 the function entry point and the `_headers` file already exist there, so
 migrating to Vercel would mean re-implementing working infrastructure with no
 functional gain.
@@ -111,4 +157,4 @@ functional gain.
    improvement that could not be pushed with this automation token.
 4. Record the outcome by changing the Status line of this document.
 
-Until step 4, treat deployment as **Netlify-defined, Vercel-unverified**.
+Deployment is now **Netlify-only**, with the deploy trigger unverified.
