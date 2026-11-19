@@ -74,12 +74,15 @@ export default function SiteSearch({
   }, [query, debouncedQuery]);
 
   const isPending = query !== debouncedQuery;
+  // SEARCH-2: even the full results page offers direct suggestions. It shows a
+  // shorter list because its full result cards already sit immediately below.
+  const suggestionsEnabled = true;
+  const suggestionLimit = variant === 'page' ? 4 : 6;
   const visibleItems = isPending && !debouncedQuery.trim()
     ? []
-    : filterSearchItems(catalog, debouncedQuery, 6);
+    : filterSearchItems(catalog, debouncedQuery, suggestionLimit);
   const isLoading = suggestionsLoading || catalogLoading || isPending;
   const hasPartialFailure = suggestionsError || catalogFailed;
-  const suggestionsEnabled = variant !== 'page';
   const suggestionsOpen = suggestionsEnabled && open && query.trim().length > 0;
 
   function updateQuery(value: string) {
@@ -100,15 +103,16 @@ export default function SiteSearch({
 
   function goToSearch(value: string) {
     const normalized = value.trim();
-    navigateInApp(normalized ? `/search?q=${encodeURIComponent(normalized)}` : '/search');
     setOpen(false);
     setActiveIndex(-1);
+    navigateInApp(normalized ? `/search?q=${encodeURIComponent(normalized)}` : '/search');
     onNavigate?.();
   }
 
   function selectSuggestion(item: SiteSearchItem) {
-    navigateInApp(item.href);
     setOpen(false);
+    setActiveIndex(-1);
+    navigateInApp(item.href);
     onNavigate?.();
   }
 
@@ -161,7 +165,21 @@ export default function SiteSearch({
         role={suggestionsEnabled ? 'combobox' : undefined}
         value={query}
         onChange={(event) => updateQuery(event.target.value)}
-        onFocus={() => { setOpen(true); if (query.trim()) void loadCatalog(); }}
+        onFocus={() => {
+          // A URL-loaded query is a completed search, not a fresh interaction:
+          // do not cover the results with a suggestion panel on auto-focus.
+          if (!initialQuery.trim()) {
+            setOpen(true);
+            if (query.trim()) void loadCatalog();
+          }
+        }}
+        onBlur={(event) => {
+          const next = event.relatedTarget;
+          if (!(next instanceof Node) || !rootRef.current?.contains(next)) {
+            setOpen(false);
+            setActiveIndex(-1);
+          }
+        }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         aria-label={label}
@@ -196,6 +214,7 @@ export default function SiteSearch({
                       className={index === activeIndex ? 'is-active' : undefined}
                       role="option"
                       aria-selected={index === activeIndex}
+                      onMouseDown={(event) => event.preventDefault()}
                       onClick={() => selectSuggestion(item)}
                     >
                       <span>

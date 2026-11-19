@@ -53,7 +53,7 @@ for (const path of ['/dashboard', '/dashboard/services', '/dashboard/cbt', '/das
 }
 test('search filters services, updates URL and follows its direct result', async ({ page }) => {
   await page.goto('/search');
-  const search = page.locator('main').getByRole('search').getByRole('searchbox', { name: 'Search EduReach' });
+  const search = page.locator('main').getByRole('search').getByRole('combobox', { name: 'Search EduReach' });
   await search.fill('nelfund');
   await search.press('Enter');
   await expect(page).toHaveURL(/\/search\?q=nelfund$/);

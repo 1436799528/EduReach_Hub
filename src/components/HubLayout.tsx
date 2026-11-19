@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Menu,
   X,
@@ -34,7 +34,8 @@ import { EDUREACH_WHATSAPP } from '../data/hubContent';
 import SiteFooter from './SiteFooter';
 import SiteSearch from './LazySiteSearch';
 import NotificationCenter from './NotificationCenter';
-import { useMenuDismiss, useMenuKeyboard } from '../lib/menuA11y';
+import { useDrawerDismiss, useMenuDismiss, useMenuKeyboard } from '../lib/menuA11y';
+import { useModalDialog } from '../lib/useModalDialog';
 import '../hub-rail.css';
 
 /**
@@ -85,8 +86,12 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
-  const mobileCloseRef = useRef<HTMLButtonElement>(null);
-  const mobileDrawerRef = useRef<HTMLDivElement>(null);
+  // MOBILE-NAV-2: one focus-managed drawer, pinned right, dismissed by any
+  // outer press. `useModalDialog` supplies focus, Escape, the Tab cycle and a
+  // return to the trigger; `useDrawerDismiss` supplies outside dismissal and
+  // the scroll lock.
+  const mobileDrawerRef = useModalDialog<HTMLDivElement>(mobileOpen, () => setMobileOpen(false));
+  useDrawerDismiss({ open: mobileOpen, onClose: () => setMobileOpen(false), drawerRef: mobileDrawerRef });
   // UX-10: both header menus share one dismissal + keyboard contract, so a
   // pointer that wanders off, an Escape, or a Tab out actually closes them.
   const accountMenuRootRef = useRef<HTMLDivElement>(null);
@@ -122,43 +127,6 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
     if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     return (parts[0]?.slice(0, 2) || 'ST').toUpperCase();
   }, [user?.name]);
-
-  // UX-10: the drawer declares `aria-modal`, so it has to behave like a modal.
-  // Focus lands on its close button, Tab and Shift+Tab cycle inside it, the page
-  // behind cannot scroll, Escape closes it, and focus returns to the trigger.
-  useEffect(() => {
-    if (!mobileOpen) return;
-    mobileCloseRef.current?.focus();
-    const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
-    const cycleFocus = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setMobileOpen(false);
-        window.setTimeout(() => mobileTriggerRef.current?.focus(), 0);
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const drawer = mobileDrawerRef.current;
-      if (!drawer) return;
-      const focusables = Array.from(drawer.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((node) => node.offsetParent !== null);
-      if (!focusables.length) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', cycleFocus);
-    return () => {
-      window.removeEventListener('keydown', cycleFocus);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [mobileOpen]);
 
   return (
     <div className="hub-shell hub-global-compact" style={{ background: '#f7f9fb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -270,6 +238,16 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {!isLoading && isAuthenticated && <NotificationCenter />}
+            {/* HOME↔DASHBOARD: one visible switch, including on phones. */}
+            {!isLoading && (
+              <a
+                className="hub-quick-dashboard"
+                href={isAuthenticated ? '/dashboard' : '/login?next=%2Fdashboard'}
+                aria-label={isAuthenticated ? 'Open your dashboard' : 'Sign in to open your dashboard'}
+              >
+                Dashboard
+              </a>
+            )}
             {!isLoading && !isAuthenticated && (
               <a
                 href="/login"
@@ -403,28 +381,36 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
       {mobileOpen && (
         <div
           id="hub-mobile-menu"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="hub-mobile-menu-title"
+          className="hub-mobile-backdrop"
+          role="presentation"
           style={{
             position: 'fixed',
             inset: 0,
             zIndex: 1000,
             background: 'rgba(15, 23, 42, 0.6)',
             display: 'flex',
+            justifyContent: 'flex-end',
           }}
         >
           <div
             ref={mobileDrawerRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hub-mobile-menu-title"
             style={{
-              width: '280px',
-              maxWidth: '86vw',
+              width: 'min(320px, 88vw)',
+              maxWidth: '88vw',
+              marginLeft: 'auto',
               background: '#ffffff',
               height: '100%',
-              padding: '20px',
+              maxHeight: '100dvh',
+              padding: '20px 20px calc(20px + env(safe-area-inset-bottom))',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              boxShadow: '-8px 0 24px rgba(0,0,0,0.2)',
             }}
           >
             <div
@@ -441,11 +427,10 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                 EduReach<span style={{ color: 'var(--er-primary)' }}>.ng</span>
               </strong>
               <button
-                ref={mobileCloseRef}
                 type="button"
                 className="hub-mobile-close"
-                onClick={() => { setMobileOpen(false); window.setTimeout(() => mobileTriggerRef.current?.focus(), 0); }}
-                style={{ background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer' }}
+                onClick={() => setMobileOpen(false)}
+                style={{ background: 'none', border: 0, color: '#5e6c82', cursor: 'pointer', minWidth: 44, minHeight: 44 }}
                 aria-label="Close menu"
               >
                 <X size={20} />
@@ -453,6 +438,20 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
             </div>
 
             <SiteSearch variant="drawer" label="Site search (mobile)" onNavigate={() => setMobileOpen(false)} />
+
+            {/* Home ↔ dashboard remains one tap even when deep in the menu. */}
+            <div className="er-shell-switch" aria-label="Quick navigation">
+              <a href="/" onClick={() => setMobileOpen(false)} aria-current={path === '/' ? 'page' : undefined}>
+                <Home size={15} aria-hidden="true" /> Home
+              </a>
+              <a
+                href={isAuthenticated ? '/dashboard' : '/login?next=%2Fdashboard'}
+                onClick={() => setMobileOpen(false)}
+                aria-current={path.startsWith('/dashboard') ? 'page' : undefined}
+              >
+                <LayoutDashboard size={15} aria-hidden="true" /> Dashboard
+              </a>
+            </div>
 
             {/* The same hierarchy on a phone: the five primary destinations
                 first, then one disclosed list for everything else. The drawer
@@ -548,8 +547,6 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
               )}
             </div>
           </div>
-          {/* Redundant pointer affordance: the drawer has a Close button and closes on Escape. */}
-          <div style={{ flex: 1 }} role="presentation" onClick={() => setMobileOpen(false)} />
         </div>
       )}
 

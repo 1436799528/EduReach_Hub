@@ -87,9 +87,19 @@ export default function NewsPage() {
     return orderedItems.filter((item) => !featuredIds.has(item.id));
   }, [orderedItems]);
 
+  // SEARCH-2: the news field suggests every current headline, source, tag and
+  // summary on this page, including words from the middle or end of a title.
+  const newsSuggestions = useMemo(() => items.filter(isArticleCurrent).map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: [item.source_name, item.summary].filter(Boolean).join(' · '),
+    category: newsCategoryLabel(item.category),
+    keywords: [item.category, ...(item.tags || [])],
+  })), [items]);
+
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '20px 0 60px' }}>
+      <div className="hub-page er-comfort-page">
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
@@ -120,6 +130,8 @@ export default function NewsPage() {
                 label="Search news"
                 placeholder="Search headlines, sources, tags"
                 clearLabel="Clear news search"
+                suggestionItems={newsSuggestions}
+                suggestionLabel="News suggestions"
               />
             </div>
           </div>
@@ -153,7 +165,7 @@ export default function NewsPage() {
                 <section className="er-section" style={{ marginTop: 0 }}>
                   <SectionHead title={activeFilter === 'ALL' ? 'Latest stories' : 'Results'} />
                   {latestItems.length > 0 ? (
-                    <div className="er-news-card-grid">
+                    <div className="er-news-card-grid er-standard-card-grid">
                       {latestItems.map((item) => (
                         <NewsCard key={item.id} item={item} />
                       ))}

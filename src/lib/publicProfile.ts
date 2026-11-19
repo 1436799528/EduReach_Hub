@@ -6,8 +6,12 @@
  * response, the page and the tests cannot disagree about what "public" means.
  *
  * Deliberately absent: id, email, phone, matric number, JAMB registration
- * number, role, wallet, examination history and notifications.
+ * number, wallet, examination history and notifications. Only a normalised
+ * application-role label is exposed so profile marks can show staff roles
+ * without publishing the raw database row or any account detail.
  */
+
+import { resolveAppRole } from './capabilities';
 
 export const PUBLIC_PROFILE_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{5,31}$/;
 
@@ -20,6 +24,8 @@ export type PublicProfileRow = {
   level?: string | null;
   avatar_url?: string | null;
   public_profile_slug?: string | null;
+  /** Used only to derive the coarse public role label; never returned raw. */
+  role?: string | null;
 };
 
 export type PublicProfile = {
@@ -32,6 +38,8 @@ export type PublicProfile = {
   slug: string;
   /** True only when the account's email is confirmed. Never assumed. */
   email_verified: boolean;
+  /** One of the four application roles, used for its public role mark. */
+  display_role: 'student' | 'content_editor' | 'service_admin' | 'super_admin';
 };
 
 /** The columns the server may select; `id` is used for verification, not returned. */
@@ -45,6 +53,7 @@ export const PUBLIC_PROFILE_SELECT = [
   'level',
   'avatar_url',
   'public_profile_slug',
+  'role',
 ].join(',');
 
 function text(value: unknown, max = 160): string {
@@ -63,6 +72,9 @@ export function projectPublicProfile(row: PublicProfileRow, emailVerified = fals
     avatar_url: /^https?:\/\//i.test(text(row.avatar_url, 500)) ? text(row.avatar_url, 500) : null,
     slug: text(row.public_profile_slug, 32),
     email_verified: Boolean(emailVerified),
+    // Unknown and retired values collapse to `student`, so a visitor never
+    // learns a legacy database spelling or gains a staff mark by accident.
+    display_role: resolveAppRole(row.role),
   };
 }
 

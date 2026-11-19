@@ -17,6 +17,7 @@ import {
   type AdminBankSummary,
 } from '../src/lib/api';
 import { AdminEmptyState, RowSkeleton, TimeAgo } from '../src/components/admin/AdminKit';
+import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
 import '../src/bank-security.css';
 
 /**
@@ -187,8 +188,8 @@ export default function AdminBankSecurityPage() {
     await run('revoke', () => revokeAdminBankCandidate(selected.exam_id, candidateId), `${name || 'Candidate'} no longer has access.`);
   }
 
-  async function doSearch(event: FormEvent) {
-    event.preventDefault();
+  async function doSearch(event?: FormEvent) {
+    event?.preventDefault();
     if (search.trim().length < 2) { setSearchResults([]); return; }
     setSearching(true);
     try {
@@ -364,15 +365,35 @@ export default function AdminBankSecurityPage() {
                     <h2 id="bs-candidates-heading"><UserPlus size={16} aria-hidden="true" /> Candidate access</h2>
                     <span>{selected.assigned_count} active · {selected.revoked_count} revoked</span>
                   </div>
-                  <form className="bs-form bs-form-inline" onSubmit={doSearch}>
-                    <label className="bs-field bs-grow">
-                      <span>Find a student account</span>
-                      <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, matric number or school" minLength={2} />
-                    </label>
-                    <button type="submit" className="bs-btn bs-btn-ghost" disabled={searching || search.trim().length < 2}>
+                  <div className="bs-form bs-form-inline" role="group" aria-label="Candidate access search">
+                    <AdminFilterSearch
+                      value={search}
+                      onChange={setSearch}
+                      label="Find a student account"
+                      placeholder="Name, matric number or school"
+                      suggestionLabel="Candidate suggestions"
+                      onSubmit={() => void doSearch()}
+                      items={[
+                        ...searchResults.map((candidate) => ({
+                          id: `lookup-${candidate.id}`,
+                          title: candidate.full_name || 'Unnamed account',
+                          description: [candidate.matric_number, candidate.school].filter(Boolean).join(' · '),
+                          category: 'Account lookup',
+                          keywords: [candidate.id],
+                        })),
+                        ...candidates.map((candidate) => ({
+                          id: `assigned-${candidate.user_id}`,
+                          title: candidate.full_name || 'Unnamed candidate',
+                          description: candidate.status === 'active' ? 'Assigned to this bank' : 'Access revoked',
+                          category: 'Bank candidate',
+                          keywords: [candidate.user_id, candidate.status],
+                        })),
+                      ]}
+                    />
+                    <button type="button" className="bs-btn bs-btn-ghost" disabled={searching || search.trim().length < 2} onClick={() => void doSearch()}>
                       <Search size={15} aria-hidden="true" /> {searching ? 'Searching…' : 'Search'}
                     </button>
-                  </form>
+                  </div>
                   {searchResults.length > 0 && (
                     <ul className="bs-search-results">
                       {searchResults.map((candidate) => (

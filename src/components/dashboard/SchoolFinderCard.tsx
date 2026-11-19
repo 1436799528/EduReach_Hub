@@ -3,6 +3,7 @@ import { ArrowRight, BookmarkPlus, Check, School } from 'lucide-react';
 import type { DashboardSavedItemInput } from '../../lib/studentDashboard';
 import { institutionSlug } from '../../lib/institutions/normalizers';
 import FilterSearch from '../ui/FilterSearch';
+import { matchesSearch } from '../../lib/searchMatch';
 
 export type Institution = {
   id: string;
@@ -60,12 +61,20 @@ export default function SchoolFinderCard({
   }, []);
 
   const filtered = useMemo(() => institutions.filter((school) => {
-      const haystack = [school.school_name, school.acronym, school.state, school.institution_type, school.course_context].filter(Boolean).join(' ').toLowerCase();
-    if (!haystack.includes(query.trim().toLowerCase())) return false;
+    if (!matchesSearch([
+      school.school_name, school.acronym, school.state,
+      school.institution_type, school.course_context, school.website_url,
+    ], query)) return false;
     if (type === 'ALL') return true;
     return String(school.institution_type || '').toLowerCase().includes(type.toLowerCase());
   }).slice(0, 40), [institutions, query, type]);
-  const suggestions = query.trim() ? filtered.slice(0, 6) : [];
+  const suggestions = useMemo(() => institutions.map((school) => ({
+    id: school.id,
+    title: school.school_name,
+    description: [school.acronym, school.state, school.institution_type].filter(Boolean).join(' · '),
+    category: school.institution_type || 'Institution',
+    keywords: [school.course_context, school.website_url],
+  })), [institutions]);
   const returnPath = `${window.location.pathname}${window.location.search}`;
 
   return (
@@ -84,8 +93,9 @@ export default function SchoolFinderCard({
             label="Search institutions"
             placeholder="School, state or course..."
             clearLabel="Clear institution search"
+            suggestionItems={suggestions}
+            suggestionLabel="Institution suggestions"
           />
-          {suggestions.length > 0 && <div className="dash-finder-suggestions" role="listbox">{suggestions.map((school) => <button type="button" key={school.id} onClick={() => setQuery(school.school_name)}><strong>{school.school_name}</strong><span>{school.acronym || school.state || 'Institution'}</span></button>)}</div>}
         </div>
         <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Institution type"><option value="ALL">All institutions</option><option value="Federal">Federal universities</option><option value="State">State universities</option><option value="Private">Private universities</option><option value="Polytechnic">Polytechnics</option><option value="College">Colleges</option></select>
       </div>

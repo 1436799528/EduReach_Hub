@@ -19,6 +19,7 @@ import AdminNewsroomQueue from '../src/components/admin/AdminNewsroomQueue';
 import AdminSortButton from '../src/components/admin/AdminSortButton';
 import { ariaSortFor, nextSortState, sortRows, NO_SORT, type SortState } from '../src/lib/tableSort';
 import { Can } from '../src/components/admin/Can';
+import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
 
 type EditorState = {
   id: string | null;
@@ -539,7 +540,20 @@ export default function AdminNewsPage() {
           <option value="draft">Drafts</option>
           <option value="placeholder">Placeholders</option>
         </select>
-        <input className="admin-input admin-search" aria-label="Search articles" placeholder="Search by title" maxLength={120} value={query} onChange={(e) => { setPage(1); setQuery(e.target.value); }} />
+        <AdminFilterSearch
+          value={query}
+          onChange={(value) => { setPage(1); setQuery(value); }}
+          label="Search articles"
+          placeholder="Search by title"
+          suggestionLabel="Article suggestions"
+          items={articles.map((article) => ({
+            id: article.id,
+            title: article.title,
+            description: [article.source_name, article.excerpt].filter(Boolean).join(' · '),
+            category: newsCategoryLabel(article.category),
+            keywords: [article.slug, article.tags, article.category, article.body],
+          }))}
+        />
         <span className="admin-filter-count">Page {page} · {visible.length} articles</span>
         <button type="button" className="admin-btn small" disabled={loading || page === 1} onClick={() => setPage((current) => current - 1)}>Previous</button>
         <button type="button" className="admin-btn small" disabled={loading || !hasMore} onClick={() => setPage((current) => current + 1)}>Next</button>

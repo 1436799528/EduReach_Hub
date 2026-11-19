@@ -88,6 +88,47 @@ export function useMenuDismiss({
   }, [open, rootRef, triggerRef]);
 }
 
+/**
+ * MOBILE-NAV-2 — the dismissal contract a phone drawer shares.
+ *
+ * A drawer pinned to the right of the viewport is still a modal: tapping any
+ * surface outside it closes it, the page behind stops scrolling while it is
+ * open, and the drawer itself owns the scroll when its links are taller than
+ * the screen (see its `overflow-y: auto` CSS). Focus and Escape are handled by
+ * `useModalDialog`, so one hook does not grow a second focus trap.
+ */
+export function useDrawerDismiss({
+  open,
+  onClose,
+  drawerRef,
+}: {
+  open: boolean;
+  onClose: () => void;
+  drawerRef: RefObject<HTMLElement | null>;
+}) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const outside = (event: Event) => {
+      if (event.target instanceof Node && !drawerRef.current?.contains(event.target)) {
+        closeRef.current();
+      }
+    };
+    // Pointerdown makes the dismissal feel immediate; click covers assistive
+    // technology and synthetic presses that do not emit a pointer event.
+    const events = ['pointerdown', 'click'];
+    for (const type of events) document.addEventListener(type, outside, true);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      for (const type of events) document.removeEventListener(type, outside, true);
+    };
+  }, [open, drawerRef]);
+}
+
 export function useMenuKeyboard(menuRef: RefObject<HTMLElement | null>, open: boolean) {
   useEffect(() => {
     if (!open) return;

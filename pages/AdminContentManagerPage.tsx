@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download, Pencil, Plus, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { adminApiFetch } from '../src/lib/api';
 import { AdminPageReport } from '../src/components/admin/AdminKit';
+import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
 
 type Field = {
   name: string;
@@ -21,6 +22,11 @@ type Resource = {
 };
 
 type Row = Record<string, unknown> & { id?: string };
+
+/** A stable, human label for a generic content-manager row. */
+function rowTitle(row: Row): string {
+  return String(row.title || row.name || row.school_name || row.full_name || row.id || 'Record');
+}
 
 function csvParse(text: string): string[][] {
   const rows: string[][] = [];
@@ -298,13 +304,19 @@ export default function AdminContentManagerPage() {
                 <span>{loading ? 'Loading…' : `${rows.filter(row => !search.trim() || JSON.stringify(row).toLowerCase().includes(search.trim().toLowerCase())).length} shown`}</span>
               </div>
               <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--admin-border)' }}>
-                <input
-                  className="admin-input"
-                  aria-label="Search rows"
-                  style={{ width: '100%' }}
-                  placeholder={`Search ${resource.label.toLowerCase()}…`}
+                <AdminFilterSearch
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={setSearch}
+                  label="Search rows"
+                  placeholder={`Search ${resource.label.toLowerCase()}…`}
+                  suggestionLabel={`${resource.label} suggestions`}
+                  items={rows.map((row, index) => ({
+                    id: String(row.id ?? `${resource.key}-${index}`),
+                    title: rowTitle(row),
+                    description: resource.fields.slice(0, 3).map((field) => row[field.name]).filter(Boolean).map(String).join(' · '),
+                    category: resource.label,
+                    keywords: [JSON.stringify(row), resource.key, resource.table],
+                  }))}
                 />
               </div>
             <div className="admin-table-wrap admin-table-wrap--stack" role="region" aria-label="Scrollable table" tabIndex={0}>

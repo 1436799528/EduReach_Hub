@@ -108,7 +108,8 @@ test('the search page uses the shared matcher and reports incomplete live source
 test('shared search supports a suggestion list, keyboard controls, and lazy catalogue loading', () => {
   const component = read('src/components/SiteSearch.tsx');
   assert.match(component, /role={suggestionsEnabled \? 'combobox' : undefined}/);
-  assert.match(component, /const suggestionsEnabled = variant !== 'page'/, 'the full results page does not overlay its result cards');
+  assert.match(component, /const suggestionsEnabled = true/, 'every placement, including the full results page, offers suggestions');
+  assert.match(component, /const suggestionLimit = variant === 'page' \? 4 : 6/, 'the full results page keeps a shorter suggestion list');
   assert.match(component, /role="listbox"/);
   assert.match(component, /role="option"/);
   assert.match(component, /event\.key === 'ArrowDown' \? 1 : event\.key === 'ArrowUp' \? -1 : 0/);
@@ -161,4 +162,18 @@ test('shared search debounces suggestions and marks the match', () => {
   assert.match(component, /aria-busy=\{suggestionsOpen && isLoading \? true : undefined\}/, 'the pending window is announced');
   assert.match(component, /highlightSegments\(item\.title, debouncedQuery\)/, 'suggestions use the shared highlighter');
   assert.match(component, /<mark key=\{segmentIndex\}>/, 'the matched part is a mark element, not a second colour');
+});
+
+test('page suggestions match a word at the beginning, middle or end of any field', async () => {
+  const { filterSearchSuggestions } = await import('../src/lib/searchMatch');
+  const items = [
+    { id: 'prefix', title: 'Scholarship award', description: 'Nigerian universities', category: 'Funding', keywords: ['undergraduate'] },
+    { id: 'middle', title: 'JAMB result checking', description: 'Portal guide', category: 'Service', keywords: ['checking'] },
+    { id: 'suffix', title: 'Post-UTME practice', description: 'Timed paper', category: 'CBT', keywords: ['practice'] },
+  ];
+  assert.deepEqual(filterSearchSuggestions(items, 'scholar').map((item) => item.id), ['prefix'], 'a leading fragment suggests');
+  assert.deepEqual(filterSearchSuggestions(items, 'checking').map((item) => item.id), ['middle'], 'an ending fragment suggests');
+  assert.deepEqual(filterSearchSuggestions(items, 'result').map((item) => item.id), ['middle'], 'a word in the middle suggests');
+  assert.deepEqual(filterSearchSuggestions(items, 'paper timed').map((item) => item.id), ['suffix'], 'tokens are order-free');
+  assert.deepEqual(filterSearchSuggestions(items, ''), [], 'an empty field does not invent suggestions');
 });

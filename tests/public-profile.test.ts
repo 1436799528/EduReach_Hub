@@ -39,12 +39,16 @@ test('the public projection is an allow-list, not a redaction pass', () => {
   assert.deepEqual(Object.keys(profile).sort(), [
     'avatar_url',
     'course_programme',
+    'display_role',
     'email_verified',
     'full_name',
     'level',
     'school',
     'slug',
   ]);
+  assert.equal(profile.display_role, 'student', 'the public role is a coarse application role, not a raw row');
+  assert.equal(projectPublicProfile({ ...privateRow, role: 'super_admin' }, true).display_role, 'super_admin', 'staff keep their role mark');
+  assert.equal(projectPublicProfile({ ...privateRow, role: 'campus_agent' }, true).display_role, 'student', 'retired half-roles never become staff');
   const serialized = JSON.stringify(profile);
   for (const secret of ['james@example.com', '08012345678', 'UNICAL/2023/001', '202312345678AB', privateRow.id, '"role"', 'notification_preferences']) {
     assert.equal(serialized.includes(secret), false, `the response must not contain ${secret}`);
@@ -99,7 +103,9 @@ test('the API reads only opted-in rows and returns no id', () => {
   const projection = read('src/lib/publicProfile.ts');
   const select = /export const PUBLIC_PROFILE_SELECT = \[([\s\S]*?)\]\.join/.exec(projection);
   assert.ok(select, 'the select list is declared');
-  assert.doesNotMatch(select[1], /phone|email|matric|jamb_reg_no|notification_preferences|role/);
+  assert.match(select[1], /'role'/, 'only the role is read so its public label can be projected');
+  assert.doesNotMatch(select[1], /phone|email|matric|jamb_reg_no|notification_preferences/);
+  assert.match(read('pages/PublicProfilePage.tsx'), /VerifiedBadge label="Verified EduReach account" role=\{profile\.display_role\}/, 'the public profile can show a staff role mark');
 });
 
 test('the public route exists and the shared link is not the private profile page', () => {

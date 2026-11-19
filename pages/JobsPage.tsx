@@ -1,4 +1,4 @@
-import { ArrowRight, BellRing, Briefcase, CalendarClock, MapPin, Search, ShieldCheck, ShieldQuestion, Tag, Users, X } from 'lucide-react';
+import { ArrowRight, BellRing, Briefcase, CalendarClock, MapPin, ShieldCheck, ShieldQuestion, Tag, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
@@ -9,6 +9,8 @@ import { fetchOpportunities, type Opportunity } from '../src/lib/api';
 import { opportunityStatus, type OpportunityState } from '../src/lib/opportunityStatus';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
+import { matchesSearch } from '../src/lib/searchMatch';
+import FilterSearch from '../src/components/ui/FilterSearch';
 
 const filters = [
   { id: 'ALL', label: 'All Listings' },
@@ -117,11 +119,13 @@ export default function JobsPage() {
       if (!categoryMatch) return false;
       const status = opportunityStatus(item);
       if (!matchesStatus(status.state, status.verification, statusFilter)) return false;
-      const haystack = [
+      // SEARCH-2: every token can occur at the start, middle or end of any
+      // listing field, in any order. The same matcher powers the suggestions.
+      if (!matchesSearch([
         item.title, item.organisation, item.description, item.locations, item.eligibility,
-        item.subcategory, ...(item.education_levels || []), ...(item.disciplines || []),
-      ].join(' ').toLowerCase();
-      if (query && !haystack.includes(query)) return false;
+        item.subcategory, item.category, item.work_mode,
+        ...(item.education_levels || []), ...(item.disciplines || []),
+      ], query)) return false;
       if (educationFilter && !(item.education_levels || []).includes(educationFilter)) return false;
       if (disciplineFilter && !(item.disciplines || []).includes(disciplineFilter)) return false;
       if (workModeFilter && item.work_mode !== workModeFilter) return false;
@@ -141,15 +145,43 @@ export default function JobsPage() {
 
   const filteredStatic = useMemo(() => {
     if (isSupabaseConfigured) return [];
-    if (activeFilter === 'ALL') return jobs;
-    return jobs.filter((item) => item.category === activeFilter);
-  }, [activeFilter]);
+    return jobs.filter((item) => {
+      const categoryMatch = activeFilter === 'ALL' || item.category === activeFilter;
+      return categoryMatch && matchesSearch([item.title, item.note, item.type, item.mode, item.category], search);
+    });
+  }, [activeFilter, search]);
+
+  // SEARCH-2: the suggestion catalogue is the active source's *whole* list,
+  // not only the rows left after other filters. A word in a description,
+  // organisation, location or discipline still suggests its listing.
+  const opportunitySuggestions = useMemo(() => isSupabaseConfigured
+    ? (live || []).map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: [item.organisation, item.locations, item.subcategory].filter(Boolean).join(' · '),
+      category: item.category,
+      keywords: [
+        item.description ? plainTextFromHtml(item.description) : null,
+        item.eligibility,
+        item.source_name,
+        item.work_mode,
+        ...(item.education_levels || []),
+        ...(item.disciplines || []),
+      ],
+    }))
+    : jobs.map((item) => ({
+      id: item.title,
+      title: item.title,
+      description: [item.type, item.mode].join(' · '),
+      category: item.category,
+      keywords: [item.note],
+    })), [live]);
 
   const loadingLive = live === null;
 
   return (
     <HubLayout>
-      <div className="hub-page" style={{ padding: '20px 0 60px' }}>
+      <div className="hub-page er-comfort-page">
         <div className="hub-container hub-narrow">
           <div className="hub-section-heading hub-page-heading-compact" style={{ marginBottom: '16px' }}>
             <div>
@@ -169,17 +201,15 @@ export default function JobsPage() {
           </div>
 
           <div style={{ marginBottom: '14px', padding: '14px', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '9px', padding: '0 11px', minHeight: '42px' }}>
-              <Search size={17} style={{ color: '#64748b', flexShrink: 0 }} />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); updateUrl(activeFilter, e.target.value); }}
-                placeholder="Search jobs, scholarships, internships, grants…"
-                aria-label="Search opportunities"
-                style={{ border: 0, outline: 0, background: 'transparent', width: '100%', fontSize: '13px', color: '#0f172a' }}
-              />
-              {search && <button type="button" onClick={() => { setSearch(''); updateUrl(activeFilter, ''); }} aria-label="Clear search" style={{ border: 0, background: 'transparent', padding: 4, cursor: 'pointer' }}><X size={15} /></button>}
-            </label>
+            <FilterSearch
+              value={search}
+              onChange={(value) => { setSearch(value); updateUrl(activeFilter, value); }}
+              label="Search opportunities"
+              placeholder="Search jobs, scholarships, internships, grants…"
+              clearLabel="Clear opportunity search"
+              suggestionItems={opportunitySuggestions}
+              suggestionLabel="Opportunity suggestions"
+            />
             {isSupabaseConfigured && live && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: '8px', marginTop: '10px' }}>
                 <select value={educationFilter} onChange={(e) => setEducationFilter(e.target.value)} aria-label="Filter by education level" className="admin-select">
@@ -276,7 +306,7 @@ export default function JobsPage() {
           {!loadingLive && !isSupabaseConfigured && filteredStatic.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
               <SectionHead title={`${filteredStatic.length} preview listing${filteredStatic.length === 1 ? '' : 's'}`} />
-              <div className="er-square-grid" style={{ gap: '12px' }}>
+              <div className="er-standard-card-grid">
                 {filteredStatic.map((item) => (
                   <a
                     key={item.title}
@@ -284,15 +314,6 @@ export default function JobsPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}`}
-                    style={{
-                      alignItems: 'center',
-                      gap: '14px',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
-                      background: '#ffffff',
-                      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)',
-                    }}
                   >
                     <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
                       <CardIdentityMark value={`${item.title} ${item.category} ${item.type}`} type="content" size="sm" />
@@ -328,7 +349,7 @@ export default function JobsPage() {
           {!loadingLive && isSupabaseConfigured && filteredLive && filteredLive.length > 0 && (
             <section className="er-section" style={{ marginTop: 0 }}>
               <SectionHead title={`${filteredLive.length} matching listing${filteredLive.length === 1 ? '' : 's'}`} />
-              <div className="er-square-grid" style={{ gap: '12px' }}>
+              <div className="er-standard-card-grid">
                 {filteredLive.map((item) => {
                   const status = opportunityStatus(item);
                   return (
@@ -336,7 +357,6 @@ export default function JobsPage() {
                       key={item.id}
                       href={`/jobs/${encodeURIComponent(item.id)}`}
                       className={`er-opportunity-card er-opportunity-link ${identityClassFor(`${item.category} ${item.title}`, 'content')}${status.actionable ? '' : ' is-expired'}`}
-                      style={{ alignItems: 'flex-start', gap: '14px', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)', opacity: status.actionable ? 1 : 0.78 }}
                     >
                       <div className="hub-news-thumb" style={{ flexShrink: 0 }}>
                         <CardIdentityMark value={`${item.title} ${item.category} ${item.organisation || ''}`} type="content" size="sm" />

@@ -44,3 +44,12 @@ tile into a hero panel and break the documented 3–4 cards per row.
 The settings-system pattern is a separate admin concern and was not part of
 this card change; the admin site page already has grouped explicit saves,
 `Modified` indicators and per-group reset.
+
+## Related content cards
+
+The `84px` phone height is the reference for a compact card that does one job.
+News, featured stories, scholarships and jobs carry more facts, so they use the
+shared `.er-standard-card-grid` horizontal row (thumbnail + copy + arrow) with
+a `104px` minimum. They stay compact by wrapping small facts and clamping long
+prose, never by hiding facts with `display:none`. See
+`docs/features/MOBILE-FIRST-SITE-STANDARD.md`.

@@ -18,6 +18,8 @@ import {
 } from '../src/lib/capabilities';
 import { can } from '../lib/authorization';
 
+const read = (path: string) => readFileSync(path, 'utf8');
+
 // ---------------------------------------------------------------------------
 // A contract stub for Supabase, not proof of a live project. The role of a
 // session is derived from its token so each request can act as a different
@@ -393,7 +395,7 @@ test('roles resolve with least privilege and retired half-roles keep nothing', (
 test('duty separation between the staff roles is real', () => {
   const content: Capability[] = ['news.publish', 'news.delete', 'cbt.manage', 'opportunity.update', 'data.read'];
   const service: Capability[] = ['service_request.process', 'service_request.read', 'service.read'];
-  const ownerOnly: Capability[] = ['user.read', 'user.suspend', 'user.manage_roles', 'audit.read', 'data.import'];
+  const ownerOnly: Capability[] = ['user.read', 'user.suspend', 'user.manage_roles', 'user.delete', 'audit.read', 'data.import'];
   const notContent: Capability[] = ['service_request.read', 'service_request.process', 'user.read', 'user.suspend'];
   const notService: Capability[] = ['news.publish', 'news.delete', 'cbt.manage', 'user.read', 'data.write'];
 
@@ -1467,4 +1469,45 @@ test('the role migration normalises the vocabulary and retires the half-roles', 
   assert.match(sql, /drop policy if exists student_notifications_staff_insert/);
   assert.match(sql, /^begin;/m);
   assert.match(sql, /^commit;/m);
+});
+
+test('destructive user deletion is an owner capability with a guarded server contract', () => {
+  const caps = read('src/lib/capabilities.ts');
+  const api = read('src/lib/api.ts');
+  const server = read('server.ts');
+  const page = read('pages/AdminUsersPage.tsx');
+  assert.match(caps, /'user\.delete'/);
+  assert.ok(capabilitiesForRole('super_admin').includes('user.delete'), 'the owner holds the capability');
+  for (const role of ['student', 'content_editor', 'service_admin'] as AppRole[]) {
+    assert.equal(hasCapability({ role }, 'user.delete'), false, `${role} cannot delete accounts`);
+  }
+  assert.match(api, /async function deleteAdminUser\(userId: string\)/);
+  assert.match(api, /adminApiFetch\(`\/api\/admin\/users\/\$\{encodeURIComponent\(userId\)\}`, \{ method: 'DELETE' \}\)/);
+  assert.match(server, /app\.delete\('\/api\/admin\/users\/:userId', requireCapability\('user\.delete'\)/);
+  assert.match(server, /You cannot delete your own account/);
+  assert.match(server, /The last administrator cannot be deleted/);
+  assert.match(server, /auth\.admin\.deleteUser\(userId\)/);
+  assert.match(server, /action: 'user_delete'/, 'both success and failure are auditable');
+  assert.match(server, /result: 'success'/);
+  assert.match(server, /result: 'failure'/);
+  assert.match(server, /foreign key/, 'linked records are reported rather than silently deleted');
+  assert.match(server, /admin_audit_logs/);
+  assert.match(server, /Suspend it instead/i);
+  assert.match(page, /Can capability="user\.delete"/, 'the button is hidden without the capability');
+  assert.match(page, /window\.confirm\(/, 'a destructive press is confirmed');
+});
+
+test('role labels have one shared source and public roles stay coarse', () => {
+  const presentation = read('src/lib/rolePresentation.ts');
+  const badge = read('src/components/RoleBadge.tsx');
+  const profile = read('src/lib/publicProfile.ts');
+  assert.match(presentation, /APP_ROLES/);
+  assert.match(presentation, /content_editor: \{[\s\S]*?color: '#1d4ed8'/);
+  assert.match(presentation, /super_admin: \{[\s\S]*?surface: '#fff8e1'/);
+  assert.match(presentation, /resolveAppRole\(value\)/, 'legacy and retired values collapse through one resolver');
+  assert.match(badge, /rolePresentation\(role\)/);
+  assert.match(profile, /display_role: resolveAppRole\(row\.role\)/, 'the boundary maps raw roles to project-safe labels');
+  assert.doesNotMatch(profile, /ROLE_CAPABILITIES|capabilitiesForRole/, 'public role labels do not expose the permission matrix');
+  assert.equal(resolveAppRole('campus_agent'), 'student');
+  assert.equal(resolveAppRole('moderator'), 'super_admin');
 });

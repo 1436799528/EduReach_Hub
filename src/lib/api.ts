@@ -1100,6 +1100,11 @@ export async function updateAdminUserRole(userId: string, role: string): Promise
   return body.user;
 }
 
+/** Permanently delete an auth account and its cascaded profile. Super-admin only. */
+export async function deleteAdminUser(userId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+}
+
 export async function uploadAdminImage(dataUrl: string): Promise<{ url: string; path: string; bytes: number }> {
   return await adminApiFetch<{ url: string; path: string; bytes: number }>('/api/admin/uploads', {
     method: 'POST',

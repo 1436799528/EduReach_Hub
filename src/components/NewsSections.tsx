@@ -118,7 +118,7 @@ export function FeaturedNews({ items }: { items: NewsItem[] }) {
   if (!flagged.length) return null;
   const list = flagged.slice(0, 2);
   return (
-    <div className="er-featured-grid">
+    <div className="er-featured-grid er-standard-card-grid">
       {list.map((item) => (
         <a key={item.id} className="er-featured-card" href={articleHref(item)}>
           <span className="er-featured-media"><NewsImage item={item} className="er-news-photo" /></span>

@@ -550,6 +550,7 @@ a.er-notif-row:hover { background: var(--er-surface-soft); }
 /* The shared page-filter search (UI-5). Same white surface, neutral icon and
    subtle focus ring as the site search, without a submit CTA. */
 .er-filter-search {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -589,6 +590,75 @@ a.er-notif-row:hover { background: var(--er-surface-soft); }
   cursor: pointer;
 }
 .er-filter-search-clear:hover { background: var(--er-surface-soft); color: var(--er-text-primary); }
+
+/* SEARCH-2: every page filter announces its own content as suggestions. The
+   panel scrolls rather than covering a phone, and the matched word is marked
+   wherever it occurs — beginning, middle or end. */
+.er-filter-suggestions {
+  position: absolute;
+  z-index: 180;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(320px, 58vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--er-border-strong, #cbd5e1);
+  border-radius: 10px;
+  background: var(--er-surface, #fff);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+  color: var(--er-text-primary);
+  /* The empty state and panel gutters must not block the page's own controls. */
+  pointer-events: none;
+}
+.er-filter-suggestion-list { margin: 0; padding: 4px; list-style: none; pointer-events: auto; }
+.er-filter-suggestion-list button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.er-filter-suggestion-list button:hover,
+.er-filter-suggestion-list button.is-active { background: var(--er-surface-soft, #f1f5f9); }
+.er-filter-suggestion-list button > span:first-child { display: grid; min-width: 0; gap: 2px; }
+.er-filter-suggestion-list small { color: var(--er-text-muted); font-size: 10px; }
+.er-filter-suggestion-list strong {
+  overflow: hidden;
+  color: var(--er-text-primary);
+  font-size: 13px;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.er-filter-suggestion-list em {
+  overflow: hidden;
+  color: var(--er-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.er-filter-suggestion-list mark {
+  padding: 0 1px;
+  border-radius: 3px;
+  background: var(--er-primary-soft, #edf4fb);
+  color: var(--er-primary, #1E40AF);
+}
+.er-filter-suggestion-empty { margin: 0; padding: 11px 12px; color: var(--er-text-secondary); font-size: 12px; line-height: 1.45; }
+
+@media (max-width: 640px) {
+  .er-filter-suggestions { max-height: min(280px, 52vh); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .er-filter-search { transition: none; }
 }

@@ -2,7 +2,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, Calculator, CheckCircle2, Clock3, Eraser,
   Flag, Grid3X3, LogOut, Send, X,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import ScientificCalculator from '../src/components/ScientificCalculator';
 import ConnectionBanner from '../src/components/ConnectionBanner';
 import SiteFooter from '../src/components/SiteFooter';
@@ -40,6 +40,24 @@ import './CbtSessionPage.css';
  */
 
 const PENDING_PREFIX = 'edureach-cbt-pending:';
+
+/** A11Y: subject tabs are one tab stop; arrows, Home and End move and activate. */
+function handleSubjectTabKeys(event: ReactKeyboardEvent<HTMLDivElement>) {
+  const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+  if (!tabs.length) return;
+  const current = Math.max(0, tabs.findIndex((tab) => tab === document.activeElement));
+  let next: number;
+  switch (event.key) {
+    case 'ArrowRight': next = (current + 1) % tabs.length; break;
+    case 'ArrowLeft': next = (current - 1 + tabs.length) % tabs.length; break;
+    case 'Home': next = 0; break;
+    case 'End': next = tabs.length - 1; break;
+    default: return;
+  }
+  event.preventDefault();
+  tabs[next].focus();
+  tabs[next].click();
+}
 
 function readPending(attemptId: string): Record<number, number> | null {
   try {
@@ -657,7 +675,13 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         </section>}
 
         {subjectPlan.length > 1 && (
-          <div className="er-exam-subject-tabs" role="tablist" aria-label="Exam subjects">
+          <div
+            className="er-exam-subject-tabs"
+            role="tablist"
+            aria-label="Exam subjects"
+            aria-orientation="horizontal"
+            onKeyDown={handleSubjectTabKeys}
+          >
             {subjectPlan.map((entry) => {
               const answeredInBlock = questions.filter((item) =>
                 item.position >= entry.first && item.position <= entry.last && visibleAnswers[item.position] !== undefined
@@ -669,6 +693,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                   type="button"
                   role="tab"
                   aria-selected={current}
+                  tabIndex={current ? 0 : -1}
                   className={current ? 'er-exam-subject-tab is-current' : 'er-exam-subject-tab'}
                   onClick={() => goTo(entry.first - 1)}
                 >

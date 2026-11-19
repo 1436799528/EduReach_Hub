@@ -94,3 +94,56 @@ export function filterSearchItems<T extends { title: string; description: string
     .slice(0, limit)
     .map(({ item }) => item);
 }
+
+/**
+ * A suggestion in a page-level filter field. `keywords` are searchable but not
+ * displayed, so a listing can be found by an organisation, source, tag or
+ * fragment without turning the suggestion into a paragraph.
+ */
+export type SearchSuggestion = {
+  id: string;
+  title: string;
+  description?: string;
+  category?: string;
+  keywords?: ReadonlyArray<string | null | undefined>;
+};
+
+/**
+ * Suggest everything on the current page whose *fields* contain every query
+ * token. A word at the start, middle or end is treated the same: rank changes,
+ * eligibility does not. This is intentionally stricter than a fuzzy matcher —
+ * a confident wrong suggestion is worse than an honest empty state.
+ */
+export function filterSearchSuggestions<T extends SearchSuggestion>(
+  items: readonly T[],
+  query: string,
+  limit = 6,
+): T[] {
+  const normalized = normalizeSearchText(query);
+  if (!normalized) return [];
+  return items
+    .filter((item) => matchesSearch([
+      item.title,
+      item.description,
+      item.category,
+      ...(item.keywords || []),
+    ], query))
+    .map((item, index) => {
+      const title = normalizeSearchText(item.title);
+      const fields = normalizeSearchText([
+        item.title,
+        item.description,
+        item.category,
+        ...(item.keywords || []),
+      ].filter(Boolean).join(' '));
+      const position = fields.indexOf(normalized);
+      const rank = title === normalized ? 0
+        : title.startsWith(normalized) ? 1
+          : title.includes(normalized) ? 2
+            : position >= 0 ? 3 : 4;
+      return { item, index, rank, position: position < 0 ? Number.MAX_SAFE_INTEGER : position };
+    })
+    .sort((a, b) => a.rank - b.rank || a.position - b.position || a.index - b.index)
+    .slice(0, limit)
+    .map(({ item }) => item);
+}

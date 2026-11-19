@@ -38,7 +38,12 @@ the current source is authoritative.
   context label and active sidebar item already identify location. No
   breadcrumbs are added to flat structures.
 - **One system:** these are complementary tiers of the same navigation model,
-  not interchangeable options to restyle a page on a whim.
+  not interchangeable options to restyle a page on a whim. Public and admin
+  phone drawers now share the same right-side placement, focus-managed dialog,
+  Escape/outside dismissal, body scroll lock and internally scrollable list.
+- **A visible Home/Dashboard bridge:** the public Home has a compact
+  `.er-home-dashboard-switch`. The signed-in dashboard keeps its own Home
+  switch. Neither transition relies on the hamburger as its only affordance.
 
 ## Accessibility notes
 

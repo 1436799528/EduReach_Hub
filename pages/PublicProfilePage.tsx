@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, GraduationCap, Lock, ShieldCheck } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import VerifiedBadge from '../src/components/VerifiedBadge';
+import { rolePresentation } from '../src/lib/rolePresentation';
 import { SkeletonRows } from '../src/components/Skeleton';
 import { fetchPublicProfile } from '../src/lib/publicProfileClient';
 import type { PublicProfile } from '../src/lib/publicProfile';
@@ -111,10 +112,10 @@ export default function PublicProfilePage({ slug }: { slug: string }) {
                   <div className="profile-identity-copy">
                     <div className="profile-identity-name">
                       <h1>{profile.full_name}</h1>
-                      {profile.email_verified && <VerifiedBadge label="Verified EduReach account" />}
+                      {profile.email_verified && <VerifiedBadge label="Verified EduReach account" role={profile.display_role} />}
                     </div>
                     <p className="profile-identity-role">
-                      Student{profile.level ? ` · ${profile.level} level` : ''}{profile.school ? ` · ${profile.school}` : ''}
+                      {rolePresentation(profile.display_role).label}{profile.level ? ` · ${profile.level} level` : ''}{profile.school ? ` · ${profile.school}` : ''}
                     </p>
                     {profile.course_programme && (
                       <p className="profile-identity-programme">{profile.course_programme}</p>
@@ -149,7 +150,7 @@ export default function PublicProfilePage({ slug }: { slug: string }) {
                     <h2 id="public-privacy">What this page does not show</h2>
                   </div>
                   <p className="profile-muted">
-                    This student chose to share only their academic identity. Their email address, phone number,
+                    This profile shares academic identity and a role label. Their email address, phone number,
                     matric number, examination history and notifications stay private.
                   </p>
                   <p className="profile-muted" style={{ marginTop: 10 }}>
