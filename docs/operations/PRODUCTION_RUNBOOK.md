@@ -315,6 +315,13 @@ check on `/api/health/ready` (it returns 503 when the database read fails) plus 
 scheduled check of `/api/admin/jobs`. **Do not describe this as alerting**; it is
 polling.
 
+Since OBS-2 the server emits one JSON event per failure with a `request_id` that matches
+the `X-Request-Id` response header, so a report from a student can be traced to the exact
+log line. The full event catalogue, the severities and the recommended alert thresholds
+(with the five pieces that still need an external service) are in
+[OBSERVABILITY.md](OBSERVABILITY.md). Two points worth knowing at 03:00: `warn` and above
+go to **stderr**, and a crash or boot failure is only visible there — nothing can poll it.
+
 ## 14. Verify production performance
 
 Lab numbers from CI are regression protection, not field data. Once deployed:

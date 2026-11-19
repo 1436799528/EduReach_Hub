@@ -12,6 +12,7 @@
 | [SUPABASE_LIVE_VERIFICATION.md](SUPABASE_LIVE_VERIFICATION.md) | Which Supabase checks are done locally, which need project access, and the safe order to run them |
 | [operations/STAGING_VERIFICATION_RUNBOOK.md](operations/STAGING_VERIFICATION_RUNBOOK.md) | The ordered, fail-closed procedure for running the outstanding live checks against a disposable project |
 | [operations/ENVIRONMENTS.md](operations/ENVIRONMENTS.md) | Development, staging and production: which Supabase project each uses, env variable names and presence, email-verification setting, database state |
+| [operations/OBSERVABILITY.md](operations/OBSERVABILITY.md) | What is logged and how (event names, levels, request ids, redaction), what health and readiness check, the recommended alert thresholds, and the five places an external service is still required |
 | [SUPABASE_ENVIRONMENT_CAPABILITY.md](SUPABASE_ENVIRONMENT_CAPABILITY.md) | Can this environment test Supabase? Test-by-test verdict: passed, failed or blocked, with the blockers named |
 | [PAGE_QUALITY_GATE.md](PAGE_QUALITY_GATE.md) | Definition of done for a page |
 | [functional-qa-gate.md](functional-qa-gate.md) | Manual pass before a deploy |
