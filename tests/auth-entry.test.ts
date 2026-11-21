@@ -102,9 +102,9 @@ test('the welcome heading is centred and follows the logo palette', () => {
 
 test('a fresh email signup is not hijacked by an existing session or admin checks', () => {
   const page = read('pages/AuthPageV2.tsx');
-  assert.match(page, /if \(currentMode === 'signup'\) return;/, 'a deliberate /register visit stays available while signed in');
+  assert.match(page, /if (currentMode === 'signup') return;/, 'a deliberate /register visit stays available while signed in');
   assert.match(page, /\[isAuthenticated, isLoading, user\?\.id, currentMode\]/, 'the return effect follows mode changes');
-  assert.match(page, /mode === 'verify' && !EMAIL_VERIFICATION_ENABLED \? 'signin' : mode/, 'direct verification links still open sign-in while verification is off');
+  assert.doesNotMatch(page, /EMAIL_VERIFICATION_ENABLED|currentMode === 'verify'/, 'email verification is removed from the auth page');
   assert.match(page, /await bootstrapAdmin\(\);/, 'sign-in admin bootstrap is preserved');
   assert.match(page, /isAdmin \? '\/admin' : getSafeNextPath\(\)/, 'staff sign-in routing is preserved');
 
@@ -116,14 +116,13 @@ test('a fresh email signup is not hijacked by an existing session or admin check
   assert.match(signupBlock, /supabase\.auth\.signUp\(/, 'new emails are created by Supabase Auth');
   assert.match(signupBlock, /signInWithPassword\(/, 'a new email without an immediate session is signed in');
   assert.match(signupBlock, /navigateInApp\(getSafeNextPath\(\)\)/, 'the new user reaches the app');
-  assert.match(signupBlock, /if \(EMAIL_VERIFICATION_ENABLED\)/, 'the verification branch remains behind the off-by-default switch');
+  assert.doesNotMatch(signupBlock, /EMAIL_VERIFICATION_ENABLED|verifyEmailCode|resendVerification/, 'signup has no email verification branch');
   assert.doesNotMatch(signupBlock, /bootstrapAdmin|admin\/session/, 'signup does not probe or bootstrap admin access');
 
-  const flag = read('src/lib/emailVerification.ts');
-  assert.match(flag, /VITE_EMAIL_VERIFICATION_ENABLED === 'true'/);
-  assert.equal(flag.includes('= true'), false, 'verification stays off unless explicitly re-enabled');
-  assert.match(read('.env.example'), /VITE_EMAIL_VERIFICATION_ENABLED=false/);
-  assert.match(read('.env.production.example'), /VITE_EMAIL_VERIFICATION_ENABLED=false/);
+  assert.match(read('src/app/routes.tsx'), /path === '\/verify-email'.*RedirectTo path="\/login"/, 'legacy verification links return to sign-in');
+  assert.doesNotMatch(read('src/lib'), /emailVerification/, 'the obsolete verification helper is gone');
+  assert.doesNotMatch(read('.env.example'), /EMAIL_VERIFICATION_ENABLED/);
+  assert.doesNotMatch(read('.env.production.example'), /EMAIL_VERIFICATION_ENABLED/);
 });
 
 test('student dashboards do not call the staff-gated session endpoint', () => {
