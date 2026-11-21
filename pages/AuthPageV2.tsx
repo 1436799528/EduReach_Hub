@@ -512,18 +512,14 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               <header className="auth-card-heading">
                 <h1 id="auth-title">{pageTitle}</h1>
                 {currentMode === 'signup' ? (
-                  EMAIL_VERIFICATION_ENABLED ? null : (
-                    <p>Test accounts are ready immediately; email confirmation is temporarily off.</p>
-                  )
+                  <p>Create your account and start using EduReach immediately.</p>
                 ) : (
                   <p>
                     {currentMode === 'signin'
                       ? 'Sign in to continue to your saved services and practice.'
-                      : currentMode === 'verify'
-                        ? 'Open the link in your email, or enter its code.'
-                        : currentMode === 'reset'
-                          ? 'Use a new password you have not used here before.'
-                          : 'Enter your email and we will send reset instructions if an account exists.'}
+                      : currentMode === 'reset'
+                        ? 'Use a new password you have not used here before.'
+                        : 'Enter your email and we will send reset instructions if an account exists.'}
                   </p>
                 )}
               </header>
