@@ -28,7 +28,6 @@ import {
 import { markPendingTermsAcceptance, readTermsAcceptance, settlePendingTermsAcceptance } from '../src/lib/legalConsent';
 import { navigateInApp } from '../src/lib/navigation';
 import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
-import { EMAIL_VERIFICATION_ENABLED } from '../src/lib/emailVerification';
 import { InlineNotice } from '../src/components/AsyncState';
 import BrandLogo from '../src/components/BrandLogo';
 import FormFieldError from '../src/components/FormFieldError';
@@ -38,7 +37,7 @@ import SiteFooter from '../src/components/SiteFooter';
 import { TabBar } from '../src/components/ui/Tabs';
 import '../src/auth-page.css';
 
-type Mode = 'signin' | 'signup' | 'forgot' | 'reset' | 'verify';
+type Mode = 'signin' | 'signup' | 'forgot' | 'reset';
 type ContactMethod = 'email' | 'phone';
 
 const accountTypes = [
@@ -75,7 +74,7 @@ function goBack() {
 
 export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [currentMode, setCurrentMode] = useState<Mode>(mode === 'verify' && !EMAIL_VERIFICATION_ENABLED ? 'signin' : mode);
+  const [currentMode, setCurrentMode] = useState<Mode>(mode);
   const [contactMethod, setContactMethod] = useState<ContactMethod>('email');
   const [accountType, setAccountType] = useState<'student' | 'parent' | 'teacher'>('student');
   const [firstName, setFirstName] = useState('');
@@ -98,9 +97,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [phoneStage, setPhoneStage] = useState<'idle' | 'sent'>('idle');
   const [phoneSentTo, setPhoneSentTo] = useState('');
   const [otp, setOtp] = useState('');
-  const [verifyEmailSent, setVerifyEmailSent] = useState('');
-  const [emailOtp, setEmailOtp] = useState('');
-  const [emailVerifyBusy, setEmailVerifyBusy] = useState(false);
   const [termsGateFor, setTermsGateFor] = useState('');
   const requestInFlight = useRef(false);
   const settlingReturn = useRef(false);
@@ -111,7 +107,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     signup: '/register',
     forgot: '/forgot-password',
     reset: '/reset-password',
-    verify: '/verify-email',
   };
 
   useEffect(() => {
@@ -186,56 +181,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     setError('Please confirm that you have read the Terms of Service and the Privacy Notice before creating an account.');
     termsRef.current?.focus();
     return false;
-  }
-
-  async function verifyEmailCode() {
-    const target = (verifyEmailSent || email).trim();
-    const token = emailOtp.replace(/\D/g, '');
-    if (!target || !target.includes('@')) { setError('Enter the email address you used to register.'); return; }
-    if (token.length < 6) { setError('Enter the verification code from the email.'); return; }
-    if (!isSupabaseConfigured) { setError('Email verification needs the live account service.'); return; }
-    setEmailVerifyBusy(true);
-    setError('');
-    setMessage('');
-    try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({ email: target, token, type: 'signup' });
-      if (verifyError) throw verifyError;
-      notifyAuthChanged();
-      navigateInApp(getSafeNextPath());
-    } catch (value) {
-      setError(userFacingError(value, 'That code could not be verified. Request a new code.'));
-    } finally {
-      setEmailVerifyBusy(false);
-    }
-  }
-
-  async function resendVerification() {
-    if (requestInFlight.current) return;
-    const target = (verifyEmailSent || email).trim();
-    if (!target) {
-      setError('Enter your email address first.');
-      return;
-    }
-    if (!isSupabaseConfigured) {
-      setMessage('Email service is not configured yet. Your verification link will send once it is.');
-      return;
-    }
-
-    requestInFlight.current = true;
-    setBusy(true);
-    setError('');
-    setMessage('');
-    try {
-      const { error: resendError } = await supabase.auth.resend({ type: 'signup', email: target });
-      if (resendError) throw resendError;
-      setEmailOtp('');
-      setMessage('A new verification email has been sent.');
-    } catch (value) {
-      setError(userFacingError(value, 'Unable to resend the verification email.'));
-    } finally {
-      requestInFlight.current = false;
-      setBusy(false);
-    }
   }
 
   function signupMetadata(phoneValue = '') {
@@ -436,15 +381,8 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
           navigateInApp(getSafeNextPath());
           return;
         }
-        if (EMAIL_VERIFICATION_ENABLED) {
-          setVerifyEmailSent(email.trim());
-          setCurrentMode('verify');
-          setMessage('Open the verification email we sent, or enter its code below.');
-          return;
-        }
-        // Temporary pre-launch mode: Supabase auto-confirms new email accounts,
-        // so finish sign-up by signing the tester in immediately. Banks are
-        // resolved only when they open the chosen simulator.
+        // Email confirmation is disabled. Supabase auto-confirms new email
+        // accounts, so finish sign-up by signing the user in immediately.
         const { error: autoSignInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -510,9 +448,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     ? 'Welcome back'
     : currentMode === 'signup'
       ? 'Create your account'
-      : currentMode === 'verify'
-        ? 'Check your email'
-        : currentMode === 'reset'
+      : currentMode === 'reset'
           ? 'Choose a new password'
           : 'Reset your password';
   const allowModeSwitch = currentMode === 'signin' || currentMode === 'signup';
@@ -576,18 +512,14 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
               <header className="auth-card-heading">
                 <h1 id="auth-title">{pageTitle}</h1>
                 {currentMode === 'signup' ? (
-                  EMAIL_VERIFICATION_ENABLED ? null : (
-                    <p>Test accounts are ready immediately; email confirmation is temporarily off.</p>
-                  )
+                  <p>Create your account and start using EduReach immediately.</p>
                 ) : (
                   <p>
                     {currentMode === 'signin'
                       ? 'Sign in to continue to your saved services and practice.'
-                      : currentMode === 'verify'
-                        ? 'Open the link in your email, or enter its code.'
-                        : currentMode === 'reset'
-                          ? 'Use a new password you have not used here before.'
-                          : 'Enter your email and we will send reset instructions if an account exists.'}
+                      : currentMode === 'reset'
+                        ? 'Use a new password you have not used here before.'
+                        : 'Enter your email and we will send reset instructions if an account exists.'}
                   </p>
                 )}
               </header>
@@ -607,29 +539,6 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                   <button className="auth-submit" type="button" disabled={busy} aria-busy={busy} onClick={() => void acceptReturningTerms()}>
                     {busy ? 'Recording…' : 'Agree and continue'}
                   </button>
-                </div>
-              ) : currentMode === 'verify' ? (
-                <div className="auth-verification">
-                  <div className="auth-verification-icon"><Mail size={24} /></div>
-                  <p>
-                    {isSupabaseConfigured
-                      ? (verifyEmailSent || email)
-                        ? <>We sent a verification email to <strong>{verifyEmailSent || email}</strong>. Open the link in it to finish. If the email also shows a code, enter it below.</>
-                        : <>Open the verification link in your email, or enter the code if the email includes one. If you opened this page directly, sign up first or request a new email.</>
-                      : 'Email verification needs the live EduReach account service, which is not configured in this environment.'}
-                  </p>
-                  {isSupabaseConfigured && (
-                    <div className="auth-code-form">
-                      <OtpInput id="auth-email-code" label="Verification code" value={emailOtp} onChange={setEmailOtp} length={8} disabled={emailVerifyBusy} />
-                      <button className="auth-submit" type="button" disabled={emailVerifyBusy || emailOtp.length < 6} aria-busy={emailVerifyBusy} onClick={() => void verifyEmailCode()}>
-                        {emailVerifyBusy ? 'Verifying…' : 'Verify code'}
-                      </button>
-                    </div>
-                  )}
-                  <button className="auth-submit auth-submit--secondary" type="button" disabled={busy || emailVerifyBusy} onClick={() => void resendVerification()}>
-                    Resend verification email
-                  </button>
-                  <button className="auth-text-button" type="button" onClick={() => changeMode('signin')}>Back to sign in</button>
                 </div>
               ) : (
                 <form className="auth-form" onSubmit={submit}>
