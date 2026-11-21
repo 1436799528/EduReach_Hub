@@ -177,3 +177,63 @@ export async function notifyServiceRequestStatus(
     return { sent: false, reason: 'unexpected error' };
   }
 }
+
+export interface CbtAttemptForNotification {
+  id: string;
+  user_id: string;
+  exam_title?: string | null;
+  score?: number | null;
+}
+
+/**
+ * Write an in-app notification when a CBT attempt result is finalised.
+ *
+ * Idempotent per attempt: an attempt is finalised once, and repeated queries
+ * or network retries do not produce duplicate notifications.
+ * Failure is logged and never reverses the finalised attempt.
+ */
+export async function notifyCbtResultReady(
+  supabase: MinimalClient,
+  attempt: CbtAttemptForNotification,
+): Promise<{ sent: boolean; reason?: string }> {
+  if (!attempt.id || !attempt.user_id) return { sent: false, reason: 'missing attempt or user id' };
+
+  const title = 'Your CBT result is ready';
+  const examName = attempt.exam_title?.trim() || 'examination';
+  const body = `Your ${examName} has been marked. You can now view your result.`;
+  const href = `/cbt/results?attemptId=${encodeURIComponent(attempt.id)}`;
+
+  try {
+    const table = supabase.from('student_notifications') as NotificationTable;
+    const existing = await table
+      .select('id')
+      .eq('user_id', attempt.user_id)
+      .eq('notification_type', 'cbt_result')
+      .contains('metadata', { attempt_id: attempt.id })
+      .limit(1);
+
+    if (existing?.error) return { sent: false, reason: 'lookup failed' };
+    if (Array.isArray(existing?.data) && existing.data.length > 0) {
+      return { sent: false, reason: 'already notified' };
+    }
+
+    const { error } = await table.insert({
+      user_id: attempt.user_id,
+      title,
+      body,
+      notification_type: 'cbt_result',
+      href,
+      metadata: {
+        attempt_id: attempt.id,
+      },
+    });
+    if (error) {
+      log.error('notifications.cbt_result_failed', { reason: 'insert_failed', ...errorFacts(error) });
+      return { sent: false, reason: 'insert failed' };
+    }
+    return { sent: true };
+  } catch (error) {
+    log.error('notifications.cbt_result_failed', { reason: 'unexpected_error', ...errorFacts(error) });
+    return { sent: false, reason: 'unexpected error' };
+  }
+}

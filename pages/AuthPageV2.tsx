@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
-  Apple,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
@@ -32,6 +31,7 @@ import { isSupabaseConfigured, supabase } from '../src/lib/supabase';
 import { EMAIL_VERIFICATION_ENABLED } from '../src/lib/emailVerification';
 import { InlineNotice } from '../src/components/AsyncState';
 import BrandLogo from '../src/components/BrandLogo';
+import FormFieldError from '../src/components/FormFieldError';
 import OtpInput from '../src/components/OtpInput';
 import PasswordStrengthMeter from '../src/components/PasswordStrengthMeter';
 import SiteFooter from '../src/components/SiteFooter';
@@ -47,7 +47,7 @@ const accountTypes = [
   { value: 'teacher', label: 'Teacher or educator', detail: 'I support learners', available: false },
 ] as const;
 
-const socialIcons: Record<SocialProvider, typeof Chrome> = { google: Chrome, apple: Apple };
+const socialIcons: Record<SocialProvider, typeof Chrome> = { google: Chrome };
 
 function getSafeNextPath() {
   const next = new URLSearchParams(window.location.search).get('next');
@@ -91,6 +91,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [phoneBusy, setPhoneBusy] = useState(false);
   const [socialBusy, setSocialBusy] = useState<SocialProvider | null>(null);
@@ -164,6 +165,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     setCurrentMode(next);
     setMessage('');
     setError('');
+    setFieldErrors({});
     setPhoneStage('idle');
     setPhoneSentTo('');
     setOtp('');
@@ -175,6 +177,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     setPhoneSentTo('');
     setOtp('');
     setError('');
+    setFieldErrors({});
     setMessage('');
   }
 
@@ -273,14 +276,20 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     if (requestInFlight.current) return;
     setError('');
     setMessage('');
+    setFieldErrors({});
 
+    const errors: Record<string, string> = {};
     if (currentMode === 'signup') {
-      if (!firstName.trim()) { setError('First name is required.'); return; }
-      if (!lastName.trim()) { setError('Last name is required.'); return; }
+      if (!firstName.trim()) errors.firstName = 'First name is required.';
+      if (!lastName.trim()) errors.lastName = 'Last name is required.';
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        return;
+      }
       if (!ensureTerms()) return;
     }
     if (!isValidPhone(phone)) {
-      setError('Enter a phone number with its country code, for example +234 801 234 5678.');
+      setFieldErrors({ phone: 'Enter a valid phone number with country code, e.g. +234 801 234 5678.' });
       return;
     }
 
@@ -350,11 +359,15 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
     setBusy(true);
     setMessage('');
     setError('');
+    setFieldErrors({});
 
     try {
       if (currentMode === 'forgot') {
         const target = email.trim();
-        if (!target || !target.includes('@')) throw new Error('Please enter a valid email address.');
+        if (!target || !target.includes('@')) {
+          setFieldErrors({ email: 'Please enter a valid email address.' });
+          return;
+        }
         if (!isSupabaseConfigured) {
           setMessage('Password reset email is unavailable in local preview mode. Connect an EduReach account to reset a password.');
           return;
@@ -372,8 +385,13 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       }
 
       if (currentMode === 'reset') {
-        if (password.length < 8) throw new Error('Password must be at least 8 characters.');
-        if (password !== confirmPassword) throw new Error('Passwords do not match.');
+        const errors: Record<string, string> = {};
+        if (password.length < 8) errors.password = 'Password must be at least 8 characters.';
+        if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match.';
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          return;
+        }
         if (!isSupabaseConfigured) {
           throw new Error('Password reset is unavailable in local preview mode. Connect an EduReach account to update a password.');
         }
@@ -387,14 +405,20 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       }
 
       if (currentMode === 'signup') {
-        if (!firstName.trim()) throw new Error('First name is required.');
-        if (!lastName.trim()) throw new Error('Last name is required.');
-        if (!email.trim() || !email.includes('@')) throw new Error('A valid email address is required.');
+        const errors: Record<string, string> = {};
+        if (!firstName.trim()) errors.firstName = 'First name is required.';
+        if (!lastName.trim()) errors.lastName = 'Last name is required.';
+        if (!email.trim() || !email.includes('@')) errors.email = 'A valid email address is required.';
         if (phone.trim() && !isValidPhone(phone)) {
-          throw new Error('Enter a valid phone number with its country code, or leave the phone field blank.');
+          errors.phone = 'Enter a valid phone number with country code, or leave blank.';
         }
-        if (password.length < 8) throw new Error('Password must be at least 8 characters.');
-        if (password !== confirmPassword) throw new Error('Passwords do not match.');
+        if (password.length < 8) errors.password = 'Password must be at least 8 characters.';
+        if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match.';
+
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          return;
+        }
         if (!ensureTerms()) return;
         if (!isSupabaseConfigured) {
           throw new Error('EduReach account registration is not available until the live account service is configured.');
@@ -432,7 +456,13 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
       }
 
       if (currentMode === 'signin') {
-        if (!email.trim() || !password) throw new Error('Email address and password are required.');
+        const errors: Record<string, string> = {};
+        if (!email.trim() || !email.includes('@')) errors.email = 'Email address is required.';
+        if (!password) errors.password = 'Password is required.';
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          return;
+        }
         if (!isSupabaseConfigured) {
           throw new Error('EduReach account sign-in is not available until the live account service is configured.');
         }
@@ -605,9 +635,9 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                 <form className="auth-form" onSubmit={submit}>
                   {allowModeSwitch && (
                     <div className="auth-social">
-                      {(['google', 'apple'] as const).map((provider) => {
+                      {(['google'] as const).map((provider) => {
                         const Icon = socialIcons[provider];
-                        const label = provider === 'google' ? 'Google' : 'Apple';
+                        const label = 'Google';
                         return (
                           <button
                             key={provider}
@@ -675,11 +705,41 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                     <div className="auth-field-grid">
                       <div className="auth-field">
                         <label htmlFor="auth-first-name">First name</label>
-                        <input id="auth-first-name" name="given-name" type="text" value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" maxLength={80} required />
+                        <input
+                          id="auth-first-name"
+                          name="given-name"
+                          type="text"
+                          value={firstName}
+                          onChange={(event) => {
+                            setFirstName(event.target.value);
+                            if (fieldErrors.firstName) setFieldErrors((prev) => ({ ...prev, firstName: '' }));
+                          }}
+                          autoComplete="given-name"
+                          maxLength={80}
+                          aria-invalid={Boolean(fieldErrors.firstName)}
+                          aria-describedby={fieldErrors.firstName ? 'auth-first-name-error' : undefined}
+                          required
+                        />
+                        <FormFieldError id="auth-first-name-error" error={fieldErrors.firstName} />
                       </div>
                       <div className="auth-field">
                         <label htmlFor="auth-last-name">Last name</label>
-                        <input id="auth-last-name" name="family-name" type="text" value={lastName} onChange={(event) => setLastName(event.target.value)} autoComplete="family-name" maxLength={80} required />
+                        <input
+                          id="auth-last-name"
+                          name="family-name"
+                          type="text"
+                          value={lastName}
+                          onChange={(event) => {
+                            setLastName(event.target.value);
+                            if (fieldErrors.lastName) setFieldErrors((prev) => ({ ...prev, lastName: '' }));
+                          }}
+                          autoComplete="family-name"
+                          maxLength={80}
+                          aria-invalid={Boolean(fieldErrors.lastName)}
+                          aria-describedby={fieldErrors.lastName ? 'auth-last-name-error' : undefined}
+                          required
+                        />
+                        <FormFieldError id="auth-last-name-error" error={fieldErrors.lastName} />
                       </div>
                     </div>
                   )}
@@ -696,6 +756,7 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                             value={phone}
                             onChange={(event) => {
                               setPhone(event.target.value);
+                              if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: '' }));
                               if (phoneStage === 'sent') {
                                 setPhoneStage('idle');
                                 setPhoneSentTo('');
@@ -706,9 +767,12 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                             inputMode="tel"
                             maxLength={20}
                             placeholder="+234 801 234 5678"
+                            aria-invalid={Boolean(fieldErrors.phone)}
+                            aria-describedby={fieldErrors.phone ? 'auth-phone-error' : undefined}
                             required
                           />
                         </div>
+                        <FormFieldError id="auth-phone-error" error={fieldErrors.phone} />
                         <small>Include the country code. Nigerian numbers starting with 0 are converted automatically.</small>
                       </div>
 
@@ -727,7 +791,25 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       {(currentMode === 'signup' || currentMode === 'signin' || currentMode === 'forgot') && (
                         <div className="auth-field">
                           <label htmlFor="auth-email">{currentMode === 'forgot' ? 'Account email' : 'Email address'}</label>
-                          <div className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="auth-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" maxLength={254} required /></div>
+                          <div className="auth-input-wrap">
+                            <Mail size={17} aria-hidden="true" />
+                            <input
+                              id="auth-email"
+                              name="email"
+                              type="email"
+                              value={email}
+                              onChange={(event) => {
+                                setEmail(event.target.value);
+                                if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }));
+                              }}
+                              autoComplete="email"
+                              maxLength={254}
+                              aria-invalid={Boolean(fieldErrors.email)}
+                              aria-describedby={fieldErrors.email ? 'auth-email-error' : undefined}
+                              required
+                            />
+                          </div>
+                          <FormFieldError id="auth-email-error" error={fieldErrors.email} />
                           {currentMode === 'signup' && <small>We use this for sign-in and account updates.</small>}
                         </div>
                       )}
@@ -735,7 +817,26 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                       {currentMode === 'signup' && (
                         <div className="auth-field">
                           <label htmlFor="auth-phone">Phone number <span className="auth-optional">Optional</span></label>
-                          <div className="auth-input-wrap"><Phone size={17} aria-hidden="true" /><input id="auth-phone" name="tel" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" inputMode="tel" maxLength={20} placeholder="+234 801 234 5678" /></div>
+                          <div className="auth-input-wrap">
+                            <Phone size={17} aria-hidden="true" />
+                            <input
+                              id="auth-phone"
+                              name="tel"
+                              type="tel"
+                              value={phone}
+                              onChange={(event) => {
+                                setPhone(event.target.value);
+                                if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: '' }));
+                              }}
+                              autoComplete="tel"
+                              inputMode="tel"
+                              maxLength={20}
+                              placeholder="+234 801 234 5678"
+                              aria-invalid={Boolean(fieldErrors.phone)}
+                              aria-describedby={fieldErrors.phone ? 'auth-phone-signup-error' : undefined}
+                            />
+                          </div>
+                          <FormFieldError id="auth-phone-signup-error" error={fieldErrors.phone} />
                           <small>For account recovery and optional SMS alerts. You can add it later.</small>
                         </div>
                       )}
@@ -746,7 +847,25 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                             <label htmlFor="auth-password">Password</label>
                             <button className="auth-text-button" type="button" onClick={() => changeMode('forgot')}>Forgot password?</button>
                           </div>
-                          <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="current-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
+                          <div className="auth-input-wrap">
+                            <LockKeyhole size={17} aria-hidden="true" />
+                            <input
+                              id="auth-password"
+                              name="current-password"
+                              type={showPassword ? 'text' : 'password'}
+                              value={password}
+                              onChange={(event) => {
+                                setPassword(event.target.value);
+                                if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                              }}
+                              autoComplete="current-password"
+                              aria-invalid={Boolean(fieldErrors.password)}
+                              aria-describedby={fieldErrors.password ? 'auth-password-error' : undefined}
+                              required
+                            />
+                            <button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                          </div>
+                          <FormFieldError id="auth-password-error" error={fieldErrors.password} />
                         </div>
                       )}
 
@@ -754,11 +873,48 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
                         <div className="auth-field-grid">
                           <div className="auth-field">
                             <label htmlFor="auth-password">{currentMode === 'signup' ? 'Create password' : 'New password'}</label>
-                            <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-password" name="new-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" minLength={8} required /><button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
+                            <div className="auth-input-wrap">
+                              <LockKeyhole size={17} aria-hidden="true" />
+                              <input
+                                id="auth-password"
+                                name="new-password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(event) => {
+                                  setPassword(event.target.value);
+                                  if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }));
+                                }}
+                                autoComplete="new-password"
+                                minLength={8}
+                                aria-invalid={Boolean(fieldErrors.password)}
+                                aria-describedby={fieldErrors.password ? 'auth-new-password-error' : undefined}
+                                required
+                              />
+                              <button className="auth-reveal" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((value) => !value)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                            </div>
+                            <FormFieldError id="auth-new-password-error" error={fieldErrors.password} />
                           </div>
                           <div className="auth-field">
                             <label htmlFor="auth-confirm-password">Confirm password</label>
-                            <div className="auth-input-wrap"><LockKeyhole size={17} aria-hidden="true" /><input id="auth-confirm-password" name="confirm-password" type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required /></div>
+                            <div className="auth-input-wrap">
+                              <LockKeyhole size={17} aria-hidden="true" />
+                              <input
+                                id="auth-confirm-password"
+                                name="confirm-password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={(event) => {
+                                  setConfirmPassword(event.target.value);
+                                  if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                                }}
+                                autoComplete="new-password"
+                                minLength={8}
+                                aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                                aria-describedby={fieldErrors.confirmPassword ? 'auth-confirm-password-error' : undefined}
+                                required
+                              />
+                            </div>
+                            <FormFieldError id="auth-confirm-password-error" error={fieldErrors.confirmPassword} />
                           </div>
                         </div>
                       )}

@@ -1,7 +1,7 @@
 /**
  * AUTH-1 — record consent that was given before an OAuth redirect.
  *
- * Google and Apple return the browser to /login with a session; at that point
+ * Google returns the browser to /login with a session; at that point
  * the original form state is gone. The checkbox was still a real, explicit
  * action, so the timestamp is written to storage before the redirect and
  * settled against the account when the session appears. If storage is

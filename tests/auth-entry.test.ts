@@ -17,17 +17,18 @@ test('phone numbers become E.164 without guessing a country for a bare number', 
   assert.equal(normalizePhone('not a phone'), '');
 });
 
-test('Google, Apple and phone are real methods, not labels on a dead button', () => {
+test('Google and phone are real methods, not labels on a dead button', () => {
   const providers = read('src/lib/authProviders.ts');
   assert.match(providers, /signInWithOAuth/);
   assert.match(providers, /provider: 'google'|provider === 'google'|SocialProvider = 'google'/);
-  assert.match(providers, /'apple'/);
+  assert.doesNotMatch(providers, /'apple'/);
   assert.match(providers, /signInWithOtp/);
   assert.match(providers, /verifyOtp/);
   assert.match(providers, /type: 'sms'/);
 
   const page = read('pages/AuthPageV2.tsx');
   assert.match(page, /startSocialSignIn\(provider/);
+  assert.doesNotMatch(page, /apple/i);
   assert.match(page, /sendPhoneCode\(/);
   assert.match(page, /verifyPhoneCode\(/);
   assert.match(page, /Continue with \$\{label\}|Sign up with \$\{label\}/);

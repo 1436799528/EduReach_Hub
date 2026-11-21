@@ -15,6 +15,7 @@ import { matchesDeclaredImageType } from './lib/image-signature';
 import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT, type UserPayload } from './lib/auth';
 import { notifyServiceRequestStatus } from './src/server/notifications';
+import { notifyCbtResultReady } from './src/server/notifications';
 import { registerRestrictedBankAdminRoutes } from './src/server/restrictedBanks/routes';
 import { registerInstitutionIntelligenceRoutes } from './src/server/institutionIntelligence';
 import { isProvenanceGuardRefusal, questionProvenanceRefusal } from './src/server/questionProvenance';
@@ -5080,6 +5081,31 @@ async function cbtV2LocalWrite(req: express.Request, res: express.Response, kind
     if (!data || typeof data !== 'object' || !allowed.includes(data.outcome)) {
       return res.status(503).json({ error: 'Unable to confirm this CBT operation.' });
     }
+
+    if (kind === 'finalize' && ['submitted', 'replayed', 'already_submitted'].includes(data.outcome)) {
+      void (async () => {
+        try {
+          const { data: attemptInfo } = await callerDb
+            .from('cbt_attempts')
+            .select('id, user_id, cbt_exams(title)')
+            .eq('id', req.params.attemptId)
+            .maybeSingle();
+          if (attemptInfo && attemptInfo.user_id) {
+            const examTitle = Array.isArray(attemptInfo.cbt_exams)
+              ? attemptInfo.cbt_exams[0]?.title
+              : (attemptInfo.cbt_exams as { title?: string } | null)?.title;
+            await notifyCbtResultReady(callerDb, {
+              id: attemptInfo.id,
+              user_id: attemptInfo.user_id,
+              exam_title: examTitle || null,
+            });
+          }
+        } catch {
+          // Never let background notification failure affect finalization response.
+        }
+      })();
+    }
+
     return res
       .status(['conflict', 'expired', 'closed'].includes(data.outcome) ? 409 : 200)
       .json({ protocol: 2, ...data });
@@ -5291,6 +5317,30 @@ app.post('/api/cbt/attempts/:attemptId/submit', async (req, res) => {
 
     const row = (Array.isArray(data) ? data[0] : data) as CbtSubmitResultRow | null;
     if (!row) return res.status(409).json({ error: 'CBT submission did not produce a result.' });
+
+    void (async () => {
+      try {
+        const { supabase, user } = await requireUser(req, 'cbt.attempt');
+        const { data: attemptData } = await supabase
+          .from('cbt_attempts')
+          .select('id, user_id, cbt_exams(title)')
+          .eq('id', req.params.attemptId)
+          .maybeSingle();
+        if (attemptData && attemptData.user_id === user.id) {
+          const examTitle = Array.isArray(attemptData.cbt_exams)
+            ? attemptData.cbt_exams[0]?.title
+            : (attemptData.cbt_exams as { title?: string } | null)?.title;
+          await notifyCbtResultReady(supabase, {
+            id: attemptData.id,
+            user_id: user.id,
+            exam_title: examTitle || null,
+          });
+        }
+      } catch {
+        // Background notification must not break submission response.
+      }
+    })();
+
     res.json({
       attemptId: row.attempt_id,
       score: row.score === null ? null : Number(row.score),
@@ -5840,6 +5890,30 @@ app.post('/api/cbt/submit', async (req, res) => {
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) return res.status(409).json({ error: 'CBT submission did not produce a result.' });
+
+    void (async () => {
+      try {
+        const { supabase, user } = await requireUser(req, 'cbt.attempt');
+        const { data: attemptData } = await supabase
+          .from('cbt_attempts')
+          .select('id, user_id, cbt_exams(title)')
+          .eq('id', attemptId)
+          .maybeSingle();
+        if (attemptData && attemptData.user_id === user.id) {
+          const examTitle = Array.isArray(attemptData.cbt_exams)
+            ? attemptData.cbt_exams[0]?.title
+            : (attemptData.cbt_exams as { title?: string } | null)?.title;
+          await notifyCbtResultReady(supabase, {
+            id: attemptData.id,
+            user_id: user.id,
+            exam_title: examTitle || null,
+          });
+        }
+      } catch {
+        // Background notification must not break submission response.
+      }
+    })();
+
     res.json({
       attemptId: row.attempt_id,
       score: row.score === null ? null : Number(row.score),
