@@ -156,7 +156,32 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
             minHeight: '64px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="hub-header-brand" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* THREE-DOT / HAMBURGER TRIGGER: ONLY VISIBLE ON MOBILE */}
+            <button
+              type="button"
+              className="hub-mobile-trigger"
+              aria-label="Open mobile menu"
+              aria-expanded={mobileOpen}
+              aria-controls="hub-mobile-menu"
+              ref={mobileTriggerRef}
+              onClick={() => setMobileOpen(true)}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '7px',
+                color: '#0f172a',
+                cursor: 'pointer',
+                padding: '6px 8px',
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Menu size={18} aria-hidden="true" />
+              <span className="hub-menu-label">Menu</span>
+            </button>
+
             {/* BRAND LOGO */}
             <a
               href="/"
@@ -236,7 +261,7 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
           {customSearch !== undefined ? customSearch : <SiteSearch variant="header" label="Site search" placeholder="Search EduReach" />}
 
           {/* ACTION BUTTONS & THREE DOT (MOBILE ONLY) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="hub-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {!isLoading && isAuthenticated && <NotificationCenter />}
             {/* HOME↔DASHBOARD: one visible switch, including on phones. */}
             {!isLoading && (
@@ -346,31 +371,6 @@ export default function HubLayout({ children, customSearch }: { children: ReactN
                 )}
               </div>
             )}
-
-            {/* THREE-DOT TRIGGER: ONLY VISIBLE ON MOBILE */}
-            <button
-              type="button"
-              className="hub-mobile-trigger"
-              aria-label="Open mobile menu"
-              aria-expanded={mobileOpen}
-              aria-controls="hub-mobile-menu"
-              ref={mobileTriggerRef}
-              onClick={() => setMobileOpen(true)}
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '7px',
-                color: '#0f172a',
-                cursor: 'pointer',
-                padding: '6px 8px',
-                display: 'none',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Menu size={18} aria-hidden="true" />
-              <span className="hub-menu-label">Menu</span>
-            </button>
           </div>
         </div>
       </header>

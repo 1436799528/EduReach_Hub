@@ -51,6 +51,7 @@ import {
   normalizeLevelValue,
   optionsIncludingSaved,
 } from '../src/data/studentOptions';
+import FormFieldError from '../src/components/FormFieldError';
 const academicInterestOptions = [
   'JAMB UTME Prep',
   'Post-UTME Screening',
@@ -141,6 +142,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileCompleted, setProfileCompleted] = useState(false);
   const [accountRole, setAccountRole] = useState('student');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const editMode = new URLSearchParams(window.location.search).get('edit') === '1';
   // The same page is mounted inside the dashboard's Profile tab, so every
   // internal link stays in whichever shell the student is already in.
@@ -545,6 +547,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
     if (saving) return;
     setSaving(true);
     setMessage('');
+    setFieldErrors({});
 
     const finalSchool = school.includes('Other') ? customSchool.trim() : school;
     const finalCourseProgramme = courseProgramme || customCourseProgramme.trim();
@@ -552,23 +555,26 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
     // UX-3: only a Storage public URL is saved. A legacy data: URL is ignored;
     // the avatar is never a base64 blob inside the profile row.
     const finalAvatar = [customAvatar, avatarUrl].find((value) => value && !value.startsWith('data:')) || '';
-    const missing = [
-      ['institution', finalSchool],
-      ['course/programme', finalCourseProgramme],
-      ['department', finalDepartment],
-      ['faculty', faculty],
-      ['current level', level],
-      ['academic session', session],
-      ['admission year', admissionYear],
-      ['expected graduation year', expectedGradYear],
-    ].filter(([, value]) => !String(value).trim()).map(([label]) => label);
-    if (missing.length) {
+    
+    const errors: Record<string, string> = {};
+    if (!finalSchool) errors.school = 'Please choose or enter your institution.';
+    if (!finalCourseProgramme) errors.courseProgramme = 'Please choose or enter your course/programme.';
+    if (!finalDepartment) errors.department = 'Please choose or enter your department.';
+    if (!faculty.trim()) errors.faculty = 'Please choose or enter your faculty.';
+    if (!level) errors.level = 'Please select your current level.';
+    if (!session) errors.session = 'Please select your academic session.';
+    if (!admissionYear) errors.admissionYear = 'Please choose your admission year.';
+    if (!expectedGradYear) errors.expectedGradYear = 'Please choose your expected graduation year.';
+
+    if (Object.keys(errors).length > 0) {
       setSaving(false);
-      setMessage(`Complete the required profile details: ${missing.join(', ')}.`);
+      setFieldErrors(errors);
+      setMessage('Complete all required profile details highlighted below.');
       return;
     }
     if (Number(expectedGradYear) < Number(admissionYear)) {
       setSaving(false);
+      setFieldErrors({ expectedGradYear: 'Expected graduation year should not be earlier than admission year.' });
       setMessage('Expected graduation year should not be earlier than the admission year.');
       return;
     }
@@ -576,6 +582,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
     const phoneDigits = phone.replace(/\D/g, '');
     if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 15)) {
       setSaving(false);
+      setFieldErrors({ phone: 'Enter a valid Nigerian phone number or leave blank.' });
       setMessage('Enter a valid Nigerian phone number or leave the phone field blank.');
       return;
     }
@@ -969,7 +976,22 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
             <section className="profile-contact-section">
               <div className="profile-contact-heading"><Smartphone size={17} color="#64748b" /><h2>Contact</h2></div>
               <p>Keep a phone number on your account so EduReach can attach service updates to the right student.</p>
-              <label className="hub-form-label">Phone number <span>(Optional)</span><input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="080 1234 5678" autoComplete="tel" /></label>
+              <label className="hub-form-label">
+                Phone number <span>(Optional)</span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => {
+                    setPhone(event.target.value);
+                    if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: '' }));
+                  }}
+                  placeholder="080 1234 5678"
+                  autoComplete="tel"
+                  aria-invalid={Boolean(fieldErrors.phone)}
+                  aria-describedby={fieldErrors.phone ? 'profile-phone-error' : undefined}
+                />
+                <FormFieldError id="profile-phone-error" error={fieldErrors.phone} />
+              </label>
               <div className="profile-contact-email"><Mail size={14} /> <span>Email: <strong>{userEmail || 'Your account email'}</strong></span></div>
             </section>
 
@@ -1076,8 +1098,11 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={school}
                     aria-label="Institution or school"
+                    aria-invalid={Boolean(fieldErrors.school)}
+                    aria-describedby={fieldErrors.school ? 'profile-school-error' : undefined}
                     onChange={(e) => {
                       setSchool(e.target.value);
+                      if (fieldErrors.school) setFieldErrors((prev) => ({ ...prev, school: '' }));
                       retainInstitutionFor(e.target.value);
                     }}
                     required
@@ -1118,7 +1143,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       type="text"
                       value={customSchool}
                       aria-label="Custom institution name"
-                      onChange={(e) => setCustomSchool(e.target.value)}
+                      aria-invalid={Boolean(fieldErrors.school)}
+                      aria-describedby={fieldErrors.school ? 'profile-school-error' : undefined}
+                      onChange={(e) => {
+                        setCustomSchool(e.target.value);
+                        if (fieldErrors.school) setFieldErrors((prev) => ({ ...prev, school: '' }));
+                      }}
                       placeholder="Enter your institution name"
                       required
                       style={{
@@ -1131,6 +1161,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       }}
                     />
                   )}
+                  <FormFieldError id="profile-school-error" error={fieldErrors.school} />
                 </div>
 
                 {/* 11. COURSE / PROGRAMME */}
@@ -1141,10 +1172,13 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={courseOtherSelected ? 'Other programme' : courseProgramme}
                     aria-label="Course or programme"
+                    aria-invalid={Boolean(fieldErrors.courseProgramme)}
+                    aria-describedby={fieldErrors.courseProgramme ? 'profile-course-error' : undefined}
                     onChange={(e) => {
                       const isOther = e.target.value === 'Other programme';
                       setCourseOtherSelected(isOther);
                       setCourseProgramme(isOther ? '' : e.target.value);
+                      if (fieldErrors.courseProgramme) setFieldErrors((prev) => ({ ...prev, courseProgramme: '' }));
                       if (!isOther) setCustomCourseProgramme('');
                     }}
                     required
@@ -1167,7 +1201,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       type="text"
                       value={customCourseProgramme}
                       aria-label="Other course or programme"
-                      onChange={(e) => setCustomCourseProgramme(e.target.value)}
+                      aria-invalid={Boolean(fieldErrors.courseProgramme)}
+                      aria-describedby={fieldErrors.courseProgramme ? 'profile-course-error' : undefined}
+                      onChange={(e) => {
+                        setCustomCourseProgramme(e.target.value);
+                        if (fieldErrors.courseProgramme) setFieldErrors((prev) => ({ ...prev, courseProgramme: '' }));
+                      }}
                       placeholder="Enter your course or programme"
                       required
                       style={{
@@ -1180,6 +1219,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       }}
                     />
                   )}
+                  <FormFieldError id="profile-course-error" error={fieldErrors.courseProgramme} />
                 </div>
 
                 {/* 12. DEPARTMENT */}
@@ -1190,10 +1230,13 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={departmentOtherSelected ? 'Other department' : department}
                     aria-label="Department"
+                    aria-invalid={Boolean(fieldErrors.department)}
+                    aria-describedby={fieldErrors.department ? 'profile-dept-error' : undefined}
                     onChange={(e) => {
                       const isOther = e.target.value === 'Other department';
                       setDepartmentOtherSelected(isOther);
                       setDepartment(isOther ? '' : e.target.value);
+                      if (fieldErrors.department) setFieldErrors((prev) => ({ ...prev, department: '' }));
                       if (!isOther) setCustomDepartment('');
                     }}
                     required
@@ -1216,7 +1259,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       type="text"
                       value={customDepartment}
                       aria-label="Other department"
-                      onChange={(e) => setCustomDepartment(e.target.value)}
+                      aria-invalid={Boolean(fieldErrors.department)}
+                      aria-describedby={fieldErrors.department ? 'profile-dept-error' : undefined}
+                      onChange={(e) => {
+                        setCustomDepartment(e.target.value);
+                        if (fieldErrors.department) setFieldErrors((prev) => ({ ...prev, department: '' }));
+                      }}
                       placeholder="Enter your department"
                       required
                       style={{
@@ -1229,6 +1277,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       }}
                     />
                   )}
+                  <FormFieldError id="profile-dept-error" error={fieldErrors.department} />
                 </div>
 
                 {/* 13. FACULTY */}
@@ -1239,7 +1288,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={faculty}
                     aria-label="Faculty"
-                    onChange={(e) => setFaculty(e.target.value)}
+                    aria-invalid={Boolean(fieldErrors.faculty)}
+                    aria-describedby={fieldErrors.faculty ? 'profile-faculty-error' : undefined}
+                    onChange={(e) => {
+                      setFaculty(e.target.value);
+                      if (fieldErrors.faculty) setFieldErrors((prev) => ({ ...prev, faculty: '' }));
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -1259,6 +1313,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       </option>
                     ))}
                   </select>
+                  <FormFieldError id="profile-faculty-error" error={fieldErrors.faculty} />
                 </div>
               </div>
             </section>
@@ -1281,7 +1336,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={level}
                     aria-label="Current level"
-                    onChange={(e) => setLevel(e.target.value)}
+                    aria-invalid={Boolean(fieldErrors.level)}
+                    aria-describedby={fieldErrors.level ? 'profile-level-error' : undefined}
+                    onChange={(e) => {
+                      setLevel(e.target.value);
+                      if (fieldErrors.level) setFieldErrors((prev) => ({ ...prev, level: '' }));
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -1301,6 +1361,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                       </option>
                     ))}
                   </select>
+                  <FormFieldError id="profile-level-error" error={fieldErrors.level} />
                 </div>
 
                 {/* 15. ACADEMIC SESSION */}
@@ -1311,7 +1372,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={session}
                     aria-label="Academic session"
-                    onChange={(e) => setSession(e.target.value)}
+                    aria-invalid={Boolean(fieldErrors.session)}
+                    aria-describedby={fieldErrors.session ? 'profile-session-error' : undefined}
+                    onChange={(e) => {
+                      setSession(e.target.value);
+                      if (fieldErrors.session) setFieldErrors((prev) => ({ ...prev, session: '' }));
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -1327,6 +1393,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                     <option value="">Choose academic session</option>
                     {academicSessions.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
+                  <FormFieldError id="profile-session-error" error={fieldErrors.session} />
                 </div>
 
                 {/* 16. ADMISSION YEAR */}
@@ -1337,7 +1404,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={admissionYear}
                     aria-label="Admission year"
-                    onChange={(e) => setAdmissionYear(e.target.value)}
+                    aria-invalid={Boolean(fieldErrors.admissionYear)}
+                    aria-describedby={fieldErrors.admissionYear ? 'profile-admission-year-error' : undefined}
+                    onChange={(e) => {
+                      setAdmissionYear(e.target.value);
+                      if (fieldErrors.admissionYear) setFieldErrors((prev) => ({ ...prev, admissionYear: '' }));
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -1353,6 +1425,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                     <option value="">Choose admission year</option>
                     {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
                   </select>
+                  <FormFieldError id="profile-admission-year-error" error={fieldErrors.admissionYear} />
                 </div>
 
                 {/* 16. EXPECTED GRADUATION YEAR */}
@@ -1363,7 +1436,12 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   <select
                     value={expectedGradYear}
                     aria-label="Expected graduation year"
-                    onChange={(e) => setExpectedGradYear(e.target.value)}
+                    aria-invalid={Boolean(fieldErrors.expectedGradYear)}
+                    aria-describedby={fieldErrors.expectedGradYear ? 'profile-grad-year-error' : undefined}
+                    onChange={(e) => {
+                      setExpectedGradYear(e.target.value);
+                      if (fieldErrors.expectedGradYear) setFieldErrors((prev) => ({ ...prev, expectedGradYear: '' }));
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -1379,6 +1457,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                     <option value="">Choose graduation year</option>
                     {academicYears.map((year) => <option key={year} value={year}>{year}</option>)}
                   </select>
+                  <FormFieldError id="profile-grad-year-error" error={fieldErrors.expectedGradYear} />
                 </div>
               </div>
             </section>

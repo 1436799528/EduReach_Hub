@@ -195,6 +195,41 @@ test('the account trigger uses initials on desktop and mobile, not a name beside
   assert.match(styles, /\.hub-profile-trigger-name\{display:none\}/, 'the name beside the trigger is hidden');
 });
 
+test('footer is static in document flow (not fixed or sticky) across all shared surfaces', () => {
+  const cssFiles = [
+    'src/edu-portal.css',
+    'src/compact-structural.css',
+    'src/hub.css',
+    'src/styles/theme.css',
+    'src/student-dashboard.css',
+  ];
+  for (const file of cssFiles) {
+    const content = read(file);
+    assert.doesNotMatch(content, /\.er-footer\s*\{[^}]*position:\s*(?:fixed|sticky)/i, `${file} does not make .er-footer fixed or sticky`);
+  }
+  const component = read('src/components/SiteFooter.tsx');
+  assert.doesNotMatch(component, /position:\s*['"]?(?:fixed|sticky)/i, 'SiteFooter does not set fixed/sticky inline');
+});
+
+test('mobile menu trigger and profile controls are separated on opposite sides of the header', () => {
+  const layout = read('src/components/HubLayout.tsx');
+  const triggerIdx = layout.indexOf('className="hub-mobile-trigger"');
+  const profileIdx = layout.indexOf('className="hub-profile-trigger"');
+  assert.ok(triggerIdx !== -1, 'hub-mobile-trigger exists');
+  assert.ok(profileIdx !== -1, 'hub-profile-trigger exists');
+  assert.ok(triggerIdx < profileIdx, 'mobile menu trigger sits on the left (before profile controls on the right)');
+  const brandIdx = layout.indexOf('className="hub-brand-link"');
+  assert.ok(triggerIdx < brandIdx, 'mobile menu trigger is placed at the leading edge of the header row');
+
+  // Verify dashboard header also separates menu toggle and profile button
+  const dash = read('pages/StudentDashboardV2.tsx');
+  const dashMenuIdx = dash.indexOf('className="edureach-menu-toggle"');
+  const dashProfileIdx = dash.indexOf('className="edureach-dash-profile-btn"');
+  assert.ok(dashMenuIdx !== -1, 'edureach-menu-toggle exists in dashboard');
+  assert.ok(dashProfileIdx !== -1, 'edureach-dash-profile-btn exists in dashboard');
+  assert.ok(dashMenuIdx < dashProfileIdx, 'dashboard menu toggle is on the left and profile button is on the right');
+});
+
 test('the home page keeps the shared search bar and it still searches', () => {
   const home = read('pages/HubHomePage.tsx');
   assert.match(home, /<SiteSearch\s+variant="header"/, 'the shared search component is present');

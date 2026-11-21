@@ -21,6 +21,7 @@ import { useAuth } from '../src/lib/auth';
 import { EDUREACH_WHATSAPP } from '../src/data/hubContent';
 import { guideForService } from '../src/data/serviceGuides';
 import { commonInstitutions } from '../src/data/studentOptions';
+import FormFieldError from '../src/components/FormFieldError';
 
 type FormState = {
   fullName: string;
@@ -512,6 +513,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
                         aria-describedby={errorField === 'fullName' ? 'service-apply-error' : undefined}
                         required
                       />
+                      <FormFieldError id="service-apply-fullname-error" error={errorField === 'fullName' ? message : null} />
                     </label>
                     <label>
                       Phone Number *
@@ -524,6 +526,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
                         aria-describedby={errorField === 'phone' ? 'service-apply-error' : undefined}
                         required
                       />
+                      <FormFieldError id="service-apply-phone-error" error={errorField === 'phone' ? message : null} />
                     </label>
                     <label>
                       WhatsApp Number
@@ -535,6 +538,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
                         aria-invalid={errorField === 'whatsapp' || undefined}
                         aria-describedby={errorField === 'whatsapp' ? 'service-apply-error' : undefined}
                       />
+                      <FormFieldError id="service-apply-whatsapp-error" error={errorField === 'whatsapp' ? message : null} />
                     </label>
                     <label>
                       Institution Name *
@@ -563,6 +567,7 @@ function ServiceApplyForm({ slug, draftKey }: { slug: string; draftKey: string |
                           required
                         />
                       )}
+                      <FormFieldError id="service-apply-institution-error" error={errorField === 'institution' ? message : null} />
                     </label>
                     <label>
                       Matriculation / Application No.

@@ -4,6 +4,7 @@ import { KeyRound, Laptop, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useModalDialog } from '../../lib/useModalDialog';
 import { recordSecurityEvent } from '../../lib/studentDashboard';
+import FormFieldError from '../FormFieldError';
 
 const inputStyle = { width: '100%', padding: '9px 10px', fontSize: '13px', border: '1px solid #cbd5e1', borderRadius: '6px' } as const;
 const labelStyle = { display: 'block', fontSize: '12px', fontWeight: 560, color: '#475569', marginBottom: '4px' } as const;
@@ -44,6 +45,7 @@ export default function SecurityModal({
 }) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState<{ newPassword?: string; confirmNewPassword?: string }>({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -88,18 +90,21 @@ export default function SecurityModal({
     setBusy(true);
     setMessage('');
     setError('');
+    setPasswordErrors({});
     if (isLocalMode) {
       setError('Password changes are unavailable in local preview mode. Connect an EduReach account to update your password.');
       setBusy(false);
       return;
     }
+    const errors: { newPassword?: string; confirmNewPassword?: string } = {};
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters.');
-      setBusy(false);
-      return;
+      errors.newPassword = 'New password must be at least 8 characters.';
     }
     if (newPassword !== confirmNewPassword) {
-      setError('New passwords do not match.');
+      errors.confirmNewPassword = 'New passwords do not match.';
+    }
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
       setBusy(false);
       return;
     }
@@ -110,6 +115,7 @@ export default function SecurityModal({
       setMessage('Password updated successfully.');
       setNewPassword('');
       setConfirmNewPassword('');
+      setPasswordErrors({});
     } catch (value) {
       setError(userFacingError(value, 'Password update failed. Please try again.'));
     } finally {
@@ -256,11 +262,37 @@ export default function SecurityModal({
               <div className="dash-two-col">
                 <div>
                   <label htmlFor="security-new-password" style={labelStyle}>New Password</label>
-                  <input id="security-new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required autoComplete="new-password" style={inputStyle} />
+                  <input
+                    id="security-new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    minLength={8}
+                    required
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(passwordErrors.newPassword)}
+                    aria-describedby={passwordErrors.newPassword ? 'security-new-password-error' : undefined}
+                    style={inputStyle}
+                  />
+                  <FormFieldError id="security-new-password-error" error={passwordErrors.newPassword} />
                 </div>
                 <div>
                   <label htmlFor="security-confirm-password" style={labelStyle}>Confirm New Password</label>
-                  <input id="security-confirm-password" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Repeat new password" minLength={8} required autoComplete="new-password" style={inputStyle} />
+                  <input
+                    id="security-confirm-password"
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Repeat new password"
+                    minLength={8}
+                    required
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(passwordErrors.confirmNewPassword)}
+                    aria-describedby={passwordErrors.confirmNewPassword ? 'security-confirm-password-error' : undefined}
+                    style={inputStyle}
+                  />
+                  <FormFieldError id="security-confirm-password-error" error={passwordErrors.confirmNewPassword} />
                 </div>
               </div>
             </div>

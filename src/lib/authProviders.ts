@@ -5,7 +5,7 @@
  * provider calls, phone normalisation and the small amount of vocabulary needed
  * to turn a provider failure into a sentence a student can act on.
  *
- * Google, Apple and phone authentication are Supabase features and must be
+ * Google and phone authentication are Supabase features and must be
  * enabled in the project before they can succeed. The UI still offers them
  * because a missing provider is a configuration state, not a reason to hide a
  * method the product supports. The failure message says so instead of blaming
@@ -14,7 +14,7 @@
 
 import { isSupabaseConfigured, supabase } from './supabase';
 
-export type SocialProvider = 'google' | 'apple';
+export type SocialProvider = 'google';
 
 export const SOCIAL_PROVIDERS: Array<{
   value: SocialProvider;
@@ -23,7 +23,6 @@ export const SOCIAL_PROVIDERS: Array<{
   busyLabel: string;
 }> = [
   { value: 'google', label: 'Continue with Google', busyLabel: 'Opening Google…' },
-  { value: 'apple', label: 'Continue with Apple', busyLabel: 'Opening Apple…' },
 ];
 
 /**
@@ -53,7 +52,7 @@ type PhoneMetadata = Record<string, unknown>;
 function phoneFailure(error: unknown): string {
   const message = String((error as { message?: string } | null)?.message || '').toLowerCase();
   if (/not configured|unsupported phone|sms provider|phone provider/.test(message)) {
-    return 'Phone verification is not configured yet. Use email or Google/Apple for now.';
+    return 'Phone verification is not configured yet. Use email or Google for now.';
   }
   if (/signups? not allowed|signup.*disabled/.test(message)) {
     return 'Phone sign-up is not open yet. Use email to create your account.';
@@ -110,13 +109,13 @@ export async function startSocialSignIn(
   if (!isSupabaseConfigured) {
     throw new Error('Social sign-in needs the live EduReach account service. It is not configured in this preview.');
   }
-  const label = provider === 'google' ? 'Google' : 'Apple';
+  const label = 'Google';
   const redirectTo = `${window.location.origin}/login?next=${encodeURIComponent(nextPath)}`;
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
       redirectTo,
-      queryParams: provider === 'google' ? { prompt: 'select_account' } : undefined,
+      queryParams: { prompt: 'select_account' },
     },
   });
   if (error) {
