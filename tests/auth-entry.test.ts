@@ -81,10 +81,10 @@ test('email confirmation is not part of the registration flow', () => {
   assert.doesNotMatch(page, /verifyEmailCode|resendVerification|auth-email-code/);
   assert.doesNotMatch(page, /currentMode === 'verify'/);
   assert.doesNotMatch(page, /Check your email/);
-  assert.match(page, /supabase\\.auth\\.signUp\\(/);
-  assert.match(page, /signInWithPassword\\(/);
+  assert.match(page, /supabase\.auth\.signUp\(/);
+  assert.match(page, /signInWithPassword\(/);
   assert.match(page, /Your account was created, but automatic sign-in failed/);
-  assert.match(page, /navigateInApp\\(getSafeNextPath\\(\\)\\)/);
+  assert.match(page, /navigateInApp\(getSafeNextPath\(\)\)/);
 });
 
 test('the return bar keeps Back and nothing else', () => {
