@@ -75,22 +75,16 @@ test('a social sign-up records consent before redirecting and settles it on retu
   assert.match(page, /termsGateFor/, 'a new OAuth account without recorded consent is asked before the dashboard');
 });
 
-test('email verification is temporarily off but its eight-digit path is preserved for re-enable', () => {
+test('email confirmation is not part of the registration flow', () => {
   const page = read('pages/AuthPageV2.tsx');
-  const flag = read('src/lib/emailVerification.ts');
-  assert.match(flag, /VITE_EMAIL_VERIFICATION_ENABLED === 'true'/);
-  assert.match(flag, /mailer_autoconfirm/, 'the switch documents the hosted Supabase setting');
-  assert.equal(flag.includes('= true'), false, 'email verification stays off by default for testers');
-  assert.match(page, /EMAIL_VERIFICATION_ENABLED/);
-  assert.match(page, /mode === 'verify' && !EMAIL_VERIFICATION_ENABLED \? 'signin' : mode/, 'old /verify-email links open sign-in while the switch is off');
-  assert.match(page, /if \(EMAIL_VERIFICATION_ENABLED\)/, 'the original verification branch is reachable only after re-enable');
-  assert.match(page, /Your account was created, but automatic sign-in failed/, 'new accounts are signed in immediately');
-  assert.match(page, /verifyOtp\(\{ email: target, token, type: 'signup' \}\)/);
-  assert.match(page, /<OtpInput[^>]*id="auth-email-code"[^>]*length=\{8\}/, 'email verification matches mailer_otp_length = 8');
-  assert.match(page, /<OtpInput[^>]*id="auth-otp"/, 'phone verification uses the shared code field');
-  assert.doesNotMatch(page, /6-digit code/, 'the copy no longer promises a six-digit code the hosted project does not send');
-  assert.match(page, /verification email/i, 'the verification infrastructure remains in the source');
-  assert.match(read('.env.example'), /VITE_EMAIL_VERIFICATION_ENABLED=false/);
+  assert.doesNotMatch(page, /EMAIL_VERIFICATION_ENABLED/);
+  assert.doesNotMatch(page, /verifyEmailCode|resendVerification|auth-email-code/);
+  assert.doesNotMatch(page, /currentMode === 'verify'/);
+  assert.doesNotMatch(page, /Check your email/);
+  assert.match(page, /supabase\\.auth\\.signUp\\(/);
+  assert.match(page, /signInWithPassword\\(/);
+  assert.match(page, /Your account was created, but automatic sign-in failed/);
+  assert.match(page, /navigateInApp\\(getSafeNextPath\\(\\)\\)/);
 });
 
 test('the return bar keeps Back and nothing else', () => {
