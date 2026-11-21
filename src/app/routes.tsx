@@ -105,7 +105,8 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/register' || path === '/signup') return <AuthPageV2 mode="signup" />;
   if (path === '/forgot-password') return <AuthPageV2 mode="forgot" />;
   if (path === '/reset-password') return <AuthPageV2 mode="reset" />;
-  if (path === '/verify-email') return <AuthPageV2 mode="verify" />;
+  // Email confirmation was removed; keep old verification links harmless by returning to sign-in.
+  if (path === '/verify-email') return <RedirectTo path="/login" />;
 
   if (path === '/profile/complete' || path === '/profile') return protectedProfile();
   // A shared public profile is a visitor route, not the owner's private page.
