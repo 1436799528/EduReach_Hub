@@ -384,6 +384,8 @@ with expected(version, migration) as (
     ,('20261118120000', '20261118120000_institution_review_gate.sql')
     ,('20261119120000', '20261119120000_institution_catalogue_registry.sql')
     ,('20261119130000', '20261119130000_question_reports.sql')
+    ,('20261120090000', '20261120090000_cbt_regrade.sql')
+    ,('20261121150000', '20261121150000_cbt_notification_unique_idx.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
