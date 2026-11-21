@@ -240,6 +240,15 @@ export async function notifyCbtResultReady(
       },
     });
     if (error) {
+      // PostgreSQL unique constraint violation (code 23505) or duplicate key error
+      const isUniqueViolation =
+        (error as { code?: string })?.code === '23505' ||
+        /duplicate key|violates unique constraint|student_notifications_cbt_attempt_unique_idx/i.test(
+          error.message || '',
+        );
+      if (isUniqueViolation) {
+        return { sent: false, reason: 'already notified' };
+      }
       log.error('notifications.cbt_result_failed', { reason: 'insert_failed', ...errorFacts(error) });
       return { sent: false, reason: 'insert failed' };
     }
