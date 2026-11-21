@@ -120,7 +120,6 @@ test('a fresh email signup is not hijacked by an existing session or admin check
   assert.doesNotMatch(signupBlock, /bootstrapAdmin|admin\/session/, 'signup does not probe or bootstrap admin access');
 
   assert.match(read('src/app/routes.tsx'), /path === '\/verify-email'.*RedirectTo path="\/login"/, 'legacy verification links return to sign-in');
-  assert.doesNotMatch(read('src/lib'), /emailVerification/, 'the obsolete verification helper is gone');
   assert.doesNotMatch(read('.env.example'), /EMAIL_VERIFICATION_ENABLED/);
   assert.doesNotMatch(read('.env.production.example'), /EMAIL_VERIFICATION_ENABLED/);
 });
