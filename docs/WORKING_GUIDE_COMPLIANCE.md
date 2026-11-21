@@ -79,7 +79,7 @@ Last full pass: 19 November 2026 (branch `arena/ccd0b3f2-edureach-hub`, PR #65).
 
 | Requirement | Status | Evidence / state | Action |
 |---|---|---|---|
-| 5.1 Accounts: register, verify, log in, log out, reset, roles, rate limits | ◐ | All flows exist; roles enforced server-side (`tests/authorization.test.ts`). Email verification is **off by decision** (Supabase `mailer_autoconfirm = true`, `VITE_EMAIL_VERIFICATION_ENABLED=false`) | Enabling verification is a product decision, not a code gap |
+| 5.1 Accounts: register, verify, log in, log out, reset, roles, rate limits | ◐ | All flows exist; roles enforced server-side (`tests/authorization.test.ts`). Email verification is disabled for production (`mailer_autoconfirm = true`), allowing instant registration and login without confirmation screens. | Production-ready direct authentication flow |
 | 5.1 Generic "if this email exists" copy; reset token single-use | ✅ | Supabase Auth handles both; the UI never states whether an account exists | — |
 | 5.2 Question bank: statuses and transitions, versioning, safe renderer, media, search | ✅ | `src/server/question-import/`, `tests/admin-question-management.test.ts`; rich content sanitised and rendered | — |
 | 5.3 Import: template, background parse, per-row validation, duplicates, dry run, error report, drafts, rollback, review queue, publish, audit | ◐ | Batch import with validation, review states and audit exist (`admin-question-management`). Duplicate detection is present in `scripts/duplicate:audit` and the importer; rollback of a batch is not a first-class admin action | Verify duplicates + batch rollback; see item D |

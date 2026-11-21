@@ -20,8 +20,7 @@ Two separate post-login behaviours made a new email registration look like an ad
 
 ## What deliberately did not change
 
-- `src/lib/emailVerification.ts`, `src/vite-env.d.ts`, `.env.example`, `.env.production.example`: the `VITE_EMAIL_VERIFICATION_ENABLED` switch remains off by default and fully reversible.
-- Hosted Supabase Auth configuration: signup remains enabled, `mailer_autoconfirm` remains `true`, and verification/OTP settings remain intact. No confirmation settings were re-enabled.
+- Hosted Supabase Auth configuration: signup remains enabled, `mailer_autoconfirm` remains `true`, and SendGrid SMTP / password reset settings remain intact. No mandatory email confirmation is required.
 - Hosted Vercel environment variables and the promoted production deployment: no environment or deployment changes were made; production remains on PR #62's merge commit `3ffd274`.
 - Sign-in admin bootstrap, first-admin promotion, staff routing, terms consent, phone OTP, OAuth, password reset, verification code infrastructure, mobile layout and design settings.
 

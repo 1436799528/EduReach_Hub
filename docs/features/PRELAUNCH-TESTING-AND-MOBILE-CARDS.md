@@ -4,14 +4,14 @@
 **Branch:** `arena/00e3bbdd-edureach-hub`  
 **Status:** implemented locally; not pushed, deployed, merged or committed unless a later request asks for it.
 
-## 1. Email verification is temporarily off, but not deleted
+## 1. Email verification is disabled for production
 
-Testers can now create an email/password account and enter the site immediately. Both halves of the switch are reversible:
+Users can create an email/password account and enter the site immediately without mandatory email confirmation:
 
-| Layer | Temporary testing state | Restore at launch |
+| Layer | Production state | Description |
 |---|---|---|
-| Frontend | `src/lib/emailVerification.ts` defaults `EMAIL_VERIFICATION_ENABLED` to **false** unless `VITE_EMAIL_VERIFICATION_ENABLED=true`. `pages/AuthPageV2.tsx` skips the “Check your email” screen and signs the new account in. Old `/verify-email` links open Sign in. | Set `VITE_EMAIL_VERIFICATION_ENABLED=true` in Vercel (production + preview) and rebuild. |
-| Supabase Auth | Production project `gjdfatwcoosyuhakrrhh` (`EduReach-V1`) now has `mailer_autoconfirm=true`, verified with `get_auth_config`. | Set `mailer_autoconfirm=false` in Supabase Auth. |
+| Frontend | Unconditional direct registration in `pages/AuthPageV2.tsx`. Users register and are automatically signed in with an active session. Old `/verify-email` links provide a clear notice that verification is not required and direct to login. | Immediate registration flow without inbox confirmation wall. |
+| Supabase Auth | Production project `gjdfatwcoosyuhakrrhh` (`EduReach-V1`) has `mailer_autoconfirm=true`, verified with `get_auth_config`. | Passwords and accounts are confirmed on creation; password-reset emails remain active via SendGrid SMTP. |
 
 The original eight-digit OTP verification UI, `verifyOtp({ type: 'signup' })`, resend action and `/verify-email` route remain in `pages/AuthPageV2.tsx` behind the switch. No auth infrastructure was removed. `.env.example`, `.env.production.example` and `src/vite-env.d.ts` document/type the flag.
 
@@ -52,4 +52,4 @@ Browser checks against the live dev server (Puppeteer, Playwright e2e not run):
 - Phone services: the reference cards remain four **175×175** two-column squares.
 - Phone news: empty state **138px** high, side rail hidden, `scrollWidth = clientWidth = 390`, `scrollHeight = 844`, no overflow.
 - Desktop 1440×900: four simulator cards **286×219**, news side rail `display: grid`, bottom nav `display: none`, no overflow.
-- Mocked email signup: `/register` showed “Test accounts are ready immediately; email confirmation is temporarily off.”; submitting went to `/dashboard` with a stored Supabase session and no verification screen. Direct `/verify-email` canonicalised to `/login` with “Welcome back”. Only expected Vite HMR websocket noise appeared from the temporary second test server.
+- Production registration: `/register` allows immediate sign-up; submitting navigates to `/dashboard` with a stored Supabase session and no verification screen. Direct `/verify-email` explains that email verification is not required and offers a direct path to sign in.

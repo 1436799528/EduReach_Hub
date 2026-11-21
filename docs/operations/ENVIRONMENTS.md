@@ -18,7 +18,6 @@ in a document, a log or a commit.
 | Runtime | Vite dev server + Express in one process | Netlify Functions (same Express app) once built | Netlify Functions (`netlify/functions/api.ts`) + `dist/` static |
 | Supabase project | `EduReach-Hub-Staging` (`kilkvajanoesqtzclsrs`, eu-central-1) **or** a local Supabase CLI stack | `EduReach-Hub-Staging` (`kilkvajanoesqtzclsrs`, eu-central-1) | `EduReach-V1` (`gjdfatwcoosyuhakrrhh`, eu-west-1) |
 | Data | disposable | disposable, no real student data | real |
-| `VITE_EMAIL_VERIFICATION_ENABLED` | `false` (unchanged; see §5) | `true` — the staging project requires confirmation | `false` — see §5 |
 | Scheduled newsroom job | not scheduled | not scheduled | `netlify/functions/daily-news-refresh.ts` (`@daily`) |
 
 `ArbsOdd` (`huqvshwirmywinikvrnf`) is an **inactive** Supabase project. It is not
@@ -64,14 +63,12 @@ Canonical lists: `.env.example` (development) and `.env.production.example`
 | `VITE_SUPABASE_PUBLISHABLE_KEY` (or `VITE_SUPABASE_ANON_KEY`) | build | yes | **confirmed present** — same build guard |
 | `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_SECRET_KEY`) | function only | yes | **confirmed present and working** — `/api/health/ready` reports `database.ok: true` |
 | `EDUREACH_SITE_URL` | function | recommended | not verifiable from here; used for absolute links |
-| `VITE_EMAIL_VERIFICATION_ENABLED` | build | optional | not set ⇒ code default `false`, which matches the project (§5) |
 | `CBT_LEGACY_SCHEMA` | function | optional | not set; see §6 |
 | `EDUREACH_ADMIN_BOOTSTRAP_EMAIL` | function | one-time | used by the bootstrap path only |
 
 ### Staging (to be created when the staging site exists)
 
-Same names, pointed at `kilkvajanoesqtzclsrs`, with
-`VITE_EMAIL_VERIFICATION_ENABLED=true`. Nothing is configured yet because there
+Same names, pointed at `kilkvajanoesqtzclsrs`. Nothing is configured yet because there
 is no staging site to configure.
 
 ### Development
@@ -102,15 +99,9 @@ curl -s <origin>/api/health/ready   # 200 ready | 503 degraded, per-check JSON
 
 | Environment | Supabase `mailer_autoconfirm` | App setting | Effective behaviour |
 |---|---|---|---|
-| Production | `true` | `VITE_EMAIL_VERIFICATION_ENABLED=false` (default; not set) | **No verification mail.** A signup is confirmed immediately and the student is signed in. This is the intended behaviour for this stage — decided 19 Nov 2026 — and the two settings agree. |
-| Staging | `false` | set `true` | Supabase requires confirmation, so the app must show the "check your inbox" path. **Blocked:** the staging project has no SMTP (`smtp_host` empty), so it would rely on Supabase's rate-limited default sender (2 mails/hour) and most signups would never arrive. Configure SMTP before using staging for signup tests. |
-| Development | unchanged | unchanged | Left as-is deliberately. |
-
-If production is later switched to real verification, three things move
-together: `mailer_autoconfirm` → `false`, a working SMTP sender, and
-`VITE_EMAIL_VERIFICATION_ENABLED=true`. Setting only the flag makes the UI wait
-for a mail that is never sent; setting only the provider value makes signups
-auto-confirm while the UI still asks the student to verify.
+| Production | `true` | Unconditional direct sign-in | **No verification mail.** A signup is confirmed immediately and the student is signed in. This is the production behaviour — users register and log in without email confirmation, while password-reset emails remain active. |
+| Staging | `false` | Unconditional direct sign-in | Same direct authentication behaviour. |
+| Development | unchanged | Unconditional direct sign-in | Left as-is deliberately. |
 
 ## 6. Database state per environment
 
