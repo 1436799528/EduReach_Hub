@@ -102,7 +102,7 @@ test('the welcome heading is centred and follows the logo palette', () => {
 
 test('a fresh email signup is not hijacked by an existing session or admin checks', () => {
   const page = read('pages/AuthPageV2.tsx');
-  assert.match(page, /if (currentMode === 'signup') return;/, 'a deliberate /register visit stays available while signed in');
+  assert.match(page, /if \(currentMode === 'signup'\) return;/, 'a deliberate /register visit stays available while signed in');
   assert.match(page, /\[isAuthenticated, isLoading, user\?\.id, currentMode\]/, 'the return effect follows mode changes');
   assert.doesNotMatch(page, /EMAIL_VERIFICATION_ENABLED|currentMode === 'verify'/, 'email verification is removed from the auth page');
   assert.match(page, /await bootstrapAdmin\(\);/, 'sign-in admin bootstrap is preserved');
