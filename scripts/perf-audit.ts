@@ -129,7 +129,9 @@ export const BUDGETS = {
   // list measured 396.6 KB across 72 chunks, +0.6 KB. It lives on the result
   // route, which is lazy, so the first-load critical path is unchanged and still
   // capped separately at 214 KB.
-  totalJsGzip: 398 * 1024,
+  // FormFieldError and accessible validation across student forms measured 398.6 KB.
+  // Raised to 402 KB with standard 3.4 KB headroom.
+  totalJsGzip: 402 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

@@ -30,16 +30,23 @@ An end-to-end audit and implementation across the 15 authentication and notifica
 - **Security:** Account enumeration is mitigated; recovery confirmation gives non-disclosing feedback ("If an account exists for this email, you will receive password reset instructions").
 
 ### Phase 3: Production Email Delivery & Templates
-- **Current Mailer:** Default Supabase mailer is active with rate-limiting in place.
-- **Production SMTP Configuration Guide:** To transition to a dedicated custom transactional mail provider (Resend, SendGrid, Amazon SES, or Postmark):
-  1. Open Supabase Dashboard → **Project Settings** → **Authentication** → **Email Templates**.
-  2. Set **Sender Email** to `noreply@edureach.ng` and **Sender Name** to `EduReach Hub`.
-  3. Enable **Custom SMTP** with:
-     - `SMTP Host`: e.g. `smtp.resend.com`
-     - `SMTP Port`: `465` (SSL) or `587` (TLS)
-     - `SMTP User`: API key username
-     - `SMTP Password`: API key secret
-  4. Ensure SPF, DKIM, and DMARC DNS records are verified on the `edureach.ng` domain.
+- **Current Active Setup (Supabase Project `EduReach-V1`):**
+  - **Custom SMTP:** Enabled in Supabase Auth settings.
+  - **Provider:** SendGrid (`smtp.sendgrid.net`).
+  - **Port:** `587`.
+  - **Sender Email:** `jamesjulius176@gmail.com` (verified account email sender).
+  - **Sender Name:** `EduReach Hub`.
+  - **SMTP Username:** `apikey`.
+  - **Credentials:** The SendGrid API key is securely stored in Supabase private SMTP settings (never checked into code or documentation).
+- **Distinction Between Email and Notification Channels:**
+  - **Supabase Auth Emails:** Transactional account lifecycle messages (password resets, email verification confirmation, email change OTPs) are dispatched via the active SendGrid SMTP configuration in Supabase Auth.
+  - **Application-Level Notification Emails:** Not implemented in this repository. There are no application-level background workers or email delivery pipelines for routine app events.
+  - **In-App Notifications:** Real-time and persistent student alerts (service request status transitions, CBT result notices) use the `public.student_notifications` table rendered in the UI via `NotificationCenter`.
+- **Future Production Launch Setup (Branded Custom Domain):**
+  - The domain `edureach.ng` is not yet configured or verified on DNS for transactional sending.
+  - Prior to general public launch:
+    1. Register and verify DNS records (SPF, DKIM, and DMARC) on the branded domain (`edureach.ng`).
+    2. In Supabase Dashboard → **Project Settings** → **Authentication** → **Email Templates**, update Sender Email from `jamesjulius176@gmail.com` to `noreply@edureach.ng` or another verified organizational address.
 
 ### Phase 4: Google OAuth Flow
 - **Client Configuration:** Button triggers `startSocialSignIn('google', nextPath)` invoking `supabase.auth.signInWithOAuth` with `prompt: 'select_account'` and safe `redirectTo` path.
@@ -101,4 +108,5 @@ An end-to-end audit and implementation across the 15 authentication and notifica
 | **Google Cloud** | Authorized Redirect URI | `https://gjdfatwcoosyuhakrrhh.supabase.co/auth/v1/callback` |
 | **Google Cloud** | Authorized JavaScript Origin | `https://edureachhub.netlify.app` |
 | **Supabase Auth** | Google Enabled | Already configured in Supabase Auth |
-| **Custom SMTP** | Host / Port / User / Pass | Configure dedicated transactional provider domain records |
+| **Custom SMTP** | SendGrid Active | Active (`smtp.sendgrid.net:587`, sender: `jamesjulius176@gmail.com`) |
+| **Custom Domain DNS** | SPF, DKIM, DMARC | Future launch step for `edureach.ng` branded sender (`noreply@edureach.ng`) |

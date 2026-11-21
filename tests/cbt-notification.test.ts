@@ -86,14 +86,73 @@ test('notifyCbtResultReady is idempotent and does not insert duplicate notificat
   };
 
   const result = await notifyCbtResultReady(mockSupabase as any, {
-    id: 'attempt-uuid-1',
-    user_id: 'user-uuid-1',
+    id: 'attempt-uuid-existing',
+    user_id: 'user-uuid-existing',
     exam_title: 'JAMB UTME Mock Exam',
   });
 
   assert.equal(result.sent, false);
   assert.equal(result.reason, 'already notified');
   assert.equal(inserted.length, 0);
+});
+
+test('notifyCbtResultReady safely prevents concurrent in-flight duplicates', async () => {
+  const inserted: any[] = [];
+  let resolveDbQuery: (val: any) => void;
+  const delayedDbPromise = new Promise((resolve) => {
+    resolveDbQuery = resolve;
+  });
+
+  const mockSupabase = {
+    from(_table: string) {
+      return {
+        select() {
+          return {
+            eq() {
+              return {
+                eq() {
+                  return {
+                    contains() {
+                      return {
+                        limit() {
+                          return delayedDbPromise;
+                        },
+                      };
+                    },
+                  };
+                },
+              };
+            },
+          };
+        },
+        insert(row: any) {
+          inserted.push(row);
+          return Promise.resolve({ error: null });
+        },
+      };
+    },
+  };
+
+  const attempt = {
+    id: 'attempt-uuid-concurrent',
+    user_id: 'user-uuid-concurrent',
+    exam_title: 'JAMB UTME Concurrent Test',
+  };
+
+  // Trigger two concurrent notifications for the same attempt
+  const call1 = notifyCbtResultReady(mockSupabase as any, attempt);
+  const call2 = notifyCbtResultReady(mockSupabase as any, attempt);
+
+  // Now release DB query
+  resolveDbQuery!({ data: [], error: null });
+
+  const [res1, res2] = await Promise.all([call1, call2]);
+
+  // One was sent, the concurrent one was deduplicated
+  assert.equal(res1.sent, true);
+  assert.equal(res2.sent, false);
+  assert.equal(res2.reason, 'already notified');
+  assert.equal(inserted.length, 1);
 });
 
 test('notifyCbtResultReady fails safely if attempt id or user id is missing', async () => {
@@ -114,4 +173,44 @@ test('notifyCbtResultReady fails safely if attempt id or user id is missing', as
     user_id: '',
   });
   assert.equal(result2.sent, false);
+});
+
+test('notifyCbtResultReady handles database lookup or insert failure safely', async () => {
+  const failingDb = {
+    from(_table: string) {
+      return {
+        select() {
+          return {
+            eq() {
+              return {
+                eq() {
+                  return {
+                    contains() {
+                      return {
+                        limit() {
+                          return Promise.resolve({ data: null, error: { message: 'connection reset' } });
+                        },
+                      };
+                    },
+                  };
+                },
+              };
+            },
+          };
+        },
+        insert() {
+          return Promise.resolve({ error: { message: 'insert error' } });
+        },
+      };
+    },
+  };
+
+  const result = await notifyCbtResultReady(failingDb as any, {
+    id: 'attempt-uuid-failing',
+    user_id: 'user-uuid-failing',
+    exam_title: 'JAMB UTME Mock Exam',
+  });
+
+  assert.equal(result.sent, false);
+  assert.equal(result.reason, 'lookup failed');
 });

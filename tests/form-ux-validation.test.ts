@@ -52,6 +52,18 @@ test('ProfileCompletionPage renders field-level errors directly beneath inputs',
   assert.match(page, /<FormFieldError id="profile-phone-error" error=\{fieldErrors\.phone\} \/>/);
 });
 
+test('SecurityModal renders field-level errors directly beneath password inputs', () => {
+  const modal = read('src/components/dashboard/SecurityModal.tsx');
+
+  assert.match(modal, /import FormFieldError from '\.\.\/FormFieldError'/);
+  assert.match(modal, /<FormFieldError id="security-new-password-error" error=\{passwordErrors\.newPassword\} \/>/);
+  assert.match(modal, /<FormFieldError id="security-confirm-password-error" error=\{passwordErrors\.confirmNewPassword\} \/>/);
+  assert.match(modal, /aria-invalid=\{Boolean\(passwordErrors\.newPassword\)\}/);
+  assert.match(modal, /aria-describedby=\{passwordErrors\.newPassword \? 'security-new-password-error' : undefined\}/);
+  assert.match(modal, /aria-invalid=\{Boolean\(passwordErrors\.confirmNewPassword\)\}/);
+  assert.match(modal, /aria-describedby=\{passwordErrors\.confirmNewPassword \? 'security-confirm-password-error' : undefined\}/);
+});
+
 test('Apple login has been completely removed from client pages and providers', () => {
   const authPage = read('pages/AuthPageV2.tsx');
   assert.doesNotMatch(authPage, /'apple'/i);

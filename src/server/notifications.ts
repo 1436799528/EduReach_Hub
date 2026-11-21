@@ -185,11 +185,13 @@ export interface CbtAttemptForNotification {
   score?: number | null;
 }
 
+const cbtNotificationInFlight = new Set<string>();
+
 /**
  * Write an in-app notification when a CBT attempt result is finalised.
  *
- * Idempotent per attempt: an attempt is finalised once, and repeated queries
- * or network retries do not produce duplicate notifications.
+ * Idempotent per attempt: an attempt is finalised once, and repeated queries,
+ * concurrent requests or network retries do not produce duplicate notifications.
  * Failure is logged and never reverses the finalised attempt.
  */
 export async function notifyCbtResultReady(
@@ -197,6 +199,13 @@ export async function notifyCbtResultReady(
   attempt: CbtAttemptForNotification,
 ): Promise<{ sent: boolean; reason?: string }> {
   if (!attempt.id || !attempt.user_id) return { sent: false, reason: 'missing attempt or user id' };
+
+  // Memory-level lock to prevent concurrent races in the same process
+  const attemptLockKey = `${attempt.user_id}:${attempt.id}`;
+  if (cbtNotificationInFlight.has(attemptLockKey)) {
+    return { sent: false, reason: 'already notified' };
+  }
+  cbtNotificationInFlight.add(attemptLockKey);
 
   const title = 'Your CBT result is ready';
   const examName = attempt.exam_title?.trim() || 'examination';
@@ -212,7 +221,10 @@ export async function notifyCbtResultReady(
       .contains('metadata', { attempt_id: attempt.id })
       .limit(1);
 
-    if (existing?.error) return { sent: false, reason: 'lookup failed' };
+    if (existing?.error) {
+      log.error('notifications.cbt_result_failed', { reason: 'lookup_failed', ...errorFacts(existing.error) });
+      return { sent: false, reason: 'lookup failed' };
+    }
     if (Array.isArray(existing?.data) && existing.data.length > 0) {
       return { sent: false, reason: 'already notified' };
     }
@@ -235,5 +247,10 @@ export async function notifyCbtResultReady(
   } catch (error) {
     log.error('notifications.cbt_result_failed', { reason: 'unexpected_error', ...errorFacts(error) });
     return { sent: false, reason: 'unexpected error' };
+  } finally {
+    // Retain lock briefly to absorb duplicate concurrent triggers
+    setTimeout(() => {
+      cbtNotificationInFlight.delete(attemptLockKey);
+    }, 5000);
   }
 }
