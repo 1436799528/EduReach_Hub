@@ -69,7 +69,7 @@
 .auth-field input::placeholder{color:#8a989f}
 .auth-field input:focus,.auth-field select:focus{border-color:var(--auth-brand);box-shadow:0 0 0 3px rgba(30,64,175,.14)}
 .auth-field small{color:var(--auth-muted);font-size:11px;line-height:1.45}
-.er-field-error{display:block;margin-top:4px;color:var(--er-status-error,#b42318);font-size:11.5px;font-weight:550;line-height:1.4}
+.er-field-error{display:block;margin-top:4px;color:var(--er-status-error,#b42318);font-size:11.5px;font-weight:560;line-height:1.4}
 .auth-field input[aria-invalid="true"],.auth-field select[aria-invalid="true"],input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--er-status-error,#b42318)!important}
 .auth-field input[aria-invalid="true"]:focus,.auth-field select[aria-invalid="true"]:focus,input[aria-invalid="true"]:focus,select[aria-invalid="true"]:focus,textarea[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(180,35,24,.18)!important}
 .auth-input-wrap{position:relative}
