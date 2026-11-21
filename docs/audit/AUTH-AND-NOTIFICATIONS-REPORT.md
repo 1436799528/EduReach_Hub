@@ -25,7 +25,7 @@ An end-to-end audit and implementation across the 15 authentication and notifica
 - **Profile Association:** Automated PostgreSQL trigger `on_auth_user_created_edureach` on `auth.users` calls `handle_new_student_profile()`, establishing a synchronized profile entry in `public.profiles` without manual frontend profile forging.
 
 ### Phase 2: Email & Password Lifecycle
-- **Sign-Up & Verification:** Dual-mode support configured in `src/lib/emailVerification.ts`. Pre-launch auto-confirmation is active in Supabase (`mailer_autoconfirm: true`), with complete 8-digit OTP code verification UI (`/verify-email`) and resend logic ready for strict email confirmation mode (`VITE_EMAIL_VERIFICATION_ENABLED=true`).
+- **Sign-Up & Verification:** Email verification is not required for production registration (`mailer_autoconfirm: true` on Supabase Auth). Upon registration, users are automatically confirmed and signed in without an inbox-check wall or verification countdown. The `/verify-email` route safely redirects visitors with a clear notification that verification is not required and offers a direct sign-in button. Password reset emails continue to be delivered reliably via SendGrid SMTP.
 - **Password Reset & Recovery:** `resetPasswordForEmail` directs students securely to `/reset-password` (`site_url` / redirect allowlist enforced). Reset form enforces password strength (min 8 chars, matching confirm password), updating via `supabase.auth.updateUser`.
 - **Security:** Account enumeration is mitigated; recovery confirmation gives non-disclosing feedback ("If an account exists for this email, you will receive password reset instructions").
 
