@@ -6,7 +6,11 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   workers: process.env.CI ? 2 : 4,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  // `github` turns each failed test into an annotation, so a red gate names the
+  // test and assertion without needing the (often truncated) job log.
+  reporter: process.env.CI
+    ? [['github'], ['list'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:3100',
     trace: 'retain-on-failure',
