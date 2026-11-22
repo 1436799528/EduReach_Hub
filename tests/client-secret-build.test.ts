@@ -32,6 +32,43 @@ test('client environment guard rejects privileged values even in preview and unu
   assert.equal(evaluateClientEnv({ CONTEXT: 'production' }).reason, 'Vercel production build');
 });
 
+test('the public Supabase aliases satisfy a production build and are still screened for secrets', () => {
+  // Netlify commonly stores the project URL and anon key without the VITE_
+  // prefix. Those two values are public, and vite.config.ts inlines them, so a
+  // build with only these names is configured rather than refused.
+  const aliased = evaluateClientEnv({
+    CONTEXT: 'production',
+    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_ANON_KEY: anonJwt,
+  });
+  assert.equal(aliased.ok, true);
+  assert.equal(aliased.enforced, true);
+  assert.deepEqual(aliased.missing, []);
+
+  const pub = evaluateClientEnv({
+    CONTEXT: 'production',
+    SUPABASE_URL: 'https://example.supabase.co',
+    SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test',
+  });
+  assert.equal(pub.ok, true);
+
+  // The same fallback must not launder a privileged key into the bundle.
+  for (const key of [opaque, serviceJwt]) {
+    const refused = evaluateClientEnv({
+      CONTEXT: 'production',
+      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_ANON_KEY: key,
+    });
+    assert.equal(refused.ok, false);
+    assert.equal(refused.privilegedClientValue, true);
+  }
+  // A service key alone still does not make a public configuration.
+  assert.equal(
+    evaluateClientEnv({ CONTEXT: 'production', SUPABASE_URL: 'https://example.supabase.co', SUPABASE_SERVICE_ROLE_KEY: opaque }).ok,
+    false,
+  );
+});
+
 test('direct Vite build and dev refuse privileged process and mode-file values before emitting client assets', () => {
   for (const [command, fromFile, value] of [['build', false, opaque], ['build', true, serviceJwt], ['dev', true, opaque]] as const) {
     const dir = mkdtempSync(join(tmpdir(), 'edureach-client-secret-test-'));
