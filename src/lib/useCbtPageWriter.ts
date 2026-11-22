@@ -251,16 +251,17 @@ export function useCbtPageWriter(accountId: string | undefined, attemptId: strin
           }
         }
       },
-      choose: async (question, selected) => run(async () => {
+      choose: async (question, selected) => {
         current();
-        if (phase !== 'active' || !lease || !snapshot || rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))) return;
+        if (phase !== 'active' || !lease || !snapshot) return;
         if (selected !== null && (selected < 0 || selected >= question.options.length)) return;
         const used = lease;
+        // Optimistically record in local IndexedDB journal
         await queue.enqueue(question.id, question.position, selected, snapshot.answers[String(question.position)] ?? null, snapshot.revision, used);
         current(); await reloadRows();
-        // Never rebind if a takeover happened while the IndexedDB transaction committed.
-        if (lease === used && phase === 'active') { busy = false; await drain(); }
-      }),
+        // Drain in background asynchronously without blocking the user
+        if (lease === used && phase === 'active') { void drain(); }
+      },
       takeover: async () => run(async () => {
         current(); lease = null; phase = 'loading'; publish();
         const latest = await journal.beginWritingSession(scope, crypto.randomUUID(), tabId); current();

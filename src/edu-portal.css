@@ -507,8 +507,8 @@ body.er-exam-mode{padding-bottom:0!important}
    anywhere: About, Contact, Terms, Privacy, Cookies, plus the consent control.
    It is deliberately not a second sitemap. */
 .er-footer{background:#0f172a;color:#94a3b8;border-top:1px solid #1e293b;margin-top:auto;padding:12px 0;padding-bottom:calc(12px + env(safe-area-inset-bottom));font-size:12px}
-.hub-shell main{min-height:calc(100vh + 120px);min-height:calc(100dvh + 120px)}
-.edureach-dash-container,.student-portal,.admin-shell,.er-auth-container{min-height:calc(100vh + 120px);min-height:calc(100dvh + 120px)}
+.hub-shell main{min-height:calc(100vh - 120px);min-height:calc(100dvh - 120px)}
+.edureach-dash-container,.student-portal,.admin-shell,.er-auth-container{min-height:calc(100vh - 120px);min-height:calc(100dvh - 120px)}
 .er-footer-bar{display:flex;align-items:center;justify-content:space-between;gap:6px 22px;flex-wrap:wrap}
 .er-footer-identity{display:flex;align-items:center;gap:4px 14px;flex-wrap:wrap;min-width:0}
 .er-footer-brand-link{display:inline-flex;align-items:center;gap:8px;min-height:32px;color:#fff;text-decoration:none;font-size:13px;font-weight:620}
@@ -567,7 +567,7 @@ body.er-exam-mode{padding-bottom:0!important}
 @media(max-width:640px){.er-search-page{padding:var(--er-space-5) 0 var(--er-space-7)}}
 
 /* Lazy route fallback: keeps the page shape while a code chunk downloads */
-.er-route-fallback{min-height:calc(100vh + 120px);min-height:calc(100dvh + 120px);background:#FAF8FF}
+.er-route-fallback{min-height:calc(100vh - 120px);min-height:calc(100dvh - 120px);background:#FAF8FF}
 .er-route-fallback-bar{height:58px;background:#fff;border-bottom:1px solid #e2e8f0}
 .er-route-fallback-body{max-width:1100px;margin:0 auto;padding:24px 16px;display:grid;gap:14px}
 

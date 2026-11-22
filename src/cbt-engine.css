@@ -226,7 +226,7 @@
   .er-exam-question h1{font-size:17px;line-height:1.55}
   .er-exam-main{padding:12px 12px 72px}
   .er-exam-next,.er-exam-submit-primary{margin-left:0;width:100%;justify-content:center}
-  .er-exam-question-actions{gap:8px}
+  .er-exam-question-actions{gap:8px;position:sticky;bottom:0;background:var(--er-surface);padding:10px 12px;box-shadow:0 -4px 12px rgba(15,23,42,.06);border-radius:8px;z-index:20}
   .er-exam-question-actions>*{flex:1 1 auto;justify-content:center;min-width:calc(50% - 4px)}
   .er-exam-question-actions .er-exam-next,
   .er-exam-question-actions .er-exam-submit-primary{flex-basis:100%;order:10}

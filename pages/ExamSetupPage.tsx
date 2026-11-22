@@ -782,6 +782,11 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
                         <Info size={14} /> {exam === 'jamb' ? 'Choose optional subjects from the selected group. Subjects without questions in this bank are unavailable. JAMB is limited to four subjects including compulsory Use of English.' : 'Only subjects with questions are listed.'}
                         {compulsoryEnglish ? ` ${compulsoryEnglish} is compulsory for this examination and cannot be removed.` : ''}
                       </p>
+                      {formError && (
+                        <p className="hub-form-error" role="alert" style={{ marginTop: '10px' }}>
+                          {formError}
+                        </p>
+                      )}
                     </div>
 
                     {mode === 'practice' && <>
