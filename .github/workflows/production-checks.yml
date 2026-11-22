@@ -49,10 +49,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit tests
+      - name: Tests
         run: npm test
 
-      - name: Schema and migration audits
+      - name: Schema audit
         run: npm run schema:audit && npm run migrations:checklist
 
       - name: Production build
