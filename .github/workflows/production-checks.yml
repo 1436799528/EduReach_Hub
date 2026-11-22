@@ -83,3 +83,7 @@ jobs:
             test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+      - name: Annotate Playwright failures
+        if: failure()
+        run: node scripts/e2e-failure-annotations.mjs
