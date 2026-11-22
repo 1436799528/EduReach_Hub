@@ -7124,17 +7124,12 @@ app.use('/api', apiErrorHandler);
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: {
-        middlewareMode: true,
-        allowedHosts: true,
-        hmr: process.env.DISABLE_HMR === 'true' ? false : undefined,
-        ws: process.env.DISABLE_HMR === 'true' ? false : undefined,
-      },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+    // The dev middleware lives in its own module and is imported through a
+    // non-literal specifier so bundlers do not pull Vite's native Rollup and
+    // Lightning CSS binaries into the serverless function.
+    const devServerModule = './server-dev.mjs';
+    const { attachDevServer } = await import(devServerModule);
+    await attachDevServer(app);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     // Cache policy, kept in step with public/_headers (the Netlify host is the
