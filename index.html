@@ -59,7 +59,11 @@
           justify-content: center;
           background: #f8fafc;
           color: #0f172a;
-          font-family: Inter, system-ui, -apple-system, sans-serif;
+          font-family:
+            Inter,
+            system-ui,
+            -apple-system,
+            sans-serif;
           padding: 24px;
           box-sizing: border-box;
         }
@@ -132,13 +136,24 @@
           font-weight: 500;
         }
         @keyframes pwa-slide {
-          0% { transform: translateX(-100%); }
-          50% { transform: translateX(110%); }
-          100% { transform: translateX(240%); }
+          0% {
+            transform: translateX(-100%);
+          }
+          50% {
+            transform: translateX(110%);
+          }
+          100% {
+            transform: translateX(240%);
+          }
         }
         @keyframes pwa-pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.04); }
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.04);
+          }
         }
         @media (prefers-reduced-motion: reduce) {
           .pwa-boot-logo,

@@ -30,8 +30,8 @@
 .hub-cbt-exam-row{min-height:48px!important;padding:6px 8px!important;border-radius:6px!important}
 .hub-panel,.hub-empty,.hub-wizard-panel,.hub-success-panel,.hub-question-card,.hub-score-card,.hub-calculator-card{border-radius:6px!important;box-shadow:none!important}
 .hub-calculator-card{padding:10px!important}
-.hub-shell main{min-height:calc(100vh + 120px)!important;min-height:calc(100dvh + 120px)!important}
-.hub-shell .hub-page{padding-top:8px!important;padding-bottom:20px!important;min-height:calc(100vh + 120px)!important;min-height:calc(100dvh + 120px)!important}
+.hub-shell main{min-height:calc(100vh - 120px)!important;min-height:calc(100dvh - 120px)!important}
+.hub-shell .hub-page{padding-top:8px!important;padding-bottom:20px!important;min-height:calc(100vh - 120px)!important;min-height:calc(100dvh - 120px)!important}
 .hub-shell .hub-layout-with-rail{gap:10px!important}
 .hub-sidebar-card{padding:8px!important;border-radius:6px!important}
 @media(max-width:900px){.hub-home-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}

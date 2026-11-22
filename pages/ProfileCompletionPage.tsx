@@ -347,6 +347,80 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
     );
   };
 
+  async function compressAvatarImage(file: File, maxDimension = 512, targetBytes = 200 * 1024): Promise<{ blob: Blob; extension: string; mimeType: string }> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Failed to read image file'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Failed to parse image content'));
+        img.onload = () => {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, width);
+          canvas.height = Math.max(1, height);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas 2D rendering context unavailable'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Try WebP first, fallback to JPEG
+          const tryWebP = (quality = 0.85) => {
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  if (blob.size <= targetBytes || quality <= 0.5) {
+                    resolve({ blob, extension: 'webp', mimeType: 'image/webp' });
+                  } else {
+                    tryWebP(quality - 0.15);
+                  }
+                } else {
+                  tryJpeg(0.85);
+                }
+              },
+              'image/webp',
+              quality
+            );
+          };
+
+          const tryJpeg = (quality = 0.85) => {
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  if (blob.size <= targetBytes || quality <= 0.5) {
+                    resolve({ blob, extension: 'jpg', mimeType: 'image/jpeg' });
+                  } else {
+                    tryJpeg(quality - 0.15);
+                  }
+                } else {
+                  reject(new Error('Image encoding failed'));
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+
+          tryWebP(0.85);
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleAvatarFile(file: File | undefined) {
     if (!file) return;
     const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
@@ -367,11 +441,39 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
     setAvatarUploading(true);
     setMessage('');
     try {
-      const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+      // Compress and resize client-side before uploading
+      let uploadPayload: Blob = file;
+      let extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+      let contentType = file.type || 'image/jpeg';
+
+      try {
+        const compressed = await compressAvatarImage(file);
+        uploadPayload = compressed.blob;
+        extension = compressed.extension;
+        contentType = compressed.mimeType;
+      } catch {
+        // Fall back to original file if canvas compression fails in browser environment
+      }
+
+      // Cleanup prior uploaded custom avatar if it belongs to this user in the avatars bucket
+      if (customAvatar && customAvatar.includes('/avatars/') && customAvatar.includes(`/${userId}/`)) {
+        try {
+          const oldPathMatch = customAvatar.split('/avatars/')[1];
+          if (oldPathMatch) {
+            const oldPath = decodeURIComponent(oldPathMatch.split('?')[0]);
+            if (oldPath.startsWith(`${userId}/`)) {
+              void supabase.storage.from('avatars').remove([oldPath]).catch(() => {});
+            }
+          }
+        } catch {
+          // Non-blocking cleanup
+        }
+      }
+
       const path = `${userId}/avatar-${Date.now()}.${extension}`;
-      const { error } = await supabase.storage.from('avatars').upload(path, file, {
+      const { error } = await supabase.storage.from('avatars').upload(path, uploadPayload, {
         cacheControl: '3600',
-        contentType: file.type || 'image/jpeg',
+        contentType,
         upsert: false,
       });
       if (error) throw error;

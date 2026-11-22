@@ -594,7 +594,8 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const progressPercent = totalSeconds ? Math.min(100, Math.round(((totalSeconds - remainingSeconds) / totalSeconds) * 100)) : 0;
   const isLastQuestion = index === questions.length - 1;
   const unansweredCount = questions.length - answeredCount;
-  const v2Blocked = Boolean(v2Paper && (writer.phase !== 'active' || (expiresAt !== null && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
+  const v2SubmittingBlocked = Boolean(v2Paper && (writer.phase !== 'active' || (expiresAt !== null && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
+  const v2OptionBlocked = Boolean(v2Paper && (writer.phase !== 'active' || (expiresAt !== null && remainingSeconds <= 0)));
   const currentSubjectEntry = subjectPlan.length > 1
     ? subjectPlan.find((plan) => question?.position >= plan.first && question?.position <= plan.last)
     : null;
@@ -747,7 +748,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                     type="button"
                     role="radio"
                     aria-checked={isSelected}
-                    disabled={v2Blocked}
+                    disabled={v2OptionBlocked}
                     className={isSelected ? 'er-exam-option is-selected' : 'er-exam-option'}
                     onClick={() => choose(optionIndex)}
                   >
@@ -780,12 +781,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               <Flag size={15} /> {isMarked ? 'Marked for review' : 'Mark for review'}
             </button>
             {selected !== undefined && (
-              <button type="button" className="er-exam-ghost" onClick={clearAnswer} disabled={v2Blocked}>
+              <button type="button" className="er-exam-ghost" onClick={clearAnswer} disabled={v2OptionBlocked}>
                 <Eraser size={15} /> Clear answer
               </button>
             )}
             {isLastQuestion ? (
-              <button type="button" className="er-exam-next er-exam-submit-primary" disabled={v2Blocked || submitting} title={v2Blocked ? 'Submit after every answer is saved and the writing session is active.' : undefined} onClick={handlePrimaryAction}>
+              <button type="button" className="er-exam-next er-exam-submit-primary" disabled={v2SubmittingBlocked || submitting} title={v2SubmittingBlocked ? 'Submit after every answer is saved and the writing session is active.' : undefined} onClick={handlePrimaryAction}>
                 Submit Examination <Send size={15} />
               </button>
             ) : (
@@ -838,7 +839,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
                 </div>
               </div>
             ))}
-            <button type="button" className="hub-primary-btn er-exam-palette-submit" disabled={v2Blocked || submitting} title={v2Blocked ? 'Submit after every answer is saved and the writing session is active.' : undefined} onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
+            <button type="button" className="hub-primary-btn er-exam-palette-submit" disabled={v2SubmittingBlocked || submitting} title={v2SubmittingBlocked ? 'Submit after every answer is saved and the writing session is active.' : undefined} onClick={() => { setPaletteOpen(false); setConfirmKind('submit'); }}>
               <Send size={15} /> Submit paper
             </button>
           </aside>
@@ -904,7 +905,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             <button
               type="button"
               className="hub-primary-btn"
-              disabled={submitting || v2Blocked}
+              disabled={submitting || v2SubmittingBlocked}
               onClick={() => { setConfirmKind(null); submitDialog.current?.close(); void submit('manual'); }}
             >
               {submitting ? 'Submitting…' : 'Submit Examination'}

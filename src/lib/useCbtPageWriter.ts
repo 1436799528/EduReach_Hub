@@ -253,7 +253,7 @@ export function useCbtPageWriter(accountId: string | undefined, attemptId: strin
       },
       choose: async (question, selected) => {
         current();
-        if (phase !== 'active' || !lease || !snapshot || rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))) return;
+        if (phase !== 'active' || !lease || !snapshot) return;
         if (selected !== null && (selected < 0 || selected >= question.options.length)) return;
         const used = lease;
         // Optimistically record in local IndexedDB journal
