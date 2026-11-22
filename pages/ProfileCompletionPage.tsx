@@ -349,12 +349,14 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
 
   async function handleAvatarFile(file: File | undefined) {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setMessage('Choose an image file for your profile photo.');
+    const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
+    if (!isImage) {
+      setMessage('Choose an image file (JPG, PNG, WebP, GIF, or HEIC) for your profile photo.');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage('Profile photos must be 2 MB or smaller.');
+    const MAX_BYTES = 10 * 1024 * 1024; // 10 MB configurable source limit
+    if (file.size > MAX_BYTES) {
+      setMessage('Profile photos must be 10 MB or smaller.');
       return;
     }
     if (!isSupabaseConfigured || user?.isLocal || !userId) {
@@ -369,7 +371,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
       const path = `${userId}/avatar-${Date.now()}.${extension}`;
       const { error } = await supabase.storage.from('avatars').upload(path, file, {
         cacheControl: '3600',
-        contentType: file.type,
+        contentType: file.type || 'image/jpeg',
         upsert: false,
       });
       if (error) throw error;
@@ -378,7 +380,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
       setCustomAvatar(data.publicUrl);
       setAvatarFileName(file.name);
     } catch {
-      setMessage('We could not upload that photo. Choose a smaller JPEG or PNG, or keep your initials for now.');
+      setMessage('We could not upload that photo. Choose a smaller JPEG, PNG, or WebP, or keep your initials for now.');
     } finally {
       setAvatarUploading(false);
     }
@@ -1075,6 +1077,7 @@ export default function ProfileCompletionPage({ embedded = false }: { embedded?:
                   </div>
                   {avatarFileName && <span className="profile-photo-note">{avatarFileName}</span>}
                   {avatarUploading && <span className="profile-photo-note" role="status">Uploading your photo…</span>}
+                  {message && message.includes('photo') && <p className="hub-form-error" role="alert" style={{ marginTop: '8px' }}>{message}</p>}
                 </div>
               </div>
             </section>

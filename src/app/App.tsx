@@ -12,7 +12,14 @@ import { trackEvent } from '../lib/api';
 // internal navigation.
 const AdminShell = lazy(() => import('../../pages/AdminLayout'));
 
-function scrollForNavigation(hash: string) {
+function scrollForNavigation(hash: string, isPop = false) {
+  if (isPop) {
+    const y = Number(history.state?.y);
+    if (Number.isFinite(y)) {
+      window.requestAnimationFrame(() => window.scrollTo({ top: y, left: 0, behavior: 'auto' }));
+      return;
+    }
+  }
   if (hash) {
     window.requestAnimationFrame(() => {
       document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -20,6 +27,14 @@ function scrollForNavigation(hash: string) {
     return;
   }
   window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'auto' }));
+}
+
+function saveCurrentScroll() {
+  try {
+    history.replaceState({ ...(history.state || {}), y: window.scrollY }, '', window.location.href);
+  } catch {
+    /* optional */
+  }
 }
 
 function readLocation() {
@@ -63,7 +78,7 @@ export default function App() {
       // Always publish a fresh location object: the dashboard relies on it to
       // re-sync its tab after a silent pushState + browser back.
       startTransition(() => setLocationState(readLocation()));
-      scrollForNavigation(window.location.hash);
+      scrollForNavigation(window.location.hash, true);
     };
     window.addEventListener('popstate', syncPath);
     return () => window.removeEventListener('popstate', syncPath);
@@ -82,6 +97,7 @@ export default function App() {
       if (url.origin !== window.location.origin) return;
       if (url.pathname.startsWith('/api/')) return;
 
+      saveCurrentScroll();
       event.preventDefault();
       const next = `${url.pathname}${url.search}${url.hash}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;

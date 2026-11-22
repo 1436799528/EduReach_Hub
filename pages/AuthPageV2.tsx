@@ -457,7 +457,19 @@ export default function AuthPageV2({ mode = 'signin' }: { mode?: Mode }) {
         navigateInApp(isAdmin ? '/admin' : getSafeNextPath());
       }
     } catch (value) {
-      setError(userFacingError(value, 'An error occurred during authentication.'));
+      const err = userFacingError(value, 'An error occurred during authentication.');
+      const errLower = err.toLowerCase();
+      if (errLower.includes('email already') || errLower.includes('already registered')) {
+        setFieldErrors({ email: 'This email is already registered. Please sign in instead.' });
+      } else if (errLower.includes('invalid login credentials') || errLower.includes('invalid credentials') || errLower.includes('wrong password')) {
+        setFieldErrors({ password: 'Incorrect password. Please try again or reset your password.' });
+      } else if (errLower.includes('password')) {
+        setFieldErrors({ password: err });
+      } else if (errLower.includes('email')) {
+        setFieldErrors({ email: err });
+      } else {
+        setError(err);
+      }
     } finally {
       requestInFlight.current = false;
       setBusy(false);

@@ -428,7 +428,12 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
 
   const choose = useCallback((optionIndex: number) => {
     if (closed) return;
-    if (v2Paper) { if ((expiresAt === null || remainingSeconds > 0) && questions[index]) void writer.choose(questions[index], optionIndex); return; }
+    if (v2Paper) {
+      if ((expiresAt === null || remainingSeconds > 0) && questions[index]) {
+        void writer.choose(questions[index], optionIndex);
+      }
+      return;
+    }
     if (!legacyProtocol.current) return;
     setAnswers((current) => {
       const next = { ...current, [questions[index].position]: optionIndex };
@@ -589,7 +594,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
   const progressPercent = totalSeconds ? Math.min(100, Math.round(((totalSeconds - remainingSeconds) / totalSeconds) * 100)) : 0;
   const isLastQuestion = index === questions.length - 1;
   const unansweredCount = questions.length - answeredCount;
-  const v2Blocked = Boolean(v2Paper && (writer.phase !== 'active' || writer.busy || (expiresAt !== null && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
+  const v2Blocked = Boolean(v2Paper && (writer.phase !== 'active' || (expiresAt !== null && remainingSeconds <= 0) || writer.rows.some(row => ['pending', 'conflicted', 'closed'].includes(row.status))));
   const currentSubjectEntry = subjectPlan.length > 1
     ? subjectPlan.find((plan) => question?.position >= plan.first && question?.position <= plan.last)
     : null;
@@ -721,9 +726,9 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
               )}
             </div>
             <span className="er-exam-save-state" role="status">
-              {v2Paper ? (writer.busy ? 'saving…' : writer.rows.some(row => row.status === 'conflicted') ? 'review required' : writer.rows.some(row => row.status === 'pending' || row.status === 'closed') ? 'not yet saved' : writer.phase === 'active' ? 'saved' : 'writing paused') : <>
-                {saveState === 'saving' && <><WaveLoader variant="inline" decorative /> saving…</>}
-                {saveState === 'saved' && <><CheckCircle2 size={13} /> saved</>}
+              {v2Paper ? (writer.rows.some(row => row.status === 'conflicted') ? 'review required' : writer.rows.some(row => row.status === 'pending' || row.status === 'closed') ? 'not yet saved' : writer.phase === 'active' ? '' : 'writing paused') : <>
+                {saveState === 'saving' && <span className="er-visually-hidden">saving…</span>}
+                {saveState === 'saved' && <span className="er-visually-hidden">saved</span>}
                 {saveState === 'pending' && <><AlertTriangle size={13} /> not yet saved; keep this page open</>}
                 {saveState === 'error' && <><AlertTriangle size={13} /> not saved</>}
               </>}

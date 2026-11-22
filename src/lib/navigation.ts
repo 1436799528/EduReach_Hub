@@ -7,7 +7,12 @@
  * way: one history entry, one render, no full page reload.
  */
 export function navigateInApp(path: string, { replace = false }: { replace?: boolean } = {}): void {
-  if (replace) window.history.replaceState({}, '', path);
-  else window.history.pushState({}, '', path);
+  try {
+    history.replaceState({ ...(history.state || {}), y: window.scrollY }, '', window.location.href);
+  } catch {
+    /* optional */
+  }
+  if (replace) window.history.replaceState({ y: 0 }, '', path);
+  else window.history.pushState({ y: 0 }, '', path);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
