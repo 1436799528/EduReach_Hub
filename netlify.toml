@@ -11,6 +11,14 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # A production NODE_ENV makes npm skip devDependencies, and Vite/Terser live
+  # there. The build needs them even when the site runs in production mode.
+  NPM_FLAGS = "--include=dev"
+  # Netlify site variables are managed outside this repository. If the public
+  # Supabase pair is absent, publish the unconfigured shell (the app has an
+  # honest offline state and the server API still reads its own environment)
+  # instead of leaving production on an old build. A privileged key still fails.
+  EDUREACH_ALLOW_UNCONFIGURED_CLIENT = "1"
 
 [functions]
   node_bundler = "esbuild"

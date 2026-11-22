@@ -86,11 +86,14 @@ test('admin shell adapts at narrow, tablet and desktop widths without losing nav
 test('dashboard failure does not present invented zero metrics or a clear queue', async ({ page }) => {
   await mockAdmin(page, { analyticsFails: true });
   await page.goto('/admin');
-  await expect(page.getByRole('alert')).toContainText(/unavailable|unable/i);
+  // The shell may surface a second, unrelated alert (for example a session
+  // warning while the isolated Supabase host is aborted). This assertion is
+  // about the analytics failure, not about there being exactly one alert.
+  await expect(page.getByRole('alert').filter({ hasText: /unavailable|unable/i })).toBeVisible();
   await expect(page.getByText('Active Queue', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Queue is clear. No active service requests.')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Open queue' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: /unavailable|unable/i }).getByRole('button', { name: 'Try again' })).toBeVisible();
 });
 
 test('navigation continues to respect server-provided capabilities', async ({ page }) => {

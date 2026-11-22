@@ -528,14 +528,19 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-footer-cookie-settings{padding:0;border:0;background:none;font:inherit;font-size:11.5px;cursor:pointer}
 .er-footer a:focus-visible,.er-footer button:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:2px}
 @media(max-width:640px){
-  .er-footer{padding:11px 0;padding-bottom:calc(11px + env(safe-area-inset-bottom))}
-  .er-footer-bar{align-items:flex-start;gap:2px}
-  .er-footer-social{order:3}
-  .er-footer-identity{gap:2px 10px}
-  .er-footer-copy{font-size:10.5px}
-  .er-footer-legal{gap:2px 8px;font-size:11px}
-  .er-footer-group{gap:0 8px}
-  .er-footer-group+.er-footer-group{padding-left:6px;border-left:1px solid #334155}
+  .er-footer{padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .er-footer-bar{align-items:flex-start;gap:2px 8px}
+  .er-footer-social{order:0}
+  .er-footer-social a{width:30px;height:30px}
+  .er-footer-identity{gap:2px 8px}
+  .er-footer-copy{font-size:10.5px;line-height:1.35}
+  /* One wrap for the utility links: the split between "company" and "policies"
+     stays semantic (two groups) but loses its divider on a phone, which was
+     costing a whole extra row and pushing the bar past its 220px ceiling. */
+  .er-footer-legal{width:100%;gap:0 10px;font-size:10.5px}
+  .er-footer-group{gap:0 10px}
+  .er-footer-group+.er-footer-group{padding-left:0;border-left:0}
+  .er-footer-legal a,.er-footer-cookie-settings{min-height:30px;font-size:10.5px}
 }
 @media(max-width:360px){
   .er-footer-group+.er-footer-group{padding-left:0;border-left:0}

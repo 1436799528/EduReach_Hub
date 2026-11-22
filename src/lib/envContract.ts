@@ -56,7 +56,7 @@ export const ENV_CONTRACT: EnvSpec[] = [
       {
         name: 'SUPABASE_URL',
         visibility: 'server',
-        note: 'Server-side fallback only. Not inlined into the browser bundle, so setting this alone leaves the client unconfigured.',
+        note: 'Public fallback. `vite.config.ts` inlines it into the browser bundle when the VITE_ name is absent, so a host that only sets this name still gets a configured client.',
       },
     ],
     purpose: 'Supabase project origin. Used by the browser client and by the server to build its own client.',
@@ -72,7 +72,7 @@ export const ENV_CONTRACT: EnvSpec[] = [
       {
         name: 'SUPABASE_ANON_KEY',
         visibility: 'server',
-        note: 'Server-side fallback only. Not inlined into the browser bundle.',
+        note: 'Public fallback. `vite.config.ts` inlines it into the browser bundle when no VITE_ key name is set.',
       },
     ],
     purpose: 'Browser-facing Supabase key. Public by design; every browser request is subject to RLS.',
