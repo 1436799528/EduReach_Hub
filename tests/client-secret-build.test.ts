@@ -69,6 +69,25 @@ test('the public Supabase aliases satisfy a production build and are still scree
   );
 });
 
+test('only an explicit host opt-out allows an unconfigured publish, never a privileged key', () => {
+  const unconfigured = { CONTEXT: 'production', EDUREACH_ALLOW_UNCONFIGURED_CLIENT: '1' };
+  const allowed = evaluateClientEnv(unconfigured);
+  assert.equal(allowed.ok, false, 'the configuration is still reported missing');
+  assert.equal(allowed.enforced, false, 'but it does not block the host build');
+  assert.match(allowed.reason, /ALLOW_UNCONFIGURED/);
+
+  // The opt-out never excuses a secret in a client-visible name or value.
+  for (const env of [
+    { ...unconfigured, VITE_SUPABASE_UNUSED: opaque },
+    { ...unconfigured, SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: serviceJwt },
+  ]) {
+    const refused = evaluateClientEnv(env);
+    assert.equal(refused.privilegedClientValue, true);
+    assert.equal(refused.enforced, true);
+    assert.equal(refused.ok, false);
+  }
+});
+
 test('direct Vite build and dev refuse privileged process and mode-file values before emitting client assets', () => {
   for (const [command, fromFile, value] of [['build', false, opaque], ['build', true, serviceJwt], ['dev', true, opaque]] as const) {
     const dir = mkdtempSync(join(tmpdir(), 'edureach-client-secret-test-'));

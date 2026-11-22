@@ -46,12 +46,18 @@ export function evaluateClientEnv(env: Record<string, string | undefined>): Clie
   // A privileged key under an unprefixed name would be inlined by the build,
   // which is exactly the mistake this guard exists to stop.
   const privilegedClientValue = hasPrivilegedClientValue(env) || Boolean(client.key && isPrivilegedKey(client.key));
-  const enforced = productionContext || explicit || privilegedClientValue;
+  // A host whose site settings are outside this repository may need to publish
+  // an unconfigured build (the app renders its honest offline state). That is
+  // an explicit, named opt-out and never bypasses the privileged-key refusal.
+  const allowUnconfigured = env.EDUREACH_ALLOW_UNCONFIGURED_CLIENT === '1';
+  const enforced = privilegedClientValue || (!allowUnconfigured && (productionContext || explicit));
   const reason = explicit
     ? 'EDUREACH_REQUIRE_CLIENT_ENV=1'
-    : productionContext
-      ? 'Vercel production build'
-      : 'not a production build';
+    : allowUnconfigured
+      ? 'EDUREACH_ALLOW_UNCONFIGURED_CLIENT=1'
+      : productionContext
+        ? 'Vercel production build'
+        : 'not a production build';
   return { ok: missing.length === 0 && !privilegedClientValue, missing, enforced, reason, privilegedClientValue };
 }
 
