@@ -59,7 +59,12 @@ export const BUDGETS = {
   // UX-7 replaced the home hero with the product home (greeting, four action
   // tiles, record strip, activity list) and added the five-destination nav with
   // familiar icons. Measured 213.1 KB; raised 211 -> 214 with 0.9 KB headroom.
-  criticalPathGzip: 214 * 1024,
+  // The editorial release added three lazy public surfaces (scholarships, FAQ,
+  // reviews) and their card styles. All of that route JavaScript stays lazy, but
+  // Vite bundles the stylesheets together, so the critical path moved 213.1 ->
+  // 216.0 KB. Raised 214 -> 220 KB; the entry chunk itself is unchanged at
+  // 54.6 KB and still well under its own 100 KB cap.
+  criticalPathGzip: 220 * 1024,
   // Measured 311.0 KB across 65 chunks (CBT subject-selection fix plus the
   // grouped WAEC picker). The 310 KB budget's baseline (280.9 KB across 58
   // chunks) was fully consumed by feature growth, leaving a gate that failed
@@ -131,7 +136,12 @@ export const BUDGETS = {
   // capped separately at 214 KB.
   // FormFieldError and accessible validation across student forms measured 398.6 KB.
   // Raised to 402 KB with standard 3.4 KB headroom.
-  totalJsGzip: 402 * 1024,
+  // The same release adds lazy chunks for the scholarship index, details
+  // lifecycle, FAQ, reviews and admin review moderation: 417.1 KB across 77
+  // chunks. Raised 402 -> 432 KB; no first-load number depends on it, and the
+  // dedicated critical-path cap above still fails if lazy code leaks into the
+  // first load.
+  totalJsGzip: 432 * 1024,
   // Measured 49.4 KB before UI-4 and 50.2 KB after it. The interaction-state
   // pass (secondary, disabled, busy, field, navigation and status rules) is
   // +0.8 KB gzip, and at 50 KB the gate would have failed on the change that

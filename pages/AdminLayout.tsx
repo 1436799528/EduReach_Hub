@@ -20,6 +20,7 @@ import {
   School,
   ShieldCheck,
   Users,
+  Star,
   X,
 } from 'lucide-react';
 import { NavLink, useNavigate } from './AdminNav';
@@ -163,6 +164,7 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin', label: 'Overview', icon: <LayoutDashboard size={15} />, capability: null },
   { kind: 'group', label: 'People' },
   { kind: 'link', href: '/admin/users', label: 'Student Accounts', icon: <Users size={15} />, capability: 'user.read' },
+  { kind: 'link', href: '/admin/reviews', label: 'Student Reviews', icon: <Star size={15} />, capability: 'review.moderate' },
   { kind: 'group', label: 'Learning' },
   { kind: 'link', href: '/admin/cbt', label: 'CBT Manager', icon: <Laptop size={15} />, capability: 'cbt.read' },
   { kind: 'link', href: '/admin/banks', label: 'Bank Security', icon: <ShieldCheck size={15} />, capability: 'cbt.read' },

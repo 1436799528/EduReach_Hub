@@ -1,0 +1,220 @@
+/* Student reviews. Uses the shared card surface and type scale. */
+
+.er-rating-summary-card {
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface-soft, #f8fafc);
+}
+
+.er-rating-score {
+  margin: 0 0 4px;
+  color: var(--er-text-primary, #0f172a);
+  font-size: 14px;
+}
+
+.er-rating-score strong {
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+
+.er-rating-count,
+.er-rating-empty {
+  margin: 4px 0 0;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 12.5px;
+}
+
+.er-stars {
+  display: inline-flex;
+  gap: 1px;
+  color: #b7791f;
+  font-size: 15px;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+
+.er-star:not(.is-filled) {
+  color: #cbd5e1;
+}
+
+.er-review-form-card {
+  margin: 0 0 26px;
+  padding: 18px 20px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface, #fff);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.er-review-form-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.er-review-form-head svg {
+  flex: none;
+  margin-top: 2px;
+  color: #b14933;
+}
+
+.er-review-form-head h2 {
+  margin: 0 0 3px;
+  color: var(--er-text-primary, #0f172a);
+  font-size: 16px;
+}
+
+.er-review-form-head p,
+.er-review-signin {
+  margin: 0;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.er-rating-field {
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+
+.er-rating-field legend {
+  padding: 0;
+  margin-bottom: 6px;
+  color: var(--er-text-secondary, #475467);
+  font-size: 11.5px;
+  font-weight: 620;
+}
+
+.er-rating-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.er-rating-option {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 11px;
+  border: 1px solid var(--er-border, #cbd5e1);
+  border-radius: 8px;
+  color: var(--er-text-secondary, #475467);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.er-rating-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.er-rating-option.is-selected {
+  border-color: #1c4f8f;
+  background: #eff6ff;
+  color: #0f172a;
+  font-weight: 620;
+}
+
+.er-rating-option:has(input:focus-visible) {
+  outline: 3px solid var(--er-primary, #1c4f8f);
+  outline-offset: 2px;
+}
+
+.er-review-field {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.er-review-field > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--er-text-secondary, #475467);
+  font-size: 11.5px;
+  font-weight: 620;
+}
+
+.er-review-field textarea,
+.er-review-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--er-border, #cbd5e1);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--er-text-primary, #0f172a);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.er-review-field--short {
+  max-width: 340px;
+}
+
+.er-review-field small {
+  display: block;
+  margin-top: 4px;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 11px;
+}
+
+.er-review-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #bbe7d3;
+  border-radius: 8px;
+  background: #f0fdf7;
+  color: #047857;
+  font-size: 12.5px;
+}
+
+.er-reviews-list > h2 {
+  margin: 0 0 12px;
+  color: var(--er-text-primary, #0f172a);
+  font-size: 17px;
+}
+
+.er-review-card {
+  margin-bottom: 12px;
+  padding: 15px 17px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface, #fff);
+}
+
+.er-review-card header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-bottom: 7px;
+}
+
+.er-review-meta {
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 11.5px;
+}
+
+.er-review-card p {
+  margin: 0;
+  color: var(--er-text-secondary, #475467);
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .er-review-form-card,
+  .er-rating-summary-card {
+    padding: 15px 14px;
+  }
+}

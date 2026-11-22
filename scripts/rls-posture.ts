@@ -319,6 +319,15 @@ export const RLS_POSTURE: TablePosture[] = [
     why: 'A student files a report and reads their own; the counter columns on exam_questions are revoked from the browser role so a report cannot be used to hide or clear a flag. Triage runs through the capability-checked server API.',
   },
   {
+    table: 'reviews',
+    access: 'server-only',
+    anon: NONE,
+    authenticated: NONE,
+    policies: 0,
+    browser: false,
+    why: 'Reviews are read and written only by the API: pending and rejected opinions, and the moderator note, must never be reachable with the publishable key. The approved-only public list and the computed rating are separate API reads.',
+  },
+  {
     table: 'student_notifications',
     access: 'owner',
     anon: NONE,

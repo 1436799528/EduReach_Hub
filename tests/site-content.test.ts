@@ -237,8 +237,12 @@ test('the footer is one compact bar with the essential destinations only', () =>
   for (const label of ['About', 'Contact', 'Terms', 'Privacy', 'Cookies', 'Cookie settings']) {
     assert.ok(footer.includes(`label: '${label}'`) || footer.includes(`>${label}<`) || footer.includes(label), `the bar keeps ${label}`);
   }
-  assert.doesNotMatch(footer, /LEARN|EXPLORE|LinkColumn|footer\.about|social\.links|whatsappHref|contact\.email/,
+  assert.doesNotMatch(footer, /LEARN|EXPLORE|LinkColumn|footer\.about|whatsappHref|contact\.email/,
     'the old four-column sitemap is gone');
+  // Social profiles are a small verified row, never a column of the sitemap.
+  const socialRow = /<nav className="er-footer-social"[\s\S]*?<\/nav>/.exec(footer);
+  assert.ok(socialRow, 'verified profiles render in one labelled row');
+  assert.match(socialRow![0], /aria-label=/, 'each icon has an accessible name');
   assert.match(footer, /not affiliated with JAMB, WAEC,\s+NECO or any institution/, 'the independence line stays');
   assert.match(read('pages/AboutPage.tsx'), /footer\.about/, 'the admin-managed description still has a visible home');
 });

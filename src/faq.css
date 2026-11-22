@@ -1,0 +1,191 @@
+/* Help centre.
+ *
+ * Card containers come from the existing design tokens; this file only lays
+ * out the accordion, its focus ring and the search field. No new palette.
+ */
+
+.er-faq-toolbar {
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface-soft, #f8fafc);
+}
+
+.er-faq-search {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.er-faq-search > span:first-child {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--er-text-secondary, #475467);
+  font-size: 11.5px;
+  font-weight: 620;
+  letter-spacing: .02em;
+}
+
+.er-faq-search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--er-border, #cbd5e1);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--er-text-muted, #5e6c82);
+}
+
+.er-faq-search-field input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  border: 0;
+  background: transparent;
+  color: var(--er-text-primary, #0f172a);
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.er-faq-search-field input:focus-visible {
+  outline: 3px solid var(--er-primary, #1c4f8f);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.er-faq-count {
+  margin: 0 0 18px;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 12.5px;
+}
+
+.er-faq-group {
+  margin: 0 0 24px;
+}
+
+.er-faq-group-head h2 {
+  margin: 0 0 3px;
+  color: var(--er-text-primary, #0f172a);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.er-faq-group-head p {
+  margin: 0 0 10px;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.er-faq-list {
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface, #fff);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.er-faq-item + .er-faq-item {
+  border-top: 1px solid var(--er-border, #e2e8f0);
+}
+
+.er-faq-question {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.er-faq-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--er-text-primary, #0f172a);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 620;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+}
+
+.er-faq-trigger:hover {
+  background: var(--er-surface-soft, #f8fafc);
+}
+
+.er-faq-trigger:focus-visible {
+  outline: 3px solid var(--er-primary, #1c4f8f);
+  outline-offset: -3px;
+}
+
+.er-faq-chevron {
+  flex: none;
+  color: var(--er-text-muted, #5e6c82);
+  transition: transform .16s ease;
+}
+
+.er-faq-item.is-open .er-faq-chevron {
+  transform: rotate(180deg);
+}
+
+.er-faq-answer {
+  padding: 0 16px 16px;
+}
+
+.er-faq-answer p {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--er-text-secondary, #475467);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.er-faq-footer-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface-soft, #f8fafc);
+}
+
+.er-faq-footer-card h2 {
+  margin: 0 0 4px;
+  color: var(--er-text-primary, #0f172a);
+  font-size: 15px;
+}
+
+.er-faq-footer-card p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--er-text-secondary, #475467);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .er-faq-chevron {
+    transition: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .er-faq-trigger {
+    font-size: 13px;
+    padding: 13px 14px;
+  }
+
+  .er-faq-answer {
+    padding: 0 14px 14px;
+  }
+}

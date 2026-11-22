@@ -67,6 +67,10 @@ export const CAPABILITIES = [
   'cbt.read',
   'cbt.manage',
 
+  // Student reviews shown on the public site. Reading the moderation queue and
+  // deciding what is published are the same editorial responsibility.
+  'review.moderate',
+
   // Product analytics and the admin audit trail.
   'analytics.read',
   'audit.read',
@@ -150,6 +154,7 @@ const CONTENT_EDITOR_CAPABILITIES: readonly Capability[] = [
   'service.delete',
   'cbt.read',
   'cbt.manage',
+  'review.moderate',
   'analytics.read',
   'data.read',
   // A content editor maintains the site's public copy, including the policy
@@ -253,6 +258,7 @@ export const ADMIN_ROUTE_CAPABILITIES: ReadonlyArray<{ path: string; capability:
   { path: '/admin/cbt', capability: 'cbt.read' },
   { path: '/admin/banks', capability: 'cbt.read' },
   { path: '/admin/users', capability: 'user.read' },
+  { path: '/admin/reviews', capability: 'review.moderate' },
   { path: '/admin/analytics', capability: 'analytics.read' },
   { path: '/admin/content-manager', capability: 'data.read' },
   { path: '/admin/pdf-bank', capability: 'data.read' },

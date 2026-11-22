@@ -1,0 +1,154 @@
+/* Scholarships.
+ *
+ * The card itself is `.er-news-card` from edu-portal.css: same radius, border,
+ * shadow, padding and hover. This file adds only what a scholarship needs
+ * inside that shell - a provider mark instead of a photograph, a provider
+ * line, and a compact deadline row. No new colour or spacing scale.
+ */
+
+.er-scholarship-toolbar {
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface-soft, #f8fafc);
+}
+
+.er-scholarship-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+  margin-top: 12px;
+}
+
+.er-scholarship-level {
+  max-width: 220px;
+  margin: 0;
+}
+
+.er-scholarship-media {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-bottom: 1px solid var(--er-border, #e2e8f0);
+  background:
+    radial-gradient(120% 120% at 20% 0%, #fdf4f1 0%, transparent 60%),
+    var(--er-surface-soft, #f4f6f5);
+}
+
+.er-scholarship-media .ms-identity-mark {
+  transform: scale(1.25);
+}
+
+.er-scholarship-provider {
+  display: block;
+  color: var(--er-text-secondary, #475467);
+  font-size: 12px;
+  font-weight: 560;
+  line-height: 1.4;
+}
+
+.er-scholarship-meta {
+  gap: 6px;
+  margin-top: 2px;
+  align-items: center;
+}
+
+.er-scholarship-meta .er-opp-chip {
+  font-size: 10.5px;
+}
+
+/* Upcoming is not open yet, so it uses the neutral chip rather than the green
+   "open" treatment. The label carries the meaning; colour is redundant. */
+.er-opp-chip.is-upcoming {
+  color: #1e40af;
+  border-color: #c7d7fb;
+  background: #eff6ff;
+}
+
+.er-scholarship-card .er-news-card-foot {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.er-scholarship-card .er-news-card-foot > span:first-child {
+  overflow: visible;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.er-scholarship-card.is-archived {
+  background: #fcfcfd;
+}
+
+.er-scholarship-archive {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--er-border, #e2e8f0);
+}
+
+.er-scholarship-archive-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.er-scholarship-archive-head h2 {
+  margin: 0 0 4px;
+  color: var(--er-text-primary, #0f172a);
+  font-size: 16px;
+}
+
+.er-scholarship-archive-head p {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.er-scholarship-archive-empty {
+  margin: 0;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 13px;
+}
+
+.er-scholarship-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 16px 18px;
+  border: 1px solid var(--er-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--er-surface-soft, #f8fafc);
+  color: var(--er-text-secondary, #475467);
+}
+
+.er-scholarship-note svg {
+  flex: none;
+  margin-top: 2px;
+  color: #b14933;
+}
+
+.er-scholarship-note p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .er-scholarship-media {
+    aspect-ratio: 2 / 1;
+  }
+
+  .er-scholarship-archive-head {
+    flex-direction: column;
+  }
+}

@@ -35,7 +35,7 @@ test('canonicalPathFor collapses aliases and dynamic prefixes to one URL', () =>
   assert.equal(canonicalPathFor('/signup'), '/register');
   assert.equal(canonicalPathFor('/calculator'), '/screening-calculator');
   assert.equal(canonicalPathFor('/cgpa-calculator'), '/tools/cgpa-calculator');
-  assert.equal(canonicalPathFor('/scholarships'), '/jobs');
+  assert.equal(canonicalPathFor('/scholarships'), '/scholarships', 'scholarships is its own indexable page');
   assert.equal(canonicalPathFor('/track'), '/services/track');
   assert.equal(canonicalPathFor('/dashboard/applications'), '/dashboard/services');
   assert.equal(canonicalPathFor('/services/apply/results'), '/services/results');

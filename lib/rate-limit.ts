@@ -196,6 +196,9 @@ export const RATE_LIMIT_RULES: Record<string, RateLimitRule> = {
   // A student reporting problems is legitimate, but a script filing thousands of
   // reports would bury the triage queue. Counted per account, across instances.
   cbtReport: { name: 'cbt-report', limit: 20, windowSeconds: 600, durable: true, keyByUser: true },
+  // One review per account already; this stops a script from hammering the
+  // submission endpoint (and the eligibility queries behind it).
+  reviewSubmit: { name: 'review-submit', limit: 5, windowSeconds: 3600, durable: true, keyByUser: true },
   adminNewsroomRun: { name: 'admin-newsroom-run', limit: 6, windowSeconds: 3600, durable: true, keyByUser: true },
   apiGeneral: { name: 'api-general', limit: 1200, windowSeconds: 60 },
 };

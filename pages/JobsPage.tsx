@@ -195,8 +195,8 @@ export default function JobsPage() {
                 Every listing states where it came from, when EduReach last checked it, and whether it is still open. A listing EduReach has not checked yet is labelled as such, never presented as verified.
               </p>
             </div>
-            <a className="hub-outline-btn" href="/news" style={{ textDecoration: 'none', fontSize: '12px' }}>
-              News &amp; Updates →
+            <a className="hub-outline-btn" href="/scholarships" style={{ textDecoration: 'none', fontSize: '12px' }}>
+              Scholarships &amp; grants →
             </a>
           </div>
 

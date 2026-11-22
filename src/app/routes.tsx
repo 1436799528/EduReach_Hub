@@ -33,6 +33,9 @@ const NewsPage = lazy(() => import('../../pages/NewsPage'));
 const EventsPage = lazy(() => import('../../pages/EventsPage'));
 const NewsArticlePage = lazy(() => import('../../pages/NewsArticlePage'));
 const JobsPage = lazy(() => import('../../pages/JobsPage'));
+const ScholarshipsPage = lazy(() => import('../../pages/ScholarshipsPage'));
+const FaqPage = lazy(() => import('../../pages/FaqPage'));
+const ReviewsPage = lazy(() => import('../../pages/ReviewsPage'));
 const OpportunityDetailsPage = lazy(() => import('../../pages/OpportunityDetailsPage'));
 const SchoolFinderPage = lazy(() => import('../../pages/SchoolFinderPage'));
 const SchoolDetailsPage = lazy(() => import('../../pages/SchoolDetailsPage'));
@@ -42,6 +45,7 @@ const AdminQueuePage = lazy(() => import('../../pages/AdminQueuePage'));
 const AdminCbtPage = lazy(() => import('../../pages/AdminCbtPage'));
 const AdminBankSecurityPage = lazy(() => import('../../pages/AdminBankSecurityPage'));
 const AdminUsersPage = lazy(() => import('../../pages/AdminUsersPage'));
+const AdminReviewsPage = lazy(() => import('../../pages/AdminReviewsPage'));
 const AdminNewsPage = lazy(() => import('../../pages/AdminNewsPage'));
 const AdminContentPage = lazy(() => import('../../pages/AdminContentPage'));
 const AdminOpportunitiesPage = lazy(() => import('../../pages/AdminOpportunitiesPage'));
@@ -139,7 +143,7 @@ export function renderRoute(pathname: string): ReactElement {
     return <RedirectTo path={`/dashboard/results/${path.slice('/dashboard/cbt/results/'.length)}`} />;
   }
   if (path === '/dashboard/past-questions') return <RedirectTo path="/past-questions" />;
-  if (path === '/dashboard/scholarships') return <RedirectTo path="/jobs" />;
+  if (path === '/dashboard/scholarships') return <RedirectTo path="/scholarships" />;
 
   if (path === '/admin') return <AdminDashboardPage />;
   if (path === '/admin/analytics') return <AdminAnalyticsPage />;
@@ -148,6 +152,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/banks') return <AdminBankSecurityPage />;
   if (path === '/admin/news') return <AdminNewsPage />;
   if (path === '/admin/users') return <AdminUsersPage />;
+  if (path === '/admin/reviews') return <AdminReviewsPage />;
   if (path === '/admin/content') return <AdminContentPage />;
   if (path === '/admin/opportunities') return <AdminOpportunitiesPage />;
   if (path === '/admin/schools') return <AdminSchoolsPage />;
@@ -217,7 +222,10 @@ export function renderRoute(pathname: string): ReactElement {
   if (path.startsWith('/news/')) {
     return <NewsArticlePage slug={decodeURIComponent(path.slice('/news/'.length))} />;
   }
-  if (path === '/jobs' || path === '/scholarships') return <JobsPage />;
+  if (path === '/scholarships') return <ScholarshipsPage />;
+  if (path === '/jobs') return <JobsPage />;
+  if (path === '/faq' || path === '/help') return <FaqPage />;
+  if (path === '/reviews') return <ReviewsPage />;
   if (path.startsWith('/jobs/')) {
     return <OpportunityDetailsPage opportunityId={decodeURIComponent(path.slice('/jobs/'.length))} />;
   }

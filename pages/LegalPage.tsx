@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import HubLayout from '../src/components/HubLayout';
 import { useSiteContent } from '../src/components/useSiteContent';
 import { sanitizeRichHtml } from '../src/lib/html-sanitize';
+import { splitLegalSections } from '../src/lib/legalSections';
 import { isPolicySlug, type PolicySlug } from '../src/lib/siteContentModel';
 
 /**
@@ -38,6 +39,11 @@ export default function LegalPage({ slug }: { slug: string }) {
   }, [page, status]);
 
   const updated = formatDate(page?.updatedAt ?? null);
+  // The stored policy body is split into its major sections so the page uses the
+  // same card containers as the rest of EduReach. Each section's HTML is
+  // sanitised at render time - the split happens before sanitising, so the
+  // heading match can only ever produce plain text.
+  const sections = useMemo(() => (page ? splitLegalSections(page.body) : []), [page]);
 
   return (
     <HubLayout>
@@ -101,12 +107,26 @@ export default function LegalPage({ slug }: { slug: string }) {
                 </aside>
               )}
 
-              <div
-                className="er-legal-body"
-                /* Stored HTML is sanitised on render: the editor is staff, but the
-                   renderer is what every visitor's browser trusts. */
-                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(page.body) }}
-              />
+              {sections.map((section) =>
+                section.heading ? (
+                  <section className="er-legal-card" key={section.id} aria-labelledby={`legal-${section.id}`}>
+                    <h2 id={`legal-${section.id}`}>{section.heading}</h2>
+                    <div
+                      className="er-legal-body"
+                      /* Stored HTML is sanitised on render: the editor is staff,
+                         but the renderer is what every visitor's browser trusts. */
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(section.html) }}
+                    />
+                  </section>
+                ) : (
+                  <div className="er-legal-intro" key={section.id}>
+                    <div
+                      className="er-legal-body"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(section.html) }}
+                    />
+                  </div>
+                ),
+              )}
             </article>
           )}
         </div>

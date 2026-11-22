@@ -22,6 +22,7 @@ import {
   School,
   Calculator,
   Info,
+  Star,
 } from 'lucide-react';
 import HubSideRail from './HubSideRail';
 import SkipLink from './a11y/SkipLink';
@@ -53,7 +54,7 @@ const PUBLIC_PRIMARY = [
   { href: '/cbt', label: 'Practice' },
   { href: '/services', label: 'Services' },
   { href: '/news', label: 'News' },
-  { href: '/jobs', label: 'Scholarships' },
+  { href: '/scholarships', label: 'Scholarships' },
 ] as const;
 
 function publicPrimaryNav(path: string): Array<{ href: string; label: string; active: boolean }> {
@@ -62,8 +63,8 @@ function publicPrimaryNav(path: string): Array<{ href: string; label: string; ac
     label: item.label,
     active: item.href === '/'
       ? path === '/'
-      : item.href === '/jobs'
-        ? path === '/jobs' || path.startsWith('/jobs/') || path === '/scholarships'
+      : item.href === '/scholarships'
+        ? path === '/scholarships' || path.startsWith('/scholarships/') || path === '/jobs' || path.startsWith('/jobs/')
         : item.href === '/services'
           ? path.startsWith('/services') && path !== '/services/track'
           : path.startsWith(item.href),
@@ -76,6 +77,9 @@ const publicSecondaryNav: Array<{ href: string; label: string; Icon: typeof Home
   { href: '/schools', label: 'School finder', Icon: School },
   { href: '/screening-calculator', label: 'Screening calculator', Icon: Calculator },
   { href: '/tools/cgpa-calculator', label: 'CGPA calculator', Icon: GraduationCap },
+  { href: '/jobs', label: 'Jobs and internships', Icon: Briefcase },
+  { href: '/faq', label: 'Help and FAQ', Icon: MessageCircle },
+  { href: '/reviews', label: 'Student reviews', Icon: Star },
   { href: '/about', label: 'About EduReach', Icon: Info },
   { href: '/contact', label: 'Contact', Icon: MessageCircle },
   { href: `https://wa.me/${EDUREACH_WHATSAPP}`, label: 'Talk to us', Icon: MessageCircle, external: true },

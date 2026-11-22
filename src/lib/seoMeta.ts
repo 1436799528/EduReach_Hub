@@ -43,7 +43,6 @@ const CANONICAL_ALIASES: Record<string, string> = {
   '/signup': '/register',
   '/calculator': '/screening-calculator',
   '/cgpa-calculator': '/tools/cgpa-calculator',
-  '/scholarships': '/jobs',
   '/track': '/services/track',
   '/dashboard/applications': '/dashboard/services',
   '/dashboard/past-questions': '/past-questions',
@@ -91,9 +90,24 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
       'Upcoming academic dates and student deadlines in one calendar, so registration windows, examinations and resumption dates are not missed.',
   },
   '/jobs': {
-    title: 'Scholarships, Grants, Jobs & Fellowships for Nigerian Students | EduReach Hub',
+    title: 'Graduate Jobs, Internships & Fellowships for Nigerian Students | EduReach Hub',
     description:
-      'Open opportunities for Nigerian students with eligibility, deadlines and the official application link. Closed opportunities are removed automatically.',
+      'Jobs, internships, fellowships and campus roles for Nigerian students, with the source, deadline and official application link for every listing.',
+  },
+  '/scholarships': {
+    title: 'Scholarships & Grants for Nigerian Students | EduReach Hub',
+    description:
+      'Current Nigerian and international scholarships with eligibility, award, deadline and the provider’s own application page. Closed listings move to the archive automatically.',
+  },
+  '/faq': {
+    title: 'Help & FAQ | EduReach Hub',
+    description:
+      'Answers about accounts, the CBT simulator, past questions, scholarships and payments on EduReach Hub.',
+  },
+  '/reviews': {
+    title: 'Student Reviews | EduReach Hub',
+    description:
+      'Verified reviews from students who have practised on EduReach Hub, with the rating calculated from approved reviews.',
   },
   '/schools': {
     title: 'Nigerian Universities, Polytechnics & Colleges Directory | EduReach Hub',

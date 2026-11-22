@@ -23,6 +23,7 @@ import {
   TimeAgo,
   requestStudentName,
 } from '../src/components/admin/AdminKit';
+import AdminQuestionBankOverview from '../src/components/admin/AdminQuestionBankOverview';
 
 const REFRESH_MS = 60_000;
 
@@ -144,6 +145,7 @@ export default function AdminDashboardPage() {
 
         {!loading && (
           <>
+            <AdminQuestionBankOverview compact />
             {pendingCount !== null && pendingCount > 0 && (
               <div className="admin-alert" role="status">
                 <ListChecks size={15} />

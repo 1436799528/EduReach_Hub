@@ -4,6 +4,7 @@ import HubLayout from '../src/components/HubLayout';
 import CardIdentityMark, { identityClassFor } from '../src/components/CardIdentityMark';
 import { fetchOpportunity, type Opportunity } from '../src/lib/api';
 import { opportunityStatus } from '../src/lib/opportunityStatus';
+import { listingLifecycle } from '../src/lib/listingLifecycle';
 import { plainTextFromHtml } from '../src/lib/html-sanitize';
 import { isSupabaseConfigured } from '../src/lib/supabase';
 import { formatLongDate } from '../src/lib/dates';
@@ -34,7 +35,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
       <HubLayout>
         <div className="hub-page" style={{ padding: '30px 0 70px' }}>
           <div className="hub-container hub-narrow">
-            <a href="/jobs" className="hub-outline-btn" style={{ textDecoration: 'none' }}><ArrowLeft size={14} /> Back to opportunities</a>
+            <a href="/scholarships" className="hub-outline-btn" style={{ textDecoration: 'none' }}><ArrowLeft size={14} /> Back to scholarships</a>
             <div className="hub-panel hub-empty" style={{ marginTop: '18px' }}>
               Opportunity details are available when the EduReach backend is connected.
             </div>
@@ -53,7 +54,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
       <HubLayout>
         <div className="hub-page" style={{ padding: '30px 0 70px' }}>
           <div className="hub-container hub-narrow">
-            <a href="/jobs" className="hub-outline-btn" style={{ textDecoration: 'none' }}><ArrowLeft size={14} /> Back to opportunities</a>
+            <a href="/scholarships" className="hub-outline-btn" style={{ textDecoration: 'none' }}><ArrowLeft size={14} /> Back to scholarships</a>
             <div className="hub-panel hub-empty" role="alert" style={{ marginTop: '18px' }}>
               <h1 style={{ margin: '0 0 7px', fontSize: '20px' }}>Opportunity not found</h1>
               <p style={{ margin: 0, color: '#5e6c82', fontSize: '13px' }}>This listing may have closed, been removed, or is temporarily unavailable.</p>
@@ -65,8 +66,10 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
   }
 
   const status = opportunityStatus(item);
+  const lifecycle = listingLifecycle(item);
   const description = plainTextFromHtml(item.description || '');
-  const verified = status.verification === 'verified';
+  const verifiedOn = item.verified_at || item.last_verified_at || null;
+  const verified = Boolean(verifiedOn);
 
   return (
     <HubLayout>
@@ -75,8 +78,8 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
           navigation ambiguous. */}
       <div className="hub-page" style={{ padding: '24px 0 70px' }}>
         <div className="hub-container hub-narrow">
-          <a href="/jobs" className="hub-outline-btn" style={{ textDecoration: 'none', marginBottom: '16px' }}>
-            <ArrowLeft size={14} /> Back to opportunities
+          <a href="/scholarships" className="hub-outline-btn" style={{ textDecoration: 'none', marginBottom: '16px' }}>
+            <ArrowLeft size={14} /> Back to scholarships
           </a>
 
           <article className={`hub-panel ${identityClassFor(`${item.category} ${item.title}`, 'content')}`} style={{ padding: 0, overflow: 'hidden' }}>
@@ -86,8 +89,8 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="er-opportunity-chips">
                     <span className="er-opp-chip is-category"><Tag size={11} /> {item.subcategory || item.category}</span>
-                    <span className={`er-opp-chip ${status.actionable ? (status.state === 'closing-soon' ? 'is-closing' : 'is-open') : 'is-expired'}`}>
-                      <CalendarClock size={11} /> {status.stateLabel}
+                    <span className={`er-opp-chip ${lifecycle.status === 'closing-soon' ? 'is-closing' : lifecycle.status === 'open' ? 'is-open' : lifecycle.status === 'upcoming' ? 'is-upcoming' : 'is-expired'}`}>
+                      <CalendarClock size={11} /> {lifecycle.label}
                     </span>
                     <span className={`er-opp-chip ${verified ? 'is-verified' : 'is-unverified'}`}>
                       {verified ? <ShieldCheck size={11} /> : <ShieldQuestion size={11} />} {status.verificationLabel}
@@ -138,21 +141,23 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                 <div style={{ position: 'sticky', top: '18px', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', background: '#f8fafc' }}>
                   <h2 style={{ margin: '0 0 12px', fontSize: '15px' }}>Application</h2>
                   <a
-                    className={status.actionable && item.link_url ? 'hub-primary-btn' : 'hub-outline-btn'}
-                    href={item.link_url || '/jobs'}
+                    className={lifecycle.actionable && item.link_url ? 'hub-primary-btn' : 'hub-outline-btn'}
+                    href={item.link_url || '/scholarships'}
                     target={item.link_url ? '_blank' : undefined}
                     rel={item.link_url ? 'noopener noreferrer' : undefined}
-                    style={{ width: '100%', justifyContent: 'center', textDecoration: 'none', boxSizing: 'border-box', opacity: status.actionable && item.link_url ? 1 : 0.65, pointerEvents: status.actionable && item.link_url ? 'auto' : 'none' }}
-                    aria-disabled={!status.actionable || !item.link_url}
+                    style={{ width: '100%', justifyContent: 'center', textDecoration: 'none', boxSizing: 'border-box', opacity: lifecycle.actionable && item.link_url ? 1 : 0.65, pointerEvents: lifecycle.actionable && item.link_url ? 'auto' : 'none' }}
+                    aria-disabled={!lifecycle.actionable || !item.link_url}
                   >
-                    {status.actionable && item.link_url ? <>Apply on organiser site <ExternalLink size={14} /></> : <>Application unavailable <ArrowRight size={14} /></>}
+                    {lifecycle.actionable && item.link_url ? <>Apply on organiser site <ExternalLink size={14} /></> : <>Application unavailable <ArrowRight size={14} /></>}
                   </a>
 
                   <dl className="er-opp-facts" style={{ marginTop: '15px' }}>
-                    <div><dt>Status</dt><dd>{status.stateLabel}</dd></div>
-                    <div><dt>Deadline</dt><dd>{formatLongDate(item.deadline)}</dd></div>
+                    <div><dt>Status</dt><dd>{lifecycle.label}{lifecycle.status === 'closed' ? ` · ${lifecycle.detail}` : ''}</dd></div>
+                    <div><dt>Deadline</dt><dd>{formatLongDate(item.deadline, 'Not stated')}</dd></div>
+                    {item.study_level && <div><dt>Study level</dt><dd>{item.study_level}</dd></div>}
+                    {item.award && <div><dt>Award</dt><dd>{item.award}</dd></div>}
                     <div><dt>Source</dt><dd>{item.source_name?.trim() || (item.link_url ? 'Organiser’s own page' : 'No source recorded')}</dd></div>
-                    <div><dt>Last checked</dt><dd>{status.verifiedOn ? formatLongDate(status.verifiedOn) : 'Not yet checked by EduReach'}</dd></div>
+                    <div><dt>Last checked</dt><dd>{verifiedOn ? formatLongDate(verifiedOn) : 'Not yet checked by EduReach'}</dd></div>
                   </dl>
                 </div>
 
@@ -161,7 +166,7 @@ export default function OpportunityDetailsPage({ opportunityId }: { opportunityI
                 </div>
 
                 <div style={{ marginTop: '14px', padding: '12px 14px', borderRadius: '10px', background: '#f8fafc', color: '#475569', fontSize: '12px', lineHeight: 1.55 }}>
-                  {verified ? <><CheckCircle2 size={14} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} /> EduReach checked the source on {formatLongDate(status.verifiedOn)}.</> : 'This listing has not yet been checked by EduReach.'}
+                  {verified ? <><CheckCircle2 size={14} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} /> EduReach checked the source on {formatLongDate(verifiedOn)}.</> : 'This listing has not yet been checked by EduReach.'}
                 </div>
               </aside>
             </div>

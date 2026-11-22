@@ -518,12 +518,19 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-footer-group{display:flex;align-items:center;flex-wrap:wrap;gap:0 12px}
 .er-footer-group+.er-footer-group{padding-left:18px;border-left:1px solid #334155}
 .er-footer-legal a,.er-footer-cookie-settings{display:inline-flex;align-items:center;min-height:32px;color:#cbd5e1;text-decoration:none}
+/* Social accounts that actually exist: one row of 32px targets, each with an
+   accessible name. A network EduReach does not operate has no icon here. */
+.er-footer-social{display:flex;align-items:center;gap:4px}
+.er-footer-social a{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #334155;border-radius:50%;color:#cbd5e1;text-decoration:none}
+.er-footer-social a:hover{color:#fff;border-color:#8fa0b5;background:#16213a}
+.er-footer-social a:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .er-footer-legal a:hover,.er-footer-cookie-settings:hover{color:#fff;text-decoration:underline}
 .er-footer-cookie-settings{padding:0;border:0;background:none;font:inherit;font-size:11.5px;cursor:pointer}
 .er-footer a:focus-visible,.er-footer button:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:2px}
 @media(max-width:640px){
   .er-footer{padding:11px 0;padding-bottom:calc(11px + env(safe-area-inset-bottom))}
   .er-footer-bar{align-items:flex-start;gap:2px}
+  .er-footer-social{order:3}
   .er-footer-identity{gap:2px 10px}
   .er-footer-copy{font-size:10.5px}
   .er-footer-legal{gap:2px 8px;font-size:11px}
@@ -558,6 +565,16 @@ body.er-exam-mode{padding-bottom:0!important}
 .er-legal-missing{max-width:620px;margin:26px 0;padding:22px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
 .er-legal-missing h1{margin:0 0 8px;font-size:20px;color:#0f172a}
 .er-legal-missing p{margin:0;color:#475569;line-height:1.6}
+/* Long-form policy pages use the application's card language: a reading-width
+   container, one card per major section, and an intro that is visually the
+   entry point rather than a wall of body copy. */
+.er-legal-intro{margin:0 0 14px;padding:16px 18px;border:1px solid #e2e8f0;border-left:3px solid #b14933;border-radius:10px;background:#f8fafc}
+.er-legal-intro .er-legal-body{font-size:14.5px}
+.er-legal-card{margin:0 0 14px;padding:18px 20px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.er-legal-card>h2{margin:0 0 8px;color:#0f172a;font-size:17px;line-height:1.35;letter-spacing:-.01em}
+.er-legal-card .er-legal-body{font-size:14.5px;line-height:1.7}
+.er-legal-card .er-legal-body>*:last-child{margin-bottom:0}
+@media(max-width:640px){.er-legal-card{padding:15px 14px}.er-legal-intro{padding:14px}}
 @media(max-width:640px){.er-legal-page{padding:var(--er-space-5) 0 var(--er-space-7)}.er-legal-body{font-size:14.5px}}
 
 /* Search is a reading-width destination, like a policy page: the same wrapper,
