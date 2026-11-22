@@ -11,6 +11,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # A production NODE_ENV makes npm skip devDependencies, and Vite/Terser live
+  # there. The build needs them even when the site runs in production mode.
+  NPM_FLAGS = "--include=dev"
 
 [functions]
   node_bundler = "esbuild"
