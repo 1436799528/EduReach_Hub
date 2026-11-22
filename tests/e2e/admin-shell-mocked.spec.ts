@@ -93,7 +93,7 @@ test('dashboard failure does not present invented zero metrics or a clear queue'
   await expect(page.getByText('Active Queue', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Queue is clear. No active service requests.')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Open queue' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: /unavailable|unable/i }).getByRole('button', { name: 'Try again' })).toBeVisible();
 });
 
 test('navigation continues to respect server-provided capabilities', async ({ page }) => {
