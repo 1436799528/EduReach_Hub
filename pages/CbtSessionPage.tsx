@@ -728,7 +728,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             </div>
             <span className="er-exam-save-state" role="status">
               {v2Paper ? (writer.rows.some(row => row.status === 'conflicted') ? 'review required' : writer.rows.some(row => row.status === 'pending' || row.status === 'closed') ? 'not yet saved' : writer.phase === 'active' ? '' : 'writing paused') : <>
-                {saveState === 'saving' && <span className="er-visually-hidden">saving…</span>}
+                {saveState === 'saving' && <><WaveLoader variant="inline" decorative /> saving…</>}
                 {saveState === 'saved' && <span className="er-visually-hidden">saved</span>}
                 {saveState === 'pending' && <><AlertTriangle size={13} /> not yet saved; keep this page open</>}
                 {saveState === 'error' && <><AlertTriangle size={13} /> not saved</>}

@@ -22,7 +22,7 @@ export default function AboutPage() {
               <p className="er-legal-summary">{footer.about}</p>
             </header>
 
-            <div className="er-legal-body">
+            <div className="er-legal-body er-legal-card">
               <p>
                 {brand.name} is an independent study and student-services platform. It is not affiliated with JAMB,
                 WAEC, NECO or any institution, and it does not speak for them.

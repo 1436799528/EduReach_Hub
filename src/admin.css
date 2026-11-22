@@ -1152,3 +1152,101 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
   vertical-align: middle;
 }
 .admin-setting-changes .admin-pill { align-self: center; }
+
+/* ---------------------------------------------------------------------------
+ * Question-bank overview and review statuses
+ *
+ * The admin console already renders white cards on the shared admin surface.
+ * These rules only lay out the bank grid; every colour comes from the existing
+ * admin variables so the panel cannot drift from the rest of the console.
+ * ------------------------------------------------------------------------- */
+.admin-bank-overview .admin-bank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 12px;
+}
+
+.admin-bank-tile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface);
+}
+
+.admin-bank-tile header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-bank-tile h3 {
+  margin: 0;
+  color: var(--admin-navy);
+  font-size: 13px;
+  font-weight: 680;
+  letter-spacing: .01em;
+}
+
+.admin-bank-state {
+  padding: 2px 7px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 680;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.admin-bank-state.is-active { color: #047857; background: var(--admin-green-soft); border-color: #a7f3d0; }
+.admin-bank-state.is-review { color: #8a6700; background: #fff7df; border-color: #ecd896; }
+.admin-bank-state.is-empty { color: #5e6c82; background: #f2f4f6; }
+
+.admin-bank-count {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 11px;
+}
+
+.admin-bank-count strong {
+  color: var(--admin-navy);
+  font-size: 20px;
+  font-weight: 680;
+  letter-spacing: -.02em;
+}
+
+.admin-bank-facts {
+  display: grid;
+  gap: 3px;
+  margin: 2px 0 0;
+  font-size: 11px;
+}
+
+.admin-bank-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-bank-facts dt { color: var(--admin-muted); }
+.admin-bank-facts dd { margin: 0; color: var(--admin-text); font-weight: 620; text-align: right; }
+
+.admin-bank-subjects {
+  margin: 2px 0 0;
+  color: var(--admin-muted);
+  font-size: 10.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.status-badge.pending { background: #fff7df; color: #8a6700; border-color: #ecd896; }
+.status-badge.hidden,
+.status-badge.approved { background: var(--admin-green-soft); color: #047857; border-color: #a7f3d0; }
+.status-badge.hidden { background: #f2f4f6; color: #5e6c82; border-color: var(--admin-border); }
+
+.admin-bank-overview.is-compact .admin-bank-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }

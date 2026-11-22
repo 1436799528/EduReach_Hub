@@ -48,6 +48,8 @@ import {
   validateAnalyticsMetadata,
 } from './src/lib/analyticsTaxonomy';
 import { OPTIONAL_ANALYTICS_ENABLED } from './src/lib/analyticsAvailability';
+import { isFeedVisible, lifecycleOf as opportunityLifecycle } from './lib/opportunityLifecycle';
+import * as REVIEW_POLICY from './lib/reviewPolicy';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
 import { registerQuestionImportRoutes } from './src/server/question-import/routes';
@@ -2884,8 +2886,48 @@ function validateOpportunityPayload(body: unknown): { error?: string; values?: R
   if (workMode && !['remote', 'hybrid', 'onsite', 'not-specified'].includes(workMode)) {
     return { error: 'Invalid work mode.' };
   }
+  // Lifecycle fields are optional so an editor using the older form keeps
+  // working; when supplied they are validated rather than trusted.
+  const lifecycle: Record<string, unknown> = {};
+  if (input.status !== undefined) {
+    const status = String(input.status || '')
+      .trim()
+      .toLowerCase();
+    if (!['draft', 'published', 'archived'].includes(status)) return { error: 'Invalid listing status.' };
+    lifecycle.status = status;
+  }
+  for (const field of ['opens_at', 'expires_at'] as const) {
+    if (input[field] === undefined) continue;
+    if (input[field] === null || input[field] === '') {
+      lifecycle[field] = null;
+      continue;
+    }
+    const parsed = new Date(String(input[field]));
+    if (!Number.isFinite(parsed.getTime())) return { error: `The ${field.replace('_', ' ')} date is invalid.` };
+    lifecycle[field] = field === 'opens_at' ? parsed.toISOString().slice(0, 10) : parsed.toISOString();
+  }
+  if (input.slug !== undefined) {
+    const slug = String(input.slug || '')
+      .trim()
+      .toLowerCase()
+      .slice(0, 120);
+    if (slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+      return { error: 'The slug may contain only letters, numbers and hyphens.' };
+    lifecycle.slug = slug || null;
+  }
+  if (input.award !== undefined)
+    lifecycle.award =
+      String(input.award || '')
+        .trim()
+        .slice(0, 400) || null;
+  if (input.study_level !== undefined)
+    lifecycle.study_level =
+      String(input.study_level || '')
+        .trim()
+        .slice(0, 120) || null;
   return {
     values: {
+      ...lifecycle,
       title,
       organisation:
         String(input.organisation || '')
@@ -2952,36 +2994,70 @@ type OpportunityRow = {
   disciplines?: string[] | null;
   work_mode?: string | null;
   is_featured?: boolean | null;
+  slug?: string | null;
+  published_at?: string | null;
+  expires_at?: string | null;
+  opens_at?: string | null;
+  status?: string | null;
+  award?: string | null;
+  study_level?: string | null;
+  verified_at?: string | null;
 };
 
 const OPPORTUNITY_ROW_BASE =
   'id,title,organisation,category,description,link_url,deadline,locations,is_active,created_at,updated_at';
 const OPPORTUNITY_ROW_GOVERNED = `${OPPORTUNITY_ROW_BASE},closed_at,last_verified_at,source_name,eligibility`;
 const OPPORTUNITY_ROW_DISCOVERY = `${OPPORTUNITY_ROW_GOVERNED},subcategory,education_levels,disciplines,work_mode,is_featured`;
+/**
+ * The editorial lifecycle columns (20261122120000). A database one release
+ * behind lacks them, so the tier is tried first and the older selects still
+ * serve the page; `lifecycleOf()` then reports what it can prove and nothing
+ * more.
+ */
+const OPPORTUNITY_ROW_LIFECYCLE = `${OPPORTUNITY_ROW_DISCOVERY},slug,published_at,expires_at,opens_at,status,award,study_level,verified_at`;
+
+// The lifecycle rule lives in a shared module so the API and its tests read
+// the same function; see lib/opportunityLifecycle.ts.
+const lifecycleOf = (item: OpportunityRow, now: number = Date.now()) => opportunityLifecycle(item, now);
 
 app.get('/api/opportunities', async (req, res) => {
   if (!isServerSupabaseConfigured()) return res.json({ items: [] });
   try {
     const supabase = getServerSupabase();
+    const scope = String(req.query.scope || 'all').toLowerCase();
+    const wantsArchive = scope === 'archive';
+    // The archive deliberately includes rows an editor archived, which are
+    // `is_active = false`; every other scope reads active rows only.
     let data: OpportunityRow[] | null = null;
     let error: { message?: string } | null = null;
-    ({ data, error } = await supabase
+    let query = supabase
       .from('opportunities')
-      .select(OPPORTUNITY_ROW_DISCOVERY)
-      .eq('is_active', true)
-      .is('closed_at', null)
+      .select(OPPORTUNITY_ROW_LIFECYCLE)
       .order('is_featured', { ascending: false })
       .order('deadline', { ascending: true, nullsFirst: false })
-      .limit(300));
+      .limit(300);
+    if (!wantsArchive) query = query.eq('is_active', true);
+    ({ data, error } = await query);
+    if (error) {
+      // Pre-lifecycle database: no publication window columns.
+      let discoveryQuery = supabase
+        .from('opportunities')
+        .select(OPPORTUNITY_ROW_DISCOVERY)
+        .order('is_featured', { ascending: false })
+        .order('deadline', { ascending: true, nullsFirst: false })
+        .limit(300);
+      if (!wantsArchive) discoveryQuery = discoveryQuery.eq('is_active', true);
+      ({ data, error } = await discoveryQuery);
+    }
     if (error) {
       // Pre-discovery database: no subcategory / education_levels / work_mode.
-      ({ data, error } = await supabase
+      let governedQuery = supabase
         .from('opportunities')
         .select(OPPORTUNITY_ROW_GOVERNED)
-        .eq('is_active', true)
-        .is('closed_at', null)
         .order('deadline', { ascending: true, nullsFirst: false })
-        .limit(300));
+        .limit(300);
+      if (!wantsArchive) governedQuery = governedQuery.eq('is_active', true);
+      ({ data, error } = await governedQuery);
     }
     if (error) {
       // Pre-newsroom database: no provenance columns and no closed_at either.
@@ -3014,6 +3090,13 @@ app.get('/api/opportunities', async (req, res) => {
     const featuredOnly = String(req.query.featured || '') === 'true';
 
     const items = (data || []).filter((item: OpportunityRow) => {
+      const lifecycle = lifecycleOf(item);
+      // Expired and archived listings leave the active feed (and the home
+      // page); they remain reachable through `scope=archive` and by direct
+      // link, so history is kept rather than deleted.
+      // `active` and the default feed both mean "still worth acting on".
+      if (!wantsArchive && !isFeedVisible(lifecycle)) return false;
+      if (wantsArchive && lifecycle !== 'expired' && lifecycle !== 'archived') return false;
       const haystack = [
         item.title,
         item.organisation,
@@ -3057,11 +3140,20 @@ app.get('/api/opportunities/:opportunityId', async (req, res) => {
     // one column from the newest migration is absent.
     ({ data, error } = await supabase
       .from('opportunities')
-      .select(OPPORTUNITY_ROW_DISCOVERY)
+      .select(OPPORTUNITY_ROW_LIFECYCLE)
       .eq('id', req.params.opportunityId)
       .eq('is_active', true)
       .is('closed_at', null)
       .maybeSingle());
+    if (error) {
+      ({ data, error } = await supabase
+        .from('opportunities')
+        .select(OPPORTUNITY_ROW_DISCOVERY)
+        .eq('id', req.params.opportunityId)
+        .eq('is_active', true)
+        .is('closed_at', null)
+        .maybeSingle());
+    }
     if (error) {
       ({ data, error } = await supabase
         .from('opportunities')
@@ -3099,7 +3191,7 @@ app.get('/api/admin/opportunities', requireCapability('opportunity.read'), async
     const { data, error } = await supabase
       .from('opportunities')
       .select(
-        'id,title,organisation,category,subcategory,description,link_url,deadline,locations,eligibility,education_levels,disciplines,work_mode,is_featured,is_active,created_at,updated_at',
+        'id,title,organisation,category,subcategory,description,link_url,deadline,locations,eligibility,education_levels,disciplines,work_mode,is_featured,is_active,created_at,updated_at,slug,published_at,expires_at,opens_at,status,award,study_level,verified_at',
       )
       .order('updated_at', { ascending: false })
       .limit(300);
@@ -3198,6 +3290,273 @@ app.delete('/api/admin/opportunities/:opportunityId', requireCapability('opportu
       ...errorFacts(error),
     });
     res.status(500).json({ error: 'Unable to delete the opportunity.' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Student reviews
+//
+// A review is not a testimonial: it is a row a signed-in student can submit
+// after actually using the product, pending until a moderator approves it.
+// The public list shows approved rows only, and the rating is an average of
+// those rows - never a number typed into the page.
+// ---------------------------------------------------------------------------
+
+// The submission rules live in a shared module so the API and its tests agree
+// on what counts as a usable review; see lib/reviewPolicy.ts.
+
+app.get('/api/reviews', async (req, res) => {
+  if (!isServerSupabaseConfigured())
+    return res.json({ items: [], summary: { reviewCount: 0, averageRating: null }, hasMore: false });
+  try {
+    const supabase = getServerSupabase();
+    const page = Math.min(Math.max(Number(req.query.page) || 1, 1), 50);
+    const pageSize = 9;
+    const from = (page - 1) * pageSize;
+    const { data, error } = await supabase
+      .from('review_moderation_queue')
+      .select('id,rating,review_text,exam_type,created_at,display_name')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .range(from, from + pageSize);
+    if (error) return res.status(503).json({ error: 'Reviews are temporarily unavailable.' });
+    const rows = data || [];
+
+    const { data: summaryRows, error: summaryError } = await supabase.rpc('review_rating_summary');
+    const summaryRow = Array.isArray(summaryRows) ? summaryRows[0] : summaryRows;
+    const reviewCount = summaryError ? null : Number(summaryRow?.review_count ?? 0);
+    const averageRating = summaryError || summaryRow?.average_rating == null ? null : Number(summaryRow.average_rating);
+
+    res.json({
+      items: rows.slice(0, pageSize).map((row: any) => ({
+        id: row.id,
+        rating: Number(row.rating),
+        reviewText: row.review_text,
+        examType: row.exam_type,
+        createdAt: row.created_at,
+        // The display name only; an email or account id is never part of a
+        // public review payload.
+        displayName: String(row.display_name || 'EduReach student').slice(0, 60),
+      })),
+      summary: { reviewCount, averageRating },
+      hasMore: rows.length > pageSize,
+    });
+  } catch (error) {
+    log.error('reviews.list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(503).json({ error: 'Reviews are temporarily unavailable.' });
+  }
+});
+
+app.post('/api/reviews', rateLimitFor(RATE_LIMIT_RULES.reviewSubmit), async (req, res) => {
+  try {
+    const { supabase, user } = await requireUser(req, 'dashboard.access');
+    const parsed = REVIEW_POLICY.parseReviewDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const { rating, reviewText, examType } = parsed.value;
+
+    // "Meaningful use": one submitted CBT attempt or one service request. An
+    // account created a minute ago cannot rate the product it has not used.
+    const [{ count: attemptCount }, { count: requestCount }] = await Promise.all([
+      supabase
+        .from('cbt_attempts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'submitted'),
+      supabase.from('service_requests').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    ]);
+    if (!(attemptCount || 0) && !(requestCount || 0)) {
+      return res
+        .status(403)
+        .json({ error: 'Complete a practice test or a service request first, then share your review.' });
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from('reviews')
+      .select('id,status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (existingError) return res.status(503).json({ error: 'Unable to save your review right now.' });
+
+    if (existing && existing.status === 'approved') {
+      // An edit to an approved review must be re-moderated, otherwise a
+      // flattering review could be approved and then rewritten.
+      const { error } = await supabase
+        .from('reviews')
+        .update({
+          rating,
+          review_text: reviewText,
+          exam_type: examType,
+          status: 'pending',
+          moderated_by: null,
+          moderated_at: null,
+          moderation_note: null,
+        })
+        .eq('id', existing.id);
+      if (error) return res.status(503).json({ error: 'Unable to save your review right now.' });
+      await recordAudit(supabase, {
+        actorId: user.id,
+        action: 'review_resubmitted',
+        resourceType: 'review',
+        resourceId: existing.id,
+        metadata: { rating },
+      });
+      return res.json({ status: 'pending', message: 'Your updated review is waiting for moderation.' });
+    }
+
+    if (existing) {
+      const { error } = await supabase
+        .from('reviews')
+        .update({ rating, review_text: reviewText, exam_type: examType, status: 'pending' })
+        .eq('id', existing.id);
+      if (error) return res.status(503).json({ error: 'Unable to save your review right now.' });
+      return res.json({ status: 'pending', message: 'Your review has been updated and is waiting for moderation.' });
+    }
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert({ user_id: user.id, rating, review_text: reviewText, exam_type: examType })
+      .select('id,status')
+      .single();
+    if (error) {
+      if (error.code === '23505') return res.status(409).json({ error: 'You have already submitted a review.' });
+      return res.status(503).json({ error: 'Unable to save your review right now.' });
+    }
+    res.status(201).json({ status: data.status, message: 'Thank you. Your review is waiting for moderation.' });
+  } catch (error) {
+    log.error('reviews.submit_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    const message = error instanceof Error ? error.message : 'Unable to submit your review.';
+    res.status(httpStatusForErrorMessage(message)).json({
+      error: publicErrorMessage(message, 'Unable to submit your review right now. Please try again.'),
+    });
+  }
+});
+
+app.get('/api/admin/reviews', requireCapability('news.read'), async (req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const status = String(req.query.status || 'pending').toLowerCase();
+    if (!['pending', 'approved', 'rejected', 'hidden', 'all'].includes(status)) {
+      return res.status(400).json({ error: 'Unknown review status.' });
+    }
+    let query = supabase
+      .from('review_moderation_queue')
+      .select('id,rating,review_text,exam_type,status,moderation_note,created_at,updated_at,display_name')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (status !== 'all') query = query.eq('status', status);
+    const { data, error } = await query;
+    if (error) return res.status(503).json({ error: 'Unable to load reviews.' });
+
+    const { data: summaryRows } = await supabase.rpc('review_rating_summary');
+    const summaryRow = Array.isArray(summaryRows) ? summaryRows[0] : summaryRows;
+    res.json({
+      items: (data || []).map((row: any) => ({
+        id: row.id,
+        rating: Number(row.rating),
+        reviewText: row.review_text,
+        examType: row.exam_type,
+        status: row.status,
+        moderationNote: row.moderation_note,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        displayName: String(row.display_name || 'EduReach student').slice(0, 60),
+      })),
+      summary: {
+        reviewCount: Number(summaryRow?.review_count ?? 0),
+        averageRating: summaryRow?.average_rating == null ? null : Number(summaryRow.average_rating),
+      },
+    });
+  } catch (error) {
+    log.error('admin.reviews_list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(503).json({ error: 'Unable to load reviews.' });
+  }
+});
+
+app.patch('/api/admin/reviews/:reviewId', requireCapability('news.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const status = String(req.body?.status || '').toLowerCase();
+    if (!['approved', 'rejected', 'hidden'].includes(status)) {
+      return res.status(400).json({ error: 'Choose approve, reject or hide.' });
+    }
+    const note =
+      String(req.body?.note || '')
+        .trim()
+        .slice(0, 300) || null;
+    const supabase = getServerSupabase();
+    // `pending` is only the starting state; moderation moves a review to a
+    // decided state. The row is updated by id and the result is read back so a
+    // missing review is a 404, not a silent success.
+    const { data, error } = await supabase
+      .from('reviews')
+      .update({
+        status,
+        moderation_note: note,
+        moderated_by: adminUser.id,
+        moderated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.reviewId)
+      .select('id,status')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Review not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: `review_${status}`,
+      resourceType: 'review',
+      resourceId: data.id,
+      metadata: { status },
+    });
+    res.json({ item: data });
+  } catch (error) {
+    log.error('admin.review_moderate_failed', {
+      request_id: res.locals?.requestId,
+      ...errorFacts(error),
+    });
+    res.status(500).json({ error: 'Unable to update this review.' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Question-bank overview
+//
+// Counts come from `admin_question_bank_summary()`, which aggregates
+// cbt_exams/exam_questions. Nothing here is a stored total: if the JAMB bank
+// holds 40 questions and 3 subjects, those are the numbers the console shows,
+// and an empty bank is displayed as empty rather than hidden.
+// ---------------------------------------------------------------------------
+
+app.get('/api/admin/question-banks', requireCapability('cbt.read'), async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase.rpc('admin_question_bank_summary');
+    if (error) {
+      // A database without the reviewed migration must say so, not show zeros.
+      const message = String(error.message || '');
+      if (error.code === '42883' || error.code === 'PGRST202' || /could not find the function/i.test(message)) {
+        return res.status(503).json({
+          error: 'Question-bank totals are unavailable until the editorial lifecycle migration is applied.',
+        });
+      }
+      throw error;
+    }
+    const items = (Array.isArray(data) ? data : []).map((row: any) => ({
+      examBody: row.exam_body,
+      bankCount: Number(row.bank_count || 0),
+      questionCount: Number(row.question_count || 0),
+      approvedCount: Number(row.approved_count || 0),
+      needsReviewCount: Number(row.needs_review_count || 0),
+      rejectedCount: Number(row.rejected_count || 0),
+      subjectCount: Number(row.subject_count || 0),
+      subjects: Array.isArray(row.subjects) ? row.subjects : [],
+      firstYear: row.first_year == null ? null : Number(row.first_year),
+      lastYear: row.last_year == null ? null : Number(row.last_year),
+      lastUpdated: row.last_updated || null,
+    }));
+    res.json({ items, generatedAt: new Date().toISOString() });
+  } catch (error) {
+    log.error('admin.question_banks_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(503).json({ error: 'Unable to load question-bank totals.' });
   }
 });
 
@@ -3351,31 +3710,33 @@ app.post('/api/admin/users/:userId/role', requireCapability('user.manage_roles')
       return res.status(400).json({ error: 'You cannot change your own role.' });
     }
     const supabase = getServerSupabase();
-    const { data: target, error: readError } = await supabase
-      .from('profiles')
-      .select('id,role,full_name')
-      .eq('id', req.params.userId)
-      .maybeSingle();
-    if (readError) throw readError;
-    if (!target) return res.status(404).json({ error: 'Account not found.' });
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ role })
-      .eq('id', req.params.userId)
-      .select('id,role')
-      .single();
-    if (error) throw error;
-
-    await recordAudit(supabase, {
-      actorId: adminUser.id,
-      action: 'user_role_change',
-      resourceType: 'profile',
-      resourceId: req.params.userId,
-      // The previous role is recorded; the account email is not.
-      metadata: { from: String(target.role || ''), to: role },
+    // The database function re-checks the actor's stored role, refuses the
+    // last-admin demotion, writes the profile row and the audit row in one
+    // transaction, and returns the previous/next role. A direct table update
+    // here would leave a window where the role changed but the trail did not.
+    const { data, error } = await supabase.rpc('admin_set_user_role', {
+      p_actor: adminUser.id,
+      p_target: req.params.userId,
+      p_role: role,
     });
-    res.json({ user: { id: data.id, role: data.role } });
+    if (error) {
+      const code = String(error.code || '');
+      const message = String(error.message || '');
+      if (code === '42501')
+        return res.status(403).json({ error: message || 'You do not have permission to change this role.' });
+      if (code === '22023') return res.status(400).json({ error: message || 'Invalid role change.' });
+      if (code === 'P0002') return res.status(404).json({ error: 'Account not found.' });
+      if (code === '42883' || code === 'PGRST202' || /could not find the function/i.test(message)) {
+        return res
+          .status(503)
+          .json({ error: 'Role changes are unavailable until the reviewed database change is applied.' });
+      }
+      throw error;
+    }
+    const result = Array.isArray(data) ? data[0] : data;
+    // The RPC already wrote the `user_role_change` audit row with the previous
+    // and new role, so this endpoint must not write a second, duplicate one.
+    res.json({ user: { id: req.params.userId, role: result?.new_role || role } });
   } catch (error) {
     log.error('admin.role_change.failed', {
       request_id: res.locals?.requestId,

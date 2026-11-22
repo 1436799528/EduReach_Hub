@@ -263,7 +263,9 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261119120000', 'institution_catalogue_registry', '20261119120000_institution_catalogue_registry.sql', 'unique'),
     ('20261119130000', 'question_reports', '20261119130000_question_reports.sql', 'unique'),
     ('20261120090000', 'cbt_regrade', '20261120090000_cbt_regrade.sql', 'unique'),
-    ('20261121150000', 'cbt_notification_unique_idx', '20261121150000_cbt_notification_unique_idx.sql', 'unique')
+    ('20261121150000', 'cbt_notification_unique_idx', '20261121150000_cbt_notification_unique_idx.sql', 'unique'),
+    ('20261122120000', 'editorial_lifecycle_reviews_admin_rpcs', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql', 'unique'),
+    ('20261122121000', 'seed_verified_scholarships', '20261122121000_seed_verified_scholarships.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -386,6 +388,8 @@ with expected(version, migration) as (
     ,('20261119130000', '20261119130000_question_reports.sql')
     ,('20261120090000', '20261120090000_cbt_regrade.sql')
     ,('20261121150000', '20261121150000_cbt_notification_unique_idx.sql')
+    ,('20261122120000', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql')
+    ,('20261122121000', '20261122121000_seed_verified_scholarships.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -575,6 +579,34 @@ with expected(version, migration) as (
   select 'public.document_bank destination links', '20261018174207_pdf_bank_destination_links.sql'
   where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='document_bank' and column_name='news_article_id')
      or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='document_bank' and column_name='opportunity_id')
+  union all
+  select 'public.opportunities.slug/status/expires_at/published_at/opens_at/award/study_level/verified_at', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='slug')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='status')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='expires_at')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='published_at')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='opens_at')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='award')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='study_level')
+     or not exists (select 1 from information_schema.columns where table_schema='public' and table_name='opportunities' and column_name='verified_at')
+  union all
+  select 'public.reviews', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
+  where to_regclass('public.reviews') is null
+  union all
+  select 'public.review_rating_summary()', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'review_rating_summary')
+  union all
+  select 'public.admin_set_user_role(text,uuid,text)', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'admin_set_user_role')
+  union all
+  select 'public.admin_question_bank_summary()', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
+  where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                    where n.nspname = 'public' and p.proname = 'admin_question_bank_summary')
+  union all
+  select 'public.review_moderation_queue', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
+  where to_regclass('public.review_moderation_queue') is null
   union all
   select 'public.ccmas_programmes.degree_title', '20261016160000_reconcile_live_catalogue_and_service_request_contract.sql'
   where not exists (select 1 from information_schema.columns

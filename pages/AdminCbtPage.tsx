@@ -3,6 +3,7 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { adminApiFetch, deleteAdminCbtExam, updateAdminCbtExam, fetchAdminInstitutions, previewCbtQuestionRegrade, regradeCbtQuestion, type AdminInstitution, type AdminCbtExam, type CbtRegradeResponse } from '../src/lib/api';
 import { AdminEmptyState, AdminPageReport } from '../src/components/admin/AdminKit';
 import AdminFilterSearch from '../src/components/admin/AdminFilterSearch';
+import AdminQuestionBankOverview from '../src/components/admin/AdminQuestionBankOverview';
 import { Trash2 } from 'lucide-react';
 
 type Exam = AdminCbtExam;
@@ -231,6 +232,7 @@ export default function AdminCbtPage() {
 
   const exam = exams.find((item) => item.id === selectedExam);
   return <div className="admin-page">
+    <AdminQuestionBankOverview />
     <div className="admin-page-header"><div><h1>CBT Exam Manager</h1><p>Manage the production CBT engine: exams, default durations, active state, question pools, answer keys and explanations. Public CBT cards read this catalogue directly, so no duration or question is hard-coded on the site.</p></div><button type="button" className="admin-btn success" onClick={() => setShowExamForm(true)}>+ New Exam</button></div>
 
     <AdminPageReport

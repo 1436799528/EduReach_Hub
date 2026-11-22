@@ -671,7 +671,30 @@ export type Opportunity = {
   disciplines?: string[];
   work_mode?: string | null;
   is_featured?: boolean;
+  /** Editorial lifecycle (20261122120000). Absent on an older database. */
+  slug?: string | null;
+  published_at?: string | null;
+  expires_at?: string | null;
+  opens_at?: string | null;
+  status?: 'draft' | 'published' | 'archived' | null;
+  award?: string | null;
+  study_level?: string | null;
+  verified_at?: string | null;
 };
+
+/**
+ * The listing feed, scoped by the server's lifecycle rule.
+ *
+ * `active` is what a student may still apply to (open or upcoming); `archive`
+ * holds listings whose deadline passed or that an editor archived. The server
+ * decides with its own clock, so changing the device date does not reopen a
+ * closed scholarship.
+ */
+export async function fetchOpportunitiesByScope(scope: 'active' | 'archive' | 'all' = 'all'): Promise<Opportunity[]> {
+  if (!isSupabaseConfigured) return [];
+  const body = await jsonFetch<{ items: Opportunity[] }>(`/api/opportunities?scope=${scope}`);
+  return body.items || [];
+}
 
 export async function fetchOpportunity(opportunityId: string): Promise<Opportunity> {
   const body = await jsonFetch<{ item: Opportunity }>(`/api/opportunities/${encodeURIComponent(opportunityId)}`);
@@ -2664,4 +2687,97 @@ export interface InstitutionIntelligence {
  */
 export async function fetchInstitutionIntelligence(institutionId: string): Promise<InstitutionIntelligence> {
   return jsonFetch<InstitutionIntelligence>(`/api/institutions/${encodeURIComponent(institutionId)}/intelligence`);
+}
+
+// ---------------------------------------------------------------------------
+// Student reviews
+//
+// Public reads are approved-only and paginated; the form is authenticated and
+// the server decides whether the account has used the product yet. Nothing in
+// this module fabricates a rating or a testimonial.
+// ---------------------------------------------------------------------------
+
+export type PublicReview = {
+  id: string;
+  rating: number;
+  reviewText: string;
+  examType: string | null;
+  createdAt: string;
+  displayName: string;
+};
+
+export type ReviewSummary = {
+  /** null when the count could not be read — the UI must not show a fake 0. */
+  reviewCount: number | null;
+  averageRating: number | null;
+};
+
+export type ReviewListPayload = {
+  items: PublicReview[];
+  summary: ReviewSummary;
+  hasMore: boolean;
+};
+
+export async function fetchReviews(page = 1): Promise<ReviewListPayload> {
+  return jsonFetch<ReviewListPayload>(`/api/reviews?page=${Math.max(1, Math.trunc(page))}`);
+}
+
+export async function submitReview(input: {
+  rating: number;
+  reviewText: string;
+  examType?: string | null;
+}): Promise<{ status: string; message: string }> {
+  const headers = await authHeaders();
+  if (!headers.Authorization) throw new Error('Sign in to review EduReach Hub.');
+  return jsonFetch<{ status: string; message: string }>('/api/reviews', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(input),
+  });
+}
+
+export type AdminReview = {
+  id: string;
+  rating: number;
+  reviewText: string;
+  examType: string | null;
+  status: 'pending' | 'approved' | 'rejected' | 'hidden';
+  moderationNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  displayName: string;
+};
+
+export async function fetchAdminReviews(status: 'pending' | 'approved' | 'rejected' | 'hidden' | 'all' = 'pending'): Promise<{ items: AdminReview[]; summary: ReviewSummary }> {
+  return adminApiFetch<{ items: AdminReview[]; summary: ReviewSummary }>(`/api/admin/reviews?status=${status}`);
+}
+
+export async function moderateAdminReview(reviewId: string, status: 'approved' | 'rejected' | 'hidden', note = ''): Promise<void> {
+  await adminApiFetch(`/api/admin/reviews/${encodeURIComponent(reviewId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, note }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Question-bank overview (real counts from admin_question_bank_summary)
+// ---------------------------------------------------------------------------
+
+export type AdminQuestionBankSummary = {
+  examBody: string;
+  bankCount: number;
+  questionCount: number;
+  approvedCount: number;
+  needsReviewCount: number;
+  rejectedCount: number;
+  subjectCount: number;
+  subjects: string[];
+  firstYear: number | null;
+  lastYear: number | null;
+  lastUpdated: string | null;
+};
+
+export async function fetchAdminQuestionBanks(): Promise<AdminQuestionBankSummary[]> {
+  const body = await adminApiFetch<{ items: AdminQuestionBankSummary[] }>('/api/admin/question-banks');
+  return body.items || [];
 }

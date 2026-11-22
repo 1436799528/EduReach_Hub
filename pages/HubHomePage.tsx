@@ -33,7 +33,7 @@ const toolLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
 // reachable from here, without turning the homepage into a second dashboard.
 const exploreLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
   { title: 'Student services', href: '/services', Icon: Wrench },
-  { title: 'Scholarships and grants', href: '/jobs', Icon: GraduationCap },
+  { title: 'Scholarships and grants', href: '/scholarships', Icon: GraduationCap },
   { title: 'Education news', href: '/news', Icon: Newspaper },
 ];
 

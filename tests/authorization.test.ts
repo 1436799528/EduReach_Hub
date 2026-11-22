@@ -250,6 +250,15 @@ bankRpc('cbt_bank_admin_inventory', () => [{ exam_id: 'bank-1', title: 'Syntheti
 bankRpc('cbt_bank_classify', () => null);
 bankRpc('cbt_bank_set_release', () => null);
 bankRpc('cbt_bank_admin_assign', () => null);
+// Role changes go through one database function that writes the profile row and
+// its audit entry in the same transaction; the server never PATCHes profiles.
+backend.post('/rest/v1/rpc/admin_set_user_role', (req, res) => {
+  recorded.push(`RPC admin_set_user_role ${JSON.stringify(req.body)}`);
+  const target = String(req.body?.p_target || '');
+  if (target === 'user-missing') return res.status(404).json({ code: 'P0002', message: 'Account not found.' });
+  return res.json([{ previous_role: 'student', new_role: String(req.body?.p_role || '') }]);
+});
+
 backend.post('/rest/v1/rpc/admin_audit_log', (req, res) => {
   recorded.push(`RPC admin_audit_log ${JSON.stringify(req.body)}`);
   return res.json(null);
@@ -837,11 +846,21 @@ test('role assignment is super-admin only, validated, audited and never self-ser
   });
   assert.equal(changed.status, 200);
   assert.deepEqual(changed.body, { user: { id: 'user-target', role: 'service_admin' } });
-  assert.ok(recorded.some((entry) => entry.startsWith('PATCH profiles') && entry.includes('service_admin')), 'the role must be written');
-  const audit = recorded.find((entry) => entry.startsWith('RPC admin_audit_log'));
-  assert.ok(audit, 'the change must be audited');
-  assert.match(audit!, /user_role_change/);
-  assert.match(audit!, /"to":"service_admin"/);
+  const write = recorded.find((entry) => entry.startsWith('RPC admin_set_user_role'));
+  assert.ok(write, 'the change must go through the privileged function');
+  assert.match(write!, /"p_actor":"user-super_admin"/, 'the actor is the signed-in administrator');
+  assert.match(write!, /"p_target":"user-target"/, 'the target is explicit');
+  assert.match(write!, /"p_role":"service_admin"/, 'the new role is explicit');
+  assert.ok(!recorded.some((entry) => entry.startsWith('PATCH profiles')), 'no client-side profile write is used');
+  assert.ok(!recorded.some((entry) => entry.startsWith('RPC admin_audit_log')), 'the function audits in-transaction');
+  // A refused function call is not reported as success.
+  const missing = await call('/api/admin/users/user-missing/role', 'super_admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role: 'student' }),
+  });
+  assert.equal(missing.status, 404);
+  assert.deepEqual(missing.body, { error: 'Account not found.' });
 });
 
 test('owner-scoped student endpoints filter by the caller, not by a client id', async () => {

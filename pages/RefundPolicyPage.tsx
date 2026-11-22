@@ -17,7 +17,7 @@ export default function RefundPolicyPage() {
               <p className="er-legal-summary">How refunds and cancellations will be handled if EduReach introduces paid products or services.</p>
               <p className="er-legal-meta">Draft framework · Last reviewed: not yet recorded</p>
             </header>
-            <div className="er-legal-body">
+            <div className="er-legal-body er-legal-card">
               <h2>Current availability</h2>
               <p>EduReach Hub is currently provided as a free educational platform. Paid subscriptions and paid digital services are not currently offered through this policy. No payment should be made on the assumption that a future paid feature is already available.</p>
               <h2>Before any paid service launches</h2>

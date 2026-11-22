@@ -91,13 +91,15 @@ test('the entry budget follows the HTML script when several index chunks exist',
 
 test('critical path counts additional transitive static chunks but not dynamic routes', () => {
   const input = healthyInput();
-  input.assets.set('index-aaa.js', asset('index-aaa.js', 90, "import './extra.js'; import('./lazy.js');"));
+  // 100 KB (not 90) so the fixture stays over the current 220 KB cap while
+  // testing exactly the same traversal rule.
+  input.assets.set('index-aaa.js', asset('index-aaa.js', 100, "import './extra.js'; import('./lazy.js');"));
   input.assets.set('extra.js', asset('extra.js', 15, "export { value } from './nested.js';"));
   input.assets.set('nested.js', asset('nested.js', 10, "import './react-aaa.js';"));
   input.assets.set('lazy.js', asset('lazy.js', 30));
   const critical = check(input, 'critical-path');
   assert.equal(critical?.ok, false);
-  assert.equal(critical?.measured, '216.0 KB', 'deduplicate React and exclude the dynamic route');
+  assert.equal(critical?.measured, '226.0 KB', 'deduplicate React and exclude the dynamic route');
   input.assets.delete('nested.js');
   const missing = check(input, 'critical-path');
   assert.equal(missing?.ok, false);

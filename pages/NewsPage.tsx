@@ -110,7 +110,7 @@ export default function NewsPage() {
                 News &amp; Updates
               </h1>
             </div>
-            <a className="hub-outline-btn" href="/jobs" style={{ textDecoration: 'none', fontSize: '12px' }}>
+            <a className="hub-outline-btn" href="/scholarships" style={{ textDecoration: 'none', fontSize: '12px' }}>
               Scholarships &amp; Grants →
             </a>
           </div>
