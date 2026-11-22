@@ -5,7 +5,7 @@
 # every deploy failed in ~25 seconds, and the live site stayed on an October
 # deployment. This file is the source of truth for the Netlify build.
 [build]
-  command = "npm run build"
+  command = "node scripts/netlify-diagnose.mjs"
   publish = "dist"
   functions = "netlify/functions"
 
