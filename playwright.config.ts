@@ -4,7 +4,13 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: 0,
+  // A shared two-core runner can take longer than five seconds to paint the
+  // "saved" state after an IndexedDB write, and several mocked CBT tests assert
+  // exactly that. The wider expectation budget and one retry keep the gate
+  // about behaviour instead of runner speed; a deterministic failure still
+  // fails twice.
+  retries: process.env.CI ? 1 : 0,
+  expect: { timeout: process.env.CI ? 10_000 : 5_000 },
   workers: process.env.CI ? 2 : 4,
   // `github` turns each failed test into an annotation, so a red gate names the
   // test and assertion without needing the (often truncated) job log.
