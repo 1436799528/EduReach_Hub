@@ -7,7 +7,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  functions = "netlify/empty-functions"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
@@ -20,6 +20,8 @@
   # instead of leaving production on an old build. A privileged key still fails.
   EDUREACH_ALLOW_UNCONFIGURED_CLIENT = "1"
 
+[functions]
+  node_bundler = "esbuild"
 
 # The API must never fall through to index.html. The function is the legacy
 # handler export used by serverless-http; the app normalises both the original
