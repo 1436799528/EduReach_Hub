@@ -72,3 +72,14 @@ jobs:
 
       - name: Database and accessibility audits
         run: npm run rls:audit && npm run a11y:audit && npm run audit:ci
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
