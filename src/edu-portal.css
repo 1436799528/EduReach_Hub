@@ -528,7 +528,7 @@ body.er-exam-mode{padding-bottom:0!important}
    nowhere. It is visibly quieter than a configured account. */
 .er-footer-social-icon{display:inline-grid;place-items:center;width:32px;height:32px;border:1px dashed #334155;border-radius:50%;color:#94a3b8}
 .er-footer-contact{display:flex;align-items:center;flex-wrap:wrap;gap:2px 12px;font-size:11.5px;color:#8fa0b5;min-width:0}
-.er-footer-contact a{color:#cbd5e1;text-decoration:none}
+.er-footer-contact a{display:inline-flex;align-items:center;min-height:32px;color:#cbd5e1;text-decoration:none}
 .er-footer-contact a:hover{color:#fff;text-decoration:underline}
 .er-footer-contact span{overflow-wrap:anywhere}
 .er-footer-legal a:hover,.er-footer-cookie-settings:hover{color:#fff;text-decoration:underline}
