@@ -3,15 +3,6 @@
 #faqs {
   scroll-margin-top: 84px;
 }
-html:has(#student-reviews) {
-  scroll-behavior: smooth;
-}
-@media (prefers-reduced-motion: reduce) {
-  html:has(#student-reviews) {
-    scroll-behavior: auto;
-  }
-}
-
 /* Homepage engagement: the reviews marquee and the FAQ accordion.
    Both sit after Latest news and reuse the news card / FAQ item surfaces, so
    the page keeps one card language and one type scale. Motion is limited to the

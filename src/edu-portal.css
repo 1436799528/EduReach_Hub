@@ -539,7 +539,8 @@ body.er-exam-mode{padding-bottom:0!important}
   .er-footer-bar{align-items:flex-start;gap:2px 8px}
   .er-footer-social{order:0}
   .er-footer-social a,.er-footer-social-icon{width:30px;height:30px}
-  .er-footer-contact{width:100%;font-size:10.5px}
+  .er-footer-contact{width:auto;flex:1 1 auto;justify-content:flex-end;font-size:10.5px;gap:0 10px}
+  .er-footer-contact a{min-height:30px}
   .er-footer-identity{gap:2px 8px}
   .er-footer-copy{font-size:10.5px;line-height:1.35}
   /* One wrap for the utility links: the split between "company" and "policies"
