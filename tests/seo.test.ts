@@ -3,10 +3,12 @@ import { after, test } from 'node:test';
 import { once } from 'node:events';
 import { JSDOM } from 'jsdom';
 
+import { APP_ROUTE_PATHS } from '../src/app/routePaths.generated';
 import {
   absoluteUrl,
   applySeo,
   canonicalPathFor,
+  DEFAULT_DESCRIPTION,
   isArticleFresh,
   isIndexablePath,
   seoForArticle,
@@ -222,6 +224,26 @@ test('absoluteUrl joins paths without doubling slashes', () => {
 // ---------------------------------------------------------------------------
 // robots.txt and sitemap.xml
 // ---------------------------------------------------------------------------
+
+test('every indexable page fits a search result and describes itself', () => {
+  // Google truncates a title at roughly 60 characters and a description at
+  // about 160. Longer copy is not an error, but it is a sentence that ends
+  // mid-word in the one place a student first meets the page. This also catches
+  // the quieter fault: four pages shipped with the site-wide default
+  // description, so they competed with each other for the same snippet.
+  const indexable = APP_ROUTE_PATHS.filter((path) => seoForPath(path).indexable);
+  assert.ok(indexable.length > 20, `expected the public pages, found ${indexable.length}`);
+
+  const problems: string[] = [];
+  for (const path of indexable) {
+    const seo = seoForPath(path);
+    if (seo.title.length > 60) problems.push(`${path}: title is ${seo.title.length} characters`);
+    if (seo.description.length > 160) problems.push(`${path}: description is ${seo.description.length} characters`);
+    if (seo.description === DEFAULT_DESCRIPTION) problems.push(`${path}: still uses the site-wide default description`);
+    if (!seo.title.endsWith('| EduReach Hub') && path !== '/') problems.push(`${path}: title does not end with the site name`);
+  }
+  assert.deepEqual(problems, []);
+});
 
 test('robots.txt allows public content and disallows private surfaces', () => {
   const robots = buildRobotsTxt('https://edureach.example');
