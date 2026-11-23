@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
-import { evaluateClientEnv } from '../scripts/client-env-check';
+import { describeClientUrlShape, evaluateClientEnv } from '../scripts/client-env-check';
 
 const root = resolve(import.meta.dirname, '..');
 const vite = join(root, 'node_modules', 'vite', 'bin', 'vite.js');
@@ -170,4 +170,26 @@ test('the pre-build script refuses a synthetic secret without printing it', () =
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// The URL variable is the one public value whose *shape* matters: the dashboard
+// hands out the REST endpoint next to the origin, and pasting it produces a site
+// that looks configured and fails every request. Warn on shape, never on the
+// value, and never fail a release over a trailing slash.
+test('the client URL warning describes shape without printing the value', () => {
+  assert.equal(describeClientUrlShape({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co' }), null);
+  assert.equal(describeClientUrlShape({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co/' }), null);
+  assert.equal(describeClientUrlShape({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co//' }), null);
+  assert.equal(describeClientUrlShape({}), null);
+
+  const withPath = describeClientUrlShape({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co/rest/v1' });
+  assert.match(String(withPath), /^WARN VITE_SUPABASE_URL carries a path/);
+  assert.ok(!String(withPath).includes('abcdefghijklmnop'), 'the warning must not echo the value');
+
+  assert.match(String(describeClientUrlShape({ VITE_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co/?apikey=x' })), /query string/);
+  assert.match(String(describeClientUrlShape({ VITE_SUPABASE_URL: 'https://user:pass@abcdefghijklmnop.supabase.co' })), /carries credentials/);
+  assert.match(String(describeClientUrlShape({ VITE_SUPABASE_URL: 'abcdefghijklmnop.supabase.co' })), /not an absolute URL/);
+
+  // The fallback name is named when it is the one supplying the value.
+  assert.match(String(describeClientUrlShape({ EDUREACH_PUBLIC_SUPABASE_URL: 'https://abcdefghijklmnop.supabase.co/rest/v1' })), /^WARN EDUREACH_PUBLIC_SUPABASE_URL/);
 });

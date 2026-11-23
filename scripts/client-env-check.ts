@@ -38,6 +38,42 @@ export function clientSupabaseEnv(env: Record<string, string | undefined>): {
   };
 }
 
+const URL_NAMES = ['VITE_SUPABASE_URL', 'EDUREACH_PUBLIC_SUPABASE_URL', 'SUPABASE_URL'] as const;
+
+/**
+ * The URL variable must hold the project origin and nothing else.
+ *
+ * This is a warning, not a failure, and deliberately so. A value with a path (the
+ * REST endpoint copied from the dashboard), a query string, or embedded
+ * credentials still reads as "configured" while producing a client that fails
+ * every request, so it is worth printing; but a trailing slash is harmless, a
+ * self-hosted Supabase may legitimately serve the API from a sub-path, and a
+ * release should not fail on a shape the deployment already works with. The value
+ * itself is never printed — the variable name and the shape are.
+ */
+export function describeClientUrlShape(env: Record<string, string | undefined>): string | null {
+  const name = URL_NAMES.find((candidate) => Boolean(env[candidate]?.trim()));
+  if (!name) return null;
+  const raw = (env[name] as string).trim();
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return `WARN ${name} is not an absolute URL; it must be the project origin (https://<project-ref>.supabase.co).`;
+  }
+  if (parsed.username || parsed.password) {
+    return `WARN ${name} carries credentials in the URL; it must be the bare project origin with no user or password.`;
+  }
+  const path = parsed.pathname.replace(/\/+$/, '');
+  if (path) {
+    return `WARN ${name} carries a path ("${path}"); it must be the bare project origin, without the REST endpoint or a trailing path.`;
+  }
+  if (parsed.search || parsed.hash) {
+    return `WARN ${name} carries a query string or fragment; it must be the bare project origin.`;
+  }
+  return null;
+}
+
 export interface ClientEnvVerdict {
   ok: boolean;
   missing: string[];
@@ -73,6 +109,8 @@ export function evaluateClientEnv(env: Record<string, string | undefined>): Clie
 
 function main(): void {
   const verdict = evaluateClientEnv(process.env);
+  const shape = describeClientUrlShape(process.env);
+  if (shape) console.warn(shape);
   const configured = CLIENT_VARS.join(' + ') + ' (or VITE_SUPABASE_ANON_KEY)';
   if (verdict.privilegedClientValue) {
     // Name the variable and the rule; never the value. A build log is stored and
