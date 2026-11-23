@@ -2724,8 +2724,35 @@ export type ReviewListPayload = {
   hasMore: boolean;
 };
 
+/** A finite number, or null — never `undefined`, `NaN` or a string. */
+function numberOf(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Read a review list defensively.
+ *
+ * The page used to trust the body: `setItems(payload.items)` and
+ * `setSummary(payload.summary)`. A 200 whose body is `[]` — a proxy, a CDN
+ * interstitial, or an endpoint mid-deploy — made `items` undefined and the page
+ * threw "Cannot read properties of undefined (reading 'length')" inside its own
+ * error boundary. A page-quality test forcing an unexpected body found it.
+ * A body that does not describe reviews means "none right now", not a crash.
+ */
+export function normaliseReviewList(body: unknown): ReviewListPayload {
+  const record = (body && typeof body === 'object' ? body : {}) as Partial<ReviewListPayload>;
+  const items = Array.isArray(record.items) ? record.items : [];
+  const rawSummary = record.summary && typeof record.summary === 'object' ? record.summary : undefined;
+  const summary: ReviewSummary = {
+    reviewCount: numberOf(rawSummary?.reviewCount),
+    averageRating: numberOf(rawSummary?.averageRating),
+  };
+  return { items, summary, hasMore: record.hasMore === true };
+}
+
 export async function fetchReviews(page = 1): Promise<ReviewListPayload> {
-  return jsonFetch<ReviewListPayload>(`/api/reviews?page=${Math.max(1, Math.trunc(page))}`);
+  const body = await jsonFetch<unknown>(`/api/reviews?page=${Math.max(1, Math.trunc(page))}`);
+  return normaliseReviewList(body);
 }
 
 export async function submitReview(input: {

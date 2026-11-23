@@ -84,6 +84,10 @@ test.describe('help centre', () => {
     await page.goto('/faq', { waitUntil: 'domcontentloaded' });
 
     const topics = page.locator('.er-faq-topic');
+    // Wait for the rail to render before counting: `count()` does not retry, and
+    // the first version of this test read 0 topics from a page that was still
+    // hydrating.
+    await expect(topics.first()).toBeVisible();
     const count = await topics.count();
     expect(count, 'the rail lists every topic plus "All questions"').toBeGreaterThan(2);
 
