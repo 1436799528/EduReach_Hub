@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
-import { hasPrivilegedClientValue } from './scripts/client-secret-guard';
+import { describeClientExposures, findClientExposures } from './scripts/client-secret-guard';
 import { clientSupabaseEnv } from './scripts/client-env-check';
 
 export default defineConfig(({ mode }) => {
@@ -27,9 +27,14 @@ export default defineConfig(({ mode }) => {
         // Vite has already loaded the selected mode's env files and applied its
         // precedence rules here, but has not yet bundled or served client code.
         configResolved(config) {
-          if (hasPrivilegedClientValue(config.env)) {
+          // Vite has already resolved every env source (process, `.env`, mode
+          // files) by now. Report the variable and the rule, never the value: this
+          // message is printed in build logs and CI summaries.
+          const exposures = findClientExposures(config.env);
+          if (exposures.length > 0) {
             throw new Error(
-              'A privileged Supabase key was found in client-exposed configuration. Remove it from VITE_ variables before starting Vite.',
+              'A privileged or private value was found in client-exposed configuration. Remove it from VITE_ variables before starting Vite.\n' +
+                describeClientExposures(exposures).join('\n'),
             );
           }
         },

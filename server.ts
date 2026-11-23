@@ -10,7 +10,7 @@ import {
   requireStaff,
   type AuthorizedRequest,
 } from './lib/authorization';
-import { getServerSupabaseKey } from './lib/supabase-config';
+import { getPublicSupabaseKey, getServerSupabaseKey, getServerSupabaseUrl } from './lib/supabase-config';
 import { matchesDeclaredImageType } from './lib/image-signature';
 import { isPdfBuffer } from './lib/pdf-signature';
 import { verifyJWT, type UserPayload } from './lib/auth';
@@ -214,7 +214,7 @@ function isPrivatePath(pathname: string): boolean {
 }
 
 function isServerSupabaseConfigured() {
-  return Boolean(process.env.VITE_SUPABASE_URL && getServerSupabaseKey());
+  return Boolean(getServerSupabaseUrl() && getServerSupabaseKey());
 }
 
 function getServerSupabase() {
@@ -235,8 +235,8 @@ function getServerSupabase() {
  * falls back to the service client (the RPC then refuses, as it did before).
  */
 function getUserScopedSupabase(accessToken: string) {
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = (process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const url = getServerSupabaseUrl();
+  const publishableKey = getPublicSupabaseKey();
   if (!url || !publishableKey) return null;
   return createClient(url, publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -282,7 +282,9 @@ app.get('/api/health/ready', async (_req, res) => {
     server: { ok: true },
     supabase_configured: {
       ok: isServerSupabaseConfigured(),
-      detail: isServerSupabaseConfigured() ? undefined : 'VITE_SUPABASE_URL or the server secret key is missing.',
+      detail: isServerSupabaseConfigured()
+        ? undefined
+        : 'The public Supabase origin or the server secret key is missing.',
     },
   };
 
@@ -5744,7 +5746,7 @@ function cbtV2LocalRehearsalEnabled(): boolean {
   )
     return false;
   try {
-    const url = new URL(process.env.VITE_SUPABASE_URL || '');
+    const url = new URL(getServerSupabaseUrl());
     return url.protocol === 'http:' && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
   } catch {
     return false;

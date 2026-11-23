@@ -5,8 +5,16 @@ const env = (typeof import.meta !== 'undefined' && import.meta.env)
   ? import.meta.env
   : (typeof process !== 'undefined' ? process.env : {});
 
-const supabaseUrl = (env.VITE_SUPABASE_URL || env.SUPABASE_URL) as string | undefined;
-const supabaseKey = (env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY) as string | undefined;
+// The `EDUREACH_PUBLIC_*` names are public aliases for a host that cannot clear a
+// mistaken "secret" flag on the VITE_ variable. They carry the same two public
+// values and nothing else; a privileged key is refused below regardless of name.
+const supabaseUrl = (env.VITE_SUPABASE_URL ||
+  env.EDUREACH_PUBLIC_SUPABASE_URL ||
+  env.SUPABASE_URL) as string | undefined;
+const supabaseKey = (env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  env.VITE_SUPABASE_ANON_KEY ||
+  env.EDUREACH_PUBLIC_SUPABASE_KEY ||
+  env.SUPABASE_ANON_KEY) as string | undefined;
 
 // Defence in depth: a privileged key bypasses RLS and must never run in a
 // browser, even if pasted into a VITE_ variable by mistake. The predicate lives

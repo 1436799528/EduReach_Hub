@@ -1,6 +1,6 @@
 /** Enforce browser Supabase configuration before a production build. */
 import 'dotenv/config';
-import { hasPrivilegedClientValue } from './client-secret-guard';
+import { describeClientExposures, findClientExposures, hasPrivilegedClientValue } from './client-secret-guard';
 import { isPrivilegedKey } from '../src/lib/supabaseKey';
 
 export const CLIENT_VARS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'] as const;
@@ -11,6 +11,15 @@ export const CLIENT_VARS = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'
  * `SUPABASE_URL` + `SUPABASE_ANON_KEY` has a working public configuration; the
  * build inlines these two values into the bundle (see `vite.config.ts`). The
  * service-role key is never read here.
+ *
+ * `EDUREACH_PUBLIC_SUPABASE_URL` / `EDUREACH_PUBLIC_SUPABASE_KEY` are the last
+ * fallback, and they exist for one specific platform problem: a hosting provider
+ * cannot clear the "secret" flag on a variable once it is set, so a public value
+ * (the project origin, the publishable key) may be stuck under a name the
+ * provider refuses to treat as public. These names are unambiguous at a glance —
+ * they say `PUBLIC` — so the pair can be recreated correctly without ever
+ * reading, printing or rotating the value that is stuck. Precedence is unchanged
+ * for every deployment that already works.
  */
 export function clientSupabaseEnv(env: Record<string, string | undefined>): {
   url?: string;
@@ -18,10 +27,11 @@ export function clientSupabaseEnv(env: Record<string, string | undefined>): {
 } {
   const value = (...names: string[]) => names.map((name) => env[name]?.trim()).find(Boolean);
   return {
-    url: value('VITE_SUPABASE_URL', 'SUPABASE_URL'),
+    url: value('VITE_SUPABASE_URL', 'EDUREACH_PUBLIC_SUPABASE_URL', 'SUPABASE_URL'),
     key: value(
       'VITE_SUPABASE_PUBLISHABLE_KEY',
       'VITE_SUPABASE_ANON_KEY',
+      'EDUREACH_PUBLIC_SUPABASE_KEY',
       'SUPABASE_PUBLISHABLE_KEY',
       'SUPABASE_ANON_KEY',
     ),
@@ -65,9 +75,13 @@ function main(): void {
   const verdict = evaluateClientEnv(process.env);
   const configured = CLIENT_VARS.join(' + ') + ' (or VITE_SUPABASE_ANON_KEY)';
   if (verdict.privilegedClientValue) {
+    // Name the variable and the rule; never the value. A build log is stored and
+    // shared, so printing the credential would repeat the exposure it reports.
+    const exposures = findClientExposures(process.env);
     console.error(
-      'FAIL privileged Supabase key in client-exposed configuration. Remove it from VITE_ variables before building.',
+      'FAIL privileged or private value in client-exposed configuration. Remove it from the VITE_ variable before building.',
     );
+    for (const line of describeClientExposures(exposures)) console.error(line);
     process.exitCode = 1;
     return;
   }

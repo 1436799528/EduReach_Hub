@@ -101,7 +101,7 @@ test('direct Vite build and dev refuse privileged process and mode-file values b
       const result = spawnSync(process.execPath, args, { cwd: dir, env, encoding: 'utf8', timeout: 20000 });
       assert.equal(result.status, 1, `${command} must fail before serving or building`);
       const output = `${result.stdout}${result.stderr}`;
-      assert.match(output, /privileged Supabase key/i);
+      assert.match(output, /privileged or private value/i);
       assert.ok(!output.includes(value), 'the diagnostic must not print the key');
       assert.equal(existsSync(outputDir), false, 'no client assets should be emitted');
     } finally {
@@ -120,7 +120,7 @@ test('production refuses secret-like public names, and resolved mode values foll
     const baseEnv = { PATH: process.env.PATH, HOME: process.env.HOME };
     const bad = spawnSync(process.execPath, args, { cwd: dir, env: baseEnv, encoding: 'utf8', timeout: 20000 });
     assert.equal(bad.status, 1);
-    assert.match(`${bad.stdout}${bad.stderr}`, /privileged Supabase key/i);
+    assert.match(`${bad.stdout}${bad.stderr}`, /privileged or private value/i);
     assert.ok(!`${bad.stdout}${bad.stderr}`.includes(opaque));
     const named = spawnSync(process.execPath, args, { cwd: dir, env: { ...baseEnv, VITE_OTHER: 'safe-value', VITE_SUPABASE_SERVICE_ROLE_KEY: 'unknown_synthetic' }, encoding: 'utf8', timeout: 20000 });
     assert.equal(named.status, 1);
@@ -145,7 +145,7 @@ test('application development startup refuses a synthetic privileged client valu
   });
   const output = `${result.stdout}${result.stderr}`;
   assert.equal(result.status, 1, 'development server must not start');
-  assert.match(output, /privileged Supabase key/i);
+  assert.match(output, /privileged or private value/i);
   assert.doesNotMatch(output, /EduReach server running on port/);
   assert.ok(!output.includes(opaque));
 });
@@ -158,7 +158,7 @@ test('the pre-build script refuses a synthetic secret without printing it', () =
     encoding: 'utf8',
   });
   assert.equal(result.status, 1);
-  assert.match(`${result.stdout}${result.stderr}`, /privileged Supabase key/i);
+  assert.match(`${result.stdout}${result.stderr}`, /privileged or private value/i);
   assert.ok(!`${result.stdout}${result.stderr}`.includes(opaque));
   const dir = mkdtempSync(join(tmpdir(), 'edureach-missing-client-env-'));
   try {

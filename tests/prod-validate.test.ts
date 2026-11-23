@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -101,22 +101,21 @@ test('a server-side fallback for a client variable is labelled as one', () => {
 });
 
 test('every alias satisfies only through the code that actually reads it', () => {
-  // The contract is a claim about the code. Check the claim: each declared alias must
-  // appear as a read of that exact name somewhere in the sources listed as consumers.
-  const sources = [
-    'server.ts',
-    'lib/supabase-config.ts',
-    'src/lib/supabase.ts',
-    'src/server/seo.ts',
-    'src/server/newsroom/run.ts',
-  ]
-    .map((path) => readFileSync(join(ROOT, path), 'utf8'))
-    .join('\n');
-
+  // The contract is a claim about the code. Check the claim against the files the
+  // contract itself names (`consumedBy`): every declared consumer must exist, and
+  // each name — primary or alias — must appear in at least one of them. Using the
+  // declaration rather than a hand-maintained list means a new variable cannot be
+  // added without saying where it is read, and a renamed reader is caught.
   for (const spec of ENV_CONTRACT) {
-    assert.ok(sources.includes(spec.name), `${spec.name} is declared but no source reads it`);
-    for (const alias of spec.aliases) {
-      assert.ok(sources.includes(alias.name), `${alias.name} is declared as an alias but no source reads it`);
+    const sources = spec.consumedBy.map((path) => {
+      assert.ok(existsSync(join(ROOT, path)), `${spec.name} names a consumer that does not exist: ${path}`);
+      return readFileSync(join(ROOT, path), 'utf8');
+    });
+    for (const name of [spec.name, ...spec.aliases.map((alias) => alias.name)]) {
+      assert.ok(
+        sources.some((text) => text.includes(name)),
+        `${name} is declared but none of its declared consumers reads it`,
+      );
     }
   }
 });
