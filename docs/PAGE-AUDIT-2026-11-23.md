@@ -19,9 +19,12 @@ Everything else that fails is listed with an owner.
 | Route table vs router | `npm run routes:check` | in sync |
 | Static accessibility | `npm run a11y:audit` | 0 blocking, 11 informational |
 | Titles, descriptions, canonical, indexability | `seoForPath()` over all 90 routes | 0 missing metadata, 0 indexable page without a canonical |
-| Rendered pages (browser) | `tests/e2e/route-coverage.spec.ts` in CI | 28 pages, desktop + mobile + WebKit, all green on `920efa8` |
+| Rendered pages (browser) | `tests/e2e/route-coverage.spec.ts` in CI | 41 declared pages opened on desktop, mobile and WebKit (`route-coverage` runs on three projects: 123 tests); 28 pages were covered on `920efa8`, the rest were added in this pass |
 | Headers, HSTS, CSP | `tests/headers.test.ts` | passing |
 | Sitemap and robots | `tests/seo.test.ts` | passing |
+| HTML conformance | `npm run html:validate` (new) | shell and built output clean |
+| Lighthouse | `npm run lighthouse -- <url>`, weekly workflow | added; runs on a deployment, not in this sandbox |
+| External links | `npm run links:external`, weekly workflow | script and six tests added; network half runs on GitHub's runner |
 | Page inventory and inbound links | this audit's script | 90 routes; 62 have at least one literal inbound link, 28 do not (most of those are aliases or flow-only screens) |
 
 Not measurable here, and therefore not claimed: a live crawl of production, a
@@ -58,11 +61,11 @@ or trust something they need; **Medium** = discoverability or compliance risk;
 | **F1** | **Three published policy pages were unreachable.** `/accessibility` and `/disclaimer` were in the sitemap (so crawlers were told to index them) but no page linked to either. `/refunds` — a real page with its own component — was in neither the footer nor the sitemap. An accessibility statement nobody can reach is not a statement | High | Fixed here | **Fixed** |
 | **F2** | **No link could fail CI.** 303 internal links, hand-written, with nothing comparing them to the router. A rename would have shipped as a 404 | High | Fixed here | **Fixed** |
 | **F3** | **`/results` is duplicate content with no inbound link.** It renders the same live service as `/services/results`, is indexable, has no canonical pointing at the service URL, is absent from the sitemap, and is linked from nowhere. Either it is the SEO landing page for "check result" searches and should be linked and canonicalised toward, or it is legacy and should redirect | Medium | Product decision | **Open** |
-| **F4** | **13 pages render in production but are not held to the browser assertions.** `checks: 'smoke'` pages (auth screens, `/cbt/setup/*`, `/nelfund`, `/results`, `/nabteb`, `/admission`, `/tools`, `/support`) are crawled after deploy but never opened by a spec that asserts one `h1`, one `<main>` and no render error | Medium | Buildable | **Open** |
-| **F5** | **18 admin routes have no browser assertion at all.** They are noindex and behind a capability check, but the most consequential screens in the product (import, publish, regrade, reports) are only covered by unit tests | Medium | Buildable | **Open** |
-| **F6** | **External destinations are unmonitored.** 5 scholarship links come from seed data and every institution/opportunity record carries a URL from the database. A dead `.gov.ng` link is a trust failure, and nothing checks them | Medium | Buildable | **Open** |
-| **F7** | **No HTML validation and no Lighthouse in CI.** Semantics are covered by targeted tests and performance by byte/LCP/CLS/TBT budgets, but there is no whole-document validator and no lab Lighthouse run against a cold mobile profile | Low | Buildable | **Open** |
-| **F8** | **9 indexable titles exceed 60 characters and 6 indexable descriptions exceed 160.** Search results truncate; nothing breaks. Cosmetic, but it is the difference between a result that reads as a sentence and one that ends mid-word. (`/jamb`, `/waec`, `/neco`, `/post-utme`, `/schools`, `/services`, `/jobs` and the CGPA calculator, plus its alias.) A further 54 descriptions are over 160 on **noindex** pages, where length does not matter | Low | Buildable | **Open** |
+| **F4** | **13 pages render in production but are not held to the browser assertions.** `checks: 'smoke'` pages (auth screens, `/cbt/setup/*`, `/nelfund`, `/results`, `/nabteb`, `/admission`, `/tools`, `/support`) are crawled after deploy but never opened by a spec that asserts one `h1`, one `<main>` and no render error | Medium | Fixed here | **Fixed** — all 41 declared pages are `full`, opened on three browser projects |
+| **F5** | **18 admin routes have no browser assertion at all.** They are noindex and behind a capability check, but the most consequential screens in the product (import, publish, regrade, reports) are only covered by unit tests | Medium | Fixed here | **Fixed for the door** — every admin route is opened and must refuse explicitly; what an administrator sees still needs the configured fixture |
+| **F6** | **External destinations are unmonitored.** 5 scholarship links come from seed data and every institution/opportunity record carries a URL from the database. A dead `.gov.ng` link is a trust failure, and nothing checks them | Medium | Fixed here | **Fixed** — weekly check, opens and closes its own issue |
+| **F7** | **No HTML validation and no Lighthouse in CI.** Semantics are covered by targeted tests and performance by byte/LCP/CLS/TBT budgets, but there is no whole-document validator and no lab Lighthouse run against a cold mobile profile | Low | Fixed here | **Fixed** — validator is a gate stage; Lighthouse is weekly. It found one real error: a `<style>` inside `#root` |
+| **F8** | **9 indexable titles exceeded 60 characters and 6 indexable descriptions exceeded 160.** Search results truncate; nothing breaks. Cosmetic, but it is the difference between a result that reads as a sentence and one that ends mid-word. (`/jamb`, `/waec`, `/neco`, `/post-utme`, `/schools`, `/services`, `/jobs` and the CGPA calculator, plus its alias.) Four pages also shared the site-wide default description. A further 54 descriptions are over 160 on **noindex** pages, where length does not matter | Low | Fixed here | **Fixed** — limits enforced by a test |
 | **F9** | **Four placeholder routes remain public:** `/admission`, `/support`, `/tools`, `/nabteb`. Each is noindex and excluded from the sitemap — honest, but a student who finds one by search gets "coming soon" from a site that claims to help them | Low | Product decision | **Open** |
 
 Two earlier claims in `docs/WORKING_GUIDE_COMPLIANCE.md`'s predecessor notes were
@@ -93,16 +96,37 @@ heading because it is a redirect shim that forwards to the setup wizard.
    `/disclaimer` were already there.
 5. **Tests extended** so the three links and the sitemap entry cannot silently
    disappear: `tests/site-content.test.ts`, `tests/seo.test.ts`.
+6. **All 13 remaining pages promoted to browser coverage** (F4). The manifest
+   now declares 41 pages as `full`; `route-coverage.spec.ts` opens each on
+   desktop and mobile — 82 tests — and asserts 200, one `<main>`, one `h1`, a
+   titled document, no uncaught error, no failed asset (123 tests with WebKit).
+7. **The admin door, tested** (F5). `tests/e2e/admin-gate.spec.ts` opens all 18
+   admin routes and requires an explicit refusal, one `h1`, no console
+   navigation and no leaked control. Writing it exposed that the refusal screen
+   had no `<main>`; it has one now.
+8. **External links checked weekly** (F6). `scripts/external-link-check.ts` plus
+   `.github/workflows/external-links.yml`: HEAD with a GET retry, 2xx/3xx is a
+   pass, everything else fails the run, the report is kept, and the job opens or
+   comments on one issue and closes it when the links recover.
+9. **HTML validated in the gate** (F7). `html-validate` with the recommended
+   ruleset, run on `index.html`, `dist/index.html` and `dist/404.html` straight
+   after the build. Its first run found a `<style>` element inside `#root`; the
+   splash styles now sit in the head.
+10. **Lighthouse weekly** (F7). A script and a workflow against a real
+    deployment, reusing the Chromium Playwright already installs, keeping the
+    HTML and JSON report. Deliberately outside the pull-request gate.
+11. **Titles and descriptions rewritten** (F8), with a test that fails the build
+    above 60/160 characters or when a page falls back to the shared default.
 
 ## 4. Standard-by-standard scorecard
 
 | Standard | Applies to | Status | Evidence | Gap |
 |---|---|---|---|---|
-| **WCAG 2.2 AA** | All public pages | ✅ measured | axe over 28 declared pages on desktop + mobile in CI; `a11y:audit` 0 blocking; 44 px touch targets, visible focus, reduced motion, skip link, labelled controls asserted statically | No manual screen-reader pass; no real-device pass |
-| **HTML semantics** | Shell + pages | ✅ measured | `lang="en"`, one `<main>`, one `h1` per page, landmarks, titled documents — asserted per page in `route-coverage` | No whole-document validator |
-| **SEO — metadata** | 90 routes | ✅ measured | title + description on all 90; canonical on all 36 indexable; indexability agrees with the manifest (test) | 9 indexable titles > 60 chars, 6 indexable descriptions > 160 |
+| **WCAG 2.2 AA** | All public pages | ✅ measured | axe runs in CI and every declared page is now opened on desktop and mobile; `a11y:audit` 0 blocking; 44 px touch targets, visible focus, reduced motion, skip link, labelled controls asserted statically | No manual screen-reader pass; no real-device pass |
+| **HTML semantics** | Shell + built output | ✅ measured | `lang="en"`, one `<main>`, one `h1` per page, landmarks, titled documents — asserted per page; `html-validate` now checks the shell and both built documents in the gate | — |
+| **SEO — metadata** | 90 routes | ✅ measured | title + description on all 90; canonical on all 36 indexable; indexability agrees with the manifest (test); length and no-shared-default limits enforced by a test | — |
 | **SEO — crawling** | Site | ✅ measured | `robots.txt` disallows admin/dashboard/api; sitemap built from static entries + database content, escaped, deduplicated, sorted | Production must serve the new 404 status (deploy) |
-| **Core Web Vitals** | Public pages | ◐ budgeted, not lab-measured | JS byte budget per route fails the build; LCP/CLS/TBT budgets in the Playwright perf spec on a throttled mobile profile | No Lighthouse run, no field data (no RUM) |
+| **Core Web Vitals** | Public pages | ◐ budgeted, not field-measured | JS byte budget per route fails the build; LCP/CLS/TBT budgets on a throttled mobile profile; Lighthouse weekly against the deployment with per-category floors | No field data (no RUM) |
 | **Mobile** | All pages | ✅ measured | 320/360/768/1440 width assertions, overflow-safe pages, no hover-only interactions | Real low-end Android untested |
 | **Security headers** | All responses | ✅ measured | HSTS, CSP, `X-Content-Type-Options`, referrer policy asserted in `tests/headers.test.ts` | — |
 | **Privacy / consent** | All pages | ◐ | Cookie banner + preference centre; data inventory and retention documented | No consent record, no DPIA sign-off, minors' consent undecided |
@@ -219,22 +243,33 @@ No index, no browser assertion (**F5**), capability-gated server-side with
    uptime accounts, leaked-password protection, Netlify variable re-scoping,
    one restore rehearsal, branch protection check.
 
-### For me, buildable without you
+### Built in this pass (no input needed, now done)
 
-1. **Browser assertions for the 13 smoke pages (F4)** — promote them to `full`
-   where deterministic, and where the data is not deterministic, assert the shell
-   and the state rather than skipping the page.
-2. **A render test for the 18 admin routes (F5)** — one spec that opens each with
-   an admin session and asserts it renders, is titled and has one `h1`.
-3. **External link checker (F6)** — a scheduled workflow that resolves every URL
-   in the opportunity and institution tables and opens an issue on a failure.
-4. **Title and description pass (F8)** — shorten the 9 indexable titles and the
-   6 indexable descriptions, then add a length limit to `tests/seo.test.ts` so a
-   new page cannot join the site with a truncated title.
-5. **HTML validation (F7)** — validate the built shell and the rendered DOM of
-   one page per template.
-6. **Lighthouse (F7)** — a budgeted run against the preview deploy, reported but
-   not blocking until the budgets are calibrated.
+| Item | Evidence |
+|---|---|
+| Browser assertions for the 13 remaining pages | `pageManifest.ts` — 41 pages `full`, 82 tests in `route-coverage.spec.ts` |
+| Admin door tested on all 18 routes | `tests/e2e/admin-gate.spec.ts` |
+| External link check, weekly | `scripts/external-link-check.ts`, `.github/workflows/external-links.yml` |
+| Titles and descriptions rewritten and enforced | `src/lib/seoMeta.ts`, the length test in `tests/seo.test.ts` |
+| HTML conformance in the gate | `html:validate` on the shell and both built documents |
+| Lighthouse, weekly | `scripts/lighthouse-audit.mjs`, `.github/workflows/lighthouse.yml` |
+
+### Still unmeasured, and who can close it
+
+| Gap | Why it is not closed here |
+|---|---|
+| What an administrator actually sees | Needs the configured-service fixture (`RUN_CONFIGURED_SERVICE_TESTS=1`); the door is tested, the room is not |
+| Core Web Vitals **field** data | Needs real traffic and a RUM endpoint — a product decision, not code |
+| Real low-end Android (Tecno/Infinix/itel), 2G | Needs the hardware; the throttled profile is a proxy |
+| Lighthouse scores on this build | Needs a deployment and a browser; the workflow is ready and runs on GitHub's runner |
+| External links right now | Needs outbound network; the weekly job will report the first result |
+
+### Follow-ups this pass created
+
+1. **`/results` (F3)** is still undecided and still unlinked — the only page in
+   the inventory whose future depends on a decision.
+2. **The four placeholders (F9)** are still public and still noindex.
+3. The admin console has a door test and no room tests; the fixture is the way in.
 
 ## 7. How to re-run this audit
 
