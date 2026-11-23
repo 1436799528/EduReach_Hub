@@ -28,8 +28,17 @@ test('guide endpoints enforce capabilities on the server, public reads are publi
   assert.match(server, /app\.get\('\/api\/services\/:slug\/guide'/);
   const publicRoute = server.slice(server.indexOf("app.get('/api/services/:slug/guide'"), server.indexOf("app.get('/api/admin/services/:serviceId/guide'"));
   assert.match(publicRoute, /eq\('status', 'published'\)/);
-  // Screenshot uploads are opened to service editors through the same guard.
-  assert.match(server, /'calendar\.update', 'service\.update'\)/);
+  // Screenshot uploads are opened to service editors through the same guard,
+  // and to the review and site editors that also upload a profile picture.
+  const upload = server.slice(server.indexOf("app.post(\n  '/api/admin/uploads'"), server.indexOf('app.post(\'/api/admin/session/verify\''));
+  for (const capability of [
+    'calendar.update',
+    'service.update',
+    'review.moderate',
+    'site.update',
+  ]) {
+    assert.ok(upload.includes(`'${capability}'`), `the upload guard includes ${capability}`);
+  }
 });
 
 test('guide payloads are validated before they can reach students', () => {

@@ -1,17 +1,8 @@
-import {
-  Facebook,
-  Instagram,
-  Linkedin,
-  Link2,
-  MessageCircle,
-  Music2,
-  Send,
-  Youtube,
-  type LucideIcon,
-} from 'lucide-react';
 import BrandLogo from './BrandLogo';
+import SocialIcon from './SocialIcon';
 import { useSiteContent } from './useSiteContent';
-import { VERIFIED_SOCIAL_LINKS, socialNetworkFor, type VerifiedSocialLink } from '../data/socials';
+import { VERIFIED_SOCIAL_LINKS, type VerifiedSocialLink } from '../data/socials';
+import { whatsappHref } from '../lib/siteContentModel';
 
 /**
  * The site footer: one compact bar, the same on every surface.
@@ -29,8 +20,8 @@ import { VERIFIED_SOCIAL_LINKS, socialNetworkFor, type VerifiedSocialLink } from
  *
  * Social accounts are shown only when they exist. The verified list comes from
  * `src/data/socials.ts` (currently the WhatsApp channel); an administrator may
- * add further profiles in Site & Policies, and those are merged here. There is
- * no placeholder icon for a network EduReach does not operate.
+ * add further profiles in Site, Social & Contact, and those are merged here. An
+ * enabled network with no saved URL keeps its icon but is not a link.
  *
  * The "Cookie settings" button is part of this contract. Consent must stay
  * reopenable after the banner is dismissed, on every page, including signed-in
@@ -52,38 +43,6 @@ const POLICIES: FooterLink[] = [
   { href: '/cookies', label: 'Cookies' },
 ];
 
-const SOCIAL_ICONS: Record<VerifiedSocialLink['network'], LucideIcon> = {
-  whatsapp: MessageCircle,
-  facebook: Facebook,
-  instagram: Instagram,
-  x: Link2,
-  tiktok: Music2,
-  youtube: Youtube,
-  linkedin: Linkedin,
-  telegram: Send,
-  website: Link2,
-};
-
-const NETWORK_NAMES: Record<VerifiedSocialLink['network'], string> = {
-  whatsapp: 'WhatsApp',
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  x: 'X',
-  tiktok: 'TikTok',
-  youtube: 'YouTube',
-  linkedin: 'LinkedIn',
-  telegram: 'Telegram',
-  website: 'website',
-};
-
-function isHttps(value: string): boolean {
-  try {
-    return new URL(value).protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
 export default function SiteFooter() {
   const { content } = useSiteContent();
   const { brand, social } = content.settings;
@@ -91,17 +50,19 @@ export default function SiteFooter() {
 
   // Verified defaults first, then administrator-added profiles; a URL appears
   // once even if both sources carry it.
-  const seen = new Set<string>();
-  const socialLinks: VerifiedSocialLink[] = [];
-  for (const link of [...VERIFIED_SOCIAL_LINKS, ...social.links.map((entry) => ({
-    label: entry.label,
-    url: entry.url,
-    network: socialNetworkFor(entry.label, entry.url),
-  }))]) {
-    if (!link.url || !isHttps(link.url) || seen.has(link.url)) continue;
-    seen.add(link.url);
-    socialLinks.push(link);
-  }
+  const verified = new Map(VERIFIED_SOCIAL_LINKS.map((link) => [link.network, link.url]));
+  const socialLinks = social.links
+    .filter((link) => link.visible)
+    .map((link) => ({
+      ...link,
+      // A network the team has already verified in code keeps working until an
+      // administrator saves the same profile in settings.
+      url: link.url || verified.get(link.platform as VerifiedSocialLink['network']) || '',
+    }));
+  const { contact } = content.settings;
+  const generalEmail = contact.email;
+  const supportEmail = contact.supportEmail || contact.email;
+  const whatsappLink = whatsappHref(contact.whatsapp);
 
   return (
     <footer className="er-footer">
@@ -118,24 +79,56 @@ export default function SiteFooter() {
 
         {socialLinks.length > 0 && (
           <nav className="er-footer-social" aria-label={`${brand.name} on social media`}>
-            {socialLinks.map((link) => {
-              const Icon = SOCIAL_ICONS[link.network] || Link2;
-              const network = NETWORK_NAMES[link.network] || 'social';
-              return (
+            {socialLinks.map((link) =>
+              link.url ? (
                 <a
-                  key={link.url}
+                  key={`${link.platform}-${link.label}`}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`${brand.name} on ${network} (opens in a new tab)`}
-                  title={`${network}: ${link.label}`}
+                  aria-label={`${brand.name} on ${link.label}${link.handle ? ` (@${link.handle})` : ''} (opens in a new tab)`}
+                  title={`${link.label}${link.handle ? `: @${link.handle}` : ''}`}
                 >
-                  <Icon size={16} aria-hidden="true" />
+                  <SocialIcon platform={link.platform} size={16} />
                 </a>
-              );
-            })}
+              ) : (
+                <span
+                  key={`${link.platform}-${link.label}`}
+                  className="er-footer-social-icon is-unconfigured"
+                  role="img"
+                  aria-label={`${link.label}: not configured yet`}
+                  title={`${link.label} profile not configured yet`}
+                >
+                  <SocialIcon platform={link.platform} size={16} />
+                </span>
+              ),
+            )}
           </nav>
         )}
+
+        <div className="er-footer-contact" role="group" aria-label="Contact EduReach Hub">
+          {supportEmail && (
+            <a href={`mailto:${supportEmail}`} title="Email support">
+              {supportEmail}
+            </a>
+          )}
+          {generalEmail && generalEmail !== supportEmail && (
+            <a href={`mailto:${generalEmail}`} title="General enquiries">
+              {generalEmail}
+            </a>
+          )}
+          {contact.phone && <a href={`tel:${contact.phone.replace(/[^0-9+]/g, '')}`}>{contact.phone}</a>}
+          {whatsappLink && (
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+              WhatsApp
+            </a>
+          )}
+          {contact.details.map((detail) => (
+            <span key={`${detail.label}-${detail.value}`}>
+              {detail.label}: {detail.value}
+            </span>
+          ))}
+        </div>
 
         <nav className="er-footer-legal" aria-label="Footer: company and policies">
           <div className="er-footer-group">

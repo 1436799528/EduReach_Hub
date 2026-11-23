@@ -56,6 +56,7 @@ const AdminContentManagerPage = lazy(() => import('../../pages/AdminContentManag
 const AdminPdfBankPage = lazy(() => import('../../pages/AdminPdfBankPage'));
 const AdminQuestionImportPage = lazy(() => import('../../pages/AdminQuestionImportPage'));
 const AdminSitePage = lazy(() => import('../../pages/AdminSitePage'));
+const AdminFaqPage = lazy(() => import('../../pages/AdminFaqPage'));
 const AboutPage = lazy(() => import('../../pages/AboutPage'));
 const LegalPage = lazy(() => import('../../pages/LegalPage'));
 const RefundPolicyPage = lazy(() => import('../../pages/RefundPolicyPage'));
@@ -162,6 +163,7 @@ export function renderRoute(pathname: string): ReactElement {
   if (path === '/admin/pdf-bank') return <AdminPdfBankPage />;
   if (path === '/admin/question-imports') return <AdminQuestionImportPage />;
   if (path === '/admin/site') return <AdminSitePage />;
+  if (path === '/admin/faq') return <AdminFaqPage />;
 
   if (path === '/') return <HubHomePage />;
   if (path === '/jamb') return <ExamHubPage exam="jamb" />;

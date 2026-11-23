@@ -242,10 +242,22 @@ export default function ReviewsPage() {
             {items.map((review) => (
               <article className="er-review-card" key={review.id} aria-label={`Review by ${review.displayName}`}>
                 <header>
+                  <span className="er-review-person">
+                    {review.profileImage ? (
+                      <img src={review.profileImage} alt="" width={40} height={40} loading="lazy" />
+                    ) : (
+                      <span aria-hidden="true">{review.displayName.slice(0, 1).toUpperCase()}</span>
+                    )}
+                    <span>
+                      <strong>{review.displayName}</strong>
+                      {review.studentDescription && <small>{review.studentDescription}</small>}
+                    </span>
+                  </span>
                   <Stars rating={review.rating} />
                   <span className="er-review-meta">
-                    {review.displayName}
-                    {review.examType ? ` · ${review.examType}` : ''} · {freshnessDate(review.createdAt)}
+                    {review.examType ? `${review.examType} · ` : ''}
+                    {freshnessDate(review.createdAt)}
+                    {review.isPlaceholder ? ' · Sample entry' : ''}
                   </span>
                 </header>
                 <p>{review.reviewText}</p>

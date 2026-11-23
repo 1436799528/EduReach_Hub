@@ -51,6 +51,19 @@ export interface Validated<T> {
 }
 
 const MAX_BODY = 40_000;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_RE = /^[0-9+()\-\s]{7,24}$/;
+const SOCIAL_PLATFORM_KEYS = new Set([
+  'facebook',
+  'instagram',
+  'tiktok',
+  'youtube',
+  'x',
+  'whatsapp',
+  'linkedin',
+  'telegram',
+  'custom',
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -109,25 +122,77 @@ export function validateSettings(key: string, raw: unknown): Validated<Record<st
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       return { ok: false, error: 'Enter a valid email address or leave the field empty.' };
     }
+    const supportEmail = typeof value.supportEmail === 'string' ? value.supportEmail.trim() : '';
+    if (supportEmail && !EMAIL_RE.test(supportEmail)) {
+      return { ok: false, error: 'Enter a valid support email address or leave the field empty.' };
+    }
     const note = cleanText(value.note, 0, 300) ?? '';
-    return { ok: true, value: { whatsapp, email, note } };
+    const phone = typeof value.phone === 'string' ? value.phone.trim() : '';
+    if (phone && (!PHONE_RE.test(phone) || phone.length > 24)) {
+      return { ok: false, error: 'Enter a support phone number using digits, spaces, +, - or brackets.' };
+    }
+    const rawDetails = value.details === undefined ? [] : value.details;
+    if (!Array.isArray(rawDetails) || rawDetails.length > 8) {
+      return { ok: false, error: 'Contact details must be a list of at most eight rows.' };
+    }
+    const details: Array<{ label: string; value: string }> = [];
+    for (const entry of rawDetails) {
+      if (!isRecord(entry)) return { ok: false, error: 'Each contact detail needs a label and a value.' };
+      const label = cleanText(entry.label, 2, 40);
+      const detail = cleanText(entry.value, 2, 120);
+      if (!label || !detail) {
+        return { ok: false, error: 'Each contact detail needs a label of 2–40 characters and a value of 2–120.' };
+      }
+      details.push({ label, value: detail });
+    }
+    return { ok: true, value: { whatsapp, email, supportEmail, phone, note, details } };
   }
 
   // social
   const links = Array.isArray(value.links) ? value.links : null;
   if (!links) return { ok: false, error: 'Social links must be a list.' };
-  if (links.length > 8) return { ok: false, error: 'Add at most eight social links.' };
-  const cleaned: Array<{ label: string; url: string }> = [];
+  if (links.length > 16) return { ok: false, error: 'Add at most sixteen social platforms.' };
+  const cleaned: Array<{
+    platform: string;
+    label: string;
+    handle: string;
+    url: string;
+    visible: boolean;
+  }> = [];
   const seen = new Set<string>();
+  const seenPlatforms = new Set<string>();
   for (const entry of links) {
-    if (!isRecord(entry)) return { ok: false, error: 'Each social link needs a label and an https URL.' };
+    if (!isRecord(entry)) return { ok: false, error: 'Each social platform needs a name and, optionally, a URL.' };
+    const platformKey = String(entry.platform ?? '')
+      .trim()
+      .toLowerCase();
+    if (!SOCIAL_PLATFORM_KEYS.has(platformKey)) {
+      return { ok: false, error: 'Choose a supported social platform, or add it as a custom platform.' };
+    }
     const label = cleanText(entry.label, 2, 40);
-    if (!label) return { ok: false, error: 'Each social link needs a label of 2 to 40 characters.' };
-    if (!isSafeHttpsUrl(entry.url)) return { ok: false, error: `The ${label} link must be a full https:// address.` };
-    const url = String(entry.url).trim();
-    if (seen.has(url)) return { ok: false, error: `The ${label} link is entered twice.` };
-    seen.add(url);
-    cleaned.push({ label, url });
+    if (!label) return { ok: false, error: 'Each social platform needs a name of 2 to 40 characters.' };
+    const handle = typeof entry.handle === 'string' ? entry.handle.replace(/^@+/, '').trim() : '';
+    if (handle.length > 40 || !/^[A-Za-z0-9._-]*$/.test(handle)) {
+      return {
+        ok: false,
+        error: `The ${label} handle may only contain letters, numbers, dots, dashes and underscores.`,
+      };
+    }
+    const rawUrl = typeof entry.url === 'string' ? entry.url.trim() : '';
+    if (rawUrl && !isSafeHttpsUrl(rawUrl)) {
+      return {
+        ok: false,
+        error: `The ${label} link must be a full https:// address, or left empty until it is known.`,
+      };
+    }
+    if (rawUrl && seen.has(rawUrl)) return { ok: false, error: `The ${label} link is entered twice.` };
+    if (rawUrl) seen.add(rawUrl);
+    const platform = platformKey === 'custom' ? `custom:${label.toLowerCase()}` : platformKey;
+    if (seenPlatforms.has(platform)) {
+      return { ok: false, error: `${label} is already in the list. Edit that row instead of adding a second one.` };
+    }
+    seenPlatforms.add(platform);
+    cleaned.push({ platform: platformKey, label, handle, url: rawUrl, visible: entry.visible !== false });
   }
   return { ok: true, value: { links: cleaned } };
 }

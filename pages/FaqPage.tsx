@@ -2,7 +2,8 @@ import { ChevronDown, LifeBuoy, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import HubLayout from '../src/components/HubLayout';
 import FilterPills from '../src/components/FilterPills';
-import { FAQ_CATEGORIES, faqSearchText } from '../src/data/faq';
+import { FAQ_CATEGORIES, faqSearchText, type FaqCategory } from '../src/data/faq';
+import { fetchFaqs } from '../src/lib/api';
 import { matchesSearch } from '../src/lib/searchMatch';
 import '../src/faq.css';
 
@@ -17,29 +18,63 @@ import '../src/faq.css';
  * the visible categories.
  */
 
-const CATEGORY_PILLS = [
-  { id: 'all', label: 'All topics' },
-  ...FAQ_CATEGORIES.map((category) => ({ id: category.id, label: category.label })),
-];
-
 export default function FaqPage() {
   const [category, setCategory] = useState('all');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<Set<string>>(() => new Set());
+  // The shipped help content is the fallback while the API answers (and in a
+  // preview with no database). Once it does, the administrator's categories and
+  // questions replace it.
+  const [categories, setCategories] = useState<FaqCategory[]>(FAQ_CATEGORIES);
 
   useEffect(() => {
     document.title = 'Help & FAQ | EduReach Hub';
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    void fetchFaqs()
+      .then((rows) => {
+        if (!active) return;
+        const mapped: FaqCategory[] = rows
+          .filter((row) => (row.questions?.length || 0) > 0)
+          .map((row) => ({
+            id: row.id,
+            label: row.label,
+            description: row.description,
+            questions: (row.questions || []).map((question) => ({
+              id: question.id,
+              question: question.question,
+              answer: question.answer,
+            })),
+          }));
+        if (mapped.length) {
+          setCategories(mapped);
+          setCategory((current) => (current === 'all' || mapped.some((entry) => entry.id === current) ? current : 'all'));
+        }
+      })
+      .catch(() => {
+        // The static copy is already on screen; a failed refresh must not empty it.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const categoryPills = useMemo(
+    () => [{ id: 'all', label: 'All topics' }, ...categories.map((entry) => ({ id: entry.id, label: entry.label }))],
+    [categories],
+  );
+
   const visibleCategories = useMemo(() => {
-    return FAQ_CATEGORIES
+    return categories
       .filter((entry) => category === 'all' || entry.id === category)
       .map((entry) => ({
         ...entry,
         questions: entry.questions.filter((question) => matchesSearch([faqSearchText(entry, question)], query)),
       }))
       .filter((entry) => entry.questions.length > 0);
-  }, [category, query]);
+  }, [category, query, categories]);
 
   const total = visibleCategories.reduce((sum, entry) => sum + entry.questions.length, 0);
 
@@ -85,7 +120,7 @@ export default function FaqPage() {
               </span>
             </label>
             <FilterPills
-              options={CATEGORY_PILLS}
+              options={categoryPills}
               active={category}
               onChange={setCategory}
               ariaLabel="Filter help by topic"
