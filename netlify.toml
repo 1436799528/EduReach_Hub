@@ -1,5 +1,14 @@
 # EduReach production target (see docs/DEPLOYMENT_DECISION.md).
 #
+# SECRET SCANNING STAYS ENABLED ON THIS SITE.
+# Never set SECRETS_SCAN_ENABLED=false, never safelist a detected value, and
+# never exclude a directory to make a deploy pass. The scan only fires when a real
+# configured value appears in repository content or build output, so the fix is
+# always in the repository: replace the value with a placeholder, or rotate and
+# remove it. A variable that is genuinely public but flagged secret is
+# re-classified under a new name (docs/NETLIFY_PRODUCTION_SETUP.md section 3,
+# EDUREACH_PUBLIC_SUPABASE_*). See SECURITY.md.
+#
 # The repository previously described this file and netlify/functions/api.ts
 # without containing either: Netlify had no build command or publish directory,
 # every deploy failed in ~25 seconds, and the live site stayed on an October

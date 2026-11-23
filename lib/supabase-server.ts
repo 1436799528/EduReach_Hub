@@ -13,7 +13,7 @@
  * or a misleading 400.
  */
 import { createClient } from '@supabase/supabase-js';
-import { getServerSupabaseKey } from './supabase-config';
+import { getServerSupabaseKey, getServerSupabaseUrl } from './supabase-config';
 
 export const SUPABASE_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -39,7 +39,7 @@ let cached: { url: string; key: string; client: ReturnType<typeof buildServerCli
 
 /** The shared service-role client, or null when Supabase is not configured. */
 export function getServerSupabaseClient() {
-  const url = process.env.VITE_SUPABASE_URL;
+  const url = getServerSupabaseUrl();
   const key = getServerSupabaseKey();
   if (!url || !key) return null;
   if (!cached || cached.url !== url || cached.key !== key) {

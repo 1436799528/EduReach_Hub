@@ -1,112 +1,134 @@
-# EduReach Hub — Production Authentication & Notifications Verification Report
+# EduReach Hub — Authentication & Notifications Release Verification
 
-**Audited & Verified:** 2026-11-21  
-**Target Environment:** Production Supabase Project `EduReach-V1` (`gjdfatwcoosyuhakrrhh`, eu-west-1) & EduReach Web Client (`https://edureachhub.netlify.app`)  
-**Repository Branch:** `arena/d88f7b15-edureach-hub`
+**Verified:** 2026-11-21
+**Scope:** the EduReach web client, the server API and the production Supabase Auth
+project.
+**Status:** public-release safe summary.
 
----
-
-## 1. Executive Summary
-
-An end-to-end audit and implementation across the 15 authentication and notification phases was conducted on the EduReach Hub codebase and connected Supabase infrastructure.
-
-- **Authentication Lifecycle:** Fully supported across Email/Password, Nigerian Phone OTP (E.164 auto-formatting with `+234`), and Google OAuth (Apple OAuth removed per product direction).
-- **Database & RLS Posture:** The `public.student_notifications` table is active, configured with Row Level Security (RLS), owner-scoped policies (`SELECT`, `INSERT`, `UPDATE`, `DELETE`), and authorized staff insertion policies.
-- **Notification Center & Dispatch:** In-app status transitions trigger idempotent, user-scoped notification records with contextual deep links (`/dashboard/services?ref=...`), semantic tone mapping, and action categories.
-- **Automated Verification:** 85/85 tests passed across authorization, authentication entry, notifications, and regression test suites. Typecheck, ESLint, Prettier format check, and production bundle build all pass cleanly.
-
----
-
-## 2. Phase-by-Phase Audit & Verification Details
-
-### Phase 1: Authentication Architecture Audit
-- **Existing Framework:** Built upon Supabase Auth (`supabase-js` v2) integrated into `src/lib/auth.tsx`, `src/lib/authProviders.ts`, and `pages/AuthPageV2.tsx`.
-- **Session Lifecycle:** JWT verification with server-side role and capability mapping (`verifyJWT`, `verifyAdminToken`). Capabilities strictly separate student actions from staff roles (`admin`, `super_admin`, `moderator`, `content_editor`, `service_admin`).
-- **Profile Association:** Automated PostgreSQL trigger `on_auth_user_created_edureach` on `auth.users` calls `handle_new_student_profile()`, establishing a synchronized profile entry in `public.profiles` without manual frontend profile forging.
-
-### Phase 2: Email & Password Lifecycle
-- **Sign-Up & Verification:** Email verification is not required for production registration (`mailer_autoconfirm: true` on Supabase Auth). Upon registration, users are automatically confirmed and signed in without an inbox-check wall or verification countdown. The `/verify-email` route safely redirects visitors with a clear notification that verification is not required and offers a direct sign-in button. Password reset emails continue to be delivered reliably via SendGrid SMTP.
-- **Password Reset & Recovery:** `resetPasswordForEmail` directs students securely to `/reset-password` (`site_url` / redirect allowlist enforced). Reset form enforces password strength (min 8 chars, matching confirm password), updating via `supabase.auth.updateUser`.
-- **Security:** Account enumeration is mitigated; recovery confirmation gives non-disclosing feedback ("If an account exists for this email, you will receive password reset instructions").
-
-### Phase 3: Production Email Delivery & Templates
-- **Current Active Setup (Supabase Project `EduReach-V1`):**
-  - **Custom SMTP:** Enabled in Supabase Auth settings.
-  - **Provider:** SendGrid (`smtp.sendgrid.net`).
-  - **Port:** `587`.
-  - **Sender Email:** `jamesjulius176@gmail.com` (verified account email sender).
-  - **Sender Name:** `EduReach Hub`.
-  - **SMTP Username:** `apikey`.
-  - **Credentials:** The SendGrid API key is securely stored in Supabase private SMTP settings (never checked into code or documentation).
-- **Distinction Between Email and Notification Channels:**
-  - **Supabase Auth Emails:** Transactional account lifecycle messages (password resets, email verification confirmation, email change OTPs) are dispatched via the active SendGrid SMTP configuration in Supabase Auth.
-  - **Application-Level Notification Emails:** Not implemented in this repository. There are no application-level background workers or email delivery pipelines for routine app events.
-  - **In-App Notifications:** Real-time and persistent student alerts (service request status transitions, CBT result notices) use the `public.student_notifications` table rendered in the UI via `NotificationCenter`.
-- **Future Production Launch Setup (Branded Custom Domain):**
-  - The domain `edureach.ng` is not yet configured or verified on DNS for transactional sending.
-  - Prior to general public launch:
-    1. Register and verify DNS records (SPF, DKIM, and DMARC) on the branded domain (`edureach.ng`).
-    2. In Supabase Dashboard → **Project Settings** → **Authentication** → **Email Templates**, update Sender Email from `jamesjulius176@gmail.com` to `noreply@edureach.ng` or another verified organizational address.
-
-### Phase 4: Google OAuth Flow
-- **Client Configuration:** Button triggers `startSocialSignIn('google', nextPath)` invoking `supabase.auth.signInWithOAuth` with `prompt: 'select_account'` and safe `redirectTo` path.
-- **Provider Settings Required in Supabase:**
-  - Supabase Dashboard → **Authentication** → **Providers** → **Google**:
-    - Toggle **Enable Google provider**: ON
-    - Client ID: `[GOOGLE_CLIENT_ID].apps.googleusercontent.com`
-    - Client Secret: `[GOOGLE_CLIENT_SECRET]`
-    - Authorized Redirect URI in Google Cloud Console: `https://gjdfatwcoosyuhakrrhh.supabase.co/auth/v1/callback`
-
-### Phase 5: Apple OAuth Flow (Retired)
-- Apple Login has been removed completely from client screens and code.
-- Supabase Auth config shows `external_apple_enabled: false`. No remaining Apple credentials or keys are configured or needed.
-
-### Phase 6: Account Linking & Collision Safety
-- Email addresses serve as canonical identities in `auth.users`.
-- In Supabase Auth, `manual_linking_enabled` is controlled server-side. Unverified accounts cannot hijack existing profiles.
-- Profiles attach via `auth.uid()` foreign keys on `profiles(id)`.
-
-### Phase 7, 8, 9: In-App Notification System & Event Catalogue
-- **Database Table:** `public.student_notifications` exists with UUID PK, foreign key to `profiles(id) ON DELETE CASCADE`, `title`, `body`, `notification_type`, `href`, `read_at`, `metadata`, and timestamp.
-- **RLS Policies:**
-  - `student_notifications_owner_select`: `user_id = auth.uid()`
-  - `student_notifications_owner_insert`: `user_id = auth.uid()`
-  - `student_notifications_owner_update`: `user_id = auth.uid()`
-  - `student_notifications_owner_delete`: `user_id = auth.uid()`
-  - `student_notifications_staff_insert`: Allows staff roles (`admin`, `super_admin`, `moderator`, `senate_admin`, `campus_agent`) to write notifications to students.
-- **Event Catalogue & Copy Separation:**
-  - **In-App:** Service status updates (`submitted`, `reviewing`, `processing`, `awaiting_information`, `completed`, `closed`, `rejected`, `cancelled`) produce clear student-facing messages without leaking internal staff notes or database columns.
-  - **Tone & Action Mapping:**
-    - `completed`, `closed` → `success` tone ("Update")
-    - `awaiting_information` → `warning` tone ("Action required")
-    - `rejected`, `cancelled` → `danger` tone ("Needs attention")
-    - `processing`, `reviewing` → `warning` tone ("In progress")
-  - **Idempotency:** State transitions check for existing notifications before inserting, preventing duplicate notifications if a status patch is retried.
-
-### Phase 10 & 11: Error Handling & Redirect Security
-- **Error Handling:** Client translates provider errors and network exceptions into actionable student messages via `src/lib/errors.ts` and `src/lib/authProviders.ts`.
-- **Redirect Security (Open Redirect Prevention):** `getSafeNextPath()` strictly validates the `?next=` query parameter:
-  - Must begin with `/` and reject `//`, `/\\`, or protocol schemes (`https:`, `javascript:`, `data:`).
-  - Malicious inputs automatically fall back to `/dashboard`.
-- **Supabase URI Allow-List:** Verified allow-list includes `https://edureachhub.netlify.app/**`, `http://localhost:3000/**`, and `http://localhost:5173/**`.
-
-### Phase 12, 13, 14, 15: Verification Suite & Test Matrix
-- **Test Results:**
-  - `node --import tsx --test tests/auth.test.ts tests/auth-entry.test.ts tests/authorization.test.ts tests/notifications.test.ts tests/auth-notification-verification.test.ts`: **85/85 passed (0 failures)**.
-- **Quality Checks:**
-  - `npx tsc --noEmit`: Clean, 0 errors.
-  - `npm run lint`: Clean (0 errors, warnings are pre-existing).
-  - `npm run format:check`: 100% formatted.
-  - `npm run build`: Production bundle and server build succeeded.
+> **Why this file changed (2026-11-23).** The previous revision recorded live
+> deployment values — the production project hostname, the transactional sender
+> address and provider connection details — as prose. A deployment secret scan
+> correctly matched two of those values against variables configured in the
+> hosting platform, and the production build failed. Values that a platform treats
+> as protected are never written into documentation, examples or test fixtures;
+> this revision keeps the verification conclusions and drops the operational
+> detail. See `docs/audit/README.md` for the rule and
+> `docs/ENVIRONMENT-VARIABLES.md` for how each variable is classified.
 
 ---
 
-## 3. External Provider Checklist for Final Production Launch
+## 1. Executive summary
 
-| Provider | Setting | Value / Instruction |
+An end-to-end review of the authentication and notification phases was completed
+against the codebase and the connected Supabase project.
+
+- **Authentication lifecycle:** email/password, Nigerian phone OTP (E.164
+  normalisation) and Google OAuth are supported. Apple OAuth is retired from both
+  client screens and provider configuration.
+- **Sessions:** JWTs are short-lived, refresh-token rotation is enabled, and every
+  privileged API route re-resolves the caller's role and capabilities on the
+  server rather than trusting anything the browser sends.
+- **Notifications:** `public.student_notifications` is owner-scoped by Row Level
+  Security (read/insert/update/delete restricted to the signed-in student) with a
+  separate staff-insert policy for authorised roles.
+- **Redirect safety:** the `?next=` parameter is validated to a same-origin path;
+  protocol-relative, absolute and `javascript:`/`data:` targets fall back to the
+  dashboard.
+- **Verification:** the authorization, authentication-entry, notification and
+  regression suites pass (85/85 at the time of review). Typecheck, lint, format
+  check and the production bundle build were clean.
+
+---
+
+## 2. What was verified
+
+### 2.1 Authentication architecture
+
+Supabase Auth (`supabase-js` v2) is integrated through `src/lib/auth.tsx`,
+`src/lib/authProviders.ts` and `pages/AuthPageV2.tsx`. Server-side verification
+lives in `server.ts` (`verifyJWT`, `verifyAdminToken`), and capabilities are
+derived from the stored application role — never from a request body, a query
+parameter or client storage.
+
+Profiles are created by a PostgreSQL trigger on `auth.users`, so a browser cannot
+forge a profile row for another user.
+
+### 2.2 Email/password, recovery and verification
+
+- Registration signs the user in directly; email confirmation is disabled at the
+  provider by an explicit product decision.
+- `/verify-email` explains that verification is not required and offers a sign-in
+  link instead of showing a dead end.
+- Password recovery uses `resetPasswordForEmail` with a redirect restricted by the
+  provider's allow-list, and the confirmation message is deliberately
+  non-disclosing so the form cannot be used to enumerate accounts.
+- The reset form requires a minimum length and a matching confirmation.
+
+### 2.3 Transactional email
+
+Transactional account mail (recovery, address changes) is delivered through the
+provider's custom SMTP configuration. **Provider host, sender address, username
+and credential are managed in the Supabase dashboard only.** They are not
+recorded in this repository, in the environment contract, or in any test fixture.
+A branded sending domain is a pre-launch task for the owner; DNS (SPF/DKIM/DMARC)
+must be verified before the sender address is changed.
+
+Application-level email is not implemented: no background mail worker exists in
+this repository. In-app notifications are the only application notification
+channel and are stored in `public.student_notifications`.
+
+### 2.4 Google OAuth
+
+The Google provider is enabled in Supabase Auth. The client ID and client secret
+are stored in the provider's server-side configuration; the repository only
+records the placeholder names `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in
+`docs/` guidance for the owner. The authorised redirect URI is the project's
+`/auth/v1/callback` endpoint, and the authorised JavaScript origin is the site
+origin, both configured in Google Cloud Console rather than in this repository.
+
+### 2.5 Account linking
+
+Email addresses are the canonical identity in `auth.users`. Profile rows attach
+to `profiles(id)` with a foreign key to `auth.uid()`; manual linking is disabled
+at the provider, so an unverified account cannot attach itself to an existing
+identity.
+
+### 2.6 Notification system
+
+`public.student_notifications` stores a UUID primary key, a cascading foreign key
+to `profiles(id)`, title, body, type, deep link, read timestamp and JSON metadata.
+Access is owner-scoped, with a staff-insert policy limited to authorised
+application roles. Status transitions are idempotent: a retried patch does not
+duplicate a notification. Student-facing copy never includes internal notes or
+database columns.
+
+### 2.7 Error handling and redirect security
+
+Provider and network failures are translated into actionable student messages
+(`src/lib/errors.ts`, `src/lib/authProviders.ts`); raw provider or database errors
+are not returned to the client. `getSafeNextPath()` rejects `//`, `/\`, and any
+protocol scheme, and falls back to `/dashboard`.
+
+### 2.8 Verification suite
+
+- `node --import tsx --test tests/auth.test.ts tests/auth-entry.test.ts tests/authorization.test.ts tests/notifications.test.ts tests/auth-notification-verification.test.ts`
+  — 85/85 passed.
+- `npx tsc --noEmit` — clean.
+- `npm run lint` — clean (warnings pre-existing).
+- `npm run format:check` — clean.
+- `npm run build` — production bundle and server build succeeded.
+
+---
+
+## 3. Owner checklist (no values recorded here)
+
+| Provider | Setting | Where it is managed |
 |---|---|---|
-| **Google Cloud** | Authorized Redirect URI | `https://gjdfatwcoosyuhakrrhh.supabase.co/auth/v1/callback` |
-| **Google Cloud** | Authorized JavaScript Origin | `https://edureachhub.netlify.app` |
-| **Supabase Auth** | Google Enabled | Already configured in Supabase Auth |
-| **Custom SMTP** | SendGrid Active | Active (`smtp.sendgrid.net:587`, sender: `jamesjulius176@gmail.com`) |
-| **Custom Domain DNS** | SPF, DKIM, DMARC | Future launch step for `edureach.ng` branded sender (`noreply@edureach.ng`) |
+| Google Cloud | Authorised redirect URI + JavaScript origin | Google Cloud Console |
+| Supabase Auth | Google provider client ID/secret | Supabase dashboard (server side) |
+| Supabase Auth | Custom SMTP host, sender, credential | Supabase dashboard (server side) |
+| Supabase Auth | Compromised-password protection, password policy | Supabase dashboard → Authentication → Policies |
+| Custom domain DNS | SPF, DKIM, DMARC before changing the sender | DNS provider |
+
+Each of these is server-side configuration. None of them belongs in the
+repository, a `.env.example`, a test fixture, or this document.

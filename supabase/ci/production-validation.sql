@@ -266,7 +266,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261121150000', 'cbt_notification_unique_idx', '20261121150000_cbt_notification_unique_idx.sql', 'unique'),
     ('20261122120000', 'editorial_lifecycle_reviews_admin_rpcs', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql', 'unique'),
     ('20261122121000', 'seed_verified_scholarships', '20261122121000_seed_verified_scholarships.sql', 'unique'),
-    ('20261123120000', 'homepage_engagement', '20261123120000_homepage_engagement.sql', 'unique')
+    ('20261123120000', 'homepage_engagement', '20261123120000_homepage_engagement.sql', 'unique'),
+    ('20261123150000', 'security_boundary_hardening', '20261123150000_security_boundary_hardening.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -392,6 +393,7 @@ with expected(version, migration) as (
     ,('20261122120000', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql')
     ,('20261122121000', '20261122121000_seed_verified_scholarships.sql')
     ,('20261123120000', '20261123120000_homepage_engagement.sql')
+    ,('20261123150000', '20261123150000_security_boundary_hardening.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -916,3 +918,32 @@ select
   'info' as result,
   'content integrity report' as check_name,
   jsonb_pretty(public.content_integrity_report()) as detail;
+
+-- 11. Function execution surface (2026-11-23 security audit) -------------------
+-- Read-only. The Security Advisor reports "SECURITY DEFINER function executable
+-- by anon" and "mutable search path" as separate, easy-to-ignore warnings; this
+-- turns them into a pass/fail an operator can see next to the rest of the
+-- deployment. It is satisfied by
+-- `supabase/migrations/20261123150000_security_boundary_hardening.sql`, which is
+-- a grants-only migration: applying it cannot change what a student can read.
+with offenders as (
+  select 'SECURITY DEFINER executable by anon: public.' || p.proname as finding
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.prokind = 'f'
+    and p.prosecdef
+    and coalesce(has_function_privilege('anon', p.oid, 'EXECUTE'), false)
+  union all
+  select 'function with no pinned search_path: public.' || p.proname
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.prokind = 'f'
+    and p.proconfig is null
+)
+select
+  case when count(*) = 0 then 'pass' else 'fail' end as result,
+  'no anonymous SECURITY DEFINER execution and no unpinned search_path' as check_name,
+  coalesce(string_agg(finding, '; '), 'anonymous execution and search paths are clean') as detail
+from offenders;

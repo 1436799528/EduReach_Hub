@@ -1,0 +1,102 @@
+# Security checks.
+#
+# The gate that answers three questions the quality gate does not:
+#
+#   1. Is a credential in the repository, in any commit, not covered by a narrow
+#      documented allowlist?  (`npm run security:scan -- --history`)
+#   2. Does the published bundle contain a credential pattern, a server-only value
+#      or a file that must never be served?  (`npm run build`, which runs
+#      `scripts/dist-secret-scan.ts`)
+#   3. Does a dependency have a known high-severity vulnerability?  (`npm audit`)
+#
+# It fails rather than warns. There is deliberately no `continue-on-error`, no
+# `SECRETS_SCAN_ENABLED=false` equivalent, and no directory exclusion anywhere in
+# this file: a red job here is a finding, not noise.
+#
+# About Gitleaks/TruffleHog: neither binary is available in every environment this
+# repository builds in, and a check that depends on a tool a contributor may not
+# have is a check that gets skipped. `scripts/security-scan.ts` is dependency-free,
+# unit-tested against credential formats, and reads the same patterns as the build
+# guard, so it runs everywhere. Contributors who have Gitleaks installed should run
+# it as well (`gitleaks detect --redact`); the two do not conflict.
+name: Security checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, so a credential added to a dependency or a new advisory is found even
+    # in a week with no commits.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: Secrets, environment contract and dependencies
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the scan reads every line ever added, which is the only
+          # way to notice a credential that was removed from the current tree but
+          # is still published in a commit.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Repository scan (tracked files, environment contract)
+        run: npm run security:scan
+
+      - name: History scan (every commit ever made)
+        run: npm run security:scan -- --history
+
+      - name: Dependency audit (high and above)
+        run: npm audit --audit-level=high
+
+      - name: Security boundary tests
+        run: node --import tsx --test tests/security-boundary.test.ts
+
+  artefact-scan:
+    name: Published artefacts and client configuration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # A CI checkout has no Supabase project configured; the build guard accepts
+      # the honest unconfigured shell explicitly rather than by accident. This
+      # never bypasses the privileged-value refusal.
+      EDUREACH_ALLOW_UNCONFIGURED_CLIENT: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (runs the client guard and the artefact scan)
+        run: npm run build
+
+      - name: Re-scan the published directory with the full report
+        run: npm run security:dist -- --verbose
+
+      - name: Typecheck
+        run: npm run typecheck

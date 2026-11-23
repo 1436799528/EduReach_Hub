@@ -26,3 +26,10 @@ supabase/.branches/
 .vercel/
 .vite/
 *.tsbuildinfo
+
+# Internal security work. Audit reports, environment inventories and incident
+# notes describe the live system's weaknesses and must never be published with
+# the code. The public repository carries SECURITY.md and the hardening tooling;
+# the findings live here, outside git, and are shared with the owner directly.
+# See SECURITY.md.
+/internal/
