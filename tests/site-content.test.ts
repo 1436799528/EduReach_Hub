@@ -263,9 +263,11 @@ test('every policy page is a real route, not a footer link to nowhere', () => {
   // The accessibility statement, the disclaimer and the refund policy are
   // published documents a visitor looks for by name. They were in the sitemap
   // (or, for refunds, nowhere) and reachable from no page at all: an orphan is
-  // a page only the author knows about.
-  for (const href of ['/accessibility', '/disclaimer', '/refunds']) {
-    assert.ok(footer.includes(`href: '${href}'`), `footer links ${href}`);
+  // a page only the author knows about. The footer is deliberately a compact
+  // bar with a height budget, so the policies link to each other instead.
+  const legal = read('pages/LegalPage.tsx');
+  for (const href of ['/privacy', '/terms', '/cookies', '/refunds', '/accessibility', '/disclaimer']) {
+    assert.ok(legal.includes(`href: '${href}'`), `the policy pages link ${href}`);
   }
   for (const href of ['/about', '/privacy', '/terms', '/cookies', '/contact']) {
     assert.ok(footer.includes(`href: '${href}'`) || footer.includes(`href="${href}"`), `footer links ${href}`);

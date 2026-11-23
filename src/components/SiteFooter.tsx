@@ -39,11 +39,8 @@ const COMPANY: FooterLink[] = [
 
 const POLICIES: FooterLink[] = [
   { href: '/terms', label: 'Terms' },
-  { href: '/refunds', label: 'Refunds' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/cookies', label: 'Cookies' },
-  { href: '/accessibility', label: 'Accessibility' },
-  { href: '/disclaimer', label: 'Disclaimer' },
 ];
 
 export default function SiteFooter() {

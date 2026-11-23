@@ -83,8 +83,12 @@ heading because it is a redirect shim that forwards to the setup wizard.
 2. **`tests/link-audit.test.ts`** — 7 cases, including that the checker actually
    fails on a bad path (a checker that only ever passes is a lie) and that every
    link shape in the codebase is detected.
-3. **Footer:** Accessibility, Disclaimer and Refunds added to the existing
-   compact policy row.
+3. **`LegalPage`:** every policy page now ends with an "Other policies" card
+   linking the other six (privacy, terms, cookies, refunds, accessibility,
+   disclaimer, contact). The footer was the obvious place and is the wrong one:
+   it is a compact bar under a 220 px height budget asserted by
+   `tests/e2e/site.spec.ts`, and three more links push it past that. A reader
+   looking for the next policy is already on a policy page.
 4. **Sitemap:** `/refunds` added to the policy entries; `/accessibility` and
    `/disclaimer` were already there.
 5. **Tests extended** so the three links and the sitemap entry cannot silently
@@ -184,7 +188,7 @@ All noindex, all behind `ProtectedRoute` except the auth screens.
 |---|---|---|---|---|
 | `/about` `/contact` `/faq` `/reviews` | index | full | 2–10 | |
 | `/privacy` `/terms` `/cookies` | index | full | 4–6 | |
-| `/accessibility` `/disclaimer` `/refunds` | index | full / — | 1 | **F1 — linked for the first time here; `/refunds` added to the sitemap** |
+| `/accessibility` `/disclaimer` `/refunds` | index | full / — | 1 | **F1 — linked for the first time here, from every policy page; `/refunds` added to the sitemap** |
 | `/privacy-policy` `/terms-of-service` `/cookie-policy` `/contact-us` `/help` `/refund-policy` | alias | — | 0 | all canonicalise to the page above |
 | `/support` | noindex | smoke | 0 | placeholder |
 

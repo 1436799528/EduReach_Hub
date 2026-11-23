@@ -15,6 +15,26 @@ import { isPolicySlug, type PolicySlug } from '../src/lib/siteContentModel';
  * never do is imply an approval nobody gave.
  */
 
+/**
+ * The published policies link to each other.
+ *
+ * The footer is one compact bar under a height budget, so it holds the four
+ * destinations most visitors look for and nothing else. That left three real
+ * documents — the accessibility statement, the disclaimer and the refund policy
+ * — with no inbound link at all: present in the sitemap and reachable by nobody.
+ * A policy page is exactly where someone reads one policy and looks for the
+ * next, so the cross-links live here, in the same card the body already uses.
+ */
+const RELATED_POLICIES: Array<{ href: string; label: string }> = [
+  { href: '/privacy', label: 'Privacy notice' },
+  { href: '/terms', label: 'Terms of use' },
+  { href: '/cookies', label: 'Cookies and storage' },
+  { href: '/refunds', label: 'Refund policy' },
+  { href: '/accessibility', label: 'Accessibility statement' },
+  { href: '/disclaimer', label: 'Disclaimer' },
+  { href: '/contact', label: 'Contact us' },
+];
+
 function formatDate(value: string | null): string {
   if (!value) return '';
   try {
@@ -127,6 +147,22 @@ export default function LegalPage({ slug }: { slug: string }) {
                   </div>
                 ),
               )}
+
+              <nav aria-labelledby="legal-related-policies">
+                <section className="er-legal-card">
+                  <h2 id="legal-related-policies">Other policies</h2>
+                  <div className="er-legal-body">
+                    <p>
+                      {RELATED_POLICIES.filter((entry) => entry.href !== `/${slug}`).map((entry, index, all) => (
+                        <span key={entry.href}>
+                          <a href={entry.href}>{entry.label}</a>
+                          {index < all.length - 1 ? ' · ' : ''}
+                        </span>
+                      ))}
+                    </p>
+                  </div>
+                </section>
+              </nav>
             </article>
           )}
         </div>
