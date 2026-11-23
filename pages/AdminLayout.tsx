@@ -351,7 +351,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (checking) return <div className="admin-loading-screen">Verifying administrative access…</div>;
   if (!session) {
     return (
-      <div className="admin-access-screen">
+      // A refusal is still a page: it needs the landmark a screen reader jumps
+      // to, so the shell it replaces is not the only thing with a <main>.
+      <main className="admin-access-screen" id="main-content">
         <div className="admin-access-card">
           <BrandLogo height={52} radius="50%" />
           <h1>Administrator access required</h1>
@@ -362,7 +364,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           <p className="admin-access-note">Access is verified against the live backend on every visit.</p>
         </div>
-      </div>
+      </main>
     );
   }
 
