@@ -1,0 +1,57 @@
+# Lighthouse against a real deployment.
+#
+# The pull-request gate already enforces a byte budget per route and
+# LCP/CLS/TBT on a throttled mobile profile. Those catch regressions the author
+# caused. This catches what they cannot see: the SEO and best-practice audits,
+# and the score a person compares over months.
+#
+# Deliberately not in the pull-request path. Lighthouse measures the network as
+# much as the code, so a red gate for a slow CDN minute would teach everyone to
+# ignore the gate. Weekly plus on demand, with the report kept.
+#
+#   Schedule: Mondays 06:30 UTC, after the external-link check.
+#   Manual:   Actions → Lighthouse → Run workflow, with an optional URL.
+name: Lighthouse
+
+on:
+  schedule:
+    - cron: '30 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Deployment URL to audit
+        required: false
+        default: https://edureachhub.netlify.app
+
+concurrency:
+  group: lighthouse
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for Lighthouse
+        run: npx playwright install --with-deps chromium
+      - name: Run Lighthouse
+        env:
+          LIGHTHOUSE_URL: ${{ inputs.url || 'https://edureachhub.netlify.app' }}
+        run: npm run lighthouse -- "$LIGHTHOUSE_URL"
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouse/
+          if-no-files-found: warn
+          retention-days: 90
