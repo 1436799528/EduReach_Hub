@@ -48,7 +48,10 @@
     "security:check": "tsx scripts/security-scan.ts && tsx scripts/security-scan.ts --history",
     "routes:generate": "tsx scripts/generate-route-paths.ts",
     "routes:check": "tsx scripts/generate-route-paths.ts --check",
-    "smoke:pages": "tsx scripts/smoke-check.ts --pages"
+    "smoke:pages": "tsx scripts/smoke-check.ts --pages",
+    "visual:baseline": "playwright test tests/e2e/visual.spec.ts --update-snapshots --project=desktop-chromium",
+    "visual:check": "playwright test tests/e2e/visual.spec.ts --project=desktop-chromium",
+    "test:e2e:webkit": "playwright test --project=desktop-webkit"
   },
   "dependencies": {
     "@sentry/node": "11.15.0",
