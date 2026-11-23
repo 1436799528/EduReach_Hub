@@ -38,7 +38,7 @@ export interface SeoMeta {
 }
 
 /** Alias → canonical. One canonical URL per resource. */
-const CANONICAL_ALIASES: Record<string, string> = {
+export const CANONICAL_ALIASES: Record<string, string> = {
   '/signin': '/login',
   '/signup': '/register',
   '/calculator': '/screening-calculator',
@@ -55,6 +55,11 @@ const CANONICAL_ALIASES: Record<string, string> = {
   '/terms-of-service': '/terms',
   '/cookie-policy': '/cookies',
   '/contact-us': '/contact',
+  // `/help` renders the help centre and `/refund-policy` renders the refund
+  // policy: both were indexable as separate URLs, so the same page competed
+  // with itself. The sitemap advertises `/faq` and `/refunds`.
+  '/help': '/faq',
+  '/refund-policy': '/refunds',
 };
 
 const AUTH_PATHS = new Set([

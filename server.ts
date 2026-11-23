@@ -19,6 +19,7 @@ import { notifyCbtResultReady } from './src/server/notifications';
 import { registerRestrictedBankAdminRoutes } from './src/server/restrictedBanks/routes';
 import { registerInstitutionIntelligenceRoutes } from './src/server/institutionIntelligence';
 import { isProvenanceGuardRefusal, questionProvenanceRefusal } from './src/server/questionProvenance';
+import { isAppRoute } from './src/app/routePaths.generated';
 import { SERVICE_REQUEST_TRANSITIONS } from './src/lib/serviceRequestTransitions';
 import { resolveAppRole, type Capability } from './src/lib/capabilities';
 import { mockCombinationError, previewPlan } from './src/lib/cbt-config';
@@ -7688,9 +7689,23 @@ async function startServer() {
     );
     // Middleware does not decode wildcard params, so malformed percent-encoded
     // URLs can reach the frontend's safe not-found page rather than Express's error page.
+    //
+    // The status is the point. Every unknown path used to answer 200 with a
+    // "Page Not Found" screen on it — a soft 404 that a crawler cannot tell from
+    // a real page, and one that got `/sitemap.xml` and `/robots.txt`
+    // special-cased rather than fixed. The route table is generated from
+    // `src/app/routes.tsx` (`npm run routes:generate`), so it cannot drift from
+    // the router; a path the router has no case for is a 404, served the shell.
     app.use((req, res, next) => {
       if (req.method !== 'GET' && req.method !== 'HEAD') return next();
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      let pathname = req.path;
+      try {
+        pathname = decodeURIComponent(req.path);
+      } catch {
+        // A malformed escape is not a route either; the shell explains it.
+      }
+      if (!isAppRoute(pathname)) res.status(404);
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

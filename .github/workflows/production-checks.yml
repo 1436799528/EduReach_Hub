@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       # Lint and format are also part of `npm run ci`; running them first gives a
       # named failure in seconds instead of a red job 15 minutes into the gate.
@@ -53,7 +53,7 @@ jobs:
         run: npm test
 
       - name: Schema audit
-        run: npm run schema:audit && npm run migrations:checklist
+        run: npm run schema:audit && npm run migrations:checklist && npm run routes:check
 
       - name: Production build
         run: npm run build
@@ -66,6 +66,11 @@ jobs:
 
       - name: End-to-end tests
         run: npm run test:e2e
+
+      # Safari's engine, for the audience that browses on iOS. A real gate, not
+      # an advisory one: this repository does not keep checks that cannot fail.
+      - name: End-to-end tests (WebKit)
+        run: npm run test:e2e:webkit
 
       - name: End-to-end performance
         run: npm run e2e:perf

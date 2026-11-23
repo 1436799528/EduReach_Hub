@@ -4,12 +4,88 @@
  * out the accordion, its focus ring and the search field. No new palette.
  */
 
-.er-faq-toolbar {
-  margin: 0 0 14px;
-  padding: 14px;
+/* Two columns: search and topics on the left, questions on the right. The
+ * topics stay in view while a long answer scrolls, which is the whole point of
+ * the layout — a student switches topic without scrolling back to the top. */
+.er-faq-layout {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.er-faq-aside {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 14px;
+}
+
+.er-faq-aside .er-faq-search {
+  margin-bottom: 0;
+}
+
+.er-faq-main {
+  min-width: 0;
+}
+
+.er-faq-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
   border: 1px solid var(--er-border, #e2e8f0);
   border-radius: 12px;
+  background: var(--er-surface, #fff);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.er-faq-topic {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--er-text-secondary, #475467);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 560;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.er-faq-topic:hover {
   background: var(--er-surface-soft, #f8fafc);
+  color: var(--er-text-primary, #0f172a);
+}
+
+.er-faq-topic.is-active {
+  background: var(--er-primary-soft, #eef2ff);
+  color: var(--er-primary, #1c4f8f);
+  font-weight: 620;
+}
+
+.er-faq-topic:focus-visible {
+  outline: 3px solid var(--er-primary, #1c4f8f);
+  outline-offset: -2px;
+}
+
+.er-faq-topic-count {
+  flex: none;
+  color: var(--er-text-muted, #5e6c82);
+  font-size: 11px;
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+}
+
+.er-faq-topic.is-active .er-faq-topic-count {
+  color: inherit;
 }
 
 .er-faq-search {
@@ -176,6 +252,42 @@
 @media (prefers-reduced-motion: reduce) {
   .er-faq-chevron {
     transition: none;
+  }
+}
+
+/* Below the two-column breakpoint the rail becomes a scrolling row of topic
+ * chips above the questions: the same control, ordered the same way, without a
+ * sidebar that would push the first question off a phone screen. */
+@media (max-width: 900px) {
+  .er-faq-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .er-faq-aside {
+    position: static;
+  }
+
+  .er-faq-topics {
+    flex-direction: row;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .er-faq-topic {
+    flex: none;
+    width: auto;
+    white-space: nowrap;
+    border: 1px solid var(--er-border, #e2e8f0);
+    border-radius: 999px;
+  }
+
+  .er-faq-topic.is-active {
+    border-color: var(--er-primary, #1c4f8f);
+  }
+
+  .er-faq-topic-count {
+    display: none;
   }
 }
 

@@ -26,3 +26,8 @@
 
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
+
+# The 404 document is a copy of the shell (scripts/build-404.ts). Cached, it
+# would keep pointing at chunk filenames a later deploy has already replaced.
+/404.html
+  Cache-Control: no-cache, no-store, must-revalidate

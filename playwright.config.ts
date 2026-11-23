@@ -36,6 +36,15 @@ export default defineConfig({
     // runner rather than the page: the same landing route reported 1.7 s alone and
     // 3.5 s while other 4×-throttled pages competed for the cores.
     { name: 'mobile-perf', use: { ...devices['Pixel 7'] }, testMatch: /perf\.spec\.ts/ },
+    // Safari's engine, for the audience that browses on iOS. Advisory for now:
+    // it runs the page-shape specs (rendering, layout, hostile data) rather
+    // than the mocked CBT flows, and the workflow step that runs it does not
+    // gate the merge until it has a stable history.
+    {
+      name: 'desktop-webkit',
+      use: { ...devices['Desktop Safari'] },
+      testMatch: /(route-coverage|layout-invariants)\.spec\.ts/,
+    },
   ],
   webServer: {
     command: 'npm start',
