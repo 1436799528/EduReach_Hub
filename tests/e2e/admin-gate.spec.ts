@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { APP_ROUTE_PATHS } from '../../src/app/routePaths.generated';
 
 /**
@@ -22,6 +22,32 @@ const ADMIN_ROUTES = APP_ROUTE_PATHS.filter((path) => path === '/admin' || path.
 /** The two honest refusals: no session at all, or a session without the role. */
 const REFUSAL = /Administrator access required|Not available for your role/i;
 
+/**
+ * Wait for the refusal, and if it never comes, say what the page was showing.
+ *
+ * A bare "element not found" from a browser test in CI is a day of guessing: no
+ * browser here, no DOM to inspect. This turns the failure into the evidence -
+ * the URL it ended on, the headings that were there, the text, and any uncaught
+ * error - which is what makes the difference between a guess and a fix.
+ */
+async function expectRefusal(page: Page, path: string, pageErrors: string[]): Promise<void> {
+  try {
+    await page.getByRole('heading', { level: 1, name: REFUSAL }).waitFor({ state: 'visible', timeout: 15000 });
+  } catch {
+    const headings = await page.locator('h1, h2').allInnerTexts().catch(() => []);
+    const body = (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 320);
+    throw new Error(
+      [
+        `${path} never showed the administrator refusal.`,
+        `url=${page.url()}`,
+        `headings=${JSON.stringify(headings)}`,
+        `body="${body}"`,
+        `pageErrors=${JSON.stringify(pageErrors)}`,
+      ].join(' '),
+    );
+  }
+}
+
 test('the admin surface has one route per console page', () => {
   // A guard on the guard: if the router stops exposing these, the loop below
   // would pass vacuously.
@@ -40,8 +66,8 @@ for (const path of ADMIN_ROUTES) {
     expect(response?.status(), `${path} must answer 200 with the shell, not a 404`).toBe(200);
 
     // It must end in a refusal, not in a permanent "Verifying…" spinner and not
-    // in the console. Playwright retries until this settles.
-    await expect(page.getByRole('heading', { level: 1, name: REFUSAL })).toBeVisible({ timeout: 15000 });
+    // in the console.
+    await expectRefusal(page, path, pageErrors);
 
     await expect(page.locator('main')).toHaveCount(1);
     await expect(page.locator('h1')).toHaveCount(1);
