@@ -264,6 +264,7 @@ export const ADMIN_ROUTE_CAPABILITIES: ReadonlyArray<{ path: string; capability:
   { path: '/admin/pdf-bank', capability: 'data.read' },
   { path: '/admin/question-imports', capability: 'cbt.manage' },
   { path: '/admin/site', capability: 'site.read' },
+  { path: '/admin/faq', capability: 'site.read' },
 ];
 
 /**

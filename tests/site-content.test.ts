@@ -140,7 +140,17 @@ test('the fallback is the footer the site shipped with, field by field', () => {
   assert.equal(DEFAULT_SITE_CONTENT.settings.brand.name, 'EduReach Hub');
   assert.match(DEFAULT_SITE_CONTENT.settings.footer.about, /JAMB, WAEC, NECO and Post-UTME/);
   assert.equal(DEFAULT_SITE_CONTENT.settings.contact.whatsapp, '2349130134969');
-  assert.deepEqual(DEFAULT_SITE_CONTENT.settings.social.links, [], 'no social account is invented');
+  const defaultLinks = DEFAULT_SITE_CONTENT.settings.social.links;
+  assert.equal(defaultLinks.length, 8, 'every supported network has an icon');
+  assert.deepEqual(
+    defaultLinks.map((link) => link.platform),
+    ['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'whatsapp', 'linkedin', 'telegram'],
+    'the eight supported networks are the defaults',
+  );
+  for (const link of defaultLinks) {
+    assert.equal(link.url, '', `${link.label} has no invented profile URL`);
+    assert.equal(link.handle, '', `${link.label} has no invented handle`);
+  }
 
   const merged = mergeSiteContent(null);
   assert.equal(merged.settings.brand.name, 'EduReach Hub', 'a failed request keeps a complete footer');
@@ -157,14 +167,22 @@ test('only https links survive, and a javascript: URL cannot become an href', ()
   const merged = mergeSiteSettings({
     social: {
       links: [
-        { label: 'Instagram', url: 'https://instagram.com/edureach' },
-        { label: 'Bad', url: 'javascript:alert(1)' },
-        { label: '', url: 'https://example.com' },
-        { label: 'Duplicate', url: 'https://instagram.com/edureach' },
+        { platform: 'instagram', label: 'Instagram', url: 'https://instagram.com/edureach' },
+        { platform: 'x', label: 'Bad', url: 'javascript:alert(1)' },
+        { platform: 'facebook', label: '', url: 'https://example.com' },
+        { platform: 'custom', label: 'Duplicate', url: 'https://instagram.com/edureach' },
       ],
     },
   });
-  assert.deepEqual(merged.social.links, [{ label: 'Instagram', url: 'https://instagram.com/edureach' }]);
+  assert.deepEqual(
+    merged.social.links.map((link) => ({ platform: link.platform, label: link.label, url: link.url })),
+    [
+      { platform: 'instagram', label: 'Instagram', url: 'https://instagram.com/edureach' },
+      // An unsafe URL is dropped, but the enabled icon remains and is not a link.
+      { platform: 'x', label: 'Bad', url: '' },
+    ],
+    'only an https URL becomes a link; a bad URL never does',
+  );
 });
 
 test('a partial or hostile API payload cannot break the footer', () => {
@@ -194,9 +212,25 @@ test('settings validation refuses what the renderer would have to strip', () => 
   assert.equal(validateSettings('brand', { name: 'x' }).ok, false, 'a one-character site name is a mistake');
   assert.equal(validateSettings('contact', { whatsapp: '2349130134969', email: '' }).ok, true);
   assert.equal(validateSettings('contact', { whatsapp: '2349130134969', email: 'nope' }).ok, false);
-  assert.equal(validateSettings('social', { links: [{ label: 'X', url: 'javascript:alert(1)' }] }).ok, false);
-  assert.equal(validateSettings('social', { links: [{ label: 'Twitter', url: 'https://x.com/edureach' }] }).ok, true);
-  assert.equal(validateSettings('social', { links: Array(9).fill({ label: 'X', url: 'https://x.com/e' }) }).ok, false);
+  assert.equal(
+    validateSettings('social', { links: [{ platform: 'x', label: 'X', url: 'javascript:alert(1)' }] }).ok,
+    false,
+    'a non-https URL is refused',
+  );
+  assert.equal(
+    validateSettings('social', { links: [{ platform: 'x', label: 'Twitter', url: 'https://x.com/edureach' }] }).ok,
+    true,
+  );
+  assert.equal(
+    validateSettings('social', { links: [{ platform: 'x', label: 'Twitter', url: '' }] }).ok,
+    true,
+    'an enabled platform may wait for its URL',
+  );
+  assert.equal(
+    validateSettings('social', { links: Array(17).fill({ platform: 'custom', label: 'X', url: 'https://x.com/e' }) }).ok,
+    false,
+    'the list is bounded',
+  );
   assert.equal(validateSettings('unknown', {}).ok, false);
 });
 
@@ -237,8 +271,10 @@ test('the footer is one compact bar with the essential destinations only', () =>
   for (const label of ['About', 'Contact', 'Terms', 'Privacy', 'Cookies', 'Cookie settings']) {
     assert.ok(footer.includes(`label: '${label}'`) || footer.includes(`>${label}<`) || footer.includes(label), `the bar keeps ${label}`);
   }
-  assert.doesNotMatch(footer, /LEARN|EXPLORE|LinkColumn|footer\.about|whatsappHref|contact\.email/,
-    'the old four-column sitemap is gone');
+  assert.doesNotMatch(footer, /LEARN|EXPLORE|LinkColumn|footer\.about/, 'the old four-column sitemap is gone');
+  assert.match(footer, /className="er-footer-contact"/, 'the contact details stay in the compact bar');
+  assert.match(footer, /whatsappHref\(/, 'the WhatsApp link is derived from the stored number');
+  assert.match(footer, /contact\.supportEmail/, 'the support email is editable');
   // Social profiles are a small verified row, never a column of the sitemap.
   const socialRow = /<nav className="er-footer-social"[\s\S]*?<\/nav>/.exec(footer);
   assert.ok(socialRow, 'verified profiles render in one labelled row');
@@ -328,7 +364,17 @@ test('the footer renders a complete, honest footer with no dead links', async ()
     assert.ok(html.includes(`href="${href}"`), `the footer links ${href}`);
   }
   assert.match(html, /er-footer-bar/, 'the footer is a single bar, not a column grid');
-  assert.doesNotMatch(html, /instagram|facebook|twitter|x\.com|wa\.me/i, 'no social or chat block crowds the bar');
+  assert.equal(
+    (html.match(/class="er-footer-social-icon is-unconfigured"/g) ?? []).length,
+    7,
+    'seven enabled networks have no saved profile, so they are icons and not links',
+  );
+  assert.equal(
+    (html.match(/href="https:\/\/wa\.me\/2349130134969"/g) ?? []).length,
+    1,
+    'the one verified channel is the only configured social link',
+  );
+  assert.doesNotMatch(html, /href="https:\/\/(?:www\.)?(?:facebook|instagram|x|tiktok|linkedin|telegram)\.com/i, 'no social URL is invented');
   assert.match(html, /<nav[^>]*aria-label="Footer: company and policies"/, 'the policy links are a labelled landmark');
   assert.equal((html.match(/<h2/g) ?? []).length, 0, 'the compact bar has no column headings');
   assert.match(html, />About<\/a>/, 'About is present');

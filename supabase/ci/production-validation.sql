@@ -265,7 +265,8 @@ with repo_migrations(version, name, filename, kind) as (
     ('20261120090000', 'cbt_regrade', '20261120090000_cbt_regrade.sql', 'unique'),
     ('20261121150000', 'cbt_notification_unique_idx', '20261121150000_cbt_notification_unique_idx.sql', 'unique'),
     ('20261122120000', 'editorial_lifecycle_reviews_admin_rpcs', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql', 'unique'),
-    ('20261122121000', 'seed_verified_scholarships', '20261122121000_seed_verified_scholarships.sql', 'unique')
+    ('20261122121000', 'seed_verified_scholarships', '20261122121000_seed_verified_scholarships.sql', 'unique'),
+    ('20261123120000', 'homepage_engagement', '20261123120000_homepage_engagement.sql', 'unique')
 -- END GENERATED MIGRATION CHECKLIST
 ),
 normalized as (
@@ -390,6 +391,7 @@ with expected(version, migration) as (
     ,('20261121150000', '20261121150000_cbt_notification_unique_idx.sql')
     ,('20261122120000', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql')
     ,('20261122121000', '20261122121000_seed_verified_scholarships.sql')
+    ,('20261123120000', '20261123120000_homepage_engagement.sql')
 ), missing_versions as (
   select 'migration ' || e.version as object, e.migration
   from expected e
@@ -592,6 +594,18 @@ with expected(version, migration) as (
   union all
   select 'public.reviews', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
   where to_regclass('public.reviews') is null
+  union all
+  select 'public.faq_categories', '20261123120000_homepage_engagement.sql'
+  where not exists (select 1 from information_schema.tables where table_schema='public' and table_name='faq_categories')
+  union all
+  select 'public.faq_items', '20261123120000_homepage_engagement.sql'
+  where not exists (select 1 from information_schema.tables where table_schema='public' and table_name='faq_items')
+  union all
+  select 'public.reviews.is_placeholder', '20261123120000_homepage_engagement.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='reviews' and column_name='is_placeholder')
+  union all
+  select 'public.reviews.profile_image', '20261123120000_homepage_engagement.sql'
+  where not exists (select 1 from information_schema.columns where table_schema='public' and table_name='reviews' and column_name='profile_image')
   union all
   select 'public.review_rating_summary()', '20261122120000_editorial_lifecycle_reviews_admin_rpcs.sql'
   where not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace

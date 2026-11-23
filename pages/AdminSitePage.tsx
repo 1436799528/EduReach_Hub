@@ -13,7 +13,13 @@ import {
 import { useSiteContent } from '../src/components/useSiteContent';
 import { AdminPageReport } from '../src/components/admin/AdminKit';
 import { resetSiteContentCache } from '../src/lib/siteContent';
-import { POLICY_SLUGS, isSafeHttpsUrl, mergeSiteSettings } from '../src/lib/siteContentModel';
+import {
+  POLICY_SLUGS,
+  SOCIAL_PLATFORMS,
+  isSafeHttpsUrl,
+  mergeSiteSettings,
+  type SocialLink,
+} from '../src/lib/siteContentModel';
 import Tabs from '../src/components/ui/Tabs';
 
 /**
@@ -32,13 +38,18 @@ import Tabs from '../src/components/ui/Tabs';
 type Tab = 'settings' | 'pages';
 type SettingsKey = 'brand' | 'footer' | 'contact' | 'social';
 
-interface SocialDraft { label: string; url: string }
-
 interface SettingsDraft {
   brand: { name: string; tagline: string };
   footer: { about: string };
-  contact: { whatsapp: string; email: string; note: string };
-  social: { links: SocialDraft[] };
+  contact: {
+    whatsapp: string;
+    email: string;
+    supportEmail: string;
+    phone: string;
+    note: string;
+    details: Array<{ label: string; value: string }>;
+  };
+  social: { links: SocialLink[] };
 }
 
 interface PageDraft {
@@ -225,7 +236,10 @@ export default function AdminSitePage() {
     }
   }
 
-  const dirtySocial = settings.social.links.some((link) => link.label.trim() && !isSafeHttpsUrl(link.url));
+  const dirtySocial = settings.social.links.some((link) => {
+    if (!link.label.trim()) return true;
+    return Boolean(link.url.trim()) && !isSafeHttpsUrl(link.url);
+  });
   const modified: Record<SettingsKey, boolean> = {
     brand: !sameValue(settings.brand, savedSettings.brand),
     footer: !sameValue(settings.footer, savedSettings.footer),
@@ -244,8 +258,11 @@ export default function AdminSitePage() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Site &amp; policies</h1>
-          <p>What every visitor reads in the footer, and the policy pages a student can open without signing in.</p>
+          <h1>Site, social &amp; contact</h1>
+          <p>
+            The footer and contact details, the social profiles behind each icon, and the policy pages a student can
+            open without signing in.
+          </p>
         </div>
       </div>
 
@@ -312,10 +329,50 @@ export default function AdminSitePage() {
                         onChange={(event) => setSettings({ ...settings, contact: { ...settings.contact, whatsapp: event.target.value } })} />
                     </label>
                     <label className="admin-field">
-                      <span>Email (optional)</span>
+                      <span>General contact email (optional)</span>
                       <input className="admin-input" type="email" value={settings.contact.email}
                         onChange={(event) => setSettings({ ...settings, contact: { ...settings.contact, email: event.target.value } })} />
                     </label>
+                    <label className="admin-field">
+                      <span>Official support email (optional)</span>
+                      <input className="admin-input" type="email" value={settings.contact.supportEmail}
+                        onChange={(event) => setSettings({ ...settings, contact: { ...settings.contact, supportEmail: event.target.value } })} />
+                    </label>
+                    <label className="admin-field">
+                      <span>Support phone (optional)</span>
+                      <input className="admin-input" type="tel" value={settings.contact.phone} maxLength={24}
+                        onChange={(event) => setSettings({ ...settings, contact: { ...settings.contact, phone: event.target.value } })} />
+                    </label>
+                    <div className="admin-field">
+                      <span>Other contact details (optional)</span>
+                      {settings.contact.details.map((detail, index) => (
+                        <div className="admin-field-row" key={index}>
+                          <input className="admin-input" value={detail.label} maxLength={40} placeholder="Label, e.g. Office hours"
+                            aria-label={`Contact detail ${index + 1} label`}
+                            onChange={(event) => {
+                              const details = settings.contact.details.map((entry, i) => (i === index ? { ...entry, label: event.target.value } : entry));
+                              setSettings({ ...settings, contact: { ...settings.contact, details } });
+                            }} />
+                          <input className="admin-input" value={detail.value} maxLength={120} placeholder="Value"
+                            aria-label={`Contact detail ${index + 1} value`}
+                            onChange={(event) => {
+                              const details = settings.contact.details.map((entry, i) => (i === index ? { ...entry, value: event.target.value } : entry));
+                              setSettings({ ...settings, contact: { ...settings.contact, details } });
+                            }} />
+                          <button type="button" className="admin-btn secondary" aria-label={`Remove contact detail ${index + 1}`}
+                            onClick={() => {
+                              const details = settings.contact.details.filter((_, i) => i !== index);
+                              setSettings({ ...settings, contact: { ...settings.contact, details } });
+                            }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" className="admin-btn secondary" disabled={settings.contact.details.length >= 8}
+                        onClick={() => setSettings({ ...settings, contact: { ...settings.contact, details: [...settings.contact.details, { label: '', value: '' }] } })}>
+                        <Plus size={14} /> Add detail
+                      </button>
+                    </div>
                     <label className="admin-field">
                       <span>Note under the contact links</span>
                       <textarea className="admin-input" rows={2} maxLength={300} value={settings.contact.note}
@@ -329,36 +386,99 @@ export default function AdminSitePage() {
 
                   <section className="admin-card">
                     <div className="admin-card-header"><h2>Social accounts</h2></div>
-                    <p className="admin-footnote">Only accounts that exist. A blank list renders no social links at all; a link without a valid https:// address is refused by the server.</p>
-                    {settings.social.links.length === 0 && <p className="admin-footnote">No social accounts configured.</p>}
-                    {settings.social.links.map((link, index) => (
-                      <div className="admin-field-row" key={index}>
-                        <label className="admin-field">
-                          <span>Label</span>
-                          <input className="admin-input" value={link.label} maxLength={40}
-                            onChange={(event) => {
-                              const links = settings.social.links.map((entry, i) => (i === index ? { ...entry, label: event.target.value } : entry));
-                              setSettings({ ...settings, social: { links } });
-                            }} />
-                        </label>
-                        <label className="admin-field">
-                          <span>https:// address</span>
-                          <input className="admin-input" type="url" value={link.url}
-                            onChange={(event) => {
-                              const links = settings.social.links.map((entry, i) => (i === index ? { ...entry, url: event.target.value } : entry));
-                              setSettings({ ...settings, social: { links } });
-                            }} />
-                        </label>
-                        <button type="button" className="admin-btn secondary" aria-label={`Remove ${link.label || 'link'}`}
-                          onClick={() => setSettings({ ...settings, social: { links: settings.social.links.filter((_, i) => i !== index) } })}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                    <button type="button" className="admin-btn secondary" disabled={settings.social.links.length >= 8}
-                      onClick={() => setSettings({ ...settings, social: { links: [...settings.social.links, { label: '', url: '' }] } })}>
-                      <Plus size={14} /> Add link
-                    </button>{' '}
+                    <p className="admin-footnote">
+                      A saved https:// address is the only thing that becomes a link. An enabled platform with no URL
+                      shows its icon without a link, so the footer never points at an invented profile.
+                    </p>
+                    {settings.social.links.map((link, index) => {
+                      const platform = SOCIAL_PLATFORMS.find((entry) => entry.key === link.platform);
+                      return (
+                        <div className="admin-social-editor" key={`${link.platform}-${index}`}>
+                          <div className="admin-field-row">
+                            <label className="admin-field">
+                              <span>Platform</span>
+                              <select className="admin-select" value={link.platform}
+                                onChange={(event) => {
+                                  const key = event.target.value as SocialLink['platform'];
+                                  const chosen = SOCIAL_PLATFORMS.find((entry) => entry.key === key);
+                                  const links = settings.social.links.map((entry, i) => (i === index
+                                    ? { ...entry, platform: key, label: key === 'custom' ? entry.label : chosen?.label || entry.label }
+                                    : entry));
+                                  setSettings({ ...settings, social: { links } });
+                                }}>
+                                {SOCIAL_PLATFORMS.map((entry) => (
+                                  <option key={entry.key} value={entry.key}>{entry.label}</option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="admin-field">
+                              <span>{link.platform === 'custom' ? 'Platform name' : 'Display name'}</span>
+                              <input className="admin-input" value={link.label} maxLength={40}
+                                onChange={(event) => {
+                                  const links = settings.social.links.map((entry, i) => (i === index ? { ...entry, label: event.target.value } : entry));
+                                  setSettings({ ...settings, social: { links } });
+                                } } />
+                            </label>
+                          </div>
+                          <div className="admin-field-row">
+                            <label className="admin-field">
+                              <span>Profile URL (optional until the account exists)</span>
+                              <input className="admin-input" type="url" inputMode="url" placeholder="https://"
+                                value={link.url}
+                                onChange={(event) => {
+                                  const links = settings.social.links.map((entry, i) => (i === index ? { ...entry, url: event.target.value } : entry));
+                                  setSettings({ ...settings, social: { links } });
+                                } } />
+                            </label>
+                            <label className="admin-field">
+                              <span>Handle (optional, without @)</span>
+                              <input className="admin-input" value={link.handle} maxLength={40}
+                                onChange={(event) => {
+                                  const links = settings.social.links.map((entry, i) => (i === index ? { ...entry, handle: event.target.value } : entry));
+                                  setSettings({ ...settings, social: { links } });
+                                } } />
+                            </label>
+                          </div>
+                          <div className="admin-social-editor-foot">
+                            <label className="admin-check-row">
+                              <input type="checkbox" checked={link.visible}
+                                onChange={(event) => {
+                                  const links = settings.social.links.map((entry, i) => (i === index ? { ...entry, visible: event.target.checked } : entry));
+                                  setSettings({ ...settings, social: { links } });
+                                } } />
+                              Show this platform
+                            </label>
+                            <span className={`admin-pill ${link.url.trim() ? 'is-ok' : 'is-warn'}`}>
+                              {link.url.trim() ? 'Configured' : 'No profile URL yet'}
+                            </span>
+                            <button type="button" className="admin-btn secondary" aria-label={`Remove ${platform?.label || link.label}`}
+                              onClick={() => setSettings({ ...settings, social: { links: settings.social.links.filter((_, i) => i !== index) } })}>
+                              <Trash2 size={14} /> Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <button type="button" className="admin-btn secondary" disabled={settings.social.links.length >= 16}
+                      onClick={() => {
+                        const used = new Set(settings.social.links.map((entry) => entry.platform));
+                        const missing = SOCIAL_PLATFORMS.find((entry) => entry.key !== 'custom' && !used.has(entry.key));
+                        const platform = missing?.key || 'custom';
+                        setSettings({
+                          ...settings,
+                          social: {
+                            links: [...settings.social.links, {
+                              platform,
+                              label: missing?.label || '',
+                              handle: '',
+                              url: '',
+                              visible: true,
+                            }],
+                          },
+                        });
+                      }}>
+                      <Plus size={14} /> Add platform
+                    </button>
                     <button type="button" className="admin-btn" onClick={() => void saveSettings('social')} disabled={savingSettings === 'social' || dirtySocial}>
                       <Save size={14} /> {savingSettings === 'social' ? 'Saving…' : 'Save social links'}
                     </button>

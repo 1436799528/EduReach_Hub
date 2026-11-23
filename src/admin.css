@@ -1250,3 +1250,63 @@ button.admin-list-item:hover { background: var(--admin-surface-2); }
 .status-badge.hidden { background: #f2f4f6; color: #5e6c82; border-color: var(--admin-border); }
 
 .admin-bank-overview.is-compact .admin-bank-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+
+/* Social & contact editor: each platform is a bordered block, because four
+   fields and a visibility switch are too much for one table row. */
+.admin-social-editor {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: #fbfcfb;
+}
+.admin-social-editor-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.admin-social-editor-foot .admin-btn {
+  width: auto;
+  margin-left: auto;
+}
+.admin-link-btn {
+  display: inline;
+  border: 0;
+  background: none;
+  color: var(--admin-text);
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-link-btn:hover {
+  color: var(--er-primary);
+  text-decoration: underline;
+}
+.admin-link-btn:focus-visible {
+  outline: 2px solid var(--er-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Small avatar preview in Reviews Management. */
+.er-review-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 50%;
+  background: #eef3f0;
+  color: #174a3a;
+}
+.er-review-avatar img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+}

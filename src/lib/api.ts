@@ -2704,6 +2704,12 @@ export type PublicReview = {
   examType: string | null;
   createdAt: string;
   displayName: string;
+  profileImage: string | null;
+  studentDescription: string | null;
+  isFeatured: boolean;
+  /** A seeded sample row. It is labelled and never counted in the average. */
+  isPlaceholder: boolean;
+  displayOrder: number;
 };
 
 export type ReviewSummary = {
@@ -2736,26 +2742,166 @@ export async function submitReview(input: {
   });
 }
 
-export type AdminReview = {
-  id: string;
-  rating: number;
-  reviewText: string;
-  examType: string | null;
+export type AdminReview = PublicReview & {
   status: 'pending' | 'approved' | 'rejected' | 'hidden';
   moderationNote: string | null;
-  createdAt: string;
   updatedAt: string;
-  displayName: string;
 };
 
-export async function fetchAdminReviews(status: 'pending' | 'approved' | 'rejected' | 'hidden' | 'all' = 'pending'): Promise<{ items: AdminReview[]; summary: ReviewSummary }> {
+export type AdminReviewInput = {
+  displayName: string;
+  profileImage: string | null;
+  studentDescription: string | null;
+  reviewText: string;
+  rating: number;
+  examType: string | null;
+  status: AdminReview['status'];
+  isFeatured: boolean;
+  isPlaceholder: boolean;
+  displayOrder: number;
+};
+
+export async function fetchAdminReviews(
+  status: 'pending' | 'approved' | 'rejected' | 'hidden' | 'all' = 'all',
+): Promise<{ items: AdminReview[]; summary: ReviewSummary }> {
   return adminApiFetch<{ items: AdminReview[]; summary: ReviewSummary }>(`/api/admin/reviews?status=${status}`);
+}
+
+export async function createAdminReview(input: AdminReviewInput): Promise<AdminReview> {
+  const body = await adminApiFetch<{ item: AdminReview }>('/api/admin/reviews', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function updateAdminReview(reviewId: string, input: AdminReviewInput): Promise<AdminReview> {
+  const body = await adminApiFetch<{ item: AdminReview }>(`/api/admin/reviews/${encodeURIComponent(reviewId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function deleteAdminReview(reviewId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/reviews/${encodeURIComponent(reviewId)}`, { method: 'DELETE' });
+}
+
+export async function reorderAdminReviews(itemIds: string[]): Promise<void> {
+  await adminApiFetch('/api/admin/reviews/reorder', { method: 'POST', body: JSON.stringify({ itemIds }) });
 }
 
 export async function moderateAdminReview(reviewId: string, status: 'approved' | 'rejected' | 'hidden', note = ''): Promise<void> {
   await adminApiFetch(`/api/admin/reviews/${encodeURIComponent(reviewId)}`, {
     method: 'PATCH',
     body: JSON.stringify({ status, note }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// FAQ: published categories and questions, plus the admin editor
+// ---------------------------------------------------------------------------
+
+export type PublicFaqQuestion = {
+  id: string;
+  categoryId: string;
+  question: string;
+  answer: string;
+  displayOrder: number;
+  isPublished: boolean;
+};
+
+export type PublicFaqCategory = {
+  id: string;
+  slug: string;
+  label: string;
+  description: string;
+  displayOrder: number;
+  isPublished: boolean;
+  questions?: PublicFaqQuestion[];
+};
+
+export type AdminFaqCategory = Omit<PublicFaqCategory, 'questions'>;
+export type AdminFaqQuestion = PublicFaqQuestion;
+
+export type FaqCategoryInput = {
+  label: string;
+  description: string;
+  isPublished: boolean;
+  displayOrder: number;
+};
+
+export type FaqQuestionInput = {
+  categoryId: string;
+  question: string;
+  answer: string;
+  isPublished: boolean;
+  displayOrder: number;
+};
+
+export async function fetchFaqs(): Promise<PublicFaqCategory[]> {
+  const body = await jsonFetch<{ categories: PublicFaqCategory[] }>('/api/faqs');
+  return body.categories || [];
+}
+
+export async function fetchAdminFaqs(): Promise<{ categories: AdminFaqCategory[]; items: AdminFaqQuestion[] }> {
+  return await adminApiFetch<{ categories: AdminFaqCategory[]; items: AdminFaqQuestion[] }>('/api/admin/faqs');
+}
+
+export async function createAdminFaqCategory(input: FaqCategoryInput): Promise<AdminFaqCategory> {
+  const body = await adminApiFetch<{ item: AdminFaqCategory }>('/api/admin/faqs/categories', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function updateAdminFaqCategory(
+  categoryId: string,
+  input: FaqCategoryInput,
+): Promise<AdminFaqCategory> {
+  const body = await adminApiFetch<{ item: AdminFaqCategory }>(
+    `/api/admin/faqs/categories/${encodeURIComponent(categoryId)}`,
+    { method: 'PATCH', body: JSON.stringify(input) },
+  );
+  return body.item;
+}
+
+export async function deleteAdminFaqCategory(categoryId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/faqs/categories/${encodeURIComponent(categoryId)}`, { method: 'DELETE' });
+}
+
+export async function createAdminFaqQuestion(input: FaqQuestionInput): Promise<AdminFaqQuestion> {
+  const body = await adminApiFetch<{ item: AdminFaqQuestion }>('/api/admin/faqs/items', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function updateAdminFaqQuestion(
+  itemId: string,
+  input: FaqQuestionInput,
+): Promise<AdminFaqQuestion> {
+  const body = await adminApiFetch<{ item: AdminFaqQuestion }>(`/api/admin/faqs/items/${encodeURIComponent(itemId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+  return body.item;
+}
+
+export async function deleteAdminFaqQuestion(itemId: string): Promise<void> {
+  await adminApiFetch(`/api/admin/faqs/items/${encodeURIComponent(itemId)}`, { method: 'DELETE' });
+}
+
+export async function reorderAdminFaqQuestions(itemIds: string[]): Promise<void> {
+  await adminApiFetch('/api/admin/faqs/reorder', { method: 'POST', body: JSON.stringify({ itemIds }) });
+}
+
+export async function reorderAdminFaqCategories(categoryIds: string[]): Promise<void> {
+  await adminApiFetch('/api/admin/faqs/categories/reorder', {
+    method: 'POST',
+    body: JSON.stringify({ categoryIds }),
   });
 }
 

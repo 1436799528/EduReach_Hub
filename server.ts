@@ -50,6 +50,7 @@ import {
 import { OPTIONAL_ANALYTICS_ENABLED } from './src/lib/analyticsAvailability';
 import { isFeedVisible, lifecycleOf as opportunityLifecycle } from './lib/opportunityLifecycle';
 import * as REVIEW_POLICY from './lib/reviewPolicy';
+import * as ENGAGEMENT_POLICY from './lib/engagementPolicy';
 import { STALE_AFTER_HOURS, evaluateJobHealth } from './src/server/jobRuns';
 import { isArticleCurrent } from './src/lib/newsFreshness';
 import { registerQuestionImportRoutes } from './src/server/question-import/routes';
@@ -3305,18 +3306,50 @@ app.delete('/api/admin/opportunities/:opportunityId', requireCapability('opportu
 // The submission rules live in a shared module so the API and its tests agree
 // on what counts as a usable review; see lib/reviewPolicy.ts.
 
+const REVIEW_PUBLIC_SELECT =
+  'id,rating,review_text,exam_type,created_at,display_name,profile_image,student_description,is_featured,is_placeholder,display_order';
+
+function publicReview(row: any) {
+  return {
+    id: row.id,
+    rating: Number(row.rating),
+    reviewText: row.review_text,
+    examType: row.exam_type,
+    createdAt: row.created_at,
+    // The display name only; an email or account id is never part of a public
+    // review payload.
+    displayName: String(row.display_name || 'EduReach student').slice(0, 60),
+    profileImage: safeContentUrl(row.profile_image),
+    studentDescription: row.student_description ? String(row.student_description).slice(0, 120) : null,
+    isFeatured: row.is_featured === true,
+    isPlaceholder: row.is_placeholder === true,
+    displayOrder: Number(row.display_order ?? 0),
+  };
+}
+
+function adminReview(row: any) {
+  return {
+    ...publicReview(row),
+    status: row.status,
+    moderationNote: row.moderation_note ?? null,
+    updatedAt: row.updated_at,
+  };
+}
+
 app.get('/api/reviews', async (req, res) => {
   if (!isServerSupabaseConfigured())
     return res.json({ items: [], summary: { reviewCount: 0, averageRating: null }, hasMore: false });
   try {
     const supabase = getServerSupabase();
     const page = Math.min(Math.max(Number(req.query.page) || 1, 1), 50);
-    const pageSize = 9;
+    const pageSize = 12;
     const from = (page - 1) * pageSize;
     const { data, error } = await supabase
       .from('review_moderation_queue')
-      .select('id,rating,review_text,exam_type,created_at,display_name')
+      .select(REVIEW_PUBLIC_SELECT)
       .eq('status', 'approved')
+      .order('is_featured', { ascending: false })
+      .order('display_order', { ascending: true })
       .order('created_at', { ascending: false })
       .range(from, from + pageSize);
     if (error) return res.status(503).json({ error: 'Reviews are temporarily unavailable.' });
@@ -3328,16 +3361,7 @@ app.get('/api/reviews', async (req, res) => {
     const averageRating = summaryError || summaryRow?.average_rating == null ? null : Number(summaryRow.average_rating);
 
     res.json({
-      items: rows.slice(0, pageSize).map((row: any) => ({
-        id: row.id,
-        rating: Number(row.rating),
-        reviewText: row.review_text,
-        examType: row.exam_type,
-        createdAt: row.created_at,
-        // The display name only; an email or account id is never part of a
-        // public review payload.
-        displayName: String(row.display_name || 'EduReach student').slice(0, 60),
-      })),
+      items: rows.slice(0, pageSize).map(publicReview),
       summary: { reviewCount, averageRating },
       hasMore: rows.length > pageSize,
     });
@@ -3431,18 +3455,20 @@ app.post('/api/reviews', rateLimitFor(RATE_LIMIT_RULES.reviewSubmit), async (req
   }
 });
 
-app.get('/api/admin/reviews', requireCapability('news.read'), async (req, res) => {
+app.get('/api/admin/reviews', requireCapability('review.moderate'), async (req, res) => {
   try {
     const supabase = getServerSupabase();
-    const status = String(req.query.status || 'pending').toLowerCase();
+    const status = String(req.query.status || 'all').toLowerCase();
     if (!['pending', 'approved', 'rejected', 'hidden', 'all'].includes(status)) {
       return res.status(400).json({ error: 'Unknown review status.' });
     }
     let query = supabase
       .from('review_moderation_queue')
-      .select('id,rating,review_text,exam_type,status,moderation_note,created_at,updated_at,display_name')
+      .select(`${REVIEW_PUBLIC_SELECT},status,moderation_note,updated_at`)
+      .order('is_featured', { ascending: false })
+      .order('display_order', { ascending: true })
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(200);
     if (status !== 'all') query = query.eq('status', status);
     const { data, error } = await query;
     if (error) return res.status(503).json({ error: 'Unable to load reviews.' });
@@ -3450,17 +3476,7 @@ app.get('/api/admin/reviews', requireCapability('news.read'), async (req, res) =
     const { data: summaryRows } = await supabase.rpc('review_rating_summary');
     const summaryRow = Array.isArray(summaryRows) ? summaryRows[0] : summaryRows;
     res.json({
-      items: (data || []).map((row: any) => ({
-        id: row.id,
-        rating: Number(row.rating),
-        reviewText: row.review_text,
-        examType: row.exam_type,
-        status: row.status,
-        moderationNote: row.moderation_note,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        displayName: String(row.display_name || 'EduReach student').slice(0, 60),
-      })),
+      items: (data || []).map(adminReview),
       summary: {
         reviewCount: Number(summaryRow?.review_count ?? 0),
         averageRating: summaryRow?.average_rating == null ? null : Number(summaryRow.average_rating),
@@ -3472,12 +3488,145 @@ app.get('/api/admin/reviews', requireCapability('news.read'), async (req, res) =
   }
 });
 
-app.patch('/api/admin/reviews/:reviewId', requireCapability('news.update'), async (req, res) => {
+const REVIEW_COLUMNS =
+  'display_name,profile_image,student_description,review_text,rating,exam_type,status,is_featured,is_placeholder,display_order';
+
+app.post('/api/admin/reviews', requireCapability('review.moderate'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseAdminReviewDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('reviews')
+      .insert({
+        display_name: parsed.value.displayName,
+        profile_image: parsed.value.profileImage,
+        student_description: parsed.value.studentDescription,
+        review_text: parsed.value.reviewText,
+        rating: parsed.value.rating,
+        status: parsed.value.status,
+        is_featured: parsed.value.isFeatured,
+        is_placeholder: parsed.value.isPlaceholder,
+        display_order: parsed.value.displayOrder,
+        exam_type: parsed.value.examType,
+        moderated_by: adminUser.id,
+        moderated_at: new Date().toISOString(),
+      })
+      .select(`id,created_at,updated_at,moderation_note,${REVIEW_COLUMNS}`)
+      .single();
+    if (error) throw error;
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'review_created',
+      resourceType: 'review',
+      resourceId: data.id,
+      metadata: { status: parsed.value.status, placeholder: parsed.value.isPlaceholder },
+    });
+    res.status(201).json({ item: adminReview(data) });
+  } catch (error) {
+    log.error('admin.review_create_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to create this review.' });
+  }
+});
+
+app.put('/api/admin/reviews/:reviewId', requireCapability('review.moderate'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseAdminReviewDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('reviews')
+      .update({
+        display_name: parsed.value.displayName,
+        profile_image: parsed.value.profileImage,
+        student_description: parsed.value.studentDescription,
+        review_text: parsed.value.reviewText,
+        rating: parsed.value.rating,
+        exam_type: parsed.value.examType,
+        status: parsed.value.status,
+        is_featured: parsed.value.isFeatured,
+        is_placeholder: parsed.value.isPlaceholder,
+        display_order: parsed.value.displayOrder,
+        moderated_by: adminUser.id,
+        moderated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.reviewId)
+      .select(`id,created_at,updated_at,moderation_note,${REVIEW_COLUMNS}`)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Review not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'review_updated',
+      resourceType: 'review',
+      resourceId: data.id,
+      metadata: { status: parsed.value.status, featured: parsed.value.isFeatured },
+    });
+    res.json({ item: adminReview(data) });
+  } catch (error) {
+    log.error('admin.review_update_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to update this review.' });
+  }
+});
+
+app.delete('/api/admin/reviews/:reviewId', requireCapability('review.moderate'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', req.params.reviewId)
+      .select('id,display_name,is_placeholder')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Review not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'review_deleted',
+      resourceType: 'review',
+      resourceId: data.id,
+      metadata: { placeholder: data.is_placeholder === true },
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    log.error('admin.review_delete_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to delete this review.' });
+  }
+});
+
+app.post('/api/admin/reviews/reorder', requireCapability('review.moderate'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseReorderDraft(req.body, 'itemIds');
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const now = new Date().toISOString();
+    for (const [index, id] of parsed.value.entries()) {
+      const { error } = await supabase.from('reviews').update({ display_order: index, updated_at: now }).eq('id', id);
+      if (error) throw error;
+    }
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'review_reordered',
+      resourceType: 'review',
+      metadata: { count: parsed.value.length },
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    log.error('admin.review_reorder_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to reorder reviews.' });
+  }
+});
+
+app.patch('/api/admin/reviews/:reviewId', requireCapability('review.moderate'), async (req, res) => {
   try {
     const adminUser = (req as AuthorizedRequest).adminUser!;
     const status = String(req.body?.status || '').toLowerCase();
     if (!['approved', 'rejected', 'hidden'].includes(status)) {
-      return res.status(400).json({ error: 'Choose approve, reject or hide.' });
+      return res.status(400).json({ error: 'Choose publish, reject or hide.' });
     }
     const note =
       String(req.body?.note || '')
@@ -3514,6 +3663,383 @@ app.patch('/api/admin/reviews/:reviewId', requireCapability('news.update'), asyn
       ...errorFacts(error),
     });
     res.status(500).json({ error: 'Unable to update this review.' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// FAQ: admin-managed categories and questions
+//
+// The public read returns published rows only. Writes are capability-gated,
+// validated at the boundary and audited; the tables themselves are closed to
+// anon and authenticated roles.
+// ---------------------------------------------------------------------------
+
+type FaqCategoryRow = {
+  id: string;
+  slug: string;
+  label: string;
+  description: string;
+  display_order: number;
+  is_published: boolean;
+};
+type FaqItemRow = {
+  id: string;
+  category_id: string;
+  question: string;
+  answer: string;
+  display_order: number;
+  is_published: boolean;
+  updated_at?: string;
+};
+
+function faqCategoryPayload(row: FaqCategoryRow) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    label: row.label,
+    description: row.description,
+    displayOrder: Number(row.display_order ?? 0),
+    isPublished: row.is_published === true,
+  };
+}
+
+function faqItemPayload(row: FaqItemRow) {
+  return {
+    id: row.id,
+    categoryId: row.category_id,
+    question: row.question,
+    answer: row.answer,
+    displayOrder: Number(row.display_order ?? 0),
+    isPublished: row.is_published === true,
+  };
+}
+
+app.get('/api/faqs', async (_req, res) => {
+  if (!isServerSupabaseConfigured()) return res.json({ categories: [] });
+  try {
+    const supabase = getServerSupabase();
+    const [categories, items] = await Promise.all([
+      supabase
+        .from('faq_categories')
+        .select('id,slug,label,description,display_order')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true })
+        .order('label', { ascending: true }),
+      supabase
+        .from('faq_items')
+        .select('id,category_id,question,answer,display_order')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true })
+        .order('question', { ascending: true }),
+    ]);
+    if (categories.error || items.error) return res.status(503).json({ error: 'FAQs are temporarily unavailable.' });
+    const visibleIds = new Set((categories.data || []).map((row: any) => row.id));
+    res.json({
+      categories: (categories.data || []).map((category: any) => ({
+        ...faqCategoryPayload({ ...category, is_published: true }),
+        questions: (items.data || [])
+          .filter((item: any) => item.category_id === category.id && visibleIds.has(item.category_id))
+          .map((item: any) => faqItemPayload({ ...item, is_published: true })),
+      })),
+    });
+  } catch (error) {
+    log.error('faqs.list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(503).json({ error: 'FAQs are temporarily unavailable.' });
+  }
+});
+
+app.get('/api/admin/faqs', requireCapability('site.read'), async (_req, res) => {
+  try {
+    const supabase = getServerSupabase();
+    const [categories, items] = await Promise.all([
+      supabase
+        .from('faq_categories')
+        .select('id,slug,label,description,display_order,is_published')
+        .order('display_order', { ascending: true })
+        .order('label', { ascending: true }),
+      supabase
+        .from('faq_items')
+        .select('id,category_id,question,answer,display_order,is_published,updated_at')
+        .order('display_order', { ascending: true })
+        .order('question', { ascending: true }),
+    ]);
+    if (categories.error || items.error) return res.status(503).json({ error: 'Unable to load FAQs.' });
+    res.json({
+      categories: (categories.data || []).map(faqCategoryPayload),
+      items: (items.data || []).map(faqItemPayload),
+    });
+  } catch (error) {
+    log.error('admin.faqs_list_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(503).json({ error: 'Unable to load FAQs.' });
+  }
+});
+
+async function uniqueFaqSlug(supabase: SupabaseClient, label: string, excludeId?: string): Promise<string> {
+  const base = ENGAGEMENT_POLICY.faqSlug(label);
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const candidate = attempt === 0 ? base : `${base}-${attempt + 1}`.slice(0, 40);
+    let query = supabase.from('faq_categories').select('id').eq('slug', candidate).limit(1);
+    if (excludeId) query = query.neq('id', excludeId);
+    const { data } = await query;
+    if (!data || data.length === 0) return candidate;
+  }
+  return `${base}-${Date.now().toString(36)}`.slice(0, 40);
+}
+
+app.post('/api/admin/faqs/categories', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseFaqCategoryDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('faq_categories')
+      .insert({
+        slug: await uniqueFaqSlug(supabase, parsed.value.label),
+        label: parsed.value.label,
+        description: parsed.value.description,
+        display_order: parsed.value.displayOrder,
+        is_published: parsed.value.isPublished,
+      })
+      .select('id,slug,label,description,display_order,is_published')
+      .single();
+    if (error) throw error;
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_category_created',
+      resourceType: 'faq_category',
+      resourceId: data.id,
+      metadata: { label: data.label, published: data.is_published },
+    });
+    res.status(201).json({ item: faqCategoryPayload(data) });
+  } catch (error) {
+    log.error('admin.faq_category_create_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to create this FAQ category.' });
+  }
+});
+
+app.patch('/api/admin/faqs/categories/:categoryId', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseFaqCategoryDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('faq_categories')
+      .update({
+        label: parsed.value.label,
+        description: parsed.value.description,
+        display_order: parsed.value.displayOrder,
+        is_published: parsed.value.isPublished,
+      })
+      .eq('id', req.params.categoryId)
+      .select('id,slug,label,description,display_order,is_published')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'FAQ category not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_category_updated',
+      resourceType: 'faq_category',
+      resourceId: data.id,
+      metadata: { label: data.label, published: data.is_published },
+    });
+    res.json({ item: faqCategoryPayload(data) });
+  } catch (error) {
+    log.error('admin.faq_category_update_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to update this FAQ category.' });
+  }
+});
+
+app.delete('/api/admin/faqs/categories/:categoryId', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { count, error: countError } = await supabase
+      .from('faq_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('category_id', req.params.categoryId);
+    if (countError) throw countError;
+    if ((count || 0) > 0) {
+      return res.status(409).json({ error: 'Move or delete this category’s questions before deleting the category.' });
+    }
+    const { data, error } = await supabase
+      .from('faq_categories')
+      .delete()
+      .eq('id', req.params.categoryId)
+      .select('id,label')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'FAQ category not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_category_deleted',
+      resourceType: 'faq_category',
+      resourceId: data.id,
+      metadata: { label: data.label },
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    log.error('admin.faq_category_delete_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to delete this FAQ category.' });
+  }
+});
+
+app.post('/api/admin/faqs/items', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseFaqItemDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data: category } = await supabase
+      .from('faq_categories')
+      .select('id')
+      .eq('id', parsed.value.categoryId)
+      .maybeSingle();
+    if (!category) return res.status(400).json({ error: 'That FAQ category no longer exists.' });
+    const { data, error } = await supabase
+      .from('faq_items')
+      .insert({
+        category_id: parsed.value.categoryId,
+        question: parsed.value.question,
+        answer: parsed.value.answer,
+        display_order: parsed.value.displayOrder,
+        is_published: parsed.value.isPublished,
+      })
+      .select('id,category_id,question,answer,display_order,is_published')
+      .single();
+    if (error) {
+      if (error.code === '23505')
+        return res.status(409).json({ error: 'That question already exists in this category.' });
+      throw error;
+    }
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_item_created',
+      resourceType: 'faq_item',
+      resourceId: data.id,
+      metadata: { category_id: data.category_id, published: data.is_published },
+    });
+    res.status(201).json({ item: faqItemPayload(data) });
+  } catch (error) {
+    log.error('admin.faq_item_create_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to create this FAQ question.' });
+  }
+});
+
+app.put('/api/admin/faqs/items/:itemId', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseFaqItemDraft(req.body);
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    const { data: category } = await supabase
+      .from('faq_categories')
+      .select('id')
+      .eq('id', parsed.value.categoryId)
+      .maybeSingle();
+    if (!category) return res.status(400).json({ error: 'That FAQ category no longer exists.' });
+    const { data, error } = await supabase
+      .from('faq_items')
+      .update({
+        category_id: parsed.value.categoryId,
+        question: parsed.value.question,
+        answer: parsed.value.answer,
+        display_order: parsed.value.displayOrder,
+        is_published: parsed.value.isPublished,
+      })
+      .eq('id', req.params.itemId)
+      .select('id,category_id,question,answer,display_order,is_published')
+      .maybeSingle();
+    if (error) {
+      if (error.code === '23505')
+        return res.status(409).json({ error: 'That question already exists in this category.' });
+      throw error;
+    }
+    if (!data) return res.status(404).json({ error: 'FAQ question not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_item_updated',
+      resourceType: 'faq_item',
+      resourceId: data.id,
+      metadata: { category_id: data.category_id, published: data.is_published },
+    });
+    res.json({ item: faqItemPayload(data) });
+  } catch (error) {
+    log.error('admin.faq_item_update_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to update this FAQ question.' });
+  }
+});
+
+app.delete('/api/admin/faqs/items/:itemId', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('faq_items')
+      .delete()
+      .eq('id', req.params.itemId)
+      .select('id,question')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'FAQ question not found.' });
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_item_deleted',
+      resourceType: 'faq_item',
+      resourceId: data.id,
+      metadata: { question: data.question },
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    log.error('admin.faq_item_delete_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to delete this FAQ question.' });
+  }
+});
+
+app.post('/api/admin/faqs/reorder', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseReorderDraft(req.body, 'itemIds');
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    for (const [index, id] of parsed.value.entries()) {
+      const { error } = await supabase.from('faq_items').update({ display_order: index }).eq('id', id);
+      if (error) throw error;
+    }
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_items_reordered',
+      resourceType: 'faq_item',
+      metadata: { count: parsed.value.length },
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    log.error('admin.faq_reorder_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to reorder FAQ questions.' });
+  }
+});
+
+app.post('/api/admin/faqs/categories/reorder', requireCapability('site.update'), async (req, res) => {
+  try {
+    const adminUser = (req as AuthorizedRequest).adminUser!;
+    const parsed = ENGAGEMENT_POLICY.parseReorderDraft(req.body, 'categoryIds');
+    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+    const supabase = getServerSupabase();
+    for (const [index, id] of parsed.value.entries()) {
+      const { error } = await supabase.from('faq_categories').update({ display_order: index }).eq('id', id);
+      if (error) throw error;
+    }
+    await recordAudit(supabase, {
+      actorId: adminUser.id,
+      action: 'faq_categories_reordered',
+      resourceType: 'faq_category',
+      metadata: { count: parsed.value.length },
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    log.error('admin.faq_category_reorder_failed', { request_id: res.locals?.requestId, ...errorFacts(error) });
+    res.status(500).json({ error: 'Unable to reorder FAQ categories.' });
   }
 });
 
@@ -4066,7 +4592,15 @@ const UPLOAD_MIME_BY_EXT: Record<string, string> = {
 app.post(
   '/api/admin/uploads',
   rateLimitFor(RATE_LIMIT_RULES.adminUpload),
-  requireCapability('news.create', 'opportunity.create', 'institution.update', 'calendar.update', 'service.update'),
+  requireCapability(
+    'calendar.update',
+    'service.update',
+    'news.create',
+    'opportunity.create',
+    'institution.update',
+    'review.moderate',
+    'site.update',
+  ),
   express.json({ limit: '5mb' }),
   async (req, res) => {
     try {

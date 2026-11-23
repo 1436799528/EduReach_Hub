@@ -201,7 +201,7 @@ test('the review and question-bank API routes keep their gates and their honest 
 
   // Moderation is capability-gated, audited, and a missing row is a 404.
   const moderation = server.slice(server.indexOf("app.patch('/api/admin/reviews/:reviewId'"), server.indexOf("// Question-bank overview"));
-  assert.match(moderation, /requireCapability\('news\.update'\)/);
+  assert.match(moderation, /requireCapability\('review\.moderate'\)/);
   assert.match(moderation, /recordAudit\(/);
   assert.match(moderation, /status\(404\)\.json\(\{ error: 'Review not found\.' \}\)/);
 

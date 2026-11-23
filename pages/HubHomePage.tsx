@@ -22,6 +22,8 @@ import { useAuth } from '../src/lib/auth';
 
 // Keep secondary, data-backed sections out of the initial route chunk.
 const HomeNewsSection = lazy(() => import('../src/components/HomeNewsSection'));
+const HomeReviewsSection = lazy(() => import('../src/components/HomeReviewsSection'));
+const HomeFaqSection = lazy(() => import('../src/components/HomeFaqSection'));
 
 const toolLinks: Array<{ title: string; href: string; Icon: LucideIcon }> = [
   { title: 'Screening calculator', href: '/screening-calculator', Icon: Calculator },
@@ -135,6 +137,26 @@ export default function HubHomePage() {
             </section>
           )}>
             <HomeNewsSection />
+          </Suspense>
+
+          <Suspense
+            fallback={
+              <section className="er-section er-home-reviews" aria-label="Student reviews">
+                <SkeletonRows rows={2} label="Loading student reviews" />
+              </section>
+            }
+          >
+            <HomeReviewsSection />
+          </Suspense>
+
+          <Suspense
+            fallback={
+              <section className="er-section er-home-faq" aria-label="Frequently asked questions">
+                <SkeletonRows rows={2} label="Loading frequently asked questions" />
+              </section>
+            }
+          >
+            <HomeFaqSection />
           </Suspense>
         </div>
       </div>

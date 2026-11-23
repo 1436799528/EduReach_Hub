@@ -12,6 +12,7 @@ import {
   FileUp,
   Globe,
   GraduationCap,
+  HelpCircle,
   Laptop,
   LayoutDashboard,
   ListChecks,
@@ -178,10 +179,11 @@ const ADMIN_CONSOLE_NAV: AdminNavEntry[] = [
   { kind: 'link', href: '/admin/news', label: 'Newsroom CMS', icon: <Newspaper size={15} />, capability: 'news.read' },
   { kind: 'link', href: '/admin/content', label: 'Events & Key Dates', icon: <CalendarDays size={15} />, capability: 'calendar.read' },
   { kind: 'link', href: '/admin/opportunities', label: 'Scholarships & Opportunities', icon: <GraduationCap size={15} />, capability: 'opportunity.read' },
+  { kind: 'link', href: '/admin/faq', label: 'FAQ Management', icon: <HelpCircle size={15} />, capability: 'site.read' },
   { kind: 'group', label: 'System' },
   { kind: 'link', href: '/admin/analytics', label: 'Analytics & Reports', icon: <BarChart3 size={15} />, capability: 'analytics.read' },
   { kind: 'link', href: '/admin/content-manager', label: 'Data Control Center', icon: <Database size={15} />, capability: 'data.read' },
-  { kind: 'link', href: '/admin/site', label: 'Site & Policies', icon: <FileText size={15} />, capability: 'site.read' },
+  { kind: 'link', href: '/admin/site', label: 'Site, Social & Contact', icon: <FileText size={15} />, capability: 'site.read' },
   { kind: 'link', href: '/admin/pdf-bank', label: 'PDF Bank', icon: <FileText size={15} />, capability: 'data.read' },
 ];
 
