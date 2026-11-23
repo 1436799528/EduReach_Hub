@@ -55,9 +55,528 @@
   status = 200
   force = true
 
-# Client-side routes fall back to the SPA shell. Assets are served from /assets
-# with immutable caching by public/_headers.
+# BEGIN GENERATED ROUTES
+# Written by scripts/generate-route-paths.ts from src/app/routes.tsx.
+#
+# Every router path answers 200 with the shell; anything else falls through to
+# the 404 rule at the end of this block, which serves dist/404.html (a copy of
+# the shell) with a real 404 status. Before this, the catch-all answered 200
+# for every unknown URL, so search engines indexed soft 404s.
+
 [[redirects]]
-  from = "/*"
+  from = "/about"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/accessibility"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/analytics"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/banks"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/cbt"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/content"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/content-manager"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/faq"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/institution-intelligence"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/news"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/opportunities"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/pdf-bank"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/question-imports"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/queue"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/reviews"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/schools"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/services"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/site"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/users"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admission"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/calculator"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/practice"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/results"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/setup/jamb"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/setup/neco"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/setup/post-utme"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/setup/waec"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cgpa-calculator"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact-us"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cookie-policy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cookies"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/applications"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/cbt"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/cbt/results"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/notifications"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/past-questions"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/profile"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/requests"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/results"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/saved"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/scholarships"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/services"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/settings"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/tools"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/disclaimer"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/events"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/faq"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/forgot-password"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/help"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/jamb"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/jobs"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/nabteb"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/neco"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/nelfund"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/news"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/past-questions"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/post-utme"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy-policy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile/complete"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/refund-policy"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/refunds"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/register"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/reset-password"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/results"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/reviews"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/scholarships"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/schools"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/screening-calculator"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/search"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/services"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/services/track"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/settings"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/signin"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/signup"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/support"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms-of-service"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tools"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tools/cgpa-calculator"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/track"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/verify-email"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/waec"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admission/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/results/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cbt/session/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/cbt/results/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/results/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/jobs/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/news/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/schools/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/services/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/services/apply/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/tools/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/u/*"
+  to = "/index.html"
+  status = 200
+
+# The shell, served with the status the path deserves.
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
+
+# END GENERATED ROUTES

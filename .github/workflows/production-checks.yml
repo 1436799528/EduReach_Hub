@@ -53,7 +53,7 @@ jobs:
         run: npm test
 
       - name: Schema audit
-        run: npm run schema:audit && npm run migrations:checklist
+        run: npm run schema:audit && npm run migrations:checklist && npm run routes:check
 
       - name: Production build
         run: npm run build

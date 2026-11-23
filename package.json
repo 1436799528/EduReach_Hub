@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsx scripts/client-env-check.ts && vite build && tsx scripts/dist-secret-scan.ts && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs",
+    "build": "tsx scripts/client-env-check.ts && vite build && tsx scripts/dist-secret-scan.ts && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=build/server.cjs && tsx scripts/build-404.ts",
     "start": "node scripts/start.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist build server.js",
@@ -19,7 +19,7 @@
     "test:e2e": "npm run build:e2e-client && playwright test --project=desktop-chromium --project=mobile-chromium",
     "e2e:perf": "playwright test --project=mobile-perf --workers=1",
     "check": "npm run ci",
-    "ci": "npm run security:scan && npm run typecheck && npm run lint && npm run format:check && npm test && npm run schema:audit && npm run migrations:checklist && npm run build && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run e2e:perf && npm run rls:audit && npm run a11y:audit && npm run audit:ci",
+    "ci": "npm run security:scan && npm run typecheck && npm run lint && npm run format:check && npm test && npm run schema:audit && npm run migrations:checklist && npm run routes:check && npm run build && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run e2e:perf && npm run rls:audit && npm run a11y:audit && npm run audit:ci",
     "newsroom:run": "tsx scripts/newsroom.ts",
     "newsroom:check": "tsx scripts/newsroom.ts --check-sources",
     "newsroom:integrity": "tsx scripts/newsroom.ts --integrity",
@@ -45,7 +45,10 @@
     "security:scan": "tsx scripts/security-scan.ts",
     "security:scan:history": "tsx scripts/security-scan.ts --history",
     "security:dist": "tsx scripts/dist-secret-scan.ts",
-    "security:check": "tsx scripts/security-scan.ts && tsx scripts/security-scan.ts --history"
+    "security:check": "tsx scripts/security-scan.ts && tsx scripts/security-scan.ts --history",
+    "routes:generate": "tsx scripts/generate-route-paths.ts",
+    "routes:check": "tsx scripts/generate-route-paths.ts --check",
+    "smoke:pages": "tsx scripts/smoke-check.ts --pages"
   },
   "dependencies": {
     "@sentry/node": "11.15.0",
