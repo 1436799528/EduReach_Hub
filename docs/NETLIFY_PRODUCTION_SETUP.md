@@ -15,9 +15,11 @@ DEVELOPMENT_ONLY) and the invariants that are asserted in CI:
 |---|---|---|---|
 | `VITE_SUPABASE_URL` | **Builds** (and Runtime only if the API runs here) | **No** | Public project origin. It is inlined into the JS bundle, so it is public by definition. |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | **Builds** | **No** | Publishable/anon key. Every request it makes is subject to RLS. |
+| `EDUREACH_PUBLIC_SUPABASE_URL` | **Builds** | **No** | Same public origin as `VITE_SUPABASE_URL`, under a name that was never flagged secret. `vite.config.ts` reads it and inlines it, so the bundle is configured exactly as before. |
+| `EDUREACH_PUBLIC_SUPABASE_KEY` | **Builds** | **No** | Same publishable/anon key as the `VITE_` name. A privileged key in this variable fails the build by name and by value, not just in review. |
 | `SUPABASE_SECRET_KEY` | **Functions** only | **Yes** | Server key. Never in Builds: a build-only process has no reason to read it. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Functions** only | **Yes** | Legacy alias of the above. Keep one, not both, where possible. |
-| `EDUREACH_ADMIN_BOOTSTRAP_EMAIL` | **Functions** only | **Yes** | Administrative control, not a credential. Delete it once the first administrator exists. |
+| `EDUREACH_ADMIN_BOOTSTRAP_EMAIL` | **Functions** only | **Yes** | Flag it, although it is not a credential: it is classified SENSITIVE_OPERATIONAL, and the flag is what keeps a real person's address out of the build. Delete it once the first administrator exists. |
 | `EDUREACH_SITE_URL` | Runtime | No | Canonical origin for sitemap/canonical URLs. |
 
 `VITE_` prefix always means "shipped to the browser". Never put a secret behind it.

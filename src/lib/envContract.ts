@@ -67,6 +67,14 @@ export type EnvScope = 'build' | 'runtime' | 'function' | 'ci';
  * fallback for a client-visible variable will satisfy the *server* and silently
  * leave the *browser* unconfigured. An operator who sets only the alias gets a site
  * that looks configured and cannot talk to Supabase.
+ *
+ * `visibility` says where the value is *read*, not where it is allowed to end up.
+ * `EDUREACH_PUBLIC_SUPABASE_URL` and `EDUREACH_PUBLIC_SUPABASE_KEY` are `server`
+ * because the build reads them from `process.env`, and their parent spec is
+ * `PUBLIC` because that build then inlines them on purpose — the one case where
+ * reading a value server-side and publishing it are both correct. The
+ * classification, never the visibility, decides whether a value may reach a
+ * browser.
  */
 export interface EnvAlias {
   name: string;

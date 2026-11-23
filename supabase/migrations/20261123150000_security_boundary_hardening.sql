@@ -23,12 +23,23 @@
 --    `public.news_articles` and was executable by `anon`.
 --
 -- 4. Two helpers had no pinned `search_path` (`cbt_limits`, `cbt_submit_grace`).
---    Both are `immutable`/`stable` constant helpers, and both were already
---    revoked from client roles by earlier migrations; the missing pin is a
---    mutable-search-path finding only. `pg_catalog` is correct for a function that
---    touches no table at all — an earlier migration pinned `cbt_limits` this way
---    and a later `create or replace` reset it, which is exactly why the pin is
---    re-asserted here rather than assumed.
+--    Both are constant helpers that touch no table, so `pg_catalog` is the correct
+--    pin and the finding is the mutable search path alone. An earlier migration
+--    pinned `cbt_limits` this way and a later `create or replace` reset it, which
+--    is exactly why the pin is re-asserted here rather than assumed.
+--
+--    The two are not equally exposed, and the difference is deliberate:
+--      * `cbt_submit_grace()` is executable only by its owner and `service_role`.
+--      * `cbt_limits()` still carries the default `PUBLIC` EXECUTE plus `anon` and
+--        `authenticated` grants from its original `create function`. It is
+--        SECURITY INVOKER, touches no table and returns the same two constants to
+--        every caller, so those grants reach no data; it is called only by the
+--        server's service client (`server.ts`, `rpc('cbt_limits')`). This
+--        migration leaves that grant surface untouched on purpose: widening a
+--        reviewed migration's diff to revoke a constant helper would change the
+--        permission set the owner is being asked to approve, for no reduction in
+--        reachable information. Tightening it is a separate, smaller change if
+--        wanted.
 --
 -- What deliberately does *not* change
 -- -----------------------------------
