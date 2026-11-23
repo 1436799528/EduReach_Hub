@@ -4,13 +4,17 @@ import { userFacingError } from '../../lib/errors';
 import { fetchFaqs, type PublicFaqCategory } from '../lib/api';
 import SectionHead from './SectionHead';
 import '../home-engagement.css';
+// The accordion classes below are defined once, in the help centre's sheet. The
+// homepage used them without importing it, so every question rendered unstyled.
+import '../faq.css';
 import { EmptyState, ErrorState } from './AsyncState';
 import { SkeletonRows } from './Skeleton';
 
 /**
- * Homepage FAQ: one category at a time in the help centre's own accordion
- * pattern. The questions come from the database, so an answered edit in the
- * console is the version a visitor reads.
+ * Homepage FAQ: topics down the left, the selected topic's questions beside
+ * them — the same shape as the help centre, sized for the homepage. The
+ * questions come from the database, so an answered edit in the console is the
+ * version a visitor reads.
  */
 export default function HomeFaqSection() {
   const [categories, setCategories] = useState<PublicFaqCategory[]>([]);
@@ -76,20 +80,21 @@ export default function HomeFaqSection() {
           />
         )}
         {!loading && !error && active && (
-          <div className="er-faq-group er-home-faq-group">
-            <div className="er-home-faq-tabs" role="group" aria-label="FAQ categories">
+          <div className="er-home-faq-layout">
+            <nav className="er-home-faq-topics" aria-label="FAQ topics">
               {categories.map((category) => (
                 <button
                   key={category.id}
                   type="button"
-                  aria-pressed={category.id === active.id}
-                  className={`er-home-faq-tab${category.id === active.id ? ' is-active' : ''}`}
+                  aria-current={category.id === active.id ? 'true' : undefined}
+                  className={`er-home-faq-topic${category.id === active.id ? ' is-active' : ''}`}
                   onClick={() => setActiveId(category.id)}
                 >
-                  {category.label}
+                  <span>{category.label}</span>
+                  <span className="er-home-faq-topic-count">{category.questions?.length || 0}</span>
                 </button>
               ))}
-            </div>
+            </nav>
             <div className="er-faq-list" role="region" aria-label={`${active.label} questions`}>
               {(active.questions || []).map((question) => {
                 const open = expanded.has(question.id);
