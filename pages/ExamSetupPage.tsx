@@ -148,7 +148,12 @@ export default function ExamSetupPage({ exam }: { exam: ExamSetupKey }) {
         : await fetchCbtExams());
       let eligibleExams = exams;
       if (exam === 'post-utme') {
-        const schools = await fetchPostUtmeDirectory();
+        // A failed directory read must not take the whole setup screen with it.
+        // An empty list is the honest state - no school can be served right
+        // now - and the student keeps the instructions, the subject picker and
+        // the rest of the page. It also keeps the rejection out of the console:
+        // this was the only uncaught error the promoted browser coverage found.
+        const schools = await fetchPostUtmeDirectory().catch(() => [] as PostUtmeSchool[]);
         // A school is only offered as a choice when EduReach can actually
         // serve it: either its published screening is paper-based and its
         // papers are listed below, or a real POST-UTME question bank exists
