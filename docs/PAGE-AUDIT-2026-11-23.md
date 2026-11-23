@@ -61,12 +61,13 @@ or trust something they need; **Medium** = discoverability or compliance risk;
 | **F1** | **Three published policy pages were unreachable.** `/accessibility` and `/disclaimer` were in the sitemap (so crawlers were told to index them) but no page linked to either. `/refunds` — a real page with its own component — was in neither the footer nor the sitemap. An accessibility statement nobody can reach is not a statement | High | Fixed here | **Fixed** |
 | **F2** | **No link could fail CI.** 303 internal links, hand-written, with nothing comparing them to the router. A rename would have shipped as a 404 | High | Fixed here | **Fixed** |
 | **F3** | **`/results` is duplicate content with no inbound link.** It renders the same live service as `/services/results`, is indexable, has no canonical pointing at the service URL, is absent from the sitemap, and is linked from nowhere. Either it is the SEO landing page for "check result" searches and should be linked and canonicalised toward, or it is legacy and should redirect | Medium | Product decision | **Open** |
-| **F4** | **13 pages render in production but are not held to the browser assertions.** `checks: 'smoke'` pages (auth screens, `/cbt/setup/*`, `/nelfund`, `/results`, `/nabteb`, `/admission`, `/tools`, `/support`) are crawled after deploy but never opened by a spec that asserts one `h1`, one `<main>` and no render error | Medium | Fixed here | **Fixed** — all 41 declared pages are `full`, opened on three browser projects |
+| **F4** | **13 pages render in production but are not held to the browser assertions.** `checks: 'smoke'` pages (auth screens, `/cbt/setup/*`, `/nelfund`, `/results`, `/nabteb`, `/admission`, `/tools`, `/support`) are crawled after deploy but never opened by a spec that asserts one `h1`, one `<main>` and no render error | Medium | Fixed here | **Fixed for 40 of 41** — `/cbt/setup/post-utme` is held at `smoke` for a reason named in the manifest (F10) |
 | **F5** | **18 admin routes have no browser assertion at all.** They are noindex and behind a capability check, but the most consequential screens in the product (import, publish, regrade, reports) are only covered by unit tests | Medium | Fixed here | **Fixed for the door** — every admin route is opened and must refuse explicitly; what an administrator sees still needs the configured fixture |
 | **F6** | **External destinations are unmonitored.** 5 scholarship links come from seed data and every institution/opportunity record carries a URL from the database. A dead `.gov.ng` link is a trust failure, and nothing checks them | Medium | Fixed here | **Fixed** — weekly check, opens and closes its own issue |
 | **F7** | **No HTML validation and no Lighthouse in CI.** Semantics are covered by targeted tests and performance by byte/LCP/CLS/TBT budgets, but there is no whole-document validator and no lab Lighthouse run against a cold mobile profile | Low | Fixed here | **Fixed** — validator is a gate stage; Lighthouse is weekly. It found one real error: a `<style>` inside `#root` |
 | **F8** | **9 indexable titles exceeded 60 characters and 6 indexable descriptions exceeded 160.** Search results truncate; nothing breaks. Cosmetic, but it is the difference between a result that reads as a sentence and one that ends mid-word. (`/jamb`, `/waec`, `/neco`, `/post-utme`, `/schools`, `/services`, `/jobs` and the CGPA calculator, plus its alias.) Four pages also shared the site-wide default description. A further 54 descriptions are over 160 on **noindex** pages, where length does not matter | Low | Fixed here | **Fixed** — limits enforced by a test |
 | **F9** | **Four placeholder routes remain public:** `/admission`, `/support`, `/tools`, `/nabteb`. Each is noindex and excluded from the sitemap — honest, but a student who finds one by search gets "coming soon" from a site that claims to help them | Low | Product decision | **Open** |
+| **F10** | **`/cbt/setup/post-utme` leaks an uncaught rejection in the preview environment.** Promoting it to browser coverage found it immediately: the institution-directory read rejects against the preview backend and reaches the page. Catching it at the call site did not remove it, so the cause is elsewhere; diagnosing it needs a browser. Held at `smoke`, with the reason in `pageManifest.ts` | Medium | Buildable, with a browser | **Open** |
 
 Two earlier claims in `docs/WORKING_GUIDE_COMPLIANCE.md`'s predecessor notes were
 checked and are **not** defects: pages with several `<h1>` in one file
@@ -96,10 +97,10 @@ heading because it is a redirect shim that forwards to the setup wizard.
    `/disclaimer` were already there.
 5. **Tests extended** so the three links and the sitemap entry cannot silently
    disappear: `tests/site-content.test.ts`, `tests/seo.test.ts`.
-6. **All 13 remaining pages promoted to browser coverage** (F4). The manifest
-   now declares 41 pages as `full`; `route-coverage.spec.ts` opens each on
+6. **Twelve of the thirteen remaining pages promoted to browser coverage**
+   (F4; the thirteenth is F10). The manifest now declares 40 pages as `full`; `route-coverage.spec.ts` opens each on
    desktop and mobile — 82 tests — and asserts 200, one `<main>`, one `h1`, a
-   titled document, no uncaught error, no failed asset (123 tests with WebKit).
+   titled document, no uncaught error, no failed asset (120 tests with WebKit).
 7. **The admin door, tested** (F5). `tests/e2e/admin-gate.spec.ts` opens all 18
    admin routes and requires an explicit refusal, one `h1`, no console
    navigation and no leaked control. Writing it exposed that the refusal screen
@@ -247,7 +248,7 @@ No index, no browser assertion (**F5**), capability-gated server-side with
 
 | Item | Evidence |
 |---|---|
-| Browser assertions for the 13 remaining pages | `pageManifest.ts` — 41 pages `full`, 82 tests in `route-coverage.spec.ts` |
+| Browser assertions for 12 of the 13 remaining pages | `pageManifest.ts` — 40 pages `full`; `route-coverage.spec.ts` runs on three browser projects |
 | Admin door tested on all 18 routes | `tests/e2e/admin-gate.spec.ts` |
 | External link check, weekly | `scripts/external-link-check.ts`, `.github/workflows/external-links.yml` |
 | Titles and descriptions rewritten and enforced | `src/lib/seoMeta.ts`, the length test in `tests/seo.test.ts` |
