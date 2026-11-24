@@ -1,0 +1,92 @@
+# External link rot.
+#
+# Every internal link is checked against the router in the pull-request gate.
+# External destinations cannot be: they belong to JAMB, WAEC, MTN, TotalEnergies
+# and several hundred institutions, and they die without telling anyone. A
+# scholarship that still shows a deadline while its application page answers 404
+# is worse than no listing, because the student does the work and hits a wall.
+#
+# Weekly, not per-pull-request: link rot is not caused by the author of the pull
+# request that happens to notice it, and a red gate for someone else's dead
+# `.gov.ng` page would train everyone to ignore the gate. A failure here opens
+# (or comments on) one issue, labelled `link-rot`, with the URL and the file or
+# table it came from. Nothing in the pull-request path depends on this workflow.
+#
+# `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are optional: without them the
+# check covers the reviewed seed data, with them it also covers the live
+# `opportunities.link_url` and `institutions.website` columns.
+name: External link check
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: external-links
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  links:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Check every published external link
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run links:external -- --report link-report.md --timeout 20000
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-link-report
+          path: link-report.md
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Record the failure where a person will see it
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -f link-report.md ]; then
+            printf 'The external link check did not produce a report. See the workflow run: %s\n' \
+              "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" > link-report.md
+          fi
+          {
+            printf 'The weekly external link check failed on %s.\n\n' "$(date -u '+%d %B %Y')"
+            cat link-report.md
+            printf '\nRun: %s/%s/actions/runs/%s\n' \
+              "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}"
+          } > issue-body.md
+          existing="$(gh issue list --state open --search 'External link check failing in:title' --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file issue-body.md
+          else
+            gh issue create --title 'External link check failing' --body-file issue-body.md
+          fi
+
+      - name: Close the issue once every link resolves
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          existing="$(gh issue list --state open --search 'External link check failing in:title' --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "Every published external link resolves again as of $(date -u '+%d %B %Y'). Closing."
+          fi

@@ -26,6 +26,122 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/logo/edureach-hub-app-icon.svg" />
+    <style>
+      .pwa-boot-splash {
+        display: none;
+        min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      @media (display-mode: standalone), (display-mode: window-controls-overlay), (display-mode: minimal-ui) {
+        .pwa-boot-splash {
+          display: flex;
+        }
+      }
+      .pwa-boot-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 320px;
+        width: 100%;
+        gap: 12px;
+      }
+      .pwa-boot-logo {
+        width: 88px;
+        height: 88px;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        display: grid;
+        place-items: center;
+        animation: pwa-pulse 2s infinite ease-in-out;
+      }
+      .pwa-boot-logo img {
+        width: 68px;
+        height: 54px;
+        object-fit: contain;
+      }
+      .pwa-boot-brand {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .pwa-boot-title {
+        font-size: 20px;
+        font-weight: 750;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+      }
+      .pwa-boot-tagline {
+        font-size: 12px;
+        font-weight: 500;
+        color: #475569;
+      }
+      .pwa-boot-loader {
+        width: 130px;
+        height: 4px;
+        background: #e2e8f0;
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-top: 10px;
+        position: relative;
+      }
+      .pwa-boot-bar {
+        width: 45%;
+        height: 100%;
+        background: #1e40af;
+        border-radius: 9999px;
+        animation: pwa-slide 1.4s infinite ease-in-out;
+      }
+      .pwa-boot-status {
+        margin: 0;
+        font-size: 11px;
+        color: #64748b;
+        font-weight: 500;
+      }
+      @keyframes pwa-slide {
+        0% {
+          transform: translateX(-100%);
+        }
+        50% {
+          transform: translateX(110%);
+        }
+        100% {
+          transform: translateX(240%);
+        }
+      }
+      @keyframes pwa-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.04);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pwa-boot-logo,
+        .pwa-boot-bar {
+          animation: none !important;
+        }
+      }
+    </style>
+    <!-- The PWA boot splash styles live in the head: <style> is only permitted
+         there in HTML, the parser reaches it before the body, and the splash is
+         the one thing that must paint before the bundle arrives. -->
     <title>EduReach Hub | Student Services, CBT &amp; Education Updates</title>
     <meta
       name="description"
@@ -49,119 +165,6 @@
           <p class="pwa-boot-status">Loading application&hellip;</p>
         </div>
       </div>
-      <style>
-        .pwa-boot-splash {
-          display: none;
-          min-height: 100vh;
-          min-height: 100dvh;
-          width: 100%;
-          align-items: center;
-          justify-content: center;
-          background: #f8fafc;
-          color: #0f172a;
-          font-family:
-            Inter,
-            system-ui,
-            -apple-system,
-            sans-serif;
-          padding: 24px;
-          box-sizing: border-box;
-        }
-        @media (display-mode: standalone), (display-mode: window-controls-overlay), (display-mode: minimal-ui) {
-          .pwa-boot-splash {
-            display: flex;
-          }
-        }
-        .pwa-boot-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          max-width: 320px;
-          width: 100%;
-          gap: 12px;
-        }
-        .pwa-boot-logo {
-          width: 88px;
-          height: 88px;
-          border-radius: 20px;
-          background: #ffffff;
-          box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-          border: 1px solid #e2e8f0;
-          display: grid;
-          place-items: center;
-          animation: pwa-pulse 2s infinite ease-in-out;
-        }
-        .pwa-boot-logo img {
-          width: 68px;
-          height: 54px;
-          object-fit: contain;
-        }
-        .pwa-boot-brand {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        .pwa-boot-title {
-          font-size: 20px;
-          font-weight: 750;
-          color: #0f172a;
-          letter-spacing: -0.02em;
-        }
-        .pwa-boot-tagline {
-          font-size: 12px;
-          font-weight: 500;
-          color: #475569;
-        }
-        .pwa-boot-loader {
-          width: 130px;
-          height: 4px;
-          background: #e2e8f0;
-          border-radius: 9999px;
-          overflow: hidden;
-          margin-top: 10px;
-          position: relative;
-        }
-        .pwa-boot-bar {
-          width: 45%;
-          height: 100%;
-          background: #1e40af;
-          border-radius: 9999px;
-          animation: pwa-slide 1.4s infinite ease-in-out;
-        }
-        .pwa-boot-status {
-          margin: 0;
-          font-size: 11px;
-          color: #64748b;
-          font-weight: 500;
-        }
-        @keyframes pwa-slide {
-          0% {
-            transform: translateX(-100%);
-          }
-          50% {
-            transform: translateX(110%);
-          }
-          100% {
-            transform: translateX(240%);
-          }
-        }
-        @keyframes pwa-pulse {
-          0%,
-          100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.04);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .pwa-boot-logo,
-          .pwa-boot-bar {
-            animation: none !important;
-          }
-        }
-      </style>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

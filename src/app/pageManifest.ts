@@ -13,9 +13,9 @@
  *
  * - `checks: 'full'` — `tests/e2e/route-coverage.spec.ts` opens it in a real
  *   browser and asserts it renders: non-empty root, one `h1`, a title, no page
- *   error, no 4xx asset. `'smoke'` means the route is declared and crawled
- *   after deploy but is not yet held to the browser assertions (auth screens,
- *   placeholder panels, pages whose data is not deterministic offline).
+ *   error, no 4xx asset. Every declared page is held to this now; `'smoke'`
+ *   remains for a future page that genuinely cannot be opened without a
+ *   configured backend or a signed-in user.
  * - `indexable` — must agree with `seoForPath().indexable`. A test asserts it,
  *   so a page cannot quietly join the sitemap or quietly leave it.
  * - `api` — endpoints the page reads. `npm run smoke -- <url> --pages` asks each
@@ -79,19 +79,25 @@ export const PAGE_MANIFEST: readonly PageManifestEntry[] = [
   { path: '/refunds', name: 'Refund policy', public: true, indexable: true, checks: 'full' },
   { path: '/login', name: 'Sign in', public: true, indexable: false, checks: 'full' },
   { path: '/register', name: 'Create account', public: true, indexable: false, checks: 'full' },
-  { path: '/forgot-password', name: 'Forgot password', public: true, indexable: false, checks: 'smoke' },
-  { path: '/reset-password', name: 'Reset password', public: true, indexable: false, checks: 'smoke' },
-  { path: '/verify-email', name: 'Verify email', public: true, indexable: false, checks: 'smoke' },
-  { path: '/cbt/setup/jamb', name: 'Practice setup (JAMB)', public: true, indexable: false, checks: 'smoke' },
-  { path: '/cbt/setup/waec', name: 'Practice setup (WAEC)', public: true, indexable: false, checks: 'smoke' },
-  { path: '/cbt/setup/neco', name: 'Practice setup (NECO)', public: true, indexable: false, checks: 'smoke' },
+  { path: '/forgot-password', name: 'Forgot password', public: true, indexable: false, checks: 'full' },
+  { path: '/reset-password', name: 'Reset password', public: true, indexable: false, checks: 'full' },
+  { path: '/verify-email', name: 'Verify email', public: true, indexable: false, checks: 'full' },
+  { path: '/cbt/setup/jamb', name: 'Practice setup (JAMB)', public: true, indexable: false, checks: 'full' },
+  { path: '/cbt/setup/waec', name: 'Practice setup (WAEC)', public: true, indexable: false, checks: 'full' },
+  { path: '/cbt/setup/neco', name: 'Practice setup (NECO)', public: true, indexable: false, checks: 'full' },
+  // Held at `smoke`: in the preview environment (a Supabase URL that is
+  // deliberately unreachable) this page's institution-directory read surfaces an
+  // uncaught rejection that the browser coverage catches and the other setup
+  // pages do not. Swallowing it in the page did not remove it, so the cause is
+  // still unknown and diagnosing it needs a browser. Everything else this page
+  // shares with jamb/waec/neco is covered through them.
   { path: '/cbt/setup/post-utme', name: 'Practice setup (Post-UTME)', public: true, indexable: false, checks: 'smoke' },
-  { path: '/nelfund', name: 'NELFUND application', public: true, indexable: true, checks: 'smoke' },
-  { path: '/results', name: 'Result checking', public: true, indexable: true, checks: 'smoke' },
-  { path: '/nabteb', name: 'NABTEB (coming soon)', public: true, indexable: false, checks: 'smoke' },
-  { path: '/admission', name: 'Admission support (coming soon)', public: true, indexable: false, checks: 'smoke' },
-  { path: '/tools', name: 'Tools index (coming soon)', public: true, indexable: false, checks: 'smoke' },
-  { path: '/support', name: 'Support (coming soon)', public: true, indexable: false, checks: 'smoke' },
+  { path: '/nelfund', name: 'NELFUND application', public: true, indexable: true, checks: 'full' },
+  { path: '/results', name: 'Result checking', public: true, indexable: true, checks: 'full' },
+  { path: '/nabteb', name: 'NABTEB (coming soon)', public: true, indexable: false, checks: 'full' },
+  { path: '/admission', name: 'Admission support (coming soon)', public: true, indexable: false, checks: 'full' },
+  { path: '/tools', name: 'Tools index (coming soon)', public: true, indexable: false, checks: 'full' },
+  { path: '/support', name: 'Support (coming soon)', public: true, indexable: false, checks: 'full' },
 ] as const;
 
 /** Entries the browser spec is expected to open. */

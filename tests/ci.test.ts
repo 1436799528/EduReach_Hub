@@ -28,6 +28,7 @@ const REQUIRED_STAGES: Array<[stage: string, command: string]> = [
   ['schema audit', 'npm run schema:audit'],
   ['migration checklist', 'npm run migrations:checklist'],
   ['build', 'npm run build'],
+  ['HTML conformance', 'npm run html:validate'],
   ['performance budget', 'npm run perf:audit'],
   ['analytics taxonomy', 'npm run analytics:audit'],
   ['browser suite', 'npm run test:e2e'],
@@ -60,7 +61,7 @@ test('the authoritative gate script runs every required stage in order', () => {
   // and therefore last.
   assert.match(
     ci,
-    /npm run build && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run e2e:perf && npm run rls:audit && npm run a11y:audit && npm run audit:ci$/,
+    /npm run build && npm run html:validate && npm run perf:audit && npm run analytics:audit && npm run test:e2e && npm run e2e:perf && npm run rls:audit && npm run a11y:audit && npm run audit:ci$/,
   );
 });
 

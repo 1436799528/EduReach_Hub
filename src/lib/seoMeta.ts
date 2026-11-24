@@ -20,7 +20,7 @@ import { pageTitleFor } from './pageMeta';
 export const SITE_NAME = 'EduReach Hub';
 export const DEFAULT_TITLE = 'EduReach Hub | Student Services, CBT & Education Updates';
 export const DEFAULT_DESCRIPTION =
-  'EduReach Hub brings verified student services, CBT practice, education news, scholarships, admission tools and a student dashboard together for Nigerian students.';
+  'EduReach Hub brings verified student services, CBT practice, education news, scholarships, admission tools and a student dashboard for Nigerian students.';
 
 export type StructuredData = Record<string, unknown>;
 
@@ -82,7 +82,23 @@ const PLACEHOLDER_PREFIXES = ['/admission'];
 const ROUTE_META: Record<string, { title: string; description: string }> = {
   '/': {
     title: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
+    description:
+      'Verified education updates, CBT practice, scholarships, a school finder and student services for Nigerian students, in one place.',
+  },
+  '/about': {
+    title: 'About | EduReach Hub',
+    description:
+      'Who runs EduReach Hub, why it exists, and the independence rules that keep it separate from JAMB, WAEC, NECO and every institution.',
+  },
+  '/nelfund': {
+    title: 'NELFUND | EduReach Hub',
+    description:
+      'NELFUND student loan guidance: who qualifies, what to prepare, and how to start a request with EduReach support and track it to completion.',
+  },
+  '/results': {
+    title: 'Results | EduReach Hub',
+    description:
+      'Check and understand your examination results with guided support, from the official portal to a tracked EduReach request.',
   },
   '/news': {
     title: 'Education News & Verified Student Updates | EduReach Hub',
@@ -95,14 +111,14 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
       'Upcoming academic dates and student deadlines in one calendar, so registration windows, examinations and resumption dates are not missed.',
   },
   '/jobs': {
-    title: 'Graduate Jobs, Internships & Fellowships for Nigerian Students | EduReach Hub',
+    title: 'Graduate Jobs & Internships in Nigeria | EduReach Hub',
     description:
       'Jobs, internships, fellowships and campus roles for Nigerian students, with the source, deadline and official application link for every listing.',
   },
   '/scholarships': {
     title: 'Scholarships & Grants for Nigerian Students | EduReach Hub',
     description:
-      'Current Nigerian and international scholarships with eligibility, award, deadline and the provider’s own application page. Closed listings move to the archive automatically.',
+      'Current Nigerian and international scholarships with eligibility, award, deadline and the provider’s own application page. Closed listings are archived.',
   },
   '/faq': {
     title: 'Help & FAQ | EduReach Hub',
@@ -115,12 +131,12 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
       'Verified reviews from students who have practised on EduReach Hub, with the rating calculated from approved reviews.',
   },
   '/schools': {
-    title: 'Nigerian Universities, Polytechnics & Colleges Directory | EduReach Hub',
+    title: 'Nigerian Universities & Polytechnics | EduReach Hub',
     description:
-      'Search Nigerian institutions by name, state and type, and reach each institution\u2019s official website. EduReach is independent and not affiliated with any institution.',
+      'Search Nigerian institutions by name, state and type, and reach each official website. EduReach is independent and not affiliated with any institution.',
   },
   '/services': {
-    title: 'Student Services: NELFUND, Results, JAMB Slip & Admission Letters | EduReach Hub',
+    title: 'Student Services: NELFUND, Results, JAMB Slip | EduReach Hub',
     description:
       'EduReach service catalogue: what each student service does, the requirements, and how to start a request and track it to completion.',
   },
@@ -173,27 +189,27 @@ const ROUTE_META: Record<string, { title: string; description: string }> = {
       'Work out your screening aggregate from JAMB and O\u2019Level results before you check the official institution portal.',
   },
   '/tools/cgpa-calculator': {
-    title: 'CGPA Calculator for Nigerian University Students | EduReach Hub',
+    title: 'CGPA Calculator for Nigerian Students | EduReach Hub',
     description:
       'Calculate semester GPA and cumulative CGPA by course units and grades, and save your terms in your EduReach dashboard.',
   },
   '/jamb': {
-    title: 'JAMB UTME Hub: Registration, CBT & Admission Updates | EduReach Hub',
+    title: 'JAMB UTME: Registration, CBT & Admission | EduReach Hub',
     description:
       'JAMB UTME guidance, practice and verified updates: registration windows, exam slips, CAPS and admission lists, always pointing at the official JAMB portal.',
   },
   '/waec': {
-    title: 'WAEC Hub: WASSCE Registration, Timetable & Results | EduReach Hub',
+    title: 'WAEC WASSCE: Registration & Results | EduReach Hub',
     description:
       'WAEC WASSCE guidance and verified updates: registration windows, timetables and result notices from the official WAEC Nigeria source.',
   },
   '/neco': {
-    title: 'NECO Hub: SSCE Registration, Timetable & Results | EduReach Hub',
+    title: 'NECO SSCE: Registration, Timetable & Results | EduReach Hub',
     description:
       'NECO SSCE and GCE guidance with verified updates on registration, timetables and results from the official NECO source.',
   },
   '/post-utme': {
-    title: 'Post-UTME Hub: Screening, Cut-off Marks & Admission Lists | EduReach Hub',
+    title: 'Post-UTME Screening & Cut-off Marks | EduReach Hub',
     description:
       'Post-UTME screening guidance for Nigerian institutions: what to expect, how aggregates are computed, and verified updates from the institutions themselves.',
   },

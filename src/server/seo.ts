@@ -65,6 +65,7 @@ const STATIC_ENTRIES: Array<{ path: string; changefreq: SitemapEntry['changefreq
   // for by name. They are indexable and belong in the sitemap.
   { path: '/privacy', changefreq: 'yearly', priority: 0.3 },
   { path: '/terms', changefreq: 'yearly', priority: 0.3 },
+  { path: '/refunds', changefreq: 'yearly', priority: 0.3 },
   { path: '/cookies', changefreq: 'yearly', priority: 0.2 },
   { path: '/accessibility', changefreq: 'yearly', priority: 0.3 },
   { path: '/disclaimer', changefreq: 'yearly', priority: 0.2 },

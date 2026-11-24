@@ -7,6 +7,7 @@
 | [WORKING_GUIDE.md](WORKING_GUIDE.md) | **The specification.** The developer working guide: every stage from discovery to maintenance, the exam-engine rules, and the checklists a change is measured against |
 | [WORKING_GUIDE_COMPLIANCE.md](WORKING_GUIDE_COMPLIANCE.md) | Requirement-by-requirement record: what the guide asks, what the repository does today, the evidence, and what is outstanding |
 | [ROUTES.md](ROUTES.md) | Every route, who can open it and whether it is live |
+| [PAGE-AUDIT-2026-11-23.md](PAGE-AUDIT-2026-11-23.md) | Every page against the product goals, the link audit, and the international-standard scorecard: what failed, what was fixed, what is left and who owns it |
 | [DATABASE.md](DATABASE.md) | Tables, migrations and row-level security |
 | [SUPABASE_SECURITY_CHECKLIST.md](SUPABASE_SECURITY_CHECKLIST.md) | Settings to verify on the database side before a release |
 | [SUPABASE_LIVE_VERIFICATION.md](SUPABASE_LIVE_VERIFICATION.md) | Which Supabase checks are done locally, which need project access, and the safe order to run them |
