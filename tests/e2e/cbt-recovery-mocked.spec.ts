@@ -153,7 +153,7 @@ test('a refresh with no network restores the paper and answers from this device 
   // The hall renders from the device — no blocking error, answers intact.
   await expect(page.getByRole('heading', { name: 'Test-only question one' })).toBeVisible();
   await expect(page.getByRole('radio', { name: /Option two/ })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByText(/Showing the copy saved on this device/i)).toBeVisible();
+  await expect(page.getByText(/Showing the answers saved on this device/i)).toBeVisible();
 
   // The connection returns: the same attempt reconciles and saves again —
   // nothing lost, nothing duplicated.

@@ -52,6 +52,9 @@ const PENDING_PREFIX = 'edureach-cbt-pending:';
 // Which account the browser copy belongs to, so one account's attempt data
 // never surfaces under another account on the same device.
 const PENDING_OWNER_PREFIX = 'edureach-cbt-pending-owner:';
+/** Restored work is real work, but only the server's ack makes it saved. */
+const RESTORED_WORK_NOTICE =
+  'Answers restored on this device are not yet confirmed saved and may be older than work in another tab or device. Review them before submitting.';
 
 /** A11Y: subject tabs are one tab stop; arrows, Home and End move and activate. */
 function handleSubjectTabKeys(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -292,7 +295,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
       setAnswers(localDraft);
       if (pending || record?.pendingDraft) {
         setSaveState('pending');
-        setRecoveryNotice('A browser copy was restored but is not confirmed saved. It may be older than work in another tab or device. Review your answers before submitting.');
+        setRecoveryNotice(RESTORED_WORK_NOTICE);
       }
       journalWrite({
         paper: { attempt: payload.attempt, questions: payload.questions },
@@ -321,7 +324,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
         // The local copy is already on screen: say so honestly and retry with
         // bounded backoff instead of replacing the paper with an error screen.
         setSaveState('pending');
-        setRecoveryNotice('The server could not be reached. Showing the copy saved on this device; your work is kept here and will sync when the connection returns.');
+        setRecoveryNotice('The server could not be reached. Showing the answers saved on this device; they will sync when the connection returns.');
         const retryAttempt = loadAttempts.current + 1;
         if (retryAttempt < DEFAULT_WRITE_BACKOFF.maxAttempts) {
           loadAttempts.current = retryAttempt;
@@ -364,7 +367,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
             if (paper.attempt.status !== 'in_progress') setClosed(paper.attempt.status);
             if (record.pendingDraft) {
               setSaveState('pending');
-              setRecoveryNotice('A browser copy was restored but is not confirmed saved. It may be older than work in another tab or device. Review your answers before submitting.');
+              setRecoveryNotice(RESTORED_WORK_NOTICE);
             }
           }
         }
@@ -1014,7 +1017,7 @@ export default function CbtSessionPage({ attemptId }: { attemptId: string }) {
           <div className="hub-form-error" role="note">
             <p>
               {conflicts.length === 1 ? 'Question' : 'Questions'} {conflicts.map((item) => item.position).join(', ')}{' '}
-              {conflicts.length === 1 ? 'has' : 'have'} two different answers on this device and in your saved account answers. Re-select an answer on each question to confirm it, or choose which answers to keep before submitting.
+              {conflicts.length === 1 ? 'has' : 'have'} two different answers: this device and your saved account. Re-select an answer to confirm it, or choose which answers to keep before submitting.
             </p>
             <p>
               <button type="button" className="hub-outline-btn" onClick={resolveConflictsKeepDevice}>Keep this device&apos;s answers</button>{' '}
