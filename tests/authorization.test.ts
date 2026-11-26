@@ -140,7 +140,8 @@ backend.get('/rest/v1/cbt_attempts', (req, res) => {
   // Activity history lists by user; the paper lookup filters by id.
   if (!req.query.id && req.query.user_id) return res.json(cbtAttemptRows);
   if (cbtPaperFixture === 'read-error') return res.status(503).json({ code: 'DB_DOWN', message: 'synthetic internal database error' });
-  if (cbtProtocolColumnMissing && req.query.select === 'protocol') return res.status(400).json({ code: '42703', message: 'column protocol does not exist' });
+  // A missing column fails every query that lists it, in whatever shape.
+  if (cbtProtocolColumnMissing && /(^|,)\s*protocol\s*(,|$)/.test(String(req.query.select || ''))) return res.status(400).json({ code: '42703', message: 'column protocol does not exist' });
   if (cbtPaperFixture !== 'missing') {
     const row = { id: 'test-attempt', exam_id: 'test-exam', protocol: cbtPaperProtocol, status: cbtPaperStatus, current_question: 0, answers_draft: {}, question_ids: cbtPaperProtocol === 'v2' ? cbtPaperQuestionIds : [], cbt_exams: {} };
     return res.json(wantsObject ? row : [row]);

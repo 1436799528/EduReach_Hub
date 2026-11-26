@@ -18,7 +18,10 @@ after(() => new Promise<void>((resolve, reject) => server.close(error => error ?
 test('health is healthy with security headers and no framework disclosure', async () => {
   const response = await fetch(`${base}/api/health`);
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { status: 'ok', service: 'edureach' });
+  const health = (await response.json()) as { status: string; service: string; time: string };
+  assert.equal(health.status, 'ok');
+  assert.equal(health.service, 'edureach');
+  assert.ok(Number.isFinite(Date.parse(health.time)), 'health carries the server clock so the exam hall can resynchronise its countdown');
   assert.equal(response.headers.get('x-powered-by'), null);
   assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   assert.equal(response.headers.get('cache-control'), 'no-store');
@@ -73,7 +76,10 @@ for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
 test('netlify functions prefix normalizes to /api under standalone server', async () => {
   const healthRes = await fetch(`${base}/.netlify/functions/api/health`);
   assert.equal(healthRes.status, 200);
-  assert.deepEqual(await healthRes.json(), { status: 'ok', service: 'edureach' });
+  const normalizedHealth = (await healthRes.json()) as { status: string; service: string; time: string };
+  assert.equal(normalizedHealth.status, 'ok');
+  assert.equal(normalizedHealth.service, 'edureach');
+  assert.ok(Number.isFinite(Date.parse(normalizedHealth.time)));
 
   const eventRes = await fetch(`${base}/.netlify/functions/api/analytics/event`, {
     method: 'POST',
